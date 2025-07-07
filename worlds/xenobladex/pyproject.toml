@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "xenobladex"
+name = "worlds.xenobladex"
 dynamic = ["version"]
 description = "MultiWorld: Xenoblade X"
 authors = [
     {name = "Maragon"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"xenobladex.WorldClass" = "xenobladex.Register:WORLD_CLASS"
-"xenobladex.WebWorldClass" = "xenobladex.Register:WEB_WORLD_CLASS"
-"xenobladex.Client" = "xenobladex.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["xenobladex*", "xenobladex"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.xenobladex"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "xenobladex.Constants.VERSION"}
+version = {attr = "worlds.xenobladex.Constants.VERSION"}

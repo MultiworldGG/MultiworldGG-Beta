@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pokemon_emerald"
+name = "worlds.pokemon_emerald"
 dynamic = ["version"]
 description = "MultiWorld: Pokemon Emerald"
 authors = [
@@ -18,16 +18,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"pokemon_emerald.WorldClass" = "pokemon_emerald.Register:WORLD_CLASS"
-"pokemon_emerald.WebWorldClass" = "pokemon_emerald.Register:WEB_WORLD_CLASS"
-"pokemon_emerald.Client" = "pokemon_emerald.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["pokemon_emerald*", "pokemon_emerald"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.pokemon_emerald"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "pokemon_emerald.Constants.VERSION"}
+version = {attr = "worlds.pokemon_emerald.Constants.VERSION"}

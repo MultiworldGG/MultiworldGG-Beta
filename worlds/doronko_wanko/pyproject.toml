@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "doronko_wanko"
+name = "worlds.doronko_wanko"
 dynamic = ["version"]
 description = "MultiWorld: DORONKO WANKO"
 authors = [
     {name = "Vendily"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"doronko_wanko.WorldClass" = "doronko_wanko.Register:WORLD_CLASS"
-"doronko_wanko.WebWorldClass" = "doronko_wanko.Register:WEB_WORLD_CLASS"
-"doronko_wanko.Client" = "doronko_wanko.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["doronko_wanko*", "doronko_wanko"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.doronko_wanko"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "doronko_wanko.Constants.VERSION"}
+version = {attr = "worlds.doronko_wanko.Constants.VERSION"}

@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "v6"
+name = "worlds.v6"
 dynamic = ["version"]
 description = "MultiWorld: VVVVVV"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"v6.WorldClass" = "v6.Register:WORLD_CLASS"
-"v6.WebWorldClass" = "v6.Register:WEB_WORLD_CLASS"
-"v6.Client" = "v6.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["v6*", "v6"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.v6"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "v6.Constants.VERSION"}
+version = {attr = "worlds.v6.Constants.VERSION"}

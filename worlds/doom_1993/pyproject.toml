@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "doom_1993"
+name = "worlds.doom_1993"
 dynamic = ["version"]
 description = "MultiWorld: DOOM 1993"
 authors = [
@@ -19,16 +19,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"doom_1993.WorldClass" = "doom_1993.Register:WORLD_CLASS"
-"doom_1993.WebWorldClass" = "doom_1993.Register:WEB_WORLD_CLASS"
-"doom_1993.Client" = "doom_1993.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["doom_1993*", "doom_1993"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.doom_1993"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "doom_1993.Constants.VERSION"}
+version = {attr = "worlds.doom_1993.Constants.VERSION"}

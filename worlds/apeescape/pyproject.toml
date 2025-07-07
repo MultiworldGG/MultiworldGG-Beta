@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "apeescape"
+name = "worlds.apeescape"
 dynamic = ["version"]
 description = "MultiWorld: Ape Escape"
 authors = [
     {name = "Thedragon005"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"apeescape.WorldClass" = "apeescape.Register:WORLD_CLASS"
-"apeescape.WebWorldClass" = "apeescape.Register:WEB_WORLD_CLASS"
-"apeescape.Client" = "apeescape.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["apeescape*", "apeescape"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.apeescape"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "apeescape.Constants.VERSION"}
+version = {attr = "worlds.apeescape.Constants.VERSION"}

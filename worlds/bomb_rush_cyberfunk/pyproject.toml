@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "bomb_rush_cyberfunk"
+name = "worlds.bomb_rush_cyberfunk"
 dynamic = ["version"]
 description = "MultiWorld: Bomb Rush Cyberfunk"
 authors = [
     {name = "CookieCat45"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"bomb_rush_cyberfunk.WorldClass" = "bomb_rush_cyberfunk.Register:WORLD_CLASS"
-"bomb_rush_cyberfunk.WebWorldClass" = "bomb_rush_cyberfunk.Register:WEB_WORLD_CLASS"
-"bomb_rush_cyberfunk.Client" = "bomb_rush_cyberfunk.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["bomb_rush_cyberfunk*", "bomb_rush_cyberfunk"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.bomb_rush_cyberfunk"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "bomb_rush_cyberfunk.Constants.VERSION"}
+version = {attr = "worlds.bomb_rush_cyberfunk.Constants.VERSION"}

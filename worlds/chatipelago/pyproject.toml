@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "chatipelago"
+name = "worlds.chatipelago"
 dynamic = ["version"]
 description = "MultiWorld: Chatipelago"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"chatipelago.WorldClass" = "chatipelago.Register:WORLD_CLASS"
-"chatipelago.WebWorldClass" = "chatipelago.Register:WEB_WORLD_CLASS"
-"chatipelago.Client" = "chatipelago.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["chatipelago*", "chatipelago"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.chatipelago"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "chatipelago.Constants.VERSION"}
+version = {attr = "worlds.chatipelago.Constants.VERSION"}

@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "toontown"
+name = "worlds.toontown"
 dynamic = ["version"]
 description = "MultiWorld: Toontown"
 authors = [
     {name = "DevvyDont"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"toontown.WorldClass" = "toontown.Register:WORLD_CLASS"
-"toontown.WebWorldClass" = "toontown.Register:WEB_WORLD_CLASS"
-"toontown.Client" = "toontown.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["toontown*", "toontown"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.toontown"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "toontown.Constants.VERSION"}
+version = {attr = "worlds.toontown.Constants.VERSION"}

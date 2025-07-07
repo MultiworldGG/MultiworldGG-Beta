@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dark_souls_2"
+name = "worlds.dark_souls_2"
 dynamic = ["version"]
 description = "MultiWorld: Dark Souls II"
 authors = [
     {name = "WildBunnie"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"dark_souls_2.WorldClass" = "dark_souls_2.Register:WORLD_CLASS"
-"dark_souls_2.WebWorldClass" = "dark_souls_2.Register:WEB_WORLD_CLASS"
-"dark_souls_2.Client" = "dark_souls_2.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["dark_souls_2*", "dark_souls_2"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.dark_souls_2"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "dark_souls_2.Constants.VERSION"}
+version = {attr = "worlds.dark_souls_2.Constants.VERSION"}

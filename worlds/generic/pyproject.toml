@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "generic"
+name = "worlds.generic"
 dynamic = ["version"]
 description = "MultiWorld: Archipelago"
 authors = [
     {name = "Unknown"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"generic.WorldClass" = "generic.Register:WORLD_CLASS"
-"generic.WebWorldClass" = "generic.Register:WEB_WORLD_CLASS"
-"generic.Client" = "generic.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["generic*", "generic"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.generic"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "generic.Constants.VERSION"}
+version = {attr = "worlds.generic.Constants.VERSION"}

@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pseudoregalia"
+name = "worlds.pseudoregalia"
 dynamic = ["version"]
 description = "MultiWorld: Pseudoregalia"
 authors = [
@@ -15,16 +15,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"pseudoregalia.WorldClass" = "pseudoregalia.Register:WORLD_CLASS"
-"pseudoregalia.WebWorldClass" = "pseudoregalia.Register:WEB_WORLD_CLASS"
-"pseudoregalia.Client" = "pseudoregalia.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["pseudoregalia*", "pseudoregalia"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.pseudoregalia"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "pseudoregalia.Constants.VERSION"}
+version = {attr = "worlds.pseudoregalia.Constants.VERSION"}

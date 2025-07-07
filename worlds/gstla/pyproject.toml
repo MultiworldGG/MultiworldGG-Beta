@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gstla"
+name = "worlds.gstla"
 dynamic = ["version"]
 description = "MultiWorld: Golden Sun The Lost Age"
 authors = [
@@ -13,21 +13,14 @@ classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
-
 dependencies = [
     "requests >= 2.28.2",
 ]
 
-[project.entry-points."mwgg.plugins"]
-"gstla.WorldClass" = "gstla.Register:WORLD_CLASS"
-"gstla.WebWorldClass" = "gstla.Register:WEB_WORLD_CLASS"
-"gstla.Client" = "gstla.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["gstla*", "gstla"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.gstla"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "gstla.Constants.VERSION"}
+version = {attr = "worlds.gstla.Constants.VERSION"}

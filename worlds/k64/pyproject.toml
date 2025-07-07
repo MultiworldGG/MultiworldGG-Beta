@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "k64"
+name = "worlds.k64"
 dynamic = ["version"]
 description = "MultiWorld: Kirby 64 - The Crystal Shards"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"k64.WorldClass" = "k64.Register:WORLD_CLASS"
-"k64.WebWorldClass" = "k64.Register:WEB_WORLD_CLASS"
-"k64.Client" = "k64.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["k64*", "k64"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.k64"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "k64.Constants.VERSION"}
+version = {attr = "worlds.k64.Constants.VERSION"}

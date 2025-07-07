@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "archipidle"
+name = "worlds.archipidle"
 dynamic = ["version"]
 description = "MultiWorld: ArchipIDLE"
 authors = [
     {name = "LegendaryLinux"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"archipidle.WorldClass" = "archipidle.Register:WORLD_CLASS"
-"archipidle.WebWorldClass" = "archipidle.Register:WEB_WORLD_CLASS"
-"archipidle.Client" = "archipidle.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["archipidle*", "archipidle"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.archipidle"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "archipidle.Constants.VERSION"}
+version = {attr = "worlds.archipidle.Constants.VERSION"}

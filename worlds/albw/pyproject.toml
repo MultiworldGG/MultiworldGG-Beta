@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "albw"
+name = "worlds.albw"
 dynamic = ["version"]
 description = "MultiWorld: A Link Between Worlds"
 authors = [
@@ -18,16 +18,11 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"albw.WorldClass" = "albw.Register:WORLD_CLASS"
-"albw.WebWorldClass" = "albw.Register:WEB_WORLD_CLASS"
-"albw.Client" = "albw.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["albw*", "albw"]
+where = ["src/"]
+include = ["worlds.albw"]
 exclude = ["test*", "*test*"]
-namespaces = false
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "albw.Constants.VERSION"}
+version = {attr = "worlds.albw.Constants.VERSION"}

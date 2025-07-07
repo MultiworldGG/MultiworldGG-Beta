@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tetrisattack"
+name = "worlds.tetrisattack"
 dynamic = ["version"]
 description = "MultiWorld: Tetris Attack"
 authors = [
     {name = "AgStarRay"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"tetrisattack.WorldClass" = "tetrisattack.Register:WORLD_CLASS"
-"tetrisattack.WebWorldClass" = "tetrisattack.Register:WEB_WORLD_CLASS"
-"tetrisattack.Client" = "tetrisattack.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["tetrisattack*", "tetrisattack"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.tetrisattack"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "tetrisattack.Constants.VERSION"}
+version = {attr = "worlds.tetrisattack.Constants.VERSION"}

@@ -3,27 +3,22 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "lufia2ac"
+name = "worlds.lufia2ac"
 dynamic = ["version"]
 description = "MultiWorld: Lufia II: Ancient Cave"
 authors = [
-    {name = "el-u & word_fcuk"}
+    {name = "el-u"},
+    {name = "word_fcuk"}
 ]
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"lufia2ac.WorldClass" = "lufia2ac.Register:WORLD_CLASS"
-"lufia2ac.WebWorldClass" = "lufia2ac.Register:WEB_WORLD_CLASS"
-"lufia2ac.Client" = "lufia2ac.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["lufia2ac*", "lufia2ac"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.lufia2ac"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "lufia2ac.Constants.VERSION"}
+version = {attr = "worlds.lufia2ac.Constants.VERSION"}

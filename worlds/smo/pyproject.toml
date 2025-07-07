@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "smo"
+name = "worlds.smo"
 dynamic = ["version"]
 description = "MultiWorld: Super Mario Odyssey"
 authors = [
@@ -15,16 +15,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"smo.WorldClass" = "smo.Register:WORLD_CLASS"
-"smo.WebWorldClass" = "smo.Register:WEB_WORLD_CLASS"
-"smo.Client" = "smo.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["smo*", "smo"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.smo"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "smo.Constants.VERSION"}
+version = {attr = "worlds.smo.Constants.VERSION"}

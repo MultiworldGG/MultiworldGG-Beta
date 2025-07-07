@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sims4"
+name = "worlds.sims4"
 dynamic = ["version"]
 description = "MultiWorld: The Sims 4"
 authors = [
@@ -18,16 +18,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"sims4.WorldClass" = "sims4.Register:WORLD_CLASS"
-"sims4.WebWorldClass" = "sims4.Register:WEB_WORLD_CLASS"
-"sims4.Client" = "sims4.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["sims4*", "sims4"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.sims4"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "sims4.Constants.VERSION"}
+version = {attr = "worlds.sims4.Constants.VERSION"}

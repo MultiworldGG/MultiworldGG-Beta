@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "blasphemous"
+name = "worlds.blasphemous"
 dynamic = ["version"]
 description = "MultiWorld: Blasphemous"
 authors = [
     {name = "TRPG"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"blasphemous.WorldClass" = "blasphemous.Register:WORLD_CLASS"
-"blasphemous.WebWorldClass" = "blasphemous.Register:WEB_WORLD_CLASS"
-"blasphemous.Client" = "blasphemous.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["blasphemous*", "blasphemous"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.blasphemous"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "blasphemous.Constants.VERSION"}
+version = {attr = "worlds.blasphemous.Constants.VERSION"}

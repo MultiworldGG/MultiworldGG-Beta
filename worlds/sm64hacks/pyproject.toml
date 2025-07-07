@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sm64hacks"
+name = "worlds.sm64hacks"
 dynamic = ["version"]
 description = "MultiWorld: SM64 Romhack"
 authors = [
@@ -18,16 +18,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"sm64hacks.WorldClass" = "sm64hacks.Register:WORLD_CLASS"
-"sm64hacks.WebWorldClass" = "sm64hacks.Register:WEB_WORLD_CLASS"
-"sm64hacks.Client" = "sm64hacks.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["sm64hacks*", "sm64hacks"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.sm64hacks"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "sm64hacks.Constants.VERSION"}
+version = {attr = "worlds.sm64hacks.Constants.VERSION"}

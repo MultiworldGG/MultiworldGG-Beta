@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ahit"
+name = "worlds.ahit"
 dynamic = ["version"]
 description = "MultiWorld: A Hat in Time"
 authors = [
     {name = "CookieCat45"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"ahit.WorldClass" = "ahit.Register:WORLD_CLASS"
-"ahit.WebWorldClass" = "ahit.Register:WEB_WORLD_CLASS"
-"ahit.Client" = "ahit.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["ahit*", "ahit"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.ahit"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "ahit.Constants.VERSION"}
+version = {attr = "worlds.ahit.Constants.VERSION"}

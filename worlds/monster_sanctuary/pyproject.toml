@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "monster_sanctuary"
+name = "worlds.monster_sanctuary"
 dynamic = ["version"]
 description = "MultiWorld: Monster Sanctuary"
 authors = [
     {name = "Saagael"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"monster_sanctuary.WorldClass" = "monster_sanctuary.Register:WORLD_CLASS"
-"monster_sanctuary.WebWorldClass" = "monster_sanctuary.Register:WEB_WORLD_CLASS"
-"monster_sanctuary.Client" = "monster_sanctuary.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["monster_sanctuary*", "monster_sanctuary"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.monster_sanctuary"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "monster_sanctuary.Constants.VERSION"}
+version = {attr = "worlds.monster_sanctuary.Constants.VERSION"}

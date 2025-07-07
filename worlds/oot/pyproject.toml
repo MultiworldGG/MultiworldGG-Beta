@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "oot"
+name = "worlds.oot"
 dynamic = ["version"]
 description = "MultiWorld: Ocarina of Time"
 authors = [
@@ -20,16 +20,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"oot.WorldClass" = "oot.Register:WORLD_CLASS"
-"oot.WebWorldClass" = "oot.Register:WEB_WORLD_CLASS"
-"oot.Client" = "oot.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["oot*", "oot"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.oot"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "oot.Constants.VERSION"}
+version = {attr = "worlds.oot.Constants.VERSION"}

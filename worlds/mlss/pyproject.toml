@@ -3,28 +3,22 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mlss"
+name = "worlds.mlss"
 dynamic = ["version"]
-description = "MultiWorld: Mario & Luigi Superstar Saga"
+description = "MultiWorld: Mario"},
+    {name = "Luigi Superstar Saga"
 authors = [
     {name = "jamesbrq"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"mlss.WorldClass" = "mlss.Register:WORLD_CLASS"
-"mlss.WebWorldClass" = "mlss.Register:WEB_WORLD_CLASS"
-"mlss.Client" = "mlss.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["mlss*", "mlss"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.mlss"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "mlss.Constants.VERSION"}
+version = {attr = "worlds.mlss.Constants.VERSION"}

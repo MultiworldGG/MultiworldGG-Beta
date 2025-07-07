@@ -3,28 +3,22 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dlcquest"
+name = "worlds.dlcquest"
 dynamic = ["version"]
 description = "MultiWorld: DLCQuest"
 authors = [
-    {name = "axe-y & Kaito Kid"}
+    {name = "axe-y"},
+    {name = "Kaito Kid"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"dlcquest.WorldClass" = "dlcquest.Register:WORLD_CLASS"
-"dlcquest.WebWorldClass" = "dlcquest.Register:WEB_WORLD_CLASS"
-"dlcquest.Client" = "dlcquest.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["dlcquest*", "dlcquest"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.dlcquest"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "dlcquest.Constants.VERSION"}
+version = {attr = "worlds.dlcquest.Constants.VERSION"}

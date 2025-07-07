@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "inscryption"
+name = "worlds.inscryption"
 dynamic = ["version"]
 description = "MultiWorld: Inscryption"
 authors = [
     {name = "DrBibop"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"inscryption.WorldClass" = "inscryption.Register:WORLD_CLASS"
-"inscryption.WebWorldClass" = "inscryption.Register:WEB_WORLD_CLASS"
-"inscryption.Client" = "inscryption.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["inscryption*", "inscryption"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.inscryption"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "inscryption.Constants.VERSION"}
+version = {attr = "worlds.inscryption.Constants.VERSION"}

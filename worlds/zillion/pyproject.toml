@@ -1,27 +1,20 @@
 [project]
-name = "zillion"
+name = "worlds.zillion"
 dynamic = ["version"]
 description = "MultiWorld: Zillion"
 authors = [
     {name = "beauxq"}
 ]
 requires-python = ">=3.12"
-
 dependencies = [
     "zilliandomizer @ git+https://github.com/beauxq/zilliandomizer@96d9a20f8278cee64bb4db859fbd874e0f332d36#0.9.1",
     "typing-extensions>=4.7, <5",
 ]
 
-[project.entry-points."mwgg.plugins"]
-"zillion.WorldClass" = "zillion.Register:WORLD_CLASS"
-"zillion.WebWorldClass" = "zillion.Register:WEB_WORLD_CLASS"
-"zillion.Client" = "zillion.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["zillion*", "zillion"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.zillion"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "zillion.Constants.VERSION"}
+version = {attr = "worlds.zillion.Constants.VERSION"}

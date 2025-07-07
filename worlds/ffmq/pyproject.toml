@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ffmq"
+name = "worlds.ffmq"
 dynamic = ["version"]
 description = "MultiWorld: Final Fantasy Mystic Quest"
 authors = [
@@ -18,16 +18,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"ffmq.WorldClass" = "ffmq.Register:WORLD_CLASS"
-"ffmq.WebWorldClass" = "ffmq.Register:WEB_WORLD_CLASS"
-"ffmq.Client" = "ffmq.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["ffmq*", "ffmq"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.ffmq"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "ffmq.Constants.VERSION"}
+version = {attr = "worlds.ffmq.Constants.VERSION"}

@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dkc2"
+name = "worlds.dkc2"
 dynamic = ["version"]
 description = "MultiWorld: Donkey Kong Country 2"
 authors = [
     {name = "lx5"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"dkc2.WorldClass" = "dkc2.Register:WORLD_CLASS"
-"dkc2.WebWorldClass" = "dkc2.Register:WEB_WORLD_CLASS"
-"dkc2.Client" = "dkc2.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["dkc2*", "dkc2"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.dkc2"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "dkc2.Constants.VERSION"}
+version = {attr = "worlds.dkc2.Constants.VERSION"}

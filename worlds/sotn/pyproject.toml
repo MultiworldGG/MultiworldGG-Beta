@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sotn"
+name = "worlds.sotn"
 dynamic = ["version"]
 description = "MultiWorld: Symphony of the Night"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"sotn.WorldClass" = "sotn.Register:WORLD_CLASS"
-"sotn.WebWorldClass" = "sotn.Register:WEB_WORLD_CLASS"
-"sotn.Client" = "sotn.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["sotn*", "sotn"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.sotn"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "sotn.Constants.VERSION"}
+version = {attr = "worlds.sotn.Constants.VERSION"}

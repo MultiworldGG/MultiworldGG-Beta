@@ -3,28 +3,22 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "shivers"
+name = "worlds.shivers"
 dynamic = ["version"]
 description = "MultiWorld: Shivers"
 authors = [
-    {name = "GodlFire & korydondzila"}
+    {name = "GodlFire"},
+    {name = "korydondzila"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"shivers.WorldClass" = "shivers.Register:WORLD_CLASS"
-"shivers.WebWorldClass" = "shivers.Register:WEB_WORLD_CLASS"
-"shivers.Client" = "shivers.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["shivers*", "shivers"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.shivers"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "shivers.Constants.VERSION"}
+version = {attr = "worlds.shivers.Constants.VERSION"}

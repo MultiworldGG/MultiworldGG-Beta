@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kh1"
+name = "worlds.kh1"
 dynamic = ["version"]
 description = "MultiWorld: Kingdom Hearts"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"kh1.WorldClass" = "kh1.Register:WORLD_CLASS"
-"kh1.WebWorldClass" = "kh1.Register:WEB_WORLD_CLASS"
-"kh1.Client" = "kh1.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["kh1*", "kh1"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.kh1"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "kh1.Constants.VERSION"}
+version = {attr = "worlds.kh1.Constants.VERSION"}

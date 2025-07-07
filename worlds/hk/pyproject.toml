@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hk"
+name = "worlds.hk"
 dynamic = ["version"]
 description = "MultiWorld: Hollow Knight"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"hk.WorldClass" = "hk.Register:WORLD_CLASS"
-"hk.WebWorldClass" = "hk.Register:WEB_WORLD_CLASS"
-"hk.Client" = "hk.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["hk*", "hk"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.hk"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "hk.Constants.VERSION"}
+version = {attr = "worlds.hk.Constants.VERSION"}

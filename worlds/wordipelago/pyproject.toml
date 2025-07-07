@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "wordipelago"
+name = "worlds.wordipelago"
 dynamic = ["version"]
 description = "MultiWorld: Wordipelago"
 authors = [
     {name = "ProfDeCube"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"wordipelago.WorldClass" = "wordipelago.Register:WORLD_CLASS"
-"wordipelago.WebWorldClass" = "wordipelago.Register:WEB_WORLD_CLASS"
-"wordipelago.Client" = "wordipelago.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["wordipelago*", "wordipelago"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.wordipelago"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "wordipelago.Constants.VERSION"}
+version = {attr = "worlds.wordipelago.Constants.VERSION"}

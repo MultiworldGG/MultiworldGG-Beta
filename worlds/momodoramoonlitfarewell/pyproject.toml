@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "momodoramoonlitfarewell"
+name = "worlds.momodoramoonlitfarewell"
 dynamic = ["version"]
 description = "MultiWorld: Momodora Moonlit Farewell"
 authors = [
     {name = "alditto"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"momodoramoonlitfarewell.WorldClass" = "momodoramoonlitfarewell.Register:WORLD_CLASS"
-"momodoramoonlitfarewell.WebWorldClass" = "momodoramoonlitfarewell.Register:WEB_WORLD_CLASS"
-"momodoramoonlitfarewell.Client" = "momodoramoonlitfarewell.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["momodoramoonlitfarewell*", "momodoramoonlitfarewell"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.momodoramoonlitfarewell"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "momodoramoonlitfarewell.Constants.VERSION"}
+version = {attr = "worlds.momodoramoonlitfarewell.Constants.VERSION"}

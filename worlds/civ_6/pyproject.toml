@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "civ_6"
+name = "worlds.civ_6"
 dynamic = ["version"]
 description = "MultiWorld: Civilization VI"
 authors = [
@@ -18,16 +18,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"civ_6.WorldClass" = "civ_6.Register:WORLD_CLASS"
-"civ_6.WebWorldClass" = "civ_6.Register:WEB_WORLD_CLASS"
-"civ_6.Client" = "civ_6.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["civ_6*", "civ_6"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.civ_6"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "civ_6.Constants.VERSION"}
+version = {attr = "worlds.civ_6.Constants.VERSION"}

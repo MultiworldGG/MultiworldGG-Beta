@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "apsudoku"
+name = "worlds.apsudoku"
 dynamic = ["version"]
 description = "MultiWorld: Sudoku"
 authors = [
     {name = "EmilyV99"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"apsudoku.WorldClass" = "apsudoku.Register:WORLD_CLASS"
-"apsudoku.WebWorldClass" = "apsudoku.Register:WEB_WORLD_CLASS"
-"apsudoku.Client" = "apsudoku.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["apsudoku*", "apsudoku"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.apsudoku"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "apsudoku.Constants.VERSION"}
+version = {attr = "worlds.apsudoku.Constants.VERSION"}

@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "metroidprime"
+name = "worlds.metroidprime"
 dynamic = ["version"]
 description = "MultiWorld: Metroid Prime"
 authors = [
@@ -20,16 +20,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"metroidprime.WorldClass" = "metroidprime.Register:WORLD_CLASS"
-"metroidprime.WebWorldClass" = "metroidprime.Register:WEB_WORLD_CLASS"
-"metroidprime.Client" = "metroidprime.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["metroidprime*", "metroidprime"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.metroidprime"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "metroidprime.Constants.VERSION"}
+version = {attr = "worlds.metroidprime.Constants.VERSION"}

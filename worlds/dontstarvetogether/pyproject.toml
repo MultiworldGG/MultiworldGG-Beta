@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dontstarvetogether"
+name = "worlds.dontstarvetogether"
 dynamic = ["version"]
 description = "MultiWorld: Dont Starve Together"
 authors = [
     {name = "Dragon Wolf Leo"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"dontstarvetogether.WorldClass" = "dontstarvetogether.Register:WORLD_CLASS"
-"dontstarvetogether.WebWorldClass" = "dontstarvetogether.Register:WEB_WORLD_CLASS"
-"dontstarvetogether.Client" = "dontstarvetogether.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["dontstarvetogether*", "dontstarvetogether"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.dontstarvetogether"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "dontstarvetogether.Constants.VERSION"}
+version = {attr = "worlds.dontstarvetogether.Constants.VERSION"}

@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "factorio"
+name = "worlds.factorio"
 dynamic = ["version"]
 description = "MultiWorld: Factorio"
 authors = [
@@ -17,21 +17,14 @@ classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
-
 dependencies = [
     "factorio-rcon-py>=2.1.2",
 ]
 
-[project.entry-points."mwgg.plugins"]
-"factorio.WorldClass" = "factorio.Register:WORLD_CLASS"
-"factorio.WebWorldClass" = "factorio.Register:WEB_WORLD_CLASS"
-"factorio.Client" = "factorio.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["factorio*", "factorio"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.factorio"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "factorio.Constants.VERSION"}
+version = {attr = "worlds.factorio.Constants.VERSION"}

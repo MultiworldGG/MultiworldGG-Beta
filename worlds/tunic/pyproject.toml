@@ -3,28 +3,22 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tunic"
+name = "worlds.tunic"
 dynamic = ["version"]
 description = "MultiWorld: TUNIC"
 authors = [
-    {name = "SilentSR & ScipioWright"}
+    {name = "SilentSR"},
+    {name = "ScipioWright"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"tunic.WorldClass" = "tunic.Register:WORLD_CLASS"
-"tunic.WebWorldClass" = "tunic.Register:WEB_WORLD_CLASS"
-"tunic.Client" = "tunic.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["tunic*", "tunic"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.tunic"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "tunic.Constants.VERSION"}
+version = {attr = "worlds.tunic.Constants.VERSION"}

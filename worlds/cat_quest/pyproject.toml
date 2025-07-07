@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cat_quest"
+name = "worlds.cat_quest"
 dynamic = ["version"]
 description = "MultiWorld: Cat Quest"
 authors = [
     {name = "Nikkilite"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"cat_quest.WorldClass" = "cat_quest.Register:WORLD_CLASS"
-"cat_quest.WebWorldClass" = "cat_quest.Register:WEB_WORLD_CLASS"
-"cat_quest.Client" = "cat_quest.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["cat_quest*", "cat_quest"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.cat_quest"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "cat_quest.Constants.VERSION"}
+version = {attr = "worlds.cat_quest.Constants.VERSION"}

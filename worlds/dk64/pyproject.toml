@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dk64"
+name = "worlds.dk64"
 dynamic = ["version"]
 description = "MultiWorld: Donkey Kong 64"
 authors = [
@@ -16,16 +16,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"dk64.WorldClass" = "dk64.Register:WORLD_CLASS"
-"dk64.WebWorldClass" = "dk64.Register:WEB_WORLD_CLASS"
-"dk64.Client" = "dk64.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["dk64*", "dk64"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.dk64"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "dk64.Constants.VERSION"}
+version = {attr = "worlds.dk64.Constants.VERSION"}

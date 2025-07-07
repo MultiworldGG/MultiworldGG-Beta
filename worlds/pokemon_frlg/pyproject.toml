@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pokemon_frlg"
+name = "worlds.pokemon_frlg"
 dynamic = ["version"]
 description = "MultiWorld: Pokemon FireRed and LeafGreen"
 authors = [
     {name = "Vyneras"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"pokemon_frlg.WorldClass" = "pokemon_frlg.Register:WORLD_CLASS"
-"pokemon_frlg.WebWorldClass" = "pokemon_frlg.Register:WEB_WORLD_CLASS"
-"pokemon_frlg.Client" = "pokemon_frlg.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["pokemon_frlg*", "pokemon_frlg"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.pokemon_frlg"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "pokemon_frlg.Constants.VERSION"}
+version = {attr = "worlds.pokemon_frlg.Constants.VERSION"}

@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "jakanddaxter"
+name = "worlds.jakanddaxter"
 dynamic = ["version"]
 description = "MultiWorld: Jak and Daxter: The Precursor Legacy"
 authors = [
@@ -13,21 +13,14 @@ classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
-
 dependencies = [
     "Pymem>=1.13.0",
 ]
 
-[project.entry-points."mwgg.plugins"]
-"jakanddaxter.WorldClass" = "jakanddaxter.Register:WORLD_CLASS"
-"jakanddaxter.WebWorldClass" = "jakanddaxter.Register:WEB_WORLD_CLASS"
-"jakanddaxter.Client" = "jakanddaxter.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["jakanddaxter*", "jakanddaxter"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.jakanddaxter"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "jakanddaxter.Constants.VERSION"}
+version = {attr = "worlds.jakanddaxter.Constants.VERSION"}

@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "brotato"
+name = "worlds.brotato"
 dynamic = ["version"]
 description = "MultiWorld: Brotato"
 authors = [
     {name = "RampagingHippy"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"brotato.WorldClass" = "brotato.Register:WORLD_CLASS"
-"brotato.WebWorldClass" = "brotato.Register:WEB_WORLD_CLASS"
-"brotato.Client" = "brotato.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["brotato*", "brotato"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.brotato"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "brotato.Constants.VERSION"}
+version = {attr = "worlds.brotato.Constants.VERSION"}

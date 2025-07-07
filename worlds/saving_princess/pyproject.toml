@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "saving_princess"
+name = "worlds.saving_princess"
 dynamic = ["version"]
 description = "MultiWorld: Saving Princess"
 authors = [
     {name = "LeonarthCG"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"saving_princess.WorldClass" = "saving_princess.Register:WORLD_CLASS"
-"saving_princess.WebWorldClass" = "saving_princess.Register:WEB_WORLD_CLASS"
-"saving_princess.Client" = "saving_princess.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["saving_princess*", "saving_princess"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.saving_princess"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "saving_princess.Constants.VERSION"}
+version = {attr = "worlds.saving_princess.Constants.VERSION"}

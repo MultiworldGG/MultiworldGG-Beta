@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "getting_over_it"
+name = "worlds.getting_over_it"
 dynamic = ["version"]
 description = "MultiWorld: Getting Over It"
 authors = [
     {name = "Slimey"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"getting_over_it.WorldClass" = "getting_over_it.Register:WORLD_CLASS"
-"getting_over_it.WebWorldClass" = "getting_over_it.Register:WEB_WORLD_CLASS"
-"getting_over_it.Client" = "getting_over_it.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["getting_over_it*", "getting_over_it"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.getting_over_it"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "getting_over_it.Constants.VERSION"}
+version = {attr = "worlds.getting_over_it.Constants.VERSION"}

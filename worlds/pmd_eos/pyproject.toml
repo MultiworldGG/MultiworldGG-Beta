@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pmd_eos"
+name = "worlds.pmd_eos"
 dynamic = ["version"]
 description = "MultiWorld: Pokemon Mystery Dungeon Explorers of Sky"
 authors = [
     {name = "CrypticMonkey33"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"pmd_eos.WorldClass" = "pmd_eos.Register:WORLD_CLASS"
-"pmd_eos.WebWorldClass" = "pmd_eos.Register:WEB_WORLD_CLASS"
-"pmd_eos.Client" = "pmd_eos.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["pmd_eos*", "pmd_eos"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.pmd_eos"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "pmd_eos.Constants.VERSION"}
+version = {attr = "worlds.pmd_eos.Constants.VERSION"}

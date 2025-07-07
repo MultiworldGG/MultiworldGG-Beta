@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "yachtdice"
+name = "worlds.yachtdice"
 dynamic = ["version"]
 description = "MultiWorld: Yacht Dice"
 authors = [
     {name = "Spineraks"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"yachtdice.WorldClass" = "yachtdice.Register:WORLD_CLASS"
-"yachtdice.WebWorldClass" = "yachtdice.Register:WEB_WORLD_CLASS"
-"yachtdice.Client" = "yachtdice.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["yachtdice*", "yachtdice"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.yachtdice"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "yachtdice.Constants.VERSION"}
+version = {attr = "worlds.yachtdice.Constants.VERSION"}

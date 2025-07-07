@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "spyro3"
+name = "worlds.spyro3"
 dynamic = ["version"]
 description = "MultiWorld: Spyro 3"
 authors = [
     {name = "ArsonAssassin"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"spyro3.WorldClass" = "spyro3.Register:WORLD_CLASS"
-"spyro3.WebWorldClass" = "spyro3.Register:WEB_WORLD_CLASS"
-"spyro3.Client" = "spyro3.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["spyro3*", "spyro3"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.spyro3"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "spyro3.Constants.VERSION"}
+version = {attr = "worlds.spyro3.Constants.VERSION"}

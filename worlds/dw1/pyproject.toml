@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dw1"
+name = "worlds.dw1"
 dynamic = ["version"]
 description = "MultiWorld: Digimon World"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"dw1.WorldClass" = "dw1.Register:WORLD_CLASS"
-"dw1.WebWorldClass" = "dw1.Register:WEB_WORLD_CLASS"
-"dw1.Client" = "dw1.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["dw1*", "dw1"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.dw1"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "dw1.Constants.VERSION"}
+version = {attr = "worlds.dw1.Constants.VERSION"}

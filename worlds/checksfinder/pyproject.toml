@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "checksfinder"
+name = "worlds.checksfinder"
 dynamic = ["version"]
 description = "MultiWorld: ChecksFinder"
 authors = [
     {name = "SunCatMC"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"checksfinder.WorldClass" = "checksfinder.Register:WORLD_CLASS"
-"checksfinder.WebWorldClass" = "checksfinder.Register:WEB_WORLD_CLASS"
-"checksfinder.Client" = "checksfinder.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["checksfinder*", "checksfinder"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.checksfinder"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "checksfinder.Constants.VERSION"}
+version = {attr = "worlds.checksfinder.Constants.VERSION"}

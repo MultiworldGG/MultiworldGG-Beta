@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "musedash"
+name = "worlds.musedash"
 dynamic = ["version"]
 description = "MultiWorld: Muse Dash"
 authors = [
     {name = "DeamonHunter"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"musedash.WorldClass" = "musedash.Register:WORLD_CLASS"
-"musedash.WebWorldClass" = "musedash.Register:WEB_WORLD_CLASS"
-"musedash.Client" = "musedash.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["musedash*", "musedash"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.musedash"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "musedash.Constants.VERSION"}
+version = {attr = "worlds.musedash.Constants.VERSION"}

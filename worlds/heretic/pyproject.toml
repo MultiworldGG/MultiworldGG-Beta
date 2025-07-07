@@ -3,11 +3,12 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "heretic"
+name = "worlds.heretic"
 dynamic = ["version"]
 description = "MultiWorld: Heretic"
 authors = [
-    {name = "Daivuk & Kaito Sinclaire"}
+    {name = "Daivuk"},
+    {name = "Kaito Sinclaire"}
 ]
 license = "Zlib"
 license-files = [
@@ -18,16 +19,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"heretic.WorldClass" = "heretic.Register:WORLD_CLASS"
-"heretic.WebWorldClass" = "heretic.Register:WEB_WORLD_CLASS"
-"heretic.Client" = "heretic.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["heretic*", "heretic"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.heretic"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "heretic.Constants.VERSION"}
+version = {attr = "worlds.heretic.Constants.VERSION"}

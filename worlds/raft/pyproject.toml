@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "raft"
+name = "worlds.raft"
 dynamic = ["version"]
 description = "MultiWorld: Raft"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"raft.WorldClass" = "raft.Register:WORLD_CLASS"
-"raft.WebWorldClass" = "raft.Register:WEB_WORLD_CLASS"
-"raft.Client" = "raft.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["raft*", "raft"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.raft"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "raft.Constants.VERSION"}
+version = {attr = "worlds.raft.Constants.VERSION"}

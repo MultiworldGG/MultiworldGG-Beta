@@ -3,9 +3,10 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rac2"
+name = "worlds.rac2"
 dynamic = ["version"]
-description = "MultiWorld: Ratchet & Clank 2"
+description = "MultiWorld: Ratchet"},
+    {name = "Clank 2"
 authors = [
     {name = "Evilwb"}
 ]
@@ -18,16 +19,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"rac2.WorldClass" = "rac2.Register:WORLD_CLASS"
-"rac2.WebWorldClass" = "rac2.Register:WEB_WORLD_CLASS"
-"rac2.Client" = "rac2.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["rac2*", "rac2"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.rac2"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "rac2.Constants.VERSION"}
+version = {attr = "worlds.rac2.Constants.VERSION"}

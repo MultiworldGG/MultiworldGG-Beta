@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dkc3"
+name = "worlds.dkc3"
 dynamic = ["version"]
 description = "MultiWorld: Donkey Kong Country 3"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"dkc3.WorldClass" = "dkc3.Register:WORLD_CLASS"
-"dkc3.WebWorldClass" = "dkc3.Register:WEB_WORLD_CLASS"
-"dkc3.Client" = "dkc3.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["dkc3*", "dkc3"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.dkc3"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "dkc3.Constants.VERSION"}
+version = {attr = "worlds.dkc3.Constants.VERSION"}

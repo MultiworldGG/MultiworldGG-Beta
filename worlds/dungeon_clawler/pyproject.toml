@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dungeon_clawler"
+name = "worlds.dungeon_clawler"
 dynamic = ["version"]
 description = "MultiWorld: Dungeon Clawler"
 authors = [
     {name = "Kaito Kid"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"dungeon_clawler.WorldClass" = "dungeon_clawler.Register:WORLD_CLASS"
-"dungeon_clawler.WebWorldClass" = "dungeon_clawler.Register:WEB_WORLD_CLASS"
-"dungeon_clawler.Client" = "dungeon_clawler.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["dungeon_clawler*", "dungeon_clawler"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.dungeon_clawler"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "dungeon_clawler.Constants.VERSION"}
+version = {attr = "worlds.dungeon_clawler.Constants.VERSION"}

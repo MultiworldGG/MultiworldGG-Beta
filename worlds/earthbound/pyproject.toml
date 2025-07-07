@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "earthbound"
+name = "worlds.earthbound"
 dynamic = ["version"]
 description = "MultiWorld: EarthBound"
 authors = [
     {name = "Pink Switch"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"earthbound.WorldClass" = "earthbound.Register:WORLD_CLASS"
-"earthbound.WebWorldClass" = "earthbound.Register:WEB_WORLD_CLASS"
-"earthbound.Client" = "earthbound.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["earthbound*", "earthbound"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.earthbound"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "earthbound.Constants.VERSION"}
+version = {attr = "worlds.earthbound.Constants.VERSION"}

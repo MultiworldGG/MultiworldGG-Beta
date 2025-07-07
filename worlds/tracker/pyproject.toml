@@ -3,27 +3,20 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tracker"
+name = "worlds.tracker"
 dynamic = ["version"]
 description = "MultiWorld: Universal Tracker"
 authors = [
     {name = "Unknown"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
-
-[project.entry-points."mwgg.plugins"]
-"tracker.WorldClass" = "tracker.Register:WORLD_CLASS"
-"tracker.Client" = "tracker.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["tracker*", "tracker"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.tracker"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "tracker.Constants.VERSION"}
+version = {attr = "worlds.tracker.Constants.VERSION"}

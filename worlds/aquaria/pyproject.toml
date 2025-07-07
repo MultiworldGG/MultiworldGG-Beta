@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "aquaria"
+name = "worlds.aquaria"
 dynamic = ["version"]
 description = "MultiWorld: Aquaria"
 authors = [
     {name = "tioui"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"aquaria.WorldClass" = "aquaria.Register:WORLD_CLASS"
-"aquaria.WebWorldClass" = "aquaria.Register:WEB_WORLD_CLASS"
-"aquaria.Client" = "aquaria.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["aquaria*", "aquaria"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.aquaria"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "aquaria.Constants.VERSION"}
+version = {attr = "worlds.aquaria.Constants.VERSION"}

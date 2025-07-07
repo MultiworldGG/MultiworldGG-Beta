@@ -3,33 +3,25 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "osu"
+name = "worlds.osu"
 dynamic = ["version"]
 description = "MultiWorld: osu!"
 authors = [
     {name = "Kanave"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
-
 dependencies = [
     "orjson>=3.9.10",
     "requests~=2.32.3",
 ]
 
-[project.entry-points."mwgg.plugins"]
-"osu.WorldClass" = "osu.Register:WORLD_CLASS"
-"osu.WebWorldClass" = "osu.Register:WEB_WORLD_CLASS"
-"osu.Client" = "osu.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["osu*", "osu"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.osu"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "osu.Constants.VERSION"}
+version = {attr = "worlds.osu.Constants.VERSION"}

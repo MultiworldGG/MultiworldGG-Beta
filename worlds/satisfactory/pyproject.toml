@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "satisfactory"
+name = "worlds.satisfactory"
 dynamic = ["version"]
 description = "MultiWorld: Satisfactory"
 authors = [
     {name = "Jarno"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"satisfactory.WorldClass" = "satisfactory.Register:WORLD_CLASS"
-"satisfactory.WebWorldClass" = "satisfactory.Register:WEB_WORLD_CLASS"
-"satisfactory.Client" = "satisfactory.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["satisfactory*", "satisfactory"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.satisfactory"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "satisfactory.Constants.VERSION"}
+version = {attr = "worlds.satisfactory.Constants.VERSION"}

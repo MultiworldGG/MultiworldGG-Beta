@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "landstalker"
+name = "worlds.landstalker"
 dynamic = ["version"]
 description = "MultiWorld: Landstalker - The Treasures of King Nole"
 authors = [
     {name = "Dinopony"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"landstalker.WorldClass" = "landstalker.Register:WORLD_CLASS"
-"landstalker.WebWorldClass" = "landstalker.Register:WEB_WORLD_CLASS"
-"landstalker.Client" = "landstalker.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["landstalker*", "landstalker"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.landstalker"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "landstalker.Constants.VERSION"}
+version = {attr = "worlds.landstalker.Constants.VERSION"}

@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "against_the_storm"
+name = "worlds.against_the_storm"
 dynamic = ["version"]
 description = "MultiWorld: Against the Storm"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"against_the_storm.WorldClass" = "against_the_storm.Register:WORLD_CLASS"
-"against_the_storm.WebWorldClass" = "against_the_storm.Register:WEB_WORLD_CLASS"
-"against_the_storm.Client" = "against_the_storm.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["against_the_storm*", "against_the_storm"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.against_the_storm"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "against_the_storm.Constants.VERSION"}
+version = {attr = "worlds.against_the_storm.Constants.VERSION"}

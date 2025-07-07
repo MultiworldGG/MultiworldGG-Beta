@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "terraria"
+name = "worlds.terraria"
 dynamic = ["version"]
 description = "MultiWorld: Terraria"
 authors = [
     {name = "Seldom-SE"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"terraria.WorldClass" = "terraria.Register:WORLD_CLASS"
-"terraria.WebWorldClass" = "terraria.Register:WEB_WORLD_CLASS"
-"terraria.Client" = "terraria.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["terraria*", "terraria"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.terraria"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "terraria.Constants.VERSION"}
+version = {attr = "worlds.terraria.Constants.VERSION"}

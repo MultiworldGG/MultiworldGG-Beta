@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "animal_well"
+name = "worlds.animal_well"
 dynamic = ["version"]
 description = "MultiWorld: ANIMAL WELL"
 authors = [
@@ -12,27 +12,19 @@ authors = [
     {name = "Franklesby"},
     {name = "Dicene"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
-
 dependencies = [
     "Pymem>=1.13.1",
     "pywin32>=306; sys_platform == 'win32'",
 ]
 
-[project.entry-points."mwgg.plugins"]
-"animal_well.WorldClass" = "animal_well.Register:WORLD_CLASS"
-"animal_well.WebWorldClass" = "animal_well.Register:WEB_WORLD_CLASS"
-"animal_well.Client" = "animal_well.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["animal_well*", "animal_well"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.animal_well"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "animal_well.Constants.VERSION"}
+version = {attr = "worlds.animal_well.Constants.VERSION"}

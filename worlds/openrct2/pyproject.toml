@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "openrct2"
+name = "worlds.openrct2"
 dynamic = ["version"]
 description = "MultiWorld: OpenRCT2"
 authors = [
     {name = "Crazycolbster"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"openrct2.WorldClass" = "openrct2.Register:WORLD_CLASS"
-"openrct2.WebWorldClass" = "openrct2.Register:WEB_WORLD_CLASS"
-"openrct2.Client" = "openrct2.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["openrct2*", "openrct2"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.openrct2"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "openrct2.Constants.VERSION"}
+version = {attr = "worlds.openrct2.Constants.VERSION"}

@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "faxanadu"
+name = "worlds.faxanadu"
 dynamic = ["version"]
 description = "MultiWorld: Faxanadu"
 authors = [
     {name = "Daivuk"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"faxanadu.WorldClass" = "faxanadu.Register:WORLD_CLASS"
-"faxanadu.WebWorldClass" = "faxanadu.Register:WEB_WORLD_CLASS"
-"faxanadu.Client" = "faxanadu.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["faxanadu*", "faxanadu"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.faxanadu"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "faxanadu.Constants.VERSION"}
+version = {attr = "worlds.faxanadu.Constants.VERSION"}

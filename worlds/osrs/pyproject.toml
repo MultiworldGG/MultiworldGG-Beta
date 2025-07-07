@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "osrs"
+name = "worlds.osrs"
 dynamic = ["version"]
 description = "MultiWorld: Old School Runescape"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"osrs.WorldClass" = "osrs.Register:WORLD_CLASS"
-"osrs.WebWorldClass" = "osrs.Register:WEB_WORLD_CLASS"
-"osrs.Client" = "osrs.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["osrs*", "osrs"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.osrs"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "osrs.Constants.VERSION"}
+version = {attr = "worlds.osrs.Constants.VERSION"}

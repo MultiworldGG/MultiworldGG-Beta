@@ -3,29 +3,22 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ufo50"
+name = "worlds.ufo50"
 dynamic = ["version"]
 description = "MultiWorld: UFO 50"
 authors = [
     {name = "LeonarthCG"},
     {name = "ScipioWright"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"ufo50.WorldClass" = "ufo50.Register:WORLD_CLASS"
-"ufo50.WebWorldClass" = "ufo50.Register:WEB_WORLD_CLASS"
-"ufo50.Client" = "ufo50.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["ufo50*", "ufo50"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.ufo50"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "ufo50.Constants.VERSION"}
+version = {attr = "worlds.ufo50.Constants.VERSION"}

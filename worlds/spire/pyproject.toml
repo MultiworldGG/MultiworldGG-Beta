@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "spire"
+name = "worlds.spire"
 dynamic = ["version"]
 description = "MultiWorld: Slay the Spire"
 authors = [
     {name = "KonoTyran"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"spire.WorldClass" = "spire.Register:WORLD_CLASS"
-"spire.WebWorldClass" = "spire.Register:WEB_WORLD_CLASS"
-"spire.Client" = "spire.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["spire*", "spire"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.spire"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "spire.Constants.VERSION"}
+version = {attr = "worlds.spire.Constants.VERSION"}

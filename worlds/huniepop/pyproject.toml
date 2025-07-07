@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "huniepop"
+name = "worlds.huniepop"
 dynamic = ["version"]
 description = "MultiWorld: Hunie Pop"
 authors = [
     {name = "dotsofdarkness"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"huniepop.WorldClass" = "huniepop.Register:WORLD_CLASS"
-"huniepop.WebWorldClass" = "huniepop.Register:WEB_WORLD_CLASS"
-"huniepop.Client" = "huniepop.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["huniepop*", "huniepop"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.huniepop"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "huniepop.Constants.VERSION"}
+version = {attr = "worlds.huniepop.Constants.VERSION"}

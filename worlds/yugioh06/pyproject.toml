@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "yugioh06"
+name = "worlds.yugioh06"
 dynamic = ["version"]
 description = "MultiWorld: Yu-Gi-Oh! 2006"
 authors = [
     {name = "Rensen3"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"yugioh06.WorldClass" = "yugioh06.Register:WORLD_CLASS"
-"yugioh06.WebWorldClass" = "yugioh06.Register:WEB_WORLD_CLASS"
-"yugioh06.Client" = "yugioh06.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["yugioh06*", "yugioh06"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.yugioh06"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "yugioh06.Constants.VERSION"}
+version = {attr = "worlds.yugioh06.Constants.VERSION"}

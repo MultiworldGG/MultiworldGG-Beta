@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "diddy_kong_racing"
+name = "worlds.diddy_kong_racing"
 dynamic = ["version"]
 description = "MultiWorld: Diddy Kong Racing"
 authors = [
     {name = "zakwiz"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"diddy_kong_racing.WorldClass" = "diddy_kong_racing.Register:WORLD_CLASS"
-"diddy_kong_racing.WebWorldClass" = "diddy_kong_racing.Register:WEB_WORLD_CLASS"
-"diddy_kong_racing.Client" = "diddy_kong_racing.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["diddy_kong_racing*", "diddy_kong_racing"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.diddy_kong_racing"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "diddy_kong_racing.Constants.VERSION"}
+version = {attr = "worlds.diddy_kong_racing.Constants.VERSION"}

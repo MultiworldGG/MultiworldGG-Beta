@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "meritous"
+name = "worlds.meritous"
 dynamic = ["version"]
 description = "MultiWorld: Meritous"
 authors = [
     {name = "FelicitusNeko"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"meritous.WorldClass" = "meritous.Register:WORLD_CLASS"
-"meritous.WebWorldClass" = "meritous.Register:WEB_WORLD_CLASS"
-"meritous.Client" = "meritous.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["meritous*", "meritous"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.meritous"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "meritous.Constants.VERSION"}
+version = {attr = "worlds.meritous.Constants.VERSION"}

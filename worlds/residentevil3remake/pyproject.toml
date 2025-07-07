@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "residentevil3remake"
+name = "worlds.residentevil3remake"
 dynamic = ["version"]
 description = "MultiWorld: Resident Evil 3 Remake"
 authors = [
     {name = "TheRealSolidusSnake"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"residentevil3remake.WorldClass" = "residentevil3remake.Register:WORLD_CLASS"
-"residentevil3remake.WebWorldClass" = "residentevil3remake.Register:WEB_WORLD_CLASS"
-"residentevil3remake.Client" = "residentevil3remake.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["residentevil3remake*", "residentevil3remake"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.residentevil3remake"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "residentevil3remake.Constants.VERSION"}
+version = {attr = "worlds.residentevil3remake.Constants.VERSION"}

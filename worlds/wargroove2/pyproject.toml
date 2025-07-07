@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "wargroove2"
+name = "worlds.wargroove2"
 dynamic = ["version"]
 description = "MultiWorld: Wargroove 2"
 authors = [
     {name = "Fly Sniper"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"wargroove2.WorldClass" = "wargroove2.Register:WORLD_CLASS"
-"wargroove2.WebWorldClass" = "wargroove2.Register:WEB_WORLD_CLASS"
-"wargroove2.Client" = "wargroove2.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["wargroove2*", "wargroove2"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.wargroove2"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "wargroove2.Constants.VERSION"}
+version = {attr = "worlds.wargroove2.Constants.VERSION"}

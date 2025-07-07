@@ -3,18 +3,16 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ff4fe"
+name = "worlds.ff4fe"
 dynamic = ["version"]
 description = "MultiWorld: Final Fantasy IV Free Enterprise"
 authors = [
     {name = "Rosalie"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
-
 dependencies = [
     "pillow",
     "cherrypy",
@@ -29,16 +27,10 @@ dependencies = [
     "FreeEnterprise4 @ git+https://github.com/Rosalie-A/FreeEnterprise4@v7",
 ]
 
-[project.entry-points."mwgg.plugins"]
-"ff4fe.WorldClass" = "ff4fe.Register:WORLD_CLASS"
-"ff4fe.WebWorldClass" = "ff4fe.Register:WEB_WORLD_CLASS"
-"ff4fe.Client" = "ff4fe.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["ff4fe*", "ff4fe"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.ff4fe"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "ff4fe.Constants.VERSION"}
+version = {attr = "worlds.ff4fe.Constants.VERSION"}

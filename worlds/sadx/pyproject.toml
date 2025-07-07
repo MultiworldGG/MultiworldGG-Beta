@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sadx"
+name = "worlds.sadx"
 dynamic = ["version"]
 description = "MultiWorld: Sonic Adventure DX"
 authors = [
     {name = "Classic"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"sadx.WorldClass" = "sadx.Register:WORLD_CLASS"
-"sadx.WebWorldClass" = "sadx.Register:WEB_WORLD_CLASS"
-"sadx.Client" = "sadx.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["sadx*", "sadx"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.sadx"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "sadx.Constants.VERSION"}
+version = {attr = "worlds.sadx.Constants.VERSION"}

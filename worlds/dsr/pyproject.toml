@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dsr"
+name = "worlds.dsr"
 dynamic = ["version"]
 description = "MultiWorld: Dark Souls Remastered"
 authors = [
     {name = "ArsonAssassin"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"dsr.WorldClass" = "dsr.Register:WORLD_CLASS"
-"dsr.WebWorldClass" = "dsr.Register:WEB_WORLD_CLASS"
-"dsr.Client" = "dsr.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["dsr*", "dsr"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.dsr"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "dsr.Constants.VERSION"}
+version = {attr = "worlds.dsr.Constants.VERSION"}

@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "alttp"
+name = "worlds.alttp"
 dynamic = ["version"]
 description = "MultiWorld: A Link to the Past"
 authors = [
@@ -17,22 +17,15 @@ classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
-
 dependencies = [
     "maseya-z3pr>=1.0.0rc1",
     "xxtea>=3.0.0",
 ]
 
-[project.entry-points."mwgg.plugins"]
-"alttp.WorldClass" = "alttp.Register:WORLD_CLASS"
-"alttp.WebWorldClass" = "alttp.Register:WEB_WORLD_CLASS"
-"alttp.Client" = "alttp.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["alttp*", "alttp"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.alttp"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "alttp.Constants.VERSION"}
+version = {attr = "worlds.alttp.Constants.VERSION"}

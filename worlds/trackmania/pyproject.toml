@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "trackmania"
+name = "worlds.trackmania"
 dynamic = ["version"]
 description = "MultiWorld: Trackmania"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"trackmania.WorldClass" = "trackmania.Register:WORLD_CLASS"
-"trackmania.WebWorldClass" = "trackmania.Register:WEB_WORLD_CLASS"
-"trackmania.Client" = "trackmania.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["trackmania*", "trackmania"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.trackmania"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "trackmania.Constants.VERSION"}
+version = {attr = "worlds.trackmania.Constants.VERSION"}

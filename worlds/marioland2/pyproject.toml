@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "marioland2"
+name = "worlds.marioland2"
 dynamic = ["version"]
 description = "MultiWorld: Super Mario Land 2"
 authors = [
@@ -18,16 +18,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"marioland2.WorldClass" = "marioland2.Register:WORLD_CLASS"
-"marioland2.WebWorldClass" = "marioland2.Register:WEB_WORLD_CLASS"
-"marioland2.Client" = "marioland2.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["marioland2*", "marioland2"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.marioland2"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "marioland2.Constants.VERSION"}
+version = {attr = "worlds.marioland2.Constants.VERSION"}

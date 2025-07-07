@@ -3,32 +3,24 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "luigismansion"
+name = "worlds.luigismansion"
 dynamic = ["version"]
 description = "MultiWorld: Luigi's Mansion"
 authors = [
     {name = "BootsinSoots"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
-
 dependencies = [
     "gclib[speedups] @ git+https://github.com/LagoLunatic/gclib.git@4ddebd0a9717dca67684fe1cc55a86da9265e6b7",
 ]
 
-[project.entry-points."mwgg.plugins"]
-"luigismansion.WorldClass" = "luigismansion.Register:WORLD_CLASS"
-"luigismansion.WebWorldClass" = "luigismansion.Register:WEB_WORLD_CLASS"
-"luigismansion.Client" = "luigismansion.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["luigismansion*", "luigismansion"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.luigismansion"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "luigismansion.Constants.VERSION"}
+version = {attr = "worlds.luigismansion.Constants.VERSION"}

@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sm"
+name = "worlds.sm"
 dynamic = ["version"]
 description = "MultiWorld: Super Metroid"
 authors = [
@@ -19,16 +19,11 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"sm.WorldClass" = "sm.Register:WORLD_CLASS"
-"sm.WebWorldClass" = "sm.Register:WEB_WORLD_CLASS"
-"sm.Client" = "sm.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["sm*", "sm"]
+where = ["src/"]
+include = ["worlds.sm"]
 exclude = ["sm_*", "sm6*", "smo*", "sms*", "smw*", "smz*", "*test*", "test*"]
-namespaces = false
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "sm.Constants.VERSION"}
+version = {attr = "worlds.sm.Constants.VERSION"}

@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "overcooked2"
+name = "worlds.overcooked2"
 dynamic = ["version"]
 description = "MultiWorld: Overcooked! 2"
 authors = [
     {name = "toasterparty"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"overcooked2.WorldClass" = "overcooked2.Register:WORLD_CLASS"
-"overcooked2.WebWorldClass" = "overcooked2.Register:WEB_WORLD_CLASS"
-"overcooked2.Client" = "overcooked2.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["overcooked2*", "overcooked2"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.overcooked2"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "overcooked2.Constants.VERSION"}
+version = {attr = "worlds.overcooked2.Constants.VERSION"}

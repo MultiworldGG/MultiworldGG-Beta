@@ -3,32 +3,24 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sms"
+name = "worlds.sms"
 dynamic = ["version"]
 description = "MultiWorld: Super Mario Sunshine"
 authors = [
     {name = "Joshark"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
-
 dependencies = [
     "dolphin_memory_engine >= 1.1.3",
 ]
 
-[project.entry-points."mwgg.plugins"]
-"sms.WorldClass" = "sms.Register:WORLD_CLASS"
-"sms.WebWorldClass" = "sms.Register:WEB_WORLD_CLASS"
-"sms.Client" = "sms.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["sms*", "sms"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.sms"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "sms.Constants.VERSION"}
+version = {attr = "worlds.sms.Constants.VERSION"}

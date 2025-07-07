@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mk64"
+name = "worlds.mk64"
 dynamic = ["version"]
 description = "MultiWorld: Mario Kart 64"
 authors = [
     {name = "Edsploration"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"mk64.WorldClass" = "mk64.Register:WORLD_CLASS"
-"mk64.WebWorldClass" = "mk64.Register:WEB_WORLD_CLASS"
-"mk64.Client" = "mk64.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["mk64*", "mk64"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.mk64"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "mk64.Constants.VERSION"}
+version = {attr = "worlds.mk64.Constants.VERSION"}

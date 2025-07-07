@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "megamix"
+name = "worlds.megamix"
 dynamic = ["version"]
 description = "MultiWorld: Hatsune Miku Project Diva Mega Mix+"
 authors = [
@@ -18,16 +18,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"megamix.WorldClass" = "megamix.Register:WORLD_CLASS"
-"megamix.WebWorldClass" = "megamix.Register:WEB_WORLD_CLASS"
-"megamix.Client" = "megamix.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["megamix*", "megamix"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.megamix"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "megamix.Constants.VERSION"}
+version = {attr = "worlds.megamix.Constants.VERSION"}

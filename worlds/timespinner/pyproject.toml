@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "timespinner"
+name = "worlds.timespinner"
 dynamic = ["version"]
 description = "MultiWorld: Timespinner"
 authors = [
     {name = "Jarno458"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"timespinner.WorldClass" = "timespinner.Register:WORLD_CLASS"
-"timespinner.WebWorldClass" = "timespinner.Register:WEB_WORLD_CLASS"
-"timespinner.Client" = "timespinner.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["timespinner*", "timespinner"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.timespinner"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "timespinner.Constants.VERSION"}
+version = {attr = "worlds.timespinner.Constants.VERSION"}

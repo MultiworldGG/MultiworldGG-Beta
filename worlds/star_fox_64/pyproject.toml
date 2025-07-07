@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "star_fox_64"
+name = "worlds.star_fox_64"
 dynamic = ["version"]
 description = "MultiWorld: Star Fox 64"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"star_fox_64.WorldClass" = "star_fox_64.Register:WORLD_CLASS"
-"star_fox_64.WebWorldClass" = "star_fox_64.Register:WEB_WORLD_CLASS"
-"star_fox_64.Client" = "star_fox_64.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["star_fox_64*", "star_fox_64"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.star_fox_64"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "star_fox_64.Constants.VERSION"}
+version = {attr = "worlds.star_fox_64.Constants.VERSION"}

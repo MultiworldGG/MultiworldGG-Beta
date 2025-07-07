@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rimworld"
+name = "worlds.rimworld"
 dynamic = ["version"]
 description = "MultiWorld: Rimworld"
 authors = [
     {name = "Phantom Of Ares"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"rimworld.WorldClass" = "rimworld.Register:WORLD_CLASS"
-"rimworld.WebWorldClass" = "rimworld.Register:WEB_WORLD_CLASS"
-"rimworld.Client" = "rimworld.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["rimworld*", "rimworld"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.rimworld"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "rimworld.Constants.VERSION"}
+version = {attr = "worlds.rimworld.Constants.VERSION"}

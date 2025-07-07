@@ -3,32 +3,24 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ttyd"
+name = "worlds.ttyd"
 dynamic = ["version"]
 description = "MultiWorld: Paper Mario The Thousand Year Door"
 authors = [
     {name = "jamesbrq"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
-
 dependencies = [
     "gclib[speedups] @ git+https://github.com/LagoLunatic/gclib.git@62df9574d99249ea16ec90dbcee9ea6b0759da29",
 ]
 
-[project.entry-points."mwgg.plugins"]
-"ttyd.WorldClass" = "ttyd.Register:WORLD_CLASS"
-"ttyd.WebWorldClass" = "ttyd.Register:WEB_WORLD_CLASS"
-"ttyd.Client" = "ttyd.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["ttyd*", "ttyd"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.ttyd"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "ttyd.Constants.VERSION"}
+version = {attr = "worlds.ttyd.Constants.VERSION"}

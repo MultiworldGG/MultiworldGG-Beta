@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sly1"
+name = "worlds.sly1"
 dynamic = ["version"]
 description = "MultiWorld: Sly Cooper and the Thievius Raccoonus"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"sly1.WorldClass" = "sly1.Register:WORLD_CLASS"
-"sly1.WebWorldClass" = "sly1.Register:WEB_WORLD_CLASS"
-"sly1.Client" = "sly1.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["sly1*", "sly1"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.sly1"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "sly1.Constants.VERSION"}
+version = {attr = "worlds.sly1.Constants.VERSION"}

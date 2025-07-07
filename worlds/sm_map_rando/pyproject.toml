@@ -3,18 +3,16 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sm_map_rando"
+name = "worlds.sm_map_rando"
 dynamic = ["version"]
 description = "MultiWorld: Super Metroid Map Rando"
 authors = [
     {name = "lordlou"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
-
 dependencies = [
     "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.103.1/pysmmaprando-0.103.1-cp38-none-win_amd64.whl ; sys_platform == 'win32' and platform_machine == 'AMD64' and python_version == '3.8'",
     "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.103.1/pysmmaprando-0.103.1-cp39-none-win_amd64.whl ; sys_platform == 'win32' and platform_machine == 'AMD64' and python_version == '3.9'",
@@ -44,16 +42,10 @@ dependencies = [
     "pysmmaprando @ https://github.com/lordlou/MapRandomizer/archive/refs/tags/v0.103.1.tar.gz ; python_version < '3.8' or python_version > '3.12' or (sys_platform != 'win32' and sys_platform != 'linux' and sys_platform != 'darwin') or (platform_machine != 'AMD64' and platform_machine != 'x86_64' and platform_machine != 'aarch64' and platform_machine != 'universal2' and platform_machine != 'arm64')",
 ]
 
-[project.entry-points."mwgg.plugins"]
-"sm_map_rando.WorldClass" = "sm_map_rando.Register:WORLD_CLASS"
-"sm_map_rando.WebWorldClass" = "sm_map_rando.Register:WEB_WORLD_CLASS"
-"sm_map_rando.Client" = "sm_map_rando.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["sm_map_rando*", "sm_map_rando"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.sm_map_rando"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "sm_map_rando.Constants.VERSION"}
+version = {attr = "worlds.sm_map_rando.Constants.VERSION"}

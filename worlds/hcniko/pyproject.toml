@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hcniko"
+name = "worlds.hcniko"
 dynamic = ["version"]
 description = "MultiWorld: Here Comes Niko!"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"hcniko.WorldClass" = "hcniko.Register:WORLD_CLASS"
-"hcniko.WebWorldClass" = "hcniko.Register:WEB_WORLD_CLASS"
-"hcniko.Client" = "hcniko.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["hcniko*", "hcniko"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.hcniko"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "hcniko.Constants.VERSION"}
+version = {attr = "worlds.hcniko.Constants.VERSION"}

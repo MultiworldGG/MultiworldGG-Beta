@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "crosscode"
+name = "worlds.crosscode"
 dynamic = ["version"]
 description = "MultiWorld: CrossCode"
 authors = [
     {name = "CodeTriangle"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"crosscode.WorldClass" = "crosscode.Register:WORLD_CLASS"
-"crosscode.WebWorldClass" = "crosscode.Register:WEB_WORLD_CLASS"
-"crosscode.Client" = "crosscode.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["crosscode*", "crosscode"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.crosscode"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "crosscode.Constants.VERSION"}
+version = {attr = "worlds.crosscode.Constants.VERSION"}

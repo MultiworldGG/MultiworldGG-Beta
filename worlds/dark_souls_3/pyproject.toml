@@ -3,28 +3,22 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dark_souls_3"
+name = "worlds.dark_souls_3"
 dynamic = ["version"]
 description = "MultiWorld: Dark Souls III"
 authors = [
-    {name = "Marech & nex3"}
+    {name = "Marech"},
+    {name = "nex3"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"dark_souls_3.WorldClass" = "dark_souls_3.Register:WORLD_CLASS"
-"dark_souls_3.WebWorldClass" = "dark_souls_3.Register:WEB_WORLD_CLASS"
-"dark_souls_3.Client" = "dark_souls_3.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["dark_souls_3*", "dark_souls_3"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.dark_souls_3"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "dark_souls_3.Constants.VERSION"}
+version = {attr = "worlds.dark_souls_3.Constants.VERSION"}

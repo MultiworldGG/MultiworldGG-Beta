@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sa2b"
+name = "worlds.sa2b"
 dynamic = ["version"]
 description = "MultiWorld: Sonic Adventure 2 Battle"
 authors = [
@@ -15,16 +15,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"sa2b.WorldClass" = "sa2b.Register:WORLD_CLASS"
-"sa2b.WebWorldClass" = "sa2b.Register:WEB_WORLD_CLASS"
-"sa2b.Client" = "sa2b.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["sa2b*", "sa2b"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.sa2b"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "sa2b.Constants.VERSION"}
+version = {attr = "worlds.sa2b.Constants.VERSION"}

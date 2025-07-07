@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kdl3"
+name = "worlds.kdl3"
 dynamic = ["version"]
 description = "MultiWorld: Kirby's Dream Land 3"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"kdl3.WorldClass" = "kdl3.Register:WORLD_CLASS"
-"kdl3.WebWorldClass" = "kdl3.Register:WEB_WORLD_CLASS"
-"kdl3.Client" = "kdl3.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["kdl3*", "kdl3"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.kdl3"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "kdl3.Constants.VERSION"}
+version = {attr = "worlds.kdl3.Constants.VERSION"}

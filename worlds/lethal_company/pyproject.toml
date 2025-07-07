@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "lethal_company"
+name = "worlds.lethal_company"
 dynamic = ["version"]
 description = "MultiWorld: Lethal Company"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"lethal_company.WorldClass" = "lethal_company.Register:WORLD_CLASS"
-"lethal_company.WebWorldClass" = "lethal_company.Register:WEB_WORLD_CLASS"
-"lethal_company.Client" = "lethal_company.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["lethal_company*", "lethal_company"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.lethal_company"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "lethal_company.Constants.VERSION"}
+version = {attr = "worlds.lethal_company.Constants.VERSION"}

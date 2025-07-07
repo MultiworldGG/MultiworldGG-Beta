@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "powerwashsimulator"
+name = "worlds.powerwashsimulator"
 dynamic = ["version"]
 description = "MultiWorld: Powerwash Simulator"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"powerwashsimulator.WorldClass" = "powerwashsimulator.Register:WORLD_CLASS"
-"powerwashsimulator.WebWorldClass" = "powerwashsimulator.Register:WEB_WORLD_CLASS"
-"powerwashsimulator.Client" = "powerwashsimulator.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["powerwashsimulator*", "powerwashsimulator"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.powerwashsimulator"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "powerwashsimulator.Constants.VERSION"}
+version = {attr = "worlds.powerwashsimulator.Constants.VERSION"}

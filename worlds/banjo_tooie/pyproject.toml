@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "banjo_tooie"
+name = "worlds.banjo_tooie"
 dynamic = ["version"]
 description = "MultiWorld: Banjo-Tooie"
 authors = [
     {name = "jjjj12212"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"banjo_tooie.WorldClass" = "banjo_tooie.Register:WORLD_CLASS"
-"banjo_tooie.WebWorldClass" = "banjo_tooie.Register:WEB_WORLD_CLASS"
-"banjo_tooie.Client" = "banjo_tooie.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["banjo_tooie*", "banjo_tooie"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.banjo_tooie"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "banjo_tooie.Constants.VERSION"}
+version = {attr = "worlds.banjo_tooie.Constants.VERSION"}

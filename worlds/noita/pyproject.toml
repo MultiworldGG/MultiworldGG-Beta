@@ -3,28 +3,22 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "noita"
+name = "worlds.noita"
 dynamic = ["version"]
 description = "MultiWorld: Noita"
 authors = [
-    {name = "ScipioWright & heinermann"}
+    {name = "ScipioWright"},
+    {name = "heinermann"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"noita.WorldClass" = "noita.Register:WORLD_CLASS"
-"noita.WebWorldClass" = "noita.Register:WEB_WORLD_CLASS"
-"noita.Client" = "noita.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["noita*", "noita"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.noita"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "noita.Constants.VERSION"}
+version = {attr = "worlds.noita.Constants.VERSION"}

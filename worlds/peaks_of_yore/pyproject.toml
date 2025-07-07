@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "peaks_of_yore"
+name = "worlds.peaks_of_yore"
 dynamic = ["version"]
 description = "MultiWorld: Peaks of Yore"
 authors = [
     {name = "c0der23"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"peaks_of_yore.WorldClass" = "peaks_of_yore.Register:WORLD_CLASS"
-"peaks_of_yore.WebWorldClass" = "peaks_of_yore.Register:WEB_WORLD_CLASS"
-"peaks_of_yore.Client" = "peaks_of_yore.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["peaks_of_yore*", "peaks_of_yore"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.peaks_of_yore"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "peaks_of_yore.Constants.VERSION"}
+version = {attr = "worlds.peaks_of_yore.Constants.VERSION"}

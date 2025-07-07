@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "yoshisisland"
+name = "worlds.yoshisisland"
 dynamic = ["version"]
 description = "MultiWorld: Yoshi's Island"
 authors = [
     {name = "Pink Switch"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"yoshisisland.WorldClass" = "yoshisisland.Register:WORLD_CLASS"
-"yoshisisland.WebWorldClass" = "yoshisisland.Register:WEB_WORLD_CLASS"
-"yoshisisland.Client" = "yoshisisland.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["yoshisisland*", "yoshisisland"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.yoshisisland"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "yoshisisland.Constants.VERSION"}
+version = {attr = "worlds.yoshisisland.Constants.VERSION"}

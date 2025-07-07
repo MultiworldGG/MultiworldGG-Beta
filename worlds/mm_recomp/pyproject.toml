@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mm_recomp"
+name = "worlds.mm_recomp"
 dynamic = ["version"]
 description = "MultiWorld: Majora's Mask Recompiled"
 authors = [
     {name = "LittleCube"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"mm_recomp.WorldClass" = "mm_recomp.Register:WORLD_CLASS"
-"mm_recomp.WebWorldClass" = "mm_recomp.Register:WEB_WORLD_CLASS"
-"mm_recomp.Client" = "mm_recomp.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["mm_recomp*", "mm_recomp"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.mm_recomp"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "mm_recomp.Constants.VERSION"}
+version = {attr = "worlds.mm_recomp.Constants.VERSION"}

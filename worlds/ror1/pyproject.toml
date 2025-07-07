@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ror1"
+name = "worlds.ror1"
 dynamic = ["version"]
 description = "MultiWorld: Risk of Rain"
 authors = [
     {name = "studkid"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"ror1.WorldClass" = "ror1.Register:WORLD_CLASS"
-"ror1.WebWorldClass" = "ror1.Register:WEB_WORLD_CLASS"
-"ror1.Client" = "ror1.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["ror1*", "ror1"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.ror1"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "ror1.Constants.VERSION"}
+version = {attr = "worlds.ror1.Constants.VERSION"}

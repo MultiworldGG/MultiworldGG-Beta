@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sm64ex"
+name = "worlds.sm64ex"
 dynamic = ["version"]
 description = "MultiWorld: Super Mario 64"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"sm64ex.WorldClass" = "sm64ex.Register:WORLD_CLASS"
-"sm64ex.WebWorldClass" = "sm64ex.Register:WEB_WORLD_CLASS"
-"sm64ex.Client" = "sm64ex.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["sm64ex*", "sm64ex"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.sm64ex"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "sm64ex.Constants.VERSION"}
+version = {attr = "worlds.sm64ex.Constants.VERSION"}

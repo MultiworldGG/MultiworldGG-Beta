@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "chainedechoes"
+name = "worlds.chainedechoes"
 dynamic = ["version"]
 description = "MultiWorld: Chained Echoes"
 authors = [
     {name = "SergioAlonso"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"chainedechoes.WorldClass" = "chainedechoes.Register:WORLD_CLASS"
-"chainedechoes.WebWorldClass" = "chainedechoes.Register:WEB_WORLD_CLASS"
-"chainedechoes.Client" = "chainedechoes.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["chainedechoes*", "chainedechoes"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.chainedechoes"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "chainedechoes.Constants.VERSION"}
+version = {attr = "worlds.chainedechoes.Constants.VERSION"}

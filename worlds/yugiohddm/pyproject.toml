@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "yugiohddm"
+name = "worlds.yugiohddm"
 dynamic = ["version"]
 description = "MultiWorld: Yu-Gi-Oh! Dungeon Dice Monsters"
 authors = [
     {name = "Jumza"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"yugiohddm.WorldClass" = "yugiohddm.Register:WORLD_CLASS"
-"yugiohddm.WebWorldClass" = "yugiohddm.Register:WEB_WORLD_CLASS"
-"yugiohddm.Client" = "yugiohddm.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["yugiohddm*", "yugiohddm"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.yugiohddm"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "yugiohddm.Constants.VERSION"}
+version = {attr = "worlds.yugiohddm.Constants.VERSION"}

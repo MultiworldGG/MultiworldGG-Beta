@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gzdoom"
+name = "worlds.gzdoom"
 dynamic = ["version"]
 description = "MultiWorld: gzDoom"
 authors = [
     {name = "ToxicFrog"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"gzdoom.WorldClass" = "gzdoom.Register:WORLD_CLASS"
-"gzdoom.WebWorldClass" = "gzdoom.Register:WEB_WORLD_CLASS"
-"gzdoom.Client" = "gzdoom.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["gzdoom*", "gzdoom"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.gzdoom"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "gzdoom.Constants.VERSION"}
+version = {attr = "worlds.gzdoom.Constants.VERSION"}

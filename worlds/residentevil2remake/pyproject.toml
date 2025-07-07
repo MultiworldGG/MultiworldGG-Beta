@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "residentevil2remake"
+name = "worlds.residentevil2remake"
 dynamic = ["version"]
 description = "MultiWorld: Resident Evil 2 Remake"
 authors = [
     {name = "Fuzzy"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"residentevil2remake.WorldClass" = "residentevil2remake.Register:WORLD_CLASS"
-"residentevil2remake.WebWorldClass" = "residentevil2remake.Register:WEB_WORLD_CLASS"
-"residentevil2remake.Client" = "residentevil2remake.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["residentevil2remake*", "residentevil2remake"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.residentevil2remake"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "residentevil2remake.Constants.VERSION"}
+version = {attr = "worlds.residentevil2remake.Constants.VERSION"}

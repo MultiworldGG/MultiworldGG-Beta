@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pokemon_crystal"
+name = "worlds.pokemon_crystal"
 dynamic = ["version"]
 description = "MultiWorld: Pokemon Crystal"
 authors = [
@@ -18,16 +18,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"pokemon_crystal.WorldClass" = "pokemon_crystal.Register:WORLD_CLASS"
-"pokemon_crystal.WebWorldClass" = "pokemon_crystal.Register:WEB_WORLD_CLASS"
-"pokemon_crystal.Client" = "pokemon_crystal.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["pokemon_crystal*", "pokemon_crystal"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.pokemon_crystal"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "pokemon_crystal.Constants.VERSION"}
+version = {attr = "worlds.pokemon_crystal.Constants.VERSION"}

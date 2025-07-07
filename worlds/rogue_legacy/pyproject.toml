@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rogue_legacy"
+name = "worlds.rogue_legacy"
 dynamic = ["version"]
 description = "MultiWorld: Rogue Legacy"
 authors = [
     {name = "Phar"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"rogue_legacy.WorldClass" = "rogue_legacy.Register:WORLD_CLASS"
-"rogue_legacy.WebWorldClass" = "rogue_legacy.Register:WEB_WORLD_CLASS"
-"rogue_legacy.Client" = "rogue_legacy.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["rogue_legacy*", "rogue_legacy"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.rogue_legacy"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "rogue_legacy.Constants.VERSION"}
+version = {attr = "worlds.rogue_legacy.Constants.VERSION"}

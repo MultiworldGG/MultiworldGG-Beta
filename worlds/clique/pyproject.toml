@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "clique"
+name = "worlds.clique"
 dynamic = ["version"]
 description = "MultiWorld: Clique"
 authors = [
     {name = "Phar"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"clique.WorldClass" = "clique.Register:WORLD_CLASS"
-"clique.WebWorldClass" = "clique.Register:WEB_WORLD_CLASS"
-"clique.Client" = "clique.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["clique*", "clique"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.clique"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "clique.Constants.VERSION"}
+version = {attr = "worlds.clique.Constants.VERSION"}

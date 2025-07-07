@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tloz_ooa"
+name = "worlds.tloz_ooa"
 dynamic = ["version"]
 description = "MultiWorld: The Legend of Zelda - Oracle of Ages"
 authors = [
     {name = "Dinopony"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"tloz_ooa.WorldClass" = "tloz_ooa.Register:WORLD_CLASS"
-"tloz_ooa.WebWorldClass" = "tloz_ooa.Register:WEB_WORLD_CLASS"
-"tloz_ooa.Client" = "tloz_ooa.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["tloz_ooa*", "tloz_ooa"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.tloz_ooa"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "tloz_ooa.Constants.VERSION"}
+version = {attr = "worlds.tloz_ooa.Constants.VERSION"}

@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cv64"
+name = "worlds.cv64"
 dynamic = ["version"]
 description = "MultiWorld: Castlevania 64"
 authors = [
     {name = "LiquidCat64"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"cv64.WorldClass" = "cv64.Register:WORLD_CLASS"
-"cv64.WebWorldClass" = "cv64.Register:WEB_WORLD_CLASS"
-"cv64.Client" = "cv64.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["cv64*", "cv64"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.cv64"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "cv64.Constants.VERSION"}
+version = {attr = "worlds.cv64.Constants.VERSION"}

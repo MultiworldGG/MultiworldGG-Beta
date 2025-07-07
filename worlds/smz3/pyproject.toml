@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "smz3"
+name = "worlds.smz3"
 dynamic = ["version"]
 description = "MultiWorld: SMZ3"
 authors = [
@@ -18,16 +18,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"smz3.WorldClass" = "smz3.Register:WORLD_CLASS"
-"smz3.WebWorldClass" = "smz3.Register:WEB_WORLD_CLASS"
-"smz3.Client" = "smz3.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["smz3*", "smz3"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.smz3"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "smz3.Constants.VERSION"}
+version = {attr = "worlds.smz3.Constants.VERSION"}

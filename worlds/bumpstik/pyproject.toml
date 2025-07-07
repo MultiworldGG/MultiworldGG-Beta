@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "bumpstik"
+name = "worlds.bumpstik"
 dynamic = ["version"]
 description = "MultiWorld: Bumper Stickers"
 authors = [
     {name = "FelicitusNeko"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"bumpstik.WorldClass" = "bumpstik.Register:WORLD_CLASS"
-"bumpstik.WebWorldClass" = "bumpstik.Register:WEB_WORLD_CLASS"
-"bumpstik.Client" = "bumpstik.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["bumpstik*", "bumpstik"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.bumpstik"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "bumpstik.Constants.VERSION"}
+version = {attr = "worlds.bumpstik.Constants.VERSION"}

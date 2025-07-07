@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tloz_oos"
+name = "worlds.tloz_oos"
 dynamic = ["version"]
 description = "MultiWorld: The Legend of Zelda - Oracle of Seasons"
 authors = [
     {name = "Dinopony"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"tloz_oos.WorldClass" = "tloz_oos.Register:WORLD_CLASS"
-"tloz_oos.WebWorldClass" = "tloz_oos.Register:WEB_WORLD_CLASS"
-"tloz_oos.Client" = "tloz_oos.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["tloz_oos*", "tloz_oos"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.tloz_oos"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "tloz_oos.Constants.VERSION"}
+version = {attr = "worlds.tloz_oos.Constants.VERSION"}

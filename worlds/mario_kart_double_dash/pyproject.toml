@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mario_kart_double_dash"
+name = "worlds.mario_kart_double_dash"
 dynamic = ["version"]
 description = "MultiWorld: Mario Kart Double Dash"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"mario_kart_double_dash.WorldClass" = "mario_kart_double_dash.Register:WORLD_CLASS"
-"mario_kart_double_dash.WebWorldClass" = "mario_kart_double_dash.Register:WEB_WORLD_CLASS"
-"mario_kart_double_dash.Client" = "mario_kart_double_dash.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["mario_kart_double_dash*", "mario_kart_double_dash"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.mario_kart_double_dash"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "mario_kart_double_dash.Constants.VERSION"}
+version = {attr = "worlds.mario_kart_double_dash.Constants.VERSION"}

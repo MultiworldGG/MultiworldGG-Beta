@@ -3,33 +3,25 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "celeste"
+name = "worlds.celeste"
 dynamic = ["version"]
 description = "MultiWorld: Celeste"
 authors = [
     {name = "doshyw"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
-
 dependencies = [
     "pandas>=2.0.3",
     "openpyxl>=3.1.2",
 ]
 
-[project.entry-points."mwgg.plugins"]
-"celeste.WorldClass" = "celeste.Register:WORLD_CLASS"
-"celeste.WebWorldClass" = "celeste.Register:WEB_WORLD_CLASS"
-"celeste.Client" = "celeste.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["celeste*", "celeste"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.celeste"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "celeste.Constants.VERSION"}
+version = {attr = "worlds.celeste.Constants.VERSION"}

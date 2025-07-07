@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "zork_grand_inquisitor"
+name = "worlds.zork_grand_inquisitor"
 dynamic = ["version"]
 description = "MultiWorld: Zork Grand Inquisitor"
 authors = [
@@ -17,21 +17,14 @@ classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
-
 dependencies = [
     "Pymem>=1.13.0",
 ]
 
-[project.entry-points."mwgg.plugins"]
-"zork_grand_inquisitor.WorldClass" = "zork_grand_inquisitor.Register:WORLD_CLASS"
-"zork_grand_inquisitor.WebWorldClass" = "zork_grand_inquisitor.Register:WEB_WORLD_CLASS"
-"zork_grand_inquisitor.Client" = "zork_grand_inquisitor.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["zork_grand_inquisitor*", "zork_grand_inquisitor"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.zork_grand_inquisitor"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "zork_grand_inquisitor.Constants.VERSION"}
+version = {attr = "worlds.zork_grand_inquisitor.Constants.VERSION"}

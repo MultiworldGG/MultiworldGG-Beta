@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tboir"
+name = "worlds.tboir"
 dynamic = ["version"]
 description = "MultiWorld: The Binding of Isaac Repentance"
 authors = [
     {name = "Cyb3R"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"tboir.WorldClass" = "tboir.Register:WORLD_CLASS"
-"tboir.WebWorldClass" = "tboir.Register:WEB_WORLD_CLASS"
-"tboir.Client" = "tboir.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["tboir*", "tboir"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.tboir"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "tboir.Constants.VERSION"}
+version = {attr = "worlds.tboir.Constants.VERSION"}

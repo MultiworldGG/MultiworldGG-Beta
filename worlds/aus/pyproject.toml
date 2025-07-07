@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "aus"
+name = "worlds.aus"
 dynamic = ["version"]
 description = "MultiWorld: An Untitled Story"
 authors = [
     {name = "ThatOneGuy27"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"aus.WorldClass" = "aus.Register:WORLD_CLASS"
-"aus.WebWorldClass" = "aus.Register:WEB_WORLD_CLASS"
-"aus.Client" = "aus.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["aus*", "aus"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.aus"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "aus.Constants.VERSION"}
+version = {attr = "worlds.aus.Constants.VERSION"}

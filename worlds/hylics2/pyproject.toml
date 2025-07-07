@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hylics2"
+name = "worlds.hylics2"
 dynamic = ["version"]
 description = "MultiWorld: Hylics 2"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"hylics2.WorldClass" = "hylics2.Register:WORLD_CLASS"
-"hylics2.WebWorldClass" = "hylics2.Register:WEB_WORLD_CLASS"
-"hylics2.Client" = "hylics2.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["hylics2*", "hylics2"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.hylics2"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "hylics2.Constants.VERSION"}
+version = {attr = "worlds.hylics2.Constants.VERSION"}

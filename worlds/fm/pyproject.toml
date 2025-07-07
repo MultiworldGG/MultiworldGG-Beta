@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fm"
+name = "worlds.fm"
 dynamic = ["version"]
 description = "MultiWorld: Yu-Gi-Oh! Forbidden Memories"
 authors = [
     {name = "sg4e"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"fm.WorldClass" = "fm.Register:WORLD_CLASS"
-"fm.WebWorldClass" = "fm.Register:WEB_WORLD_CLASS"
-"fm.Client" = "fm.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["fm*", "fm"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.fm"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "fm.Constants.VERSION"}
+version = {attr = "worlds.fm.Constants.VERSION"}

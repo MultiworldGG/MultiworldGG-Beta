@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "balatro"
+name = "worlds.balatro"
 dynamic = ["version"]
 description = "MultiWorld: Balatro"
 authors = [
     {name = "Burndi"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"balatro.WorldClass" = "balatro.Register:WORLD_CLASS"
-"balatro.WebWorldClass" = "balatro.Register:WEB_WORLD_CLASS"
-"balatro.Client" = "balatro.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["balatro*", "balatro"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.balatro"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "balatro.Constants.VERSION"}
+version = {attr = "worlds.balatro.Constants.VERSION"}

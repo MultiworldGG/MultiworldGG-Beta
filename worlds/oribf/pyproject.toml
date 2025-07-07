@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "oribf"
+name = "worlds.oribf"
 dynamic = ["version"]
 description = "MultiWorld: Ori and the Blind Forest"
 authors = [
     {name = "Gray"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"oribf.WorldClass" = "oribf.Register:WORLD_CLASS"
-"oribf.WebWorldClass" = "oribf.Register:WEB_WORLD_CLASS"
-"oribf.Client" = "oribf.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["oribf*", "oribf"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.oribf"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "oribf.Constants.VERSION"}
+version = {attr = "worlds.oribf.Constants.VERSION"}

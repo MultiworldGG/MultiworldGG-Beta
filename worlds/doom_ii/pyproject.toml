@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "doom_ii"
+name = "worlds.doom_ii"
 dynamic = ["version"]
 description = "MultiWorld: DOOM II"
 authors = [
@@ -19,16 +19,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"doom_ii.WorldClass" = "doom_ii.Register:WORLD_CLASS"
-"doom_ii.WebWorldClass" = "doom_ii.Register:WEB_WORLD_CLASS"
-"doom_ii.Client" = "doom_ii.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["doom_ii*", "doom_ii"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.doom_ii"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "doom_ii.Constants.VERSION"}
+version = {attr = "worlds.doom_ii.Constants.VERSION"}

@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cuphead"
+name = "worlds.cuphead"
 dynamic = ["version"]
 description = "MultiWorld: Cuphead"
 authors = [
@@ -18,16 +18,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"cuphead.WorldClass" = "cuphead.Register:WORLD_CLASS"
-"cuphead.WebWorldClass" = "cuphead.Register:WEB_WORLD_CLASS"
-"cuphead.Client" = "cuphead.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["cuphead*", "cuphead"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.cuphead"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "cuphead.Constants.VERSION"}
+version = {attr = "worlds.cuphead.Constants.VERSION"}

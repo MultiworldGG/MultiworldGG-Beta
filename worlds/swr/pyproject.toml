@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "swr"
+name = "worlds.swr"
 dynamic = ["version"]
 description = "MultiWorld: Star Wars Episode I Racer"
 authors = [
@@ -18,16 +18,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"swr.WorldClass" = "swr.Register:WORLD_CLASS"
-"swr.WebWorldClass" = "swr.Register:WEB_WORLD_CLASS"
-"swr.Client" = "swr.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["swr*", "swr"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.swr"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "swr.Constants.VERSION"}
+version = {attr = "worlds.swr.Constants.VERSION"}

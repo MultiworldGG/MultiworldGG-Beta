@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tp"
+name = "worlds.tp"
 dynamic = ["version"]
 description = "MultiWorld: Twilight Princess"
 authors = [
     {name = "WritingHusky"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"tp.WorldClass" = "tp.Register:WORLD_CLASS"
-"tp.WebWorldClass" = "tp.Register:WEB_WORLD_CLASS"
-"tp.Client" = "tp.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["tp*", "tp"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.tp"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "tp.Constants.VERSION"}
+version = {attr = "worlds.tp.Constants.VERSION"}

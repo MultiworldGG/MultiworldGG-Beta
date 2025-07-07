@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "adventure"
+name = "worlds.adventure"
 dynamic = ["version"]
 description = "MultiWorld: Adventure"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"adventure.WorldClass" = "adventure.Register:WORLD_CLASS"
-"adventure.WebWorldClass" = "adventure.Register:WEB_WORLD_CLASS"
-"adventure.Client" = "adventure.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["adventure*", "adventure"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.adventure"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "adventure.Constants.VERSION"}
+version = {attr = "worlds.adventure.Constants.VERSION"}

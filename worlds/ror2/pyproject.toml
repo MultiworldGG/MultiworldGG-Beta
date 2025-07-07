@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ror2"
+name = "worlds.ror2"
 dynamic = ["version"]
 description = "MultiWorld: Risk of Rain 2"
 authors = [
     {name = "Sneaki"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"ror2.WorldClass" = "ror2.Register:WORLD_CLASS"
-"ror2.WebWorldClass" = "ror2.Register:WEB_WORLD_CLASS"
-"ror2.Client" = "ror2.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["ror2*", "ror2"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.ror2"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "ror2.Constants.VERSION"}
+version = {attr = "worlds.ror2.Constants.VERSION"}

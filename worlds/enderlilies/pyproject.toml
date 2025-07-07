@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "enderlilies"
+name = "worlds.enderlilies"
 dynamic = ["version"]
 description = "MultiWorld: Ender Lilies"
 authors = [
     {name = "Trexounay"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"enderlilies.WorldClass" = "enderlilies.Register:WORLD_CLASS"
-"enderlilies.WebWorldClass" = "enderlilies.Register:WEB_WORLD_CLASS"
-"enderlilies.Client" = "enderlilies.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["enderlilies*", "enderlilies"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.enderlilies"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "enderlilies.Constants.VERSION"}
+version = {attr = "worlds.enderlilies.Constants.VERSION"}

@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "paint"
+name = "worlds.paint"
 dynamic = ["version"]
 description = "MultiWorld: Paint"
 authors = [
     {name = "MairoManTAW"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"paint.WorldClass" = "paint.Register:WORLD_CLASS"
-"paint.WebWorldClass" = "paint.Register:WEB_WORLD_CLASS"
-"paint.Client" = "paint.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["paint*", "paint"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.paint"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "paint.Constants.VERSION"}
+version = {attr = "worlds.paint.Constants.VERSION"}

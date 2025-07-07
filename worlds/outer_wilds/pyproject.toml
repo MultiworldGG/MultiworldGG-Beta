@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "outer_wilds"
+name = "worlds.outer_wilds"
 dynamic = ["version"]
 description = "MultiWorld: Outer Wilds"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"outer_wilds.WorldClass" = "outer_wilds.Register:WORLD_CLASS"
-"outer_wilds.WebWorldClass" = "outer_wilds.Register:WEB_WORLD_CLASS"
-"outer_wilds.Client" = "outer_wilds.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["outer_wilds*", "outer_wilds"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.outer_wilds"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "outer_wilds.Constants.VERSION"}
+version = {attr = "worlds.outer_wilds.Constants.VERSION"}

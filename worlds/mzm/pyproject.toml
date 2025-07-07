@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mzm"
+name = "worlds.mzm"
 dynamic = ["version"]
 description = "MultiWorld: Metroid Zero Mission"
 authors = [
@@ -18,16 +18,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"mzm.WorldClass" = "mzm.Register:WORLD_CLASS"
-"mzm.WebWorldClass" = "mzm.Register:WEB_WORLD_CLASS"
-"mzm.Client" = "mzm.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["mzm*", "mzm"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.mzm"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "mzm.Constants.VERSION"}
+version = {attr = "worlds.mzm.Constants.VERSION"}

@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mmbn3"
+name = "worlds.mmbn3"
 dynamic = ["version"]
 description = "MultiWorld: MegaMan Battle Network 3"
 authors = [
@@ -14,16 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"mmbn3.WorldClass" = "mmbn3.Register:WORLD_CLASS"
-"mmbn3.WebWorldClass" = "mmbn3.Register:WEB_WORLD_CLASS"
-"mmbn3.Client" = "mmbn3.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["mmbn3*", "mmbn3"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.mmbn3"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "mmbn3.Constants.VERSION"}
+version = {attr = "worlds.mmbn3.Constants.VERSION"}

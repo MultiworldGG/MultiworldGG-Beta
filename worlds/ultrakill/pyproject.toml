@@ -3,28 +3,21 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ultrakill"
+name = "worlds.ultrakill"
 dynamic = ["version"]
 description = "MultiWorld: ULTRAKILL"
 authors = [
     {name = "TRPG"}
 ]
-license = "MIT"
 classifiers = [
     "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 
-[project.entry-points."mwgg.plugins"]
-"ultrakill.WorldClass" = "ultrakill.Register:WORLD_CLASS"
-"ultrakill.WebWorldClass" = "ultrakill.Register:WEB_WORLD_CLASS"
-"ultrakill.Client" = "ultrakill.Register:CLIENT_FUNCTION"
-
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["ultrakill*", "ultrakill"]
-exclude = ["*test*", "test*"]
-namespaces = false
+where = ["src/"]
+include = ["worlds.ultrakill"]
+namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "ultrakill.Constants.VERSION"}
+version = {attr = "worlds.ultrakill.Constants.VERSION"}
