@@ -4,10 +4,8 @@ import typing
 import enum
 import warnings
 from json import JSONEncoder, JSONDecoder
-from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from websockets import WebSocketServerProtocol as ServerConnection
 
 from Utils import ByValue, Version
@@ -71,28 +69,24 @@ class Permission(ByValue, enum.IntFlag):
         return Permission(data)
 
 
-@dataclass(frozen=True)
-class NetworkPlayer:
+class NetworkPlayer(typing.NamedTuple):
     """Represents a particular player on a particular team."""
     team: int
     slot: int
     alias: str
     name: str
-    pronouns: str | None = None
-    avatar: bytes | None = None
+    avatar: bytes = b""
 
 
-@dataclass(frozen=True)
-class NetworkSlot:
+class NetworkSlot(typing.NamedTuple):
     """Represents a particular slot across teams."""
     name: str
     game: str
     type: SlotType
-    group_members: list[int] | tuple = ()  # only populated if type == group
+    group_members: typing.Union[typing.List[int], typing.Tuple] = ()  # only populated if type == group
 
 
-@dataclass(frozen=True)
-class NetworkItem:
+class NetworkItem(typing.NamedTuple):
     item: int
     location: int
     player: int
@@ -100,23 +94,15 @@ class NetworkItem:
     flags: int = 0
 
 
-def _scan_for_dataclasses(obj: typing.Any) -> typing.Any:
-    # Handle dataclasses
-    if hasattr(obj, "__dataclass_fields__"):
-        data = {}
-        for field_name in obj.__dataclass_fields__:
-            value = getattr(obj, field_name)
-            # Handle bytes specially for JSON serialization
-            if isinstance(value, bytes):
-                data[field_name] = value.hex()  # Convert to hex string for JSON
-            else:
-                data[field_name] = value
+def _scan_for_TypedTuples(obj: typing.Any) -> typing.Any:
+    if isinstance(obj, tuple) and hasattr(obj, "_fields"):  # NamedTuple is not actually a parent class
+        data = obj._asdict()
         data["class"] = obj.__class__.__name__
         return data
     if isinstance(obj, (tuple, list, set, frozenset)):
-        return tuple(_scan_for_dataclasses(o) for o in obj)
+        return tuple(_scan_for_TypedTuples(o) for o in obj)
     if isinstance(obj, dict):
-        return {key: _scan_for_dataclasses(value) for key, value in obj.items()}
+        return {key: _scan_for_TypedTuples(value) for key, value in obj.items()}
     return obj
 
 
@@ -128,7 +114,7 @@ _encode = JSONEncoder(
 
 
 def encode(obj: typing.Any) -> str:
-    return _encode(_scan_for_dataclasses(obj))
+    return _encode(_scan_for_TypedTuples(obj))
 
 
 def get_any_version(data: dict) -> Version:
@@ -153,19 +139,12 @@ def _object_hook(o: typing.Any) -> typing.Any:
         if hook:
             return hook(o)
         cls = allowlist.get(o.get("class", None), None)
-        if cls and hasattr(cls, "__dataclass_fields__"):
-            field_names = cls.__dataclass_fields__.keys()
-            # Convert hex string back to bytes for avatar field
-            if "avatar" in o and isinstance(o["avatar"], str):
-                try:
-                    o["avatar"] = bytes.fromhex(o["avatar"])
-                except ValueError:
-                    o["avatar"] = None  # Invalid hex string
-            # Remove unknown fields
+        if cls:
             for key in tuple(o):
-                if key not in field_names and key != "class":
-                    del o[key]
-            return cls(**{k: v for k, v in o.items() if k != "class"})
+                if key not in cls._fields:
+                    del (o[key])
+            return cls(**o)
+
     return o
 
 
@@ -240,7 +219,7 @@ class JSONtoTextParser(metaclass=HandlerMeta):
     def __init__(self, ctx):
         self.ctx = ctx
 
-    def __call__(self, input_object: list[JSONMessagePart]) -> str:
+    def __call__(self, input_object: typing.List[JSONMessagePart]) -> str:
         return "".join(self.handle_node(section) for section in input_object)
 
     def handle_node(self, node: JSONMessagePart):
@@ -254,8 +233,7 @@ class JSONtoTextParser(metaclass=HandlerMeta):
         return buffer + self._handle_text(node) + color_code("reset")
 
     def _handle_text(self, node: JSONMessagePart):
-        node["text"] = 'default'
-        return self._handle_color(node)
+        return node.get("text", "")
 
     def _handle_player_id(self, node: JSONMessagePart):
         player = int(node["text"])
@@ -352,14 +330,14 @@ def add_json_location(parts: list, location_id: int, player: int = 0, **kwargs) 
     parts.append({"text": str(location_id), "player": player, "type": JSONTypes.location_id, **kwargs})
 
 ## HintStatus map is the location identifier/colors
-status_names: dict[HintStatus, str] = {
+status_names: typing.Dict[HintStatus, str] = {
     HintStatus.HINT_FOUND: "(found)",
     HintStatus.HINT_UNSPECIFIED: "(unspecified)",
     HintStatus.HINT_NO_PRIORITY: "(no priority)",
     HintStatus.HINT_AVOID: "(avoid)",
     HintStatus.HINT_PRIORITY: "(priority)",
 }
-status_colors: dict[HintStatus, str] = {
+status_colors: typing.Dict[HintStatus, str] = {
     HintStatus.HINT_FOUND: "green",
     HintStatus.HINT_UNSPECIFIED: "white",
     HintStatus.HINT_NO_PRIORITY: "lightgray",
@@ -368,13 +346,12 @@ status_colors: dict[HintStatus, str] = {
 }
 
 
-def add_json_hint_status(parts: list, hint_status: HintStatus, text: str | None = None, **kwargs):
+def add_json_hint_status(parts: list, hint_status: HintStatus, text: typing.Optional[str] = None, **kwargs):
     parts.append({"text": text if text != None else status_names.get(hint_status, "(unknown)"),
                   "hint_status": hint_status, "type": JSONTypes.hint_status, **kwargs})
 
 
-@dataclass(frozen=True)
-class Hint:
+class Hint(typing.NamedTuple):
     receiving_player: int
     finding_player: int
     location: int
@@ -389,92 +366,37 @@ class Hint:
             return self
         found = self.location in ctx.location_checks[team, self.finding_player]
         if found:
-            return Hint(
-                receiving_player=self.receiving_player,
-                finding_player=self.finding_player,
-                location=self.location,
-                item=self.item,
-                found=found,
-                entrance=self.entrance,
-                item_flags=self.item_flags,
-                status=HintStatus.HINT_FOUND
-            )
+            return self._replace(found=found, status=HintStatus.HINT_FOUND)
         return self
     
     def re_prioritize(self, ctx, status: HintStatus) -> Hint:
         if self.found and status != HintStatus.HINT_FOUND:
             status = HintStatus.HINT_FOUND
         if status != self.status:
-            return Hint(
-                receiving_player=self.receiving_player,
-                finding_player=self.finding_player,
-                location=self.location,
-                item=self.item,
-                found=self.found,
-                entrance=self.entrance,
-                item_flags=self.item_flags,
-                status=status
-            )
+            return self._replace(status=status)
         return self
 
     def __hash__(self):
         return hash((self.receiving_player, self.finding_player, self.location, self.item, self.entrance))
 
     def as_network_message(self) -> dict:
-        # Template for hint messages
-        template = [
-            {"text": "[Hint]: ", "type": "text"},
-            {"text": "{receiving_player}", "type": "player_id"},
-            {"text": "'s ", "type": "text"},
-            {"text": "{item}", "type": "item_id", "player": "{receiving_player}", "flags": "{item_flags}"},
-            {"text": " is at ", "type": "text"},
-            {"text": "{location}", "type": "location_id", "player": "{finding_player}"},
-            {"text": " in ", "type": "text"},
-            {"text": "{finding_player}", "type": "player_id"},
-            {"text": "{entrance_text}", "type": "text"},
-            {"text": ". ", "type": "text"},
-            {"text": "{status_text}", "type": "color", "color": "{status_color}"}
-        ]
-        
-        # Determine entrance text based on whether entrance exists
-        if self.entrance:
-            entrance_text = "'s World at " + self.entrance
-        else:
-            entrance_text = "'s World"
-        
-        # Get status information
-        status_text = status_names.get(self.status, "(unknown)")
-        status_color = status_colors.get(self.status, "red")
-        
-        # Fill template with actual values
         parts = []
-        for part in template:
-            filled_part = {}
-            for key, value in part.items():
-                if isinstance(value, str) and value.startswith("{") and value.endswith("}"):
-                    # Replace template variables
-                    var_name = value[1:-1]  # Remove { and }
-                    if var_name == "receiving_player":
-                        filled_part[key] = self.receiving_player
-                    elif var_name == "finding_player":
-                        filled_part[key] = self.finding_player
-                    elif var_name == "item":
-                        filled_part[key] = self.item
-                    elif var_name == "location":
-                        filled_part[key] = self.location
-                    elif var_name == "item_flags":
-                        filled_part[key] = self.item_flags
-                    elif var_name == "entrance_text":
-                        filled_part[key] = entrance_text
-                    elif var_name == "status_text":
-                        filled_part[key] = status_text
-                    elif var_name == "status_color":
-                        filled_part[key] = status_color
-                    else:
-                        filled_part[key] = value
-                else:
-                    filled_part[key] = value
-            parts.append(filled_part)
+        add_json_text(parts, "[Hint]: ")
+        add_json_text(parts, self.receiving_player, type="player_id")
+        add_json_text(parts, "'s ")
+        add_json_item(parts, self.item, self.receiving_player, self.item_flags)
+        add_json_text(parts, " is at ")
+        add_json_location(parts, self.location, self.finding_player)
+        add_json_text(parts, " in ")
+        add_json_text(parts, self.finding_player, type="player_id")
+        if self.entrance:
+            add_json_text(parts, "'s World at ")
+            add_json_text(parts, self.entrance, type="entrance_name")
+        else:
+            add_json_text(parts, "'s World")
+        add_json_text(parts, ". ")
+        add_json_text(parts, status_names.get(self.status, "(unknown)"), type="color",
+                      color=status_colors.get(self.status, "red"))
 
         return {"cmd": "PrintJSON", "data": parts, "type": "Hint",
                 "receiving": self.receiving_player,
@@ -486,8 +408,8 @@ class Hint:
         return self.receiving_player == self.finding_player
 
 
-class _LocationStore(dict, typing.MutableMapping[int, dict[int, tuple[int, int, int]]]):
-    def __init__(self, values: typing.MutableMapping[int, dict[int, tuple[int, int, int]]]):
+class _LocationStore(dict, typing.MutableMapping[int, typing.Dict[int, typing.Tuple[int, int, int]]]):
+    def __init__(self, values: typing.MutableMapping[int, typing.Dict[int, typing.Tuple[int, int, int]]]):
         super().__init__(values)
 
         if not self:
@@ -499,24 +421,24 @@ class _LocationStore(dict, typing.MutableMapping[int, dict[int, tuple[int, int, 
         if len(self.get(0, {})):
             raise ValueError("Invalid player id 0 for location")
 
-    def find_item(self, slots: set[int], seeked_item_id: int
-                  ) -> typing.Generator[tuple[int, int, int, int, int], None, None]:
+    def find_item(self, slots: typing.Set[int], seeked_item_id: int
+                  ) -> typing.Generator[typing.Tuple[int, int, int, int, int], None, None]:
         for finding_player, check_data in self.items():
             for location_id, (item_id, receiving_player, item_flags) in check_data.items():
                 if receiving_player in slots and item_id == seeked_item_id:
                     yield finding_player, location_id, item_id, receiving_player, item_flags
 
-    def get_for_player(self, slot: int) -> dict[int, set[int]]:
+    def get_for_player(self, slot: int) -> typing.Dict[int, typing.Set[int]]:
         import collections
-        all_locations: dict[int, set[int]] = collections.defaultdict(set)
+        all_locations: typing.Dict[int, typing.Set[int]] = collections.defaultdict(set)
         for source_slot, location_data in self.items():
             for location_id, values in location_data.items():
                 if values[1] == slot:
                     all_locations[source_slot].add(location_id)
         return all_locations
 
-    def get_checked(self, state: dict[tuple[int, int], set[int]], team: int, slot: int
-                    ) -> list[int]:
+    def get_checked(self, state: typing.Dict[typing.Tuple[int, int], typing.Set[int]], team: int, slot: int
+                    ) -> typing.List[int]:
         checked = state[team, slot]
         if not checked:
             # This optimizes the case where everyone connects to a fresh game at the same time.
@@ -527,8 +449,8 @@ class _LocationStore(dict, typing.MutableMapping[int, dict[int, tuple[int, int, 
                 location_id in self[slot] if
                 location_id in checked]
 
-    def get_missing(self, state: dict[tuple[int, int], set[int]], team: int, slot: int
-                    ) -> list[int]:
+    def get_missing(self, state: typing.Dict[typing.Tuple[int, int], typing.Set[int]], team: int, slot: int
+                    ) -> typing.List[int]:
         checked = state[team, slot]
         if not checked:
             # This optimizes the case where everyone connects to a fresh game at the same time.
@@ -537,8 +459,8 @@ class _LocationStore(dict, typing.MutableMapping[int, dict[int, tuple[int, int, 
                 location_id in self[slot] if
                 location_id not in checked]
 
-    def get_remaining(self, state: dict[tuple[int, int], set[int]], team: int, slot: int
-                      ) -> list[tuple[int, int]]:
+    def get_remaining(self, state: typing.Dict[typing.Tuple[int, int], typing.Set[int]], team: int, slot: int
+                      ) -> typing.List[typing.Tuple[int, int]]:
         checked = state[team, slot]
         player_locations = self[slot]
         return sorted([(player_locations[location_id][1], player_locations[location_id][0]) for
@@ -546,7 +468,7 @@ class _LocationStore(dict, typing.MutableMapping[int, dict[int, tuple[int, int, 
                         location_id not in checked])
 
 
-if TYPE_CHECKING:  # type-check with pure python implementation until we have a typing stub
+if typing.TYPE_CHECKING:  # type-check with pure python implementation until we have a typing stub
     LocationStore = _LocationStore
 else:
     try:
