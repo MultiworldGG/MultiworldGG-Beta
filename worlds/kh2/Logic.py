@@ -320,8 +320,8 @@ normal_thousand_heartless_rules = {
     ItemName.Guard:     1,
 }
 easy_data_demyx = {
-    ItemName.FormBoost:      1,
     ItemName.ReflectElement: 2,
+    ItemName.BlizzardElement: 1,
     ItemName.FireElement:    3,
     ItemName.FlareForce:     1,
     ItemName.TrinityLimit:   1,

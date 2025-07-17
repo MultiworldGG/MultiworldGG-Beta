@@ -20,8 +20,7 @@ ModuleUpdate.update()
 import Utils
 import Options
 from BaseClasses import seeddigits, get_seed, PlandoOptions
-from Utils import parse_yamls, version_tuple, __version__, tuplize_version, discover_world_class
-
+from Utils import parse_yamls, version_tuple, __version__, tuplize_version, get_module_for_game, set_game_names, game_names
 
 def mystery_argparse():
     from settings import get_settings
@@ -75,7 +74,6 @@ def mystery_argparse():
 
 def get_seed_name(random_source) -> str:
     return f"{random_source.randint(0, pow(10, seeddigits) - 1)}".zfill(seeddigits)
-
 
 def main(args=None) -> tuple[argparse.Namespace, int]:
     # __name__ == "__main__" check so unittests that already imported worlds don't trip this.
@@ -165,6 +163,11 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
                         f"Provide a general weights file ({args.weights_file_path}) or individual player files. "
                         f"A mix is also permitted.")
     
+    games_to_load = []
+    for player, yaml in weights_cache.items():
+        games_to_load.append(yaml[0]['game'])
+    set_game_names(games_to_load)
+
     from legacyalttpArgumentParser import parse_arguments
     erargs = parse_arguments(['--multi', str(args.multi)])
     erargs.seed = seed
@@ -188,33 +191,33 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
             for key in category_dict:
                 option = roll_meta_option(key, category_name, category_dict)
                 if option is not None:
-                    for path in weights_cache:
-                        for yaml in weights_cache[path]:
+                    for yaml_filename in weights_cache:
+                        for yaml in weights_cache[yaml_filename]:
                             if category_name is None:
                                 for category in yaml:
-                                    world_class = discover_world_class(category)
-                                    print(world_class)
+                                    from worlds import AutoWorldRegister
+                                    world_class = AutoWorldRegister.world_types[category]
                                     if world_class is not None and \
                                             key in Options.CommonOptions.type_hints:
                                         yaml[category][key] = option
                             elif category_name not in yaml:
-                                logging.warning(f"Meta: Category {category_name} is not present in {path}.")
+                                logging.warning(f"Meta: Category {category_name} is not present in {yaml_filename}.")
                             else:
                                 yaml[category_name][key] = option
 
-    player_path_cache = {}
+    player_yaml_cache = {}
     for player in range(1, args.multi + 1):
-        player_path_cache[player] = player_files.get(player, args.weights_file_path)
+        player_yaml_cache[player] = player_files.get(player, args.weights_file_path)
     name_counter = Counter()
     erargs.player_options = {}
 
     player = 1
     while player <= args.multi:
-        path = player_path_cache[player]
-        if path:
+        yaml_filename = player_yaml_cache[player]
+        if yaml_filename:
             try:
-                settings: tuple[argparse.Namespace, ...] = settings_cache[path] if settings_cache[path] else \
-                    tuple(roll_settings(yaml, args.plando) for yaml in weights_cache[path])
+                settings: tuple[argparse.Namespace, ...] = settings_cache[yaml_filename] if settings_cache[yaml_filename] else \
+                    tuple(roll_settings(yaml, args.plando) for yaml in weights_cache[yaml_filename])
                 for settingsObject in settings:
                     for k, v in vars(settingsObject).items():
                         if v is not None:
@@ -227,17 +230,17 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
 
                     # name was not specified
                     if player not in erargs.name:
-                        if path == args.weights_file_path:
+                        if yaml_filename == args.weights_file_path:
                             # weights file, so we need to make the name unique
                             erargs.name[player] = f"Player{player}"
                         else:
                             # use the filename
-                            erargs.name[player] = os.path.splitext(os.path.split(path)[-1])[0]
+                            erargs.name[player] = os.path.splitext(os.path.split(yaml_filename)[-1])[0]
                     erargs.name[player] = handle_name(erargs.name[player], player, name_counter)
 
                     player += 1
             except Exception as e:
-                raise ValueError(f"File {path} is invalid. Please fix your yaml.") from e
+                raise ValueError(f"File {yaml_filename} is invalid. Please fix your yaml.") from e
         else:
             raise RuntimeError(f'No weights specified for player {player}')
 
@@ -384,12 +387,14 @@ def update_weights(weights: dict, new_weights: dict, update_type: str, name: str
 
 
 def roll_meta_option(option_key, game: str, category_dict: dict) -> Any:
+    from worlds import AutoWorldRegister
+
     if not game:
         return get_choice(option_key, category_dict)
-    
-    world_class = discover_world_class(game)
-    if world_class is not None:
-        options = world_class.options_dataclass.type_hints
+    if game in AutoWorldRegister.world_types:
+        game_world = AutoWorldRegister.world_types[game]
+        options = game_world.options_dataclass.type_hints
+
         if option_key in options:
             if options[option_key].supports_weighting:
                 return get_choice(option_key, category_dict)
@@ -462,7 +467,8 @@ def handle_option(ret: argparse.Namespace, game_weights: dict, option_key: str, 
     except Exception as e:
         raise Options.OptionError(f"Error generating option {option_key} in {ret.game}") from e
     else:
-        world_class = discover_world_class(ret.game)
+        from worlds import AutoWorldRegister
+        world_class = AutoWorldRegister.world_types[ret.game]
         if world_class is not None:
             player_option.verify(world_class, ret.name, plando_options)
 
@@ -501,14 +507,26 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
             raise Exception(f"Option {option_key} has to be in a game's section, not on its own.")
 
     ret.game = get_choice("game", weights)
+    ret.module_name = get_module_for_game(ret.game)
     if not isinstance(ret.game, str):
         if ret.game is None:
             raise Exception('"game" not specified')
         raise Exception(f"Invalid game: {ret.game}")
-    world_class = discover_world_class(ret.game)
+
+    import worlds
+    from worlds import failed_world_loads
+    available_worlds = Utils.get_available_worlds()
+    
+    world_module = sys.modules.get(ret.module_name)
+    if world_module is None:
+        picks = Utils.get_fuzzy_results(ret.game, list(available_worlds.keys()) + failed_world_loads, limit=1)[0]
+        world_class = None
+        raise Exception(f"No world found to handle game {ret.game}. Did you mean '{picks[0]}' ({picks[1]}% sure)? "
+                        f"Check your spelling or installation of that world.")
+    else:
+        world_class = worlds.AutoWorldRegister.world_types[ret.game]
+
     if world_class is None:
-        from worlds import failed_world_loads
-        available_worlds = Utils.get_available_worlds()
         picks = Utils.get_fuzzy_results(ret.game, list(available_worlds.keys()) + failed_world_loads, limit=1)[0]
         if picks[0] in failed_world_loads:
             raise Exception(f"No functional world found to handle game {ret.game}. "

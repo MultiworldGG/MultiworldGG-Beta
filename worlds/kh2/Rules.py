@@ -960,9 +960,9 @@ class KH2FightRules(KH2Rules):
         # normal:remove form boost and scom
         # hard:wisdom 6,reflect,guard,duck flare,fira,finishing plus
         data_demyx_rules = {
-            "easy":   self.kh2_dict_count(easy_data_demyx, state) and self.form_list_unlock(state, ItemName.WisdomForm, 5, True),
-            "normal": self.kh2_dict_count(normal_data_demyx, state) and self.form_list_unlock(state, ItemName.WisdomForm, 5, True),
-            "hard":   self.kh2_dict_count(hard_data_demyx, state) and self.form_list_unlock(state, ItemName.WisdomForm, 4, True),
+            "easy":   self.kh2_dict_count(easy_data_demyx, state) and self.kh2_can_reach(LocationName.Wisdomlvl6, state),
+            "normal": self.kh2_dict_count(normal_data_demyx, state) and self.kh2_can_reach(LocationName.Wisdomlvl5, state),
+            "hard":   self.kh2_dict_count(hard_data_demyx, state) and self.kh2_can_reach(LocationName.Wisdomlvl5, state),
         }
         return data_demyx_rules[self.fight_logic]
 
@@ -971,8 +971,8 @@ class KH2FightRules(KH2Rules):
         # normal:both gap closers,limit 5,reflera,guard,both 2 ground finishers,3 dodge roll,finishing plus
         # hard:1 gap closers,reflect, guard,both 1 ground finisher,2 dodge roll,finishing plus
         sephiroth_rules = {
-            "easy":   self.kh2_dict_count(easy_sephiroth_tools, state) and self.kh2_can_reach(LocationName.Limitlvl5, state) and self.kh2_list_any_sum([donald_limit], state) >= 1,
-            "normal": self.kh2_dict_count(normal_sephiroth_tools, state) and self.kh2_can_reach(LocationName.Limitlvl5, state) and self.kh2_list_any_sum([donald_limit, gap_closer], state) >= 2,
+            "easy":   self.kh2_dict_count(easy_sephiroth_tools, state) and self.kh2_can_reach(LocationName.Limitlvl5, state),
+            "normal": self.kh2_dict_count(normal_sephiroth_tools, state) and self.kh2_can_reach(LocationName.Limitlvl5, state) and self.kh2_list_any_sum([gap_closer], state) >= 1,
             "hard":   self.kh2_dict_count(hard_sephiroth_tools, state) and self.kh2_list_any_sum([gap_closer, ground_finisher], state) >= 2,
         }
         return sephiroth_rules[self.fight_logic]
