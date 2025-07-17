@@ -1,12 +1,11 @@
-from typing import List, Dict, Any
+from typing import Callable
 
-from BaseClasses import Region, Tutorial
+from BaseClasses import CollectionState, Region, Tutorial
 from worlds.AutoWorld import WebWorld, World
-from .Items import CliqueItem, item_data_table, item_table
-from .Locations import CliqueLocation, location_data_table, location_table, locked_locations
-from .Options import CliqueOptions
-from .Regions import region_data_table
-from .Rules import get_button_rule
+
+from .items import CliqueItem, item_data
+from .locations import CliqueLocation, location_table, location_table
+from .options import CliqueOptions
 from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
 
 class CliqueWebWorld(WebWorld):
@@ -44,61 +43,51 @@ class CliqueWorld(World):
     options: CliqueOptions
     options_dataclass = CliqueOptions
     location_name_to_id = location_table
-    item_name_to_id = item_table
+    item_name_to_id = {name: data.code for name, data in item_data.items()}
 
     def create_item(self, name: str) -> CliqueItem:
-        return CliqueItem(name, item_data_table[name].type, item_data_table[name].code, self.player)
+        return CliqueItem(name, item_data[name].type, item_data[name].code, self.player)
 
     def create_items(self) -> None:
-        item_pool: List[CliqueItem] = []
-        for name, item in item_data_table.items():
-            if item.code and item.can_create(self):
-                item_pool.append(self.create_item(name))
+        item_pool: list[CliqueItem] = [self.create_item("Feeling of Satisfaction")]
+        if self.options.hard_mode:
+            item_pool.append(self.create_item("Button Activation"))
 
         self.multiworld.itempool += item_pool
 
     def create_regions(self) -> None:
         # Create regions.
-        for region_name in region_data_table.keys():
-            region = Region(region_name, self.player, self.multiworld)
-            self.multiworld.regions.append(region)
+        region = Region("Menu", self.player, self.multiworld)
+        region.add_locations({"The Button": 69696969}, CliqueLocation)
+        if self.options.hard_mode:
+            region.add_locations({"The Free Item": 69696968}, CliqueLocation)
 
-        # Create locations.
-        for region_name, region_data in region_data_table.items():
-            region = self.get_region(region_name)
-            region.add_locations({
-                location_name: location_data.address for location_name, location_data in location_data_table.items()
-                if location_data.region == region_name and location_data.can_create(self)
-            }, CliqueLocation)
-            region.add_exits(region_data_table[region_name].connecting_regions)
+        # Set priority location for the Button!
+        if self.options.force_progression:
+            self.options.priority_locations.value.add("The Button")
 
-        # Place locked locations.
-        for location_name, location_data in locked_locations.items():
-            # Ignore locations we never created.
-            if not location_data.can_create(self):
-                continue
-
-            locked_item = self.create_item(location_data_table[location_name].locked_item)
-            self.get_location(location_name).place_locked_item(locked_item)
-
-        # Set priority location for the Big Red Button!
-        self.options.priority_locations.value.add("The Big Red Button")
+        self.multiworld.regions.append(region)
 
     def get_filler_item_name(self) -> str:
         return "A Cool Filler Item (No Satisfaction Guaranteed)"
 
     def set_rules(self) -> None:
-        button_rule = get_button_rule(self)
-        self.get_location("The Big Red Button").access_rule = button_rule
-        self.get_location("In the Player's Mind").access_rule = button_rule
+        def get_button_rule(world: "CliqueWorld") -> Callable[[CollectionState], bool]:
+            if world.options.hard_mode:
+                return lambda state: state.has("Button Activation", world.player)
 
-        # Do not allow button activations on buttons.
-        self.get_location("The Big Red Button").item_rule = lambda item: item.name != "Button Activation"
+            return lambda state: True
+
+        self.get_location("The Button").access_rule = get_button_rule(self)
 
         # Completion condition.
-        self.multiworld.completion_condition[self.player] = lambda state: state.has("The Urge to Push", self.player)
+        self.multiworld.completion_condition[self.player] = get_button_rule(self)
 
-    def fill_slot_data(self) -> Dict[str, Any]:
+    def fill_slot_data(self) -> dict:
         return {
-            "color": self.options.color.current_key
+            # fmt: off
+            "world_version":    1,
+            "hard_mode":        bool(self.options.hard_mode),
+            "color":            self.options.color.current_key,
+            # fmt: on
         }

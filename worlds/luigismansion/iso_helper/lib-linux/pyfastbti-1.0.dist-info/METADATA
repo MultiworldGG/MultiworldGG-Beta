@@ -1,0 +1,16 @@
+Metadata-Version: 2.4
+Name: PyFastBTI
+Version: 1.0
+Summary: Functions for encoding/decoding BTI files written in C.
+Home-page: https://github.com/LagoLunatic
+Author: LagoLunatic
+Author-email: 
+License-File: LICENSE.txt
+Dynamic: author
+Dynamic: description
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: summary
+
+
+Python module written in C for encoding/decoding BTI image files with better performance than native Python code.

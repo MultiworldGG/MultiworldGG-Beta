@@ -17,7 +17,8 @@
                 "exists": true
             },
             {
-                "exists": true
+                "exists": true,
+                "Requirements": ["Wing Cap"]
             },
             {
                 "exists": true,
@@ -28,7 +29,10 @@
             {
                 "exists": true,
                 "StarRequirement": "80",
-                "Requirements": [],
+                "Requirements": [
+                    "Bowser 2 Cannon Star",
+                    "Key 1"
+                ],
                 "ConditionalRequirements": []
             }
         ],

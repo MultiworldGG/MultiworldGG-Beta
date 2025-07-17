@@ -7,7 +7,7 @@ from struct import pack
 from .game_data.local_data import client_specials, world_version, hint_bits, item_id_table, money_id_table
 from .game_data.text_data import text_encoder
 from .gifting.gift_tags import gift_properties
-from .gifting.trait_parser import wanted_traits, trait_interpreter
+from .gifting.trait_parser import wanted_traits, trait_interpreter, gift_exclusions
 
 from NetUtils import ClientStatus, color
 from worlds.AutoSNIClient import SNIClient
@@ -120,7 +120,7 @@ class EarthBoundClient(SNIClient):
         ctx.death_state = DeathState.dead
         ctx.last_death_link = time.time()
 
-    async def validate_rom(self, ctx):
+    async def validate_rom(self, ctx) -> bool:
         from SNIClient import snes_read
 
         rom_name = await snes_read(ctx, EB_ROMHASH_START, ROMHASH_SIZE)
@@ -148,7 +148,7 @@ class EarthBoundClient(SNIClient):
             await ctx.update_death_link(bool(death_link[0] & 0b1))
         return True
 
-    async def game_watcher(self, ctx):
+    async def game_watcher(self, ctx) -> None:
         from SNIClient import snes_buffered_write, snes_flush_writes, snes_read, snes_write
         giygas_clear = await snes_read(ctx, GIYGAS_CLEAR, 0x1)
         game_clear = await snes_read(ctx, GAME_CLEAR, 0x1)
@@ -219,9 +219,8 @@ class EarthBoundClient(SNIClient):
             key, gift = next(iter(inbox.items()))
             if "item_name" in gift or "ItemName" in gift:
                 gift_item_name = gift.get("item_name", gift.get("ItemName"))
-            if gift_item_name in item_id_table:
+            if gift_item_name in item_id_table and gift_item_name not in gift_exclusions:
                 # If the name matches an EB item, convert it to one (even if not coming from EB)
-                # Maybe a key item override here
                 item = item_id_table[gift_item_name]
             else:
                 item = trait_interpreter(gift)
@@ -360,7 +359,6 @@ class EarthBoundClient(SNIClient):
                                 prog_shops.append(location)
                     await ctx.send_msgs([{"cmd": "LocationScouts", "locations": prog_shops, "create_as_hint": 2}])
 
-
         await ctx.send_msgs([{
                     "cmd": "Set",
                     "key": f"{ctx.team}_{ctx.slot}_melody_status",
@@ -487,7 +485,7 @@ class EarthBoundClient(SNIClient):
         await snes_flush_writes(ctx)
 
 
-def get_alias(alias: str, slot_name: str):
+def get_alias(alias: str, slot_name: str) -> str:
     try:
         index = alias.index(f" ({slot_name}")
     except ValueError:

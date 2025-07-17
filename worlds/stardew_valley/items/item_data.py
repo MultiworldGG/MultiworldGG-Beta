@@ -1,26 +1,38 @@
+from __future__ import annotations
+
 import csv
 import enum
 from dataclasses import dataclass, field
 from functools import reduce
-from pathlib import Path
-from typing import Dict, List, Protocol, Union, Set, Optional
+from typing import Protocol
 
-from BaseClasses import Item, ItemClassification
+from BaseClasses import ItemClassification, Item
 from .. import data
+from ..content.vanilla.ginger_island import ginger_island_content_pack
 from ..logic.logic_event import all_events
 
 ITEM_CODE_OFFSET = 717000
 
-world_folder = Path(__file__).parent
+
+class StardewItemFactory(Protocol):
+    def __call__(self, item: str | ItemData, /, *, classification_pre_fill: ItemClassification = None,
+                 classification_post_fill: ItemClassification = None) -> Item:
+        """
+        :param item: The item to create. Can be the name of the item or the item data.
+        :param classification_pre_fill: The classification to use for the item before the fill. If None, the basic classification of the item is used.
+        :param classification_post_fill: The classification to use for the item after the fill. If None, the pre_fill classification will be used.
+        """
+        raise NotImplementedError
 
 
 class Group(enum.Enum):
     RESOURCE_PACK = enum.auto()
     FRIENDSHIP_PACK = enum.auto()
     COMMUNITY_REWARD = enum.auto()
+    TRASH_BEAR = enum.auto()
     TRASH = enum.auto()
     FOOTWEAR = enum.auto()
-    HATS = enum.auto()
+    HAT = enum.auto()
     RING = enum.auto()
     WEAPON = enum.auto()
     WEAPON_GENERIC = enum.auto()
@@ -33,6 +45,8 @@ class Group(enum.Enum):
     SKILL_MASTERY = enum.auto()
     BUILDING = enum.auto()
     WIZARD_BUILDING = enum.auto()
+    DESERT_TRANSPORTATION = enum.auto()
+    ISLAND_TRANSPORTATION = enum.auto()
     ARCADE_MACHINE_BUFFS = enum.auto()
     BASE_RESOURCE = enum.auto()
     WARP_TOTEM = enum.auto()
@@ -71,6 +85,14 @@ class Group(enum.Enum):
     BOOK_POWER = enum.auto()
     LOST_BOOK = enum.auto()
     PLAYER_BUFF = enum.auto()
+    EASY_SECRET = enum.auto()
+    FISHING_SECRET = enum.auto()
+    SECRET_NOTES_SECRET = enum.auto()
+    MOVIESANITY = enum.auto()
+    TRINKET = enum.auto()
+    EATSANITY_ENZYME = enum.auto()
+    ENDGAME_LOCATION_ITEMS = enum.auto()
+    REQUIRES_FRIENDSANITY_MARRIAGE = enum.auto()
     # Mods
     MAGIC_SPELL = enum.auto()
     MOD_WARP = enum.auto()
@@ -78,28 +100,31 @@ class Group(enum.Enum):
 
 @dataclass(frozen=True)
 class ItemData:
-    code_without_offset: Optional[int]
+    code_without_offset: int | None
     name: str
     classification: ItemClassification
-    mod_name: Optional[str] = None
-    groups: Set[Group] = field(default_factory=frozenset)
+    content_packs: frozenset[str] = frozenset()
+    """All the content packs required for this item to be available."""
+    groups: set[Group] = field(default_factory=frozenset)
 
     def __post_init__(self):
         if not isinstance(self.groups, frozenset):
             super().__setattr__("groups", frozenset(self.groups))
 
     @property
-    def code(self):
+    def code(self) -> int | None:
         return ITEM_CODE_OFFSET + self.code_without_offset if self.code_without_offset is not None else None
 
     def has_any_group(self, *group: Group) -> bool:
         groups = set(group)
         return bool(groups.intersection(self.groups))
 
+    def has_all_groups(self, *group: Group) -> bool:
+        groups = set(group)
+        return bool(groups.issubset(self.groups))
 
-class StardewItemFactory(Protocol):
-    def __call__(self, name: Union[str, ItemData], override_classification: ItemClassification = None) -> Item:
-        raise NotImplementedError
+    def has_limited_amount(self) -> bool:
+        return self.has_any_group(Group.MAXIMUM_ONE, Group.AT_LEAST_TWO)
 
 
 def load_item_csv():
@@ -109,11 +134,15 @@ def load_item_csv():
     with files(data).joinpath("items.csv").open() as file:
         item_reader = csv.DictReader(file)
         for item in item_reader:
-            id = int(item["id"]) if item["id"] else None
+            item_id = int(item["id"]) if item["id"] else None
             classification = reduce((lambda a, b: a | b), {ItemClassification[str_classification] for str_classification in item["classification"].split(",")})
             groups = {Group[group] for group in item["groups"].split(",") if group}
-            mod_name = str(item["mod_name"]) if item["mod_name"] else None
-            items.append(ItemData(id, item["name"], classification, mod_name, groups))
+
+            content_packs = frozenset(cp for cp in item["content_packs"].split(",") if cp)
+            if Group.GINGER_ISLAND in groups:
+                content_packs |= {ginger_island_content_pack.name}
+
+            items.append(ItemData(item_id, item["name"], classification, content_packs, groups))
     return items
 
 
@@ -122,9 +151,9 @@ events = [
     for e in sorted(all_events)
 ]
 
-all_items: List[ItemData] = load_item_csv() + events
-item_table: Dict[str, ItemData] = {}
-items_by_group: Dict[Group, List[ItemData]] = {}
+all_items: list[ItemData] = load_item_csv() + events
+item_table: dict[str, ItemData] = {}
+items_by_group: dict[Group, list[ItemData]] = {}
 
 
 def initialize_groups():

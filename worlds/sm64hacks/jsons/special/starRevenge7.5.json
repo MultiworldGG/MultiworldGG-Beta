@@ -573,8 +573,19 @@
             {
                 "exists": true,
                 "Requirements": [
-                    "Ultra Badge",
                     "Triple Jump Badge"
+                ],
+                "ConditionalRequirements": [
+                    {
+                        "StarRequirement": "0",
+                        "Requirements": ["Ultra Badge"]
+                    },
+                    {
+                        "StarRequirement": "0",
+                        "Requirements": [
+                            "Wall Badge"
+                        ]
+                    }
                 ]
             },
             {
@@ -595,10 +606,20 @@
                 "StarRequirement": "0",
                 "Requirements": [
                     "Wing Cap",
-                    "Ultra Badge",
                     "Triple Jump Badge"
                 ],
-                "ConditionalRequirements": []
+                "ConditionalRequirements": [
+                    {
+                        "StarRequirement": "0",
+                        "Requirements": ["Ultra Badge"]
+                    },
+                    {
+                        "StarRequirement": "0",
+                        "Requirements": [
+                            "Wall Badge"
+                        ]
+                    }
+                ]
             },
             {
                 "exists": true,

@@ -6,14 +6,14 @@
 - SMAPI ([Mod loader for Stardew Valley](https://www.nexusmods.com/stardewvalley/mods/2400?tab=files))
 - [StardewArchipelago Mod Release 6.x.x](https://github.com/agilbert1412/StardewArchipelago/releases)
     - It is important to use a mod release of version 6.x.x to play seeds that have been generated here. Later releases 
-  can only be used with later releases of the world generator, that are not hosted on multiworld.gg yet.
+  can only be used with later releases of the world generator, that are not hosted on archipelago.gg yet.
 
 ## Optional Software
-- MultiworldGG from the [MultiworldGG Releases Page](https://github.com/MultiworldGG/MultiworldGG/releases)
+- Archipelago from the [Archipelago Releases Page](https://github.com/ArchipelagoMW/Archipelago/releases)
     * (Only for the TextClient)
 - Other Stardew Valley Mods [Nexus Mods](https://www.nexusmods.com/stardewvalley)
     * There are [supported mods](https://github.com/agilbert1412/StardewArchipelago/blob/6.x.x/Documentation/Supported%20Mods.md) 
-  that you can add to your yaml to include them with the MultiworldGG randomization
+  that you can add to your yaml to include them with the Archipelago randomization
 
     * It is **not** recommended to further mod Stardew Valley with unsupported mods, although it is possible to do so. 
   Mod interactions can be unpredictable, and no support will be offered for related bugs.
@@ -23,7 +23,7 @@
 
 ### What is a YAML file and why do I need one?
 
-See the guide on setting up a basic YAML at the MultiworldGG setup
+See the guide on setting up a basic YAML at the Archipelago setup
 guide: [Basic Multiworld Setup Guide](/tutorial/Archipelago/setup/en)
 
 ### Where do I get a YAML file?
@@ -45,7 +45,7 @@ your Stardew Valley "Mods" folder
 
 Launch Stardew Valley with SMAPI. Once you have reached the Stardew Valley title screen, create a new farm.
 
-On the new character creation page, you will see 3 new fields, used to link your new character to an MultiworldGG multiworld
+On the new character creation page, you will see 3 new fields, used to link your new character to an archipelago multiworld
 
 ![image](https://i.imgur.com/b8KZy2F.png)
 
@@ -53,20 +53,20 @@ You can customize your farm and character as much as desired.
 
 The Server text box needs to have both the address and the port, and your slotname is the name specified in your yaml
 
-`multiworld.gg:38281`
+`archipelago.gg:38281`
 
 `StardewPlayer`
 
 The password is optional.
 
-Your game will connect automatically to MultiworldGG, and reconnect automatically when loading the save, later.
+Your game will connect automatically to Archipelago, and reconnect automatically when loading the save, later.
 
 You will never need to enter this information again for this character, unless your room changes its ip or port.
 If the room's ip or port **does** change, you can follow these instructions to modify the connection information of your save file
 - Launch modded Stardew Valley
 - While **on the main menu** of the game, enter the follow command **in the SMAPI console**:
 - `connect_override ip:port slot password`
-- Example: `connect_override multiworld.gg:38281 StardewPlayer`
+- Example: `connect_override archipelago.gg:38281 StardewPlayer`
 - Load your save game. The new connection information will be used, instead of the saved one
 - Play a full day, sleep, and save the game. This connection information will overwrite the previous one and become permanent.
 
@@ -78,13 +78,13 @@ Stardew-exclusive chat commands you can use.
 Furthermore, you can use the in-game chat box to talk to other players in the multiworld, assuming they are using a game 
 that supports chatting.
 
-Lastly, you can also run MultiworldGG commands `!help` from the in game chat box, allowing you to request hints on certain 
+Lastly, you can also run Archipelago commands `!help` from the in game chat box, allowing you to request hints on certain 
 items, or check missing locations.
 
 It is important to note that the Stardew Valley chat is fairly limited in its capabilities. For example, it doesn't allow 
 scrolling up to see history that has been pushed off screen. The SMAPI console running alonside your game will have the 
 full history as well and may be better suited to read older messages.
-For a better chat experience, you can also use the official MultiworldGG Text Client, altough it will not allow you to run 
+For a better chat experience, you can also use the official Archipelago Text Client, altough it will not allow you to run 
 Stardew-exclusive commands.
 
 ### Playing with supported mods
@@ -93,4 +93,4 @@ See the [Supported mods documentation](https://github.com/agilbert1412/StardewAr
 
 ### Multiplayer
 
-You cannot play an MultiworldGG Slot in multiplayer at the moment. There are no short-term plans to support that feature.
+You cannot play an Archipelago Slot in multiplayer at the moment. There are no short-term plans to support that feature.

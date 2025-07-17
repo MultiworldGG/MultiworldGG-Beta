@@ -121,10 +121,13 @@ class Lighting:
 
 
 class Furniture:
+    modern_lamp = "Modern Lamp"
+    candle_lamp = "Candle Lamp"
     tub_o_flowers = "Tub o' Flowers"
     wicked_statue = "Wicked Statue"
     flute_block = "Flute Block"
     drum_block = "Drum Block"
+    single_bed = "Single Bed"
 
 
 class Storage:
@@ -176,7 +179,7 @@ class ModEdible:
 class ModCraftable:
     travel_core = "Travel Core"
     glass_brazier = "Glass Brazier"
-    water_shifter = "Water Shifter"
+    water_sifter = "Water Sifter"
     rusty_brazier = "Rusty Brazier"
     glass_fence = "Glass Fence"
     bone_fence = "Bone Fence"

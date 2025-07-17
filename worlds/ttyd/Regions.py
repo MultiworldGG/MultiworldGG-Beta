@@ -5,7 +5,7 @@ from .Locations import (TTYDLocation, rogueport, sewers, sewers_westside, sewers
                         petal_right, hooktails_castle, boggly_woods, great_tree, glitzville, twilight_trail,
                         twilight_town, creepy_steeple, keelhaul_key, pirates_grotto, excess_express, riverside,
                         poshley_heights, fahr_outpost, xnaut_fortress, palace, pit, rogueport_westside, riddle_tower,
-                        shadow_queen, LocationData)
+                        shadow_queen, LocationData, tattlesanity_region)
 from . import StateLogic
 
 if typing.TYPE_CHECKING:
@@ -41,7 +41,8 @@ def get_regions_dict() -> dict[str, list[LocationData]]:
         "Palace of Shadow": palace,
         "Palace of Shadow (Post-Riddle Tower)": riddle_tower,
         "Pit of 100 Trials": pit,
-        "Shadow Queen": shadow_queen
+        "Shadow Queen": shadow_queen,
+        "Tattlesanity": tattlesanity_region
     }
 
 
@@ -53,6 +54,7 @@ def get_region_connections_dict(world: "TTYDWorld") -> dict[tuple[str, str], typ
     return {
         ("Menu", "Rogueport"): None,
         ("Menu", "Rogueport (Westside)"): None,
+        ("Menu", "Tattlesanity"): None,
         ("Rogueport", "Rogueport Sewers"): None,
         ("Rogueport", "Rogueport Sewers Westside"):
             lambda state: StateLogic.sewer_westside(state, world.player),

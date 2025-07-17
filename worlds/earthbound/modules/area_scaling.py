@@ -1,4 +1,5 @@
 from ..modules.enemy_data import combat_regions
+from ..Options import MagicantMode
 
 expected_level_gains = {
     "Ness's Mind": 0,
@@ -14,7 +15,7 @@ expected_level_gains = {
     "Happy-Happy Village": 0,
     "Happy-Happy HQ": 1,
     "Lilliput Steps": 2,
-    "Threed": 2,
+    "Threed": 0,
     "Boogey Tent": 0,
     "Threed Underground": 2,
     "Grapefruit Falls": 1,
@@ -26,7 +27,7 @@ expected_level_gains = {
     "Gold Mine": 2,
     "Monkey Caves": 2,
     "Fourside": 0,
-    "Fourside Dept. Store": 2,
+    "Fourside Dept. Store": 1,
     "Moonside": 1,
     "Monotoli Building": 2,
     "Magnet Hill": 2,
@@ -52,7 +53,7 @@ expected_level_gains = {
     "Lost Underworld": 2,
     "Fire Spring": 2,
     "Magicant": 1,
-    "Sea of Eden": 2,
+    "Sea of Eden": 1,
     "Cave of the Present": 0,
     "Cave of the Past": 2,
     "Endgame": 0
@@ -558,14 +559,14 @@ def calculate_scaling(world) -> None:
         if region.name not in world.accessible_regions and region.name != "Menu":
             world.accessible_regions.append(region.name)
 
-    if world.options.magicant_mode == 2 and world.options.giygas_required:
+    if world.options.magicant_mode == MagicantMode.option_alternate_goal and world.options.giygas_required:
         # If magicant is an alternate goal it should be scaled after Giygas
         world.accessible_regions.remove("Magicant")
         world.accessible_regions.append("Sea of Eden")
         world.accessible_regions.insert(world.accessible_regions.index("Endgame") + 1, "Magicant")
-    elif world.options.magicant_mode == 3 and world.options.giygas_required:
+    elif world.options.magicant_mode == MagicantMode.option_optional_boost and world.options.giygas_required:
         world.accessible_regions.insert(world.accessible_regions.index("Endgame") - 1, "Magicant")
-    elif world.options.magicant_mode == 3 and not world.options.giygas_required:
+    elif world.options.magicant_mode == MagicantMode.option_optional_boost and not world.options.giygas_required:
         # Just add it to the end of scaling
         world.accessible_regions.append("Magicant")
         world.accessible_regions.append("Sea of Eden")

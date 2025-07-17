@@ -1,10 +1,15 @@
 import unittest
+from typing import Dict, Optional
 
-from .bases import SVTestBase
-from .. import BundleRandomization
-from ..data.bundle_data import all_bundle_items_except_money, quality_crops_items_thematic, quality_foraging_items, quality_fish_items
-from ..options import BundlePlando
-from ..strings.bundle_names import BundleName
+from .bases import SVTestBase, SVTestCase
+from .. import BundleRandomization, location_table
+from ..bundles.bundle import Bundle
+from ..data.bundles_data.bundle_data import all_bundle_items_except_money, quality_crops_items_thematic, \
+    quality_foraging_items, quality_fish_items
+from ..data.bundles_data.meme_bundles import all_cc_meme_bundles
+from ..locations import LocationTags
+from ..options import BundlePlando, BundlePrice
+from ..strings.bundle_names import BundleName, MemeBundleName, all_meme_bundle_names
 from ..strings.crop_names import Fruit
 from ..strings.quality_names import CropQuality, ForageQuality, FishQuality
 
@@ -87,3 +92,86 @@ class TestRemixedAnywhereBundles(SVTestBase):
         for bundle_name in self.fish_bundle_names:
             with self.subTest(f"{bundle_name}"):
                 self.assertIn(bundle_name, location_names)
+
+
+class TestMemeBundles(SVTestBase):
+    options = {
+        BundleRandomization.internal_name: BundleRandomization.option_meme,
+        BundlePrice.internal_name: BundlePrice.option_maximum,
+    }
+
+    def test_can_complete_all_bundles_with_all_state(self):
+        self.collect_everything()
+        for location_name in self.get_real_location_names():
+            if location_name not in location_table or LocationTags.MEME_BUNDLE not in location_table[location_name].tags:
+                continue
+            with self.subTest(f"{location_name}"):
+                self.assert_can_reach_location(location_name)
+
+    def test_specific_bundles_are_not_affected_by_price(self):
+        all_bundles = [bundle for bundle_room in self.world.modified_bundles for bundle in bundle_room.bundles]
+        bundles_by_name = {bundle.name: bundle for bundle in all_bundles}
+        self.check_price(bundles_by_name, MemeBundleName.death, 1, 1, 1)
+        self.check_price(bundles_by_name, MemeBundleName.communism, 1, 1, 1)
+        self.check_price(bundles_by_name, MemeBundleName.amons_fall, 7, 7, 1)
+        self.check_price(bundles_by_name, MemeBundleName.rick, 1, 1, 1)
+        self.check_price(bundles_by_name, MemeBundleName.obelisks, 8, 8)
+        self.check_price(bundles_by_name, MemeBundleName.eg, 8, 2, 57)
+        self.check_price(bundles_by_name, MemeBundleName.chaos_emerald, 7, 7, 1)
+        self.check_price(bundles_by_name, MemeBundleName.honorable, 2, 1)
+        self.check_price(bundles_by_name, MemeBundleName.snitch, 1, 1, 1)
+        self.check_price(bundles_by_name, MemeBundleName.commitment, 4, 4)
+        self.check_price(bundles_by_name, MemeBundleName.journalist, 1, 1, 1)
+        self.check_price(bundles_by_name, MemeBundleName.off_your_back, 6, 6, 1)
+        self.check_price(bundles_by_name, MemeBundleName.sisyphus, 12, 12, 1)
+
+    def check_price(self, bundles: Dict[str, Bundle], bundle_name: str, expected_items: int, expected_required_items: int, stack_amount: Optional[int] = None):
+        if bundle_name not in bundles:
+            return
+        with self.subTest(bundle_name):
+            bundle = bundles[bundle_name]
+            self.assertEqual(len(bundle.items), expected_items)
+            self.assertEqual(bundle.number_required, expected_required_items)
+            if stack_amount is not None:
+                for item in bundle.items:
+                    self.assertEqual(item.amount, stack_amount)
+
+
+class TestMemeBundleContent(SVTestCase):
+    def test_all_meme_bundles_are_included(self):
+        all_meme_bundles_in_cc = {bundle.name for bundle in all_cc_meme_bundles}
+        for meme_bundle_name in all_meme_bundle_names:
+            if meme_bundle_name == MemeBundleName.investment:
+                continue
+            with self.subTest(meme_bundle_name):
+                self.assertIn(meme_bundle_name, all_meme_bundles_in_cc)
+
+
+class TestScamBundlePlando(SVTestBase):
+    options = {
+        BundleRandomization: BundleRandomization.option_meme,
+        BundlePlando: frozenset({MemeBundleName.scam})
+    }
+
+    def test_scam_bundle_is_there(self):
+        location_names = {location.name for location in self.multiworld.get_locations()}
+        self.assertIn(MemeBundleName.scam, location_names)
+
+    def test_investment_bundle_is_not_there(self):
+        location_names = {location.name for location in self.multiworld.get_locations()}
+        self.assertNotIn(MemeBundleName.investment, location_names)
+
+
+class TestInvestmentBundlePlando(SVTestBase):
+    options = {
+        BundleRandomization: BundleRandomization.option_meme,
+        BundlePlando: frozenset({MemeBundleName.scam})
+    }
+
+    def test_scam_bundle_is_there(self):
+        location_names = {location.name for location in self.multiworld.get_locations()}
+        self.assertIn(MemeBundleName.scam, location_names)
+
+    def test_investment_bundle_is_not_there(self):
+        location_names = {location.name for location in self.multiworld.get_locations()}
+        self.assertNotIn(MemeBundleName.investment, location_names)

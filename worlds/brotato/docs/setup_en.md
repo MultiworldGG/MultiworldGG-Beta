@@ -53,7 +53,6 @@ in that folder.
     2. Click on the three horizontal dots next to its name.
     3. In the window that opens, click the folder+magnifying glass next in the
        "Installation" row.
-
 ## MultiworldGG Text Client
 
 The Brotato mod acts as a client to MultiworldGG, so you do not need to launch a separate

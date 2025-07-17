@@ -328,6 +328,9 @@ JML LoadPhotoColor
 ORG $00FA22
 JML GetRemoteMoney
 
+ORG $C2A03F
+JML ClearStatusVars
+
 ;new jmls
 
 
@@ -689,7 +692,7 @@ ORG $CFA949
 db $47,$00,$01
 
 ORG $CFA93A
-db $00
+db $02
 
 ORG $CF8915
 db $20,$A8
@@ -9083,6 +9086,33 @@ ORG $C005F5
 LDA #$00F8
 nop
 
+ORG $CFA93B
+dd RideSkycicle
+
+ORG $CFA933
+db $D3
+
+ORG $CF8919
+db $30, $68
+
+ORG $CFA932
+db $02
+
+ORG $C7CB74
+db $C7, $00
+
+ORG $D7A90C
+db $5F
+
+ORG $D68463
+db $FF
+
+ORG $C8A8E3
+dd CheckForRubyPoo
+
+ORG $C80C40
+db $E1, $03
+
 
 ;New data table go here
 
@@ -12345,10 +12375,10 @@ LDA #$0000
 JML $C17F0F
 
 LoadPartyDirections:
-PHX
 PHY
+PHX
 .Ness:
-  LDA #$0001
+JMP LoadPartyMemberDirectionsFixed
   LDX $B43E
   JSL $C46363
 .Paula:
@@ -12372,6 +12402,7 @@ STA $2B30
   ASL
   TAX
   LDA $9897,X
+  BEQ .Temp2
   ASL
   TAX
   LDA $2AF6,x
@@ -12390,6 +12421,7 @@ STA $2B30
   ASL
   TAX
   LDA $9897,X
+  BEQ .Done
   ASL
   TAX
   LDA $2AF6,x
@@ -12403,6 +12435,7 @@ STA $2B30
   AND #$00FF
   PLX
   JSL $C46363 ;not working
+.Done:
 PLY
 PLX
 LDA #$0000
@@ -12658,6 +12691,43 @@ LDA $006D
 AND #$A000
 JML $C0B8F4
 
+ClearStatusVars:
+LDA #$766E
+STA $0E
+STZ $B587
+STZ $B588
+JML $C2A044
+
+LoadPartyMemberDirectionsFixed:
+    phy
+    phx
+    LDA #$000B
+    LDY #$2B26
+    LDX #$B43E
+    MVN $7E7E
+    ldy #$0000
+    bra .loopcond
+.loop:
+    phy
+    ; Update entity sprite frame (the thing that the "set direction" function at C46363 does after storing to the table of directions)
+    jsl $C0A780
+    ply
+    iny
+    iny
+.loopcond:
+    ; Have we gotten through all 6 possible party members?
+    cpy #$000C
+    bcs .loopend
+    ; If not, have we gotten through all valid party members? (according to the entity index list)
+    lda $9897,y
+    and #$00FF
+    bne .loop
+.loopend:
+    ply
+    plx
+    lda #$0000
+    jml $C17F0F
+
 
 
 ;new code go here
@@ -12717,17 +12787,19 @@ ORG $C5E029
 ORG $C5E1AE
 ;dd ForcePurchaseCheck
 
+;ALWAYS HAVE THESE
 ORG $C50A6A
-;db $0A
-;dl BackupShopEquipText
+db $0A
+dl BackupShopEquipText
 
 ORG $C50B4C
-;db $0A
-;dl BackupShopSellText
+db $0A
+dl BackupShopSellText
 
 ORG $C50C2E
-;db $0A
-;dl BackupShopCantEquip
+db $0A
+dl BackupShopCantEquip
+;
 
 ORG $C5E04C
 ;db $0A
@@ -12745,7 +12817,7 @@ ORG $C5E0F2
 
 
 
-ORG $F4002A
+ORG $F403F0
 ;Item ID, 2-byte price, Item Type, 2-bytelocation ID/flag number
 ;db $05, $00, $00, $02, $00, $00; Non-remote local item. Franklin Badge.
 ;db $5A, $00, $00, $01, $01, $00; Non-remote local Teleport.
@@ -16482,6 +16554,7 @@ Gift_menu:
   db $1F, $13, $FF, $03
   db $10, $20
   db $1F, $03
+  db $01, $01, $01
   db $1C, $29, $01
   db $18, $01, $01
   db $1F, $02, $74
@@ -18189,6 +18262,46 @@ dl $C0A82F
 db $03
 dl $C3A09F
 
+RideSkycicle:
+db $70, $58, $87, $95, $9c, $9c, $5c, $10, $0a, $90, $99, $a4, $57, $a3, $90, $9e
+db $9f, $a4, $90, $a4, $98, $95, $50, $83, $9b, $a9, $50, $82, $a5, $9e, $9e, $95
+db $a2, $5e, $03, $01, $70, $82, $99, $94, $95, $50, $99, $a4, $50, $91, $9e, $a9
+db $a7, $91, $a9, $a3, $6f, $59, $01
+db $19, $02
+db $89, $95, $A3, $02
+db $19, $02
+db $7E, $9F, $02
+db $1C, $07, $02
+db $11
+db $09, $02
+dd .Ride
+dd .DontRide
+db $0A
+dl .DontRide
+.Ride:
+db $12
+db $70, $58
+db $08
+dd $C7E6D7
+db $50
+db $a2, $9f, $94, $95, $50, $a4, $98, $95, $50, $83, $9b, $a9, $93, $99, $93, $9c
+db $95, $5e, $59, $1f, $02, $73, $10, $30
+db $18, $04
+db $1F, $21, $DA
+db $02
+.DontRide:
+db $12
+db $70, $58, $89, $95, $91, $98, $5c, $10, $0a, $50, $79, $50, $a7, $9f, $a5, $9c
+db $94, $9e, $57, $a4, $5C, $50, $95, $99, $a4, $98, $95, $a2, $5e, $59, $13, $02
+
+CheckForRubyPoo:
+db $1D, $05, $FF, $D0 ; Check for tiny ruby
+db $1B, $03
+dd $C8A997
+db $0A
+dl $C8A8E7
+
+
 ;ORG $C7617D
 ;dd DisplayAndGetMoney
 
@@ -18595,6 +18708,7 @@ incbin crashscreen.bin
 
 ORG $F3F000
 DisplayAndGetMoney:
+db $01
 db $1F, $02, $74
 db $18, $0A
 db $18, $03, $01
@@ -18629,6 +18743,7 @@ db $5E, $59
 db $1F, $02, $74
 db $10, $3C
 db $03
+db $1D, $19, $01
 db $02
 
 ;ORG $EEB0DA

@@ -35,6 +35,33 @@ class ProgressiveDamageUpgrade(Toggle):
     """Add the Heavenly Lilies to the item location check, as well as adding progressive damage upgrade to the itempool (each upgrade grants 2 extra damage)"""
     display_name = "Progressive Damage Upgrade"
     default = 0
+
+class ProgressiveHealthUpgrade(Toggle):
+    """Add the Dotted Berries to the item location check, as well as adding progressive health upgrade to the itempool (each upgrade grants 50 extra health)"""
+    display_name = "Progressive Health Upgrade"
+    default = 0
+
+class ProgressiveMagicUpgrade(Toggle):
+    """Add the Lun Berries to the item location check, as well as adding progressive magic upgrade to the itempool (each upgrade grants 10 extra magic)"""
+    display_name = "Progressive Magic Upgrade"
+    default = 0
+
+class ProgressiveStaminaUpgrade(Toggle):
+    """Add the Stamina Peaches to the item location check, as well as adding progressive stamina upgrade to the itempool"""
+    display_name = "Progressive Stamina Upgrade"
+    default = 0
+
+class ProgressiveLumenFairies(Toggle):
+    """Add the Lumen Fairies to the item location check, as well as adding progressive Lumen Fairies to the itempool (you need a total of 30 Lumen Fairies to unlock the Oracle Sigil)"""
+    display_name = "Progressive Lumen Fairies"
+    default = 0
+
+class VictoryCondition(Choice):
+    """Choose which boss must be defeated to be considered as having completed the game."""
+    display_name = "Victory Condition"
+    option_Moon_God_Selin = 0
+    option_Dora = 1
+    default = 0
 # class FastTravel(Choice):
 #     """Whether to start with Fast Travel, add it to the randomization pool, or keep it vanilla (Unlocking Fast Travel is still a location check)"""
 #     display_name = "Fast Travel Choice"
@@ -52,4 +79,9 @@ class MomodoraOptions(PerGameCommonOptions):
     oracle_sigil: OracleSigil
     final_boss_keys: ProgressiveFinalBossKeys
     progressive_damage_upgrade: ProgressiveDamageUpgrade
+    progressive_health_upgrade: ProgressiveHealthUpgrade
+    progressive_magic_upgrade: ProgressiveMagicUpgrade
+    progressive_stamina_upgrade: ProgressiveStaminaUpgrade
+    progressive_lumen_fairies: ProgressiveLumenFairies
+    victory_condition: VictoryCondition
     # fast_travel: FastTravel

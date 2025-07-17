@@ -3,7 +3,7 @@ from .enemy_attributes import excluded_enemies
 from ..enemy_data import spell_breaks
 from ..enemy_shuffler import enemy_ids
 
-battle_actions = {
+battle_actions = {  # Actions in camel case are scaled
     "Attack": 0x04,
     "Shoot": 0x05,
     "Spy": 0x06,
@@ -196,7 +196,7 @@ psi_actions = {
 }
 
 
-def randomize_enemy_attacks(world, rom):
+def randomize_enemy_attacks(world, rom) -> None:
     for enemy in world.enemies:
         if enemy not in excluded_enemies:
             enemy_ai = world.random.randint(0, 3)

@@ -247,6 +247,16 @@ def get_datapackage():
     import json
     return Response(json.dumps(network_data_package, indent=4), mimetype="text/plain")
 
+@app.route('/datapackage/<game_name>')
+@cache.cached()
+def get_datapackage_single(game_name):
+    """A pretty print version of /api/datapackage, filtered by an individual game"""
+    from worlds import network_data_package_single_game
+    import json
+    pkg = network_data_package_single_game.get(game_name)
+    if pkg is None:
+        abort(404, description=f"Game '{game_name}' not found")
+    return Response(json.dumps(pkg, indent=4), mimetype='text/plain')
 
 @app.route('/index')
 @app.route('/sitemap')

@@ -21,6 +21,7 @@ except OSError:  # can't access/write?
 
 __all__ = {
     "network_data_package",
+    "network_data_package_single_game",
     "AutoWorldRegister",
     "world_sources",
     "local_folder",
@@ -85,4 +86,9 @@ from .AutoWorld import AutoWorldRegister
     
 network_data_package: DataPackage = {
     "games": {world_name: world.get_data_package_data() for world_name, world in AutoWorldRegister.world_types.items()},
+}
+
+network_data_package_single_game: Dict[str, DataPackage] = {
+    game_name: {"games": {game_name: pkg_data}}
+    for game_name, pkg_data in network_data_package["games"].items()
 }

@@ -659,6 +659,132 @@ pit: typing.List[LocationData] = [
     #LocationData("Pit of 100 Trials Charlieton: Thunder Rage", 78780653, Rels.dol, [0x3C7270])
 ]
 
+tattlesanity_region: typing.List[LocationData] = [
+    LocationData("Tattle: Goomba", 78780850, Rels.dol, []),  # Tattle Log #1
+    LocationData("Tattle: Paragoomba", 78780851, Rels.dol, []),  # Tattle Log #2
+    LocationData("Tattle: Spiky Goomba", 78780852, Rels.dol, []),  # Tattle Log #3
+    LocationData("Tattle: Hyper Goomba", 78780853, Rels.dol, []),  # Tattle Log #4
+    LocationData("Tattle: Hyper Paragoomba", 78780854, Rels.dol, []),  # Tattle Log #5
+    LocationData("Tattle: Hyper Spiky Goomba", 78780855, Rels.dol, []),  # Tattle Log #6
+    LocationData("Tattle: Gloomba", 78780856, Rels.dol, []),  # Tattle Log #7
+    LocationData("Tattle: Paragloomba", 78780857, Rels.dol, []),  # Tattle Log #8
+    LocationData("Tattle: Spiky Gloomba", 78780858, Rels.dol, []),  # Tattle Log #9
+    LocationData("Tattle: Koopa Troopa", 78780859, Rels.dol, []),  # Tattle Log #10
+    LocationData("Tattle: Paratroopa", 78780860, Rels.dol, []),  # Tattle Log #11
+    LocationData("Tattle: KP Koopa", 78780861, Rels.dol, []),  # Tattle Log #12
+    LocationData("Tattle: KP Paratroopa", 78780862, Rels.dol, []),  # Tattle Log #13
+    LocationData("Tattle: Shady Koopa", 78780863, Rels.dol, []),  # Tattle Log #14
+    LocationData("Tattle: Shady Paratroopa", 78780864, Rels.dol, []),  # Tattle Log #15
+    LocationData("Tattle: Dark Koopa", 78780865, Rels.dol, []),  # Tattle Log #16
+    LocationData("Tattle: Dark Paratroopa", 78780866, Rels.dol, []),  # Tattle Log #17
+    LocationData("Tattle: Koopatrol", 78780867, Rels.dol, []),  # Tattle Log #18
+    LocationData("Tattle: Dark Koopatrol", 78780868, Rels.dol, []),  # Tattle Log #19
+    LocationData("Tattle: Dull Bones", 78780869, Rels.dol, []),  # Tattle Log #20
+    LocationData("Tattle: Red Bones", 78780870, Rels.dol, []),  # Tattle Log #21
+    LocationData("Tattle: Dry Bones", 78780871, Rels.dol, []),  # Tattle Log #22
+    LocationData("Tattle: Dark Bones", 78780872, Rels.dol, []),  # Tattle Log #23
+    LocationData("Tattle: Hammer Bro", 78780873, Rels.dol, []),  # Tattle Log #24
+    LocationData("Tattle: Boomerang Bro", 78780874, Rels.dol, []),  # Tattle Log #25
+    LocationData("Tattle: Fire Bro", 78780875, Rels.dol, []),  # Tattle Log #26
+    LocationData("Tattle: Lakitu", 78780876, Rels.dol, []),  # Tattle Log #27
+    LocationData("Tattle: Dark Lakitu", 78780877, Rels.dol, []),  # Tattle Log #28
+    LocationData("Tattle: Spiny", 78780878, Rels.dol, []),  # Tattle Log #29
+    LocationData("Tattle: Sky-Blue Spiny", 78780879, Rels.dol, []),  # Tattle Log #30
+    LocationData("Tattle: Buzzy Beetle", 78780880, Rels.dol, []),  # Tattle Log #31
+    LocationData("Tattle: Spike Top", 78780881, Rels.dol, []),  # Tattle Log #32
+    LocationData("Tattle: Parabuzzy", 78780882, Rels.dol, []),  # Tattle Log #33
+    LocationData("Tattle: Spiky Parabuzzy", 78780883, Rels.dol, []),  # Tattle Log #34
+    LocationData("Tattle: Red Spike Top", 78780884, Rels.dol, []),  # Tattle Log #35
+    LocationData("Tattle: Magikoopa", 78780885, Rels.dol, []),  # Tattle Log #36
+    LocationData("Tattle: Red Magikoopa", 78780886, Rels.dol, []),  # Tattle Log #37
+    LocationData("Tattle: White Magikoopa", 78780887, Rels.dol, []),  # Tattle Log #38
+    LocationData("Tattle: Green Magikoopa", 78780888, Rels.dol, []),  # Tattle Log #39
+    LocationData("Tattle: Kammy Koopa", 78780889, Rels.dol, []),  # Tattle Log #40
+    LocationData("Tattle: Bowser", 78780890, Rels.dol, []),  # Tattle Log #41
+    LocationData("Tattle: Gus", 78780891, Rels.dol, []),  # Tattle Log #42
+    LocationData("Tattle: Dark Craw", 78780892, Rels.dol, []),  # Tattle Log #43
+    LocationData("Tattle: Bandit", 78780893, Rels.dol, []),  # Tattle Log #44
+    LocationData("Tattle: Big Bandit", 78780894, Rels.dol, []),  # Tattle Log #45
+    LocationData("Tattle: Badge Bandit", 78780895, Rels.dol, []),  # Tattle Log #46
+    LocationData("Tattle: Spinia", 78780896, Rels.dol, []),  # Tattle Log #47
+    LocationData("Tattle: Spania", 78780897, Rels.dol, []),  # Tattle Log #48
+    LocationData("Tattle: Spunia", 78780898, Rels.dol, []),  # Tattle Log #49
+    LocationData("Tattle: Fuzzy", 78780899, Rels.dol, []),  # Tattle Log #50
+    LocationData("Tattle: Gold Fuzzy", 78780900, Rels.dol, []),  # Tattle Log #51
+    LocationData("Tattle: Green Fuzzy", 78780901, Rels.dol, []),  # Tattle Log #52
+    LocationData("Tattle: Flower Fuzzy", 78780902, Rels.dol, []),  # Tattle Log #53
+    LocationData("Tattle: Pokey", 78780903, Rels.dol, []),  # Tattle Log #54
+    LocationData("Tattle: Poison Pokey", 78780904, Rels.dol, []),  # Tattle Log #55
+    LocationData("Tattle: Pale Piranha", 78780905, Rels.dol, []),  # Tattle Log #56
+    LocationData("Tattle: Putrid Piranha", 78780906, Rels.dol, []),  # Tattle Log #57
+    LocationData("Tattle: Frost Piranha", 78780907, Rels.dol, []),  # Tattle Log #58
+    LocationData("Tattle: Piranha Plant", 78780908, Rels.dol, []),  # Tattle Log #59
+    LocationData("Tattle: Crazee Dayzee", 78780909, Rels.dol, []),  # Tattle Log #60
+    LocationData("Tattle: Amazy Dayzee", 78780910, Rels.dol, []),  # Tattle Log #61
+    LocationData("Tattle: Pider", 78780911, Rels.dol, []),  # Tattle Log #62
+    LocationData("Tattle: Arantula", 78780912, Rels.dol, []),  # Tattle Log #63
+    LocationData("Tattle: Swooper", 78780913, Rels.dol, []),  # Tattle Log #64
+    LocationData("Tattle: Swoopula", 78780914, Rels.dol, []),  # Tattle Log #65
+    LocationData("Tattle: Swampire", 78780915, Rels.dol, []),  # Tattle Log #66
+    LocationData("Tattle: Dark Puff", 78780916, Rels.dol, []),  # Tattle Log #67
+    LocationData("Tattle: Ruff Puff", 78780917, Rels.dol, []),  # Tattle Log #68
+    LocationData("Tattle: Ice Puff", 78780918, Rels.dol, []),  # Tattle Log #69
+    LocationData("Tattle: Poison Puff", 78780919, Rels.dol, []),  # Tattle Log #70
+    LocationData("Tattle: Boo", 78780920, Rels.dol, []),  # Tattle Log #71
+    LocationData("Tattle: Atomic Boo", 78780921, Rels.dol, []),  # Tattle Log #72
+    LocationData("Tattle: Dark Boo", 78780922, Rels.dol, []),  # Tattle Log #73
+    LocationData("Tattle: Ember", 78780923, Rels.dol, []),  # Tattle Log #74
+    LocationData("Tattle: Lava Bubble", 78780924, Rels.dol, []),  # Tattle Log #75
+    LocationData("Tattle: Phantom Ember", 78780925, Rels.dol, []),  # Tattle Log #76
+    LocationData("Tattle: Bald Cleft", 78780926, Rels.dol, []),  # Tattle Log #77
+    LocationData("Tattle: Hyper Bald Cleft", 78780927, Rels.dol, []),  # Tattle Log #78
+    LocationData("Tattle: Cleft", 78780928, Rels.dol, []),  # Tattle Log #79
+    LocationData("Tattle: Iron Cleft", 78780929, Rels.dol, []),  # Tattle Log #80
+    LocationData("Tattle: Hyper Cleft", 78780931, Rels.dol, []),  # Tattle Log #82
+    LocationData("Tattle: Moon Cleft", 78780932, Rels.dol, []),  # Tattle Log #83
+    LocationData("Tattle: Bristle", 78780933, Rels.dol, []),  # Tattle Log #84
+    LocationData("Tattle: Dark Bristle", 78780934, Rels.dol, []),  # Tattle Log #85
+    LocationData("Tattle: Bob-omb", 78780935, Rels.dol, []),  # Tattle Log #86
+    LocationData("Tattle: Bulky Bob-omb", 78780936, Rels.dol, []),  # Tattle Log #87
+    LocationData("Tattle: Bob-ulk", 78780937, Rels.dol, []),  # Tattle Log #88
+    LocationData("Tattle: Chain-Chomp", 78780938, Rels.dol, []),  # Tattle Log #89
+    LocationData("Tattle: Red Chomp", 78780939, Rels.dol, []),  # Tattle Log #90
+    LocationData("Tattle: Bill Blaster", 78780940, Rels.dol, []),  # Tattle Log #91
+    LocationData("Tattle: Bullet Bill", 78780941, Rels.dol, []),  # Tattle Log #92
+    LocationData("Tattle: B. Bill Blaster", 78780942, Rels.dol, []),  # Tattle Log #93
+    LocationData("Tattle: Bombshell Bill", 78780943, Rels.dol, []),  # Tattle Log #94
+    LocationData("Tattle: Dark Wizzerd", 78780944, Rels.dol, []),  # Tattle Log #95
+    LocationData("Tattle: Wizzerd", 78780945, Rels.dol, []),  # Tattle Log #96
+    LocationData("Tattle: Elite Wizzerd", 78780946, Rels.dol, []),  # Tattle Log #97
+    LocationData("Tattle: Blooper", 78780947, Rels.dol, []),  # Tattle Log #98
+    LocationData("Tattle: Hooktail", 78780948, Rels.dol, []),  # Tattle Log #99
+    LocationData("Tattle: Gloomtail", 78780949, Rels.dol, []),  # Tattle Log #100
+    LocationData("Tattle: Bonetail", 78780950, Rels.dol, []),  # Tattle Log #101
+    LocationData("Tattle: Rawk Hawk", 78780951, Rels.dol, []),  # Tattle Log #102
+    LocationData("Tattle: Macho Grubba", 78780952, Rels.dol, []),  # Tattle Log #103
+    LocationData("Tattle: Doopliss", 78780953, Rels.dol, []),  # Tattle Log #104
+    LocationData("Tattle: Cortez", 78780954, Rels.dol, []),  # Tattle Log #105
+    LocationData("Tattle: Smorg", 78780955, Rels.dol, []),  # Tattle Log #106
+    LocationData("Tattle: X-Naut", 78780956, Rels.dol, []),  # Tattle Log #107
+    LocationData("Tattle: X-Naut PhD", 78780957, Rels.dol, []),  # Tattle Log #108
+    LocationData("Tattle: Elite X-Naut", 78780958, Rels.dol, []),  # Tattle Log #109
+    LocationData("Tattle: Yux", 78780959, Rels.dol, []),  # Tattle Log #110
+    LocationData("Tattle: Mini-Yux", 78780960, Rels.dol, []),  # Tattle Log #111
+    LocationData("Tattle: Z-Yux", 78780961, Rels.dol, []),  # Tattle Log #112
+    LocationData("Tattle: Mini-Z-Yux", 78780962, Rels.dol, []),  # Tattle Log #113
+    LocationData("Tattle: X-Yux", 78780963, Rels.dol, []),  # Tattle Log #114
+    LocationData("Tattle: Mini-X-Yux", 78780964, Rels.dol, []),  # Tattle Log #115
+    LocationData("Tattle: Grodus X", 78780965, Rels.dol, []),  # Tattle Log #116
+    LocationData("Tattle: Magnus von Grapple", 78780966, Rels.dol, []),  # Tattle Log #117
+    LocationData("Tattle: Magnus von Grapple 2.0", 78780967, Rels.dol, []),  # Tattle Log #118
+    LocationData("Tattle: Lord Crump", 78780968, Rels.dol, []),  # Tattle Log #119
+    LocationData("Tattle: Sir Grodus", 78780969, Rels.dol, []),  # Tattle Log #120
+    LocationData("Tattle: Beldam", 78780970, Rels.dol, []),  # Tattle Log #121
+    LocationData("Tattle: Marilyn", 78780971, Rels.dol, []),  # Tattle Log #122
+    LocationData("Tattle: Vivian", 78780972, Rels.dol, []),  # Tattle Log #123
+    LocationData("Tattle: Shadow Queen", 78780973, Rels.dol, []),  # Tattle Log #124
+]
+
 shadow_queen: typing.List[LocationData] = [
     LocationData("Shadow Queen", None, Rels.las, [])
 ]
@@ -667,7 +793,7 @@ all_locations: typing.List[LocationData] = (rogueport + rogueport_westside + sew
                                             petal_left + petal_right + hooktails_castle + boggly_woods +
                                             great_tree + glitzville + twilight_town + twilight_trail + creepy_steeple +
                                             keelhaul_key + pirates_grotto + excess_express + riverside + poshley_heights +
-                                            fahr_outpost + xnaut_fortress + palace + riddle_tower + pit + shadow_queen)
+                                            fahr_outpost + xnaut_fortress + palace + riddle_tower + pit + shadow_queen + tattlesanity_region)
 
 location_table: typing.Dict[str, int] = {locData.name: locData.id for locData in all_locations}
 

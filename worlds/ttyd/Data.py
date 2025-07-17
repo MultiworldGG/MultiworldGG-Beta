@@ -623,102 +623,130 @@ location_gsw_info = {
     78780573: (GSWType.GSWF, 6257, 1),
     78780566: (GSWType.GSWF, 6258, 1),
     78780574: (GSWType.GSWF, 6259, 1),
-}
-
-tubu_dt = {
-    0x37491E: 0x0003,
-    0x37492A: 0x000C,
-    0x374936: 0x000C,
-    0x374942: 0x000C,
-    0x37494E: 0x0001,
-    0x37495A: 0x0003,
-    0x374966: 0x0003,
-    0x374972: 0x0003,
-    0x37497E: 0x0003,
-    0x37498A: 0x0002,
-    0x374996: 0x0002,
-    0x3749A2: 0x0002,
-    0x3749AE: 0x0002,
-    0x3749BA: 0x0001,
-    0x3749C6: 0x0003,
-    0x3749D2: 0x0003,
-    0x3749DE: 0x0010,
-    0x3749EA: 0x0010,
-    0x3749F6: 0x0010,
-    0x374A02: 0x0001,
-    0x374A0E: 0x0001,
-    0x374A1A: 0x0001,
-    0x374A26: 0x0001,
-    0x374A32: 0x0001,
-    0x374A3E: 0x0001,
-    0x374A4A: 0x0001,
-    0x374A56: 0x0001,
-    0x374A62: 0x0001,
-    0x374A6E: 0x0001,
-    0x374A7A: 0x0001,
-    0x374A86: 0x0001,
-    0x374A92: 0x0001,
-    0x374A9E: 0x0002,
-    0x374AAA: 0x0007,
-    0x374AB6: 0x0007,
-    0x374AC2: 0x0007,
-    0x374ACE: 0x0007,
-    0x374ADA: 0x0007,
-    0x374AE6: 0x0007,
-    0x374AF2: 0x0007,
-    0x374AFE: 0x0007,
-    0x374B0A: 0x0007,
-    0x374B16: 0x0006,
-    0x374B22: 0x0006,
-    0x374B2E: 0x0006,
-    0x374B3A: 0x0006,
-    0x374B46: 0x0006,
-    0x374B52: 0x0006,
-    0x374B5E: 0x0010,
-    0x374B6A: 0x0010,
-    0x374B76: 0x0010,
-    0x374B82: 0x0010,
-    0x374B8E: 0x0010,
-    0x374B9A: 0x0010,
-    0x374BA6: 0x0010,
-    0x374BB2: 0x0010,
-    0x374BBE: 0x0010,
-    0x374BCA: 0x0010,
-    0x374BD6: 0x0002,
-    0x374BE2: 0x0002,
-    0x374BEE: 0x0002,
-    0x374BFA: 0x0001,
-    0x374C06: 0x0001,
-    0x374C12: 0x0001,
-    0x374C1E: 0x0001,
-    0x374C2A: 0x0001,
-    0x374C36: 0x0001,
-    0x374C42: 0x0001,
-    0x374C4E: 0x0001,
-    0x374C5A: 0x0038,
-    0x374C66: 0x0038,
-    0x374C72: 0x0038,
-    0x374C7E: 0x0038,
-    0x374C8A: 0x0038,
-    0x374C96: 0x0040,
-    0x374CA2: 0x0040,
-    0x374CAE: 0x0040,
-    0x374CBA: 0x0002,
-    0x374CC6: 0x0006,
-    0x374CD2: 0x0006,
-    0x374CDE: 0x0006,
-    0x374CEA: 0x0006,
-    0x374CF6: 0x0006,
-    0x374D02: 0x0006,
-    0x374D0E: 0x0006,
-    0x374D1A: 0x0006,
-    0x374D26: 0x0009,
-    0x374D32: 0x0009,
-    0x374D3E: 0x0009,
-    0x374D4A: 0x0009,
-    0x374D56: 0x0002,
-    0x374D62: 0x0002,
-    0x374D6E: 0x0002
+    # Tattles
+    78780850: (GSWType.GSWF, 4475, 1),   # Tattle: Goomba
+    78780851: (GSWType.GSWF, 4476, 1),   # Tattle: Paragoomba
+    78780852: (GSWType.GSWF, 4477, 1),   # Tattle: Spiky Goomba
+    78780853: (GSWType.GSWF, 4478, 1),   # Tattle: Hyper Goomba
+    78780854: (GSWType.GSWF, 4479, 1),   # Tattle: Hyper Paragoomba
+    78780855: (GSWType.GSWF, 4480, 1),   # Tattle: Hyper Spiky Goomba
+    78780856: (GSWType.GSWF, 4481, 1),   # Tattle: Gloomba
+    78780857: (GSWType.GSWF, 4482, 1),   # Tattle: Paragloomba
+    78780858: (GSWType.GSWF, 4483, 1),   # Tattle: Spiky Gloomba
+    78780859: (GSWType.GSWF, 4484, 1),   # Tattle: Koopa Troopa
+    78780860: (GSWType.GSWF, 4485, 1),   # Tattle: Paratroopa
+    78780861: (GSWType.GSWF, 4486, 1),   # Tattle: KP Koopa
+    78780862: (GSWType.GSWF, 4487, 1),   # Tattle: KP Paratroopa
+    78780863: (GSWType.GSWF, 4488, 1),   # Tattle: Shady Koopa
+    78780864: (GSWType.GSWF, 4489, 1),   # Tattle: Shady Paratroopa
+    78780865: (GSWType.GSWF, 4490, 1),   # Tattle: Dark Koopa
+    78780866: (GSWType.GSWF, 4491, 1),   # Tattle: Dark Paratroopa
+    78780867: (GSWType.GSWF, 4492, 1),   # Tattle: Koopatrol
+    78780868: (GSWType.GSWF, 4493, 1),   # Tattle: Dark Koopatrol
+    78780869: (GSWType.GSWF, 4494, 1),   # Tattle: Dull Bones
+    78780870: (GSWType.GSWF, 4495, 1),   # Tattle: Red Bones
+    78780871: (GSWType.GSWF, 4496, 1),   # Tattle: Dry Bones
+    78780872: (GSWType.GSWF, 4497, 1),   # Tattle: Dark Bones
+    78780873: (GSWType.GSWF, 4498, 1),   # Tattle: Hammer Bro
+    78780874: (GSWType.GSWF, 4499, 1),   # Tattle: Boomerang Bro
+    78780875: (GSWType.GSWF, 4500, 1),   # Tattle: Fire Bro
+    78780876: (GSWType.GSWF, 4501, 1),   # Tattle: Lakitu
+    78780877: (GSWType.GSWF, 4502, 1),   # Tattle: Dark Lakitu
+    78780878: (GSWType.GSWF, 4503, 1),   # Tattle: Spiny
+    78780879: (GSWType.GSWF, 4504, 1),   # Tattle: Sky-Blue Spiny
+    78780880: (GSWType.GSWF, 4505, 1),   # Tattle: Buzzy Beetle
+    78780881: (GSWType.GSWF, 4506, 1),   # Tattle: Spike Top
+    78780882: (GSWType.GSWF, 4507, 1),   # Tattle: Parabuzzy
+    78780883: (GSWType.GSWF, 4508, 1),   # Tattle: Spiky Parabuzzy
+    78780884: (GSWType.GSWF, 4509, 1),   # Tattle: Red Spike Top
+    78780885: (GSWType.GSWF, 4510, 1),   # Tattle: Magikoopa
+    78780886: (GSWType.GSWF, 4511, 1),   # Tattle: Red Magikoopa
+    78780887: (GSWType.GSWF, 4512, 1),   # Tattle: White Magikoopa
+    78780888: (GSWType.GSWF, 4513, 1),   # Tattle: Green Magikoopa
+    78780889: (GSWType.GSWF, 4514, 1),   # Tattle: Kammy Koopa
+    78780890: (GSWType.GSWF, 4515, 1),   # Tattle: Bowser (Glitz Pit)
+    78780891: (GSWType.GSWF, 4516, 1),   # Tattle: Gus
+    78780892: (GSWType.GSWF, 4517, 1),   # Tattle: Dark Craw
+    78780893: (GSWType.GSWF, 4518, 1),   # Tattle: Bandit
+    78780894: (GSWType.GSWF, 4519, 1),   # Tattle: Big Bandit
+    78780895: (GSWType.GSWF, 4520, 1),   # Tattle: Badge Bandit
+    78780896: (GSWType.GSWF, 4521, 1),   # Tattle: Spinia
+    78780897: (GSWType.GSWF, 4522, 1),   # Tattle: Spania
+    78780898: (GSWType.GSWF, 4523, 1),   # Tattle: Spunia
+    78780899: (GSWType.GSWF, 4524, 1),   # Tattle: Fuzzy
+    78780900: (GSWType.GSWF, 4525, 1),   # Tattle: Gold Fuzzy
+    78780901: (GSWType.GSWF, 4526, 1),   # Tattle: Green Fuzzy
+    78780902: (GSWType.GSWF, 4527, 1),   # Tattle: Flower Fuzzy
+    78780903: (GSWType.GSWF, 4528, 1),   # Tattle: Pokey
+    78780904: (GSWType.GSWF, 4529, 1),   # Tattle: Poison Pokey
+    78780905: (GSWType.GSWF, 4530, 1),   # Tattle: Pale Piranha
+    78780906: (GSWType.GSWF, 4531, 1),   # Tattle: Putrid Piranha
+    78780907: (GSWType.GSWF, 4532, 1),   # Tattle: Frost Piranha
+    78780908: (GSWType.GSWF, 4533, 1),   # Tattle: Piranha Plant
+    78780909: (GSWType.GSWF, 4534, 1),   # Tattle: Crazee Dayzee
+    78780910: (GSWType.GSWF, 4535, 1),   # Tattle: Amazy Dayzee
+    78780911: (GSWType.GSWF, 4536, 1),   # Tattle: Pider
+    78780912: (GSWType.GSWF, 4537, 1),   # Tattle: Arantula
+    78780913: (GSWType.GSWF, 4538, 1),   # Tattle: Swooper
+    78780914: (GSWType.GSWF, 4539, 1),   # Tattle: Swoopula
+    78780915: (GSWType.GSWF, 4540, 1),   # Tattle: Swampire
+    78780916: (GSWType.GSWF, 4541, 1),   # Tattle: Dark Puff
+    78780917: (GSWType.GSWF, 4542, 1),   # Tattle: Ruff Puff
+    78780918: (GSWType.GSWF, 4543, 1),   # Tattle: Ice Puff
+    78780919: (GSWType.GSWF, 4544, 1),   # Tattle: Poison Puff
+    78780920: (GSWType.GSWF, 4545, 1),   # Tattle: Boo
+    78780921: (GSWType.GSWF, 4546, 1),   # Tattle: Atomic Boo
+    78780922: (GSWType.GSWF, 4547, 1),   # Tattle: Dark Boo
+    78780923: (GSWType.GSWF, 4548, 1),   # Tattle: Ember
+    78780924: (GSWType.GSWF, 4549, 1),   # Tattle: Lava Bubble
+    78780925: (GSWType.GSWF, 4550, 1),   # Tattle: Phantom Ember
+    78780926: (GSWType.GSWF, 4551, 1),   # Tattle: Bald Cleft
+    78780927: (GSWType.GSWF, 4552, 1),   # Tattle: Hyper Bald Cleft
+    78780928: (GSWType.GSWF, 4553, 1),   # Tattle: Cleft
+    78780929: (GSWType.GSWF, 4554, 1),   # Tattle: Iron Cleft
+    78780931: (GSWType.GSWF, 4556, 1),   # Tattle: Hyper Cleft
+    78780932: (GSWType.GSWF, 4557, 1),   # Tattle: Moon Cleft
+    78780933: (GSWType.GSWF, 4558, 1),   # Tattle: Bristle
+    78780934: (GSWType.GSWF, 4559, 1),   # Tattle: Dark Bristle
+    78780935: (GSWType.GSWF, 4560, 1),   # Tattle: Bob-omb
+    78780936: (GSWType.GSWF, 4561, 1),   # Tattle: Bulky Bob-omb
+    78780937: (GSWType.GSWF, 4562, 1),   # Tattle: Bob-ulk
+    78780938: (GSWType.GSWF, 4563, 1),   # Tattle: Chain-Chomp
+    78780939: (GSWType.GSWF, 4564, 1),   # Tattle: Red Chomp
+    78780940: (GSWType.GSWF, 4565, 1),   # Tattle: Bill Blaster
+    78780941: (GSWType.GSWF, 4566, 1),   # Tattle: Bullet Bill
+    78780942: (GSWType.GSWF, 4567, 1),   # Tattle: B. Bill Blaster
+    78780943: (GSWType.GSWF, 4568, 1),   # Tattle: Bombshell Bill
+    78780944: (GSWType.GSWF, 4569, 1),   # Tattle: Dark Wizzerd
+    78780945: (GSWType.GSWF, 4570, 1),   # Tattle: Wizzerd
+    78780946: (GSWType.GSWF, 4571, 1),   # Tattle: Elite Wizzerd
+    78780947: (GSWType.GSWF, 4572, 1),   # Tattle: Blooper
+    78780948: (GSWType.GSWF, 4573, 1),   # Tattle: Hooktail
+    78780949: (GSWType.GSWF, 4574, 1),   # Tattle: Gloomtail
+    78780950: (GSWType.GSWF, 4575, 1),   # Tattle: Bonetail
+    78780951: (GSWType.GSWF, 4576, 1),   # Tattle: Rawk Hawk
+    78780952: (GSWType.GSWF, 4577, 1),   # Tattle: Macho Grubba
+    78780953: (GSWType.GSWF, 4578, 1),   # Tattle: Doopliss
+    78780954: (GSWType.GSWF, 4579, 1),   # Tattle: Cortez
+    78780955: (GSWType.GSWF, 4580, 1),   # Tattle: Smorg
+    78780956: (GSWType.GSWF, 4581, 1),   # Tattle: X-Naut
+    78780957: (GSWType.GSWF, 4582, 1),   # Tattle: X-Naut PhD
+    78780958: (GSWType.GSWF, 4583, 1),   # Tattle: Elite X-Naut
+    78780959: (GSWType.GSWF, 4584, 1),   # Tattle: Yux
+    78780960: (GSWType.GSWF, 4585, 1),   # Tattle: Mini-Yux
+    78780961: (GSWType.GSWF, 4586, 1),   # Tattle: Z-Yux
+    78780962: (GSWType.GSWF, 4587, 1),   # Tattle: Mini-Z-Yux
+    78780963: (GSWType.GSWF, 4588, 1),   # Tattle: X-Yux
+    78780964: (GSWType.GSWF, 4589, 1),   # Tattle: Mini-X-Yux
+    78780965: (GSWType.GSWF, 4590, 1),   # Tattle: Grodus X
+    78780966: (GSWType.GSWF, 4591, 1),   # Tattle: Magnus von Grapple
+    78780967: (GSWType.GSWF, 4592, 1),   # Tattle: Magnus von Grapple 2.0
+    78780968: (GSWType.GSWF, 4593, 1),   # Tattle: Lord Crump
+    78780969: (GSWType.GSWF, 4594, 1),   # Tattle: Sir Grodus
+    78780970: (GSWType.GSWF, 4595, 1),   # Tattle: Beldam
+    78780971: (GSWType.GSWF, 4596, 1),   # Tattle: Marilyn
+    78780972: (GSWType.GSWF, 4597, 1),   # Tattle: Vivian
+    78780973: (GSWType.GSWF, 4598, 1),   # Tattle: Shadow Queen
 }
 
 item_prices = {
@@ -932,6 +960,133 @@ item_prices = {
     77772214: 20,  # Zap Tap
 }
 
+location_to_unit = {
+    78780850: [0x01, 0x24],  # Tattle: Goomba -> unit_kuriboo
+    78780851: [0x02],  # Tattle: Paragoomba -> unit_patakuri
+    78780852: [0x03],  # Tattle: Spiky Goomba -> unit_togekuri
+    78780853: [0x42],  # Tattle: Hyper Goomba -> unit_hyper_kuriboo
+    78780854: [0x43],  # Tattle: Hyper Paragoomba -> unit_hyper_patakuri
+    78780855: [0x44],  # Tattle: Hyper Spiky Goomba -> unit_hyper_togekuri
+    78780856: [0x99],  # Tattle: Gloomba -> unit_yami_kuriboo
+    78780857: [0x9a],  # Tattle: Paragloomba -> unit_yami_patakuri
+    78780858: [0x9b],  # Tattle: Spiky Gloomba -> unit_yami_togekuri
+    78780859: [0x0e],  # Tattle: Koopa Troopa -> unit_nokonoko
+    78780860: [0x0f],  # Tattle: Paratroopa -> unit_patapata
+    78780861: [0x25],  # Tattle: KP Koopa -> unit_nokonoko_fighter
+    78780862: [0x26],  # Tattle: KP Paratroopa -> unit_patapata_fighter
+    78780863: [0x2f],  # Tattle: Shady Koopa -> unit_ura_noko
+    78780864: [0x30],  # Tattle: Shady Paratroopa -> unit_ura_pata
+    78780865: [0x9c],  # Tattle: Dark Koopa -> unit_yami_noko
+    78780866: [0x9d],  # Tattle: Dark Paratroopa -> unit_yami_pata
+    78780867: [0x0b],  # Tattle: Koopatrol -> unit_togenoko
+    78780868: [0x3c],  # Tattle: Dark Koopatrol -> unit_togenoko_ace
+    78780869: [0x11],  # Tattle: Dull Bones -> unit_honenoko
+    78780870: [0x16],  # Tattle: Red Bones -> unit_red_honenoko
+    78780871: [0x82],  # Tattle: Dry Bones -> unit_karon
+    78780872: [0x83],  # Tattle: Dark Bones -> unit_black_karon
+    78780873: [0x38],  # Tattle: Hammer Bro -> unit_hammer_bros
+    78780874: [0x39],  # Tattle: Boomerang Bro -> unit_boomerang_bros
+    78780875: [0x3a],  # Tattle: Fire Bro -> unit_fire_bros
+    78780876: [0x28],  # Tattle: Lakitu -> unit_jyugem
+    78780877: [0x9f],  # Tattle: Dark Lakitu -> unit_hyper_jyugem
+    78780878: [0x29],  # Tattle: Spiny -> unit_togezo
+    78780879: [0xa0],  # Tattle: Sky-Blue Spiny -> unit_hyper_togezo
+    78780880: [0x48],  # Tattle: Buzzy Beetle -> unit_met
+    78780881: [0x49],  # Tattle: Spike Top -> unit_togemet
+    78780882: [0x59],  # Tattle: Parabuzzy -> unit_patamet
+    78780883: [0x69],  # Tattle: Spiky Parabuzzy -> unit_patatogemet
+    78780884: [0x2e],  # Tattle: Red Spike Top -> unit_crimson_togemet
+    78780885: [0x0C, 0x0D],  # Tattle: Magikoopa -> unit_kamec
+    78780886: [0x31, 0x32],  # Tattle: Red Magikoopa -> unit_kamec_red
+    78780887: [0x33, 0x34],  # Tattle: White Magikoopa -> unit_kamec_white
+    78780888: [0x35, 0x36],  # Tattle: Green Magikoopa -> unit_kamec_green
+    78780889: [0x91],  # Tattle: Kammy Koopa -> unit_boss_kamec_obaba
+    78780890: [0x90, 0x3F],  # Tattle: Bowser -> unit_boss_koopa
+    78780891: [0x07],  # Tattle: Gus -> unit_monban
+    78780892: [0x37],  # Tattle: Dark Craw -> unit_dark_keeper
+    78780893: [0x2c],  # Tattle: Bandit -> unit_borodo
+    78780894: [0x2d],  # Tattle: Big Bandit -> unit_borodo_king
+    78780895: [0x9e],  # Tattle: Badge Bandit -> unit_badge_borodo
+    78780896: [0x04],  # Tattle: Spinia -> unit_hinnya
+    78780897: [0x05],  # Tattle: Spania -> unit_hannya
+    78780898: [0xa3],  # Tattle: Spunia -> unit_hennya
+    78780899: [0x10, 0x15],  # Tattle: Fuzzy -> unit_chorobon
+    78780900: [0x14],  # Tattle: Gold Fuzzy -> unit_gold_chorobon
+    78780901: [0x56],  # Tattle: Green Fuzzy -> unit_green_chorobon
+    78780902: [0x57],  # Tattle: Flower Fuzzy -> unit_flower_chorobon
+    78780903: [0x27],  # Tattle: Pokey -> unit_sambo
+    78780904: [0x68],  # Tattle: Poison Pokey -> unit_sambo_mummy
+    78780905: [0x19],  # Tattle: Pale Piranha -> unit_monochrome_pakkun
+    78780906: [0x58],  # Tattle: Putrid Piranha -> unit_poison_pakkun
+    78780907: [0x71],  # Tattle: Frost Piranha -> unit_ice_pakkun
+    78780908: [0xa2],  # Tattle: Piranha Plant -> unit_pakkun_flower
+    78780909: [0x45],  # Tattle: Crazee Dayzee -> unit_pansy
+    78780910: [0x46],  # Tattle: Amazy Dayzee -> unit_twinkling_pansy
+    78780911: [0x1b],  # Tattle: Pider -> unit_piders
+    78780912: [0xa4],  # Tattle: Arantula -> unit_churantalar
+    78780913: [0x4a],  # Tattle: Swooper -> unit_basabasa
+    78780914: [0x7b],  # Tattle: Swoopula -> unit_basabasa_chururu
+    78780915: [0xa7],  # Tattle: Swampire -> unit_basabasa_green
+    78780916: [0x18],  # Tattle: Dark Puff -> unit_monochrome_kurokumorn
+    78780917: [0x67],  # Tattle: Ruff Puff -> unit_kurokumorn
+    78780918: [0x70],  # Tattle: Ice Puff -> unit_bllizard
+    78780919: [0xa6],  # Tattle: Poison Puff -> unit_dokugassun
+    78780920: [0x4b],  # Tattle: Boo -> unit_teresa
+    78780921: [0x4c],  # Tattle: Atomic Boo -> unit_atmic_teresa
+    78780922: [0x6a],  # Tattle: Dark Boo -> unit_purple_teresa
+    78780923: [0x54],  # Tattle: Ember -> unit_hermos
+    78780924: [0x55],  # Tattle: Lava Bubble -> unit_bubble
+    78780925: [0x7c],  # Tattle: Phantom Ember -> unit_phantom
+    78780926: [0x12],  # Tattle: Bald Cleft -> unit_sinnosuke
+    78780927: [0x2a],  # Tattle: Hyper Bald Cleft -> unit_hyper_sinnosuke
+    78780928: [0x1a],  # Tattle: Cleft -> unit_monochrome_sinemon
+    78780929: [0x3D, 0x3E],  # Tattle: Iron Cleft (Red) -> unit_iron_sinemon
+    78780931: [0x47],  # Tattle: Hyper Cleft -> unit_hyper_sinemon
+    78780932: [0x72],  # Tattle: Moon Cleft -> unit_sinemon
+    78780933: [0x13],  # Tattle: Bristle -> unit_togedaruma
+    78780934: [0xa5],  # Tattle: Dark Bristle -> unit_yamitogedaruma
+    78780935: [0x2b],  # Tattle: Bob-omb -> unit_bomhei
+    78780936: [0x5c],  # Tattle: Bulky Bob-omb -> unit_heavy_bom
+    78780937: [0xa8],  # Tattle: Bob-ulk -> unit_giant_bomb
+    78780938: [0x7f],  # Tattle: Chain-Chomp -> unit_wanwan
+    78780939: [0x3b],  # Tattle: Red Chomp -> unit_burst_wanwan
+    78780940: [0x5a],  # Tattle: Bill Blaster -> unit_killer_cannon
+    78780941: [0x5b],  # Tattle: Bullet Bill -> unit_killer
+    78780942: [0x7d],  # Tattle: B. Bill Blaster -> unit_super_killer_cannon
+    78780943: [0x7e],  # Tattle: Bombshell Bill -> unit_super_killer
+    78780944: [0x80, 0x81],  # Tattle: Dark Wizzerd -> unit_super_mahorn
+    78780945: [0xa1],  # Tattle: Wizzerd -> unit_mahorn
+    78780946: [0xA9, 0xAA],  # Tattle: Elite Wizzerd -> unit_mahorn_custom
+    78780947: [0x08, 0x09, 0x0A],  # Tattle: Blooper -> unit_boss_gesso
+    78780948: [0x17],  # Tattle: Hooktail -> unit_boss_gonbaba
+    78780949: [0x84],  # Tattle: Gloomtail -> unit_boss_bunbaba
+    78780950: [0xab],  # Tattle: Bonetail -> unit_boss_zonbaba
+    78780951: [0x40],  # Tattle: Rawk Hawk -> unit_boss_champion
+    78780952: [0x41],  # Tattle: Macho Grubba -> unit_boss_macho_gance
+    78780953: [0x4D, 0x4E, 0x4F],  # Tattle: Doopliss -> unit_boss_rampell
+    78780954: [0x5D, 0x5E, 0x5F, 0x60, 0x61, 0x62],  # Tattle: Cortez -> unit_boss_cortez
+    78780955: [0x6b, 0x6E, 0x6D, 0x6C, 0x6F],  # Tattle: Smorg -> unit_boss_moamoa
+    78780956: [0x1c, 0x64, 0x65, 0x66],  # Tattle: X-Naut -> unit_gundan_zako
+    78780957: [0x77],  # Tattle: X-Naut PhD -> unit_gundan_zako_magician
+    78780958: [0x78],  # Tattle: Elite X-Naut -> unit_gundan_zako_elite
+    78780959: [0x1d],  # Tattle: Yux -> unit_barriern
+    78780960: [0x1e],  # Tattle: Mini-Yux -> unit_barriern_satellite
+    78780961: [0x73],  # Tattle: Z-Yux -> unit_barriern_z
+    78780962: [0x74],  # Tattle: Mini-Z-Yux -> unit_barriern_z_satellite
+    78780963: [0x75],  # Tattle: X-Yux -> unit_barriern_custom
+    78780964: [0x76],  # Tattle: Mini-X-Yux -> unit_barriern_custom_satellite
+    78780965: [0x93],  # Tattle: Grodus X -> unit_boss_batten_satellite
+    78780966: [0x22, 0x23],  # Tattle: Magnus von Grapple -> unit_boss_magnum_battender
+    78780967: [0x79, 0x7A],  # Tattle: Magnus von Grapple 2.0 -> unit_boss_magnum_battender_mkII
+    78780968: [0x06],  # Tattle: Lord Crump -> unit_boss_kanbu1
+    78780969: [0x92],  # Tattle: Sir Grodus -> unit_boss_batten_leader
+    78780970: [0x1f, 0xBD, 0xC0, 0x85],  # Tattle: Beldam -> unit_boss_majolyne
+    78780971: [0x20, 0xBE, 0xC1, 0x86],  # Tattle: Marilyn -> unit_boss_marilyn
+    78780972: [0x21, 0xBF],  # Tattle: Vivian -> unit_boss_vivian
+    78780973: [0x94, 0x96, 0x97, 0x98, 0x95]  # Tattle: Shadow Queen -> unit_boss_black_peach
+}
+
+
 limit_one = [
     # petal_right
     78780161, 78780162, 78780185, 78780163, 78780164, 78780165, 78780166,
@@ -1003,7 +1158,10 @@ limit_five = [
     # pirates_grotto
     78780493, 78780494, 78780495, 78780496, 78780497, 78780498, 78780499,
     78780500, 78780501, 78780502, 78780503, 78780504, 78780505, 78780506,
-    78780507, 78780508, 78780509, 78780510
+    78780507, 78780508, 78780509, 78780510,
+
+    # Train Ticket
+    78780070
 ]
 
 limit_six = [
@@ -1046,6 +1204,11 @@ limit_eight = [
     78780636, 78780637
 ]
 
+limit_pit = [
+    78780638, 78780639, 78780640, 78780641, 78780642, 78780643,
+    78780644, 78780645, 78780646, 78780647
+]
+
 limited_location_ids = [
     limit_one,
     limit_two,
@@ -1054,7 +1217,7 @@ limited_location_ids = [
     limit_five,
     limit_six,
     limit_seven,
-    limit_eight
+    limit_eight,
 ]
 
 stars = [
@@ -1076,4 +1239,35 @@ chapter_items = {
     6: ["Elevator Key", "Ragged Diary", "Blanket", "Autograph", "Shell Earrings", "Gold Ring", "Briefcase", "Galley Pot", "Vital Paper", "Station Key 1", "Station Key 2"],
     7: ["Goldbob Guide", "Elevator Key 1", "Elevator Key 2", "Cog", "Card Key 1", "Card Key 2", "Card Key 3", "Card Key 4"],
     8: ["Palace Key", "Palace Key (Riddle Tower)", "Star Key"],
+}
+
+pit_exclusive_tattle_stars_required = {
+    1: [
+        "Tattle: Gloomba",
+        "Tattle: Paragloomba"
+    ],
+    2: [
+        "Tattle: Spiky Gloomba",
+        "Tattle: Dark Koopa"
+    ],
+    3: [
+        "Tattle: Dark Paratroopa",
+        "Tattle: Badge Bandit",
+        "Tattle: Dark Boo"
+    ],
+    4: [
+        "Tattle: Dark Lakitu",
+        "Tattle: Sky-Blue Spiny",
+        "Tattle: Wizzerd"
+    ],
+    5: [
+        "Tattle: Piranha Plant",
+        "Tattle: Dark Bristle",
+        "Tattle: Arantula",
+        "Tattle: Elite Wizzerd",
+        "Tattle: Swampire",
+        "Tattle: Poison Puff",
+        "Tattle: Bob-ulk",
+        "Tattle: Bonetail"
+    ]
 }

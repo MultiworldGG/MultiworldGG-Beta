@@ -1,0 +1,16 @@
+Metadata-Version: 2.4
+Name: PyFastYaz0Yay0
+Version: 2.0
+Summary: Functions for Yaz0 and Yay0 compressing and decompressing files, written in C.
+Home-page: https://github.com/LagoLunatic
+Author: LagoLunatic
+Author-email: 
+License-File: LICENSE.txt
+Dynamic: author
+Dynamic: description
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: summary
+
+
+Python module written in C for Yaz0 and Yay0 compressing and decompressing files with better performance than native Python code.

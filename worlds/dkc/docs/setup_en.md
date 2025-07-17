@@ -12,7 +12,7 @@
    - SNES v1.0 US MD5: `30c5f292ff4cbbfcc00fd8fa96c2de3b`
 
 ## Optional Software
-- [Map & Level tracker for Donkey Kong Country Archipelago](https://github.com/pwkfisher/ap-dkc-tracker/releases/), 
+- [Map & Level tracker for Donkey Kong Country MWGG](https://github.com/pwkfisher/ap-dkc-tracker/releases/), 
 to be used with [PopTracker](https://github.com/black-sliver/PopTracker/releases)
 - [Universal Tracker](https://github.com/FarisTheAncient/Archipelago/releases?q="Tracker_"&expanded=true)
 

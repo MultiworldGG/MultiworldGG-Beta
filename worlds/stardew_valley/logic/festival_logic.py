@@ -42,7 +42,7 @@ class FestivalLogic(BaseLogic):
             FestivalCheck.rarecrow_2: self.logic.money.can_spend(5000),
             FestivalCheck.fishing_competition: self.logic.festival.can_win_fishing_competition(),
             FestivalCheck.rarecrow_4: self.logic.money.can_spend(5000),
-            FestivalCheck.mermaid_pearl: self.logic.has(Forageable.secret_note),
+            FestivalCheck.mermaid_show: self.logic.has(Forageable.secret_note),
             FestivalCheck.cone_hat: self.logic.money.can_spend(2500),
             FestivalCheck.iridium_fireplace: self.logic.money.can_spend(15000),
             FestivalCheck.rarecrow_7: self.logic.money.can_spend(5000) & self.logic.museum.can_donate_museum_artifacts(20),
@@ -122,6 +122,9 @@ class FestivalLogic(BaseLogic):
     def can_succeed_luau_soup(self) -> StardewRule:
         if self.options.festival_locations != FestivalLocations.option_hard:
             return self.logic.true_
+        return self.can_get_luau_soup_delight()
+
+    def can_get_luau_soup_delight(self) -> StardewRule:
         eligible_fish = (Fish.blobfish, Fish.crimsonfish, Fish.ice_pip, Fish.lava_eel, Fish.legend, Fish.angler, Fish.catfish, Fish.glacierfish,
                          Fish.mutant_carp, Fish.spookfish, Fish.stingray, Fish.sturgeon, Fish.super_cucumber)
         fish_rule = self.logic.has_any(*(f for f in eligible_fish if f in self.content.fishes))  # To filter stingray
@@ -137,7 +140,9 @@ class FestivalLogic(BaseLogic):
     def can_succeed_grange_display(self) -> StardewRule:
         if self.options.festival_locations != FestivalLocations.option_hard:
             return self.logic.true_
+        return self.can_get_grange_display_max_score()
 
+    def can_get_grange_display_max_score(self) -> StardewRule:
         # Other animal products are not counted in the animal product category
         good_animal_products = [
             AnimalProduct.duck_egg, AnimalProduct.duck_feather, AnimalProduct.egg, AnimalProduct.goat_milk, AnimalProduct.golden_egg, AnimalProduct.large_egg,
@@ -157,7 +162,7 @@ class FestivalLogic(BaseLogic):
         fish_rule = self.logic.fishing.can_fish_anywhere(50)
 
         # Hazelnut always available since the grange display is in fall
-        forage_rule = self.logic.region.can_reach_any((Region.forest, Region.backwoods))
+        forage_rule = self.logic.region.can_reach_any(Region.forest, Region.backwoods)
 
         # More than half the minerals are good enough
         mineral_rule = self.logic.action.can_open_geode(Generic.any)

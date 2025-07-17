@@ -5,7 +5,7 @@ import pkgutil
 GAME_NAME: str = "OpenRCT2"
 AUTHOR: str = "Crazycolbster"
 IGDB_ID: int = 80720
-VERSION: str = "v0.1.18-beta"
+VERSION: str = "v0.1.19-beta"
 
 # Sent to the game to verify that the plugin version is compatible
 apworld_version = VERSION

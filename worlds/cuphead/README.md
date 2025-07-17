@@ -1,8 +1,8 @@
-# CupheadArchipelago World
+# CupheadArchipelago AP World
 
 *Archipelago World Created by JKLeckr*
 
-MultiworldGG: [GitHub](https://github.com/MultiworldGG/MultiworldGG)
+Archipelago: [GitHub](https://github.com/ArchipelagoMW/Archipelago)
 
 Client Mod: [CupheadArchipelago](https://github.com/JKLeckr/CupheadArchipelagoMod)
 

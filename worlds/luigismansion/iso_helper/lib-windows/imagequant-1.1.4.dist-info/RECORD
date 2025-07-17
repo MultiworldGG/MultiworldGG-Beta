@@ -1,0 +1,11 @@
+imagequant-1.1.4.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+imagequant-1.1.4.dist-info/METADATA,sha256=0RjLDtnLkq1zRB5rURDqU_k3_-mcX9GoD4w4xQX81Oo,7397
+imagequant-1.1.4.dist-info/RECORD,,
+imagequant-1.1.4.dist-info/WHEEL,sha256=ovhA9_Ei_7ok2fAych90j-feDV4goiAxbO7REePtvw0,101
+imagequant-1.1.4.dist-info/licenses/LICENSE,sha256=WjuRuFXN2gXuJFKlhnK19ITS8sBlwOjdbRMCCU5oISA,1521
+imagequant-1.1.4.dist-info/top_level.txt,sha256=9AzQ9NgvAz4fDBTQwr6nG2LtlMnV88Dm3IGIkx0ZfGo,11
+imagequant/__init__.py,sha256=vKQzx50YlbF6T0ea0O8g_4MRmOQkT-JaxUmCOnsXpKc,7240
+imagequant/__pycache__/__init__.cpython-312.pyc,,
+imagequant/__pycache__/libimagequant_build.cpython-312.pyc,,
+imagequant/_libimagequant.pyd,sha256=pIfQEB5zUj4TE99gIS91tnU4pvC3nARMiFy8AUWeTAA,98816
+imagequant/libimagequant_build.py,sha256=OL-3EjI_gjcwOpAaVoRcmYQj1G-rc5Y7jIbTvZgGays,840

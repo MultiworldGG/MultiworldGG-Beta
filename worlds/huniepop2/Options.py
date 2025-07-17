@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from Options import PerGameCommonOptions, Range, Toggle, OptionSet, Visibility
+from Options import PerGameCommonOptions, Range, Toggle, OptionSet, Visibility, Choice
 
 
 class starting_pairs(Range):
@@ -147,6 +147,41 @@ class filler_item(Range):
     range_end = 3
     default = 3
 
+class outfits_require_date_completion(Toggle):
+    """require date to be successfully completed before outfit can be unlocked"""
+    display_name = "outfit require date completion"
+    default = False
+
+class boss_wings_requirement(Range):
+    """number of wings required to access the boss
+    NOTE: Asking Kyu about the wings will show you the amount of wings needed"""
+    display_name = "boss wing requirement"
+    range_start = 1
+    range_end = 24
+    default = 24
+
+class player_gender(Choice):
+    """sets the players gender in game"""
+    display_name = "player gender"
+    option_male = 0
+    option_female = 1
+    default = 0
+
+class polly_gender(Choice):
+    """sets pollys gender in game"""
+    display_name = "polly gender"
+    option_innie = 0
+    option_outie = 1
+    default = 0
+
+class game_difficulty(Choice):
+    """sets the client game difficulty"""
+    display_name = "game client difficulty"
+    option_chad = 0
+    option_average_guy = 1
+    option_incel = 2
+    default = 1
+
 
 @dataclass
 class HP2Options(PerGameCommonOptions):
@@ -169,3 +204,8 @@ class HP2Options(PerGameCommonOptions):
     filler_item: filler_item
     exclude_shop_items: exclude_shop_items
     hide_shop_item_details: hide_shop_item_details
+    outfits_require_date_completion: outfits_require_date_completion
+    boss_wings_requirement: boss_wings_requirement
+    player_gender:player_gender
+    polly_gender:polly_gender
+    game_difficulty:game_difficulty

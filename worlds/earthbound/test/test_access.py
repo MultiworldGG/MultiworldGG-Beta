@@ -59,3 +59,8 @@ class TestEnemizer(EarthBoundTestBase):
         "EnemizerAttacks": True,
         "EnemizerAttributes": True,
     }
+
+class TestMapPalettes(EarthBoundTestBase):
+    options = {
+        "RandomMapColors": 3,
+    }

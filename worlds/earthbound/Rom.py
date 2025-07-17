@@ -8,7 +8,7 @@ from worlds.Files import APProcedurePatch, APTokenMixin, APTokenTypes, APPatchEx
 from .game_data import local_data
 from .game_data.battle_bg_data import battle_bg_bpp
 from .modules.psi_shuffle import write_psi
-from .game_data.text_data import barf_text, eb_text_table, text_encoder
+from .game_data.text_data import barf_text, text_encoder
 from .modules.flavor_data import flavor_data, vanilla_flavor_pointers
 from .modules.hint_data import parse_hint_data
 from .modules.enemy_data import scale_enemies
@@ -81,7 +81,7 @@ class LocalRom(object):
         return bytes(self.file)
 
 
-def patch_rom(world, rom, player: int):
+def patch_rom(world, rom, player: int) -> None:
     rom.copy_bytes(0x1578DD, 0x3E, 0x34A060)  # Threed/Saturn teleport move
     rom.copy_bytes(0x15791B, 0xF8, 0x157959)
 
@@ -141,7 +141,7 @@ def patch_rom(world, rom, player: int):
     for item in world.multiworld.precollected_items[world.player]:
         world.start_items.append(item.name)
 
-    if world.options.random_start_location != 0:
+    if world.options.random_start_location:
         rom.write_bytes(0x0F96C2, bytearray([0x69, 0x00]))
         rom.write_bytes(0x0F9618, bytearray([0x69, 0x00]))
         rom.write_bytes(0x0F9629, bytearray([0x69, 0x00]))  # Block Northern Onett
@@ -178,7 +178,7 @@ def patch_rom(world, rom, player: int):
     else:
         rom.write_bytes(0x04FD72, bytearray([0xFF]))
 
-    if world.options.giygas_required == 0:
+    if not world.options.giygas_required:
         rom.write_bytes(0x2E9C29, bytearray([0x10, 0xA5]))
 
     if world.options.magicant_mode == 2:
@@ -228,22 +228,11 @@ def patch_rom(world, rom, player: int):
             else:
                 item = location.item.name
             item_name_loc = (((location.address - 0xEB0000) * 128) + 0x3F0000)
-            item_text = bytearray(0)
-            player_text = bytearray(0)
             # todo; replace with the encoder function
-            for char in location.item.name[:128]:
-                if char in eb_text_table:
-                    item_text.extend(eb_text_table[char])
-                else:
-                    item_text.extend([0x6F])
+            item_text = text_encoder(location.item.name, 128)
             item_text.extend([0x00])
             player_name_loc = (((location.address - 0xEB0000) * 48) + 0x3F8000)
-            for char in receiver_name[:48]:
-                if char in eb_text_table:
-                    player_text.extend(eb_text_table[char])
-                else:
-                    player_text.extend([0x6F])
-            player_text.extend([0x00])
+            player_text = text_encoder(receiver_name, 48)
             # Locations over this address are Shopsanity locations and handled in the shopsanity module
             if location.address < 0xEB1000:
                 rom.write_bytes(item_name_loc, bytearray(item_text))
@@ -300,9 +289,9 @@ def patch_rom(world, rom, player: int):
                     rom.write_bytes(psi_locations[name][0], special_name_table[item][1].to_bytes(3, byteorder="little"))
                     rom.write_bytes(psi_locations[name][0] + 4, bytearray([0x00, 0x00, 0x00, 0x00, 0x00, 0x00]))
                 elif item in money_item_table and location.item.player == location.player:
-                    rom.write_bytes(psi_locations[name][0] -1, bytearray([0x1D, 0x25]))
-                    rom.write_bytes(psi_locations[name][0] +1, struct.pack("H", money_item_table[item]))
-                    rom.write_bytes(psi_locations[name][0] +3, bytearray([0x08, 0x25, 0xF0, 0xF3, 0x00, 0x03, 0x00]))
+                    rom.write_bytes(psi_locations[name][0] - 1, bytearray([0x1D, 0x25]))
+                    rom.write_bytes(psi_locations[name][0] + 1, struct.pack("H", money_item_table[item]))
+                    rom.write_bytes(psi_locations[name][0] + 3, bytearray([0x08, 0x26, 0xF0, 0xF3, 0x00, 0x03, 0x00]))
                 else:
                     rom.write_bytes(psi_locations[name][0], bytearray(psi_locations[name][1:4]))
                     rom.write_bytes(psi_locations[name][4], bytearray([item_id]))
@@ -324,7 +313,7 @@ def patch_rom(world, rom, player: int):
                     rom.write_bytes(character_locations[name][2] - 1, bytearray([0x1D, 0x25]))
                     rom.write_bytes(character_locations[name][2] + 1, struct.pack("H", money_item_table[item]))
                     rom.write_bytes(character_locations[name][0] - 2, bytearray([0x01]))
-                    rom.write_bytes(character_locations[name][0], bytearray([0x4A, 0xF0, 0xF3]))
+                    rom.write_bytes(character_locations[name][0], bytearray([0x4B, 0xF0, 0xF3]))
                     rom.write_bytes(character_locations[name][1], bytearray([0x97]))
                 else:
                     rom.write_bytes(character_locations[name][0], bytearray(character_locations[name][4:7]))
@@ -485,6 +474,7 @@ def patch_rom(world, rom, player: int):
         rom.write_bytes(0x0912F2, bytearray([0x0A, 0xFE, 0xBF, 0xEE]))
         rom.write_bytes(0x2EBFFE, bytearray([0x00, 0x1B, 0x04, 0x15, 0x38, 0x1F, 0x81, 0xFF, 0xFF, 0x1B, 0x04, 0x0A, 0xF7, 0x12, 0xC9]))  # Hospitals = 0$
         rom.write_bytes(0x04C822, bytearray([0xEA, 0xEA, 0xEA, 0xEA]))
+        rom.write_bytes(0x04C7F7, bytearray([0x00, 0x00])) # Stop "rounding up" the money
 
     if world.options.magicant_mode >= 2:
         rom.write_bytes(0x077629, bytearray([item_id_table[world.magicant_junk[0]]]))
@@ -736,13 +726,13 @@ class EBProcPatch(APProcedurePatch, APTokenMixin):
     def get_source_data(cls) -> bytes:
         return get_base_rom_bytes()
 
-    def write_byte(self, offset, value):
+    def write_byte(self, offset, value) -> None:
         self.write_token(APTokenTypes.WRITE, offset, value.to_bytes(1, "little"))
 
-    def write_bytes(self, offset, value: typing.Iterable[int]):
+    def write_bytes(self, offset, value: typing.Iterable[int]) -> None:
         self.write_token(APTokenTypes.WRITE, offset, bytes(value))
     
-    def copy_bytes(self, source, amount, destination):
+    def copy_bytes(self, source, amount, destination) -> None:
         self.write_token(APTokenTypes.COPY, destination, (amount, source))
 
 

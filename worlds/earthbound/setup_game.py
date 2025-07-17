@@ -7,7 +7,7 @@ from .modules.enemy_shuffler import shuffle_enemies
 from .modules.dungeon_er import shuffle_dungeons
 
 
-def setup_gamevars(world):
+def setup_gamevars(world) -> None:
     world.slime_pile_wanted_item = world.random.choice([
         "Cookie",
         "Bag of Fries",
@@ -159,7 +159,7 @@ def setup_gamevars(world):
     if world.options.magicant_mode != 00:
         valid_starts -= 1
 
-    if world.options.random_start_location == 1:
+    if world.options.random_start_location:
         world.start_location = world.random.randint(1, valid_starts)
     else:
         world.start_location = 0
@@ -337,7 +337,7 @@ def setup_gamevars(world):
     else:
         world.franklin_protection = "thunder"
 
-    if world.options.random_start_location == 1:
+    if world.options.random_start_location:
         world.valid_teleports = [
             "Onett Teleport",
             "Twoson Teleport",
@@ -429,7 +429,7 @@ def setup_gamevars(world):
     shuffle_dungeons(world)
 
 
-def place_static_items(world):
+def place_static_items(world) -> None:
     world.get_location("Belch Defeated").place_locked_item(world.create_item("Threed Tunnels Clear"))
     world.get_location("Dungeon Man Submarine").place_locked_item(world.create_item("Submarine to Deep Darkness"))
     world.get_location("Any ATM").place_locked_item(world.create_item("ATM Access"))
@@ -445,7 +445,7 @@ def place_static_items(world):
 
     world.get_location("Carpainter Defeated").place_locked_item(world.create_item("Valley Bridge Repair"))
 
-    if world.options.giygas_required == 1:
+    if world.options.giygas_required:
         world.get_location("Giygas").place_locked_item(world.create_item("Saved Earth"))  # Normal final boss
         if world.options.magicant_mode == 1:
             # If required magicant

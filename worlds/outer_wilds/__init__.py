@@ -29,8 +29,8 @@ class OuterWildsWebWorld(WebWorld):
 
 class OuterWildsWorld(World):
     """
-    Outer Wilds is a 2019 adventure video game developed by Mobius Digital.
-    The game follows the player character as they explore a planetary system stuck in a 22-minute time loop that resets after the sun goes supernova and destroys the system.
+    Outer Wilds is a 2019 action-adventure game about exploring a planetary system stuck in a very short time loop that resets after the sun goes supernova and destroys the system. 
+    Through repeated attempts, they investigate the alien ruins of the Nomai to discover their history and the cause of the time loop.
     """
     game = GAME_NAME
     igdb_id = IGDB_ID

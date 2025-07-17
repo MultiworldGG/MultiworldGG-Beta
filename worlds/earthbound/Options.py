@@ -440,6 +440,11 @@ class RandomMapColors(Choice):
     option_nonsense = 3
     default = 0
 
+class SafeFinalBoss(DefaultOnToggle):
+    """Prevents specific difficult bosses from being randomized onto Heavily Armed Pokey's boss slot.
+       Only affects Boss Shuffle, and does not affect Phase 2 Giygas if Boss Shuffle Add Giygas is enabled."""
+    display_name = "Safe Final Boss"
+
 
 @dataclass
 class EBOptions(PerGameCommonOptions):
@@ -459,6 +464,7 @@ class EBOptions(PerGameCommonOptions):
     boss_shuffle: BossShuffle
     decouple_diamond_dog: DecoupleDiamondDog
     boss_shuffle_add_giygas: ShuffleGiygas
+    safe_final_boss: SafeFinalBoss
     randomize_enemy_attributes: EnemizerAttributes
     randomize_enemy_stats: EnemizerStats
     randomize_enemy_attacks: EnemizerAttacks
@@ -549,6 +555,7 @@ eb_option_groups = [
     OptionGroup("Enemy Randomization", [
         EnemyShuffle,
         BossShuffle,
+        SafeFinalBoss,
         DecoupleDiamondDog,
         ShuffleGiygas,
         ExperienceModifier,

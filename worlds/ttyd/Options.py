@@ -24,6 +24,13 @@ class PitItems(Choice):
     option_all = 2
     default = 1
 
+class TattleSanityOption(Toggle):
+    """
+    Creates a location for every enemy being tattled.
+    All key items can possibly be placed in these locations.
+    """
+    display_name = "Tattlesanity"
+
 class LimitChapterLogic(Toggle):
     """
     Progression items will only appear in required chapters, and in common areas. You will not need to
@@ -64,10 +71,24 @@ class FullRunBar(Toggle):
 
 class DisableIntermissions(Toggle):
     """
-    After obtaining a crystal star, mario will stay in the bosses room,
+    After obtaining a crystal star, mario will stay in the boss' room,
     and the sequence will be updated past the intermission.
     """
     display_name = "Disable Intermissions"
+
+class FastTravel(Toggle):
+    """
+    Enable this to gain the ability to warp to any area you have visited from the map
+    screen in the main menu. Press A on the destination to open the warp confirmation dialog.
+    """
+    display_name = "Fast Travel"
+
+class AlwaysSucceedConditions(Toggle):
+    """
+    Enable this to make it so the battle condition in fights in the Glitz Pit
+    will always be fulfilled, regardless of their actual fulfillment.
+    """
+    display_name = "Always Succeed Conditions"
 
 class StartingHP(Range):
     """
@@ -125,15 +146,15 @@ class YoshiColor(Choice):
     Select the color of your Yoshi partner.
     """
     display_name = "Yoshi Color"
-    option_green = 0
-    option_red = 1
-    option_blue = 2
-    option_orange = 3
-    option_pink = 4
-    option_black = 5
-    option_white = 6
-    option_random_color = 7
-    default = 0
+    option_green = 1
+    option_red = 2
+    option_blue = 3
+    option_orange = 4
+    option_pink = 5
+    option_black = 6
+    option_white = 7
+    option_random_color = 8
+    default = 1
 
 class YoshiName(FreeText):
     """
@@ -149,11 +170,14 @@ class YoshiName(FreeText):
 class TTYDOptions(PerGameCommonOptions):
     start_inventory_from_pool: StartInventoryPool
     chapter_clears: ChapterClears
+    tattlesanity: TattleSanityOption
     pit_items: PitItems
     limit_chapter_logic: LimitChapterLogic
     limit_chapter_eight: LimitChapterEight
     palace_skip: PalaceSkip
     disable_intermissions: DisableIntermissions
+    fast_travel: FastTravel
+    succeed_conditions: AlwaysSucceedConditions
     open_westside: OpenWestside
     permanent_peekaboo: PermanentPeekaboo
     full_run_bar: FullRunBar

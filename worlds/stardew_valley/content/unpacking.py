@@ -5,7 +5,7 @@ from typing import Iterable, Mapping, Callable
 
 from .game_content import StardewContent, ContentPack, StardewFeatures
 from .vanilla.base import base_game as base_game_content_pack
-from ..data.game_item import GameItem, Source
+from ..data.game_item import Source
 
 
 def unpack_content(features: StardewFeatures, packs: Iterable[ContentPack]) -> StardewContent:
@@ -52,6 +52,7 @@ def register_pack(content: StardewContent, pack: ContentPack):
     register_sources_and_call_hook(content, pack.shop_sources, pack.shop_source_hook)
     register_sources_and_call_hook(content, pack.crafting_sources, pack.crafting_hook)
     register_sources_and_call_hook(content, pack.artisan_good_sources, pack.artisan_good_hook)
+    register_sources_and_call_hook(content, {hat.name: sources for hat, sources in pack.hat_sources.items()}, pack.hat_source_hook)
 
     for fish in pack.fishes:
         content.fishes[fish.name] = fish
@@ -73,6 +74,10 @@ def register_pack(content: StardewContent, pack: ContentPack):
         content.skills[skill.name] = skill
     pack.skill_hook(content)
 
+    for hat in pack.hat_sources:
+        content.hats[hat.name] = hat
+    pack.hat_source_hook(content)
+
     # register_quests
 
     # ...
@@ -84,14 +89,7 @@ def register_sources_and_call_hook(content: StardewContent,
                                    sources_by_item_name: Mapping[str, Iterable[Source]],
                                    hook: Callable[[StardewContent], None]):
     for item_name, sources in sources_by_item_name.items():
-        item = content.game_items.setdefault(item_name, GameItem(item_name))
-        item.add_sources(sources)
-
-        for source in sources:
-            for requirement_name, tags in source.requirement_tags.items():
-                requirement_item = content.game_items.setdefault(requirement_name, GameItem(requirement_name))
-                requirement_item.add_tags(tags)
-
+        content.source_item(item_name, *sources)
     hook(content)
 
 

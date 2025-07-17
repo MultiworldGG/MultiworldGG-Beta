@@ -281,7 +281,7 @@ class EarthBoundWorld(World):
         create_flavors(self)
         initialize_enemies(self)
 
-        if self.options.character_shuffle == 0:
+        if not self.options.character_shuffle:
             self.options.local_items.value.update(["Paula", "Jeff", "Poo", "Flying Man"])
             self.event_count += 6
 
@@ -306,7 +306,7 @@ class EarthBoundWorld(World):
         prefill_locations = []
         prefill_items = []
 
-        if self.options.character_shuffle == 0:
+        if not self.options.character_shuffle:
             main_characters = ["Ness", "Paula", "Jeff", "Poo"]
             for character in main_characters:
                 if character != self.starting_character:
@@ -337,7 +337,7 @@ class EarthBoundWorld(World):
         fill_restrictive(self.multiworld, self.multiworld.get_all_state(False), prefill_locations, prefill_items, True, True)
         setup_hints(self)
 
-    def get_pre_fill_items(self):
+    def get_pre_fill_items(self) -> list:
         characters = ["Ness", "Paula", "Jeff", "Poo"]
         prefill_items = []
         for character in characters:
@@ -346,7 +346,7 @@ class EarthBoundWorld(World):
         return prefill_items
 
     @classmethod
-    def stage_generate_output(cls, multiworld, output_directory):
+    def stage_generate_output(cls, multiworld, output_directory) -> None:
         multiworld.eb_spheres = list(multiworld.get_spheres())
         for world in multiworld.get_game_worlds("EarthBound"):
             world.get_all_spheres.set()
@@ -354,7 +354,7 @@ class EarthBoundWorld(World):
     def generate_output(self, output_directory: str) -> None:
         try:
             patch = EBProcPatch(player=self.player, player_name=self.multiworld.player_name[self.player])
-            patch.write_file("earthbound_basepatch.bsdiff4", pkgutil.get_data(__name__, "earthbound_basepatch.bsdiff4"))
+            patch.write_file("earthbound_basepatch.bsdiff4", pkgutil.get_data(__name__, "src/earthbound_basepatch.bsdiff4"))
             patch_rom(self, patch, self.player)
 
             self.rom_name = patch.name
@@ -366,7 +366,7 @@ class EarthBoundWorld(World):
         finally:
             self.rom_name_available_event.set()  # make sure threading continues and errors are collected
 
-    def extend_hint_information(self, hint_data: Dict[int, Dict[int, str]]):
+    def extend_hint_information(self, hint_data: Dict[int, Dict[int, str]]) -> None:
         if self.options.dungeon_shuffle:
             dungeon_entrances = {}
             dungeon_mapping = {}
@@ -467,8 +467,10 @@ class EarthBoundWorld(World):
                 )
         
         spoiler_handle.write("\nArea Levels:\n")
+        spoiler_excluded_areas = ["Ness's Mind", "Global ATM Access", "Common Condiment Shop"]
         for area in self.area_levels:
-            spoiler_handle.write(f" {area}: Level {self.area_levels[area]}\n")
+            if area not in spoiler_excluded_areas:
+                spoiler_handle.write(f" {area}: Level {self.area_levels[area]}\n")
 
     def create_item(self, name: str) -> Item:
         data = item_table[name]
@@ -506,7 +508,7 @@ class EarthBoundWorld(World):
         if self.options.magicant_mode not in [0, 3]:
             excluded_items.add("Magicant Teleport")
 
-        if self.options.character_shuffle == 0:
+        if not self.options.character_shuffle:
             excluded_items.add("Ness")
             excluded_items.add("Paula")
             excluded_items.add("Jeff")

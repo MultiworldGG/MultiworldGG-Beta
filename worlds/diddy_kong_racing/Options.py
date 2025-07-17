@@ -44,6 +44,7 @@ class DoorRequirementProgression(Choice):
     option_vanilla = 0
     option_linear = 1
     option_exponential = 2
+    default = option_vanilla
 
 
 class MaximumDoorRequirement(Range):
@@ -99,6 +100,23 @@ class Wizpig2Balloons(Range):
     default = range_end
 
 
+class RandomizeCharacterOnMapChange(Toggle):
+    """Randomly change your character every time the map is changed"""
+    display_name = "Randomize character on map change"
+
+
+class PowerUpBalloonType(Choice):
+    """
+    Alter the power-up balloons in races (does not affect boss races):
+        Random (visible): Power-up balloons will visually shuffle between all types.
+        Random (hidden): Power-up balloons will shuffle between all types, but always appear rainbow.
+    """
+    display_name = "Power-up balloon type"
+    option_vanilla = 0
+    option_random_visible = 1
+    option_random_hidden = 2
+    default = option_vanilla
+
 class SkipTrophyRaces(DefaultOnToggle):
     """Start with all 1st place trophies, so you only need to beat Wizpig 1 to unlock Future Fun Land"""
     display_name = "Skip trophy races"
@@ -118,4 +136,6 @@ class DiddyKongRacingOptions(PerGameCommonOptions):
     wizpig_1_amulet_pieces: Wizpig1AmuletPieces
     wizpig_2_amulet_pieces: Wizpig2AmuletPieces
     wizpig_2_balloons: Wizpig2Balloons
+    randomize_character_on_map_change: RandomizeCharacterOnMapChange
+    power_up_balloon_type: PowerUpBalloonType
     skip_trophy_races: SkipTrophyRaces

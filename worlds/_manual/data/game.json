@@ -1,7 +1,7 @@
 {
   "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.game.schema.json",
   "game": "Stable",
-  "creator": "20241119",
+  "creator": "20250714",
   "filler_item_name": "Free Character of Your Choice",
   "starting_items": [
     {

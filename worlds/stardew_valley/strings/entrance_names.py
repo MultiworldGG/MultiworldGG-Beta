@@ -66,6 +66,8 @@ class Entrance:
     town_to_alex_house = "Town to Alex's House"
     town_to_trailer = "Town to Trailer"
     town_to_mayor_manor = "Town to Mayor's Manor"
+    enter_lewis_bedroom = "Enter Lewis's Bedroom"
+    enter_shorts_maze = "Mayor's Manor to Purple Shorts Maze"
     town_to_sam_house = "Town to Sam's House"
     town_to_haley_house = "Town to Haley's House"
     town_to_sewer = "Town to Sewer"
@@ -177,6 +179,16 @@ class Entrance:
     parrot_express_jungle_to_docks = "Parrot Express Jungle to Docks"
     parrot_express_dig_site_to_docks = "Parrot Express Dig Site to Docks"
     parrot_express_volcano_to_docks = "Parrot Express Volcano to Docks"
+    mountain_to_outside_adventure_guild = "Mountain to Outside Adventure Guild"
+
+    forest_beach_shortcut = "Forest to Beach Shortcut"
+    mountain_jojamart_shortcut = "Mountain to Jojamart Shortcut"
+    mountain_town_shortcut = "Mountain to Town Shortcut"
+    town_tidepools_shortcut = "Town to Tide Pools Shortcut"
+    tunnel_backwoods_shortcut = "Tunnel to Backwoods Shortcut"
+    mountain_lake_to_outside_adventure_guild_shortcut = "Mountain Lake to Outside Adventure Guild"
+
+    feed_trash_bear = "Feed Trash Bear"
 
 
 class LogicEntrance:
@@ -231,6 +243,8 @@ class LogicEntrance:
     attend_fair = "Attend Stardew Valley Fair"
     attend_spirit_eve = "Attend Spirit's Eve"
     attend_festival_of_ice = "Attend Festival of Ice"
+    buy_from_hat_mouse = "Buy From Hat Mouse"
+    buy_from_lost_items_shop = "Buy From Lost Items Shop"
     attend_night_market = "Attend Night Market"
     attend_winter_star = "Attend Feast of the Winter Star"
     attend_squidfest = "Attend SquidFest"
@@ -240,6 +254,9 @@ class LogicEntrance:
     complete_raccoon_requests = "Complete Raccoon Requests"
     buy_from_raccoon = "Buy From Raccoon"
     fish_in_waterfall = "Fish In Waterfall"
+    find_secret_notes = "Find Secret Notes"
+    search_garbage_cans = "Search Garbage Cans"
+    purchase_wizard_blueprints = "Purchase Wizard Blueprints"
 
 
 # Skull Cavern Elevator

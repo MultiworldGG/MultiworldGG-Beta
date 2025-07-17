@@ -26,7 +26,7 @@ battle_songs = [
 ]
 
 
-def randomize_enemy_attributes(world, rom):
+def randomize_enemy_attributes(world, rom) -> None:
     taken_names = []
     for enemy in world.enemies:
         if enemy not in excluded_enemies and " (" not in enemy:

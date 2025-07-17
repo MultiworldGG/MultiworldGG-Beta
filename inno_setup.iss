@@ -356,6 +356,11 @@ Root: HKCR; Subkey: "{#MyAppName}apz2patch";                     ValueData: "Mul
 Root: HKCR; Subkey: "{#MyAppName}apz2patch\DefaultIcon";         ValueData: "{app}\MultiworldGGBizHawkClient.exe,0";                   ValueType: string; ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apz2patch\shell\open\command";  ValueData: """{app}\MultiworldGGBizHawkClient.exe"" ""%1""";          ValueType: string; ValueName: "";
 
+Root: HKCR; Subkey: ".aptmc";                                     ValueData: "{#MyAppName}aptmcpatch";    Flags: uninsdeletevalue;       ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}aptmcpatch";                     ValueData: "MultiworldGG The Minish Cap Patch"; Flags: uninsdeletekey;      ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}aptmcpatch\DefaultIcon";         ValueData: "{app}\MultiworldGGBizHawkClient.exe,0";                   ValueType: string; ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}aptmcpatch\shell\open\command";  ValueData: """{app}\MultiworldGGBizHawkClient.exe"" ""%1""";          ValueType: string; ValueName: "";
+
 Root: HKCR; Subkey: ".multiworldgg";                              ValueData: "{#MyAppName}multidata";        Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}multidata";                     ValueData: "MultiworldGG Server Data";      Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}multidata\DefaultIcon";         ValueData: "{app}\MultiworldGGServer.exe,0";                         ValueType: string;  ValueName: "";

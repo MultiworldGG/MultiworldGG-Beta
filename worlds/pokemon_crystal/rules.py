@@ -535,6 +535,8 @@ def set_rules(world: "PokemonCrystalWorld") -> None:
     set_rule(get_location("Azalea Town - Lure Ball from Kurt"),
              lambda state: state.has("EVENT_CLEARED_SLOWPOKE_WELL", world.player))
 
+    set_rule(get_location("Charcoal Kiln - Charcoal"), lambda state: state.has("EVENT_HERDED_FARFETCHD", world.player))
+
     if world.options.level_scaling:
         set_rule(get_location("RIVAL_BAYLEEF_AZALEA"),
                  lambda state: state.has("EVENT_CLEARED_SLOWPOKE_WELL", world.player))
@@ -554,6 +556,9 @@ def set_rules(world: "PokemonCrystalWorld") -> None:
         set_rule(get_location("Static_Celebi_1"), lambda state: state.has("GS Ball", world.player))
 
     add_rule(get_entrance("REGION_ILEX_FOREST:SOUTH -> REGION_ILEX_FOREST:NORTH"),
+             lambda state: state.has("EVENT_CLEARED_SLOWPOKE_WELL", world.player))
+
+    set_rule(get_location("EVENT_HERDED_FARFETCHD"),
              lambda state: state.has("EVENT_CLEARED_SLOWPOKE_WELL", world.player))
 
     # Route 34

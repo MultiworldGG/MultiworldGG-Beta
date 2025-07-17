@@ -1,7 +1,7 @@
 import typing
 from typing import Any
 from worlds.generic.Rules import add_rule
-from . import StateLogic
+from . import StateLogic, location_id_to_name, tattlesanity_region
 
 if typing.TYPE_CHECKING:
     from . import TTYDWorld
@@ -11,6 +11,31 @@ def set_rules(world: "TTYDWorld"):
     for location, rule in get_rules_dict(world).items():
         if location not in world.disabled_locations:
             add_rule(world.multiworld.get_location(location, world.player), rule)
+
+def set_tattle_rules(world: "TTYDWorld"):
+    for location in tattlesanity_region:
+        if location.name in world.disabled_locations:
+            continue
+        add_rule(world.get_location(location.name), lambda state: state.has("Goombella", world.player))
+    for location_name, locations in get_tattle_rules_dict().items():
+        if location_name in world.disabled_locations:
+            continue
+        if len(locations) == 0:
+            # Require access to Shadow Queen
+            extra_condition = lambda state: state.can_reach("Shadow Queen", "Location", world.player)
+        else:
+            # Require access to any of the listed locations
+            valid_locations = [
+                location_id_to_name[loc] for loc in locations
+                if location_id_to_name[loc] not in world.disabled_locations
+            ]
+            if "Bowser" in location_name:
+                valid_locations.append("Shadow Queen")
+            extra_condition = lambda state, locs=valid_locations: any(
+                state.can_reach(loc, "Location", world.player) for loc in locs
+            )
+
+        add_rule(world.get_location(location_name), extra_condition)
 
 def get_rules_dict(world: "TTYDWorld") -> dict[str, Any]:
     return {
@@ -38,11 +63,11 @@ def get_rules_dict(world: "TTYDWorld") -> dict[str, Any]:
         "Boggly Woods Outside Great Tree: FP Plus":
             lambda state: StateLogic.super_boots(state, world.player),
         "Great Tree Entrance: Mystic Egg":
-            lambda state: state.has("Emerald Star", world.player),
+            lambda state: state.can_reach("Great Tree Entrance: Emerald Star", "Location", world.player),
         "Great Tree Red Key Room: Mushroom":
-            lambda state: state.has("Emerald Star", world.player),
+            lambda state: state.can_reach("Great Tree Entrance: Emerald Star", "Location", world.player),
         "Keelhaul Key Grotto Entrance: Wedding Ring":
-            lambda state: state.has("Sapphire Star", world.player),
+            lambda state: state.has("Yoshi", world.player),
         "Creepy Steeple Main Hall: Steeple Key":
             lambda state: state.has("Koops", world.player) or state.has("Yoshi", world.player),
         "Creepy Steeple Main Hall: Lucky Start":
@@ -221,7 +246,7 @@ def get_rules_dict(world: "TTYDWorld") -> dict[str, Any]:
                            and StateLogic.super_boots(state, world.player)
                            and (state.has("Yoshi", world.player) or state.has("Koops", world.player))),
         "Great Tree Blue Key Room: Shine Sprite":
-            lambda state: (state.has("Red Key", world.player ) and state.has("Puni Orb", world.player)
+            lambda state: (StateLogic.key_any(state, world.player) and state.has("Puni Orb", world.player)
                           and StateLogic.super_boots(state, world.player)),
         "Great Tree 10-Puni Pedestal: Star Piece":
             lambda state: StateLogic.super_boots(state, world.player),
@@ -262,7 +287,8 @@ def get_rules_dict(world: "TTYDWorld") -> dict[str, Any]:
                            and state.has("Black Key (Paper Curse)", world.player)),
         "Hooktail's Castle Prison Entrance: Attack FX R":
             lambda state: ((state.has("Yoshi", world.player) or state.has("Plane Curse", world.player))
-                           and state.has("Koops", world.player) and state.has("Castle Key", world.player, 1)),
+                           and state.has("Koops", world.player) and state.has("Castle Key", world.player, 1)
+                           and state.has("Paper Curse", world.player)),
         "Hooktail's Castle Spikes Room: Black Key (Paper Curse)":
             lambda state: ((state.has("Yoshi", world.player) or state.has("Plane Curse", world.player))
                            and state.has("Koops", world.player) and state.has("Castle Key", world.player, 1)
@@ -396,7 +422,7 @@ def get_rules_dict(world: "TTYDWorld") -> dict[str, Any]:
         "Pirate's Grotto Cortez' Hoard: Sapphire Star":
             lambda state: state.has("Yoshi", world.player) and state.has("Bobbery", world.player)
                            and state.has("Boat Curse", world.player) and state.has("Gate Handle", world.player)
-                           and state.has("Plane Curse", world.player) and state.has("Grotto Key", world.player),
+                           and state.has("Plane Curse", world.player),
         "Pirate's Grotto Sluice Gate: Star Piece":
             lambda state: state.has("Yoshi", world.player) and state.has("Bobbery", world.player)
                           and StateLogic.super_boots(state, world.player),
@@ -505,7 +531,7 @@ def get_rules_dict(world: "TTYDWorld") -> dict[str, Any]:
         "Riverside Station Ultra Boots Room: Elevator Key":
             lambda state: (state.has("Station Key 1", world.player) and state.has("Station Key 2", world.player)
                            and StateLogic.tube_curse(state, world.player) and StateLogic.ultra_boots(state, world.player)
-                           and state.has("Flurrie", world.player)),
+                           and state.has("Flurrie", world.player) and state.has("Yoshi", world.player)),
         "Riverside Station Clockwork Room: Star Piece":
             lambda state: state.has("Station Key 1", world.player) and StateLogic.tube_curse(state, world.player),
         "Riverside Station Clockwork Room: Station Key 2":
@@ -733,4 +759,127 @@ def get_rules_dict(world: "TTYDWorld") -> dict[str, Any]:
             lambda state: state.has("stars", world.player, 5),
         "Pit of 100 Trials Floor 100: Return Postage":
             lambda state: state.has("stars", world.player, 5)
+    }
+
+
+def get_tattle_rules_dict() -> dict[str, typing.List[int]]:
+    return {
+        "Tattle: Spania": [78780145, 78780267, 78780638],
+        "Tattle: Fuzzy": [78780170, 78780296, 78780638],
+        "Tattle: Koopa Troopa": [78780193, 78780170],
+        "Tattle: Blooper": [78780184],
+        "Tattle: Lord Crump": [78780511],
+        "Tattle: Cleft": [78780216, 78780639],
+        "Tattle: Bald Cleft": [78780165],
+        "Tattle: Bristle": [78780800, 78780296],
+        "Tattle: Gold Fuzzy": [78780170],
+        "Tattle: Paratroopa": [78780193],
+        "Tattle: Dull Bones": [78780193, 78780267, 78780615, 78780638],
+        "Tattle: Red Bones": [78780193, 78780615],
+        "Tattle: Hooktail": [78780209],
+        "Tattle: Pale Piranha": [78780216, 78780267],
+        "Tattle: Dark Puff": [78780216, 78780267, 78780639],
+        "Tattle: Vivian": [78780215],
+        "Tattle: Marilyn": [78780215, 78780622],
+        "Tattle: Beldam": [78780215, 78780622],
+        "Tattle: X-Naut": [78780300],
+        "Tattle: Yux": [78780231],
+        "Tattle: Mini-Yux": [78780231],
+        "Tattle: Pider": [78780241, 78780267, 78780639],
+        "Tattle: Magnus von Grapple": [78780232],
+        "Tattle: KP Koopa": [78780267],
+        "Tattle: KP Paratroopa": [78780267],
+        "Tattle: Pokey": [78780267, 78780639],
+        "Tattle: Spiny": [78780267, 78780640],
+        "Tattle: Lakitu": [78780267, 78780640],
+        "Tattle: Bandit": [78780267, 78780640],
+        "Tattle: Big Bandit": [78780267],
+        "Tattle: Hyper Bald Cleft": [78780267],
+        "Tattle: Bob-omb": [78780267, 78780640],
+        "Tattle: Swooper": [78780287, 78780436],
+        "Tattle: Iron Cleft": [78780267],
+        "Tattle: Red Spike Top": [78780296],
+        "Tattle: Shady Koopa": [78780296, 78780641],
+        "Tattle: Shady Paratroopa": [78780296],
+        "Tattle: Green Fuzzy": [78780296, 78780470],
+        "Tattle: Flower Fuzzy": [78780296, 78780470],
+        "Tattle: Magikoopa": [78780511],
+        "Tattle: Red Magikoopa": [78780296],
+        "Tattle: White Magikoopa": [78780296],
+        "Tattle: Green Magikoopa": [78780296],
+        "Tattle: Hammer Bro": [78780296, 78780511],
+        "Tattle: Boomerang Bro": [78780296],
+        "Tattle: Fire Bro": [78780296],
+        "Tattle: Dark Craw": [78780296, 78780644],
+        "Tattle: Red Chomp": [78780296, 78780643],
+        "Tattle: Koopatrol": [78780511],
+        "Tattle: Dark Koopatrol": [78780296, 78780645],
+        "Tattle: Rawk Hawk": [78780295],
+        "Tattle: Macho Grubba": [78780287],
+        "Tattle: Hyper Goomba": [78780319],
+        "Tattle: Hyper Paragoomba": [78780319],
+        "Tattle: Crazee Dayzee": [78780327],
+        "Tattle: Hyper Spiky Goomba": [78780319],
+        "Tattle: Amazy Dayzee": [78780327],
+        "Tattle: Hyper Cleft": [78780329, 78780641],
+        "Tattle: Buzzy Beetle": [78780450],
+        "Tattle: Spike Top": [78780450],
+        "Tattle: Atomic Boo": [78780434],
+        "Tattle: Boo": [78780434],
+        "Tattle: Doopliss": [78780437],
+        "Tattle: Ember": [78780503],
+        "Tattle: Putrid Piranha": [78780470],
+        "Tattle: Lava Bubble": [78780495, 78780642],
+        "Tattle: Bullet Bill": [78780497],
+        "Tattle: Bill Blaster": [78780497],
+        "Tattle: Bulky Bob-omb": [78780497, 78780642],
+        "Tattle: Parabuzzy": [78780503],
+        "Tattle: Cortez": [78780511],
+        "Tattle: Smorg": [78780554],
+        "Tattle: Ruff Puff": [78780538],
+        "Tattle: Poison Pokey": [78780541, 78780642],
+        "Tattle: Spiky Parabuzzy": [78780543, 78780642],
+        "Tattle: Ice Puff": [78780562, 78780643],
+        "Tattle: Frost Piranha": [78780562, 78780644],
+        "Tattle: Moon Cleft": [78780579, 78780643],
+        "Tattle: Z-Yux": [78780579],
+        "Tattle: Mini-Z-Yux": [78780579],
+        "Tattle: Elite X-Naut": [78780584],
+        "Tattle: X-Yux": [78780595],
+        "Tattle: Mini-X-Yux": [78780595],
+        "Tattle: X-Naut PhD": [78780595],
+        "Tattle: Magnus von Grapple 2.0": [78780604],
+        "Tattle: Spunia": [78780646, 78780156],
+        "Tattle: Swoopula": [78780605, 78780645],
+        "Tattle: Dry Bones": [78780605, 78780644],
+        "Tattle: Bombshell Bill": [78780605, 78780609],
+        "Tattle: B. Bill Blaster": [78780605, 78780609],
+        "Tattle: Phantom Ember": [78780634, 78780645],
+        "Tattle: Dark Bones": [78780609],
+        "Tattle: Chain-Chomp": [78780634, 78780645],
+        "Tattle: Dark Wizzerd": [78780634, 78780644],
+        "Tattle: Gloomtail": [78780634],
+        "Tattle: Sir Grodus": [],
+        "Tattle: Grodus X": [],
+        "Tattle: Kammy Koopa": [],
+        "Tattle: Bowser": [78780296],
+        "Tattle: Shadow Queen": [],
+        "Tattle: Gloomba": [78780638],
+        "Tattle: Paragloomba": [78780639],
+        "Tattle: Spiky Gloomba": [78780640],
+        "Tattle: Dark Koopa": [78780641],
+        "Tattle: Dark Paratroopa": [78780642],
+        "Tattle: Badge Bandit": [78780643],
+        "Tattle: Dark Boo": [78780643],
+        "Tattle: Dark Lakitu": [78780644],
+        "Tattle: Sky-Blue Spiny": [78780644],
+        "Tattle: Wizzerd": [78780645],
+        "Tattle: Piranha Plant": [78780646],
+        "Tattle: Dark Bristle": [78780646],
+        "Tattle: Arantula": [78780646],
+        "Tattle: Elite Wizzerd": [78780647],
+        "Tattle: Swampire": [78780647],
+        "Tattle: Poison Puff": [78780647],
+        "Tattle: Bob-ulk": [78780647],
+        "Tattle: Bonetail": [78780647]
     }

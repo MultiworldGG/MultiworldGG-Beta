@@ -30,7 +30,7 @@ class HuniePop2(World):
     game = GAME_NAME
     author: str = AUTHOR
     igdb_id: int = IGDB_ID
-    worldversion = "1.0.0"
+    worldversion = "2.0.0"
     item_name_to_id = item_table
     item_id_to_name = {item_table[name]: name for name in item_table}
     item_name_groups = {
@@ -47,6 +47,11 @@ class HuniePop2(World):
     startinggirls = []
     shopslots = 0
     trashitems = 0
+    wingval = 0
+
+    totall = 0
+    totali = 0
+
 
 
     location_name_to_id = location_table
@@ -221,6 +226,15 @@ class HuniePop2(World):
         for pair in pair_girls:
             self.pairs_enabled.add(pair[0])
 
+        if len(pair_girls) < self.options.boss_wings_requirement.value:
+            print(f"ENABLED PAIRS LESS THAN BOSS WING REQUIREMENT SETTING VALUE TO MATCH NUMBER OF PAIRS:{len(pair_girls)}")
+            self.options.boss_wings_requirement.value = len(pair_girls)
+
+        self.wingval = self.options.boss_wings_requirement.value
+
+        if len(self.pairs_enabled) != 24:
+            self.options.boss_wings_requirement.value = min(24, (self.options.boss_wings_requirement.value + (24-len(self.pairs_enabled))))
+
         #get random number of pairs based on what's set in options
         temppairs = pair_girls.copy()
         tempgirl = []
@@ -295,6 +309,8 @@ class HuniePop2(World):
             else:
                 self.shopslots = totalitems - (totallocations - self.options.number_shop_items.value)
 
+        self.totall = totalitems + self.trashitems + 1
+        self.totali = totalitems + self.trashitems + len(self.startinggirls) + len(self.startingpairs)
         self.options.number_shop_items.value = self.shopslots
 
     def create_regions(self):
@@ -489,7 +505,7 @@ class HuniePop2(World):
             wings = set()
             for pair in self.pairs_enabled:
                 wings.add(f"Fairy Wings {pair}")
-            set_rule(self.multiworld.get_entrance("hub-boss", self.player), lambda state: state.has_all(wings, self.player))
+            set_rule(self.multiworld.get_entrance("hub-boss", self.player), lambda state: state.has_from_list(wings, self.player, self.wingval))
 
 
         #visualize_regions(self.multiworld.get_region("Menu", self.player), "my_world.puml")
@@ -509,7 +525,14 @@ class HuniePop2(World):
             "boss_affection": self.options.puzzle_goal_boss.value,
             "start_moves": self.options.puzzle_moves.value,
             "hide_shop_item_details": self.options.hide_shop_item_details.value,
-            "world_version": self.worldversion
+            "world_version": self.worldversion,
+            "outfit_date_complete": self.options.outfits_require_date_completion.value,
+            "boss_wing_requirement": self.options.boss_wings_requirement.value,
+            "player_gender": self.options.player_gender.value,
+            "polly_gender": self.options.polly_gender.value,
+            "game_difficulty": self.options.game_difficulty.value,
+            "total_items": self.totali,
+            "total_locations": self.totall,
         }
 
         if "lola" in self.girls_enabled:

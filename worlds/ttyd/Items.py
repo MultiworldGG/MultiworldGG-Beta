@@ -17,7 +17,7 @@ class ItemData:
 
 
 class TTYDItem(Item):
-    game: str = "Paper Mario The Thousand Year Door"
+    game: str = "Paper Mario: The Thousand Year Door"
 
 
 itemList: typing.List[ItemData] = [
@@ -56,7 +56,7 @@ itemList: typing.List[ItemData] = [
     ItemData(77772033, "Coconut", ItemClassification.progression),
     ItemData(77772034, "Cog", ItemClassification.progression),
     ItemData(77772036, "Contact Lens", ItemClassification.progression),
-    ItemData(77772037, "Cookbook", ItemClassification.filler),
+    ItemData(77772037, "Cookbook", ItemClassification.useful),
     ItemData(77772038, "Courage Shell", ItemClassification.filler),
     ItemData(77772039, "Crystal Star", ItemClassification.progression),
     ItemData(77772040, "Damage Dodge", ItemClassification.filler),

@@ -1,9 +1,15 @@
 from __future__ import annotations
+import typing
 import Utils
-from typing import TypeVar, Iterable
+from collections.abc import Iterable
+from typing import TypeVar
 from worlds.AutoWorld import World
 from BaseClasses import Region
 from .auxiliary import format_list
+from .items.itemdefs import items_all
+from .locations.locationdefs import locations_all
+if typing.TYPE_CHECKING:
+    from . import CupheadWorld
 
 T = TypeVar("T")
 
@@ -19,17 +25,60 @@ def test_duplicates(ls: Iterable[T]) -> int:
     print("Total Duplicates: "+str(len(dups)))
     return len(dups)
 
-def print_list_each_line(ls: Iterable[T]) -> None:
+def print_list_each_line(ls: Iterable[T]):
     for item in ls:
         print(item)
 
-def print_list(ls: Iterable[T]) -> None:
+def print_list(ls: Iterable[T]):
     print(format_list(ls))
 
-def print_locations(world: World) -> None:
+def print_locations(world: World):
     locations = world.multiworld.get_locations(world.player)
     for loc in locations:
         print(f"{loc.name}: {loc.access_rule}")
 
-def visualize_regions(root_region: Region, file_name: str) -> None:
-    Utils.visualize_regions(root_region, file_name, show_entrance_names=True, show_locations=True, show_other_regions=True, linetype_ortho=True)
+def print_all_items():
+    print("-- Items --")
+    for item, data in items_all.items():
+        print(f"{item}: {data.id} | {data.item_type}")
+    print("")
+
+def print_all_locations():
+    print("-- Locations --")
+    for item, data in locations_all.items():
+        print(f"{item}: {data.id} | {data.progress_type}")
+    print("")
+
+def visualize_regions_ext(
+        root_region: Region,
+        highlight_regions: set[Region] | None,
+        file_name: str,
+        show_entrance_names: bool = True,
+        show_locations: bool = True,
+        show_other_regions: bool = True,
+        linetype_ortho: bool = True,
+    ):
+    Utils.visualize_regions(
+        root_region,
+        file_name,
+        show_entrance_names=show_entrance_names,
+        show_locations=show_locations,
+        show_other_regions=show_other_regions,
+        linetype_ortho=linetype_ortho,
+        regions_to_highlight=highlight_regions
+    )
+
+def visualize_regions(root_region: Region, highlight_regions: set[Region] | None, file_name: str):
+    visualize_regions_ext(
+        root_region,
+        highlight_regions,
+        file_name,
+    )
+
+def debug_visualize_regions(world: CupheadWorld):
+    state = world.multiworld.get_all_state(False)
+    visualize_regions(
+        world.multiworld.get_region("Menu", world.player),
+        state.reachable_regions[world.player],
+        f"./output/AP_{world.multiworld.seed_name}-regionmap.puml"
+    )

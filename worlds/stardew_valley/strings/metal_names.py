@@ -17,7 +17,7 @@ class Ore:
     iron = "Iron Ore"
     gold = "Gold Ore"
     iridium = "Iridium Ore"
-    radioactive = "Radioactive Bar"
+    radioactive = "Radioactive Ore"
 
 
 class MetalBar:
@@ -26,25 +26,35 @@ class MetalBar:
     iron = "Iron Bar"
     gold = "Gold Bar"
     iridium = "Iridium Bar"
-    radioactive = "Radioactive Ore"
+    radioactive = "Radioactive Bar"
 
 
 class Mineral:
-    petrified_slime = "Petrified Slime"
-    quartz = "Quartz"
-    earth_crystal = "Earth Crystal"
-    fire_quartz = "Fire Quartz"
-    marble = "Marble"
-    prismatic_shard = "Prismatic Shard"
-    diamond = "Diamond"
-    frozen_tear = "Frozen Tear"
-    aquamarine = "Aquamarine"
-    topaz = "Topaz"
-    jade = "Jade"
-    ruby = "Ruby"
-    emerald = "Emerald"
+    lemon_stone = "Lemon Stone"
+    kyanite = "Kyanite"
+    ghost_crystal = "Ghost Crystal"
     amethyst = "Amethyst"
+    any_gem = "Any Gem"
+    aquamarine = "Aquamarine"
+    diamond = "Diamond"
+    earth_crystal = "Earth Crystal"
+    emerald = "Emerald"
+    fire_quartz = "Fire Quartz"
+    frozen_tear = "Frozen Tear"
+    jade = "Jade"
+    jamborite = "Jamborite"
+    marble = "Marble"
+    obsidian = "Obsidian"
+    opal = "Opal"
+    petrified_slime = "Petrified Slime"
+    prismatic_shard = "Prismatic Shard"
+    quartz = "Quartz"
+    ruby = "Ruby"
+    thunder_egg = "Thunder Egg"
     tigerseye = "Tigerseye"
+    topaz = "Topaz"
+    mudstone = "Mudstone"
+    limestone = "Limestone"
 
 
 class Artifact:

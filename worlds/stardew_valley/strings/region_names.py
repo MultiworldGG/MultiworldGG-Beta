@@ -1,3 +1,6 @@
+from .tool_names import ToolMaterial
+
+
 class Region:
     menu = "Menu"
     stardew_valley = "Stardew Valley"
@@ -108,6 +111,8 @@ class Region:
     bathhouse_entrance = "Bathhouse Entrance"
     locker_room = "Locker Room"
     public_bath = "Public Bath"
+    lewis_bedroom = "Lewis's Bedroom"
+    purple_shorts_maze = "Purple Shorts Maze"
     jotpk_world_1 = "JotPK World 1"
     jotpk_world_2 = "JotPK World 2"
     jotpk_world_3 = "JotPK World 3"
@@ -142,6 +147,8 @@ class Region:
     dangerous_mines_20 = "Dangerous Mines - Floor 20"
     dangerous_mines_60 = "Dangerous Mines - Floor 60"
     dangerous_mines_100 = "Dangerous Mines - Floor 100"
+    outside_adventure_guild = "Outside Adventure Guild"
+    trash_bear = "Trash Bear"
 
 
 class LogicRegion:
@@ -164,10 +171,10 @@ class LogicRegion:
     def blacksmith_upgrade(material: str) -> str:
         return f"Blacksmith {material} Upgrades"
 
-    blacksmith_copper = blacksmith_upgrade("Copper")
-    blacksmith_iron = blacksmith_upgrade("Iron")
-    blacksmith_gold = blacksmith_upgrade("Gold")
-    blacksmith_iridium = blacksmith_upgrade("Iridium")
+    blacksmith_copper = blacksmith_upgrade(ToolMaterial.copper)
+    blacksmith_iron = blacksmith_upgrade(ToolMaterial.iron)
+    blacksmith_gold = blacksmith_upgrade(ToolMaterial.gold)
+    blacksmith_iridium = blacksmith_upgrade(ToolMaterial.iridium)
 
     spring_farming = "Spring Farming"
     summer_farming = "Summer Farming"
@@ -195,6 +202,11 @@ class LogicRegion:
     bookseller_2 = "Bookseller Year 1 Books"
     bookseller_3 = "Bookseller Year 3 Books"
     forest_waterfall = "Waterfall"
+    secret_notes = "Secret Notes"
+    hat_mouse = "Hat Mouse"
+    lost_items_shop = "Lost Items Shop"
+    garbage_cans = "Garbage Cans"
+    wizard_blueprints = "Wizard Blueprints"
 
 
 class DeepWoodsRegion:

@@ -14,7 +14,7 @@
 * Launch the shortcut, which should open Pseudoregalia. Start a new file.
 
 
-## Joining an Archipelago Session
+## Joining a MultiworldGG Session
 ### Connecting to server
 Once the game is launched through the shortcut and a new file has been started, press F10 to open the in-game console, and enter your connect message:
 ```

@@ -2,16 +2,17 @@ from collections import Counter
 
 from ..bases import SVTestBase
 from ... import options
-from ...options import ToolProgression, SeasonRandomization
+from ...options import ToolProgression, SeasonRandomization, Secretsanity
 from ...strings.entrance_names import Entrance
 from ...strings.region_names import Region
-from ...strings.tool_names import Tool, ToolMaterial
+from ...strings.tool_names import Tool, ToolMaterial, FishingRod
 
 
 class TestProgressiveToolsLogic(SVTestBase):
     options = {
         ToolProgression.internal_name: ToolProgression.option_progressive,
         SeasonRandomization.internal_name: SeasonRandomization.option_randomized,
+        Secretsanity.internal_name: Secretsanity.preset_simple,
     }
 
     def test_sturgeon(self):
@@ -58,34 +59,35 @@ class TestProgressiveToolsLogic(SVTestBase):
         self.multiworld.state.collect(self.create_item("Summer"))
         self.collect_lots_of_money()
 
-        self.assert_cannot_reach_location("Old Master Cannoli")
+        location = "Old Master Cannoli"
+        self.assert_cannot_reach_location(location)
 
         fall = self.create_item("Fall")
         self.multiworld.state.collect(fall)
-        self.assert_cannot_reach_location("Old Master Cannoli")
+        self.assert_cannot_reach_location(location)
 
         tuesday = self.create_item("Traveling Merchant: Tuesday")
         self.multiworld.state.collect(tuesday)
-        self.assert_cannot_reach_location("Old Master Cannoli")
+        self.assert_cannot_reach_location(location)
 
         rare_seed = self.create_item("Rare Seed")
         self.multiworld.state.collect(rare_seed)
-        self.assert_can_reach_location("Old Master Cannoli")
+        self.assert_can_reach_location(location)
 
         self.remove(fall)
-        self.assert_cannot_reach_location("Old Master Cannoli")
+        self.assert_cannot_reach_location(location)
         self.remove(tuesday)
 
         green_house = self.create_item("Greenhouse")
         self.multiworld.state.collect(green_house)
-        self.assert_cannot_reach_location("Old Master Cannoli")
+        self.assert_cannot_reach_location(location)
 
         friday = self.create_item("Traveling Merchant: Friday")
         self.multiworld.state.collect(friday)
-        self.assert_can_reach_location("Old Master Cannoli")
+        self.assert_can_reach_location(location)
 
         self.remove(green_house)
-        self.assert_cannot_reach_location("Old Master Cannoli")
+        self.assert_cannot_reach_location(location)
         self.remove(friday)
 
 
@@ -118,13 +120,13 @@ class TestToolVanillaRequiresBlacksmith(SVTestBase):
         place_region_at_entrance(self.multiworld, self.player, Region.fish_shop, Entrance.enter_bathhouse_entrance)
         self.collect_all_except(railroad_item)
 
-        for fishing_rod_level in [3, 4]:
-            self.assert_rule_false(self.world.logic.tool.has_fishing_rod(fishing_rod_level))
+        for fishing_rod in [FishingRod.fiberglass, FishingRod.iridium]:
+            self.assert_rule_false(self.world.logic.tool.has_fishing_rod(fishing_rod))
 
         self.multiworld.state.collect(self.create_item(railroad_item))
 
-        for fishing_rod_level in [3, 4]:
-            self.assert_rule_true(self.world.logic.tool.has_fishing_rod(fishing_rod_level))
+        for fishing_rod in [FishingRod.fiberglass, FishingRod.iridium]:
+            self.assert_rule_true(self.world.logic.tool.has_fishing_rod(fishing_rod))
 
 
 def place_region_at_entrance(multiworld, player, region, entrance):

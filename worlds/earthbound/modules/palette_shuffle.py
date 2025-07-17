@@ -1,5 +1,4 @@
 from ..game_data.palettes_organized import map_palettes, nice_palettes, ugly_palettes, nonsense_palettes
-import struct
 
 event_palettes = {
     "Happy-Happy Village": 0x8367,
@@ -7,7 +6,8 @@ event_palettes = {
     "Deep Darkness": 0x8F67
     }
 
-def randomize_psi_palettes(world, rom):
+
+def randomize_psi_palettes(world, rom) -> None:
     spell_palettes = []
     for i in range(34):
         spell_palettes.append(0x0CF47F + (i * 8))
@@ -30,7 +30,8 @@ def randomize_psi_palettes(world, rom):
     for index, pointer in enumerate(spell_palettes):
         rom.copy_bytes(pointer, 8, shuffled_palettes[index])
 
-def map_palette_shuffle(world, rom):
+
+def map_palette_shuffle(world, rom) -> None:
     for i in range(168):
         rom.copy_bytes(0x1A7CA7 + (i * 192), 191, 0x381000 + (i * 192))
     
@@ -42,8 +43,5 @@ def map_palette_shuffle(world, rom):
             choosable_palettes += nonsense_palettes[item]
         
         chosen_palette = world.random.choice(choosable_palettes)
-        if item in event_palettes:
-            rom.copy_bytes(0x381002 + (chosen_palette * 192), 189, 0x1A7CA9 + (map_palettes[item] * 192))
-            rom.write_bytes(0x1A7CC7 + (map_palettes[item] * 192), struct.pack("H", event_palettes[item]))
-        else:
-            rom.copy_bytes(0x381000 + (chosen_palette * 192), 191, 0x1A7CA7 + (map_palettes[item] * 192))
+        rom.copy_bytes(0x381002 + (chosen_palette * 192), 29, 0x1A7CA9 + (map_palettes[item] * 192))
+        rom.copy_bytes(0x381022 + (chosen_palette * 192), 157, 0x1A7CC9 + (map_palettes[item] * 192))  # The event palette pointer is between these 2 blocks

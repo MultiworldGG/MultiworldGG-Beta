@@ -10,7 +10,8 @@ class RegionExit(NamedTuple):
 
 region_table: Dict[str, List[str]] = {
     "Menu":
-        ["Dungeon Mirror"],
+        ["Castle Main"],
+
     "Dungeon Mirror":
         ["Dungeon Slide"],
     "Dungeon Slide":
@@ -38,7 +39,8 @@ region_table: Dict[str, List[str]] = {
          "Bailey Lower",
          "Library Main",
          "Castle => Theatre Pillar",
-         "Castle Spiral Climb",],
+         "Castle Spiral Climb",
+         "Keep (Northeast) => Castle"],
     "Castle Spiral Climb":
         ["Castle Main",
          "Castle High Climb",
@@ -63,22 +65,32 @@ region_table: Dict[str, List[str]] = {
     "Library Locked":
         [],
     "Library Greaves":
-        ["Library Top"],
+        ["Library Back"],
     "Library Top":
-        ["Library Greaves"],
+        ["Library Back"],
+    "Library Back":
+        ["Library Greaves",
+         "Library Top"],
 
     "Keep Main":
         ["Keep Locked Room",
          "Keep Sunsetter",
+         "Keep Throne Room",
          "Keep => Underbelly",
-         "Theatre Outside Scythe Corridor",],
+         "Theatre Outside Scythe Corridor",
+         "Keep (Northeast) => Castle"],
     "Keep Locked Room":
         ["Keep Sunsetter"],
     "Keep Sunsetter":
         [],
+    "Keep Throne Room":
+        [],
     "Keep => Underbelly":
         ["Keep Main",
          "Underbelly => Keep"],
+    "Keep (Northeast) => Castle":
+        ["Keep Main",
+         "Castle Main"],
 
     "Bailey Lower":
         ["Bailey Upper",
@@ -86,7 +98,7 @@ region_table: Dict[str, List[str]] = {
          "Theatre Pillar => Bailey",],
     "Bailey Upper":
         ["Bailey Lower",
-         "Underbelly Little Guy",
+         "Underbelly => Bailey",
          "Tower Remains",],
     "Tower Remains":
         ["The Great Door",],
@@ -100,10 +112,9 @@ region_table: Dict[str, List[str]] = {
          "Underbelly => Dungeon",
          "Underbelly Ascendant Light"],
     "Underbelly Ascendant Light":
-        ["Underbelly Light Pillar",
-         "Underbelly => Dungeon"],
+        ["Underbelly => Dungeon"],
     "Underbelly Main Lower":
-        ["Underbelly Little Guy",
+        ["Underbelly => Bailey",
          "Underbelly Hole",
          "Underbelly By Heliacal",
          "Underbelly Main Upper"],
@@ -113,7 +124,7 @@ region_table: Dict[str, List[str]] = {
          "Underbelly By Heliacal"],
     "Underbelly By Heliacal":
         ["Underbelly Main Upper"],
-    "Underbelly Little Guy":
+    "Underbelly => Bailey":
         ["Bailey Upper",
          "Bailey Lower",
          "Underbelly Main Lower",],
