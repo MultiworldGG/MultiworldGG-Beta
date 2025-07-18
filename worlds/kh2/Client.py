@@ -26,25 +26,25 @@ except ImportError:
 from NetUtils import ClientStatus, JSONMessagePart, JSONtoTextParser
 from CommonClient import gui_enabled, logger, get_base_parser, CommonContext, server_loop, ClientCommandProcessor
 
-class KH2CommandProcessor(ClientCommandProcessor):
-    def __init__(self, ctx): 
-        super().__init__(ctx)
+# class KH2CommandProcessor(ClientCommandProcessor):
+#     def __init__(self, ctx): 
+#         super().__init__(ctx)
 
-    def _cmd_deathlink(self):
-        """Toggles deathlink"""
-        if isinstance(self.ctx, KH2Context):
-            self.ctx.death_link = not self.ctx.death_link
-            asyncio.create_task((self.ctx.update_death_link(self.ctx.death_link)), name="Update Deathlink")
+#     def _cmd_deathlink(self):
+#         """Toggles deathlink"""
+#         if isinstance(self.ctx, KH2Context):
+#             self.ctx.death_link = not self.ctx.death_link
+#             asyncio.create_task((self.ctx.update_death_link(self.ctx.death_link)), name="Update Deathlink")
 
 class KH2Context(CommonContext):
-    command_processor = KH2CommandProcessor
+    # command_processor = KH2CommandProcessor
     game = "Kingdom Hearts 2"
     items_handling = 0b111  # Indicates you get items sent from other worlds.
-    death_link = False #Start deathlink off
-    game_func_addrs = {
-        "SoraPointer": 0x03B16F0,
-        "HitPointFunc": 0x3D0720
-    }
+    # death_link = False #Start deathlink off
+    # game_func_addrs = {
+    #     "SoraPointer": 0x03B16F0,
+    #     "HitPointFunc": 0x3D0720
+    # }
 
     def __init__(self, server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None):
         super(KH2Context, self).__init__(server_address = server_address, password = password)
