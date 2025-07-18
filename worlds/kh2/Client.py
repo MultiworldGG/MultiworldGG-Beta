@@ -219,6 +219,8 @@ class KH2Context(CommonContext):
         if not self.auth:
             await self.get_username()
 
+        await self.send_connect()
+
     async def connection_closed(self):
         self.kh2connected = False
         self.serverconnected = False
@@ -346,11 +348,8 @@ class KH2Context(CommonContext):
         if cmd == "Connected":
             self.kh2slotdata = args['slot_data']
 
-            if Utils:
-                self.kh2_data_package = Utils.load_data_package_for_checksum(
-                        "Kingdom Hearts 2", self.checksums["Kingdom Hearts 2"])
-            else:
-                self.kh2_data_package = {}
+            self.kh2_data_package = Utils.load_data_package_for_checksum(
+                    "Kingdom Hearts 2", self.checksums["Kingdom Hearts 2"])
 
             if "location_name_to_id" in self.kh2_data_package:
                 self.data_package_kh2_cache(
@@ -419,6 +418,7 @@ class KH2Context(CommonContext):
                 self.data_package_kh2_cache(
                         args["data"]["games"]["Kingdom Hearts 2"]["location_name_to_id"],
                         args["data"]["games"]["Kingdom Hearts 2"]["item_name_to_id"])
+                self.connect_to_game()
                 asyncio.create_task(self.send_msgs([{'cmd': 'Sync'}]))
 
     def connect_to_game(self):
@@ -1041,9 +1041,9 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
-            ctx.run_gui()
-            await ctx.exit_event.wait()
+            logger.critical("Client did not launch properly, exiting.")
 
+        ctx.ui.base_title = apname + " | KH2"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
         #ctx.run_cli()
         await ctx.server_auth()
