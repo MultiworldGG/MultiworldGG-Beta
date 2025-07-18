@@ -34,9 +34,7 @@ from kivymd.app import MDApp
 
 logger = logging.getLogger(__name__)
 
-with open(
-    os.path.join("gui", "kivydi", "expansionlist.kv"), encoding="utf-8"
-) as kv_file:
+with open(os.path.join(os.path.dirname(__file__), "expansionlist.kv"), encoding="utf-8") as kv_file:
     Builder.load_string(kv_file.read())
 
 class IconBadge(MDBadge):

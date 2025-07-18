@@ -113,11 +113,12 @@ def get_available_worlds() -> typing.List[str]:
 def discover_and_launch_module(module_name: str, **kwargs) -> None:
     """Discover and launch module via entrypoints"""
     try:
-        entry_points = importlib.metadata.entry_points(group="worlds")
+        entry_points = importlib.metadata.entry_points(group="mwgg.client")
+        print(entry_points)
         # Look for the client entry point
-        if entry_points[f"{module_name}.Client"]:
+        if entry_points[f"worlds.{module_name}.Client"]:
             # Load and execute the client entrypoint
-            launch_function = entry_points[f"{module_name}.Client"].load()
+            launch_function = entry_points[f"worlds.{module_name}.Client"].load()
             result = launch_function(**kwargs)
             
             # Check if the launch function returned a task (GUI mode)

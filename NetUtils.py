@@ -75,7 +75,6 @@ class NetworkPlayer(typing.NamedTuple):
     slot: int
     alias: str
     name: str
-    avatar: bytes = b""
 
 
 class NetworkSlot(typing.NamedTuple):

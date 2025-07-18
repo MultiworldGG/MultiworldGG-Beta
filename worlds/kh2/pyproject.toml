@@ -18,6 +18,9 @@ dependencies = [
     "Pymem>=1.10.0",
 ]
 
+[project.entry-points."mwgg.client"]
+"worlds.kh2.Client" = "worlds.kh2.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]  # list of folders that contain the packages (["."] by default)
 include = ["worlds.kh2"]

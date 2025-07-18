@@ -495,29 +495,14 @@ def patch_kh2(self, output_directory):
 
     iconbytes = bytes()
     previewbytes = bytes()
-    apworldloc = os.path.join("worlds","kh2","data")
-    if os.path.exists(apworldloc):
-        try:
-            with open(os.path.join(apworldloc, "khapicon.png"),'rb') as icon, open(os.path.join(apworldloc, "preview.png"),'rb') as preview:
-                iconbytes = icon.read()
-                previewbytes = preview.read()
-            openkhmod["icon.png"] = iconbytes
-            openkhmod["preview.png"] = previewbytes
-        except IOError as openerror:
-            logging.warning(openerror)
-
-    apworldloc = os.path.join("lib","worlds")
-    if not os.path.isfile(Utils.user_path(apworldloc, 'kh2.apworld')): apworldloc = os.path.join("custom_worlds", "")
-    if os.path.exists(os.path.join(apworldloc,"kh2.apworld")):
-        try: 
-            with zipfile.ZipFile(Utils.user_path(os.path.join(apworldloc, 'kh2.apworld')), 'r') as apworld_archive:
-                with apworld_archive.open('kh2/data/khapicon.png', 'r') as icon, apworld_archive.open('kh2/data/preview.png', 'r') as preview:
-                    iconbytes = icon.read()
-                    previewbytes = preview.read()
-                openkhmod["icon.png"] = iconbytes
-                openkhmod["preview.png"] = previewbytes
-        except IOError as openerror:
-            logging.warning(openerror)
+    try:
+        with open(os.path.join(os.path.dirname(__file__), "data", "khapicon.png"),'rb') as icon, open(os.path.join(os.path.dirname(__file__), "data", "preview.png"),'rb') as preview:
+            iconbytes = icon.read()
+            previewbytes = preview.read()
+        openkhmod["icon.png"] = iconbytes
+        openkhmod["preview.png"] = previewbytes
+    except IOError as openerror:
+        logging.warning(openerror)
 
     mod = KH2Container(openkhmod, mod_dir, output_directory, self.player,
             self.multiworld.get_file_safe_player_name(self.player))
