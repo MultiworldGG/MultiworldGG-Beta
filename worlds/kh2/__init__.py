@@ -18,7 +18,7 @@ from .Subclasses import KH2Item
 
 
 def launch_client():
-    from .Client import launch
+    from .ClientStuff.Client import launch
     launch_component(launch, name="KH2Client")
 
 
@@ -111,16 +111,16 @@ class KH2World(World):
                 self.goofy_ability_dict[ability] -= 1
 
         slot_data = self.options.as_dict(
-            "Goal", 
-            "FinalXemnas", 
-            "LuckyEmblemsRequired", 
-            "BountyRequired",
-            "FightLogic",
-            "FinalFormLogic",
-            "AutoFormLogic",
-            "LevelDepth",
-            "DonaldGoofyStatsanity",
-            "CorSkipToggle"
+                "Goal",
+                "FinalXemnas",
+                "LuckyEmblemsRequired",
+                "BountyRequired",
+                "FightLogic",
+                "FinalFormLogic",
+                "AutoFormLogic",
+                "LevelDepth",
+                "DonaldGoofyStatsanity",
+                "CorSkipToggle"
         )
         slot_data.update({
             "hitlist":                [],  # remove this after next update
@@ -213,6 +213,9 @@ class KH2World(World):
         Determines the quantity of items and maps plando locations to items.
         This happens first.  Nothing is placed here.
         """
+        if self.player_name != self.multiworld.get_file_safe_player_name(self.player):
+            raise Exception(f"{self.player_name} yaml name contains characters not supported for kingdom hearts 2")
+
         # Item: Quantity Map
         # Example. Quick Run: 4
         self.total_locations = len(all_locations.keys())
@@ -375,9 +378,7 @@ class KH2World(World):
             self.donald_weapon_abilities += [self.create_item(random_ability)]
             self.item_quantity_dict[random_ability] -= 1
             self.total_locations -= 1
-
         self.slot_data_donald_weapon = [item_name.name for item_name in self.donald_weapon_abilities]
-
         if not self.options.DonaldGoofyStatsanity:
             # pre plando donald get bonuses
             for item_name in donald_master_ability:
@@ -487,7 +488,6 @@ class KH2World(World):
         """
         Fills keyblade slots with abilities determined on player's setting
         """
-
         keyblade_locations = [self.multiworld.get_location(location, self.player) for location in Keyblade_Slots.keys()]
         for location in keyblade_locations:
             random_ability = self.random.choice(self.keyblade_ability_pool)
@@ -501,7 +501,7 @@ class KH2World(World):
             if loc.name == kbslot:
                 keyblade = [i for i in self.multiworld.itempool if i.name == kbitem and i.player == self.player].pop()
                 keyblade.classification = ItemClassification.progression
-                
+
     def starting_invo_verify(self):
         """
         Making sure the player doesn't put too many abilities in their starting inventory.

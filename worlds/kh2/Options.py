@@ -1,22 +1,8 @@
 from dataclasses import dataclass
 
-from Options import Choice, Range, Toggle, ItemDict, OptionDict, PerGameCommonOptions, StartInventoryPool, ItemsAccessibility
+from Options import Choice, Range, Toggle, ItemDict, OptionDict, PerGameCommonOptions, StartInventoryPool
 
 from . import default_itempool_option, default_keyblade_pool
-
-# class ItemAccess(ItemsAccessibility):
-#     """
-#     Set rules for reachability of your items/locations.
-    
-#     **Full:** ensure everything can be reached and acquired.
-
-#     **Minimal:** ensure what is needed to reach your goal can be acquired.
-
-#     **Items:** ensure all logically relevant items can be acquired. Some items, such as keys, may be self-locking, and
-#     some locations may be inaccessible.
-#     """
-#     option_items = 1
-#     default = 1
 
 class SoraEXP(Range):
     """Sora Level Exp Multiplier"""
@@ -309,7 +295,7 @@ class BountyLevel(Range):
     range_start = 1
     range_end = 10
     default = 10
-    
+
 class BountyStartHint(Toggle):
     """Start with Bounties Hinted"""
     display_name = "Start with Bounties Hinted"
@@ -338,7 +324,7 @@ class CustomKeybladePool(OptionDict):
     """Abilities that are allowed to go onto Keyblades. 
     
     Note: Values will not change ability pool values.
-    
+
     Example: Reducing Negative Combo to 1 will
     
     prevent both from showing up on keyblades but
@@ -374,7 +360,6 @@ class SummonLevelLocationToggle(Toggle):
 # shamelessly stolen from the messanger
 @dataclass
 class KingdomHearts2Options(PerGameCommonOptions):
-    accessibility: ItemsAccessibility
     start_inventory: StartInventoryPool
     LevelDepth: LevelDepth
     Sora_Level_EXP: SoraEXP

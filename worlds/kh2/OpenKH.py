@@ -1,4 +1,3 @@
-from genericpath import isdir
 import logging
 
 import yaml
@@ -388,7 +387,7 @@ def patch_kh2(self, output_directory):
                     {
                         'name': 'msg/sp/he.bar'
                     }
-        ],
+                ],
                 'method': 'binarc',
                 'source': [
                     {

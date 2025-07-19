@@ -1,4 +1,4 @@
-# Kingdom Hearts 2 MultiworldGG Setup Guide
+# Kingdom Hearts 2 Archipelago Setup Guide
 
 <h2 style="text-transform:none";>Quick Links</h2>
 
@@ -14,11 +14,12 @@ Kingdom Hearts II Final Mix from the [Epic Games Store](https://store.epicgames.
     2. Lua Backend from the OpenKH Mod Manager
     3. Install the mod `KH2FM-Mods-Num/GoA-ROM-Edition` using OpenKH Mod Manager
 - Needed for Archipelago 
-    1. [MultiworldGGKH2Client.exe](https://github.com/MultiworldGG/MultiworldGG/releases)
-    2. Install the Archipelago Companion mod from `JaredWeakStrike/AP_Companion` using OpenKH Mod Manager
+    1. [ArchipelagoKH2Client.exe](https://github.com/ArchipelagoMW/Archipelago/releases)
+    2. Install the Archipelago Companion mod from `JaredWeakStrike/APCompanion` using OpenKH Mod Manager
     3. Install the mod from `KH2FM-Mods-equations19/auto-save` using OpenKH Mod Manager
     4. Install the mod from `KH2FM-Mods-equations19/KH2-Lua-Library` using OpenKH Mod Manager
-    5. AP Randomizer Seed
+    5. Install the mod from `TopazTK/EnablersAP` using OpenKH Mod Manager
+    6. AP Randomizer Seed
 - Optional Quality of Life Mods for Archipelago
     1. Optionally Install the Archipelago Quality Of Life mod from `JaredWeakStrike/AP_QOL` using OpenKH Mod Manager
     2. Optionally Install the Quality Of Life mod from `shananas/BearSkip` using OpenKH Mod Manager
@@ -52,12 +53,12 @@ After Installing the seed click "Mod Loader -> Build/Build and Run". Every slot 
 
 <h2 style="text-transform:none";>What the Mod Manager Should Look Like.</h2>
 
-![image](https://i.imgur.com/N0WJ8Qn.png)
+![image](https://i.imgur.com/su6fOvH.png)
 
 
 <h2 style="text-transform:none";>Using the KH2 Client</h2>
 
-Start the game through OpenKH Mod Manager. If starting a new run, enter the Garden of Assemblage from a new save. If returning to a run, load the save and enter the Garden of Assemblage. Then run the [MultiworldGGKH2Client.exe](https://github.com/MultiworldGG/MultiworldGG/releases).<br>
+Start the game through OpenKH Mod Manager. If starting a new run, enter the Garden of Assemblage from a new save. If returning to a run, load the save and enter the Garden of Assemblage. Then run the [ArchipelagoKH2Client.exe](https://github.com/ArchipelagoMW/Archipelago/releases).<br>
 When you successfully connect to the server the client will automatically hook into the game to send/receive checks. <br>
 If the client ever loses connection to the game, it will also disconnect from the server and you will need to reconnect.<br> 
 
@@ -84,7 +85,7 @@ Enter The room's port number into the top box <b> where the x's are</b> and pres
     - To fix this look over the guide at [KH2Rando.com](https://tommadness.github.io/KH2Randomizer/setup/Panacea-ModLoader/). Specifically the Panacea and Lua Backend Steps.
 
 -  Using a seed from the standalone KH2 Randomizer Seed Generator.
-    - The Archipelago version of the KH2 Randomizer does not use this Seed Generator; refer to the [MultiworldGG Setup](https://multiworld.gg/tutorial/Archipelago/setup/en) to learn how to generate and play a seed through MultiworldGG. 
+    - The Archipelago version of the KH2 Randomizer does not use this Seed Generator; refer to the [Archipelago Setup](https://archipelago.gg/tutorial/Archipelago/setup/en) to learn how to generate and play a seed through Archipelago. 
 
 <h2 style="text-transform:none"; >Best Practices</h2>
 
@@ -107,7 +108,7 @@ Alternatively you can use the Kingdom Hearts 2 PopTracker Pack that is based off
 2. Put the tracker pack into packs/ in your PopTracker install.
 3. Open PopTracker, and load the Kingdom Hearts 2 pack.
 4. For autotracking, click on the "AP" symbol at the top.
-5. Enter the MultiworldGG server address (the one you connected your client to), slot name, and password.
+5. Enter the Archipelago server address (the one you connected your client to), slot name, and password.
 
 This pack will handle logic, received items, checked locations and autotabbing for you!
 
@@ -117,7 +118,7 @@ This pack will handle logic, received items, checked locations and autotabbing f
 - Why is my Client giving me a "Cannot Open Process: " error?
     - Due to how the client reads kingdom hearts 2 memory some people's computer flags it as a virus. Run the client as admin.
 - Why is my HP/MP continuously increasing without stopping?
-    - You do not have `JaredWeakStrike/AP_Companion` set up correctly. Make sure it is above the GoA ROM Edition Mod in the mod manager.
+    - You do not have `JaredWeakStrike/APCompanion` set up correctly. Make sure it is above the GoA ROM Edition Mod in the mod manager.
 - Why is my HP/MP continuously increasing without stopping when I have the APCompanion Mod?
     - You have a leftover GOA lua script in your `Documents\KINGDOM HEARTS HD 1.5+2.5 ReMIX\scripts\KH2`.
 - Why am I missing worlds/portals in the GoA?
@@ -133,10 +134,10 @@ This pack will handle logic, received items, checked locations and autotabbing f
 - Why did I crash after picking my dream weapon?
     - This is normally caused by having an outdated GOA mod or having an outdated panacea and/or luabackend. To fix this rerun the setup wizard and reinstall luabackend and panacea. Also make sure all your mods are up-to-date.
 - Why did I crash?
-    - The port of Kingdom Hearts 2 can and will randomly crash, this is the fault of the game not the randomizer or the MultiworldGG client.
+    - The port of Kingdom Hearts 2 can and will randomly crash, this is the fault of the game not the randomizer or the archipelago client.
       - If you have a continuous/constant crash (in the same area/event every time) you will want to reverify your installed files. This can be done by doing the following: Open Epic Game Store --> Library --> Click Triple Dots --> Manage --> Verify
 - Why am I getting dummy items or letters?
-    - You will need to get the `JaredWeakStrike/AP_Companion` (you can find how to get this if you scroll up)
+    - You will need to get the `JaredWeakStrike/APCompanion` (you can find how to get this if you scroll up)
 - Why am I not sending or receiving items?
     - Make sure you are connected to the KH2 client and the correct room (for more information scroll up)
 - Why should I install the auto save mod at `KH2FM-Mods-equations19/auto-save` and `KH2FM-Mods-equations19/KH2-Lua-Library`?
