@@ -135,8 +135,7 @@ async def give_item(self, item, location):
     except Exception as e:
         if self.kh2connected:
             self.kh2connected = False
-        logger.info(e)
-        logger.info("line 582")
+        logger.info(f"Error in give_item: {e}")
 
 
 async def IsInShop(self, sellable):
@@ -390,8 +389,7 @@ async def verifyItems(self):
     except Exception as e:
         if self.kh2connected:
             self.kh2connected = False
-        logger.info(e)
-        logger.info("line 840")
+        logger.info(f"Error in verifyItems: {e}")
 
 
 async def displayInfoTextinGame(self, string_to_display):

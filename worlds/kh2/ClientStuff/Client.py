@@ -1,16 +1,15 @@
-from __future__ import annotations
 import ModuleUpdate
 import Utils
 
 ModuleUpdate.update()
+
 import os
 import asyncio
 import json
 import requests
 from werkzeug.utils import secure_filename
 from pymem import pymem
-from worlds.kh2 import item_dictionary_table, exclusion_item_table, CheckDupingItems, \
-                all_locations, exclusion_table,  all_weapon_slot, \
+from worlds.kh2 import item_dictionary_table, exclusion_item_table, CheckDupingItems, all_locations, exclusion_table,  all_weapon_slot, \
                 GreatActionAbility_Table, UsefulActionAbility_Table, JunkActionAbility_Table, \
                 GreatSupportAbility_Table, UsefulSupportAbility_Table, JunkSupportAbility_Table
 from worlds.kh2.Names import ItemName
@@ -32,9 +31,10 @@ class KH2Context(CommonContext):
     game = "Kingdom Hearts 2"
     items_handling = 0b111  # Indicates you get items sent from other worlds.
 
-    def __init__(self, server_address, password):
-        super(KH2Context, self).__init__(server_address, password)
-
+    def __init__(self, server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None):
+        super(KH2Context, self).__init__(server_address = server_address, password = password)
+        self.slot_name = slot_name
+        self.ready_callback = ready_callback
         self.goofy_ability_to_slot = dict()
         self.donald_ability_to_slot = dict()
         self.all_weapon_location_id = None
@@ -59,7 +59,10 @@ class KH2Context(CommonContext):
             for k, v in dic.items()}
         self.location_name_to_worlddata = {name: data for name, data, in all_world_locations.items()}
 
-        self.slot_name = None
+        if self.slot_name is not None:
+            self.auth = self.slot_name
+        else:
+            self.auth = None
         self.disconnect_from_server = False
         self.sending = []
         # queue for the strings to display on the screen
@@ -145,9 +148,12 @@ class KH2Context(CommonContext):
             elif os.path.exists(self.kh2_client_settings_join):
                 with open(self.kh2_client_settings_join) as f:
                     # if the file isnt empty load it
-                    temp_json = json.load(f)
-                    if temp_json != {}:
+                    try:
+                        temp_json = json.load(f)
                         self.client_settings = temp_json
+                    except json.JSONDecodeError as e:
+                        logger.error(f"Error decoding JSON: {e}")
+                        self.client_settings = {}
 
         self.hitlist_bounties = 0
         # hooked object
@@ -280,10 +286,12 @@ class KH2Context(CommonContext):
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
             await super(KH2Context, self).server_auth(password_requested)
-        await self.get_username()
+        
+        if not self.auth:
+            await self.get_username()
         # if slot name != first time login or previous name
         # and seed name is none or saved seed name
-        if not self.slot_name and not self.kh2seedname:
+        if not self.kh2seedname:
             await self.send_connect()
         elif self.slot_name == self.auth and self.kh2seedname:
             await self.send_connect()
@@ -328,8 +336,6 @@ class KH2Context(CommonContext):
         if self.kh2seedname not in {None} and self.auth not in {None}:
             with open(self.kh2_seed_save_path_join, 'w') as f:
                 f.write(json.dumps(self.kh2_seed_save, indent=4))
-        with open(self.kh2_client_settings_join, 'w') as f2:
-            f2.write(json.dumps(self.client_settings, indent=4))
         await super(KH2Context, self).shutdown()
 
     def on_package(self, cmd: str, args: dict):
@@ -525,13 +531,14 @@ class KH2Context(CommonContext):
 
     def connect_to_game(self):
         if "KeybladeAbilities" in self.kh2slotdata.keys():
-            # sora ability to slot
+                # sora ability to slot
             self.AbilityQuantityDict.update(self.kh2slotdata["KeybladeAbilities"])
-            # itemid:[slots that are available for that item]
+                # itemid:[slots that are available for that item]
             self.AbilityQuantityDict.update(self.kh2slotdata["StaffAbilities"])
             self.AbilityQuantityDict.update(self.kh2slotdata["ShieldAbilities"])
 
-        self.all_weapon_location_id = {self.kh2_loc_name_to_id[loc] for loc in all_weapon_slot}
+        if self.kh2_loc_name_to_id:
+            self.all_weapon_location_id = {self.kh2_loc_name_to_id[loc] for loc in all_weapon_slot}
 
         try:
             if not self.kh2:
@@ -544,6 +551,9 @@ class KH2Context(CommonContext):
             logger.info("Game is not open.")
         self.serverconnected = True
         self.slot_name = self.auth
+        # Call ready callback if provided
+        if self.ready_callback:
+            self.ready_callback()
 
     def data_package_kh2_cache(self, loc_to_id, item_to_id):
         self.kh2_loc_name_to_id = loc_to_id
@@ -592,7 +602,7 @@ class KH2Context(CommonContext):
             logging_pairs = [
                 ("Client", "Archipelago")
             ]
-            base_title = "Archipelago KH2 Client"
+            base_title = apname + " KH2 Client"
 
         self.ui = KH2Manager(self)
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
@@ -608,14 +618,12 @@ class KH2Context(CommonContext):
                     self.Slot1 = 0x2A23598
                     self.Journal = 0x7434E0
                     self.Shop = 0x7435D0
-                    self.InfoBarPointer = 0xABE828
-                    self.isDead = 0x0BEF4A8
                 elif self.kh2_read_string(0x9A9330, 4) == "KH2J":
                     self.kh2_game_version = "EGS"
                 else:
                     if self.game_communication_path:
                         logger.info("Checking with most up to date addresses from the addresses json.")
-                        # if mem addresses file is found then check version and if old get new one
+                        #if mem addresses file is found then check version and if old get new one
                         kh2memaddresses_path = os.path.join(self.game_communication_path, "kh2memaddresses.json")
                         if not os.path.exists(kh2memaddresses_path):
                             logger.info("File is not found. Downloading json with memory addresses. This might take a moment")
@@ -687,6 +695,7 @@ async def kh2_watcher(ctx: KH2Context):
                         ctx.get_addresses()
                         logger.info("Game Connection Established.")
                     except Exception as e:
+                        logger.info("Game not found, retrying in 5 seconds...")
                         await asyncio.sleep(5)
             if ctx.disconnect_from_server:
                 ctx.disconnect_from_server = False
@@ -694,8 +703,11 @@ async def kh2_watcher(ctx: KH2Context):
         except Exception as e:
             if ctx.kh2connected:
                 ctx.kh2connected = False
-            logger.info(e)
-            logger.info("line 940")
+                logger.info("Game connection lost, will attempt to reconnect.")
+            if "Could not find process" in str(e):
+                logger.info("Game process not found, retrying in 5 seconds...")
+            else:
+                logger.info(f"Watcher error: {str(e)}")
         await asyncio.sleep(0.5)
 
 
@@ -705,20 +717,17 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
 
     async def main(args):
         ctx = KH2Context(server_address, slot_name, password, ready_callback)
-
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
             logger.critical("Client did not launch properly, exiting.")
 
         ctx.ui.base_title = apname + " | KH2"
-
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
         #ctx.run_cli()
         await ctx.server_auth()
         progression_watcher = asyncio.create_task(
                 kh2_watcher(ctx), name="KH2ProgressionWatcher")
-
         await progression_watcher
         await ctx.shutdown()
 

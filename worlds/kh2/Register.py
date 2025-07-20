@@ -1,7 +1,7 @@
 from . import KH2World
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 from . import KingdomHearts2Web
-from .Client import launch
+from .ClientStuff.Client import launch
 
 """
 Kingdom Hearts 2 World Registration

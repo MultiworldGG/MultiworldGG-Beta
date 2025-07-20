@@ -91,7 +91,7 @@ from kivymd.uix.navigationdrawer import MDNavigationLayout
 from kivymd.uix.appbar import MDBottomAppBar
 from kivy.uix.effectwidget import EffectWidget
 
-#from NetUtils import JSONtoTextParser, JSONMessagePart, SlotType, HintStatus
+from NetUtils import JSONtoTextParser, RawJSONtoTextParser, JSONMessagePart, SlotType, HintStatus
 # from Utils import async_start, get_input_text_from_response
 from .mw_theme import RegisterFonts, DefaultTheme
 
@@ -179,7 +179,6 @@ class MultiMDApp(MDApp):
         super().__init__(**kwargs)
         RegisterFonts(self)
         self.ctx = ctx
-        
         # Use the existing Kivy Config singleton for Kivy settings
         self.config = MWKVConfig
         
@@ -455,7 +454,7 @@ class MultiMDApp(MDApp):
     def _console_init(self):
         self.commandprocessor = self.ctx.command_processor(self.ctx)
         self.ui_console = self.console_screen.ui_console
-        self.ui_console.console_handler()
+        self.console_handler = self.ui_console.console_handler()
 
     def _create_menu_item(self, item):
         """Create a menu item with proper binding
@@ -492,6 +491,16 @@ class MultiMDApp(MDApp):
 
     def focus_textinput(self):
         self.change_screen("console")
+
+    def print_json(self, data: typing.List[JSONMessagePart]):
+        self.focus_textinput()
+        # Convert the list of JSONMessagePart to a single text message
+        # Use RawJSONtoTextParser to convert the JSON message parts to plain text without ANSI codes
+        parser = RawJSONtoTextParser(self.ctx)
+        print(data)
+        text = parser(data)
+        # Put the text string into the queue instead of the list
+        self.console_handler.queue.put_nowait(text)
 
     def on_message(self):
         try:

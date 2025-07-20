@@ -46,7 +46,12 @@ class TextConsole(MarkupTextField, ThemableBehavior):
     def add_text_from_buffer(self, dt):
         try:
             text = self.text_buffer.get_nowait()
-            self.text = self.text + "\n" + text.msg
+            # Handle both string and object with msg attribute
+            if isinstance(text, str):
+                message_text = text
+            else:
+                message_text = text.msg
+            self.text = self.text + "\n" + message_text
         except Empty:
             return
         except Exception as e:

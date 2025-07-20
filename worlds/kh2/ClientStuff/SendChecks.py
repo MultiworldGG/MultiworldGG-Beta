@@ -98,8 +98,7 @@ async def checkWorldLocations(self):
     except Exception as e:
         if self.kh2connected:
             self.kh2connected = False
-        logger.info(e)
-        logger.info("line 425")
+        logger.info(f"Error in checkWorldLocations: {e}")
 
 
 async def checkLevels(self):
@@ -130,8 +129,7 @@ async def checkLevels(self):
     except Exception as e:
         if self.kh2connected:
             self.kh2connected = False
-        logger.info(e)
-        logger.info("line 456")
+        logger.info(f"Error in checkLevels: {e}")
 
 
 async def checkSlots(self):
@@ -150,8 +148,7 @@ async def checkSlots(self):
     except Exception as e:
         if self.kh2connected:
             self.kh2connected = False
-        logger.info(e)
-        logger.info("line 475")
+        logger.info(f"Error in checkSlots: {e}")
 
 
 async def verifyChests(self):
@@ -170,8 +167,7 @@ async def verifyChests(self):
     except Exception as e:
         if self.kh2connected:
             self.kh2connected = False
-        logger.info(e)
-        logger.info("line 491")
+        logger.info(f"Error in verifyChests: {e}")
 
 
 async def verifyLevel(self):
