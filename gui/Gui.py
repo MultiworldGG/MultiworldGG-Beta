@@ -91,7 +91,7 @@ from kivymd.uix.navigationdrawer import MDNavigationLayout
 from kivymd.uix.appbar import MDBottomAppBar
 from kivy.uix.effectwidget import EffectWidget
 
-from NetUtils import JSONtoTextParser, RawJSONtoTextParser, JSONMessagePart, SlotType, HintStatus
+from NetUtils import KivyMarkupJSONtoTextParser, JSONMessagePart, SlotType, HintStatus
 # from Utils import async_start, get_input_text_from_response
 from .mw_theme import RegisterFonts, DefaultTheme
 
@@ -495,10 +495,11 @@ class MultiMDApp(MDApp):
     def print_json(self, data: typing.List[JSONMessagePart]):
         self.focus_textinput()
         # Convert the list of JSONMessagePart to a single text message
-        # Use RawJSONtoTextParser to convert the JSON message parts to plain text without ANSI codes
-        parser = RawJSONtoTextParser(self.ctx)
+        # Use KivyMarkupJSONtoTextParser to convert the JSON message parts to Kivy markup with hex colors
+        parser = KivyMarkupJSONtoTextParser(self.ctx)
         print(data)
         text = parser(data)
+        print(text)
         # Put the text string into the queue instead of the list
         self.console_handler.queue.put_nowait(text)
 

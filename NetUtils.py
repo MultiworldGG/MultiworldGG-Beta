@@ -217,7 +217,9 @@ class JSONTypes(str, enum.Enum):
     entrance_name = "entrance_name"
 
 # Default color definitions - these should be imported by GUI themes
+# [Dark, Light]
 DEFAULT_TEXT_COLORS = {
+    "default_color":["080808", "fafafa"],
     "location_color":["006f10", "00c51b"],
     "player1_color":["b42f88", "ff87d7"],
     "player2_color":["206cb8", "5fafff"],
@@ -257,13 +259,13 @@ class JSONtoTextParser(metaclass=HandlerMeta):
 
     def _handle_player_id(self, node: JSONMessagePart):
         player = int(node["text"])
-        node["color"] = 'playercolor' if self.ctx.slot_concerns_self(player) else 'friendcolor'
+        node["color"] = 'player1_color' if self.ctx.slot_concerns_self(player) else 'player2_color'
         node["text"] = self.ctx.player_names[player]
         return self._handle_color(node)
 
     # for other teams, spectators etc.? Only useful if player isn't in the clientside mapping
     def _handle_player_name(self, node: JSONMessagePart):
-        node["color"] = 'friendcolor'
+        node["color"] = 'player2_color'
         return self._handle_color(node)
 
     def _handle_item_name(self, node: JSONMessagePart):
@@ -272,15 +274,15 @@ class JSONtoTextParser(metaclass=HandlerMeta):
             node["color"] = 'regular_item_color' # filler
         elif flags & 0b1000:  # skip_balancing bit set
             if flags & 0b0001:  # progression_skip_balancing
-                node["color"] = 'progression_item_color'  # citron for progression skip items
+                node["color"] = 'progression_skip_item_color'  # citron for progression skip items
             else:  # just skip_balancing (shouldn't happen in practice)
                 node["color"] = 'regular_item_color'
         elif flags & 0b0001:  # progression
-            node["color"] = 'wothcolor'  # gold for required progression
+            node["color"] = 'progression_item_color'  # gold for required progression
         elif flags & 0b0010:  # useful
-            node["color"] = 'usefulcolor'  # lime for useful items
+            node["color"] = 'useful_item_color'  # lime for useful items
         elif flags & 0b0100:  # trap
-            node["color"] = 'trapcolor'  # salmon for traps
+            node["color"] = 'trap_item_color'  # salmon for traps
         else:
             node["color"] = 'regular_item_color'  # fallback to filler
         return self._handle_color(node)
@@ -291,7 +293,7 @@ class JSONtoTextParser(metaclass=HandlerMeta):
         return self._handle_item_name(node)
 
     def _handle_location_name(self, node: JSONMessagePart):
-        node["color"] = 'foundcolor'
+        node["color"] = 'location_color'
         return self._handle_color(node)
 
     def _handle_location_id(self, node: JSONMessagePart):
@@ -300,7 +302,7 @@ class JSONtoTextParser(metaclass=HandlerMeta):
         return self._handle_location_name(node)
 
     def _handle_entrance_name(self, node: JSONMessagePart):
-        node["color"] = 'entrancecolor'
+        node["color"] = 'entrance_color'
         return self._handle_color(node)
 
     def _handle_hint_status(self, node: JSONMessagePart):
@@ -312,22 +314,49 @@ class RawJSONtoTextParser(JSONtoTextParser):
     def _handle_color(self, node: JSONMessagePart):
         return self._handle_text(node)
 
+
+class KivyMarkupJSONtoTextParser(JSONtoTextParser):
+    """JSON parser that converts to Kivy markup format with hex colors"""
+    
+    def _handle_color(self, node: JSONMessagePart):
+        codes = node["color"].split(";")
+        # Find the first valid color code
+        color_hex = None
+        for code in codes:
+            if code in self.color_codes:
+                color_hex = self.color_codes[code]
+                break
+        
+        if color_hex:
+            # Get the plain text without wrapping it in default color
+            text = node.get("text", "")
+            return f'[color={color_hex}]{text}[/color]'
+        else:
+            return self._handle_text(node)
+    
+    def _handle_text(self, node: JSONMessagePart):
+        text = node.get("text", "")
+        # Wrap plain text with default color
+        default_color = self.color_codes.get("default_color", "CDCDCD")  # Default to gray readable on both dark and light
+        return f'[color={default_color}]{text}[/color]'
+
 # setting ansi colors - Added many 8 bit to go with the 4 bit.
 color_codes = {'reset': 0, 'bold': 1, 'underline': 4, 'black': 30, 'red': 31, 'green': 32, 'yellow': 33, 'blue': 34,
                 'magenta': 35, 'cyan': 36, 'white': 37, 'black_bg': 40, 'red_bg': 41, 'green_bg': 42, 'yellow_bg': 43,
                 'blue_bg': 44, 'magenta_bg': 45, 'cyan_bg': 46, 'white_bg': 47,
                 'plum': 33, 'slateblue': 32, 'salmon': 31, 'limegreen': 32, 'lightgray': 37, 'gold': 33,
-                'notfoundcolor': '38;5;196', #red
-                'foundcolor': '38;5;34', #green
-                'friendcolor': '38;5;75', #ltblue
-                'entrancecolor': '38;5;27', #blue
-                'playercolor': '38;5;212', #atzpink
-                'junkcolor': '38;5;249', #gray
-                'usefulcolor': '38;5;149', #lime
-                'wothcolor': '38;5;220', #gold
-                'trapcolor': '38;5;167', #salmon
-                'default': 37, #white
-                'bcastcolor': '38;5;208' #orange
+                'default_color': 37, #white
+                'location_color': '38;5;34', #green
+                'player1_color': '38;5;212', #atzpink
+                'player2_color': '38;5;75', #ltblue
+                'entrance_color': '38;5;27', #blue
+                'trap_item_color': '38;5;167', #salmon
+                'regular_item_color': '38;5;249', #gray
+                'useful_item_color': '38;5;149', #lime
+                'skip_item_color': '38;5;149', #lime
+                'progression_skip_item_color': '38;5;220', #gold
+                'progression_item_color': '38;5;220', #gold
+                'command_echo_color': '38;5;208' #orange
 }
 
 def color_code(*args):

@@ -128,12 +128,15 @@ class KH2Context(CommonContext):
         self.kh2slotdata = None
         self.mem_json = None
         self.itemamount = {}
-        self.client_settings = {
+        # Default client settings
+        default_settings = {
             "send_truncate_first":    "PlayerName",  # there is no need to truncate item names for info popup
             "receive_truncate_first": "PlayerName",  # truncation order. Can be PlayerName or ItemName
             "send_popup_type":        "Puzzle",  # type of popup when you receive an item
             "receive_popup_type":     "Puzzle",  # can be Puzzle, Info or None
         }
+        
+        self.client_settings = default_settings.copy()
 
         if "localappdata" in os.environ:
             self.game_communication_path = os.path.expandvars(r"%localappdata%\KH2AP")
@@ -144,16 +147,17 @@ class KH2Context(CommonContext):
             if not os.path.exists(self.kh2_client_settings_join):
                 # make the json with the settings
                 with open(self.kh2_client_settings_join, "wt") as f:
-                    pass
+                    json.dump(default_settings, f, indent=4)
             elif os.path.exists(self.kh2_client_settings_join):
                 with open(self.kh2_client_settings_join) as f:
                     # if the file isnt empty load it
                     try:
                         temp_json = json.load(f)
-                        self.client_settings = temp_json
+                        # Merge with defaults to ensure all required keys exist
+                        self.client_settings = {**default_settings, **temp_json}
                     except json.JSONDecodeError as e:
                         logger.error(f"Error decoding JSON: {e}")
-                        self.client_settings = {}
+                        self.client_settings = default_settings.copy()
 
         self.hitlist_bounties = 0
         # hooked object

@@ -47,6 +47,7 @@ THEME_OPTIONS = {
 
 @dataclass
 class MarkupTagsTheme:
+    default_color: list[str]
     location_color: list[str]
     player1_color: list[str]
     player2_color: list[str]
@@ -60,6 +61,8 @@ class MarkupTagsTheme:
     command_echo_color: list[str]
 
     def __init__(self, **kwargs):
+        # Dark, Light
+        self.default_color=["080808","fafafa"]
         self.location_color=["006f10","00c51b"]
         self.player1_color=["b42f88","ff87d7"]
         self.player2_color=["206cb8","5fafff"]
@@ -73,6 +76,7 @@ class MarkupTagsTheme:
         self.command_echo_color=["a75600","ff9334"]
 
     def name(self, color_attr):
+        if color_attr == self.default_color: return "Default Text:"
         if color_attr == self.location_color: return "Location:"
         if color_attr == self.player1_color: return "Slot:"
         if color_attr == self.player2_color: return "Other Players:"
