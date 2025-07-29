@@ -135,7 +135,7 @@ class ConsoleScreen(MDScreen, ThemableBehavior):
         self.important_appbar.size_hint_x = 260/Window.width
         self.important_appbar.size_hint_y=1-(8/Window.height)
 
-        self.ui_console = ConsoleView(pos_hint={"center_y": .5, "center_x": .5+(130/Window.width)},
+        self.ui_console = ConsoleView(pos_hint={"y": 0, "center_x": .5+(130/Window.width)},
                                       size_hint_x=1-(264/Window.width), 
                                       size_hint_y=1-(8/Window.height))
         self.important_appbar.ids.scroll.scroll_wheel_distance = 40

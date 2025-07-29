@@ -10,10 +10,86 @@ from kivy.lang import Builder
 from kivymd.app import MDApp
 from kivymd.uix.button import MDButton
 from kivymd.uix.label import MDLabel, MDIcon
-from kivymd.uix.bottomsheet import MDBottomSheet
-from kivymd.uix.textfield.textfield import MDTextField
+from kivymd.uix.floatlayout import MDFloatLayout
 from kivy.clock import Clock
-from .kivydi import CONSOLE_ACTIONS, LAUNCHER_ACTIONS
+#from kivydi import CONSOLE_ACTIONS, LAUNCHER_ACTIONS
+CONSOLE_ACTIONS = [
+{
+    "id":           "console",
+    "buttonicon":   "chat-outline",
+    "icon":         "chat-outline",
+    "prefill":      "!countdown",
+    "label":        "Console",
+    "indicator":    "blank",
+    "type":         "assist",
+},
+{
+    "id":           "hint",
+    "buttonicon":   "map-search",
+    "icon":         "map-search",
+    "prefill":      "!hint",
+    "label":        "Hint",
+    "indicator":    "widgets",
+    "type":         "assist",
+},
+{
+    "id":           "admin",
+    "buttonicon":   "account-lock-outline",
+    "icon":         "wrench",
+    "prefill":      "password",
+    "label":        "Host Administration",
+    "indicator":    "server-network",
+    "type":         "assist",
+}]
+
+
+LAUNCHER_ACTIONS = [
+{
+    "id":           "generate",
+    "buttonicon":   "creation-outline",
+    "icon":         "creation-outline",
+    "prefill":      "",
+    "label":        "Generate",
+    "indicator":    "blank",
+    "type":         "assist",
+},
+{
+    "id":           "host",
+    "buttonicon":   "hand-extended",
+    "icon":         "hand-extended",
+    "prefill":      "",
+    "label":        "Host",
+    "indicator":    "blank",
+    "type":         "assist",
+},
+{
+    "id":           "patch",
+    "buttonicon":   "auto-fix",
+    "icon":         "auto-fix",
+    "prefill":      "",
+    "label":        "Patch",
+    "indicator":    "blank",
+    "type":         "assist",
+},
+{
+    "id":           "yaml",
+    "buttonicon":   "code-brackets",
+    "icon":         "code-brackets",
+    "prefill":      "",
+    "label":        "YAML",
+    "indicator":    "blank",
+    "type":         "assist",
+},
+{
+    "id":           "connect",
+    "buttonicon":   "lan-connect",
+    "icon":         "lan-connect",
+    "prefill":      "",
+    "label":        "Connect",
+    "indicator":    "blank",
+    "type":         "assist",
+},
+]
 
 Builder.load_string('''
 <BottomAppBar>:
@@ -22,10 +98,22 @@ Builder.load_string('''
                     if app.theme_cls.theme_style == "Light" \
                     else app.theme_cls.onPrimaryColor
     MDFabBottomAppBarButton:
-        id: bottomsheet_fab
+        id: text_input_fab
         icon: "chat-outline"
-        on_release: app.bottom_sheet.set_state("toggle")
+        on_release: root.show_text_input()
+                    
+<ConsoleTextInput>:
+    height: dp(80)
+    width: Window.width
+    pos: 0, 0
+    MDTextField:
+        id: text_input
+        hint_text: "Enter text"
+        write_tab: False
+        on_text_validate: root.on_text_validate(text_input.text)
 ''')
+class ConsoleTextInput(MDFloatLayout):
+    pass
 
 class BottomAppBar(MDBottomAppBar):
 

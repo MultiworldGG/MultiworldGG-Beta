@@ -8,6 +8,7 @@ from kivymd.uix.list import MDListItem
 from mw_theme import RegisterFonts, md_icons
 from kivy.core.text import LabelBase
 from kivy.metrics import sp
+from kivymd.theming import ThemableBehavior
 
 Builder.load_string('''
 #:import images_path kivymd.images_path
@@ -39,8 +40,18 @@ Builder.load_string('''
 
             MDTextField:
                 id: search_field
-                hint_text: 'Search icon'
+                #hint_text: 'Search icon'
                 on_text: root.set_list_md_icons(self.text, True)
+                MDTextFieldHintText:
+                    text: 'anything goes'
+                MDTextFieldHelperText:
+                    text: 'Search'
+                    mode: "persistent"
+                MDTextFieldLeadingIcon:
+                    icon: 'magnify'
+                MDTextFieldTrailingIcon:
+                    icon: 'close'
+
 
         RecycleView:
             id: rv
@@ -62,7 +73,7 @@ class IconItem(MDListItem):
     text = StringProperty()
 
 
-class PreviousMDIcons(MDScreen):
+class PreviousMDIcons(MDScreen, ThemableBehavior):
     def set_list_md_icons(self, text="", search=False):
         '''Builds a list of icons for the screen MDIcons.'''
 

@@ -3,10 +3,11 @@ __all__ = ['LauncherScreen', 'LauncherLayout']
 import asynckivy
 from textwrap import wrap
 from kivy.metrics import dp
-from kivy.properties import StringProperty, DictProperty, ObjectProperty
+from kivy.properties import StringProperty, DictProperty, ObjectProperty, BooleanProperty
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.relativelayout import MDRelativeLayout
+from kivymd.uix.floatlayout import MDFloatLayout
 from kivy.lang import Builder
 from kivy.core.window import Window
 from kivy.properties import ObjectProperty
@@ -16,129 +17,199 @@ from kivymd.theming import ThemableBehavior
 from kivymd.uix.list import *
 from kivymd.uix.expansionpanel import *
 from .kivydi.expansionlist import *
-from kivymd.uix.textfield import MDTextField
+from kivymd.uix.textfield import MDTextField, MDTextFieldHelperText, MDTextFieldHintText, MDTextFieldLeadingIcon, MDTextFieldTrailingIcon
 import logging
 from typing import Any
 
 from kivy.clock import Clock
-from kivymd.app import MDApp
+from kivy.app import App
 from data.game_index import GameIndex
 
 from .bottomappbar import BottomAppBar
 
 from Utils import discover_and_launch_module
 
+import sys
+
 game_index = GameIndex()
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("Client")
 
 Builder.load_string('''
+<LauncherScreen>:
+    size_hint: 1,1
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
 <LauncherLayout>:
     id: launcher_layout
-    size_hint: None,None
-    pos: 0,82
+    y: 82
+    size_hint_y: 1-(185/Window.height)
 
 <LauncherView>:
     id: launcher_view
-    pos: 0,82
-    game_name: "test"
-    orientation: 'vertical'
-    padding: 10
-    spacing: 10
-    theme_bg_color: "Custom"
-    md_bg_color: app.theme_cls.surfaceVariantColor
-    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+    server_layout: server_layout
+    game_name: ""
+    orientation: 'horizontal'
+    padding: dp(50)
     MDBoxLayout:
         orientation: 'vertical'
-        spacing: 10
-        padding: 8
-        pos_hint:{"x": 0, "y": 0}
+        spacing: 30
+        padding: dp(30)
+        theme_bg_color: "Custom"
+        md_bg_color: app.theme_cls.surfaceVariantColor
         MDBoxLayout:
-            orientation: 'horizontal'
-            spacing: 10
-            padding: 8
-            MDButton:
-                id: host_button
-                on_release: app.root.current = 'host'
-                MDButtonText:
+            orientation: 'vertical'
+            MDBoxLayout:
+                orientation: 'vertical'
+                spacing: 10
+                size_hint_y: None
+                height: dp(120)
+                MDLabel:
+                    text: "Welcome to Multiworld!"
+                    halign: 'center'
+                    font_style: "Title"
+                    role: "small"
                     theme_text_color: "Custom"
                     text_color: app.theme_cls.onSurfaceVariantColor
-                    text: 'Host or Generate'
-                    halign: 'center'
-
-        MDBoxLayout:
-            orientation: 'horizontal'
-            spacing: 10
-            padding: 8
-            MDButton:
-                id: game_yaml_button
-                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                MDButtonText:
-                    theme_text_color: "Custom"
-                    text_color: app.theme_cls.onSurfaceVariantColor
-                    text: 'Generate YAML'
-                    halign: 'center'
-            MDButton:
-                id: game_patch_button
-                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                MDButtonText:
-                    theme_text_color: "Custom"
-                    text_color: app.theme_cls.onSurfaceVariantColor
-                    text: 'Patch ' + root.game_name
-                    halign: 'center'
-        MDBoxLayout:
-            orientation: 'horizontal'
-            spacing: 10
-            padding: 8
-            MDTextField:
-                id: server
-                size_hint_x: 0.7
-                theme_text_color: "Custom"
-                text_color_focus: app.theme_cls.onSurfaceVariantColor
-                MDTextFieldLeadingIcon:
-                    icon: 'router-network'
-                MDTextFieldHintText:
-                    text: app.app_config.get("client", "hostname", fallback="multiworld.gg")
-            MDTextField:
-                id: port
-                size_hint_x: 0.3
-                theme_text_color: "Custom"
-                text_color_focus: app.theme_cls.onSurfaceVariantColor
-                MDTextFieldHintText:
-                    text: app.app_config.get("client", "port", fallback="38281")
-        MDBoxLayout:
-            orientation: 'horizontal'
-            spacing: 10
-            padding: 8
-            MDTextField:
-                id: slot_name
-                size_hint_x: 0.5
-                theme_text_color: "Custom"
-                text_color_focus: app.theme_cls.onSurfaceVariantColor
-                MDTextFieldLeadingIcon:
-                    icon: 'ticket-account'
-                MDTextFieldHelperText:
-                    text: app.app_config.get("client", "slot", fallback="")
-            MDTextField:
-                id: slot_password
-                size_hint_x: 0.5
-                password: True
-                theme_text_color: "Custom"
-                text_color_focus: app.theme_cls.onSurfaceVariantColor
-                MDTextFieldHelperText:
-                    text: 'Password'
-        MDBoxLayout:
-            orientation: 'horizontal'
-            spacing: 10
-            padding: 8
-            MDButton:
-                id: connect_button
-                on_release: app.launcher_screen.connect()
-                pos_hint: {'right': .9, 'center_y': 0.5}
-                MDButtonText:
-                    theme_text_color: "Custom"
-                    text_color: app.theme_cls.onSurfaceVariantColor
-                    text: 'Connect & Play'
-                    halign: 'center'
+            MDBoxLayout:
+                orientation: 'horizontal'
+                spacing: 10
+                MDBoxLayout:
+                    orientation: 'vertical'
+                    spacing: dp(15)
+                    MDButton:
+                        id: connect_button
+                        pos_hint: {"center_x": 0.5}
+                        on_release: app.launcher_screen.connect()
+                        MDButtonText:
+                            theme_text_color: "Custom"
+                            text_color: app.theme_cls.onSurfaceVariantColor
+                            text: 'Connect & Play'
+                            halign: 'center'
+                        MDButtonIcon:
+                            icon: "play"
+                    MDButton:
+                        id: game_patch_button
+                        pos_hint: {"center_x": 0.5}
+                        MDButtonText:
+                            theme_text_color: "Custom"
+                            text_color: app.theme_cls.onSurfaceVariantColor
+                            text: 'Patch ' + root.game_name
+                            halign: 'center'
+                        MDButtonIcon:
+                            icon: "file-edit"
+                    MDButton:
+                        id: game_yaml_button
+                        pos_hint: {"center_x": 0.5}
+                        MDButtonText:
+                            theme_text_color: "Custom"
+                            text_color: app.theme_cls.onSurfaceVariantColor
+                            text: 'Create YAML'
+                            halign: 'center'
+                        MDButtonIcon:
+                            icon: "code-block-brackets"
+                    MDButton:
+                        id: generate_button
+                        on_release: app.root.current = 'generate'
+                        pos_hint: {"center_x": 0.5}
+                        MDButtonText:
+                            theme_text_color: "Custom"
+                            text_color: app.theme_cls.onSurfaceVariantColor
+                            text: 'Generate'
+                            halign: 'center'
+                        MDButtonIcon:
+                            icon: "gamepad-square-outline"
+                    MDButton:
+                        id: host_button
+                        on_release: app.root.current = 'host'
+                        pos_hint: {"center_x": 0.5}
+                        MDButtonText:
+                            theme_text_color: "Custom"
+                            text_color: app.theme_cls.onSurfaceVariantColor
+                            text: 'Host'
+                            halign: 'center'
+                        MDButtonIcon:
+                            icon: "router-network"
+                MDBoxLayout:
+                    orientation: 'vertical'
+                    spacing: dp(5)
+                    width: dp(10)
+                    size_hint_x: None
+                    MDDivider:
+                        size_hint_y: .8
+                        pos_hint: {"center_y": 0.5}
+                        orientation: "vertical"
+                        color: app.theme_cls.outlineColor
+                MDBoxLayout:
+                    id: server_layout
+                    orientation: 'vertical'
+                    spacing: dp(15)
+                    LauncherAuthTextField:
+                        id: server
+                        size_hint_x: 0.8
+                        pos_hint: {"center_x": 0.5}
+                        text: app.app_config.get("client", "hostname", fallback="")
+                        MDTextFieldLeadingIcon:
+                            theme_icon_color: "Custom"
+                            icon: 'router-network'
+                            icon_color_focus: self.parent.icon_color_focus
+                            icon_color_normal: self.parent.icon_color_normal
+                        MDTextFieldHintText:
+                            text: "Server Address"
+                        # MDTextFieldHelperText:
+                        #     theme_text_color: "Custom"
+                        #     text_color_focus: self.parent.text_color_focus
+                        #     text_color_normal: self.parent.text_color_normal
+                        #     text: "multiworld.gg"
+                        #     mode: "persistent"
+                    LauncherAuthTextField:
+                        id: port
+                        size_hint_x: 0.8
+                        pos_hint: {"center_x": 0.5}
+                        text: app.app_config.get("client", "port", fallback="")
+                        MDTextFieldLeadingIcon:
+                            theme_icon_color: "Custom"
+                            icon: 'numeric'
+                            icon_color_focus: self.parent.icon_color_focus
+                            icon_color_normal: self.parent.icon_color_normal
+                        MDTextFieldHintText:
+                            text: "Port"
+                        # MDTextFieldHelperText:
+                        #     theme_text_color: "Custom"
+                        #     text_color_focus: self.parent.text_color_focus
+                        #     text_color_normal: self.parent.text_color_normal
+                        #     text: "38281"
+                        #     mode: "persistent"
+                    LauncherAuthTextField:
+                        id: slot_name
+                        size_hint_x: 0.8
+                        pos_hint: {"center_x": 0.5}
+                        text: app.app_config.get("client", "slot_name", fallback="")
+                        MDTextFieldLeadingIcon:
+                            theme_icon_color: "Custom"
+                            icon_color_focus: self.parent.icon_color_focus
+                            icon_color_normal: self.parent.icon_color_normal
+                            icon: 'ticket-account'
+                        MDTextFieldHintText:
+                            text: "Username"
+                    LauncherAuthTextField:
+                        id: slot_password
+                        password: True
+                        size_hint_x: 0.8
+                        pos_hint: {"center_x": 0.5}
+                        text: app.app_config.get("client", "slot_password", fallback="")
+                        MDTextFieldLeadingIcon:
+                            theme_icon_color: "Custom"
+                            icon_color_focus: self.parent.icon_color_focus
+                            icon_color_normal: self.parent.icon_color_normal
+                            icon: 'lock'    
+                        MDTextFieldHintText:
+                            text: "Password"
+                        # MDTextFieldHelperText:
+                        #     theme_text_color: "Custom"
+                        #     text_color_focus: self.parent.text_color_focus
+                        #     text_color_normal: self.parent.text_color_normal
+                        #     text: "Password"
+                        #     mode: "persistent"
 
 <TagChip>:
     type: "filter"
@@ -147,8 +218,8 @@ Builder.load_string('''
         icon: root.icon
         
 <LauncherSliverAppbar>:
-    pos_hint: {"x": 0}
-    width: 260
+    pos_hint: {"x": 0, "top": 1}
+    width: dp(260)
     size_hint_x: None
     adaptive_height: True
     hide_appbar: True
@@ -172,24 +243,42 @@ Builder.load_string('''
                 pos_hint: {"top": 1}
                 fit_mode: "scale-down"
 
+<LauncherAuthTextField>:
+    theme_font_name: "Custom"
+    theme_font_style: "Custom"
+    theme_icon_color: "Custom"
+    theme_text_color: "Custom"
+    theme_bg_color: "Custom"
+    text_color_focus: app.theme_cls.onSecondaryContainerColor
+    text_color_normal: app.theme_cls.onSurfaceVariantColor
+    icon_color_focus: app.theme_cls.primaryColor
+    icon_color_normal: app.theme_cls.onPrimaryColor
+    fill_color_focus: app.theme_cls.surfaceContainerHighestColor
+    fill_color_normal: app.theme_cls.surfaceVariantColor
+    font_name: app.theme_cls.font_styles[self.font_style][self.role]["font-name"]
+    font_size: app.theme_cls.font_styles[self.font_style][self.role]["font-size"]
+    mode: "filled"
+    write_tab: False
+                    
 <LauncherTextField>:
     theme_font_name: "Custom"
     theme_font_style: "Custom"
     font_name: app.theme_cls.font_styles[self.font_style][self.role]["font-name"]
     font_size: app.theme_cls.font_styles[self.font_style][self.role]["font-size"]
-    MDTextFieldHelperText:
-        text: root.helper_text
+    MDTextFieldHintText:
+        text: root.hint_text
         theme_font_name: "Custom"
         theme_font_style: "Custom"
         font_name: app.theme_cls.font_styles[self.font_style][self.role]["font-name"]
         font_size: app.theme_cls.font_styles[self.font_style][self.role]["font-size"]
 
 ''')
-class LauncherLayout(MDRelativeLayout):
+class LauncherLayout(MDFloatLayout):
     pass
 
 class LauncherView(MDBoxLayout):
-    pass
+    slot_layout: ObjectProperty
+    server_layout: ObjectProperty
 
 class LauncherSliverAppbar(MDSliverAppbar):
     content: MDSliverAppbarContent
@@ -200,11 +289,15 @@ class LauncherSliverAppbar(MDSliverAppbar):
         self.content.id = "content"
         self.add_widget(self.content)
 
+class LauncherAuthTextField(MDTextField):
+    pass
+
+
 class LauncherTextField(MDTextField):
-    helper_text = StringProperty("")
+    hint_text = StringProperty("")
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.helper_text = kwargs.get("helper_text", "")
+        self.hint_text = kwargs.get("hint_text", "")
 
 class SearchBar(MDTopAppBar):
     def __init__(self, **kwargs):
@@ -212,8 +305,7 @@ class SearchBar(MDTopAppBar):
         self.search_box = LauncherTextField(
             id="game_tag_filter",
             padding=dp(16),
-            font_style = "Body",
-            helper_text = "Game Search",
+            hint_text = "Game Search",
             pos_hint = {"center_x": 0.5, "top": 1}
         )
         self.add_widget(self.search_box)
@@ -229,7 +321,6 @@ class SearchBar(MDTopAppBar):
         if isinstance(widget, MDTextField):
             widget._appbar = self
             self.appbar_title = widget
-            widget.theme_font_style = "Body"
             Clock.schedule_once(lambda x: self._add_title(widget))
         else:
             super().add_widget(widget)
@@ -239,7 +330,7 @@ class SearchBar(MDTopAppBar):
 
     def on_enter(self, instance):
         # Get the parent screen to access the game list
-        screen = MDApp.get_running_app().screen_manager.current_screen
+        screen = App.get_running_app().screen_manager.current_screen
         if isinstance(screen, LauncherScreen):
             # Clear existing game list
             screen.games_mdlist.clear_widgets()
@@ -257,34 +348,33 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     '''
     name = "launcher"
     launcher_hero_from: ObjectProperty
-    layoutgrid: MDBoxLayout
+    launchergrid: LauncherLayout
     important_appbar: MDSliverAppbar
-    launcher_layout: LauncherView
+    launcher_view: LauncherView
     game_filter: list
     game_tag_filter: StringProperty
     bottom_appbar: BottomAppBar
     selected_game: StringProperty = ""
-    app: MDApp
+    app: App
     result: Any
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
-        self.size_hint = (1, 1)
-        self.pos_hint = {"center_x": 0.5, "center_y": 0.5}
         self.game_filter = []
         self.games_mdlist = MDList(width=260)
         self.game_tag_filter = "popular"
         self.selected_game = ""
-        self.app = MDApp.get_running_app()
+        self.app = App.get_running_app()
 
         self.bottom_appbar = BottomAppBar(screen_name="launcher")
         self.important_appbar = LauncherSliverAppbar()
-
+        self.launcher_view = LauncherView()
         Clock.schedule_once(lambda x: self.init_important())
 
         asynckivy.start(self.set_game_list())
 
     def init_important(self):
-        self.launchergrid = LauncherLayout(width=Window.width, height=Window.height-185)
+        self.launchergrid = LauncherLayout()
+
         self.add_widget(self.launchergrid)
         self.add_widget(self.bottom_appbar)
 
@@ -292,18 +382,17 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.heroes_from = [self.launcher_hero_from]
 
         self.important_appbar.size_hint_x = 260/Window.width
-        self.important_appbar.size_hint_y=1-(8/Window.height)
+        self.important_appbar.size_hint_y=1
+        self.launcher_view.size_hint_x = 1-(264/Window.width)
+        self.launcher_view.size_hint_y =1
 
-        self.launcher_view = LauncherView(pos_hint={"center_y": .5, "center_x": .5+(130/Window.width)},
-                                      size_hint_x=1-(264/Window.width), 
-                                      size_hint_y=1-(8/Window.height))
-        
         self.important_appbar.ids.scroll.scroll_wheel_distance = 40
         #self.important_appbar.ids.scroll.y = 82
 
         self.important_appbar.content.add_widget(self.games_mdlist)
 
-        self.launchergrid.add_widget(self.important_appbar)  
+        self.launchergrid.add_widget(self.important_appbar)
+        self.launcher_view.pos_hint={"y": 0, "x": 260/Window.width}
         self.launchergrid.add_widget(self.launcher_view)
 
     async def set_game_list(self):
@@ -348,6 +437,13 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         port_field = self.launcher_view.ids.port
         slot_name_field = self.launcher_view.ids.slot_name
         slot_password_field = self.launcher_view.ids.slot_password
+
+        if not server_field.text:
+            server_field.text = server_field.hint_text
+        if not port_field.text:
+            port_field.text = port_field.hint_text
+        if not slot_name_field.text:
+            slot_name_field.text = slot_name_field.hint_text
         
         server_address = f"{server_field.text}:{port_field.text}" if server_field.text and port_field.text else None
         slot_name = slot_name_field.text if slot_name_field.text else None
@@ -357,20 +453,19 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         logger.info(f"Server: {server_address}, Password: {'*' * len(password) if password else 'None'}")
         
         try:
+            # Switch to console screen first to ensure it's created before connection
+            self.app.client_console_init()
+            
             # Show loading screen
             #Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(speed=0.033), 0)
 
             # Define ready callback to hide loading layout
             def ready_callback():
-                logger.info(f"Client {self.selected_game} is ready, hiding loading layout")
                 self.app.loading_layout.hide_loading()
             discover_and_launch_module(
                     self.selected_game, server_address = server_address, slot_name = slot_name, \
                     password = password, ready_callback=ready_callback
             )
-
-            self.app.loading_layout.hide_loading()
-            logger.info(f"Successfully launched {self.selected_game} module")
                 
         except Exception as e:
             logger.error(f"Failed to launch {self.selected_game} module: {e}")

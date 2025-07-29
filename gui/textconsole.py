@@ -19,7 +19,11 @@ from kivy.utils import get_hex_from_color
 
 __all__ = ('TextConsole', 'ConsoleView',)
 
-
+## helper class to return both Client and Archipelago logs
+class ConsoleFilter(logging.Filter):
+    def filter(self, record):
+        return record.name == "Client" or record.name == "Archipelago"
+    
 class TextConsole(MarkupTextField, ThemableBehavior):
     text_buffer: Queue
     #text_color: ColorProperty
@@ -35,7 +39,6 @@ class TextConsole(MarkupTextField, ThemableBehavior):
         self.multiline = True
         self.do_wrap = True
         self.auto_indent = True
-        self.use_handles = True
         self.use_menu = True
         self.readonly = True
         self.cursor_color = self.theme_cls.primaryColor
@@ -104,6 +107,5 @@ class ConsoleView(MDFloatLayout):
         _console_out = QueueHandler(queue=self.text_console.text_buffer)
         _console_out.setFormatter(logging.Formatter("%(message)s"))
         _console_out.setLevel(logging.INFO)
-        _console_out.addFilter(logging.Filter("Archipelago"))
-        _console_out.addFilter(logging.Filter("Client"))
+        _console_out.addFilter(ConsoleFilter())
         return _console_out

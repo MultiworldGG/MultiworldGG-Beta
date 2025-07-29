@@ -1,10 +1,5 @@
 from __future__ import annotations
-__all__ = ("MarkupTextField", 
-           "MDTextFieldHintText",
-           "MDTextFieldHelperText",
-           "MDTextFieldLeadingIcon",
-           "MDTextFieldTrailingIcon",
-           )
+__all__ = ("MarkupTextField", )
 
 import logging
 import os
@@ -154,7 +149,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
 
     __events__ = ('on_touch_up',)
 
-    admin_enabled = BooleanProperty(True)
+    admin_enabled = BooleanProperty(False)
     role = StringProperty("large") #MD
     mode = OptionProperty("outlined", options=["outlined", "filled"]) #MD
     error_color = ColorProperty(None) #MD
@@ -1374,23 +1369,4 @@ class MarkupTextField(TextInput, ThemableBehavior):
 
     def _refresh_hint_text(self):
         """Method override to avoid duplicate hint text texture."""
-
-class MDTextFieldLeadingIcon(MDTextFieldLeadingIcon):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-    
-
-class MDTextFieldHelperText(MDTextFieldHelperText):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-    
-
-class MDTextFieldHintText(MDTextFieldHintText):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-    
-
-class MDTextFieldTrailingIcon(MDTextFieldTrailingIcon):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
     

@@ -95,7 +95,6 @@ from NetUtils import KivyMarkupJSONtoTextParser, JSONMessagePart, SlotType, Hint
 # from Utils import async_start, get_input_text_from_response
 from .mw_theme import RegisterFonts, DefaultTheme
 
-from .bottomsheet import MainBottomSheet, BottomChipLayout
 from .titlebar import Titlebar
 from .console import ConsoleScreen
 from .hintscreen import HintScreen
@@ -158,7 +157,6 @@ class MultiMDApp(MDApp):
     navigation_layout: NavLayout
     loading_layout: MWGGLoadingLayout
     top_appbar_layout: TopAppBarLayout
-    bottom_sheet: MainBottomSheet
     screen_manager: MainScreenMgr
 
     console_screen: ConsoleScreen
@@ -167,7 +165,6 @@ class MultiMDApp(MDApp):
     launcher_screen: LauncherScreen
 
     bottom_appbar: BottomAppBar
-    bottom_chips: BottomChipLayout
     
     theme_mw: DefaultTheme
     top_appbar_menu: MDDropdownMenu
@@ -215,6 +212,7 @@ class MultiMDApp(MDApp):
             'in_bk': '0',
             'hostname': 'multiworld.gg',
             'port': '38281',
+            'password': '',
             'admin_password': '',
             'theme_style': 'Dark',
             'primary_palette': 'Purple',
@@ -363,10 +361,6 @@ class MultiMDApp(MDApp):
         # Top appbar layout
         self.top_appbar_layout = TopAppBarLayout()
         self.top_appbar_menu = None
-
-        # Bottom sheet
-        self.bottom_sheet = MainBottomSheet()
-        #self.bottom_chips = BottomChipLayout()
         
         # Screen manager
         # Screens are under the appbar and titlebar
@@ -374,7 +368,6 @@ class MultiMDApp(MDApp):
 
         # Set up navigation layout
         self.navigation_layout.add_widget(self.screen_manager)
-        self.navigation_layout.add_widget(self.bottom_sheet)
 
         # Add user interface elements to main layout
         self.main_layout.add_widget(self.navigation_layout)
@@ -433,12 +426,7 @@ class MultiMDApp(MDApp):
         It updates or creates the current screen and dismisses 
         the menu with the screen names.
         '''
-        if item == "console":
-            self.console_screen = ConsoleScreen()
-            self.screen_manager.add_widget(self.console_screen)
-            self.screen_manager.current = "console"
-            Clock.schedule_once(lambda x: self._console_init())
-        elif item == "settings":
+        if item == "settings":
             self.settings_screen = SettingsScreen()
             self.screen_manager.add_widget(self.settings_screen)
             self.screen_manager.current = "settings"
@@ -455,6 +443,11 @@ class MultiMDApp(MDApp):
         self.commandprocessor = self.ctx.command_processor(self.ctx)
         self.ui_console = self.console_screen.ui_console
         self.console_handler = self.ui_console.console_handler()
+
+    def client_console_init(self):
+        self.console_screen = ConsoleScreen()
+        self.screen_manager.add_widget(self.console_screen)
+        Clock.schedule_once(lambda x: self._console_init())
 
     def _create_menu_item(self, item):
         """Create a menu item with proper binding
