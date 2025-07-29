@@ -86,12 +86,12 @@ class GameListItemHeader(MDBoxLayout, ButtonBehavior, CommonElevationBehavior):
         panel (ObjectProperty): Reference to the parent panel
         on_game_select (ObjectProperty): Callback function for game selection
     """
-    game_tag: StringProperty
+    game_module: StringProperty
     game_data: DictProperty
     panel: ObjectProperty
     on_game_select: ObjectProperty = None
 
-    def __init__(self, game_tag, game_data, panel, on_game_select=None, **kwargs):
+    def __init__(self, game_module, game_data, panel, on_game_select=None, **kwargs):
         """
         Initialize the GameListItemHeader.
         
@@ -101,7 +101,7 @@ class GameListItemHeader(MDBoxLayout, ButtonBehavior, CommonElevationBehavior):
             panel: Reference to the parent panel
             on_game_select: Callback function for game selection
         """
-        self.game_tag = game_tag
+        self.game_module = game_module
         self.game_data = game_data
         self.panel = panel
         self.on_game_select = on_game_select
@@ -110,7 +110,7 @@ class GameListItemHeader(MDBoxLayout, ButtonBehavior, CommonElevationBehavior):
     def on_press(self):
         """Handle press event for game selection"""
         if self.on_game_select:
-            self.on_game_select(self.game_tag)
+            self.on_game_select(self.game_module)
 
     def list_tooltip(self, item_list: list[str]) -> dict[str, str]:
         """
@@ -398,7 +398,7 @@ class GameListPanel(MDExpansionPanel):
     slot items (if hints are present) or game metadata.
     
     Attributes:
-        game_tag (StringProperty): The tag identifier for the game
+        game_module (StringProperty): The module to use for the game
         game_data (DictProperty): Dictionary containing game information
         icon (StringProperty): The icon to display (default: "game-controller")
         leading_avatar (MDListItemLeadingAvatar): Avatar widget for the game
@@ -407,7 +407,7 @@ class GameListPanel(MDExpansionPanel):
         panel_header_layout (ObjectProperty): Layout for the panel header
         on_game_select (ObjectProperty): Callback function for game selection
     """
-    game_tag: StringProperty
+    game_module: StringProperty
     game_data: DictProperty
     icon = StringProperty("game-controller")
     leading_avatar: MDListItemLeadingAvatar
@@ -417,7 +417,7 @@ class GameListPanel(MDExpansionPanel):
     on_game_select: ObjectProperty = None
     app: MDApp
     
-    def __init__(self, game_tag, game_data, on_game_select=None, **kwargs):
+    def __init__(self, game_module, game_data, on_game_select=None, **kwargs):
         """
         Initialize the GameListPanel.
         
@@ -429,7 +429,7 @@ class GameListPanel(MDExpansionPanel):
         """
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
-        self.game_tag = game_tag
+        self.game_module = game_module
         self.game_data = game_data
         self.on_game_select = on_game_select
         self.width = 256
@@ -480,7 +480,7 @@ class GameListPanel(MDExpansionPanel):
         self.panel_header = self.ids.panel_header
         self.panel_content = self.ids.panel_content
         self.panel_header_layout = GameListItemHeader(
-            game_tag=self.game_tag, 
+            game_module=self.game_module, 
             game_data=self.game_data, 
             panel=self,
             on_game_select=self.on_game_select
@@ -522,7 +522,7 @@ class GameListPanel(MDExpansionPanel):
                            'tooltip' (full text) keys
         """
         full_list = ", ".join(item_list).rstrip(", ")
-        wrapped_list = wrap(full_list, width=27, break_on_hyphens=False, max_lines=3)
+        wrapped_list = wrap(full_list, width=25, break_on_hyphens=False, max_lines=3)
         item_dict = {
             "label": "\n".join(wrapped_list).rstrip("\n"),
             "tooltip": "\n".join(wrap(full_list, width=40, break_on_hyphens=False)).rstrip("\n")

@@ -26,6 +26,7 @@ from kivy.app import App
 from data.game_index import GameIndex
 
 from .bottomappbar import BottomAppBar
+from .launcher_sliver_appbar import LauncherSliverAppbar, SearchBar, LauncherTextField
 
 from Utils import discover_and_launch_module
 
@@ -47,7 +48,7 @@ Builder.load_string('''
 <LauncherView>:
     id: launcher_view
     server_layout: server_layout
-    game_name: ""
+    module_name: ""
     orientation: 'horizontal'
     padding: dp(50)
     MDBoxLayout:
@@ -86,14 +87,14 @@ Builder.load_string('''
                             text: 'Connect & Play'
                             halign: 'center'
                         MDButtonIcon:
-                            icon: "play"
+                            icon: "play-network"
                     MDButton:
                         id: game_patch_button
                         pos_hint: {"center_x": 0.5}
                         MDButtonText:
                             theme_text_color: "Custom"
                             text_color: app.theme_cls.onSurfaceVariantColor
-                            text: 'Patch ' + root.game_name
+                            text: 'Patch Game'
                             halign: 'center'
                         MDButtonIcon:
                             icon: "file-edit"
@@ -216,32 +217,6 @@ Builder.load_string('''
     MDChipText:
         text: root.text
         icon: root.icon
-        
-<LauncherSliverAppbar>:
-    pos_hint: {"x": 0, "top": 1}
-    width: dp(260)
-    size_hint_x: None
-    adaptive_height: True
-    hide_appbar: True
-    background_color: app.theme_cls.secondaryContainerColor
-    launcher_hero_from: launcher_hero_from
-
-    SearchBar:
-        type: "small"
-        id: games_search_bar
-        padding: dp(4)
-        pos_hint: {"center_x": 0.5, "top": 1}
-
-    MDSliverAppbarHeader:
-        MDHeroFrom:   #### ok the herofrom size/loc is the transition size
-            id: launcher_hero_from
-            tag: "logo"
-            size_hint: 1,1
-            pos: root.x, root.y
-            Image:
-                source: "gui/data/logo_bg.png"
-                pos_hint: {"top": 1}
-                fit_mode: "scale-down"
 
 <LauncherAuthTextField>:
     theme_font_name: "Custom"
@@ -259,18 +234,6 @@ Builder.load_string('''
     font_size: app.theme_cls.font_styles[self.font_style][self.role]["font-size"]
     mode: "filled"
     write_tab: False
-                    
-<LauncherTextField>:
-    theme_font_name: "Custom"
-    theme_font_style: "Custom"
-    font_name: app.theme_cls.font_styles[self.font_style][self.role]["font-name"]
-    font_size: app.theme_cls.font_styles[self.font_style][self.role]["font-size"]
-    MDTextFieldHintText:
-        text: root.hint_text
-        theme_font_name: "Custom"
-        theme_font_style: "Custom"
-        font_name: app.theme_cls.font_styles[self.font_style][self.role]["font-name"]
-        font_size: app.theme_cls.font_styles[self.font_style][self.role]["font-size"]
 
 ''')
 class LauncherLayout(MDFloatLayout):
@@ -280,63 +243,8 @@ class LauncherView(MDBoxLayout):
     slot_layout: ObjectProperty
     server_layout: ObjectProperty
 
-class LauncherSliverAppbar(MDSliverAppbar):
-    content: MDSliverAppbarContent
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.content = MDSliverAppbarContent(orientation="vertical")
-        self.content.id = "content"
-        self.add_widget(self.content)
-
 class LauncherAuthTextField(MDTextField):
     pass
-
-
-class LauncherTextField(MDTextField):
-    hint_text = StringProperty("")
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.hint_text = kwargs.get("hint_text", "")
-
-class SearchBar(MDTopAppBar):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.search_box = LauncherTextField(
-            id="game_tag_filter",
-            padding=dp(16),
-            hint_text = "Game Search",
-            pos_hint = {"center_x": 0.5, "top": 1}
-        )
-        self.add_widget(self.search_box)
-        Clock.schedule_once(lambda x: self.remove_widgets())
-        self.search_box.bind(on_text_validate=self.on_enter)
-    
-    def remove_widgets(self):
-        for child in self.children:
-            if not isinstance(child, MDTextField):
-                self.remove_widget(child)
-
-    def add_widget(self, widget):
-        if isinstance(widget, MDTextField):
-            widget._appbar = self
-            self.appbar_title = widget
-            Clock.schedule_once(lambda x: self._add_title(widget))
-        else:
-            super().add_widget(widget)
-
-    def _add_title(self, widget):
-        super()._add_title(widget)
-
-    def on_enter(self, instance):
-        # Get the parent screen to access the game list
-        screen = App.get_running_app().screen_manager.current_screen
-        if isinstance(screen, LauncherScreen):
-            # Clear existing game list
-            screen.games_mdlist.clear_widgets()
-            # Update the filter and trigger new search
-            screen.game_tag_filter = instance.text
-            asynckivy.start(screen.set_game_list())
 
 
 class LauncherScreen(MDScreen, ThemableBehavior):
@@ -399,21 +307,21 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         game_index = GameIndex()
         matching_games = game_index.search(self.game_tag_filter)
         self.games_mdlist.clear_widgets()
-        for game_name, game_data in matching_games.items():
+        for module_name, game_data in matching_games.items():
             await asynckivy.sleep(0)
             game = GameListPanel(
-                game_tag=game_name, 
+                game_module=module_name, 
                 game_data=game_data,
-                on_game_select=lambda x: self.on_game_selected(x)
+                on_game_select=lambda x, name=module_name: self.on_game_selected(name)
             )
             self.games_mdlist.add_widget(game)
 
-    def on_game_selected(self, game_name):
+    def on_game_selected(self, module_name):
         """Handle game selection from the game list"""
-        self.selected_game = game_name
-        logger.info(f"Selected game: {game_name}")
+        self.selected_game = module_name
+        logger.info(f"Selected game: {module_name}")
         # Update the launcher view to show the selected game
-        self.launcher_view.game_name = game_name
+        self.launcher_view.module_name = module_name
 
     def set_filter(self, active, tag):
         if active:
