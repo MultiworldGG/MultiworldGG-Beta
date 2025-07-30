@@ -53,7 +53,7 @@ class Version(typing.NamedTuple):
         return ".".join(str(item) for item in self)
 
 
-__version__ = "0.6.2"
+__version__ = "0.6.3"
 version_tuple = tuplize_version(__version__)
 
 instance_name = "MultiworldGG"
@@ -479,38 +479,26 @@ def store_data_package_for_checksum(game: str, data: typing.Dict[str, Any]) -> N
             logging.debug(f"Could not store data package: {e}")
 
 
-def get_default_adjuster_settings(game_name: str) -> Namespace:
-    import LttPAdjuster
-    adjuster_settings = Namespace()
-    if game_name == LttPAdjuster.GAME_ALTTP:
-        return LttPAdjuster.get_argparser().parse_known_args(args=[])[0]
-
-    return adjuster_settings
-
-
-def get_adjuster_settings_no_defaults(game_name: str) -> Namespace:
-    return persistent_load().get("adjuster", {}).get(game_name, Namespace())
-
-
-def get_adjuster_settings(game_name: str) -> Namespace:
-    adjuster_settings = get_adjuster_settings_no_defaults(game_name)
-    default_settings = get_default_adjuster_settings(game_name)
-
-    # Fill in any arguments from the argparser that we haven't seen before
-    return Namespace(**vars(adjuster_settings), **{
-        k: v for k, v in vars(default_settings).items() if k not in vars(adjuster_settings)
-    })
-
 
 @cache_argsless
 def get_unique_identifier():
-    uuid = persistent_load().get("client", {}).get("uuid", None)
+    common_path = cache_path("common.json")
+    if os.path.exists(common_path):
+        with open(common_path) as f:
+            common_file = json.load(f)
+            uuid = common_file.get("uuid", None)
+    else:
+        common_file = {}
+        uuid = None
+
     if uuid:
         return uuid
 
-    import uuid
-    uuid = uuid.getnode()
-    persistent_store("client", "uuid", uuid)
+    from uuid import uuid4
+    uuid = str(uuid4())
+    common_file["uuid"] = uuid
+    with open(common_path, "w") as f:
+        json.dump(common_file, f, separators=(",", ":"))
     return uuid
 
 
@@ -562,6 +550,18 @@ class RestrictedUnpickler(pickle.Unpickler):
 def restricted_loads(s: bytes) -> Any:
     """Helper function analogous to pickle.loads()."""
     return RestrictedUnpickler(io.BytesIO(s)).load()
+
+
+def restricted_dumps(obj: Any) -> bytes:
+    """Helper function analogous to pickle.dumps()."""
+    s = pickle.dumps(obj)
+    # Assert that the string can be successfully loaded by restricted_loads
+    try:
+        restricted_loads(s)
+    except pickle.UnpicklingError as e:
+        raise pickle.PicklingError(e) from e
+
+    return s
 
 
 class ByValue:

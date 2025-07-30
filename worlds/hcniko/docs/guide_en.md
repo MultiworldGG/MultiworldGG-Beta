@@ -4,13 +4,13 @@
 
 - [Here Comes Niko!](https://store.steampowered.com/app/925950/Here_Comes_Niko/) (Steam)
 - [Here Comes Niko! Randomizer Mod](https://github.com/niieli/NikoArchipelagoMod/releases/latest)
-- [BepInEx 5.4.21 (Unity Mono x64)](https://github.com/BepInEx/BepInEx/tree/v5.4.21)
+- [BepInEx 5.4.23.3 (Unity Mono x64)](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.3)
 
 ## Installation
 
 ### Install BepInEx
 
-1. Download [BepInEx 5.4.21 (Unity Mono x64)](https://github.com/BepInEx/BepInEx/tree/v5.4.21)
+1. Download [BepInEx 5.4.23.3 (Unity Mono x64)](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.3)
 2. Extract the contents of the BepInEx .zip file into your Here Comes Niko! game directory:
    - Default Steam path: `C:\Program Files (x86)\Steam\steamapps\common\Here Comes Niko`
    - If using a custom installation, adjust accordingly.

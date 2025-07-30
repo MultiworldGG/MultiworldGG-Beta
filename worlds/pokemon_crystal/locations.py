@@ -138,7 +138,7 @@ def create_locations(world: "PokemonCrystalWorld", regions: dict[str, Region]) -
             world.player,
             "Pokedex - Final Catch",
             pokedex_region,
-            rom_address=len(world.generated_dexcountsanity),
+            rom_address=world.generated_dexcountsanity[-1],
             flag=POKEDEX_COUNT_OFFSET + len(data.pokemon),
             tags=frozenset({"dexcountsanity"})
         )

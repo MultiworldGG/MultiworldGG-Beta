@@ -17,7 +17,7 @@ class DoronkoWankoWeb(WebWorld):
     theme = "dirt"
     tutorials = [Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up the DORONKO WANKO randomizer connected to an MultiworldGG Multiworld",
+        "A guide to setting up the DORONKO WANKO randomizer connected to a MultiworldGG Multiworld",
         "English",
         "setup_en.md",
         "setup/en",

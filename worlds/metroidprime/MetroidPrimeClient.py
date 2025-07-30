@@ -18,6 +18,7 @@ from CommonClient import (
 )
 from NetUtils import ClientStatus
 import Utils
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from .Config import make_version_specific_changes
 from .PrimeUtils import get_apworld_version
 from .Items import suit_upgrade_table
@@ -164,7 +165,7 @@ class MetroidPrimeContext(CommonContext):
 
         class MetroidPrimeManager(GameManager):
             logging_pairs = [("Client", "Archipelago")]
-            base_title = "MultiworldGG Metroid Prime Client"
+            base_title = f"{apname} Metroid Prime Client"
 
         self.ui = MetroidPrimeManager(self)
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")

@@ -92,23 +92,6 @@ class ByteEdit(TypedDict):
     offset: int
     values: Iterable[int]
 
-class SMMRCollectionState(metaclass=AutoLogicRegister):
-    def init_mixin(self, parent: MultiWorld):
-        
-        # for unit tests where MultiWorld is instantiated before worlds
-        if hasattr(parent, "state"):
-            self.smmrcs = {player: parent.state.smmrcs[player].copy() for player in parent.get_game_players(SMMapRandoWorld.game)}
-            for player, group in parent.groups.items():
-                if (group["game"] == SMMapRandoWorld.game):
-                    self.smmrcs[player] = APCollectionState(None)
-                    if player not in parent.state.smmrcs:
-                        parent.state.smmrcs[player] = APCollectionState(None)
-        else:
-            self.smmrcs = {}
-
-    def copy_mixin(self, ret) -> CollectionState:
-        ret.smmrcs = {player: self.smmrcs[player].copy() for player in self.smmrcs}
-        return ret
 
 class SMMapRandoWeb(WebWorld):
     tutorials = [Tutorial(
@@ -920,6 +903,23 @@ class SMMapRandoWorld(World):
                 
         return slot_data
     
+class SMMRCollectionState(metaclass=AutoLogicRegister):
+    def init_mixin(self, parent: MultiWorld):
+        
+        # for unit tests where MultiWorld is instantiated before worlds
+        if hasattr(parent, "state"):
+            self.smmrcs = {player: parent.state.smmrcs[player].copy() for player in parent.get_game_players(SMMapRandoWorld.game)}
+            for player, group in parent.groups.items():
+                if (group["game"] == SMMapRandoWorld.game):
+                    self.smmrcs[player] = APCollectionState(None)
+                    if player not in parent.state.smmrcs:
+                        parent.state.smmrcs[player] = APCollectionState(None)
+        else:
+            self.smmrcs = {}
+
+    def copy_mixin(self, ret) -> CollectionState:
+        ret.smmrcs = {player: self.smmrcs[player].copy() for player in self.smmrcs}
+        return ret
     
 class SMMRLocation(Location):
     game: str = SMMapRandoWorld.game

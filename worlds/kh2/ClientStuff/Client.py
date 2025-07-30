@@ -1,3 +1,4 @@
+from __future__ import annotations
 import ModuleUpdate
 import Utils
 
@@ -135,7 +136,7 @@ class KH2Context(CommonContext):
             "send_popup_type":        "Puzzle",  # type of popup when you receive an item
             "receive_popup_type":     "Puzzle",  # can be Puzzle, Info or None
         }
-        
+
         self.client_settings = default_settings.copy()
 
         if "localappdata" in os.environ:
@@ -152,7 +153,7 @@ class KH2Context(CommonContext):
                 with open(self.kh2_client_settings_join) as f:
                     # if the file isnt empty load it
                     try:
-                        temp_json = json.load(f)
+                    temp_json = json.load(f)
                         # Merge with defaults to ensure all required keys exist
                         self.client_settings = {**default_settings, **temp_json}
                     except json.JSONDecodeError as e:
@@ -292,7 +293,7 @@ class KH2Context(CommonContext):
             await super(KH2Context, self).server_auth(password_requested)
         
         if not self.auth:
-            await self.get_username()
+        await self.get_username()
         # if slot name != first time login or previous name
         # and seed name is none or saved seed name
         if not self.kh2seedname:
@@ -340,6 +341,8 @@ class KH2Context(CommonContext):
         if self.kh2seedname not in {None} and self.auth not in {None}:
             with open(self.kh2_seed_save_path_join, 'w') as f:
                 f.write(json.dumps(self.kh2_seed_save, indent=4))
+        with open(self.kh2_client_settings_join, 'w') as f2:
+            f2.write(json.dumps(self.client_settings, indent=4))
         await super(KH2Context, self).shutdown()
 
     def on_package(self, cmd: str, args: dict):
@@ -535,14 +538,14 @@ class KH2Context(CommonContext):
 
     def connect_to_game(self):
         if "KeybladeAbilities" in self.kh2slotdata.keys():
-                # sora ability to slot
+            # sora ability to slot
             self.AbilityQuantityDict.update(self.kh2slotdata["KeybladeAbilities"])
-                # itemid:[slots that are available for that item]
+            # itemid:[slots that are available for that item]
             self.AbilityQuantityDict.update(self.kh2slotdata["StaffAbilities"])
             self.AbilityQuantityDict.update(self.kh2slotdata["ShieldAbilities"])
 
         if self.kh2_loc_name_to_id:
-            self.all_weapon_location_id = {self.kh2_loc_name_to_id[loc] for loc in all_weapon_slot}
+        self.all_weapon_location_id = {self.kh2_loc_name_to_id[loc] for loc in all_weapon_slot}
 
         try:
             if not self.kh2:
@@ -622,6 +625,8 @@ class KH2Context(CommonContext):
                     self.Slot1 = 0x2A23598
                     self.Journal = 0x7434E0
                     self.Shop = 0x7435D0
+                    self.InfoBarPointer = 0xABE828
+                    self.isDead = 0x0BEF4A8
                 elif self.kh2_read_string(0x9A9330, 4) == "KH2J":
                     self.kh2_game_version = "EGS"
                 else:
@@ -719,6 +724,7 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
     from Utils import init_logging
     init_logging("KH2Client", exception_logger="Client")
 
+def launch():
     async def main(args):
         ctx = KH2Context(server_address, slot_name, password, ready_callback)
         if ctx._can_takeover_existing_gui():

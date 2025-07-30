@@ -707,14 +707,13 @@ async def main() -> None:
             import time
             time.sleep(3)
             sys.exit()
-        elif args.diff_file.endswith(".aplttp"):
-            from worlds.alttp.Client import get_alttp_settings
-            adjustedromfile, adjusted = get_alttp_settings(romfile)
-            async_start(run_game(adjustedromfile if adjusted else romfile))
         else:
             async_start(run_game(romfile))
 
     ctx = SNIContext(args.snes, args.connect, args.password)
+    # Store the ROM file path for game-specific adjustments
+    if args.diff_file:
+        ctx.rom_file = romfile
     if ctx.server_task is None:
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
 

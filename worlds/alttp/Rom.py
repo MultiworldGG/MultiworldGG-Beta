@@ -41,6 +41,7 @@ from .Text import KingsReturn_texts, Sanctuary_texts, Kakariko_texts, Blacksmith
 from .Items import item_table, item_name_groups, progression_items
 from .EntranceShuffle import door_addresses
 from .Options import small_key_shuffle
+from .utils import get_shuffle_ganon
 
 try:
     from maseya import z3pr
@@ -96,7 +97,7 @@ class LocalRom:
             # cause crash to provide traceback
             import xxtea
 
-        local_random = world.per_slot_randoms[player]
+        local_random = multiworld.worlds[player].random
         key = bytes(local_random.getrandbits(8 * 16).to_bytes(16, 'big'))
         self.write_bytes(0x1800B0, bytearray(key))
         self.write_int16(0x180087, 1)
@@ -390,7 +391,7 @@ def patch_enemizer(world, rom: LocalRom, enemizercli, output_directory):
 
     max_enemizer_tries = 5
     for i in range(max_enemizer_tries):
-        enemizer_seed = str(multiworld.per_slot_randoms[player].randint(0, 999999999))
+        enemizer_seed = str(world.random.randint(0, 999999999))
         enemizer_command = [os.path.abspath(enemizercli),
                             '--rom', randopatch_path,
                             '--seed', enemizer_seed,
@@ -420,7 +421,7 @@ def patch_enemizer(world, rom: LocalRom, enemizercli, output_directory):
             continue
 
         for j in range(i + 1, max_enemizer_tries):
-            multiworld.per_slot_randoms[player].randint(0, 999999999)
+            world.random.randint(0, 999999999)
             # Sacrifice all remaining random numbers that would have been used for unused enemizer tries.
             # This allows for future enemizer bug fixes to NOT affect the rest of the seed's randomness
         break
@@ -519,7 +520,7 @@ def _populate_sprite_table():
                     logging.debug(f"Spritefile {file} could not be loaded as a valid sprite.")
 
             with concurrent.futures.ThreadPoolExecutor() as pool:
-                sprite_paths = [user_path('data', 'sprites', 'alttpr'), user_path('data', 'sprites', 'custom')]
+                sprite_paths = [user_path('data', 'sprites', 'remote'), user_path('data', 'sprites', 'custom')]
                 for dir in [dir for dir in sprite_paths if os.path.isdir(dir)]:
                     for file in os.listdir(dir):
                         pool.submit(load_sprite_from_file, os.path.join(dir, file))
@@ -888,7 +889,7 @@ def patch_rom(world: MultiWorld, rom: LocalRom, player: int, enemized: bool):
                         rom.write_int16(0x15DB5 + 2 * offset, 0x0640)
                     elif room_id == 0x00d6 and local_world.fix_trock_exit:
                         rom.write_int16(0x15DB5 + 2 * offset, 0x0134)
-                    elif room_id == 0x000c and world.shuffle_ganon:  # fix ganons tower exit point
+                    elif room_id == 0x000c and get_shuffle_ganon(world, player):  # fix ganons tower exit point
                         rom.write_int16(0x15DB5 + 2 * offset, 0x00A4)
                     else:
                         rom.write_int16(0x15DB5 + 2 * offset, link_y)
@@ -1005,14 +1006,19 @@ def patch_rom(world: MultiWorld, rom: LocalRom, player: int, enemized: bool):
         rom.write_bytes(0x6D323, [0x00, 0x00, 0xe4, 0xff, 0x08, 0x0E])
 
     # set light cones
-    rom.write_byte(0x180038, 0x01 if world.mode[player] == "standard" else 0x00)
-    rom.write_byte(0x180039, 0x01 if world.light_world_light_cone else 0x00)
-    rom.write_byte(0x18003A, 0x01 if world.dark_world_light_cone else 0x00)
+    rom.write_byte(0x180038, 0x01 if local_world.options.mode == "standard" else 0x00)
+    # light world light cone
+    rom.write_byte(0x180039, local_world.light_world_light_cone)
+    # dark world light cone
+    rom.write_byte(0x18003A, local_world.dark_world_light_cone)
 
     GREEN_TWENTY_RUPEES = 0x47
     GREEN_CLOCK = item_table["Green Clock"].item_code
 
     rom.write_byte(0x18004F, 0x01)  # Byrna Invulnerability: on
+
+    # Rupoor negative value
+    rom.write_int16(0x180036, local_world.rupoor_cost)
 
     # handle item_functionality
     if world.item_functionality[player] == 'hard':
@@ -1031,8 +1037,6 @@ def patch_rom(world: MultiWorld, rom: LocalRom, player: int, enemized: bool):
         # Disable catching fairies
         rom.write_byte(0x34FD6, 0x80)
         overflow_replacement = GREEN_TWENTY_RUPEES
-        # Rupoor negative value
-        rom.write_int16(0x180036, world.rupoor_cost)
         # Set stun items
         rom.write_byte(0x180180, 0x02)  # Hookshot only
     elif world.item_functionality[player] == 'expert':
@@ -1051,8 +1055,6 @@ def patch_rom(world: MultiWorld, rom: LocalRom, player: int, enemized: bool):
         # Disable catching fairies
         rom.write_byte(0x34FD6, 0x80)
         overflow_replacement = GREEN_TWENTY_RUPEES
-        # Rupoor negative value
-        rom.write_int16(0x180036, world.rupoor_cost)
         # Set stun items
         rom.write_byte(0x180180, 0x00)  # Nothing
     else:
@@ -1070,8 +1072,6 @@ def patch_rom(world: MultiWorld, rom: LocalRom, player: int, enemized: bool):
         rom.write_byte(0x18004F, 0x01)
         # Enable catching fairies
         rom.write_byte(0x34FD6, 0xF0)
-        # Rupoor negative value
-        rom.write_int16(0x180036, world.rupoor_cost)
         # Set stun items
         rom.write_byte(0x180180, 0x03)  # All standard items
         # Set overflow items for progressive equipment
@@ -1318,7 +1318,7 @@ def patch_rom(world: MultiWorld, rom: LocalRom, player: int, enemized: bool):
                                          player] == 0 else 0x00)  # GT pre-opened if crystal requirement is 0
     rom.write_byte(0xF5D73, 0xF0)  # bees are catchable
     rom.write_byte(0xF5F10, 0xF0)  # bees are catchable
-    rom.write_byte(0x180086, 0x00 if world.aga_randomness else 0x01)  # set blue ball and ganon warp randomness
+    rom.write_byte(0x180086, 0x00)  # set blue ball and ganon warp randomness
     rom.write_byte(0x1800A0, 0x01)  # return to light world on s+q without mirror
     rom.write_byte(0x1800A1, 0x01)  # enable overworld screen transition draining for water level inside swamp
     rom.write_byte(0x180174, 0x01 if local_world.fix_fake_world else 0x00)
@@ -1630,10 +1630,9 @@ def patch_rom(world: MultiWorld, rom: LocalRom, player: int, enemized: bool):
     rom.write_byte(0x180020, digging_game_rng)
     rom.write_byte(0xEFD95, digging_game_rng)
     rom.write_byte(0x1800A3, 0x01)  # enable correct world setting behaviour after agahnim kills
-    rom.write_byte(0x1800A4, 0x01 if world.glitches_required[player] != 'no_logic' else 0x00)  # enable POD EG fix
-    rom.write_byte(0x186383, 0x01 if world.glitches_required[
-        player] == 'no_logic' else 0x00)  # disable glitching to Triforce from Ganons Room
-    rom.write_byte(0x180042, 0x01 if world.save_and_quit_from_boss else 0x00)  # Allow Save and Quit after boss kill
+    rom.write_byte(0x1800A4, 0x01 if local_world.options.glitches_required != 'no_logic' else 0x00)  # enable POD EG fix
+    rom.write_byte(0x186383, 0x01 if local_world.options.glitches_required == 'no_logic' else 0x00)  # disable glitching to Triforce from Ganons Room
+    rom.write_byte(0x180042, 0x01 if local_world.save_and_quit_from_boss else 0x00)  # Allow Save and Quit after boss kill
 
     # remove shield from uncle
     rom.write_bytes(0x6D253, [0x00, 0x00, 0xf6, 0xff, 0x00, 0x0E])
@@ -1699,7 +1698,7 @@ def patch_rom(world: MultiWorld, rom: LocalRom, player: int, enemized: bool):
         rom.write_byte(0xFEE41, 0x2A)  # bombable exit
 
     if world.tile_shuffle[player]:
-        tile_set = TileSet.get_random_tile_set(world.per_slot_randoms[player])
+        tile_set = TileSet.get_random_tile_set(world.random)
         rom.write_byte(0x4BA21, tile_set.get_speed())
         rom.write_byte(0x4BA1D, tile_set.get_len())
         rom.write_bytes(0x4BA2A, tile_set.get_bytes())
@@ -1754,8 +1753,7 @@ def get_price_data(price: int, price_type: int) -> List[int]:
 
 
 def write_custom_shops(rom, world, player):
-    shops = sorted([shop for shop in world.shops if shop.custom and shop.region.player == player],
-                   key=lambda shop: shop.sram_offset)
+    shops = sorted([shop for shop in world.worlds[player].shops if shop.custom], key=lambda shop: shop.sram_offset)
 
     shop_data = bytearray()
     items_data = bytearray()
@@ -2268,7 +2266,7 @@ def write_strings(rom, world, player):
             # First we take care of the one inconvenient dungeon in the appropriately simple shuffles.
             entrances_to_hint = {}
             entrances_to_hint.update(InconvenientDungeonEntrances)
-            if world.shuffle_ganon:
+            if get_shuffle_ganon(world, player):
                 if world.mode[player] == 'inverted':
                     entrances_to_hint.update({'Inverted Ganons Tower': 'The sealed castle door'})
                 else:
@@ -2321,7 +2319,7 @@ def write_strings(rom, world, player):
                 entrances_to_hint.update({'Big Bomb Shop': 'The old bomb shop'})
             if world.entrance_shuffle[player] != 'insanity':
                 entrances_to_hint.update(InsanityEntrances)
-                if world.shuffle_ganon:
+                if get_shuffle_ganon(world, player):
                     if world.mode[player] == 'inverted':
                         entrances_to_hint.update({'Inverted Pyramid Entrance': 'The extra castle passage'})
                     else:

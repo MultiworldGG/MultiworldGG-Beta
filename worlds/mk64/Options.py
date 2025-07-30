@@ -35,21 +35,21 @@ class LogicDifficulty(Choice):
     """Scales the logic threshhold where skill is involved. Specifically, how many good items are available before you
     are expected to be able to qualify and win on tough courses.
 
-    Basic: Balanced runs for a competent karter.
-
-    Advanced: Low logic, high randomness, high skill. Few good items may be available early in the run.
-
-    Generous: Makes sure you have plenty of good items early. For easier play, or skipping 50 cc.
-    (Generous is more likely to fail generation. To raise chances try increasing shuffle_item_box_clusters and
+    Basic: Makes sure you have plenty of good items early. For easier play, or skipping 50 cc.
+    (Basic is more likely to fail generation. To raise chances try increasing shuffle_item_box_clusters and
     minimum_filler_items. Future versions will be less fragile to generation failure.)
 
-    No Logic: If fences are enabled, THE RUN MAY BE IMPOSSIBLE!"""
+    Advanced: Balanced runs for a competent karter.
+
+    Expert: Low logic, high randomness, high skill. Few good items may be available early in the run.
+
+    No Logic: If fences are enabled, THE RUN MAY BE NEAR IMPOSSIBLE!"""
     display_name = "Logic Difficulty"
-    option_basic = 3
-    option_advanced = 0
-    option_generous = 6
+    option_basic = 6
+    option_advanced = 3
+    option_expert = 0
     option_no_logic = -100
-    default = 3
+    default = 6
 
 
 class LockedCourses(Range):
@@ -116,7 +116,7 @@ class SecretLocations(DefaultOnToggle):
 
 class ShuffleDriftAbilities(Choice):
     """Optionally shuffle into the item pool the ability to drift and the ability to use mini-turbos as progressive
-    unlocks per driver. "Plentiful" shuffles a 3rd progressive unlock into the pool. "Free Drift" means drivers start
+    unlocks per kart. "Plentiful" shuffles a 3rd progressive unlock into the pool. "Free Drift" means karts start
     with the ability to drift. "Free mini-turbo" means both abilities will be obtained together."""
     display_name = "Shuffle Drift Abilities"
     option_off = 0
@@ -135,13 +135,13 @@ class ShuffleDriftAbilities(Choice):
 
 class TractionTires(DefaultOnToggle):
     """Optionally shuffle into the item pool the ability to have traction on off-road and winter surface types,
-    per driver. "Off" means karts always have traction, as in the vanilla game."""
+    per kart. "Off" means karts always have traction, as in the vanilla game."""
     display_name = "Add Traction Tires"
 
 
 class StartingItems(DefaultOnToggle):
-    """Optionally shuffle into the item pool a random item power to start each race with, per driver. For example
-    Mario may be able to start each race with a blue shell. Which item is random per driver."""
+    """Optionally shuffle into the item pool a random item power to start each race with, per kart. For example
+    Mario may be able to start each race with a blue shell. Which item is random per kart."""
     display_name = "Add Starting Items"
 
 

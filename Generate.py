@@ -168,7 +168,7 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
         games_to_load.append(yaml[0]['game'])
     set_game_names(games_to_load)
 
-    from legacyalttpArgumentParser import parse_arguments
+    from EntranceRandomizer import parse_arguments
     erargs = parse_arguments(['--multi', str(args.multi)])
     erargs.seed = seed
     erargs.plando_options = args.plando

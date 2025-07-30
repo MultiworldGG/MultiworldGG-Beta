@@ -219,6 +219,9 @@
 # Landstalker: The Treasures of King Nole
 /worlds/landstalker/ @Dinopony
 
+# Lego Star Wars: The Complete Saga
+/worlds/lego_star_wars_tcs/ @Mysteryem
+
 # Lethal Company
 /worlds/lethal_company/ @T0r1nn
 
@@ -252,6 +255,9 @@
 
 # MegaMan Battle Network 3
 /worlds/mmbn3/ @digiholic
+
+# Mega Man X3
+/worlds/mmx3/ @TheLX5
 
 # Meritous
 /worlds/meritous/ @FelicitusNeko
@@ -381,6 +387,9 @@
 
 # A Short Hike
 /worlds/shorthike/ @chandler05 @BrandenEK
+
+# Simpsons: Hit and Run
+/worlds/simpsonshitnrun @nmize1
 
 # Sims 4
 /worlds/sims4/ @benny-dreamly

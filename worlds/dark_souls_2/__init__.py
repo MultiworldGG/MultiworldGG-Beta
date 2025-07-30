@@ -1,5 +1,4 @@
 import string
-import random
 
 from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import set_rule, add_item_rule, add_rule
@@ -107,15 +106,16 @@ class DS2World(World):
         regions["Majula"].connect(regions["Grave of Saints"])
 
         regions["Grave of Saints"].connect(regions["The Gutter"])
-        regions["The Gutter"].connect(regions["Dark Chasm of Old"])
 
         regions["Forest of Fallen Giants"].connect(regions["Memory of Vammar"])
         regions["Forest of Fallen Giants"].connect(regions["FOFG - Soldier Key"])
+        regions["Forest of Fallen Giants"].connect(regions["FOFG - Salamander Pit"])
         regions["FOFG - Soldier Key"].connect(regions["Memory of Orro"])
         regions["FOFG - Soldier Key"].connect(regions["Memory of Jeigh"])
         regions["FOFG - Soldier Key"].connect(regions["Lost Bastille - FOFG"])
 
         regions["Heide's Tower of Flame"].connect(regions["No-man's Wharf"])
+        regions["Heide's Tower of Flame"].connect(regions["Cathedral of Blue"])
         regions["No-man's Wharf"].connect(regions["Lost Bastille - Wharf"])
         
         regions["Lost Bastille - FOFG"].connect(regions["Early Lost Bastille"])
@@ -135,7 +135,6 @@ class DS2World(World):
         regions["Shaded Woods"].connect(regions["Drangleic Castle"])
         regions["Shaded Woods"].connect(regions["Doors of Pharros"])
         regions["Shaded Woods"].connect(regions["Aldia's Keep"])
-        regions["Shaded Woods"].connect(regions["Dark Chasm of Old"])
 
         regions["Doors of Pharros"].connect(regions["Brightstone Cove"])
 
@@ -226,7 +225,7 @@ class DS2World(World):
         # remove filler items so pool is not overfilled
         if diff > 0:
             while diff != 0:
-                item = random.choice(pool)
+                item = self.random.choice(pool)
                 if item.category in repeatable_categories and item.classification == ItemClassification.filler:
                     pool.remove(item)
                     diff -= 1
@@ -234,7 +233,7 @@ class DS2World(World):
         elif diff < 0:
             filler_items = [item for item in item_list if item.category in repeatable_categories and not item.skip and not item.sotfs and self.is_dlc_allowed(item.dlc)]
             for _ in range(abs(diff)):
-                item_data = random.choice(filler_items)
+                item_data = self.random.choice(filler_items)
                 item = self.create_item(item_data.name, item_data.classification, item_data.category)
                 pool.append(item)
 
@@ -280,6 +279,9 @@ class DS2World(World):
              state.has("Defeat the Duke's Dear Freja", self.player)))
 
         # LOCATIONS
+        ## ALDIA KEY
+        self.set_location_rule("[AldiasKeep] Inside a barrel in the corner in side room with caged Gargoyle", lambda state: state.has("Aldia Key", self.player))
+        self.set_location_rule("[AldiasKeep] On table in side room with caged Gargoyle", lambda state: state.has("Aldia Key", self.player))
         ## MAJULA
         self.set_location_rule("[Majula] Wooden chest in Lenigrast's workshop", lambda state: state.has("Lenigrast's Key", self.player))
         self.set_location_rule("[Majula] Library room in Cale's house", lambda state: state.has("House Key", self.player))
@@ -289,6 +291,8 @@ class DS2World(World):
         ## LOWER FIRE AREA
         self.set_location_rule("[FOFG] First corpse in the lower fire area", lambda state: state.has("Iron Key", self.player))
         self.set_location_rule("[FOFG] Second corpse in the lower fire area", lambda state: state.has("Iron Key", self.player))
+        ## FANG KEY
+        self.set_location_rule("[ShadedWoods] Room where Ornifex is locked", lambda state: state.has("Fang Key", self.player))
         ## TSELDORA DEN
         self.set_location_rule("[Tseldora] Metal chest in Tseldora den", lambda state: state.has("Tseldora Den Key", self.player))
         self.set_location_rule("[Tseldora] Wooden chest in Tseldora den", lambda state: state.has("Tseldora Den Key", self.player))
@@ -326,6 +330,10 @@ class DS2World(World):
             self.set_location_rule("[Gulch] Urn next to the second bonfire", lambda state: state.has("Unpetrify Statue in Black Gulch", self.player))
             self.set_location_rule("[ShadedWoods] Metal chest blocked by petrified statue", lambda state: state.has("Unpetrify Statue Blocking the Chest in Shaded Ruins", self.player))
             self.set_location_rule("[ShadedWoods] Drop from Petrified Lion Warrior next to Golden Lion Warrior", lambda state: state.has("Unpetrify Warlock Mask Statue in Shaded Ruins", self.player))
+            self.set_location_rule("[ShadedWoods] Corpse next to chest in area behind two petrified statues and Vengarl's body", lambda state: state.has("Unpetrify Statue near Manscorpion Tark" or
+                                                                                                   "Unpetrify Statue near Black Knight Halberd", self.player))
+            self.set_location_rule("[ShadedWoods] Next to Vengarl's body", lambda state: state.has("Unpetrify Statue near Manscorpion Tark" or
+                                                                                                   "Unpetrify Statue near Black Knight Halberd", self.player))
             self.set_location_rule("[AldiasKeep] Drop from Petrified Undead Traveller just before Giant Basilisk", lambda state: state.has("Unpetrify Left Cage Statue in Aldia's Keep", self.player))
             self.set_location_rule("[AldiasKeep] Drop from Centre petrified Undead Traveller just before Giant Basilisk", lambda state: state.has("Unpetrify Right Cage Statue in Aldia's Keep", self.player))
         self.set_location_rule("[ShadedWoods] Metal chest in room blocked by petrified statue", lambda state: state.has("Unpetrify Lion Mage Set Statue in Shaded Ruins", self.player))
@@ -342,6 +350,7 @@ class DS2World(World):
         self.set_location_rule("[DragonShrine] Metal chest behind the Pharros contraption under the staircase", lambda state: state.has("Master Lockstone", self.player))
         self.set_location_rule("[Pharros] Wooden chest in room after using top Pharros contraption and dropping down near the toxic rats", lambda state: state.has("Master Lockstone", self.player))
         self.set_location_rule("[Pharros] Trapped wooden chest behind (floor) Pharros contraption in the upper level", lambda state: state.has("Master Lockstone", self.player))
+        self.set_location_rule("[Pharros] Corpse- behind three-part Pharros' door in the upper level", lambda state: state.has("Master Lockstone", self.player))
         if self.options.enable_ngp:
             self.set_location_rule("[Pharros] Trapped wooden chest behind (floor) Pharros contraption in the upper level in NG+", lambda state: state.has("Master Lockstone", self.player))
         self.set_location_rule("[Pharros] Metal chest behind three-part pharros door in the lower level", lambda state: state.has("Master Lockstone", self.player))
@@ -381,8 +390,10 @@ class DS2World(World):
         self.set_connection_rule("Majula", "Grave of Saints", lambda state: state.has("Silvercat Ring", self.player) or state.has("Flying Feline Boots", self.player))
         self.set_connection_rule("Majula", "Shaded Woods", lambda state: state.has("Unpetrify Rosabeth of Melfia", self.player))
         self.set_connection_rule("Forest of Fallen Giants", "FOFG - Soldier Key", lambda state: state.has("Soldier Key", self.player))
+        self.set_connection_rule("Forest of Fallen Giants", "FOFG - Salamander Pit", lambda state: state.has("Iron Key", self.player))
         self.set_connection_rule("Shaded Woods", "Aldia's Keep", lambda state: state.has("King's Ring", self.player))
         self.set_connection_rule("Shaded Woods", "Drangleic Castle", lambda state: state.has("Open Shrine of Winter", self.player))
+        self.set_connection_rule("Drangleic Castle", "Dark Chasm of Old", lambda state: state.has("Forgotten Key", self.player))
         self.set_connection_rule("Drangleic Castle", "King's Passage", lambda state: state.has("Key to King's Passage", self.player))
         self.set_connection_rule("Forest of Fallen Giants", "Memory of Vammar", lambda state: state.has("Ashen Mist Heart", self.player))
         self.set_connection_rule("FOFG - Soldier Key", "Memory of Orro", lambda state: state.has("Ashen Mist Heart", self.player))
@@ -467,7 +478,9 @@ class DS2World(World):
         if self.options.combat_logic == "easy":
         
             #Lost Sinner Route
+            self.add_connection_rule("Forest of Fallen Giants", "FOFG - Salamander Pit", lambda state: state.has("Estus Flask Shard", self.player, 6) and state.has("Sublime Bone Dust", self.player, 3))
             self.add_connection_rule("FOFG - Soldier Key", "Lost Bastille - FOFG", lambda state: state.has("Estus Flask Shard", self.player, 3) and state.has("Sublime Bone Dust", self.player, 1))
+            self.add_connection_rule("Heide's Tower of Flame", "Cathedral of Blue", lambda state: state.has("Estus Flask Shard", self.player, 3) and state.has("Sublime Bone Dust", self.player, 1))
             self.add_connection_rule("No-man's Wharf", "Lost Bastille - Wharf", lambda state: state.has("Estus Flask Shard", self.player, 3) and state.has("Sublime Bone Dust", self.player, 1))
             self.add_connection_rule("Late Lost Bastille", "Sinners' Rise", lambda state: state.has("Estus Flask Shard", self.player, 7) and state.has("Sublime Bone Dust", self.player, 3))
             #Old Iron King Route
@@ -496,7 +509,9 @@ class DS2World(World):
         if self.options.combat_logic == "medium":
         
             #Lost Sinner Route
+            self.add_connection_rule("Forest of Fallen Giants", "FOFG - Salamander Pit", lambda state: state.has("Estus Flask Shard", self.player, 4) and state.has("Sublime Bone Dust", self.player, 2))
             self.add_connection_rule("FOFG - Soldier Key", "Lost Bastille - FOFG", lambda state: state.has("Estus Flask Shard", self.player, 1) and state.has("Sublime Bone Dust", self.player, 1))
+            self.add_connection_rule("Heide's Tower of Flame", "Cathedral of Blue", lambda state: state.has("Estus Flask Shard", self.player, 2) and state.has("Sublime Bone Dust", self.player, 1))
             self.add_connection_rule("No-man's Wharf", "Lost Bastille - Wharf", lambda state: state.has("Estus Flask Shard", self.player, 1) and state.has("Sublime Bone Dust", self.player, 1))
             self.add_connection_rule("Late Lost Bastille", "Sinners' Rise", lambda state: state.has("Estus Flask Shard", self.player, 5) and state.has("Sublime Bone Dust", self.player, 2))
             #Old Iron King Route

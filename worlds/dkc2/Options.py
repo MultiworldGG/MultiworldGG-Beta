@@ -84,9 +84,26 @@ class ExtraLostWorldRocks(Range):
     How many additional Lost World Rocks can be found in the multiworld
     """
     display_name = "Extra Lost World Rocks"
-    range_start = 1
+    range_start = 0
     range_end = 5
     default = 3
+
+class LostWorldRockPlacement(Choice):
+    """
+    Determines how Lost World Rocks will be placed in the multiworld
+    - **anywhere**: Placed anywhere in the multiworld
+    - **lost_world_level_clear**: Forced in Level Clears found in Lost World
+      This option always creates 5 rocks. Extra lost world rocks aren't created.
+    - **lost_world_anywhere**: Forced in anywhere in Lost World
+
+    These options listens to Excluded Locations, it won't force you to deal with levels you don't want to deal with.
+    However, if it can place an item due to excluded locations AP will place them anywhere in the multiworld.
+    """
+    display_name = "Lost World Rock Behavior"
+    option_anywhere = 0
+    option_lost_world_level_clear = 1
+    option_lost_world_anywhere = 2
+    default = 1
 
 class AbilityShuffle(OptionSet):
     """
@@ -449,21 +466,15 @@ class EnergyLink(Toggle):
 
     You can exchange energy for Instant DK Barrels. Great for players that find the base game hard.
     There's an additional item in the item pool that allows for better energy extraction from bananas.
-
-    Exchanging energy for DK Barrels requires AP 0.6.0 to work correctly.
     """
     display_name = "Energy Link"
-    visibility = Visibility.spoiler | Visibility.complex_ui | Visibility.template
 
 
 class TrapLink(Toggle):
     """
     Whether your received traps are linked to other players
-
-    This feature requires AP 0.6.0 to work correctly.
     """
     display_name = "Trap Link"
-    visibility = Visibility.spoiler | Visibility.complex_ui | Visibility.template
 
 
 dkc2_option_groups = [
@@ -472,6 +483,7 @@ dkc2_option_groups = [
         FlyingKrockTokens,
         LostWorldRocks,
         ExtraLostWorldRocks,
+        LostWorldRockPlacement,
     ]),
     OptionGroup("Locations", [
         Logic,
@@ -534,6 +546,7 @@ class DKC2Options(PerGameCommonOptions):
     krock_boss_tokens: FlyingKrockTokens
     lost_world_rocks: LostWorldRocks
     extra_lost_world_rocks: ExtraLostWorldRocks
+    lost_world_rock_placement: LostWorldRockPlacement
     logic: Logic
     shuffle_levels: ShuffleLevels
     shuffle_abilities: AbilityShuffle

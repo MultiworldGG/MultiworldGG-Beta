@@ -128,7 +128,7 @@ components.extend([
     Component("ZSR Discord", icon="discord", func=lambda: webbrowser.open("https://discord.gg/zsr"),
               description="Join the Discord server to play public multiworlds, report issues, or just chat!"),
     Component("Browse Files", func=browse_files,
-              description="Open the Archipelago installation folder in your file browser."),
+              description="Open the MultiworldGG installation folder in your file browser."),
 ])
 
 

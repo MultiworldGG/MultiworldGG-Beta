@@ -136,8 +136,3 @@ Once you do, follow these steps to connect to the room:
 - In Dolphin, when fighting Ridley my screen keeps changing width
   - This is an issue with Dolphin's widescreen detection heuristic.
   - In Dolphin, go to Graphics > General tab, and then set Aspect Ratio to `Force 4:3`
-
-## Feedback
-
-In the offical [MultiworldGG Discord](https://discord.com/invite/8Z65BR2) under the `future-game-design` channel, there is a [_Metroid Prime_ thread](https://discord.com/channels/731205301247803413/1172631093837570068).
-Feel free to ping `@Electro15` or `@hesto2` with any bugs/thoughts/complaints/wishes/jokes you may have!

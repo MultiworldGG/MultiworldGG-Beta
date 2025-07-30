@@ -222,8 +222,6 @@ components: List[Component] = [
             #   description="Install an APWorld to play games not included with Archipelago by default."),
     Component('Text Client', 'CommonClient', f'{apname}TextClient', func=launch_textclient,
               description="Connect to a multiworld using the text client."),
-    Component('LttP Adjuster', 'LttPAdjuster',
-              description="Adjust your ALttPR seed in regards to sprites, color palettes, and more."),
     # Minecraft
     Component('Minecraft Client', 'MinecraftClient', icon='mcicon', cli=True,
               file_identifier=SuffixIdentifier('.apmc')),

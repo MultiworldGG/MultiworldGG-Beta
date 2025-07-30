@@ -100,6 +100,7 @@ class BanjoTooieWorld(World):
             continue
         item_name_to_id[name] = data.btid
 
+    glitches_item_name = itemName.UT_GLITCHED
     location_name_to_id = {name: data.btid for name, data in all_location_table.items()}
     location_name_to_group = {name: data.group for name, data in all_location_table.items()}
 
@@ -260,19 +261,20 @@ class BanjoTooieWorld(World):
         return created_item
 
     def get_classification(self, banjoItem: ItemData) -> ItemClassification:
-        itemname = self.item_id_to_name[banjoItem.btid]
+        if not banjoItem.btid is None:
+            itemname = self.item_id_to_name[banjoItem.btid]
 
-        if itemname == itemName.PAGES:
-            if self.options.cheato_rewards:
-                return ItemClassification.progression_skip_balancing
-            else:
-                return ItemClassification.filler
+            if itemname == itemName.PAGES:
+                if self.options.cheato_rewards:
+                    return ItemClassification.progression_skip_balancing
+                else:
+                    return ItemClassification.filler
 
-        if itemname == itemName.HONEY:
-            if self.options.honeyb_rewards:
-                return ItemClassification.progression_skip_balancing
-            else:
-                return ItemClassification.useful
+            if itemname == itemName.HONEY:
+                if self.options.honeyb_rewards:
+                    return ItemClassification.progression_skip_balancing
+                else:
+                    return ItemClassification.useful
 
         if banjoItem.type == "progress":
             return ItemClassification.progression
@@ -694,9 +696,7 @@ class BanjoTooieWorld(World):
         if not self.options.cheato_rewards:
             self.banjo_pre_fills("Cheats", None, True)
 
-        if not self.worlds_randomized and self.options.skip_puzzles:
-            self.banjo_pre_fills("Access", None, True)
-        elif self.worlds_randomized:
+        if self.options.skip_puzzles:
             world_num = 1
             for world, amt in self.world_requirements.items():
                 if world == regionName.GIO:
@@ -705,12 +705,6 @@ class BanjoTooieWorld(World):
                     item = self.create_item(itemName.JRA)
                 else:
                     item = self.create_item(world)
-                self.get_location("World "+ str(world_num) +" Unlocked").place_locked_item(item)
-                world_num += 1
-        else:
-            world_num = 1
-            for world, amt in self.world_requirements.items():
-                item = self.create_item(itemName.NONE)
                 self.get_location("World "+ str(world_num) +" Unlocked").place_locked_item(item)
                 world_num += 1
 

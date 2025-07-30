@@ -5,8 +5,6 @@ import os
 import Utils
 import zipfile
 
-from datetime import datetime, UTC
-
 from .Items import item_dictionary_table
 from .Locations import all_locations, SoraLevels, exclusion_table
 from .XPValues import lvlStats, formExp, soraExp

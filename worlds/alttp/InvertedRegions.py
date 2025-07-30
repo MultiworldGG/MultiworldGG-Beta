@@ -483,10 +483,10 @@ def create_inverted_regions(world, player):
     ]
 
 
-def mark_dark_world_regions(world, player):
+def mark_dark_world_regions(multiworld, player):
     # cross world caves may have some sections marked as both in_light_world, and in_dark_work.
     # That is ok. the bunny logic will check for this case and incorporate special rules.
-    queue = collections.deque(region for region in world.get_regions(player) if region.type == LTTPRegionType.DarkWorld)
+    queue = collections.deque(region for region in multiworld.get_regions(player) if region.type == LTTPRegionType.DarkWorld)
     seen = set(queue)
     while queue:
         current = queue.popleft()
@@ -499,7 +499,7 @@ def mark_dark_world_regions(world, player):
                 seen.add(exit.connected_region)
                 queue.append(exit.connected_region)
 
-    queue = collections.deque(region for region in world.get_regions(player) if region.type == LTTPRegionType.LightWorld)
+    queue = collections.deque(region for region in multiworld.get_regions(player) if region.type == LTTPRegionType.LightWorld)
     seen = set(queue)
     while queue:
         current = queue.popleft()

@@ -13,7 +13,7 @@
 2. Download and install the Dolphin Gamecube/Wii Emulator from the link above, making sure to install the most recent version.
 Run the emulator at least once to make sure it is working.
 
-3. Unzip the APworld from the downloads. Place the luigismansion.apworld in the custom_worlds folder of your MultiworldGG install (not needed with MWGG release)
+3. Acquire the most recent APWorld from the [Releases page](https://github.com/BootsinSoots/Archipelago/releases/latest) and place the luigismansion.apworld in the custom_worlds folder of your MultiworldGG install (not needed with MWGG release)
 
 4. Download the lib.zip from the releases page and unpack it. Place the contents of the /lib from what you unzipped into the /lib folder of your MultiworldGG install. (not needed with MWGG release)
 

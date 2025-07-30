@@ -17,6 +17,7 @@ from .Rules import *
 from .Subclasses import KH2Item
 
 
+
 def launch_client():
     from .ClientStuff.Client import launch
     launch_component(launch, name="KH2Client")
@@ -111,16 +112,16 @@ class KH2World(World):
                 self.goofy_ability_dict[ability] -= 1
 
         slot_data = self.options.as_dict(
-                "Goal",
-                "FinalXemnas",
-                "LuckyEmblemsRequired",
-                "BountyRequired",
-                "FightLogic",
-                "FinalFormLogic",
-                "AutoFormLogic",
-                "LevelDepth",
-                "DonaldGoofyStatsanity",
-                "CorSkipToggle"
+            "Goal", 
+            "FinalXemnas", 
+            "LuckyEmblemsRequired", 
+            "BountyRequired",
+            "FightLogic",
+            "FinalFormLogic",
+            "AutoFormLogic",
+            "LevelDepth",
+            "DonaldGoofyStatsanity",
+            "CorSkipToggle"
         )
         slot_data.update({
             "hitlist":                [],  # remove this after next update

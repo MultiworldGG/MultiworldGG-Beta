@@ -1,6 +1,6 @@
 from typing import Dict, Any
 
-from BaseClasses import CollectionState, Item, MultiWorld, Tutorial, Region, Entrance
+from BaseClasses import CollectionState, Item, MultiWorld, Tutorial, Region
 from Options import OptionError
 from worlds.AutoWorld import LogicMixin, World, WebWorld
 from .items import item_table, PaintItem, item_data_table, traps, deathlink_traps
@@ -26,20 +26,23 @@ class PaintWebWorld(WebWorld):
 
 class PaintWorld(World):
     """
-    The classic Microsoft app, reimagined as an Archipelago game! Find your tools, expand your canvas, and paint the
+    The classic Microsoft app, reimagined as a MultiworldGG game! Find your tools, expand your canvas, and paint the
     greatest image the world has ever seen.
     """
     game = GAME_NAME
     author: str = AUTHOR
     options_dataclass = PaintOptions
-    options = PaintOptions
+    options: PaintOptions
     web = PaintWebWorld()
     location_name_to_id = location_table
     item_name_to_id = item_table
+    origin_region_name = "Canvas"
 
     def generate_early(self) -> None:
         if self.options.canvas_size_increment < 50 and self.options.logic_percent <= 55:
-            self.multiworld.local_early_items[self.player]["Pick Color"] = 1
+            if self.multiworld.players == 1:
+                raise OptionError("Logic Percent must be greater than 55 when generating a single-player world with "
+                                  "Canvas Size Increment below 50.")
 
     def get_filler_item_name(self) -> str:
         if self.random.randint(0, 99) >= self.options.trap_count:
@@ -56,8 +59,8 @@ class PaintWorld(World):
     def create_items(self) -> None:
         starting_tools = ["Brush", "Pencil", "Eraser/Color Eraser", "Airbrush", "Line", "Rectangle", "Ellipse",
                           "Rounded Rectangle"]
-        self.multiworld.push_precollected(self.create_item("Magnifier"))
-        self.multiworld.push_precollected(self.create_item(starting_tools.pop(self.options.starting_tool)))
+        self.push_precollected(self.create_item("Magnifier"))
+        self.push_precollected(self.create_item(starting_tools.pop(self.options.starting_tool)))
         items_to_create = ["Free-Form Select", "Select", "Fill With Color", "Pick Color", "Text", "Curve", "Polygon"]
         items_to_create += starting_tools
         items_to_create += ["Progressive Canvas Width"] * (400 // self.options.canvas_size_increment)
@@ -65,14 +68,14 @@ class PaintWorld(World):
         depth_items = ["Progressive Color Depth (Red)", "Progressive Color Depth (Green)",
                        "Progressive Color Depth (Blue)"]
         for item in depth_items:
-            self.multiworld.push_precollected(self.create_item(item))
+            self.push_precollected(self.create_item(item))
         items_to_create += depth_items * 6
         pre_filled = len(items_to_create)
         to_fill = len(self.get_region("Canvas").locations)
         if pre_filled > to_fill:
-            raise OptionError(f"{self.player_name}'s Paint world has too few locations for its required items."
-                              f"Consider adding more locations by raising logic percent or adding fractional checks."
-                              f"Alternatively, increasing the canvas size increment will require fewer items.")
+            raise OptionError(f"{self.player_name}'s Paint world has too few locations for its required items. "
+                              "Consider adding more locations by raising logic percent or adding fractional checks. "
+                              "Alternatively, increasing the canvas size increment will require fewer items.")
         while len(items_to_create) < (to_fill - pre_filled) * (self.options.trap_count / 100) + pre_filled:
             if self.options.death_link:
                 items_to_create += [self.random.choice(deathlink_traps)]
@@ -83,25 +86,20 @@ class PaintWorld(World):
         self.multiworld.itempool += [self.create_item(item) for item in items_to_create]
 
     def create_regions(self) -> None:
-        menu = Region("Menu", self.player, self.multiworld)
         canvas = Region("Canvas", self.player, self.multiworld)
         canvas.locations += [PaintLocation(self.player, loc_name, loc_data.address, canvas)
                              for loc_name, loc_data in location_data_table.items()
                              if location_exists_with_options(self, loc_data.address)]
 
-        connection = Entrance(self.player, "New Canvas", menu)
-        menu.exits.append(connection)
-        connection.connect(canvas)
-        self.multiworld.regions += [menu, canvas]
+        self.multiworld.regions += [canvas]
 
     def set_rules(self) -> None:
-        from .rules import set_rules, set_completion_rules
-        set_rules(self, self.player)
+        from .rules import set_completion_rules
         set_completion_rules(self, self.player)
 
     def fill_slot_data(self) -> Dict[str, Any]:
         return dict(self.options.as_dict("logic_percent", "goal_percent", "goal_image", "death_link",
-                                         "canvas_size_increment"), version="0.5.0")
+                                         "canvas_size_increment"), version="0.5.2")
 
     def collect(self, state: CollectionState, item: Item) -> bool:
         change = super().collect(state, item)

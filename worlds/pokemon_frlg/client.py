@@ -297,7 +297,7 @@ class PokemonFRLGClient(BizHawkClient):
                 return False
             if rom_name != data.rom_names[self.game_version]:
                 logger.info("ERROR: You appear to be running a version of Pokemon FireRed or LeafGreen that wasn't "
-                            "patched using Archipelago. You need to create a patched ROM using the Archipelago "
+                            "patched using MultiworldGG. You need to create a patched ROM using the MultiworldGG "
                             "Launcher.")
                 return False
             if data.rom_checksum != rom_checksum:
@@ -634,7 +634,9 @@ class PokemonFRLGClient(BizHawkClient):
                     hint_ids = []
                     for location in hints_locations:
                         location_id = data.locations[location].flag
-                        if location_id not in ctx.missing_locations or location_id in self.local_checked_locations:
+                        if (location_id not in ctx.missing_locations or
+                                location_id in self.local_checked_locations or
+                                location_id not in ctx.locations_info):
                             continue
                         if (ctx.slot_data["provide_hints"] == ProvideHints.option_progression and
                                 ctx.locations_info[location_id].flags & 0b001):
@@ -823,7 +825,9 @@ class PokemonFRLGClient(BizHawkClient):
                     else:
                         await bizhawk.write(
                             ctx.bizhawk_ctx,
-                            [(data.ram_addresses["gArchipelagoDeathLinkReceived"][self.game_version], [1], "System Bus")]
+                            [(data.ram_addresses["gArchipelagoDeathLinkReceived"][self.game_version],
+                              [1],
+                              "System Bus")]
                         )
 
                 if death_link_sent:
@@ -832,5 +836,7 @@ class PokemonFRLGClient(BizHawkClient):
                     self.ignore_next_death_link = True
                     await bizhawk.write(
                         ctx.bizhawk_ctx,
-                        [(data.ram_addresses["gArchipelagoDeathLinkSent"][self.game_version], [0], "System Bus")]
+                        [(data.ram_addresses["gArchipelagoDeathLinkSent"][self.game_version],
+                          [0],
+                          "System Bus")]
                     )

@@ -46,6 +46,12 @@ def handle_itempool(world: "SSWorld") -> None:
     # Place items and remove from the item pool
     placed = _handle_placements(world, pool)
 
+    # Handle start inventory now, as these items are not removed from the pool
+    start_inventory = []
+    for itm, q in world.options.start_inventory.value.items():
+        world.starting_items.extend([itm] * q)
+        # No need to push these as precollected, AP already does that c:
+
     for itm in placed:
         adjusted_classification = item_classification(world, itm)
         classification = (
@@ -246,6 +252,11 @@ def _handle_starting_items(world: "SSWorld") -> list[str]:
             if data.type == "Map":
                 starting_items.append(itm)
 
+    # Start with Caves Key
+    caves_key_option = options.lanayru_caves_small_key
+    if caves_key_option == "start_with":
+        starting_items.append("Lanayru Caves Small Key")
+
     return starting_items
 
 
@@ -304,7 +315,7 @@ def _handle_placements(world: "SSWorld", pool: list[str]) -> list[str]:
 
     if not options.tadtonesanity:
         num_tadtones = 17 - options.starting_tadtones.value
-        all_tadtones = [loc for loc in world.multiworld.get_locations(world.player) if LOCATION_TABLE[loc.name].type == SSLocType.CLEF]
+        all_tadtones = [loc for loc in world.multiworld.get_locations(world.player) if loc.type == SSLocType.CLEF]
         for i, tad in enumerate(all_tadtones):
             if i < num_tadtones:
                 tad.place_locked_item(
@@ -341,6 +352,9 @@ def _handle_placements(world: "SSWorld", pool: list[str]) -> list[str]:
     # Sword Dungeon Reward
     if options.sword_dungeon_reward != "none":
         num_swords_to_place = pool.count("Progressive Sword")
+        if num_swords_to_place == 5 or num_swords_to_place == 6:
+            cap = 4
+            num_swords_to_place = min(num_swords_to_place, cap)
         if num_swords_to_place < len(world.dungeons.required_dungeons):
             # More dungeons than swords to place, place as many as possible
             dungeons_to_place_swords = world.random.sample(
@@ -370,6 +384,8 @@ def _handle_placements(world: "SSWorld", pool: list[str]) -> list[str]:
     # Place non-vanilla keys now
     if options.small_key_mode != "vanilla":
         placed.extend(world.dungeons.key_handler.place_small_keys())
+    if options.lanayru_caves_small_key != "start_with":
+        placed.extend(world.dungeons.key_handler.place_caves_key())
     if options.boss_key_mode != "vanilla":
         placed.extend(world.dungeons.key_handler.place_boss_keys())
     if options.map_mode != "start_with" and options.map_mode != "vanilla":

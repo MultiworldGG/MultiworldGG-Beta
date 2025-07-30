@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING
-from BaseClasses import MultiWorld, CollectionState
+from BaseClasses import CollectionState
 from ..generic.Rules import add_rule, set_rule
 
-from . import Locations
-from .Options import Opt
+from .Locations import course_locations, Group, shared_hazard_locations, cup_locations
+from .Options import Opt, GameMode
 from .Items import item_name_groups
 
 if TYPE_CHECKING:
@@ -46,18 +46,18 @@ def item_win_score(state: CollectionState, player: int) -> int:  # 0 to 5
 
 
 def track_score(state: CollectionState, player: int) -> int:  # 0 to 2
-    ratings = [state.count("Progressive Drift " + kart, player) for kart in karts if state.has(kart, player)]
+    ratings = [min(state.count("Progressive Drift " + kart, player), 2) for kart in karts if state.has(kart, player)]
     return max(ratings, default=0)
 
 
 def off_road_score(state: CollectionState, player: int) -> int:  # 0 to 3
-    ratings = [state.count("Progressive Drift " + kart, player) + state.has("Off-Road Tires " + kart, player)
+    ratings = [min(state.count("Progressive Drift " + kart, player), 2) + state.has("Off-Road Tires " + kart, player)
                for kart in karts if state.has(kart, player)]
     return max(ratings, default=0)
 
 
 def winter_score(state: CollectionState, player: int) -> int:  # 0 to 4
-    ratings = [state.count("Progressive Drift " + kart, player)
+    ratings = [min(state.count("Progressive Drift " + kart, player), 2)
                + (state.has("Winter Tires " + kart, player) and 2) or (state.has("Off-Road Tires " + kart, player))
                for kart in karts if state.has(kart, player)]
     return max(ratings, default=0)
@@ -158,13 +158,17 @@ course_win_rules = [    # TODO: Refactor with coupling among score types after m
 ]
 
 
-def set_star_access_rule(loc_name: str, multiworld: MultiWorld, player: int, opt: Opt) -> None:
+def can_win_trophy(state: CollectionState, player: int, courses: frozenset[int], trophy_class: int, ease: int) -> bool:
+    return trophy_class <= sum(course_win_rules[course](state, player, ease) for course in courses)
+
+
+def set_star_access_rule(world: "MK64World", loc_name: str, player: int, opt: Opt) -> None:
     # Relevant Option
     if opt.two_player:
-        set_rule(multiworld.get_location(loc_name, player),
+        set_rule(world.get_location(loc_name),
                  lambda state: state.has_any({"Star Power", "P2 Star Power"}, player))
     else:
-        set_rule(multiworld.get_location(loc_name, player), lambda state: state.has("Star Power", player))
+        set_rule(world.get_location(loc_name), lambda state: state.has("Star Power", player))
 
 
 def create_rules(world: "MK64World") -> None:
@@ -172,6 +176,14 @@ def create_rules(world: "MK64World") -> None:
     player = world.player
     opt = world.opt
     order = world.course_order
+
+    # Make starting kart(s) required, which has them show up in the spoiler log Playthrough.
+    if opt.mode == GameMode.option_cups:
+        first_entrance = world.multiworld.get_region("Menu", player).get_exits()[0]
+        if len(world.starting_karts) == 1:
+            first_entrance.access_rule = lambda state, kart=world.starting_karts[0]: state.has(kart, player)
+        else:
+            first_entrance.access_rule = lambda state, kts=frozenset(world.starting_karts): state.has_all(kts, player)
 
     # Region (Entrance) Rules (handled in Regions.py instead for now)
     # if opt_game_mode == GameMode.option_cups:
@@ -185,73 +197,58 @@ def create_rules(world: "MK64World") -> None:
     #     pass
 
     # Base Course Rules # TODO: Clean this up, probably combine with Star Access Rules section
-    for locations in Locations.course_locations.values():
+    for locations in course_locations.values():
         for name, (code, group) in locations.items():
-            if group == Locations.Group.base:
+            if group == Group.base:
                 if code % 3 < 2:
-                    set_rule(multiworld.get_location(name, player),
-                             lambda state: course_win_rules[(code - 4660000) // 3](state, player, opt.logic))
+                    set_rule(world.get_location(name),
+                             lambda state, c=code: course_win_rules[(c - 4660000) // 3](state, player, opt.logic))
                 else:
-                    set_rule(multiworld.get_location(name, player),
-                             lambda state: course_qualify_rules[(code - 4660000) // 3](state, player, opt.logic))
+                    set_rule(world.get_location(name),
+                             lambda state, c=code: course_qualify_rules[(c - 4660000) // 3](state, player, opt.logic))
 
     # Item Spot Access Rules moved to Regions.py for context that knows which item box spots to apply rules to
 
     # Koopa Troopa Beach Rock Access
     if opt.special_boxes:
-        set_rule(multiworld.get_location("Koopa Troopa Beach Rock", player),
+        set_rule(world.get_location("Koopa Troopa Beach Rock"),
                  lambda state: state.has_all({"Yellow Switch", "Blue Switch"}, player)
                                or state.has_all({"Red Switch", "Green Switch"}, player))
 
     if opt.secrets:
         # Kalimari Desert Secret Access
-        set_rule(multiworld.get_location("Kalimari Desert Secret", player),
+        set_rule(world.get_location("Kalimari Desert Secret"),
                  lambda state: state.has_any({"Yellow Switch", "Red Switch", "Blue Switch",
                                               "Feather Power", "P2 Feather Power"}, player))
 
         # Marty's Secret Access
-        set_rule(multiworld.get_location("Marty's Secret", player),
+        set_rule(world.get_location("Marty's Secret"),
                  lambda state: state.has_any({"Green Switch", "Feather Power", "P2 Feather Power"}, player))
 
+    # Hazard Access, all use Star Power
     if opt.hazards:
-        # Hazard Access, all use Star Power
-        if opt.hazards:
-            for locations in Locations.course_locations.values():
-                for name, (_, group) in locations.items():
-                    if group == Locations.Group.hazard:
-                        set_star_access_rule(name, multiworld, player, opt)
-            for name, _ in Locations.shared_hazard_locations.items():
-                set_star_access_rule(name, multiworld, player, opt)
+        for locations in course_locations.values():
+            for name, (_, group) in locations.items():
+                if group == Group.hazard:
+                    set_star_access_rule(world, name, player, opt)
+        for name, _ in shared_hazard_locations.items():
+            set_star_access_rule(world, name, player, opt)
 
         # Add Blue Fence rule to Mario sign
-        add_rule(multiworld.get_location("Destroy Mario Sign", player),
-                 lambda state: state.has("Blue Switch", player))
+        add_rule(world.get_location("Destroy Mario Sign"), lambda state: state.has("Blue Switch", player))
 
     # Cup Trophy Rules
-    trophy_class_mapping = {"Bronze": 1, "Silver": 2, "Gold": 3}
-    engine_class_mapping = {"100cc": 2, "150cc": 3}  # 50cc is 0
-    for c, locations in enumerate(Locations.cup_locations.values()):
-        for loc_name in locations.keys():
-            difficulty, trophy = loc_name.rsplit(" ", 1)[-2:]
-            trophy_class = trophy_class_mapping[trophy]
-            engine_class = engine_class_mapping.get(difficulty, 0)
-            set_rule(multiworld.get_location(loc_name, player), lambda state: trophy_class <=
-                     course_win_rules[order[4*c]](state, player, opt.logic + engine_class) +
-                     course_win_rules[order[4*c+1]](state, player, opt.logic + engine_class) +
-                     course_win_rules[order[4*c+2]](state, player, opt.logic + engine_class) +
-                     course_win_rules[order[4*c+3]](state, player, opt.logic + engine_class))
-                     # TODO: Would these rules run faster? But we could only use them for the base tropies, not higher cc ones
-                     # state.can_reach(course_regions[4*c].locations[2]) +
-                     # state.can_reach(course_regions[4*c+1].locations[2]) +
-                     # state.can_reach(course_regions[4*c+2].locations[2]) +
-                     # state.can_reach(course_regions[4*c+3].locations[2]))
+    cup_courses = [frozenset(order[i:i + 4]) for i in range(0, len(order), 4)]
+    if opt.mode == GameMode.option_cups:
+        trophy_class_mapping = {"Bronze": 1, "Silver": 2, "Gold": 3}
+        engine_class_mapping = {"100cc": 2, "150cc": 3}  # 50cc is 0
+        for locations, courses in zip(cup_locations.values(), cup_courses):
+            for loc_name in locations.keys():
+                difficulty, trophy = loc_name.rsplit(" ", 2)[-2:]
+                trophy_class = trophy_class_mapping[trophy]
+                ease = opt.logic + engine_class_mapping.get(difficulty, 0)
+                set_rule(world.get_location(loc_name),
+                         lambda state, o=courses, t=trophy_class, e=ease: can_win_trophy(state, player, o, t, e))
 
     # Completion Condition (Victory Rule)
     multiworld.completion_condition[player] = lambda state: state.has("Victory", player)
-
-    # Add starting drivers to sphere 0 spoiler log by adding minimum driver(s) as an access rule to the victory location
-    # Technically they are needed to get past the driver select screen, but checking the rule for victory is cleaner
-    # in code and runtime, and functionally identical since items cannot be lost.
-    for k in range(8):
-        if world.driver_unlocks >> k & 1:
-            add_rule(world.victory_location, lambda state, k=k: state.has(item_name_groups["Karts"][k], player))

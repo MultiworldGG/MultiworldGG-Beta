@@ -1,5 +1,6 @@
 import collections
 import typing
+import logging
 
 from BaseClasses import MultiWorld
 from .SubClasses import LTTPEntrance, LTTPRegion, LTTPRegionType
@@ -422,15 +423,19 @@ def _create_region(world: MultiWorld, player: int, name: str, type: LTTPRegionTy
     return ret
 
 
-def mark_light_world_regions(world, player: int):
+def mark_light_world_regions(multiworld, player: int):
     # cross world caves may have some sections marked as both in_light_world, and in_dark_work.
     # That is ok. the bunny logic will check for this case and incorporate special rules.
-    queue = collections.deque(region for region in world.get_regions(player) if region.type == LTTPRegionType.LightWorld)
+    queue = collections.deque(region for region in multiworld.get_regions(player) if region.type == LTTPRegionType.LightWorld)
     seen = set(queue)
+    logger = logging.getLogger("A Link to the Past")
     while queue:
         current = queue.popleft()
         current.is_light_world = True
         for exit in current.exits:
+            if exit.connected_region is None:
+                logger.info(f"[DEBUG] mark_light_world_regions() - exit.connected_region is None for {exit}")
+                continue
             if exit.connected_region.type == LTTPRegionType.DarkWorld:
                 # Don't venture into the dark world
                 continue
@@ -438,7 +443,7 @@ def mark_light_world_regions(world, player: int):
                 seen.add(exit.connected_region)
                 queue.append(exit.connected_region)
 
-    queue = collections.deque(region for region in world.get_regions(player) if region.type == LTTPRegionType.DarkWorld)
+    queue = collections.deque(region for region in multiworld.get_regions(player) if region.type == LTTPRegionType.DarkWorld)
     seen = set(queue)
     while queue:
         current = queue.popleft()

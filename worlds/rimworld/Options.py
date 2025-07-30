@@ -67,6 +67,24 @@ class RaidTrapCount(Range):
 	range_end = 100
 	default = 0
 
+class ColonistItemCount(Range):
+	"""
+	The number of colonists that will get sent as items in the game. Note: If you wind up with more than ~20 colonists, you may have performance issues.
+	"""
+	display_name = "Colonist Item Count"
+	range_start = 0
+	range_end = 50
+	default = 5
+
+class PlayerNamesAsColonistItems(Choice):
+	"""
+	If enabled, random player names from the multiworld will be used for colonist nicknames
+	"""
+	display_name = "Use Player Names for Colonist Items"
+	option_disabled = 0
+	option_enabled = 1
+	default = 0
+
 class PercentFillerAsTraps(Range):
 	"""
 	The chance random filler will become trap items, like raids.
@@ -150,6 +168,15 @@ class AnomalyEnabled(Choice):
 	option_disabled = 0
 	option_enabled = 1
 	default = 1
+
+class OdysseyEnabled(Choice):
+	"""
+	Enable the Odyssey DLC. If you disable any DLC in yaml and enable it in client, all research will be researchable and excluded from the generator.
+	"""
+	display_name = "Odyssey Enabled"
+	option_disabled = 0
+	option_enabled = 1
+	default = 0
 
 class StartingResearchLevel(Choice):
 	"""
@@ -243,6 +270,8 @@ class RimworldOptions(PerGameCommonOptions):
     ResearchMaxPrerequisites: ResearchMaxPrerequisites
     CraftLocationCount: CraftLocationCount
     RaidTrapCount: RaidTrapCount
+    ColonistItemCount: ColonistItemCount
+    PlayerNamesAsColonistItems: PlayerNamesAsColonistItems
     PercentFillerAsTraps: PercentFillerAsTraps
     VictoryCondition: VictoryCondition
     MonumentStatueCount: MonumentStatueCount
@@ -252,6 +281,7 @@ class RimworldOptions(PerGameCommonOptions):
     IdeologyEnabled: IdeologyEnabled
     BiotechEnabled: BiotechEnabled
     AnomalyEnabled: AnomalyEnabled
+    OdysseyEnabled: OdysseyEnabled
     StartingResearchLevel: StartingResearchLevel
     ResearchScoutType: ResearchScoutType
     ResearchScoutSecretTraps: ResearchScoutSecretTraps
@@ -268,9 +298,9 @@ rimworld_options: typing.Dict[str, type(Option)] = {
 		option.__name__: option
 		for option in {
 			BasicResearchLocationCount, HiTechResearchLocationCount, MultiAnalyzerResearchLocationCount,
-			ResearchBaseCost, ResearchMaxPrerequisites, CraftLocationCount, VictoryCondition,
-			RoyaltyEnabled, IdeologyEnabled, BiotechEnabled, AnomalyEnabled, StartingResearchLevel,
-			ResearchScoutType, ResearchScoutSecretTraps
+			ResearchBaseCost, ResearchMaxPrerequisites, CraftLocationCount, PlayerNamesAsColonistItems,
+			VictoryCondition, RoyaltyEnabled, IdeologyEnabled, BiotechEnabled, AnomalyEnabled, OdysseyEnabled,
+			StartingResearchLevel, ResearchScoutType, ResearchScoutSecretTraps
 		}
 	}
 }

@@ -1,8 +1,9 @@
+import unicodedata
+
 from typing import TYPE_CHECKING, Optional, Set
 
 from .Locations import ID_BASE
 from .Rom import Addr
-import unicodedata
 
 from NetUtils import ClientStatus
 import worlds._bizhawk as bizhawk
@@ -29,7 +30,7 @@ class MarioKart64Client(BizHawkClient):
         from CommonClient import logger
 
         try:
-            # Check if ROM is some version of MK64 patched with the MultiworldGG basepatch
+            # Check if ROM is some version of MK64 patched with the Archipelago basepatch
             game_name = ((await bizhawk.read(ctx.bizhawk_ctx, [(0x20, 0x10, "ROM")]))[0]).decode("ascii")
             if game_name != "MK64 ARCHIPELAGO" and game_name != "MK64 MULTIWORLDGG":
                 return False
@@ -41,7 +42,9 @@ class MarioKart64Client(BizHawkClient):
                                                       [(Addr.PLAYER_NAME, Addr.PLAYER_NAME_SIZE, "ROM")]))[0]
                 seed_name_bytes = (await bizhawk.read(ctx.bizhawk_ctx,
                                                       [(Addr.SEED_NAME, Addr.SEED_NAME_SIZE, "ROM")]))[0]
-                self.rom_slot_name = (bytes([byte for byte in player_name_bytes if byte != 0]).decode("utf-8"))
+                self.rom_slot_name = (bytes([byte for byte in player_name_bytes if byte != 0]).decode("utf-8")
+                                      + "_"
+                                      + bytes([byte for byte in seed_name_bytes if byte != 0]).decode("ascii"))
             except UnicodeDecodeError:
                 logger.info("Could not read slot name from ROM. Are you sure this ROM matches this client version?")
                 return False
@@ -79,21 +82,10 @@ class MarioKart64Client(BizHawkClient):
             if num_received_items < len(ctx.items_received):
                 receive_item = ctx.items_received[num_received_items]
                 local_id = receive_item.item - ID_BASE
-
-                raw_name = ctx.player_names[receive_item.player]
-                decomposed = unicodedata.normalize("NFKD", raw_name)
-                ascii_bytes = decomposed.encode("ascii", "ignore")
-                receive_player = ascii_bytes[:Addr.ASCII_PLAYER_NAME_SIZE]
-                
-                if len(receive_player) < Addr.ASCII_PLAYER_NAME_SIZE:
-                    receive_player = receive_player.ljust(Addr.ASCII_PLAYER_NAME_SIZE, b"\0")
-
-                raw_item = ctx.item_names.lookup_in_game(receive_item.item)
-                item_bytes = raw_item.encode("ascii", "ignore")
-                receive_item_name = item_bytes[:Addr.ITEM_NAME_SIZE]
-                if len(receive_item_name) < Addr.ITEM_NAME_SIZE:
-                    receive_item_name = receive_item_name.ljust(Addr.ITEM_NAME_SIZE, b"\0")
-
+                receive_player = unicodedata.normalize("NFKD", ctx.player_names[receive_item.player])\
+                                            .encode("ascii", "ignore")[:Addr.ASCII_PLAYER_NAME_SIZE]
+                receive_item_name = unicodedata.normalize("NFKD", ctx.item_names.lookup_in_game(receive_item.item))\
+                                               .encode("ascii", "ignore")[:Addr.ITEM_NAME_SIZE]
                 await bizhawk.guarded_write(ctx.bizhawk_ctx,
                     [(Addr.RECEIVE_ITEM_ID, local_id.to_bytes(1, "big"), "RDRAM"),
                         (Addr.RECEIVE_CLASSIFICATION, receive_item.flags.to_bytes(1, "big"), "RDRAM"),

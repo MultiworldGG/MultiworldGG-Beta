@@ -183,6 +183,7 @@ class PokemonCrystalWorld(World):
 
         randomize_wild_pokemon(self)
         randomize_static_pokemon(self)
+        randomize_move_types(self)
         randomize_pokemon_data(self)
         randomize_starters(self)
         generate_breeding_data(self)
@@ -281,6 +282,7 @@ class PokemonCrystalWorld(World):
 
     def set_rules(self) -> None:
         set_rules(self)
+        fill_wild_encounter_locations(self)
 
     def pre_fill(self) -> None:
         if self.options.randomize_badges.value == RandomizeBadges.option_shuffle:
@@ -322,11 +324,8 @@ class PokemonCrystalWorld(World):
 
                 logging.debug(f"Failed to shuffle badges for player {self.player} ({self.player_name}). Retrying.")
 
-        fill_wild_encounter_locations(self)
-
     def generate_basic(self) -> None:
         randomize_move_values(self)
-        randomize_move_types(self)
         randomize_traded_pokemon(self)
         randomize_music(self)
         randomize_mischief(self)

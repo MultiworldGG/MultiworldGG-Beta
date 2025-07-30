@@ -16,6 +16,10 @@ from collections.abc import Iterable, Sequence
 from hashlib import sha3_512
 from pathlib import Path
 
+
+SNI_VERSION = "v0.0.100"  # change back to "latest" once tray icon issues are fixed
+
+
 # This is a bit jank. We need cx-Freeze to be able to run anything from this script, so install it
 requirement = 'cx-Freeze==8.0.0'
 try:
@@ -87,7 +91,8 @@ def download_SNI() -> None:
     machine_name = platform.machine().lower()
     # force amd64 on macos until we have universal2 sni, otherwise resolve to GOARCH
     machine_name = "universal" if platform_name == "darwin" else machine_to_go.get(machine_name, machine_name)
-    with urllib.request.urlopen("https://api.github.com/repos/alttpo/sni/releases/latest") as request:
+    sni_version_ref = "latest" if SNI_VERSION == "latest" else f"tags/{SNI_VERSION}"
+    with urllib.request.urlopen(f"https://api.github.com/repos/alttpo/SNI/releases/{sni_version_ref}") as request:
         data = json.load(request)
     files = data["assets"]
 
@@ -194,9 +199,10 @@ extra_libs = ["libssl.so", "libcrypto.so"] if is_linux else []
 
 
 def remove_sprites_from_folder(folder: Path) -> None:
-    for file in os.listdir(folder):
-        if file != ".gitignore":
-            os.remove(folder / file)
+    if os.path.isdir(folder):
+        for file in os.listdir(folder):
+            if file != ".gitignore":
+                os.remove(folder / file)
 
 
 def _threaded_hash(filepath: str | Path) -> str:
@@ -405,6 +411,7 @@ class BuildExeCommand(cx_Freeze.command.build_exe.build_exe):
                 os.system(signtool + os.path.join(self.buildfolder, "lib", "worlds", "oot", "data", *exe_path))
 
         remove_sprites_from_folder(self.buildfolder / "data" / "sprites" / "alttpr")
+        remove_sprites_from_folder(self.buildfolder / "data" / "sprites" / "remote")
 
         self.create_manifest()
 
@@ -665,7 +672,7 @@ cx_Freeze.setup(
     ext_modules=cythonize("_speedups.pyx"),
     options={
         "build_exe": {
-            "packages": ["worlds", "kivy", "cymem", "websockets", "kivymd"],
+            "packages": ["worlds", "kivy", "cymem", "websockets", "kivymd", "werkzeug"],
             "includes": [],
             "excludes": ["numpy", "Cython", "PySide2", "PIL",
                          "pandas"],

@@ -206,3 +206,6 @@ certs/README
 gunicorn.conf.py
 selflaunch.yaml
 local_build_win.ps1
+
+# Sprites
+data/sprites/remote/*.zspr

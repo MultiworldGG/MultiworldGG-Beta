@@ -1,7 +1,7 @@
 # Super Mario Odyssey Setup Guide
 
 ## Installation and Usage
-* Install the latest version from the releases page. Either `SMO_Archipelago_Vx.x_Switch.zip` for console or `SMO_Archipelago_Vx.x_Emu.zip` for emulator. The apworld file is usually not needed when using MWGG.
+* Install the latest version from the [Github releases page](https://github.com/Kgamer77/SuperMarioOdysseyArchipelago/releases). Either `SMO_Archipelago_Vx.x_Switch.zip` for console or `SMO_Archipelago_Vx.x_Emu.zip` for emulator. The apworld file is usually not needed when using MWGG.
 <details>
 <summary>Switch</summary> 
   

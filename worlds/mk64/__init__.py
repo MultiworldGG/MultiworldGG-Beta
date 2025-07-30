@@ -52,13 +52,10 @@ class MK64World(World):
     options: MK64Options
     options_dataclass = MK64Options
     settings: typing.ClassVar[MK64Settings]
-    
-    web = MK64Web()
+
     item_name_to_id = Items.item_name_to_id
     location_name_to_id = Locations.location_name_to_id
     item_name_groups = Items.item_name_groups
-
-    data_version = 1
 
     opt: Opt
     num_filler_items: int
@@ -66,7 +63,7 @@ class MK64World(World):
     filler_spots: list[bool]
     victory_location: MK64Location
     course_order: list[int]
-    driver_unlocks: int
+    starting_karts: list[str]
 
     @classmethod
     def stage_assert_generate(cls, multiworld: MultiWorld):
@@ -112,13 +109,13 @@ class MK64World(World):
         #           f" for {self.multiworld.get_player_name(self.player)} to match their number of locations.")
 
     def create_regions(self) -> None:
-        self.victory_location, self.course_order = Regions.create_regions_locations_connections(self)
+        Regions.create_regions_locations_connections(self)
 
     def create_item(self, name: str) -> Item:
         return Items.create_item(name, self.player)
 
     def create_items(self) -> None:
-        self.driver_unlocks = Items.create_items(self)
+        Items.create_items(self)
 
     def set_rules(self) -> None:
         Rules.create_rules(self)

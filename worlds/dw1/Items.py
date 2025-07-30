@@ -301,7 +301,6 @@ def BuildItemPool(world: MultiWorld, count, options):
     if(options.progressive_stats.value):
         # add 9 stat cap items to the pool
         if(options.early_statcap.value):
-            
             for i in range(8):
                 item_pool.append(item_dictionary["Progressive Stat Cap"])
         else: 

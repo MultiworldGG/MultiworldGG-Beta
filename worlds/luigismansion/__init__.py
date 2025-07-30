@@ -900,6 +900,8 @@ class LMWorld(World):
 
     # TODO: UPDATE FOR LM tracker
     def fill_slot_data(self):
+        from .LMClient import CLIENT_VERSION
+
         return {
             "rank requirement": self.options.rank_requirement.value,
             "better vacuum": self.options.good_vacuum.value,

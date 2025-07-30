@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from Utils import local_path, user_path
 from worlds.alttp.Rom import Sprite
-from LttPAdjuster import get_image_for_sprite, update_sprites
+from worlds.alttp.Adjuster import get_image_for_sprite, update_sprites
 
 class NullTask:
     def update_status(self, text: str):
@@ -17,6 +17,10 @@ class NullTask:
 
     def close_window(self):
         pass
+
+    # Target directories
+    input_dir = user_path("data", "sprites", "remote")
+    output_dir = local_path("WebHostLib", "static", "generated")  # TODO: move to user_path
 
 def update_sprites_lttp(
     parallel: bool = True,

@@ -58,7 +58,7 @@ class StardewWebWorld(WebWorld):
     tutorials = [
         Tutorial(
             "Multiworld Setup Guide",
-            "A guide to playing Stardew Valley with MultiworldGG.",
+            "A guide to playing Stardew Valley with Archipelago.",
             "English",
             "setup_en.md",
             "setup/en",

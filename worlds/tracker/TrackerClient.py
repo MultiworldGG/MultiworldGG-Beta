@@ -32,7 +32,7 @@ if not sys.stdout:  # to make sure sm varia's "i'm working" dots don't break UT 
 
 logger = logging.getLogger("Client")
 
-UT_VERSION = "v0.2.10MD"
+UT_VERSION = "v0.2.11"
 DEBUG = False
 ITEMS_HANDLING = 0b111
 REGEN_WORLDS = {name for name, world in AutoWorld.AutoWorldRegister.world_types.items() if getattr(world, "ut_can_gen_without_yaml", False)}
@@ -608,8 +608,8 @@ class TrackerGameContext(CommonContext):
             tracker_divider = MDDivider(size_hint_y=None, height=dp(1))
             self.tracker_total_locs_label = MDLabel(text="Locations: 0/0", halign="center")
             self.tracker_logic_locs_label = MDLabel(text="In Logic: 0", halign="center")
-            self.tracker_glitched_locs_label = MDLabel(text=f"Glitched: [color={get_ut_color("glitched")}]0[/color]",  halign="center")
-            self.tracker_hinted_locs_label = MDLabel(text=f"Hinted: [color={get_ut_color("hinted_in_logic")}]0[/color]", halign="center")
+            self.tracker_glitched_locs_label = MDLabel(text=f"Glitched: [color={get_ut_color('glitched')}]0[/color]",  halign="center")
+            self.tracker_hinted_locs_label = MDLabel(text=f"Hinted: [color={get_ut_color('hinted_in_logic')}]0[/color]", halign="center")
             self.tracker_glitched_locs_label.markup = True
             self.tracker_hinted_locs_label.markup = True
             tracker_header.add_widget(self.tracker_total_locs_label)
@@ -669,7 +669,7 @@ class TrackerGameContext(CommonContext):
             loc_border = NumericProperty(5)
             enable_map = BooleanProperty(False)
             iconSource = StringProperty("")
-            base_title = f"Tracker {UT_VERSION} for AP version"  # core appends ap version so this works
+            base_title = f"Tracker {UT_VERSION} for MWGG version"  # core appends ap version so this works
 
             def build(self):
                 class TrackerHintLabel(HintLabel):
@@ -765,7 +765,10 @@ class TrackerGameContext(CommonContext):
             if cmd == 'Connected':
                 self.game = args["slot_info"][str(args["slot"])][1]
                 slot_name = args["slot_info"][str(args["slot"])][0]
-                connected_cls = AutoWorld.AutoWorldRegister.world_types[self.game]
+                connected_cls = AutoWorld.AutoWorldRegister.world_types.get(self.game)
+                if connected_cls is None:
+                    self.log_to_tab(f"Connected to World {self.game} but that world is not installed")
+                    return
                 if getattr(connected_cls, "disable_ut", False):
                     self.log_to_tab("World Author has requested UT be disabled on this world, please respect their decision")
                     return
@@ -856,7 +859,7 @@ class TrackerGameContext(CommonContext):
                     self.scout_checked_locations()
                 updateTracker(self)
             elif cmd == 'SetReply' or cmd == 'Retrieved':
-                if self.ui is not None and hasattr(AutoWorld.AutoWorldRegister.world_types[self.game], "tracker_world") and self.tracker_world:
+                if self.ui is not None and hasattr(AutoWorld.AutoWorldRegister.world_types.get(self.game), "tracker_world") and self.tracker_world:
                     key = self.tracker_world.map_page_setting_key or f"{self.slot}_{self.team}_{UT_MAP_TAB_KEY}"
                     icon_key = self.tracker_world.location_setting_key
                     if "key" in args:
@@ -923,9 +926,9 @@ class TrackerGameContext(CommonContext):
             if hasattr(self, "tracker_logic_locs_label"):
                 self.tracker_logic_locs_label.text = f"In Logic: 0"
             if hasattr(self, "tracker_glitched_locs_label"):
-                self.tracker_glitched_locs_label.text = f"Glitched: [color={get_ut_color("glitched")}]0[/color]"
+                self.tracker_glitched_locs_label.text = f"Glitched: [color={get_ut_color('glitched')}]0[/color]"
             if hasattr(self, "tracker_hinted_locs_label"):
-                self.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color("hinted_in_logic")}]0[/color]"
+                self.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color('hinted_in_logic')}]0[/color]"
         self.local_items.clear()
 
         await super().disconnect(allow_autoreconnect)
@@ -1092,41 +1095,57 @@ def get_logical_path(ctx: TrackerGameContext, dest_name: str):
         logger.error("Player YAML not installed or Generator failed")
         ctx.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}")
         return
-    dest_id = ctx.multiworld.worlds[ctx.player_id].location_name_to_id[dest_name]
-    if dest_id not in ctx.server_locations:
-        logger.error("Location not found")
-        return
-
-    state = updateTracker(ctx).state
-    location = ctx.multiworld.get_location(dest_name, ctx.player_id)
-    if location.can_reach(state):
-
-        # stolen from core
-        from BaseClasses import Region
-        from typing import Tuple, Iterator
-        from itertools import zip_longest
-
-        def flist_to_iter(path_value) -> Iterator[str]:
-            while path_value:
-                region_or_entrance, path_value = path_value
-                yield region_or_entrance
-
-        def get_path(state: CollectionState, region: Region) -> list[Union[Tuple[str, str], Tuple[str, None]]]:
-            reversed_path_as_flist = state.path.get(region, (str(region), None))
-            string_path_flat = reversed(list(map(str, flist_to_iter(reversed_path_as_flist))))
-            # Now we combine the flat string list into (region, exit) pairs
-            pathsiter = iter(string_path_flat)
-            pathpairs = zip_longest(pathsiter, pathsiter)
-            return list(pathpairs)
-
-        paths = get_path(state=state, region=location.parent_region)
-        for k, v in paths:
-            if v:
-                logger.info(v)
-
+    relevent_region = None
+    state = None
+    if dest_name in ctx.multiworld.worlds[ctx.player_id].location_name_to_id:
+        
+        dest_id = ctx.multiworld.worlds[ctx.player_id].location_name_to_id[dest_name]
+        if dest_id not in ctx.server_locations:
+            logger.error("Location not found")
+            return
+        location = ctx.multiworld.get_location(dest_name, ctx.player_id)
+        state = updateTracker(ctx).state
+        if location.can_reach(state):
+            relevent_region = location.parent_region
+    elif dest_name in ctx.multiworld.regions.region_cache[ctx.player_id]:
+        relevent_region = ctx.multiworld.get_region(dest_name,ctx.player_id)
+        state = updateTracker(ctx).state
+        if not relevent_region.can_reach(state):
+            relevent_region = None
+    elif dest_name in ctx.multiworld.regions.location_cache[ctx.player_id]:
+        location = ctx.multiworld.get_location(dest_name,ctx.player_id)
+        state = updateTracker(ctx).state
+        if location.can_reach(state):
+            relevent_region = location.parent_region
     else:
-        logger.info("Location not in logic")
+        logger.info(f"{dest_name} not found in the multiworld")
 
+    if state:
+        if relevent_region:
+            # stolen from core
+            from BaseClasses import Region
+            from typing import Tuple, Iterator
+            from itertools import zip_longest
+
+            def flist_to_iter(path_value) -> Iterator[str]:
+                while path_value:
+                    region_or_entrance, path_value = path_value
+                    yield region_or_entrance
+
+            def get_path(state: CollectionState, region: Region) -> list[Union[Tuple[str, str], Tuple[str, None]]]:
+                reversed_path_as_flist = state.path.get(region, (str(region), None))
+                string_path_flat = reversed(list(map(str, flist_to_iter(reversed_path_as_flist))))
+                # Now we combine the flat string list into (region, exit) pairs
+                pathsiter = iter(string_path_flat)
+                pathpairs = zip_longest(pathsiter, pathsiter)
+                return list(pathpairs)
+
+            paths = get_path(state=state, region=relevent_region)
+            for k, v in paths:
+                if v:
+                    logger.info(v)
+        else:
+            logger.info(f"{dest_name} not in logic")
 
 def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
     if ctx.player_id is None or ctx.multiworld is None:
@@ -1315,9 +1334,9 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
     if hasattr(ctx, "tracker_logic_locs_label"):
         ctx.tracker_logic_locs_label.text = f"In Logic: {len(locations)}"
     if hasattr(ctx, "tracker_glitched_locs_label"):
-        ctx.tracker_glitched_locs_label.text = f"Glitched: [color={get_ut_color("glitched")}]{len(glitches_locations)}[/color]"
+        ctx.tracker_glitched_locs_label.text = f"Glitched: [color={get_ut_color('glitched')}]{len(glitches_locations)}[/color]"
     if hasattr(ctx, "tracker_hinted_locs_label"):
-        ctx.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color("hinted_in_logic")}]{len(hinted_locations)}[/color]"
+        ctx.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color('hinted_in_logic')}]{len(hinted_locations)}[/color]"
 
     return CurrentTrackerState(all_items, prog_items, glitches_locations, events, state)
 

@@ -1,5 +1,5 @@
 """
-MultiworldGG World definition for Pokémon FireRed/LeafGreen
+Archipelago World definition for Pokémon FireRed/LeafGreen
 """
 import base64
 import copy

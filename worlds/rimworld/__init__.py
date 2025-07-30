@@ -262,6 +262,7 @@ class RimworldWorld(World):
         ideology_disabled = not getattr(self.options, "IdeologyEnabled")
         biotech_disabled = not getattr(self.options, "BiotechEnabled")
         anomaly_disabled = not getattr(self.options, "AnomalyEnabled")
+        odyssey_disabled = not getattr(self.options, "OdysseyEnabled")
         possibleItems = {}
         for itemId, itemName in list(self.craftable_item_id_to_name.items()):
             if royalty_disabled and self.item_name_to_expansion[itemName] == "Ludeon.RimWorld.Royalty":
@@ -271,6 +272,8 @@ class RimworldWorld(World):
             if biotech_disabled and self.item_name_to_expansion[itemName] == "Ludeon.RimWorld.Biotech":
                 continue
             if anomaly_disabled and self.item_name_to_expansion[itemName] == "Ludeon.RimWorld.Anomaly":
+                continue
+            if odyssey_disabled and self.item_name_to_expansion[itemName] == "Ludeon.RimWorld.Odyssey":
                 continue
             possibleItems[itemId] = itemName
 
@@ -285,6 +288,8 @@ class RimworldWorld(World):
                 if biotech_disabled and self.item_name_to_expansion[itemName] == "Ludeon.RimWorld.Biotech":
                     continue
                 if anomaly_disabled and self.item_name_to_expansion[itemName] == "Ludeon.RimWorld.Anomaly":
+                    continue
+                if odyssey_disabled and self.item_name_to_expansion[itemName] == "Ludeon.RimWorld.Odyssey":
                     continue
                 possibleBuildings.append(itemName)
 
@@ -413,6 +418,7 @@ class RimworldWorld(World):
         ideology_disabled = not getattr(self.options, "IdeologyEnabled")
         biotech_disabled = not getattr(self.options, "BiotechEnabled")
         anomaly_disabled = not getattr(self.options, "AnomalyEnabled")
+        odyssey_disabled = not getattr(self.options, "OdysseyEnabled")
         starting_research_level = getattr(self.options, "StartingResearchLevel")
         for item in self.research_items:
             if royalty_disabled and self.item_name_to_expansion[item] == "Ludeon.RimWorld.Royalty":
@@ -423,6 +429,9 @@ class RimworldWorld(World):
                 continue
             if anomaly_disabled and self.item_name_to_expansion[item] == "Ludeon.RimWorld.Anomaly":
                 continue
+            if odyssey_disabled and self.item_name_to_expansion[item] == "Ludeon.RimWorld.Odyssey":
+                continue
+
             # Removing items you start with from the pool
             if starting_research_level == 1 and item in self.tribal_tech_items:
                 if item in self.progression_items[self.player]:
@@ -452,6 +461,11 @@ class RimworldWorld(World):
             for i in range(statueCount):
                 self.item_counts[self.player] += 1
                 itempool.append(self.create_item("Archipelago Sculpture", ItemClassification.progression))
+
+        colonistItems = getattr(self.options, "ColonistItemCount").value
+        for i in range(colonistItems):
+            self.item_counts[self.player] += 1
+            itempool.append(self.create_item("Colonist", ItemClassification.useful))
         
         guaranteedTrapCount = getattr(self.options, "RaidTrapCount")
         for i in range(guaranteedTrapCount):
@@ -463,7 +477,7 @@ class RimworldWorld(World):
     def create_filler(self) -> None:
         trapRandomChance = getattr(self.options, "PercentFillerAsTraps")
         if self.item_counts[self.player] < self.location_counts[self.player]:
-            logger.warning("Player " + self.player_name + " had " + str(len(self.multiworld.itempool)) + " items, but " + str(self.location_counts[self.player]) + " locations! Adding filler.")
+            logger.warning("Player " + self.player_name + " had " + str(self.item_counts[self.player]) + " items, but " + str(self.location_counts[self.player]) + " locations! Adding filler.")
             while self.item_counts[self.player] < self.location_counts[self.player]:
                 self.item_counts[self.player] += 1
                 if random.randrange(100) < trapRandomChance:
@@ -471,7 +485,7 @@ class RimworldWorld(World):
                 else:
                     self.multiworld.itempool.append(self.create_item("Ship Chunk Drop", ItemClassification.filler))
         if self.item_counts[self.player] > self.location_counts[self.player]:
-            logger.warning("Player " + self.player_name + " had " + str(len(self.multiworld.itempool)) + " items, but " + str(self.location_counts[self.player]) + " locations! Adding basic research as filler.")
+            logger.warning("Player " + self.player_name + " had " + str(self.item_counts[self.player]) + " items, but " + str(self.location_counts[self.player]) + " locations! Adding basic research as filler.")
             main_region = self.multiworld.get_region("Main", self.player)
             basicResearchLocationCount = getattr(self.options, "BasicResearchLocationCount").value
             i = 1

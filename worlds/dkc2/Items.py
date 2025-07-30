@@ -15,10 +15,6 @@ class DKC2Item(Item):
     game = "Donkey Kong Country 2"
 
 # Item tables
-event_table = {
-    ItemName.victory:           ItemData(STARTING_ID + 0x0000, ItemClassification.progression_skip_balancing),
-}
-
 worlds_table = {
     ItemName.gangplank_galleon:     ItemData(STARTING_ID + 0x0001, ItemClassification.progression | ItemClassification.useful),
     ItemName.crocodile_cauldron:    ItemData(STARTING_ID + 0x0002, ItemClassification.progression | ItemClassification.useful),
@@ -40,11 +36,11 @@ hints_table = {
 }
 
 lost_world_table = {
-    ItemName.lost_world_cauldron:   ItemData(STARTING_ID + 0x000B, ItemClassification.progression),
-    ItemName.lost_world_quay:       ItemData(STARTING_ID + 0x000C, ItemClassification.progression),
-    ItemName.lost_world_kremland:   ItemData(STARTING_ID + 0x000D, ItemClassification.progression),
-    ItemName.lost_world_gulch:      ItemData(STARTING_ID + 0x000E, ItemClassification.progression),
-    ItemName.lost_world_keep:       ItemData(STARTING_ID + 0x000F, ItemClassification.progression),
+    ItemName.lost_world_cauldron:   ItemData(STARTING_ID + 0x000B, ItemClassification.progression | ItemClassification.useful),
+    ItemName.lost_world_quay:       ItemData(STARTING_ID + 0x000C, ItemClassification.progression | ItemClassification.useful),
+    ItemName.lost_world_kremland:   ItemData(STARTING_ID + 0x000D, ItemClassification.progression | ItemClassification.useful),
+    ItemName.lost_world_gulch:      ItemData(STARTING_ID + 0x000E, ItemClassification.progression | ItemClassification.useful),
+    ItemName.lost_world_keep:       ItemData(STARTING_ID + 0x000F, ItemClassification.progression | ItemClassification.useful),
 }
 
 progression_table = {
@@ -77,6 +73,7 @@ misc_table = {
     ItemName.red_balloon:           ItemData(STARTING_ID + 0x0031, ItemClassification.filler),
     ItemName.dk_barrel:             ItemData(STARTING_ID + 0x0032, ItemClassification.filler),
     ItemName.extractinator:         ItemData(STARTING_ID + 0x0033, ItemClassification.useful),
+    ItemName.glitched:              ItemData(None, ItemClassification.progression_skip_balancing),
 }
 
 trap_table = {
@@ -118,6 +115,9 @@ trap_name_to_value: typing.Dict[str, int] = {
     "Bomb":                 STARTING_ID + 0x0044,  # TNT Barrel Trap
     "Banana Trap":          STARTING_ID + 0x0043,  # Ice Trap
     "Gooey Bag":            STARTING_ID + 0x0044,  # TNT Barrel Trap
+    "Posession Trap":       STARTING_ID + 0x0045,  # Damage Trap 
+    "Ghost":                STARTING_ID + 0x0044,  # TNT Barrel Trap
+    "Fire Trap":            STARTING_ID + 0x0044,  # TNT Barrel Trap
 }
 
 trap_value_to_name: typing.Dict[int, str] = {
@@ -176,7 +176,6 @@ item_groups = {
 }
 
 item_table = {
-    **event_table,
     **mcguffin_table,
     **worlds_table,
     **lost_world_table,

@@ -23,7 +23,8 @@ class PowerwashSimulatorWebWorld(WebWorld):
 
 class PowerwashSimulator(World):
     """
-    Powerwash Simulator
+    Powerwash Simulator is a 2022 simulation video game where players take control of a power washing business and complete various jobs to earn money. 
+    Gameplay primarily revolves around using a power washer to clean dirt off of objects and buildings.
     """
     game = GAME_NAME
     author: str = AUTHOR
