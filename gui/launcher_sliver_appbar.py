@@ -35,7 +35,7 @@ Builder.load_string('''
             x: root.x
             Image:
                 source: "gui/data/logo_bg.png"
-                valign: "top"
+                pos_hint: {"top": 1}
                 fit_mode: "scale-down"
 
 
@@ -78,6 +78,7 @@ class SearchBar(MDTopAppBar):
         self.add_widget(self.search_box)
         Clock.schedule_once(lambda x: self.remove_widgets())
         self.search_box.bind(on_text_validate=self.on_enter)
+        self.pos_hint = {"top": 1}
     
     def remove_widgets(self):
         for child in self.children:
