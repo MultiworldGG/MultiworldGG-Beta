@@ -242,7 +242,7 @@ class ClientCommandProcessor(CommandProcessor):
         for group_name in AutoWorldRegister.world_types[self.ctx.game].location_name_groups:
             self.output(group_name)
 
-    def _cmd_ready(self) -> bool:
+    def _cmd_ready(self):
         """Send ready status to server."""
         self.ctx.ready = not self.ctx.ready
         if self.ctx.ready:
@@ -252,7 +252,6 @@ class ClientCommandProcessor(CommandProcessor):
             state = ClientStatus.CLIENT_CONNECTED
             self.output("Unreadied.")
         async_start(self.ctx.send_msgs([{"cmd": "StatusUpdate", "status": state}]), name="send StatusUpdate")
-        return True
 
     def default(self, raw: str):
         """The default message parser to be used when parsing any messages that do not match a command"""
@@ -273,6 +272,8 @@ class InitContext:
     def run_gui(self):
         """Run the GUI as self.ui_task."""
         self.ui = MultiMDApp(self)
+        # Launch splash screen before starting the UI
+        self.ui.launch_splash_screen()
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     async def shutdown(self):
@@ -309,7 +310,7 @@ class CommonContext(InitContext):
             return iter(self._game_store)
 
         def __repr__(self) -> str:
-            return repr(self._game_store)
+            return self._game_store.__repr__()
 
         def lookup_in_game(self, code: int, game_name: typing.Optional[str] = None) -> str:
             """Returns the name for an item/location id in the context of a specific game or own game if `game` is
@@ -484,8 +485,6 @@ class CommonContext(InitContext):
 
         self.jsontotextparser = JSONtoTextParser(self)
         self.rawjsontotextparser = RawJSONtoTextParser(self)
-        if self.game:
-            self.checksums[self.game] = network_data_package["games"][self.game]["checksum"]
         self.update_data_package(network_data_package)
 
         # execution
@@ -813,24 +812,6 @@ class CommonContext(InitContext):
         for game, game_data in data_package["games"].items():
             Utils.store_data_package_for_checksum(game, game_data)
 
-    def consume_network_item_groups(self):
-        data = {"item_name_groups": self.stored_data[f"_read_item_name_groups_{self.game}"]}
-        current_cache = Utils.persistent_load().get("groups_by_checksum", {}).get(self.checksums[self.game], {})
-        if self.game in current_cache:
-            current_cache[self.game].update(data)
-        else:
-            current_cache[self.game] = data
-        Utils.persistent_store("groups_by_checksum", self.checksums[self.game], current_cache)
-
-    def consume_network_location_groups(self):
-        data = {"location_name_groups": self.stored_data[f"_read_location_name_groups_{self.game}"]}
-        current_cache = Utils.persistent_load().get("groups_by_checksum", {}).get(self.checksums[self.game], {})
-        if self.game in current_cache:
-            current_cache[self.game].update(data)
-        else:
-            current_cache[self.game] = data
-        Utils.persistent_store("groups_by_checksum", self.checksums[self.game], current_cache)
-
     # data storage
 
     def set_notify(self, *keys: str) -> None:
@@ -1121,12 +1102,6 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.hint_points = args.get("hint_points", 0)
         ctx.consume_players_package(args["players"])
         ctx.stored_data_notification_keys.add(f"_read_hints_{ctx.team}_{ctx.slot}")
-        if ctx.game:
-            game = ctx.game
-        else:
-            game = ctx.slot_info[ctx.slot][1]
-        ctx.stored_data_notification_keys.add(f"_read_item_name_groups_{game}")
-        ctx.stored_data_notification_keys.add(f"_read_location_name_groups_{game}")
         msgs = []
         if ctx.locations_checked:
             msgs.append({"cmd": "LocationChecks",
@@ -1207,19 +1182,11 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.stored_data.update(args["keys"])
         if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" in args["keys"]:
             ctx.ui.update_hints()
-        if f"_read_item_name_groups_{ctx.game}" in args["keys"]:
-            ctx.consume_network_item_groups()
-        if f"_read_location_name_groups_{ctx.game}" in args["keys"]:
-            ctx.consume_network_location_groups()
 
     elif cmd == "SetReply":
         ctx.stored_data[args["key"]] = args["value"]
         if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" == args["key"]:
             ctx.ui.update_hints()
-        elif f"_read_item_name_groups_{ctx.game}" == args["key"]:
-            ctx.consume_network_item_groups()
-        elif f"_read_location_name_groups_{ctx.game}" == args["key"]:
-            ctx.consume_network_location_groups()
         elif args["key"].startswith("EnergyLink"):
             ctx.current_energy_link_value = args["value"]
             if ctx.ui:

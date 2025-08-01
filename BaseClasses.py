@@ -1555,7 +1555,7 @@ class ItemClassification(IntFlag):
     skip_balancing = 0b01000
     """ should technically never occur on its own
     Item that is logically relevant, but progression balancing should not touch.
-    
+
     Possible reasons for why an item should not be pulled ahead by progression balancing:
     1. This item is quite insignificant, so pulling it earlier doesn't help (currency/etc.)
     2. It is important for the player experience that this item is evenly distributed in the seed (e.g. goal items) """
