@@ -150,5 +150,5 @@ class ConsoleScreen(MDScreen, ThemableBehavior):
         self.slots_mdlist.clear_widgets()
         for slot_name, slot_data in testdict.items():
             await asynckivy.sleep(0)
-            slot = GameListPanel(game_tag=slot_name, game_data=slot_data)
+            slot = GameListPanel(game_module=slot_name, game_data=slot_data)
             self.slots_mdlist.add_widget(slot)

@@ -8,9 +8,8 @@ import warnings
 import zipimport
 import time
 import dataclasses
-from typing import List, Dict
+from typing import Dict, List, TypedDict
 
-from NetUtils import DataPackage
 from Utils import local_path, user_path
 
 local_folder = os.path.dirname(__file__)
@@ -27,6 +26,8 @@ __all__ = {
     "world_sources",
     "local_folder",
     "user_folder",
+    "GamesPackage",
+    "DataPackage",
     "failed_world_loads",
 }
 

@@ -273,8 +273,6 @@ class InitContext:
     def run_gui(self):
         """Run the GUI as self.ui_task."""
         self.ui = MultiMDApp(self)
-        # Launch splash screen before starting the UI
-        self.ui.launch_splash_screen()
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     async def shutdown(self):

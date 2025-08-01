@@ -367,9 +367,11 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             # Show loading screen
             #Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(speed=0.033), 0)
 
-            # Define ready callback to hide loading layout
+            # Define ready callback to hide loading layout and initialize console
             def ready_callback():
                 self.app.loading_layout.hide_loading()
+                # Initialize console after context switch
+                Clock.schedule_once(lambda x: self.app.console_init())
             discover_and_launch_module(
                     self.selected_game, server_address = server_address, slot_name = slot_name, \
                     password = password, ready_callback=ready_callback

@@ -90,6 +90,7 @@ from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.navigationdrawer import MDNavigationLayout
 from kivymd.uix.appbar import MDBottomAppBar
 from kivy.uix.effectwidget import EffectWidget
+from kivymd.uix.textfield import MDTextField
 
 from NetUtils import KivyMarkupJSONtoTextParser, JSONMessagePart, SlotType, HintStatus
 # from Utils import async_start, get_input_text_from_response
@@ -102,6 +103,7 @@ from .settings_screen import SettingsScreen
 from .topappbar import TopAppBarLayout, TopAppBar
 from .launcher import LauncherScreen
 from .kivydi.loadinglayout import MWGGLoadingLayout
+from .bottomappbar import BottomAppBar, BottomBarTextInput
 
 if typing.TYPE_CHECKING:
     import CommonClient
@@ -109,12 +111,6 @@ if typing.TYPE_CHECKING:
     context_type = CommonClient.CommonContext
 else:
     context_type = object
-
-class BottomAppBar(MDBottomAppBar):
-    def hide_me(self, *args):
-        self.hide_bar()
-    def show_me(self, *args):
-        self.show_bar()
 
 class MainLayout(MDAnchorLayout):
     pass
@@ -126,23 +122,6 @@ class MainScreenMgr(MDScreenManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # self.transition = MDFadeSlideTransition()
-
-# class GuiContext:
-#     def __init__(self):
-#         self.loop = asyncio.get_event_loop()
-#         self.exit_event = asyncio.Event()
-#         self.splash_process = None
-
-#     def run_gui(self):
-#         """Run the GUI as self.ui_task."""
-#         self.ui = MultiMDApp(self)
-#         # Launch splash screen before starting the UI
-#         self.ui.launch_splash_screen()
-#         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
-
-#     async def shutdown(self):
-#         if self.ui_task:
-#             await self.ui_task
 
 class MultiMDApp(MDApp): 
 
@@ -165,10 +144,12 @@ class MultiMDApp(MDApp):
     launcher_screen: LauncherScreen
 
     bottom_appbar: BottomAppBar
+    launcher_text_input: BottomBarTextInput
+    console_text_input: BottomBarTextInput
+    hint_text_input: BottomBarTextInput
     
     theme_mw: DefaultTheme
     top_appbar_menu: MDDropdownMenu
-    splash_process = None
     pixelate_effect: EffectWidget
     ui_console: ObjectProperty
 
@@ -245,59 +226,16 @@ class MultiMDApp(MDApp):
         # Write changes to app config file
         self.app_config.write()
 
-    def launch_splash_screen(self):
-        """Launch the splash screen as a separate process"""
-        try:
-            # Get the directory of the current script
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            splash_path = os.path.join(script_dir, "splashscreen.py")
-            
-            # Launch the splash screen process
-            if sys.platform == "win32":
-                self.splash_process = subprocess.Popen(
-                    [sys.executable, splash_path],
-                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
-                )
-            else:
-                self.splash_process = subprocess.Popen(
-                    [sys.executable, splash_path]
-                )
-            
-            logging.info(f"Splash screen launched with PID: {self.splash_process.pid}")
-            return self.splash_process
-        except Exception as e:
-            logging.error(f"Failed to launch splash screen: {e}")
-            return None
-
-    def terminate_splash_screen(self):
-        """Send termination signal to the splash screen"""
-        try:
-            # Create a termination file
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            flag_path = os.path.join(script_dir, "terminate_splash.flag")
-            
-            with open(flag_path, "w") as f:
-                f.write("terminate")
-            
-            logging.info("Termination signal sent to splash screen")
-            
-            # Clean up the flag file
-            if os.path.exists(flag_path):
-                os.remove(flag_path)
-                
-            # If the process is still running, terminate it
-            if self.splash_process and self.splash_process.poll() is None:
-                self.splash_process.terminate()
-                self.splash_process.wait(timeout=2)
-
-        except Exception as e:
-            logging.error(f"Failed to terminate splash screen: {e}")
-        Clock.schedule_once(self.set_opacity)
-
     def set_opacity(self, dt):
         Window.opacity = 1
         Window.size = (1100, 700)
         Window.clearcolor = [0,0,0,1]
+
+    def terminate_splash_screen_wrapper(self):
+        """Wrapper to call the terminate_splash_screen function from MultiWorld"""
+        from MultiWorld import terminate_splash_screen
+        terminate_splash_screen(self.ctx.splash_process)
+        Clock.schedule_once(self.set_opacity)
 
     def on_start(self):
         """Set up additional build necessities that
@@ -326,7 +264,7 @@ class MultiMDApp(MDApp):
         super().on_start()
         Clock.schedule_once(on_start)
         # Terminate the splash screen after the UI is fully initialized
-        Clock.schedule_once(lambda dt: self.terminate_splash_screen())
+        Clock.schedule_once(lambda dt: self.terminate_splash_screen_wrapper())
 
 
     def build(self):
@@ -434,12 +372,16 @@ class MultiMDApp(MDApp):
             self.hint_screen = HintScreen()
             self.screen_manager.add_widget(self.hint_screen)
             self.screen_manager.current = "hint"
+            self.hint_text_input = self.hint_screen.bottom_appbar.text_input
+            self.hint_text_input.bind(on_enter=self.on_message)
         elif item == "launcher":
             self.launcher_screen = LauncherScreen()
             self.screen_manager.add_widget(self.launcher_screen)
             self.screen_manager.current = "launcher"
+            self.launcher_text_input = self.launcher_screen.bottom_appbar.text_input  
+            self.launcher_text_input.bind(on_enter=self.on_message)
 
-    def _console_init(self):
+    def console_init(self):
         self.commandprocessor = self.ctx.command_processor(self.ctx)
         self.ui_console = self.console_screen.ui_console
         self.console_handler = self.ui_console.console_handler()
@@ -447,7 +389,8 @@ class MultiMDApp(MDApp):
     def client_console_init(self):
         self.console_screen = ConsoleScreen()
         self.screen_manager.add_widget(self.console_screen)
-        Clock.schedule_once(lambda x: self._console_init())
+        self.console_text_input = self.console_screen.bottom_appbar.text_input
+        self.console_text_input.bind(on_enter=self.on_message)
 
     def _create_menu_item(self, item):
         """Create a menu item with proper binding
@@ -482,6 +425,24 @@ class MultiMDApp(MDApp):
         if hasattr(self, "top_appbar"):
             self.top_appbar.update_address_bar(text)
 
+    def on_message(self, textinput: MDTextField):
+        try:
+            input_text = textinput.text.strip()
+            textinput.text = ""
+            textinput.update_history(input_text)
+
+            if self.ctx.input_requests > 0:
+                self.ctx.input_requests -= 1
+                self.ctx.input_queue.put_nowait(input_text)
+            elif is_command_input(input_text):
+                self.ctx.on_ui_command(input_text)
+                self.commandprocessor(input_text)
+            elif input_text:
+                self.commandprocessor(input_text)
+
+        except Exception as e:
+            logging.getLogger("Client").exception(e)
+
     def focus_textinput(self):
         self.change_screen("console")
 
@@ -495,24 +456,6 @@ class MultiMDApp(MDApp):
         print(text)
         # Put the text string into the queue instead of the list
         self.console_handler.queue.put_nowait(text)
-
-    def on_message(self):
-        try:
-            input_text = self.bottom_sheet.input_field.text.strip()
-            self.bottom_sheet.input_field.text = ""
-            #self.bottom_sheet.input_field.update_history(input_text)
-
-            if self.ctx.input_requests > 0:
-                self.ctx.input_requests -= 1
-                self.ctx.input_queue.put_nowait(input_text)
-            elif is_command_input(input_text):
-                self.ctx.on_ui_command(input_text)
-                self.commandprocessor(input_text)
-            elif input_text:
-                self.commandprocessor(input_text)
-
-        except Exception as e:
-            logging.getLogger("Client").exception(e)
 
     def update_hints(self):
         hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}", [])
