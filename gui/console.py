@@ -126,7 +126,6 @@ class ConsoleScreen(MDScreen, ThemableBehavior):
 
 
     def init_important(self):
-
         self.consolegrid = ConsoleLayout(width=Window.width, height=Window.height-185)
         self.add_widget(self.consolegrid)
         self.add_widget(self.bottom_appbar)
@@ -146,9 +145,8 @@ class ConsoleScreen(MDScreen, ThemableBehavior):
         self.consolegrid.add_widget(self.ui_console)
 
     async def set_slots_list(self):
-
         self.slots_mdlist.clear_widgets()
         for slot_name, slot_data in testdict.items():
             await asynckivy.sleep(0)
-            slot = GameListPanel(game_module=slot_name, game_data=slot_data)
+            slot = GameListPanel(item_name=slot_name, item_data=slot_data)
             self.slots_mdlist.add_widget(slot)

@@ -391,24 +391,24 @@ class GameListItem(MDListItem, CommonElevationBehavior):
 
 class GameListPanel(MDExpansionPanel):
     """
-    Expansion panel for displaying game information in the game list.
+    Expansion panel for displaying game information in the game or hintlist.
     
     This class is used to display a game item in the game list.
     It is a subclass of MDExpansionPanel and can display either
     slot items (if hints are present) or game metadata.
     
     Attributes:
-        game_module (StringProperty): The module to use for the game
-        game_data (DictProperty): Dictionary containing game information
+        item_name (StringProperty): The name of the item
+        item_data (DictProperty): Dictionary containing item information
         icon (StringProperty): The icon to display (default: "game-controller")
-        leading_avatar (MDListItemLeadingAvatar): Avatar widget for the game
+        leading_avatar (MDListItemLeadingAvatar): Avatar widget for the item
         panel_header (MDExpansionPanelHeader): Header widget for the panel
         panel_content (MDExpansionPanelContent): Content widget for the panel
         panel_header_layout (ObjectProperty): Layout for the panel header
         on_game_select (ObjectProperty): Callback function for game selection
     """
-    game_module: StringProperty
-    game_data: DictProperty
+    item_name: StringProperty
+    item_data: DictProperty
     icon = StringProperty("game-controller")
     leading_avatar: MDListItemLeadingAvatar
     panel_header: MDExpansionPanelHeader
@@ -417,24 +417,24 @@ class GameListPanel(MDExpansionPanel):
     on_game_select: ObjectProperty = None
     app: MDApp
     
-    def __init__(self, game_module, game_data, on_game_select=None, **kwargs):
+    def __init__(self, item_name, item_data, on_game_select=None, **kwargs):
         """
         Initialize the GameListPanel.
         
         Args:
-            game_tag (str): The tag identifier for the game
-            game_data (dict): Dictionary containing game information
+            item_name (str): The name of the item
+            item_data (dict): Dictionary containing item information
             on_game_select: Callback function for game selection
             **kwargs: Additional keyword arguments for MDExpansionPanel
         """
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
-        self.game_module = game_module
-        self.game_data = game_data
+        self.item_name = item_name
+        self.item_data = item_data
         self.on_game_select = on_game_select
         self.width = 256
         self.pos_hint = {"center_y": 0.5}
-        if "hints" in self.game_data:
+        if "hints" in self.item_data:
             Clock.schedule_once(lambda x: self.populate_slot_item())
         else:
             Clock.schedule_once(lambda x: self.populate_game_item())
@@ -448,18 +448,18 @@ class GameListPanel(MDExpansionPanel):
         """
         self.panel_header = self.ids.panel_header
         self.panel_content = self.ids.panel_content
-        self.panel_header_layout = SlotListItemHeader(game_data=self.game_data, panel=self)
+        self.panel_header_layout = SlotListItemHeader(game_data=self.item_data, panel=self)
         self.leading_avatar = self.panel_header_layout.ids.leading_avatar
         self.panel_header.add_widget(self.panel_header_layout)
-        self.leading_avatar.source = self.game_data['avatar']
-        for item, data in self.game_data.items():
+        self.leading_avatar.source = self.item_data['avatar']
+        for item, data in self.item_data.items():
             if item == "bk_mode" and data:
                 self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="food", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
             elif item == "in_call" and data:
                 self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="headphones", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
             elif item == "game_status" and data == "GOAL":
                 self.panel_header_layout.ids.game_item_container.add_widget(BaseListItemIcon(icon="flag_checkered", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
-        for item in self.game_data["hints"]:
+        for item in self.item_data["hints"]:
             i = 1 if self.app.theme_cls.theme_style == "Dark" else 0
             item_colors = {
                 "trap": self.app.theme_mw.markup_tags_theme.trap_item_color[i],
@@ -467,7 +467,7 @@ class GameListPanel(MDExpansionPanel):
                 "useful": self.app.theme_mw.markup_tags_theme.useful_item_color[i],
                 "progression": self.app.theme_mw.markup_tags_theme.progression_item_color[i],
             }
-            self.panel_content.add_widget(SlotListItem(game_data=item, game_status=self.game_data['game_status'], shadow_colors=item_colors))
+            self.panel_content.add_widget(SlotListItem(game_data=item, game_status=self.item_data['game_status'], shadow_colors=item_colors))
 
     def populate_game_item(self):
         """
@@ -480,32 +480,32 @@ class GameListPanel(MDExpansionPanel):
         self.panel_header = self.ids.panel_header
         self.panel_content = self.ids.panel_content
         self.panel_header_layout = GameListItemHeader(
-            game_module=self.game_module, 
-            game_data=self.game_data, 
+            game_module=self.item_name, 
+            game_data=self.item_data, 
             panel=self,
             on_game_select=self.on_game_select
         )
         self.leading_avatar = self.panel_header_layout.ids.leading_avatar
         self.panel_header.add_widget(self.panel_header_layout)
-        self.leading_avatar.source = self.game_data['cover_url']
-        for item in self.game_data:
-            if item == "genres" and self.game_data['genres']:
-                list_tooltip = self.list_tooltip(self.game_data['genres'])
+        self.leading_avatar.source = self.item_data['cover_url']
+        for item in self.item_data:
+            if item == "genres" and self.item_data['genres']:
+                list_tooltip = self.list_tooltip(self.item_data['genres'])
                 self.panel_content.add_widget(GameListItem(text=list_tooltip['label'], icon="dice-multiple", tooltip_text=list_tooltip['tooltip']))
-            elif item == "themes" and self.game_data['themes']:
-                list_tooltip = self.list_tooltip(self.game_data['themes'])
+            elif item == "themes" and self.item_data['themes']:
+                list_tooltip = self.list_tooltip(self.item_data['themes'])
                 self.panel_content.add_widget(GameListItem(text=list_tooltip['label'], icon="sword", tooltip_text=list_tooltip['tooltip']))
-            elif item == "keywords" and self.game_data['keywords']:
-                list_tooltip = self.list_tooltip(self.game_data['keywords'])
-                self.panel_content.add_widget(GameListItem(text=list_tooltip['label'], icon="tag-outline", tooltip_text=list_tooltip['tooltip']))
-            elif item == "player_perspectives" and self.game_data['player_perspectives']:
-                list_tooltip = self.list_tooltip(self.game_data['player_perspectives'])
+            # elif item == "keywords" and self.item_data['keywords']:
+            #     list_tooltip = self.list_tooltip(self.item_data['keywords'])
+            #     self.panel_content.add_widget(GameListItem(text=list_tooltip['label'], icon="tag-outline", tooltip_text=list_tooltip['tooltip']))
+            elif item == "player_perspectives" and self.item_data['player_perspectives']:
+                list_tooltip = self.list_tooltip(self.item_data['player_perspectives'])
                 self.panel_content.add_widget(GameListItem(text=list_tooltip['label'], icon="eye-outline", tooltip_text=list_tooltip['tooltip']))
-            elif item == "rating" and self.game_data['rating']:
-                list_tooltip = self.list_tooltip(self.game_data['rating'])
+            elif item == "rating" and self.item_data['rating']:
+                list_tooltip = self.list_tooltip(self.item_data['rating'])
                 self.panel_content.add_widget(GameListItem(text=list_tooltip['label'], icon="alert-box-outline", tooltip_text=list_tooltip['tooltip']))
-            elif item == "release_date" and self.game_data['release_date']:
-                self.panel_content.add_widget(GameListItem(text=str(self.game_data['release_date']), icon="calendar-month", tooltip_text=str(self.game_data['release_date'])))
+            elif item == "release_date" and self.item_data['release_date']:
+                self.panel_content.add_widget(GameListItem(text=str(self.item_data['release_date']), icon="calendar-month", tooltip_text=str(self.item_data['release_date'])))
                 
     def list_tooltip(self, item_list: list[str]) -> dict[str, str]:
         """

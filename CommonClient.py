@@ -193,11 +193,17 @@ class ClientCommandProcessor(CommandProcessor):
         if not self.ctx.game:
             self.output(f"No game set, cannot determine {name}.")
             return False
+        self.output(f"Item Names for {self.ctx.game}")
+        for item_name in AutoWorldRegister.world_types[self.ctx.game].item_name_to_id:
+            self.output(item_name)
 
         lookup = self.get_current_datapackage().get(key)
         if lookup is None:
             self.output("datapackage not yet loaded, try again")
             return False
+        self.output(f"Item Group Names for {self.ctx.game}")
+        for group_name in AutoWorldRegister.world_types[self.ctx.game].item_name_groups:
+            self.output(group_name)
 
         self.output(f"{name} for {self.ctx.game}")
         for key in lookup:

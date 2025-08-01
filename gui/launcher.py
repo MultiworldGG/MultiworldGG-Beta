@@ -310,8 +310,8 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         for module_name, game_data in matching_games.items():
             await asynckivy.sleep(0)
             game = GameListPanel(
-                game_module=module_name, 
-                game_data=game_data,
+                item_name=module_name, 
+                item_data=game_data,
                 on_game_select=lambda x, name=module_name: self.on_game_selected(name)
             )
             self.games_mdlist.add_widget(game)
