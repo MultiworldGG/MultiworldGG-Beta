@@ -75,6 +75,7 @@ def mystery_argparse():
 def get_seed_name(random_source) -> str:
     return f"{random_source.randint(0, pow(10, seeddigits) - 1)}".zfill(seeddigits)
 
+
 def main(args=None) -> tuple[argparse.Namespace, int]:
     # __name__ == "__main__" check so unittests that already imported worlds don't trip this.
     if __name__ == "__main__" and "worlds" in sys.modules:
@@ -394,7 +395,6 @@ def roll_meta_option(option_key, game: str, category_dict: dict) -> Any:
     if game in AutoWorldRegister.world_types:
         game_world = AutoWorldRegister.world_types[game]
         options = game_world.options_dataclass.type_hints
-
         if option_key in options:
             if options[option_key].supports_weighting:
                 return get_choice(option_key, category_dict)

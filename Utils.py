@@ -93,6 +93,16 @@ is_linux = sys.platform.startswith("linux")
 is_macos = sys.platform == "darwin"
 is_windows = sys.platform in ("win32", "cygwin", "msys")
 
+_worlds_to_load: typing.List[str] = []
+
+def set_game_names(value: typing.List[str]):
+    for game in value:
+        _worlds_to_load.append(get_module_for_game(game))
+
+def game_names() -> typing.List[str]:
+    """Get a list of only the game names that we're using"""
+    return _worlds_to_load
+
 def get_module_for_game(game_name: str) -> str:
     from data.game_index import GAMES_DATA
     for game, game_data in GAMES_DATA.items():
@@ -136,15 +146,6 @@ def discover_and_launch_module(module_name: str, **kwargs) -> None:
         logging.error(f"Failed to launch module {module_name}: {e}")
         raise
 
-_worlds_to_load: typing.List[str] = []
-
-def set_game_names(value: typing.List[str]):
-    for game in value:
-        _worlds_to_load.append(get_module_for_game(game))
-
-def game_names() -> typing.List[str]:
-    """Get a list of only the game names that we're using"""
-    return _worlds_to_load
 
 def int16_as_bytes(value: int) -> typing.List[int]:
     value = value & 0xFFFF
