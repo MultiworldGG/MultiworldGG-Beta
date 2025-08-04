@@ -27,12 +27,23 @@ except ImportError:
 from PIL import Image
 import numpy as np
 
-from Utils import local_path
+from BaseUtils import local_path
 
-# Overwriting default style.kv
+# Overwriting or adding to default styles.kv
 Builder.load_string('''
 <Selector>:
     color: app.theme_cls.inversePrimaryColor
+                    
+<MDTextFieldLeadingIcon>:
+    theme_icon_color: "Custom"
+    icon_color_focus: app.theme_cls.primaryColor
+    icon_color_normal: app.theme_cls.onPrimaryColor
+                    
+<MDTextFieldHintText>:
+    theme_font_name: "Custom"
+    theme_font_style: "Custom"
+    font_name: app.theme_cls.font_styles[self.font_style][self.role]["font-name"]
+    font_size: app.theme_cls.font_styles[self.font_style][self.role]["font-size"]
 ''')
 # The names of these colors are from Material Design
 # and will be the input for primary_palette

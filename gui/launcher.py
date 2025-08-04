@@ -81,6 +81,8 @@ Builder.load_string('''
                         id: connect_button
                         pos_hint: {"center_x": 0.5}
                         on_release: app.launcher_screen.connect()
+                        width: dp(200)
+                        radius: dp(10)
                         MDButtonText:
                             theme_text_color: "Custom"
                             text_color: app.theme_cls.onSurfaceVariantColor
@@ -91,6 +93,8 @@ Builder.load_string('''
                     MDButton:
                         id: game_patch_button
                         pos_hint: {"center_x": 0.5}
+                        width: dp(200)
+                        radius: dp(10)
                         MDButtonText:
                             theme_text_color: "Custom"
                             text_color: app.theme_cls.onSurfaceVariantColor
@@ -101,6 +105,8 @@ Builder.load_string('''
                     MDButton:
                         id: game_yaml_button
                         pos_hint: {"center_x": 0.5}
+                        width: dp(200)
+                        radius: dp(10)
                         MDButtonText:
                             theme_text_color: "Custom"
                             text_color: app.theme_cls.onSurfaceVariantColor
@@ -112,6 +118,8 @@ Builder.load_string('''
                         id: generate_button
                         on_release: app.root.current = 'generate'
                         pos_hint: {"center_x": 0.5}
+                        width: dp(200)
+                        radius: dp(10)
                         MDButtonText:
                             theme_text_color: "Custom"
                             text_color: app.theme_cls.onSurfaceVariantColor
@@ -123,6 +131,8 @@ Builder.load_string('''
                         id: host_button
                         on_release: app.root.current = 'host'
                         pos_hint: {"center_x": 0.5}
+                        width: dp(200)
+                        radius: dp(10)
                         MDButtonText:
                             theme_text_color: "Custom"
                             text_color: app.theme_cls.onSurfaceVariantColor
@@ -156,14 +166,9 @@ Builder.load_string('''
                             icon_color_normal: self.parent.icon_color_normal
                         MDTextFieldHintText:
                             text: "Server Address"
-                        # MDTextFieldHelperText:
-                        #     theme_text_color: "Custom"
-                        #     text_color_focus: self.parent.text_color_focus
-                        #     text_color_normal: self.parent.text_color_normal
-                        #     text: "multiworld.gg"
-                        #     mode: "persistent"
                     LauncherAuthTextField:
                         id: port
+                        input_filter: 'int'
                         size_hint_x: 0.8
                         pos_hint: {"center_x": 0.5}
                         text: app.app_config.get("client", "port", fallback="")
@@ -174,12 +179,6 @@ Builder.load_string('''
                             icon_color_normal: self.parent.icon_color_normal
                         MDTextFieldHintText:
                             text: "Port"
-                        # MDTextFieldHelperText:
-                        #     theme_text_color: "Custom"
-                        #     text_color_focus: self.parent.text_color_focus
-                        #     text_color_normal: self.parent.text_color_normal
-                        #     text: "38281"
-                        #     mode: "persistent"
                     LauncherAuthTextField:
                         id: slot_name
                         size_hint_x: 0.8
@@ -205,12 +204,6 @@ Builder.load_string('''
                             icon: 'lock'    
                         MDTextFieldHintText:
                             text: "Password"
-                        # MDTextFieldHelperText:
-                        #     theme_text_color: "Custom"
-                        #     text_color_focus: self.parent.text_color_focus
-                        #     text_color_normal: self.parent.text_color_normal
-                        #     text: "Password"
-                        #     mode: "persistent"
 
 <TagChip>:
     type: "filter"
@@ -262,9 +255,10 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     game_filter: list
     game_tag_filter: StringProperty
     bottom_appbar: BottomAppBar
-    selected_game: StringProperty = ""
+    selected_game: tuple[str, str] = ("", "")
     app: App
     result: Any
+
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
         self.game_filter = []
@@ -315,19 +309,28 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             game = GameListPanel(
                 item_name=module_name, 
                 item_data=game_data,
-                on_game_select=lambda x, name=module_name: self.on_game_selected(name)
+                on_game_select=lambda x, name=module_name, game_name=game_data['game_name']: self.on_game_selected((name, game_name))
             )
             self.games_mdlist.add_widget(game)
 
-    def on_game_selected(self, module_name):
+    def on_game_selected(self, game_info: tuple[str, str]):
         """Handle game selection from the game list"""
-        self.selected_game = module_name
-        logger.info(f"Selected game: {module_name}")
+        self.selected_game = game_info
+        logger.info(f"Selected game: {game_info[1]}")
         # Update the launcher view to show the selected game
-        self.launcher_view.module_name = module_name
+        self.launcher_view.module_name = game_info[0]
         # Update button text based on context
         self.update_connect_button_text()
     
+    def set_filter(self, active, tag):
+        if active:
+            self.game_filter.append((self.game_tag_filter.text, tag))
+        else:
+            self.game_filter.remove((self.game_tag_filter.text, tag))
+
+    def on_game_tag_filter_text(self, instance):
+        self.game_filter = [(self.game_tag_filter.text, tag) for tag in GameIndex.search(self.game_tag_filter.text)]
+
     def update_connect_button_text(self):
         """Update the connect button text based on current context"""
         current_ctx = self.app.ctx
@@ -344,15 +347,6 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             connect_button._button_text.text = f'Reconnect ({game_name})'
             connect_button._button_icon.icon = 'refresh'
 
-    def set_filter(self, active, tag):
-        if active:
-            self.game_filter.append((self.game_tag_filter.text, tag))
-        else:
-            self.game_filter.remove((self.game_tag_filter.text, tag))
-
-    def on_game_tag_filter_text(self, instance):
-        self.game_filter = [(self.game_tag_filter.text, tag) for tag in GameIndex.search(self.game_tag_filter.text)]
-    
     def connect(self):
         """Connect to server and launch the selected game module"""
         logger.info("Connect method called!")
@@ -384,7 +378,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             slot_name = slot_name_field.text if slot_name_field.text else None
             password = slot_password_field.text if slot_password_field.text else None
             
-            logger.info(f"Attempting to launch module: {self.selected_game}")
+            logger.info(f"Attempting to launch module: {self.selected_game[1]}")
             logger.info(f"Server: {server_address}, Password: {'*' * len(password) if password else 'None'}")
             
             try:
@@ -403,27 +397,29 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                     # Stay on launcher screen, don't switch to console
                     # Error dialog will be shown by the context's handle_connection_loss
                 
+                self.app.client_console_init()
+
                 discover_and_launch_module(
-                        self.selected_game, server_address = server_address, slot_name = slot_name, \
+                        self.selected_game[0], server_address = server_address, slot_name = slot_name, \
                         password = password, ready_callback=ready_callback, error_callback=error_callback
                 )
                     
             except Exception as e:
-                logger.error(f"Failed to launch {self.selected_game} module: {e}")
+                logger.error(f"Failed to launch {self.selected_game[1]} module: {e}")
                 # Hide loading layout on error
                 self.app.loading_layout.hide_loading()
                 # Show error dialog and stay on launcher screen
                 from .dialog import show_error_dialog
-                show_error_dialog("Launch Error", f"Failed to launch {self.selected_game}: {str(e)}")
+                show_error_dialog("Launch Error", f"Failed to launch {self.selected_game[1]}: {str(e)}")
         
         else:
             # We're in a game context, check if the selected game matches the current context
-            if hasattr(current_ctx, 'game') and current_ctx.game != self.selected_game:
+            if hasattr(current_ctx, 'game') and current_ctx.game != self.selected_game[1]:
                 # Game mismatch - need to rebuild to InitContext first
-                logger.info(f"Game mismatch: current={current_ctx.game}, selected={self.selected_game}")
+                logger.info(f"Game mismatch: current={current_ctx.game}, selected={self.selected_game[1]}")
                 from .dialog import show_error_dialog
                 show_error_dialog("Game Mismatch", 
-                                f"Current game ({current_ctx.game}) doesn't match selected game ({self.selected_game}). "
+                                f"Current game ({current_ctx.game}) doesn't match selected game ({self.selected_game[1]}). "
                                 "Please restart the client to change games.")
                 return
             

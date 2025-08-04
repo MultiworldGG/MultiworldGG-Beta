@@ -7,7 +7,6 @@ import io
 import pkgutil
 import asyncio
 import subprocess
-import time
 
 from collections import deque
 from PIL import Image as PILImage, ImageSequence
@@ -16,8 +15,6 @@ from PIL import Image as PILImage, ImageSequence
 # from worlds.alttp.Rom import text_addresses
 
 # Check if we're in a test environment
-import sys
-import os
 
 # Allow Kivy to be imported during testing
 if "pytest" not in sys.modules and "unittest" not in sys.modules and "test" not in sys.argv[0]:
@@ -38,7 +35,7 @@ if sys.platform == "win32":
 # apname = "Archipelago" if not Utils.archipelago_name else Utils.archipelago_name
 
 # if Utils.is_frozen():
-from Utils import local_path
+from BaseUtils import local_path
 
 from kivy.config import Config as MWKVConfig
 from kivy.config import ConfigParser
@@ -118,7 +115,7 @@ class MainScreenMgr(MDScreenManager):
 class MultiMDApp(MDApp): 
 
     logging_pairs = [
-        ("Client", "Archipelago"),
+        ("Client", "Archipelago", "MultiWorld"),
     ]
 
     title = "MultiWorldGG"
@@ -421,6 +418,7 @@ class MultiMDApp(MDApp):
     def console_init(self):
         self.commandprocessor = self.ctx.command_processor(self.ctx)
         self.ui_console = self.console_screen.ui_console
+        self.ui_console.text_console.text_default_color = self.theme_mw.markup_tags_theme.default_color[0 if self.theme_mw.theme_style == "Light" else 1]
         self.console_handler = self.ui_console.console_handler()
         
         # Add console handler to Client logger
@@ -434,10 +432,11 @@ class MultiMDApp(MDApp):
             self._message_buffer.clear()
 
     def client_console_init(self):
-        self.console_screen = ConsoleScreen()
-        self.screen_manager.add_widget(self.console_screen)
-        self.console_text_input = self.console_screen.bottom_appbar.text_input
-        self.console_text_input.bind(on_enter=self.on_message)
+        if "console" not in self.screen_manager.screens:
+            self.console_screen = ConsoleScreen()
+            self.screen_manager.add_widget(self.console_screen)
+            self.console_text_input = self.console_screen.bottom_appbar.text_input
+            self.console_text_input.bind(on_enter=self.on_message)
 
     def _create_menu_item(self, item):
         """Create a menu item with proper binding

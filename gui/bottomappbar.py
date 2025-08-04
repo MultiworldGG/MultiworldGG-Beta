@@ -113,16 +113,8 @@ Builder.load_string('''
     on_text_validate: app.on_message(self)
     MDTextFieldLeadingIcon:
         icon: root.icon
-        theme_icon_color: "Custom"
-        icon_color_focus: app.theme_cls.primaryColor
-        icon_color_normal: app.theme_cls.onSecondaryColor
     MDTextFieldHintText:
         text: root.hint_text
-        theme_font_name: "Custom"
-        theme_font_style: "Custom"
-        font_name: app.theme_cls.font_styles[self.font_style][self.role]["font-name"]
-        font_size: app.theme_cls.font_styles[self.font_style][self.role]["font-size"]
-
 ''')
 
 def is_command_input(string: str) -> bool:
@@ -184,7 +176,10 @@ class BottomAppBar(MDBottomAppBar):
         self.animate_text_input(instance)
 
     def animate_text_input(self, instance):
-        """Animate the text input with properties from the clicked action item"""
+        """Animate the text input with properties from the clicked action item
+        
+        TODO: This doesn't animate text input between button presses, it would hide
+        it instead of animating it"""
         # Find the action data for this button
         action_data = None
         if self.screen_name == "console":
@@ -231,16 +226,16 @@ class BottomAppBar(MDBottomAppBar):
         
         # Animate the text input appearing
         def animate_in(dt):
-            Animation(y=13, duration=0.1).start(self.text_input)
-            self.text_input.focus = True
+            Animation(y=13, duration=0.2).start(self.text_input)
         
         Clock.schedule_once(animate_in, 0.1)
+        self.text_input.focus = True
     
     def hide_text_input(self):
         """Hide the text input with animation"""
         if self.text_input.parent:
             def animate_out(dt):
-                Animation(y=-60, duration=0.1).start(self.text_input)
+                Animation(y=-60, duration=0.2).start(self.text_input)
                 def remove_widget(dt2):
                     if self.text_input.parent:
                         self.remove_widget(self.text_input)

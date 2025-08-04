@@ -119,7 +119,7 @@ class TopAppBar(MDTopAppBar):
     address_bar_label: ObjectProperty
 
     def __init__(self, **kwargs):
-        self.address_bar = ""
+        self.address_bar = "Not Connected"
         super().__init__(**kwargs)
         self.timer = self.ids.timer
         self.address_bar_label = self.ids.address_bar_label

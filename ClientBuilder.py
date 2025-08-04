@@ -1,6 +1,5 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from gui import Gui
 from typing import Optional, Any, Dict, TYPE_CHECKING
 import asyncio
 import time
@@ -10,6 +9,8 @@ from NetUtils import Endpoint
 from Utils import Version
 from NetUtils import NetworkItem
 from ClientState import ClientState
+
+from gui import Gui
 
 if TYPE_CHECKING:
     from CommonClient import CommonContext, InitContext

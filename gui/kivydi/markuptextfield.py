@@ -856,15 +856,23 @@ class MarkupTextField(TextInput, ThemableBehavior):
             max_length_rect.size = self._max_length_label.texture_size
             max_length_rect.pos = (
                 (self.x + self.width)
-                - (self._max_length_label.texture_size[0] + dp(16)),
-                self.y - dp(18),
+                - (self._max_length_label.texture_size[0] + self.font_size),
+                self.y - self.font_size + dp(2),
             )
+
+    def _add_default_color(self, line):
+        if line.startswith("[color="):
+            return line
+        else:
+            return "[color={color}]{line}[/color]".format(color=self.text_default_color, line=line)
 
     def set_text(self, instance, text: str) -> None:
         """Fired when text is entered into a text field."""
 
         def set_text(*args):
             if self.line_count > 1000:
+                for i in self._lines[-1000:]:
+                    i = self._add_default_color(i)
                 self._lines = self._lines[-1000:] #_lines is bound to the text property
             self.text = re.sub("\n", " ", text) if not self.multiline else text
             self.set_max_text_length()

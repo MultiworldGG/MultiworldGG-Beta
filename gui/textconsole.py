@@ -22,7 +22,7 @@ __all__ = ('TextConsole', 'ConsoleView',)
 ## helper class to return both Client and Archipelago logs
 class ConsoleFilter(logging.Filter):
     def filter(self, record):
-        return record.name == "Client" or record.name == "Archipelago"
+        return record.name == "Client" or record.name == "Archipelago" or record.name == "MultiWorld"
     
 class TextConsole(MarkupTextField, ThemableBehavior):
     text_buffer: Queue
