@@ -11,8 +11,11 @@ from kivymd.app import MDApp
 from kivymd.uix.button import MDButton
 from kivymd.uix.label import MDLabel, MDIcon
 from kivymd.uix.floatlayout import MDFloatLayout
+from kivy.animation import Animation
 from kivy.clock import Clock
 from kivymd.uix.textfield import MDTextField
+from collections import deque
+from typing import Deque
 #from kivydi import CONSOLE_ACTIONS, LAUNCHER_ACTIONS
 CONSOLE_ACTIONS = [
 {
@@ -107,7 +110,7 @@ Builder.load_string('''
     id: text_input
     hint_text: "Enter text"
     write_tab: False
-    on_text_validate: root.on_text_validate(text_input.text)
+    on_text_validate: app.on_message(self)
     MDTextFieldLeadingIcon:
         icon: root.icon
         theme_icon_color: "Custom"
@@ -121,10 +124,16 @@ Builder.load_string('''
         font_size: app.theme_cls.font_styles[self.font_style][self.role]["font-size"]
 
 ''')
+
+def is_command_input(string: str) -> bool:
+    return len(string) > 0 and string[0] in "/!"
+
 class BottomBarTextInput(MDTextField):
     icon: StringProperty
     hint_text: StringProperty
     silent_prefix: StringProperty
+    MAXIMUM_HISTORY_MESSAGES = 50
+    
     #BottomAppBar is a MDFloatLayout already, so we can place the TextField in it without shenanigans
     def __init__(self, *args, **kwargs):
         self.icon = "blank"
@@ -132,13 +141,13 @@ class BottomBarTextInput(MDTextField):
         self.silent_prefix = ""
         super().__init__(*args, **kwargs)
         self.write_tab = False
-
-        self.on_text_validate = self.on_text_validate
-    
-    def on_text_validate(self, text):
-        if self.silent_prefix:
-            text = self.silent_prefix + text
-        self.parent.on_bar_action(text)
+        self._command_history_index = -1
+        self._command_history: Deque[str] = deque(maxlen=BottomBarTextInput.MAXIMUM_HISTORY_MESSAGES)
+            
+    def update_history(self, new_entry: str) -> None:
+        self._command_history_index = -1
+        if is_command_input(new_entry):
+            self._command_history.appendleft(new_entry)
 
 class BottomAppBar(MDBottomAppBar):
     text_input: BottomBarTextInput
@@ -159,7 +168,7 @@ class BottomAppBar(MDBottomAppBar):
             action_items.append(button)
         self.text_input = BottomBarTextInput(id=f'{screen_name}_text_input')
         Clock.schedule_once(lambda dt: self.set_actions(action_items), 0)
-    
+
     def set_actions(self, action_items: list[MDActionBottomAppBarButton]):
         self.action_items = action_items
 
@@ -172,9 +181,6 @@ class BottomAppBar(MDBottomAppBar):
             super().add_widget(widget, index, canvas)
 
     def on_bar_action(self, instance):
-        # if isinstance(instance, str):
-        #     self.text_input.on_text_validate(instance)
-        # else:
         self.animate_text_input(instance)
 
     def animate_text_input(self, instance):
@@ -190,7 +196,7 @@ class BottomAppBar(MDBottomAppBar):
         
         # Find the matching action data
         for action in actions:
-            if action["id"] == instance.id:
+            if action["id"] in instance.id:
                 action_data = action
                 break
 
@@ -219,23 +225,22 @@ class BottomAppBar(MDBottomAppBar):
             self.add_widget(self.text_input)
         
         # Set position and animate in
-        self.text_input.opacity = 0
+        self.text_input.y = -60
         self.text_input.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
         self.text_input.size_hint = (0.4, None)
         
         # Animate the text input appearing
         def animate_in(dt):
-            self.text_input.opacity = 1
+            Animation(y=13, duration=0.1).start(self.text_input)
             self.text_input.focus = True
         
         Clock.schedule_once(animate_in, 0.1)
-        print(self.text_input.parent)
     
     def hide_text_input(self):
         """Hide the text input with animation"""
         if self.text_input.parent:
             def animate_out(dt):
-                self.text_input.opacity = 0
+                Animation(y=-60, duration=0.1).start(self.text_input)
                 def remove_widget(dt2):
                     if self.text_input.parent:
                         self.remove_widget(self.text_input)

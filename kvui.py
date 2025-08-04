@@ -6,35 +6,35 @@ import re
 import io
 import pkgutil
 from collections import deque
-assert "kivy" not in sys.modules, "kvui should be imported before kivy for frozen compatibility"
+# assert "kivy" not in sys.modules, "kvui should be imported before kivy for frozen compatibility"
 
-if sys.platform == "win32":
-    import ctypes
+# if sys.platform == "win32":
+#     import ctypes
 
-    # kivy 2.2.0 introduced DPI awareness on Windows, but it makes the UI enter an infinitely recursive re-layout
-    # by setting the application to not DPI Aware, Windows handles scaling the entire window on its own, ignoring kivy's
-    ctypes.windll.shcore.SetProcessDpiAwareness(0)
+#     # kivy 2.2.0 introduced DPI awareness on Windows, but it makes the UI enter an infinitely recursive re-layout
+#     # by setting the application to not DPI Aware, Windows handles scaling the entire window on its own, ignoring kivy's
+#     ctypes.windll.shcore.SetProcessDpiAwareness(0)
 
-os.environ["KIVY_NO_CONSOLELOG"] = "1"
-os.environ["KIVY_NO_FILELOG"] = "1"
-os.environ["KIVY_NO_ARGS"] = "1"
-os.environ["KIVY_LOG_ENABLE"] = "0"
+# os.environ["KIVY_NO_CONSOLELOG"] = "1"
+# os.environ["KIVY_NO_FILELOG"] = "1"
+# os.environ["KIVY_NO_ARGS"] = "1"
+# os.environ["KIVY_LOG_ENABLE"] = "0"
 
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
-if Utils.is_frozen():
-    os.environ["KIVY_DATA_DIR"] = Utils.local_path("data")
+# if Utils.is_frozen():
+#     os.environ["KIVY_DATA_DIR"] = Utils.local_path("data")
 
-import platformdirs
-os.environ["KIVY_HOME"] = os.path.join(platformdirs.user_config_dir(apname, False), "kivy")
-os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
+# import platformdirs
+# os.environ["KIVY_HOME"] = os.path.join(platformdirs.user_config_dir(apname, False), "kivy")
+# os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
 
-from kivy.config import Config
+# from kivy.config import Config
 
-Config.set("input", "mouse", "mouse,disable_multitouch")
-Config.set("kivy", "exit_on_escape", "0")
-#Config.set("kivy", "default_font", "TODO") #I want to put dyslexia safe fonts in
-Config.set("graphics", "multisamples", "0")  # multisamples crash old intel drivers
+# Config.set("input", "mouse", "mouse,disable_multitouch")
+# Config.set("kivy", "exit_on_escape", "0")
+# #Config.set("kivy", "default_font", "TODO") #I want to put dyslexia safe fonts in
+# Config.set("graphics", "multisamples", "0")  # multisamples crash old intel drivers
 from kivymd.uix.divider import MDDivider
 from kivy.core.window import Window
 from kivy.core.clipboard import Clipboard
@@ -77,6 +77,7 @@ from kivymd.uix.scrollview import MDScrollView
 from kivymd.uix.tooltip import MDTooltip, MDTooltipPlain
 
 fade_in_animation = Animation(opacity=0, duration=0) + Animation(opacity=1, duration=0.25)
+"""Animation that fades in a widget from transparent to opaque over 0.25 seconds."""
 
 from NetUtils import JSONtoTextParser, JSONMessagePart, SlotType, HintStatus
 from Utils import async_start, get_input_text_from_response
@@ -89,16 +90,49 @@ else:
     context_type = object
 
 remove_between_brackets = re.compile(r"\[.*?]")
-Window.clearcolor = (0, 0, 0.169, 1)
+"""Regular expression to remove text between square brackets for sorting purposes."""
+# Window.clearcolor = (0, 0, 0.169, 1)
 
-kivycolors = {"basecolor": [0.031, 0.024, 0.102, 1], #darker
-              "secondarycolor": [0, 0, 0.169, 1], #lighter
-              "buttoncolor": [0.839, 0.078, 0.078, 1], #this is an overlay
-              "accentcolor": [0.439, 0.078, 0.078, 1]
-              }
+# kivycolors = {"basecolor": [0.031, 0.024, 0.102, 1], #darker
+#               "secondarycolor": [0, 0, 0.169, 1], #lighter
+#               "buttoncolor": [0.839, 0.078, 0.078, 1], #this is an overlay
+#               "accentcolor": [0.439, 0.078, 0.078, 1]
+#               }
+
+
+__all__ = ["ServerLabel", 
+           "MarkupDropdownTextItem", 
+           "MarkupDropdown", 
+           "AutocompleteHintInput", 
+           "HintLabel", 
+           "ConnectBarTextInput", 
+           "CommandPromptTextInput",
+           "MessageBoxLabel",
+           "MessageBox",
+           "MDNavigationItemBase",
+           "ButtonsPrompt",
+           "CommandButton",
+           "HintLayout",
+           "HintLog",
+           "E",
+           "KivyJSONtoTextParser",
+           "is_command_input",
+           "fade_in_animation",
+           "remove_between_brackets",
+           "status_icons",
+           "status_names",
+           "status_colors",
+           "status_sort_weights",]
 
 class ThemedApp(MDApp):
+    """Base MDApp class that sets up theme colors from the KivyJSONtoTextParser.
+    
+    This class provides a consistent theming system by reading color definitions
+    from the TextColors class and applying them to the KivyMD theme.
+    """
+    
     def set_colors(self):
+        """Set the application theme colors from the TextColors configuration."""
         text_colors = KivyJSONtoTextParser.TextColors()
         self.theme_cls.theme_style = text_colors.theme_style
         self.theme_cls.primary_palette = text_colors.primary_palette
@@ -178,10 +212,14 @@ class ToggleButton(MDButton, ToggleButtonBehavior):
 
 # thanks kivymd
 class ResizableTextField(MDTextField):
-    """
-    Resizable MDTextField that manually overrides the builtin sizing.
+    """Resizable MDTextField that manually overrides the builtin sizing.
 
-    Note that in order to use this, the sizing must be specified from within a .kv rule.
+    This class provides a text field that can be resized programmatically,
+    overriding KivyMD's default sizing behavior. The sizing must be specified
+    from within a .kv rule for proper functionality.
+
+    Note:
+        In order to use this class, the sizing must be specified from within a .kv rule.
     """
     def __init__(self, *args, **kwargs):
         # cursed rules override
@@ -204,43 +242,43 @@ def on_release(self: MDButton, *args):
 MDButton.on_release = on_release
 
 
-# I was surprised to find this didn't already exist in kivy :(
-class HoverBehavior(object):
-    """originally from https://stackoverflow.com/a/605348110"""
-    hovered = BooleanProperty(False)
-    border_point = ObjectProperty(None)
+# # I was surprised to find this didn't already exist in kivy :(
+# class HoverBehavior(object):
+#     """originally from https://stackoverflow.com/a/605348110"""
+#     hovered = BooleanProperty(False)
+#     border_point = ObjectProperty(None)
 
-    def __init__(self, **kwargs):
-        self.register_event_type("on_enter")
-        self.register_event_type("on_leave")
-        Window.bind(mouse_pos=self.on_mouse_pos)
-        Window.bind(on_cursor_leave=self.on_cursor_leave)
-        super(HoverBehavior, self).__init__(**kwargs)
+#     def __init__(self, **kwargs):
+#         self.register_event_type("on_enter")
+#         self.register_event_type("on_leave")
+#         Window.bind(mouse_pos=self.on_mouse_pos)
+#         Window.bind(on_cursor_leave=self.on_cursor_leave)
+#         super(HoverBehavior, self).__init__(**kwargs)
 
-    def on_mouse_pos(self, window, pos):
-        if not self.get_root_window():
-            return  # Abort if not displayed
+#     def on_mouse_pos(self, window, pos):
+#         if not self.get_root_window():
+#             return  # Abort if not displayed
 
-        # to_widget translates window pos to within widget pos
-        inside = self.collide_point(*self.to_widget(*pos))
-        if self.hovered == inside:
-            return  # We have already done what was needed
-        self.border_point = pos
-        self.hovered = inside
+#         # to_widget translates window pos to within widget pos
+#         inside = self.collide_point(*self.to_widget(*pos))
+#         if self.hovered == inside:
+#             return  # We have already done what was needed
+#         self.border_point = pos
+#         self.hovered = inside
 
-        if inside:
-            self.dispatch("on_enter")
-        else:
-            self.dispatch("on_leave")
+#         if inside:
+#             self.dispatch("on_enter")
+#         else:
+#             self.dispatch("on_leave")
 
-    def on_cursor_leave(self, *args):
-        # if the mouse left the window, it is obviously no longer inside the hover label.
-        self.hovered = BooleanProperty(False)
-        self.border_point = ObjectProperty(None)
-        self.dispatch("on_leave")
+#     def on_cursor_leave(self, *args):
+#         # if the mouse left the window, it is obviously no longer inside the hover label.
+#         self.hovered = BooleanProperty(False)
+#         self.border_point = ObjectProperty(None)
+#         self.dispatch("on_leave")
 
-
-Factory.register("HoverBehavior", HoverBehavior)
+from kivymd.uix.behaviors import HoverBehavior
+#Factory.register("HoverBehavior", HoverBehavior)
 
 
 class ToolTip(MDTooltipPlain):
@@ -248,14 +286,27 @@ class ToolTip(MDTooltipPlain):
 
 
 class ServerToolTip(ToolTip):
-    pass
+    """Tooltip specifically designed for server-related information display.
+    
+    This class extends the base ToolTip to provide specialized tooltip
+    functionality for server connection status and information.
+    """
 
 
-class HovererableLabel(HoverBehavior, MDLabel):
-    pass
+# class HovererableLabel(HoverBehavior, MDLabel):
+#     pass
 
 
-class TooltipLabel(HovererableLabel, MDTooltip):
+class TooltipLabel(MDLabel, MDTooltip):
+    """Label widget that displays tooltips on hover with clickable references.
+    
+    This class combines hover behavior with tooltip functionality, allowing
+    users to see additional information when hovering over specific text
+    elements. It also supports clickable references that can be copied to clipboard.
+    
+    Attributes:
+        tooltip_display_delay (float): Delay before showing tooltip (0.1 seconds)
+    """
     tooltip_display_delay = 0.1
 
     def create_tooltip(self, text, x, y):
@@ -305,6 +356,16 @@ class TooltipLabel(HovererableLabel, MDTooltip):
 
 
 class ServerLabel(HoverBehavior, MDTooltip, MDBoxLayout):
+    """Server status label that displays connection information in a tooltip.
+    
+    This widget shows the current server connection status and provides
+    detailed information about the connection, player slot, and game progress
+    when hovered over.
+    
+    Attributes:
+        tooltip_display_delay (float): Delay before showing tooltip (0.1 seconds)
+        text (str): The display text for the server label
+    """
     tooltip_display_delay = 0.1
     text: str = StringProperty("Server:")
 
@@ -420,16 +481,30 @@ class SelectableLabel(RecycleDataViewBehavior, TooltipLabel):
 
 
 class MarkupDropdownTextItem(MDDropdownTextItem):
+    """Dropdown text item that supports markup formatting.
+    
+    This class extends MDDropdownTextItem to enable markup formatting
+    for text elements within dropdown menus. Currently only supports
+    markup on text without icons.
+    
+    Note:
+        Currently, this only lets us do markup on text that does not have any icons.
+        Create new TextItems as needed for more complex cases.
+    """
     def __init__(self):
         super().__init__()
         for child in self.children:
             if child.__class__ == MDLabel:
                 child.markup = True
-    # Currently, this only lets us do markup on text that does not have any icons
-    # Create new TextItems as needed
 
 
 class MarkupDropdown(MDDropdownMenu):
+    """Dropdown menu that supports markup formatting in its items.
+    
+    This class extends MDDropdownMenu to provide markup support for dropdown
+    items. It automatically detects the appropriate viewclass based on the
+    item content (text, icons, etc.) and applies markup formatting where possible.
+    """
     def on_items(self, instance, value: list) -> None:
         """
         The method sets the class that will be used to create the menu item.
@@ -503,7 +578,18 @@ class MarkupDropdown(MDDropdownMenu):
 
 
 class AutocompleteHintInput(ResizableTextField):
+    """Text input field with autocomplete functionality for hint commands.
+    
+    This class provides an input field that automatically suggests item names
+    as the user types, specifically designed for hint commands. It shows
+    matching items in a dropdown and allows quick selection.
+    
+    Attributes:
+        min_chars (int): Minimum number of characters before showing suggestions (3)
+    """
     min_chars = NumericProperty(3)
+    item_names: list[str] = []
+    location_names: list[str] = []
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -513,7 +599,12 @@ class AutocompleteHintInput(ResizableTextField):
         self.bind(width=lambda instance, x: setattr(self.dropdown, "width", x))
 
     def on_message(self, instance):
-        MDApp.get_running_app().commandprocessor("!hint "+instance.text)
+        if instance.text in self.item_names:
+            MDApp.get_running_app().commandprocessor("!hint "+instance.text)
+        elif instance.text in self.location_names:
+            MDApp.get_running_app().commandprocessor("!hint_location "+instance.text)
+        self.item_names = []
+        self.location_names = []
 
     def on_text(self, instance, value):
         if len(value) >= self.min_chars:
@@ -521,7 +612,8 @@ class AutocompleteHintInput(ResizableTextField):
             ctx: context_type = MDApp.get_running_app().ctx
             if not ctx.game:
                 return
-            item_names = ctx.item_names._game_store[ctx.game].values()
+            self.item_names = ctx.item_names._game_store[ctx.game].values()
+            self.location_names = ctx.location_names._game_store[ctx.game].values()
 
             def on_press(text):
                 split_text = MarkupLabel(text=text).markup
@@ -531,13 +623,13 @@ class AutocompleteHintInput(ResizableTextField):
                 self.focus = True
 
             lowered = value.lower()
-            for item_name in item_names:
+            for hint_name in self.item_names + self.location_names:
                 try:
-                    index = item_name.lower().index(lowered)
+                    index = hint_name.lower().index(lowered)
                 except ValueError:
                     pass  # substring not found
                 else:
-                    text = escape_markup(item_name)
+                    text = escape_markup(hint_name)
                     text = text[:index] + "[b]" + text[index:index+len(value)]+"[/b]"+text[index+len(value):]
                     self.dropdown.items.append({
                         "text": text,
@@ -555,9 +647,23 @@ status_icons = {
     HintStatus.HINT_PRIORITY: "exclamation-thick",
     HintStatus.HINT_AVOID: "alert"
 }
+"""Mapping of hint status values to their corresponding icon names."""
 
 
 class HintLabel(RecycleDataViewBehavior, MDBoxLayout):
+    """Recyclable label widget for displaying hint information in a table format.
+    
+    This class represents a single row in the hint log table, displaying
+    information about hints including receiving player, item, finding player,
+    location, entrance, and status. It supports selection, sorting, and
+    status modification through dropdown menus.
+    
+    Attributes:
+        selected (bool): Whether this hint row is currently selected
+        striped (bool): Whether this row should have striped background
+        index (int): The index of this item in the recycle view
+        dropdown (MDDropdownMenu): Dropdown menu for status selection
+    """
     selected = BooleanProperty(False)
     striped = BooleanProperty(False)
     index = None
@@ -664,16 +770,40 @@ class HintLabel(RecycleDataViewBehavior, MDBoxLayout):
 
 
 class ConnectBarTextInput(ResizableTextField):
+    """Text input field for server connection addresses.
+    
+    This class provides a specialized text input for entering server
+    connection addresses. It filters out newline characters to prevent
+    unwanted line breaks in the address field.
+    """
     def insert_text(self, substring, from_undo=False):
         s = substring.replace("\n", "").replace("\r", "")
         return super(ConnectBarTextInput, self).insert_text(s, from_undo=from_undo)
 
 
 def is_command_input(string: str) -> bool:
+    """Check if a string represents a command input.
+    
+    Args:
+        string (str): The string to check
+        
+    Returns:
+        bool: True if the string starts with '/' or '!' (command prefixes)
+    """
     return len(string) > 0 and string[0] in "/!"
 
 
 class CommandPromptTextInput(ResizableTextField):
+    """Text input field with command history functionality.
+    
+    This class provides a command input field that maintains a history
+    of previously entered commands. Users can navigate through the history
+    using up/down arrow keys, and the history is automatically updated
+    when new commands are entered.
+    
+    Attributes:
+        MAXIMUM_HISTORY_MESSAGES (int): Maximum number of commands to keep in history (50)
+    """
     MAXIMUM_HISTORY_MESSAGES = 50
 
     def __init__(self, **kwargs) -> None:
@@ -721,13 +851,29 @@ class CommandPromptTextInput(ResizableTextField):
 
 
 class MessageBoxLabel(MDLabel):
+    """Label widget specifically designed for message box content.
+    
+    This class extends MDLabel to provide proper text rendering and
+    refresh functionality for use within message boxes and dialogs.
+    """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._label.refresh()
 
 
 class MessageBox(Popup):
-
+    """Custom popup dialog for displaying messages to the user.
+    
+    This class provides a customizable popup dialog that can display
+    informational messages or error messages with appropriate styling.
+    The dialog automatically sizes itself based on the content.
+    
+    Args:
+        title (str): The title of the message box
+        text (str): The message content to display
+        error (bool): Whether this is an error message (affects styling)
+        **kwargs: Additional arguments passed to Popup
+    """
     def __init__(self, title, text, error=False, **kwargs):
         label = MessageBoxLabel(text=text)
         separator_color = [217 / 255, 129 / 255, 122 / 255, 1.] if error else [47 / 255., 167 / 255., 212 / 255, 1.]
@@ -737,10 +883,31 @@ class MessageBox(Popup):
 
 
 class MDNavigationItemBase(MDNavigationItem):
+    """Base navigation item class with text property.
+    
+    This class extends MDNavigationItem to provide a standardized
+    text property for navigation tabs and items.
+    
+    Attributes:
+        text (str): The text to display on the navigation item
+    """
     text = StringProperty(None)
 
 
 class ButtonsPrompt(MDDialog):
+    """Customizable dialog with multiple buttons for user interaction.
+    
+    This class provides a dialog that displays a message and presents
+    multiple button options to the user. The response callback is called
+    with the text of the pressed button.
+    
+    Args:
+        title (str): The title of the dialog
+        text (str): The message to display in the dialog
+        response (callable): Function called when a button is pressed, receives button text
+        *prompts (str): Variable number of button labels
+        **kwargs: Additional arguments passed to MDDialog
+    """
     def __init__(self, title: str, text: str, response: typing.Callable[[str], None],
                  *prompts: str, **kwargs) -> None:
         """
@@ -811,6 +978,16 @@ class MDScreenManagerBase(MDScreenManager):
 
 
 class CommandButton(MDButton, MDTooltip):
+    """Button widget that displays command help information in a tooltip.
+    
+    This class combines a button with tooltip functionality to show
+    help information for commands when the user hovers over the button.
+    
+    Args:
+        *args: Arguments passed to MDButton
+        manager (GameManager): The game manager instance for command processing
+        **kwargs: Additional arguments passed to MDButton
+    """
     def __init__(self, *args, manager: "GameManager", **kwargs):
         super().__init__(*args, **kwargs)
         self.manager = manager
@@ -1163,6 +1340,14 @@ class UILog(MDRecycleView):
 
 
 class HintLayout(MDBoxLayout):
+    """Layout container for hint input and display components.
+    
+    This class provides a vertical layout that contains the hint input
+    field and related components for the hint system interface.
+    
+    Attributes:
+        orientation (str): Layout orientation, set to "vertical"
+    """
     orientation = "vertical"
 
     def __init__(self, *args, **kwargs):
@@ -1186,6 +1371,7 @@ status_names: typing.Dict[HintStatus, str] = {
     HintStatus.HINT_AVOID: "Avoid",
     HintStatus.HINT_PRIORITY: "Priority",
 }
+"""Mapping of hint status values to their human-readable display names."""
 status_colors: typing.Dict[HintStatus, str] = {
     HintStatus.HINT_FOUND: "green",
     HintStatus.HINT_UNSPECIFIED: "white",
@@ -1193,6 +1379,7 @@ status_colors: typing.Dict[HintStatus, str] = {
     HintStatus.HINT_AVOID: "salmon",
     HintStatus.HINT_PRIORITY: "gold",
 }
+"""Mapping of hint status values to their color names for display."""
 status_sort_weights: dict[HintStatus, int] = {
     HintStatus.HINT_FOUND: 0,
     HintStatus.HINT_UNSPECIFIED: 1,
@@ -1200,8 +1387,22 @@ status_sort_weights: dict[HintStatus, int] = {
     HintStatus.HINT_AVOID: 3,
     HintStatus.HINT_PRIORITY: 4,
 }
+"""Mapping of hint status values to their sort weights for ordering hints."""
 
 class HintLog(MDRecycleView):
+    """Recyclable view for displaying and managing hint information.
+    
+    This class provides a table-like view for displaying hints with
+    sortable columns and interactive functionality. It shows information
+    about receiving player, item, finding player, location, entrance,
+    and status for each hint.
+    
+    Attributes:
+        header (dict): Header row configuration with column definitions
+        data (list): List of hint data items to display
+        sort_key (str): Current column used for sorting
+        reversed (bool): Whether sorting is in reverse order
+    """
     header = {
         "receiving": {"text": "[u]Receiving Player[/u]"},
         "item": {"text": "[u]Item[/u]"},
@@ -1311,6 +1512,14 @@ ImageLoader.load = load_override
 
 
 class E(ExceptionHandler):
+    """Exception handler for uncaught exceptions in the Kivy application.
+    
+    This class provides a centralized exception handling mechanism that
+    logs uncaught exceptions to the client logger for debugging purposes.
+    
+    Attributes:
+        logger: Logger instance for client-related logging
+    """
     logger = logging.getLogger("Client")
 
     def handle_exception(self, inst):
@@ -1319,6 +1528,15 @@ class E(ExceptionHandler):
 
 
 class KivyJSONtoTextParser(JSONtoTextParser):
+    """JSON to text parser with Kivy-specific color and formatting support.
+    
+    This class extends the base JSONtoTextParser to provide Kivy-specific
+    text formatting, color handling, and markup support. It reads color
+    definitions from .kv files and applies them to parsed JSON messages.
+    
+    Attributes:
+        TextColors: Inner class that defines color properties for theming
+    """
     # dummy class to absorb kvlang definitions
     class TextColors(Widget):
         white: str = StringProperty("FFFFFF")

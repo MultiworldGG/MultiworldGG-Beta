@@ -30,9 +30,9 @@ class TextConsole(MarkupTextField, ThemableBehavior):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.font_name = self.theme_cls.font_styles.monospace['medium']['font-name'] 
-        self.font_size = self.theme_cls.font_styles.monospace['medium']['font-size']
-        self.line_spacing = self.theme_cls.font_styles.monospace['medium']['line-height']
+        self.font_name = self.theme_cls.font_styles.Monospace['small']['font-name'] 
+        self.font_size = self.theme_cls.font_styles.Monospace['small']['font-size']
+        self.line_spacing = self.theme_cls.font_styles.Monospace['small']['line-height']
         self.selection_color = self.theme_cls.secondaryColor
         self.selection_color[3] = 0.3
         self.text_default_color = self.theme_cls.onSurfaceColor

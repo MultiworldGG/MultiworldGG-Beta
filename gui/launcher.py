@@ -302,6 +302,9 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.launchergrid.add_widget(self.important_appbar)
         self.launcher_view.pos_hint={"y": 0, "x": 260/Window.width}
         self.launchergrid.add_widget(self.launcher_view)
+        
+        # Update button text based on initial context
+        Clock.schedule_once(lambda dt: self.update_connect_button_text(), 0.1)
 
     async def set_game_list(self):
         game_index = GameIndex()
@@ -322,6 +325,24 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         logger.info(f"Selected game: {module_name}")
         # Update the launcher view to show the selected game
         self.launcher_view.module_name = module_name
+        # Update button text based on context
+        self.update_connect_button_text()
+    
+    def update_connect_button_text(self):
+        """Update the connect button text based on current context"""
+        current_ctx = self.app.ctx
+        connect_button = self.launcher_view.ids.connect_button
+        
+        # Check if we're in initial state by checking if ctx has a 'game' attribute
+        if not hasattr(current_ctx, 'game'):
+            # Initial state - launch new game
+            connect_button._button_text.text = 'Connect & Play'
+            connect_button._button_icon.icon = 'play-network'
+        else:
+            # Game context - reconnect
+            game_name = getattr(current_ctx, 'game', 'Unknown Game')
+            connect_button._button_text.text = f'Reconnect ({game_name})'
+            connect_button._button_icon.icon = 'refresh'
 
     def set_filter(self, active, tag):
         if active:
@@ -336,51 +357,108 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         """Connect to server and launch the selected game module"""
         logger.info("Connect method called!")
         
-        if not self.selected_game:
-            logger.warning("No game selected")
-            return
+        # Get the current app context
+        current_ctx = self.app.ctx
         
-        # Get connection details from the UI
-        server_field = self.launcher_view.ids.server
-        port_field = self.launcher_view.ids.port
-        slot_name_field = self.launcher_view.ids.slot_name
-        slot_password_field = self.launcher_view.ids.slot_password
-
-        if not server_field.text:
-            server_field.text = server_field.hint_text
-        if not port_field.text:
-            port_field.text = port_field.hint_text
-        if not slot_name_field.text:
-            slot_name_field.text = slot_name_field.hint_text
-        
-        server_address = f"{server_field.text}:{port_field.text}" if server_field.text and port_field.text else None
-        slot_name = slot_name_field.text if slot_name_field.text else None
-        password = slot_password_field.text if slot_password_field.text else None
-        
-        logger.info(f"Attempting to launch module: {self.selected_game}")
-        logger.info(f"Server: {server_address}, Password: {'*' * len(password) if password else 'None'}")
-        
-        try:
-            # Switch to console screen first to ensure it's created before connection
-            self.app.client_console_init()
+        # Check if we're in initial state by checking if ctx has a 'game' attribute
+        if not hasattr(current_ctx, 'game'):
+            if not self.selected_game:
+                from .dialog import show_error_dialog
+                show_error_dialog("No Game Selected", "Please select a game before connecting.")
+                return
             
-            # Show loading screen
-            #Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(speed=0.033), 0)
+            # Get connection details from the UI
+            server_field = self.launcher_view.ids.server
+            port_field = self.launcher_view.ids.port
+            slot_name_field = self.launcher_view.ids.slot_name
+            slot_password_field = self.launcher_view.ids.slot_password
 
-            # Define ready callback to hide loading layout and initialize console
-            def ready_callback():
-                self.app.loading_layout.hide_loading()
-                # Initialize console after context switch
-                Clock.schedule_once(lambda x: self.app.console_init())
-            discover_and_launch_module(
-                    self.selected_game, server_address = server_address, slot_name = slot_name, \
-                    password = password, ready_callback=ready_callback
-            )
+            if not server_field.text:
+                server_field.text = server_field.hint_text
+            if not port_field.text:
+                port_field.text = port_field.hint_text
+            if not slot_name_field.text:
+                slot_name_field.text = slot_name_field.hint_text
+            
+            server_address = f"{server_field.text}:{port_field.text}" if server_field.text and port_field.text else None
+            slot_name = slot_name_field.text if slot_name_field.text else None
+            password = slot_password_field.text if slot_password_field.text else None
+            
+            logger.info(f"Attempting to launch module: {self.selected_game}")
+            logger.info(f"Server: {server_address}, Password: {'*' * len(password) if password else 'None'}")
+            
+            try:
+                # Show loading screen
+                Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(speed=0.033), 0)
+
+                # Define ready callback to hide loading layout and switch to console
+                def ready_callback():
+                    self.app.loading_layout.hide_loading()
+                    # Switch to console after successful connection
+                    Clock.schedule_once(lambda x: self.app.console_init())
                 
-        except Exception as e:
-            logger.error(f"Failed to launch {self.selected_game} module: {e}")
-            # Hide loading layout on error
-            self.app.loading_layout.hide_loading()
-            # You might want to show an error dialog here
-            # from .dialog import show_error_dialog
-            # show_error_dialog("Launch Error", f"Failed to launch {self.selected_game}: {str(e)}")
+                # Define error callback to handle connection failures
+                def error_callback():
+                    self.app.loading_layout.hide_loading()
+                    # Stay on launcher screen, don't switch to console
+                    # Error dialog will be shown by the context's handle_connection_loss
+                
+                discover_and_launch_module(
+                        self.selected_game, server_address = server_address, slot_name = slot_name, \
+                        password = password, ready_callback=ready_callback, error_callback=error_callback
+                )
+                    
+            except Exception as e:
+                logger.error(f"Failed to launch {self.selected_game} module: {e}")
+                # Hide loading layout on error
+                self.app.loading_layout.hide_loading()
+                # Show error dialog and stay on launcher screen
+                from .dialog import show_error_dialog
+                show_error_dialog("Launch Error", f"Failed to launch {self.selected_game}: {str(e)}")
+        
+        else:
+            # We're in a game context, check if the selected game matches the current context
+            if hasattr(current_ctx, 'game') and current_ctx.game != self.selected_game:
+                # Game mismatch - need to rebuild to InitContext first
+                logger.info(f"Game mismatch: current={current_ctx.game}, selected={self.selected_game}")
+                from .dialog import show_error_dialog
+                show_error_dialog("Game Mismatch", 
+                                f"Current game ({current_ctx.game}) doesn't match selected game ({self.selected_game}). "
+                                "Please restart the client to change games.")
+                return
+            
+            # Game matches, try to connect using the current context
+            try:
+                # Get connection details from the UI
+                server_field = self.launcher_view.ids.server
+                port_field = self.launcher_view.ids.port
+                
+                if not server_field.text:
+                    server_field.text = server_field.hint_text
+                if not port_field.text:
+                    port_field.text = port_field.hint_text
+                
+                server_address = f"{server_field.text}:{port_field.text}" if server_field.text and port_field.text else None
+                
+                if not server_address:
+                    from .dialog import show_error_dialog
+                    show_error_dialog("Connection Error", "Please enter a valid server address and port.")
+                    return
+                
+                logger.info(f"Attempting to connect to: {server_address}")
+                
+                # Show loading screen
+                Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(speed=0.033), 0)
+                
+                # Use the context's connect method
+                import asyncio
+                asyncio.create_task(current_ctx.connect(server_address))
+                
+                # Hide loading screen after a short delay (connection will handle its own UI updates)
+                Clock.schedule_once(lambda dt: self.app.loading_layout.hide_loading(), 2)
+                
+            except Exception as e:
+                logger.error(f"Failed to connect: {e}")
+                self.app.loading_layout.hide_loading()
+                from .dialog import show_error_dialog
+                show_error_dialog("Connection Error", f"Failed to connect: {str(e)}")

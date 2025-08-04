@@ -32,22 +32,13 @@ if sys.platform == "win32":
     # by setting the application to not DPI Aware, Windows handles scaling the entire window on its own, ignoring kivy's
     from ctypes import windll, c_int64
     windll.user32.SetProcessDpiAwarenessContext(c_int64(-4))
-
-#os.environ["KCFG_GRAPHICS_WINDOW_STATE"] = "visible"
-os.environ["KIVY_NO_CONSOLELOG"] = "0"
-os.environ["KIVY_NO_FILELOG"] = "0"
-os.environ["KIVY_NO_ARGS"] = "1"
-os.environ["KIVY_LOG_ENABLE"] = "1"
-
+    
 # from CommonClient import console_loop
 # from MultiServer import console
 # apname = "Archipelago" if not Utils.archipelago_name else Utils.archipelago_name
 
 # if Utils.is_frozen():
 from Utils import local_path
-os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"venv","Lib","site-packages","kivy","data")
-os.environ["KIVY_HOME"] = os.path.join(local_path(),"data", "kivy_home")
-os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
 
 from kivy.config import Config as MWKVConfig
 from kivy.config import ConfigParser
@@ -100,10 +91,11 @@ from .titlebar import Titlebar
 from .console import ConsoleScreen
 from .hintscreen import HintScreen
 from .settings_screen import SettingsScreen
-from .topappbar import TopAppBarLayout, TopAppBar
+from .topappbar import TopAppBarLayout
 from .launcher import LauncherScreen
 from .kivydi.loadinglayout import MWGGLoadingLayout
 from .bottomappbar import BottomAppBar, BottomBarTextInput
+from .kvui_functions import MW_ServerLabel
 
 if typing.TYPE_CHECKING:
     import CommonClient
@@ -155,11 +147,8 @@ class MultiMDApp(MDApp):
 
     def __init__(self, ctx: context_type, **kwargs):
         super().__init__(**kwargs)
-        RegisterFonts(self)
-        self.ctx = ctx
         # Use the existing Kivy Config singleton for Kivy settings
         self.config = MWKVConfig
-        
         # Create app-specific config
         try:
             self.app_config = ConfigParser(name='app')
@@ -175,9 +164,16 @@ class MultiMDApp(MDApp):
         else:
             self.build_config(self.app_config)
             self.app_config.write()
-            
+
+        RegisterFonts(self, self.app_config.get('client', 'monospace_font', fallback='Argon'))
+        
+        self.ctx = ctx
+
         self.icon = os.path.join(os.path.curdir, "icon.ico")
         self.theme_mw = DefaultTheme(self.app_config)
+        
+        # Buffer for messages before console is initialized
+        self._message_buffer = []
 
     def get_application_config(self):
         """Get the path to the configuration file"""
@@ -198,6 +194,7 @@ class MultiMDApp(MDApp):
             'theme_style': 'Dark',
             'primary_palette': 'Purple',
             'font_scale': '1.0',
+            'monospace_font': 'Argon',
             'device_orientation': '0'
         })
 
@@ -299,6 +296,7 @@ class MultiMDApp(MDApp):
         # Top appbar layout
         self.top_appbar_layout = TopAppBarLayout()
         self.top_appbar_menu = None
+        self.top_appbar_layout.top_appbar.address_bar_label = MW_ServerLabel()
         
         # Screen manager
         # Screens are under the appbar and titlebar
@@ -319,7 +317,46 @@ class MultiMDApp(MDApp):
         return self.root_layout
 
     def on_stop(self):
-        self.ctx.exit_event.set()
+        """Handle application shutdown properly"""
+        try:
+            # Remove console handler from logger to prevent AttributeError during shutdown
+            if hasattr(self, 'console_handler') and self.console_handler:
+                try:
+                    client_logger = logging.getLogger("Client")
+                    client_logger.removeHandler(self.console_handler)
+                except Exception:
+                    pass
+            
+            # Mark that we're disconnecting intentionally to prevent auto-reconnect
+            if hasattr(self.ctx, 'disconnected_intentionally'):
+                self.ctx.disconnected_intentionally = True
+            
+            # Cancel any ongoing tasks
+            if hasattr(self.ctx, 'server_task') and self.ctx.server_task:
+                self.ctx.server_task.cancel()
+            
+            if hasattr(self.ctx, 'autoreconnect_task') and self.ctx.autoreconnect_task:
+                self.ctx.autoreconnect_task.cancel()
+            
+            if hasattr(self.ctx, 'keep_alive_task') and self.ctx.keep_alive_task:
+                self.ctx.keep_alive_task.cancel()
+            
+            # Close server connection if it exists
+            if hasattr(self.ctx, 'server') and self.ctx.server and hasattr(self.ctx.server, 'socket'):
+                if not self.ctx.server.socket.closed:
+                    # Schedule the socket close to avoid blocking
+                    asyncio.create_task(self.ctx.server.socket.close())
+            
+            # Set the exit event to signal shutdown
+            self.ctx.exit_event.set()
+            
+        except Exception as e:
+            # Log any errors during shutdown but don't let them prevent shutdown
+            import logging
+            logger = logging.getLogger("gui")
+            logger.warning(f"Error during shutdown: {e}")
+            # Still set the exit event to ensure shutdown proceeds
+            self.ctx.exit_event.set()
 
     def update_colors(self):
         '''
@@ -385,6 +422,16 @@ class MultiMDApp(MDApp):
         self.commandprocessor = self.ctx.command_processor(self.ctx)
         self.ui_console = self.console_screen.ui_console
         self.console_handler = self.ui_console.console_handler()
+        
+        # Add console handler to Client logger
+        client_logger = logging.getLogger("Client")
+        client_logger.addHandler(self.console_handler)
+        
+        # Flush any buffered messages
+        if self._message_buffer:
+            for message in self._message_buffer:
+                self.console_handler.queue.put_nowait(message)
+            self._message_buffer.clear()
 
     def client_console_init(self):
         self.console_screen = ConsoleScreen()
@@ -428,6 +475,8 @@ class MultiMDApp(MDApp):
     def on_message(self, textinput: MDTextField):
         try:
             input_text = textinput.text.strip()
+            if textinput.silent_prefix:
+                input_text = textinput.silent_prefix + input_text
             textinput.text = ""
             textinput.update_history(input_text)
 
@@ -444,18 +493,23 @@ class MultiMDApp(MDApp):
             logging.getLogger("Client").exception(e)
 
     def focus_textinput(self):
-        self.change_screen("console")
+        if self.ctx.slot_info:  # Only focus console if we have slot info
+            self.change_screen("console")
+            self.console_text_input.animate_text_input(self.bottom_appbar, {"id": "console_text_input"})
 
     def print_json(self, data: typing.List[JSONMessagePart]):
         self.focus_textinput()
         # Convert the list of JSONMessagePart to a single text message
         # Use KivyMarkupJSONtoTextParser to convert the JSON message parts to Kivy markup with hex colors
         parser = KivyMarkupJSONtoTextParser(self.ctx)
-        print(data)
         text = parser(data)
-        print(text)
-        # Put the text string into the queue instead of the list
-        self.console_handler.queue.put_nowait(text)
+        
+        # Check if console_handler exists, if not buffer the message
+        if hasattr(self, 'console_handler') and self.console_handler:
+            self.console_handler.queue.put_nowait(text)
+        else:
+            # Buffer the message until console is initialized
+            self._message_buffer.append(text)
 
     def update_hints(self):
         hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}", [])

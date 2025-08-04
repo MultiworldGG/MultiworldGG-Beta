@@ -18,23 +18,22 @@ Builder.load_string('''
 <TopAppBar>:
     type: "small"
     padding: 0,0,0,0
+    spacing: dp(10)
+    size_hint_x: 1
     md_bg_color: app.theme_cls.backgroundColor
     MDTopAppBarLeadingButtonContainer:
         MDActionTopAppBarButton:
             icon: "menu"
             id: menu_button
             on_release: app.open_top_appbar_menu(self)
-    Timer:
-        id: timer
-        text: "00:00:00"
-        font_style: "Title"
-        bold: True
-        theme_font_style: "Custom"
-        pos_hint: {"x": .05}
     MDTopAppBarTitle:
+        size_hint_x: .5
         id: address_bar_label
         text: root.address_bar
-        pos_hint: {"right": .05}
+    Timer:
+        id: timer
+        size_hint_x: .5
+        text: "00:00:00"
 
 
     MDTopAppBarTrailingButtonContainer:
@@ -45,6 +44,7 @@ Builder.load_string('''
             text: "Profile"
         MDActionTopAppBarButton:
             icon: "account-circle-outline"
+            on_release: root.open_profile()
 ''')
 
 class Timer(MDTopAppBarTitle):
@@ -57,6 +57,9 @@ class Timer(MDTopAppBarTitle):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.theme_font_style = "Custom"
+        self.font_style = "Monospace"
+        self.role = "large"
         self.text = "00:00:00"
         # Bind the elapsed_time property to update the display
         self.bind(elapsed_time=self.on_elapsed_time)
@@ -116,11 +119,12 @@ class TopAppBar(MDTopAppBar):
     address_bar_label: ObjectProperty
 
     def __init__(self, **kwargs):
-        self.address_bar = "Not Connected"
+        self.address_bar = ""
         super().__init__(**kwargs)
         self.timer = self.ids.timer
         self.address_bar_label = self.ids.address_bar_label
         self.item_data = None
+        Clock.schedule_once(lambda x: self.remove_widget(self.ids.title_box), 0.1)
 
     def toggle_timer(self):
         """Toggle timer on/off (pause/resume)"""
@@ -140,6 +144,9 @@ class TopAppBar(MDTopAppBar):
     def update_address_bar(self, text: str):
         if self.address_bar_label:
             self.address_bar = text
+
+    def open_profile(self):
+        print("open profile")
 
 class TopAppBarLayout(AnchorLayout):
     top_appbar: ObjectProperty

@@ -931,7 +931,26 @@ class CommonContext(InitContext):
         """Helper for logging and displaying a loss of connection. Must be called from an except block."""
         exc_info = sys.exc_info()
         logger.exception(msg, exc_info=exc_info, extra={'compact_gui': True})
-        self._messagebox_connection_loss = self.gui_error(msg, exc_info[1])
+        
+        # Hide loading screen if it exists
+        if self.ui and hasattr(self.ui, 'loading_layout'):
+            self.ui.loading_layout.hide_loading()
+     
+        error_msg = ""
+        # Provide helpful guidance for retrying connection
+        if self.server_address:
+            error_msg = f"To retry the connection, use: /connect {self.server_address}"
+        else:
+            error_msg = "To retry the connection, use: /connect <server_address:port>"
+        
+        # Show error message box using MDDialog
+        if self.ui:
+            from gui.dialog import show_error_dialog
+            error_text = str(exc_info[1]) if exc_info[1] else msg
+            self._messagebox_connection_loss = show_error_dialog("Connection Error", error_text + "\n" + error_msg)
+        else:
+            # Fallback to old method if no UI
+            self._messagebox_connection_loss = self.gui_error(msg, exc_info[1])
 
     def make_gui(self) -> "type[Gui.MultiMDApp]":
         """
@@ -1016,10 +1035,19 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
         ctx.server_address = address
         ctx.current_reconnect_delay = ctx.starting_reconnect_delay
         ctx.disconnected_intentionally = False
-        async for data in ctx.server.socket:
-            for msg in decode(data):
-                await process_server_cmd(ctx, msg)
-        logger.warning(f"Disconnected from multiworld server{reconnect_hint()}")
+        try:
+            async for data in ctx.server.socket:
+                for msg in decode(data):
+                    await process_server_cmd(ctx, msg)
+        except asyncio.CancelledError:
+            # Expected when the task is cancelled during shutdown
+            logger.info("Server loop cancelled during shutdown")
+            raise
+        except Exception as e:
+            # Log unexpected errors but don't let them crash the loop
+            logger.warning(f"Error in server loop: {e}")
+        finally:
+            logger.warning(f"Disconnected from multiworld server{reconnect_hint()}")
     except websockets.InvalidMessage:
         # probably encrypted
         if address.startswith("ws://"):

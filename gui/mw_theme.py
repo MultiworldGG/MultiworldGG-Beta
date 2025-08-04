@@ -263,17 +263,37 @@ class DefaultTheme(ThemableBehavior):
         #self.theme_cls.sync_theme_styles()
 
 ### Full unicode fonts, finally
-def RegisterFonts(app: MDApp):
+def RegisterFonts(app: MDApp, monospace_font: str = 'Argon'):
     LabelBase.register('Inter',
                         os.path.join(local_path(),"data","fonts","Inter-Regular.ttf"),
                         os.path.join(local_path(),"data","fonts","Inter-Italic.ttf"),
                         os.path.join(local_path(),"data","fonts","Inter-Bold.ttf"),
                         os.path.join(local_path(),"data","fonts","Inter-BoldItalic.ttf"))
-    LabelBase.register('MonaspaceArgon',
+    LabelBase.register('Neon',
+                        os.path.join(local_path(),"data","fonts","MonaspaceNeonFrozen-Regular.ttf"),
+                        os.path.join(local_path(),"data","fonts","MonaspaceNeonFrozen-Italic.ttf"),
+                        os.path.join(local_path(),"data","fonts","MonaspaceNeonFrozen-ExtraBold.ttf"),
+                        os.path.join(local_path(),"data","fonts","MonaspaceNeonFrozen-ExtraBoldItalic.ttf")),
+    LabelBase.register('Argon',
                         os.path.join(local_path(),"data","fonts","MonaspaceArgonFrozen-Regular.ttf"),
                         os.path.join(local_path(),"data","fonts","MonaspaceArgonFrozen-Italic.ttf"),
                         os.path.join(local_path(),"data","fonts","MonaspaceArgonFrozen-ExtraBold.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceArgonFrozen-ExtraBoldItalic.ttf"))
+                        os.path.join(local_path(),"data","fonts","MonaspaceArgonFrozen-ExtraBoldItalic.ttf")),
+    LabelBase.register('Xenon',
+                        os.path.join(local_path(),"data","fonts","MonaspaceXenonFrozen-Regular.ttf"),
+                        os.path.join(local_path(),"data","fonts","MonaspaceXenonFrozen-Italic.ttf"),
+                        os.path.join(local_path(),"data","fonts","MonaspaceXenonFrozen-ExtraBold.ttf"),
+                        os.path.join(local_path(),"data","fonts","MonaspaceXenonFrozen-ExtraBoldItalic.ttf")),
+    LabelBase.register('Radon',
+                        os.path.join(local_path(),"data","fonts","MonaspaceRadonFrozen-Regular.ttf"),
+                        os.path.join(local_path(),"data","fonts","MonaspaceRadonFrozen-Italic.ttf"),
+                        os.path.join(local_path(),"data","fonts","MonaspaceRadonFrozen-ExtraBold.ttf"),
+                        os.path.join(local_path(),"data","fonts","MonaspaceRadonFrozen-ExtraBoldItalic.ttf")),
+    LabelBase.register('Krypton',
+                        os.path.join(local_path(),"data","fonts","MonaspaceKryptonFrozen-Regular.ttf"),
+                        os.path.join(local_path(),"data","fonts","MonaspaceKryptonFrozen-Italic.ttf"),
+                        os.path.join(local_path(),"data","fonts","MonaspaceKryptonFrozen-ExtraBold.ttf"),
+                        os.path.join(local_path(),"data","fonts","MonaspaceKryptonFrozen-ExtraBoldItalic.ttf"))
     LabelBase.register('GothicA1',
                         os.path.join(local_path(),"data","fonts","GothicA1-Regular.ttf"),
                         None,
@@ -398,21 +418,21 @@ def RegisterFonts(app: MDApp):
                 "font-size": sp(18),
             },
         },
-        "monospace": {
+        "Monospace": {
             "large": {
-                "line-height": 2.0,
-                "font-name": "MonaspaceArgon",
-                "font-size": sp(14),
+                "line-height": 2.6,
+                "font-name": f"{monospace_font}",
+                "font-size": sp(22),
             },
             "medium": {
-                "line-height": 1.6,
-                "font-name": "MonaspaceArgon",
-                "font-size": sp(12),
+                "line-height": 2.4,
+                "font-name": f"{monospace_font}",
+                "font-size": sp(18),
             },
             "small": {
-                "line-height": 1.5,
-                "font-name": "MonaspaceArgon",
-                "font-size": sp(10),
+                "line-height": 2.0,
+                "font-name": f"{monospace_font}",
+                "font-size": sp(14),
             },
         },
     }

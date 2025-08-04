@@ -10,6 +10,10 @@ import json
 import requests
 from werkzeug.utils import secure_filename
 from pymem import pymem
+import logging
+# Disable pymem logger to suppress ProcessError messages
+logging.getLogger('pymem').setLevel(logging.CRITICAL)
+
 from worlds.kh2 import item_dictionary_table, exclusion_item_table, CheckDupingItems, all_locations, exclusion_table,  all_weapon_slot, \
                 GreatActionAbility_Table, UsefulActionAbility_Table, JunkActionAbility_Table, \
                 GreatSupportAbility_Table, UsefulSupportAbility_Table, JunkSupportAbility_Table
@@ -32,10 +36,11 @@ class KH2Context(CommonContext):
     game = "Kingdom Hearts 2"
     items_handling = 0b111  # Indicates you get items sent from other worlds.
 
-    def __init__(self, server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None):
+    def __init__(self, server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
         super(KH2Context, self).__init__(server_address = server_address, password = password)
         self.slot_name = slot_name
         self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.goofy_ability_to_slot = dict()
         self.donald_ability_to_slot = dict()
         self.all_weapon_location_id = None
@@ -313,6 +318,18 @@ class KH2Context(CommonContext):
         self.kh2seedname = None
         CommonContext.event_invalid_slot(self)
 
+    def handle_connection_loss(self, msg: str) -> None:
+        """Override to handle connection loss with error callback"""
+        # Call the parent method first
+        super().handle_connection_loss(msg)
+        
+        # Call error callback if provided
+        if self.error_callback:
+            try:
+                self.error_callback()
+            except Exception as e:
+                logger.error(f"Error in error callback: {e}")
+
     async def connection_closed(self):
         self.kh2connected = False
         self.serverconnected = False
@@ -407,6 +424,13 @@ class KH2Context(CommonContext):
                 asyncio.create_task(self.send_msgs([{"cmd": "GetDataPackage", "games": ["Kingdom Hearts 2"]}]))
 
             self.locations_checked = set(args["checked_locations"])
+            
+            # Call ready_callback after successful server connection and authentication
+            if self.ready_callback:
+                try:
+                    self.ready_callback()
+                except Exception as e:
+                    logger.error(f"Error in ready callback: {e}")
 
         if cmd == "ReceivedItems":
             # Sora   Front of Ability List:0x2546
@@ -556,9 +580,6 @@ class KH2Context(CommonContext):
             logger.info("Game is not open.")
         self.serverconnected = True
         self.slot_name = self.auth
-        # Call ready callback if provided
-        if self.ready_callback:
-            self.ready_callback()
 
     def data_package_kh2_cache(self, loc_to_id, item_to_id):
         self.kh2_loc_name_to_id = loc_to_id
@@ -718,21 +739,25 @@ async def kh2_watcher(ctx: KH2Context):
         await asyncio.sleep(0.5)
 
 
-def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None):
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
     from Utils import init_logging
     init_logging("KH2Client", exception_logger="Client")
 
     async def main(args):
-        ctx = KH2Context(server_address, slot_name, password, ready_callback)
+        ctx = KH2Context(server_address, slot_name, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
             logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
         ctx.ui.base_title = apname + " | KH2"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
         #ctx.run_cli()
         await ctx.server_auth()
+        
         progression_watcher = asyncio.create_task(
                 kh2_watcher(ctx), name="KH2ProgressionWatcher")
         await progression_watcher
@@ -758,7 +783,9 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
         return task
     except RuntimeError:
         logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the KH2 client.")
+        if error_callback:
+            error_callback()
 
-def main(server_address: str, slot_name: str = None, password: str = None, ready_callback=None):
+def main(server_address: str, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, slot_name, password, ready_callback)
+    launch(server_address, slot_name, password, ready_callback, error_callback)

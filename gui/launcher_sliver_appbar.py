@@ -17,28 +17,26 @@ Builder.load_string('''
 <LauncherSliverAppbar>:
     pos_hint: {"x": 0, "top": 1}
     width: dp(260)
+    padding: 0
     size_hint_x: None
     adaptive_height: True
     hide_appbar: True
     background_color: app.theme_cls.secondaryContainerColor
-    launcher_hero_from: launcher_hero_from
-    SearchBar:
-        type: "small"
-        id: games_search_bar
-        padding: dp(10), dp(16), dp(10), dp(16)
-                    
+    launcher_hero_from: launcher_hero_from       
     MDSliverAppbarHeader:
         MDHeroFrom:   #### ok the herofrom size/loc is the transition size
             id: launcher_hero_from
             tag: "logo"
             size_hint: 1,1
-            x: root.x
             Image:
                 source: "gui/data/logo_bg.png"
-                pos_hint: {"top": 1}
+                pos_hint: {"center_y": 0.5}
                 fit_mode: "scale-down"
-
-
+    SearchBar:
+        type: "small"
+        height: dp(74)
+        id: games_search_bar,
+        padding: dp(10), dp(0), dp(10), dp(0)
                     
 <LauncherTextField>:
     theme_font_name: "Custom"
@@ -58,9 +56,11 @@ class LauncherSliverAppbar(MDSliverAppbar):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.content = MDSliverAppbarContent(orientation="vertical")
+        self.content = MDSliverAppbarContent(orientation="vertical", padding=0)
         self.content.id = "content"
         self.add_widget(self.content)
+        self.ids.scroll.y = dp(82)
+        self.ids.header.pos_hint = {"top": 1}
 
 class LauncherTextField(MDTextField):
     hint_text = StringProperty("")
@@ -73,12 +73,12 @@ class SearchBar(MDTopAppBar):
         super().__init__(**kwargs)
         self.search_box = LauncherTextField(
             id="game_tag_filter",
-            hint_text = "Game Search"
+            hint_text = "Game Search", 
+            pos_hint = {"center_y": 0.5}
         )
         self.add_widget(self.search_box)
         Clock.schedule_once(lambda x: self.remove_widgets())
         self.search_box.bind(on_text_validate=self.on_enter)
-        self.pos_hint = {"top": 1}
     
     def remove_widgets(self):
         for child in self.children:

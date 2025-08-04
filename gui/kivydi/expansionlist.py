@@ -13,9 +13,10 @@ from textwrap import wrap
 from kivy.animation import Animation
 from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
-from kivy.properties import StringProperty, DictProperty, ObjectProperty
+from kivy.properties import StringProperty, DictProperty, ObjectProperty, NumericProperty
 from kivy.uix.behaviors import ButtonBehavior
 from kivymd.uix.behaviors import RotateBehavior, CommonElevationBehavior
+from kivymd.theming import ThemableBehavior
 from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.badge import MDBadge
@@ -76,7 +77,7 @@ class SlotListItemHeader(MDBoxLayout, CommonElevationBehavior):
         super().__init__(**kwargs)
 
 
-class GameListItemHeader(MDBoxLayout, ButtonBehavior, CommonElevationBehavior):
+class GameListItemHeader(MDBoxLayout, ButtonBehavior, ThemableBehavior):
     """
     Header widget for displaying game item information in the game list.
     
@@ -105,9 +106,10 @@ class GameListItemHeader(MDBoxLayout, ButtonBehavior, CommonElevationBehavior):
         self.game_data = game_data
         self.panel = panel
         self.on_game_select = on_game_select
+        self.style = "Tonal"
         super().__init__(**kwargs)
 
-    def on_press(self):
+    def on_release(self, *args):
         """Handle press event for game selection"""
         if self.on_game_select:
             self.on_game_select(self.game_module)

@@ -66,8 +66,8 @@
     height: dp(60)
     size_hint_y: None
     theme_bg_color: "Custom"
-    md_bg_color: app.theme_cls.secondaryContainerColor
-    on_release: root.on_press()
+    md_bg_color: app.theme_cls.tertiaryContainerColor if self.state == "down" else app.theme_cls.secondaryContainerColor
+    on_release: root.on_release(self, args)
     MDListItemLeadingAvatar:
         id: leading_avatar
         source: root.game_data['cover_url']
@@ -101,6 +101,7 @@
 <GameListItem>:
     tooltip_text: ""
     ripple_effect: False
+    theme_elevation_level: "Custom"
     MDListItemLeadingIcon:
         icon: root.icon
 

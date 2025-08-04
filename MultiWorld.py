@@ -5,13 +5,26 @@ import os
 import re
 import subprocess
 import time
-from Utils import discover_and_launch_module
 
 worlds_modules_dir = os.path.abspath(os.path.join("worlds"))
 if worlds_modules_dir not in sys.path:
     sys.path.insert(0, worlds_modules_dir)
 
-import gui.Gui
+#os.environ["KCFG_GRAPHICS_WINDOW_STATE"] = "visible"
+os.environ["KIVY_NO_CONSOLELOG"] = "0"
+os.environ["KIVY_NO_FILELOG"] = "0"
+os.environ["KIVY_NO_ARGS"] = "1"
+os.environ["KIVY_LOG_ENABLE"] = "1"
+
+# from CommonClient import console_loop
+# from MultiServer import console
+# apname = "Archipelago" if not Utils.archipelago_name else Utils.archipelago_name
+
+# if Utils.is_frozen():
+from BaseUtils import local_path
+os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"venv","Lib","site-packages","kivy","data")
+os.environ["KIVY_HOME"] = os.path.join(local_path(),"data", "kivy_home")
+os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
 
 logger = logging.getLogger("MultiWorld")
 
@@ -80,6 +93,7 @@ def run_client(*args):
             
             # Try to launch the module via entrypoints
             try:
+                from Utils import discover_and_launch_module
                 discover_and_launch_module(game_name, args)
                 return  # Module takeover successful, exit initial client
             except Exception as e:
@@ -89,11 +103,19 @@ def run_client(*args):
         
         # Default initial client behavior
         logger.info("Launching default GUI")
-        ctx.run_gui()
-
-        await ctx.exit_event.wait()
-        await ctx.shutdown()
-        sys.exit()
+        try:
+            ctx.run_gui()
+            await ctx.exit_event.wait()
+        except Exception as e:
+            logger.error(f"Error during GUI execution: {e}")
+        finally:
+            # Ensure cleanup happens even if there are errors
+            try:
+                await ctx.shutdown()
+            except Exception as e:
+                logger.error(f"Error during shutdown: {e}")
+            finally:
+                sys.exit()
 
     import colorama
     colorama.just_fix_windows_console()
