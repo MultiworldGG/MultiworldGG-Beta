@@ -26,16 +26,18 @@ class ConsoleFilter(logging.Filter):
     
 class TextConsole(MarkupTextField, ThemableBehavior):
     text_buffer: Queue
+    app: MDApp
     #text_color: ColorProperty
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.app = MDApp.get_running_app()
         self.font_name = self.theme_cls.font_styles.Monospace['small']['font-name'] 
         self.font_size = self.theme_cls.font_styles.Monospace['small']['font-size']
         self.line_spacing = self.theme_cls.font_styles.Monospace['small']['line-height']
         self.selection_color = self.theme_cls.secondaryColor
         self.selection_color[3] = 0.3
-        self.text_default_color = self.theme_cls.onSurfaceColor
+        self.text_default_color = self.app.theme_mw.markup_tags_theme.default_color[0 if self.app.theme_mw.theme_style == "Light" else 1]
         self.multiline = True
         self.do_wrap = True
         self.auto_indent = True

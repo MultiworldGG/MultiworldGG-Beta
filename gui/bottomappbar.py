@@ -102,7 +102,7 @@ Builder.load_string('''
                     if app.theme_cls.theme_style == "Light" \
                     else app.theme_cls.onPrimaryColor
     MDFabBottomAppBarButton:
-        id: text_input_fab
+        id: console_text_input_fab
         icon: "chat-outline"
         on_release: root.on_bar_action(self)
                     
@@ -173,13 +173,13 @@ class BottomAppBar(MDBottomAppBar):
             super().add_widget(widget, index, canvas)
 
     def on_bar_action(self, instance):
-        self.animate_text_input(instance)
+        self.animate_text_input(instance.id)
 
-    def animate_text_input(self, instance):
-        """Animate the text input with properties from the clicked action item
-        
-        TODO: This doesn't animate text input between button presses, it would hide
-        it instead of animating it"""
+    def on_gui_focus(self):
+        self.animate_text_input("console_text_input")
+
+    def animate_text_input(self, id_name: str):
+        """Animate the text input with properties from the clicked action item"""
         # Find the action data for this button
         action_data = None
         if self.screen_name == "console":
@@ -191,20 +191,9 @@ class BottomAppBar(MDBottomAppBar):
         
         # Find the matching action data
         for action in actions:
-            if action["id"] in instance.id:
+            if action["id"] in id_name:
                 action_data = action
                 break
-
-        if isinstance(instance, MDFabBottomAppBarButton):
-            if not self.text_input.parent:
-                action_data = {
-                    "icon": "chat-outline",
-                    "label": "Console Input",
-                    "prefill": "",
-                }
-            else:
-                self.hide_text_input()
-                return
         
         if not action_data:
             return

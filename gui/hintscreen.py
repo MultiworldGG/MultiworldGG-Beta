@@ -9,6 +9,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.scrollview import ScrollView
 from kivymd.app import MDApp
 from kivymd.uix.behaviors import HoverBehavior
+from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDIconButton
 from kivymd.uix.card import MDCard
 from kivymd.uix.chip import MDChip
@@ -19,12 +20,17 @@ from kivymd.theming import ThemableBehavior
 from kivymd.uix.recycleview import MDRecycleView
 from NetUtils import HintStatus
 from .testdict import testdict
+import typing
 
-# Load the KV string
-Builder.load_string('''
-'''
+# Builder.load_string(
+#     '''
+#     <HintLayout>
+#         orientation: "vertical"
+#     '''
+# )
+class HintScreen(MDScreen):
+    pass
 
-# Register the KV string
 class HintLayout(MDBoxLayout):
     """Layout container for hint input and display components.
     
@@ -41,7 +47,7 @@ class HintLayout(MDBoxLayout):
         boxlayout = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=dp(40))
         boxlayout.add_widget(MDLabel(text="New Hint:", size_hint_x=None, size_hint_y=None,
                                      height=dp(40), width=dp(75), halign="center", valign="center"))
-        boxlayout.add_widget(AutocompleteHintInput())
+        #boxlayout.add_widget(AutocompleteHintInput())
         self.add_widget(boxlayout)
 
     def fix_heights(self):

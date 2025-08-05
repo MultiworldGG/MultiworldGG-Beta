@@ -173,7 +173,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
     # The right/left lines coordinates of the text field in 'outlined' mode.
     _left_x_axis_pos = NumericProperty(dp(32)) #MD
     _right_x_axis_pos = NumericProperty(dp(32)) #MD
-    text_default_color = ColorProperty(None) #MD
+    text_default_color = StringProperty("cdcdcd") #MD
     _empty_texture = ObjectProperty(None) #MD
     _saved_markup = StringProperty("[color=FFFFFF]") #MD
 
@@ -871,10 +871,27 @@ class MarkupTextField(TextInput, ThemableBehavior):
 
         def set_text(*args):
             if self.line_count > 1000:
-                for i in self._lines[-1000:]:
-                    i = self._add_default_color(i)
                 self._lines = self._lines[-1000:] #_lines is bound to the text property
-            self.text = re.sub("\n", " ", text) if not self.multiline else text
+            
+            # Process the incoming text to add color tags using patterns
+            if self.multiline:
+                # Simple pattern-based approach:
+                # 1. [/color]\n needs a [color= after it
+                # 2. \n with no color blocks needs both [color= and [/color]
+                # 3. \n[color= needs a [/color] before it
+                
+                # Add opening color tags after [/color]\n (but only if not already followed by [color=)
+                text = re.sub(r'\[/color\]\n(?!\[color=)', f'[/color]\n[color={self.text_default_color}]', text)
+                
+                # Add closing color tags before \n[color= (but only if not already preceded by [/color])
+                text = re.sub(r'(?<!\[/color\])\n\[color=', f'[/color]\n[color=', text)
+                
+                # Add both tags around \n that don't have color blocks (but only if not already handled)
+                text = re.sub(r'(?<!\[/color\])\n(?!\[color=)', f'[/color]\n[color={self.text_default_color}]', text)
+                
+                self.text = text
+            else:
+                self.text = re.sub("\n", " ", text)
             self.set_max_text_length()
 
             if self.text and self._get_has_error() or self._get_has_error():

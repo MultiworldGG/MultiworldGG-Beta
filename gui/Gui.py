@@ -494,7 +494,7 @@ class MultiMDApp(MDApp):
     def focus_textinput(self):
         if self.ctx.slot_info:  # Only focus console if we have slot info
             self.change_screen("console")
-            self.console_text_input.animate_text_input(self.bottom_appbar, {"id": "console_text_input"})
+            self.console_screen.bottom_appbar.on_gui_focus()
 
     def print_json(self, data: typing.List[JSONMessagePart]):
         self.focus_textinput()
