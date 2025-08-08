@@ -266,13 +266,13 @@ class BanjoTooieWorld(World):
 
             if itemname == itemName.PAGES:
                 if self.options.cheato_rewards:
-                    return ItemClassification.progression_skip_balancing
+                    return ItemClassification.progression_deprioritized_skip_balancing
                 else:
                     return ItemClassification.filler
 
             if itemname == itemName.HONEY:
                 if self.options.honeyb_rewards:
-                    return ItemClassification.progression_skip_balancing
+                    return ItemClassification.progression_deprioritized_skip_balancing
                 else:
                     return ItemClassification.useful
 
@@ -280,6 +280,8 @@ class BanjoTooieWorld(World):
             return ItemClassification.progression
         if banjoItem.type == "progression_skip_balancing":
             return ItemClassification.progression_skip_balancing
+        if banjoItem.type == "progression_deprioritized_skip_balancing":
+            return ItemClassification.progression_deprioritized_skip_balancing
         if banjoItem.type == "useful":
             return ItemClassification.useful
         if banjoItem.type == "filler":

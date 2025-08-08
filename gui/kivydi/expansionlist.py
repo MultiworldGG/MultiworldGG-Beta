@@ -32,6 +32,12 @@ from kivy.lang import Builder
 import os
 from kivy.clock import Clock
 from kivymd.app import MDApp
+from kivymd.icon_definitions import md_icons
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from NetUtils import HintStatus
+    from CommonClient import CommonContext
 
 logger = logging.getLogger(__name__)
 
@@ -179,35 +185,39 @@ class SlotListItem(MDBoxLayout, CommonElevationBehavior):
     assigned_level: StringProperty
     found: StringProperty
 
-    def __init__(self, game_data, game_status, shadow_colors, **kwargs):
+    def __init__(self, user_data: dict, game_status: str, shadow_colors: dict, hint_status: "HintStatus", **kwargs):
         """
         Initialize the SlotListItem.
         
         Args:
             game_status (str): Current status of the game
-            game_data (dict): Dictionary containing slot item data
+            game_data (dict): Dictionary containing stored data
         """
-        self.game_data = game_data
+        self.user_data = user_data
+        self.hint_data = self.user_data["hints"]
         self.game_status = game_status
-        for item in self.game_data:
+        for item in self.hint_data:
             if item == "entrance":
-                self.entrance_name = self.game_data[item]
+                self.entrance_name = self.hint_data[item]
             elif item == "location":
-                self.location_name = self.game_data[item]
+                self.location_name = self.hint_data[item]
             elif item == "item":
-                self.item_name = self.game_data[item]
+                self.item_name = self.hint_data[item]
             elif item == "prog_level":
-                self.prog_level = self.game_data[item]
-            elif item == "assigned_level":
-                self.assigned_level = self.game_data[item]
-            elif item == "for_bk_mode":
-                self.for_bk_mode = self.game_data[item]
-            elif item == "for_goal":
-                self.for_goal = self.game_data[item]
-            elif item == "from_shop":
-                self.from_shop = self.game_data[item]
+                self.prog_level = self.hint_data[item]
             elif item == "found":
-                self.found = self.game_data[item]
+                self.found = self.hint_data[item]
+            elif item == "status":
+                if self.hint_data[item] == HintStatus.HINT_FOUND:
+                    self.found = "Found"
+                elif self.hint_data[item] == HintStatus.HINT_UNSPECIFIED:
+                    self.found = "Unspecified"
+                elif self.hint_data[item] == HintStatus.HINT_NO_PRIORITY:
+                    self.from_shop = "Shop"
+                elif self.hint_data[item] == HintStatus.HINT_AVOID:
+                    self.for_goal = "Avoid"
+                elif self.hint_data[item] == HintStatus.HINT_PRIORITY:
+                    self.for_bk_mode = "BK Mode"
 
         super().__init__(**kwargs)
 
@@ -218,11 +228,11 @@ class SlotListItem(MDBoxLayout, CommonElevationBehavior):
         self.slot_icon_goal = self.ids.slot_icon_goal
         badge_text = ""
         if self.for_bk_mode:
-            badge_text += "\uf254 "
+            badge_text += md_icons["food"] + " "
         if self.for_goal:
-            badge_text += "\uf11e "
+            badge_text += md_icons["flag_checkered"] + " "
         if self.from_shop:
-            badge_text += "\uee18 "
+            badge_text += md_icons["shop"] + " "
         if badge_text != "":
             self.slot_icon_item.add_widget(IconBadge(text=badge_text.rstrip()))
         Clock.schedule_once(lambda x: self.populate_slot_item())
@@ -245,16 +255,16 @@ class SlotListItem(MDBoxLayout, CommonElevationBehavior):
         self.slot_icon_goal.icon = "flag_checkered" if self.game_status == "GOAL" else "blank"
 
     def set_prio_behavior(self, item_colors: dict[str, list[str]]):
-        if self.assigned_level == "Avoid" or self.prog_level == "Trap":
+        if self.prog_level == "Trap":
             self.elevation_level = 1
             self.shadow_color = item_colors["trap"]
-        if self.assigned_level == "Unassigned" or self.prog_level == "Trash":
+        if self.prog_level == "Trash":
             self.elevation_level = 2
             self.shadow_color = item_colors["regular"]
-        if self.assigned_level == "Useful" or self.prog_level == "Useful":
+        if self.prog_level == "Useful":
             self.elevation_level = 3
             self.shadow_color = item_colors["useful"]
-        if self.assigned_level == "Priority" or self.prog_level == "Important":
+        if self.prog_level == "Important":
             self.elevation_level = 4
             self.shadow_color = item_colors["progression"]
         if self.found == "Found":
@@ -436,12 +446,12 @@ class GameListPanel(MDExpansionPanel):
         self.on_game_select = on_game_select
         self.width = 256
         self.pos_hint = {"center_y": 0.5}
-        if "hints" in self.item_data:
-            Clock.schedule_once(lambda x: self.populate_slot_item())
+        if "found" in self.item_data:
+            Clock.schedule_once(lambda x: self.populate_slot_item(ctx=self.app.ctx))
         else:
             Clock.schedule_once(lambda x: self.populate_game_item())
 
-    def populate_slot_item(self):
+    def populate_slot_item(self, ctx: "CommonContext"):
         """
         Populate the panel with slot items when hints are present.
         
@@ -450,10 +460,10 @@ class GameListPanel(MDExpansionPanel):
         """
         self.panel_header = self.ids.panel_header
         self.panel_content = self.ids.panel_content
-        self.panel_header_layout = SlotListItemHeader(game_data=self.item_data, panel=self)
+        self.panel_header_layout = SlotListItemHeader(item_data=ctx.player_names, panel=self)
         self.leading_avatar = self.panel_header_layout.ids.leading_avatar
         self.panel_header.add_widget(self.panel_header_layout)
-        self.leading_avatar.source = self.item_data['avatar']
+        self.leading_avatar.source = "https://multiworld.gg/favicon.ico" #self.item_data['avatar']
         for item, data in self.item_data.items():
             if item == "bk_mode" and data:
                 self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="food", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
@@ -461,13 +471,15 @@ class GameListPanel(MDExpansionPanel):
                 self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="headphones", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
             elif item == "game_status" and data == "GOAL":
                 self.panel_header_layout.ids.game_item_container.add_widget(BaseListItemIcon(icon="flag_checkered", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
-        for item in self.item_data["hints"]:
+        for item in self.item_data:
             i = 1 if self.app.theme_cls.theme_style == "Dark" else 0
             item_colors = {
                 "trap": self.app.theme_mw.markup_tags_theme.trap_item_color[i],
                 "regular": self.app.theme_mw.markup_tags_theme.regular_item_color[i],
+                "currency": self.app.theme_mw.markup_tags_theme.skip_balancing_item_color[i],
                 "useful": self.app.theme_mw.markup_tags_theme.useful_item_color[i],
-                "progression": self.app.theme_mw.markup_tags_theme.progression_item_color[i],
+                "logically_required": self.app.theme_mw.markup_tags_theme.progression_deprioritized_skip_balancing_item_color[i],
+                "progression": self.app.theme_mw.markup_tags_theme.progression_item_color[i], # also progression_skip_balancing
             }
             self.panel_content.add_widget(SlotListItem(game_data=item, game_status=self.item_data['game_status'], shadow_colors=item_colors))
 

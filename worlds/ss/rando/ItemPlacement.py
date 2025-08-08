@@ -99,7 +99,7 @@ def _create_base_itempool(world: "SSWorld") -> tuple[list[str], list[str], list[
                 else adjusted_classification
             )
 
-            if classification == IC.progression or classification == IC.progression_skip_balancing:
+            if classification == IC.progression or classification == IC.progression_skip_balancing or classification == IC.progression_deprioritized_skip_balancing or classification == IC.skip_balancing:
                 progression_pool.extend([item] * data.quantity)
             elif classification == IC.useful:
                 useful_pool.extend([item] * data.quantity)

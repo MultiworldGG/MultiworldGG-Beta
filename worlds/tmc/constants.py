@@ -828,6 +828,7 @@ EXTERNAL_ITEM_MAP: dict[ItemClassification, Callable[[object], int]] = {
     ItemClassification.trap: lambda random: random.choice(EXTERNAL_ITEMS),
     ItemClassification.skip_balancing: lambda random: 0x19,
     ItemClassification.progression_skip_balancing: lambda random: 0x18,
+    ItemClassification.progression_deprioritized_skip_balancing: lambda random: 0x18,
 }
 
 ALL_REGIONS = [

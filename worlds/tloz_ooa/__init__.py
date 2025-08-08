@@ -277,15 +277,18 @@ class OracleOfAgesWorld(World):
         if name.endswith("!PROG"):
             # If item name has a "!PROG" suffix, force it to be progression. This is typically used to create the right
             # amount of progression rupees while keeping them a filler item as default
+            # EDIT: Changing to skip_balancing, as that is where required currency is expected to be.
             name = name.removesuffix("!PROG")
-            classification = ItemClassification.progression_skip_balancing
+            classification = ItemClassification.skip_balancing
         elif name.endswith("!USEFUL"):
             # Same for above but with useful. This is typically used for Required Rings,
             # as we don't want those locked in a barren dungeon
+            # EDIT: Changing to progression_deprioritized_skip_balancing
+            # 'useful' should never be required - other users will not pick it up.
             name = name.removesuffix("!USEFUL")
             classification = ITEMS_DATA[name]["classification"]
             if classification == ItemClassification.filler:
-                classification = ItemClassification.useful
+                classification = ItemClassification.progression_deprioritized_skip_balancing
         else:
             classification = ITEMS_DATA[name]["classification"]
         ap_code = self.item_name_to_id[name]

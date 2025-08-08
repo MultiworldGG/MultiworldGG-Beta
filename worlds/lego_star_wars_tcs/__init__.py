@@ -385,7 +385,7 @@ class LegoStarWarsTCSWorld(World):
             elif abilities & constants.RARE_AND_USEFUL_ABILITIES:
                 classification = ItemClassification.progression
             elif abilities:
-                classification = ItemClassification.progression_skip_balancing
+                classification = ItemClassification.progression_deprioritized_skip_balancing
             elif name in USEFUL_NON_PROGRESSION_CHARACTERS:
                 classification = ItemClassification.useful
 

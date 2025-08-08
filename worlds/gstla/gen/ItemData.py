@@ -38,7 +38,7 @@ class DjinnItemData(ItemData):
     stats: List[int]
 
     def __new__(cls, id: int, name: str, addr: int, element: ElementType, stats_addr: int, stats: List[int]):
-        self = super(ItemData, cls).__new__(cls, (addr, name, ItemClassification.progression_skip_balancing, addr, ItemType.Djinn))
+        self = super(ItemData, cls).__new__(cls, (addr, name, ItemClassification.progression_deprioritized_skip_balancing, addr, ItemType.Djinn))
         self.element = element
         self.stats_addr = stats_addr
         self.stats = stats

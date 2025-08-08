@@ -405,14 +405,14 @@ class MessengerWorld(World):
             count = int(name.strip("Time Shard ()"))
             count = count if count >= 100 else 0
             self.total_shards += count
-            return ItemClassification.progression_skip_balancing if count else ItemClassification.filler
+            return ItemClassification.progression_deprioritized_skip_balancing if count else ItemClassification.filler
 
         if name == "Windmill Shuriken":
             return ItemClassification.progression if self.options.logic_level else ItemClassification.filler
 
         if name == "Power Seal":
             self.created_seals += 1
-            return ItemClassification.progression_skip_balancing \
+            return ItemClassification.progression_deprioritized_skip_balancing \
                 if self.required_seals >= self.created_seals else ItemClassification.filler
 
         if name in {*NOTES, *PROG_ITEMS, *PHOBEKINS, *PROG_SHOP_ITEMS}:

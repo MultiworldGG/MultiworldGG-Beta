@@ -22,8 +22,11 @@ __all__ = ('TextConsole', 'ConsoleView',)
 ## helper class to return both Client and Archipelago logs
 class ConsoleFilter(logging.Filter):
     def filter(self, record):
-        return record.name == "Client" or record.name == "Archipelago" or record.name == "MultiWorld"
-    
+        return record.name == "Client" or \
+               record.name == "Archipelago" or \
+               record.name == "MultiWorld" or \
+               record.name == "All"
+
 class TextConsole(MarkupTextField, ThemableBehavior):
     text_buffer: Queue
     app: MDApp
@@ -56,7 +59,7 @@ class TextConsole(MarkupTextField, ThemableBehavior):
                 message_text = text
             else:
                 message_text = text.msg
-            self.text = self.text + "\n" + message_text
+            self.text = self.text + u"\n" + message_text
         except Empty:
             return
         except Exception as e:
@@ -107,7 +110,7 @@ class ConsoleView(MDFloatLayout):
     def console_handler(self) -> QueueHandler:
         """Create a StreamHandler that writes directly to the text_buffer"""
         _console_out = QueueHandler(queue=self.text_console.text_buffer)
-        _console_out.setFormatter(logging.Formatter("%(message)s"))
+        _console_out.setFormatter(logging.Formatter("%(name)s: %(message)s"))
         _console_out.setLevel(logging.INFO)
         _console_out.addFilter(ConsoleFilter())
         return _console_out

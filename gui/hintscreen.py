@@ -2,7 +2,7 @@ from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.metrics import dp
-from kivy.properties import BooleanProperty, ListProperty, ObjectProperty, StringProperty, DictProperty
+from kivy.properties import BooleanProperty, NumericProperty, ListProperty, ObjectProperty, StringProperty, DictProperty
 from kivy.uix.behaviors import DragBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
@@ -18,6 +18,15 @@ from kivymd.uix.screen import MDScreen
 from kivymd.uix.appbar import MDTopAppBar
 from kivymd.theming import ThemableBehavior
 from kivymd.uix.recycleview import MDRecycleView
+from kivymd.uix.textfield import MDTextField
+#from kivymd.uix.dropdown import MarkupDropdown
+from kivy.uix.label import Label
+from kivymd.uix.menu import MDDropdownMenu
+from kivymd.uix.menu.menu import MDDropdownTextItem
+from kivymd.uix.dropdownitem import MDDropDownItem, MDDropDownItemText
+from kivymd.uix.behaviors import HoverBehavior
+from kivy.utils import escape_markup
+from kivy.core.clipboard import Clipboard
 from NetUtils import HintStatus
 from .testdict import testdict
 import typing
@@ -28,6 +37,71 @@ import typing
 #         orientation: "vertical"
 #     '''
 # )
+
+class AutocompleteHintInput(MDTextField):
+    """Text input field with autocomplete functionality for hint commands.
+    
+    This class provides an input field that automatically suggests item names
+    as the user types, specifically designed for hint commands. It shows
+    matching items in a dropdown and allows quick selection.
+    
+    Attributes:
+        min_chars (int): Minimum number of characters before showing suggestions (3)
+    """
+    min_chars = NumericProperty(3)
+    item_names: list[str] = []
+    location_names: list[str] = []
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.dropdown = MDDropdownMenu(caller=self, position="bottom", border_margin=dp(2), width=self.width)
+        self.bind(on_text_validate=self.on_message)
+        self.bind(width=lambda instance, x: setattr(self.dropdown, "width", x))
+
+    def on_message(self, instance):
+        if instance.text in self.item_names:
+            MDApp.get_running_app().commandprocessor("!hint "+instance.text)
+        elif instance.text in self.location_names:
+            MDApp.get_running_app().commandprocessor("!hint_location "+instance.text)
+        self.item_names = []
+        self.location_names = []
+
+    def on_text(self, instance, value):
+        if len(value) >= self.min_chars:
+            self.dropdown.items.clear()
+            ctx = MDApp.get_running_app().ctx
+            if not ctx.game:
+                return
+            self.item_names = ctx.item_names._game_store[ctx.game].values()
+            self.location_names = ctx.location_names._game_store[ctx.game].values()
+
+            def on_press(text):
+                split_text = Label(text=text).markup
+                self.set_text(self, "".join(text_frag for text_frag in split_text
+                                            if not text_frag.startswith("[")))
+                self.dropdown.dismiss()
+                self.focus = True
+
+            lowered = value.lower()
+            for hint_name in self.item_names + self.location_names:
+                try:
+                    index = hint_name.lower().index(lowered)
+                except ValueError:
+                    pass  # substring not found
+                else:
+                    text = escape_markup(hint_name)
+                    text = text[:index] + "[b]" + text[index:index+len(value)]+"[/b]"+text[index+len(value):]
+                    self.dropdown.items.append({
+                        "text": text,
+                        "on_release": lambda txt=text: on_press(txt),
+                        "markup": True
+                    })
+            if not self.dropdown.parent:
+                self.dropdown.open()
+        else:
+            self.dropdown.dismiss()
+
 class HintScreen(MDScreen):
     pass
 
@@ -58,16 +132,16 @@ class HintLayout(MDBoxLayout):
 
 status_icons = {
     HintStatus.HINT_NO_PRIORITY: "information",
-    HintStatus.HINT_PRIORITY: "exclamation-thick",
-    HintStatus.HINT_AVOID: "alert"
+    HintStatus.HINT_AVOID: "checkered-flag",
+    HintStatus.HINT_PRIORITY: "alert"
 }
 
 status_names: typing.Dict[HintStatus, str] = {
     HintStatus.HINT_FOUND: "Found",
     HintStatus.HINT_UNSPECIFIED: "Unspecified",
-    HintStatus.HINT_NO_PRIORITY: "No Priority",
-    HintStatus.HINT_AVOID: "Avoid",
-    HintStatus.HINT_PRIORITY: "Priority",
+    HintStatus.HINT_NO_PRIORITY: "Shop",
+    HintStatus.HINT_AVOID: "Goal",
+    HintStatus.HINT_PRIORITY: "BK Mode",
 }
 """Mapping of hint status values to their human-readable display names."""
 status_colors: typing.Dict[HintStatus, str] = {
@@ -165,3 +239,121 @@ class HintLog(MDRecycleView):
     @staticmethod
     def hint_sorter(element: dict) -> str:
         return element["status"]["hint"]["status"]  # By status by default
+
+class HintLabel(MDBoxLayout):
+    """Recyclable label widget for displaying hint information in a table format.
+    
+    This class represents a single row in the hint log table, displaying
+    information about hints including receiving player, item, finding player,
+    location, entrance, and status. It supports selection, sorting, and
+    status modification through dropdown menus.
+    
+    Attributes:
+        selected (bool): Whether this hint row is currently selected
+        striped (bool): Whether this row should have striped background
+        index (int): The index of this item in the recycle view
+        dropdown (MDDropdownMenu): Dropdown menu for status selection
+    """
+    selected = BooleanProperty(False)
+    striped = BooleanProperty(False)
+    index = None
+    dropdown: MDDropdownMenu
+
+    def __init__(self):
+        super(HintLabel, self).__init__()
+        self.receiving_text = ""
+        self.item_text = ""
+        self.finding_text = ""
+        self.location_text = ""
+        self.entrance_text = ""
+        self.status_text = ""
+        self.hint = {}
+
+        ctx = MDApp.get_running_app().ctx
+        menu_items = []
+
+        for status in (HintStatus.HINT_NO_PRIORITY, HintStatus.HINT_PRIORITY, HintStatus.HINT_AVOID):
+            name = status_names[status]
+            status_button = MDDropDownItem(MDDropDownItemText(text=name), size_hint_y=None, height=dp(50))
+            status_button.status = status
+            menu_items.append({
+                "text": name,
+                "leading_icon": status_icons[status],
+                "on_release": lambda x=status: select(self, x)
+            })
+
+        self.dropdown = MDDropdownMenu(caller=self.ids["status"], items=menu_items)
+
+        def select(instance, data):
+            ctx.update_hint(self.hint["location"],
+                            self.hint["finding_player"],
+                            data)
+
+        self.dropdown.bind(on_release=self.dropdown.dismiss)
+
+    def set_height(self, instance, value):
+        self.height = max([child.texture_size[1] for child in self.children])
+
+    def refresh_view_attrs(self, rv, index, data):
+        self.index = index
+        self.striped = data.get("striped", False)
+        self.receiving_text = data["receiving"]["text"]
+        self.item_text = data["item"]["text"]
+        self.finding_text = data["finding"]["text"]
+        self.location_text = data["location"]["text"]
+        self.entrance_text = data["entrance"]["text"]
+        self.status_text = data["status"]["text"]
+        self.hint = data["status"]["hint"]
+        return super(HintLabel, self).refresh_view_attrs(rv, index, data)
+
+    def on_touch_down(self, touch):
+        """ Add selection on touch down """
+        if super(HintLabel, self).on_touch_down(touch):
+            return True
+        if self.index:  # skip header
+            if self.collide_point(*touch.pos):
+                status_label = self.ids["status"]
+                if status_label.collide_point(*touch.pos):
+                    if self.hint["status"] == HintStatus.HINT_FOUND:
+                        return
+                    ctx = MDApp.get_running_app().ctx
+                    if ctx.slot_concerns_self(self.hint["receiving_player"]):  # If this player owns this hint
+                        # open a dropdown
+                        self.dropdown.open()
+                elif self.selected:
+                    self.parent.clear_selection()
+                else:
+                    text = "".join((self.receiving_text, "\'s ", self.item_text, " is at ", self.location_text, " in ",
+                                    self.finding_text, "\'s World", (" at " + self.entrance_text)
+                                    if self.entrance_text != "Vanilla"
+                                    else "", ". (", self.status_text.lower(), ")"))
+                    temp = Label(text).markup
+                    text = "".join(part for part in temp if not part.startswith("["))
+                    Clipboard.copy(escape_markup(text).replace("&amp;", "&").replace("&bl;", "[").replace("&br;", "]"))
+                    return self.parent.select_with_touch(self.index, touch)
+        else:
+            parent = self.parent
+            parent.clear_selection()
+            parent: HintLog = parent.parent
+            # find correct column
+            for child in self.children:
+                if child.collide_point(*touch.pos):
+                    key = child.sort_key
+                    if key == "status":
+                        parent.hint_sorter = lambda element: status_sort_weights[element["status"]["hint"]["status"]]
+                    # else:
+                        # parent.hint_sorter = lambda element: (
+                        #     remove_between_brackets.sub("", element[key]["text"]).lower()
+                        # )
+                    if key == parent.sort_key:
+                        # second click reverses order
+                        parent.reversed = not parent.reversed
+                    else:
+                        parent.sort_key = key
+                        parent.reversed = False
+                    MDApp.get_running_app().update_hints()
+
+    def apply_selection(self, rv, index, is_selected):
+        """ Respond to the selection of items in the view. """
+        if self.index:
+            self.selected = is_selected

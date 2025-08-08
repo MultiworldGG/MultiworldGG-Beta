@@ -363,7 +363,7 @@ class WLWorld(World):
         if force_non_progression:
             classification = ItemClassification.filler
         elif name == ItemName.garlic_clove:
-            classification = ItemClassification.progression_skip_balancing
+            classification = ItemClassification.progression_deprioritized_skip_balancing
         elif data.progression:
             classification = ItemClassification.progression
         elif data.trap:

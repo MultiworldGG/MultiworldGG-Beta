@@ -45,7 +45,7 @@ from kivy.clock import Clock
 from kivy.core.clipboard import Clipboard
 from kivy.animation import Animation
 from kivy.config import Config
-from kivy.uix.textinput import TextInput
+from kivy.uix.textinput import TextInput, FL_IS_LINEBREAK, FL_IS_WORDBREAK
 from kivy.core.text.markup import MarkupLabel as Label
 from kivy.cache import Cache
 from kivymd.uix.menu import MDDropdownMenu
@@ -272,6 +272,85 @@ class MarkupTextField(TextInput, ThemableBehavior):
         self._update_plaintext_lines()
         self._update_markup_to_plain_map()
 
+    # def _split_smart(self, text):
+    #     """
+    #     Do a "smart" split. If not multiline, or if wrap is set,
+    #     we are not doing smart split, just a split on line break.
+    #     Otherwise, we are trying to split as soon as possible, to prevent
+    #     overflow on the widget.
+    #     """
+
+    #     # depend of the options, split the text on line, or word
+    #     if not self.multiline or not self.do_wrap:
+    #         lines = text.split(u'\n')
+    #         lines_flags = [0] + [FL_IS_LINEBREAK] * (len(lines) - 1)
+    #         return lines, lines_flags
+
+    #     # no autosize, do wordwrap.
+    #     x = flags = 0
+    #     line = []
+    #     lines = []
+    #     lines_flags = []
+    #     _join = u''.join
+    #     lines_append, lines_flags_append = lines.append, lines_flags.append
+    #     padding_left = self.padding[0]
+    #     padding_right = self.padding[2]
+    #     width = self.width - padding_left - padding_right
+    #     text_width = self._get_text_width
+    #     _tab_width, _label_cached = self.tab_width, self._label_cached
+
+    #     # try to add each word on current line.
+    #     words_widths = {}
+    #     for word in self._tokenize(text):
+    #         is_newline = (word == u'\n')
+    #         try:
+    #             w = words_widths[word]
+    #         except KeyError:
+    #             w = text_width(word, _tab_width, _label_cached)
+    #             words_widths[word] = w
+    #         # if we have more than the width, or if it's a newline,
+    #         # push the current line, and create a new one
+    #         if (x + w > width and line) or is_newline:
+    #             lines_append(self._add_default_color(_join(line)))
+    #             lines_flags_append(flags)
+    #             flags = 0
+    #             line = []
+    #             x = 0
+    #         if is_newline:
+    #             flags |= FL_IS_LINEBREAK
+    #         elif width >= 1 and w > width:
+    #             while w > width:
+    #                 split_width = split_pos = 0
+    #                 # split the word
+    #                 for c in word:
+    #                     try:
+    #                         cw = words_widths[c]
+    #                     except KeyError:
+    #                         cw = text_width(c, _tab_width, _label_cached)
+    #                         words_widths[c] = cw
+    #                     if split_width + cw > width:
+    #                         break
+    #                     split_width += cw
+    #                     split_pos += 1
+    #                 if split_width == split_pos == 0:
+    #                     # can't fit the word in, give up
+    #                     break
+    #                 lines_append(self._add_default_color(word[:split_pos]))
+    #                 lines_flags_append(flags)
+    #                 flags = FL_IS_WORDBREAK
+    #                 word = word[split_pos:]
+    #                 w -= split_width
+    #             x = w
+    #             line.append(word)
+    #         else:
+    #             x += w
+    #             line.append(word)
+    #     if line or flags & FL_IS_LINEBREAK:
+    #         lines_append(self._add_default_color(_join(line)))
+    #         lines_flags_append(flags)
+
+    #     return lines, lines_flags
+
     def _create_line_label(self, text, hint=False):
         '''Create a label from a text, using line options'''
 
@@ -286,6 +365,8 @@ class MarkupTextField(TextInput, ThemableBehavior):
         
         if self.password and not hint:  # Don't replace hint_text with *
             ntext = self.password_mask * len(ntext)
+
+        ntext = self._get_bbcode(ntext)
 
         kw = self._get_line_options()
 
@@ -395,7 +476,6 @@ class MarkupTextField(TextInput, ThemableBehavior):
     def _is_color_tag(self, text) -> bool:
         """Check if the text is in a color tag with format [color=XXXXXX]text[/color]
         where XXXXXX is a 6-digit hex color code (0-9A-F), or if it contains just a closing color tag"""
-        import re
         # Pattern for complete color tag pair
         complete_pattern = r'.*\[color=[0-9A-Fa-f]{6}\].*\[\/color\].*'
         # Pattern for just a closing color tag - this will flag the markup warning but necessary for
@@ -403,6 +483,24 @@ class MarkupTextField(TextInput, ThemableBehavior):
         closing_pattern = r'.*\[\/color\].*'
         return bool(re.match(complete_pattern, text) or re.match(closing_pattern, text))
 
+    def _get_bbcode(self, ntext):
+        # get bbcoded text for python
+        try:
+            ntext[0]
+            # replace brackets with special chars that aren't highlighted
+            # by pygment. can't use &bl; ... cause & is highlighted
+            #ntext = ntext.replace(u'[', u'\x01').replace(u']', u'\x02')
+            #ntext = highlight(ntext, self.lexer, self.formatter)
+            #ntext = ntext.replace(u'\x01', u'&bl;').replace(u'\x02', u'&br;')
+            # replace special chars with &bl; and &br;
+            ntext = ''.join((u'[color=', str(self.text_default_color), u']',
+                             ntext, u'[/color]'))
+            #ntext = ntext.replace(u'\n', u'')
+            # remove possible extra highlight options
+            ntext = ntext.replace(u'[u]', '').replace(u'[/u]', '')
+            return ntext
+        except IndexError:
+            return ''
 
     def cursor_offset(self):
         '''Get the cursor x offset on the current line'''
@@ -872,26 +970,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
         def set_text(*args):
             if self.line_count > 1000:
                 self._lines = self._lines[-1000:] #_lines is bound to the text property
-            
-            # Process the incoming text to add color tags using patterns
-            if self.multiline:
-                # Simple pattern-based approach:
-                # 1. [/color]\n needs a [color= after it
-                # 2. \n with no color blocks needs both [color= and [/color]
-                # 3. \n[color= needs a [/color] before it
-                
-                # Add opening color tags after [/color]\n (but only if not already followed by [color=)
-                text = re.sub(r'\[/color\]\n(?!\[color=)', f'[/color]\n[color={self.text_default_color}]', text)
-                
-                # Add closing color tags before \n[color= (but only if not already preceded by [/color])
-                text = re.sub(r'(?<!\[/color\])\n\[color=', f'[/color]\n[color=', text)
-                
-                # Add both tags around \n that don't have color blocks (but only if not already handled)
-                text = re.sub(r'(?<!\[/color\])\n(?!\[color=)', f'[/color]\n[color={self.text_default_color}]', text)
-                
-                self.text = text
-            else:
-                self.text = re.sub("\n", " ", text)
+            self.text = re.sub("\n", " ", text) if not self.multiline else text
             self.set_max_text_length()
 
             if self.text and self._get_has_error() or self._get_has_error():

@@ -9,7 +9,7 @@ from json import JSONEncoder, JSONDecoder
 if typing.TYPE_CHECKING:
     from websockets import WebSocketServerProtocol as ServerConnection
 
-from Utils import ByValue, Version
+from BaseUtils import ByValue, Version
 
 class HintStatus(ByValue, enum.IntEnum):
     HINT_UNSPECIFIED = 0
@@ -276,7 +276,7 @@ class JSONtoTextParser(metaclass=HandlerMeta):
         elif flags & 0b1000:  # skip_balancing bit set
             if flags & 0b0001:  # progression_skip_balancing
                 node["color"] = 'progression_skip_item_color'  # citron for progression skip items
-            else:  # just skip_balancing (shouldn't happen in practice)
+            else:  # just skip_balancing
                 node["color"] = 'regular_item_color'
         elif flags & 0b0001:  # progression
             node["color"] = 'progression_item_color'  # gold for required progression

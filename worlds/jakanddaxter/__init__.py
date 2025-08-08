@@ -374,7 +374,7 @@ class JakAndDaxterWorld(World):
         # with the remainder as Filler, but they are still entirely fungible. See collect function for why these
         # are OrbAssoc.NEVER_UNLOCKS_ORBS.
         elif item in range(jak1_id + orbs.orb_offset, jak1_max - max(trap_item_table)):
-            data.append((self.total_prog_orb_bundles, ItemClass.progression_skip_balancing,
+            data.append((self.total_prog_orb_bundles, ItemClass.progression_deprioritized_skip_balancing,
                          OrbAssoc.NEVER_UNLOCKS_ORBS, self.orb_bundle_size))
             data.append((self.total_filler_orb_bundles, ItemClass.filler,
                          OrbAssoc.NEVER_UNLOCKS_ORBS, self.orb_bundle_size))

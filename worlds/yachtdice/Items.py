@@ -91,7 +91,7 @@ item_table = {
     "Bad RNG": ItemData(16871244204, ItemClassification.trap),
     "Bonus Point": ItemData(16871244205, ItemClassification.useful),  # not included in logic
     # These points are included in the logic and might be necessary to progress.
-    "1 Point": ItemData(16871244301, ItemClassification.progression_skip_balancing),
+    "1 Point": ItemData(16871244301, ItemClassification.progression_deprioritized_skip_balancing),
     "10 Points": ItemData(16871244302, ItemClassification.progression),
     "100 Points": ItemData(16871244303, ItemClassification.progression | ItemClassification.useful),
     

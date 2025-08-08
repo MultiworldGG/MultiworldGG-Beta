@@ -73,7 +73,7 @@ def get_item_classification(item: dict[str, typing.Any]) -> ItemClassification:
     if item["type"] == "KEY":
         return ItemClassification.progression
     if item["type"] == "EQUIP":
-        return ItemClassification.progression_skip_balancing
+        return ItemClassification.progression_deprioritized_skip_balancing
     if item["type"] == "TOGGLE":
         if "Booster" in item["name"]["en_US"]:
             return ItemClassification.progression

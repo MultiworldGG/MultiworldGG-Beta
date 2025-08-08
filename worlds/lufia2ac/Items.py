@@ -452,15 +452,15 @@ l2ac_item_table: Dict[str, ItemData] = {
     # 0x0199: "Bunnysuit"
     # 0x019A: "Seethru cape"
     # 0x019B: "Seethru silk"
-    "Iris sword": ItemData(0x039C, ItemType.IRIS_TREASURE, ItemClassification.progression_skip_balancing),
-    "Iris shield": ItemData(0x039D, ItemType.IRIS_TREASURE, ItemClassification.progression_skip_balancing),
-    "Iris helmet": ItemData(0x039E, ItemType.IRIS_TREASURE, ItemClassification.progression_skip_balancing),
-    "Iris armor": ItemData(0x039F, ItemType.IRIS_TREASURE, ItemClassification.progression_skip_balancing),
-    "Iris ring": ItemData(0x03A0, ItemType.IRIS_TREASURE, ItemClassification.progression_skip_balancing),
-    "Iris jewel": ItemData(0x03A1, ItemType.IRIS_TREASURE, ItemClassification.progression_skip_balancing),
-    "Iris staff": ItemData(0x03A2, ItemType.IRIS_TREASURE, ItemClassification.progression_skip_balancing),
-    "Iris pot": ItemData(0x03A3, ItemType.IRIS_TREASURE, ItemClassification.progression_skip_balancing),
-    "Iris tiara": ItemData(0x03A4, ItemType.IRIS_TREASURE, ItemClassification.progression_skip_balancing),
+    "Iris sword": ItemData(0x039C, ItemType.IRIS_TREASURE, ItemClassification.progression_deprioritized_skip_balancing),
+    "Iris shield": ItemData(0x039D, ItemType.IRIS_TREASURE, ItemClassification.progression_deprioritized_skip_balancing),
+    "Iris helmet": ItemData(0x039E, ItemType.IRIS_TREASURE, ItemClassification.progression_deprioritized_skip_balancing),
+    "Iris armor": ItemData(0x039F, ItemType.IRIS_TREASURE, ItemClassification.progression_deprioritized_skip_balancing),
+    "Iris ring": ItemData(0x03A0, ItemType.IRIS_TREASURE, ItemClassification.progression_deprioritized_skip_balancing),
+    "Iris jewel": ItemData(0x03A1, ItemType.IRIS_TREASURE, ItemClassification.progression_deprioritized_skip_balancing),
+    "Iris staff": ItemData(0x03A2, ItemType.IRIS_TREASURE, ItemClassification.progression_deprioritized_skip_balancing),
+    "Iris pot": ItemData(0x03A3, ItemType.IRIS_TREASURE, ItemClassification.progression_deprioritized_skip_balancing),
+    "Iris tiara": ItemData(0x03A4, ItemType.IRIS_TREASURE, ItemClassification.progression_deprioritized_skip_balancing),
     # 0x01A5: "Power jelly"
     # 0x01A6: "Jewel sonar"
     # 0x01A7: "Hook"

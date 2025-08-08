@@ -71,8 +71,10 @@ class Hint:
         if self.one_of_a_kind:
             return f"{formatted_location} has a legendary one-of-a-kind item."
         if self.location.item.classification == ItemClassification.progression:
-            return f"{formatted_location} has a wonderful item."
+            return f"{formatted_location} has a goal required item."
         if self.location.item.classification == ItemClassification.progression_skip_balancing:
+            return f"{formatted_location} has a wonderful item."
+        if self.location.item.classification == ItemClassification.progression_deprioritized_skip_balancing:
             return f"{formatted_location} has a great item."
         if self.location.item.classification == ItemClassification.useful:
             return f"{formatted_location} has a good item."
@@ -203,6 +205,8 @@ def generate_slow_locations_hints(world: World, hints: List[Hint]):
             return 20
         elif hint.location.item.classification == ItemClassification.progression:
             return 10
+        elif hint.location.item.classification == ItemClassification.progression_deprioritized_skip_balancing:
+            return 7
         elif hint.location.item.classification == ItemClassification.progression_skip_balancing:
             return 5
 

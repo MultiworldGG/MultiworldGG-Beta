@@ -43,10 +43,10 @@ item_table: Dict[str, RLItemData] = {
     "Traitors":                 RLItemData("Classes",    90_097, ItemClassification.useful),
 
     # Skills
-    "Health Up":                RLItemData("Skills",     90_013, ItemClassification.progression_skip_balancing, 15),
-    "Mana Up":                  RLItemData("Skills",     90_014, ItemClassification.progression_skip_balancing, 15),
-    "Attack Up":                RLItemData("Skills",     90_015, ItemClassification.progression_skip_balancing, 15),
-    "Magic Damage Up":          RLItemData("Skills",     90_016, ItemClassification.progression_skip_balancing, 15),
+    "Health Up":                RLItemData("Skills",     90_013, ItemClassification.progression_deprioritized_skip_balancing, 15),
+    "Mana Up":                  RLItemData("Skills",     90_014, ItemClassification.progression_deprioritized_skip_balancing, 15),
+    "Attack Up":                RLItemData("Skills",     90_015, ItemClassification.progression_deprioritized_skip_balancing, 15),
+    "Magic Damage Up":          RLItemData("Skills",     90_016, ItemClassification.progression_deprioritized_skip_balancing, 15),
     "Armor Up":                 RLItemData("Skills",     90_017, ItemClassification.useful,                     15),
     "Equip Up":                 RLItemData("Skills",     90_018, ItemClassification.useful,                      5),
     "Crit Chance Up":           RLItemData("Skills",     90_019, ItemClassification.useful,                      5),

@@ -2,6 +2,23 @@ import os
 import sys
 import typing
 
+class Version(typing.NamedTuple):
+    major: int
+    minor: int
+    build: int
+
+    def as_simple_string(self) -> str:
+        return ".".join(str(item) for item in self)
+
+def tuplize_version(version: str) -> Version:
+    return Version(*(int(piece, 10) for piece in version.split(".")))
+
+__version__ = "0.6.3"
+version_tuple = tuplize_version(__version__)
+
+instance_name = "MultiworldGG"
+archipelago_guid = "{{918BA46A-FAB8-460C-9DFF-AE691E1C865D}}"
+
 def is_frozen() -> bool:
     return typing.cast(bool, getattr(sys, 'frozen', False))
 
@@ -33,3 +50,11 @@ def local_path(*path: str) -> str:
             local_path.cached_path = os.path.abspath(".")
 
     return os.path.join(local_path.cached_path, *path)
+
+class ByValue:
+    """
+    Mixin for enums to pickle value instead of name (restores pre-3.11 behavior). Use as left-most parent.
+    See https://github.com/python/cpython/pull/26658 for why this exists.
+    """
+    def __reduce_ex__(self, prot):
+        return self.__class__, (self._value_, )

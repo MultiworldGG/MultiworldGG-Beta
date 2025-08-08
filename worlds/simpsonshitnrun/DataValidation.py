@@ -161,6 +161,9 @@ class DataValidation():
             if "progression_skip_balancing" in item and item["progression_skip_balancing"]:
                 continue
 
+            if "progression_deprioritized_skip_balancing" in item and item["progression_deprioritized_skip_balancing"]:
+                continue
+
             # check location requires for the presence of item name
             for location in DataValidation.location_table:
                 if "requires" not in location:

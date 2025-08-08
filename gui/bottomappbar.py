@@ -22,7 +22,7 @@ CONSOLE_ACTIONS = [
     "id":           "console",
     "buttonicon":   "chat-outline",
     "icon":         "chat-outline",
-    "prefill":      "!countdown ",
+    "prefill":      "",
     "label":        "Console",
     "indicator":    "blank",
     "type":         "assist",

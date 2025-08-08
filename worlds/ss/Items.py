@@ -65,22 +65,22 @@ ITEM_TABLE: dict[str, SSItemData] = {
     "Clawshots":            SSItemData("Item",         IC.progression,         20,     1,  0x14),
     "Spiral Charge":        SSItemData("Item",         IC.progression,         21,     1,  0x15),
 
-    "Ancient Cistern Boss Key":         SSItemData("Boss Key",     IC.progression_skip_balancing,         25,  1,  0x19),
-    "Fire Sanctuary Boss Key":          SSItemData("Boss Key",     IC.progression_skip_balancing,         26,  1,  0x1A),
-    "Sandship Boss Key":                SSItemData("Boss Key",     IC.progression_skip_balancing,         27,  1,  0x1B),
-    "Key Piece":                        SSItemData("Item",         IC.progression,                        28,  5,  0x1C),
-    "Skyview Boss Key":                 SSItemData("Boss Key",     IC.progression_skip_balancing,         29,  1,  0x1D),
-    "Earth Temple Boss Key":            SSItemData("Boss Key",     IC.progression_skip_balancing,         30,  1,  0x1E),
-    "Lanayru Mining Facility Boss Key": SSItemData("Boss Key",     IC.progression_skip_balancing,         31,  1,  0x1F),
+    "Ancient Cistern Boss Key":         SSItemData("Boss Key",     IC.progression,         25,  1,  0x19),
+    "Fire Sanctuary Boss Key":          SSItemData("Boss Key",     IC.progression,         26,  1,  0x1A),
+    "Sandship Boss Key":                SSItemData("Boss Key",     IC.progression,         27,  1,  0x1B),
+    "Key Piece":                        SSItemData("Item",         IC.progression_deprioritized_skip_balancing,    28,  5,  0x1C),
+    "Skyview Boss Key":                 SSItemData("Boss Key",     IC.progression,         29,  1,  0x1D),
+    "Earth Temple Boss Key":            SSItemData("Boss Key",     IC.progression,         30,  1,  0x1E),
+    "Lanayru Mining Facility Boss Key": SSItemData("Boss Key",     IC.progression,         31,  1,  0x1F),
 
-    "Silver Rupee":         SSItemData("Consumable",   IC.filler,              32,     24, 0x20),
-    "Gold Rupee":           SSItemData("Consumable",   IC.filler,              33,     11, 0x21),
-    "Rupoor":               SSItemData("Consumable",   IC.trap,                34,     0,  0x22),
+    "Silver Rupee":         SSItemData("Consumable",   IC.skip_balancing,              32,     24, 0x20),
+    "Gold Rupee":           SSItemData("Consumable",   IC.skip_balancing,              33,     11, 0x21),
+    "Rupoor":               SSItemData("Consumable",   IC.trap,                        34,     0,  0x22),
 
-    "Gratitude Crystal Pack":       SSItemData("Item",         IC.progression,         35,     13, 0x23),
+    "Gratitude Crystal Pack":       SSItemData("Item",         IC.progression_deprioritized_skip_balancing,         35,     13, 0x23),
     "5 Bombs":                      SSItemData("Item",         IC.filler,              40,     1,  0x28),
     "10 Bombs":                     SSItemData("Item",         IC.filler,              41,     0,  0x29), # Rupin
-    "Gratitude Crystal":            SSItemData("Item",         IC.progression,         48,     15, 0x30), # Locked
+    "Gratitude Crystal":            SSItemData("Item",         IC.progression_deprioritized_skip_balancing,         48,     15, 0x30), # Locked
     "Gust Bellows":                 SSItemData("Item",         IC.progression,         49,     1,  0x31),
     "Map":                          SSItemData("Item",         IC.filler,              50,     0,  0x32), # unused
     "Progressive Slingshot":        SSItemData("Item",         IC.progression,         52,     2,  0x34),
@@ -167,7 +167,7 @@ ITEM_TABLE: dict[str, SSItemData] = {
     "Sandship Map":                         SSItemData("Map",          IC.useful,              212,    1,  0xD4),
     "Sky Keep Map":                         SSItemData("Map",          IC.useful,              213,    1,  0xD5),
 
-    "Group of Tadtones":                    SSItemData("Item",         IC.progression,         214,    17, 0xD6),
+    "Group of Tadtones":                    SSItemData("Item",         IC.progression_deprioritized_skip_balancing,         214,    17, 0xD6),
     "Scrapper":                             SSItemData("Item",         IC.progression,         215,    1,  0xD7),
 
     # AP Victory item

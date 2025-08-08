@@ -136,11 +136,14 @@ class MultiMDApp(MDApp):
     launcher_text_input: BottomBarTextInput
     console_text_input: BottomBarTextInput
     hint_text_input: BottomBarTextInput
-    
+
     theme_mw: DefaultTheme
     top_appbar_menu: MDDropdownMenu
     pixelate_effect: EffectWidget
     ui_console: ObjectProperty
+
+    ui_player_data: dict[str, dict[str, bool]]
+    ui_hint_data: dict[str, dict[str, list[typing.Any]]]
 
     def __init__(self, ctx: context_type, **kwargs):
         super().__init__(**kwargs)
@@ -182,8 +185,8 @@ class MultiMDApp(MDApp):
             'slot': '',
             'alias': '',
             'pronouns': '',
-            'in_call': '0',
-            'in_bk': '0',
+            'in_call': 'False',
+            'in_bk': 'False',
             'hostname': 'multiworld.gg',
             'port': '38281',
             'password': '',
@@ -496,8 +499,29 @@ class MultiMDApp(MDApp):
             self.change_screen("console")
             self.console_screen.bottom_appbar.on_gui_focus()
 
+    def on_connect(self):
+        pronouns = self.app_config.get('client', 'pronouns')
+        in_call = self.app_config.get('client', 'in_call', fallback='False')
+        in_bk = self.app_config.get('client', 'in_bk', fallback='False')
+        for slot, name in self.ctx.player_names.items():
+            self.ui_player_data[slot] = {
+                "slot_name": name,
+                "avatar": "",
+                "bk_mode": in_bk,
+                "in_call": in_call,
+                "pronouns": pronouns,
+                "in_call": in_call,
+                "in_bk": in_bk,
+            }
+            if self.ctx.slot_concerns_self(slot):
+                self.ui_player_data[slot]["self"] = True
+            else:
+                self.ui_player_data[slot]["self"] = False
+            if pronouns:
+                self.ui_player_data[slot]["pronouns"] = pronouns
+        self.ui_hint_data = {}
+
     def print_json(self, data: typing.List[JSONMessagePart]):
-        self.focus_textinput()
         # Convert the list of JSONMessagePart to a single text message
         # Use KivyMarkupJSONtoTextParser to convert the JSON message parts to Kivy markup with hex colors
         parser = KivyMarkupJSONtoTextParser(self.ctx)
@@ -510,9 +534,74 @@ class MultiMDApp(MDApp):
             # Buffer the message until console is initialized
             self._message_buffer.append(text)
 
+    def refresh_hints(self):
+        self.ui_hint_data = {}
+        parser = KivyMarkupJSONtoTextParser(self.ctx)
+        hints_key = f"_read_hints_{self.ctx.team}_{self.ctx.slot}"
+        if hints_key not in self.ctx.stored_data:
+            return  # Hints data not available yet
+            
+        for player_slot, name in self.ctx.player_names:
+            self.ui_hint_data[name] = self.ui_player_data[player_slot]
+            for hint in self.ctx.stored_data[hints_key]:
+                # if not hint.get("status"): # Allows connecting to old servers
+                #     hint["status"] = HintStatus.HINT_FOUND if hint["found"] else HintStatus.HINT_UNSPECIFIED
+                # hint_status_node = self.parser.handle_node({"type": "color",
+                #                                             "color": status_colors.get(hint["status"], "red"),
+                #                                             "text": status_names.get(hint["status"], "Unknown")})
+                # if hint["status"] != HintStatus.HINT_FOUND and ctx.slot_concerns_self(hint["receiving_player"]):
+                #     hint_status_node = f"[u]{hint_status_node}[/u]"
+                if self.ctx.slot_concerns_self(hint["receiving_player"]):
+                    self.ui_hint_data[player["name"]] = {
+                        "receiving": {"text": parser.handle_node({"type": "player_id", "text": hint["receiving_player"]})},
+                        "item": {"text": parser.handle_node({
+                            "type": "item_id",
+                            "text": hint["item"],
+                            "flags": hint["item_flags"],
+                            "player": hint["receiving_player"],
+                        })},
+                        "finding": {"text": parser.handle_node({"type": "player_id", "text": hint["finding_player"]})},
+                        "location": {"text": parser.handle_node({
+                            "type": "location_id",
+                            "text": hint["location"],
+                            "player": hint["finding_player"],
+                        })},
+                        "entrance": {"text": self.parser.handle_node({"type": "color" if hint["entrance"] else "text",
+                                                                    "color": 'entrancecolor', "text": hint["entrance"]
+                                                                    if hint["entrance"] else "Vanilla"})},
+                    }
+                elif self.ctx.slot_concerns_self(hint["finding_player"]):
+                    self.ui_hint_data[player["name"]] = {
+                        "finding": {"text": parser.handle_node({"type": "player_id", "text": hint["finding_player"]})},
+                        "item": {"text": parser.handle_node({
+                            "type": "item_id",
+                            "text": hint["item"],
+                            "flags": hint["item_flags"],
+                            "player": hint["receiving_player"],
+                        })},
+                        "location": {"text": parser.handle_node({
+                            "type": "location_id",
+                            "text": hint["location"],
+                            "player": hint["finding_player"],
+                        })},
+                    }
+                # "status": {
+                #     "text": hint_status_node,
+                #     "hint": hint,
+                # },
+
+                # "status": {
+                #     "text": hint_status_node,
+                #     "hint": hint,
+                # },
+
+        # Update console screen slots list if it exists
+        if hasattr(self, 'console_screen') and self.console_screen:
+            self.console_screen.update_slots_list()
+
     def update_hints(self):
-        hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}", [])
-        #self.hint_log.refresh_hints(hints)
+        """Called when hints data is updated from the server"""
+        self.refresh_hints()
 
 def is_command_input(string: str) -> bool:
     return len(string) > 0 and string[0] in "/!"

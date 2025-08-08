@@ -240,7 +240,7 @@ ITEM_TABLE: dict[str, TPItemData] = {
     # "Sky Character 3": TPItemData("Item", IC.useful, 134, 1, 0xDD),
     # "Sky Character 4": TPItemData("Item", IC.useful, 135, 1, 0xDE),
     # "Sky Character 5": TPItemData("Item", IC.useful, 136, 1, 0xDF),
-    "Poe Soul": TPItemData("Poe", IC.progression_skip_balancing, 124, 60, 0xE0),
+    "Poe Soul": TPItemData("Poe", IC.progression_deprioritized_skip_balancing, 124, 60, 0xE0),
     # "Poe 1 (Fire)": TPItemData("Item", IC.useful, 125, 1, 0xEF),
     # "Poe 2 (Fire)": TPItemData("Item", IC.useful, 126, 1, 0xF0),
     # "Poe 3 (Fire)": TPItemData("Item", IC.useful, 127, 1, 0xF1),

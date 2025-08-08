@@ -30,7 +30,6 @@ from kivymd.uix.appbar import MDTopAppBar, MDTopAppBarLeadingButtonContainer, MD
 from kivymd.uix.sliverappbar import MDSliverAppbar, MDSliverAppbarContent, MDSliverAppbarHeader
 from kivymd.uix.expansionpanel import MDExpansionPanel, MDExpansionPanelContent
 from kivymd.uix.list import MDList, MDListItem
-from .testdict import testdict
 from dataclasses import dataclass
 from textwrap import wrap
 from .kivydi.expansionlist import *
@@ -86,12 +85,22 @@ class ConsoleLayout(MDRelativeLayout):
 
 class ConsoleSliverAppbar(MDSliverAppbar):
     content: MDSliverAppbarContent
+    app: MDApp
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.app = MDApp.get_running_app()
         self.content = MDSliverAppbarContent(orientation="vertical")
         self.content.id = "content"
         self.add_widget(self.content)
+
+    def set_bk(self):
+        self.app.ctx.update_tags({"in_bk": not self.app.ctx.tags.get("in_bk", False)})
+        self.app.print_json([{"type": "color", "color": "green", "text": "BK mode set to " + str(self.app.ctx.tags.get("in_bk", False)) + "."}])
+    
+    def set_deafen(self):
+        self.app.ctx.update_tags({"in_call": not self.app.ctx.tags.get("in_call", False)})
+        self.app.print_json([{"type": "color", "color": "green", "text": "Deafen mode set to " + str(self.app.ctx.tags.get("in_call", False)) + "."}])
 
 class ConsoleScreen(MDScreen, ThemableBehavior):
     '''
@@ -100,6 +109,7 @@ class ConsoleScreen(MDScreen, ThemableBehavior):
     Right contains the console
     '''
     name = "console"
+    app: MDApp
     console_hero_to: ObjectProperty
     consolegrid: MDBoxLayout
     important_appbar: MDSliverAppbar
@@ -108,6 +118,7 @@ class ConsoleScreen(MDScreen, ThemableBehavior):
 
 
     def __init__(self, **kwargs):
+        self.app = MDApp.get_running_app()
         self.size_hint = (1,1)
         self.pos_hint = {"center_x": 0.5, "center_y": 0.5}
         super().__init__(**kwargs)
@@ -122,6 +133,8 @@ class ConsoleScreen(MDScreen, ThemableBehavior):
 
         Clock.schedule_once(lambda x: self.init_important())
 
+    def update_slots_list(self):
+        """Update the slots list when hints data becomes available"""
         asynckivy.start(self.set_slots_list())
 
 
@@ -146,7 +159,11 @@ class ConsoleScreen(MDScreen, ThemableBehavior):
 
     async def set_slots_list(self):
         self.slots_mdlist.clear_widgets()
-        for slot_name, slot_data in testdict.items():
+        hints_key = f"_read_hints_{self.app.ctx.team}_{self.app.ctx.slot}"
+        if hints_key not in self.app.ctx.stored_data:
+            return  # Hints data not available yet
+        
+        for slot_data in self.app.ctx.stored_data[hints_key].items():
             await asynckivy.sleep(0)
-            slot = GameListPanel(item_name=slot_name, item_data=slot_data)
+            slot = GameListPanel(item_name=self.app.ctx.auth, item_data=slot_data, panel=self)
             self.slots_mdlist.add_widget(slot)

@@ -28,7 +28,7 @@ class LocalItem:
         self.local_id = local_id
         self.count = count
         self.item_class = item_class
-        self.tossable = (item_class != IClass.progression and item_class != IClass.progression_skip_balancing)
+        self.tossable = (item_class != IClass.progression and item_class != IClass.progression_skip_balancing and item_class != IClass.progression_deprioritized_skip_balancing)
 
 
 class LocalLevel(LocalItem):
@@ -281,8 +281,8 @@ class LocalItemData:
     }
 
     other_items: Dict[str, LocalItem] = {
-        "Maximum Power Up":      LocalItem(906, count=10, item_class=IClass.progression_skip_balancing),  # 1 -> 11
-        "Armor Up":              LocalItem(907, count=9,  item_class=IClass.progression_skip_balancing),  # 5 -> 14
+        "Maximum Power Up":      LocalItem(906, count=10, item_class=IClass.progression_deprioritized_skip_balancing),  # 1 -> 11
+        "Armor Up":              LocalItem(907, count=9,  item_class=IClass.progression_deprioritized_skip_balancing),  # 5 -> 14
         "Shield Up":             LocalItem(908, count=9,  item_class=IClass.useful),  # 5 -> 14
         "Solar Shields":         LocalItem(909, count=1,  item_class=IClass.useful),
 

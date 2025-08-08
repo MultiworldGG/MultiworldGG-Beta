@@ -768,9 +768,9 @@ class HKItem(Item):
         elif name == "Godtuner":
             classification = ItemClassification.progression
         elif type in ("Grub", "DreamWarrior", "Root", "Egg", "Dreamer"):
-            classification = ItemClassification.progression_skip_balancing
+            classification = ItemClassification.progression_deprioritized_skip_balancing
         elif type == "Charm" and name not in progression_charms:
-            classification = ItemClassification.progression_skip_balancing
+            classification = ItemClassification.progression_deprioritized_skip_balancing
         elif type in ("Map", "Journal"):
             classification = ItemClassification.filler
         elif type in ("Ore", "Vessel"):

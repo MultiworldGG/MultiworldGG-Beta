@@ -21,7 +21,7 @@ item_table: Dict[str, ItemInfo] = {
     "Force Mod": ItemInfo(3, IC.progression | IC.useful, 1),
     "Stabilizer": ItemInfo(10, IC.progression, 2),
     "Clone Material": ItemInfo(11, IC.useful, 3),
-    "Shield Upgrade": ItemInfo(12, IC.progression_skip_balancing, 25),
+    "Shield Upgrade": ItemInfo(12, IC.progression_deprioritized_skip_balancing, 25),
     "Key Code A": ItemInfo(20, IC.progression_skip_balancing, 1),
     "Key Code B": ItemInfo(21, IC.progression_skip_balancing, 1),
     "Key Code C": ItemInfo(22, IC.progression_skip_balancing, 1),

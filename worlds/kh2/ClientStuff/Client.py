@@ -69,6 +69,7 @@ class KH2Context(CommonContext):
             self.auth = self.slot_name
         else:
             self.auth = None
+
         self.disconnect_from_server = False
         self.sending = []
         # queue for the strings to display on the screen

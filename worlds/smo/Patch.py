@@ -496,7 +496,7 @@ def patch_shop_text(rom_fs : str, location_data : dict, player : int, names : di
                             ("Comes from the world of " + item_game.replace("_", " ") +  ".\nSeems to belong to " + item_player +
                             ".\n")
                         root.msbt["labels"][internal_name.replace(" ", "") + "_Explain"]["message"] += ("It looks really important!"
-                            if item_classification == ItemClassification.progression_skip_balancing or
+                            if item_classification == ItemClassification.progression_skip_balancing or item_classification == ItemClassification.progression_deprioritized_skip_balancing or
                             item_classification == ItemClassification.progression or item_classification == ItemClassification.trap
                             else "It looks useful!" if item_classification == ItemClassification.useful else "It looks like junk, but may as well ask...")
 
@@ -509,7 +509,7 @@ def patch_shop_text(rom_fs : str, location_data : dict, player : int, names : di
                                 "message"] = filler_item_table[location_data[item][1]] + "\0"
                         else:
                             root.msbt["labels"][internal_name.replace(" ", "") + "_Explain"][
-                                "message"] = ("I may need this!" if item_classification == ItemClassification.progression_skip_balancing or item_classification ==
+                                "message"] = ("I may need this!" if item_classification == ItemClassification.progression_skip_balancing or item_classification == ItemClassification.progression_deprioritized_skip_balancing or
                             ItemClassification.progression or item_classification == ItemClassification.trap
                             else "It looks useful!" if item_classification == ItemClassification.useful else "I don't need this...")
                             root.msbt["labels"][internal_name.replace(" ", "") + "_Explain"]["message"] += "\0"

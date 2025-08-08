@@ -10,15 +10,15 @@ class ItemDict(TypedDict):
 base_id = 82000
 
 item_table: List[ItemDict] = [
-    {"name": "Stick", "id": base_id + 1, "count": 0, "classification": ItemClassification.progression_skip_balancing},
-    {"name": "Seashell", "id": base_id + 2, "count": 23, "classification": ItemClassification.progression_skip_balancing},
+    {"name": "Stick", "id": base_id + 1, "count": 0, "classification": ItemClassification.progression_deprioritized_skip_balancing},
+    {"name": "Seashell", "id": base_id + 2, "count": 23, "classification": ItemClassification.progression_deprioritized_skip_balancing},
     {"name": "Golden Feather", "id": base_id + 3, "count": 0, "classification": ItemClassification.progression},
     {"name": "Silver Feather", "id": base_id + 4, "count": 0, "classification": ItemClassification.useful},
     {"name": "Bucket", "id": base_id + 5, "count": 0, "classification": ItemClassification.progression},
     {"name": "Bait", "id": base_id + 6, "count": 2, "classification": ItemClassification.filler},
     {"name": "Progressive Fishing Rod", "id": base_id + 7, "count": 2, "classification": ItemClassification.progression},
     {"name": "Shovel", "id": base_id + 8, "count": 1, "classification": ItemClassification.progression},
-    {"name": "Toy Shovel", "id": base_id + 9, "count": 0, "classification": ItemClassification.progression_skip_balancing},
+    {"name": "Toy Shovel", "id": base_id + 9, "count": 0, "classification": ItemClassification.progression_deprioritized_skip_balancing},
     {"name": "Compass", "id": base_id + 10, "count": 1, "classification": ItemClassification.useful},
     {"name": "Medal", "id": base_id + 11, "count": 3, "classification": ItemClassification.filler},
     {"name": "Shell Necklace", "id": base_id + 12, "count": 1, "classification": ItemClassification.progression},

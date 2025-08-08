@@ -10,6 +10,7 @@ item_categories: Dict[ItemClassification, str] = {
     ItemClassification.progression: "valuable",
     ItemClassification.skip_balancing: "useful",
     ItemClassification.progression_skip_balancing: "valuable",
+    ItemClassification.progression_deprioritized_skip_balancing: "valuable",
 }
 
 

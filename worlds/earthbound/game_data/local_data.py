@@ -1337,7 +1337,8 @@ local_present_types = {
     "progression": [0xE9, 0x00],
     "useful": [0xC3, 0x00],
     "trap": [0xE9, 0x00],
-    "progression_skip_balancing": [0xE9, 0x00]
+    "progression_skip_balancing": [0xE9, 0x00],
+    "progression_deprioritized_skip_balancing": [0xC3, 0x00]
 }
 
 nonlocal_present_types = {
@@ -1345,7 +1346,8 @@ nonlocal_present_types = {
     "progression": [0x90, 0x01],
     "useful": [0x98, 0x01],
     "trap": [0x90, 0x01],
-    "progression_skip_balancing": [0x90, 0x01]
+    "progression_skip_balancing": [0x90, 0x01],
+    "progression_deprioritized_skip_balancing": [0x98, 0x01]
 
 }
 
@@ -1354,6 +1356,7 @@ present_text_pointers = {
     "progression": [0x67, 0xd8, 0xc7],
     "useful": [0x4F, 0xD8, 0xC7],
     "progression_skip_balancing": [0x67, 0xd8, 0xc7],
+    "progression_deprioritized_skip_balancing": [0x4F, 0xD8, 0xC7],
     "trap": [0x67, 0xd8, 0xc7]
 }
 

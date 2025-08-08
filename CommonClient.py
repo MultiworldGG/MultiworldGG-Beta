@@ -19,9 +19,6 @@ import websockets
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 
-if __name__ == "__main__":
-    Utils.init_logging("TextClient", exception_logger="Client")
-
 from MultiServer import CommandProcessor, mark_raw
 from NetUtils import (Endpoint, ClientStatus, encode, decode, NetworkItem, NetworkPlayer, NetworkSlot, 
                       Permission, SlotType, LocationStore, Hint, HintStatus, JSONtoTextParser,
@@ -94,6 +91,7 @@ class ClientCommandProcessor(CommandProcessor):
         """Connect to a MultiWorld Server"""
         if address:
             self.ctx.server_address = None
+            # TODO: add checks to see if it was a failed username/password rather than wiping them out.
             self.ctx.username = None
             self.ctx.password = None
         elif not self.ctx.server_address:
@@ -620,6 +618,8 @@ class CommonContext(InitContext):
     def consume_players_package(self, package: typing.List[tuple]):
         self.player_names = {slot: name for team, slot, name, orig_name in package if self.team == team}
         self.player_names[0] = "Archipelago"
+        if self.ui:
+            self.ui.ui_player_data = {slot: {} for team, slot in package if self.team == team}
 
     def event_invalid_slot(self):
         raise Exception('Invalid Slot; please verify that you have connected to the correct world.')
@@ -708,6 +708,12 @@ class CommonContext(InitContext):
         if self.ui:
             # send copy to UI
             self.ui.print_json(copy.deepcopy(args["data"]))
+        if args["data"]["tags"]:
+            for tag in self.ui.ui_player_data[args["data"]["slot"]]:
+                if tag in args["data"]["tags"]:
+                    self.ui.ui_player_data[args["data"]["slot"]][tag] = True
+                else:
+                    self.ui.ui_player_data[args["data"]["slot"]][tag] = False
 
         logging.getLogger("FileLog").info(self.rawjsontotextparser(copy.deepcopy(args["data"])),
                                           extra={"NoStream": True})
@@ -751,7 +757,18 @@ class CommonContext(InitContext):
         while self.input_requests > 0:
             self.input_queue.put_nowait(None)
             self.input_requests -= 1
-        self.keep_alive_task.cancel()
+        
+        # Set exit event first so keep_alive can exit naturally
+        self.exit_event.set()
+        
+        # Cancel keep_alive task if it's still running
+        if self.keep_alive_task and not self.keep_alive_task.done():
+            self.keep_alive_task.cancel()
+            try:
+                await self.keep_alive_task
+            except asyncio.CancelledError:
+                pass  # Expected when task is cancelled
+        
         if self.ui_task:
             await self.ui_task
         if self.input_task:
@@ -904,28 +921,34 @@ class CommonContext(InitContext):
         if old_tags != self.tags and self.server and not self.server.socket.closed:
             await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
 
+    async def update_tags(self, tags: typing.Set[str]):
+        """Helper function to update the tags of the client."""
+        old_tags = self.tags.copy()
+        self.tags = tags
+        if old_tags != self.tags and self.server and not self.server.socket.closed:
+            await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
+
     def gui_error(self, title: str, text: typing.Union[Exception, str]) -> typing.Optional["gui.dialog.MessageBox"]:
         """Displays an error messagebox in the loaded Kivy UI. Override if using a different UI framework"""
-        pass
-        # if not self.ui:
-        #     return None
-        # title = title or "Error"
-        # from gui.dialog import MessageBox
-        # if self._messagebox:
-        #     self._messagebox.dismiss()
-        # # make "Multiple exceptions" look nice
-        # text = str(text).replace('[Errno', '\n[Errno').strip()
-        # # split long messages into title and text
-        # parts = title.split('. ', 1)
-        # if len(parts) == 1:
-        #     parts = title.split(', ', 1)
-        # if len(parts) > 1:
-        #     text = parts[1] + '\n\n' + text
-        #     title = parts[0]
-        # # display error
-        # self._messagebox = MessageBox(title, text, error=True)
-        # self._messagebox.open()
-        # return self._messagebox
+        if not self.ui:
+            return None
+        title = title or "Error"
+        from gui.dialog import MessageBox
+        if self._messagebox:
+            self._messagebox.dismiss()
+        # make "Multiple exceptions" look nice
+        text = str(text).replace('[Errno', '\n[Errno').strip()
+        # split long messages into title and text
+        parts = title.split('. ', 1)
+        if len(parts) == 1:
+            parts = title.split(', ', 1)
+        if len(parts) > 1:
+            text = parts[1] + '\n\n' + text
+            title = parts[0]
+        # display error
+        self._messagebox = MessageBox(title, text, error=True)
+        self._messagebox.open()
+        return self._messagebox
 
     def handle_connection_loss(self, msg: str) -> None:
         """Helper for logging and displaying a loss of connection. Must be called from an except block."""
@@ -1045,7 +1068,7 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
             raise
         except Exception as e:
             # Log unexpected errors but don't let them crash the loop
-            logger.warning(f"Error in server loop: {e}")
+            logger.warning(f"Error in server loop: {e}", exc_info=True)
         finally:
             logger.warning(f"Disconnected from multiworld server{reconnect_hint()}")
     except websockets.InvalidMessage:
@@ -1171,6 +1194,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.slot_info = {0: NetworkSlot("Archipelago", "Archipelago", SlotType.player)}
         ctx.slot_info.update({int(pid): data for pid, data in args["slot_info"].items()})
         ctx.hint_points = args.get("hint_points", 0)
+        ctx.players = args["players"]
         ctx.consume_players_package(args["players"])
         ctx.stored_data_notification_keys.add(f"_read_hints_{ctx.team}_{ctx.slot}")
         msgs = []
@@ -1225,6 +1249,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
     elif cmd == "RoomUpdate":
         if "players" in args:
             ctx.consume_players_package(args["players"])
+            ctx.players = args["players"]
         if "hint_points" in args:
             ctx.hint_points = args['hint_points']
         if "checked_locations" in args:
@@ -1262,6 +1287,9 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             ctx.current_energy_link_value = args["value"]
             if ctx.ui:
                 ctx.ui.set_new_energy_link_value()
+
+    elif cmd == "SetUserTags":
+        ctx.player_info[args["slot"]]["tags"] = args["tags"]
     else:
         logger.debug(f"unknown command {cmd}")
 

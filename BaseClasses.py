@@ -1557,8 +1557,8 @@ class ItemClassification(IntFlag):
     Item that is logically relevant, but progression balancing should not touch.
 
     Possible reasons for why an item should not be pulled ahead by progression balancing:
-    1. This item is quite insignificant, so pulling it earlier doesn't help (currency/etc.)
-    2. It is important for the player experience that this item is evenly distributed in the seed (e.g. goal items) """
+    This item is quite insignificant, so pulling it earlier doesn't help.
+    Examples: Currency, Ammo, etc. """
 
     deprioritized = 0b10000
     """ Should technically never occur on its own.
@@ -1570,10 +1570,21 @@ class ItemClassification(IntFlag):
 
     progression_deprioritized_skip_balancing = 0b11001
     """ Since a common case of both skip_balancing and deprioritized is "insignificant progression", 
-    these items often want both flags. """
+    these items often want both flags. 
+    Items that are logically required to unlock other checks, but any specific one may not be needed.
+    Examples: Skulltula Tokens, Grubs, Weapons, etc """
 
-    progression_skip_balancing = 0b01001  # only progression gets balanced
-    progression_deprioritized = 0b10001  # only progression can be placed during priority fill
+    progression_skip_balancing = 0b01001
+    """
+    Item that is logically required to beat the game, but is otherwise useless.  A Macguffin.
+    Items placed here should not unlock any other items, only be used to unlock the goal.
+    Protects this item from being placed on excluded or unreachable locations.
+    Examples: Triforce, Artifact, Proof, etc.
+    """
+    progression_deprioritized = 0b10001
+    """
+    Any progression item that you don't especially want to find on a priority location.
+    """
 
     def as_flag(self) -> int:
         """As Network API flag int."""

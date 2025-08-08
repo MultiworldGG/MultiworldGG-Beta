@@ -22,6 +22,9 @@ Builder.load_string('''
     MDListItemSupportingText:
         text: root.text
 
+    MDListItemTertiaryText:
+        text: root.unicode_value
+
 
 <PreviousMDIcons>
     md_bg_color: self.theme_cls.backgroundColor
@@ -71,6 +74,7 @@ Builder.load_string('''
 class IconItem(MDListItem):
     icon = StringProperty()
     text = StringProperty()
+    unicode_value = StringProperty()
 
 
 class PreviousMDIcons(MDScreen, ThemableBehavior):
@@ -78,11 +82,15 @@ class PreviousMDIcons(MDScreen, ThemableBehavior):
         '''Builds a list of icons for the screen MDIcons.'''
 
         def add_icon_item(name_icon):
+            unicode_char = md_icons.get(name_icon, "")
+            # Convert unicode character to escape sequence
+            unicode_escape = repr(unicode_char)[1:-1] if unicode_char else ""
             self.ids.rv.data.append(
                 {
                     "viewclass": "IconItem",
                     "icon": name_icon,
                     "text": name_icon,
+                    "unicode_value": unicode_escape,
                     "callback": lambda x: x,
                 }
             )
