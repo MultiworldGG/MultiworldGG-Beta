@@ -70,10 +70,11 @@ class Hint:
 
         if self.one_of_a_kind:
             return f"{formatted_location} has a legendary one-of-a-kind item."
-        if self.location.item.classification == ItemClassification.progression:
-            return f"{formatted_location} has a goal required item."
-        if self.location.item.classification == ItemClassification.progression_skip_balancing:
+        if self.location.item.classification == ItemClassification.progression or \
+           self.location.item.classification == ItemClassification.progression_deprioritized:
             return f"{formatted_location} has a wonderful item."
+        if self.location.item.classification == ItemClassification.progression_skip_balancing:
+            return f"{formatted_location} has a goal required item."
         if self.location.item.classification == ItemClassification.progression_deprioritized_skip_balancing:
             return f"{formatted_location} has a great item."
         if self.location.item.classification == ItemClassification.useful:

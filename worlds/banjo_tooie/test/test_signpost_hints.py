@@ -129,6 +129,7 @@ class TestCrypticSignpostsHints(TestSignpostsHints):
 
             classification_keywords = {
                 ItemClassification.progression: "wonderful",
+                ItemClassification.progression_deprioritized: "wonderful",
                 ItemClassification.progression_skip_balancing: "goal",
                 ItemClassification.progression_deprioritized_skip_balancing: "great",
                 ItemClassification.useful: "good",

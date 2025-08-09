@@ -285,7 +285,7 @@ del (_simple_groups)
 
 everything = {name for name, data in item_table.items() if type(data.item_code) == int}
 progression_items = {name for name in everything if
-                     item_table[name].classification in {IC.progression, IC.progression_skip_balancing, IC.progression_deprioritized_skip_balancing}}
+                     item_table[name].classification in {IC.progression, IC.progression_skip_balancing, IC.progression_deprioritized,IC.progression_deprioritized_skip_balancing}}
 item_name_groups['Progression Items'] = progression_items
 item_name_groups['Non Progression Items'] = everything - progression_items
 item_name_groups['Upgrades'] = {name for name in everything if 'Upgrade' in name}

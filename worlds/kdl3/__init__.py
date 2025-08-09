@@ -98,7 +98,7 @@ class KDL3World(World):
         classification = ItemClassification.filler
         if item.progression and not force_non_progression:
             classification = ItemClassification.progression_deprioritized_skip_balancing \
-                if item.skip_balancing else ItemClassification.progression
+                if item.progression_deprioritized_skip_balancing else ItemClassification.progression
         elif item.trap:
             classification = ItemClassification.trap
         return KDL3Item(name, classification, item.code, self.player)

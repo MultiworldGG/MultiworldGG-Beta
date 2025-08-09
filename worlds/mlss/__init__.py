@@ -120,7 +120,7 @@ class MLSSWorld(World):
         required_items = []
         precollected = [item for item in itemList if item in self.multiworld.precollected_items]
         for item in itemList:
-            if item.classification != ItemClassification.filler and item.classification != ItemClassification.skip_balancing:
+            if item.classification != ItemClassification.filler and item.classification != ItemClassification.progression_deprioritized_skip_balancing:
                 freq = item_frequencies.get(item.itemName, 1)
                 if item.itemName == "Beanstar Emblem":
                     freq = (0 if self.options.goal != "emblem_hunt" else self.options.emblems_amount.value)

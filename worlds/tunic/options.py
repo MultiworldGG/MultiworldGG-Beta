@@ -290,6 +290,16 @@ class CombatLogic(Choice):
     option_on = 2
     default = 0
 
+class TrueEnd(Choice):
+    """
+    If enabled, the pages are marked as deprioritized progression items rather than useful items. This 
+    will not effect the logic of the game, only the item classification.
+    """
+    internal_name = "true_end"
+    display_name = "True Ending"
+    option_off = 0
+    option_on = 1
+    default = 0
 
 class LaurelsZips(Toggle):
     """
@@ -419,6 +429,7 @@ tunic_option_groups = [
     ]),
     OptionGroup("Logic Options", [
         CombatLogic,
+        TrueEnd,
         Lanternless,
         Maskless,
         LaurelsZips,

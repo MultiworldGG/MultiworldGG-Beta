@@ -114,6 +114,7 @@ def get_item_counts(world: "CV64World") -> Dict[str, Dict[str, int]]:
         "progression": {},
         "progression_skip_balancing": {},
         "progression_deprioritized_skip_balancing": {},
+        "progression_deprioritized": {},
         "useful": {},
         "filler": {},
         "trap": {}

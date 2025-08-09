@@ -158,8 +158,8 @@ itemList: typing.List[ItemData] = [
     ItemData(77771140, "Power Grip", ItemClassification.useful, 0xFC),
     ItemData(77771141, "Cobalt Necktie", ItemClassification.useful, 0xFD),
     ItemData(77771142, "Game Boy Horror SP", ItemClassification.useful, 0xFE),
-    ItemData(77771143, "Woo Bean", ItemClassification.skip_balancing, 0x1C),
-    ItemData(77771144, "Hee Bean", ItemClassification.skip_balancing, 0x1F),
+    ItemData(77771143, "Woo Bean", ItemClassification.progression_deprioritized_skip_balancing, 0x1C),
+    ItemData(77771144, "Hee Bean", ItemClassification.progression_deprioritized_skip_balancing, 0x1F),
     ItemData(77771145, "Beanstar Emblem", ItemClassification.progression, 0x3E),
 ]
 

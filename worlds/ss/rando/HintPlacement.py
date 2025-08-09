@@ -290,13 +290,17 @@ class Hints:
                 if trial_item.classification == IC.progression
                 or trial_item.classification == IC.progression_skip_balancing
                 or trial_item.classification == IC.progression_deprioritized_skip_balancing
+                or trial_item.classification == IC.progression_deprioritized
                 or trial_item.classification == IC.useful
                 else [useless_text]
             )
         if self.world.options.song_hints == "advanced":
-            if trial_item.classification == IC.progression or trial_item.classification == IC.progression_skip_balancing or trial_item.classification == IC.progression_deprioritized_skip_balancing:
+            if trial_item.classification == IC.progression or 
+               trial_item.classification == IC.progression_skip_balancing or 
+               trial_item.classification == IC.progression_deprioritized_skip_balancing or 
+               trial_item.classification == IC.progression_deprioritized:
                 return [required_text]
-            elif trial_item.classification == IC.useful or trial_item.classification == IC.skip_balancing:
+            elif trial_item.classification == IC.useful:
                 return [useful_text]
             else:
                 return [useless_text]

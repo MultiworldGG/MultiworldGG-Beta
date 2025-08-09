@@ -325,6 +325,7 @@ class TunicWorld(World):
         # it'll choose whichever classification isn't None first in this if else tree
         itemclass: ItemClassification = (classification
                                          or (item_data.combat_ic if self.options.combat_logic else None)
+                                         or (item_data.trueend_ic if self.options.true_end else None)
                                          or (ItemClassification.progression | ItemClassification.useful
                                              if name == "Glass Cannon"
                                              and (self.options.grass_randomizer or self.options.breakable_shuffle)

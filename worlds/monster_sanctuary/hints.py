@@ -8,7 +8,7 @@ item_categories: Dict[ItemClassification, str] = {
     ItemClassification.useful: "useful",
     ItemClassification.trap: "valuable",  # It's a trap, so let's pretend it's a progression item
     ItemClassification.progression: "valuable",
-    ItemClassification.skip_balancing: "useful",
+    ItemClassification.progression_deprioritized: "valuable",
     ItemClassification.progression_skip_balancing: "valuable",
     ItemClassification.progression_deprioritized_skip_balancing: "valuable",
 }

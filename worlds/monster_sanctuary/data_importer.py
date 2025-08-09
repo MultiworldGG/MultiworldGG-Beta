@@ -260,6 +260,10 @@ def parse_item_classification(text: Optional[str]) -> Optional[ItemClassificatio
         return ItemClassification.skip_balancing
     elif text == "progression_skip_balancing":
         return ItemClassification.progression_skip_balancing
+    elif text == "progression_deprioritized_skip_balancing":
+        return ItemClassification.progression_deprioritized_skip_balancing
+    elif text == "progression_deprioritized":
+        return ItemClassification.progression_deprioritized
 
     return None
 

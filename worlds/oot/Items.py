@@ -42,7 +42,7 @@ class OOTItem(Item):
         elif name == "Ice Trap":
             classification = ItemClassification.trap
         elif name in "Gold Skulltula Token":
-            classification = ItemClassification.progression_deprioritized_skip_balancing
+            classification = ItemClassification.progression_deprioritized
         elif name == "Triforce Piece":
             classification = ItemClassification.progression_skip_balancing
         elif advancement:

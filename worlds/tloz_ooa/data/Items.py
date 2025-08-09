@@ -118,27 +118,27 @@ ITEMS_DATA = {
         'subid': 0x02
     },
     "Rupees (20)": {
-        'classification': ItemClassification.skip_balancing,
+        'classification': ItemClassification.progression_deprioritized_skip_balancing,
         'id': 0x28,
         'subid': 0x03
     },
     "Rupees (30)": {
-        'classification': ItemClassification.skip_balancing,
+        'classification': ItemClassification.progression_deprioritized_skip_balancing,
         'id': 0x28,
         'subid': 0x04
     },
     "Rupees (50)": {
-        'classification': ItemClassification.skip_balancing,
+        'classification': ItemClassification.progression_deprioritized_skip_balancing,
         'id': 0x28,
         'subid': 0x05
     },
     "Rupees (100)": {
-        'classification': ItemClassification.skip_balancing,
+        'classification': ItemClassification.progression_deprioritized_skip_balancing,
         'id': 0x28,
         'subid': 0x06
     },
     "Rupees (200)": {
-        'classification': ItemClassification.skip_balancing,
+        'classification': ItemClassification.progression_deprioritized_skip_balancing,
         'id': 0x28,
         'subid': 0x08
     },

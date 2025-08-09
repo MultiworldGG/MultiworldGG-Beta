@@ -73,8 +73,8 @@ ITEM_TABLE: dict[str, SSItemData] = {
     "Earth Temple Boss Key":            SSItemData("Boss Key",     IC.progression,         30,  1,  0x1E),
     "Lanayru Mining Facility Boss Key": SSItemData("Boss Key",     IC.progression,         31,  1,  0x1F),
 
-    "Silver Rupee":         SSItemData("Consumable",   IC.skip_balancing,              32,     24, 0x20),
-    "Gold Rupee":           SSItemData("Consumable",   IC.skip_balancing,              33,     11, 0x21),
+    "Silver Rupee":         SSItemData("Consumable",   IC.progression_deprioritized_skip_balancing,              32,     24, 0x20),
+    "Gold Rupee":           SSItemData("Consumable",   IC.progression_deprioritized_skip_balancing,              33,     11, 0x21),
     "Rupoor":               SSItemData("Consumable",   IC.trap,                        34,     0,  0x22),
 
     "Gratitude Crystal Pack":       SSItemData("Item",         IC.progression_deprioritized_skip_balancing,         35,     13, 0x23),
