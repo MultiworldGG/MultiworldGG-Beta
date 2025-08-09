@@ -41,8 +41,6 @@ Builder.load_string('''
             icon: "timer-outline"
             on_release: root.toggle_timer()
         MDActionTopAppBarButton:
-            text: "Profile"
-        MDActionTopAppBarButton:
             icon: "account-circle-outline"
             on_release: root.open_profile()
 ''')

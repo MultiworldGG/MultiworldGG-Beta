@@ -1,108 +1,138 @@
 from dataclasses import dataclass
-from NetUtils import Hint, HintStatus
+from NetUtils import Hint, HintStatus, MWGGUIHintStatus, JSONtoTextParser
 from BaseClasses import ItemClassification
-
+from typing import Optional
 
 @dataclass
 class UIHint:
+    """
+    A UI-friendly wrapper that provides formatted text
+    and additional metadata for display in the MultiWorld GUI.
+    
+    This class adds properties that are specifically
+    formatted for UI display, including parsed item names, location names,
+    and classification information.
+    """
+    location_id: int
     item: str
     location: str
     entrance: str
     found: str
     classification: str
-    for_bk_mode: bool
-    for_goal: bool
-    from_shop: bool
+    assigned_classification: str
+    _for_bk_mode: bool
+    _for_goal: bool
+    _from_shop: bool
     hint_status: HintStatus
+    mwgg_hint_status: MWGGUIHintStatus
 
-    def __init__(self, hint: Hint):
-        self.item = hint.item
-        self.location = hint.location
-        self.entrance = hint.entrance
+    def __init__(self, hint: Hint, hint_status: Optional[HintStatus], mwgg_hint_status: Optional[MWGGUIHintStatus]):
+        """
+        Initialize a UIHint from a base Hint and status information.
+        
+        Args:
+            hint: The base Hint object to wrap
+            hint_status: Optional status indicating user-defined status
+            mwgg_hint_status: Optional MWGG GUI specific hint information
+        """
+        parser = JSONtoTextParser()
+        self.location_id = hint.location
+        self.item = parser.handle_node({"type": "item_id", "text": hint.item, "flags": hint.item_flags, "player": hint.receiving_player})
+        self.location = parser.handle_node({"type": "location_id", "text": hint.location, "player": hint.finding_player})
+        self.entrance = parser.handle_node({"type": "color" if hint.entrance else "text", "color": 'entrancecolor', "text": hint.entrance if hint.entrance else "Vanilla"})
         self.found = hint.found
         self.classification = self.get_classification(hint.item_flags)
-        self.for_bk_mode = hint.for_bk_mode
-        self.for_goal = hint.for_goal
-        self.from_shop = hint.from_shop
-        self.hint_status = hint.status
+        self.for_bk_mode = mwgg_hint_status.for_bk_mode
+        self.for_goal = mwgg_hint_status.for_goal
+        self.from_shop = mwgg_hint_status.from_shop
+        self.set_status(hint_status, mwgg_hint_status)
 
-    def set_status(self, status: HintStatus):
-        self.for_bk_mode = False
-        self.for_goal = False
-        self.from_shop = False
-        if status == HintStatus.HINT_FOUND:
+    def set_status(self, hint_status: Optional[HintStatus], mwgg_status: Optional[MWGGUIHintStatus]):
+        """
+        Update the hint's status and classification based on status flags.
+        
+        Args:
+            hint_status: The hint's user-defined status (found, unspecified, etc.)
+            mwgg_status: MWGG GUI specific status information (shop, goal, bk_mode, etc.)
+        """
+        if hint_status == HintStatus.HINT_FOUND:
             self.found = True
-        elif status == HintStatus.HINT_UNSPECIFIED:
+        elif hint_status == HintStatus.HINT_UNSPECIFIED:
             pass
-        elif status == HintStatus.HINT_NO_PRIORITY:
-            self.for_goal = True
-        elif status == HintStatus.HINT_AVOID:
-            self.for_goal = True
-        elif status == HintStatus.HINT_PRIORITY:
-            self.for_bk_mode = True
-        self.hint_status = status
+        elif hint_status == HintStatus.HINT_NO_PRIORITY:
+            self.assigned_classification = self.get_classification(ItemClassification.filler)
+        elif hint_status == HintStatus.HINT_AVOID:
+            self.assigned_classification = self.get_classification(ItemClassification.trap)
+        elif hint_status == HintStatus.HINT_PRIORITY:
+            self.assigned_classification = self.get_classification(ItemClassification.progression)
 
-    def get_classification(self, flags: int) -> str:
-        if flags & ItemClassification.progression_skip_balancing:
-            return "Goal"
-        elif flags & ItemClassification.progression:
-            return "Progression"
-        elif flags & ItemClassification.progression_deprioritized:
-            return "Logically Relevant"
-        elif flags & ItemClassification.progression_deprioritized_skip_balancing:
-            return "Logically Relevant"
-        elif flags & ItemClassification.skip_balancing:
-            return "Currency"
-        elif flags & ItemClassification.deprioritized:
-            return "Logically Relevant"
-        elif flags & ItemClassification.useful:
+        if mwgg_status == MWGGUIHintStatus.HINT_SHOP:
+            self.from_shop = True
+        elif mwgg_status == MWGGUIHintStatus.HINT_GOAL:
+            self.for_goal = True
+        elif mwgg_status == MWGGUIHintStatus.HINT_BK_MODE:
+            self.for_bk_mode = True
+        elif mwgg_status == MWGGUIHintStatus.HINT_UNSPECIFIED:
+            pass
+        self.hint_status = hint_status
+        self.mwgg_hint_status = mwgg_status
+
+    @property
+    def from_shop(self) -> bool:
+        return self._from_shop
+    @from_shop.setter
+    def from_shop(self, value: bool):
+        self._from_shop = value
+
+    @property
+    def for_bk_mode(self) -> bool:
+        return self._for_bk_mode
+    @for_bk_mode.setter
+    def for_bk_mode(self, value: bool):
+        self._for_bk_mode = value
+    
+    @property
+    def for_goal(self) -> bool:
+        return self._for_goal
+    @for_goal.setter
+    def for_goal(self, value: bool):
+        self._for_goal = value
+
+    @staticmethod
+    def get_classification(flags: int) -> str:
+        """
+        Convert item classification flags to a human-readable string.
+        
+        Args:
+            flags: Bit flags representing the item's classification
+            
+        Returns:
+            A string describing the item's classification (Progression, Useful, Trap, or Filler)
+        """
+        if flags & ItemClassification.progression:  # Check for progression flag first!
+            # "useful progression" gets marked progression
+            if flags & ItemClassification.deprioritized:  # deprioritized, but still progression (skulls etc)
+                return "Progression - Logically Relevant"
+            elif flags & ItemClassification.skip_balancing:  # skip_balancing bit set on a priority item: macguffin
+                return "Progression - Requried for Goal"
+            else:
+                return "Progression"
+        elif flags & ItemClassification.useful:  # useful
             return "Useful"
-        elif flags & ItemClassification.trap:
+        elif flags & ItemClassification.trap:  # "useful trap" gets marked trap
             return "Trap"
         else:
             return "Filler"
 
-
-    filler = 0b00000
-    """ aka trash, as in filler items like ammo, currency etc """
-
-    progression = 0b00001
-    """ Item that is logically relevant.
-    Protects this item from being placed on excluded or unreachable locations. """
-
-    useful = 0b00010
-    """ Item that is especially useful.
-    Protects this item from being placed on excluded or unreachable locations.
-    When combined with another flag like "progression", it means "an especially useful progression item". """
-
-    trap = 0b00100
-    """ Item that is detrimental in some way. """
-
-    skip_balancing = 0b01000
-    """ should technically never occur on its own
-    Item that is logically relevant, but progression balancing should not touch.
-
-    Possible reasons for why an item should not be pulled ahead by progression balancing:
-    1. This item is quite insignificant, so pulling it earlier doesn't help (currency/etc.)
-    2. It is important for the player experience that this item is evenly distributed in the seed (e.g. goal items) """
-
-    deprioritized = 0b10000
-    """ Should technically never occur on its own.
-    Will not be considered for priority locations,
-    unless Priority Locations Fill runs out of regular progression items before filling all priority locations. 
-    
-    Should be used for items that would feel bad for the player to find on a priority location.
-    Usually, these are items that are plentiful or insignificant. """
-
-    progression_deprioritized_skip_balancing = 0b11001
-    """ Since a common case of both skip_balancing and deprioritized is "insignificant progression", 
-    these items often want both flags. """
-
-    progression_skip_balancing = 0b01001  # only progression gets balanced
-    progression_deprioritized = 0b10001 
-
 @dataclass
 class UIPlayerData:
+    """
+    Container for player data formatted for UI display in the MultiWorld GUI.
+    
+    This class holds all the information needed to display a player's status,
+    including their slot information, game status, and associated hints.
+    """
+    slot_id: int
     slot_name: str
     avatar: str
     bk_mode: bool
@@ -111,5 +141,5 @@ class UIPlayerData:
     end_user: bool
     game_status: str
     game: str
-    hints: list[UIHint]
+    hints: dict[int, UIHint]
 

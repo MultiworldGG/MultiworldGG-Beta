@@ -57,7 +57,7 @@ Builder.load_string('''
         MDTopAppBarLeadingButtonContainer:
             MDActionTopAppBarButton:
                 icon: "refresh"
-                on_release: root.refresh()
+                on_release: app.ctx.ui.update_hints()
         MDTopAppBarTitle:
             text: "Flags"
             halign: "center"
@@ -159,11 +159,7 @@ class ConsoleScreen(MDScreen, ThemableBehavior):
 
     async def set_slots_list(self):
         self.slots_mdlist.clear_widgets()
-        hints_key = f"_read_hints_{self.app.ctx.team}_{self.app.ctx.slot}"
-        if hints_key not in self.app.ctx.stored_data:
-            return  # Hints data not available yet
-        
-        for slot_data in self.app.ctx.stored_data[hints_key].items():
+        for slot_id, slot_data in self.app.ctx.ui.ui_player_data.items():
             await asynckivy.sleep(0)
-            slot = GameListPanel(item_name=self.app.ctx.auth, item_data=slot_data, panel=self)
+            slot = GameListPanel(item_name=slot_id, item_data=slot_data, panel=self)
             self.slots_mdlist.add_widget(slot)

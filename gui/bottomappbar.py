@@ -176,7 +176,7 @@ class BottomAppBar(MDBottomAppBar):
         self.animate_text_input(instance.id)
 
     def on_gui_focus(self):
-        self.animate_text_input("console_text_input")
+        self.animate_text_input(self.text_input.id)
 
     def animate_text_input(self, id_name: str):
         """Animate the text input with properties from the clicked action item"""

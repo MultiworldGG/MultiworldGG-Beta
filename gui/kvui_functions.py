@@ -30,7 +30,7 @@ __all__ = ["MW_ServerLabel",
            "mw_status_sort_weights"]
 
 class MW_ServerLabel(ServerLabel):
-    text = StringProperty("Not Connected")
+    pass
 
 class MW_MarkupDropdownTextItem(MarkupDropdownTextItem):
     pass

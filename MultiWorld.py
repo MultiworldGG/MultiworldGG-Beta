@@ -107,13 +107,13 @@ def run_client(*args):
             ctx.run_gui()
             await ctx.exit_event.wait()
         except Exception as e:
-            logger.error(f"Error during GUI execution: {e}")
+            logger.error(f"Error during GUI execution: {e}", exc_info=True)
         finally:
             # Ensure cleanup happens even if there are errors
             try:
                 await ctx.shutdown()
             except Exception as e:
-                logger.error(f"Error during shutdown: {e}")
+                logger.error(f"Error during shutdown: {e}", exc_info=True)
             finally:
                 sys.exit()
 

@@ -619,7 +619,7 @@ class CommonContext(InitContext):
         self.player_names = {slot: name for team, slot, name, orig_name in package if self.team == team}
         self.player_names[0] = "Archipelago"
         if self.ui:
-            self.ui.ui_player_data = {slot: {} for team, slot in package if self.team == team}
+            self.ui.ui_player_data = {slot: {} for team, slot, alias, name in package if self.team == team}
 
     def event_invalid_slot(self):
         raise Exception('Invalid Slot; please verify that you have connected to the correct world.')
@@ -708,12 +708,12 @@ class CommonContext(InitContext):
         if self.ui:
             # send copy to UI
             self.ui.print_json(copy.deepcopy(args["data"]))
-        if args["data"]["tags"]:
-            for tag in self.ui.ui_player_data[args["data"]["slot"]]:
-                if tag in args["data"]["tags"]:
-                    self.ui.ui_player_data[args["data"]["slot"]][tag] = True
+        if "tags" in args and args["slot"] in self.ui.ui_player_data:
+            for tag in self.ui.ui_player_data[args["slot"]]:
+                if tag in args["tags"]:
+                    self.ui.ui_player_data[args["slot"]][tag] = args["tags"][tag]
                 else:
-                    self.ui.ui_player_data[args["data"]["slot"]][tag] = False
+                    self.ui.ui_player_data[args["slot"]][tag] = False
 
         logging.getLogger("FileLog").info(self.rawjsontotextparser(copy.deepcopy(args["data"])),
                                           extra={"NoStream": True})
@@ -1197,6 +1197,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.players = args["players"]
         ctx.consume_players_package(args["players"])
         ctx.stored_data_notification_keys.add(f"_read_hints_{ctx.team}_{ctx.slot}")
+        ctx.stored_data_notification_keys.add(f"_read_hints_{ctx.team}_{ctx.slot}_mwgg")
         msgs = []
         if ctx.locations_checked:
             msgs.append({"cmd": "LocationChecks",
@@ -1278,10 +1279,14 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.stored_data.update(args["keys"])
         if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" in args["keys"]:
             ctx.ui.update_hints()
+        if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}_mwgg" in args["keys"]:
+            ctx.ui.update_hints()
 
     elif cmd == "SetReply":
         ctx.stored_data[args["key"]] = args["value"]
         if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" == args["key"]:
+            ctx.ui.update_hints()
+        elif ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}_mwgg" == args["key"]:
             ctx.ui.update_hints()
         elif args["key"].startswith("EnergyLink"):
             ctx.current_energy_link_value = args["value"]

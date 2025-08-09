@@ -27,7 +27,7 @@ from kivymd.uix.dropdownitem import MDDropDownItem, MDDropDownItemText
 from kivymd.uix.behaviors import HoverBehavior
 from kivy.utils import escape_markup
 from kivy.core.clipboard import Clipboard
-from NetUtils import HintStatus
+from NetUtils import HintStatus, MWGGUIHintStatus
 from .testdict import testdict
 import typing
 
@@ -130,20 +130,46 @@ class HintLayout(MDBoxLayout):
             if fix_func:
                 fix_func()
 
+mwggstatus_icons: typing.Dict[MWGGUIHintStatus, str] = {
+    MWGGUIHintStatus.HINT_UNSPECIFIED: "",
+    MWGGUIHintStatus.HINT_SHOP: "shop",
+    MWGGUIHintStatus.HINT_GOAL: "flag_checkered",
+    MWGGUIHintStatus.HINT_BK_MODE: "food"
+}
+"""Mapping of MWGG hint status values to their corresponding icon names."""
+
+mwggstatus_names: typing.Dict[MWGGUIHintStatus, str] = {
+    MWGGUIHintStatus.HINT_UNSPECIFIED: "",
+    MWGGUIHintStatus.HINT_SHOP: "Shop",
+    MWGGUIHintStatus.HINT_GOAL: "Goal",
+    MWGGUIHintStatus.HINT_BK_MODE: "BK Mode",
+}
+"""Mapping of MWGG hint status values to their corresponding display names."""
+
+mwggstatus_colors: typing.Dict[MWGGUIHintStatus, str] = {
+    MWGGUIHintStatus.HINT_UNSPECIFIED: "",
+    MWGGUIHintStatus.HINT_SHOP: "gray",
+    MWGGUIHintStatus.HINT_GOAL: "gold",
+    MWGGUIHintStatus.HINT_BK_MODE: "red",
+}
+"""Mapping of MWGG hint status values to their corresponding color names for display."""
+
 status_icons = {
     HintStatus.HINT_NO_PRIORITY: "information",
-    HintStatus.HINT_AVOID: "checkered-flag",
-    HintStatus.HINT_PRIORITY: "alert"
+    HintStatus.HINT_PRIORITY: "exclamation-thick",
+    HintStatus.HINT_AVOID: "alert"
 }
+"""Mapping of hint status values to their corresponding icon names."""
 
 status_names: typing.Dict[HintStatus, str] = {
     HintStatus.HINT_FOUND: "Found",
     HintStatus.HINT_UNSPECIFIED: "Unspecified",
-    HintStatus.HINT_NO_PRIORITY: "Shop",
-    HintStatus.HINT_AVOID: "Goal",
-    HintStatus.HINT_PRIORITY: "BK Mode",
+    HintStatus.HINT_NO_PRIORITY: "No Priority",
+    HintStatus.HINT_AVOID: "Avoid",
+    HintStatus.HINT_PRIORITY: "Priority",
 }
 """Mapping of hint status values to their human-readable display names."""
+
 status_colors: typing.Dict[HintStatus, str] = {
     HintStatus.HINT_FOUND: "green",
     HintStatus.HINT_UNSPECIFIED: "white",
@@ -152,12 +178,17 @@ status_colors: typing.Dict[HintStatus, str] = {
     HintStatus.HINT_PRIORITY: "gold",
 }
 """Mapping of hint status values to their color names for display."""
-status_sort_weights: dict[HintStatus, int] = {
+
+status_sort_weights: dict[HintStatus | MWGGUIHintStatus, int] = {
     HintStatus.HINT_FOUND: 0,
-    HintStatus.HINT_UNSPECIFIED: 1,
-    HintStatus.HINT_NO_PRIORITY: 2,
+    MWGGUIHintStatus.HINT_SHOP: 1,
+    MWGGUIHintStatus.HINT_GOAL: 2,
     HintStatus.HINT_AVOID: 3,
-    HintStatus.HINT_PRIORITY: 4,
+    HintStatus.HINT_UNSPECIFIED: 4,
+    MWGGUIHintStatus.HINT_UNSPECIFIED: 5,
+    HintStatus.HINT_NO_PRIORITY: 6,
+    HintStatus.HINT_PRIORITY: 7,
+    MWGGUIHintStatus.HINT_BK_MODE: 8,
 }
 """Mapping of hint status values to their sort weights for ordering hints."""
 

@@ -18,6 +18,16 @@ class HintStatus(ByValue, enum.IntEnum):
     HINT_PRIORITY = 30
     HINT_FOUND = 40
 
+class MWGGUIHintStatus(ByValue, enum.IntEnum):
+    """
+    Shop Item, Goal-required item, and 'this item is what is keeping me in BK_MODE'
+    BK_MODE items will be shown as the highest priority.
+    """
+    HINT_UNSPECIFIED = 0
+    HINT_SHOP = 10
+    HINT_GOAL = 20
+    HINT_BK_MODE = 30
+
 
 class JSONMessagePart(typing.TypedDict, total=False):
     text: str
@@ -219,25 +229,14 @@ class JSONTypes(str, enum.Enum):
 
 # Default color definitions - these should be imported by GUI themes
 # [Dark, Light]
-DEFAULT_TEXT_COLORS = {
-    "default_color":["080808", "fafafa"],
-    "location_color":["006f10", "00c51b"],
-    "player1_color":["b42f88", "ff87d7"],
-    "player2_color":["206cb8", "5fafff"],
-    "entrance_color":["2985a0", "60b7e8"],
-    "trap_item_color":["8f1515", "d75f5f"],
-    "regular_item_color":["3b3b3b", "b2b2b2"],
-    "useful_item_color":["419F44", "6EC471"],
-    "skip_item_color":["419F44", "6EC471"],
-    "progression_skip_item_color":["A59C3B", "d4cd87"],
-    "progression_item_color":["9f8a00", "FFC500"],
-    "command_echo_color":["a75600", "ff9334"]
-}
+from gui.mw_theme import TEXT_COLORS
 
 class JSONtoTextParser(metaclass=HandlerMeta):
-    color_codes = {}
-    for key,value in DEFAULT_TEXT_COLORS.items():
-        color_codes[key] = value[1]
+    # add *all* of the colors, to prevent crashes where colors are expected.
+    from kivy.utils import colormap as color_codes
+    # then add the custom ones
+    for key,value in TEXT_COLORS.items():
+        color_codes[key] = value
 
     def __init__(self, ctx):
         self.ctx = ctx
@@ -273,19 +272,21 @@ class JSONtoTextParser(metaclass=HandlerMeta):
         flags = node.get("flags", 0)
         if flags == 0:
             node["color"] = 'regular_item_color' # filler
-        elif flags & 0b1000:  # skip_balancing bit set
-            if flags & 0b0001:  # progression_skip_balancing
-                node["color"] = 'progression_skip_item_color'  # citron for progression skip items
-            else:  # just skip_balancing
-                node["color"] = 'regular_item_color'
-        elif flags & 0b0001:  # progression
-            node["color"] = 'progression_item_color'  # gold for required progression
-        elif flags & 0b0010:  # useful
+        elif flags & 0b00010:  # useful
             node["color"] = 'useful_item_color'  # lime for useful items
-        elif flags & 0b0100:  # trap
+        if flags & 0b00100:  # "useful trap" gets marked trap
             node["color"] = 'trap_item_color'  # salmon for traps
-        else:
-            node["color"] = 'regular_item_color'  # fallback to filler
+        elif flags & 0b00001:  # progression is the third flag checked, so it can overwrite. 
+            # "useful progression" gets marked progression
+            node["color"] = 'progression_item_color'  # "dulled" gold for regular progression
+            if flags & 0b10000:  # deprioritized, but still progression (skulls etc)
+                node["color"] = 'progression_deprioritized_item_color'  # Citron for progression deprioritized
+            else:
+                if flags & 0b01000:  # skip_balancing bit set
+                    node["color"] = 'progression_goal_item_color'  # Gold for progression skip items/macguffins
+        if not node["color"]:
+            # if we can't find the flag set, use the command echo color to indicate it doesn't know what kind of item it is
+            node["color"] = 'command_echo_color' 
         return self._handle_color(node)
 
     def _handle_item_id(self, node: JSONMessagePart):
@@ -394,7 +395,17 @@ status_colors: typing.Dict[HintStatus, str] = {
     HintStatus.HINT_AVOID: "salmon",
     HintStatus.HINT_PRIORITY: "gold",
 }
-
+## HintStatus map is the location identifier/colors
+mwggui_status_names: typing.Dict[MWGGUIHintStatus, str] = {
+    MWGGUIHintStatus.HINT_SHOP: "(shop)",
+    MWGGUIHintStatus.HINT_GOAL: "(goal)",
+    MWGGUIHintStatus.HINT_BK_MODE: "(bk_mode)",
+}
+mwggui_status_colors: typing.Dict[MWGGUIHintStatus, str] = {
+    MWGGUIHintStatus.HINT_SHOP: "grey",
+    MWGGUIHintStatus.HINT_GOAL: "gold",
+    MWGGUIHintStatus.HINT_BK_MODE: "salmon",
+}
 
 def add_json_hint_status(parts: list, hint_status: HintStatus, text: typing.Optional[str] = None, **kwargs):
     parts.append({"text": text if text != None else status_names.get(hint_status, "(unknown)"),

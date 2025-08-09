@@ -7,7 +7,6 @@ import sys
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
-from NetUtils import DEFAULT_TEXT_COLORS
 from dataclasses import dataclass
 from kivy.core.window import Window
 from kivy.core.text import LabelBase
@@ -27,18 +26,60 @@ except ImportError:
 from PIL import Image
 import numpy as np
 
+from NetUtils import TEXT_COLORS
 from BaseUtils import local_path
+
+DEFAULT_TEXT_COLORS = {
+    "default_color":["080808", "fafafa"],
+    "location_color":["006f10", "00c51b"],
+    "player1_color":["b42f88", "ff87d7"],
+    "player2_color":["206cb8", "5fafff"],
+    "entrance_color":["2985a0", "60b7e8"],
+    "trap_item_color":["8f1515", "d75f5f"],
+    "regular_item_color":["3b3b3b", "b2b2b2"],
+    "useful_item_color":["419F44", "6EC471"],
+    "skip_item_color":["419F44", "6EC471"],
+    "progression_deprioritized_item_color":["6a8300", "d2ff49"],
+    "progression_goal_item_color":["a56c00", "ffa700"],
+    "progression_item_color":["a46a00", "ffbe00"],
+    "command_echo_color":["a75600", "ff9334"]
+}
+''' Default markup text colors
+[Light Mode, Dark Mode]
+'''
+TEXT_COLORS = {
+    "default_color": "ababab",
+    "location_color": "00c51b",
+    "player1_color": "ff87d7",
+    "player2_color": "5fafff",
+    "entrance_color": "60b7e8",
+    "trap_item_color": "d75f5f",
+    "regular_item_color": "b2b2b2",
+    "useful_item_color": "6EC471",
+    "skip_item_color": "6EC471",
+    "progression_deprioritized_item_color": "d2ff49",
+    "progression_goal_item_color": "ffa700",
+    "progression_item_color": "ffbe00",
+    "command_echo_color": "ff9334"
+}
+''' Default color definitions, should be overwritten on init from stored Dark/Light colors'''
 
 # Overwriting or adding to default styles.kv
 Builder.load_string('''
 <Selector>:
     color: app.theme_cls.inversePrimaryColor
-                    
+
+<MDTextField>:
+    theme_font_name: "Custom"
+    theme_font_style: "Custom"
+    font_name: app.theme_cls.font_styles[self.font_style][self.role]["font-name"]
+    font_size: app.theme_cls.font_styles[self.font_style][self.role]["font-size"]
+
 <MDTextFieldLeadingIcon>:
     theme_icon_color: "Custom"
     icon_color_focus: app.theme_cls.primaryColor
     icon_color_normal: app.theme_cls.onPrimaryColor
-                    
+
 <MDTextFieldHintText>:
     theme_font_name: "Custom"
     theme_font_style: "Custom"
@@ -49,16 +90,16 @@ Builder.load_string('''
 # and will be the input for primary_palette
 # The colors in hex are actual color for the theme
 THEME_OPTIONS = {
-    "Dark": [("Purple","551353"), #default
-             ("Pink","5f112a"),
-             ("Brown","5f1414"),
-             ("Cyan","003737"),
-             ("Green","003a00")],
     "Light": [("Gray","97f0ff"), #default
               ("Chocolate","ffdbc9"),
               ("Goldenrod","ffdea0"),
               ("Pink","ffd9df"),
-              ("Olivedrab","cbef86")]
+              ("Olivedrab","cbef86")],
+    "Dark": [("Purple","551353"), #default
+             ("Pink","5f112a"),
+             ("Brown","5f1414"),
+             ("Cyan","003737"),
+             ("Green","003a00")]
 }
 
 @dataclass
@@ -72,24 +113,26 @@ class MarkupTagsTheme:
     regular_item_color: list[str]
     useful_item_color: list[str]
     skip_item_color: list[str]
-    progression_skip_item_color: list[str]
+    progression_goal_item_color: list[str]
     progression_item_color: list[str]
+    progression_deprioritized_item_color: list[str]
     command_echo_color: list[str]
 
     def __init__(self, **kwargs):
-        # Dark, Light
-        self.default_color=["080808","fafafa"]
-        self.location_color=["006f10","00c51b"]
-        self.player1_color=["b42f88","ff87d7"]
-        self.player2_color=["206cb8","5fafff"]
-        self.entrance_color=["2985a0","60b7e8"]
-        self.trap_item_color=["8f1515","d75f5f"]
-        self.regular_item_color=["3b3b3b","b2b2b2"]
-        self.useful_item_color=["419F44","6EC471"]
-        self.skip_item_color=["419F44","6EC471"]
-        self.progression_skip_item_color=["A59C3B","d4cd87"]
-        self.progression_item_color=["9f8a00","FFC500"]
-        self.command_echo_color=["a75600","ff9334"]
+        # Light, Dark
+        self.default_color=DEFAULT_TEXT_COLORS["default_color"]
+        self.location_color=DEFAULT_TEXT_COLORS["location_color"]
+        self.player1_color=DEFAULT_TEXT_COLORS["player1_color"]
+        self.player2_color=DEFAULT_TEXT_COLORS["player2_color"]
+        self.entrance_color=DEFAULT_TEXT_COLORS["entrance_color"]
+        self.trap_item_color=DEFAULT_TEXT_COLORS["trap_item_color"]
+        self.regular_item_color=DEFAULT_TEXT_COLORS["regular_item_color"]
+        self.useful_item_color=DEFAULT_TEXT_COLORS["useful_item_color"]
+        self.skip_item_color=DEFAULT_TEXT_COLORS["skip_item_color"]
+        self.progression_goal_item_color=DEFAULT_TEXT_COLORS["progression_goal_item_color"]
+        self.progression_item_color=DEFAULT_TEXT_COLORS["progression_item_color"]
+        self.progression_deprioritized_item_color=DEFAULT_TEXT_COLORS["progression_deprioritized_item_color"]
+        self.command_echo_color=DEFAULT_TEXT_COLORS["command_echo_color"]
 
     def name(self, color_attr):
         if color_attr == self.default_color: return "Default Text:"
@@ -101,12 +144,16 @@ class MarkupTagsTheme:
         if color_attr == self.regular_item_color: return "Regular Item:"
         if color_attr == self.useful_item_color: return "Useful Item:"
         if color_attr == self.skip_item_color: return "Necessary Duplicate Item:"
-        if color_attr == self.progression_skip_item_color: return "Progression Skip Item:"
-        if color_attr == self.progression_item_color: return "Progression Item:"
-        if color_attr == self.command_echo_color: return "Broadcast:"
+        if color_attr == self.progression_item_color: return "Progression:"
+        if color_attr == self.progression_deprioritized_item_color: return "Progression - Deprioritized Item:"
+        if color_attr == self.progression_goal_item_color: return "Progression - Goal Item:"
+        if color_attr == self.command_echo_color: return "Command Echo:"
 
-    def save_color(self, app_config, color_name, color_value):
+    def save_color(self, app_config, color_name, color_value, theme_style_index):
         """Save a single color value to the config file"""
+        curr_value = app_config.get('markup_tags', color_name)
+        curr_value = curr_value.split(',') if curr_value else ['ababab','ababab']
+        curr_value[theme_style_index] = color_value[theme_style_index]
         app_config.set('markup_tags', color_name, ','.join(color_value))
         app_config.write()
 
@@ -115,17 +162,17 @@ class MarkupTagsTheme:
         value = app_config.get('markup_tags', color_name, fallback=','.join(default_value))
         return value.split(',')
 
-    def save_all_colors(self, app_config):
+    def save_all_colors(self, app_config, theme_style_index):
         """Save all color values to the config file"""
-        for color_name in DEFAULT_TEXT_COLORS.keys():
+        for color_name in TEXT_COLORS.keys():
             color_value = getattr(self, color_name)
-            self.save_color(app_config, color_name, color_value)
+            self.save_color(app_config, color_name, color_value, theme_style_index)
 
-    def load_all_colors(self, app_config):
+    def load_all_colors(self, app_config, theme_style_index):
         """Load all color values from the config file"""
-        for color_name, default_value in DEFAULT_TEXT_COLORS.items():
+        for color_name, default_value in TEXT_COLORS.items():
             loaded_value = self.load_color(app_config, color_name, default_value)
-            setattr(self, color_name, loaded_value)
+            setattr(self, color_name, loaded_value[theme_style_index])
 
 class DefaultTheme(ThemableBehavior):
     markup_tags_theme: MarkupTagsTheme
@@ -141,7 +188,7 @@ class DefaultTheme(ThemableBehavior):
         self.app_config = app_config
         self.init_global_theme()
         self.markup_tags_theme = MarkupTagsTheme()
-        self.markup_tags_theme.load_all_colors(app_config)
+        self.markup_tags_theme.load_all_colors(app_config, self._theme_style_index)
 
     @property
     def theme_style(self):
@@ -149,6 +196,7 @@ class DefaultTheme(ThemableBehavior):
     @theme_style.setter
     def theme_style(self, value):
         self.primary_palette = THEME_OPTIONS[value][0][0]
+        self._theme_style_index = 1 if value == "Dark" else 0
         self._theme_style = value
 
     @property
