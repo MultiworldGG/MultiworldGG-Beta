@@ -104,7 +104,7 @@ Builder.load_string('''
     MDFabBottomAppBarButton:
         id: console_text_input_fab
         icon: "chat-outline"
-        on_release: root.on_bar_action(self)
+        on_release: root.animate_text_input('console_text_input_fab')
                     
 <BottomBarTextInput>:
     id: text_input

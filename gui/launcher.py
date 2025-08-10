@@ -390,6 +390,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                     self.app.loading_layout.hide_loading()
                     # Switch to console after successful connection
                     Clock.schedule_once(lambda x: self.app.console_init())
+                    Clock.schedule_once(lambda x: self.app.change_screen("console"))
                 
                 # Define error callback to handle connection failures
                 def error_callback():

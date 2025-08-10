@@ -414,8 +414,16 @@ class MarkupTextField(TextInput, ThemableBehavior):
             #ntext = highlight(ntext, self.lexer, self.formatter)
             #ntext = ntext.replace(u'\x01', u'&bl;').replace(u'\x02', u'&br;')
             # replace special chars with &bl; and &br;
-            ntext = ''.join((u'[color=', str(self.text_default_color), u']',
-                             ntext, u'[/color]'))
+            color_tag = f'[color={self.text_default_color}]'
+            end_color_tag = '[/color]'
+            if not ntext.startswith(color_tag):
+                if ntext.endswith(end_color_tag):
+                    ntext = u''.join((color_tag, ntext))
+                else:
+                    ntext = u''.join((color_tag, ntext, end_color_tag))
+            else:
+                if not ntext.endswith(end_color_tag):
+                    ntext = u''.join((ntext, end_color_tag))
             #ntext = ntext.replace(u'\n', u'')
             # remove possible extra highlight options
             ntext = ntext.replace(u'[u]', '').replace(u'[/u]', '')

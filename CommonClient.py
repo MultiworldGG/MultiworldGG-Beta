@@ -708,17 +708,29 @@ class CommonContext(InitContext):
         if self.ui:
             # send copy to UI
             self.ui.print_json(copy.deepcopy(args["data"]))
-        if "tags" in args and args["slot"] in self.ui.ui_player_data:
-            for tag in self.ui.ui_player_data[args["slot"]]:
-                if tag in args["tags"]:
-                    self.ui.ui_player_data[args["slot"]][tag] = args["tags"][tag]
-                else:
-                    self.ui.ui_player_data[args["slot"]][tag] = False
 
         logging.getLogger("FileLog").info(self.rawjsontotextparser(copy.deepcopy(args["data"])),
                                           extra={"NoStream": True})
         logging.getLogger("StreamLog").info(self.jsontotextparser(copy.deepcopy(args["data"])),
                                             extra={"NoFile": True})
+        if "tags" in args and args["slot"] in self.ui.ui_player_data:
+            if not self.ui.ui_player_data[args["slot"]]:
+                return
+            # Toggle boolean UI flags based on presence in server-provided tags
+            tags_iterable = args["tags"] or []
+            tags_set = set(tags_iterable)
+            player_data = self.ui.ui_player_data[args["slot"]]
+            player_data.bk_mode = ("in_bk" in tags_set)
+            player_data.in_call = ("in_call" in tags_set)
+            # Extract pronouns from any tag that starts with "pronouns", e.g., "pronouns:she/her"
+            pronouns_value = ""
+            for tag_value in tags_iterable:
+                if isinstance(tag_value, str) and tag_value.startswith("pronouns"):
+                    _, _, suffix = tag_value.partition(":")
+                    pronouns_value = suffix
+                    break
+            player_data.pronouns = pronouns_value
+
 
     def on_package(self, cmd: str, args: dict):
         """For custom package handling in subclasses."""
@@ -1225,6 +1237,8 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
 
         server_url = urllib.parse.urlparse(ctx.server_address)
         Utils.persistent_store("client", "last_server_address", server_url.netloc)
+        if ctx.ui:
+            ctx.ui.on_connect()
 
     elif cmd == 'ReceivedItems':
         start_index = args["index"]
@@ -1279,14 +1293,10 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.stored_data.update(args["keys"])
         if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" in args["keys"]:
             ctx.ui.update_hints()
-        if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}_mwgg" in args["keys"]:
-            ctx.ui.update_hints()
 
     elif cmd == "SetReply":
         ctx.stored_data[args["key"]] = args["value"]
         if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" == args["key"]:
-            ctx.ui.update_hints()
-        elif ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}_mwgg" == args["key"]:
             ctx.ui.update_hints()
         elif args["key"].startswith("EnergyLink"):
             ctx.current_energy_link_value = args["value"]

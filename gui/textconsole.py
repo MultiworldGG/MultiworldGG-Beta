@@ -59,7 +59,7 @@ class TextConsole(MarkupTextField, ThemableBehavior):
                 message_text = text
             else:
                 message_text = text.msg
-            self.text = self.text + u"\n" + message_text
+            self.text = self.text + u"\n" + message_text if self.text else message_text
         except Empty:
             return
         except Exception as e:

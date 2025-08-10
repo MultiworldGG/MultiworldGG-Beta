@@ -229,11 +229,25 @@ class JSONTypes(str, enum.Enum):
 
 # Default color definitions - these should be imported by GUI themes
 # [Dark, Light]
-from gui.mw_theme import TEXT_COLORS
+TEXT_COLORS = {
+    "default_color": "cdcdcd",
+    "location_color": "00c51b",
+    "player1_color": "ff87d7",
+    "player2_color": "5fafff",
+    "entrance_color": "60b7e8",
+    "trap_item_color": "d75f5f",
+    "regular_item_color": "b2b2b2",
+    "useful_item_color": "6EC471",
+    "skip_item_color": "6EC471",
+    "progression_deprioritized_item_color": "d2ff49",
+    "progression_goal_item_color": "ffa700",
+    "progression_item_color": "ffbe00",
+    "command_echo_color": "ff9334"
+}
 
 class JSONtoTextParser(metaclass=HandlerMeta):
     # add *all* of the colors, to prevent crashes where colors are expected.
-    from kivy.utils import colormap as color_codes
+    from kivy.utils import hex_colormap as color_codes
     # then add the custom ones
     for key,value in TEXT_COLORS.items():
         color_codes[key] = value
@@ -246,7 +260,7 @@ class JSONtoTextParser(metaclass=HandlerMeta):
 
     def handle_node(self, node: JSONMessagePart):
         node_type = node.get("type", None)
-        handler = self.handlers.get(node_type, self.handlers["text"])
+        handler = self.handlers.get(node_type, self.handlers["plaintext"])
         return handler(node)
 
     def _handle_color(self, node: JSONMessagePart):
@@ -311,6 +325,10 @@ class JSONtoTextParser(metaclass=HandlerMeta):
         node["color"] = status_colors.get(node["hint_status"], "red")
         return self._handle_color(node)
 
+    def _handle_plaintext(self, node: JSONMessagePart):
+        node["color"] = 'default_color'
+        return self._handle_color(node)
+
 
 class RawJSONtoTextParser(JSONtoTextParser):
     def _handle_color(self, node: JSONMessagePart):
@@ -319,7 +337,11 @@ class RawJSONtoTextParser(JSONtoTextParser):
 
 class KivyMarkupJSONtoTextParser(JSONtoTextParser):
     """JSON parser that converts to Kivy markup format with hex colors"""
-    
+    def __init__(self, ctx):
+        super().__init__(ctx)
+        for key,value in TEXT_COLORS.items():
+            self.color_codes[key] = value
+
     def _handle_color(self, node: JSONMessagePart):
         codes = node["color"].split(";")
         # Find the first valid color code
@@ -337,10 +359,7 @@ class KivyMarkupJSONtoTextParser(JSONtoTextParser):
             return self._handle_text(node)
     
     def _handle_text(self, node: JSONMessagePart):
-        text = node.get("text", "")
-        # Wrap plain text with default color
-        default_color = self.color_codes.get("default_color", "CDCDCD")  # Default to gray readable on both dark and light
-        return f'[color={default_color}]{text}[/color]'
+        return node.get("text", "")
 
 # setting ansi colors - Added many 8 bit to go with the 4 bit.
 color_codes = {'reset': 0, 'bold': 1, 'underline': 4, 'black': 30, 'red': 31, 'green': 32, 'yellow': 33, 'blue': 34,

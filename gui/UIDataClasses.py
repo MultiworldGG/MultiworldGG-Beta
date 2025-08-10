@@ -26,7 +26,7 @@ class UIHint:
     hint_status: HintStatus
     mwgg_hint_status: MWGGUIHintStatus
 
-    def __init__(self, hint: Hint, hint_status: Optional[HintStatus], mwgg_hint_status: Optional[MWGGUIHintStatus]):
+    def __init__(self, hint: Hint, location_names: dict[int, str], item_names: dict[int, str], hint_status: Optional[HintStatus], mwgg_hint_status: Optional[MWGGUIHintStatus]):
         """
         Initialize a UIHint from a base Hint and status information.
         
@@ -35,16 +35,15 @@ class UIHint:
             hint_status: Optional status indicating user-defined status
             mwgg_hint_status: Optional MWGG GUI specific hint information
         """
-        parser = JSONtoTextParser()
-        self.location_id = hint.location
-        self.item = parser.handle_node({"type": "item_id", "text": hint.item, "flags": hint.item_flags, "player": hint.receiving_player})
-        self.location = parser.handle_node({"type": "location_id", "text": hint.location, "player": hint.finding_player})
-        self.entrance = parser.handle_node({"type": "color" if hint.entrance else "text", "color": 'entrancecolor', "text": hint.entrance if hint.entrance else "Vanilla"})
-        self.found = hint.found
-        self.classification = self.get_classification(hint.item_flags)
-        self.for_bk_mode = mwgg_hint_status.for_bk_mode
-        self.for_goal = mwgg_hint_status.for_goal
-        self.from_shop = mwgg_hint_status.from_shop
+        self.location_id = hint['location']
+        self.item = item_names.lookup_in_slot(hint['item'], hint['receiving_player'])
+        self.location = location_names.lookup_in_slot(hint['location'], hint['finding_player'])
+        self.entrance = location_names.lookup_in_slot(hint['entrance'], hint['finding_player']) if hint['entrance'] else ""
+        self.found = hint['found']
+        self.classification = self.get_classification(hint['item_flags'])
+        self.for_bk_mode = False    
+        self.for_goal = False
+        self.from_shop = False
         self.set_status(hint_status, mwgg_hint_status)
 
     def set_status(self, hint_status: Optional[HintStatus], mwgg_status: Optional[MWGGUIHintStatus]):
@@ -142,4 +141,23 @@ class UIPlayerData:
     game_status: str
     game: str
     hints: dict[int, UIHint]
+
+    # Mapping-like helpers for legacy code paths that treat this as a dict
+    def __getitem__(self, key: str):
+        return getattr(self, key)
+
+    def __setitem__(self, key: str, value):
+        setattr(self, key, value)
+
+    def get(self, key: str, default=None):
+        return getattr(self, key, default)
+
+    # Backwards compatibility: some UI code refers to "in_bk"
+    @property
+    def in_bk(self) -> bool:
+        return self.bk_mode
+
+    @in_bk.setter
+    def in_bk(self, value: bool):
+        self.bk_mode = value
 

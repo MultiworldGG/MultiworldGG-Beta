@@ -33,7 +33,7 @@ import os
 from kivy.clock import Clock
 from kivymd.app import MDApp
 from kivymd.icon_definitions import md_icons
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from NetUtils import HintStatus, MWGGUIHintStatus
@@ -66,7 +66,7 @@ class SlotListItemHeader(MDBoxLayout, CommonElevationBehavior):
     game: StringProperty
     panel: ObjectProperty
 
-    def __init__(self, game_data, panel, **kwargs):
+    def __init__(self, item_data, panel, **kwargs):
         """
         Initialize the SlotListItemHeader.
         
@@ -75,12 +75,9 @@ class SlotListItemHeader(MDBoxLayout, CommonElevationBehavior):
             panel: Reference to the parent panel
         """
         self.panel = panel
-        self.game_data = game_data
-        for item in self.game_data:
-            if item == "slot_name":
-                self.slot_name = self.game_data[item]
-            elif item == "game":
-                self.game = self.game_data[item]
+        self.item_data = item_data
+        self.slot_name = self.item_data.slot_name
+        self.game = self.item_data.game
 
         super().__init__(**kwargs)
 
@@ -166,7 +163,7 @@ class SlotListItem(MDBoxLayout, CommonElevationBehavior):
         for_bk_mode (StringProperty): Indicates if item is for BK mode
         for_goal (StringProperty): Indicates if item is for their goal
         from_shop (StringProperty): Indicates if item is from a shop
-        prog_level (StringProperty): Progression level
+        classification (StringProperty): Classification of the item
         assigned_level (StringProperty): Assigned level
     """
     slot_icon_entrance: ObjectProperty
@@ -183,7 +180,7 @@ class SlotListItem(MDBoxLayout, CommonElevationBehavior):
     for_bk_mode: StringProperty
     for_goal: StringProperty
     from_shop: StringProperty
-    prog_level: StringProperty
+    classification: StringProperty
     assigned_level: StringProperty
     found: StringProperty
 
@@ -195,24 +192,25 @@ class SlotListItem(MDBoxLayout, CommonElevationBehavior):
             game_status (str): Current status of the game
             game_data (dict): Dictionary containing stored data
         """
+        from NetUtils import HintStatus, MWGGUIHintStatus
         self.hint_data = hint_data
         self.game_status = game_status
         self.entrance_name = self.hint_data.entrance if self.hint_data.entrance else "Vanilla"
         self.location_name = self.hint_data.location
         self.item_name = self.hint_data.item
-        self.prog_level = self.hint_data.classification
+        self.classification = self.hint_data.classification
         self.found = self.hint_data.found
         self.status = self.hint_data.hint_status
-        self.mwgg_status = self.hint_data.mwgg_status
-        if self.hint_data.status == HintStatus.HINT_FOUND:
+        self.mwgg_status = self.hint_data.mwgg_hint_status
+        if self.status == HintStatus.HINT_FOUND:
             self.found = "Found"
-        elif self.hint_data.status == HintStatus.HINT_UNSPECIFIED:
+        elif self.status == HintStatus.HINT_UNSPECIFIED:
             pass
-        elif self.hint_data.status == HintStatus.HINT_NO_PRIORITY:
+        elif self.status == HintStatus.HINT_NO_PRIORITY:
             self.assigned_level = "Filler"
-        elif self.hint_data.status == HintStatus.HINT_AVOID:
+        elif self.status == HintStatus.HINT_AVOID:
             self.assigned_level = "Trap"
-        elif self.hint_data.status == HintStatus.HINT_PRIORITY:
+        elif self.status == HintStatus.HINT_PRIORITY:
             self.assigned_level = "Progression"
 
         super().__init__(**kwargs)
@@ -422,7 +420,7 @@ class GameListPanel(MDExpansionPanel):
         on_game_select (ObjectProperty): Callback function for game selection
     """
     item_name: StringProperty
-    item_data: dict | UIPlayerData
+    item_data: Any
     icon = StringProperty("game-controller")
     leading_avatar: MDListItemLeadingAvatar
     panel_header: MDExpansionPanelHeader
@@ -462,10 +460,10 @@ class GameListPanel(MDExpansionPanel):
         """
         self.panel_header = self.ids.panel_header
         self.panel_content = self.ids.panel_content
-        self.panel_header_layout = SlotListItemHeader(item_data=ctx.player_names, panel=self)
+        self.panel_header_layout = SlotListItemHeader(item_data=self.item_data, panel=self)
         self.leading_avatar = self.panel_header_layout.ids.leading_avatar
         self.panel_header.add_widget(self.panel_header_layout)
-        self.leading_avatar.source = "https://multiworld.gg/favicon.ico" #self.item_data['avatar']
+        self.leading_avatar.source = "" #self.item_data['avatar']
         if self.item_data.bk_mode:
             self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="food", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
         if self.item_data.in_call:
@@ -482,7 +480,7 @@ class GameListPanel(MDExpansionPanel):
                 "progression": self.app.theme_mw.markup_tags_theme.progression_item_color[i],
                 "progression_goal": self.app.theme_mw.markup_tags_theme.progression_goal_item_color[i],
             }
-            self.panel_content.add_widget(SlotListItem(game_data=hint, game_status=self.item_data.game_status, shadow_colors=item_colors))
+            self.panel_content.add_widget(SlotListItem(hint_data=hint, game_status=self.item_data.game_status, shadow_colors=item_colors, hint_status=hint.hint_status))
 
     def populate_game_item(self):
         """

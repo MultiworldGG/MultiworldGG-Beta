@@ -17,7 +17,6 @@ from kivy.uix.anchorlayout import AnchorLayout
 #from console import ConsoleView, UIRecycleView
 from .textconsole import ConsoleView, TextConsole
 from .launcher import LauncherScreen, LauncherLayout
-import asynckivy
 
 # from kivy.core.window import Window
 from kivy.clock import Clock
@@ -35,6 +34,7 @@ from textwrap import wrap
 from .kivydi.expansionlist import *
 from kivymd.theming import ThemableBehavior
 from .bottomappbar import BottomAppBar
+import asynckivy
 
 Builder.load_string('''
 <ConsoleLayout>:
@@ -95,12 +95,11 @@ class ConsoleSliverAppbar(MDSliverAppbar):
         self.add_widget(self.content)
 
     def set_bk(self):
-        self.app.ctx.update_tags({"in_bk": not self.app.ctx.tags.get("in_bk", False)})
-        self.app.print_json([{"type": "color", "color": "green", "text": "BK mode set to " + str(self.app.ctx.tags.get("in_bk", False)) + "."}])
+        self.app.ctx.ui.set_bk()
     
     def set_deafen(self):
-        self.app.ctx.update_tags({"in_call": not self.app.ctx.tags.get("in_call", False)})
-        self.app.print_json([{"type": "color", "color": "green", "text": "Deafen mode set to " + str(self.app.ctx.tags.get("in_call", False)) + "."}])
+        self.app.ctx.ui.set_deafen()
+
 
 class ConsoleScreen(MDScreen, ThemableBehavior):
     '''
@@ -161,5 +160,5 @@ class ConsoleScreen(MDScreen, ThemableBehavior):
         self.slots_mdlist.clear_widgets()
         for slot_id, slot_data in self.app.ctx.ui.ui_player_data.items():
             await asynckivy.sleep(0)
-            slot = GameListPanel(item_name=slot_id, item_data=slot_data, panel=self)
+            slot = GameListPanel(item_name=slot_id, item_data=slot_data)
             self.slots_mdlist.add_widget(slot)

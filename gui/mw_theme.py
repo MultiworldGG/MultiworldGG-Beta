@@ -47,23 +47,6 @@ DEFAULT_TEXT_COLORS = {
 ''' Default markup text colors
 [Light Mode, Dark Mode]
 '''
-TEXT_COLORS = {
-    "default_color": "ababab",
-    "location_color": "00c51b",
-    "player1_color": "ff87d7",
-    "player2_color": "5fafff",
-    "entrance_color": "60b7e8",
-    "trap_item_color": "d75f5f",
-    "regular_item_color": "b2b2b2",
-    "useful_item_color": "6EC471",
-    "skip_item_color": "6EC471",
-    "progression_deprioritized_item_color": "d2ff49",
-    "progression_goal_item_color": "ffa700",
-    "progression_item_color": "ffbe00",
-    "command_echo_color": "ff9334"
-}
-''' Default color definitions, should be overwritten on init from stored Dark/Light colors'''
-
 # Overwriting or adding to default styles.kv
 Builder.load_string('''
 <Selector>:
@@ -149,34 +132,33 @@ class MarkupTagsTheme:
         if color_attr == self.progression_goal_item_color: return "Progression - Goal Item:"
         if color_attr == self.command_echo_color: return "Command Echo:"
 
-    def save_color(self, app_config, color_name, color_value, theme_style_index):
+    def save_color(self, app_config, color_name, color_value):
         """Save a single color value to the config file"""
-        curr_value = app_config.get('markup_tags', color_name)
-        curr_value = curr_value.split(',') if curr_value else ['ababab','ababab']
-        curr_value[theme_style_index] = color_value[theme_style_index]
         app_config.set('markup_tags', color_name, ','.join(color_value))
         app_config.write()
 
-    def load_color(self, app_config, color_name, default_value):
+    def load_color(self, app_config, color_name, default_value, theme_style_index):
         """Load a single color value from the config file"""
         value = app_config.get('markup_tags', color_name, fallback=','.join(default_value))
+        TEXT_COLORS[color_name] = value.split(',')[theme_style_index]
         return value.split(',')
 
-    def save_all_colors(self, app_config, theme_style_index):
+    def save_all_colors(self, app_config):
         """Save all color values to the config file"""
-        for color_name in TEXT_COLORS.keys():
+        for color_name in DEFAULT_TEXT_COLORS.keys():
             color_value = getattr(self, color_name)
-            self.save_color(app_config, color_name, color_value, theme_style_index)
+            self.save_color(app_config, color_name, color_value)
 
     def load_all_colors(self, app_config, theme_style_index):
         """Load all color values from the config file"""
-        for color_name, default_value in TEXT_COLORS.items():
-            loaded_value = self.load_color(app_config, color_name, default_value)
-            setattr(self, color_name, loaded_value[theme_style_index])
+        for color_name, default_value in DEFAULT_TEXT_COLORS.items():
+            loaded_value = self.load_color(app_config, color_name, default_value, theme_style_index)
+            setattr(self, color_name, loaded_value)
 
 class DefaultTheme(ThemableBehavior):
     markup_tags_theme: MarkupTagsTheme
     _theme_style: StringProperty
+    _theme_style_index: int
     _primary_palette: StringProperty
     dynamic_scheme_name: StringProperty
     compact_mode: BooleanProperty
@@ -223,7 +205,7 @@ class DefaultTheme(ThemableBehavior):
         self.app_config.set('markup_tags', color_name, ','.join(color_value))
         self.app_config.write()
 
-    def load_markup_color(self, color_name):
+    def load_markup_color(self, color_name, theme_style_index):
         """Load a single markup color from the config"""
         default_value = DEFAULT_TEXT_COLORS[color_name]
         return self.markup_tags_theme.load_color(self.app_config, color_name, default_value)

@@ -27,7 +27,7 @@
     MDListItemLeadingAvatar:
         width: dp(40)
         id: leading_avatar
-        source: root.game_data['avatar']
+        source: root.item_data['avatar']
         pos_hint: {"center_y": 0.5, "center_x": 0.5}
     MDBoxLayout:
         orientation: "vertical"
@@ -38,7 +38,7 @@
             orientation: "horizontal"
             size_hint_y: .5
             MDListItemHeadlineText:
-                text: root.slot_name
+                text: root.item_data['slot_name']
                 theme_text_color: "Custom"
                 text_color: app.theme_cls.onSecondaryContainerColor
                 pos_hint: {"center_y": 0.5}
@@ -47,7 +47,7 @@
             orientation: "horizontal"
             size_hint_y: .5
             MDListItemTertiaryText:
-                text: root.game
+                text: root.item_data['game']
                 theme_text_color: "Custom"
                 pos_hint: {"center_y": 0.5}
                 text_color: app.theme_cls.onSecondaryContainerColor

@@ -8,6 +8,7 @@ import pkgutil
 import asyncio
 import subprocess
 import weakref
+import asynckivy
 
 from collections import deque
 from PIL import Image as PILImage, ImageSequence
@@ -177,6 +178,8 @@ class MultiMDApp(MDApp):
         
         # Buffer for messages before console is initialized
         self._message_buffer = []
+        self.ui_hint_data = {}
+        self.ui_player_data = {}
 
     def get_application_config(self):
         """Get the path to the configuration file"""
@@ -476,7 +479,7 @@ class MultiMDApp(MDApp):
         if not self.top_appbar_menu:
             menu_items = [
                 self._create_menu_item(item)
-                for item in zip(["settings", "launcher"], self.screen_manager.screen_names)
+                for item in list(set(["settings", "launcher"] + self.screen_manager.screen_names))
             ]
 
             self.top_appbar_menu = MDDropdownMenu(
@@ -511,32 +514,42 @@ class MultiMDApp(MDApp):
             logging.getLogger("Client").exception(e)
 
     def focus_textinput(self):
+        '''
+        This function is called when the text input is focused.
+        It changes the screen to the console and focuses the text input.
+        '''
         if self.ctx.slot_info:  # Only focus console if we have slot info
             self.change_screen("console")
-            self.console_screen.bottom_appbar.on_gui_focus()
 
     def on_connect(self):
-        pronouns = self.app_config.get('client', 'pronouns')
-        in_call = self.app_config.get('client', 'in_call', fallback='False')
-        in_bk = self.app_config.get('client', 'in_bk', fallback='False')
+        '''
+        This function is called when the connection is established.
+        It sets up the UI player data and updates the hints.
+        '''
+        pronouns = ""
+        in_call = False
+        in_bk = False
+        
         for slot, name in self.ctx.player_names.items():
-            self.ui_hint_data[slot] = []
+            if self.ctx.slot_concerns_self(slot):
+                pronouns = self.app_config.get('client', 'pronouns', fallback='')
+            hint_data = self.ui_hint_data[slot] = {}
             self.ui_player_data[slot] = UIPlayerData(
                 slot_id=slot,
                 slot_name=name,
                 avatar="",
+                pronouns = pronouns,
                 bk_mode=in_bk,
                 in_call=in_call,
                 end_user=self.ctx.slot_concerns_self(slot),
-                game_status=self.ctx.player_status[slot],
-                game=self.ctx.player_games[slot],
-                hints=weakref.ref(self.ui_hint_data[slot]),
+                game_status="PLAYING",
+                game=self.ctx.slot_info[slot].game,
+                hints=hint_data,
             )
-            if pronouns:
-                self.ui_player_data[slot]["pronouns"] = pronouns
 
-        self.update_mwgg_hints(self.ui_hint_data)
+        self.update_mwgg_hints()
         self.update_hints()
+        self.set_pronouns()
 
 
     def print_json(self, data: typing.List[JSONMessagePart]):
@@ -552,34 +565,69 @@ class MultiMDApp(MDApp):
             # Buffer the message until console is initialized
             self._message_buffer.append(text)
 
+    def set_pronouns(self):
+        pronouns = self.ui_player_data[self.ctx.slot].pronouns
+        tags = list(self.ctx.tags)
+        if "pronouns" in tags:
+            for tag in tags:
+                if tag.startswith("pronouns"):
+                    tags.remove(tag)
+                    break
+        tags.append(f"pronouns:{pronouns}")
+        asynckivy.start(self.ctx.update_tags(tags))
+
+    def set_deafen(self):
+        tags = list(self.ctx.tags)
+        if "in_call" in tags:
+            tags.remove("in_call")
+        else:
+            tags.append("in_call")
+        asynckivy.start(self.ctx.update_tags(tags))
+    
+    def set_bk(self):
+        tags = list(self.ctx.tags)
+        if "in_bk" in tags:
+            tags.remove("in_bk")
+        else:
+            tags.append("in_bk")
+        asynckivy.start(self.ctx.update_tags(tags))
+
     def update_hints(self):
         hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}", [])
         mwgg_hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}_mwgg", {})
-        self.refresh_hints(hints, mwgg_hints)
+        if hints:
+            self.refresh_hints(hints, mwgg_hints)
 
 
     def refresh_hints(self, hints, mwgg_hints):
         hints_key = f"_read_hints_{self.ctx.team}_{self.ctx.slot}"
-        if hints_key not in self.ctx.stored_data:
-            return  # Hints data not available yet
+        mwgg_hints_key = f"_read_hints_{self.ctx.team}_{self.ctx.slot}_mwgg"
+        if hints_key not in self.ctx.stored_data or mwgg_hints_key not in self.ctx.stored_data:
+            return
+        if not self.ctx.location_names or not self.ctx.item_names:
+            return
 
         for hint in hints:
             if self.ctx.slot_concerns_self(hint["receiving_player"]):
-                for loc_id, ui_hint in self.ui_hint_data[hint["finding_player"]].items():
-                    if ui_hint.location_id == loc_id:
-                        ui_hint.set_status(hint.get("status"), mwgg_hints.get(loc_id, {}).get("mwgg_status"))
-                        break
-                else:
+                if not self.ui_hint_data[hint["finding_player"]]:
                     self.ui_hint_data[hint["finding_player"]][hint["location"]] = \
-                        UIHint(hint, HintStatus.HINT_UNSPECIFIED, MWGGUIHintStatus.HINT_UNSPECIFIED)
-            elif self.ctx.slot_concerns_self(hint["finding_player"]):
-                for loc_id, ui_hint in self.ui_hint_data[hint["receiving_player"]].items():
-                    if ui_hint.location_id == hint["location"]:
-                        ui_hint.set_status(hint.get("status"), mwgg_hints.get(loc_id, {}).get("mwgg_status"))
-                        break
+                        UIHint(hint, self.ctx.location_names, self.ctx.item_names, HintStatus.HINT_UNSPECIFIED, MWGGUIHintStatus.HINT_UNSPECIFIED)
                 else:
+                    if hint["location"] in self.ui_hint_data[hint["finding_player"]]:
+                        self.ui_hint_data[hint["finding_player"]][hint["location"]].set_status(hint.get("status"), mwgg_hints.get(hint["location"], {}).get("mwgg_status"))
+                    else:
+                        self.ui_hint_data[hint["finding_player"]][hint["location"]] = \
+                            UIHint(hint, self.ctx.location_names, self.ctx.item_names, HintStatus.HINT_UNSPECIFIED, MWGGUIHintStatus.HINT_UNSPECIFIED)
+            elif self.ctx.slot_concerns_self(hint["finding_player"]):
+                if not self.ui_hint_data[hint["finding_player"]]:
                     self.ui_hint_data[hint["receiving_player"]][hint["location"]] = \
-                        UIHint(hint, HintStatus.HINT_UNSPECIFIED, MWGGUIHintStatus.HINT_UNSPECIFIED)
+                        UIHint(hint, self.ctx.location_names, self.ctx.item_names, HintStatus.HINT_UNSPECIFIED, MWGGUIHintStatus.HINT_UNSPECIFIED)
+                else:
+                    if hint["location"] in self.ui_hint_data[hint["receiving_player"]]:
+                        self.ui_hint_data[hint["receiving_player"]][hint["location"]].set_status(hint.get("status"), mwgg_hints.get(hint["location"], {}).get("mwgg_status"))
+                    else:
+                        self.ui_hint_data[hint["receiving_player"]][hint["location"]] = \
+                            UIHint(hint, self.ctx.location_names, self.ctx.item_names, HintStatus.HINT_UNSPECIFIED, MWGGUIHintStatus.HINT_UNSPECIFIED)
             
                 # if not hint.get("status"): # Allows connecting to old servers
                 #     hint["status"] = HintStatus.HINT_FOUND if hint["found"] else HintStatus.HINT_UNSPECIFIED
@@ -598,14 +646,16 @@ class MultiMDApp(MDApp):
         if hasattr(self, 'console_screen') and self.console_screen:
             self.console_screen.update_slots_list()
 
-    async def update_mwgg_hints(self, mwgg_hints):
-        await self.ctx.send_msgs([{
+    def update_mwgg_hints(self, mwgg_hints: typing.Optional[dict] = None):
+        if mwgg_hints is None:
+            mwgg_hints = self.ui_hint_data
+        asynckivy.start(self.ctx.send_msgs([{
                         "cmd": "Set",
                         "key": f"_read_hints_{self.ctx.team}_{self.ctx.slot}_mwgg",
-                        "want_reply": True,
+                        "want_reply": False,
                         "default": {},
                         "operations": [{"operation": "update", "value": mwgg_hints}]
-                    }])
+                    }]))
 
 def is_command_input(string: str) -> bool:
     return len(string) > 0 and string[0] in "/!"
