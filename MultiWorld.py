@@ -122,6 +122,7 @@ def run_client(*args):
 
     asyncio.run(main(args))
     colorama.deinit()
-
+    
 if __name__ == "__main__":
-   run_client(*sys.argv[1:])
+    logging.getLogger().setLevel(logging.INFO)
+    run_client(*sys.argv[1:])

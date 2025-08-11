@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from kivymd.uix.menu.menu import MDDropdownTextItem
 __all__ = (
     "BottomAppBar"
 )
@@ -13,7 +15,10 @@ from kivymd.uix.label import MDLabel, MDIcon
 from kivymd.uix.floatlayout import MDFloatLayout
 from kivy.animation import Animation
 from kivy.clock import Clock
+from kivy.utils import escape_markup
+from kivy.metrics import dp
 from kivymd.uix.textfield import MDTextField
+from kivymd.uix.menu import MDDropdownMenu
 from collections import deque
 from typing import Deque
 #from kivydi import CONSOLE_ACTIONS, LAUNCHER_ACTIONS
@@ -104,13 +109,12 @@ Builder.load_string('''
     MDFabBottomAppBarButton:
         id: console_text_input_fab
         icon: "chat-outline"
-        on_release: root.animate_text_input('console_text_input_fab')
+        on_release: root.on_bar_action(self)
                     
 <BottomBarTextInput>:
     id: text_input
     hint_text: "Enter text"
     write_tab: False
-    on_text_validate: app.on_message(self)
     MDTextFieldLeadingIcon:
         icon: root.icon
     MDTextFieldHintText:
@@ -121,17 +125,27 @@ def is_command_input(string: str) -> bool:
     return len(string) > 0 and string[0] in "/!"
 
 class BottomBarTextInput(MDTextField):
+    action_type: StringProperty
     icon: StringProperty
     hint_text: StringProperty
     silent_prefix: StringProperty
     MAXIMUM_HISTORY_MESSAGES = 50
+
+    #hint autocomplete
+    min_chars = NumericProperty(3)
+    item_names: list[str] = []
+    location_names: list[str] = []
     
     #BottomAppBar is a MDFloatLayout already, so we can place the TextField in it without shenanigans
     def __init__(self, *args, **kwargs):
         self.icon = "blank"
         self.hint_text = "Enter text"
         self.silent_prefix = ""
+        self.action_type = "console"
         super().__init__(*args, **kwargs)
+        self.dropdown = MDDropdownMenu(caller=self, position="top", border_margin=dp(2), width=self.width)
+        self.bind(on_text_validate=self.on_fork)
+        self.bind(width=lambda instance, x: setattr(self.dropdown, "width", x))
         self.write_tab = False
         self._command_history_index = -1
         self._command_history: Deque[str] = deque(maxlen=BottomBarTextInput.MAXIMUM_HISTORY_MESSAGES)
@@ -140,6 +154,67 @@ class BottomBarTextInput(MDTextField):
         self._command_history_index = -1
         if is_command_input(new_entry):
             self._command_history.appendleft(new_entry)
+
+    def on_fork(self, instance):
+        if self.action_type == "hint":
+            self.on_message(instance)
+        elif self.action_type == "admin":
+            self.on_admin_message(instance)
+        else:
+            MDApp.get_running_app().on_message(instance)
+
+    def on_admin_message(self, instance):
+        MDApp.get_running_app().commandprocessor("!admin "+instance.text)
+
+    def on_message(self, instance):
+        if instance.text in self.item_names:
+            MDApp.get_running_app().commandprocessor("!hint "+instance.text)
+        elif instance.text in self.location_names:
+            MDApp.get_running_app().commandprocessor("!hint_location "+instance.text)
+        self.item_names = []
+        self.location_names = []
+
+    def on_text(self, instance, value):
+        if self.action_type != "hint":
+            return
+        if len(value) >= self.min_chars:
+            self.dropdown.items.clear()
+            ctx = MDApp.get_running_app().ctx
+            if not ctx.game:
+                return
+            self.item_names = [item for item in ctx.item_names._game_store[ctx.game].values()]
+            self.location_names = [location for location in ctx.location_names._game_store[ctx.game].values()]
+
+            def on_press(text):
+                split_text = MDDropdownTextItem(text=text)
+                self.set_text(self, "".join(text_frag for text_frag in split_text
+                                            ))
+                self.dropdown.dismiss()
+                self.focus = True
+
+            lowered = value.lower()
+            for hint_name in self.item_names + self.location_names:
+                try:
+                    index = hint_name.lower().index(lowered)
+                except ValueError:
+                    pass  # substring not found
+                else:
+                    text = escape_markup(hint_name)
+                    text = text[:index]+text[index:index+len(value)]+text[index+len(value):]
+                    self.dropdown.items.append({
+                        "text": text,
+                        "on_release": lambda txt=text: on_press(txt),
+                        "leading_icon": "map-marker" if hint_name in self.location_names else "treasure-chest"
+                    })
+            if not self.dropdown.parent:
+                self.dropdown.open()
+            else:
+                self.dropdown.check_ver_growth()
+        else:
+            self.dropdown.dismiss()
+
+    def on_text_validate(self):
+        super().on_text_validate()
 
 class BottomAppBar(MDBottomAppBar):
     text_input: BottomBarTextInput
@@ -159,6 +234,7 @@ class BottomAppBar(MDBottomAppBar):
             button.bind(on_release=lambda instance: self.on_bar_action(instance))
             action_items.append(button)
         self.text_input = BottomBarTextInput(id=f'{screen_name}_text_input')
+        self.ids.console_text_input_fab.id = "console_fab_button"
         Clock.schedule_once(lambda dt: self.set_actions(action_items), 0)
 
     def set_actions(self, action_items: list[MDActionBottomAppBarButton]):
@@ -188,7 +264,7 @@ class BottomAppBar(MDBottomAppBar):
             actions = LAUNCHER_ACTIONS
         else:
             return
-        
+    
         # Find the matching action data
         for action in actions:
             if action["id"] in id_name:
@@ -202,6 +278,7 @@ class BottomAppBar(MDBottomAppBar):
         self.text_input.icon = action_data["icon"]
         self.text_input.hint_text = action_data["label"]
         self.text_input.silent_prefix = action_data["prefill"]
+        self.text_input.action_type = action_data["id"]
         
         # Show the text input with animation
         if not self.text_input.parent:

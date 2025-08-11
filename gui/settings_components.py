@@ -21,44 +21,7 @@ from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogSupporting
 from .mw_theme import THEME_OPTIONS, DEFAULT_TEXT_COLORS, RegisterFonts
 from .kivydi.colorpicker import MWColorPicker
 
-# Set up logging
-log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs")
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, "settings_components.log")
-
-# Remove any existing handlers
-root_logger = logging.getLogger()
-for handler in root_logger.handlers[:]:
-    root_logger.removeHandler(handler)
-    handler.close()
-
-# Create a custom stream handler that won't cause recursion
-class CustomStreamHandler(logging.StreamHandler):
-    def emit(self, record):
-        try:
-            msg = self.format(record)
-            stream = self.stream
-            stream.write(msg + self.terminator)
-            self.flush()
-        except Exception:
-            self.handleError(record)
-
-# Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(log_file, mode='w'),
-        CustomStreamHandler(sys.stdout)  # Use stdout instead of stderr
-    ]
-)
-logger = logging.getLogger(__name__)
-
-# Test log message
-logger.debug("Settings components logging initialized")
-logger.info("Settings components logging initialized")
-logger.warning("Settings components logging initialized")
-logger.error("Settings components logging initialized")
+logger = logging.getLogger("Client")
 
 # KV string for settings components
 settings_components_kv = '''

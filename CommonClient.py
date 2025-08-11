@@ -38,7 +38,6 @@ import os
 import ssl
 
 if typing.TYPE_CHECKING:
-    import kvui
     import argparse
     import gui.Gui
     from typing import Optional

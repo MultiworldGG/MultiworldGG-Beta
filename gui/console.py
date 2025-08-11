@@ -159,6 +159,7 @@ class ConsoleScreen(MDScreen, ThemableBehavior):
     async def set_slots_list(self):
         self.slots_mdlist.clear_widgets()
         for slot_id, slot_data in self.app.ctx.ui.ui_player_data.items():
-            await asynckivy.sleep(0)
-            slot = GameListPanel(item_name=slot_id, item_data=slot_data)
-            self.slots_mdlist.add_widget(slot)
+            if not slot_data.slot_name == "Archipelago":
+                await asynckivy.sleep(0)
+                slot = GameListPanel(item_name=slot_id, item_data=slot_data)
+                self.slots_mdlist.add_widget(slot)

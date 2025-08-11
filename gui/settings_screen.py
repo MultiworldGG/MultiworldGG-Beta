@@ -20,44 +20,7 @@ from kivymd.uix.label import MDLabel
 
 from .settings_components import ConnectionSettings, ThemingSettings, InterfaceSettings
 
-# Set up logging
-log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs")
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, "settings_screen.log")
-
-# Remove any existing handlers
-root_logger = logging.getLogger()
-for handler in root_logger.handlers[:]:
-    root_logger.removeHandler(handler)
-    handler.close()
-
-# Create a custom stream handler that won't cause recursion
-class CustomStreamHandler(logging.StreamHandler):
-    def emit(self, record):
-        try:
-            msg = self.format(record)
-            stream = self.stream
-            stream.write(msg + self.terminator)
-            self.flush()
-        except Exception:
-            self.handleError(record)
-
-# Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(log_file, mode='w'),
-        CustomStreamHandler(sys.stdout)  # Use stdout instead of stderr
-    ]
-)
-logger = logging.getLogger(__name__)
-
-# Test log message
-logger.debug("Settings screen logging initialized")
-logger.info("Settings screen logging initialized")
-logger.warning("Settings screen logging initialized")
-logger.error("Settings screen logging initialized")
+logger = logging.getLogger("Client")
 
 settings_dict = {
     "Connection": [

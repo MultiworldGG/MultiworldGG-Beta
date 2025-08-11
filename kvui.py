@@ -20,8 +20,8 @@ from collections import deque
 # os.environ["KIVY_NO_ARGS"] = "1"
 # os.environ["KIVY_LOG_ENABLE"] = "0"
 
-import Utils
-apname = Utils.instance_name if Utils.instance_name else "Archipelago"
+# import Utils
+# apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 # if Utils.is_frozen():
 #     os.environ["KIVY_DATA_DIR"] = Utils.local_path("data")
 
@@ -423,7 +423,7 @@ class ServerLabel(HoverBehavior, MDTooltip, MDBoxLayout):
             return text
 
         else:
-            return f"No current server connection. \nPlease connect to a {apname} server."
+            return f"No current server connection. \nPlease connect to a server."
 
 
 class MainLayout(MDGridLayout):
@@ -988,7 +988,7 @@ class CommandButton(MDButton, MDTooltip):
         manager (GameManager): The game manager instance for command processing
         **kwargs: Additional arguments passed to MDButton
     """
-    def __init__(self, *args, manager: "GameManager", **kwargs):
+    def __init__(self, *args, manager, **kwargs):
         super().__init__(*args, **kwargs)
         self.manager = manager
         self._tooltip = ToolTip(text="Test")
@@ -1002,292 +1002,292 @@ class CommandButton(MDButton, MDTooltip):
         self.animation_tooltip_dismiss()
 
 
-class GameManager(ThemedApp):
-    logging_pairs = [
-        ("Client", "Archipelago"),
-    ]
-    base_title: str = apname + " Client"
-    last_autofillable_command: str
+# class GameManager(ThemedApp):
+#     logging_pairs = [
+#         ("Client", "Archipelago"),
+#     ]
+#     base_title: str = apname + " Client"
+#     last_autofillable_command: str
 
-    main_area_container: MDGridLayout
-    """ subclasses can add more columns beside the tabs """
+#     main_area_container: MDGridLayout
+#     """ subclasses can add more columns beside the tabs """
 
-    tabs: MDNavigationBar
-    screens: MDScreenManagerBase
+#     tabs: MDNavigationBar
+#     screens: MDScreenManagerBase
 
-    def __init__(self, ctx: context_type):
-        self.title = self.base_title
-        self.ctx = ctx
-        self.commandprocessor = ctx.command_processor(ctx)
-        self.icon = r"data/icon.png"
-        self.json_to_kivy_parser = KivyJSONtoTextParser(ctx)
-        self.log_panels: typing.Dict[str, Widget] = {}
+#     def __init__(self, ctx: context_type):
+#         self.title = self.base_title
+#         self.ctx = ctx
+#         self.commandprocessor = ctx.command_processor(ctx)
+#         self.icon = r"data/icon.png"
+#         self.json_to_kivy_parser = KivyJSONtoTextParser(ctx)
+#         self.log_panels: typing.Dict[str, Widget] = {}
 
-        # keep track of last used command to autofill on click
-        self.last_autofillable_command = "hint"
-        autofillable_commands = ("hint_location", "hint", "getitem")
-        original_say = ctx.on_user_say
+#         # keep track of last used command to autofill on click
+#         self.last_autofillable_command = "hint"
+#         autofillable_commands = ("hint_location", "hint", "getitem")
+#         original_say = ctx.on_user_say
 
-        def intercept_say(text):
-            text = original_say(text)
-            if text:
-                for command in autofillable_commands:
-                    if text.startswith("!" + command):
-                        self.last_autofillable_command = command
-                        break
-            return text
+#         def intercept_say(text):
+#             text = original_say(text)
+#             if text:
+#                 for command in autofillable_commands:
+#                     if text.startswith("!" + command):
+#                         self.last_autofillable_command = command
+#                         break
+#             return text
 
-        ctx.on_user_say = intercept_say
+#         ctx.on_user_say = intercept_say
 
-        super(GameManager, self).__init__()
+#         super(GameManager, self).__init__()
 
-    @property
-    def tab_count(self):
-        if hasattr(self, "tabs"):
-            return max(1, len(self.tabs.children))
-        return 1
+#     @property
+#     def tab_count(self):
+#         if hasattr(self, "tabs"):
+#             return max(1, len(self.tabs.children))
+#         return 1
 
-    def on_start(self):
-        def on_start(*args):
-            self.root.md_bg_color = self.theme_cls.backgroundColor
-        super().on_start()
-        Clock.schedule_once(on_start)
+#     def on_start(self):
+#         def on_start(*args):
+#             self.root.md_bg_color = self.theme_cls.backgroundColor
+#         super().on_start()
+#         Clock.schedule_once(on_start)
 
-    def build(self) -> Layout:
-        self.set_colors()
-        self.container = ContainerLayout()
+#     def build(self) -> Layout:
+#         self.set_colors()
+#         self.container = ContainerLayout()
 
-        self.grid = MainLayout()
-        self.grid.cols = 1
-        self.connect_layout = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=dp(40),
-                                          spacing=5, padding=(5, 10))
-        # top part
-        server_label = ServerLabel(width=dp(75))
-        self.connect_layout.add_widget(server_label)
-        self.server_connect_bar = ConnectBarTextInput(text=self.ctx.suggested_address or "multiworld.gg:",
-                                                      pos_hint={"center_x": 0.5, "center_y": 0.5})
+#         self.grid = MainLayout()
+#         self.grid.cols = 1
+#         self.connect_layout = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=dp(40),
+#                                           spacing=5, padding=(5, 10))
+#         # top part
+#         server_label = ServerLabel(width=dp(75))
+#         self.connect_layout.add_widget(server_label)
+#         self.server_connect_bar = ConnectBarTextInput(text=self.ctx.suggested_address or "multiworld.gg:",
+#                                                       pos_hint={"center_x": 0.5, "center_y": 0.5})
 
-        def connect_bar_validate(sender):
-            if not self.ctx.server:
-                self.connect_button_action(sender)
+#         def connect_bar_validate(sender):
+#             if not self.ctx.server:
+#                 self.connect_button_action(sender)
 
-        self.server_connect_bar.height = dp(30)
-        self.server_connect_bar.bind(on_text_validate=connect_bar_validate)
-        self.connect_layout.add_widget(self.server_connect_bar)
-        self.server_connect_button = MDButton(MDButtonText(text="Connect"), style="filled", size=(dp(100), dp(70)),
-                                              size_hint_x=None, size_hint_y=None, radius=5, pos_hint={"center_y": 0.55})
-        self.server_connect_button.bind(on_press=self.connect_button_action)
-        self.server_connect_button.height = self.server_connect_bar.height
-        self.connect_layout.add_widget(self.server_connect_button)
-        self.grid.add_widget(self.connect_layout)
-        self.progressbar = MDLinearProgressIndicator(size_hint_y=None, height=3)
-        self.grid.add_widget(self.progressbar)
+#         self.server_connect_bar.height = dp(30)
+#         self.server_connect_bar.bind(on_text_validate=connect_bar_validate)
+#         self.connect_layout.add_widget(self.server_connect_bar)
+#         self.server_connect_button = MDButton(MDButtonText(text="Connect"), style="filled", size=(dp(100), dp(70)),
+#                                               size_hint_x=None, size_hint_y=None, radius=5, pos_hint={"center_y": 0.55})
+#         self.server_connect_button.bind(on_press=self.connect_button_action)
+#         self.server_connect_button.height = self.server_connect_bar.height
+#         self.connect_layout.add_widget(self.server_connect_button)
+#         self.grid.add_widget(self.connect_layout)
+#         self.progressbar = MDLinearProgressIndicator(size_hint_y=None, height=3)
+#         self.grid.add_widget(self.progressbar)
 
-        # middle part
-        self.screens = MDScreenManagerBase(pos_hint={"center_x": 0.5})
-        self.tabs = MDNavigationBar(orientation="horizontal", size_hint_y=None, height=dp(40), set_bars_color=True)
-        # bind the method to the bar for back compatibility
-        self.tabs.remove_tab = self.remove_client_tab
-        self.screens.current_tab = self.add_client_tab(
-            "All" if len(self.logging_pairs) > 1 else "Archipelago",
-            UILog(*(logging.getLogger(logger_name) for logger_name, name in self.logging_pairs)),
-        )
-        self.log_panels["All"] = self.screens.current_tab.content
-        self.screens.current_tab.active = True
+#         # middle part
+#         self.screens = MDScreenManagerBase(pos_hint={"center_x": 0.5})
+#         self.tabs = MDNavigationBar(orientation="horizontal", size_hint_y=None, height=dp(40), set_bars_color=True)
+#         # bind the method to the bar for back compatibility
+#         self.tabs.remove_tab = self.remove_client_tab
+#         self.screens.current_tab = self.add_client_tab(
+#             "All" if len(self.logging_pairs) > 1 else "Archipelago",
+#             UILog(*(logging.getLogger(logger_name) for logger_name, name in self.logging_pairs)),
+#         )
+#         self.log_panels["All"] = self.screens.current_tab.content
+#         self.screens.current_tab.active = True
 
-        for logger_name, display_name in self.logging_pairs:
-            bridge_logger = logging.getLogger(logger_name)
-            self.log_panels[display_name] = UILog(bridge_logger)
-            if len(self.logging_pairs) > 1:
-                self.add_client_tab(display_name, self.log_panels[display_name])
+#         for logger_name, display_name in self.logging_pairs:
+#             bridge_logger = logging.getLogger(logger_name)
+#             self.log_panels[display_name] = UILog(bridge_logger)
+#             if len(self.logging_pairs) > 1:
+#                 self.add_client_tab(display_name, self.log_panels[display_name])
 
-        self.hint_log = HintLog(self.json_to_kivy_parser)
-        hint_panel = self.add_client_tab("Hints", HintLayout(self.hint_log))
-        self.log_panels["Hints"] = hint_panel.content
+#         self.hint_log = HintLog(self.json_to_kivy_parser)
+#         hint_panel = self.add_client_tab("Hints", HintLayout(self.hint_log))
+#         self.log_panels["Hints"] = hint_panel.content
 
-        self.main_area_container = MDGridLayout(size_hint_y=1, rows=1)
-        tab_container = MDGridLayout(size_hint_y=1, cols=1)
-        tab_container.add_widget(self.tabs)
-        tab_container.add_widget(self.screens)
-        self.main_area_container.add_widget(tab_container)
+#         self.main_area_container = MDGridLayout(size_hint_y=1, rows=1)
+#         tab_container = MDGridLayout(size_hint_y=1, cols=1)
+#         tab_container.add_widget(self.tabs)
+#         tab_container.add_widget(self.screens)
+#         self.main_area_container.add_widget(tab_container)
 
-        self.grid.add_widget(self.main_area_container)
+#         self.grid.add_widget(self.main_area_container)
 
-        # bottom part
-        bottom_layout = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=dp(40), spacing=5, padding=(5, 10))
-        info_button = CommandButton(MDButtonText(text="Command:", halign="left"), manager=self, radius=5,
-                                    style="filled", size=(dp(100), dp(70)), size_hint_x=None, size_hint_y=None,
-                                    pos_hint={"center_y": 0.575})
-        info_button.bind(on_release=self.command_button_action)
-        bottom_layout.add_widget(info_button)
-        self.textinput = CommandPromptTextInput(size_hint_y=None, multiline=False, write_tab=False)
-        self.textinput.bind(on_text_validate=self.on_message)
-        info_button.height = self.textinput.height
-        self.textinput.text_validate_unfocus = False
-        bottom_layout.add_widget(self.textinput)
-        self.grid.add_widget(bottom_layout)
-        self.commandprocessor("/help")
-        Clock.schedule_interval(self.update_texts, 1 / 30)
-        self.container.add_widget(self.grid)
+#         # bottom part
+#         bottom_layout = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=dp(40), spacing=5, padding=(5, 10))
+#         info_button = CommandButton(MDButtonText(text="Command:", halign="left"), manager=self, radius=5,
+#                                     style="filled", size=(dp(100), dp(70)), size_hint_x=None, size_hint_y=None,
+#                                     pos_hint={"center_y": 0.575})
+#         info_button.bind(on_release=self.command_button_action)
+#         bottom_layout.add_widget(info_button)
+#         self.textinput = CommandPromptTextInput(size_hint_y=None, multiline=False, write_tab=False)
+#         self.textinput.bind(on_text_validate=self.on_message)
+#         info_button.height = self.textinput.height
+#         self.textinput.text_validate_unfocus = False
+#         bottom_layout.add_widget(self.textinput)
+#         self.grid.add_widget(bottom_layout)
+#         self.commandprocessor("/help")
+#         Clock.schedule_interval(self.update_texts, 1 / 30)
+#         self.container.add_widget(self.grid)
 
-        # If the address contains a port, select it; otherwise, select the host.
-        s = self.server_connect_bar.text
-        host_start = s.find("@") + 1
-        ipv6_end = s.find("]", host_start) + 1
-        port_start = s.find(":", ipv6_end if ipv6_end > 0 else host_start) + 1
-        self.server_connect_bar.focus = True
-        self.server_connect_bar.select_text(port_start if port_start > 0 else host_start, len(s))
+#         # If the address contains a port, select it; otherwise, select the host.
+#         s = self.server_connect_bar.text
+#         host_start = s.find("@") + 1
+#         ipv6_end = s.find("]", host_start) + 1
+#         port_start = s.find(":", ipv6_end if ipv6_end > 0 else host_start) + 1
+#         self.server_connect_bar.focus = True
+#         self.server_connect_bar.select_text(port_start if port_start > 0 else host_start, len(s))
 
-        # Uncomment to enable the kivy live editor console
-        # Press Ctrl-E (with numlock/capslock) disabled to open
-        # from kivy.core.window import Window
-        # from kivy.modules import console
-        # console.create_console(Window, self.container)
+#         # Uncomment to enable the kivy live editor console
+#         # Press Ctrl-E (with numlock/capslock) disabled to open
+#         # from kivy.core.window import Window
+#         # from kivy.modules import console
+#         # console.create_console(Window, self.container)
 
-        return self.container
+#         return self.container
 
-    def add_client_tab(self, title: str, content: Widget, index: int = -1) -> MDNavigationItemBase:
-        """
-        Adds a new tab to the client window with a given title, and provides a given Widget as its content.
-        Returns the new tab widget, with the provided content being placed on the tab as content.
+#     def add_client_tab(self, title: str, content: Widget, index: int = -1) -> MDNavigationItemBase:
+#         """
+#         Adds a new tab to the client window with a given title, and provides a given Widget as its content.
+#         Returns the new tab widget, with the provided content being placed on the tab as content.
 
-        :param title: The title of the tab.
-        :param content: The Widget to be added as content for this tab's new MDScreen. Will also be added to the
-         returned tab as tab.content.
-        :param index: The index to insert the tab at. Defaults to -1, meaning the tab will be appended to the end.
+#         :param title: The title of the tab.
+#         :param content: The Widget to be added as content for this tab's new MDScreen. Will also be added to the
+#          returned tab as tab.content.
+#         :param index: The index to insert the tab at. Defaults to -1, meaning the tab will be appended to the end.
 
-        :return: The new tab.
-        """
-        if self.tabs.children:
-            self.tabs.add_widget(MDDivider(orientation="vertical"))
-        new_tab = MDNavigationItemBase(text=title)
-        new_tab.content = content
-        new_screen = MDScreen(name=title)
-        new_screen.add_widget(content)
-        if -1 < index <= len(self.tabs.children):
-            remapped_index = len(self.tabs.children) - index
-            self.tabs.add_widget(new_tab, index=remapped_index)
-            self.screens.add_widget(new_screen, index=index)
-        else:
-            self.tabs.add_widget(new_tab)
-            self.screens.add_widget(new_screen)
-        return new_tab
+#         :return: The new tab.
+#         """
+#         if self.tabs.children:
+#             self.tabs.add_widget(MDDivider(orientation="vertical"))
+#         new_tab = MDNavigationItemBase(text=title)
+#         new_tab.content = content
+#         new_screen = MDScreen(name=title)
+#         new_screen.add_widget(content)
+#         if -1 < index <= len(self.tabs.children):
+#             remapped_index = len(self.tabs.children) - index
+#             self.tabs.add_widget(new_tab, index=remapped_index)
+#             self.screens.add_widget(new_screen, index=index)
+#         else:
+#             self.tabs.add_widget(new_tab)
+#             self.screens.add_widget(new_screen)
+#         return new_tab
 
-    def remove_client_tab(self, tab: MDNavigationItemBase) -> None:
-        """
-        Called to remove a tab and its screen.
+#     def remove_client_tab(self, tab: MDNavigationItemBase) -> None:
+#         """
+#         Called to remove a tab and its screen.
 
-        :param tab: The tab to remove.
-        """
-        tab_index = self.tabs.children.index(tab)
-        # if the tab is currently active we need to swap before removing it
-        if tab == self.screens.current_tab:
-            if not tab_index:
-                # account for the divider
-                swap_index = tab_index + 2
-            else:
-                swap_index = tab_index - 2
-            self.tabs.children[swap_index].on_release()
-            # self.screens.switch_screens(self.tabs.children[swap_index])
-        # get the divider to the left if we can
-        if not tab_index:
-            divider_index = tab_index + 1
-        else:
-            divider_index = tab_index - 1
-        self.tabs.remove_widget(self.tabs.children[divider_index])
-        self.tabs.remove_widget(tab)
-        self.screens.remove_widget(self.screens.get_screen(tab.text))
+#         :param tab: The tab to remove.
+#         """
+#         tab_index = self.tabs.children.index(tab)
+#         # if the tab is currently active we need to swap before removing it
+#         if tab == self.screens.current_tab:
+#             if not tab_index:
+#                 # account for the divider
+#                 swap_index = tab_index + 2
+#             else:
+#                 swap_index = tab_index - 2
+#             self.tabs.children[swap_index].on_release()
+#             # self.screens.switch_screens(self.tabs.children[swap_index])
+#         # get the divider to the left if we can
+#         if not tab_index:
+#             divider_index = tab_index + 1
+#         else:
+#             divider_index = tab_index - 1
+#         self.tabs.remove_widget(self.tabs.children[divider_index])
+#         self.tabs.remove_widget(tab)
+#         self.screens.remove_widget(self.screens.get_screen(tab.text))
 
-    def update_texts(self, dt):
-        if hasattr(self.screens.current_tab.content, "fix_heights"):
-            getattr(self.screens.current_tab.content, "fix_heights")()
-        if self.ctx.server:
-            self.title = self.base_title + " " + Utils.__version__ + \
-                         f" | Connected to: {self.ctx.server_address} " \
-                         f"{'.'.join(str(e) for e in self.ctx.server_version)}"
-            self.server_connect_button._button_text.text = "Disconnect"
-            self.server_connect_bar.readonly = True
-            self.progressbar.max = len(self.ctx.checked_locations) + len(self.ctx.missing_locations)
-            self.progressbar.value = len(self.ctx.checked_locations)
-        else:
-            self.server_connect_button._button_text.text = "Connect"
-            self.server_connect_bar.readonly = False
-            self.title = self.base_title + " " + Utils.__version__
-            self.progressbar.value = 0
+#     def update_texts(self, dt):
+#         if hasattr(self.screens.current_tab.content, "fix_heights"):
+#             getattr(self.screens.current_tab.content, "fix_heights")()
+#         if self.ctx.server:
+#             self.title = self.base_title + " " + Utils.__version__ + \
+#                          f" | Connected to: {self.ctx.server_address} " \
+#                          f"{'.'.join(str(e) for e in self.ctx.server_version)}"
+#             self.server_connect_button._button_text.text = "Disconnect"
+#             self.server_connect_bar.readonly = True
+#             self.progressbar.max = len(self.ctx.checked_locations) + len(self.ctx.missing_locations)
+#             self.progressbar.value = len(self.ctx.checked_locations)
+#         else:
+#             self.server_connect_button._button_text.text = "Connect"
+#             self.server_connect_bar.readonly = False
+#             self.title = self.base_title + " " + Utils.__version__
+#             self.progressbar.value = 0
 
-    def command_button_action(self, button):
-        if self.ctx.server:
-            logging.getLogger("Client").info("/help for client commands and !help for server commands.")
-        else:
-            logging.getLogger("Client").info("/help for client commands and once you are connected, "
-                                             "!help for server commands.")
+#     def command_button_action(self, button):
+#         if self.ctx.server:
+#             logging.getLogger("Client").info("/help for client commands and !help for server commands.")
+#         else:
+#             logging.getLogger("Client").info("/help for client commands and once you are connected, "
+#                                              "!help for server commands.")
 
-    def connect_button_action(self, button):
-        self.ctx.username = None
-        self.ctx.password = None
-        if self.ctx.server:
-            async_start(self.ctx.disconnect())
-        else:
-            async_start(self.ctx.connect(self.server_connect_bar.text.replace("/connect ", "")))
+#     def connect_button_action(self, button):
+#         self.ctx.username = None
+#         self.ctx.password = None
+#         if self.ctx.server:
+#             async_start(self.ctx.disconnect())
+#         else:
+#             async_start(self.ctx.connect(self.server_connect_bar.text.replace("/connect ", "")))
 
-    def on_stop(self):
-        # "kill" input tasks
-        for x in range(self.ctx.input_requests):
-            self.ctx.input_queue.put_nowait("")
-        self.ctx.input_requests = 0
+#     def on_stop(self):
+#         # "kill" input tasks
+#         for x in range(self.ctx.input_requests):
+#             self.ctx.input_queue.put_nowait("")
+#         self.ctx.input_requests = 0
 
-        self.ctx.exit_event.set()
+#         self.ctx.exit_event.set()
 
-    def on_message(self, textinput: CommandPromptTextInput):
-        try:
-            input_text = textinput.text.strip()
-            textinput.text = ""
-            textinput.update_history(input_text)
+#     def on_message(self, textinput: CommandPromptTextInput):
+#         try:
+#             input_text = textinput.text.strip()
+#             textinput.text = ""
+#             textinput.update_history(input_text)
 
-            if self.ctx.input_requests > 0:
-                self.ctx.input_requests -= 1
-                self.ctx.input_queue.put_nowait(input_text)
-            elif is_command_input(input_text):
-                self.ctx.on_ui_command(input_text)
-                self.commandprocessor(input_text)
-            elif input_text:
-                self.commandprocessor(input_text)
+#             if self.ctx.input_requests > 0:
+#                 self.ctx.input_requests -= 1
+#                 self.ctx.input_queue.put_nowait(input_text)
+#             elif is_command_input(input_text):
+#                 self.ctx.on_ui_command(input_text)
+#                 self.commandprocessor(input_text)
+#             elif input_text:
+#                 self.commandprocessor(input_text)
 
-        except Exception as e:
-            logging.getLogger("Client").exception(e)
+#         except Exception as e:
+#             logging.getLogger("Client").exception(e)
 
-    def print_json(self, data: typing.List[JSONMessagePart]):
-        text = self.json_to_kivy_parser(data)
-        self.log_panels["Archipelago"].on_message_markup(text)
-        self.log_panels["All"].on_message_markup(text)
+#     def print_json(self, data: typing.List[JSONMessagePart]):
+#         text = self.json_to_kivy_parser(data)
+#         self.log_panels["Archipelago"].on_message_markup(text)
+#         self.log_panels["All"].on_message_markup(text)
 
-    def focus_textinput(self):
-        if hasattr(self, "textinput"):
-            self.textinput.focus = True
+#     def focus_textinput(self):
+#         if hasattr(self, "textinput"):
+#             self.textinput.focus = True
 
-    def update_address_bar(self, text: str):
-        if hasattr(self, "server_connect_bar"):
-            self.server_connect_bar.text = text
-        else:
-            logging.getLogger("Client").info("Could not update address bar as the GUI is not yet initialized.")
+#     def update_address_bar(self, text: str):
+#         if hasattr(self, "server_connect_bar"):
+#             self.server_connect_bar.text = text
+#         else:
+#             logging.getLogger("Client").info("Could not update address bar as the GUI is not yet initialized.")
 
-    def enable_energy_link(self):
-        if not hasattr(self, "energy_link_label"):
-            self.energy_link_label = MDLabel(text="Energy Link: Standby",
-                                           size_hint_x=None, width=150, halign="center")
-            self.connect_layout.add_widget(self.energy_link_label)
+#     def enable_energy_link(self):
+#         if not hasattr(self, "energy_link_label"):
+#             self.energy_link_label = MDLabel(text="Energy Link: Standby",
+#                                            size_hint_x=None, width=150, halign="center")
+#             self.connect_layout.add_widget(self.energy_link_label)
 
-    def set_new_energy_link_value(self):
-        if hasattr(self, "energy_link_label"):
-            self.energy_link_label.text = f"EL: {Utils.format_SI_prefix(self.ctx.current_energy_link_value)}J"
+#     def set_new_energy_link_value(self):
+#         if hasattr(self, "energy_link_label"):
+#             self.energy_link_label.text = f"EL: {Utils.format_SI_prefix(self.ctx.current_energy_link_value)}J"
 
-    def update_hints(self):
-        hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}", [])
-        self.hint_log.refresh_hints(hints)
+#     def update_hints(self):
+#         hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}", [])
+#         self.hint_log.refresh_hints(hints)
 
-    # default F1 keybind, opens a settings menu, that seems to break the layout engine once closed
-    def open_settings(self, *largs):
-        pass
+#     # default F1 keybind, opens a settings menu, that seems to break the layout engine once closed
+#     def open_settings(self, *largs):
+#         pass
 
 
 class LogtoUI(logging.Handler):
@@ -1622,8 +1622,8 @@ class KivyJSONtoTextParser(JSONtoTextParser):
 
 ExceptionManager.add_handler(E())
 
-Builder.load_file(Utils.local_path("data", "client.kv"))
-user_file = Utils.user_path("data", "user.kv")
-if os.path.exists(user_file):
-    logging.info("Loading user.kv into builder.")
-    Builder.load_file(user_file)
+# Builder.load_file(Utils.local_path("data", "client.kv"))
+# user_file = Utils.user_path("data", "user.kv")
+# if os.path.exists(user_file):
+#     logging.info("Loading user.kv into builder.")
+#     Builder.load_file(user_file)

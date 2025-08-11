@@ -621,18 +621,18 @@ class KH2Context(CommonContext):
                 logger.info(f"Deathlink: {self.player_names[self.slot]} lost their heart to darkness.")
                 await self.send_death(death_text=f"{self.player_names[self.slot]} lost their heart to darkness.")
 
-    def run_gui(self):
-        """Import kivy UI system and start running it as self.ui_task."""
-        from kvui import GameManager
+    # def run_gui(self):
+    #     """Import kivy UI system and start running it as self.ui_task."""
+    #     from kvui import GameManager
 
-        class KH2Manager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = apname + " KH2 Client"
+    #     class KH2Manager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = apname + " KH2 Client"
 
-        self.ui = KH2Manager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = KH2Manager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     def get_addresses(self):
         if not self.kh2connected and self.kh2 is not None:
@@ -741,8 +741,7 @@ async def kh2_watcher(ctx: KH2Context):
 
 
 def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
-    from Utils import init_logging
-    init_logging("Client", exception_logger="Client")
+    logging.getLogger("KH2Client")
 
     async def main(args):
         ctx = KH2Context(server_address, slot_name, password, ready_callback, error_callback)
