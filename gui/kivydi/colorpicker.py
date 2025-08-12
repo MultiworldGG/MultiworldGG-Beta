@@ -15,44 +15,7 @@ import logging
 import os
 import sys
 
-# Set up logging
-log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs")
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, "colorpicker.log")
-
-# Remove any existing handlers
-root_logger = logging.getLogger()
-for handler in root_logger.handlers[:]:
-    root_logger.removeHandler(handler)
-    handler.close()
-
-# Create a custom stream handler that won't cause recursion
-class CustomStreamHandler(logging.StreamHandler):
-    def emit(self, record):
-        try:
-            msg = self.format(record)
-            stream = self.stream
-            stream.write(msg + self.terminator)
-            self.flush()
-        except Exception:
-            self.handleError(record)
-
-# Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(log_file, mode='w'),
-        CustomStreamHandler(sys.stdout)  # Use stdout instead of stderr
-    ]
-)
-logger = logging.getLogger(__name__)
-
-# Test log message
-logger.debug("Color picker logging initialized")
-logger.info("Color picker logging initialized")
-logger.warning("Color picker logging initialized")
-logger.error("Color picker logging initialized")
+logger = logging.getLogger("MultiWorld")
 
 color_info_kv = """
 <ColorInfoLayout>:

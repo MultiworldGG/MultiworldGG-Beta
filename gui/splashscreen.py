@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import os
 import sys
 import time
@@ -10,15 +7,7 @@ import signal
 import tkinter as tk
 from PIL import Image, ImageTk, ImageSequence
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("splashscreen.log"),
-        logging.StreamHandler()
-    ]
-)
+logger = logging.getLogger("MultiWorld")
 
 class SplashScreen:
     def __init__(self, png_path, loop_count=1):

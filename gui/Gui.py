@@ -9,6 +9,7 @@ import asyncio
 import subprocess
 import weakref
 import asynckivy
+from datetime import datetime, UTC
 from multiprocessing import Queue
 from logging.handlers import QueueHandler
 from collections import deque
@@ -241,6 +242,14 @@ class MultiMDApp(MDApp):
         from MultiWorld import terminate_splash_screen
         terminate_splash_screen(self.ctx.splash_process)
         Clock.schedule_once(self.set_opacity)
+
+    @staticmethod
+    def qotd():
+        with open(local_path("data", "QOTD.txt"), "r", encoding="utf-8") as f:
+            qotd_lines = f.readlines()
+            if qotd_lines:
+                return qotd_lines[int(int(datetime.now(UTC).strftime("%d")) % len(qotd_lines))]
+        return "Blame TreZ"
 
     def on_start(self):
         """Set up additional build necessities that
@@ -506,10 +515,7 @@ class MultiMDApp(MDApp):
         This function is called when the connection is established.
         It sets up the UI player data and updates the hints.
         '''
-        # Reset console initialization flag to allow reinitialization
-        if hasattr(self, '_console_initialized'):
-            delattr(self, '_console_initialized')
-            
+          
         pronouns = ""
         in_call = False
         in_bk = False

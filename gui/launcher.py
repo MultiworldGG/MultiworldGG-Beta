@@ -3,7 +3,7 @@ __all__ = ['LauncherScreen', 'LauncherLayout']
 import asynckivy
 from textwrap import wrap
 from kivy.metrics import dp
-from kivy.properties import StringProperty, DictProperty, ObjectProperty, BooleanProperty
+from kivy.properties import StringProperty, DictProperty, ObjectProperty, BooleanProperty, ListProperty
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.relativelayout import MDRelativeLayout
@@ -18,6 +18,8 @@ from kivymd.uix.list import *
 from kivymd.uix.expansionpanel import *
 from .kivydi.expansionlist import *
 from kivymd.uix.textfield import MDTextField, MDTextFieldHelperText, MDTextFieldHintText, MDTextFieldLeadingIcon, MDTextFieldTrailingIcon
+from kivymd.uix.swiper import MDSwiper, MDSwiperItem
+from kivy.animation import Animation
 import logging
 from typing import Any
 
@@ -36,6 +38,28 @@ game_index = GameIndex()
 logger = logging.getLogger("Client")
 
 Builder.load_string('''
+
+
+<Favorites>:
+    game_module: ""
+    game_name: ""
+    adaptive_height: True
+    MDBoxLayout:
+        orientation: 'vertical'
+        width: dp(100)
+        FitImage:
+            source: root.game_cover_url
+            radius: [dp(20),]
+            fit_mode: "scale-down"
+        MDLabel:
+            text: root.game_name
+            halign: 'center'
+            theme_font_style: "Custom"
+            font_style: "Body"
+            role: "small"
+            theme_text_color: "Custom"
+            text_color: app.theme_cls.onSurfaceVariantColor
+
 <LauncherScreen>:
     size_hint: 1,1
     pos_hint: {"center_x": 0.5, "center_y": 0.5}
@@ -65,12 +89,22 @@ Builder.load_string('''
                 size_hint_y: None
                 height: dp(120)
                 MDLabel:
-                    text: "Welcome to Multiworld!"
+                    text: app.qotd()
                     halign: 'center'
+                    theme_font_style: "Custom"
                     font_style: "Title"
                     role: "small"
                     theme_text_color: "Custom"
                     text_color: app.theme_cls.onSurfaceVariantColor
+                MDSwiper:
+                    id: favorites_swiper
+                    items_spacing: dp(10)
+                    width_mult: 1
+                    #width: dp(100)
+                    # size_hint_y: None
+                    # height: dp(100)
+                    # y: root.height - self.height - dp(100) # root-50-30-20
+                        
             MDBoxLayout:
                 orientation: 'horizontal'
                 spacing: 10
@@ -239,6 +273,45 @@ class LauncherView(MDBoxLayout):
 class LauncherAuthTextField(MDTextField):
     pass
 
+class Favorites(MDSwiperItem):
+    """Custom MDSwiperItem for displaying favorite games"""
+    game_module = StringProperty("")
+    game_name = StringProperty("")
+    
+    @property
+    def game_cover_url(self):
+        """Get the cover URL for the game"""
+        if not self.game_module:
+            return ""
+        
+        try:
+            game_index = GameIndex()
+            game_data = game_index.get_game(self.game_module)
+            return game_data.get('cover_url', "") if game_data else ""
+        except:
+            return ""
+
+    def _selected_size(self):
+        size = [
+            self._root.parent.size[0]
+            - self._root.items_spacing * self._root.width_mult * 2,
+            self._root.height,
+        ]
+        anim = Animation(
+            size=size, d=self._root.size_duration, t=self._root.size_transition
+        )
+        anim.start(self)
+
+    def _dismiss_size(self):
+        size = [
+            self._root.parent.size[0]
+            - self._root.items_spacing * (1 + self._root.width_mult) * 2,
+            self._root.height - self._root.items_spacing * 2,
+        ]
+        anim = Animation(
+            size=size, d=self._root.size_duration, t=self._root.size_transition
+        )
+        anim.start(self)
 
 class LauncherScreen(MDScreen, ThemableBehavior):
     '''
@@ -258,6 +331,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     selected_game: tuple[str, str] = ("", "")
     app: App
     result: Any
+    favorite_games: ListProperty = ListProperty([])
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
@@ -266,6 +340,9 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.game_tag_filter = "popular"
         self.selected_game = ""
         self.app = App.get_running_app()
+
+        # Load favorite games from config
+        self.load_favorite_games()
 
         self.bottom_appbar = BottomAppBar(screen_name="launcher")
         self.important_appbar = LauncherSliverAppbar()
@@ -298,7 +375,9 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.launchergrid.add_widget(self.launcher_view)
         
         # Update button text based on initial context
-        Clock.schedule_once(lambda dt: self.update_connect_button_text(), 0.1)
+        Clock.schedule_once(lambda dt: self.update_connect_button_text(), 0.2)
+        #Clock.schedule_once(lambda dt: self.update_selected_game(), 0.2)
+        Clock.schedule_once(lambda dt: self.populate_favorites_swiper(), 0.2)
 
     async def set_game_list(self):
         game_index = GameIndex()
@@ -321,7 +400,17 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.launcher_view.module_name = game_info[0]
         # Update button text based on context
         self.update_connect_button_text()
-    
+        
+        # Handle favorites - add to favorites if not already there, or swipe to it if it is
+        module_name = game_info[0]
+        if self.is_favorite(module_name):
+            # Game is already a favorite, swipe to it
+            self.swipe_to_favorite(module_name)
+        else:
+            # Game is not a favorite, add it
+            self.add_to_favorites(module_name)
+            self.swipe_to_favorite(module_name)
+   
     def set_filter(self, active, tag):
         if active:
             self.game_filter.append((self.game_tag_filter.text, tag))
@@ -346,6 +435,133 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             game_name = getattr(current_ctx, 'game', 'Unknown Game')
             connect_button._button_text.text = f'Reconnect ({game_name})'
             connect_button._button_icon.icon = 'refresh'
+
+    # def update_selected_game(self):
+    #     current_ctx = self.app.ctx
+    #     game_bar = self.launcher_view.ids.game_bar
+    #     game_selected = self.launcher_view.ids.game_selected
+
+    #     if not hasattr(current_ctx, 'game'):
+    #         game_selected.elevation = 0
+    #     else:
+    #         game_selected.elevation = 10
+    #         game_selected.game_name = current_ctx.game
+    #         game_selected.shadow_color = self.app.theme_cls.primaryColor
+    #         game_selected.shadow_offset = (0, 0)
+    #         game_selected.shadow_opacity = 0.5
+    #         game_selected.shadow_radius = 10
+    #         game_selected.shadow_elevation = 5
+
+    def load_favorite_games(self):
+        """Load favorite games from app config"""
+        try:
+            favorites_str = self.app.app_config.get('game_settings', 'favorite_games', fallback='')
+            if favorites_str:
+                self.favorite_games = favorites_str.split(',')
+            else:
+                self.favorite_games = []
+        except (KeyError):
+            self.favorite_games = []
+        logger.debug(f"Loaded {len(self.favorite_games)} favorite games")
+
+    def save_favorite_games(self):
+        """Save favorite games to app config"""
+        try:
+            self.app.app_config.set('game_settings', 'favorite_games', ','.join(self.favorite_games))
+            self.app.app_config.write()
+            logger.debug(f"Saved {len(self.favorite_games)} favorite games")
+        except Exception as e:
+            logger.error(f"Failed to save favorite games: {e}")
+
+    def populate_favorites_swiper(self):
+        """Populate the favorites swiper with favorite games"""
+        try:
+            swiper = self.launcher_view.ids.favorites_swiper
+            swiper.clear_widgets()
+            
+            if not self.favorite_games:
+                # Add a placeholder item when no favorites
+                placeholder = Favorites(
+                    game_module="",
+                    game_name=""
+                )
+                swiper.add_widget(placeholder)
+                return
+            
+            game_index = GameIndex()
+            for module_name in self.favorite_games:
+                try:
+                    game_data = game_index.get_game(module_name)
+                    if game_data:
+                        favorite_item = Favorites(
+                            game_module=module_name,
+                            game_name=game_data.get('game_name', module_name)
+                        )
+                        favorite_item.bind(on_release=lambda x=module_name: self.on_favorite_clicked(x))
+                        swiper.add_widget(favorite_item)
+                except Exception as e:
+                    logger.error(f"Failed to add favorite {module_name}: {e}")
+                    
+        except Exception as e:
+            logger.error(f"Failed to populate favorites swiper: {e}")
+
+    def add_to_favorites(self, module_name: str):
+        """Add a game to favorites"""
+        if module_name not in self.favorite_games:
+            self.favorite_games.append(module_name)
+            self.save_favorite_games()
+            self.populate_favorites_swiper()
+            logger.info(f"Added {module_name} to favorites")
+
+    def remove_from_favorites(self, module_name: str):
+        """Remove a game from favorites"""
+        if module_name in self.favorite_games:
+            self.favorite_games.remove(module_name)
+            self.save_favorite_games()
+            self.populate_favorites_swiper()
+            logger.info(f"Removed {module_name} from favorites")
+
+    def toggle_favorite(self, module_name: str):
+        """Toggle favorite status for a game"""
+        if module_name in self.favorite_games:
+            self.remove_from_favorites(module_name)
+        else:
+            self.add_to_favorites(module_name)
+
+    def is_favorite(self, module_name: str) -> bool:
+        """Check if a game is in favorites"""
+        return module_name in self.favorite_games
+
+    def swipe_to_favorite(self, module_name: str):
+        """Swipe to a specific favorite game"""
+        try:
+            swiper = self.launcher_view.ids.favorites_swiper
+            if not self.favorite_games:
+                return
+                
+            # Find the index of the favorite
+            try:
+                index = self.favorite_games.index(module_name)
+                swiper.current = index
+                logger.info(f"Swiped to favorite {module_name} at index {index}")
+            except ValueError:
+                logger.warning(f"Game {module_name} not found in favorites")
+                
+        except Exception as e:
+            logger.error(f"Failed to swipe to favorite: {e}")
+
+    def on_favorite_clicked(self, module_name: str):
+        """Handle clicking on a favorite item in the swiper"""
+        try:
+            game_index = GameIndex()
+            game_data = game_index.get_game(module_name)
+            if game_data:
+                game_name = game_data.get('game_name', module_name)
+                self.on_game_selected((module_name, game_name))
+                logger.info(f"Selected favorite game: {game_name}")
+        except Exception as e:
+            logger.error(f"Failed to select favorite game {module_name}: {e}")
+
 
     def connect(self):
         """Connect to server and launch the selected game module"""

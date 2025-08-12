@@ -6,10 +6,6 @@ import re
 import subprocess
 import time
 
-worlds_modules_dir = os.path.abspath(os.path.join("worlds"))
-if worlds_modules_dir not in sys.path:
-    sys.path.insert(0, worlds_modules_dir)
-
 #os.environ["KCFG_GRAPHICS_WINDOW_STATE"] = "visible"
 os.environ["KIVY_NO_CONSOLELOG"] = "0"
 os.environ["KIVY_NO_FILELOG"] = "0"
@@ -20,8 +16,12 @@ os.environ["KIVY_LOG_ENABLE"] = "1"
 # from MultiServer import console
 # apname = "Archipelago" if not Utils.archipelago_name else Utils.archipelago_name
 
-# if Utils.is_frozen():
-from BaseUtils import local_path
+from BaseUtils import local_path, is_frozen
+if not is_frozen():
+    worlds_modules_dir = os.path.abspath(os.path.join("worlds"))
+    if worlds_modules_dir not in sys.path:
+        sys.path.insert(0, worlds_modules_dir)
+        
 os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"venv","Lib","site-packages","kivy","data")
 os.environ["KIVY_HOME"] = os.path.join(local_path(),"data", "kivy_home")
 os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)

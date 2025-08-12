@@ -57,7 +57,10 @@ from kivymd.uix.textfield import (MDTextFieldHelperText,
                                   MDTextFieldLeadingIcon,
                                   )
 import re
+from re import Pattern, compile
 import os
+
+HINT_PATTERN = compile(r'(\[Hint\])|(\[[\'"][^\'"]*[\'"](?:,[\s]*[\'"][^\'"]*[\'"])*\])')
 
 with open(
     os.path.join(os.path.dirname(__file__), "markuptextfield.kv"), encoding="utf-8"
@@ -109,7 +112,7 @@ class MarkupTextFieldCutCopyPaste(MDDropdownMenu):
     def _make_callback(self, func, *args):
         def callback(*_):
             func(*args)
-            Clock.schedule_once(lambda dt: self.dismiss(), 0.5)
+            Clock.schedule_once(lambda dt: self.dismiss(), 1)
             return True
         return callback
 
@@ -177,7 +180,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
     _empty_texture = ObjectProperty(None) #MD
     _saved_markup = StringProperty("[color=FFFFFF]") #MD
 
-    def __init__(self, **kwargs):
+    def __init__(self, ignore_patterns: Pattern = None, **kwargs):
         self._label_cached = Label()
         self.selection_previous = None
         self.plaintext = ""
@@ -185,6 +188,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
         self.hint_info = [] # for use in hinting, 2nd item is for host/admin hinting
         self._lines_plaintext = []  # Add a list to store plain text lines
         self._markup_to_plain_map = {}  # Dictionary to map markup positions to plain text positions
+        self.ignore_patterns = ignore_patterns or None # Patterns to ignore when stripping markup
         super().__init__(**kwargs)
 
         self.use_bubble = False
@@ -212,9 +216,16 @@ class MarkupTextField(TextInput, ThemableBehavior):
         return len(self._lines[-1]), len(self._lines)
 
     @staticmethod
-    def strip_markup(text):
+    def strip_markup(text, ignore_patterns: Pattern = None):
         # Remove Kivy markup tags for plain text operations
         # First, handle complete markup tags
+        if ignore_patterns:
+            # Split by the pattern and rejoin with placeholders, then strip markup, then restore
+            parts = ignore_patterns.split(text)
+            stripped_parts = [re.sub(r'\[/?[a-zA-Z0-9_=,#.\-]+\]', '', part) for part in parts]
+            stripped_parts = [re.sub(r'\[.*$', '', part) for part in parts]
+            return ignore_patterns.sub(lambda m: m.group(0), ''.join(stripped_parts))
+        # Remove Kivy markup tags for plain text operations, but preserve specified patterns
         text = re.sub(r'\[/?[a-zA-Z0-9_=,#.\-]+\]', '', text)
         # Then remove any partial markup tags (text starting with [)
         text = re.sub(r'\[.*$', '', text)
@@ -224,8 +235,8 @@ class MarkupTextField(TextInput, ThemableBehavior):
         """Update the _lines_plaintext list with plain text versions of each line"""
         _text = self.text
         _lines = self._lines
-        self._lines_plaintext = [self.strip_markup(line) for line in _lines]
-        self.plaintext = self.strip_markup(_text)
+        self._lines_plaintext = [self.strip_markup(line, ignore_patterns=self.ignore_patterns) for line in _lines]
+        self.plaintext = self.strip_markup(_text, ignore_patterns=self.ignore_patterns)
 
     def _update_markup_to_plain_map(self):
         """Create a mapping between markup positions and plain text positions"""
@@ -372,9 +383,9 @@ class MarkupTextField(TextInput, ThemableBehavior):
                 # If we're in the middle of a markup tag, return 0 width
                 return 0
                
-            # Get the plain text version
-            plain_text = self.strip_markup(text)
-            # Create a label with the plain text
+            # Get the plaintext version
+            plain_text = self.strip_markup(text, ignore_patterns=self.ignore_patterns)
+            # Create a label with the plaintext
             temp_kw = kw.copy()
             temp_kw['markup'] = False
             temp_label = Label(text=plain_text, **temp_kw)
@@ -506,6 +517,9 @@ class MarkupTextField(TextInput, ThemableBehavior):
             self._touch_count -= 1
             win = EventLoop.window
             self._show_cut_copy_paste(position=touch.pos, touch=touch, win=win)
+            return True
+        # For right-click touches, don't call parent to prevent deselection
+        if touch.button == 'right':
             return True
         return super().on_touch_up(touch)
         
@@ -745,7 +759,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
             distance = abs(current_pos[0] - last_pos[0]) + abs(current_pos[1] - last_pos[1])
             
             # Only dismiss if the cursor has moved more than a few pixels
-            if distance > 10:  # Adjust this threshold as needed
+            if distance > 20:  # Adjust this threshold as needed
                 self._hide_cut_copy_paste()
         
         # Store the current cursor position
@@ -886,12 +900,6 @@ class MarkupTextField(TextInput, ThemableBehavior):
                 - (self._max_length_label.texture_size[0] + self.font_size),
                 self.y - self.font_size + dp(2),
             )
-
-    def _add_default_color(self, line):
-        if line.startswith("[color="):
-            return line
-        else:
-            return "[color={color}]{line}[/color]".format(color=self.text_default_color, line=line)
 
     def set_text(self, instance, text: str) -> None:
         """Fired when text is entered into a text field."""

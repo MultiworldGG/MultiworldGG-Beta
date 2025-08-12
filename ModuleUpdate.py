@@ -53,7 +53,6 @@ if not update_ran:
                         if wheel.endswith(".whl"):
                             wheels_files.add(os.path.join(local_dir, "worlds", "Wheels", wheel))
 
-
 def check_pip():
     # detect if pip is available
     try:
@@ -69,10 +68,23 @@ def confirm(msg: str):
         print("\nAborting")
         sys.exit(1)
 
+def update_worlds(worlds: list[str]):
+    '''
+    Update the world modules that we need from pypi wheels.
+    Check global pypi first, if it is hasn't been pushed there, 
+    install from the multiworld pypi repository.
+    '''
+    check_pip()
+    for world in worlds:
+        # TODO: Commented out until public beta because we know that there aren't any worlds on pypi yet
+        # pypi_response = subprocess.call([sys.executable, "-m", "pip", "install", world, "--upgrade"])
+        # if pypi_response == 1:
+        subprocess.call([sys.executable, "-m", "pip", "install", "-i", "https://pypi.multiworld.gg/worlds", f"worlds.{world}", "--upgrade"])
+
 def update_world_wheels():
     check_pip()
-    for wheel in wheels_files: ##TODO: change this to upgrade
-        subprocess.call([sys.executable, "-m", "pip", "install", wheel, "--force-reinstall", "--upgrade", "--target", os.path.join(local_dir, "worlds", "Lib")])
+    for wheel in wheels_files:
+        subprocess.call([sys.executable, "-m", "pip", "install", wheel, "--upgrade", "--target", os.path.join(local_dir, "worlds", "Lib")])
 
 def update_command():
     check_pip()
@@ -90,7 +102,7 @@ def install_packaging(yes=False):
         subprocess.call([sys.executable, "-m", "pip", "install", "--upgrade", "packaging"])
 
 
-def update(yes: bool = False, force: bool = False) -> None:
+def update(yes: bool = False, force: bool = False, worlds: list[str] = None) -> None:
     global update_ran
     if not update_ran:
         update_ran = True
@@ -100,10 +112,15 @@ def update(yes: bool = False, force: bool = False) -> None:
         import importlib.metadata
 
         if force:
+            if worlds:
+                update_worlds(worlds)
             update_command()
             return
 
         update_world_wheels() #install wheels if they aren't
+
+        if worlds:
+            update_worlds(worlds)
 
         prev = ""  # if a line ends in \ we store here and merge later
         for req_file in requirements_files:
@@ -180,7 +197,12 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--force', dest='force', action='store_true', help='force update')
     parser.add_argument('-a', '--append', nargs="*", dest='additional_requirements',
                         help='List paths to additional requirement files.')
+    parser.add_argument('-w', '--worlds', nargs="*", dest='worlds',
+                        help='List of worlds to update.')
     args = parser.parse_args()
     if args.additional_requirements:
         requirements_files.update(args.additional_requirements)
-    update(args.yes, args.force)
+    if args.worlds:
+        update(args.yes, args.force, args.worlds)
+    else:
+        update(args.yes, args.force)
