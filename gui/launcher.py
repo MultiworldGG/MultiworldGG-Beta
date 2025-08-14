@@ -1,9 +1,12 @@
 from __future__ import annotations
+
+from kivymd.uix.scrollview import MDScrollView
 __all__ = ['LauncherScreen', 'LauncherLayout']
 import asynckivy
 from textwrap import wrap
 from kivy.metrics import dp
-from kivy.properties import StringProperty, DictProperty, ObjectProperty, BooleanProperty, ListProperty
+from kivy.uix.boxlayout import BoxLayout
+from kivy.properties import StringProperty, DictProperty, ObjectProperty, BooleanProperty, ListProperty, NumericProperty
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.relativelayout import MDRelativeLayout
@@ -11,6 +14,9 @@ from kivymd.uix.floatlayout import MDFloatLayout
 from kivy.lang import Builder
 from kivy.core.window import Window
 from kivy.properties import ObjectProperty
+from kivy.uix.behaviors import ButtonBehavior
+from kivymd.uix.behaviors import CommonElevationBehavior
+from kivymd.uix.tab import MDTabsCarousel, MDTabsPrimary, MDTabsItem, MDTabsItemText
 from kivymd.uix.sliverappbar import MDSliverAppbar, MDSliverAppbarHeader, MDSliverAppbarContent
 from kivymd.uix.appbar import MDTopAppBar
 from kivymd.theming import ThemableBehavior
@@ -18,7 +24,8 @@ from kivymd.uix.list import *
 from kivymd.uix.expansionpanel import *
 from .kivydi.expansionlist import *
 from kivymd.uix.textfield import MDTextField, MDTextFieldHelperText, MDTextFieldHintText, MDTextFieldLeadingIcon, MDTextFieldTrailingIcon
-from kivymd.uix.swiper import MDSwiper, MDSwiperItem
+from kivymd.uix.fitimage import FitImage
+from kivymd.uix.label import MDLabel
 from kivy.animation import Animation
 import logging
 from typing import Any
@@ -39,26 +46,46 @@ logger = logging.getLogger("Client")
 
 Builder.load_string('''
 
+<FavoritesCarousel>:
+    do_x_scroll: True
+    do_y_scroll: False
+    effect_y: "ScrollEffect"
+    size_hint_x: None
 
-<Favorites>:
-    game_module: ""
-    game_name: ""
-    adaptive_height: True
+    size_hint_y: 1
+    bar_color: [0,0,0,0]
+    inactive_bar_color: [0,0,0,0]
+    height: dp(75)
+
+<Favorite>:
+    size_hint_x: None
+    size_hint_y: None
+    width: dp(100)
+    height: dp(75)
+    FitImage:
+        source: root.game_cover_url
+        fit_mode: 'cover'
+        height: dp(75)
     MDBoxLayout:
-        orientation: 'vertical'
-        width: dp(100)
-        FitImage:
-            source: root.game_cover_url
-            radius: [dp(20),]
-            fit_mode: "scale-down"
+        orientation: 'horizontal'
+        size_hint_x: 1
+        size_hint_y: 0.3
+        theme_bg_color: "Custom"
+        md_bg_color: app.theme_cls.surfaceVariantColor
+        opacity: 0.7
+        radius: [dp(10), dp(10), 0, 0]
         MDLabel:
+            pos_hint: {"x": 0, "y": 0}
+            size_hint_y: 1
             text: root.game_name
+            valign: 'bottom'
             halign: 'center'
             theme_font_style: "Custom"
-            font_style: "Body"
+            font_style: "Title"
             role: "small"
             theme_text_color: "Custom"
             text_color: app.theme_cls.onSurfaceVariantColor
+
 
 <LauncherScreen>:
     size_hint: 1,1
@@ -72,6 +99,7 @@ Builder.load_string('''
 <LauncherView>:
     id: launcher_view
     server_layout: server_layout
+    title_layout: title_layout
     module_name: ""
     orientation: 'horizontal'
     padding: dp(50)
@@ -84,11 +112,12 @@ Builder.load_string('''
         MDBoxLayout:
             orientation: 'vertical'
             MDBoxLayout:
+                id: title_layout
                 orientation: 'vertical'
-                spacing: 10
                 size_hint_y: None
                 height: dp(120)
                 MDLabel:
+                    size_hint_y: 0.37
                     text: app.qotd()
                     halign: 'center'
                     theme_font_style: "Custom"
@@ -96,14 +125,6 @@ Builder.load_string('''
                     role: "small"
                     theme_text_color: "Custom"
                     text_color: app.theme_cls.onSurfaceVariantColor
-                MDSwiper:
-                    id: favorites_swiper
-                    items_spacing: dp(10)
-                    width_mult: 1
-                    #width: dp(100)
-                    # size_hint_y: None
-                    # height: dp(100)
-                    # y: root.height - self.height - dp(100) # root-50-30-20
                         
             MDBoxLayout:
                 orientation: 'horizontal'
@@ -269,15 +290,28 @@ class LauncherLayout(MDFloatLayout):
 class LauncherView(MDBoxLayout):
     slot_layout: ObjectProperty
     server_layout: ObjectProperty
+    title_layout: ObjectProperty
 
 class LauncherAuthTextField(MDTextField):
     pass
 
-class Favorites(MDSwiperItem):
-    """Custom MDSwiperItem for displaying favorite games"""
+class FavoritesScroll(MDScrollView):
+    favorites: ObjectProperty
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.favorites = MDBoxLayout(orientation='horizontal', spacing=dp(10), size_hint_x=None, size_hint_y=None, height=dp(75), width=dp(1000))
+        self.add_widget(self.favorites)
+
+class Favorite(MDFloatLayout, CommonElevationBehavior, ButtonBehavior):
+    """Custom Layout for displaying favorite games"""
     game_module = StringProperty("")
     game_name = StringProperty("")
-    
+    click_down_pos = ListProperty([])
+    app = ObjectProperty()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.app = App.get_running_app()
+
     @property
     def game_cover_url(self):
         """Get the cover URL for the game"""
@@ -291,27 +325,29 @@ class Favorites(MDSwiperItem):
         except:
             return ""
 
-    def _selected_size(self):
-        size = [
-            self._root.parent.size[0]
-            - self._root.items_spacing * self._root.width_mult * 2,
-            self._root.height,
-        ]
-        anim = Animation(
-            size=size, d=self._root.size_duration, t=self._root.size_transition
-        )
-        anim.start(self)
+    def on_touch_down(self, touch):
+        self.click_down_pos = touch.pos
+        return super().on_touch_down(touch)
 
-    def _dismiss_size(self):
-        size = [
-            self._root.parent.size[0]
-            - self._root.items_spacing * (1 + self._root.width_mult) * 2,
-            self._root.height - self._root.items_spacing * 2,
-        ]
-        anim = Animation(
-            size=size, d=self._root.size_duration, t=self._root.size_transition
-        )
-        anim.start(self)
+    def on_touch_up(self, touch):
+        if self.click_down_pos:
+            if self.collide_point(*self.click_down_pos):
+                self.app.launcher_screen.on_favorite_clicked(self.game_module)
+            self.click_down_pos = []
+            return super().on_touch_up(touch)
+    
+# class FavoritesTabs(MDTabsPrimary):
+#     def __init__(self, **kwargs):
+#         super().__init__(**kwargs)
+#         self.allow_stretch = False
+#         self.loop = True
+#         self.adaptive_height = True
+#         self.size_hint_x = 1
+#         self.size_hint_y = None
+#         self.pos_hint = {"x": 0, "y": 0}
+#         self.height = dp(90)
+#         # Dictionary to map tab text to game module
+#         self.game_modules = {}
 
 class LauncherScreen(MDScreen, ThemableBehavior):
     '''
@@ -329,6 +365,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     game_tag_filter: StringProperty
     bottom_appbar: BottomAppBar
     selected_game: tuple[str, str] = ("", "")
+    favorites_tabs: MDTabsPrimary
     app: App
     result: Any
     favorite_games: ListProperty = ListProperty([])
@@ -373,11 +410,16 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.launchergrid.add_widget(self.important_appbar)
         self.launcher_view.pos_hint={"y": 0, "x": 260/Window.width}
         self.launchergrid.add_widget(self.launcher_view)
+
+        fave_scroll = FavoritesScroll()
+        self.favorites_layout = fave_scroll.favorites
+        self.launcher_view.ids.title_layout.add_widget(fave_scroll)
+        fave_scroll.size = (self.launcher_view.ids.title_layout.width, dp(100))
         
         # Update button text based on initial context
         Clock.schedule_once(lambda dt: self.update_connect_button_text(), 0.2)
         #Clock.schedule_once(lambda dt: self.update_selected_game(), 0.2)
-        Clock.schedule_once(lambda dt: self.populate_favorites_swiper(), 0.2)
+        Clock.schedule_once(lambda dt: self.populate_favorites(), 0.2)
 
     async def set_game_list(self):
         game_index = GameIndex()
@@ -400,16 +442,10 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.launcher_view.module_name = game_info[0]
         # Update button text based on context
         self.update_connect_button_text()
-        
-        # Handle favorites - add to favorites if not already there, or swipe to it if it is
-        module_name = game_info[0]
-        if self.is_favorite(module_name):
-            # Game is already a favorite, swipe to it
-            self.swipe_to_favorite(module_name)
-        else:
-            # Game is not a favorite, add it
-            self.add_to_favorites(module_name)
-            self.swipe_to_favorite(module_name)
+
+        # if not self.is_favorite(game_info[0]):
+        #     self.add_to_favorites(game_info[0])
+        # self.highlight_selected_game()
    
     def set_filter(self, active, tag):
         if active:
@@ -436,21 +472,15 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             connect_button._button_text.text = f'Reconnect ({game_name})'
             connect_button._button_icon.icon = 'refresh'
 
-    # def update_selected_game(self):
-    #     current_ctx = self.app.ctx
-    #     game_bar = self.launcher_view.ids.game_bar
-    #     game_selected = self.launcher_view.ids.game_selected
-
-    #     if not hasattr(current_ctx, 'game'):
-    #         game_selected.elevation = 0
-    #     else:
-    #         game_selected.elevation = 10
-    #         game_selected.game_name = current_ctx.game
-    #         game_selected.shadow_color = self.app.theme_cls.primaryColor
-    #         game_selected.shadow_offset = (0, 0)
-    #         game_selected.shadow_opacity = 0.5
-    #         game_selected.shadow_radius = 10
-    #         game_selected.shadow_elevation = 5
+    def highlight_selected_game(self):
+        """Highlight the selected game tab"""
+        try:
+            # Set the active tab by game name
+            if self.selected_game and self.selected_game[1]:
+                self.favorites_tabs.switch_tab(text=self.selected_game[1])
+        except Exception as e:
+            logger.error(f"Failed to highlight selected game: {e}")
+        
 
     def load_favorite_games(self):
         """Load favorite games from app config"""
@@ -473,44 +503,36 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         except Exception as e:
             logger.error(f"Failed to save favorite games: {e}")
 
-    def populate_favorites_swiper(self):
-        """Populate the favorites swiper with favorite games"""
+    def populate_favorites(self):
+        """Populate the favorites with favorite games"""
         try:
-            swiper = self.launcher_view.ids.favorites_swiper
-            swiper.clear_widgets()
+            self.favorites_layout.clear_widgets()
             
             if not self.favorite_games:
                 # Add a placeholder item when no favorites
-                placeholder = Favorites(
-                    game_module="",
-                    game_name=""
-                )
-                swiper.add_widget(placeholder)
+                placeholder = Favorite(game_name="", game_module="")
+                self.favorites_layout.add_widget(placeholder)
                 return
             
             game_index = GameIndex()
-            for module_name in self.favorite_games:
+            for name in self.favorite_games:
                 try:
-                    game_data = game_index.get_game(module_name)
-                    if game_data:
-                        favorite_item = Favorites(
-                            game_module=module_name,
-                            game_name=game_data.get('game_name', module_name)
-                        )
-                        favorite_item.bind(on_release=lambda x=module_name: self.on_favorite_clicked(x))
-                        swiper.add_widget(favorite_item)
+                    game_name = game_index.get_game_name_for_module(name)
+                    if game_name:
+                        favorite_tab = Favorite(game_name=game_name, game_module=name)
+                        self.favorites_layout.add_widget(favorite_tab)
                 except Exception as e:
-                    logger.error(f"Failed to add favorite {module_name}: {e}")
+                    logger.error(f"Failed to add favorite {name}: {e}")
                     
         except Exception as e:
-            logger.error(f"Failed to populate favorites swiper: {e}")
+            logger.error(f"Failed to populate favorites tabs: {e}")
 
     def add_to_favorites(self, module_name: str):
         """Add a game to favorites"""
         if module_name not in self.favorite_games:
             self.favorite_games.append(module_name)
             self.save_favorite_games()
-            self.populate_favorites_swiper()
+            self.populate_favorites_tabs()
             logger.info(f"Added {module_name} to favorites")
 
     def remove_from_favorites(self, module_name: str):
@@ -518,7 +540,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         if module_name in self.favorite_games:
             self.favorite_games.remove(module_name)
             self.save_favorite_games()
-            self.populate_favorites_swiper()
+            self.populate_favorites_tabs()
             logger.info(f"Removed {module_name} from favorites")
 
     def toggle_favorite(self, module_name: str):
@@ -533,25 +555,25 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         return module_name in self.favorite_games
 
     def swipe_to_favorite(self, module_name: str):
-        """Swipe to a specific favorite game"""
+        """Switch to a specific favorite game tab"""
         try:
-            swiper = self.launcher_view.ids.favorites_swiper
             if not self.favorite_games:
                 return
                 
-            # Find the index of the favorite
-            try:
-                index = self.favorite_games.index(module_name)
-                swiper.current = index
-                logger.info(f"Swiped to favorite {module_name} at index {index}")
-            except ValueError:
+            # Find the game name for this module
+            game_index = GameIndex()
+            game_name = game_index.get_game_name_for_module(module_name)
+            if game_name:
+                self.favorites_tabs.switch_tab(text=game_name)
+                logger.info(f"Switched to favorite {module_name}")
+            else:
                 logger.warning(f"Game {module_name} not found in favorites")
                 
         except Exception as e:
-            logger.error(f"Failed to swipe to favorite: {e}")
+            logger.error(f"Failed to switch to favorite: {e}")
 
     def on_favorite_clicked(self, module_name: str):
-        """Handle clicking on a favorite item in the swiper"""
+        """Handle clicking on a favorite item in the tabs"""
         try:
             game_index = GameIndex()
             game_data = game_index.get_game(module_name)

@@ -31,7 +31,6 @@ class MWGGLoadingLayout(MDRelativeLayout):
     current_image: Image
     current_frame = NumericProperty(0)
     app = ObjectProperty(None)
-    effect_app = PixelateEffect(pixel_size=3)
     _clock_event = None
 
     def __init__(self, *args, **kwargs):
@@ -58,7 +57,12 @@ class MWGGLoadingLayout(MDRelativeLayout):
         if not self.loading and not self.img_box.parent:
             self.loading = True
             self.add_widget(self.img_box)
-            self.app.pixelate_effect.effects = [self.effect_app]
+            # Use the new enable_effects method instead of directly setting effects
+            if hasattr(self.app, 'enable_effects'):
+                self.app.enable_effects()
+            else:
+                # Fallback to old method
+                self.app.pixelate_effect.effects = [PixelateEffect(pixel_size=3)]
             self._clock_event = Clock.schedule_interval(self.update_frame, speed)
     
     def set_speed(self, speed):
@@ -99,5 +103,10 @@ class MWGGLoadingLayout(MDRelativeLayout):
                 self.current_image = None
             if self.img_box.parent:
                 self.remove_widget(self.img_box)
-            self.app.pixelate_effect.effects = []  # Hide blur
+            # Use the new disable_effects method instead of directly clearing effects
+            if hasattr(self.app, 'disable_effects'):
+                self.app.disable_effects()
+            else:
+                # Fallback to old method
+                self.app.pixelate_effect.effects = []  # Hide blur
 

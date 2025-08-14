@@ -26,13 +26,13 @@ if "pytest" not in sys.modules and "unittest" not in sys.modules and "test" not 
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "kivydi"))
 
-if sys.platform == "win32":
-    #import ctypes
+# if sys.platform == "win32":
+#     #import ctypes
 
-    # kivy 2.2.0 introduced DPI awareness on Windows, but it makes the UI enter an infinitely recursive re-layout
-    # by setting the application to not DPI Aware, Windows handles scaling the entire window on its own, ignoring kivy's
-    from ctypes import windll, c_int64
-    windll.user32.SetProcessDpiAwarenessContext(c_int64(-4))
+#     # kivy 2.2.0 introduced DPI awareness on Windows, but it makes the UI enter an infinitely recursive re-layout
+#     # by setting the application to not DPI Aware, Windows handles scaling the entire window on its own, ignoring kivy's
+#     from ctypes import windll, c_int64
+#     windll.user32.SetProcessDpiAwarenessContext(c_int64(-4))
     
 # from CommonClient import console_loop
 # from MultiServer import console
@@ -63,7 +63,6 @@ MWKVConfig.set("graphics", "custom_titlebar", "1")
 MWKVConfig.set("graphics", "window_icon", os.path.join(local_path(),"data", "icon.png"))
 MWKVConfig.set("graphics", "minimum_height", "700")
 MWKVConfig.set("graphics", "minimum_width", "600")
-MWKVConfig.set("graphics", "shaped", 0)
 MWKVConfig.set("graphics", "focus", "False")
 
 from kivy.core.window import Window
@@ -96,7 +95,7 @@ from .topappbar import TopAppBarLayout
 from .launcher import LauncherScreen
 from .kivydi.loadinglayout import MWGGLoadingLayout
 from .bottomappbar import BottomAppBar, BottomBarTextInput
-from .kvui_functions import MW_ServerLabel
+#from .kvui_functions import MW_ServerLabel
 
 from .UIDataClasses import UIPlayerData, UIHint
 
@@ -119,10 +118,6 @@ class MainScreenMgr(MDScreenManager):
         # self.transition = MDFadeSlideTransition()
 
 class MultiMDApp(MDApp): 
-
-    logging_pairs = [
-        ("Client", "Archipelago", "MultiWorld"),
-    ]
 
     title = "MultiWorldGG"
 
@@ -248,7 +243,8 @@ class MultiMDApp(MDApp):
         with open(local_path("data", "QOTD.txt"), "r", encoding="utf-8") as f:
             qotd_lines = f.readlines()
             if qotd_lines:
-                return qotd_lines[int(int(datetime.now(UTC).strftime("%d")) % len(qotd_lines))]
+                todays_qotd = qotd_lines[int(int(datetime.now(UTC).strftime("%m%d")) % len(qotd_lines))]
+                return "QOTD for " + datetime.now(UTC).strftime("%m/%d/%Y") + ": " + todays_qotd
         return "Blame TreZ"
 
     def on_start(self):
@@ -309,7 +305,7 @@ class MultiMDApp(MDApp):
         # Top appbar layout
         self.top_appbar_layout = TopAppBarLayout()
         self.top_appbar_menu = None
-        self.top_appbar_layout.top_appbar.address_bar_label = MW_ServerLabel()
+        #self.top_appbar_layout.top_appbar.address_bar_label = MW_ServerLabel()
         
         # Screen manager
         # Screens are under the appbar and titlebar
@@ -323,11 +319,54 @@ class MultiMDApp(MDApp):
         self.main_layout.add_widget(self.top_appbar_layout)
         self.main_layout.add_widget(self.title_bar)
 
-        # Add the main layout to the root layout
-        self.pixelate_effect.add_widget(self.main_layout)
-        self.root_layout.add_widget(self.pixelate_effect)
+        # Add the main layout directly to root layout when no effects are active
+        # This prevents matrix transformation interference with StencilView
+        self.root_layout.add_widget(self.main_layout)
         
         return self.root_layout
+
+    def enable_effects(self):
+        """Enable EffectWidget with pixelate effect for loading screen"""
+        if hasattr(self, 'pixelate_effect') and hasattr(self, 'main_layout'):
+            # Remove main_layout from root_layout
+            self.root_layout.remove_widget(self.main_layout)
+            # Add main_layout to EffectWidget
+            self.pixelate_effect.add_widget(self.main_layout)
+            # Add EffectWidget to root_layout
+            self.root_layout.add_widget(self.pixelate_effect)
+            # Add pixelate effect
+            if hasattr(self, 'loading_layout') and self.loading_layout.loading:
+                from kivy.uix.effectwidget import PixelateEffect
+                self.loading_layout.effect_app = PixelateEffect(pixel_size=3)
+                self.pixelate_effect.effects = [self.loading_layout.effect_app]
+            
+            # Ensure loading_layout is on top of the EffectWidget (img_box needs to be above pixelated content)
+            # Remove from current parent if it exists
+            if hasattr(self, 'loading_layout') and self.loading_layout.parent:
+                self.loading_layout.parent.remove_widget(self.loading_layout)
+            # Add to root_layout to be on top of the EffectWidget
+            if hasattr(self, 'loading_layout'):
+                self.root_layout.add_widget(self.loading_layout)
+
+    def disable_effects(self):
+        """Disable EffectWidget to prevent matrix transformation interference with StencilView"""
+        if hasattr(self, 'pixelate_effect') and hasattr(self, 'main_layout'):
+            # Remove EffectWidget from root_layout
+            self.root_layout.remove_widget(self.pixelate_effect)
+            # Remove main_layout from EffectWidget
+            self.pixelate_effect.remove_widget(self.main_layout)
+            # Add main_layout directly to root_layout
+            self.root_layout.add_widget(self.main_layout)
+            # Clear effects
+            self.pixelate_effect.effects = []
+            
+            # Ensure loading_layout is on top of the main_layout (img_box needs to be above content)
+            # Remove from current parent if it exists
+            if hasattr(self, 'loading_layout') and self.loading_layout.parent:
+                self.loading_layout.parent.remove_widget(self.loading_layout)
+            # Add to root_layout to be on top of the main_layout
+            if hasattr(self, 'loading_layout'):
+                self.root_layout.add_widget(self.loading_layout)
 
     def on_stop(self):
         """Handle application shutdown properly"""

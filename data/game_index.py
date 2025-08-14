@@ -69,17 +69,17 @@ class GameIndex:
         # Return only matching games
         return {name: self.games[name] for name in matching_games}
     
-    def get_game(self, game_name: str) -> dict:
+    def get_game(self, game_module: str) -> dict:
         """
         Get full game data for a specific game.
         
         Args:
-            game_name: The name of the game to retrieve
+            game_module: The module name of the game to retrieve
             
         Returns:
             Dictionary containing all game data
         """
-        return self.games.get(game_name, {})
+        return self.games.get(game_module, {})
     
     def get_all_games(self) -> dict:
         """
@@ -89,6 +89,22 @@ class GameIndex:
             Dictionary containing all games and their data
         """
         return self.games.copy()
+
+    @staticmethod
+    def get_module_for_game(game_name: str) -> str:
+        """Get the module name for a given game name"""
+        for module, game_data in GAMES_DATA.items():
+            if game_data['game_name'] == game_name:
+                return module
+        return None
+
+    @staticmethod
+    def get_game_name_for_module(module_name: str) -> str:
+        """Get the game name for a given module name"""
+        for module, game_data in GAMES_DATA.items():
+            if module == module_name:
+                return game_data['game_name']
+        return None
 
 # These constants will be generated during build
 GAMES_DATA = {

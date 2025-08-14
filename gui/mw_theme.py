@@ -394,17 +394,17 @@ def RegisterFonts(app: MDApp, monospace_font: str = 'Argon'):
         "Title": {
             "large": {
                 "line-height": 1.28,
-                "font-name": "Inter",
+                "font-name": "GothicA1",
                 "font-size": sp(22),
             },
             "medium": {
                 "line-height": 1.24,
-                "font-name": "Inter",
+                "font-name": "GothicA1",
                 "font-size": sp(16),
             },
             "small": {
                 "line-height": 1.20,
-                "font-name": "Inter",
+                "font-name": "GothicA1",
                 "font-size": sp(14),
             },
         },
