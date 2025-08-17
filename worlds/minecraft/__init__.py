@@ -13,9 +13,17 @@ from .Options import MinecraftOptions
 from .Structures import shuffle_structures
 from .ItemPool import build_item_pool, get_junk_item_names
 from .Rules import set_rules
+from worlds.LauncherComponents import launch as launch_componenent, components, Component, Type, SuffixIdentifier
 
 client_version = 9
 
+def launch_client(*args):
+    from .Client import main
+    launch_componenent(main, name="MinecraftClient", args=args)
+
+
+components.append(Component(display_name="Minecraft Client", func=launch_client, component_type=Type.CLIENT,
+                            file_identifier=SuffixIdentifier('.apmc')))
 
 class MinecraftSettings(settings.Group):
     class ForgeDirectory(settings.OptionalUserFolderPath):

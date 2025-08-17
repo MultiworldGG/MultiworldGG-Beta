@@ -3216,6 +3216,40 @@
         ],
         "release_date": 2004
     },
+    "Path of Exile": {
+        "igdb_id": "1911",
+        "world_name": "Path of Exile",
+        "igdb_name": "Path of Exile",
+        "us_rating": [],
+        "player_perspectives": [],
+        "genres": [
+            "Role-playing (RPG)",
+            "Hack and slash/Beat 'em up",
+            "Adventure"
+        ],
+        "themes": [
+            "Action",
+            "Fantasy",
+            "Horror"
+        ],
+        "keywords": [
+            "bloody",
+            "magic",
+            "3d",
+            "free-to-play",
+            "leveling up",
+            "bink video",
+            "loot boxes",
+            "bow and arrow",
+            "active ability",
+            "potion",
+            "skill tree",
+            "mana",
+            "fast traveling",
+            "passive ability"
+        ],
+        "release_date": 2013
+    },
     "Peaks of Yore": {
         "igdb_id": "238690",
         "world_name": "Peaks of Yore",

@@ -19,9 +19,6 @@ item_num = 1
 
 logger = logging.getLogger("Client")
 
-if __name__ == "__main__":
-    Utils.init_logging("KH1Client", exception_logger="Client")
-
 from NetUtils import NetworkItem, ClientStatus
 from CommonClient import gui_enabled, logger, get_base_parser, ClientCommandProcessor, \
     CommonContext, server_loop
@@ -274,8 +271,11 @@ async def game_watcher(ctx: KH1Context):
         await asyncio.sleep(0.1)
 
 
-def launch():
-    async def main(args):
+def main(*launcher_args: str):
+    async def main():
+        parser = get_base_parser(description="KH1 Client, for text interfacing.")
+        args = parser.parse_args(launcher_args)
+
         ctx = KH1Context(args.connect, args.password)
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
         if gui_enabled:
@@ -293,9 +293,6 @@ def launch():
 
     import colorama
 
-    parser = get_base_parser(description="KH1 Client, for text interfacing.")
-
-    args, rest = parser.parse_known_args()
     colorama.just_fix_windows_console()
-    asyncio.run(main(args))
+    asyncio.run(main())
     colorama.deinit()

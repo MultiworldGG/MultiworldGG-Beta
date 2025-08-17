@@ -2111,6 +2111,11 @@ async def process_client_cmd(ctx: Context, client: Client, args: dict):
             for key in args["keys"]:
                 ctx.stored_data_notification_clients[key].add(client)
 
+        else:
+            # Unknown command - log it for debugging but don't crash
+            if ctx.log_network:
+                ctx.logger.info(f"Unknown command from {client.name} (Team #{client.team + 1}): {cmd}")
+
 
 def update_client_status(ctx: Context, client: Client, new_status: ClientStatus):
     current = ctx.client_game_state[client.team, client.slot]

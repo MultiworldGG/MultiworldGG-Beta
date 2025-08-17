@@ -115,6 +115,7 @@ Currently, the following games are supported:
 * Overcooked 2
 * Paper Mario
 * Paper Mario: The Thousand-Year Door
+* Path of Exile
 * Peaks of Yore
 * Placid Plastic Duck Simulator
 * Pokémon Crystal
