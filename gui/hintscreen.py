@@ -115,89 +115,10 @@ class HintScreen(MDScreen):
             for slot_id, slot_data in self.app.ctx.ui.ui_player_data.items():
                 if hasattr(slot_data, 'hints') and slot_data.hints:
                     await asynckivy.sleep(0)  # Yield control for smooth UI
-                    
-                    # Create the static header section
-                    header_section = SlotListItemHeader(item_data=slot_data, panel=None)
-                    header_section.ids.leading_avatar.source = ""  # slot_data['avatar']
-                    
-                    # Add status icons to header
-                    if slot_data.bk_mode:
-                        header_section.ids.slot_item_container.add_widget(
-                            BaseListItemIcon(icon="food", theme_font_size="Custom", 
-                                           font_size=dp(14), pos_hint={"center_y": 0.5}), 1)
-                    if slot_data.in_call:
-                        header_section.ids.slot_item_container.add_widget(
-                            BaseListItemIcon(icon="headphones", theme_font_size="Custom", 
-                                           font_size=dp(14), pos_hint={"center_y": 0.5}), 1)
-                    if slot_data.game_status == "GOAL":
-                        header_section.ids.game_item_container.add_widget(
-                            BaseListItemIcon(icon="flag_checkered", theme_font_size="Custom", 
-                                           font_size=dp(14), pos_hint={"center_y": 0.5}), 1)
-                    
-                    # Add the static header to the main list
-                    self.hints_mdlist.add_widget(header_section)
-                    
-                    # Create scrollable hints container
-                    hints_container = MDList()
-                    
-                    # Get theme colors
-                    i = 1 if self.app.theme_cls.theme_style == "Dark" else 0
-                    item_colors = {
-                        "trap": self.app.theme_mw.markup_tags_theme.trap_item_color[i],
-                        "regular": self.app.theme_mw.markup_tags_theme.regular_item_color[i],
-                        "useful": self.app.theme_mw.markup_tags_theme.useful_item_color[i],
-                        "progression_deprioritized": self.app.theme_mw.markup_tags_theme.progression_deprioritized_item_color[i],
-                        "progression": self.app.theme_mw.markup_tags_theme.progression_item_color[i],
-                        "progression_goal": self.app.theme_mw.markup_tags_theme.progression_goal_item_color[i],
-                    }
-                    
-                    def on_select_status(instance, status: HintStatus):
-                        instance.hint.set_status(status=status)
-                    
-                    # Add individual hint items to the scrollable container
-                    for hint in slot_data.hints.values():
-                        if hint.hint_status == HintStatus.HINT_FOUND or hint.found:
-                            hint.hide = True
-                        if hint.hide and not self.app.show_all_hints:
-                            continue
-                            
-                        hint_item = HintListItem(
-                            hint_data=hint, 
-                            game_status=slot_data.game_status, 
-                            shadow_colors=item_colors,
-                            hint_icon_status=status_icons[hint.hint_status], 
-                            hint_status_text=status_names[hint.hint_status]
-                        )
-                        hint_item.bind(on_bkmode=lambda x: self.on_bkmode(hint))
-                        hint_item.bind(on_goal=lambda x: self.on_goal(hint))
-                        hint_item.bind(on_shop=lambda x: self.on_shop(hint))
-                        hint_item.dropdown = HintListDropdown(
-                            status_names=status_names, 
-                            status_icons=status_icons, 
-                            dropdown_callback=on_select_status
-                        )
-                        hint_item.dropdown.bind(on_release=hint_item.dropdown.dismiss)
-                        hint_item.dropdown.caller = hint_item.ids["hint_item_status_button"]
-                        hints_container.add_widget(hint_item)
-                    
-                    # Create a scroll view for the hints and add it to the main list
-                    # Calculate dynamic height based on available space, but cap it for usability
-                    max_height = min(dp(400), len(slot_data.hints) * dp(80) + dp(20))  # Dynamic based on hint count
-                    hints_scroll = MDScrollView(size_hint_y=None, height=max_height)
-                    hints_scroll.add_widget(hints_container)
-                    self.hints_mdlist.add_widget(hints_scroll)
-                    
+                    hint_panel = HintListPanel(item_name=slot_id, item_data=slot_data)
+                    self.hints_mdlist.add_widget(hint_panel)
         finally:
             self._updating_hints = False
-
-    def on_bkmode(self, hint: UIHint):
-        hint.set_status(mwgg_status=MWGGUIHintStatus.HINT_BK_MODE)
-    
-    def on_goal(self, hint: UIHint):
-        hint.set_status(mwgg_status=MWGGUIHintStatus.HINT_GOAL)
-    
-    def on_shop(self, hint: UIHint):
-        hint.set_status(mwgg_status=MWGGUIHintStatus.HINT_SHOP)
 
 class HintLayout(MDBoxLayout):
     """Layout container for hint display components.
@@ -320,6 +241,7 @@ class HintListPanel(GameListPanel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._populated = False
         Clock.schedule_once(self.populate_slot_item, 0)
 
     def populate_slot_item(self, ctx: "CommonContext"):
@@ -329,6 +251,11 @@ class HintListPanel(GameListPanel):
         This method sets up the panel to display slot information
         including the header with avatar and slot items for each hint.
         """
+        
+        # Guard against multiple population
+        if self._populated:
+            return
+        self._populated = True
 
         def on_select_status(instance, status: HintStatus):
             instance.hint.set_status(status=status)
@@ -359,6 +286,9 @@ class HintListPanel(GameListPanel):
             "progression": self.app.theme_mw.markup_tags_theme.progression_item_color[i],
             "progression_goal": self.app.theme_mw.markup_tags_theme.progression_goal_item_color[i],
         }
+        # Create a scrollable container for the hint items
+        hints_container = MDList()
+        
         for hint in self.item_data.hints.values():
             if hint.hint_status == HintStatus.HINT_FOUND or hint.found:
                 hint.hide = True
@@ -373,7 +303,16 @@ class HintListPanel(GameListPanel):
             hint_item.dropdown = HintListDropdown(status_names=status_names, status_icons=status_icons, dropdown_callback=on_select_status)
             hint_item.dropdown.bind(on_release=hint_item.dropdown.dismiss)
             hint_item.dropdown.caller = hint_item.ids["hint_item_status_button"]
-            self.panel_content.add_widget(hint_item)
+            hints_container.add_widget(hint_item)
+        
+        # Create a scroll view for the hints and add it to the panel content
+        # Calculate dynamic height based on hint count, but cap it for usability
+        visible_hints = len([h for h in self.item_data.hints.values() 
+                           if not (h.hide and not self.app.show_all_hints)])
+        max_height = min(dp(400), max(dp(120), visible_hints * dp(80) + dp(20)))
+        hints_scroll = MDScrollView(size_hint_y=None, height=max_height)
+        hints_scroll.add_widget(hints_container)
+        self.panel_content.add_widget(hints_scroll)
 
     def on_bkmode(self, hint: UIHint):
         hint.set_status(mwgg_status=MWGGUIHintStatus.HINT_BK_MODE)
@@ -383,101 +322,5 @@ class HintListPanel(GameListPanel):
     
     def on_shop(self, hint: UIHint):
         hint.set_status(mwgg_status=MWGGUIHintStatus.HINT_SHOP)
-
-# class HintLabel(MDBoxLayout):
-#     """Recyclable label widget for displaying hint information in a table format.
-    
-#     This class represents a single row in the hint log table, displaying
-#     information about hints including receiving player, item, finding player,
-#     location, entrance, and status. It supports selection, sorting, and
-#     status modification through dropdown menus.
-    
-#     Attributes:
-#         selected (bool): Whether this hint row is currently selected
-#         striped (bool): Whether this row should have striped background
-#         index (int): The index of this item in the recycle view
-#         dropdown (MDDropdownMenu): Dropdown menu for status selection
-#     """
-#     selected = BooleanProperty(False)
-#     striped = BooleanProperty(False)
-#     index = None
-#     dropdown: MDDropdownMenu
-#     hint: UIHint
-
-#     def __init__(self, hint: UIHint, ctx: "CommonContext"):
-#         super().__init__()
-#         self.hint = hint
-
-#         menu_items = []
-#         for status in (HintStatus.HINT_NO_PRIORITY, HintStatus.HINT_PRIORITY, HintStatus.HINT_AVOID):
-#             name = status_names[status]
-#             status_button = MDDropDownItem(MDDropDownItemText(text=name), size_hint_y=None, height=dp(50))
-#             status_button.status = status
-#             menu_items.append({
-#                 "text": name,
-#                 "leading_icon": status_icons[status],
-#                 "on_release": lambda x=status: select(self, x)
-#             })
-
-#         self.dropdown = MDDropdownMenu(caller=self.ids["status"], items=menu_items)
-
-#         def select(instance, data):
-#             self.hint.set_status(status=data)
-
-#         self.dropdown.bind(on_release=self.dropdown.dismiss)
-
-#     def set_height(self, instance, value):
-#         self.height = max([child.texture_size[1] for child in self.children])
-
-#     def on_touch_down(self, touch):
-#         """ Add selection on touch down """
-#         if super(HintLabel, self).on_touch_down(touch):
-#             return True
-#         if self.index:  # skip header
-#             if self.collide_point(*touch.pos):
-#                 status_label = self.ids["status"]
-#                 if status_label.collide_point(*touch.pos):
-#                     if self.hint["status"] == HintStatus.HINT_FOUND:
-#                         return
-#                     if self.hint.self:# If this player owns this hint
-#                         # open a dropdown
-#                         self.dropdown.open()
-#                 elif self.selected:
-#                     self.parent.clear_selection()
-#                 else:
-#                     text = "".join((self.receiving_text, "\'s ", self.item_text, " is at ", self.location_text, " in ",
-#                                     self.finding_text, "\'s World", (" at " + self.entrance_text)
-#                                     if self.entrance_text != "Vanilla"
-#                                     else "", ". (", self.status_text.lower(), ")"))
-#                     temp = Label(text).markup
-#                     text = "".join(part for part in temp if not part.startswith("["))
-#                     Clipboard.copy(escape_markup(text).replace("&amp;", "&").replace("&bl;", "[").replace("&br;", "]"))
-#                     return self.parent.select_with_touch(self.index, touch)
-#         else:
-#             parent = self.parent
-#             parent.clear_selection()
-#             parent: HintLog = parent.parent
-#             # find correct column
-#             for child in self.children:
-#                 if child.collide_point(*touch.pos):
-#                     key = child.sort_key
-#                     if key == "status":
-#                         parent.hint_sorter = lambda element: status_sort_weights[element["status"]["hint"]["status"]]
-#                     # else:
-#                         # parent.hint_sorter = lambda element: (
-#                         #     remove_between_brackets.sub("", element[key]["text"]).lower()
-#                         # )
-#                     if key == parent.sort_key:
-#                         # second click reverses order
-#                         parent.reversed = not parent.reversed
-#                     else:
-#                         parent.sort_key = key
-#                         parent.reversed = False
-#                     MDApp.get_running_app().update_hints()
-
-#     def apply_selection(self, rv, index, is_selected):
-#         """ Respond to the selection of items in the view. """
-#         if self.index:
-#             self.selected = is_selected
 
 Builder.load_string(hint_kv)

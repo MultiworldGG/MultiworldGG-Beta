@@ -44,10 +44,10 @@ class UIHint:
         self.entrance = location_names.lookup_in_slot(hint['entrance'], hint['finding_player']) if hint['entrance'] else ""
         self.found = hint['found']
         self.classification = self.get_classification(hint['item_flags'])
-        self.for_bk_mode = False    
-        self.for_goal = False
-        self.from_shop = False
-        self.hide = False
+        self._for_bk_mode = False    
+        self._for_goal = False
+        self._from_shop = False
+        self._hide = False
         self.set_status(hint_status, mwgg_hint_status)
 
     def set_status(self, hint_status: Optional[HintStatus] = None, mwgg_status: Optional[MWGGUIHintStatus] = None):
