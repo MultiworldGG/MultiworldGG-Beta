@@ -6,6 +6,9 @@ __all__ = ['GameListPanel',
            'GameTrailingPressedIconButton',
            'SlotListItemHeader',
            'SlotListItem',
+           'HintListItem',
+           'HintListDropdown',
+           'IconBadge',
            ]
 import asynckivy
 from textwrap import wrap
@@ -18,6 +21,8 @@ from kivy.uix.behaviors import ButtonBehavior
 from kivymd.uix.behaviors import RotateBehavior, CommonElevationBehavior
 from kivymd.theming import ThemableBehavior
 from kivymd.uix.label import MDLabel
+from kivymd.uix.menu import MDDropdownMenu
+from kivymd.uix.dropdownitem import MDDropDownItem, MDDropDownItemText
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.badge import MDBadge
 
@@ -33,13 +38,13 @@ import os
 from kivy.clock import Clock
 from kivymd.app import MDApp
 from kivymd.icon_definitions import md_icons
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
     from NetUtils import HintStatus, MWGGUIHintStatus
     from CommonClient import CommonContext
 
-from gui.UIDataClasses import UIPlayerData, UIHint
+from gui.UIDataClasses import UIPlayerData, UIHint, HintStatus
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +81,10 @@ class SlotListItemHeader(MDBoxLayout, CommonElevationBehavior):
         """
         self.panel = panel
         self.item_data = item_data
-        self.slot_name = self.item_data.slot_name
+        if self.item_data.pronouns:
+            self.slot_name = self.item_data.slot_name + " (" + self.item_data.pronouns + ")"
+        else:
+            self.slot_name = self.item_data.slot_name
         self.game = self.item_data.game
 
         super().__init__(**kwargs)
@@ -141,11 +149,12 @@ class GameListItemHeader(MDBoxLayout, ButtonBehavior, ThemableBehavior):
         }
         return item_dict
 
-class SlotListItem(MDBoxLayout, CommonElevationBehavior):
+class MWBaseListItem(MDBoxLayout, CommonElevationBehavior):
     """
-    Widget for displaying individual slot items in the slot list.
+    Base class for list items.
+    Widget for displaying individual hint items in the hint player list.
     
-    This class is used to display a slot item in the slot list.
+    This class is used to display a hint item in the hint player list.
     Displays entrance, location, item, and goal information.
     
     Attributes:
@@ -183,8 +192,9 @@ class SlotListItem(MDBoxLayout, CommonElevationBehavior):
     classification: StringProperty
     assigned_level: StringProperty
     found: StringProperty
+    badge_text: StringProperty
 
-    def __init__(self, hint_data: UIHint, game_status: str, shadow_colors: dict, hint_status: "HintStatus", **kwargs):
+    def __init__(self, hint_data: UIHint, game_status: str, shadow_colors: dict, **kwargs):
         """
         Initialize the SlotListItem.
         
@@ -215,38 +225,16 @@ class SlotListItem(MDBoxLayout, CommonElevationBehavior):
 
         super().__init__(**kwargs)
 
-        self.slot_icon_location = self.ids.slot_icon_location
-        self.slot_text_location = self.ids.slot_text_location
-        self.slot_icon_item = self.ids.slot_icon_item
-        self.slot_text_item = self.ids.slot_text_item
-        self.slot_icon_goal = self.ids.slot_icon_goal
-        badge_text = ""
+        self.badge_text = ""
         if self.mwgg_status == MWGGUIHintStatus.HINT_BK_MODE:
             badge_text += md_icons["food"] + " "
         if self.mwgg_status == MWGGUIHintStatus.HINT_GOAL:
             badge_text += md_icons["flag_checkered"] + " "
         if self.mwgg_status == MWGGUIHintStatus.HINT_SHOP:
             badge_text += md_icons["shop"] + " "
-        if badge_text != "":
-            self.slot_icon_item.add_widget(IconBadge(text=badge_text.rstrip()))
-        Clock.schedule_once(lambda x: self.populate_slot_item())
-        Clock.schedule_once(lambda x: self.set_prio_behavior(shadow_colors), .5)
 
     def populate_slot_item(self):
-        """
-        Populate the slot item with entrance, location, item, and goal information.
-        
-        This method sets up the visual elements of the slot item including
-        entrance information, location text, item text, and goal icon.
-        """
-        if self.entrance_name != "":
-            self.slot_text_entrance = (MDListItemSupportingText(text=self.entrance_name, do_wrap=False))
-            self.slot_icon_entrance = (MDListItemLeadingIcon(icon="door-open", pos_hint={"center_y": 0.5}))
-            self.ids.slot_item_top_container.add_widget(self.slot_icon_entrance)
-            self.ids.slot_item_top_container.add_widget(self.slot_text_entrance)
-        self.slot_text_location.text = self.location_name
-        self.slot_text_item.text = self.item_name
-        self.slot_icon_goal.icon = "flag_checkered" if self.game_status == "GOAL" else "blank"
+        pass
 
     def set_prio_behavior(self, item_colors: dict[str, list[str]]):
         if self.classification == "Trap":
@@ -292,7 +280,97 @@ class SlotListItem(MDBoxLayout, CommonElevationBehavior):
         }
         return item_dict
 
-class GameListItemTooltip(MDTooltip):
+class SlotListItem(MWBaseListItem):
+    """
+    Widget for displaying individual slot items in the slot list.
+    """
+    def __init__(self, hint_data: UIHint, game_status: str, shadow_colors: dict, **kwargs):
+        super().__init__(hint_data, game_status, shadow_colors, **kwargs)
+        self.slot_icon_location = self.ids.slot_icon_location
+        self.slot_text_location = self.ids.slot_text_location
+        self.slot_icon_item = self.ids.slot_icon_item
+        self.slot_text_item = self.ids.slot_text_item
+        self.slot_icon_goal = self.ids.slot_icon_goal
+
+        if self.badge_text != "":
+            self.slot_icon_item.add_widget(IconBadge(text=self.badge_text.rstrip()))
+
+        Clock.schedule_once(lambda x: self.populate_slot_item())
+        Clock.schedule_once(lambda x: self.set_prio_behavior(shadow_colors), .5)
+
+    def populate_slot_item(self):
+        """
+        Populate the slot item with entrance, location, item, and goal information.
+        
+        This method sets up the visual elements of the slot item including
+        entrance information, location text, item text, and goal icon.
+        """
+        if self.entrance_name == "Vanilla":
+            if not self.entrance_name:
+                pass
+        else:
+            self.slot_text_entrance = (MDListItemSupportingText(text=self.entrance_name, do_wrap=False))
+            self.slot_icon_entrance = (MDListItemLeadingIcon(icon="door-open", pos_hint={"center_y": 0.5}))
+            self.ids.slot_item_top_container.add_widget(self.slot_icon_entrance)
+            self.ids.slot_item_top_container.add_widget(self.slot_text_entrance)
+        self.slot_text_location.text = self.location_name
+        self.slot_text_item.text = self.item_name
+        self.slot_icon_goal.icon = "flag_checkered" if self.game_status == "GOAL" else "blank"
+
+
+class HintListItem(MWBaseListItem):
+    hint_icon_status: StringProperty
+    hint_status_text: StringProperty
+
+    def __init__(self, hint_data: UIHint, game_status: str, shadow_colors: dict, hint_icon_status: str, hint_status_text: str, **kwargs):
+        self.hint_icon_status = hint_icon_status
+        self.hint_status_text = hint_status_text
+        super().__init__(hint_data, game_status, shadow_colors, **kwargs)
+        Clock.schedule_once(lambda x: self.populate_slot_item())
+
+    def populate_slot_item(self):
+        """
+        Populate the hint item with entrance, location, item, and goal information.
+        
+        This method sets up the visual elements of the hint item including
+        entrance information, location text, item text, and goal icon.
+        """
+        if self.hint_data.entrance == "Vanilla" or not self.hint_data.entrance:
+            self.remove_widget(self.ids.hint_item_entrance_container)
+
+    @staticmethod
+    def on_hide(instance, value):
+        instance.hint_data.hide = value
+    
+    @staticmethod
+    def on_bkmode(instance, value):
+        pass
+    
+    @staticmethod
+    def on_goal(instance, value):
+        pass
+    
+    @staticmethod
+    def on_shop(instance, value):
+        pass
+
+class HintListDropdown(MDDropdownMenu):
+    def __init__(self, *args, status_names: dict[HintStatus, str], status_icons: dict[HintStatus, str], 
+                 dropdown_callback: Callable[[UIHint, HintStatus], None], **kwargs):
+        super().__init__(*args, **kwargs)
+        self.items = []
+        for status in (HintStatus.HINT_NO_PRIORITY, HintStatus.HINT_PRIORITY, HintStatus.HINT_AVOID):
+            name = status_names[status]
+            status_button = MDDropDownItem(MDDropDownItemText(text=name))
+            status_button.status = status
+            self.items.append({
+                "text": name,
+                "leading_icon": status_icons[status],
+                "on_release": lambda x=status: dropdown_callback(self, x)
+            })
+        self.bind(on_release=self.dismiss)
+
+class ListItemTooltip(MDTooltip):
     """
     Base class for tooltip behavior.
     
@@ -300,7 +378,7 @@ class GameListItemTooltip(MDTooltip):
     """
     pass
 
-class GameListItemLongText(GameListItemTooltip, MDListItemSupportingText):
+class GameListItemLongText(ListItemTooltip, MDListItemSupportingText):
     """
     List item with tooltip behavior for long text.
     
@@ -480,7 +558,7 @@ class GameListPanel(MDExpansionPanel):
                 "progression": self.app.theme_mw.markup_tags_theme.progression_item_color[i],
                 "progression_goal": self.app.theme_mw.markup_tags_theme.progression_goal_item_color[i],
             }
-            self.panel_content.add_widget(SlotListItem(hint_data=hint, game_status=self.item_data.game_status, shadow_colors=item_colors, hint_status=hint.hint_status))
+            self.panel_content.add_widget(SlotListItem(hint_data=hint, game_status=self.item_data.game_status, shadow_colors=item_colors))
 
     def populate_game_item(self):
         """
@@ -535,7 +613,7 @@ class GameListPanel(MDExpansionPanel):
                            'tooltip' (full text) keys
         """
         full_list = ", ".join(item_list).rstrip(", ")
-        wrapped_list = wrap(full_list, width=25, break_on_hyphens=False, max_lines=3)
+        wrapped_list = wrap(full_list, width=18, break_on_hyphens=False, max_lines=3)
         item_dict = {
             "label": "\n".join(wrapped_list).rstrip("\n"),
             "tooltip": "\n".join(wrap(full_list, width=40, break_on_hyphens=False)).rstrip("\n")

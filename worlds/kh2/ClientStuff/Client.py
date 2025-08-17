@@ -725,7 +725,8 @@ async def kh2_watcher(ctx: KH2Context):
                         logger.info("Game Connection Established.")
                     except Exception as e:
                         logger.info("Game not found, retrying in 5 seconds...")
-                        await asyncio.sleep(5)
+                        if not ctx.exit_event.is_set():
+                            await asyncio.sleep(5)
             if ctx.disconnect_from_server:
                 ctx.disconnect_from_server = False
                 await ctx.disconnect()

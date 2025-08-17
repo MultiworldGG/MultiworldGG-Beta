@@ -88,7 +88,7 @@
         pos_hint: {"center_y": 0.5, "center_x": 0.5}
         on_release: root.panel.toggle_expansion(self)
 
-<GameListItemTooltip>:
+<ListItemTooltip>:
     MDTooltipPlain:
         text: root.tooltip_text
         do_wrap: True
@@ -122,18 +122,20 @@
     adaptive_height: True
     role: "small"    
 
-<SlotListItem>:
+<MWBaseListItem>:
     spacing: dp(8)
     padding: 12, 12, 12, 12
     orientation: "vertical"
-    id: slot_item
     ripple_effect: False
-    height: dp(70)
-    size_hint_y: None
     theme_shadow_color: "Custom"
     theme_bg_color: "Custom"
     md_bg_color: app.theme_cls.surfaceContainerColor
     theme_elevation_level: "Custom"
+
+<SlotListItem>:
+    id: slot_item
+    height: dp(70)
+    size_hint_y: None
     MDBoxLayout:
         id: slot_item_top_container
         orientation: "horizontal"
@@ -141,7 +143,7 @@
         size_hint_y: .5
         MDListItemLeadingIcon:
             id: slot_icon_location
-            icon: "map-marker"
+            icon: "sign-direction"
             pos_hint: {"center_y": 0.5}
         MDListItemSupportingText:
             id: slot_text_location
@@ -170,6 +172,105 @@
             id: slot_icon_goal
             icon: "flag_checkered"
             pos_hint: {"center_y": 0.5}
+
+<HintListItem>:
+    id: hint_item
+    height: dp(176)
+    size_hint_y: None
+    MDBoxLayout:
+        orientation: "horizontal"
+        adaptive_height: True
+        MDIcon:
+            icon: "treasure-chest"
+            pos_hint: {"center_y": 0.5}
+        MDLabel:
+            text: root.item_name
+            do_wrap: True
+            theme_font_style: "Custom"
+            font_style: "Body"
+            role: "large"
+            theme_text_color: "Custom"
+            text_color: app.theme_cls.onSurfaceColor
+        MDCheckbox:
+            id: hint_item_checkbox
+            pos_hint: {"right": 0.1, "center_y": 0.5}
+            on_active: root.on_hide(self)
+            checkbox_icon_normal: "eye"
+            checkbox_icon_active: "eye-off"
+    MDBoxLayout:
+        orientation: "horizontal"
+        adaptive_height: True
+        MDIcon:
+            icon: "sign-direction"
+            pos_hint: {"center_y": 0.5}
+        MDLabel:
+            text: root.location_name
+            do_wrap: True
+            theme_font_style: "Custom"
+            font_style: "Body"
+            role: "medium"
+            theme_text_color: "Custom"
+            text_color: app.theme_cls.onSurfaceColor
+    MDBoxLayout:
+        id: hint_item_entrance_container
+        orientation: "horizontal"
+        adaptive_height: True
+        MDIcon:
+            icon: "door-open"
+            pos_hint: {"center_y": 0.5}
+        MDLabel:
+            text: root.entrance_name
+            do_wrap: True
+            theme_font_style: "Custom"
+            font_style: "Body"
+            role: "medium"
+            theme_text_color: "Custom"
+            text_color: app.theme_cls.onSurfaceColor
+    MDButton:
+        id: hint_item_status_button
+        MDButtonIcon:
+            icon: root.hint_icon_status
+        MDButtonText:
+            text: root.hint_status_text
+            theme_text_color: "Custom"
+            text_color: app.theme_cls.onSurfaceColor
+            theme_font_style: "Custom"
+            font_style: "Body"
+            role: "large"
+    MDSegmentedButton:
+        multiselect: True
+        size_hint_x: .4
+        MDSegmentedButtonItem:
+            on_active: root.on_bkmode(self)
+            MDSegmentButtonIcon:
+                icon: "food"
+            MDSegmentButtonLabel:
+                text: "BK Mode"
+                tooltip_text: "This hint is blocking me or another player from playing."
+        MDSegmentedButtonItem:
+            on_active: root.on_goal(self)
+            MDSegmentButtonIcon:
+                icon: "flag_checkered"
+            MDSegmentButtonLabel:
+                text: "Goal Item"
+                tooltip_text: "This is a goal related item, I need it only to finish the game."
+        MDSegmentedButtonItem:
+            on_active: root.on_shop(self)
+            MDSegmentButtonIcon:
+                icon: "shop"
+            MDSegmentButtonLabel:
+                text: "Shop Item"
+                tooltip_text: "This is a shop related item."
+            # MDBoxLayout:
+            #     orientation: "horizontal"
+            #     size_hint_y: None
+            #     height: dp(40)
+            #     MDLabel:
+            #         text: "Hide"
+            #     MDCheckbox:
+            #         id: hint_item_checkbox
+            #         pos_hint: {"center_y": 0.5}
+            #         on_active: root.on_hide(self)
 
 <IconBadge>:
     text: ""

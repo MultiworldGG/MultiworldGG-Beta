@@ -209,7 +209,9 @@ class BottomBarTextInput(MDTextField):
             if not self.dropdown.parent:
                 self.dropdown.open()
             else:
-                self.dropdown.check_ver_growth()
+                self.dropdown.dismiss()
+                Clock.schedule_once(self.dropdown.open, 0.1)
+                Clock.schedule_once(self.dropdown.check_ver_growth, 0.1)
         else:
             self.dropdown.dismiss()
 
@@ -222,7 +224,7 @@ class BottomAppBar(MDBottomAppBar):
     def __init__(self, screen_name: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.screen_name = screen_name  # Store screen_name for later use
-        if screen_name == "console":
+        if screen_name == "console" or screen_name == "hint":
             actions = CONSOLE_ACTIONS   
         elif screen_name == "launcher":
             actions = LAUNCHER_ACTIONS

@@ -3,6 +3,8 @@ from NetUtils import Hint, HintStatus, MWGGUIHintStatus, JSONtoTextParser
 from BaseClasses import ItemClassification
 from typing import Optional
 
+__all__ = ["UIHint", "UIPlayerData"]
+
 @dataclass
 class UIHint:
     """
@@ -23,6 +25,7 @@ class UIHint:
     _for_bk_mode: bool
     _for_goal: bool
     _from_shop: bool
+    _hide: bool
     hint_status: HintStatus
     mwgg_hint_status: MWGGUIHintStatus
 
@@ -44,9 +47,10 @@ class UIHint:
         self.for_bk_mode = False    
         self.for_goal = False
         self.from_shop = False
+        self.hide = False
         self.set_status(hint_status, mwgg_hint_status)
 
-    def set_status(self, hint_status: Optional[HintStatus], mwgg_status: Optional[MWGGUIHintStatus]):
+    def set_status(self, hint_status: Optional[HintStatus] = None, mwgg_status: Optional[MWGGUIHintStatus] = None):
         """
         Update the hint's status and classification based on status flags.
         
@@ -96,6 +100,13 @@ class UIHint:
     @for_goal.setter
     def for_goal(self, value: bool):
         self._for_goal = value
+
+    @property
+    def hide(self) -> bool:
+        return self._hide
+    @hide.setter
+    def hide(self, value: bool):
+        self._hide = value
 
     @staticmethod
     def get_classification(flags: int) -> str:

@@ -72,7 +72,7 @@ Window.borderless = True
 Window.set_title("MultiWorldGG")
 
 from kivy.clock import Clock
-from kivy.properties import ObjectProperty
+from kivy.properties import ObjectProperty, BooleanProperty
 from kivymd.app import MDApp
 from kivymd.uix.screenmanager import MDScreenManager
 from kivymd.uix.anchorlayout import MDAnchorLayout
@@ -425,6 +425,9 @@ class MultiMDApp(MDApp):
                 self.top_appbar_menu.dismiss()
         else:
             self._create_screen(item)
+            self.screen_manager.current = item
+            if self.top_appbar_menu:
+                self.top_appbar_menu.dismiss()
 
     def _create_screen(self, item):
         '''
@@ -435,17 +438,14 @@ class MultiMDApp(MDApp):
         if item == "settings":
             self.settings_screen = SettingsScreen()
             self.screen_manager.add_widget(self.settings_screen)
-            self.screen_manager.current = "settings"
         elif item == "hint":
             self.hint_screen = HintScreen()
             self.screen_manager.add_widget(self.hint_screen)
-            self.screen_manager.current = "hint"
             self.hint_text_input = self.hint_screen.bottom_appbar.text_input
             self.hint_text_input.bind(on_enter=self.on_message)
         elif item == "launcher":
             self.launcher_screen = LauncherScreen()
             self.screen_manager.add_widget(self.launcher_screen)
-            self.screen_manager.current = "launcher"
             self.launcher_text_input = self.launcher_screen.bottom_appbar.text_input  
             self.launcher_text_input.bind(on_enter=self.on_message)
 
@@ -579,6 +579,7 @@ class MultiMDApp(MDApp):
         self.update_mwgg_hints()
         self.update_hints()
         self.set_pronouns()
+        self._create_screen("hint")
 
 
     def print_json(self, data: typing.List[JSONMessagePart]):
@@ -663,9 +664,11 @@ class MultiMDApp(MDApp):
             if slot in self.ui_hint_data:
                 self.ui_player_data[slot].hints = self.ui_hint_data[slot]
 
-        # Update console screen slots list if it exists
+        # Update hints lists if it exists
         if hasattr(self, 'console_screen') and self.console_screen:
             self.console_screen.update_slots_list()
+        if hasattr(self, 'hint_screen') and self.hint_screen:
+            self.hint_screen.update_hints_list()
 
     def update_mwgg_hints(self, mwgg_hints: typing.Optional[dict] = None):
         if mwgg_hints is None:
@@ -702,6 +705,18 @@ class MultiMDApp(MDApp):
                 "default": {},
                 "operations": [{"operation": "replace", "value": mwgg_data_to_store}]
             }]))
+
+    _show_all_hints: BooleanProperty(False)
+
+    @property
+    def show_all_hints(self) -> bool:
+        return self._show_all_hints
+
+    @show_all_hints.setter
+    def show_all_hints(self, value: bool):
+        self._show_all_hints = value
+        if hasattr(self, 'hint_screen') and self.hint_screen:
+            self.hint_screen.update_hints_list()
 
 def is_command_input(string: str) -> bool:
     return len(string) > 0 and string[0] in "/!"
