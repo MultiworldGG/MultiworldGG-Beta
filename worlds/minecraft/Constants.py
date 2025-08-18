@@ -6,7 +6,7 @@ import pkgutil
 GAME_NAME: str = "Minecraft"
 AUTHOR: str = "KonoTyran & espeon"
 IGDB_ID: int = 121
-VERSION: str = "9"
+VERSION: str = "10"
 
 def load_data_file(*args) -> dict:
     fname = "/".join(["data", *args])
