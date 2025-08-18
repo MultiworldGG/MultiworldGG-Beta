@@ -1366,7 +1366,9 @@ def handle_url_arg(args: "argparse.Namespace",
     return args
 
 
-def run_as_textclient(*args):
+def launch_textclient(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Launch text client in GUI integration mode like KH2"""
+    
     class TextContext(CommonContext):
         # Text Mode to use !hint and such with games that have no text entry
         tags = CommonContext.tags | {"TextOnly"}
@@ -1374,48 +1376,90 @@ def run_as_textclient(*args):
         items_handling = 0b111  # receive all items for /received
         want_slot_data = False  # Can't use game specific slot_data
 
+        def __init__(self, server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+            super(TextContext, self).__init__(server_address=server_address, password=password)
+            self.slot_name = slot_name
+            self.ready_callback = ready_callback
+            self.error_callback = error_callback
+            
+            if self.slot_name is not None:
+                self.auth = self.slot_name
+            else:
+                self.auth = None
+
         async def server_auth(self, password_requested: bool = False):
             if password_requested and not self.password:
                 await super(TextContext, self).server_auth(password_requested)
-            await self.get_username()
+            
+            if not self.auth:
+                await self.get_username()
             await self.send_connect(game="")
 
         def on_package(self, cmd: str, args: dict):
             if cmd == "Connected":
                 self.game = self.slot_info[self.slot].game
+                # Call ready_callback after successful connection
+                if self.ready_callback:
+                    try:
+                        self.ready_callback()
+                    except Exception as e:
+                        logger.error(f"Error in ready callback: {e}")
 
         async def disconnect(self, allow_autoreconnect: bool = False):
             self.game = ""
             await super().disconnect(allow_autoreconnect)
 
+        def handle_connection_loss(self, msg: str) -> None:
+            """Override to handle connection loss with error callback"""
+            super().handle_connection_loss(msg)
+            if self.error_callback:
+                try:
+                    self.error_callback()
+                except Exception as e:
+                    logger.error(f"Error in error callback: {e}")
+
     async def main(args):
-        ctx = TextContext(args.connect, args.password)
-        ctx.auth = args.name
+        ctx = TextContext(server_address, slot_name, password, ready_callback, error_callback)
+        
+        # Try to takeover existing GUI like KH2
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui()
+        else:
+            logger.critical("Text client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Text Client"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
-
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
-
+        await ctx.server_auth()
+        
+        # Wait for exit instead of running a watcher
         await ctx.exit_event.wait()
         await ctx.shutdown()
 
     import colorama
 
-    parser = get_base_parser(description=f"Gameless {apname} Client, for text interfacing.")
-    parser.add_argument('--name', default=None, help="Slot Name to connect as.")
-    parser.add_argument("url", nargs="?", help=f"{apname} connection url")
-    args = parser.parse_args(args)
+    # Check if we're already in an event loop (GUI mode)
+    try:
+        loop = asyncio.get_running_loop()
+        logger.info("Running text client in existing event loop (GUI mode)")
+        
+        # Create a simple namespace object to mimic argparse.Namespace
+        class Args:
+            def __init__(self, server_address, slot_name, password):
+                self.server_address = server_address
+                self.slot_name = slot_name
+                self.password = password
+        
+        args = Args(server_address, slot_name, password)
+        task = asyncio.create_task(main(args), name="TextClientMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone text client. Please run the MultiWorld GUI.")
+        if error_callback:
+            error_callback()
 
-    args = handle_url_arg(args, parser=parser)
-
-    # use colorama to display colored text highlighting on windows
-    colorama.just_fix_windows_console()
-
-    asyncio.run(main(args))
-    colorama.deinit()
-
-
-if __name__ == '__main__':
-    logging.getLogger().setLevel(logging.INFO)  # force log-level to work around log level resetting to WARNING
-    run_as_textclient(*sys.argv[1:])  # default value for parse_args
+def main_textclient(server_address: str, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    return launch_textclient(server_address, slot_name, password, ready_callback, error_callback)

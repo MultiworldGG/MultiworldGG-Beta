@@ -212,16 +212,6 @@ class MWBaseListItem(MDBoxLayout, CommonElevationBehavior):
         self.found = self.hint_data.found
         self.status = self.hint_data.hint_status
         self.mwgg_status = self.hint_data.mwgg_hint_status
-        if self.status == HintStatus.HINT_FOUND:
-            self.found = "Found"
-        elif self.status == HintStatus.HINT_UNSPECIFIED:
-            pass
-        elif self.status == HintStatus.HINT_NO_PRIORITY:
-            self.assigned_level = "Filler"
-        elif self.status == HintStatus.HINT_AVOID:
-            self.assigned_level = "Trap"
-        elif self.status == HintStatus.HINT_PRIORITY:
-            self.assigned_level = "Progression"
 
         super().__init__(**kwargs)
 
@@ -237,6 +227,8 @@ class MWBaseListItem(MDBoxLayout, CommonElevationBehavior):
         pass
 
     def set_prio_behavior(self, item_colors: dict[str, list[str]]):
+        if self.hint_data.assigned_classification:
+            self.classification = self.hint_data.assigned_classification
         if self.classification == "Trap":
             self.elevation_level = 1
             self.shadow_color = item_colors["trap"]
@@ -325,8 +317,10 @@ class HintListItem(MWBaseListItem):
     def __init__(self, hint_data: UIHint, game_status: str, shadow_colors: dict, hint_icon_status: str, hint_status_text: str, **kwargs):
         self.hint_icon_status = hint_icon_status
         self.hint_status_text = hint_status_text
+        self.dropdown = None  # Will be set by the parent
         super().__init__(hint_data, game_status, shadow_colors, **kwargs)
         Clock.schedule_once(lambda x: self.populate_slot_item())
+        Clock.schedule_once(lambda x: self.set_prio_behavior(shadow_colors), .5)
 
     def populate_slot_item(self):
         """
@@ -338,9 +332,14 @@ class HintListItem(MWBaseListItem):
         if self.hint_data.entrance == "Vanilla" or not self.hint_data.entrance:
             self.remove_widget(self.ids.hint_item_entrance_container)
 
+    def open_dropdown(self):
+        """Open the status dropdown menu"""
+        if self.dropdown:
+            self.dropdown.open()
+
     @staticmethod
-    def on_hide(instance, value):
-        instance.hint_data.hide = value
+    def on_hide(hint_instance, value):
+        hint_instance.hint_data.hide = value
     
     @staticmethod
     def on_bkmode(instance, value):
@@ -356,19 +355,24 @@ class HintListItem(MWBaseListItem):
 
 class HintListDropdown(MDDropdownMenu):
     def __init__(self, *args, status_names: dict[HintStatus, str], status_icons: dict[HintStatus, str], 
-                 dropdown_callback: Callable[[UIHint, HintStatus], None], **kwargs):
-        super().__init__(*args, **kwargs)
-        self.items = []
+                 dropdown_callback: Callable[[HintStatus], None], **kwargs):
+        # Create items before calling super().__init__
+        items = []
         for status in (HintStatus.HINT_NO_PRIORITY, HintStatus.HINT_PRIORITY, HintStatus.HINT_AVOID):
             name = status_names[status]
-            status_button = MDDropDownItem(MDDropDownItemText(text=name))
-            status_button.status = status
-            self.items.append({
+            items.append({
                 "text": name,
                 "leading_icon": status_icons[status],
-                "on_release": lambda x=status: dropdown_callback(self, x)
+                "on_release": lambda x=status: self._on_item_release(dropdown_callback, x)
             })
-        self.bind(on_release=self.dismiss)
+        
+        # Pass items to parent constructor
+        super().__init__(*args, items=items, **kwargs)
+    
+    def _on_item_release(self, callback: Callable[[HintStatus], None], status: HintStatus):
+        """Handle item release and dismiss dropdown"""
+        callback(status)
+        self.dismiss()
 
 class ListItemTooltip(MDTooltip):
     """
@@ -548,17 +552,18 @@ class GameListPanel(MDExpansionPanel):
             self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="headphones", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
         if self.item_data.game_status == "GOAL":
             self.panel_header_layout.ids.game_item_container.add_widget(BaseListItemIcon(icon="flag_checkered", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
-        for hint in self.item_data.hints.values():
-            i = 1 if self.app.theme_cls.theme_style == "Dark" else 0
-            item_colors = {
-                "trap": self.app.theme_mw.markup_tags_theme.trap_item_color[i],
-                "regular": self.app.theme_mw.markup_tags_theme.regular_item_color[i],
-                "useful": self.app.theme_mw.markup_tags_theme.useful_item_color[i],
-                "progression_deprioritized": self.app.theme_mw.markup_tags_theme.progression_deprioritized_item_color[i],
-                "progression": self.app.theme_mw.markup_tags_theme.progression_item_color[i],
-                "progression_goal": self.app.theme_mw.markup_tags_theme.progression_goal_item_color[i],
+        i = 1 if self.app.theme_cls.theme_style == "Dark" else 0
+        item_colors = {
+            "trap": self.app.theme_mw.markup_tags_theme.trap_item_color[i],
+            "regular": self.app.theme_mw.markup_tags_theme.regular_item_color[i],
+            "useful": self.app.theme_mw.markup_tags_theme.useful_item_color[i],
+            "progression_deprioritized": self.app.theme_mw.markup_tags_theme.progression_deprioritized_item_color[i],
+            "progression": self.app.theme_mw.markup_tags_theme.progression_item_color[i],
+            "progression_goal": self.app.theme_mw.markup_tags_theme.progression_goal_item_color[i],
             }
-            self.panel_content.add_widget(SlotListItem(hint_data=hint, game_status=self.item_data.game_status, shadow_colors=item_colors))
+        for hint in self.item_data.hints.values():
+            if not hint.hide or self.app.show_all_hints:
+                self.panel_content.add_widget(SlotListItem(hint_data=hint, game_status=self.item_data.game_status, shadow_colors=item_colors))
 
     def populate_game_item(self):
         """

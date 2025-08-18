@@ -194,7 +194,7 @@
         MDCheckbox:
             id: hint_item_checkbox
             pos_hint: {"right": 0.1, "center_y": 0.5}
-            on_active: root.on_hide(self)
+            on_active: root.on_hide(root, self.active)
             checkbox_icon_normal: "eye"
             checkbox_icon_active: "eye-off"
     MDBoxLayout:
@@ -228,6 +228,7 @@
             text_color: app.theme_cls.onSurfaceColor
     MDButton:
         id: hint_item_status_button
+        on_release: root.open_dropdown()
         MDButtonIcon:
             icon: root.hint_icon_status
         MDButtonText:

@@ -238,7 +238,7 @@ Builder.load_string('''
                         id: slot_name
                         size_hint_x: 0.8
                         pos_hint: {"center_x": 0.5}
-                        text: app.app_config.get("client", "slot_name", fallback="")
+                        text: app.app_config.get("client", "slot", fallback="")
                         MDTextFieldLeadingIcon:
                             theme_icon_color: "Custom"
                             icon_color_focus: self.parent.icon_color_focus
@@ -358,6 +358,8 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     '''
     name = "launcher"
     launcher_hero_from: ObjectProperty
+    launcher_hero_to: ObjectProperty
+    heroes_to = []
     launchergrid: LauncherLayout
     important_appbar: MDSliverAppbar
     launcher_view: LauncherView
@@ -395,7 +397,9 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.add_widget(self.bottom_appbar)
 
         self.launcher_hero_from = self.important_appbar.launcher_hero_from
+        self.launcher_hero_to = self.important_appbar.launcher_hero_to
         self.heroes_from = [self.launcher_hero_from]
+        self.heroes_to = [self.launcher_hero_to]
 
         self.important_appbar.size_hint_x = 260/Window.width
         self.important_appbar.size_hint_y=1

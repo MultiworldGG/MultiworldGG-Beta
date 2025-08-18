@@ -132,9 +132,11 @@ class HintLayout(MDBoxLayout):
         search_placeholder (MDBoxLayout): Placeholder for future search features
     """
     orientation = "vertical"
+    app: MDApp
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.app = MDApp.get_running_app()
         
         # Create placeholder for future search and filter functionality
         self.search_placeholder = HintFeaturebar(
@@ -160,13 +162,28 @@ class HintLayout(MDBoxLayout):
             icon_active="eye",
             on_active=self.on_show_all_hints
         )
+        
+        self.refresh_button = MDIconButton(
+            icon="refresh",
+            size_hint_y=None,
+            height=dp(40),
+            on_release=self.on_refresh_hints
+        )
+        
         self.search_placeholder.add_widget(placeholder_label)
         self.search_placeholder.add_widget(self.show_all_hints_switch)
+        self.search_placeholder.add_widget(self.refresh_button)
         # Add the placeholder to the layout
         self.add_widget(self.search_placeholder)
 
     def on_show_all_hints(self, instance, value):
         self.app.show_all_hints = value
+    
+    def on_refresh_hints(self, instance):
+        """Refresh the hints list when refresh button is clicked"""
+        # Get the hint screen from the app
+        hint_screen = self.app.screen_manager.get_screen("hint")
+        hint_screen.update_hints_list()
 
 mwggstatus_icons: typing.Dict[MWGGUIHintStatus, str] = {
     MWGGUIHintStatus.HINT_UNSPECIFIED: "",
@@ -200,8 +217,6 @@ status_icons = {
 """Mapping of hint status values to their corresponding icon names."""
 
 status_names: typing.Dict[HintStatus, str] = {
-    HintStatus.HINT_FOUND: "Found",
-    HintStatus.HINT_UNSPECIFIED: "Unset",
     HintStatus.HINT_NO_PRIORITY: "Doesn't Matter",
     HintStatus.HINT_AVOID: "Don't Get This",
     HintStatus.HINT_PRIORITY: "This is Important",
@@ -209,8 +224,6 @@ status_names: typing.Dict[HintStatus, str] = {
 """Mapping of hint status values to their human-readable display names."""
 
 status_colors: typing.Dict[HintStatus, str] = {
-    HintStatus.HINT_FOUND: TEXT_COLORS["location_color"],
-    HintStatus.HINT_UNSPECIFIED: TEXT_COLORS["regular_item_color"],
     HintStatus.HINT_NO_PRIORITY: TEXT_COLORS["regular_item_color"],
     HintStatus.HINT_AVOID: TEXT_COLORS["trap_item_color"],
     HintStatus.HINT_PRIORITY: TEXT_COLORS["progression_item_color"],
@@ -257,8 +270,8 @@ class HintListPanel(GameListPanel):
             return
         self._populated = True
 
-        def on_select_status(instance, status: HintStatus):
-            instance.hint.set_status(status=status)
+        def on_select_status(hint: UIHint, status: HintStatus):
+            hint.set_status(hint_status=status)
 
         hint_items = []
         self.panel_header = self.ids.panel_header
@@ -294,15 +307,23 @@ class HintListPanel(GameListPanel):
                 hint.hide = True
             if hint.hide and not self.app.show_all_hints:
                 continue
+            
             hint_item = HintListItem(hint_data=hint, game_status=self.item_data.game_status, shadow_colors=item_colors,
                                      hint_icon_status=status_icons[hint.hint_status], hint_status_text=status_names[hint.hint_status]
                                      )
             hint_item.bind(on_bkmode=lambda x: self.on_bkmode(hint))
             hint_item.bind(on_goal=lambda x: self.on_goal(hint))
             hint_item.bind(on_shop=lambda x: self.on_shop(hint))
-            hint_item.dropdown = HintListDropdown(status_names=status_names, status_icons=status_icons, dropdown_callback=on_select_status)
-            hint_item.dropdown.bind(on_release=hint_item.dropdown.dismiss)
-            hint_item.dropdown.caller = hint_item.ids["hint_item_status_button"]
+            
+            # Only add dropdown for non-found items
+            if not (hint.hint_status == HintStatus.HINT_FOUND or hint.found):
+                hint_item.dropdown = HintListDropdown(
+                    caller=hint_item.ids["hint_item_status_button"],
+                    status_names=status_names, 
+                    status_icons=status_icons, 
+                    dropdown_callback=lambda status: on_select_status(hint, status)
+                )
+            
             hints_container.add_widget(hint_item)
         
         # Create a scroll view for the hints and add it to the panel content

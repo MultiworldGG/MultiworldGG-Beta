@@ -418,6 +418,7 @@ class TunicOptions(PerGameCommonOptions):
 
     fixed_shop: FixedShop  # will be removed at a later date
     logic_rules: Removed  # fully removed in the direction pairs update
+    true_end: TrueEnd
 
 
 tunic_option_groups = [

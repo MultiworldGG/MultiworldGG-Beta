@@ -43,6 +43,8 @@ class UIHint:
         self.location = location_names.lookup_in_slot(hint['location'], hint['finding_player'])
         self.entrance = location_names.lookup_in_slot(hint['entrance'], hint['finding_player']) if hint['entrance'] else ""
         self.found = hint['found']
+        self.item_flags = hint['item_flags']  # Store the flags for status derivation
+        self.assigned_classification = ""
         self.classification = self.get_classification(hint['item_flags'])
         self._for_bk_mode = False    
         self._for_goal = False
@@ -61,7 +63,8 @@ class UIHint:
         if hint_status == HintStatus.HINT_FOUND:
             self.found = True
         elif hint_status == HintStatus.HINT_UNSPECIFIED:
-            pass
+            # Derive hint status from item flags (inverse mapping)
+            hint_status = self._derive_status_from_flags()
         elif hint_status == HintStatus.HINT_NO_PRIORITY:
             self.assigned_classification = self.get_classification(ItemClassification.filler)
         elif hint_status == HintStatus.HINT_AVOID:
@@ -107,6 +110,20 @@ class UIHint:
     @hide.setter
     def hide(self, value: bool):
         self._hide = value
+
+    def _derive_status_from_flags(self) -> HintStatus:
+        """
+        Derive hint status from item classification flags.
+        
+        Returns:
+            The appropriate HintStatus based on the item's flags
+        """
+        if self.item_flags & ItemClassification.progression:
+            return HintStatus.HINT_PRIORITY
+        elif self.item_flags & ItemClassification.trap:
+            return HintStatus.HINT_AVOID
+        else:  # useful or filler
+            return HintStatus.HINT_NO_PRIORITY
 
     @staticmethod
     def get_classification(flags: int) -> str:

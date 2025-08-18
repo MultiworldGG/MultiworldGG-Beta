@@ -9,6 +9,7 @@ from .Items import item_dictionary_table
 from .Locations import all_locations, SoraLevels, exclusion_table
 from .XPValues import lvlStats, formExp, soraExp
 from worlds.Files import APPlayerContainer
+from datetime import datetime, UTC
 
 
 class KH2Container(APPlayerContainer):

@@ -209,8 +209,6 @@ class BottomBarTextInput(MDTextField):
             if not self.dropdown.parent:
                 self.dropdown.open()
             else:
-                self.dropdown.dismiss()
-                Clock.schedule_once(self.dropdown.open, 0.1)
                 Clock.schedule_once(self.dropdown.check_ver_growth, 0.1)
         else:
             self.dropdown.dismiss()

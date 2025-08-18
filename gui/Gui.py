@@ -147,6 +147,8 @@ class MultiMDApp(MDApp):
     ui_hint_data: dict[int, dict[int, list[UIHint]]]
     text_buffer: Queue
 
+    _show_all_hints: BooleanProperty(False)
+
     def __init__(self, ctx: context_type, **kwargs):
         super().__init__(**kwargs)
         # Use the existing Kivy Config singleton for Kivy settings
@@ -178,6 +180,8 @@ class MultiMDApp(MDApp):
         self.text_buffer = Queue(maxsize=1000) 
         self.ui_hint_data = {}
         self.ui_player_data = {}
+
+        self._show_all_hints = False
 
     def get_application_config(self):
         """Get the path to the configuration file"""
@@ -706,10 +710,8 @@ class MultiMDApp(MDApp):
                 "operations": [{"operation": "replace", "value": mwgg_data_to_store}]
             }]))
 
-    _show_all_hints: BooleanProperty(False)
-
     @property
-    def show_all_hints(self) -> bool:
+    def show_all_hints(self):
         return self._show_all_hints
 
     @show_all_hints.setter
