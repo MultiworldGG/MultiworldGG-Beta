@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from kivymd.uix.menu.menu import MDDropdownTextItem
 __all__ = (
     "BottomAppBar"
 )
@@ -186,9 +185,7 @@ class BottomBarTextInput(MDTextField):
             self.location_names = [location for location in ctx.location_names._game_store[ctx.game].values()]
 
             def on_press(text):
-                split_text = MDDropdownTextItem(text=text)
-                self.set_text(self, "".join(text_frag for text_frag in split_text
-                                            ))
+                self.set_text(self, text)
                 self.dropdown.dismiss()
                 self.focus = True
 
