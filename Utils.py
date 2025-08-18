@@ -124,10 +124,18 @@ def discover_and_launch_module(module_name: str, **kwargs) -> None:
     """Discover and launch module via entrypoints"""
     try:
         entry_points = importlib.metadata.entry_points(group="mwgg.client")
-        # Look for the client entry point
-        if entry_points[f"worlds.{module_name}.Client"]:
+        entry_point_name = f"worlds.{module_name}.Client"
+        
+        # Check if the entry point exists by looking through the entry points
+        module_entry_point = None
+        for entry_point in entry_points:
+            if entry_point.name == entry_point_name:
+                module_entry_point = entry_point
+                break
+        
+        if module_entry_point:
             # Load and execute the client entrypoint
-            launch_function = entry_points[f"worlds.{module_name}.Client"].load()
+            launch_function = module_entry_point.load()
             result = launch_function(**kwargs)
             
             # Check if the launch function returned a task (GUI mode)
@@ -139,8 +147,18 @@ def discover_and_launch_module(module_name: str, **kwargs) -> None:
                 logging.info(f"Launch function completed synchronously for {module_name}")
                 return result
         else:
-            raise ValueError(f"Client entrypoint for module {module_name} not found")
-            
+            from CommonClient import main_textclient
+            result = main_textclient(**kwargs)
+
+            # Check if the launch function returned a task (GUI mode)
+            if hasattr(result, '_coro'):
+                logging.info(f"Launch function returned a task for text client, running in GUI mode")
+                # The task is already scheduled in the event loop
+                return result
+            else:
+                logging.info(f"Launch function completed synchronously for text client")
+                return result
+
     except Exception as e:
         logging.error(f"Failed to launch module {module_name}: {e}")
         # Call error callback if provided
