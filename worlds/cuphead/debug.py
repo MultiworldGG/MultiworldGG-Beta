@@ -1,6 +1,7 @@
 from __future__ import annotations
 import typing
 import Utils
+from typing import Any
 from collections.abc import Iterable
 from typing import TypeVar
 from worlds.AutoWorld import World
@@ -12,6 +13,10 @@ if typing.TYPE_CHECKING:
     from . import CupheadWorld
 
 T = TypeVar("T")
+
+def p(v: Any) -> Any:
+    #print(v)
+    return v
 
 def test_duplicates(ls: Iterable[T]) -> int:
     seen: set[T] = set()
@@ -49,6 +54,12 @@ def print_all_locations():
         print(f"{item}: {data.id} | {data.progress_type}")
     print("")
 
+def debug_print_regions(world: CupheadWorld):
+    for rname,r in world.multiworld.regions.region_cache[world.player].items():
+        print(f"{rname}:")
+        for loc in r.locations:
+            print(f" {loc}")
+
 def visualize_regions_ext(
         root_region: Region,
         highlight_regions: set[Region] | None,
@@ -75,10 +86,11 @@ def visualize_regions(root_region: Region, highlight_regions: set[Region] | None
         file_name,
     )
 
-def debug_visualize_regions(world: CupheadWorld):
+def debug_visualize_regions(world: CupheadWorld, highlight_reachable: bool = False, output_name: str | None = None):
     state = world.multiworld.get_all_state(False)
+    output_name = f"_{output_name}" if output_name else ""
     visualize_regions(
-        world.multiworld.get_region("Menu", world.player),
-        state.reachable_regions[world.player],
-        f"./output/AP_{world.multiworld.seed_name}-regionmap.puml"
+        world.multiworld.get_region("Start", world.player),
+        state.reachable_regions[world.player] if highlight_reachable else None,
+        f"./output/AP_{world.multiworld.seed_name}{output_name}-regionmap.puml"
     )

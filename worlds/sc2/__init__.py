@@ -32,7 +32,7 @@ components.append(Component("Starcraft 2 Client", func=launch_client, component_
 class Starcraft2WebWorld(WebWorld):
     setup_en = Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up the Starcraft 2 randomizer connected to an MultiworldGG Multiworld",
+        "A guide to setting up the Starcraft 2 randomizer connected to a MultiworldGG Multiworld",
         "English",
         "setup_en.md",
         "setup/en",

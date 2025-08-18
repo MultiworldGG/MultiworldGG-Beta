@@ -63,7 +63,7 @@ class ZillionLogicCache:
 
     def cs_to_zz_locs(self, cs: CollectionState) -> frozenset[Location]:
         """
-        given an MultiworldGG `CollectionState`,
+        given a MultiworldGG `CollectionState`,
         returns frozenset of accessible zilliandomizer locations
         """
         # caching this function because it would be slow

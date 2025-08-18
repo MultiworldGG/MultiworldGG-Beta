@@ -18,12 +18,13 @@ from .Subclasses import KH2Item
 
 
 
+
 def launch_client():
     from .ClientStuff.Client import launch
     launch_component(launch, name="KH2Client")
 
 
-components.append(Component("KH2Client", "KH2Client", func=launch_client, component_type=Type.CLIENT, icon='khapicon'))
+components.append(Component(display_name="KH2Client", func=launch_client, component_type=Type.CLIENT, icon='khapicon'))
 icon_paths['khapicon'] = local_path('data', 'khapicon.png')
 
 
@@ -214,8 +215,6 @@ class KH2World(World):
         Determines the quantity of items and maps plando locations to items.
         This happens first.  Nothing is placed here.
         """
-        if self.player_name != self.multiworld.get_file_safe_player_name(self.player):
-            raise Exception(f"{self.player_name} yaml name contains characters not supported for kingdom hearts 2")
 
         # Item: Quantity Map
         # Example. Quick Run: 4

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from BaseClasses import LocationProgressType
 from .locationbase import LocationData
-from ..enums import GameMode, GradeCheckMode, ChessCastleMode, ChaliceMode
+from ..enums import GameMode, GradeCheckMode, WeaponMode, ChessCastleMode, ChaliceMode
 from ..names import LocationNames
 from ..wconf import WorldConfig
 from . import locationdefs as ld
@@ -10,6 +10,7 @@ def add_location(locations_ref: dict[str,LocationData], loc_name: str):
     locations_ref[loc_name] = ld.locations_all[loc_name]
 
 def exclude_location(locations_ref: dict[str,LocationData], loc_name: str):
+    #print(f"Exclude {loc_name}")
     locations_ref[loc_name] = locations_ref[loc_name].with_progress_type(LocationProgressType.EXCLUDED)
 
 def setup_grade_check_locations(locations_ref: dict[str,LocationData], wconf: WorldConfig):
@@ -24,8 +25,6 @@ def setup_grade_check_locations(locations_ref: dict[str,LocationData], wconf: Wo
             locations_ref.update(ld.location_level_rungun_agrade)
         elif rungun_grade_checks==GradeCheckMode.PACIFIST:
             locations_ref.update(ld.location_level_rungun_pacifist)
-    if wconf.boss_secret_checks:
-        locations_ref.update(ld.location_level_boss_secret)
 
 def setup_quest_locations(locations_ref: dict[str,LocationData], wconf: WorldConfig):
     def _add_location(name: str):
@@ -46,8 +45,7 @@ def setup_quest_locations(locations_ref: dict[str,LocationData], wconf: WorldCon
         _add_location(LocationNames.loc_event_quest_wolfgang)
     if wconf.silverworth_quest:
         locations_ref.update(ld.locations_event_agrade)
-        if wconf.mode == GameMode.BEAT_DEVIL:
-            locations_ref.update(ld.location_level_boss_final_event_agrade)
+        locations_ref.update(ld.location_level_boss_final_event_agrade)
         _add_location(LocationNames.loc_quest_silverworth)
     if wconf.pacifist_quest:
         locations_ref.update(ld.location_level_rungun_event_pacifist)
@@ -72,7 +70,7 @@ def setup_dlc_chalice_locations(locations_ref: dict[str,LocationData], wconf: Wo
         add_location(locations_ref, LocationNames.loc_event_dlc_cookie)
     if wconf.dlc_boss_chalice_checks:
         locations_ref.update(ld.locations_dlc_boss_chaliced)
-        if wconf.mode != GameMode.DLC_BEAT_SALTBAKER:
+        if wconf.mode != GameMode.BEAT_DEVIL:
             locations_ref.update(ld.location_level_boss_final_dlc_chaliced)
         if wconf.mode != GameMode.DLC_BEAT_SALTBAKER:
             locations_ref.update(ld.location_level_dlc_boss_final_dlc_chaliced)
@@ -103,14 +101,23 @@ def setup_dlc_locations(locations_ref: dict[str,LocationData], wconf: WorldConfi
     if wconf.dlc_chalice > 0:
         setup_dlc_chalice_locations(locations_ref, wconf)
     if wconf.dlc_kingsleap != ChessCastleMode.INCLUDE_ALL:
+        _kingsleap_locs = [x for x in [
+            *ld.location_level_dlc_chesscastle.keys(), *ld.location_level_dlc_chesscastle_dlc_chaliced.keys()
+        ] if x in locations_ref]
         for loc in ld.location_level_dlc_chesscastle.keys():
             if (
                 (
                     wconf.dlc_kingsleap == ChessCastleMode.EXCLUDE_GAUNTLET and
-                    loc == LocationNames.level_dlc_chesscastle_run
+                    (
+                        loc == LocationNames.loc_level_dlc_chesscastle_run or
+                        loc == LocationNames.loc_level_dlc_chesscastle_run_dlc_chaliced
+                    )
                 ) or (
                     wconf.dlc_kingsleap == ChessCastleMode.GAUNTLET_ONLY and
-                    loc != LocationNames.level_dlc_chesscastle_run
+                    (
+                        loc != LocationNames.loc_level_dlc_chesscastle_run and
+                        loc != LocationNames.loc_level_dlc_chesscastle_run_dlc_chaliced
+                    )
                 ) or wconf.dlc_kingsleap == ChessCastleMode.EXCLUDE
             ):
                 exclude_location(locations_ref, loc)
@@ -119,7 +126,14 @@ def setup_locations(wconf: WorldConfig) -> dict[str,LocationData]:
     use_dlc = wconf.use_dlc
     locations: dict[str,LocationData] = {**ld.locations_base}
 
+    add_location(locations, LocationNames.loc_event_start_weapon)
+    if (wconf.weapon_mode & WeaponMode.EXCEPT_START) > 0:
+        add_location(locations, LocationNames.loc_event_start_weapon_ex)
+
     setup_grade_check_locations(locations, wconf)
+
+    if wconf.boss_secret_checks:
+        locations.update(ld.location_level_boss_secret)
 
     setup_quest_locations(locations, wconf)
 
@@ -139,4 +153,3 @@ def setup_locations(wconf: WorldConfig) -> dict[str,LocationData]:
     )
 
     return locations
-

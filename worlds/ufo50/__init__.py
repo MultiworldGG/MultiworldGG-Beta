@@ -69,7 +69,7 @@ class UFO50Web(WebWorld):
     bug_report_page = "https://github.com/UFO-50-Archipelago/Archipelago/issues"
     setup_en = Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up UFO 50 for Archipelago multiworld.",
+        "A guide to setting up UFO 50 for a MultiworldGG multiworld.",
         "English",
         "setup_en.md",
         "setup/en",

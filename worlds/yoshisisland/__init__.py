@@ -33,7 +33,7 @@ class YoshisIslandWeb(WebWorld):
 
     setup_en = Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up the Yoshi's Island randomizer and connecting to an MultiworldGG server.",
+        "A guide to setting up the Yoshi's Island randomizer and connecting to a MultiworldGG server.",
         "English",
         "setup_en.md",
         "setup/en",

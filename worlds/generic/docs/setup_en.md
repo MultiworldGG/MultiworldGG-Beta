@@ -30,7 +30,7 @@ you are hosting on. The default port for MultiworldGG is `38281`. If you are uns
 other guides on the internet that will be more suited to your hardware.
 
 - The clients are what are used to connect your game to the multiworld. Some games use a client that is automatically
-installed with an MultiworldGG installation. You can access those clients via the launcher or by navigating
+installed with a MultiworldGG installation. You can access those clients via the launcher or by navigating
 to your MultiworldGG installation. 
 
 ## Generating a game
@@ -64,7 +64,7 @@ each player is planning on playing their own game then they will each need a YAM
 
 #### On the website
 
-The easiest way to get started playing an MultiworldGG generated game, after following the base setup from the game's
+The easiest way to get started playing a MultiworldGG generated game, after following the base setup from the game's
 setup guide, is to find the game on the [MultiworldGG Games List](/games), click on `Options Page`, set the options for
 how you want to play, and click `Generate Game` at the bottom of the page. This will create a page for the seed, from
 which you can create a room, and then [connect](#connecting-to-an-multiworldgg-server).
@@ -136,7 +136,7 @@ when running the MultiworldGG installation software. If you have changed setting
 them, you may rename the file to `options.yaml`. 
 
 
-## Hosting an MultiworldGG Server
+## Hosting a MultiworldGG Server
 
 When a multiworld seed is generated, the multidata will be output as a `.archipelago`. If the game was generated locally,
 a compressed folder will be in `/output` and will contain the `.archipelago`, the spoiler log, and any relevant files
@@ -181,7 +181,7 @@ The `.archipelago` file may be extracted from the compressed file. Double-clicki
 `MultiworldGGServer.exe` and pointing the resulting file selection prompt to the `.archipelago` file or the generated
 compressed folder will begin hosting.
 
-## Connecting to an MultiworldGG Server
+## Connecting to a MultiworldGG Server
 
 The actual method of connection will vary depending on the game, so follow that game's setup guide, but all games will
 use the same general connection info noted here.

@@ -10,6 +10,7 @@ from .Locations import SM64HackLocation, location_names, location_names_that_exi
 from .Data import sm64hack_items, star_like, traps, badges, sr6_25_locations, Data
 from .client import SM64HackClient
 from BaseClasses import Region, Location, Entrance, Item, ItemClassification, CollectionState, Tutorial
+
 #class SM64HackSettings(settings.Group):
 #    pass
     #class RomFile(settings.HackRomPath):

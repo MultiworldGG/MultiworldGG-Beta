@@ -2,6 +2,7 @@ import asyncio
 from copy import deepcopy
 import time
 import traceback
+import unicodedata
 from typing import TYPE_CHECKING, Any, Optional
 
 from MultiServer import mark_raw
@@ -147,11 +148,11 @@ class TPCommandProcessor(ClientCommandProcessor):
         if len(name) > 16:
             name = name[:16]
 
-        # Pad the name with 0x00 characters to make it 16 characters long
-        padded_name = name.ljust(16, "\x00")
+        # Normalize Unicode characters and encode to target encoding, ignoring any characters that can't be encoded
+        encoded_name = unicodedata.normalize("NFKD", name).encode(STRING_ENCODING, "ignore")
 
-        logger.info(f"Writing name {padded_name}")
-        write_string(SLOT_NAME_ADDR, padded_name)
+        logger.info(f"Writing name {encoded_name}")
+        write_string(SLOT_NAME_ADDR, encoded_name)
         return
 
 

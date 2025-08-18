@@ -38,7 +38,7 @@ class CV64Web(WebWorld):
 
     tutorials = [Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up the Archipleago Castlevania 64 randomizer on your computer and connecting it to a "
+        "A guide to setting up the MultiworldGG Castlevania 64 randomizer on your computer and connecting it to a "
         "multiworld.",
         "English",
         "setup_en.md",

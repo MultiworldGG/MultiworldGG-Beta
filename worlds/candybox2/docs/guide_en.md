@@ -4,7 +4,7 @@
 
 ### What is a YAML file and why do I need one?
 
-See the guide on setting up a basic YAML at the Archipelago setup
+See the guide on setting up a basic YAML at the MultiworldGG setup
 guide: [Basic Multiworld Setup Guide](/tutorial/MultiworldGG/setup/en)
 
 ### Where do I get a YAML file?
@@ -13,7 +13,7 @@ You can customize your options by visiting the [Candy Box 2 Player Options Page]
 
 ## Joining a MultiWorld Game
 
-1. Visit the Candy Box 2 Archipelago Game page at [https://candybox2-ap.vicr123.com](https://candybox2-ap.vicr123.com)
+1. Visit the Candy Box 2 MultiworldGG Game page at [https://candybox2-ap.vicr123.com](https://candybox2-ap.vicr123.com)
 2. Enter the following information:
     - Enter the server url and port from your game (for example, `multiworld.gg:55819`)
     - Enter the name of the slot you wish to connect to

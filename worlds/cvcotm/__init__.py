@@ -42,7 +42,7 @@ class CVCotMWeb(WebWorld):
 
     tutorials = [Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up the Archipleago Castlevania: Circle of the Moon randomizer on your computer and "
+        "A guide to setting up the MultiworldGG Castlevania: Circle of the Moon randomizer on your computer and "
         "connecting it to a multiworld.",
         "English",
         "setup_en.md",

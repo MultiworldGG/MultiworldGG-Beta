@@ -919,23 +919,20 @@
             {
                 "exists": true,
                 "StarRequirement": "0",
-                "Requirements": [],
-                "ConditionalRequirements": []
-            },
-            {
-                "exists": false
-            },
-            {
-                "exists": false
-            },
-            {
-                "exists": false
-            },
-            {
-                "exists": true,
-                "StarRequirement": "0",
                 "Requirements": ["Super Badge"],
                 "ConditionalRequirements": []
+            },
+            {
+                "exists": false
+            },
+            {
+                "exists": false
+            },
+            {
+                "exists": false
+            },
+            {
+                "exists": true
             },
             {
                 "exists": false

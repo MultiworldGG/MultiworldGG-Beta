@@ -59,9 +59,9 @@ multiplier.
 
 ## Can I play offline?
 
-No, a connection to the Archipelago server is required to receive items, even in a single-player multiworld.
+No, a connection to the MultiworldGG server is required to receive items, even in a single-player multiworld.
 
-If the connection to the Archipelago server is lost temporarily, it is possible to continue playing. Any checked
+If the connection to the MultiworldGG server is lost temporarily, it is possible to continue playing. Any checked
 locations while disconnected will be sent once the connection is reestablished.
 
 ## Known Issues
@@ -81,7 +81,7 @@ This will happen whenever your starting Chapter is from any Episode other than E
 
 #### Episode 1 door in new save files
 
-When starting a new save file and connecting to the Archipelago server, the door to Episode 1 will start, and remain
+When starting a new save file and connecting to the MultiworldGG server, the door to Episode 1 will start, and remain
 unlocked until you re-enter the main room of the Cantina.
 
 ### Starting Characters
@@ -121,7 +121,7 @@ slots in the shop may appear to be unlocked while making the purchase.
 ### Purchasing already unlocked Characters/Extras
 
 When attempting to purchase a Character/Extra that has already been unlocked, by receiving that Character/Extra from
-Archipelago, there may be a small delay before the purchase will be allowed because the client has to temporarily
+MultiworldGG, there may be a small delay before the purchase will be allowed because the client has to temporarily
 disable that character to allow the purchase to go through.
 
 ### Purple Studs

@@ -40,7 +40,7 @@ class TradeQuestHinting(Choice):
     Whether NPCs offering Chip Trades should show what item they provide.
     None - NPCs will not provide any information on what item they will give
     Partial - NPCs will state if an item is progression or not, but not the specific item
-    Full - NPCs will state what item they will give, providing an MultiworldGG Hint when doing so
+    Full - NPCs will state what item they will give, providing a MultiworldGG Hint when doing so
     """
     display_name = "Trade Quest Hinting"
     option_none = 0

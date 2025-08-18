@@ -17,7 +17,7 @@ At this time, this method of setup works on Windows only, but Linux support is a
 - Click the Jak and Daxter logo on the left sidebar.
 - Click `Features` in the bottom right corner, then click `Mods`.
 - Under `Available Mods`, click `ArchipelaGOAL`. The mod should begin installing. When it is done, click `Continue` in the bottom right corner.
-- **DO NOT PLAY AN MULTIWORLDGG GAME THROUGH THE OPENGOAL LAUNCHER.** The MultiworldGG client should handle everything for you.
+- **DO NOT PLAY a MultiworldGG GAME THROUGH THE OPENGOAL LAUNCHER.** The MultiworldGG client should handle everything for you.
 
 ### For NTSC versions of the game, follow these steps.
 

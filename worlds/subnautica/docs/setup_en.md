@@ -16,7 +16,7 @@
 
 ## Connecting
 
-Use the connect form in Subnautica's main menu to enter your connection information to connect to an MultiworldGG Multiworld.
+Use the connect form in Subnautica's main menu to enter your connection information to connect to a MultiworldGG Multiworld.
 Connection information consists of:
  - Host: the full url that you're trying to connect to, such as `multiworld.gg:38281`.
  - PlayerName: your name in the multiworld. Can also be called "slot name" and is the name you entered when creating your options.

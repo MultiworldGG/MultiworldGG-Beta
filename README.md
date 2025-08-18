@@ -44,6 +44,7 @@ Currently, the following games are supported:
 * Castlevania 64
 * Castlevania: Curse of the Moon
 * Castlevania: Sympfony of the Night
+* Crystal Project
 * Dark Souls II
 * Dark Souls III
 * Dark Souls Remastered
@@ -95,6 +96,7 @@ Currently, the following games are supported:
 * Mario Kart 64
 * Mario & Luigi Superstar Saga
 * Mega Man 2
+* Mega Man 3
 * Mega Man Battle Network 3
 * Mega Man X3
 * Meritous
@@ -113,6 +115,7 @@ Currently, the following games are supported:
 * Overcooked 2
 * Paper Mario
 * Paper Mario: The Thousand-Year Door
+* Path of Exile
 * Peaks of Yore
 * Placid Plastic Duck Simulator
 * Pokémon Crystal
@@ -122,6 +125,7 @@ Currently, the following games are supported:
 * Pokémon Red/Blue
 * Powerwash Simulator
 * Pseudoregalia
+* Quake 1
 * Raft
 * Ratchet & Clank 2
 * Resident Evil 2 Remake
@@ -169,6 +173,7 @@ Currently, the following games are supported:
 * The Legend of Zelda: Ocarina of Time
 * The Legend of Zelda: Oracle of Ages
 * The Legend of Zelda: Oracle of Seasons
+* The Legend of Zelda: Phantom Hourglass
 * The Legend of Zelda: Skyward Sword
 * The Legend of Zelda: The Minish Cap
 * The Legend of Zelda: The Wind Waker

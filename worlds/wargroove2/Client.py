@@ -6,15 +6,12 @@ import sys
 import asyncio
 import pkgutil
 import random
-import typing
 import Utils
-apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 import json
 import logging
 import ModuleUpdate
 from typing import Tuple, List, Iterable, Dict, Any
 
-from settings import get_settings
 from . import Wargroove2World
 from .Items import item_table, faction_table, CommanderData, ItemData, item_id_name
 
@@ -52,6 +49,7 @@ class Wargroove2ClientCommandProcessor(ClientCommandProcessor):
         """Toggles deathlink On/Off"""
         if isinstance(self.ctx, Wargroove2Context):
             self.ctx.has_death_link = not self.ctx.has_death_link
+            Utils.async_start(self.ctx.update_death_link(self.ctx.has_death_link), name="Update Deathlink")
             if self.ctx.has_death_link:
                 death_link_send_file = os.path.join(self.ctx.game_communication_path, "deathLinkSend")
                 if os.path.exists(death_link_send_file):
@@ -125,16 +123,15 @@ class Wargroove2Context(CommonContext):
         self.syncing = False
         self.awaiting_bridge = False
 
-        options = get_settings()
         # self.game_communication_path: files go in this path to pass data between us and the actual game
-        game_options = options.wargroove2_options
+        game_options = Wargroove2World.settings
 
         # Validate the AppData directory with Wargroove save data.
         # By default, Windows sets an environment variable we can leverage.
         # However, other OSes don't usually have this value set, so we need to rely on a settings value instead.
         appdata_wargroove = None
+        self.level_directory = "levels"
         if "appdata" in os.environ:
-            self.level_directory = "levels"
             appdata_wargroove = os.environ['appdata']
         else:
             try:
@@ -154,7 +151,7 @@ class Wargroove2Context(CommonContext):
                                   f"\"save_directory\" value in your local options file "
                                   f"to the AppData folder containing your Wargroove 2 saves.")
 
-        root_directory = os.path.join(game_options.root_directory)
+        root_directory = game_options["root_directory"]
         if not os.path.isfile(os.path.join(root_directory, "win64_bin", "wargroove64.exe")):
             print_error_and_close(f"WargrooveClient couldn't find wargroove64.exe in "
                                   f"\"{root_directory}/win64_bin/\".\n"
@@ -173,24 +170,24 @@ class Wargroove2Context(CommonContext):
         # Wargroove 2 doesn't always create the mods directory, so we have to do it
         if not os.path.isdir(mods_directory):
             os.makedirs(mods_directory)
-        resources = [os.path.join("data", "mods", "ArchipelagoMod", "maps.dat"),
-                     os.path.join("data", "mods", "ArchipelagoMod", "mod.dat"),
-                     os.path.join("data", "mods", "ArchipelagoMod", "modAssets.dat"),
-                     os.path.join("data", "save", "campaign-45747c660b6a2f09601327a18d662a7d.cmp"),
-                     os.path.join("data", "save", "campaign-45747c660b6a2f09601327a18d662a7d.cmp.bak")]
+        resources = ["data/mods/ArchipelagoMod/maps.dat",
+                     "data/mods/ArchipelagoMod/mod.dat",
+                     "data/mods/ArchipelagoMod/modAssets.dat",
+                     "data/save/campaign-45747c660b6a2f09601327a18d662a7d.cmp",
+                     "data/save/campaign-45747c660b6a2f09601327a18d662a7d.cmp.bak"]
         file_paths = [os.path.join(mods_directory, "maps.dat"),
                       os.path.join(mods_directory, "mod.dat"),
                       os.path.join(mods_directory, "modAssets.dat"),
                       os.path.join(save_directory, "campaign-45747c660b6a2f09601327a18d662a7d.cmp"),
                       os.path.join(save_directory, "campaign-45747c660b6a2f09601327a18d662a7d.cmp.bak")]
-        for i in range(0, len(resources)):
-            file_data = pkgutil.get_data("worlds.wargroove2", resources[i])
+        for resource, destination in zip(resources, file_paths):
+            file_data = pkgutil.get_data("worlds.wargroove2", resource)
             if file_data is None:
                 print_error_and_close("Wargroove2Client couldn't find Wargoove 2 mod and save files in install!")
-            with open(file_paths[i], 'wb') as f:
+            with open(destination, 'wb') as f:
                 f.write(file_data)
 
-    def on_deathlink(self, data: typing.Dict[str, typing.Any]) -> None:
+    def on_deathlink(self, data: Dict[str, Any]) -> None:
         with open(os.path.join(self.game_communication_path, "deathLinkReceive"), 'w+') as f:
             text = data.get("cause", "")
             if text:
@@ -254,9 +251,8 @@ class Wargroove2Context(CommonContext):
             self.stored_finale_key = f"wargroove_2_{self.slot}_{self.team}"
             self.set_notify(self.stored_finale_key)
             self.player_stored_units_key = f"wargroove_player_units_{self.team}"
-            self.set_notify(self.player_stored_units_key)
             self.ai_stored_units_key = f"wargroove_ai_units_{self.team}"
-            self.set_notify(self.ai_stored_units_key)
+            self.set_notify(self.player_stored_units_key, self.ai_stored_units_key)
 
             self.update_commander_data()
             self.ui.update_ui()
@@ -340,8 +336,6 @@ class Wargroove2Context(CommonContext):
     def run_gui(self):
         """Import kivy UI system and start running it as self.ui_task."""
         from kvui import GameManager
-        from kivymd.uix.tab import MDTabsItem, MDTabsItemText
-        from kivy.uix.tabbedpanel import TabbedPanelItem
         from kivy.lang import Builder
         from kivy.uix.togglebutton import ToggleButton
         from kivy.uix.boxlayout import BoxLayout
@@ -381,14 +375,14 @@ class Wargroove2Context(CommonContext):
                 ("Client", "Archipelago"),
                 ("WG2", "WG2 Console"),
             ]
-            base_title = f"{apname} Wargroove 2 Client"
+            base_title = "Archipelago Wargroove 2 Client"
             ctx: Wargroove2Context
             unit_tracker: ItemTracker
             level_tracker: LevelTracker
-            level_1_Layout: GridLayout(cols=1)
-            level_2_Layout: GridLayout(cols=1)
-            level_3_Layout: GridLayout(cols=1)
-            level_4_Layout: GridLayout(cols=1)
+            level_1_Layout: GridLayout
+            level_2_Layout: GridLayout
+            level_3_Layout: GridLayout
+            level_4_Layout: GridLayout
             trigger_tracker: BoxLayout
             boost_tracker: BoxLayout
             commander_buttons: Dict[str, List[CommanderButton]]
@@ -728,101 +722,103 @@ class Wargroove2Context(CommonContext):
 
 async def game_watcher(ctx: Wargroove2Context):
     while not ctx.exit_event.is_set():
-        if ctx.syncing:
-            sync_msg = [{'cmd': 'Sync'}]
-            if ctx.locations_checked:
-                sync_msg.append({"cmd": "LocationChecks", "locations": list(ctx.locations_checked)})
-            await ctx.send_msgs(sync_msg)
-            ctx.syncing = False
-        sending: set = set()
-        victory = False
-        await ctx.update_death_link(ctx.has_death_link)
-        for _root, _dirs, files in os.walk(ctx.game_communication_path):
-            for file in files:
-                if file.find("send") > -1:
-                    st = int(file.split("send", -1)[1])
-                    loc_name = location_id_name[st]
-                    total_locations = 1
-                    if loc_name is not None and loc_name.endswith("Victory"):
-                        total_locations = ctx.victory_locations
-                    elif loc_name is not None and \
-                            st < location_table["Humble Beginnings Rebirth: Talk to Nadia Extra 1"]:  # type: ignore
-                        total_locations = ctx.objective_locations
-                    for i in range(1, total_locations):
-                        sending.add(location_table[loc_name + f" Extra {i}"])
-                    sending.add(st)
+        try:
+            if ctx.syncing:
+                sync_msg = [{'cmd': 'Sync'}]
+                if ctx.locations_checked:
+                    sync_msg.append({"cmd": "LocationChecks", "locations": list(ctx.locations_checked)})
+                await ctx.send_msgs(sync_msg)
+                ctx.syncing = False
+            sending: set = set()
+            victory = False
+            for _root, _dirs, files in os.walk(ctx.game_communication_path):
+                for file in files:
+                    if file.find("send") > -1:
+                        st = int(file.split("send", -1)[1])
+                        loc_name = location_id_name[st]
+                        total_locations = 1
+                        if loc_name is not None and loc_name.endswith("Victory"):
+                            total_locations = ctx.victory_locations
+                        elif loc_name is not None and \
+                                st < location_table["Humble Beginnings Rebirth: Talk to Nadia Extra 1"]:  # type: ignore
+                            total_locations = ctx.objective_locations
+                        for i in range(1, total_locations):
+                            sending.add(location_table[loc_name + f" Extra {i}"])
+                        sending.add(st)
 
-                    os.remove(os.path.join(ctx.game_communication_path, file))
-                if file == "deathLinkSend" and ctx.has_death_link:
-                    with open(os.path.join(ctx.game_communication_path, file), 'r') as f:
-                        failed_mission = f.read()
-                        if ctx.slot is not None:
-                            await ctx.send_death(f"{ctx.player_names[ctx.slot]} failed {failed_mission}")
-                    os.remove(os.path.join(ctx.game_communication_path, file))
-                if file == "victory":
-                    with open(os.path.join(ctx.game_communication_path, file), 'r') as f:
-                        victory_level = f.read()
-                        final_level_list = []
-                        if ctx.stored_finale_key in ctx.stored_data.keys():
-                            final_level_list = ctx.stored_data[ctx.stored_finale_key]
-                            if final_level_list is None:
-                                final_level_list = []
-
-                        if victory_level not in final_level_list:
-                            final_level_list.append(victory_level)
-                            ctx.stored_data[ctx.stored_finale_key] = final_level_list
-
-                        message = [{"cmd": 'Set', "key": ctx.stored_finale_key,
-                                    "default": final_level_list,
-                                    "want_reply": True,
-                                    "operations": [{"operation": "replace", "value": final_level_list}]}]
-                        await ctx.send_msgs(message)
-                        final_levels_won = len(ctx.stored_data[ctx.stored_finale_key])
-                        completed_levels = ", ".join(final_level_list)
-                        logger.info(f"({final_levels_won}/{ctx.final_levels}) final levels conquered! Completed: "
-                                    f"{completed_levels}")
-                        if final_levels_won >= ctx.final_levels:
-                            victory = True
-                    os.remove(os.path.join(ctx.game_communication_path, file))
-                    ctx.ui.update_levels()
-                if file == "unitSacrifice" or file == "unitSacrificeAI":
-                    if ctx.has_sacrifice_summon:
-                        stored_units_key = ctx.player_stored_units_key
-                        if file == "unitSacrificeAI":
-                            stored_units_key = ctx.ai_stored_units_key
+                        os.remove(os.path.join(ctx.game_communication_path, file))
+                    if file == "deathLinkSend" and ctx.has_death_link:
                         with open(os.path.join(ctx.game_communication_path, file), 'r') as f:
-                            unit_class = f.read()
-                            message = [{"cmd": 'Set', "key": stored_units_key,
-                                        "default": [],
-                                        "want_reply": True,
-                                        "operations": [{"operation": "add", "value": [unit_class[:64]]}]}]
-                            await ctx.send_msgs(message)
-                    os.remove(os.path.join(ctx.game_communication_path, file))
-                if file == "unitSummonRequest" or file == "unitSummonRequestAI":
-                    if ctx.has_sacrifice_summon:
-                        stored_units_key = ctx.player_stored_units_key
-                        if file == "unitSummonRequestAI":
-                            stored_units_key = ctx.ai_stored_units_key
-                        with open(os.path.join(ctx.game_communication_path, "unitSummonResponse"), 'w') as f:
-                            if stored_units_key in ctx.stored_data:
-                                stored_units = ctx.stored_data[stored_units_key]
-                                if stored_units is not None and len(stored_units) != 0:
-                                    summoned_unit = random.choice(stored_units)
-                                    message = [{"cmd": 'Set', "key": stored_units_key,
-                                                "default": [],
-                                                "want_reply": True,
-                                                "operations": [{"operation": "remove", "value": summoned_unit[:64]}]}]
-                                    await ctx.send_msgs(message)
-                                    f.write(summoned_unit)
-                    os.remove(os.path.join(ctx.game_communication_path, file))
-        ctx.locations_checked = sending
-        message = [{"cmd": "LocationChecks", "locations": list(sending)}]
-        await ctx.send_msgs(message)
-        if not ctx.finished_game and victory:
-            await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
-            ctx.finished_game = True
-        await asyncio.sleep(0.1)
+                            failed_mission = f.read()
+                            if ctx.slot is not None:
+                                await ctx.send_death(f"{ctx.player_names[ctx.slot]} failed {failed_mission}")
+                        os.remove(os.path.join(ctx.game_communication_path, file))
+                    if file == "victory":
+                        with open(os.path.join(ctx.game_communication_path, file), 'r') as f:
+                            victory_level = f.read()
+                            final_level_list = []
+                            if ctx.stored_finale_key in ctx.stored_data.keys():
+                                final_level_list = ctx.stored_data[ctx.stored_finale_key]
+                                if final_level_list is None:
+                                    final_level_list = []
 
+                            if victory_level not in final_level_list:
+                                final_level_list.append(victory_level)
+                                ctx.stored_data[ctx.stored_finale_key] = final_level_list
+
+                            message = [{"cmd": 'Set', "key": ctx.stored_finale_key,
+                                        "default": final_level_list,
+                                        "want_reply": True,
+                                        "operations": [{"operation": "replace", "value": final_level_list}]}]
+                            await ctx.send_msgs(message)
+                            final_levels_won = len(ctx.stored_data[ctx.stored_finale_key])
+                            completed_levels = ", ".join(final_level_list)
+                            logger.info(f"({final_levels_won}/{ctx.final_levels}) final levels conquered! Completed: "
+                                        f"{completed_levels}")
+                            if final_levels_won >= ctx.final_levels:
+                                victory = True
+                        os.remove(os.path.join(ctx.game_communication_path, file))
+                        ctx.ui.update_levels()
+                    if file == "unitSacrifice" or file == "unitSacrificeAI":
+                        if ctx.has_sacrifice_summon:
+                            stored_units_key = ctx.player_stored_units_key
+                            if file == "unitSacrificeAI":
+                                stored_units_key = ctx.ai_stored_units_key
+                            with open(os.path.join(ctx.game_communication_path, file), 'r') as f:
+                                unit_class = f.read()
+                                message = [{"cmd": 'Set', "key": stored_units_key,
+                                            "default": [],
+                                            "want_reply": True,
+                                            "operations": [{"operation": "add", "value": [unit_class[:64]]}]}]
+                                await ctx.send_msgs(message)
+                        os.remove(os.path.join(ctx.game_communication_path, file))
+                    if file == "unitSummonRequest" or file == "unitSummonRequestAI":
+                        if ctx.has_sacrifice_summon:
+                            stored_units_key = ctx.player_stored_units_key
+                            if file == "unitSummonRequestAI":
+                                stored_units_key = ctx.ai_stored_units_key
+                            with open(os.path.join(ctx.game_communication_path, "unitSummonResponse"), 'w') as f:
+                                if stored_units_key in ctx.stored_data:
+                                    stored_units = ctx.stored_data[stored_units_key]
+                                    if stored_units is not None and len(stored_units) != 0:
+                                        summoned_unit = random.choice(stored_units)
+                                        message = [{"cmd": 'Set', "key": stored_units_key,
+                                                    "default": [],
+                                                    "want_reply": True,
+                                                    "operations": [{"operation": "remove", "value": summoned_unit[:64]}]}]
+                                        await ctx.send_msgs(message)
+                                        f.write(summoned_unit)
+                        os.remove(os.path.join(ctx.game_communication_path, file))
+            ctx.locations_checked = sending
+            message = [{"cmd": "LocationChecks", "locations": list(sending)}]
+            await ctx.send_msgs(message)
+            if not ctx.finished_game and victory:
+                await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
+                ctx.finished_game = True
+            await asyncio.sleep(0.1)
+
+        except Exception as err:
+            logger.warn("Exception in communication thread, a check may not have been sent: " + str(err))
 
 def print_error_and_close(msg):
     logger.error("Error: " + msg)
@@ -830,8 +826,9 @@ def print_error_and_close(msg):
     sys.exit(1)
 
 
-def launch():
-    async def main(args):
+def launch(*launch_args: str):
+    async def main():
+        args = parser.parse_args(launch_args)
         ctx = Wargroove2Context(args.connect, args.password)
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
         if gui_enabled:
@@ -851,7 +848,6 @@ def launch():
 
     parser = get_base_parser(description="Wargroove 2 Client, for text interfacing.")
 
-    args, rest = parser.parse_known_args()
     colorama.just_fix_windows_console()
-    asyncio.run(main(args))
+    asyncio.run(main())
     colorama.deinit()

@@ -238,6 +238,10 @@ html {
   min-width: unset;
   display: unset;
 }
+#player-options .manual-container{
+  font-style: italic;
+  font-size: 12px;
+}
 #player-options .randomize-button {
   display: flex;
   flex-direction: column;

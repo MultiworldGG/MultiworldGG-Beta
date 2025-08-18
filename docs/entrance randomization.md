@@ -31,7 +31,7 @@ Some important terminology to understand when reading this doc and working with 
 
 The Generic ER algorithm works by using the logic structures you are already familiar with. To give a basic example,
 let's assume a toy world is defined with the vanilla region graph modeled below. In this diagram, the smaller boxes
-represent regions while the larger boxes represent scenes. Scenes are not an MultiworldGG concept, the grouping is
+represent regions while the larger boxes represent scenes. Scenes are not a MultiworldGG concept, the grouping is
 purely illustrative.
 
 ```mermaid

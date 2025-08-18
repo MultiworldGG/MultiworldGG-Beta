@@ -3,56 +3,6 @@ from ..names import LocationNames
 from .levelbase import LevelData
 from . import levelrules as lr
 
-level_map = {
-    0: LocationNames.level_boss_veggies,
-    1: LocationNames.level_boss_slime,
-    2: LocationNames.level_boss_frogs,
-    3: LocationNames.level_boss_flower,
-    4: LocationNames.level_boss_baroness,
-    5: LocationNames.level_boss_clown,
-    6: LocationNames.level_boss_dragon,
-    7: LocationNames.level_boss_bee,
-    8: LocationNames.level_boss_pirate,
-    9: LocationNames.level_boss_mouse,
-    10: LocationNames.level_boss_sallystageplay,
-    11: LocationNames.level_boss_train,
-    12: LocationNames.level_boss_plane_blimp,
-    13: LocationNames.level_boss_plane_genie,
-    14: LocationNames.level_boss_plane_bird,
-    15: LocationNames.level_boss_plane_mermaid,
-    16: LocationNames.level_boss_plane_robot,
-    17: LocationNames.level_boss_kingdice,
-    18: LocationNames.level_boss_devil,
-    19: LocationNames.level_dicepalace_boss_booze,
-    20: LocationNames.level_dicepalace_boss_chips,
-    21: LocationNames.level_dicepalace_boss_cigar,
-    22: LocationNames.level_dicepalace_boss_domino,
-    23: LocationNames.level_dicepalace_boss_rabbit,
-    24: LocationNames.level_dicepalace_boss_plane_horse,
-    25: LocationNames.level_dicepalace_boss_roulette,
-    26: LocationNames.level_dicepalace_boss_eightball,
-    27: LocationNames.level_dicepalace_boss_plane_memory,
-    28: LocationNames.level_rungun_forest,
-    29: LocationNames.level_rungun_tree,
-    30: LocationNames.level_rungun_circus,
-    31: LocationNames.level_rungun_funhouse,
-    32: LocationNames.level_rungun_harbour,
-    33: LocationNames.level_rungun_mountain,
-    100: LocationNames.level_dlc_boss_oldman,
-    101: LocationNames.level_dlc_boss_rumrunners,
-    102: LocationNames.level_dlc_boss_snowcult,
-    103: LocationNames.level_dlc_boss_airplane,
-    104: LocationNames.level_dlc_boss_plane_cowboy,
-    105: LocationNames.level_dlc_boss_saltbaker,
-    106: LocationNames.level_dlc_graveyard,
-    107: LocationNames.level_dlc_chesscastle_pawn,
-    108: LocationNames.level_dlc_chesscastle_knight,
-    109: LocationNames.level_dlc_chesscastle_bishop,
-    110: LocationNames.level_dlc_chesscastle_rook,
-    111: LocationNames.level_dlc_chesscastle_queen,
-}
-level_id_map = {v: k for k, v in level_map.items()}
-
 # Levels
 level_boss_regular: dict[str, LevelData] = {
     LocationNames.level_boss_veggies: LevelData(LocationNames.world_inkwell_1, [
@@ -125,7 +75,7 @@ level_boss_regular: dict[str, LevelData] = {
         LocationNames.loc_level_boss_mouse_event_agrade,
         LocationNames.loc_level_boss_mouse_dlc_chaliced,
         LocationNames.loc_level_boss_mouse_event_dlc_chaliced,
-    ], lr.level_rule_parry),
+    ], lr.level_rule_mouse),
     LocationNames.level_boss_sallystageplay: LevelData(LocationNames.world_inkwell_3, [
         LocationNames.loc_level_boss_sallystageplay,
         LocationNames.loc_level_boss_sallystageplay_topgrade,
@@ -254,7 +204,7 @@ level_dlc_boss_final: dict[str, LevelData] = {
         LocationNames.loc_event_dlc_goal_saltbaker,
     ], lr.level_rule_final),
 }
-level_dicepalace_boss = {
+level_dicepalace_boss: dict[str, LevelData] = {
     LocationNames.level_dicepalace_boss_booze: LevelData(LocationNames.level_boss_kingdice, [
         LocationNames.loc_level_dicepalace_boss_booze,
         LocationNames.loc_level_dicepalace_boss_booze_dlc_chaliced,
@@ -439,7 +389,6 @@ levels_dlc: dict[str, LevelData] = {
     **level_dlc_boss_final,
     **level_dlc_chesscastle_boss,
 }
-
 levels_all: dict[str, LevelData] = {
     **levels_base,
     **level_dicepalace_boss,

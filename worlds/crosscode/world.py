@@ -40,7 +40,7 @@ class CrossCodeWebWorld(WebWorld):
     theme="ocean"
     setup_en = Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up the CrossCode randomizer connected to an MultiworldGG Multiworld.",
+        "A guide to setting up the CrossCode randomizer connected to a MultiworldGG Multiworld.",
         "English",
         "setup_en.md",
         "setup/en",

@@ -10,7 +10,7 @@ Here is a list of software to install and source code to download.
 5. If you would like to generate Enemized seeds for ALTTP locally (not on the website), you may need the EnemizerCLI from its [Github releases page](https://github.com/Ijwu/Enemizer/releases).
 6. An Emulator of your choosing for games that need an emulator. For SNES games, I recommend RetroArch, entirely because it was the easiest for me to setup on macOS. It can be downloaded at the [RetroArch downloads page](https://www.retroarch.com/?page=platforms)
 ## Extracting the MultiworldGG Directory
-1. Double click on the MultiworldGG source code zip file to extract the files to an MultiworldGG directory.
+1. Double click on the MultiworldGG source code zip file to extract the files to a MultiworldGG directory.
 2. Move this MultiworldGG directory out of your downloads directory.
 3. Open terminal and navigate to your MultiworldGG directory.
 ## Setting up a Virtual Environment

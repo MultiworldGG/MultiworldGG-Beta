@@ -2,7 +2,7 @@
 
 It is recommended to use the [Mod Installer](https://github.com/BrandenEK/Blasphemous.Modding.Installer) to handle installing and updating mods. If you would prefer to install mods manually, instructions can also be found at the Mod Installer repository. 
 
-You will need the [Multiworld](https://github.com/BrandenEK/Blasphemous.Randomizer.Multiworld) mod to play an MultiworldGG randomizer.
+You will need the [Multiworld](https://github.com/BrandenEK/Blasphemous.Randomizer.Multiworld) mod to play a MultiworldGG randomizer.
 
 Some optional mods are also recommended:
 - [Rando Map](https://github.com/BrandenEK/Blasphemous.Randomizer.MapTracker)

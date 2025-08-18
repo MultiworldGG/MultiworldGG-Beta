@@ -71,7 +71,7 @@ class MM2WebWorld(WebWorld):
 
         Tutorial(
            "Multiworld Setup Guide",
-           "A guide to setting up the Mega Man 2 randomizer connected to an MultiworldGG world.",
+           "A guide to setting up the Mega Man 2 randomizer connected to a MultiworldGG world.",
            "English",
            "setup_en.md",
            "setup/en",

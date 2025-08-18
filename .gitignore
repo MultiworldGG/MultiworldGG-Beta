@@ -209,3 +209,13 @@ local_build_win.ps1
 
 # Sprites
 data/sprites/remote/*.zspr
+
+# SMO
+/atmosphere
+
+# gzDoom
+gzdoom/*
+gzdoom/cache/*
+
+# Minecraft
+minecraft_versions.json

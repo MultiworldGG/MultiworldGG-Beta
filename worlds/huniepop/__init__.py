@@ -1,6 +1,6 @@
 import random
 
-from BaseClasses import ItemClassification, Region, Tutorial
+from BaseClasses import ItemClassification, Region, LocationProgressType, Tutorial
 from worlds.AutoWorld import World, WebWorld
 from worlds.huniepop.Items import HPItem, girl_unlock_table, item_table, panties_item_table, gift_item_table, \
     unique_item_table, girl_gift, progressive_token_item_table, itemgen_to_name
@@ -22,13 +22,17 @@ class HuniePopWeb(WebWorld):
 
 
 class HuniePop(World):
+    """
+    HuniePop is a unique sim experience around 8 girls.
+    It's a gameplay first approach that's part dating sim, part puzzle game, with light RPG elements.
+    """
     game = GAME_NAME
     author: str = AUTHOR
     igdb_id: int = IGDB_ID
     worldversion = {
         "major":1,
-        "minor":0,
-        "build":1
+        "minor":1,
+        "build":0
     }
 
     item_name_to_id = item_table
@@ -381,6 +385,11 @@ class HuniePop(World):
         self.multiworld.completion_condition[self.player] = lambda state: state.has("victory", self.player)
 
         set_rules(self.multiworld, self.player, self.enabledgirls, self.startgirls, self.options.goal.value)
+
+        if self.shopslots > self.options.exclude_shop_items:
+            for i in range(self.shopslots):
+                if i>=self.options.exclude_shop_items:
+                    self.multiworld.get_location(f"shop_location: {i + 1}", self.player).progress_type = LocationProgressType.EXCLUDED
 
 
     def fill_slot_data(self) -> dict:

@@ -67,8 +67,8 @@ les liens suivants sont les versions des logiciels que nous utilisons.
 
 ### Liens d'installation manuelle du logiciel
 
-- [Page de téléchargement de Minecraft Forge] (https://files.minecraftforge.net/net/minecraftforge/forge/)
-- [Page des versions du mod Minecraft Archipelago Randomizer] (https://github.com/KonoTyran/Minecraft_AP_Randomizer/releases)
+- [Page de téléchargement de Minecraft Forge](https://files.minecraftforge.net/net/minecraftforge/forge/)
+- [Page des versions du mod Minecraft Archipelago Randomizer](https://github.com/KonoTyran/Minecraft_AP_Randomizer/releases)
      - **NE PAS INSTALLER CECI SUR VOTRE CLIENT**
 - [Amazon Corretto](https://docs.aws.amazon.com/corretto/)
      - choisissez la version correspondante et sélectionnez "Téléchargements" sur la gauche

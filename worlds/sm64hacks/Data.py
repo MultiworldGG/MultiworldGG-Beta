@@ -170,18 +170,17 @@ class Data:
 
 
     def import_json(self, file_name):
-        cleanup_file_name = re.sub(r'(\d+)dot(\d+)', r'\1.\2', file_name)
-        json_dir = os.path.join("data", "sm64hacks")
+        json_dir = os.path.join(Utils.local_path("data", "sm64hacks"))
         os.makedirs(json_dir, exist_ok=True)
-        json_file = list(Path(json_dir).rglob(cleanup_file_name)) #external takes priority over internal
+        json_file = list(Path(json_dir).rglob(file_name)) #external takes priority over internal
         local_file = True
         if json_file == []:
-            json_file = list(resources.files(__package__).joinpath("jsons").rglob(cleanup_file_name))
+            json_file = list(resources.files(__package__).joinpath("jsons").rglob(file_name))
             local_file = False
         if len(json_file) > 1:
             raise ValueError("Multiple JSON files with the same name detected")
         if len(json_file) == 0:
-            raise FileNotFoundError(f"JSON file {cleanup_file_name} does not exist")
+            raise FileNotFoundError(f"JSON file {file_name} does not exist")
         json_file = json_file[0]
         #print(json_file)
         if(local_file):

@@ -30,7 +30,7 @@ If you've successfully installed everything, a button will appear in the bottom 
 ## Generating a MultiWorld Game
 1. Visit the [Player Options](/games/Muse%20Dash/player-options) page and configure the game-specific options to your taste.
 2. Export your yaml file and use it to generate a new randomized game
-  - (For instructions on how to generate an MultiworldGG game, refer to the [MultiworldGG Web Guide](/tutorial/Archipelago/setup/en))
+  - (For instructions on how to generate a MultiworldGG game, refer to the [MultiworldGG Web Guide](/tutorial/Archipelago/setup/en))
 
 ## Joining a MultiWorld Game
 

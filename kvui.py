@@ -1426,7 +1426,10 @@ class HintLog(MDRecycleView):
         if not hints:  # Fix the scrolling looking visually wrong in some edge cases
             self.scroll_y = 1.0
         data = []
-        ctx = MDApp.get_running_app().ctx
+        app = MDApp.get_running_app()
+        if app is None:
+            return  # App is shutting down, skip hint refresh
+        ctx = app.ctx
         for hint in hints:
             if not hint.get("status"): # Allows connecting to old servers
                 hint["status"] = HintStatus.HINT_FOUND if hint["found"] else HintStatus.HINT_UNSPECIFIED

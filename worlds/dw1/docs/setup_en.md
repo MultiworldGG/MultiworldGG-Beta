@@ -4,7 +4,7 @@
 
 - [Duckstation](https://github.com/stenzek/duckstation/releases/tag/latest)
 - [DWAP Client](https://github.com/ArsonAssassin/DWAP/releases)
-- [Digimon World APWorld] (https://github.com/ArsonAssassin/DWAP/releases) (ships with MWGG)
+- [Digimon World APWorld](https://github.com/ArsonAssassin/DWAP/releases) (ships with MWGG)
 - Digimon World US ROM. The Archipelago community cannot provide this.
 
 ## Optional Software

@@ -25,7 +25,7 @@ class HereticItem(Item):
 class HereticWeb(WebWorld):
     tutorials = [Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up the Heretic randomizer connected to an MultiworldGG Multiworld",
+        "A guide to setting up the Heretic randomizer connected to a MultiworldGG Multiworld",
         "English",
         "setup_en.md",
         "setup/en",

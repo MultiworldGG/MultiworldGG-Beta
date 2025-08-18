@@ -92,7 +92,7 @@ class ALBWClientContext(CommonContext):
     
     def validate_rom(self) -> None:
         if self.citra.read(self.AP_HEADER_LOCATION, 4) != b"ARCH":
-            self.error("The running game was not patched with an MultiworldGG patch.")
+            self.error("The running game was not patched with a MultiworldGG patch.")
         elif self.citra.read_u32(self.AP_HEADER_LOCATION + 0x4) < self.DATA_VERSION:
             self.error("Version mismatch: update your albwrandomizer library and re-patch.")
         elif self.citra.read_u32(self.AP_HEADER_LOCATION + 0x4) > self.DATA_VERSION:
@@ -113,7 +113,7 @@ class ALBWClientContext(CommonContext):
             self.invalid = True
             self.last_error = ""
         elif self.citra.read(self.save_ptr + 0xde0, 4) == b"\0\0\0\0":
-            self.error("The loaded save file is not an MultiworldGG save file. Choose a different save file.")
+            self.error("The loaded save file is not a MultiworldGG save file. Choose a different save file.")
         elif self.citra.read(self.save_ptr + 0xde0, 4) != b"ARCH":
             self.invalid = True
             self.last_error = ""
@@ -294,7 +294,7 @@ async def game_watcher(ctx: ALBWClientContext) -> None:
 def launch() -> None:
     async def main():
         parser = get_base_parser()
-        parser.add_argument("patch_file", default="", type=str, nargs="?", help="Path to an MultiworldGG patch file")
+        parser.add_argument("patch_file", default="", type=str, nargs="?", help="Path to a MultiworldGG patch file")
         args = parser.parse_args()
 
         if args.patch_file != "":

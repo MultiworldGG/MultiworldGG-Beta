@@ -19,14 +19,14 @@ class NullTask:
         pass
 
     # Target directories
-    input_dir = user_path("data", "sprites", "remote")
+    input_dir = user_path("data", "sprites", "alttp", "remote")
     output_dir = local_path("WebHostLib", "static", "generated")  # TODO: move to user_path
 
 def update_sprites_lttp(
     parallel: bool = True,
     max_workers: int = None,
     skip_remote_update: bool = False,
-    remote_timeout: int = 10
+    remote_timeout: int = 8
 ):
 
     if not skip_remote_update:
@@ -40,7 +40,7 @@ def update_sprites_lttp(
         else:
             print("✅ Sprite‐list update finished.")
 
-    input_dir   = user_path("data", "sprites", "alttpr")
+    input_dir   = user_path("data", "sprites", "alttp", "remote")
     base_out    = local_path("WebHostLib", "static", "generated")
     sprites_out = os.path.join(base_out, "sprites")
     os.makedirs(sprites_out, exist_ok=True)

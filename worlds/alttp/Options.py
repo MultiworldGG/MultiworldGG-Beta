@@ -2,7 +2,8 @@ from dataclasses import dataclass
 
 from BaseClasses import MultiWorld
 from Options import Choice, Range, DeathLink, DefaultOnToggle, FreeText, ItemsAccessibility, PerGameCommonOptions, \
-    PlandoBosses, PlandoConnections, PlandoTexts, Removed, StartInventoryPool, Toggle
+    PlandoBosses, PlandoConnections, PlandoTexts, Removed, StartInventoryPool, Toggle, OptionList, OptionDict, OptionGroup
+import typing
 from .EntranceShuffle import default_connections, default_dungeon_connections, \
     inverted_default_connections, inverted_default_dungeon_connections
 from .Text import TextTable
@@ -694,6 +695,79 @@ class TriforceHud(Choice):
     option_hide_both = 3
 
 
+# Sprite Options
+class Sprite(OptionDict):
+    """
+    Note: Edit your yaml locally or use the LttpAdjuster to change this.
+    The sprite to use for Link. Supports both simple and weighted (dict) usage:
+    This allows for both static and complex random/event-based sprite selection.
+    """
+    display_name = "Sprite"
+    default = {"Link": 1}
+
+    @classmethod
+    def from_any(cls, data: typing.Any) -> "Sprite":
+        if isinstance(data, str):
+            # Convert string to dict format
+            return cls({data: 1})
+        elif isinstance(data, dict):
+            return cls(data)
+        else:
+            raise ValueError(f"Cannot convert {type(data)} to Sprite option")
+
+
+class SpritePool(OptionList):
+    """
+    Note: Edit your yaml locally or use the LttpAdjuster to change this.
+    List of sprites to choose from when using random sprite selection.
+    Leave empty to use all available sprites.
+    """
+    display_name = "Sprite Pool"
+    default = []
+
+
+class RandomSpriteOnHit(Toggle):
+    """Change sprite when Link takes damage."""
+    display_name = "Random Sprite on Hit"
+    default = False
+
+
+class RandomSpriteOnEnter(Toggle):
+    """Change sprite when entering a new area."""
+    display_name = "Random Sprite on Enter"
+    default = False
+
+
+class RandomSpriteOnExit(Toggle):
+    """Change sprite when exiting an area."""
+    display_name = "Random Sprite on Exit"
+    default = False
+
+
+class RandomSpriteOnSlash(Toggle):
+    """Change sprite when using sword slash."""
+    display_name = "Random Sprite on Slash"
+    default = False
+
+
+class RandomSpriteOnItem(Toggle):
+    """Change sprite when using items."""
+    display_name = "Random Sprite on Item"
+    default = False
+
+
+class RandomSpriteOnBonk(Toggle):
+    """Change sprite when bonking into walls/objects."""
+    display_name = "Random Sprite on Bonk"
+    default = False
+
+
+class RandomSpriteOnEverything(Toggle):
+    """Change sprite on all possible events."""
+    display_name = "Random Sprite on Everything"
+    default = False
+
+
 class GlitchBoots(DefaultOnToggle):
     """If this is enabled, the player will start with Pegasus Boots when playing with overworld glitches or harder logic."""
     display_name = "Glitched Starting Boots"
@@ -820,8 +894,102 @@ class ALTTPOptions(PerGameCommonOptions):
     music: Music
     reduceflashing: ReduceFlashing
     triforcehud: TriforceHud
+    sprite: Sprite
+    sprite_pool: SpritePool
+    random_sprite_on_hit: RandomSpriteOnHit
+    random_sprite_on_enter: RandomSpriteOnEnter
+    random_sprite_on_exit: RandomSpriteOnExit
+    random_sprite_on_slash: RandomSpriteOnSlash
+    random_sprite_on_item: RandomSpriteOnItem
+    random_sprite_on_bonk: RandomSpriteOnBonk
+    random_sprite_on_everything: RandomSpriteOnEverything
 
-    # removed:
-    goals: Removed
-    smallkey_shuffle: Removed
-    bigkey_shuffle: Removed
+
+option_groups = [
+    OptionGroup("Game Options", [
+        ItemsAccessibility,
+        ALttPPlandoConnections,
+        ALttPPlandoTexts,
+        Goal,
+        Mode,
+        GlitchesRequired,
+        DarkRoomLogic,
+        OpenPyramid,
+        CrystalsTower,
+        CrystalsGanon,
+        TriforcePiecesMode,
+        TriforcePiecesPercentage,
+        TriforcePiecesRequired,
+        TriforcePiecesAvailable,
+        TriforcePiecesExtra,
+        EntranceShuffle,
+        EntranceShuffleSeed,
+        big_key_shuffle,
+        small_key_shuffle,
+        key_drop_shuffle,
+        compass_shuffle,
+        map_shuffle,
+        RestrictBossItem,
+        ItemPool,
+        ItemFunctionality,
+        EnemyHealth,
+        EnemyDamage,
+        Progressive,
+        Swordless,
+        DungeonCounters,
+        RetroBow,
+        RetroCaves,
+        Hints,
+        Scams,
+        LTTPBosses,
+        PotShuffle,
+        EnemyShuffle,
+        KillableThieves,
+        BushShuffle,
+        ShopItemSlots,
+        RandomizeShopInventories,
+        ShuffleShopInventories,
+        IncludeWitchHut,
+        RandomizeShopPrices,
+        RandomizeCostTypes,
+        ShopPriceModifier,
+        ShuffleCapacityUpgrades,
+        BomblessStart,
+        ShufflePrizes,
+        TileShuffle,
+        MiseryMireMedallion,
+        TurtleRockMedallion,
+        GlitchBoots,
+        BeemizerTotalChance,
+        BeemizerTrapChance,
+        Timer,
+        CountdownStartTime,
+        RedClockTime,
+        BlueClockTime,
+        GreenClockTime,
+        DeathLink,
+        AllowCollect,
+    ]),
+    OptionGroup("Cosmetic Options", [
+        OWPalette,
+        UWPalette,
+        SwordPalette,
+        ShieldPalette,
+        HeartBeep,
+        HeartColor,
+        QuickSwap,
+        MenuSpeed,
+        Music,
+        ReduceFlashing,
+        TriforceHud,
+        Sprite,
+        SpritePool,
+        RandomSpriteOnHit,
+        RandomSpriteOnEnter,
+        RandomSpriteOnExit,
+        RandomSpriteOnSlash,
+        RandomSpriteOnItem,
+        RandomSpriteOnBonk,
+        RandomSpriteOnEverything,
+    ])
+]

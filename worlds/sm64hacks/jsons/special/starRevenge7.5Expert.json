@@ -489,34 +489,12 @@
             {
                 "exists": true,
                 "Requirements": [],
-                "ConditionalRequirements": [
-                    {
-                        "StarRequirement": "0",
-                        "Requirements": ["Ultra Badge"]
-                    },
-                    {
-                        "StarRequirement": "0",
-                        "Requirements": [
-                            "Wall Badge"
-                        ]
-                    }
-                ]
+                "ConditionalRequirements": []
             },
             {
                 "exists": true,
                 "Requirements": [],
-                "ConditionalRequirements": [
-                    {
-                        "StarRequirement": "0",
-                        "Requirements": ["Ultra Badge"]
-                    },
-                    {
-                        "StarRequirement": "0",
-                        "Requirements": [
-                            "Wall Badge"
-                        ]
-                    }
-                ]
+                "ConditionalRequirements": []
             },
             {
                 "exists": true,
@@ -528,16 +506,7 @@
                 "Requirements": [
                     "Wing Cap"
                 ],
-                "ConditionalRequirements": [
-                    {
-                        "StarRequirement": "0",
-                        "Requirements": ["Ultra Badge"]
-                    },
-                    {
-                        "StarRequirement": "0",
-                        "Requirements": ["Wall Badge"]
-                    }
-                ]
+                "ConditionalRequirements": []
             },
             {
                 "exists": true,

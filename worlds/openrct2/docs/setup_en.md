@@ -42,7 +42,7 @@ Save the `.js` file to the "plugin" folder within.
 
 2. Export your yaml file and use it to generate a new randomized game or generate a game on the spot.
 
-*For instructions on how to generate an MultiworldGG game, refer to the [MultiworldGG Setup Guide](../../../../tutorial/Archipelago/setup/en).*
+*For instructions on how to generate a MultiworldGG game, refer to the [MultiworldGG Setup Guide](../../../../tutorial/Archipelago/setup/en).*
 
 ## Joining a MultiWorld Game
 

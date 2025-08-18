@@ -20,6 +20,30 @@ class Goal(Choice):
     option_all = 4
     default = 0
 
+class GameMode(Choice):
+    """
+    CHose what mode to play
+    - **Book Unlock**: unlock entire books at once, and play the peaks in whatever order you like
+    - **Peak Unlock**: unlock individual peaks instead of entire books, more restrictive, more of a challenge
+    """
+    display_name = "Game Mode"
+    option_book_unlock = 0
+    option_peak_unlock = 1
+    default = 0
+
+class DeathLinkTraps(DefaultOnToggle):
+    """
+    Instead of killing the player, Death Link triggers traps.
+    Only affects the game when Death Link is enabled.
+    """
+    display_name = "Death Link Traps"
+
+class FillerTraps(DefaultOnToggle):
+    """
+    Adds traps to the item pool if enabled.
+    """
+    display_name = "Traps in pool"
+
 class StartingBook(Choice):
     """
     Choose what book to start with. If the book is not enabled, the easiest enabled book will be chosen.
@@ -45,6 +69,14 @@ class StartingBook(Choice):
 class StartWithBarometer(DefaultOnToggle):
     """Choose to start with the barometer, to locate items quicker"""
     display_name = "Start with Barometer"
+
+class StartWithChalk(Toggle):
+    """Choose to start with the Chalk Bag, also unlocking bird seeds."""
+    display_name = "Start with Chalk"
+
+class StartWithCoffee(Toggle):
+    """Choose to start with the Coffee Flask"""
+    display_name = "Start with Coffee"
 
 class StartWithOilLamp(Toggle):
     """
@@ -116,6 +148,8 @@ poy_option_groups = [
     OptionGroup("Starting Items", [
         StartingBook,
         StartWithBarometer,
+        StartWithChalk,
+        StartWithCoffee,
         StartWithOilLamp,
         RopeUnlockMode,
         StartingHands,
@@ -160,10 +194,15 @@ poy_option_presets: dict[str, dict[str, any]] = {
 
 @dataclass
 class PeaksOfYoreOptions(PerGameCommonOptions):
-    death_link: DeathLink
     goal: Goal
+    game_mode: GameMode
+    death_link: DeathLink
+    death_link_traps: DeathLinkTraps
+    item_traps: FillerTraps
     starting_book: StartingBook
     start_with_barometer: StartWithBarometer
+    start_with_chalk: StartWithChalk
+    start_with_coffee: StartWithCoffee
     start_with_oil_lamp: StartWithOilLamp
     start_with_hands: StartingHands
     early_hands: EarlyHands
@@ -176,4 +215,3 @@ class PeaksOfYoreOptions(PerGameCommonOptions):
     include_free_solo: IncludeFreeSolo
     include_time_attack: IncludeTimeAttack
     start_inventory_from_pool: StartInventoryPool
-

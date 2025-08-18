@@ -15,7 +15,7 @@ from .EntranceShuffle import link_entrances, link_inverted_entrances, plando_con
 from .InvertedRegions import create_inverted_regions, mark_dark_world_regions
 from .ItemPool import generate_itempool, difficulties
 from .Items import item_init_table, item_name_groups, item_table, GetBeemizerItem
-from .Options import ALTTPOptions, small_key_shuffle
+from .Options import ALTTPOptions, small_key_shuffle, option_groups
 from .Regions import lookup_name_to_id, create_regions, mark_light_world_regions, lookup_vanilla_location_to_entrance, \
     is_main_entrance, key_drop_data
 from .Rom import LocalRom, patch_rom, patch_race_rom, check_enemizer, patch_enemizer, apply_rom_settings, \
@@ -33,7 +33,7 @@ def launch_adjuster(*args):
     from .Adjuster import launch
     launch_component(launch, "LttPAdjuster", args=args)
 
-components.append(Component(display_name="LttP Adjuster", component_type=Type.ADJUSTER, func=launch_adjuster))
+components.append(Component(display_name="LttP Adjuster", component_type=Type.ADJUSTER, func=launch_adjuster, description="Customize your ALttPR experience with sprites, color palettes, and more"))
 
 class ALTTPSettings(settings.Group):
     class RomFile(settings.SNESRomPath):
@@ -130,6 +130,7 @@ class ALTTPWeb(WebWorld):
 
     tutorials = [setup_en, setup_de, setup_es, setup_fr, msu, msu_es, msu_fr, plando, oof_sound]
     game_info_languages = ["en", "fr"]
+    option_groups = option_groups
 
 
 class ALTTPWorld(World):
@@ -419,6 +420,53 @@ class ALTTPWorld(World):
         self.options.non_local_items.value -= item_name_groups['Pendants']
         self.options.non_local_items.value -= item_name_groups['Crystals']
 
+        # Process sprite options
+        sprite_value = self.options.sprite.value
+        
+        # Handle weighted sprite choices (legacy format)
+        if isinstance(sprite_value, dict) and sprite_value:
+            # Convert weighted choices to a single selection
+            choices = []
+            weights = []
+            for sprite_name, weight in sprite_value.items():
+                if weight > 0:
+                    choices.append(sprite_name)
+                    weights.append(weight)
+            
+            if choices:
+                # Use the world's random to select from weighted choices
+                selected_sprite = self.random.choices(choices, weights=weights, k=1)[0]
+                sprite_value = selected_sprite
+        
+        # Check if this is a legacy randomon-xyz string
+        if sprite_value.startswith("randomon"):
+            self.sprite = sprite_value
+            self.sprite_pool = list(self.options.sprite_pool.value)
+        elif (self.options.random_sprite_on_hit or self.options.random_sprite_on_enter or
+              self.options.random_sprite_on_exit or self.options.random_sprite_on_slash or
+              self.options.random_sprite_on_item or self.options.random_sprite_on_bonk or
+              self.options.random_sprite_on_everything):
+            sprite_config = "randomon"
+            if self.options.random_sprite_on_hit:
+                sprite_config += "hit"
+            if self.options.random_sprite_on_enter:
+                sprite_config += "enter"
+            if self.options.random_sprite_on_exit:
+                sprite_config += "exit"
+            if self.options.random_sprite_on_slash:
+                sprite_config += "slash"
+            if self.options.random_sprite_on_item:
+                sprite_config += "item"
+            if self.options.random_sprite_on_bonk:
+                sprite_config += "bonk"
+            if self.options.random_sprite_on_everything:
+                sprite_config = "randomonall"
+            self.sprite = sprite_config
+            self.sprite_pool = list(self.options.sprite_pool.value)
+        else:
+            self.sprite = sprite_value
+            self.sprite_pool = list(self.options.sprite_pool.value)
+
     create_dungeons = create_dungeons
 
     def create_regions(self):
@@ -614,27 +662,27 @@ class ALTTPWorld(World):
             multiworld.spoiler.hashes[player] = get_hash_string(rom.hash)
 
             palettes_options = {
-                'dungeon': multiworld.uw_palettes[player],
-                'overworld': multiworld.ow_palettes[player],
-                'hud': multiworld.hud_palettes[player],
-                'sword': multiworld.sword_palettes[player],
-                'shield': multiworld.shield_palettes[player],
+                'dungeon': self.options.uw_palettes,
+                'overworld': self.options.ow_palettes,
+                'hud': self.options.hud_palettes,
+                'sword': self.options.sword_palettes,
+                'shield': self.options.shield_palettes,
                 # 'link': world.link_palettes[player]
             }
             palettes_options = {key: option.current_key for key, option in palettes_options.items()}
 
-            apply_rom_settings(rom, multiworld.heartbeep[player].current_key,
-                               multiworld.heartcolor[player].current_key,
-                               multiworld.quickswap[player],
-                               multiworld.menuspeed[player].current_key,
-                               multiworld.music[player],
-                               multiworld.sprite[player],
+            apply_rom_settings(rom, self.options.heartbeep.current_key,
+                               self.options.heartcolor.current_key,
+                               self.options.quickswap,
+                               self.options.menuspeed.current_key,
+                               self.options.music,
+                               str(self.sprite),  # Ensure sprite is a string
                                None,
                                palettes_options, multiworld, player, True,
-                               reduceflashing=multiworld.reduceflashing[player] or multiworld.is_race,
-                               triforcehud=multiworld.triforcehud[player].current_key,
-                               deathlink=multiworld.death_link[player],
-                               allowcollect=multiworld.allow_collect[player])
+                               reduceflashing=self.options.reduceflashing or multiworld.is_race,
+                               triforcehud=self.options.triforcehud.current_key,
+                               deathlink=self.options.death_link,
+                               allowcollect=self.options.allow_collect)
 
             rompath = os.path.join(output_directory, f"{self.multiworld.get_out_file_name_base(self.player)}.sfc")
             rom.write_to_file(rompath)
@@ -649,11 +697,11 @@ class ALTTPWorld(World):
             self.rom_name_available_event.set() # make sure threading continues and errors are collected
 
     @classmethod
-    def stage_extend_hint_information(cls, world, hint_data: typing.Dict[int, typing.Dict[int, str]]):
-        er_hint_data = {player: {} for player in world.get_game_players("A Link to the Past") if
-                        world.entrance_shuffle[player] != "vanilla" or world.retro_caves[player]}
+    def stage_extend_hint_information(cls, multiworld, hint_data: typing.Dict[int, typing.Dict[int, str]]):
+        er_hint_data = {player: {} for player in multiworld.get_game_players("A Link to the Past") if
+                        multiworld.worlds[player].options.entrance_shuffle != "vanilla" or multiworld.worlds[player].options.retro_caves}
 
-        for region in world.regions:
+        for region in multiworld.regions:
             if region.player in er_hint_data and region.locations:
                 main_entrance = region.get_connecting_entrance(is_main_entrance)
                 for location in region.locations:
@@ -721,10 +769,10 @@ class ALTTPWorld(World):
                     world.options.glitches_required.current_key in {'overworld_glitches', 'hybrid_major_glitches', "no_logic"}:
                 pass
             elif 'triforce_hunt' in world.options.goal.current_key and ('local' in world.options.goal.current_key or multiworld.players == 1):
-                trash_counts[player] = multiworld.random.randint(world.options.crystals_needed_for_gt * 2,
+                trash_counts[player] = world.random.randint(world.options.crystals_needed_for_gt * 2,
                                                             world.options.crystals_needed_for_gt * 4)
             else:
-                trash_counts[player] = multiworld.random.randint(0, world.options.crystals_needed_for_gt * 2)
+                trash_counts[player] = world.random.randint(0, world.options.crystals_needed_for_gt * 2)
 
         if trash_counts:
             locations_mapping = {player: [] for player in trash_counts}
@@ -767,7 +815,7 @@ class ALTTPWorld(World):
                              f" {self.pyramid_fairy_bottle_fill}")
         spoiler_handle.write(f"\nWaterfall Fairy ({player_name}):"
                              f" {self.waterfall_fairy_bottle_fill}")
-        if self.options.boss_shuffle[self.player] != "none":
+        if self.options.boss_shuffle != "none":
             def create_boss_map() -> typing.Dict:
                 boss_map = {
                     "Eastern Palace": self.dungeons["Eastern Palace"].boss.name,
@@ -839,6 +887,17 @@ class ALTTPWorld(World):
                 item for item in [shop_data.get('item_0', None), shop_data.get('item_1', None), shop_data.get('item_2', None)] if
                 item)))
 
+        # Write sprite configuration to spoiler
+        if hasattr(self, 'sprite'):
+            spoiler_handle.write(f'\n\nSprite Configuration ({self.multiworld.get_player_name(self.player)}):\n')
+            spoiler_handle.write(f'    Sprite: {self.sprite}\n')
+            if hasattr(self, 'sprite_pool'):
+                sprite_pool = self.sprite_pool
+                if sprite_pool:
+                    spoiler_handle.write(f'    Sprite Pool: {", ".join(sprite_pool)}\n')
+                else:
+                    spoiler_handle.write('    Sprite Pool: All available sprites\n')
+
     def get_filler_item_name(self) -> str:
         item = self.multiworld.random.choice(extras_list)
         return GetBeemizerItem(self.multiworld, self.player, item)
@@ -893,8 +952,8 @@ def get_same_seed(world, seed_def: tuple) -> str:
 
 class ALttPLogic(LogicMixin):
     def _lttp_has_key(self, item, player, count: int = 1):
-        if self.options.glitches_required == 'no_logic':
+        if self.multiworld.worlds[player].options.glitches_required == 'no_logic':
             return True
-        if self.options.small_key_shuffle == small_key_shuffle.option_universal:
+        if self.multiworld.worlds[player].options.small_key_shuffle == small_key_shuffle.option_universal:
             return can_buy_unlimited(self, 'Small Key (Universal)', player)
         return self.prog_items[player][item] >= count

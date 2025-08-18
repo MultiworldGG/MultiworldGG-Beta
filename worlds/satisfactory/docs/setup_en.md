@@ -36,7 +36,7 @@ This guide uses the following terms to refer to the software:
 
 ### What a Playable State Looks Like
 
-- An MultiworldGG Server
+- a MultiworldGG Server
 - One running modded Satisfactory Host (game client or dedicated server) per Satisfactory world
 - Optionally, additional modded Satisfactory Clients for additional players
 
@@ -105,7 +105,7 @@ See the [Troubleshooting section below](#troubleshooting) if you encounter any i
 ## Hosting Your Own Satisfactory Game
 
 If you're hosting your own Satisfactory game,
-you will need to configure an MultiworldGG world and set up the Satisfactory Host you will be playing on.
+you will need to configure a MultiworldGG world and set up the Satisfactory Host you will be playing on.
 
 ### Create a Config (.yaml) File
 
@@ -134,7 +134,7 @@ YAML Validator page: [Yaml Validation Page](/mysterycheck)
 The Player Settings page provides a few options for controlling what materials you start with
 and when certain key technologies are unlocked.
 Any Resource Bundle type items added to your starting inventory will be delivered to your player inventory when you initally spawn,
-unless they can't fit, in which case they can be collected by building an MultiworldGG Portal.
+unless they can't fit, in which case they can be collected by building a MultiworldGG Portal.
 
 Advanced users can use Plando, Weighted Options, and manual yaml editing to further configure the starting inventory.
 If you don't wish to use these techniques, consider using Satisfactory's
@@ -150,7 +150,7 @@ to futher customize their experience.
 
 ### Generating and Hosting the Multiworld
 
-Generating a game and hosting an MultiworldGG server is explained in the [MultiworldGG Setup Guide](/tutorial/Archipelago/setup/en).
+Generating a game and hosting a MultiworldGG server is explained in the [MultiworldGG Setup Guide](/tutorial/Archipelago/setup/en).
 
 ### Creating the Satisfactory World
 

@@ -18,7 +18,7 @@ class GenericWeb(WebWorld):
                                  'English', 'advanced_settings_en.md', 'advanced_settings/en',
                                  ['alwaysintreble', 'Alchav'])
     commands = Tutorial('MultiworldGG Server and Client Commands',
-                        'A guide detailing the commands available to the user when participating in an MultiworldGG session.',
+                        'A guide detailing the commands available to the user when participating in a MultiworldGG session.',
                         'English', 'commands_en.md', 'commands/en', ['jat2980', 'Ijwu'])
     mac = Tutorial('MultiworldGG Setup Guide for Mac', 'A guide detailing how to run MultiworldGG clients on macOS.', 
                    'English', 'mac_en.md','mac/en', ['Bicoloursnake'])

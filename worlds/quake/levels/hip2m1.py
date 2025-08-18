@@ -1,0 +1,766 @@
+from BaseClasses import Region
+
+from ..base_classes import Q1Level
+
+
+class hip2m1(Q1Level):
+    name = "Ancient Realms"
+    mapfile = "hip2m1"
+    keys = ["Silver"]
+    location_defs = [
+        {
+            "id": 1,
+            "name": "Megahealth (1)",
+            "classname": "item_health",
+            "uuid": 894563166541931006,
+            "mp": 0,
+        },
+        {
+            "id": 2,
+            "name": "Supershotgun (2)",
+            "classname": "weapon_supershotgun",
+            "uuid": 18093637037491946622,
+            "mp": 0,
+        },
+        {
+            "id": 3,
+            "name": "Secret (3)",
+            "classname": "trigger_secret",
+            "uuid": 8289614618466124781,
+            "mp": 0,
+        },
+        {
+            "id": 4,
+            "name": "Exit",
+            "classname": "trigger_changelevel",
+            "uuid": 7862138421565428043,
+            "mp": 0,
+        },
+        {
+            "id": 5,
+            "name": "Secret (5)",
+            "classname": "trigger_secret",
+            "uuid": 15141589618607746314,
+            "mp": 0,
+        },
+        {
+            "id": 6,
+            "name": "Silver Key (6)",
+            "classname": "item_key1",
+            "uuid": 11670177271819815072,
+            "mp": 0,
+        },
+        {
+            "id": 7,
+            "name": "Shells (7)",
+            "classname": "item_shells",
+            "uuid": 9554161663093834263,
+            "mp": 0,
+        },
+        {
+            "id": 8,
+            "name": "Large Medkit (8)",
+            "classname": "item_health",
+            "uuid": 13464463109333679645,
+            "mp": 0,
+        },
+        {
+            "id": 9,
+            "name": "Shells (9)",
+            "classname": "item_shells",
+            "uuid": 6148314956831704861,
+            "mp": 0,
+        },
+        {
+            "id": 10,
+            "name": "Large Medkit (10)",
+            "classname": "item_health",
+            "uuid": 1771966770721373619,
+            "mp": 0,
+        },
+        {
+            "id": 11,
+            "name": "Large Medkit (11)",
+            "classname": "item_health",
+            "uuid": 4037839579578359468,
+            "mp": 0,
+        },
+        {
+            "id": 12,
+            "name": "Large Medkit (12)",
+            "classname": "item_health",
+            "uuid": 1403697662787239383,
+            "mp": 0,
+        },
+        {
+            "id": 13,
+            "name": "Nailgun (13)",
+            "classname": "weapon_nailgun",
+            "uuid": 578170654027617370,
+            "mp": 0,
+        },
+        {
+            "id": 14,
+            "name": "Supershotgun (14)",
+            "classname": "weapon_supershotgun",
+            "uuid": 11791977965293417344,
+            "mp": 0,
+        },
+        {
+            "id": 15,
+            "name": "Shells (15)",
+            "classname": "item_shells",
+            "uuid": 1047821006920482829,
+            "mp": 0,
+        },
+        {
+            "id": 16,
+            "name": "Grenadelauncher (16)",
+            "classname": "weapon_grenadelauncher",
+            "uuid": 11790134086581570112,
+            "mp": 0,
+        },
+        {
+            "id": 17,
+            "name": "Small Medkit (17)",
+            "classname": "item_health",
+            "uuid": 16290032008623838159,
+            "mp": 0,
+        },
+        {
+            "id": 18,
+            "name": "Small Medkit (18)",
+            "classname": "item_health",
+            "uuid": 13117663868439429362,
+            "mp": 0,
+        },
+        {
+            "id": 19,
+            "name": "Spikes (19)",
+            "classname": "item_spikes",
+            "uuid": 15004921117047213977,
+            "mp": 0,
+        },
+        {
+            "id": 20,
+            "name": "Shells (20)",
+            "classname": "item_shells",
+            "uuid": 9743911748126809308,
+            "mp": 0,
+        },
+        {
+            "id": 21,
+            "name": "Shells (21)",
+            "classname": "item_shells",
+            "uuid": 1182563126646763884,
+            "mp": 0,
+        },
+        {
+            "id": 22,
+            "name": "Large Medkit (22)",
+            "classname": "item_health",
+            "uuid": 6414570202702405573,
+            "mp": 0,
+        },
+        {
+            "id": 23,
+            "name": "Large Medkit (23)",
+            "classname": "item_health",
+            "uuid": 17309760553472843515,
+            "mp": 0,
+        },
+        {
+            "id": 24,
+            "name": "Spikes (24)",
+            "classname": "item_spikes",
+            "uuid": 3119811139731494874,
+            "mp": 0,
+        },
+        {
+            "id": 25,
+            "name": "Shells (25)",
+            "classname": "item_shells",
+            "uuid": 8953931257333815589,
+            "mp": 0,
+        },
+        {
+            "id": 26,
+            "name": "Supernailgun (26)",
+            "classname": "weapon_supernailgun",
+            "uuid": 15364248951055206414,
+            "mp": 1,
+        },
+        {
+            "id": 27,
+            "name": "Shells (27)",
+            "classname": "item_shells",
+            "uuid": 6819055426619386210,
+            "mp": 0,
+        },
+        {
+            "id": 28,
+            "name": "Large Medkit (28)",
+            "classname": "item_health",
+            "uuid": 15258724213117959016,
+            "mp": 0,
+        },
+        {
+            "id": 29,
+            "name": "Small Medkit (29)",
+            "classname": "item_health",
+            "uuid": 1848320371769586758,
+            "mp": 0,
+        },
+        {
+            "id": 30,
+            "name": "Secret (30)",
+            "classname": "trigger_secret",
+            "uuid": 18121501269319583646,
+            "mp": 0,
+        },
+        {
+            "id": 31,
+            "name": "Invisibility (31)",
+            "classname": "item_artifact_invisibility",
+            "uuid": 9371096907111731251,
+            "mp": 0,
+        },
+        {
+            "id": 32,
+            "name": "Spikes (32)",
+            "classname": "item_spikes",
+            "uuid": 17242611718550895684,
+            "mp": 0,
+        },
+        # {
+        #    "id": 33,
+        #    "name": "Rocketlauncher (33)",
+        #    "classname": "weapon_rocketlauncher",
+        #    "uuid": 6936146364797826066,
+        #    "mp": 1,
+        # },
+        {
+            "id": 34,
+            "name": "Spikes (34)",
+            "classname": "item_spikes",
+            "uuid": 790393292939518995,
+            "mp": 0,
+        },
+        {
+            "id": 35,
+            "name": "Shells (35)",
+            "classname": "item_shells",
+            "uuid": 3757207185961023649,
+            "mp": 0,
+        },
+        {
+            "id": 36,
+            "name": "Shells (36)",
+            "classname": "item_shells",
+            "uuid": 7032631541862481157,
+            "mp": 0,
+        },
+        {
+            "id": 37,
+            "name": "Shells (37)",
+            "classname": "item_shells",
+            "uuid": 16251547514832099089,
+            "mp": 0,
+        },
+        {
+            "id": 38,
+            "name": "Spikes (38)",
+            "classname": "item_spikes",
+            "uuid": 7175144392416072583,
+            "mp": 0,
+        },
+        {
+            "id": 39,
+            "name": "Small Medkit (39)",
+            "classname": "item_health",
+            "uuid": 3505062627078063599,
+            "mp": 0,
+        },
+        {
+            "id": 40,
+            "name": "Small Medkit (40)",
+            "classname": "item_health",
+            "uuid": 5248112408779275648,
+            "mp": 0,
+        },
+        {
+            "id": 41,
+            "name": "Green Armor (41)",
+            "classname": "item_armor1",
+            "uuid": 8804580628627927123,
+            "mp": 0,
+        },
+        {
+            "id": 42,
+            "name": "Invulnerability (42)",
+            "classname": "item_artifact_invulnerability",
+            "uuid": 18444905048077442131,
+            "mp": 0,
+        },
+        {
+            "id": 43,
+            "name": "Large Medkit (43)",
+            "classname": "item_health",
+            "uuid": 16856908570602020319,
+            "mp": 0,
+        },
+        {
+            "id": 44,
+            "name": "Large Medkit (44)",
+            "classname": "item_health",
+            "uuid": 1968621240687937363,
+            "mp": 0,
+        },
+        {
+            "id": 45,
+            "name": "Spikes (45)",
+            "classname": "item_spikes",
+            "uuid": 13104096192270883288,
+            "mp": 0,
+        },
+        {
+            "id": 46,
+            "name": "Spikes (46)",
+            "classname": "item_spikes",
+            "uuid": 18439806625595348976,
+            "mp": 0,
+        },
+        {
+            "id": 47,
+            "name": "Shells (47)",
+            "classname": "item_shells",
+            "uuid": 11087549506352159928,
+            "mp": 0,
+        },
+        {
+            "id": 48,
+            "name": "Large Medkit (48)",
+            "classname": "item_health",
+            "uuid": 9534939320733911315,
+            "mp": 0,
+        },
+        {
+            "id": 49,
+            "name": "Spikes (49)",
+            "classname": "item_spikes",
+            "uuid": 9379567668853319100,
+            "mp": 0,
+        },
+        {
+            "id": 50,
+            "name": "Spikes (50)",
+            "classname": "item_spikes",
+            "uuid": 11731389662780908202,
+            "mp": 0,
+        },
+        {
+            "id": 51,
+            "name": "Shells (51)",
+            "classname": "item_shells",
+            "uuid": 9452896709199093325,
+            "mp": 0,
+        },
+        {
+            "id": 52,
+            "name": "Spikes (52)",
+            "classname": "item_spikes",
+            "uuid": 9045436320812311766,
+            "mp": 0,
+        },
+        {
+            "id": 53,
+            "name": "Shells (53)",
+            "classname": "item_shells",
+            "uuid": 13546853335958524764,
+            "mp": 0,
+        },
+        {
+            "id": 54,
+            "name": "Shells (54)",
+            "classname": "item_shells",
+            "uuid": 7544331753954488882,
+            "mp": 0,
+        },
+        {
+            "id": 55,
+            "name": "Shells (55)",
+            "classname": "item_shells",
+            "uuid": 6491205269672344627,
+            "mp": 0,
+        },
+        {
+            "id": 56,
+            "name": "Shells (56)",
+            "classname": "item_shells",
+            "uuid": 7120845523590030133,
+            "mp": 0,
+        },
+        {
+            "id": 57,
+            "name": "Spikes (57)",
+            "classname": "item_spikes",
+            "uuid": 15320679320179731421,
+            "mp": 0,
+        },
+        {
+            "id": 58,
+            "name": "Secret (58)",
+            "classname": "trigger_secret",
+            "uuid": 9996287701448204355,
+            "mp": 0,
+        },
+        {
+            "id": 59,
+            "name": "Red Armor (59)",
+            "classname": "item_armorInv",
+            "uuid": 16693583298278637679,
+            "mp": 0,
+        },
+        {
+            "id": 60,
+            "name": "Large Medkit (60)",
+            "classname": "item_health",
+            "uuid": 14962871912715824170,
+            "mp": 0,
+        },
+        {
+            "id": 61,
+            "name": "Large Medkit (61)",
+            "classname": "item_health",
+            "uuid": 6583551324535190518,
+            "mp": 0,
+        },
+        {
+            "id": 62,
+            "name": "Large Medkit (62)",
+            "classname": "item_health",
+            "uuid": 17891677751593925712,
+            "mp": 0,
+        },
+        {
+            "id": 63,
+            "name": "Large Medkit (63)",
+            "classname": "item_health",
+            "uuid": 6123941288252637191,
+            "mp": 0,
+        },
+        {
+            "id": 64,
+            "name": "Cells (64)",
+            "classname": "item_cells",
+            "uuid": 11093566431201651657,
+            "mp": 0,
+        },
+        {
+            "id": 65,
+            "name": "Cells (65)",
+            "classname": "item_cells",
+            "uuid": 605187508111753082,
+            "mp": 0,
+        },
+        {
+            "id": 66,
+            "name": "Cells (66)",
+            "classname": "item_cells",
+            "uuid": 10018002261906202343,
+            "mp": 1,
+        },
+        {
+            "id": 67,
+            "name": "Cells (67)",
+            "classname": "item_cells",
+            "uuid": 9233930281052628291,
+            "mp": 1,
+        },
+        {
+            "id": 68,
+            "name": "Empathy (68)",
+            "classname": "item_artifact_empathy_shields",
+            "uuid": 11096265255607479117,
+            "mp": 0,
+        },
+        {
+            "id": 69,
+            "name": "Secret Exit",
+            "classname": "trigger_changelevel",
+            "uuid": 10770046985016178576,
+            "mp": 0,
+        },
+        {
+            "id": 70,
+            "name": "Secret (70)",
+            "classname": "trigger_secret",
+            "uuid": 7620794029766845726,
+            "mp": 0,
+        },
+        {
+            "id": 71,
+            "name": "Proximity (71)",
+            "classname": "weapon_proximity_gun",
+            "uuid": 11670554776174178481,
+            "mp": 0,
+        },
+        {
+            "id": 72,
+            "name": "Secret (72)",
+            "classname": "trigger_secret",
+            "uuid": 17125101326747000006,
+            "mp": 0,
+        },
+        {
+            "id": 73,
+            "name": "Secret (73)",
+            "classname": "trigger_secret",
+            "uuid": 4473368468191648979,
+            "mp": 0,
+        },
+        {
+            "id": 74,
+            "name": "Mjolnir (74)",
+            "classname": "weapon_mjolnir",
+            "uuid": 17686681029193326619,
+            "mp": 1,
+        },
+        {
+            "id": 75,
+            "name": "Shells (75)",
+            "classname": "item_shells",
+            "uuid": 14842265772013634743,
+            "mp": 0,
+        },
+        {
+            "id": 76,
+            "name": "Shells (76)",
+            "classname": "item_shells",
+            "uuid": 9080911951859225376,
+            "mp": 0,
+        },
+        {
+            "id": 77,
+            "name": "Megahealth (77)",
+            "classname": "item_health",
+            "uuid": 12277170979314347646,
+            "mp": 0,
+        },
+        {
+            "id": 78,
+            "name": "Quad Damage (78)",
+            "classname": "item_artifact_super_damage",
+            "uuid": 15838313066022747611,
+            "mp": 0,
+        },
+        {
+            "id": 79,
+            "name": "Hornofconjuring (79)",
+            "classname": "item_hornofconjuring",
+            "uuid": 3686157990610458941,
+            "mp": 0,
+        },
+        {
+            "id": 80,
+            "name": "Small Medkit (80)",
+            "classname": "item_health",
+            "uuid": 3050572253035552206,
+            "mp": 0,
+        },
+        {
+            "id": 81,
+            "name": "Large Medkit (81)",
+            "classname": "item_health",
+            "uuid": 10069215426735716345,
+            "mp": 0,
+        },
+        {
+            "id": 82,
+            "name": "Large Medkit (82)",
+            "classname": "item_health",
+            "uuid": 4574688818648088066,
+            "mp": 0,
+        },
+        {
+            "id": 83,
+            "name": "Secret (83)",
+            "classname": "trigger_secret",
+            "uuid": 7675363422768258260,
+            "mp": 0,
+        },
+        {
+            "id": 84,
+            "name": "Lightning (84)",
+            "classname": "weapon_lightning",
+            "uuid": 12028165443628638049,
+            "mp": 1,
+        },
+        {
+            "id": 85,
+            "name": "Laser (85)",
+            "classname": "weapon_laser_gun",
+            "uuid": 3759000096735959999,
+            "mp": 1,
+        },
+        {
+            "id": 86,
+            "name": "All Kills (86)",
+            "classname": "all_kills",
+            "uuid": 13573223690220680667,
+            "mp": 0,
+        },
+    ]
+    events = ["Barrier Lowered"]
+
+    def main_region(self) -> Region:
+        r = self.rules
+
+        ret = self.region(
+            self.name,
+            [
+                "Supershotgun (2)",
+                "Shells (15)",
+                "Supershotgun (14)",
+                "Large Medkit (10)",
+                "Large Medkit (8)",
+                "Shells (21)",
+            ],
+        )
+
+        start_secret_area = self.region(
+            "Start Secret",
+            [
+                "Secret (3)",
+                "Megahealth (1)",
+                "Shells (7)",
+            ],
+        )
+        self.connect(ret, start_secret_area, r.can_shootswitch & r.can_dive)
+
+        past_door_area = self.region(
+            "Past Door Area",
+            [
+                "Grenadelauncher (16)",
+                "Shells (9)",
+                "Spikes (19)",
+                "Shells (20)",
+                "Nailgun (13)",
+                "Large Medkit (11)",
+                "Large Medkit (12)",
+                "Large Medkit (28)",
+                "Shells (27)",
+                "Spikes (34)",
+                "Shells (35)",
+                "Shells (36)",
+                "Large Medkit (60)",
+                "Large Medkit (61)",
+                "Spikes (50)",
+                "Spikes (49)",
+                "Large Medkit (62)",
+                "Large Medkit (63)",
+                "Small Medkit (39)",
+                "Small Medkit (40)",
+                "Cells (67)",
+                "Cells (66)",
+                "Laser (85)",
+                "Green Armor (41)",
+                "Spikes (52)",
+                "Shells (53)",
+                "Spikes (32)",
+                "Shells (51)",
+                "Hornofconjuring (79)",
+                "Spikes (38)",
+                "Shells (37)",
+                "Cells (64)",
+                "Cells (65)",
+                "Small Medkit (18)",
+                "Small Medkit (17)",
+                "Shells (56)",
+                "Spikes (57)",
+                "Secret (72)",
+                "Quad Damage (78)",
+                "Secret (5)",
+                "Megahealth (77)",
+                "Secret (58)",
+                "Red Armor (59)",
+                "Silver Key (6)",
+            ],
+        )
+        self.connect(ret, past_door_area, r.can_door)
+
+        self.restrict("Secret (72)", r.can_shootswitch)
+        self.restrict("Quad Damage (78)", r.can_shootswitch)
+        self.restrict("Secret (5)", r.can_shootswitch)
+        self.restrict("Megahealth (77)", r.can_shootswitch)
+        self.restrict("Secret (58)", r.can_shootswitch)
+        self.restrict("Red Armor (59)", r.can_shootswitch)
+        self.restrict("Silver Key (6)", r.can_button | r.bigjump_hard)
+
+        wall_secret_area = self.region(
+            "Wall Secret",
+            [
+                "Secret (70)",
+                "Proximity (71)",
+            ],
+        )
+        self.connect(past_door_area, wall_secret_area, r.jump & r.can_button)
+
+        secret_exit_area = self.region(
+            "Secret Exit Area",
+            [
+                "Large Medkit (81)",
+                "Large Medkit (82)",
+                "Secret (73)",
+                "Mjolnir (74)",
+                "Secret Exit",
+            ],
+        )
+        self.connect(wall_secret_area, secret_exit_area, self.event("Barrier Lowered"))
+
+        past_silver_door_area = self.region(
+            "Past Silver Door",
+            [
+                "Small Medkit (80)",
+                "Small Medkit (29)",
+                "Secret (83)",
+                "Empathy (68)",
+                "Secret (30)",
+                "Invisibility (31)",
+                "Shells (54)",
+                "Lightning (84)",
+                "Shells (55)",
+                "Spikes (45)",
+                "Spikes (46)",
+                "Shells (47)",
+                "Shells (75)",
+                "Shells (76)",
+                "Spikes (24)",
+                "Shells (25)",
+                "Large Medkit (23)",
+                "Supernailgun (26)",
+                "Large Medkit (22)",
+                "Large Medkit (48)",
+                "Large Medkit (43)",
+                "Large Medkit (44)",
+                "Invulnerability (42)",
+                "Exit",
+                "Barrier Lowered",
+                "All Kills (86)",
+            ],
+        )
+        self.connect(ret, past_silver_door_area, self.silver_key)
+        self.restrict(
+            "Secret (83)", r.grenadelauncher | r.rocketlauncher | r.proximitygun
+        )
+        self.restrict(
+            "Empathy (68)", r.grenadelauncher | r.rocketlauncher | r.proximitygun
+        )
+        self.restrict("Secret (30)", r.can_shootswitch)
+        self.restrict("Invisibility (31)", r.can_shootswitch)
+        self.restrict("Barrier Lowered", r.can_shootswitch)
+        self.restrict(
+            "All Kills (86)", r.can_shootswitch & r.can_button & r.difficult_combat
+        )
+
+        return ret

@@ -5,22 +5,19 @@ from Options import PerGameCommonOptions, Choice, DeathLink, Range, Toggle, Defa
 
 class QuestRandomisation(Choice):
     """
-    Determine logic for quest randomisation
+    Determine logic for entrance randomisation
 
-    Off - Do not randomise quests
+    Off - Do not randomise entrances
 
-    Quests Only, Except X Potion Quest - Randomise every quest, except for the X Potion Quest
-
-    Quests Only - Rendomise every quest
+    Quests Only - Randomise every quest
 
     Quests and Rooms Separate - Randomise every quest and every room
 
     Everything - Randomise every quest and room together
     """
-    display_name = "Quest Randomisation"
+    display_name = "Entrance Randomisation"
 
     option_off = 0
-    option_quests_only_except_x_potion_quest = 1
     option_quests_only = 2
     option_quests_and_rooms_separate = 3
     option_everything = 4
@@ -156,7 +153,31 @@ class CreateHints(DefaultOnToggle):
     """Do you want to create hints when you first enter a shop?"""
     display_name = "Create Hints"
 
+class FontTrap(Range):
+    """The number of font traps made available in the item pool"""
+    display_name = "Font Traps"
+    range_start = 0
+    range_end = 5
+    default = 0
+
+class RandomiseTowerEntrance(DefaultOnToggle):
+    """
+    Determine whether the tower is affected by your entrance randomisation setting. Does not have any effect if entrance randomisation does not randomise rooms
+    """
+    display_name = "Randomise Tower Entrance"
+
+class RandomiseXPotion(DefaultOnToggle):
+    """
+    Determine whether the X Potion is affected by your entrance randomisation setting. Does not have any effect if entrance randomisation does not randomise quests
+    """
+    display_name = "Randomise X Potion"
+
 candy_box_2_options_groups = [
+    OptionGroup("Entrances", [
+        QuestRandomisation,
+        RandomiseTowerEntrance,
+        RandomiseXPotion
+    ]),
     OptionGroup("Inventory Customisation", [
         StartingWeapon,
         ProgressiveJump,
@@ -183,6 +204,8 @@ class CandyBox2Options(PerGameCommonOptions):
     progression_balancing = True
 
     quest_randomisation: QuestRandomisation
+    randomise_tower: RandomiseTowerEntrance
+    randomise_x_potion: RandomiseXPotion
     death_link: DeathLink
     starting_weapon: StartingWeapon
     progressive_jump: ProgressiveJump
@@ -200,3 +223,4 @@ class CandyBox2Options(PerGameCommonOptions):
     energy_link: EnergyLink
     gifting: Gifting
     scouting: CreateHints
+    font_traps: FontTrap

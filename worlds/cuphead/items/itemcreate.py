@@ -3,7 +3,7 @@ import math
 import typing
 from collections.abc import Iterable
 from random import Random
-from BaseClasses import Item, ItemClassification
+from BaseClasses import Item, ItemClassification, LocationProgressType
 from ..auxiliary import count_in_list
 from ..names import ItemNames, LocationNames
 from ..enums import WeaponMode, ItemGroups, ChaliceMode, CurseMode
@@ -39,6 +39,9 @@ def create_item_ext(
 
     return new_item
 
+def create_filler_item(world: CupheadWorld) -> Item:
+    return create_active_item(get_filler_item_name(world), world)
+
 def create_filler_items(world: CupheadWorld, filler_count: int) -> list[Item]:
     #print(f"Filler count: {filler_count}")
     rand = world.random
@@ -53,18 +56,13 @@ def create_filler_items(world: CupheadWorld, filler_count: int) -> list[Item]:
         #print(f"Total count so far: {len(_itempool)}")
         #print(f"Filler count: {filler_count}")
         #print(len(world.multiworld.precollected_items[world.player]))
-        _itempool += [create_active_item(get_filler_item_name(world), world) for _ in range(filler_count)]
+        _itempool += [create_filler_item(world) for _ in range(filler_count)]
 
     #print(f"Total count: {len(_itempool)}")
     return _itempool
 
 def create_traps(world: CupheadWorld, trap_count: int, wconf: WorldConfig, rand: Random) -> list[Item]:
-    trap_items = list(idef.item_trap.keys())
-    trap_item_weights = wconf.trap_weights
-
-    active_trap_weights = [
-        (trap, weight) for trap, weight in zip(trap_items, trap_item_weights, strict=True) if weight > 0
-    ]
+    active_trap_weights = wconf.trap_item_weights
 
     if not active_trap_weights:
         return []
@@ -94,6 +92,7 @@ def create_locked_item(
         location: str,
         force_classification: ItemClassification | None = None
     ):
+    #print(f"Create locked item: '{name}' at '{location}'")
     world.multiworld.get_location(location, world.player) \
         .place_locked_item(create_active_item(name, world, force_classification))
 def create_locked_items_at(
@@ -105,7 +104,7 @@ def create_locked_items_at(
     for loc in locations:
         if loc in world.active_locations.keys():
             create_locked_item(world, name, loc, force_classification)
-        elif world.settings.verbose:
+        elif world.settings.is_debug_bit_on(1):
             print(f"Skipped {name} for {loc}")
 
 def create_dlc_locked_items(world: CupheadWorld):
@@ -190,24 +189,40 @@ def compress_coins(coin_amounts: tuple[int, int, int], location_count: int) -> t
             break
     return (total_single_coins, total_double_coins, total_triple_coins)
 
+def create_start_weapons(world: CupheadWorld) -> set[str]:
+    wconf = world.wconfig
+    weapon_dict = weapons.get_weapon_dict(world.wconfig)
+    res: set[str] = set()
+
+    weapon = weapon_dict[wconf.start_weapon]
+
+    create_locked_item(world, weapon, LocationNames.loc_event_start_weapon, ItemClassification.progression)
+    res.add(weapon)
+    if LocationNames.loc_event_start_weapon_ex in world.active_locations:
+        if wconf.weapon_mode == WeaponMode.PROGRESSIVE_EXCEPT_START:
+            weapon_ex = weapons.weapon_p_dict[wconf.start_weapon]
+        elif wconf.weapon_mode == WeaponMode.EX_SEPARATE_EXCEPT_START:
+            weapon_ex = weapons.weapon_ex_dict[wconf.start_weapon]
+        else:
+            weapon_ex = ""
+        create_locked_item(world, weapon_ex, LocationNames.loc_event_start_weapon_ex, ItemClassification.progression)
+        res.add(weapon_ex)
+    return res
+
 def setup_weapon_pool(world: CupheadWorld, precollected_item_names: list[str]) -> list[str]:
     _weapons: list[str] = []
     _weapon_dict = weapons.get_weapon_dict(world.wconfig)
 
-    # Starter weapon
-    if world.wconfig.weapon_mode > 1:
-        _weapons = [x for x in set(idef.item_p_weapons.keys()) if x not in precollected_item_names]
+    _start_weapons = create_start_weapons(world)
+
+    _no_set = {*precollected_item_names, *_start_weapons}
+
+    _weapons = [x for x in set(_weapon_dict.values()) if x not in _no_set]
+
+    if (world.wconfig.weapon_mode & WeaponMode.EX_SEPARATE) > 0:
+        _weapons.extend([x for x in set(idef.item_weapon_ex.keys()) if x not in _no_set])
         if world.use_dlc:
-            _weapons.extend([x for x in set(idef.item_dlc_p_weapons.keys()) if x not in precollected_item_names])
-    else:
-        _weapons = [x for x in set(idef.item_weapons.keys()) if x not in precollected_item_names]
-        if world.use_dlc:
-            _weapons.extend([x for x in set(idef.item_dlc_weapons.keys()) if x not in precollected_item_names])
-    start_weapon_index = world.start_weapon
-    start_weapon = _weapon_dict[start_weapon_index]
-    if start_weapon in _weapons and world.wconfig.weapon_mode != WeaponMode.PROGRESSIVE:
-        #world.multiworld.push_precollected(create_active_item(start_weapon, world.player))
-        _weapons.remove(start_weapon)
+            _weapons.extend([x for x in set(idef.item_dlc_weapon_ex.keys()) if x not in _no_set])
 
     return _weapons
 
@@ -226,7 +241,8 @@ def create_coins(world: CupheadWorld, location_count: int, precollected_item_nam
                  coin_items: tuple[str, str, str]) -> list[Item]:
     res: list[Item] = []
     # Coins
-    coin_amounts = world.wconfig.coin_amounts # TODO: Start inventory from pool vs start inventory. Allow for extra coins depending on shop  # noqa: E501
+    # TODO: Start inventory from pool vs start inventory. Allow for extra coins depending on shop.
+    coin_amounts = world.wconfig.coin_amounts
     total_single_coins = coin_amounts[0]
     total_double_coins = coin_amounts[1]
     total_triple_coins = coin_amounts[2]
@@ -268,16 +284,17 @@ def create_items(world: CupheadWorld) -> None:
 
     create_locked_items(world)
 
+    # Setup Weapons including start weapons
+    weapons = setup_weapon_pool(world, precollected_item_names)
+
     #total_locations = len([x.name for x in world.multiworld.get_locations(world.player) if not x.is_event])
-    unfilled_locations = len([x.name for x in world.multiworld.get_unfilled_locations(world.player)])
+    unfilled_locations = [x for x in world.multiworld.get_unfilled_locations(world.player)]
+    unfilled_location_count = len(unfilled_locations)
     #print(total_locations)
     #print(unfilled_locations)
     # This can fail if someone uses plando
     # if total_locations != unfilled_locations:
     #     print("ERROR: unfilled locations mismatch total non-event locations")
-
-    # Setup Weapons with start weapon and progressive upgrade settings in mind
-    weapons = setup_weapon_pool(world, precollected_item_names)
 
     #print(weapons)
 
@@ -293,7 +310,7 @@ def create_items(world: CupheadWorld) -> None:
 
     if world.use_dlc and world.wconfig.dlc_chalice_items_separate:
         essential_items += list(idef.item_dlc_chalice_essential.keys())
-        #supers += list(items.item_dlc_chalice_super) # TODO: Investigate addding this later
+        #supers += list(items.item_dlc_chalice_super) # TODO: Investigate adding this later
 
     # Add the grouped fill items
     itempool += create_pool_items(world, essential_items, precollected_item_names)
@@ -307,12 +324,17 @@ def create_items(world: CupheadWorld) -> None:
     # Add special Items
     itempool += create_special_items(world, precollected_item_names)
 
+    excluded_location_count = len(
+        [x for x in unfilled_locations if x.progress_type == LocationProgressType.EXCLUDED]
+    )
+    minimum_filler = max(world.wconfig.minimum_filler, excluded_location_count)
+
     # Add Coins
-    leftover_locations = unfilled_locations - len(itempool) - world.wconfig.minimum_filler
+    leftover_locations = unfilled_location_count - len(itempool) - minimum_filler
 
     itempool += create_coins(world, leftover_locations, precollected_item_names, coin_items)
 
-    leftover_locations = unfilled_locations - len(itempool)
+    leftover_locations = unfilled_location_count - len(itempool)
     if (leftover_locations<0):
         print("Error: There are more items than locations!")
 

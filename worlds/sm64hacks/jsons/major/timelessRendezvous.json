@@ -32,6 +32,9 @@
 			"Requirements": [],
 			"ConditionalRequirements": []
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "0",
 		"Requirements": [],
 		"ConditionalRequirements": []
@@ -62,6 +65,9 @@
 		],
 		"Cannon": {
 			"exists": false
+		},
+		"Troll Star": {
+			"exists": false
 		}
 	},
 	"Course 3": {
@@ -90,6 +96,9 @@
 		],
 		"Cannon": {
 			"exists": false
+		},
+		"Troll Star": {
+			"exists": false
 		}
 	},
 	"Course 4": {
@@ -117,6 +126,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "0",
@@ -149,6 +161,9 @@
 		],
 		"Cannon": {
 			"exists": false
+		},
+		"Troll Star": {
+			"exists": false
 		}
 	},
 	"Course 6": {
@@ -176,6 +191,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		}
 	},
@@ -215,6 +233,9 @@
 		],
 		"Cannon": {
 			"exists": false
+		},
+		"Troll Star": {
+			"exists": false
 		}
 	},
 	"Course 8": {
@@ -242,6 +263,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "30",
@@ -280,6 +304,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "30",
 		"Requirements": [],
 		"ConditionalRequirements": []
@@ -316,6 +343,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "30",
 		"Requirements": [],
 		"ConditionalRequirements": []
@@ -345,6 +375,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "50",
@@ -393,6 +426,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "50",
 		"Requirements": [],
 		"ConditionalRequirements": []
@@ -432,6 +468,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "50",
@@ -475,6 +514,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "70",
 		"Requirements": [],
 		"ConditionalRequirements": []
@@ -504,6 +546,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "100",
@@ -540,6 +585,9 @@
 			"Requirements": [],
 			"ConditionalRequirements": []
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "30",
 		"Requirements": [],
 		"ConditionalRequirements": []
@@ -573,6 +621,9 @@
 			"StarRequirement": "0",
 			"Requirements": [],
 			"ConditionalRequirements": []
+		},
+		"Troll Star": {
+			"exists": false
 		},
 		"StarRequirement": "50",
 		"Requirements": [],
@@ -608,6 +659,9 @@
 			"Requirements": [],
 			"ConditionalRequirements": []
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "80",
 		"Requirements": [],
 		"ConditionalRequirements": []
@@ -642,6 +696,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "70",
 		"Requirements": [],
 		"ConditionalRequirements": []
@@ -671,6 +728,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "50",
@@ -710,6 +770,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "0",
 		"Requirements": [
 			"Vanish Cap"
@@ -742,6 +805,9 @@
 		],
 		"Cannon": {
 			"exists": false
+		},
+		"Troll Star": {
+			"exists": false
 		}
 	},
 	"Metal Cap": {
@@ -769,6 +835,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "0",
@@ -817,6 +886,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "0",
 		"Requirements": [
 			"Overworld Cannon"
@@ -855,6 +927,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "0",
 		"Requirements": [],
 		"ConditionalRequirements": []
@@ -888,6 +963,9 @@
 			"StarRequirement": "0",
 			"Requirements": [],
 			"ConditionalRequirements": []
+		},
+		"Troll Star": {
+			"exists": false
 		}
 	},
 	"Other": {
@@ -935,6 +1013,9 @@
 		"Settings": {
 			"cannons": true,
 			"prog_key": 0
+		},
+		"Troll Star": {
+			"exists": false
 		}
 	}
 }

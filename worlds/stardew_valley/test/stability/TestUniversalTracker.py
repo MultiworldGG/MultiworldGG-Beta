@@ -39,8 +39,6 @@ class TestUniversalTrackerGenerationIsStable(SVTestBase):
         args.plando_options = self.multiworld.plando_options
         args.game = self.multiworld.game
         args.name = self.multiworld.player_name
-        args.sprite = {}
-        args.sprite_pool = {}
         args.skip_output = True
 
         generated_multi_world = TrackerGameContext.TMain(fake_context, args, self.multiworld.seed)

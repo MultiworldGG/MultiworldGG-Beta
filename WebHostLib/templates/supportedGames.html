@@ -42,10 +42,21 @@
             </div>
             <p><a href="#" id="toggle-nsfw">Show NSFW games</a></p>
         </div>
+
+        <!-- Favorites Section -->
+        <div id="favorites-section" class="js-only" style="display: none;">
+            <h2>Favorite Games</h2>
+            <div id="favorites-list"></div>
+            <hr class="favorites-divider">
+        </div>
+
         {% for game_name in worlds | world_list_sorted(worlds=worlds) %}
         {% set world = worlds[game_name] %}
         <details data-game="{{ game_name }}" data-display-name="{{ world.web.display_name | default(game_name) }}" {% if world.web.rating == "nsfw" %} data-nsfw="true"{% endif %}>
-            <summary class="h2"> {{ world.web.display_name | default(game_name) }}</summary>
+            <summary class="h2">
+                {{ world.web.display_name | default(game_name) }}
+                <span class="star-icon" data-game="{{ game_name }}" title="Add to favorites">★</span>
+            </summary>
             {% if world.author %}
             <div class="author_credit">created by {{ world.author }}</div>
             {% endif %}

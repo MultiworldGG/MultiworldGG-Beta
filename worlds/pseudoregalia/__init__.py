@@ -1,5 +1,5 @@
 from worlds.AutoWorld import World, WebWorld
-from BaseClasses import Region, Tutorial
+from BaseClasses import Region, CollectionState, Tutorial
 from .Constants import GAME_NAME, AUTHOR, IGDB_ID
 from .items import PseudoregaliaItem, item_table, item_groups
 from .locations import PseudoregaliaLocation, location_table, zones
@@ -53,6 +53,36 @@ class PseudoregaliaWorld(World):
         data = item_table[name]
         return PseudoregaliaItem(name, data.classification, data.code, self.player)
 
+    def collect(self, state: CollectionState, item: PseudoregaliaItem) -> bool:
+        ret = super().collect(state, item)
+        name = item.name
+        # only adding the first Sun Greaves or Cling Gem actually matters
+        # to match how the game interprets these items
+        if name == "Sun Greaves" and state.count(name, self.player) == 1:
+            state.add_item("Kick Count", self.player, 3)
+        elif name in ("Heliacal Power", "Air Kick"):
+            state.add_item("Kick Count", self.player, 1)
+        elif name == "Cling Gem" and state.count(name, self.player) == 1:
+            state.add_item("Cling Count", self.player, 6)
+        elif name == "Cling Shard":
+            state.add_item("Cling Count", self.player, 2)
+        return ret
+
+    def remove(self, state: CollectionState, item: PseudoregaliaItem) -> bool:
+        ret = super().remove(state, item)
+        name = item.name
+        # only removing the last Sun Greaves or Cling Gem actually matters
+        # to match how the game interprets these items
+        if name == "Sun Greaves" and state.count(name, self.player) == 0:
+            state.remove_item("Kick Count", self.player, 3)
+        elif name in ("Heliacal Power", "Air Kick"):
+            state.remove_item("Kick Count", self.player, 1)
+        elif name == "Cling Gem" and state.count(name, self.player) == 0:
+            state.remove_item("Cling Count", self.player, 6)
+        elif name == "Cling Shard":
+            state.remove_item("Cling Count", self.player, 2)
+        return ret
+
     def create_items(self):
         itempool = []
         for item_name, item_data in item_table.items():
@@ -101,6 +131,7 @@ class PseudoregaliaWorld(World):
             "progressive_breaker": bool(self.options.progressive_breaker),
             "progressive_slide": bool(self.options.progressive_slide),
             "split_sun_greaves": bool(self.options.split_sun_greaves),
+            "split_cling_gem": bool(self.options.split_cling_gem),
             "randomize_time_trials": bool(self.options.randomize_time_trials),
             "randomize_goats": bool(self.options.randomize_goats),
             "randomize_chairs": bool(self.options.randomize_chairs),

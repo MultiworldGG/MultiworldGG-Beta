@@ -11,7 +11,7 @@ class Hylics2Web(WebWorld):
     theme = "ocean"
     tutorials = [Tutorial(
         "Multiworld Setup Guide",
-        "A guide to settings up the Hylics 2 randomizer connected to an MultiworldGG Multiworld",
+        "A guide to settings up the Hylics 2 randomizer connected to a MultiworldGG Multiworld",
         "English",
         "setup_en.md",
         "setup/en",

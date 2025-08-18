@@ -34,7 +34,7 @@
 5. Run `MultiworldGGGenerate.exe` from the `/MultiworldGG` folder.
 6. Upload the `AP_#######.zip` file from `/MultiworldGG/output` to [the MultiworldGG website](https://multiworld.gg/uploads) to host the game.
 
-## Joining an MultiworldGG Game in Against The Storm
+## Joining a MultiworldGG Game in Against The Storm
 * Optional: backup your save files located in `%userprofile%\AppData\LocalLow\Eremite Games\Against the Storm`
 1. Go to Thunderstore Mod Manager, open your Against the Storm profile with the Against the Storm for Archipelago mod, and click the blue Modded play button.
     * Optional: from the main menu, start a separate profile in the top right if you already have data in your default profile.

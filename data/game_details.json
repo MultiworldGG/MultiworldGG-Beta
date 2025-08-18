@@ -942,6 +942,47 @@
         "keywords": [],
         "release_date": 2021
     },
+    "Crystal Project": {
+        "igdb_id": "181444",
+        "world_name": "Crystal Project",
+        "igdb_name": "Crystal Project",
+        "us_rating": [
+            "E10+"
+        ],
+        "player_perspectives": [
+            "Third person",
+            "Bird view / Isometric"
+        ],
+        "genres": [
+            "Platform",
+            "Role-playing (RPG)",
+            "Adventure",
+            "Strategy",
+            "Turn-based strategy (TBS)",
+            "Indie",
+            "Tactical"
+        ],
+        "themes": [
+            "Fantasy",
+            "Mystery"
+        ],
+        "keywords": [
+            "character customization",
+            "3d",
+            "metroidvania",
+            "jrpg",
+            "voxel",
+            "class-based",
+            "atmospheric",
+            "pixel graphics",
+            "non-linear",
+            "party-based",
+            "turn-based combat",
+            "collectathon",
+            "party-based rpg"
+        ],
+        "release_date": 2022
+    },
     "Dark Souls II": {
         "igdb_id": "2368",
         "world_name": "Dark Souls II",
@@ -2668,6 +2709,41 @@
         ],
         "release_date": 1991
     },
+    "Mega Man 3": {
+        "igdb_id": "1735",
+        "world_name": "Mega Man 3",
+        "igdb_name": "Mega Man III",
+        "us_rating": [
+            "A",
+            "E",
+            "7"
+        ],
+        "player_perspectives": [
+            "Side view"
+        ],
+        "genres": [
+            "Platform",
+            "Shooter"
+        ],
+        "themes": [
+            "Action",
+            "Science fiction"
+        ],
+        "keywords": [
+            "future",
+            "robots",
+            "compilation",
+            "crime",
+            "sequel",
+            "high score",
+            "boss fight",
+            "super game boy enhancement",
+            "virtual console",
+            "film noir",
+            "fictional currencies"
+        ],
+        "release_date": 1992
+    },
     "MegaMan Battle Network 3": {
         "igdb_id": "1758",
         "world_name": "MegaMan Battle Network 3",
@@ -3140,6 +3216,40 @@
         ],
         "release_date": 2004
     },
+    "Path of Exile": {
+        "igdb_id": "1911",
+        "world_name": "Path of Exile",
+        "igdb_name": "Path of Exile",
+        "us_rating": [],
+        "player_perspectives": [],
+        "genres": [
+            "Role-playing (RPG)",
+            "Hack and slash/Beat 'em up",
+            "Adventure"
+        ],
+        "themes": [
+            "Action",
+            "Fantasy",
+            "Horror"
+        ],
+        "keywords": [
+            "bloody",
+            "magic",
+            "3d",
+            "free-to-play",
+            "leveling up",
+            "bink video",
+            "loot boxes",
+            "bow and arrow",
+            "active ability",
+            "potion",
+            "skill tree",
+            "mana",
+            "fast traveling",
+            "passive ability"
+        ],
+        "release_date": 2013
+    },
     "Peaks of Yore": {
         "igdb_id": "238690",
         "world_name": "Peaks of Yore",
@@ -3156,6 +3266,85 @@
         ],
         "keywords": [],
         "release_date": 2023
+    },
+    "Phantom Hourglass": {
+        "igdb_id": "1037",
+        "world_name": "The Legend of Zelda: Phantom Hourglass",
+        "igdb_name": "The Legend of Zelda: Phantom Hourglass",
+        "us_rating": [
+            "E"
+        ],
+        "player_perspectives": [
+            "Bird view / Isometric"
+        ],
+        "genres": [
+            "Puzzle",
+            "Adventure"
+        ],
+        "themes": [
+            "Action",
+            "Fantasy"
+        ],
+        "keywords": [
+            "pirates",
+            "exploration",
+            "minigames",
+            "mascot",
+            "death",
+            "action-adventure",
+            "fairy",
+            "backtracking",
+            "time limit",
+            "campaign",
+            "princess",
+            "sailing",
+            "amnesia",
+            "silent protagonist",
+            "easy",
+            "link",
+            "boss fight",
+            "single-player only",
+            "countdown timer",
+            "game critics awards",
+            "world map",
+            "human",
+            "polygonal 3d",
+            "shopping",
+            "bow and arrow",
+            "damsel in distress",
+            "transforming boss",
+            "collectibles",
+            "touch controls",
+            "virtual console",
+            "young protagonist",
+            "treasure chest",
+            "saving the world",
+            "side quests",
+            "potion",
+            "grapple",
+            "real-time combat",
+            "nintendo wi-fi connection",
+            "pack-in game",
+            "moving platforms",
+            "been here before",
+            "boss assistance",
+            "fetch quests",
+            "gesture-based controls",
+            "time stopping",
+            "fast traveling",
+            "context sensitive",
+            "nameless protagonist",
+            "cartography",
+            "second person perspective",
+            "naval warfare",
+            "comic relief",
+            "damage over time",
+            "dead multiplayer",
+            "monomyth",
+            "ds microphone use",
+            "friend codes"
+        ],
+        "release_date": 2007
     },
     "Placid Plastic Duck Simulator": {
         "igdb_id": "204122",
@@ -3353,6 +3542,49 @@
             "metroidvania"
         ],
         "release_date": 2023
+    },
+    "Quake": {
+        "igdb_id": "333",
+        "world_name": "Quake 1",
+        "igdb_name": "Quake",
+        "us_rating": [],
+        "player_perspectives": [
+            "First person"
+        ],
+        "genres": [
+            "Shooter"
+        ],
+        "themes": [
+            "Action",
+            "Science fiction",
+            "Horror",
+            "Historical",
+            "Comedy"
+        ],
+        "keywords": [
+            "aliens",
+            "arena",
+            "bloody",
+            "medieval",
+            "pvp",
+            "death",
+            "voxel",
+            "open-source",
+            "run and gun",
+            "steam",
+            "backtracking",
+            "lovecraftian",
+            "gore",
+            "shareware",
+            "portals",
+            "arena shooter",
+            "capture the flag",
+            "castle",
+            "silent protagonist",
+            "swimming",
+            "one-man army"
+        ],
+        "release_date": 1996
     },
     "Ratchet & Clank 2": {
         "igdb_id": "1770",

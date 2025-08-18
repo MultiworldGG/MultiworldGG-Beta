@@ -442,7 +442,7 @@ def get_location_data(world: "CV64World", active_locations: Iterable[Location]) 
             location_bytes[get_location_info(loc.name, "offset")] = 0x11
 
         # Figure out the item's appearance. If it's a CV64 player's item, change the multiworld item's model to
-        # match what it is. Otherwise, change it to an MultiworldGG progress or not progress icon. The model "change"
+        # match what it is. Otherwise, change it to a MultiworldGG progress or not progress icon. The model "change"
         # has to be applied to even local items because this is how the game knows to count it on the Countdown.
         if loc.item.game == "Castlevania 64":
             location_bytes[get_location_info(loc.name, "offset") - 1] = get_item_info(loc.item.name, "code")

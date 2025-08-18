@@ -119,7 +119,7 @@ QoLItems = [
         -1,
         "Fairy camera range has been increased, and the wall check has been removed to improve ease of taking photos.",
     ),
-    MultiselectorItem("Remove Enemy Cabin Timer", 24, "Removes the enemy 5-Door Cabin timer in Crystal Caves."),
+    MultiselectorItem("Remove Enemy Cabin Timer", 24, "Removes the timer to defeat the enemies in Diddy's Lower 5-Door Cabin in Crystal Caves."),
     MultiselectorItem(
         "Remove Galleon Ship Timers",
         6,
@@ -154,11 +154,11 @@ RemovedBarrierItems = [
     # MultiselectorItem("Galleon Shipwreck Gates", 4, "The gates to the two shipwrecks in Galleon will be permanently opened after activating their respective switches."),
     MultiselectorItem("Galleon Seasick Ship", 2, "The seasick ship in the lighthouse side of Galleon will be spawned."),
     MultiselectorItem("Galleon Treasure Room", -1, "The gate to treasure room in Galleon will be opened."),
-    MultiselectorItem("Forest Green Tunnel", 10, "The green tunnel at the start of Forest will have it's gates opened."),
+    MultiselectorItem("Forest Green Tunnel", 10, "The green tunnel to the beanstalk area will have it's gates opened."),
     MultiselectorItem("Forest Yellow Tunnel", 11, "The yellow tunnel to the owl tree area will have it's gate opened."),
     MultiselectorItem("Caves Igloo Pads", 3, "The pads to gain access to the five igloo rooms in Caves will be spawned."),
     MultiselectorItem("Caves Ice Walls", -1, "The various ice walls in Caves will be removed."),
-    MultiselectorItem("Castle Crypt Doors", -1, "The various doors in the crypt area of Creepy Castle will be removed."),
+    MultiselectorItem("Castle Crypt Doors", -1, "The various doors in the crypt and mausoleum areas of Creepy Castle will be removed."),
 ]
 FasterCheckItems = [
     MultiselectorItem("Factory Toy Monster Fight", -1, "The toy monster fight in Factory will remove the initial enemy killing phase."),
@@ -192,6 +192,22 @@ FasterCheckItems = [
         6,
         "DK Arcade will only consist of 2 screens rather than 4, with 75m being an excluded screen from appearing in the first two.",
     ),
+]
+RandomColorItems = [
+    MultiselectorItem("Enemies", -1, "Enemies will receive random colors. This excludes modifications to the 'Fireball with Glasses' Enemy."),
+    MultiselectorItem("Bosses", -1, "Bosses will receive random colors."),
+    MultiselectorItem("Playable Characters", -1, "Playable Characters (outside of the main kongs, rambi & enguarde) will receive random colors."),
+    MultiselectorItem("Friendly NPCs", -1, "Friendly NPCs will receive random colors."),
+    MultiselectorItem("Fire", -1, "Fire will be a random color. This includes modifying the 'Fireball with Glasses' Enemy."),
+    MultiselectorItem("Items", -1, "Items will receive random colors."),
+    MultiselectorItem(
+        "Barrels and Boulders",
+        -1,
+        "Barrels and Boulders will receive random colors. This does not impact the Kaboom and Klobber enemies as they fall under the enemies classification (There's a couple of other barrels which are impacted by the Kaboom and Klobber textures being randomized).",
+    ),
+    MultiselectorItem("Particles", -1, "Particle Effects will receive random colors."),
+    MultiselectorItem("Misc Objects", -1, "Miscellaneous Objects will receive random colors."),
+    MultiselectorItem("Environment", -1, "Environmental elements will receive random colors."),
 ]
 
 
@@ -234,3 +250,4 @@ CBRandoSelector = [
 QoLSelector = parseMultiselector(QoLItems)
 RemovedBarrierSelector = parseMultiselector(RemovedBarrierItems)
 FasterCheckSelector = parseMultiselector(FasterCheckItems)
+RandomColorSelector = parseMultiselector(RandomColorItems)

@@ -223,7 +223,7 @@ frazzleduck_bundle = BundleTemplate(CCRoom.bulletin_board, MemeBundleName.frazzl
 loser_club_items = [tuna]
 loser_club_bundle = FixedPriceBundleTemplate(CCRoom.bulletin_board, MemeBundleName.loser_club, loser_club_items, 1, 1)
 
-ministry_items = [item.as_amount(999) for item in [trash, joja_cola, broken_glasses, broken_glasses, soggy_newspaper]]
+ministry_items = [item.as_amount(999) for item in [trash, joja_cola, broken_glasses, broken_cd, soggy_newspaper]]
 ministry_bundle = BundleTemplate(CCRoom.bulletin_board, MemeBundleName.ministry_of_madness, ministry_items, 4, 1)
 
 pomnut_items = [pomegranate, hazelnut, carrot]
@@ -246,7 +246,7 @@ exhaustion_bundle = CurrencyBundleTemplate(CCRoom.vault, MemeBundleName.exhausti
 tick_tock_bundle = CurrencyBundleTemplate(CCRoom.vault, MemeBundleName.tick_tock, BundleItem(MemeCurrency.time, 1440))
 archipela_go_bundle = CurrencyBundleTemplate(CCRoom.vault, MemeBundleName.archipela_go, BundleItem(MemeCurrency.steps, 20000))
 clique_bundle = FixedPriceCurrencyBundleTemplate(CCRoom.vault, MemeBundleName.clique, BundleItem(MemeCurrency.clic, 1))
-cookie_clicker_bundle = CurrencyBundleTemplate(CCRoom.vault, MemeBundleName.cookie_clicker, BundleItem(MemeCurrency.cookies, 20000))  # ?
+cookie_clicker_bundle = CurrencyBundleTemplate(CCRoom.vault, MemeBundleName.cookie_clicker, BundleItem(MemeCurrency.cookies, 200000))
 communism_bundle = FixedPriceCurrencyBundleTemplate(CCRoom.vault, MemeBundleName.communism, BundleItem.money_bundle(1))
 death_bundle = FixedPriceCurrencyBundleTemplate(CCRoom.vault, MemeBundleName.death, death)
 flashbang_bundle = FixedPriceCurrencyBundleTemplate(CCRoom.vault, MemeBundleName.flashbang, BundleItem.money_bundle(0))

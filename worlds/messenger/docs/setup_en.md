@@ -49,7 +49,7 @@ These steps can also be followed to launch the game and check for mod updates af
 2. Navigate to `Options > Archipelago Options`
 3. Enter connection info using the relevant option buttons
     * **The game is limited to alphanumerical characters, `.`, and `-`.**
-    * This defaults to `archipelago.gg` and does not need to be manually changed if connecting to a game hosted on the
+    * This defaults to `multiworld.gg` and does not need to be manually changed if connecting to a game hosted on the
       website.
     * If using a name that cannot be entered in the in game menus, there is a config file (APConfig.toml) in the game
       directory. When using this, all connection information must be entered in the file. 

@@ -91,6 +91,16 @@
                                 {% elif issubclass(option, Options.OptionList) and option.valid_keys %}
                                     {{ inputs.OptionList(option_name, option) }}
 
+                                {% elif issubclass(option, Options.OptionList) %}
+                                    <div class="unsupported-option">
+                                        This option needs to be configured manually in the YAML file.
+                                    </div>
+
+                                {% elif issubclass(option, Options.OptionDict) %}
+                                    <div class="unsupported-option">
+                                        This option needs to be configured manually in the YAML file.
+                                    </div>
+
                                 {% elif issubclass(option, Options.LocationSet) and option.verify_location_name %}
                                     {{ inputs.LocationSet(option_name, option, world) }}
 
@@ -102,7 +112,7 @@
 
                                 {% else %}
                                     <div class="unsupported-option">
-                                        This option cannot be modified here. Please edit your .yaml file manually.
+                                        This option needs to be configured manually in the YAML file.
                                     </div>
 
                                 {% endif %}

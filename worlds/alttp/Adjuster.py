@@ -39,14 +39,18 @@ WINDOW_MIN_WIDTH = 425
 
 class AdjusterWorld(object):
     class AdjusterSubWorld(object):
-        def __init__(self, random):
+        def __init__(self, random, sprite_pool):
             self.random = random
+            # Create a mock options object with sprite_pool attribute
+            class MockOptions:
+                def __init__(self, sprite_pool):
+                    self.sprite_pool = sprite_pool
+            self.options = MockOptions(sprite_pool)
 
     def __init__(self, sprite_pool):
         import random
         self.sprite_pool = {1: sprite_pool}
-        self.per_slot_randoms = {1: random}
-        self.worlds = {1: self.AdjusterSubWorld(random)}
+        self.worlds = {1: self.AdjusterSubWorld(random, sprite_pool)}
 
 
 class ArgumentDefaultsHelpFormatter(argparse.RawTextHelpFormatter):
@@ -207,7 +211,7 @@ def main(launcher_args):
         persistent_store("adjuster", GAME_ALTTP, args)
 
 
-def adjust(args):
+def adjust(args, allow_random_on_event=False):
     start = time.perf_counter()
     init_logging("LttP Adjuster")
     logger = logging.getLogger('Adjuster')
@@ -240,7 +244,7 @@ def adjust(args):
 
     apply_rom_settings(rom, args.heartbeep, args.heartcolor, args.quickswap, args.menuspeed, args.music,
                        args.sprite, args.oof, palettes_options, reduceflashing=args.reduceflashing or racerom, world=world,
-                       deathlink=args.deathlink, allowcollect=args.allowcollect)
+                       allow_random_on_event=allow_random_on_event, deathlink=args.deathlink, allowcollect=args.allowcollect)
     os.makedirs(args.output, exist_ok=True)
     output_filename = f'{os.path.basename(args.rom)[:-4]}_adjusted.sfc'
     path = os.path.join(args.output, output_filename)
@@ -286,7 +290,9 @@ def adjustGUI():
     # --- Output Directory Frame ---
     outputDialogFrame = Frame(adjustWindow, padx=8, pady=2)
     outputLabel = Label(outputDialogFrame, text='Output Directory:')
-    outputDirVar = StringVar(value=local_path('output'))  # default value
+    # Load output path from saved settings, fallback to default if not saved
+    adjuster_settings = get_adjuster_settings(GAME_ALTTP)
+    outputDirVar = StringVar(value=getattr(adjuster_settings, 'output', local_path('output')))
     outputEntry = Entry(outputDialogFrame, textvariable=outputDirVar)
 
     def OutputSelect():
@@ -320,13 +326,44 @@ def adjustGUI():
         guiargs.rom = romVar2.get()
         guiargs.baserom = romVar.get()
         guiargs.output = outputDirVar.get()
-        guiargs.sprite = rom_vars.sprite
+        # Construct sprite string with random event flags if any are checked
+        sprite_name = rom_vars.sprite
+        if (rom_vars.randomSpriteOnHitVar.get() or rom_vars.randomSpriteOnEnterVar.get() or 
+            rom_vars.randomSpriteOnExitVar.get() or rom_vars.randomSpriteOnSlashVar.get() or 
+            rom_vars.randomSpriteOnItemVar.get() or rom_vars.randomSpriteOnBonkVar.get() or 
+            rom_vars.randomSpriteOnEverythingVar.get()):
+            
+            # Build random event flags
+            random_flags = []
+            if rom_vars.randomSpriteOnHitVar.get():
+                random_flags.append("hit")
+            if rom_vars.randomSpriteOnEnterVar.get():
+                random_flags.append("enter")
+            if rom_vars.randomSpriteOnExitVar.get():
+                random_flags.append("exit")
+            if rom_vars.randomSpriteOnSlashVar.get():
+                random_flags.append("slash")
+            if rom_vars.randomSpriteOnItemVar.get():
+                random_flags.append("item")
+            if rom_vars.randomSpriteOnBonkVar.get():
+                random_flags.append("bonk")
+            if rom_vars.randomSpriteOnEverythingVar.get():
+                random_flags = ["all"]
+            
+            # Construct the sprite string with random event flags
+            if random_flags:
+                sprite_name = f"randomon{''.join(random_flags)}"
+        
+        guiargs.sprite = sprite_name
         if rom_vars.sprite_pool:
             guiargs.world = AdjusterWorld(rom_vars.sprite_pool)
         guiargs.oof = rom_vars.oof
 
         try:
-            guiargs, path = adjust(args=guiargs)
+            # Always allow random on event if we have random flags
+            allow_random_on_event = bool(random_flags) if 'random_flags' in locals() else False
+            
+            guiargs, path = adjust(args=guiargs, allow_random_on_event=allow_random_on_event)
             if rom_vars.sprite_pool:
                 guiargs.sprite_pool = rom_vars.sprite_pool
                 delattr(guiargs, "world")
@@ -364,6 +401,14 @@ def adjustGUI():
             guiargs.sprite = rom_vars.sprite
         guiargs.sprite_pool = rom_vars.sprite_pool
         guiargs.oof = rom_vars.oof
+        # Save random event checkbox states using existing YAML option names
+        guiargs.random_sprite_on_hit = bool(rom_vars.randomSpriteOnHitVar.get())
+        guiargs.random_sprite_on_enter = bool(rom_vars.randomSpriteOnEnterVar.get())
+        guiargs.random_sprite_on_exit = bool(rom_vars.randomSpriteOnExitVar.get())
+        guiargs.random_sprite_on_slash = bool(rom_vars.randomSpriteOnSlashVar.get())
+        guiargs.random_sprite_on_item = bool(rom_vars.randomSpriteOnItemVar.get())
+        guiargs.random_sprite_on_bonk = bool(rom_vars.randomSpriteOnBonkVar.get())
+        guiargs.random_sprite_on_everything = bool(rom_vars.randomSpriteOnEverythingVar.get())
         persistent_store("adjuster", GAME_ALTTP, guiargs)
         messagebox.showinfo(title="Success", message="Settings saved to persistent storage")
 
@@ -397,7 +442,7 @@ def run_sprite_update():
 def update_sprites(task, on_finish=None, repository_url: str = "https://alttpr.com/sprites"):
     resultmessage = ""
     successful = True
-    sprite_dir = user_path("data", "sprites", "remote")
+    sprite_dir = user_path("data", "sprites", "alttp", "remote")
     os.makedirs(sprite_dir, exist_ok=True)
     ctx = get_cert_none_ssl_context()
 
@@ -690,7 +735,7 @@ def get_rom_options_frame(parent=None):
 
     def SpriteSelect():
         nonlocal vars
-        SpriteSelector(parent, set_sprite, spritePool=vars.sprite_pool)
+        SpriteSelector(romOptionsFrame, set_sprite, spritePool=vars.sprite_pool)
 
     spriteSelectButton = Button(spriteDialogFrame, text='...', command=SpriteSelect)
 
@@ -862,6 +907,52 @@ def get_rom_options_frame(parent=None):
     spritePoolSelectButton.pack(side=LEFT)
     spritePoolClearButton.pack(side=LEFT)
 
+    randomEventFrame = LabelFrame(romOptionsFrame, text="Random Sprite Events", padx=8, pady=8)
+    randomEventFrame.grid(row=6, column=0, columnspan=2, sticky=W+E, pady=(10, 0))
+    
+    infoLabel = Label(randomEventFrame, text="Configure when Link's sprite should change randomly during gameplay:")
+    infoLabel.pack(side=TOP, anchor=W, pady=(0, 5))
+    vars.random_sprite_on_hit = getattr(adjuster_settings, 'random_sprite_on_hit', False)
+    vars.random_sprite_on_enter = getattr(adjuster_settings, 'random_sprite_on_enter', False)
+    vars.random_sprite_on_exit = getattr(adjuster_settings, 'random_sprite_on_exit', False)
+    vars.random_sprite_on_slash = getattr(adjuster_settings, 'random_sprite_on_slash', False)
+    vars.random_sprite_on_item = getattr(adjuster_settings, 'random_sprite_on_item', False)
+    vars.random_sprite_on_bonk = getattr(adjuster_settings, 'random_sprite_on_bonk', False)
+    vars.random_sprite_on_everything = getattr(adjuster_settings, 'random_sprite_on_everything', False)
+    vars.randomSpriteOnHitVar = IntVar(value=vars.random_sprite_on_hit)
+    vars.randomSpriteOnEnterVar = IntVar(value=vars.random_sprite_on_enter)
+    vars.randomSpriteOnExitVar = IntVar(value=vars.random_sprite_on_exit)
+    vars.randomSpriteOnSlashVar = IntVar(value=vars.random_sprite_on_slash)
+    vars.randomSpriteOnItemVar = IntVar(value=vars.random_sprite_on_item)
+    vars.randomSpriteOnBonkVar = IntVar(value=vars.random_sprite_on_bonk)
+    vars.randomSpriteOnEverythingVar = IntVar(value=vars.random_sprite_on_everything)
+    checkboxFrame1 = Frame(randomEventFrame)
+    checkboxFrame1.pack(side=TOP, fill=X, pady=2)
+    
+    hitCheck = Checkbutton(checkboxFrame1, text="Hit", variable=vars.randomSpriteOnHitVar)
+    hitCheck.pack(side=LEFT, padx=(0, 10))
+    
+    enterCheck = Checkbutton(checkboxFrame1, text="Enter", variable=vars.randomSpriteOnEnterVar)
+    enterCheck.pack(side=LEFT, padx=(0, 10))
+    
+    exitCheck = Checkbutton(checkboxFrame1, text="Exit", variable=vars.randomSpriteOnExitVar)
+    exitCheck.pack(side=LEFT, padx=(0, 10))
+    
+    slashCheck = Checkbutton(checkboxFrame1, text="Slash", variable=vars.randomSpriteOnSlashVar)
+    slashCheck.pack(side=LEFT, padx=(0, 10))
+    
+    checkboxFrame2 = Frame(randomEventFrame)
+    checkboxFrame2.pack(side=TOP, fill=X, pady=2)
+    
+    itemCheck = Checkbutton(checkboxFrame2, text="Item", variable=vars.randomSpriteOnItemVar)
+    itemCheck.pack(side=LEFT, padx=(0, 10))
+    
+    bonkCheck = Checkbutton(checkboxFrame2, text="Bonk", variable=vars.randomSpriteOnBonkVar)
+    bonkCheck.pack(side=LEFT, padx=(0, 10))
+    
+    everythingCheck = Checkbutton(checkboxFrame2, text="Everything", variable=vars.randomSpriteOnEverythingVar)
+    everythingCheck.pack(side=LEFT, padx=(0, 10))
+
     vars.auto_apply = StringVar(value=adjuster_settings.auto_apply)
     autoApplyFrame = Frame(romOptionsFrame)
     autoApplyFrame.grid(row=9, column=0, columnspan=2, sticky=W)
@@ -942,40 +1033,11 @@ class SpriteSelector():
         button.pack(side=LEFT, padx=(0, 5))
         self.randomButtonText.set("Random")
 
-        self.randomOnEventText = StringVar()
-        self.randomOnHitVar = IntVar()
-        self.randomOnEnterVar = IntVar()
-        self.randomOnExitVar = IntVar()
-        self.randomOnSlashVar = IntVar()
-        self.randomOnItemVar = IntVar()
-        self.randomOnBonkVar = IntVar()
-        self.randomOnRandomVar = IntVar()
-        self.randomOnAllVar = IntVar()
 
-        if self.randomOnEvent:
-            self.buttonHit = Checkbutton(frame, text="Hit", command=self.update_random_button, variable=self.randomOnHitVar)
-            self.buttonHit.pack(side=LEFT, padx=(0, 5))
+        
 
-            self.buttonEnter = Checkbutton(frame, text="Enter", command=self.update_random_button, variable=self.randomOnEnterVar)
-            self.buttonEnter.pack(side=LEFT, padx=(0, 5))
 
-            self.buttonExit = Checkbutton(frame, text="Exit", command=self.update_random_button, variable=self.randomOnExitVar)
-            self.buttonExit.pack(side=LEFT, padx=(0, 5))
 
-            self.buttonSlash = Checkbutton(frame, text="Slash", command=self.update_random_button, variable=self.randomOnSlashVar)
-            self.buttonSlash.pack(side=LEFT, padx=(0, 5))
-
-            self.buttonItem = Checkbutton(frame, text="Item", command=self.update_random_button, variable=self.randomOnItemVar)
-            self.buttonItem.pack(side=LEFT, padx=(0, 5))
-
-            self.buttonBonk = Checkbutton(frame, text="Bonk", command=self.update_random_button, variable=self.randomOnBonkVar)
-            self.buttonBonk.pack(side=LEFT, padx=(0, 5))
-
-            self.buttonRandom = Checkbutton(frame, text="Random", command=self.update_random_button, variable=self.randomOnRandomVar)
-            self.buttonRandom.pack(side=LEFT, padx=(0, 5))
-
-            self.buttonAll = Checkbutton(frame, text="All", command=self.update_random_button, variable=self.randomOnAllVar)
-            self.buttonAll.pack(side=LEFT, padx=(0, 5))
 
         set_icon(self.window)
         self.window.focus()
@@ -1133,41 +1195,7 @@ class SpriteSelector():
             self.callback("link")
             self.add_to_sprite_pool("link")
 
-    def update_random_button(self):
-        if self.randomOnAllVar.get():
-            randomon = "all"
-            self.buttonHit.config(state=DISABLED)
-            self.buttonEnter.config(state=DISABLED)
-            self.buttonExit.config(state=DISABLED)
-            self.buttonSlash.config(state=DISABLED)
-            self.buttonItem.config(state=DISABLED)
-            self.buttonBonk.config(state=DISABLED)
-            self.buttonRandom.config(state=DISABLED)
-        elif self.randomOnRandomVar.get():
-            randomon = "random"
-            self.buttonHit.config(state=DISABLED)
-            self.buttonEnter.config(state=DISABLED)
-            self.buttonExit.config(state=DISABLED)
-            self.buttonSlash.config(state=DISABLED)
-            self.buttonItem.config(state=DISABLED)
-            self.buttonBonk.config(state=DISABLED)
-        else:
-            self.buttonHit.config(state=NORMAL)
-            self.buttonEnter.config(state=NORMAL)
-            self.buttonExit.config(state=NORMAL)
-            self.buttonSlash.config(state=NORMAL)
-            self.buttonItem.config(state=NORMAL)
-            self.buttonBonk.config(state=NORMAL)
-            self.buttonRandom.config(state=NORMAL)
-            randomon = "-hit" if self.randomOnHitVar.get() else ""
-            randomon += "-enter" if self.randomOnEnterVar.get() else ""
-            randomon += "-exit" if self.randomOnExitVar.get() else ""
-            randomon += "-slash" if self.randomOnSlashVar.get() else ""
-            randomon += "-item" if self.randomOnItemVar.get() else ""
-            randomon += "-bonk" if self.randomOnBonkVar.get() else ""
 
-        self.randomOnEventText.set(f"randomon{randomon}" if randomon else None)
-        self.randomButtonText.set("Random On Event" if randomon else "Random")
 
     def use_random_sprite(self):
         if not self.randomOnEvent:
@@ -1197,11 +1225,12 @@ class SpriteSelector():
 
     @property
     def remote_sprite_dir(self):
-        return user_path("data", "sprites", "remote")
+        return user_path("data", "sprites", "alttp", "remote")
 
     @property
     def custom_sprite_dir(self):
-        return user_path("data", "sprites", "custom")
+        return user_path("data", "sprites", "alttp", "custom")
+
 
 
 def get_image_for_sprite(sprite, gif_only: bool = False):

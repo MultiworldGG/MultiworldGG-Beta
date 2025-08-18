@@ -7,7 +7,7 @@
 - BepinEx (utilisé comme un modloader pour DLCQuest. La version du mod ci-dessus inclut BepInEx si vous choisissez la version d'installation complète)
 
 ## Logiciels optionnels
-- [MultiworldGG] (https://github.com/MultiworldGG/MultiworldGG/releases)
+- [MultiworldGG](https://github.com/MultiworldGG/MultiworldGG/releases)
     - (Uniquement pour le TextClient)
 
 ## Créer un fichier de configuration (.yaml)
@@ -52,4 +52,4 @@ Vous pouvez personnaliser vos paramètres en visitant la [page des paramètres d
 
 Vous ne pouvez pas envoyer de commandes au serveur ou discuter avec les autres joueurs depuis DLC Quest, car le jeu ne dispose pas d'un moyen approprié pour saisir du texte.
 Vous pouvez suivre l'activité du serveur dans votre console BepInEx, car les messages de chat d'Archipelago y seront affichés.
-Vous devrez utiliser [MultiworldGG Text Client] (https://github.com/MultiworldGG/MultiworldGG/releases) si vous voulez envoyer des commandes.
+Vous devrez utiliser [MultiworldGG Text Client](https://github.com/MultiworldGG/MultiworldGG/releases) si vous voulez envoyer des commandes.

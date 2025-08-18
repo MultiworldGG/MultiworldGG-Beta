@@ -319,6 +319,12 @@
     {% elif issubclass(option, Options.OptionList) and option.valid_keys %}
         {{ OptionList(option_name, option) }}
 
+    {% elif issubclass(option, Options.OptionList) %}
+        {{ ManualConfigOption(option_name, option) }}
+
+    {% elif issubclass(option, Options.OptionDict) %}
+        {{ ManualConfigOption(option_name, option) }}
+
     {% elif issubclass(option, Options.LocationSet) and option.verify_location_name %}
         {% if mass %}
             {{ MassLocationSet(option_name, option) }}
@@ -344,5 +350,14 @@
             <input type="checkbox" id="random-{{ option_name }}" name="random-{{ option_name }}" class="randomize-checkbox" data-option-name="{{ option_name }}" {{ "checked" if option.default == "random" }} />
             🎲
         </label>
+    </div>
+{% endmacro %}
+
+{% macro ManualConfigOption(option_name, option) %}
+    {{ OptionTitle(option_name, option) }}
+    <div class="manual-container">
+        <div class="manual-config-message">
+            This option needs to be configured manually in the YAML file.
+        </div>
     </div>
 {% endmacro %}

@@ -174,7 +174,7 @@ class MultiWorld():
             set_player_attr('completion_condition', lambda state: True)
         self.worlds = {}
         self.per_slot_randoms = Utils.DeprecateDict("Using per_slot_randoms is now deprecated. Please use the "
-                                                    "world's random object instead (usually self.random)")
+                                                    "world's random object instead (usually self.random)", True)
         self.plando_options = PlandoOptions.none
 
     def get_all_ids(self) -> Tuple[int, ...]:
@@ -219,16 +219,7 @@ class MultiWorld():
         self.seed_name = name if name else str(self.seed)
 
     def set_options(self, args: Namespace) -> None:
-        # TODO - remove this section once all worlds use options dataclasses
         from worlds import AutoWorld
-
-        all_keys: Set[str] = {key for player in self.player_ids for key in
-                              AutoWorld.AutoWorldRegister.world_types[self.game[player]].options_dataclass.type_hints}
-        for option_key in all_keys:
-            option = Utils.DeprecateDict(f"Getting options from multiworld is now deprecated. "
-                                         f"Please use `self.options.{option_key}` instead.", True)
-            option.update(getattr(args, option_key, {}))
-            setattr(self, option_key, option)
 
         for player in self.player_ids:
             world_type = AutoWorld.AutoWorldRegister.world_types[self.game[player]]
@@ -1591,7 +1582,7 @@ class ItemClassification(IntFlag):
 
     def as_flag(self) -> int:
         """As Network API flag int."""
-        return int(self)
+        return int(self & 0b00111)
 
 
 class Item:
@@ -1919,7 +1910,8 @@ class Spoiler:
             if self.unreachables:
                 outfile.write('\n\nUnreachable Progression Items:\n\n')
                 outfile.write(
-                    '\n'.join(['%s: %s' % (unreachable.item, unreachable) for unreachable in self.unreachables]))
+                    '\n'.join(['%s: %s' % (unreachable.item, unreachable)
+                               for unreachable in sorted(self.unreachables)]))
 
             if self.paths:
                 outfile.write('\n\nPaths:\n\n')
@@ -1940,13 +1932,13 @@ class Spoiler:
 class Tutorial(NamedTuple):
     """Class to build website tutorial pages from a .md file in the world's /docs folder. Order is as follows.
     Name of the tutorial as it will appear on the site. Concise description covering what the guide will entail.
-    Language the guide is written in. Name of the file ex 'setup_en.md'. Name of the link on the site; game name is
-    filled automatically so 'setup/en' etc. Author or authors."""
+    Language the guide is written in. Name of the file ex 'setup_en.md'. Legacy link format for backward compatibility
+    (e.g., 'setup/en'). Author or authors."""
     tutorial_name: str
     description: str
     language: str
     file_name: str
-    link: str
+    link: str  # Legacy link format for backward compatibility
     authors: List[str]
 
 

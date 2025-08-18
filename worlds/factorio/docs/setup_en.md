@@ -65,7 +65,7 @@ This guide uses the following terms to refer to the software:
 
 ### What a Playable State Looks Like
 
-- An MultiworldGG Server
+- a MultiworldGG Server
 - The generated Factorio Mod, created as a result of running `MultiworldGGGenerate.exe`
 - One running instance of `MultiworldGGFactorioClient.exe` (the MultiworldGG client) per Factorio world
 - A running modded Factorio Server, which should have been started by the MultiworldGG client automatically

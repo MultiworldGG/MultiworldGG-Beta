@@ -181,8 +181,3 @@ circular / partial imports. Instead, the code should fetch from settings on dema
 
 "Global" settings are populated immediately, while worlds settings are lazy loaded, so if really necessary,
 "global" settings could be used in global scope of worlds.
-
-
-### APWorld Backwards Compatibility
-
-APWorlds that want to be compatible with both stable and dev versions, have the option to add some sort of compatibility code to your world that mimics the new API

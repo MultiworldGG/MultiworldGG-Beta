@@ -19,7 +19,7 @@ ENDERLILIES = "Ender Lilies"
 class EnderLiliesWeb(WebWorld):
     setup_en = Tutorial(
         "Multiworld Setup Tutorial",
-        "A guide to setting up the Ender Lilies randomizer connected to an MultiworldGG Multiworld.",
+        "A guide to setting up the Ender Lilies randomizer connected to a MultiworldGG Multiworld.",
         "English",
         "setup_en.md",
         "setup/en",

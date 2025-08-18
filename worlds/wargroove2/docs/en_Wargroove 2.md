@@ -54,7 +54,7 @@ A contributor's guide can be found
 
 ## Unique Local Commands
 
-The following commands are only available when using the Wargroove2Client to play with Archipelago.
+The following commands are only available when using the Wargroove2Client to play with MultiworldGG.
 
 - `/resync` Manually trigger a resync.
 - `/commander` Set the current commander to the given commander.

@@ -25,7 +25,7 @@ class DOOM1993Item(Item):
 class DOOM1993Web(WebWorld):
     tutorials = [Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up the DOOM 1993 randomizer connected to an MultiworldGG Multiworld",
+        "A guide to setting up the DOOM 1993 randomizer connected to a MultiworldGG Multiworld",
         "English",
         "setup_en.md",
         "setup/en",

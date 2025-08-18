@@ -32,7 +32,7 @@ class MarioLand2Settings(settings.Group):
 class MarioLand2WebWorld(WebWorld):
     setup_en = Tutorial(
         "Multiworld Setup Guide",
-        "A guide to playing Super Mario Land 2 with Archipelago.",
+        "A guide to playing Super Mario Land 2 with MultiworldGG.",
         "English",
         "setup_en.md",
         "setup/en",

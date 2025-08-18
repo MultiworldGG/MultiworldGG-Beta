@@ -28,7 +28,7 @@
    In Game Settings, make sure **Enable Developer Console** is checked.
 
 
-5. You should now be good to go. See below for more details on how to use the mod and connect to an MultiworldGG game.
+5. You should now be good to go. See below for more details on how to use the mod and connect to a MultiworldGG game.
 
 
 ## Connecting to the MultiworldGG server

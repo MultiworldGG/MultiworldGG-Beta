@@ -41,7 +41,7 @@ class Z2Web(WebWorld):
     setup_en = Tutorial(
         "Multiworld Setup Guide",
         "A guide to setting up the Zelda 2 randomizer"
-        "and connecting to an MultiworldGG server.",
+        "and connecting to a MultiworldGG server.",
         "English",
         "setup_en.md",
         "setup/en",

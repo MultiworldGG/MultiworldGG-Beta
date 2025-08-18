@@ -11,7 +11,10 @@ def rule_has_all(items: Iterable[str]) -> RegionRule:
     return region_rule_has_all(items)
 
 region_begin: RegionData = RegionData(
-    "Menu", None, [Target(LocationNames.level_house)], flags=DefFlags.TGT_IGNORE_FREEMOVE
+    "Start",
+    [LocationNames.loc_event_start_weapon, LocationNames.loc_event_start_weapon_ex],
+    [Target(LocationNames.level_house)],
+    flags=DefFlags.TGT_IGNORE_FREEMOVE
 )
 region_house: RegionData = RegionData(LocationNames.level_house, None, [
         LevelTarget(LocationNames.level_tutorial),
@@ -114,7 +117,7 @@ region_dlc_worlds = [
 ]
 
 region_isle1 =  [
-    LevelRegionData(LocationNames.level_boss_veggies, [LocationNames.loc_event_isle1_secret_prereq1], #FIXME: Secret Prereq should stick to absolute location  # noqa: E501
+    LevelRegionData(LocationNames.level_boss_veggies, [LocationNames.loc_event_isle1_secret_prereq1],
         [LevelTarget(LocationNames.level_boss_frogs)]),
     LevelRegionData(LocationNames.level_boss_slime, [LocationNames.loc_event_isle1_secret_prereq2],
         [LevelTarget(LocationNames.level_boss_plane_blimp)]),

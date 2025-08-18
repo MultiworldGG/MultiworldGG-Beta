@@ -98,6 +98,9 @@
 # CrossCode
 /worlds/crosscode/ @CodeTriangle
 
+# Crystal Project
+/worlds/crystal_project/ @Emerassi
+
 # Cuphead
 /worlds/cuphead/ @JKLeckr
 
@@ -253,6 +256,8 @@
 # Mega Man 2
 /worlds/mm2/ @Silvris
 
+/worlds/mm3/ @Silvris
+
 # MegaMan Battle Network 3
 /worlds/mmbn3/ @digiholic
 
@@ -319,8 +324,14 @@
 # Paper Mario: TTYD
 /worlds/ttyd/ @jamesbrq
 
+# Path of Exile
+/worlds/poe/ @stubobis1
+
 # Peaks of Yore
 /worlds/peaks_of_yore/ @c0der23
+
+# Phantom Hourglass
+/worlds/tloz_ph/ @carrotinator
 
 # Placid Plastic Duck Simulator
 /worlds/placidplasticducksim/ @SWCreeperKing
@@ -345,6 +356,9 @@
 
 # Pseudoregalia 
 /worlds/pseudoregalia/ @qwint
+
+# Quake 1
+/worlds/quake/ @randomcodegen
 
 # Raft
 /worlds/raft/ @SunnyBat
@@ -468,7 +482,7 @@
 /worlds/tboir/ @Cyb3RGER
 
 # The Legend of Zelda (1)
-/worlds/tloz/ @Rosalie-A @t3hf1gm3nt
+/worlds/tloz/ @Rosalie-A
 
 # The Minish Cap
 /worlds/tmc/ @eternalcode0

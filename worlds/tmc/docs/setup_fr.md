@@ -27,7 +27,7 @@ lorsque vous êtes déconnecté d'EmuHawk.
 
 1. Créez votre fichier d'options (YAML). Vous pouvez en créer un sur
 [La page des options de Minish Cap](../../../games/The%20Minish%20Cap/player-options).
-2. Suivez les instructions générales de MultiworldGG pour [générer un jeu] (../../Archipelago/setup/en#generating-a-game).
+2. Suivez les instructions générales de MultiworldGG pour [générer un jeu](../../Archipelago/setup/en#generating-a-game).
 Cela générera un fichier de sortie pour vous. Votre fichier patch aura l'extension `.aptmc`.
 3. Ouvrez `MultiworldGGLauncher.exe`
 4. Sélectionnez « Open Patch » sur le côté gauche et sélectionnez votre fichier patch.

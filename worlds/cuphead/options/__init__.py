@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from random import Random
 from Options import PerGameCommonOptions, OptionGroup
 from . import optiondefs as odefs
 
@@ -11,13 +12,18 @@ class CupheadOptions(PerGameCommonOptions):
     start_weapon: odefs.StartWeapon
     weapon_mode: odefs.WeaponMode
     start_maxhealth: odefs.StartMaxHealth
+    start_maxhealth_p2: odefs.StartMaxHealthP2
     contract_requirements: odefs.ContractRequirements
     dlc_ingredient_requirements: odefs.DlcIngredientRequirements
     contract_goal_requirements: odefs.ContractGoalRequirements
     dlc_ingredient_goal_requirements: odefs.DlcIngredientGoalRequirements
     level_shuffle: odefs.LevelShuffle
+    level_shuffle_seed: odefs.LevelShuffleSeed
+    level_placements: odefs.LevelPlacements
     freemove_isles: odefs.FreeMoveIsles
+    #shop_mode: odefs.ShopMode
     deathlink: odefs.DeathLink
+    deathlink_grace_count: odefs.DeathLinkGraceCount
     #weapon_gate: odefs.WeaponGate
     randomize_abilities: odefs.RandomizeAbilities
     #randomize_abilities_aim: odefs.RandomizeAimAbilities
@@ -31,7 +37,7 @@ class CupheadOptions(PerGameCommonOptions):
     dlc_chess_chalice_checks: odefs.DlcChessChaliceChecks
     silverworth_quest: odefs.SilverworthQuest
     pacifist_quest: odefs.PacifistQuest
-    dlc_chalice: odefs.DlcChaliceEnabled
+    dlc_chalice: odefs.DlcChaliceMode
     dlc_chalice_items_separate: odefs.DlcChaliceItemsSeparate
     dlc_kingsleap: odefs.DlcChessCastle
     dlc_cactusgirl_quest: odefs.DlcCactusGirlQuest
@@ -49,6 +55,7 @@ class CupheadOptions(PerGameCommonOptions):
     trap_weight_superdrain: odefs.TrapWeightSuperDrain
     trap_weight_loadout: odefs.TrapWeightLoadout
     music_shuffle: odefs.MusicShuffle
+    ducklock_platdrop: odefs.DuckLockPlatDrop
 
 cuphead_option_groups = [
     OptionGroup("Main", [
@@ -60,17 +67,22 @@ cuphead_option_groups = [
         odefs.ContractRequirements,
         odefs.ContractGoalRequirements,
         odefs.StartMaxHealth,
+        odefs.StartMaxHealthP2,
         odefs.LevelShuffle,
+        odefs.LevelShuffleSeed,
+        odefs.LevelPlacements,
         odefs.FreeMoveIsles,
+        #odefs.ShopMode,
         #odefs.WeaponGate,
         odefs.RandomizeAbilities,
         #odefs.RandomizeAimAbilities,
         odefs.DeathLink,
+        odefs.DeathLinkGraceCount,
     ]),
     OptionGroup("DLC Main", [
         odefs.DlcIngredientRequirements,
         odefs.DlcIngredientGoalRequirements,
-        odefs.DlcChaliceEnabled,
+        odefs.DlcChaliceMode,
         odefs.DlcCurseMode,
     ]),
     OptionGroup("Checks", [
@@ -96,10 +108,11 @@ cuphead_option_groups = [
         odefs.Traps,
         odefs.DlcChaliceItemsSeparate,
     ]),
-    #OptionGroup("Misc", [
-    #    odefs.TrapLoadoutAnyWeapon,
-    #    odefs.MusicShuffle,
-    #]),
+    OptionGroup("Misc", [
+        odefs.DuckLockPlatDrop,
+        #odefs.TrapLoadoutAnyWeapon,
+        #odefs.MusicShuffle,
+    ]),
     OptionGroup("Item Weights", [
         odefs.FillerWeightExtraHealth,
         odefs.FillerWeightSuperRecharge,
@@ -110,3 +123,18 @@ cuphead_option_groups = [
         odefs.TrapWeightLoadout,
     ], True),
 ]
+
+def resolve_dependent_options(options: CupheadOptions) -> None:
+    if options.start_maxhealth_p2.value == 0:
+            options.start_maxhealth_p2.value = options.start_maxhealth.value
+
+def resolve_random_options(options: CupheadOptions, rand: Random) -> None:
+    # Resolve Random
+    if options.mode.value == -1:
+        options.mode.value = rand.randint(0,6 if options.use_dlc else 2)
+    if options.start_weapon.value == -1:
+        options.start_weapon.value = rand.randint(0,8 if options.use_dlc else 5)
+    if options.boss_grade_checks.value == -1:
+        options.boss_grade_checks.value = rand.randint(0,4 if options.use_dlc else 3)
+    if options.level_shuffle_seed.value == "":
+        options.level_shuffle_seed.value = "".join(rand.choices("0123456789", k=16))

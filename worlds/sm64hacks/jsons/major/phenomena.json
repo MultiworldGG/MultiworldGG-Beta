@@ -25,6 +25,9 @@
 		],
 		"Cannon": {
 			"exists": false
+		},
+		"Troll Star": {
+			"exists": false
 		}
 	},
 	"Course 2": {
@@ -52,6 +55,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "0",
@@ -90,6 +96,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "0",
 		"Requirements": [
 			"Wing Cap"
@@ -121,6 +130,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "15",
@@ -192,6 +204,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "15",
 		"Requirements": [
 			"Wing Cap"
@@ -225,6 +240,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "15",
 		"Requirements": [
 			"Wing Cap"
@@ -256,6 +274,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "15",
@@ -294,6 +315,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "35",
@@ -337,6 +361,9 @@
 			"Requirements": [],
 			"ConditionalRequirements": []
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "35",
 		"Requirements": [
 			"Wing Cap"
@@ -368,6 +395,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "35",
@@ -410,6 +440,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "35",
@@ -466,6 +499,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "35",
 		"Requirements": [
 			"Wing Cap"
@@ -513,6 +549,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "50",
 		"Requirements": [
 			"Wing Cap"
@@ -545,6 +584,9 @@
 		],
 		"Cannon": {
 			"exists": false
+		},
+		"Troll Star": {
+			"exists": false
 		}
 	},
 	"Course 15": {
@@ -573,6 +615,9 @@
 		],
 		"Cannon": {
 			"exists": false
+		},
+		"Troll Star": {
+			"exists": false
 		}
 	},
 	"Bowser 1": {
@@ -600,6 +645,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "50",
@@ -634,6 +682,9 @@
 		],
 		"Cannon": {
 			"exists": false
+		},
+		"Troll Star": {
+			"exists": false
 		}
 	},
 	"Bowser 3": {
@@ -661,6 +712,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "70",
@@ -699,6 +753,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "35",
 		"Requirements": [
 			"Wing Cap"
@@ -731,6 +788,9 @@
 		],
 		"Cannon": {
 			"exists": false
+		},
+		"Troll Star": {
+			"exists": false
 		}
 	},
 	"Secret 2": {
@@ -758,6 +818,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "0",
@@ -789,6 +852,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		}
 	},
@@ -854,6 +920,9 @@
 		"Cannon": {
 			"exists": false
 		},
+		"Troll Star": {
+			"exists": false
+		},
 		"StarRequirement": "50",
 		"Requirements": [
 			"Wing Cap"
@@ -885,6 +954,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "0",
@@ -924,6 +996,9 @@
 			}
 		],
 		"Cannon": {
+			"exists": false
+		},
+		"Troll Star": {
 			"exists": false
 		},
 		"StarRequirement": "0",
@@ -981,6 +1056,9 @@
 		],
 		"Cannon": {
 			"exists": false
+		},
+		"Troll Star": {
+			"exists": false
 		}
 	},
 	"Other": {
@@ -1034,6 +1112,9 @@
 		"Settings": {
 			"cannons": true,
 			"prog_key": 0
+		},
+		"Troll Star": {
+			"exists": false
 		}
 	}
 }

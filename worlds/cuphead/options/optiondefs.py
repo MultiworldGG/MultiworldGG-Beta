@@ -1,9 +1,5 @@
-from typing import ClassVar, Protocol
 from Options import Toggle, DefaultOnToggle, Range, Choice, OptionSet, FreeText, Visibility
-from .optionbase import ChoiceEx, Weight
-
-class CupheadOption(Protocol):
-    name: ClassVar[str]
+from .optionbase import ChoiceEx, Weight, LevelDict
 
 class Version(FreeText):
     """
@@ -11,7 +7,7 @@ class Version(FreeText):
     The version of the APWorld
     """
     name = "version"
-    display_name = name
+    display_name = "APWorld Version"
     visibility = Visibility.spoiler
     default = "MISSINGVER"
 
@@ -29,16 +25,17 @@ class GameMode(ChoiceEx):
     """
     name = "mode"
     display_name = "Mode"
-    option_beat_devil = 0
-    option_collect_contracts = 1
-    option_buy_out_shop = 2
-    option_dlc_beat_saltbaker = 3
-    option_dlc_beat_both = 4
-    option_dlc_collect_ingredients = 5
-    option_dlc_collect_both = 6
-    #option_dlc_beat_devil_no_isle4 = 7 # TODO: Modularize Goal
-    #option_dlc_beat_saltbaker_isle4_only = 8
-    default = 0
+    _isle_4_bit = 32
+    option_beat_devil = 1
+    option_collect_contracts = 2
+    option_buy_out_shop = 4
+    option_dlc_beat_saltbaker = 8
+    option_dlc_beat_both = 9
+    option_dlc_collect_ingredients = 16
+    option_dlc_collect_both = 18
+    #option_dlc_beat_devil_no_isle4 = 33 # TODO: Modularize Goal
+    #option_dlc_beat_saltbaker_isle4_only = 40
+    default = 1
 
 class HardLogic(Toggle):
     """
@@ -78,16 +75,23 @@ class StartWeapon(ChoiceEx):
 class WeaponMode(Choice):
     """
     Set how the weapons are shuffled in the pool.
-    Progressive turns the weapons in the pool into progressive weapons.
-
-    "Progressive" means that weapon EX is unlocked from having two of the same weapon.
+    Options:
+    - Normal: EX is part of the weapon you receive (vanilla behavior).
+    - Progressive: turns the weapons in the pool into progressive weapons (plane has a separate EX item).
+    - EX Separate makes each weapon's EX ability a separate item.
+    - ... Except Start: makes the start weapon have normal behavior.
+    Notes:
+    - "Progressive" means that weapon EX is unlocked from having two of the same weapon.
+    - A weapon EX item without the base weapon will give you a weapon that only can do EX shots.
     """
     name = "weapon_mode"
     display_name = "Weapon Mode"
-    option_normal = 1
-    option_progressive = 2
-    option_progressive_except_start = 3
-    default = 1
+    option_normal = 0
+    option_progressive = 1
+    option_progressive_except_start = 5
+    option_ex_separate = 2
+    option_ex_separate_except_start = 6
+    default = 0
 
 class ContractRequirements(Range):
     """
@@ -136,19 +140,38 @@ class DlcIngredientGoalRequirements(Range):
 
 class LevelShuffle(Choice):
     """
-    --NOT YET IMPLEMENTED--
+    --EXPERIMENTAL--
     Shuffle the Boss and Run n' Gun levels.
     Bosses and Run n' Guns are shuffled within their own group.
+    Note: Be careful with this option! This can easily break generation if used with plando.
     """
     name = "level_shuffle"
     display_name = "Level Shuffle"
-    visibility = Visibility.template | Visibility.spoiler
     option_disabled = 0
-    option_all_levels = 1
-    option_plane_levels_separate = 2
-    alias_false = 0
-    alias_true = 1
+    option_enabled = 1
+    option_plane_separate = 2
     default = 0
+
+class LevelShuffleSeed(FreeText):
+    """
+    Seed for Level Shuffle.
+    Leave blank to use a seed based on the multiworld's seed.
+    """
+    name = "level_shuffle_seed"
+    display_name = "Level Shuffle Seed"
+    visibility = Visibility.spoiler
+    default = ""
+
+class LevelPlacements(LevelDict):
+    """
+    Define which levels will be placed in which spots when shuffling the levels.
+    Note: Some levels cannot be shuffled, and some levels cannot be placed in specific spots.
+    Key: original, Value: new
+    """
+    name = "level_placements"
+    display_name = "Level Placements"
+    visibility = Visibility.spoiler | Visibility.template | Visibility.complex_ui
+    default: dict[str, str] = {}
 
 class FreeMoveIsles(Toggle):
     """
@@ -156,6 +179,18 @@ class FreeMoveIsles(Toggle):
     """
     name = "freemove_isles"
     display_name = "Free Move Isles"
+
+class ShopMode(Choice):
+    """
+    Set shop mode.
+    You get access to higher tiers the more shops you have access to.
+    """
+    name = "shop_mode"
+    display_name = "Shop Mode"
+    option_tiers = 0
+    #option_strict_tiers = 1
+    option_independent = 2
+    default = 0
 
 class WeaponGate(Toggle):
     """
@@ -221,25 +256,58 @@ class RunGunGradeChecks(Choice):
     alias_pacifist = 5
     default = 1
 
-class DlcBossChaliceChecks(Toggle):
+class DlcChaliceCheckGrade(Choice):
     """
     -DLC ONLY-
     -REQUIRES CHALICE-
     Enable checks for defeating each boss as Ms. Chalice.
+    Separate makes Chalice checks separate from level completion checks.
+    Grade Required has the set grade check requirement for bosses.
     """
-    name = "dlc_boss_chalice_checks"
-    display_name = "[DLC] Boss Chalice Checks"
+    name = "dlc_chalice_check_grade"
+    display_name = "[DLC] Chalice Check Grade Requirement"
+    option_disabled = 0
+    option_a_minus_grade = 1
+    option_a_grade = 2
+    option_a_plus_grade = 3
+    option_use_grade_check = 64
+    default = 0
 
-class DlcRunGunChaliceChecks(Toggle):
+class DlcBossChaliceChecks(Choice):
     """
     -DLC ONLY-
     -REQUIRES CHALICE-
-    Enable checks for completing each Run n' Gun as Ms. Chalice.
+    Enable checks for defeating each boss as Ms. Chalice.
+    Separate makes Chalice checks separate from level completion checks.
+    Grade Required has the set grade check requirement for bosses.
+    """
+    name = "dlc_boss_chalice_checks"
+    display_name = "[DLC] Boss Chalice Checks"
+    option_disabled = 0
+    option_enabled = 1
+    option_separate = 2
+    option_grade_required = 4
+    option_separate_grade_required = 6
+    default = 0
+
+class DlcRunGunChaliceChecks(Choice):
+    """
+    -DLC ONLY-
+    -REQUIRES CHALICE-
+    Enable checks for completing each run n' gun as Ms. Chalice.
+    Separate makes Chalice checks separate from level completion checks.
+    Grade Required has the set grade check requirement for run n' guns.
     """
     name = "dlc_rungun_chalice_checks"
-    display_name = "[DLC] Boss Chalice Checks"
+    display_name = "[DLC] Run n' Gun Chalice Checks"
+    option_disabled = 0
+    option_enabled = 1
+    option_separate = 2
+    option_grade_required = 4
+    option_separate_grade_required = 6
+    default = 0
 
-class DlcDicePalaceChaliceChecks(Toggle):
+class DlcDicePalaceChaliceChecks(Choice):
     """
     --NOT YET IMPLEMENTED--
     -DLC ONLY-
@@ -250,8 +318,12 @@ class DlcDicePalaceChaliceChecks(Toggle):
     name = "dlc_kingdice_chalice_checks"
     display_name = "[DLC] Kingdice Chalice Checks"
     visibility = Visibility.template | Visibility.spoiler
+    option_disabled = 0
+    option_enabled = 1
+    option_separate = 2
+    default = 0
 
-class DlcChessChaliceChecks(Toggle):
+class DlcChessChaliceChecks(Choice):
     """
     --NOT YET IMPLEMENTED--
     -DLC ONLY-
@@ -262,6 +334,10 @@ class DlcChessChaliceChecks(Toggle):
     name = "dlc_chess_chalice_checks"
     display_name = "[DLC] Chess Chalice Checks"
     visibility = Visibility.template | Visibility.spoiler
+    option_disabled = 0
+    option_enabled = 1
+    option_separate = 2
+    default = 0
 
 class SilverworthQuest(DefaultOnToggle):
     """
@@ -287,7 +363,7 @@ class DicePalaceBossSanity(Toggle):
     """
     name = "kingdice_bosssanity"
     display_name = "Kingdice BossSanity"
-    visibility = Visibility.template | Visibility.spoiler
+    visibility = Visibility.spoiler | Visibility.template
 
 class TrapLoadoutAnyWeapon(Toggle):
     """
@@ -298,7 +374,7 @@ class TrapLoadoutAnyWeapon(Toggle):
     display_name = "Loadout Mixup Any Item"
     visibility = Visibility.spoiler
 
-class DlcChaliceEnabled(Choice):
+class DlcChaliceMode(Choice):
     """
     -DLC ONLY-
     Enable Ms. Chalice and the Astral Cookie.
@@ -314,7 +390,7 @@ class DlcChaliceEnabled(Choice):
     option_start = 1
     option_vanilla = 2
     option_randomized = 3
-    # - Chalice Only: Play as only Ms. Chalice. Cookie is not considered an item.
+    #- Chalice Only: Play as only Ms. Chalice. Cookie is not considered an item.
     #option_chalice_only = 4
     default = 3
 
@@ -336,7 +412,7 @@ class DlcChaliceItemsSeparate(OptionSet):
     display_name = "[DLC] Chalice Items Separate"
     #visibility = Visibility.complex_ui
     visibility = Visibility.spoiler
-    valid_keys = frozenset({"core_items", "weapon_ex", "abilities"}) # TODO: Finish
+    valid_keys = frozenset({"core_items", "abilities"}) # TODO: Finish
     valid_keys_casefold = True
 
 class DlcChessCastle(Choice):
@@ -405,6 +481,17 @@ class StartMaxHealth(Range):
     range_start = 1
     range_end = 4
     default = 3
+
+class StartMaxHealthP2(Range):
+    """
+    Set starting max health for Player 2. Set to 0 to use Player 1's max health.
+    NOTE: Health cannot be any higher than 9, so health charms would be less useful at higher health amounts.
+    """
+    name = "start_maxhealth_p2"
+    display_name = "Starting Max Health"
+    range_start = 0
+    range_end = 4
+    default = 0
 
 class MaxHealthUpgrades(Range):
     """
@@ -519,13 +606,23 @@ class MusicShuffle(Choice):
     """
     name = "music_shuffle"
     display_name = "Music Shuffle"
-    visibility = Visibility.none
+    visibility = Visibility.spoiler
     option_disabled = 0
     option_level_music = 1
     option_map_music = 2
     option_level_and_map_music = 3
     #option_all_music = 255
     default = 0
+
+class DuckLockPlatDrop(Toggle):
+    """
+    Allow the dropping-down-platforms-without-duck-by-using-aim-lock exploit.
+    This option re-enables that bug that the mod had before alpha02.
+    This "feature" is purely client-side and does not affect logic.
+    """
+    name = "ducklock_platdrop"
+    display_name = "DuckLock PlatDrop"
+    visibility = Visibility.spoiler | Visibility.template | Visibility.complex_ui
 
 class DeathLink(Toggle):
     """
@@ -534,3 +631,30 @@ class DeathLink(Toggle):
     """
     name = "deathlink"
     display_name = "Death Link"
+
+class DeathLinkMode(Toggle):
+    """
+    -REQUIRES DEATHLINK-
+    Set DeathLink Mode.
+
+    Modes:
+    - Lose: Both players dying triggers DeathLink. Same in reverse.
+    - Per Player: Each player's death will trigger DeathLink. Receiving a DeathLink will kill a random player.
+
+    NOTE: Per Player will behave like Lose if playing singleplayer.
+    """
+    name = "deathlink_mode"
+    display_name = "Death Link Mode"
+    option_lose = 0
+    option_per_player = 1
+
+class DeathLinkGraceCount(Range):
+    """
+    -REQUIRES DEATHLINK-
+    Set DeathLink Grace Count. Each "Grace" grants you a free Death without triggering DeathLink.
+    """
+    name = "deathlink_grace_count"
+    display_name = "Death Link Grace Count"
+    range_start = 0
+    range_end = 9
+    default = 0

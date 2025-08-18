@@ -305,11 +305,11 @@ class ZorkGrandInquisitorContext(CommonClient.CommonContext):
                 if self.process_attached_at_least_once:
                     process_message = (
                         "Connection to the Zork Grand Inquisitor process was lost. Ensure that you are connected "
-                        "to an MultiworldGG or AP server and the game is running, then use the /zork command to reconnect."
+                        "to a MultiworldGG or AP server and the game is running, then use the /zork command to reconnect."
                     )
                 else:
                     process_message = (
-                        "To start playing, connect to an MultiworldGG or AP server and use the /zork command to "
+                        "To start playing, connect to a MultiworldGG or AP server and use the /zork command to "
                         "link to an active Zork Grand Inquisitor process."
                     )
 

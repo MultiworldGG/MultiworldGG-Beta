@@ -559,11 +559,6 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
         handle_option(ret, game_weights, option_key, option, plando_options)
         valid_keys.add(option_key)
 
-    if ret.game == "A Link to the Past":
-        # TODO there are still more LTTP options not on the options system
-        valid_keys |= {"sprite_pool", "sprite", "random_sprite_on_event"}
-        roll_alttp_settings(ret, game_weights)
-
     # log a warning for options within a game section that aren't determined as valid
     for option_key in game_weights:
         if option_key in valid_keys:
@@ -573,30 +568,6 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
 
     return ret
 
-
-def roll_alttp_settings(ret: argparse.Namespace, weights):
-    ret.sprite_pool = weights.get('sprite_pool', [])
-    ret.sprite = get_choice_legacy('sprite', weights, "Link")
-    if 'random_sprite_on_event' in weights:
-        randomoneventweights = weights['random_sprite_on_event']
-        if get_choice_legacy('enabled', randomoneventweights, False):
-            ret.sprite = 'randomon'
-            ret.sprite += '-hit' if get_choice_legacy('on_hit', randomoneventweights, True) else ''
-            ret.sprite += '-enter' if get_choice_legacy('on_enter', randomoneventweights, False) else ''
-            ret.sprite += '-exit' if get_choice_legacy('on_exit', randomoneventweights, False) else ''
-            ret.sprite += '-slash' if get_choice_legacy('on_slash', randomoneventweights, False) else ''
-            ret.sprite += '-item' if get_choice_legacy('on_item', randomoneventweights, False) else ''
-            ret.sprite += '-bonk' if get_choice_legacy('on_bonk', randomoneventweights, False) else ''
-            ret.sprite = 'randomonall' if get_choice_legacy('on_everything', randomoneventweights, False) else ret.sprite
-            ret.sprite = 'randomonnone' if ret.sprite == 'randomon' else ret.sprite
-
-            if (not ret.sprite_pool or get_choice_legacy('use_weighted_sprite_pool', randomoneventweights, False)) \
-                    and 'sprite' in weights:  # Use sprite as a weighted sprite pool, if a sprite pool is not already defined.
-                for key, value in weights['sprite'].items():
-                    if key.startswith('random'):
-                        ret.sprite_pool += ['random'] * int(value)
-                    else:
-                        ret.sprite_pool += [key] * int(value)
 
 if __name__ == '__main__':
     import atexit

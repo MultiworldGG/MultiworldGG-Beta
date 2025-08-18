@@ -1,6 +1,6 @@
 # MultiworldGG General Client
 ## MultiworldGG Connection Handshake
-These steps should be followed in order to establish a gameplay connection with an MultiworldGG session.
+These steps should be followed in order to establish a gameplay connection with a MultiworldGG session.
 
 1. Client establishes WebSocket connection to MultiworldGG server.
 2. Server accepts connection and responds with a [RoomInfo](#RoomInfo) packet.
@@ -71,7 +71,7 @@ These packets are sent from the multiworld server to the client. They are not me
 * [SetReply](#SetReply)
 
 ### RoomInfo
-Sent to clients when they connect to an MultiworldGG server.
+Sent to clients when they connect to a MultiworldGG server.
 #### Arguments
 | Name                  | Type                                          | Notes                                                                                                                                                                                                                                 |
 |-----------------------|-----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -287,7 +287,7 @@ These packets are sent purely from client to server. They are not accepted by cl
 * [SetNotify](#SetNotify)
 
 ### Connect
-Sent by the client to initiate a connection to an MultiworldGG game session.
+Sent by the client to initiate a connection to a MultiworldGG game session.
 
 #### Arguments
 | Name           | Type                              | Notes                                                                                        |

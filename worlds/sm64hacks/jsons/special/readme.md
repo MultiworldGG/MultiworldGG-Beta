@@ -1,4 +1,4 @@
-#What are these JSONs?
+# What are these JSONs?
 
 These are the JSONs for games with special features, which aren't in most games.
 Specifically:

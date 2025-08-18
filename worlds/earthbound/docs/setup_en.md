@@ -10,9 +10,16 @@
         - snes9x-rr from: [snes9x rr](https://github.com/gocha/snes9x-rr/releases),
         - BizHawk from: [TASVideos](https://tasvideos.org/BizHawk)
         - snes9x-nwa from: [snes9x nwa](https://github.com/Skarsnik/snes9x-emunwa/releases)
+        - RetroArch 1.10.3 or newer from: RetroArch Website
+        - You can additionally use the FX Pack Pro, however some issues with it have been reported and it is not officially recommended.
     
 - Your legally obtained EarthBound English ROM file, probably named `EarthBound (USA).sfc`
 
+## Optional Software
+- EarthBound Archipelago Poptracker Pack
+	- PopTracker from: [PopTracker Releases Page](https://github.com/black-sliver/PopTracker/releases/)
+	- EarthBound Archipelago PopTracker pack from: [EarthBound AP Tracker Releases Page](https://github.com/PinkSwitch/earthbound_poptracker/releases/tag/ebpoptracker1.0)
+    - todo finish the sprite converter and put it here
 
 ## Installation Procedures
 
@@ -92,7 +99,7 @@ the lua you are using in your file explorer and copy the `socket.dll` to the bas
 
 ### Connect to the MultiworldGG Server
 
-The patch file which launched your client should have automatically connected you to the AP Server. There are a few
+The patch file which launched your client should have automatically connected you to the MWGG Server. There are a few
 reasons this may not happen however, including if the game is hosted on the website but was generated elsewhere. If the
 client window shows "Server Status: Not Connected", simply ask the host for the address of the server, and copy/paste it
 into the "Server" input field then press enter.

@@ -1,7 +1,7 @@
 # Setup Guide for Twilight Princess MultiworldGG
 
 Welcome to Twilight Princess MultiworldGG! This guide will help you set up the randomizer and play your first multiworld.
-Whether playing, generating, or hosting an MultiworldGG room with Twilight Princess, you must follow a few simple steps to
+Whether playing, generating, or hosting a MultiworldGG room with Twilight Princess, you must follow a few simple steps to
 get started.
 
 Unfortunately, Mac OS is not officially supported at this time.

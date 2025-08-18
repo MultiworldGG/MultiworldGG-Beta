@@ -433,9 +433,6 @@ def mark_light_world_regions(multiworld, player: int):
         current = queue.popleft()
         current.is_light_world = True
         for exit in current.exits:
-            if exit.connected_region is None:
-                logger.info(f"[DEBUG] mark_light_world_regions() - exit.connected_region is None for {exit}")
-                continue
             if exit.connected_region.type == LTTPRegionType.DarkWorld:
                 # Don't venture into the dark world
                 continue

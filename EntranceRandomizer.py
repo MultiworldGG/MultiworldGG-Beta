@@ -32,15 +32,7 @@ def parse_arguments(argv, no_defaults=False):
                              --seed given will produce the same 10 (different) roms each
                              time).
                              ''', type=int)
-    parser.add_argument('--sprite', help='''\
-                             Path to a sprite sheet to use for Link. Needs to be in
-                             binary format and have a length of 0x7000 (28672) bytes,
-                             or 0x7078 (28792) bytes including palette data.
-                             Alternatively, can be a ALttP Rom patched with a Link
-                             sprite that will be extracted.
-                             ''')
-    parser.add_argument('--sprite_pool', help='''\
-    Specifies a colon separated list of sprites used for random/randomonevent. If not specified, the full sprite pool is used.''')
+
     parser.add_argument('--multi', default=defval(1), type=lambda value: max(int(value), 1))
     parser.add_argument('--names', default=defval(''))
     parser.add_argument('--outputpath')
@@ -60,7 +52,7 @@ def parse_arguments(argv, no_defaults=False):
         for player in range(1, multiargs.multi + 1):
             playerargs = parse_arguments(shlex.split(getattr(ret, f"p{player}")), True)
 
-            for name in ["game", "sprite", "sprite_pool"]:
+            for name in ["game"]:
                 value = getattr(defaults, name) if getattr(playerargs, name) is None else getattr(playerargs, name)
                 if player == 1:
                     setattr(ret, name, {1: value})

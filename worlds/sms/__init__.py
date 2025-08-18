@@ -19,7 +19,7 @@ class SmsWebWorld(WebWorld):
     theme = "ocean"
     tutorials = [Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up the Super Mario Sunshine randomizer connected to an MultiworldGG world",
+        "A guide to setting up the Super Mario Sunshine randomizer connected to a MultiworldGG world",
         "English",
         "setup_en.md",
         "setup/en",

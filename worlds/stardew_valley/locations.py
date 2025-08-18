@@ -10,7 +10,6 @@ from .content.game_content import StardewContent
 from .content.vanilla.ginger_island import ginger_island_content_pack
 from .content.vanilla.qi_board import qi_board_content_pack
 from .data.game_item import ItemTag
-from .data.hats_data import Hats
 from .data.museum_data import all_museum_items
 from .mods.mod_data import ModNames
 from .options import ArcadeMachineLocations, SpecialOrderLocations, Museumsanity, \
@@ -409,12 +408,12 @@ def extend_backpack_locations(randomized_locations: List[LocationData], options:
     if options.backpack_progression == BackpackProgression.option_vanilla:
         return
 
+    no_start_tools = options.tool_progression & ToolProgression.value_no_starting_tools
     if options.backpack_size == BackpackSize.option_12:
-        backpack_locations = [location for location in locations_by_tag[LocationTags.BACKPACK_TIER]]
+        backpack_locations = [location for location in locations_by_tag[LocationTags.BACKPACK_TIER] if no_start_tools or LocationTags.STARTING_TOOLS not in location.tags]
     else:
         num_per_tier = options.backpack_size.count_per_tier()
-        backpack_tier_names = Backpack.get_purchasable_tiers(ModNames.big_backpack in content.registered_packs,
-                                                             options.tool_progression & ToolProgression.value_no_starting_tools)
+        backpack_tier_names = Backpack.get_purchasable_tiers(ModNames.big_backpack in content.registered_packs, no_start_tools)
         backpack_locations = []
         for tier in backpack_tier_names:
             for i in range(1, num_per_tier + 1):
@@ -586,15 +585,11 @@ def extend_hats_locations(randomized_locations: List[LocationData], content: Sta
     if not hatsanity.is_enabled:
         return
 
-    museum_hats = [Hats.blue_bonnet, Hats.cowboy]
-
     for hat in content.hats.values():
         if not hatsanity.is_included(hat):
             continue
-        if not content.features.museumsanity.is_enabled and hat in museum_hats:
-            continue
 
-        randomized_locations.append(location_table[hat.to_location_name()])
+        randomized_locations.append(location_table[hatsanity.to_location_name(hat)])
 
 
 def eatsanity_item_is_included(location: LocationData, options: StardewValleyOptions, content: StardewContent) -> bool:

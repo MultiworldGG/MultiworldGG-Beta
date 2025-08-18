@@ -19,6 +19,7 @@ from CommonClient import CommonContext, server_loop, ClientCommandProcessor, gui
 
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
+from settings import Settings
 from Utils import async_start
 from MultiServer import mark_raw
 if typing.TYPE_CHECKING:
@@ -286,7 +287,7 @@ class SNESState(enum.IntEnum):
 
 
 def launch_sni() -> None:
-    sni_path = Utils.get_settings()["sni_options"]["sni_path"]
+    sni_path = Settings.sni_options.sni_path
 
     if not os.path.isdir(sni_path):
         sni_path = Utils.local_path(sni_path)
@@ -669,8 +670,7 @@ async def game_watcher(ctx: SNIContext) -> None:
 
 
 async def run_game(romfile: str) -> None:
-    auto_start = typing.cast(typing.Union[bool, str],
-                             Utils.get_settings()["sni_options"].get("snes_rom_start", True))
+    auto_start = Settings.sni_options.snes_rom_start
     if auto_start is True:
         import webbrowser
         webbrowser.open(romfile)

@@ -1,6 +1,8 @@
 import logging
 import math
 import typing
+from collections import Counter
+from functools import wraps
 from random import Random
 from typing import Dict, List, Any, ClassVar, TextIO, Optional
 
@@ -12,9 +14,12 @@ from worlds.LauncherComponents import components, Component, icon_paths, Type
 from .bundles.bundle_room import BundleRoom
 from .bundles.bundles import get_all_bundles, get_trash_bear_requests
 from .content import StardewContent, create_content
+from .content.feature.special_order_locations import get_qi_gem_amount
+from .content.feature.walnutsanity import get_walnut_amount
 from .items import item_table, ItemData, Group, items_by_group, create_items, generate_filler_choice_pool, \
     setup_early_items
 from .locations import location_table, create_locations, LocationData, locations_by_tag
+from .logic.combat_logic import valid_weapons
 from .logic.logic import StardewLogic
 from .options import StardewValleyOptions, SeasonRandomization, Goal, BundleRandomization, EnabledFillerBuffs, \
     NumberOfMovementBuffs, BuildingProgression, EntranceRandomization, FarmType, ToolProgression, BackpackProgression, TrapDistribution, BundlePrice, \
@@ -28,6 +33,7 @@ from .options.worlds_group import apply_most_restrictive_options
 from .regions import create_regions, prepare_mod_data
 from .rules import set_rules
 from .stardew_rule import True_, StardewRule, HasProgressionPercent
+from .strings.ap_names.ap_weapon_names import APWeapon
 from .strings.ap_names.event_names import Event
 from .strings.goal_names import Goal as GoalName
 from .Constants import GAME_NAME, AUTHOR, IGDB_ID
@@ -47,6 +53,12 @@ class StardewLocation(Location):
 
 class StardewItem(Item):
     game: str = STARDEW_VALLEY
+    events_to_collect: Counter[str]
+
+    @wraps(Item.__init__)
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.events_to_collect = Counter()
 
 
 class StardewWebWorld(WebWorld):
@@ -55,15 +67,25 @@ class StardewWebWorld(WebWorld):
     options_presets = sv_options_presets
     option_groups = sv_option_groups
 
-    tutorials = [
-        Tutorial(
-            "Multiworld Setup Guide",
-            "A guide to playing Stardew Valley with Archipelago.",
-            "English",
-            "setup_en.md",
-            "setup/en",
-            ["KaitoKid", "Jouramie", "Witchybun (Mod Support)", "Exempt-Medic (Proofreading)"]
-        )]
+    setup_en = Tutorial(
+        "Multiworld Setup Guide",
+        "A guide to playing Stardew Valley with MultiworldGG.",
+        "English",
+        "setup_en.md",
+        "setup/en",
+        ["KaitoKid", "Jouramie", "Witchybun (Mod Support)", "Exempt-Medic (Proofreading)"]
+    )
+
+    setup_fr = Tutorial(
+        "Guide de configuration MultiWorld",
+        "Un guide pour configurer Stardew Valley sur MultiworldGG",
+        "Français",
+        "setup_fr.md",
+        "setup/fr",
+        ["Eindall"]
+    )
+
+    tutorials = [setup_en, setup_fr]
 
 
 if TRACKER_ENABLED:
@@ -124,7 +146,7 @@ class StardewValleyWorld(World):
     trash_bear_requests: Dict[str, List[str]]
 
     total_progression_items: int
-    classifications_to_override_post_fill: list[tuple[Item, ItemClassification]]
+    classifications_to_override_post_fill: list[tuple[StardewItem, ItemClassification]]
 
     @classmethod
     def create_group(cls, multiworld: MultiWorld, new_player_id: int, players: set[int]) -> World:
@@ -283,8 +305,10 @@ class StardewValleyWorld(World):
                 self.multiworld.push_precollected(self.create_item("Progressive Backpack"))
 
     def setup_logic_events(self):
-        def register_event(name: str, region: str, rule: StardewRule):
-            event_location = LocationData(None, region, name)
+        def register_event(name: str, region: str, rule: StardewRule, location_name: str | None = None) -> None:
+            if location_name is None:
+                location_name = name
+            event_location = LocationData(None, region, location_name)
             self.create_event_location(event_location, rule, name)
 
         self.logic.setup_events(register_event)
@@ -375,6 +399,16 @@ class StardewValleyWorld(World):
 
         stardew_item = StardewItem(item.name, classification_pre_fill, item.code, self.player)
 
+        if stardew_item.advancement:
+            # Progress is only counted for pre-fill progression items, so we don't count filler items later converted to progression post-fill.
+            stardew_item.events_to_collect[Event.received_progression_item] = 1
+
+        if (walnut_amount := get_walnut_amount(stardew_item.name)) > 0:
+            stardew_item.events_to_collect[Event.received_walnuts] = walnut_amount
+
+        if (qi_gem_amount := get_qi_gem_amount(stardew_item.name)) > 0:
+            stardew_item.events_to_collect[Event.received_qi_gems] = qi_gem_amount
+
         if classification_post_fill is not None:
             self.classifications_to_override_post_fill.append((stardew_item, classification_post_fill))
 
@@ -382,7 +416,8 @@ class StardewValleyWorld(World):
 
     def create_event_location(self, location_data: LocationData, rule: StardewRule, item: str):
         region = self.multiworld.get_region(location_data.region, self.player)
-        region.add_event(location_data.name, item, rule, StardewLocation, StardewItem)
+        item = typing.cast(StardewItem, region.add_event(location_data.name, item, rule, StardewLocation, StardewItem))
+        item.events_to_collect[Event.received_progression_item] = 1
 
     def set_rules(self):
         set_rules(self)
@@ -469,18 +504,16 @@ class StardewValleyWorld(World):
             return False
 
         player_state = state.prog_items[self.player]
+        player_state.update(item.events_to_collect)
 
-        received_progression_count = player_state[Event.received_progression_item]
-        received_progression_count += 1
         if self.total_progression_items:
+            received_progression_count = player_state[Event.received_progression_item]
             # Total progression items is not set until all items are created, but collect will be called during the item creation when an item is precollected.
             # We can't update the percentage if we don't know the total progression items, can't divide by 0.
             player_state[Event.received_progression_percent] = received_progression_count * 100 // self.total_progression_items
-        player_state[Event.received_progression_item] = received_progression_count
 
-        walnut_amount = self.get_walnut_amount(item.name)
-        if walnut_amount:
-            player_state[Event.received_walnuts] += walnut_amount
+        if item.name in APWeapon.all_weapons:
+            player_state[Event.received_progressive_weapon] = max(player_state[Event.received_progressive_weapon], player_state[item.name])
 
         return True
 
@@ -490,26 +523,15 @@ class StardewValleyWorld(World):
             return False
 
         player_state = state.prog_items[self.player]
+        player_state.subtract(item.events_to_collect)
 
-        received_progression_count = player_state[Event.received_progression_item]
-        received_progression_count -= 1
         if self.total_progression_items:
+            received_progression_count = player_state[Event.received_progression_item]
+            # Total progression items is not set until all items are created, but collect will be called during the item creation when an item is precollected.
             # We can't update the percentage if we don't know the total progression items, can't divide by 0.
             player_state[Event.received_progression_percent] = received_progression_count * 100 // self.total_progression_items
-        player_state[Event.received_progression_item] = received_progression_count
 
-        walnut_amount = self.get_walnut_amount(item.name)
-        if walnut_amount:
-            player_state[Event.received_walnuts] -= walnut_amount
+        if item.name in APWeapon.all_weapons:
+            player_state[Event.received_progressive_weapon] = max(player_state[weapon] for weapon in APWeapon.all_weapons)
 
         return True
-
-    @staticmethod
-    def get_walnut_amount(item_name: str) -> int:
-        if item_name == "Golden Walnut":
-            return 1
-        if item_name == "3 Golden Walnuts":
-            return 3
-        if item_name == "5 Golden Walnuts":
-            return 5
-        return 0

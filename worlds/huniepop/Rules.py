@@ -12,8 +12,9 @@ def set_rules(multiworld, player, girls, starting, goal):
         girlsset.add(f"Unlock Girl({girl})")
 
     if "tiffany" in girls:
-        if "tiffany" not in starting:
-            set_rule(multiworld.get_entrance("hub-tiffany", player), lambda state: state.has("Unlock Girl(tiffany)", player))
+        #if "tiffany" not in starting:
+        #    set_rule(multiworld.get_entrance("hub-tiffany", player), lambda state: state.has("Unlock Girl(tiffany)", player))
+        set_rule(multiworld.get_entrance("hub-tiffany", player), lambda state: state.has("Unlock Girl(tiffany)", player))
 
         set_rule(multiworld.get_location(locationgen_to_name["tiffany gift location 1"], player), lambda state: state.has(itemgen_to_name["academy gift item 1"], player))
         set_rule(multiworld.get_location(locationgen_to_name["tiffany gift location 2"], player), lambda state: state.has(itemgen_to_name["academy gift item 2"], player))
@@ -92,8 +93,9 @@ def set_rules(multiworld, player, girls, starting, goal):
         forbid_items_for_player(multiworld.get_location(locationgen_to_name["tiffany gift location 24"], player), {"Unlock Girl(tiffany)", itemgen_to_name["tiffany unique item 6"]}, player)
 
     if "aiko" in girls:
-        if "aiko" not in starting:
-            set_rule(multiworld.get_entrance("hub-aiko", player), lambda state: state.has("Unlock Girl(aiko)", player))
+        #if "aiko" not in starting:
+        #    set_rule(multiworld.get_entrance("hub-aiko", player), lambda state: state.has("Unlock Girl(aiko)", player))
+        set_rule(multiworld.get_entrance("hub-aiko", player), lambda state: state.has("Unlock Girl(aiko)", player))
 
         set_rule(multiworld.get_location(locationgen_to_name["aiko gift location 1"], player), lambda state: state.has(itemgen_to_name["toys gift item 1"], player))
         set_rule(multiworld.get_location(locationgen_to_name["aiko gift location 2"], player), lambda state: state.has(itemgen_to_name["toys gift item 2"], player))
@@ -172,8 +174,9 @@ def set_rules(multiworld, player, girls, starting, goal):
         forbid_items_for_player(multiworld.get_location(locationgen_to_name["aiko gift location 24"], player), {"Unlock Girl(aiko)", itemgen_to_name["aiko unique item 6"]}, player)
 
     if "kyanna" in girls:
-        if "kyanna" not in starting:
-            set_rule(multiworld.get_entrance("hub-kyanna", player), lambda state: state.has("Unlock Girl(kyanna)", player))
+        #if "kyanna" not in starting:
+        #    set_rule(multiworld.get_entrance("hub-kyanna", player), lambda state: state.has("Unlock Girl(kyanna)", player))
+        set_rule(multiworld.get_entrance("hub-kyanna", player), lambda state: state.has("Unlock Girl(kyanna)", player))
 
         set_rule(multiworld.get_location(locationgen_to_name["kyanna gift location 1"], player), lambda state: state.has(itemgen_to_name["fitness gift item 1"], player))
         set_rule(multiworld.get_location(locationgen_to_name["kyanna gift location 2"], player), lambda state: state.has(itemgen_to_name["fitness gift item 2"], player))
@@ -252,8 +255,9 @@ def set_rules(multiworld, player, girls, starting, goal):
         forbid_items_for_player(multiworld.get_location(locationgen_to_name["kyanna gift location 24"], player), {"Unlock Girl(kyanna)", itemgen_to_name["kyanna unique item 6"]}, player)
 
     if "audrey" in girls:
-        if "audrey" not in starting:
-            set_rule(multiworld.get_entrance("hub-audrey", player), lambda state: state.has("Unlock Girl(audrey)", player))
+        #if "audrey" not in starting:
+        #    set_rule(multiworld.get_entrance("hub-audrey", player), lambda state: state.has("Unlock Girl(audrey)", player))
+        set_rule(multiworld.get_entrance("hub-audrey", player), lambda state: state.has("Unlock Girl(audrey)", player))
 
         set_rule(multiworld.get_location(locationgen_to_name["audrey gift location 1"], player), lambda state: state.has(itemgen_to_name["rave gift item 1"], player))
         set_rule(multiworld.get_location(locationgen_to_name["audrey gift location 2"], player), lambda state: state.has(itemgen_to_name["rave gift item 2"], player))
@@ -332,8 +336,9 @@ def set_rules(multiworld, player, girls, starting, goal):
         forbid_items_for_player(multiworld.get_location(locationgen_to_name["audrey gift location 24"], player), {"Unlock Girl(audrey)", itemgen_to_name["audrey unique item 6"]}, player)
 
     if "lola" in girls:
-        if "lola" not in starting:
-            set_rule(multiworld.get_entrance("hub-lola", player), lambda state: state.has("Unlock Girl(lola)", player))
+        #if "lola" not in starting:
+        #    set_rule(multiworld.get_entrance("hub-lola", player), lambda state: state.has("Unlock Girl(lola)", player))
+        set_rule(multiworld.get_entrance("hub-lola", player), lambda state: state.has("Unlock Girl(lola)", player))
 
 
         set_rule(multiworld.get_location(locationgen_to_name["lola gift location 1"], player), lambda state: state.has(itemgen_to_name["sports gift item 1"], player))
@@ -413,8 +418,9 @@ def set_rules(multiworld, player, girls, starting, goal):
         forbid_items_for_player(multiworld.get_location(locationgen_to_name["lola gift location 24"], player), {"Unlock Girl(lola)", itemgen_to_name["lola unique item 6"]}, player)
 
     if "nikki" in girls:
-        if "nikki" not in starting:
-            set_rule(multiworld.get_entrance("hub-nikki", player), lambda state: state.has("Unlock Girl(nikki)", player))
+        #if "nikki" not in starting:
+        #    set_rule(multiworld.get_entrance("hub-nikki", player), lambda state: state.has("Unlock Girl(nikki)", player))
+        set_rule(multiworld.get_entrance("hub-nikki", player), lambda state: state.has("Unlock Girl(nikki)", player))
 
         set_rule(multiworld.get_location(locationgen_to_name["nikki gift location 1"], player), lambda state: state.has(itemgen_to_name["artist gift item 1"], player))
         set_rule(multiworld.get_location(locationgen_to_name["nikki gift location 2"], player), lambda state: state.has(itemgen_to_name["artist gift item 2"], player))
@@ -493,8 +499,9 @@ def set_rules(multiworld, player, girls, starting, goal):
         forbid_items_for_player(multiworld.get_location(locationgen_to_name["nikki gift location 24"], player), {"Unlock Girl(nikki)", itemgen_to_name["nikki unique item 6"]}, player)
 
     if "jessie" in girls:
-        if "jessie" not in starting:
-            set_rule(multiworld.get_entrance("hub-jessie", player), lambda state: state.has("Unlock Girl(jessie)", player))
+        #if "jessie" not in starting:
+        #    set_rule(multiworld.get_entrance("hub-jessie", player), lambda state: state.has("Unlock Girl(jessie)", player))
+        set_rule(multiworld.get_entrance("hub-jessie", player), lambda state: state.has("Unlock Girl(jessie)", player))
 
         set_rule(multiworld.get_location(locationgen_to_name["jessie gift location 1"], player), lambda state: state.has(itemgen_to_name["baking gift item 1"], player))
         set_rule(multiworld.get_location(locationgen_to_name["jessie gift location 2"], player), lambda state: state.has(itemgen_to_name["baking gift item 2"], player))
@@ -574,8 +581,9 @@ def set_rules(multiworld, player, girls, starting, goal):
         forbid_items_for_player(multiworld.get_location(locationgen_to_name["jessie gift location 24"], player), {"Unlock Girl(jessie)", itemgen_to_name["jessie unique item 6"]}, player)
 
     if "beli" in girls:
-        if "beli" not in starting:
-            set_rule(multiworld.get_entrance("hub-beli", player), lambda state: state.has("Unlock Girl(beli)", player))
+        #if "beli" not in starting:
+        #    set_rule(multiworld.get_entrance("hub-beli", player), lambda state: state.has("Unlock Girl(beli)", player))
+        set_rule(multiworld.get_entrance("hub-beli", player), lambda state: state.has("Unlock Girl(beli)", player))
 
         set_rule(multiworld.get_location(locationgen_to_name["beli gift location 1"], player), lambda state: state.has(itemgen_to_name["yoga gift item 1"], player))
         set_rule(multiworld.get_location(locationgen_to_name["beli gift location 2"], player), lambda state: state.has(itemgen_to_name["yoga gift item 2"], player))
@@ -654,8 +662,9 @@ def set_rules(multiworld, player, girls, starting, goal):
         forbid_items_for_player(multiworld.get_location(locationgen_to_name["beli gift location 24"], player), {"Unlock Girl(beli)", itemgen_to_name["beli unique item 6"]}, player)
 
     if "kyu" in girls:
-        if "kyu" not in starting:
-            set_rule(multiworld.get_entrance("hub-kyu", player), lambda state: state.has("Unlock Girl(kyu)", player))
+        #if "kyu" not in starting:
+        #    set_rule(multiworld.get_entrance("hub-kyu", player), lambda state: state.has("Unlock Girl(kyu)", player))
+        set_rule(multiworld.get_entrance("hub-kyu", player), lambda state: state.has("Unlock Girl(kyu)", player))
 
         set_rule(multiworld.get_location(locationgen_to_name["kyu gift location 1"], player), lambda state: state.has(itemgen_to_name["dancer gift item 1"], player))
         set_rule(multiworld.get_location(locationgen_to_name["kyu gift location 2"], player), lambda state: state.has(itemgen_to_name["dancer gift item 2"], player))
@@ -771,8 +780,9 @@ def set_rules(multiworld, player, girls, starting, goal):
             forbid_items_for_player(multiworld.get_location("given kyu venus's panties", player), {"Unlock Girl(kyu)", "venus's panties"}, player)
 
     if "momo" in girls:
-        if "momo" not in starting:
-            set_rule(multiworld.get_entrance("hub-momo", player), lambda state: state.has("Unlock Girl(momo)", player))
+        #if "momo" not in starting:
+        #    set_rule(multiworld.get_entrance("hub-momo", player), lambda state: state.has("Unlock Girl(momo)", player))
+        set_rule(multiworld.get_entrance("hub-momo", player), lambda state: state.has("Unlock Girl(momo)", player))
 
         set_rule(multiworld.get_location(locationgen_to_name["momo gift location 1"], player), lambda state: state.has(itemgen_to_name["aquarium gift item 1"], player))
         set_rule(multiworld.get_location(locationgen_to_name["momo gift location 2"], player), lambda state: state.has(itemgen_to_name["aquarium gift item 2"], player))
@@ -851,8 +861,9 @@ def set_rules(multiworld, player, girls, starting, goal):
         forbid_items_for_player(multiworld.get_location(locationgen_to_name["momo gift location 24"], player), {"Unlock Girl(momo)", itemgen_to_name["momo unique item 6"]}, player)
 
     if "celeste" in girls:
-        if "celeste" not in starting:
-            set_rule(multiworld.get_entrance("hub-celeste", player), lambda state: state.has("Unlock Girl(celeste)", player))
+        #if "celeste" not in starting:
+        #    set_rule(multiworld.get_entrance("hub-celeste", player), lambda state: state.has("Unlock Girl(celeste)", player))
+        set_rule(multiworld.get_entrance("hub-celeste", player), lambda state: state.has("Unlock Girl(celeste)", player))
 
         set_rule(multiworld.get_location(locationgen_to_name["celeste gift location 1"], player), lambda state: state.has(itemgen_to_name["scuba gift item 1"], player))
         set_rule(multiworld.get_location(locationgen_to_name["celeste gift location 2"], player), lambda state: state.has(itemgen_to_name["scuba gift item 2"], player))
@@ -931,8 +942,9 @@ def set_rules(multiworld, player, girls, starting, goal):
         forbid_items_for_player(multiworld.get_location(locationgen_to_name["celeste gift location 24"], player), {"Unlock Girl(celeste)", itemgen_to_name["celeste unique item 6"]}, player)
 
     if "venus" in girls:
-        if "venus" not in starting:
-            set_rule(multiworld.get_entrance("hub-venus", player), lambda state: state.has("Unlock Girl(venus)", player))
+        #if "venus" not in starting:
+        #    set_rule(multiworld.get_entrance("hub-venus", player), lambda state: state.has("Unlock Girl(venus)", player))
+        set_rule(multiworld.get_entrance("hub-venus", player), lambda state: state.has("Unlock Girl(venus)", player))
 
         set_rule(multiworld.get_location(locationgen_to_name["venus gift location 1"], player), lambda state: state.has(itemgen_to_name["garden gift item 1"], player))
         set_rule(multiworld.get_location(locationgen_to_name["venus gift location 2"], player), lambda state: state.has(itemgen_to_name["garden gift item 2"], player))

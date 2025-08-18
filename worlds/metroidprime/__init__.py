@@ -107,7 +107,7 @@ class MetroidPrimeWeb(WebWorld):
             "Multiworld Setup Guide",
             "A guide to setting up Metroid Prime for MultiworldGG",
             "English",
-            "setup.md",
+            "setup_en.md",
             "setup/en",
             ["hesto2", "Electro15"],
         )

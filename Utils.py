@@ -53,7 +53,7 @@ class Version(typing.NamedTuple):
         return ".".join(str(item) for item in self)
 
 
-__version__ = "0.6.3"
+__version__ = "0.6.4"
 version_tuple = tuplize_version(__version__)
 
 instance_name = "MultiworldGG"
@@ -293,6 +293,8 @@ def cache_path(*path: str) -> str:
     else:
         import platformdirs
         cache_path.cached_path = platformdirs.user_cache_dir(instance_name, False)
+        # Ensure the cache directory exists
+        os.makedirs(cache_path.cached_path, exist_ok=True)
 
     return os.path.join(cache_path.cached_path, *path)
 
@@ -973,7 +975,7 @@ def async_start(co: Coroutine[None, None, typing.Any], name: Optional[str] = Non
     Use this to start a task when you don't keep a reference to it or immediately await it,
     to prevent early garbage collection. "fire-and-forget"
     """
-    # https://docs.python.org/3.10/library/asyncio-task.html#asyncio.create_task
+    # https://docs.python.org/3.12/library/asyncio-task.html#asyncio.create_task
     # Python docs:
     # ```
     # Important: Save a reference to the result of [asyncio.create_task],
@@ -1026,8 +1028,7 @@ def _extend_freeze_support() -> None:
         # Handle the first process that MP will create
         if (
             len(sys.argv) >= 2 and sys.argv[-2] == '-c' and sys.argv[-1].startswith((
-                'from multiprocessing.semaphore_tracker import main',  # Py<3.8
-                'from multiprocessing.resource_tracker import main',  # Py>=3.8
+                'from multiprocessing.resource_tracker import main',
                 'from multiprocessing.forkserver import main'
             )) and set(sys.argv[1:-2]) == set(_args_from_interpreter_flags())
         ):

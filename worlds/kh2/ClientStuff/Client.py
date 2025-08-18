@@ -8,7 +8,7 @@ import os
 import asyncio
 import json
 import requests
-from werkzeug.utils import secure_filename
+
 from pymem import pymem
 import logging
 # Disable pymem logger to suppress ProcessError messages
@@ -310,7 +310,8 @@ class KH2Context(CommonContext):
             logger.info(f"You are trying to connect with data still cached in the client. Close client or connect to the correct slot: {self.slot_name}")
             self.serverconnected = False
             self.disconnect_from_server = True
-    #to not softlock the client when you connect to the wrong slot/game
+
+    # to not softlock the client when you connect to the wrong slot/game
     def event_invalid_slot(self):
         self.kh2seedname = None
         CommonContext.event_invalid_slot(self)
@@ -372,7 +373,7 @@ class KH2Context(CommonContext):
                 logger.info("Connection to the wrong seed, connect to the correct seed or close the client.")
                 return
             self.kh2_seed_save_path = f"kh2save2{self.kh2seedname}{self.auth}.json"
-            self.kh2_seed_save_path_join = os.path.join(self.game_communication_path, secure_filename(self.kh2_seed_save_path))
+            self.kh2_seed_save_path_join = os.path.join(self.game_communication_path, Utils.get_file_safe_name(self.kh2_seed_save_path))
 
             if not os.path.exists(self.kh2_seed_save_path_join):
                 self.kh2_seed_save = {
@@ -510,13 +511,13 @@ class KH2Context(CommonContext):
                     itemName = self.item_names.lookup_in_game(itemId)
                     playerName = self.player_names[networkItem.player]  # player that sent you the item
                     totalLength = len(itemName) + len(playerName)
-                    if self.client_settings["send_popup_type"] == "Info":  # no restrictions on size here
+                    if self.client_settings["receive_popup_type"] == "Info":  # no restrictions on size here
                         temp_length = f"Obtained {itemName} from {playerName}"
                         if totalLength > 90:
                             self.queued_info_popup += [temp_length[:90]]  # slice it to be 90
                         else:
                             self.queued_info_popup += [temp_length]
-                    elif self.client_settings["send_popup_type"] == "Puzzle":  # sanitize ItemName and receiver name
+                    elif self.client_settings["receive_popup_type"] == "Puzzle":  # sanitize ItemName and receiver name
                         totalLength = len(itemName) + len(playerName)
                         while totalLength > 25:
                             if self.client_settings["receive_truncate_first"] == "PlayerName":
@@ -534,7 +535,7 @@ class KH2Context(CommonContext):
                         self.queued_puzzle_popup += [f"{itemName} from {playerName}"]
 
                 if receiverID != self.slot and senderID == self.slot:  #item is sent to other players
-                    itemName = self.item_names.lookup_in_slot(itemId,receiverID)
+                    itemName = self.item_names.lookup_in_slot(itemId, receiverID)
                     playerName = self.player_names[receiverID]
                     totalLength = len(itemName) + len(playerName)
                     if self.client_settings["send_popup_type"] == "Info":

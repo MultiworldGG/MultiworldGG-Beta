@@ -31,7 +31,7 @@ class WL4Settings(settings.Group):
 class WL4Web(WebWorld):
     setup_en = Tutorial(
         'Multiworld Setup Guide',
-        'A guide to setting up the Wario Land 4 randomizer connected to an MultiworldGG world.',
+        'A guide to setting up the Wario Land 4 randomizer connected to a MultiworldGG world.',
         'English',
         'setup_en.md',
         'setup/en',

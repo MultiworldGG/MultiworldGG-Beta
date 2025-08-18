@@ -10,7 +10,7 @@
 
 1. Download and install the MultiworldGG Multiworld Suite from the link above, making sure to install the most recent version.
 
-2. Download and install the Dolphin Gamecube/Wii Emulator from the link above, making sure to install the most recent version.
+2. Download and install the Dolphin Gamecube/Wii Emulator from the link above, making sure to install the most recent version (minimum 2503).
 Run the emulator at least once to make sure it is working.
 
 3. Acquire the most recent APWorld from the [Releases page](https://github.com/BootsinSoots/Archipelago/releases/latest) and place the luigismansion.apworld in the custom_worlds folder of your MultiworldGG install (not needed with MWGG release)
@@ -30,7 +30,7 @@ options.
 
 Run the MultiworldGGLauncher.exe from your MultiworldGG install and click `Generate Template Options`.
 This will produce a `/Players/Templates` folder in your MultiworldGG install, which contains default config files for 
-every game in your `custom_worlds` folder. You can manually edit the config file using a text editor of your choice.
+every game in your `custom_worlds` and `lib/worlds` folder. You can manually edit the config file using a text editor of your choice.
 
 Alternately, the [Player Settings](../player-settings) page on the website allows you to configure
 your personal settings and export a config file from them.
@@ -46,20 +46,20 @@ If you would like to validate your config file to make sure it works, you may do
    - Alternately, navigate to the [Player Settings](../player-settings) page, configure your options,
       and click the "Generate Game" button.
 2. Open the MultiworldGG Launcher and click "Generate". This will create a zip file in MultiworldGG/output
-   - You will need to open this .zip to get your .aplm patch file
-3. Navigate to the MultiworldGG website and go to the Host Game page
+   - You will need to open this .zip to get your .aplm patch file if you are not using the MultiworldGG website
+3. Navigate to the MultiworldGG website and go to the Host Game page (top right menu)
 4. Click upload file and pass it the .zip created in your output folder
-5. Click the "Create New Room" link.
+5. Click the "Create New Room" link. You are now able to download your patch file from here.
 6. Run the MultiworldGGLauncher.exe and click `Open Patch`. Select your `.aplm` patch file.
 You will be prompted to locate your Luigi's Mansion ISO the first time you do this.
-   - This action will automatically run the Luigi's Mansion Client.
+   - This action will automatically run the Luigi's Mansion Client (and connect to the webhost if the patch was downloaded from there).
    - The patch will be placed in the same folder as your patch file by default.
    - You will ***not*** need to patch the game every time, and can simply run the `Luigis Mansion Client` from the list on the right of the MultiworldGG Launcher
 to continue later.
 7. Open Dolphin and from Dolphin, open your newly patched Luigi's Mansion ISO. Load all the way into a brand new save file, and pause.
    - Ensure that "Enable GPU Overclock" and "Emulated Memory Size Override" are both off in your Dolphin settings
    - You ***must*** use a brand new save file, not a New Game Plus file
-8. In the server page, there will be a port number. Copy this port number into the top of your LMClient. 
+8. In the server page, there will be a port number. Copy this port number into the top of your LMClient if it did not populate on its own. 
    - The field should read `multiworld.gg:<port number>`
 9. Once you have loaded into the game, click the `Connect` button at the top of the LMClient. You are now connected and ready to play!
    - The client takes around 10 seconds to finish connecting, and only connects once you are actually in the mansion
@@ -70,8 +70,7 @@ to continue later.
 ### Obtain your patch file and create your ROM
 
 When you join a multiworld game, you will be asked to provide your config file to whoever is hosting. Once that is done,
-the host will provide you with either a link to download your patch file, or with a zip file containing everyone's patch
-files. Your patch file should have a `.aplm` extension.
+the host will provide you with either a link to download your patch file, or with an APLM patch file that they have extracted from the zip. 
 
 Put your patch file on your desktop or somewhere convenient. Open the MultiworldGGLauncher.exe and click `Open Patch`. 
 This should automatically launch the client, and will also create your ISO in the same place as your patch file. On first time patching, you will be prompted 
@@ -79,8 +78,8 @@ to locate your Luigi's Mansion ISO
 
 ### Connect to the client
 
-When the client launched automatically, the Luigi's Mansion client (LMClient) should have also automatically launched in
-the background. If this is its first time launching, you may be prompted to allow it to communicate through the Windows Firewall. You must reopen the client each time you connect to a different randomized ISO.
+When the ISO patched, the Luigi's Mansion client (LMClient) should have also automatically launched in
+the background. If it did not, please check the log in your MultiworldGG/logs folder. If this is its first time launching, you may be prompted to allow it to communicate through the Windows Firewall. You must reopen the client each time you connect to a different randomized ISO.
 
 1. Open Dolphin and from Dolphin, open your newly patched Luigi's Mansion ISO
 2. In the server page, there will be a port number. Copy this port number into the top of your LMClient. 

@@ -1,6 +1,8 @@
-from .Data import moon_list, id_to_name
+from NetUtils import NetworkItem, NetworkPlayer
+from .Data import moon_list, id_to_name, goals
 
 class SMOPlayer:
+    player : NetworkPlayer
     moons = {}
     MAX_MOONS = {
         "Cascade Story Moon": 1,
@@ -28,6 +30,26 @@ class SMOPlayer:
     messages : list[str] = []
     MAX_MESSAGE_SIZE = 0x42
     item_index : int = 0
+    world_scenarios : dict = {
+        "Cap": 1,
+        "Cascade": 1,
+        "Sand": 1,
+        "Wooded": 1,
+        "Lake": 1,
+        "Cloud": 1,
+        "Lost": 1,
+        "Metro": 1,
+        "Seaside": 1,
+        "Snow": 1,
+        "Luncheon": 1,
+        "Ruined": 1,
+        "Bowser": 1,
+        "Moon": 1,
+        "Mushroom": 1,
+        "Dark": 1,
+        "Darker": 1
+    }
+    goal : int
 
     def __init__(self):
         self.reset_moons()
@@ -38,7 +60,7 @@ class SMOPlayer:
         "Cascade Power Moon": 2,
         "Sand Power Moon": 4,
         "Wooded Power Moon": 4,
-        "Lake Power Moon": 0,
+        "Lake Power Moon": 1,
         "Cloud Power Moon": 0,
         "Lost Power Moon": 0,
         "Metro Power Moon": 7,
@@ -70,7 +92,8 @@ class SMOPlayer:
         "Bowser Multi-Moon": 3,
         "Mushroom Multi-Moon": 0,
         "Dark Side Multi-Moon": 0,
-        "Darker Side Multi-Moon": 0
+        "Darker Side Multi-Moon": 0,
+        "Beat the Game": -1
     }
 
     def get_next_moon(self, item : int) -> int:
@@ -81,10 +104,12 @@ class SMOPlayer:
             next moon id to send to SMO
         """
         item_name : str = id_to_name[item]
+
+
         if item_name in self.MAX_MOONS:
             if self.moons[item_name] >= self.MAX_MOONS[item_name]:
                 raise f"{item_name} out of bounds. Already received max amount of {item_name}s"
-        moon_id : int = moon_list[item_name.split(" ")[0]][self.moons[item_name]]
+        moon_id : int = moon_list["Mushroom" if item_name == "Power Star" else item_name.split(" ")[0]][self.moons[item_name]]
         self.moons[item_name] += 1
         return moon_id
 
@@ -129,3 +154,11 @@ class SMOPlayer:
             case _:
                 return [self.messages.pop(0), self.messages[0], self.messages[1]]
 
+    def check_goal(self, item : NetworkItem) -> bool:
+        if goals[self.goal].item == item.item:
+            if goals[self.goal].item_index == self.moons[id_to_name[item.item]]:
+                return True
+        return False
+
+    def get_scenario_dict(self) -> dict:
+        return self.world_scenarios

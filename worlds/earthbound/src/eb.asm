@@ -4,10 +4,10 @@ CharLastInvSlot:
 dw $99FE,$9A5D,$9ABC,$9B1B
 
 TeleSectorID:
-dw $FFFF,$5A85,$5A91,$5AAD,$5AED,$5B09,$5B31,$5AD1,$5B4D,$5B5D,$5B79,$5B91,$5B99,$5BAD,$5AB1,$5B89,$5B29
+dw $FFFF,$5A85,$5A91,$5AAD,$5AED,$5B09,$5B31,$5AD1,$5B4D,$5B5D,$5B79,$5B91,$5B99,$5BAD,$5AB1,$5B89,$5B29,$5A8D
 
 TeleFlags:
-dw $0001,$0002,$1000,$0004,$0010,$2000,$0020,$0008,$0040,$0100,$0080,$0400,$0800,$4000,$0004,$0200,$0020
+dw $0001,$0002,$1000,$0004,$0010,$2000,$0020,$0008,$0040,$0100,$0080,$0400,$0800,$4000,$0004,$0200,$0020,$1000
 
 TeleportFlags:
 dw $0000,$00D1,$00D2,$00D3,$00D4,$00D5,$00D6,$00D7,$00D8,$00D9,$00DA,$00DB,$00DC,$00DD,$00DE,$00DF
@@ -3162,7 +3162,7 @@ LDX #$0000
 CheckTeleFlag:
 CMP TeleSectorID,X
 BEQ UnlockTeleport
-CPX #$0026
+CPX #$0028
 BEQ EndTeleCheck
 INX
 INX
@@ -9102,16 +9102,19 @@ ORG $C7CB74
 db $C7, $00
 
 ORG $D7A90C
-db $5F
+db $EC
 
 ORG $D68463
-db $FF
+;db $FF
 
 ORG $C8A8E3
 dd CheckForRubyPoo
 
 ORG $C80C40
 db $E1, $03
+
+ORG $C91EA8; TEST THIS!!!! SKY RUNNER FIX
+db $d2
 
 
 ;New data table go here
@@ -15147,6 +15150,7 @@ LDA $1A
 JSL goto_bank_c2
 
 .Return:
+STZ $AA96
 PLD
 RTS
 
@@ -15194,6 +15198,7 @@ LDY #$A579
 LDA $1A
 JSL goto_bank_c2
 .Return:
+STZ $AA96
 PLD
 RTS
 
@@ -15267,6 +15272,7 @@ BEQ .skip_vram_load
 CMP $0785
 BEQ .skip_vram_load ;If the enemy is already loaded, don't load it into a new slot
 REP #$20
+JSR refresh_all_enemy_sprites ;Enemy sprites get cleared by things like PSI; they will corrupt if not refreshed
 LDA #$0090
 LDY #$005E
 INC $0780
@@ -15285,6 +15291,51 @@ TDC
 ADC #$FFE2
 TCD
 JML $C2EEF5
+
+refresh_all_enemy_sprites:
+LDA $AAB2
+STA $B5F5
+LDA $AAB4
+STA $B5F3
+STZ $AAB4
+STZ $AAB2
+LDA #$0000
+PHA
+.LoadNext:
+TAX
+LDA $0782,X
+AND #$00FF
+JSR get_enemy_sprite
+LDY #$EAE9
+JSL goto_bank_c2
+PLA
+INC
+CMP $B5F3
+BEQ .Done
+PHA
+BRA .LoadNext
+
+.Done:
+LDA $B5F5
+STA $AAB2
+LDA $B5F3
+STA $AAB4
+RTS
+
+get_enemy_sprite:
+TAX
+LDA #$0000
+.CheckNext:
+CPX #$0000
+BEQ .done
+DEX
+CLC
+ADC #$005E
+BRA .CheckNext
+.done:
+TAX
+LDA $D595A5,X
+RTS
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ORG $C28FC8
@@ -18722,7 +18773,7 @@ db $02
 
 DisplayAndGetMoneyPSI:
 db $18, $0A
-db $18, $03, $01
+db $18, $01, $01
 db $19, $10, $01
 db $1B, $04
 db $70, $58, $1C, $02, $00, $50, $97, $9F, $A4, $50, $54, $1B, $06

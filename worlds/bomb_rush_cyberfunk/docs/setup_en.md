@@ -39,6 +39,6 @@ After installing MultiworldGG, there are some additional mods that can also be i
 
 ## Connecting
 
-To connect to an MultiworldGG server, click one of the MultiworldGG buttons next to the save files. If the save file is 
+To connect to a MultiworldGG server, click one of the MultiworldGG buttons next to the save files. If the save file is 
 blank or already has randomizer save data, it will open a menu where you can enter the server address and port, your 
 name, and a password if necessary. Then click the check mark to connect to the server.

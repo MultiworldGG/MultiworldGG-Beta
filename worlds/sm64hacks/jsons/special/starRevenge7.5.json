@@ -1245,7 +1245,7 @@
     "Vanish Cap": {
         "Stars": [
             {
-                "exists": true
+                "exists": false
             },
             {
                 "exists": false

@@ -17,5 +17,5 @@ JSON Author credit:
 * duckSM64/mr.zebra - SM74 Ten Years After
 * zuils - Super Mario 74
 * GraymonDgt - Unoriginal Cringe Meme Hack
-* Awesome7285 - Star Revenge 6.5, Star Revenge 7, Star Revenge 1, Star Revenge 2 TTM, Star Revenge 3, Star Revenge 5, Star Revenge 1.5, Star Revenge 8 Advanced, Peach's Memory, Star Revenge 4
+* Awesome7285 - Star Revenge 6.5, Star Revenge 7, Star Revenge 1, Star Revenge 2 TTM, Star Revenge 3, Star Revenge 5, Star Revenge 1.5, Star Revenge 8 Advanced, Peach's Memory, Star Revenge 4, Star Revenge 6
 * Iwer Sonsch - Ztar Attack 2

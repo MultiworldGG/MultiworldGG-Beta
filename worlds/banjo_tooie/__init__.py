@@ -89,6 +89,7 @@ class BanjoTooieWorld(World):
     version = VERSION
     options: BanjoTooieOptions
     settings: BanjoTooieSettings
+    author: str = "jjjj12212"
     settings_key = "banjo_tooie_options"
     web = BanjoTooieWeb()
     topology_present = True
@@ -276,20 +277,18 @@ class BanjoTooieWorld(World):
                 else:
                     return ItemClassification.useful
 
-        if banjoItem.type == "progress":
-            return ItemClassification.progression
-        if banjoItem.type == "progression_skip_balancing":
-            return ItemClassification.progression_skip_balancing
-        if banjoItem.type == "progression_deprioritized_skip_balancing":
-            return ItemClassification.progression_deprioritized_skip_balancing
-        if banjoItem.type == "useful":
-            return ItemClassification.useful
-        if banjoItem.type == "filler":
-            return ItemClassification.filler
-        if banjoItem.type == "trap":
-            return ItemClassification.trap
+        if banjoItem.type not in (
+            ItemClassification.progression,
+            ItemClassification.progression_skip_balancing,
+            ItemClassification.progression_deprioritized,
+            ItemClassification.progression_deprioritized_skip_balancing,
+            ItemClassification.useful,
+            ItemClassification.filler,
+            ItemClassification.trap
+        ):
+            raise Exception(f"{banjoItem.type} does not correspond to a valid item classification.")
 
-        raise Exception(f"{banjoItem.type} does not correspond to a valid item classification.")
+        return banjoItem.type
 
     def create_event_item(self, name: str) -> Item:
         item_classification = ItemClassification.progression
@@ -432,7 +431,7 @@ class BanjoTooieWorld(World):
             return None
 
         # While JNONE is filler, it's funny enough to warrant always keeping
-        if item.type in ['filler', 'trap'] and name != itemName.JNONE:
+        if item.type in (ItemClassification.filler, ItemClassification.trap) and name != itemName.JNONE:
             return None
 
         if name == itemName.DOUBLOON and not self.options.randomize_doubloons:

@@ -3,7 +3,6 @@ import os
 import multiprocessing
 import logging
 import typing
-
 import ModuleUpdate
 
 ModuleUpdate.requirements_files.add(os.path.join("WebHostLib", "requirements.txt"))
@@ -12,7 +11,6 @@ ModuleUpdate.update()
 # in case app gets imported by something like gunicorn
 import Utils
 import settings
-from Utils import get_file_safe_name
 
 if typing.TYPE_CHECKING:
     from flask import Flask
@@ -54,25 +52,24 @@ def get_app() -> "Flask":
     return app
 
 
-def create_ordered_tutorials_file() -> typing.List[typing.Dict[str, typing.Any]]:
-    import json
+def copy_tutorials_files_to_static(app=None) -> None:
     import shutil
     import zipfile
+    from werkzeug.utils import secure_filename
 
     zfile: zipfile.ZipInfo
 
     from worlds.AutoWorld import AutoWorldRegister
     worlds = {}
-    data = []
     for game, world in AutoWorldRegister.world_types.items():
-        if hasattr(world.web, 'tutorials') and (not world.hidden or game == 'Archipelago') and (not game in app.config["HIDDEN_WEBWORLDS"]):
+        if hasattr(world.web, 'tutorials') and (not world.hidden or game == 'Archipelago'):
             worlds[game] = world
 
     base_target_path = Utils.local_path("WebHostLib", "static", "generated", "docs")
     shutil.rmtree(base_target_path, ignore_errors=True)
     for game, world in worlds.items():
         # copy files from world's docs folder to the generated folder
-        target_path = os.path.join(base_target_path, get_file_safe_name(game))
+        target_path = os.path.join(base_target_path, secure_filename(game))
         os.makedirs(target_path, exist_ok=True)
 
         if world.zip_path:
@@ -85,55 +82,57 @@ def create_ordered_tutorials_file() -> typing.List[typing.Dict[str, typing.Any]]
                 for zfile in zf.infolist():
                     if not zfile.is_dir() and "/docs/" in zfile.filename:
                         zfile.filename = os.path.basename(zfile.filename)
-                        zf.extract(zfile, target_path)
+                        with open(os.path.join(target_path, secure_filename(zfile.filename)), "wb") as f:
+                            f.write(zf.read(zfile))
         else:
-            source_path = Utils.local_path(os.path.dirname(world.__file__), "docs")
-            files = os.listdir(source_path)
-            for file in files:
-                shutil.copyfile(Utils.local_path(source_path, file), Utils.local_path(target_path, file))
-
-        game_title = game
-        game_rating = ''
-
-        if hasattr(world.web, 'display_name') and world.web.display_name:
-            game_title = world.web.display_name
-        
-        if hasattr(world.web, 'rating') :
-            game_rating = world.web.rating
-
-        # build a json tutorial dict per game
-        game_data = {'gameTitle': game_title, 'rating': game_rating, 'tutorials': []}
-        for tutorial in world.web.tutorials:
-            # build dict for the json file
-            current_tutorial = {
-                'name': tutorial.tutorial_name,
-                'description': tutorial.description,
-                'files': [{
-                    'language': tutorial.language,
-                    'filename': game + '/' + tutorial.file_name,
-                    'link': f'{game}/{tutorial.link}',
-                    'authors': tutorial.authors
-                }]
-            }
-
-            # check if the name of the current guide exists already
-            for guide in game_data['tutorials']:
-                if guide and tutorial.tutorial_name == guide['name']:
-                    guide['files'].append(current_tutorial['files'][0])
-                    break
+            world_dir = os.path.dirname(world.__file__)
+            source_path = None
+            
+            root_docs_path = Utils.local_path(world_dir, "docs")
+            if os.path.exists(root_docs_path) and os.path.isdir(root_docs_path):
+                source_path = root_docs_path
             else:
-                game_data['tutorials'].append(current_tutorial)
+                source_path = find_docs_folder_recursive(world_dir)
+            
+            if source_path:
+                try:
+                    files = os.listdir(source_path)
+                    for file in files:
+                        file_path = Utils.local_path(source_path, file)
+                        if os.path.isfile(file_path):
+                            shutil.copyfile(file_path,
+                                            Utils.local_path(target_path, secure_filename(file)))
+                except (OSError, IOError) as e:
+                    logging.warning(f"Failed to copy docs for {game}: {e}")
+            else:
+                logging.info(f"No docs folder found for {game}")
 
-        data.append(game_data)
-    with open(Utils.local_path("WebHostLib", "static", "generated", "tutorials.json"), 'w', encoding='utf-8-sig') as json_target:
-        generic_data = {}
-        for games in data:
-            if Utils.instance_name in games['gameTitle']: # this uses the display name
-                generic_data = data.pop(data.index(games))
-        sorted_data = [generic_data] + Utils.title_sorted(data, key=lambda entry: entry["gameTitle"])
-        json.dump(sorted_data, json_target, indent=2, ensure_ascii=False)
-    return sorted_data
 
+def find_docs_folder_recursive(root_dir, max_depth=3):
+    """
+    Recursively search for a "docs" folder in subdirectories.
+    Returns  Path to docs folder if found, None otherwise
+    """
+    def search_recursive(current_dir, current_depth):
+        if current_depth > max_depth:
+            return None
+        
+        try:
+            for item in os.listdir(current_dir):
+                item_path = os.path.join(current_dir, item)
+                if os.path.isdir(item_path):
+                    if item == "docs":
+                        return item_path
+                    # Recursively search subdirectories
+                    result = search_recursive(item_path, current_depth + 1)
+                    if result:
+                        return result
+        except (OSError, PermissionError):
+            pass
+        
+        return None
+    
+    return search_recursive(root_dir, 0)
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
@@ -151,7 +150,7 @@ if __name__ == "__main__":
         logging.warning("Could not update LttP sprites: %s", e)
     app = get_app()
     create_options_files()
-    create_ordered_tutorials_file()
+    copy_tutorials_files_to_static(app)
     if app.config["SELFLAUNCH"]:
         autohost(app.config)
     if app.config["SELFGEN"]:

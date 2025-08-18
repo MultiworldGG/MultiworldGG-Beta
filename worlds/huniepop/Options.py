@@ -57,11 +57,18 @@ class puzzle_affection_add(Range):
 
 class shop_items(Range):
     """number of archipelago items in the shop Note if there is not enough locations for items it will add shop locations to satisfy the locations needed, MAX is 480 so total locations isn't over 1000"""
-    #"""DISABLED DOES NOTHING AT THE MOMENT"""
     display_name = "shop items"
     range_start = 0
     range_end = 480
     default = 0
+
+class exclude_shop_items(Range):
+    """shop items after the number set will be excluded from having progression items in them. will do nothing if set higher than the number of shop items,
+    NOTE will cause world generation to fail if number is set too low as there will be not enough location slots for progression items"""
+    display_name = "shop location exclude start"
+    range_start = 0
+    range_end = 480
+    default = 20
 
 class shop_item_cost(Range):
     """the cost of each arch item location in the shop"""
@@ -99,6 +106,7 @@ class HPOptions(PerGameCommonOptions):
     enabled_girls: enabled_girls
     number_of_starting_girls: starting_girls
     number_shop_items: shop_items
+    exclude_shop_items: exclude_shop_items
     shop_item_cost: shop_item_cost
     shop_gift_cost: shop_gift_cost
     hunie_gift_cost: hunie_gift_cost

@@ -6,6 +6,11 @@
 - An EU copy of The Legend of Zelda: The Minish Cap. The MultiworldGG community cannot provide this.
 - [BizHawk](https://tasvideos.org/BizHawk/ReleaseHistory) 2.7 or later
 
+## Optional Software
+
+- [TMC AP Tracker by Deoxis](https://github.com/deoxis9001/tmcrando_maptracker_deoxis/releases/latest), for use with
+[PopTracker](https://github.com/black-sliver/PopTracker/releases)
+
 ### Configuring BizHawk
 
 Once you have installed BizHawk, open `EmuHawk.exe` and change the following settings:
@@ -19,10 +24,6 @@ tabbed out of EmuHawk.
 - Consider clearing keybinds in `Config > Hotkeys…` if you don't intend to use them. Select the keybind and press Esc to
 clear it.
 
-## Optional Software
-
-- [TMC AP Tracker by Deoxis](https://github.com/deoxis9001/tmcrando_maptracker_deoxis/releases/latest), for use with
-[PopTracker](https://github.com/black-sliver/PopTracker/releases)
 
 ## Generating and Patching a Game
 

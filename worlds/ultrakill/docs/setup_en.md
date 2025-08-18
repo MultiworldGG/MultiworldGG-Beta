@@ -14,12 +14,12 @@ Optionally, you can also download [NoTutorial](https://thunderstore.io/c/ultraki
 
 4. Run `MultiworldGGGenerate.exe` to generate a game, which will appear in the `output` folder.
 
-5. Host a game, either manually, or by [uploading](https://multiworld.gg/uploads) it to the Archipelago website.
+5. Host a game, either manually, or by [uploading](https://multiworld.gg/uploads) it to the MultiworldGG website.
 
 6. To connect to the server, first select a new save file. Then open the options menu, click the PLUGIN CONFIG button, click Configure next to Archipelago, and open the PLAYER SETTINGS menu. Enter your name, the server's address in the form of `address:port`, and a password if necessary, then click the Connect button.
 
 There are also some commands that can be used by pressing `F8` to open the console:
 
-- `connect [address:port] [player] [password]` - Connect to an Archipelago server.
-- `disconnect`: Disconnect from an Archipelago server.
+- `connect [address:port] [player] [password]` - Connect to an MultiworldGG server.
+- `disconnect`: Disconnect from an MultiworldGG server.
 - `say [message]`: Send messages or commands to the server.

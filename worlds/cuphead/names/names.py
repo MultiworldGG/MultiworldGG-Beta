@@ -482,6 +482,8 @@ class LocationNames:
 
     loc_dlc_curse_complete = "Divine Relic"
 
+    loc_event_start_weapon = _loc_event_ + "Start Weapon"
+    loc_event_start_weapon_ex = _loc_event_ + "Start Weapon EX"
     loc_event_isle1_secret_prereq = _loc_event_ + loc_coin_isle1_secret + " Prerequisite"
     loc_event_isle1_secret_prereq1 = loc_event_isle1_secret_prereq + " 1"
     loc_event_isle1_secret_prereq2 = loc_event_isle1_secret_prereq + " 2"
@@ -528,6 +530,20 @@ class ItemNames:
     item_weapon_dlc_crackshot = "Crackshot"
     item_weapon_dlc_converge = "Converge"
     item_weapon_dlc_twistup = "Twist-Up"
+
+    # Weapon EX
+    _weapon_ex = " EX"
+    item_weapon_ex = item_weapon + _weapon_ex
+    item_weapon_peashooter_ex = item_weapon_peashooter + _weapon_ex
+    item_weapon_spread_ex = item_weapon_spread + _weapon_ex
+    item_weapon_chaser_ex = item_weapon_chaser + _weapon_ex
+    item_weapon_lobber_ex = item_weapon_lobber + _weapon_ex
+    item_weapon_charge_ex = item_weapon_charge + _weapon_ex
+    item_weapon_roundabout_ex = item_weapon_roundabout + _weapon_ex
+    item_dlc_weapon_ex = item_dlc_weapon + _weapon_ex
+    item_weapon_dlc_crackshot_ex = item_weapon_dlc_crackshot + _weapon_ex
+    item_weapon_dlc_converge_ex = item_weapon_dlc_converge + _weapon_ex
+    item_weapon_dlc_twistup_ex = item_weapon_dlc_twistup + _weapon_ex
 
     # Progressive Weapon
     item_p_weapon = _item_progressive + "Weapon"
@@ -603,7 +619,8 @@ class ItemNames:
     item_coin3 = "3 Coins"
     item_progressive_plane = _item_progressive + "Plane"
     item_plane = "Plane"
-    item_plane_gun = "Plane Gun"
+    item_plane_gun = "Plane Peashooter"
+    item_plane_gun_a = "Plane Gun"
     item_plane_ex = "Plane EX"
     item_plane_bombs = "Plane Bombs"
     item_plane_super = "Plane Super"
@@ -611,7 +628,8 @@ class ItemNames:
     item_healthupgrade = "+1 Max Health"
     item_dlc_boat = "Boat"
     item_dlc_ingredient = "Ingredient"
-    item_dlc_cplane_gun = "Chalice Plane Gun"
+    item_dlc_cplane_gun = "Chalice Plane Peashooter"
+    item_dlc_cplane_gun_a = "Chalice Plane Gun"
     item_dlc_cplane_ex = "Chalice Plane EX"
     item_dlc_cplane_bombs = "Chalice Plane Bombs"
     item_dlc_cplane_super = "Chalice Plane Super"
@@ -624,6 +642,7 @@ class ItemNames:
     item_level_trap_screen = "Screen Trap"
 
     # Events
+    item_event_null = "null"
     item_event_boss_defeated = _item_event_ + "Boss Defeated"
     item_event_mausoleum = _item_event_ + "Mausoleum"
     item_event_isle1_secret_prereq = _item_event_ + LocationNames.world_inkwell_1 + " Secret Coin Prerequisite"

@@ -1,23 +1,30 @@
 from enum import IntEnum, IntFlag
 
 class GameMode(IntEnum):
-    BEAT_DEVIL = 0
-    COLLECT_CONTRACTS = 1
-    BUY_OUT_SHOP = 2
-    DLC_BEAT_SALTBAKER = 3
-    DLC_BEAT_BOTH = 4
-    DLC_COLLECT_INGREDIENTS = 5
-    DLC_COLLECT_BOTH = 6
-    DLC_BEAT_DEVIL_NO_ISLE4 = 7
-    DLC_BEAT_SALTBAKER_ISLE4_ONLY = 8
+    BEAT_DEVIL = 1
+    COLLECT_CONTRACTS = 2
+    BUY_OUT_SHOP = 3
+    DLC_BEAT_SALTBAKER = 8
+    DLC_BEAT_BOTH = 9
+    DLC_COLLECT_INGREDIENTS = 16
+    DLC_COLLECT_BOTH = 18
+    DLC_BEAT_DEVIL_NO_ISLE4 = 33
+    DLC_BEAT_SALTBAKER_ISLE4_ONLY = 40
 class WeaponMode(IntEnum):
-    NORMAL = 1
-    PROGRESSIVE = 2
-    PROGRESSIVE_BUT_START = 3
+    NORMAL = 0
+    EXCEPT_START = 4 # Not functional on its own.
+    PROGRESSIVE = 1
+    PROGRESSIVE_EXCEPT_START = 5
+    EX_SEPARATE = 2
+    EX_SEPARATE_EXCEPT_START = 6
+class ShopMode(IntEnum):
+    TIERS = 0
+    STRICT_TIERS = 1
+    INDEPENDENT = 2
 class LevelShuffleMode(IntEnum):
     DISABLED = 0
     ENABLED = 1
-    PLANE_LEVELS_SEPARATE = 2
+    PLANE_SEPARATE = 2
 class GradeCheckMode(IntEnum):
     DISABLED = 0
     A_MINUS_GRADE = 1
@@ -31,6 +38,13 @@ class ChaliceMode(IntEnum):
     VANILLA = 2
     RANDOMIZED = 3
     CHALICE_ONLY = 4
+class ChaliceCheckMode(IntEnum):
+    DISABLED = 0
+    ENABLED = 1
+    SEPARATE = 2
+    GRADE_REQUIRED = 4
+    SEPARATE_GRADE_REQUIRED = 6
+# TODO: Switch to Flag format
 class ChessCastleMode(IntEnum):
     EXCLUDE = 0
     EXCLUDE_GAUNTLET = 1
@@ -54,6 +68,7 @@ class ItemGroups(IntFlag):
     CORE_ITEMS = 3
     WEAPON_BASIC = 4
     WEAPON_EX = 8
+    WEAPONS = 12
     ABILITIES = 32
     AIM_ABILITIES = 64
     ALL = 255

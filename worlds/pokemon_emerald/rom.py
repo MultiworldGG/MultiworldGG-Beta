@@ -170,7 +170,7 @@ def write_tokens(world: "PokemonEmeraldWorld", patch: PokemonEmeraldProcedurePat
                     )
 
             # Creates a list of item information to store in tables later. Those tables are used to display the item and
-            # player name in a text box. In the case of not enough space, the game will default to "found an MultiworldGG
+            # player name in a text box. In the case of not enough space, the game will default to "found a MultiworldGG
             # ITEM"
             location_info.append((location.address - BASE_OFFSET, location.item.player, location.item.name))
 

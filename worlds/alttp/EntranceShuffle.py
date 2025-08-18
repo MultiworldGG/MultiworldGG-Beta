@@ -5,7 +5,6 @@ from .OverworldGlitchRules import overworld_glitch_connections
 from .UnderworldGlitchRules import underworld_glitch_connections
 from .Regions import mark_light_world_regions
 from .InvertedRegions import mark_dark_world_regions
-from .utils import get_shuffle_ganon
 
 
 def link_entrances(multiworld, player):    
@@ -50,13 +49,13 @@ def link_entrances(multiworld, player):
             dungeon_exits.append(('Hyrule Castle Exit (South)', 'Hyrule Castle Exit (West)', 'Hyrule Castle Exit (East)'))
             lw_entrances.append('Hyrule Castle Entrance (South)')
 
-        if not get_shuffle_ganon(multiworld.worlds[player], player):
+        if not multiworld.worlds[player].shuffle_ganon:
             connect_two_way(multiworld, 'Ganons Tower', 'Ganons Tower Exit', player)
         else:
             dw_entrances.append('Ganons Tower')
             dungeon_exits.append('Ganons Tower Exit')
 
-        if multiworld.worlds[player].options.entrance_shuffle == 'standard':
+        if multiworld.worlds[player].options.mode == 'standard':
             # rest of hyrule castle must be in light world, so it has to be the one connected to east exit of desert
             hyrule_castle_exits = [('Hyrule Castle Exit (West)', 'Hyrule Castle Exit (East)')]
             connect_mandatory_exits(multiworld, lw_entrances, hyrule_castle_exits, list(LW_Dungeon_Entrances_Must_Exit), player)
@@ -234,7 +233,7 @@ def link_entrances(multiworld, player):
                 ['Hyrule Castle Exit (South)', 'Hyrule Castle Exit (West)', 'Hyrule Castle Exit (East)'], 3)))
             lw_entrances.append('Hyrule Castle Entrance (South)')
 
-        if not get_shuffle_ganon(multiworld, player):
+        if not multiworld.worlds[player].shuffle_ganon:
             connect_two_way(multiworld, 'Ganons Tower', 'Ganons Tower Exit', player)
         else:
             dw_entrances.append('Ganons Tower')
@@ -322,7 +321,8 @@ def link_entrances(multiworld, player):
         must_exits = list(DW_Entrances_Must_Exit + DW_Dungeon_Entrances_Must_Exit + LW_Dungeon_Entrances_Must_Exit)
 
         old_man_entrances = list(Old_Man_Entrances + ['Tower of Hera'])
-        caves = list(Cave_Exits + Dungeon_Exits + Cave_Three_Exits)  # don't need to consider three exit caves, have one exit caves to avoid parity issues
+        caves = list(Cave_Exits + Dungeon_Exits + Cave_Three_Exits) # don't need to consider three exit caves, have one exit caves to avoid parity issues
+        caves.extend(list(Old_Man_House))
         bomb_shop_doors = list(Bomb_Shop_Single_Cave_Doors + Bomb_Shop_Multi_Cave_Doors)
         blacksmith_doors = list(Blacksmith_Single_Cave_Doors + Inverted_Blacksmith_Multi_Cave_Doors)
         door_targets = list(Single_Cave_Targets)
@@ -338,7 +338,7 @@ def link_entrances(multiworld, player):
                 ['Hyrule Castle Exit (South)', 'Hyrule Castle Exit (West)', 'Hyrule Castle Exit (East)'], 3)))
             entrances.append('Hyrule Castle Entrance (South)')
 
-        if not get_shuffle_ganon(multiworld, player):
+        if not multiworld.worlds[player].shuffle_ganon:
             connect_two_way(multiworld, 'Ganons Tower', 'Ganons Tower Exit', player)
         else:
             entrances.append('Ganons Tower')
@@ -441,7 +441,7 @@ def link_entrances(multiworld, player):
             entrances.append('Hyrule Castle Secret Entrance Stairs')
             caves.append('Hyrule Castle Secret Entrance Exit')
 
-        if not get_shuffle_ganon(multiworld, player):
+        if not multiworld.worlds[player].shuffle_ganon:
             connect_two_way(multiworld, 'Ganons Tower', 'Ganons Tower Exit', player)
             connect_two_way(multiworld, 'Pyramid Entrance', 'Pyramid Exit', player)
             connect_entrance(multiworld, 'Pyramid Hole', 'Pyramid', player)
@@ -614,7 +614,7 @@ def link_inverted_entrances(multiworld, player):
         dungeon_exits.append(('Hyrule Castle Exit (South)', 'Hyrule Castle Exit (West)', 'Hyrule Castle Exit (East)'))
         lw_entrances.append('Hyrule Castle Entrance (South)')
         
-        if not get_shuffle_ganon(multiworld, player):
+        if not multiworld.worlds[player].shuffle_ganon:
             connect_two_way(multiworld, 'Inverted Ganons Tower', 'Inverted Ganons Tower Exit', player)
             hc_ledge_entrances = ['Hyrule Castle Entrance (West)', 'Hyrule Castle Entrance (East)']
         else:
@@ -857,7 +857,7 @@ def link_inverted_entrances(multiworld, player):
 
         lw_entrances.append('Hyrule Castle Entrance (South)')
 
-        if not get_shuffle_ganon(multiworld, player):
+        if not multiworld.worlds[player].shuffle_ganon:
             connect_two_way(multiworld, 'Inverted Ganons Tower', 'Inverted Ganons Tower Exit', player)
             hc_ledge_entrances = ['Hyrule Castle Entrance (West)', 'Hyrule Castle Entrance (East)']
         else:
@@ -990,6 +990,7 @@ def link_inverted_entrances(multiworld, player):
 
         old_man_entrances = list(Inverted_Old_Man_Entrances + Old_Man_Entrances + ['Inverted Agahnims Tower', 'Tower of Hera'])
         caves = list(Cave_Exits + Dungeon_Exits + Cave_Three_Exits)  # don't need to consider three exit caves, have one exit caves to avoid parity issues
+        caves.extend(list(Old_Man_House))
         bomb_shop_doors = list(Inverted_Bomb_Shop_Single_Cave_Doors + Inverted_Bomb_Shop_Multi_Cave_Doors)
         blacksmith_doors = list(Blacksmith_Single_Cave_Doors + Inverted_Blacksmith_Multi_Cave_Doors)
         door_targets = list(Inverted_Single_Cave_Targets)
@@ -1006,7 +1007,7 @@ def link_inverted_entrances(multiworld, player):
             ['Hyrule Castle Exit (South)', 'Hyrule Castle Exit (West)', 'Hyrule Castle Exit (East)'], 3)))
         entrances.append('Hyrule Castle Entrance (South)')
         
-        if not get_shuffle_ganon(multiworld, player):
+        if not multiworld.worlds[player].shuffle_ganon:
             connect_two_way(multiworld, 'Inverted Ganons Tower', 'Inverted Ganons Tower Exit', player)
             hc_ledge_entrances = ['Hyrule Castle Entrance (West)', 'Hyrule Castle Entrance (East)']
         else:
@@ -1142,7 +1143,7 @@ def link_inverted_entrances(multiworld, player):
         entrances.append('Hyrule Castle Secret Entrance Stairs')
         caves.append('Hyrule Castle Secret Entrance Exit')
 
-        if not get_shuffle_ganon(multiworld, player):
+        if not multiworld.worlds[player].shuffle_ganon:
             connect_two_way(multiworld, 'Inverted Ganons Tower', 'Inverted Ganons Tower Exit', player)
             connect_two_way(multiworld, 'Inverted Pyramid Entrance', 'Pyramid Exit', player)
             connect_entrance(multiworld, 'Inverted Pyramid Hole', 'Pyramid', player)
@@ -1326,8 +1327,6 @@ def connect_two_way(multiworld, entrancename, exitname, player):
 
 
 def scramble_holes(multiworld, player):
-    shuffle_ganon_value = get_shuffle_ganon(multiworld, player)
-    
     hole_entrances = [('Kakariko Well Cave', 'Kakariko Well Drop'),
                       ('Bat Cave Cave', 'Bat Cave Drop'),
                       ('North Fairy Cave', 'North Fairy Cave Drop'),
@@ -1341,7 +1340,7 @@ def scramble_holes(multiworld, player):
                     ('Lost Woods Hideout Exit', 'Lost Woods Hideout (top)'),
                     ('Lumberjack Tree Exit', 'Lumberjack Tree (top)')]
 
-    if not get_shuffle_ganon(multiworld, player):
+    if not multiworld.worlds[player].shuffle_ganon:
         connect_two_way(multiworld, 'Pyramid Entrance', 'Pyramid Exit', player)
         connect_entrance(multiworld, 'Pyramid Hole', 'Pyramid', player)
     else:
@@ -1358,7 +1357,7 @@ def scramble_holes(multiworld, player):
     # do not shuffle sanctuary into pyramid hole unless shuffle is crossed
     if multiworld.worlds[player].options.entrance_shuffle == 'crossed':
         hole_targets.append(('Sanctuary Exit', 'Sewer Drop'))
-    if get_shuffle_ganon(multiworld, player):
+    if multiworld.worlds[player].shuffle_ganon:
         multiworld.random.shuffle(hole_targets)
         exit, target = hole_targets.pop()
         connect_two_way(multiworld, 'Pyramid Entrance', exit, player)
@@ -1373,7 +1372,6 @@ def scramble_holes(multiworld, player):
 
 
 def scramble_inverted_holes(multiworld, player):
-    shuffle_ganon_value = get_shuffle_ganon(multiworld, player)
     hole_entrances = [('Kakariko Well Cave', 'Kakariko Well Drop'),
                       ('Bat Cave Cave', 'Bat Cave Drop'),
                       ('North Fairy Cave', 'North Fairy Cave Drop'),
@@ -1387,7 +1385,7 @@ def scramble_inverted_holes(multiworld, player):
                     ('Lost Woods Hideout Exit', 'Lost Woods Hideout (top)'),
                     ('Lumberjack Tree Exit', 'Lumberjack Tree (top)')]
 
-    if not get_shuffle_ganon(multiworld, player):
+    if not multiworld.worlds[player].shuffle_ganon:
         connect_two_way(multiworld, 'Inverted Pyramid Entrance', 'Pyramid Exit', player)
         connect_entrance(multiworld, 'Inverted Pyramid Hole', 'Pyramid', player)
     else:
@@ -1400,8 +1398,7 @@ def scramble_inverted_holes(multiworld, player):
     # do not shuffle sanctuary into pyramid hole unless shuffle is crossed
     if multiworld.worlds[player].options.entrance_shuffle == 'crossed':
         hole_targets.append(('Sanctuary Exit', 'Sewer Drop'))
-    shuffle_ganon_value = get_shuffle_ganon(multiworld, player)
-    if shuffle_ganon_value:
+    if multiworld.worlds[player].shuffle_ganon:
         multiworld.random.shuffle(hole_targets)
         exit, target = hole_targets.pop()
         connect_two_way(multiworld, 'Inverted Pyramid Entrance', exit, player)
@@ -1564,7 +1561,7 @@ def simple_shuffle_dungeons(multiworld, player):
     dungeon_exits = ['Eastern Palace Exit', 'Tower of Hera Exit', 'Thieves Town Exit', 'Skull Woods Final Section Exit', 'Palace of Darkness Exit', 'Ice Palace Exit', 'Misery Mire Exit', 'Swamp Palace Exit']
 
     if multiworld.worlds[player].options.mode != 'inverted':
-        if not get_shuffle_ganon(multiworld, player):
+        if not multiworld.worlds[player].shuffle_ganon:
             connect_two_way(multiworld, 'Ganons Tower', 'Ganons Tower Exit', player)
         else:
             dungeon_entrances.append('Ganons Tower')
@@ -1578,13 +1575,13 @@ def simple_shuffle_dungeons(multiworld, player):
 
     # mix up 4 door dungeons
     multi_dungeons = ['Desert', 'Turtle Rock']
-    if multiworld.worlds[player].options.mode == 'open' or (multiworld.worlds[player].options.mode == 'inverted' and get_shuffle_ganon(multiworld, player)):
+    if multiworld.worlds[player].options.mode == 'open' or (multiworld.worlds[player].options.mode == 'inverted' and multiworld.worlds[player].shuffle_ganon):
         multi_dungeons.append('Hyrule Castle')
     multiworld.random.shuffle(multi_dungeons)
 
     dp_target = multi_dungeons[0]
     tr_target = multi_dungeons[1]
-    if multiworld.worlds[player].options.mode not in ['open', 'inverted'] or (multiworld.worlds[player].options.mode == 'inverted' and get_shuffle_ganon(multiworld, player) is False):
+    if multiworld.worlds[player].options.mode not in ['open', 'inverted'] or (multiworld.worlds[player].options.mode == 'inverted' and not multiworld.worlds[player].shuffle_ganon):
         # place hyrule castle as intended
         hc_target = 'Hyrule Castle'
     else:
@@ -1701,7 +1698,7 @@ def crossed_shuffle_dungeons(multiworld, player: int):
     dungeon_exits = Dungeon_Exits_Base.copy()
     dungeon_entrances = lw_entrances+dw_entrances
 
-    if not get_shuffle_ganon(multiworld, player):
+    if not multiworld.worlds[player].shuffle_ganon:
         connect_two_way(multiworld, 'Ganons Tower', 'Ganons Tower Exit', player)
     else:
         dungeon_entrances.append('Ganons Tower')
@@ -1747,7 +1744,7 @@ def inverted_crossed_shuffle_dungeons(multiworld, player: int):
     dungeon_exits.append(('Hyrule Castle Exit (South)', 'Hyrule Castle Exit (West)', 'Hyrule Castle Exit (East)'))
     dungeon_entrances.append('Hyrule Castle Entrance (South)')
 
-    if not get_shuffle_ganon(multiworld, player):
+    if not multiworld.worlds[player].shuffle_ganon:
         connect_two_way(multiworld, 'Inverted Ganons Tower', 'Inverted Ganons Tower Exit', player)
         hc_ledge_entrances = ['Hyrule Castle Entrance (West)', 'Hyrule Castle Entrance (East)']
     else:
