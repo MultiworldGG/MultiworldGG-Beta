@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from kivymd.uix.button import MDButton
+from kivymd.uix.card.card import MDCard
 from kivymd.uix.scrollview import MDScrollView
 __all__ = ['LauncherScreen', 'LauncherLayout']
 import asynckivy
@@ -25,6 +27,7 @@ from kivymd.uix.expansionpanel import *
 from .kivydi.expansionlist import *
 from kivymd.uix.textfield import MDTextField, MDTextFieldHelperText, MDTextFieldHintText, MDTextFieldLeadingIcon, MDTextFieldTrailingIcon
 from kivymd.uix.fitimage import FitImage
+from kivymd.uix.imagelist import MDSmartTile, MDSmartTileImage, MDSmartTileOverlayContainer
 from kivymd.uix.label import MDLabel
 from kivy.animation import Animation
 import logging
@@ -62,18 +65,12 @@ Builder.load_string('''
     size_hint_y: None
     width: dp(100)
     height: dp(75)
-    FitImage:
+    MDSmartTileImage:
         source: root.game_cover_url
-        fit_mode: 'cover'
         height: dp(75)
-    MDBoxLayout:
-        orientation: 'horizontal'
-        size_hint_x: 1
-        size_hint_y: 0.3
-        theme_bg_color: "Custom"
-        md_bg_color: app.theme_cls.surfaceVariantColor
-        opacity: 0.7
-        radius: [dp(10), dp(10), 0, 0]
+    MDSmartTileOverlayContainer:
+        overlap: True
+        overlay_mode: 'footer'
         MDLabel:
             pos_hint: {"x": 0, "y": 0}
             size_hint_y: 1
@@ -302,7 +299,7 @@ class FavoritesScroll(MDScrollView):
         self.favorites = MDBoxLayout(orientation='horizontal', spacing=dp(10), size_hint_x=None, size_hint_y=None, height=dp(75), width=dp(1000))
         self.add_widget(self.favorites)
 
-class Favorite(MDFloatLayout, CommonElevationBehavior, ButtonBehavior):
+class Favorite(MDSmartTile):
     """Custom Layout for displaying favorite games"""
     game_module = StringProperty("")
     game_name = StringProperty("")
@@ -396,7 +393,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.add_widget(self.launchergrid)
         self.add_widget(self.bottom_appbar)
 
-        self.launcher_hero_from = self.important_appbar.launcher_hero_from
+        self.launcher_hero_from = self.important_appbar.launcher_hero_to
         self.launcher_hero_to = self.important_appbar.launcher_hero_to
         self.heroes_from = [self.launcher_hero_from]
         self.heroes_to = [self.launcher_hero_to]
@@ -520,6 +517,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             
             game_index = GameIndex()
             for name in self.favorite_games:
+
                 try:
                     game_name = game_index.get_game_name_for_module(name)
                     if game_name:

@@ -2,20 +2,26 @@ from enum import IntFlag
 
 import comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0 as __wrapper_module__
 from comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0 import (
-    Checked, FONTNAME, VARIANT_BOOL, OLE_XPOS_CONTAINER, DISPMETHOD,
-    DISPPROPERTY, Gray, CoClass, FONTSTRIKETHROUGH, _check_version,
-    IPicture, IFontEventsDisp, IDispatch, FONTUNDERSCORE, FONTITALIC,
-    IFontDisp, OLE_XSIZE_CONTAINER, OLE_XPOS_PIXELS, Picture, IFont,
-    Monochrome, VgaColor, Unchecked, IPictureDisp, OLE_YSIZE_HIMETRIC,
-    OLE_XPOS_HIMETRIC, Font, typelib_path, COMMETHOD, Default,
-    HRESULT, OLE_HANDLE, FontEvents, FONTSIZE, IUnknown, OLE_COLOR,
-    IEnumVARIANT, dispid, OLE_ENABLEDEFAULTBOOL, DISPPARAMS, _lcid,
-    StdPicture, OLE_YPOS_PIXELS, OLE_YPOS_CONTAINER,
-    OLE_YPOS_HIMETRIC, BSTR, StdFont, OLE_OPTEXCLUSIVE, GUID,
-    OLE_XSIZE_PIXELS, OLE_CANCELBOOL, FONTBOLD, Library, Color,
-    OLE_YSIZE_PIXELS, OLE_XSIZE_HIMETRIC, OLE_YSIZE_CONTAINER,
-    EXCEPINFO
+    OLE_YSIZE_HIMETRIC, Monochrome, OLE_XPOS_HIMETRIC, Color,
+    IPictureDisp, BSTR, IDispatch, Default, IFontEventsDisp,
+    OLE_YPOS_CONTAINER, FONTSIZE, Checked, COMMETHOD, OLE_CANCELBOOL,
+    IFont, DISPPROPERTY, typelib_path, IFontDisp,
+    OLE_ENABLEDEFAULTBOOL, OLE_OPTEXCLUSIVE, StdPicture,
+    FONTSTRIKETHROUGH, _lcid, OLE_XSIZE_PIXELS, Gray, _check_version,
+    FONTNAME, Unchecked, Picture, CoClass, DISPPARAMS,
+    OLE_XSIZE_CONTAINER, OLE_YPOS_PIXELS, OLE_XPOS_CONTAINER,
+    FONTUNDERSCORE, OLE_YSIZE_CONTAINER, dispid, EXCEPINFO, OLE_COLOR,
+    GUID, HRESULT, IEnumVARIANT, FONTITALIC, StdFont,
+    OLE_YPOS_HIMETRIC, DISPMETHOD, OLE_XSIZE_HIMETRIC, IUnknown, Font,
+    OLE_YSIZE_PIXELS, OLE_HANDLE, FONTBOLD, FontEvents,
+    OLE_XPOS_PIXELS, VgaColor, IPicture, Library, VARIANT_BOOL
 )
+
+
+class OLE_TRISTATE(IntFlag):
+    Unchecked = 0
+    Checked = 1
+    Gray = 2
 
 
 class LoadPictureConstants(IntFlag):
@@ -25,25 +31,18 @@ class LoadPictureConstants(IntFlag):
     Color = 4
 
 
-class OLE_TRISTATE(IntFlag):
-    Unchecked = 0
-    Checked = 1
-    Gray = 2
-
-
 __all__ = [
-    'FontEvents', 'Checked', 'FONTNAME', 'FONTSIZE', 'OLE_COLOR',
-    'OLE_XPOS_CONTAINER', 'OLE_ENABLEDEFAULTBOOL', 'Gray',
-    'FONTSTRIKETHROUGH', 'StdPicture', 'OLE_YPOS_PIXELS',
-    'OLE_YPOS_CONTAINER', 'IPicture', 'IFontEventsDisp',
-    'OLE_YPOS_HIMETRIC', 'FONTUNDERSCORE', 'FONTITALIC', 'StdFont',
-    'OLE_OPTEXCLUSIVE', 'OLE_XSIZE_PIXELS', 'IFontDisp',
-    'OLE_CANCELBOOL', 'FONTBOLD', 'OLE_XSIZE_CONTAINER',
-    'OLE_XPOS_PIXELS', 'Picture', 'OLE_TRISTATE', 'IFont', 'Library',
-    'Monochrome', 'VgaColor', 'Unchecked', 'Color', 'IPictureDisp',
-    'OLE_YSIZE_HIMETRIC', 'OLE_XPOS_HIMETRIC', 'Font',
-    'OLE_YSIZE_PIXELS', 'typelib_path', 'OLE_XSIZE_HIMETRIC',
-    'LoadPictureConstants', 'OLE_YSIZE_CONTAINER', 'Default',
-    'OLE_HANDLE'
+    'OLE_YSIZE_HIMETRIC', 'Monochrome', 'OLE_XPOS_HIMETRIC', 'Color',
+    'IPictureDisp', 'Default', 'IFontEventsDisp',
+    'OLE_YPOS_CONTAINER', 'FONTSIZE', 'OLE_COLOR', 'Checked',
+    'OLE_CANCELBOOL', 'IFont', 'FONTITALIC', 'StdFont',
+    'typelib_path', 'OLE_TRISTATE', 'OLE_YPOS_HIMETRIC',
+    'OLE_XSIZE_HIMETRIC', 'IFontDisp', 'OLE_ENABLEDEFAULTBOOL',
+    'OLE_OPTEXCLUSIVE', 'StdPicture', 'FONTSTRIKETHROUGH', 'Font',
+    'OLE_YSIZE_PIXELS', 'LoadPictureConstants', 'OLE_XSIZE_PIXELS',
+    'Gray', 'OLE_HANDLE', 'FONTBOLD', 'Unchecked', 'FONTNAME',
+    'Picture', 'FontEvents', 'OLE_XPOS_PIXELS', 'VgaColor',
+    'OLE_XSIZE_CONTAINER', 'OLE_YPOS_PIXELS', 'OLE_XPOS_CONTAINER',
+    'FONTUNDERSCORE', 'IPicture', 'Library', 'OLE_YSIZE_CONTAINER'
 ]
 

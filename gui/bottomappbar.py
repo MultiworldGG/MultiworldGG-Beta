@@ -196,7 +196,6 @@ class BottomBarTextInput(MDTextField):
                 except ValueError:
                     pass  # substring not found
                 else:
-                    text = escape_markup(hint_name)
                     text = text[:index]+text[index:index+len(value)]+text[index+len(value):]
                     self.dropdown.items.append({
                         "text": text,
@@ -205,8 +204,8 @@ class BottomBarTextInput(MDTextField):
                     })
             if not self.dropdown.parent:
                 self.dropdown.open()
-            else:
-                Clock.schedule_once(self.dropdown.check_ver_growth, 0.1)
+            # else:
+            #     Clock.schedule_once(self.dropdown.check_ver_growth, 0.1)
         else:
             self.dropdown.dismiss()
 
@@ -255,7 +254,7 @@ class BottomAppBar(MDBottomAppBar):
         """Animate the text input with properties from the clicked action item"""
         # Find the action data for this button
         action_data = None
-        if self.screen_name == "console":
+        if self.screen_name == "console" or self.screen_name == "hint":
             actions = CONSOLE_ACTIONS
         elif self.screen_name == "launcher":
             actions = LAUNCHER_ACTIONS

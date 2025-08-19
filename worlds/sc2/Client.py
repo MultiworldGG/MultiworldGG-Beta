@@ -41,10 +41,10 @@ logger = logging.getLogger("Client")
 sc2_logger = logging.getLogger("Starcraft2")
 
 import nest_asyncio
-from worlds._sc2common import bot
-from worlds._sc2common.bot.data import Race
-from worlds._sc2common.bot.main import run_game
-from worlds._sc2common.bot.player import Bot
+from . import bot
+from .bot import Race
+from .bot.main import run_game
+from .bot.player import Bot
 from .Items import (lookup_id_to_name, get_full_item_list, ItemData, type_flaggroups, upgrade_numbers,
                     upgrade_numbers_all)
 from .Locations import SC2WOL_LOC_ID_OFFSET, LocationType, SC2HOTS_LOC_ID_OFFSET

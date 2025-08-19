@@ -123,6 +123,7 @@ def get_available_worlds() -> typing.List[str]:
 def discover_and_launch_module(module_name: str, **kwargs) -> None:
     """Discover and launch module via entrypoints"""
     try:
+        # 1. Check for explicit entry point first
         entry_points = importlib.metadata.entry_points(group="mwgg.client")
         entry_point_name = f"worlds.{module_name}.Client"
         
@@ -146,18 +147,41 @@ def discover_and_launch_module(module_name: str, **kwargs) -> None:
             else:
                 logging.info(f"Launch function completed synchronously for {module_name}")
                 return result
-        else:
-            from CommonClient import main_textclient
-            result = main_textclient(**kwargs)
+                        
+        # 2. Check SNI registry  
+        try:
+            from worlds._sni.client import AutoSNIClientRegister
+            if AutoSNIClientRegister.is_sni_world(module_name):
+                logging.info(f"Detected SNI client for {module_name}")
+                from worlds._sni.context import launch
+                return launch(**kwargs)
+        except ImportError:
+            logging.debug("SNI client not available")
+            
+        # 3. Check BizHawk registry
+        try:
+            from worlds._bizhawk.client import AutoBizHawkClientRegister
+            if AutoBizHawkClientRegister.is_bizhawk_world(module_name):
+                logging.info(f"Detected BizHawk client for {module_name}")
+                from worlds._bizhawk.context import launch
+                return launch(**kwargs)
+        except ImportError:
+            logging.debug("BizHawk client not available")
 
-            # Check if the launch function returned a task (GUI mode)
-            if hasattr(result, '_coro'):
-                logging.info(f"Launch function returned a task for text client, running in GUI mode")
-                # The task is already scheduled in the event loop
-                return result
-            else:
-                logging.info(f"Launch function completed synchronously for text client")
-                return result
+        
+        # 4. Fallback to text client
+        logging.info(f"No specialized client found for {module_name}, using text client")
+        from CommonClient import main_textclient
+        result = main_textclient(**kwargs)
+
+        # Check if the launch function returned a task (GUI mode)
+        if hasattr(result, '_coro'):
+            logging.info(f"Launch function returned a task for text client, running in GUI mode")
+            # The task is already scheduled in the event loop
+            return result
+        else:
+            logging.info(f"Launch function completed synchronously for text client")
+            return result
 
     except Exception as e:
         logging.error(f"Failed to launch module {module_name}: {e}")

@@ -23,18 +23,9 @@ Builder.load_string('''
     hide_appbar: True
     background_color: app.theme_cls.secondaryContainerColor
     launcher_hero_from: launcher_hero_from
-    launcher_hero_to: launcher_hero_to
     MDSliverAppbarHeader:
         MDHeroFrom:   #### ok the herofrom size/loc is the transition size
             id: launcher_hero_from
-            tag: "logo"
-            size_hint: 1,1
-            Image:
-                source: "gui/data/logo_bg.png"
-                pos_hint: {"center_y": 0.5}
-                fit_mode: "scale-down"
-        MDHeroTo:   #### hero to element for transitions
-            id: launcher_hero_to
             tag: "logo"
             size_hint: 1,1
             Image:
@@ -62,7 +53,6 @@ Builder.load_string('''
 
 class LauncherSliverAppbar(MDSliverAppbar):
     content: MDSliverAppbarContent
-    launcher_hero_to: ObjectProperty
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

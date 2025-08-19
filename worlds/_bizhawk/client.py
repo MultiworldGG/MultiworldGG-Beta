@@ -64,6 +64,42 @@ class AutoBizHawkClientRegister(abc.ABCMeta):
 
         return None
 
+    @staticmethod
+    def get_games() -> dict[tuple[str, ...], list[str]]:
+        """Get all registered games by system"""
+        return {systems: list(handlers.keys()) 
+                for systems, handlers in AutoBizHawkClientRegister.game_handlers.items()}
+
+    @staticmethod  
+    def get_all_games() -> list[str]:
+        """Get a flat list of all registered game names"""
+        games = []
+        for handlers in AutoBizHawkClientRegister.game_handlers.values():
+            games.extend(handlers.keys())
+        return games
+
+    @staticmethod
+    def has_bizhawk_client(game_name: str) -> bool:
+        """Check if a specific game has a BizHawk client registered"""
+        for handlers in AutoBizHawkClientRegister.game_handlers.values():
+            if game_name in handlers:
+                return True
+        return False
+
+    @staticmethod
+    def is_bizhawk_world(module_name: str) -> bool:
+        """Check if a world module has a registered BizHawk client"""
+        # Try exact game name match first
+        for game_name in AutoBizHawkClientRegister.get_all_games():
+            # Normalize both names for comparison
+            game_normalized = game_name.lower().replace(' ', '_').replace('-', '_')
+            module_normalized = module_name.lower().replace('-', '_')
+            
+            if (module_normalized in game_normalized or 
+                game_normalized in module_normalized):
+                return True
+        return False
+
 
 class BizHawkClient(abc.ABC, metaclass=AutoBizHawkClientRegister):
     system: ClassVar[str | tuple[str, ...]]
