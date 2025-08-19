@@ -1,4 +1,5 @@
 import logging
+from .constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
 from .constants.mounts import *
 from .constants.jobs import *
 from .constants.keys import *
@@ -41,9 +42,10 @@ class CrystalProjectWeb(WebWorld):
 
 class CrystalProjectWorld(World):
     """Crystal Project is a mix of old school job based jRPG mixed with a ton of 3D platforming and exploration."""
-    apworld_version = "0.9.0"
-    game = "Crystal Project"
-    author: str = "Emerassi"
+    apworld_version = VERSION
+    igdb_id = IGDB_ID
+    game = GAME_NAME
+    author = AUTHOR
     options_dataclass = CrystalProjectOptions
     options: CrystalProjectOptions
     topology_present = True  # show path to required location checks in spoiler

@@ -1,4 +1,4 @@
-from . import WitnessWebWorld
+from . import WitnessWorld, WitnessWebWorld
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -15,6 +15,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = WitnessWebWorld
-WEB_WORLD_CLASS = None
+WORLD_CLASS = WitnessWorld
+WEB_WORLD_CLASS = WitnessWebWorld
 CLIENT_FUNCTION = None

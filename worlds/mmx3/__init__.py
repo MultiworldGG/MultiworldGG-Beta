@@ -18,6 +18,7 @@ from .Client import MMX3SNIClient
 from .Levels import location_id_to_level_id
 from .Weaknesses import handle_weaknesses, weapon_id
 from .Rom import patch_rom, MMX3ProcedurePatch, HASH_US, HASH_LEGACY
+from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
 
 from typing import Dict, Any, TYPE_CHECKING, Optional, Sequence, Tuple, ClassVar, List
 
@@ -63,8 +64,10 @@ class MMX3World(World):
     Players once again control Mega Man X, who must thwart a rebellion led by the Maverick Reploid scientist 
     Dr. Doppler. The game introduces the ability to play as Zero for limited segments, adding variety to the gameplay.
     """
-    game = "Mega Man X3"
-    author: str = "lx5"
+    game = GAME_NAME
+    author: str = AUTHOR
+    igdb_id: int = IGDB_ID
+
     web = MMX3Web()
 
     settings: typing.ClassVar[MMX3Settings]

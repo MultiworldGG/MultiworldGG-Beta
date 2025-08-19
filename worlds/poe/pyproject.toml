@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds.poe"
+dynamic = ["version"]
+description = "MultiWorld: Path of Exile"
+authors = [
+    {name = "StuBob"}
+]
+classifiers = [
+    "Private :: Do Not Upload"
+]
+requires-python = ">=3.12"
+
+[tool.setuptools.packages.find]
+where = ["src/"]
+include = ["worlds.poe"]
+namespaces = true
+
+[tool.setuptools.dynamic]
+version = {attr = "worlds.poe.Constants.VERSION"}

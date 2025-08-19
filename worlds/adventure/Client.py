@@ -8,6 +8,7 @@ import subprocess
 import zipfile
 from asyncio import StreamReader, StreamWriter, CancelledError
 from typing import List
+import logging
 
 
 import Utils
@@ -135,17 +136,17 @@ class AdventureContext(CommonContext):
         self.deathlink_pending = True
         super().on_deathlink(data)
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class AdventureManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = apname + " Adventure Client"
+    #     class AdventureManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = apname + " Adventure Client"
 
-        self.ui = AdventureManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = AdventureManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     async def get_freeincarnates_used(self):
         if self.server and not self.server.socket.closed:
@@ -474,45 +475,62 @@ async def patch_and_run_game(patch_file, ctx):
     async_start(run_game(comp_path))
 
 
-def main(*launch_args: str):
-    async def main():
-        parser = get_base_parser()
-        parser.add_argument('patch_file', default="", type=str, nargs="?",
-                            help='Path to an ADVNTURE.BIN rom file')
-        parser.add_argument('port', default=17242, type=int, nargs="?",
-                            help='port for adventure_connector connection')
-        args = parser.parse_args(launch_args)
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None, lua_port: int = 17242):
+    logging.getLogger("AdventureClient")
 
-        ctx = AdventureContext(args.connect, args.password)
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
+    async def main():
+        ctx = AdventureContext(server_address, slot_name, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Adventure"
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+        #ctx.run_cli()
+        await ctx.server_auth()
+ 
         ctx.atari_sync_task = asyncio.create_task(atari_sync_task(ctx), name="Adventure Sync")
 
-        if args.patch_file:
-            ext = args.patch_file.split(".")[len(args.patch_file.split(".")) - 1].lower()
+        if patch_file:
+            ext = patch_file.split(".")[len(patch_file.split(".")) - 1].lower()
             if ext == "apadvn":
                 logger.info("apadvn file supplied, beginning patching process...")
-                async_start(patch_and_run_game(args.patch_file, ctx))
+                async_start(patch_and_run_game(patch_file, ctx))
             else:
                 logger.warning(f"Unknown patch file extension {ext}")
-        if args.port is int:
-            ctx.lua_connector_port = args.port
-
-        await ctx.exit_event.wait()
-        ctx.server_address = None
-
+        if lua_port is int:
+            ctx.lua_connector_port = lua_port
         await ctx.shutdown()
-
-        if ctx.atari_sync_task:
-            await ctx.atari_sync_task
-            print("finished atari_sync_task (main)")
-
 
     import colorama
 
-    colorama.just_fix_windows_console()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        # Create a simple namespace object to mimic argparse.Namespace
+        class Args:
+            def __init__(self, server_address, slot_name, password, patch_file, lua_port):
+                self.server_address = server_address
+                self.slot_name = slot_name
+                self.password = password
+                self.patch_file = patch_file
+                self.lua_port = lua_port
+        
+        args = Args(server_address, slot_name, password, patch_file, lua_port)
+        task = asyncio.create_task(main(args), name="AdventureMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Adventure client.")
+        if error_callback:
+            error_callback()
 
-    asyncio.run(main())
-    colorama.deinit()
+def main(server_address: str, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None, lua_port: int = 17242):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, slot_name, password, ready_callback, error_callback, patch_file, lua_port)

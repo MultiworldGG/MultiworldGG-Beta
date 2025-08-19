@@ -1,4 +1,4 @@
-from . import SatisfactoryWorld
+from . import SatisfactoryWorld, SatisfactoryWebWorld
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -16,5 +16,5 @@ VERSION = version
 
 # Plugin entry points
 WORLD_CLASS = SatisfactoryWorld
-WEB_WORLD_CLASS = None
+WEB_WORLD_CLASS = SatisfactoryWebWorld
 CLIENT_FUNCTION = None

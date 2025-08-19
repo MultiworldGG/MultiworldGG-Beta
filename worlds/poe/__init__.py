@@ -10,6 +10,7 @@ import base64
 
 from worlds.poe.data import ItemTable
 
+from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
 from .Options import PathOfExileOptions
 from . import Items
 from . import Locations
@@ -62,8 +63,10 @@ class PathOfExileWorld(World):
     tree, thousands of items, and a huge endgame full of challenging bosses, and a wide variety of skill gems that define abilities.
     """
     _debug = True
-    game = "Path of Exile"
-    author: str = "StuBob"
+    game = GAME_NAME
+    author: str = AUTHOR
+    igdb_id: int = IGDB_ID
+    version = VERSION
     web = PathOfExileWebWorld()
     options_dataclass = PathOfExileOptions
     origin_region_name = "Menu"

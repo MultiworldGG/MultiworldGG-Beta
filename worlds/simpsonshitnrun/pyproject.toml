@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds.simpsonshitnrun"
+dynamic = ["version"]
+description = "MultiWorld: The Simpsons Hit And Run"
+authors = [
+    {name = "Caesius"}
+]
+classifiers = [
+    "Private :: Do Not Upload"
+]
+requires-python = ">=3.12"
+
+[tool.setuptools.packages.find]
+where = ["src/"]
+include = ["worlds.simpsonshitnrun"]
+namespaces = true
+
+[tool.setuptools.dynamic]
+version = {attr = "worlds.simpsonshitnrun.Constants.VERSION"}

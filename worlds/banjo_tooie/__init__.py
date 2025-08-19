@@ -89,7 +89,6 @@ class BanjoTooieWorld(World):
     version = VERSION
     options: BanjoTooieOptions
     settings: BanjoTooieSettings
-    author: str = "jjjj12212"
     settings_key = "banjo_tooie_options"
     web = BanjoTooieWeb()
     topology_present = True

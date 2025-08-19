@@ -1,4 +1,4 @@
-from . import MM2WebWorld
+from . import MM2World, MM2WebWorld
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -15,6 +15,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = MM2WebWorld
-WEB_WORLD_CLASS = None
+WORLD_CLASS = MM2World
+WEB_WORLD_CLASS = MM2WebWorld
 CLIENT_FUNCTION = None

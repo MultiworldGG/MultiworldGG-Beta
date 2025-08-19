@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds.debug"
+dynamic = ["version"]
+description = "MultiWorld: debug"
+authors = [
+    {name = "TreZ"}
+]
+classifiers = [
+    "Private :: Do Not Upload"
+]
+requires-python = ">=3.12"
+
+[tool.setuptools.packages.find]
+where = ["src/"]
+include = ["worlds.debug"]
+namespaces = true
+
+[tool.setuptools.dynamic]
+version = {attr = "worlds.debug.Constants.VERSION"}

@@ -2,6 +2,7 @@ import json
 import math
 from random import Random
 from .levels import SL, HIPSL, ROGUESL, MG1SL
+from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
 from typing import Any, Dict, List, Optional, Set, Tuple
 from BaseClasses import CollectionState, Tutorial
 
@@ -49,10 +50,11 @@ class Q1World(World):
     That first Grunt you encounter in E1M1? Now it could be an Enforcer, a Knight... or maybe a Shambler!
     """
 
-    game = "Quake 1"
-    author: str = "rand(0)"
+    game = GAME_NAME
+    author: str = AUTHOR
+    igdb_id: int = IGDB_ID
     game_id = GAME_ID
-    game_full_name = "Quake 1"
+    game_full_name = GAME_NAME
 
     item_name_to_id = {
         name: net_id(loc_id) for name, loc_id in game_ids["items"].items()

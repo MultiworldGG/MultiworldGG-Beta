@@ -1,4 +1,4 @@
-from . import OriBlindForestWebWorld
+from . import OriBlindForestWorld, OriBlindForestWebWorld
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -15,6 +15,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = OriBlindForestWebWorld
-WEB_WORLD_CLASS = None
+WORLD_CLASS = OriBlindForestWorld
+WEB_WORLD_CLASS = OriBlindForestWebWorld
 CLIENT_FUNCTION = None

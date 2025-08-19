@@ -1,4 +1,4 @@
-from . import SOTWorld
+from . import SOTWorld, SOTWebWorld
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -16,5 +16,5 @@ VERSION = version
 
 # Plugin entry points
 WORLD_CLASS = SOTWorld
-WEB_WORLD_CLASS = None
+WEB_WORLD_CLASS = SOTWebWorld
 CLIENT_FUNCTION = None

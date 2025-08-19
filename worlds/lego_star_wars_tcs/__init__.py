@@ -98,6 +98,8 @@ class LegoStarWarsTCSWorld(World):
 
     game = constants.GAME_NAME
     author = constants.AUTHOR
+    version = constants.VERSION
+    igdb_id = constants.IGDB_ID
     web = LegoStarWarsTCSWebWorld()
     options: LegoStarWarsTCSOptions
     options_dataclass = LegoStarWarsTCSOptions

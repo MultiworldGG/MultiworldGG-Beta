@@ -1,4 +1,4 @@
-from . import Starcraft2WebWorld
+from . import Starcraft2World, Starcraft2WebWorld
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -15,6 +15,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = Starcraft2WebWorld
-WEB_WORLD_CLASS = None
+WORLD_CLASS = Starcraft2World
+WEB_WORLD_CLASS = Starcraft2WebWorld
 CLIENT_FUNCTION = None

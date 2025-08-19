@@ -21,6 +21,7 @@ from .data.Items import ITEMS_DATA
 from .data.Regions import REGIONS
 from .data.LogicPredicates import *
 from .data.Entrances import EntranceGroups, OPPOSITE_ENTRANCE_GROUPS, ENTRANCES
+from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
 
 from .Client import PhantomHourglassClient  # Unused, but required to register with BizHawkClient
 
@@ -105,8 +106,9 @@ class PhantomHourglassWorld(World):
     """
     The Legend of Zelda: Phantom Hourglass is the sea bound handheld sequel to the Wind Waker.
     """
-    game = "The Legend of Zelda - Phantom Hourglass"
-    author: str = "Carrotinator"
+    game = GAME_NAME
+    author: str = AUTHOR
+    igdb_id: int = IGDB_ID
     options_dataclass = PhantomHourglassOptions
     options: PhantomHourglassOptions
     required_client_version = (0, 6, 1)

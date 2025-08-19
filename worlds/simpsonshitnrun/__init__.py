@@ -13,6 +13,7 @@ from .Meta import world_description, world_webworld, enable_region_diagram
 from .Locations import location_table, location_id_to_name, location_name_to_id, location_name_to_location, location_name_groups, victory_names
 from .Items import item_table, item_id_to_name, item_name_to_id, item_name_to_item, item_name_groups
 from .DataValidation import runGenerationDataValidation, runPreFillDataValidation
+from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
 
 from .Regions import create_regions
 from .Items import ManualItem
@@ -35,12 +36,13 @@ from .hooks.Data import hook_interpret_slot_data
 
 class SimpsonsHitAndRunWorld(World):
     """A 2003 Action Adventure game similar to the GTA series starring the Simpsons"""
-    game = "The Simpsons Hit And Run"
-    author: str = "Caesius"
+    game = GAME_NAME
+    author: str = AUTHOR
+    igdb_id: int = IGDB_ID
     web = world_webworld
 
     options_dataclass = SimpsonsHitAndRunOptions
-    data_version = 2
+    data_version = VERSION
     required_client_version = (0, 5, 0)
 
     # These properties are set from the imports of the same name above.

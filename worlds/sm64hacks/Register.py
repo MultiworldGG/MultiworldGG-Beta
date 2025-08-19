@@ -1,4 +1,4 @@
-from . import SM64HackWebWorld
+from . import SM64HackWorld, SM64HackWebWorld
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -15,6 +15,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = SM64HackWebWorld
-WEB_WORLD_CLASS = None
+WORLD_CLASS = SM64HackWorld
+WEB_WORLD_CLASS = SM64HackWebWorld
 CLIENT_FUNCTION = None

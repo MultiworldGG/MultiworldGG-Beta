@@ -1,4 +1,4 @@
-from . import TetrisAttackWebWorld
+from . import TetrisAttackWorld, TetrisAttackWebWorld
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -15,6 +15,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = TetrisAttackWebWorld
-WEB_WORLD_CLASS = None
+WORLD_CLASS = TetrisAttackWorld
+WEB_WORLD_CLASS = TetrisAttackWebWorld
 CLIENT_FUNCTION = None

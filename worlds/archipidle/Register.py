@@ -1,4 +1,4 @@
-from . import ArchipIDLEWebWorld
+from . import ArchipIDLEWorld, ArchipIDLEWebWorld
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -15,6 +15,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = ArchipIDLEWebWorld
-WEB_WORLD_CLASS = None
+WORLD_CLASS = ArchipIDLEWorld
+WEB_WORLD_CLASS = ArchipIDLEWebWorld
 CLIENT_FUNCTION = None

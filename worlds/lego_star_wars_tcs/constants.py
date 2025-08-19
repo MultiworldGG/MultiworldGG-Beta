@@ -3,6 +3,8 @@ from enum import auto, IntFlag
 GAME_NAME = "Lego Star Wars: The Complete Saga"
 
 AP_WORLD_VERSION: tuple[int, int, int] = (1, 1, 3)
+IGDB_ID = 2682
+VERSION =  str(AP_WORLD_VERSION)
 
 
 AUTHOR = "Mysteryem"

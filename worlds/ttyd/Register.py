@@ -1,4 +1,4 @@
-from . import TTYDWebWorld
+from . import TTYDWorld, TTYDWebWorld
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -15,6 +15,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = TTYDWebWorld
-WEB_WORLD_CLASS = None
+WORLD_CLASS = TTYDWorld
+WEB_WORLD_CLASS = TTYDWebWorld
 CLIENT_FUNCTION = None

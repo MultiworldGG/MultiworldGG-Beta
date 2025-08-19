@@ -1,4 +1,4 @@
-from . import MMRWebWorld
+from . import MMRWorld, MMRWebWorld
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -15,6 +15,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = MMRWebWorld
-WEB_WORLD_CLASS = None
+WORLD_CLASS = MMRWorld
+WEB_WORLD_CLASS = MMRWebWorld
 CLIENT_FUNCTION = None

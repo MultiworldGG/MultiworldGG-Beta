@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds.lego_star_wars_tcs"
+dynamic = ["version"]
+description = "MultiWorld: Lego Star Wars"
+authors = [
+    {name = "Unknown"}
+]
+classifiers = [
+    "Private :: Do Not Upload"
+]
+requires-python = ">=3.12"
+
+dependencies = [
+    "Pymem>=1.10.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src/"]
+include = ["worlds.lego_star_wars_tcs"]
+namespaces = true
+
+[tool.setuptools.dynamic]
+version = {attr = "worlds.lego_star_wars_tcs.Constants.VERSION"}

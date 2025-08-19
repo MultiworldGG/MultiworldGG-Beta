@@ -1639,7 +1639,7 @@ async def main():
     ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
 
     if gui_enabled:
-        ctx.run_gui()
+        ()
     ctx.run_cli()
 
     game_watcher_task = asyncio.create_task(game_watcher(ctx), name="LegoStarWarsTheCompleteSagaGameWatcher")

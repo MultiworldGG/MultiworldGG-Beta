@@ -1,4 +1,4 @@
-from . import FF4FEWebWorld
+from . import FF4FEWorld, FF4FEWebWorld
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -15,6 +15,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = FF4FEWebWorld
-WEB_WORLD_CLASS = None
+WORLD_CLASS = FF4FEWorld
+WEB_WORLD_CLASS = FF4FEWebWorld
 CLIENT_FUNCTION = None

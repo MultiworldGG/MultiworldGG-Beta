@@ -1,4 +1,4 @@
-from . import SoEWebWorld
+from . import SoEWorld, SoEWebWorld
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -15,6 +15,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = SoEWebWorld
-WEB_WORLD_CLASS = None
+WORLD_CLASS = SoEWorld
+WEB_WORLD_CLASS = SoEWebWorld
 CLIENT_FUNCTION = None

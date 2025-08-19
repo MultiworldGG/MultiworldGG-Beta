@@ -3,7 +3,15 @@
 World Plugin Standardization Tool
 
 This script automates the process of standardizing all world plugins by generating
-pyproject.toml and Register.py files for each world in the worlds/ directory.
+pyproject.toml, Constants.py, and Register.py files for each world in the worlds/ directory.
+
+Features:
+- Search for worlds missing standardization files (--search-missing)
+- Process only worlds missing pyproject.toml files (--missing-pyproject-only)
+- Generate files for all worlds (default behavior)
+- Dry-run mode to preview changes (--dry-run)
+- Report-only mode for analysis (--report-only)
+- Automatically excludes system directories (lib, wheels, __pycache__, etc.)
 """
 
 import os
@@ -209,12 +217,19 @@ class WorldFileGenerator:
 
     def generate_pyproject_toml(self, metadata: WorldMetadata) -> str:
         """Generate pyproject.toml content from metadata."""
-        template = f'''[project]
-name = "{metadata.plugin_name}"
-version = "{metadata.version}"
-description = "{metadata.description}"
+        template = f'''[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds.{metadata.plugin_name}"
+dynamic = ["version"]
+description = "MultiWorld: {metadata.game_name}"
 authors = [
     {{name = "{metadata.author}"}}
+]
+classifiers = [
+    "Private :: Do Not Upload"
 ]
 requires-python = ">=3.12"
 '''
@@ -226,16 +241,29 @@ requires-python = ">=3.12"
             template += ']\n'
         
         template += f'''
-[project.entry-points."mwgg.plugins"]
-"{metadata.plugin_name}.WorldClass" = "{metadata.plugin_name}.Register:WORLD_CLASS"
-"{metadata.plugin_name}.WebWorldClass" = "{metadata.plugin_name}.Register:WEB_WORLD_CLASS"
+[tool.setuptools.packages.find]
+where = ["src/"]
+include = ["worlds.{metadata.plugin_name}"]
+namespaces = true
+
+[tool.setuptools.dynamic]
+version = {{attr = "worlds.{metadata.plugin_name}.Constants.VERSION"}}
 '''
         
         return template
     
+    def generate_constants_py(self, metadata: WorldMetadata) -> str:
+        """Generate Constants.py content from metadata."""
+        return f'''GAME_NAME: str = "{metadata.game_name}"
+AUTHOR: str = "{metadata.author}"
+IGDB_ID: int = {metadata.igdb_id}
+VERSION: str = "{metadata.version}"
+'''
+
     def generate_register_py(self, metadata: WorldMetadata) -> str:
         """Generate Register.py content from metadata."""
         imports = [f"from . import {metadata.world_class}"]
+        imports.append("from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version")
         if metadata.web_world_class:
             imports.append(f"from . import {metadata.web_world_class}")
         
@@ -249,10 +277,10 @@ This file contains the metadata and class references for the {metadata.plugin_na
 
 # Required metadata
 WORLD_NAME = "{metadata.plugin_name}"
-GAME_NAME = "{metadata.game_name}"
-IGDB_ID = {metadata.igdb_id}
-AUTHOR = "{metadata.author}"
-VERSION = "{metadata.version}"
+GAME_NAME = game_name
+IGDB_ID = igdb_id
+AUTHOR = author
+VERSION = version
 
 # Plugin entry points
 WORLD_CLASS = {metadata.world_class}
@@ -267,27 +295,107 @@ WORLD_CLASS = {metadata.world_class}
         
         return template
     
+    def _append_constants_to_existing_file(self, constants_file: Path, metadata: WorldMetadata) -> None:
+        """Append standardization constants to an existing constants file."""
+        # Read existing file content
+        with open(constants_file, 'r', encoding='utf-8') as f:
+            existing_content = f.read()
+        
+        # Check if standardization constants already exist
+        standardization_constants = [
+            'GAME_NAME',
+            'AUTHOR', 
+            'IGDB_ID',
+            'VERSION'
+        ]
+        
+        missing_constants = []
+        for const in standardization_constants:
+            # Check if the constant is already defined (allowing for various assignment patterns)
+            if not re.search(rf'^{const}\s*[:=]', existing_content, re.MULTILINE):
+                missing_constants.append(const)
+        
+        if not missing_constants:
+            logger.info(f"All standardization constants already exist in {constants_file}")
+            return
+            
+        # Generate the missing constants
+        new_constants = []
+        if 'GAME_NAME' in missing_constants:
+            new_constants.append(f'GAME_NAME: str = "{metadata.game_name}"')
+        if 'AUTHOR' in missing_constants:
+            new_constants.append(f'AUTHOR: str = "{metadata.author}"')
+        if 'IGDB_ID' in missing_constants:
+            new_constants.append(f'IGDB_ID: int = {metadata.igdb_id}')
+        if 'VERSION' in missing_constants:
+            new_constants.append(f'VERSION: str = "{metadata.version}"')
+        
+        # Add a comment and the new constants
+        append_content = f"\n\n# Standardization constants added by world_standardization.py\n"
+        append_content += "\n".join(new_constants) + "\n"
+        
+        # Write the updated content
+        with open(constants_file, 'a', encoding='utf-8') as f:
+            f.write(append_content)
+        
+        logger.info(f"Appended {len(missing_constants)} standardization constants to {constants_file}")
+    
     def generate_for_world(self, world_path: str, metadata: WorldMetadata) -> None:
-        """Generate both files for a single world."""
+        """Generate all standardization files for a single world."""
         world_path = Path(world_path)
+        
+        # Generate content for all files
         pyproject_content = self.generate_pyproject_toml(metadata)
-        pyproject_file = world_path / "pyproject.toml"
+        constants_content = self.generate_constants_py(metadata)
         register_content = self.generate_register_py(metadata)
+        
+        # Define file paths
+        pyproject_file = world_path / "pyproject.toml"
         register_file = world_path / "Register.py"
+        
+        # Handle constants file - check for existing files
+        constants_file_cap = world_path / "Constants.py"
+        constants_file_lower = world_path / "constants.py" 
+        
+        existing_constants_file = None
+        if constants_file_cap.exists():
+            existing_constants_file = constants_file_cap
+        elif constants_file_lower.exists():
+            existing_constants_file = constants_file_lower
+        
         if self.write_files:
+            # Generate pyproject.toml
             with open(pyproject_file, 'w', encoding='utf-8') as f:
                 f.write(pyproject_content)
             logger.info(f"Generated {pyproject_file}")
+            
+            # Handle constants file
+            if existing_constants_file:
+                self._append_constants_to_existing_file(existing_constants_file, metadata)
+            else:
+                # Create new Constants.py file
+                with open(constants_file_cap, 'w', encoding='utf-8') as f:
+                    f.write(constants_content)
+                logger.info(f"Generated {constants_file_cap}")
+            
+            # Generate Register.py
             with open(register_file, 'w', encoding='utf-8') as f:
                 f.write(register_content)
             logger.info(f"Generated {register_file}")
         else:
             logger.info(f"[DRY-RUN] Would generate {pyproject_file}")
+            if existing_constants_file:
+                logger.info(f"[DRY-RUN] Would append constants to existing {existing_constants_file}")
+            else:
+                logger.info(f"[DRY-RUN] Would generate {constants_file_cap}")
             logger.info(f"[DRY-RUN] Would generate {register_file}")
 
 
 class WorldBatchProcessor:
     """Processes all worlds in batch."""
+    
+    # Directories to exclude from world processing
+    EXCLUDED_DIRS = {'_', '.', 'Lib', 'Wheels', '__pycache__'}
     
     def __init__(self, worlds_dir: str = "worlds", write_files: bool = True):
         self.worlds_dir = Path(worlds_dir)
@@ -296,11 +404,84 @@ class WorldBatchProcessor:
         self.results = []
         self.write_files = write_files
         
+    def _get_valid_world_dirs(self) -> List[Path]:
+        """Get list of valid world directories, excluding system/utility directories."""
+        return [d for d in self.worlds_dir.iterdir() 
+                if d.is_dir() and not any(d.name.startswith(prefix) for prefix in self.EXCLUDED_DIRS) 
+                and d.name.lower() not in self.EXCLUDED_DIRS]
+        
+    def find_worlds_missing_pyproject(self) -> List[str]:
+        """Find all worlds that don't have a pyproject.toml file."""
+        world_dirs = self._get_valid_world_dirs()
+        
+        missing_pyproject = []
+        for world_dir in world_dirs:
+            pyproject_file = world_dir / "pyproject.toml"
+            if not pyproject_file.exists():
+                missing_pyproject.append(world_dir.name)
+        
+        return missing_pyproject
+    
+    def find_worlds_missing_register(self) -> List[str]:
+        """Find all worlds that don't have a Register.py file."""
+        world_dirs = self._get_valid_world_dirs()
+        
+        missing_register = []
+        for world_dir in world_dirs:
+            register_file = world_dir / "Register.py"
+            if not register_file.exists():
+                missing_register.append(world_dir.name)
+        
+        return missing_register
+    
+    def find_worlds_missing_constants(self) -> List[str]:
+        """Find all worlds that don't have a Constants.py file."""
+        world_dirs = self._get_valid_world_dirs()
+        
+        missing_constants = []
+        for world_dir in world_dirs:
+            constants_file = world_dir / "Constants.py"
+            if not constants_file.exists():
+                missing_constants.append(world_dir.name)
+        
+        return missing_constants
+    
+    def search_missing_files(self) -> Dict[str, List[str]]:
+        """Search for all worlds missing standardization files."""
+        logger.info("Searching for worlds with missing standardization files...")
+        
+        missing_pyproject = self.find_worlds_missing_pyproject()
+        missing_register = self.find_worlds_missing_register()
+        missing_constants = self.find_worlds_missing_constants()
+        
+        results = {
+            'missing_pyproject': missing_pyproject,
+            'missing_register': missing_register,
+            'missing_constants': missing_constants,
+            'total_worlds': len(self._get_valid_world_dirs())
+        }
+        
+        logger.info(f"Found {len(missing_pyproject)} worlds missing pyproject.toml")
+        logger.info(f"Found {len(missing_register)} worlds missing Register.py")
+        logger.info(f"Found {len(missing_constants)} worlds missing Constants.py")
+        
+        return results
+        
     def process_all_worlds(self) -> None:
         """Process all worlds in parallel."""
-        world_dirs = [d for d in self.worlds_dir.iterdir() 
-                     if d.is_dir() and not d.name.startswith('_') and not d.name.startswith('.')]
+        world_dirs = self._get_valid_world_dirs()
         logger.info(f"Found {len(world_dirs)} worlds to process")
+        self._process_world_list(world_dirs)
+    
+    def process_worlds_missing_pyproject(self) -> None:
+        """Process only worlds that are missing pyproject.toml files."""
+        missing_worlds = self.find_worlds_missing_pyproject()
+        world_dirs = [self.worlds_dir / world_name for world_name in missing_worlds]
+        logger.info(f"Found {len(world_dirs)} worlds missing pyproject.toml to process")
+        self._process_world_list(world_dirs)
+    
+    def _process_world_list(self, world_dirs: List[Path]) -> None:
+        """Process a specific list of world directories."""
         for world_dir in world_dirs:
             try:
                 logger.info(f"Processing {world_dir.name}...")
@@ -329,10 +510,13 @@ class WorldBatchProcessor:
                 
                 # Check if files exist
                 pyproject_file = world_dir / "pyproject.toml"
+                constants_file = world_dir / "Constants.py"
                 register_file = world_dir / "Register.py"
                 
                 if not pyproject_file.exists():
                     errors.append(f"{result['world']}: pyproject.toml not found")
+                if not constants_file.exists():
+                    errors.append(f"{result['world']}: Constants.py not found")
                 if not register_file.exists():
                     errors.append(f"{result['world']}: Register.py not found")
                 
@@ -352,6 +536,9 @@ class WorldBatchProcessor:
         successful = [r for r in self.results if r['status'] == 'success']
         failed = [r for r in self.results if r['status'] == 'error']
         
+        # Get current missing files status
+        missing_files = self.search_missing_files() if not self.results else {}
+        
         # Identify worlds with missing metadata
         missing_metadata = []
         for result in successful:
@@ -368,9 +555,16 @@ Summary:
 - Successful: {len(successful)}
 - Failed: {len(failed)}
 - Worlds with missing metadata: {len(missing_metadata)}
-
-Successful Migrations:
 """
+
+        # Add missing files information if available
+        if missing_files:
+            report += f"- Total worlds in directory: {missing_files['total_worlds']}\n"
+            report += f"- Worlds still missing pyproject.toml: {len(missing_files['missing_pyproject'])}\n"
+            report += f"- Worlds still missing Constants.py: {len(missing_files['missing_constants'])}\n"
+            report += f"- Worlds still missing Register.py: {len(missing_files['missing_register'])}\n"
+
+        report += "\nSuccessful Migrations:\n"
         
         for result in successful:
             metadata = result['metadata']
@@ -384,6 +578,22 @@ Successful Migrations:
         if missing_metadata:
             report += "\nWorlds with Missing Metadata (require manual review):\n"
             for world in missing_metadata:
+                report += f"- {world}\n"
+        
+        # Add remaining missing files to report
+        if missing_files and missing_files['missing_pyproject']:
+            report += f"\nWorlds Still Missing pyproject.toml:\n"
+            for world in sorted(missing_files['missing_pyproject']):
+                report += f"- {world}\n"
+        
+        if missing_files and missing_files['missing_constants']:
+            report += f"\nWorlds Still Missing Constants.py:\n"
+            for world in sorted(missing_files['missing_constants']):
+                report += f"- {world}\n"
+        
+        if missing_files and missing_files['missing_register']:
+            report += f"\nWorlds Still Missing Register.py:\n"
+            for world in sorted(missing_files['missing_register']):
                 report += f"- {world}\n"
         
         # Validation errors
@@ -404,17 +614,60 @@ def main():
     parser.add_argument("--worlds-dir", default="worlds", help="Path to worlds directory")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be generated without writing files")
     parser.add_argument("--report-only", action="store_true", help="Generate report only")
+    parser.add_argument("--search-missing", action="store_true", help="Search for worlds missing standardization files")
+    parser.add_argument("--missing-pyproject-only", action="store_true", help="Process only worlds missing pyproject.toml files")
     
     args = parser.parse_args()
-    write_files = not (args.dry_run or args.report_only)
+    write_files = not (args.dry_run or args.report_only or args.search_missing)
     processor = WorldBatchProcessor(args.worlds_dir, write_files=write_files)
+    
+    if args.search_missing:
+        # Search for missing files only
+        logger.info("Searching for worlds with missing standardization files...")
+        missing_files = processor.search_missing_files()
+        
+        print(f"\nMissing Files Report")
+        print(f"==================")
+        print(f"Total worlds: {missing_files['total_worlds']}")
+        print(f"Worlds missing pyproject.toml: {len(missing_files['missing_pyproject'])}")
+        print(f"Worlds missing Constants.py: {len(missing_files['missing_constants'])}")
+        print(f"Worlds missing Register.py: {len(missing_files['missing_register'])}")
+        
+        if missing_files['missing_pyproject']:
+            print(f"\nWorlds missing pyproject.toml:")
+            for world in sorted(missing_files['missing_pyproject']):
+                print(f"  - {world}")
+        
+        if missing_files['missing_constants']:
+            print(f"\nWorlds missing Constants.py:")
+            for world in sorted(missing_files['missing_constants']):
+                print(f"  - {world}")
+        
+        if missing_files['missing_register']:
+            print(f"\nWorlds missing Register.py:")
+            for world in sorted(missing_files['missing_register']):
+                print(f"  - {world}")
+        
+        return
     
     if args.report_only:
         # Just analyze existing files
         logger.info("Analyzing existing worlds...")
         processor.process_all_worlds()
+    elif args.missing_pyproject_only:
+        # Process only worlds missing pyproject.toml
+        logger.info("Processing worlds missing pyproject.toml files...")
+        processor.process_worlds_missing_pyproject()
+        
+        if not args.dry_run:
+            # Validate results
+            errors = processor.validate_generated_files()
+            if errors:
+                logger.warning(f"Found {len(errors)} validation errors")
+                for error in errors:
+                    logger.warning(error)
     else:
-        # Generate files
+        # Generate files for all worlds
         logger.info("Starting world standardization...")
         processor.process_all_worlds()
         
@@ -426,15 +679,16 @@ def main():
                 for error in errors:
                     logger.warning(error)
     
-    # Generate report
-    report = processor.create_migration_report()
-    print(report)
-    
-    # Save report to file
-    report_file = Path("world_standardization_report.txt")
-    with open(report_file, 'w', encoding='utf-8') as f:
-        f.write(report)
-    logger.info(f"Report saved to {report_file}")
+    # Generate report (unless we're just searching)
+    if not args.search_missing:
+        report = processor.create_migration_report()
+        print(report)
+        
+        # Save report to file
+        report_file = Path("world_standardization_report.txt")
+        with open(report_file, 'w', encoding='utf-8') as f:
+            f.write(report)
+        logger.info(f"Report saved to {report_file}")
 
 
 if __name__ == "__main__":

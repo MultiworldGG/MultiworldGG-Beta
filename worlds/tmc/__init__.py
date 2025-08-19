@@ -14,7 +14,7 @@ from worlds.AutoWorld import WebWorld, World
 from Fill import FillError
 from Options import OptionError
 from .client import MinishCapClient
-from .constants import MinishCapEvent, MinishCapItem, MinishCapLocation, TMCEvent, TMCItem, TMCLocation, TMCRegion
+from .constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION, MinishCapEvent, MinishCapItem, MinishCapLocation, TMCEvent, TMCItem, TMCLocation, TMCRegion
 from .dungeons import fill_dungeons
 from .items import (get_filler_item_selection, get_item_pool, get_pre_fill_pool, item_frequencies, item_groups,
                     item_table, ItemData)
@@ -73,8 +73,10 @@ class MinishCapWorld(World):
     The game retains many elements common to previous Zelda games, especially top-down predecessors such as ALttP, and includes new features and mechanics.
     """
 
-    game = "The Minish Cap"
-    author: str = "EternalCode"
+    game = GAME_NAME
+    author: str = AUTHOR
+    igdb_id: int = IGDB_ID
+    version = VERSION
     web = MinishCapWebWorld()
     options_dataclass = MinishCapOptions
     options: MinishCapOptions
