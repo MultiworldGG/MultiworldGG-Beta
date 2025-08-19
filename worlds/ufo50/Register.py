@@ -1,6 +1,6 @@
-from . import UFO50World
-from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import UFO50Web
+from . import UFO50World, UFO50Web
+from .constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
+from .Client import launch
 
 """
 UFO 50 World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = UFO50World
 WEB_WORLD_CLASS = UFO50Web
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

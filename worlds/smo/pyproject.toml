@@ -15,6 +15,9 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
+[project.entry-points."mwgg.client"]
+smo.Client = "smo.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.smo"]

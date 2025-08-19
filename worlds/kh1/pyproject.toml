@@ -14,7 +14,131 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
-[tool.setuptools.packages.find]
+[
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+t
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+o
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+o
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+l
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+.
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+s
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+e
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+t
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+u
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+p
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+t
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+o
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+o
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+l
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+s
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+.
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+p
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+a
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+c
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+k
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+a
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+g
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+e
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+s
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+.
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+f
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+i
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+n
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+d
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+]
+[project.entry-points."mwgg.client"]
+kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+
+
 where = ["src/"]
 include = ["worlds.kh1"]
 namespaces = true

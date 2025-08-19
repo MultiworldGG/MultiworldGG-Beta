@@ -1,5 +1,6 @@
 from . import HatInTimeWorld, HatInTimeWeb
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
+from .Client import launch
 
 """
 A Hat in Time World Registration
@@ -17,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = HatInTimeWorld
 WEB_WORLD_CLASS = HatInTimeWeb
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

@@ -1,6 +1,6 @@
-from . import TLoZWorld
-from . import TLoZWeb
+from . import TLoZWorld, TLoZWeb
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
+from .Client import main
 
 """
 The Legend of Zelda World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = TLoZWorld
 WEB_WORLD_CLASS = TLoZWeb
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = main

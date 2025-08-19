@@ -1,6 +1,5 @@
-from . import AdventureWorld
+from . import AdventureWorld, AdventureWeb
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import AdventureWeb
 
 """
 Adventure for the Atari 2600 is an early graphical adventure game. World Registration

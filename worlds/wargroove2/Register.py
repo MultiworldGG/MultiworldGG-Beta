@@ -1,6 +1,6 @@
-from . import Wargroove2World
+from . import Wargroove2World, Wargroove2Web
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import Wargroove2Web
+from .Client import launch
 
 """
 Wargroove 2 World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = Wargroove2World
 WEB_WORLD_CLASS = Wargroove2Web
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

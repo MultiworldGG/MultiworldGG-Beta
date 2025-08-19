@@ -1,6 +1,6 @@
-from . import KH1World
+from . import KH1World, KH1Web
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import KH1Web
+from .Client import launch
 
 """
 Kingdom Hearts World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = KH1World
 WEB_WORLD_CLASS = KH1Web
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

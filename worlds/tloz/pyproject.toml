@@ -18,6 +18,9 @@ dependencies = [
     "bsdiff4>=1.2.2"
 ]
 
+[project.entry-points."mwgg.client"]
+tloz.Client = "tloz.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.tloz"]

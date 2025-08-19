@@ -347,23 +347,28 @@ def _patch_and_run_game(patch_file: str):
         return {}
 
 
-def launch(*launch_args: str) -> None:
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None) -> None:
+    logger.info("BizHawkClient")
+
     async def main():
-        parser = get_base_parser()
-        parser.add_argument("patch_file", default="", type=str, nargs="?", help="Path to a MultiworldGG patch file")
-        args = parser.parse_args(launch_args)
+        ctx = BizHawkClientContext(server_address, password)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-        if args.patch_file != "":
-            metadata = _patch_and_run_game(args.patch_file)
-            if "server" in metadata:
-                args.connect = metadata["server"]
-
-        ctx = BizHawkClientContext(args.connect, args.password)
+        ctx.ui.base_title = apname + " | BizHawk Client"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        await ctx.server_auth()
 
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
+        if patch_file:
+            metadata = _patch_and_run_game(patch_file)
+            if "server" in metadata and not server_address:
+                # Only use metadata server if no server_address was provided
+                ctx.server_address = metadata["server"]
 
         watcher_task = asyncio.create_task(_game_watcher(ctx), name="GameWatcher")
 
@@ -375,8 +380,29 @@ def launch(*launch_args: str) -> None:
         await ctx.exit_event.wait()
         await ctx.shutdown()
 
-    Utils.init_logging("BizHawkClient", exception_logger="Client")
     import colorama
-    colorama.just_fix_windows_console()
-    asyncio.run(main())
-    colorama.deinit()
+
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        # Create a simple namespace object to mimic argparse.Namespace
+        class Args:
+            def __init__(self, server_address, password, patch_file):
+                self.server_address = server_address
+                self.password = password
+                self.patch_file = patch_file
+        
+        args = Args(server_address, password, patch_file)
+        task = asyncio.create_task(main(), name="BizHawkMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the BizHawk client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+    launch(server_address, password, ready_callback, error_callback, patch_file)

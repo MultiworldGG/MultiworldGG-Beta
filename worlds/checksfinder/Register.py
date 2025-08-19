@@ -1,6 +1,6 @@
-from . import ChecksFinderWorld
+from . import ChecksFinderWorld, ChecksFinderWeb
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import ChecksFinderWeb
+from .Client import main
 
 """
 ChecksFinder World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = ChecksFinderWorld
 WEB_WORLD_CLASS = ChecksFinderWeb
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = main
