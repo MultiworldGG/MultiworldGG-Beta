@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
-from worlds._sc2common.bot import logger
+from . import logger
 
 from s2clientprotocol import debug_pb2 as debug_pb
 from s2clientprotocol import query_pb2 as query_pb

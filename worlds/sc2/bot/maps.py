@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from worlds._sc2common.bot import logger
+from . import logger
 
 from .paths import Paths
 

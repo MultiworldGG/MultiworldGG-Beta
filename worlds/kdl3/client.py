@@ -10,14 +10,14 @@ import random
 from MultiServer import mark_raw
 from NetUtils import ClientStatus, color
 from Utils import async_start
-from worlds.AutoSNIClient import SNIClient
+from worlds._sni.client import SNIClient
 from .locations import boss_locations
 from .gifting import kdl3_gifting_options, kdl3_trap_gifts, kdl3_gifts, update_object, pop_object, initialize_giftboxes
 from .client_addrs import consumable_addrs, star_addrs
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from SNIClient import SNIClientCommandProcessor, SNIContext
+    from worlds._sni.client import  SNIClientCommandProcessor, SNIContext
 
 snes_logger = logging.getLogger("SNES")
 
@@ -110,7 +110,7 @@ class KDL3SNIClient(SNIClient):
     client_random: random.Random = random.Random()
 
     async def deathlink_kill_player(self, ctx: "SNIContext") -> None:
-        from SNIClient import DeathState, snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni.client import  DeathState, snes_buffered_write, snes_flush_writes, snes_read
         game_state = await snes_read(ctx, KDL3_GAME_STATE, 1)
         if game_state[0] == 0xFF:
             return  # despite how funny it is, don't try to kill Kirby in a menu
@@ -132,7 +132,7 @@ class KDL3SNIClient(SNIClient):
         ctx.last_death_link = time.time()
 
     async def validate_rom(self, ctx: "SNIContext") -> bool:
-        from SNIClient import snes_read
+        from worlds._sni.client import  snes_read
         rom_name = await snes_read(ctx, KDL3_ROMNAME, 0x15)
         if rom_name is None or rom_name == bytes([0] * 0x15) or rom_name[:4] != b"KDL3":
             if "gift" in ctx.command_processor.commands:
@@ -153,7 +153,7 @@ class KDL3SNIClient(SNIClient):
         return True
 
     async def pop_item(self, ctx: "SNIContext", in_stage: bool) -> None:
-        from SNIClient import snes_buffered_write, snes_read
+        from worlds._sni.client import  snes_buffered_write, snes_read
         if len(self.item_queue) > 0:
             item = self.item_queue.pop()
             if not in_stage and item & 0xC0:
@@ -171,7 +171,7 @@ class KDL3SNIClient(SNIClient):
 
     async def pop_gift(self, ctx: "SNIContext") -> None:
         if self.giftbox_key in ctx.stored_data and ctx.stored_data[self.giftbox_key]:
-            from SNIClient import snes_read, snes_buffered_write
+            from worlds._sni.client import  snes_read, snes_buffered_write
             key, gift = ctx.stored_data[self.giftbox_key].popitem()
             await pop_object(ctx, self.giftbox_key, key)
             # first, special cases
@@ -261,7 +261,7 @@ class KDL3SNIClient(SNIClient):
 
     async def game_watcher(self, ctx: "SNIContext") -> None:
         try:
-            from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
+            from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
             rom = await snes_read(ctx, KDL3_ROMNAME, 0x15)
             if rom != ctx.rom:
                 ctx.rom = None

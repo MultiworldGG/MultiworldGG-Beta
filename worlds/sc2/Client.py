@@ -45,7 +45,7 @@ sc2_logger = logging.getLogger("Starcraft2")
 
 import nest_asyncio
 from . import bot
-from .bot import Race
+from .bot.data import Race
 from .bot.main import run_game
 from .bot.player import Bot
 from .Items import (lookup_id_to_name, get_full_item_list, ItemData, type_flaggroups, upgrade_numbers,

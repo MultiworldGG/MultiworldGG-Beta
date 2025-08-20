@@ -1,7 +1,7 @@
 import logging
 
 from NetUtils import ClientStatus, color
-from worlds.AutoSNIClient import SNIClient
+from worlds._sni.client import SNIClient
 
 snes_logger = logging.getLogger("SNES")
 
@@ -31,7 +31,7 @@ class DKC3SNIClient(SNIClient):
 
 
     async def validate_rom(self, ctx):
-        from SNIClient import snes_read
+        from worlds._sni.client import  snes_read
 
         rom_name = await snes_read(ctx, DKC3_ROMHASH_START, ROMHASH_SIZE)
         if rom_name is None or rom_name == bytes([0] * ROMHASH_SIZE) or rom_name[:2] != b"D3":
@@ -51,7 +51,7 @@ class DKC3SNIClient(SNIClient):
 
 
     async def game_watcher(self, ctx):
-        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
         # DKC3_TODO: Handle Deathlink
         save_file_name = await snes_read(ctx, DKC3_FILE_NAME_ADDR, 0x5)
         if save_file_name is None or save_file_name[0] == 0x00 or save_file_name == bytes([0x55] * 0x05):

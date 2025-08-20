@@ -6,14 +6,14 @@ from logging import Logger
 from typing import Dict, List, Optional
 
 from NetUtils import ClientStatus, NetworkItem
-from worlds.AutoSNIClient import SNIClient
+from worlds._sni.client import SNIClient
 from .Enemies import enemy_id_to_name
 from .Items import start_id as items_start_id
 from .Locations import start_id as locations_start_id
 from .Options import BlueChestCount
 
 if typing.TYPE_CHECKING:
-    from SNIClient import SNIContext
+    from worlds._sni.context import SNIContext
 else:
     SNIContext = typing.Any
 
@@ -33,7 +33,7 @@ class L2ACSNIClient(SNIClient):
     patch_suffix = ".apl2ac"
 
     async def validate_rom(self, ctx: SNIContext) -> bool:
-        from SNIClient import snes_read
+        from worlds._sni.client import  snes_read
 
         rom_name: Optional[bytes] = await snes_read(ctx, L2AC_ROMNAME_START, 0x15)
         if rom_name is None or rom_name[:4] != b"L2AC":
@@ -47,7 +47,7 @@ class L2ACSNIClient(SNIClient):
         return True
 
     async def game_watcher(self, ctx: SNIContext) -> None:
-        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
 
         rom: Optional[bytes] = await snes_read(ctx, L2AC_ROMNAME_START, 0x15)
         if rom != ctx.rom:
@@ -157,7 +157,7 @@ class L2ACSNIClient(SNIClient):
         await snes_flush_writes(ctx)
 
     async def deathlink_kill_player(self, ctx: SNIContext) -> None:
-        from SNIClient import DeathState, snes_buffered_write, snes_flush_writes
+        from worlds._sni.client import  DeathState, snes_buffered_write, snes_flush_writes
 
         # DeathLink RX
         if "DeathLink" in ctx.tags:

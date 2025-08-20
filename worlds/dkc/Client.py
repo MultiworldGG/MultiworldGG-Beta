@@ -3,7 +3,7 @@ import time
 import random
 
 from NetUtils import ClientStatus, NetworkItem, color
-from worlds.AutoSNIClient import SNIClient
+from worlds._sni.client import SNIClient
 from .Items import trap_value_to_name, trap_name_to_value
 
 logger = logging.getLogger("Client")
@@ -65,7 +65,7 @@ class DKCSNIClient(SNIClient):
         self.barrel_label = None
 
     async def validate_rom(self, ctx):
-        from SNIClient import snes_read
+        from worlds._sni.client import  snes_read
 
         setting_data = await snes_read(ctx, DKC_SETTINGS, 0x40)
         rom_name = await snes_read(ctx, DKC_ROMHASH_START, ROMHASH_SIZE)
@@ -104,7 +104,7 @@ class DKCSNIClient(SNIClient):
 
 
     async def game_watcher(self, ctx):
-        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
 
         setting_data = await snes_read(ctx, DKC_SETTINGS, 0x40)
         if setting_data is None:
@@ -352,7 +352,7 @@ class DKCSNIClient(SNIClient):
                 snes_buffered_write(ctx, DKC_STAGE_FLAGS, bytearray(level_flags))
 
     async def handle_energy_link(self, ctx):
-        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
 
         # Deposits EnergyLink into pool
         energy_packet = await snes_read(ctx, DKC_ENERGY_LINK_TRANSFER, 0x2)
@@ -421,7 +421,7 @@ class DKCSNIClient(SNIClient):
             from kvui import MDLabel as Label
         except ImportError:
             from kvui import Label
-        from SNIClient import snes_read
+        from worlds._sni.client import  snes_read
 
         if not self.barrel_label:
             self.barrel_label = Label(text=f"", size_hint_x=None, width=120, halign="center")
@@ -433,7 +433,7 @@ class DKCSNIClient(SNIClient):
             self.barrel_label.text = f"Barrels: {barrel_count}"
 
     async def handle_trap_link(self, ctx):
-        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
         from .Rom import trap_data
         
         setting_data = await snes_read(ctx, DKC_SETTINGS, 0x40)

@@ -4,7 +4,7 @@ import re
 import subprocess
 from pathlib import Path, PureWindowsPath
 
-from worlds._sc2common.bot import logger
+from . import logger
 
 ## This file is used for compatibility with WSL and shouldn't need to be
 ## accessed directly by any bot clients

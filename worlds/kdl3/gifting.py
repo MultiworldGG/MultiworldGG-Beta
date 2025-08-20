@@ -2,7 +2,7 @@
 import typing
 
 if typing.TYPE_CHECKING:
-    from SNIClient import SNIContext
+    from worlds._sni.context import SNIContext
 
 
 async def update_object(ctx: "SNIContext", key: str, value: typing.Dict[str, typing.Any]) -> None:

@@ -99,9 +99,9 @@ def _create_base_itempool(world: "SSWorld") -> tuple[list[str], list[str], list[
                 else adjusted_classification
             )
 
-            if classification == IC.progression or 
-               classification == IC.progression_skip_balancing or 
-               classification == IC.progression_deprioritized_skip_balancing or 
+            if classification == IC.progression or \
+               classification == IC.progression_skip_balancing or \
+               classification == IC.progression_deprioritized_skip_balancing or \
                classification == IC.progression_deprioritized:
                 progression_pool.extend([item] * data.quantity)
             elif classification == IC.useful:
@@ -111,8 +111,8 @@ def _create_base_itempool(world: "SSWorld") -> tuple[list[str], list[str], list[
 
     if not world.options.rupeesanity:
         filler_pool.extend([data.vanilla_item for loc, data in LOCATION_TABLE.items() if data.flags & SSLocFlag.RUPEE])
-            # Put all placed rupees in filler pool if rupeesanity is on
-            # These will be removed from the pool and manually placed vanilla
+        # Put all placed rupees in filler pool if rupeesanity is on
+        # These will be removed from the pool and manually placed vanilla
 
     return progression_pool, useful_pool, filler_pool
 
