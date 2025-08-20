@@ -73,8 +73,10 @@ class FactorioContext(CommonContext):
 
     def __init__(self, server_address, password, filter_item_sends: bool, bridge_chat_out: bool,
                  rcon_port: int, rcon_password: str, server_settings_path: str | None,
-                 factorio_server_args: tuple[str, ...]):
+                 factorio_server_args: tuple[str, ...], ready_callback=None, error_callback=None):
         super(FactorioContext, self).__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.send_index: int = 0
         self.rcon_client = None
         self.awaiting_bridge = False
@@ -538,35 +540,72 @@ if os.path.samefile(settings.executable, sys.executable):
 executable = settings.executable
 
 
-def launch(*new_args: str):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, 
+          rcon_port: int = 24242, rcon_password: str = None, server_settings: str = None, extra_args: list = None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("FactorioClient")
+
+    async def main():
+        # Initialize factorio-specific settings
+        if rcon_password is None:
+            import string
+            import random
+            actual_rcon_password = ''.join(random.choice(string.ascii_letters) for _ in range(32))
+        else:
+            actual_rcon_password = rcon_password
+
+        actual_server_settings = server_settings
+        if actual_server_settings:
+            actual_server_settings = os.path.abspath(actual_server_settings)
+            if not os.path.isfile(actual_server_settings):
+                raise FileNotFoundError(f"Could not find file {actual_server_settings} for server_settings. Aborting.")
+
+        initial_filter_item_sends = bool(settings.filter_item_sends)
+        initial_bridge_chat_out = bool(settings.bridge_chat_out)
+
+        ctx = FactorioContext(
+            server_address, password,
+            initial_filter_item_sends, initial_bridge_chat_out,
+            rcon_port, actual_rcon_password, actual_server_settings, extra_args or [],
+            ready_callback, error_callback
+        )
+        
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Factorio"
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        await ctx.server_auth()
+
+        factorio_server_task = asyncio.create_task(factorio_spinup_server(ctx), name="FactorioSpinupServer")
+        successful_launch = await factorio_server_task
+        if successful_launch:
+            factorio_server_task = asyncio.create_task(factorio_server_watcher(ctx), name="FactorioServer")
+            progression_watcher = asyncio.create_task(
+                game_watcher(ctx), name="FactorioProgressionWatcher")
+
+            await ctx.exit_event.wait()
+            ctx.server_address = None
+
+            await progression_watcher
+            await factorio_server_task
+        else:
+            logger.error("Unable to start Factorio server.")
+
+        await ctx.shutdown()
+
     import colorama
     global executable
-    colorama.just_fix_windows_console()
 
-    # args handling
-    parser = get_base_parser(description="Optional arguments to Factorio Client follow. "
-                                         "Remaining arguments get passed into bound Factorio instance."
-                                         "Refer to Factorio --help for those.")
-    parser.add_argument('--rcon-port', default='24242', type=int, help='Port to use to communicate with Factorio')
-    parser.add_argument('--rcon-password', help='Password to authenticate with RCON.')
-    parser.add_argument('--server-settings', help='Factorio server settings configuration file.')
-
-    args, rest = parser.parse_known_args(args=new_args)
-    rcon_port = args.rcon_port
-    rcon_password = args.rcon_password if args.rcon_password else ''.join(
-        random.choice(string.ascii_letters) for _ in range(32))
-
-    server_settings = args.server_settings if args.server_settings \
-        else getattr(settings, "server_settings", None)
-
-    if server_settings:
-        server_settings = os.path.abspath(server_settings)
-        if not os.path.isfile(server_settings):
-            raise FileNotFoundError(f"Could not find file {server_settings} for server_settings. Aborting.")
-
-    initial_filter_item_sends = bool(settings.filter_item_sends)
-    initial_bridge_chat_out = bool(settings.bridge_chat_out)
-
+    # Validate executable path
     if not os.path.exists(os.path.dirname(executable)):
         raise FileNotFoundError(f"Path {os.path.dirname(executable)} does not exist or could not be accessed.")
     if os.path.isdir(executable):  # user entered a path to a directory, let's find the executable therein
@@ -577,9 +616,21 @@ def launch(*new_args: str):
         else:
             raise FileNotFoundError(f"Path {executable} is not an executable file.")
 
-    asyncio.run(main(lambda: FactorioContext(
-        args.connect, args.password,
-        initial_filter_item_sends, initial_bridge_chat_out,
-        rcon_port, rcon_password, server_settings, rest
-    )))
-    colorama.deinit()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="FactorioMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Factorio client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, 
+         rcon_port: int = 24242, rcon_password: str = None, server_settings: str = None, extra_args: list = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, rcon_port, rcon_password, server_settings, extra_args)

@@ -17,6 +17,9 @@ dependencies = [
     "gclib[speedups] @ git+https://github.com/LagoLunatic/gclib.git@4ddebd0a9717dca67684fe1cc55a86da9265e6b7",
 ]
 
+[project.entry-points."mwgg.client"]
+luigismansion.Client = "luigismansion.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.luigismansion"]

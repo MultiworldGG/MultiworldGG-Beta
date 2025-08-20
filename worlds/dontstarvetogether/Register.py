@@ -1,5 +1,5 @@
-from . import DSTWorld
-from . import DSTWeb
+from . import DSTWorld, DSTWeb
+from .Client import launch
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = DSTWorld
 WEB_WORLD_CLASS = DSTWeb
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

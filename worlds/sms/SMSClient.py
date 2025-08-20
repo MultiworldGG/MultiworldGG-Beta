@@ -12,10 +12,11 @@ from .options import SmsOptions
 from .bit_helper import change_endian, bit_flagger, extract_bits
 import dolphin_memory_engine as dme
 from . import addresses
+import Utils
+
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 
 ModuleUpdate.update()
-
-import Utils
 
 ''' "Comment-Dictionary"
     #Gravi01    Preventing Crash when game is closed/disconnected before Client + Allowing client to reconnect
@@ -103,8 +104,10 @@ class SmsContext(CommonContext):
 
     ap_nozzles_received = []
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super(SmsContext, self).__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.send_index: int = 0
         self.syncing = False
         self.awaiting_bridge = False
@@ -587,23 +590,31 @@ async def handle_stages(ctx):
         await asyncio.sleep(0.1)
 
 
-def main(connect= None, password= None):
-    Utils.init_logging("SMSClient", exception_logger="Client")
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("SMSClient")
 
-    async def _main(connect, password):
-        ctx = SmsContext(connect, password)
+    async def main():
+        ctx = SmsContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Super Mario Sunshine"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
-        await asyncio.sleep(1)
+        await ctx.server_auth()
 
+        await asyncio.sleep(1)
         game_start()
 
         ctx.dolphin_sync_task = asyncio.create_task(dolphin_sync_task(ctx), name="DolphinSync")
-
-        # if dme.is_hooked():
-        #     logger.info("Hooked to Dolphin!")
 
         progression_watcher = asyncio.create_task(game_watcher(ctx), name="SmsProgressionWatcher")
         loc_watch = asyncio.create_task(location_watcher(ctx))
@@ -625,12 +636,25 @@ def main(connect= None, password= None):
             await asyncio.sleep(3)
             await ctx.dolphin_sync_task
 
-
     import colorama
 
-    colorama.init()
-    asyncio.run(_main(connect, password))
-    colorama.deinit()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="SMSMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the SMS client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)
 
 
 if __name__ == "__main__":

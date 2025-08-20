@@ -18,6 +18,9 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
+[project.entry-points."mwgg.client"]
+civ_6.Client = "civ_6.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.civ_6"]

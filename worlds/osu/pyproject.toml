@@ -18,6 +18,9 @@ dependencies = [
     "requests~=2.32.3",
 ]
 
+[project.entry-points."mwgg.client"]
+osu.Client = "osu.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.osu"]

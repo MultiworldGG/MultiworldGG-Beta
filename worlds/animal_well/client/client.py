@@ -397,8 +397,10 @@ class AnimalWellContext(CommonContext):
     command_processor = AnimalWellCommandProcessor
     items_handling = 0b111  # get sent remote and starting items
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.game = "ANIMAL WELL"
         self.process_sync_task = None
         self.get_animal_well_process_handle_task = None
@@ -1645,38 +1647,25 @@ async def console_task(ctx: AnimalWellContext):
         await asyncio.sleep(1/120)
 
 
-def launch(*args):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
     Launch the client
     """
+    logging.getLogger("AnimalWellClient")
 
-    async def main(*args):
-        """
-        main function
-        """
-        import urllib
-        parser = get_base_parser()
-        parser.add_argument("url", type=str, nargs="?", help="Archipelago Webhost uri to auto connect to.")
-        args = parser.parse_args(args)
+    async def main():
+        ctx = AnimalWellContext(server_address, password)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-        # handle if text client is launched using the "archipelago://name:pass@host:port" url from webhost
-        if args.url:
-            url = urllib.parse.urlparse(args.url)
-            if url.scheme == "archipelago":
-                args.connect = url.netloc
-                if url.username:
-                    args.name = urllib.parse.unquote(url.username)
-                if url.password:
-                    args.password = urllib.parse.unquote(url.password)
-            else:
-                parser.error(f"bad url, found {args.url}, expected url in form of archipelago://archipelago.gg:38281")
-
-        ctx = AnimalWellContext(args.connect, args.password)
+        ctx.ui.base_title = apname + " | Animal Well"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
-
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
+        await ctx.server_auth()
 
         ctx.process_sync_task = asyncio.create_task(process_sync_task(ctx), name="Animal Well Process Sync")
         try:
@@ -1709,9 +1698,22 @@ def launch(*args):
             ctx.console_task.cancel()
             ctx.console_task = None
 
-    Utils.init_logging("AnimalWellClient")
-
     import colorama
-    colorama.init()
-    asyncio.run(main(*args))
-    colorama.deinit()
+
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="AnimalWellMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Animal Well client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)

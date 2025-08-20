@@ -5,6 +5,7 @@ import asyncio
 import typing
 import bsdiff4
 import shutil
+import logging
 
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
@@ -97,8 +98,10 @@ class UndertaleContext(CommonContext):
     completed_count = 0
     save_game_folder = os.path.expandvars(r"%localappdata%/UNDERTALE")
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.pieces_needed = 0
         self.finished_game = False
         self.game = "Undertale"
@@ -480,28 +483,51 @@ async def game_watcher(ctx: UndertaleContext):
         await asyncio.sleep(0.1)
 
 
-def main():
-    Utils.init_logging("UndertaleClient", exception_logger="Client")
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    logging.getLogger("UndertaleClient")
 
-    async def _main():
-        ctx = UndertaleContext(None, None)
+    async def main():
+        ctx = UndertaleContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Undertale"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+        await ctx.server_auth()
+
         asyncio.create_task(
             game_watcher(ctx), name="UndertaleProgressionWatcher")
 
         asyncio.create_task(
             multi_watcher(ctx), name="UndertaleMultiplayerWatcher")
 
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
-
         await ctx.exit_event.wait()
         await ctx.shutdown()
 
     import colorama
 
-    colorama.just_fix_windows_console()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="UndertaleMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Undertale client.")
+        if error_callback:
+            error_callback()
 
-    asyncio.run(_main())
-    colorama.deinit()
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)

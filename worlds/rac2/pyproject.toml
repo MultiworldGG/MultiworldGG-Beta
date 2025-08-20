@@ -19,6 +19,9 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
+[project.entry-points."mwgg.client"]
+rac2.Client = "rac2.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.rac2"]

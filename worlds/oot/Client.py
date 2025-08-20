@@ -4,6 +4,7 @@ import os
 import multiprocessing
 import subprocess
 import zipfile
+import logging
 from asyncio import StreamReader, StreamWriter
 
 # CommonClient import first to trigger ModuleUpdater
@@ -80,8 +81,10 @@ class OoTContext(CommonContext):
     command_processor = OoTCommandProcessor
     items_handling = 0b001  # full local
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.game = 'Ocarina of Time'
         self.n64_streams: (StreamReader, StreamWriter) = None
         self.n64_sync_task = None
@@ -316,26 +319,31 @@ async def patch_and_run_game(apz5_file):
     async_start(run_game(comp_path))
 
 
-def main(*launcher_args: str):
-
-    Utils.init_logging("OoTClient")
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+    """
+    Launch the client
+    """
+    logging.getLogger("OoTClient")
 
     async def main():
         multiprocessing.freeze_support()
-        parser = get_base_parser()
-        parser.add_argument('apz5_file', default="", type=str, nargs="?",
-                            help='Path to an APZ5 file')
-        args = parser.parse_args(launcher_args)
+        
+        ctx = OoTContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-        if args.apz5_file:
-            logger.info("APZ5 file supplied, beginning patching process...")
-            async_start(patch_and_run_game(args.apz5_file))
-
-        ctx = OoTContext(args.connect, args.password)
+        ctx.ui.base_title = apname + " | Ocarina of Time"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="Server Loop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
+        await ctx.server_auth()
+
+        if patch_file:
+            logger.info("APZ5 file supplied, beginning patching process...")
+            async_start(patch_and_run_game(patch_file))
 
         ctx.n64_sync_task = asyncio.create_task(n64_sync_task(ctx), name="N64 Sync")
 
@@ -349,7 +357,20 @@ def main(*launcher_args: str):
 
     import colorama
 
-    colorama.just_fix_windows_console()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="OoTMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the OoT client.")
+        if error_callback:
+            error_callback()
 
-    asyncio.run(main())
-    colorama.deinit()
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, patch_file)

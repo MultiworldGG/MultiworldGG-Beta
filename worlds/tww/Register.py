@@ -1,6 +1,6 @@
-from . import TWWWorld
+from . import TWWWorld, TWWWeb
+from .TWWClient import launch
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import TWWWeb
 
 """
 Legend has it that whenever evil has appeared, a hero named Link has arisen to defeat it. The legend continues on World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = TWWWorld
 WEB_WORLD_CLASS = TWWWeb
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

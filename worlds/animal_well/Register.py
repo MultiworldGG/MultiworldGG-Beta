@@ -1,6 +1,6 @@
-from . import AnimalWellWorld
+from . import AnimalWellWorld, AnimalWellWeb
+from .client.client import launch
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import AnimalWellWeb
 
 """
 ANIMAL WELL World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = AnimalWellWorld
 WEB_WORLD_CLASS = AnimalWellWeb
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

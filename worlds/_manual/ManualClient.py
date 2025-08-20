@@ -13,7 +13,6 @@ from worlds.LauncherComponents import icon_paths
 import json
 import traceback
 
-
 import ModuleUpdate
 ModuleUpdate.update()
 
@@ -95,8 +94,10 @@ class ManualContext(SuperContext):
         'header_background': [15/255, 80/255, 112/255, 1]
     }
 
-    def __init__(self, server_address, password, game, player_name) -> None:
+    def __init__(self, server_address, password, game, player_name, ready_callback=None, error_callback=None) -> None:
         super(ManualContext, self).__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
 
         if tracker_loaded:
             super().set_callback(self.on_tracker_updated) # Universal Tracker takes this func and calls it when updateTracker is called
@@ -924,26 +925,67 @@ async def main(args):
 
     await ctx.shutdown()
 
-def launch() -> None:
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, apmanual_file: str = None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("ManualClient")
+
+    async def main():
+        config_file = {}
+        if apmanual_file:
+            config_file = read_apmanual_file(apmanual_file)
+        
+        ctx = ManualContext(server_address, password, config_file.get("game"), config_file.get("player_name"), ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Manual"
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+
+        ctx.item_table = config_file.get("items", {})
+        ctx.location_table = config_file.get("locations", {})
+        ctx.region_table = config_file.get("regions", {})
+        ctx.category_table = config_file.get("categories", {})
+        ctx.category_name_to_id = {}
+        if ctx.game:
+            await ctx.server_auth()
+
+        if gui_enabled:
+            ctx.run_gui()
+        ctx.run_cli()
+
+        if "tags" in config_file:
+            ctx.tags = ctx.tags | config_file["tags"]
+
+        await ctx.exit_event.wait()
+        await ctx.shutdown()
+
     import colorama
 
-    parser = get_base_parser(description="Manual Client, for operating a Manual game in Archipelago.")
-    parser.add_argument('apmanual_file', default="", type=str, nargs="?",
-                        help='Path to an APMANUAL file')
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="ManualMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Manual client.")
+        if error_callback:
+            error_callback()
 
-    args = sys.argv[1:]
-    if "Manual Client" in args:
-        args.remove("Manual Client")
-    args, rest = parser.parse_known_args(args=args)
-    colorama.init()
-    asyncio.run(main(args))
-    colorama.deinit()
 
-    if not os.path.exists(icon_paths["manual"]):
-        # Download the icon for next time
-        icon_url = "https://manualforarchipelago.github.io/ManualBuilder/images/ap-manual-discord-logo-square-96x96.png"
-        with open(icon_paths["manual"], 'wb') as f:
-            f.write(requests.get(icon_url).content)
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, apmanual_file: str = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, apmanual_file)
 
 if __name__ == '__main__':
     launch()

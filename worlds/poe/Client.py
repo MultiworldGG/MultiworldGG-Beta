@@ -11,6 +11,8 @@ from .Constants import VERSION
 import colorama
 import Utils
 from CommonClient import ClientCommandProcessor, CommonContext, server_loop, gui_enabled
+
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from pathlib import Path
 
 from .poeClient.fileHelper import load_settings, save_settings, find_possible_client_txt_path
@@ -268,8 +270,10 @@ class PathOfExileContext(CommonContext):
 
     logger = logging.getLogger("poeClient.PathOfExileContext")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, server_address=None, password=None, ready_callback=None, error_callback=None):
+        super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
 
     def get_is_death_linked(self) -> bool:
         """Check if the client is in death link mode."""
@@ -371,11 +375,49 @@ async def main():
     await ctx.shutdown()
 
 
-def launch():
-    # use colorama to display colored text highlighting
-    colorama.just_fix_windows_console()
-    asyncio.run(main())
-    colorama.deinit()
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("PathOfExileClient")
+
+    async def main():
+        ctx = PathOfExileContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Path of Exile"
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+        await ctx.server_auth()
+
+        await ctx.exit_event.wait()
+        await ctx.shutdown()
+
+    import colorama
+
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="PathOfExileMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Path of Exile client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)
 
 
 

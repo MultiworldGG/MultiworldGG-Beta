@@ -5,6 +5,7 @@ import os
 import multiprocessing
 import subprocess
 import zipfile
+import logging
 
 from asyncio import StreamReader, StreamWriter
 
@@ -61,8 +62,10 @@ class MMBN3Context(CommonContext):
     game = "MegaMan Battle Network 3"
     items_handling = 0b101  # full local except starting items
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.gba_streams: (StreamReader, StreamWriter) = None
         self.gba_sync_task = None
         self.gba_status = CONNECTION_INITIAL_STATUS
@@ -337,26 +340,35 @@ def confirm_checksum():
     return CHECKSUM_BLUE == basemd5.hexdigest()
 
 
-def main(*launch_args: str):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+    """
+    Launch the client
+    """
+    logging.getLogger("MMBN3Client")
 
     async def main():
         multiprocessing.freeze_support()
-        parser = get_base_parser()
-        parser.add_argument("patch_file", default="", type=str, nargs="?",
-                            help="Path to an APMMBN3 file")
-        args = parser.parse_args(launch_args)
+        
         checksum_matches = confirm_checksum()
-        if checksum_matches:
-            if args.patch_file:
-                asyncio.create_task(patch_and_run_game(args.patch_file))
-
-        ctx = MMBN3Context(args.connect, args.password)
+        
+        ctx = MMBN3Context(server_address, password, ready_callback, error_callback)
         if not checksum_matches:
             ctx.patching_error = True
+            
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Mega Man Battle Network 3"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="Server Loop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
+        await ctx.server_auth()
+
+        if checksum_matches and patch_file:
+            asyncio.create_task(patch_and_run_game(patch_file))
 
         ctx.gba_sync_task = asyncio.create_task(gba_sync_task(ctx), name="GBA Sync")
         await ctx.exit_event.wait()
@@ -368,7 +380,20 @@ def main(*launch_args: str):
 
     import colorama
 
-    colorama.just_fix_windows_console()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="MMBN3Main")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the MMBN3 client.")
+        if error_callback:
+            error_callback()
 
-    asyncio.run(main())
-    colorama.deinit()
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, patch_file)

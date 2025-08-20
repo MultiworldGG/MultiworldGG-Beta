@@ -103,8 +103,10 @@ class SimsContext(SuperContext):
     want_slot_data = True
     tags = {"AP"}
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.syncing = False
         self.goal = None
         self.career = None
@@ -190,20 +192,31 @@ async def game_watcher(ctx: SimsContext):
         await asyncio.sleep(0.5)
 
 
-def main():
-    async def _main():
-        parser = get_base_parser(description="The Sims 4 Client, for text interfacing.")
-        args, rest = parser.parse_known_args()
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("Sims4Client")
 
-        ctx = SimsContext(args.connect, args.password)
+    async def main():
+        ctx = SimsContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | The Sims 4"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        await ctx.server_auth()
+
         watcher_task = asyncio.create_task(game_watcher(ctx), name="GameWatcher")
 
         if tracker_loaded:
             ctx.run_generator()
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
 
         await ctx.exit_event.wait()
         await watcher_task
@@ -211,10 +224,23 @@ def main():
 
     import colorama
 
-    colorama.just_fix_windows_console()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="Sims4Main")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Sims 4 client.")
+        if error_callback:
+            error_callback()
 
-    asyncio.run(_main())
-    colorama.deinit()
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)
 
 
 if __name__ == "__main__":

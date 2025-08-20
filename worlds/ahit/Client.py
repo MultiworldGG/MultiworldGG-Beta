@@ -6,7 +6,7 @@ from copy import deepcopy
 from typing import List, Any, Iterable
 from NetUtils import decode, encode, JSONtoTextParser, JSONMessagePart, NetworkItem, NetworkPlayer
 from MultiServer import Endpoint
-from CommonClient import CommonContext, gui_enabled, ClientCommandProcessor, logger, get_base_parser
+from CommonClient import CommonContext, gui_enabled, ClientCommandProcessor, logger, get_base_parser, server_loop
 
 DEBUG = False
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
@@ -27,8 +27,10 @@ class AHITContext(CommonContext):
     command_processor = AHITCommandProcessor
     game = "A Hat in Time"
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.proxy = None
         self.proxy_task = None
         self.gamejsontotext = AHITJSONToTextParser(self)
@@ -238,29 +240,52 @@ async def proxy_loop(ctx: AHITContext):
         logger.info("Aborting AHIT Proxy Client due to errors")
 
 
-def launch(*launch_args: str):
-    async def main():
-        parser = get_base_parser()
-        args = parser.parse_args(launch_args)
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("AHITClient")
 
-        ctx = AHITContext(args.connect, args.password)
+    async def main():
+        ctx = AHITContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | A Hat in Time"
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        await ctx.server_auth()
+
         logger.info("Starting A Hat in Time proxy server")
         ctx.proxy = websockets.serve(functools.partial(proxy, ctx=ctx),
                                      host="localhost", port=11311, ping_timeout=999999, ping_interval=999999)
         ctx.proxy_task = asyncio.create_task(proxy_loop(ctx), name="ProxyLoop")
 
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
-
         await ctx.proxy
         await ctx.proxy_task
         await ctx.exit_event.wait()
 
-    Utils.init_logging("AHITClient")
-    # options = Utils.get_options()
-
     import colorama
-    colorama.just_fix_windows_console()
-    asyncio.run(main())
-    colorama.deinit()
+
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="AHITMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the AHIT client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)

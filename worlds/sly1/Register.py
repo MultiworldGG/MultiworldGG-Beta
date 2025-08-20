@@ -1,6 +1,6 @@
-from . import Sly1World
+from . import Sly1World, Sly1Web
+from .Sly1Client import launch
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import Sly1Web
 
 """
 Sly Cooper and the Thievius Raccoonus World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = Sly1World
 WEB_WORLD_CLASS = Sly1Web
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

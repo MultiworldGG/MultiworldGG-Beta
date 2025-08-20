@@ -1,6 +1,6 @@
-from . import BanjoTooieWorld
+from . import BanjoTooieWorld, BanjoTooieWeb
+from .BTClient import launch
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import BanjoTooieWeb
 
 """
 Banjo-Tooie is a single-player platform game in which the protagonists are controlled from a third-person perspective. World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = BanjoTooieWorld
 WEB_WORLD_CLASS = BanjoTooieWeb
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

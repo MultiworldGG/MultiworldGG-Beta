@@ -1,6 +1,11 @@
-import colorama, asyncio, bsdiff4, pathlib, os, Utils, hashlib, sys, zipfile, settings, atexit, time, typing
-from CommonClient import CommonContext, ClientCommandProcessor, get_base_parser, gui_enabled, logger
+import colorama, asyncio, bsdiff4, pathlib, os, Utils, hashlib, sys, zipfile, settings, atexit, time, typing, logging, urllib.parse
+from CommonClient import CommonContext, ClientCommandProcessor, get_base_parser, gui_enabled, logger, server_loop
 from NetUtils import ClientStatus
+
+try:
+    from Utils import instance_name as apname
+except ImportError:
+    apname = "Archipelago"
 
 from . import locations, items, data
 from .version import version
@@ -303,6 +308,11 @@ class StarFox64Context(CommonContext):
   seed_name = 0
   slot_data = {}
   n64_sockets = set()
+
+  def __init__(self, server_address, password, ready_callback=None, error_callback=None):
+    super().__init__(server_address, password)
+    self.ready_callback = ready_callback
+    self.error_callback = error_callback
 
   def make_gui(self):
     from kvui import GameManager, Window, UILog
@@ -613,39 +623,57 @@ def close_program():
     program.kill()
     program = None
 
-def run(*args):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    logging.getLogger("StarFox64Client")
 
-  async def main(args):
-    ctx = StarFox64Context(args.connect, args.password)
-    ctx.auth = args.name
-    if gui_enabled:
-      ctx.run_gui()
-    ctx.run_cli()
+    async def main():
+        ctx = StarFox64Context(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Star Fox 64"
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        await ctx.server_auth()
+
+        try:
+            await asyncio.start_server(lambda r, w: N64Socket.create(r, w, ctx), port=0x5F64)
+        except OSError:
+            logger.error("[N64] Unable to open port 24420")
+        await ctx.exit_event.wait()
+        await ctx.shutdown()
+
+    import colorama
+
+    # Check if we're already in an event loop (GUI mode) first
     try:
-      await asyncio.start_server(lambda r, w: N64Socket.create(r, w, ctx), port=0x5F64)
-    except OSError:
-      logger.error("[N64] Unable to open port 24420")
-    await ctx.exit_event.wait()
-    await ctx.shutdown()
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="StarFox64Main")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Star Fox 64 client.")
+        if error_callback:
+            error_callback()
 
-  parser = get_base_parser(description="Star Fox 64 Archipelago Client.")
-  parser.add_argument('--name', default=None, help="Slot Name to connect as.")
-  parser.add_argument("url", nargs="?", help="Archipelago connection url")
-  args = parser.parse_args(args)
-  if args.url:
-    url = urllib.parse.urlparse(args.url)
-    if url.scheme == "archipelago":
-      args.connect = url.netloc
-      if url.username:
-        args.name = urllib.parse.unquote(url.username)
-      if url.password:
-        args.password = urllib.parse.unquote(url.password)
-    else:
-      parser.error(f"bad url, found {args.url}, expected url in form of archipelago://archipelago.gg:38281")
 
-  colorama.init()
-  asyncio.run(main(args))
-  colorama.deinit()
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)
+
+
+def run(*args):
+    """Legacy run function for backward compatibility"""
+    main()
 
 if __name__ == '__main__':
   run(*sys,argv[1:])

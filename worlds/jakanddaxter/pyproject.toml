@@ -17,6 +17,9 @@ dependencies = [
     "Pymem>=1.13.0",
 ]
 
+[project.entry-points."mwgg.client"]
+jakanddaxter.Client = "jakanddaxter.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.jakanddaxter"]

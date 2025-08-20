@@ -1,4 +1,5 @@
 from . import Starcraft2World, Starcraft2WebWorld
+from .Client import launch
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -17,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = Starcraft2World
 WEB_WORLD_CLASS = Starcraft2WebWorld
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

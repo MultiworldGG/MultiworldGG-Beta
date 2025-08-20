@@ -16,6 +16,9 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
+[project.entry-points."mwgg.client"]
+dk64.Client = "dk64.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.dk64"]

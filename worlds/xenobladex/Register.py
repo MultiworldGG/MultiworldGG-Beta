@@ -1,6 +1,6 @@
-from . import XenobladeXWorld
+from . import XenobladeXWorld, XenobladeXWeb
+from .Client import launch
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import XenobladeXWeb
 
 """
 Xenoblade X World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = XenobladeXWorld
 WEB_WORLD_CLASS = XenobladeXWeb
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

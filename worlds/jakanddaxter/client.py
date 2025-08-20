@@ -21,6 +21,11 @@ from pymem.exception import ProcessNotFound
 import ModuleUpdate
 import Utils
 
+try:
+    from Utils import instance_name as apname
+except ImportError:
+    apname = "Archipelago"
+
 from CommonClient import ClientCommandProcessor, CommonContext, server_loop, gui_enabled
 from NetUtils import ClientStatus
 
@@ -98,7 +103,10 @@ class JakAndDaxterContext(CommonContext):
     # Storing some information for writing save slot identifiers.
     slot_seed: str
 
-    def __init__(self, server_address: str | None, password: str | None) -> None:
+    def __init__(self, server_address: str | None, password: str | None, ready_callback=None, error_callback=None) -> None:
+        super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.repl = JakAndDaxterReplClient(self.on_log_error,
                                            self.on_log_warn,
                                            self.on_log_success,
@@ -614,26 +622,50 @@ async def run_game(ctx: JakAndDaxterContext):
     ctx.memr.initiated_connect = True
 
 
-async def main():
-    Utils.init_logging("JakAndDaxterClient", exception_logger="Client")
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    logging.getLogger("JakAndDaxterClient")
 
-    ctx = JakAndDaxterContext(None, None)
-    ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
-    ctx.repl_task = create_task_log_exception(ctx.run_repl_loop())
-    ctx.memr_task = create_task_log_exception(ctx.run_memr_loop())
+    async def main():
+        ctx = JakAndDaxterContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-    if gui_enabled:
-        ctx.run_gui()
-    ctx.run_cli()
+        ctx.ui.base_title = apname + " | Jak and Daxter"
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+        await ctx.server_auth()
 
-    # Find and run the game (gk) and compiler/repl (goalc).
-    create_task_log_exception(run_game(ctx))
-    await ctx.exit_event.wait()
-    await ctx.shutdown()
+        ctx.repl_task = create_task_log_exception(ctx.run_repl_loop())
+        ctx.memr_task = create_task_log_exception(ctx.run_memr_loop())
+
+        # Find and run the game (gk) and compiler/repl (goalc).
+        create_task_log_exception(run_game(ctx))
+        await ctx.exit_event.wait()
+        await ctx.shutdown()
+
+    import colorama
+
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="JakAndDaxterMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Jak and Daxter client.")
+        if error_callback:
+            error_callback()
 
 
-def launch():
-    # use colorama to display colored text highlighting
-    colorama.just_fix_windows_console()
-    asyncio.run(main())
-    colorama.deinit()
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)

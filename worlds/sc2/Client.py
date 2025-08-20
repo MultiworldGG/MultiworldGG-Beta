@@ -22,6 +22,9 @@ from pathlib import Path
 # CommonClient import first to trigger ModuleUpdater
 from CommonClient import CommonContext, server_loop, ClientCommandProcessor, gui_enabled, get_base_parser
 from Utils import init_logging, is_windows, async_start
+import Utils
+
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from . import ItemNames, Options
 from .ItemGroups import item_name_groups
 from .Options import (
@@ -498,8 +501,10 @@ class SC2Context(CommonContext):
     game = STARCRAFT2
     items_handling = 0b111
 
-    def __init__(self, *args, **kwargs) -> None:
-        super(SC2Context, self).__init__(*args, **kwargs)
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None) -> None:
+        super(SC2Context, self).__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.raw_text_parser = SC2JSONtoTextParser(self)
 
         self.difficulty = -1
@@ -746,24 +751,53 @@ class CompatItemHolder(typing.NamedTuple):
     quantity: int = 1
 
 
-async def main():
-    multiprocessing.freeze_support()
-    parser = get_base_parser()
-    parser.add_argument('--name', default=None, help="Slot Name to connect as.")
-    args = parser.parse_args()
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, slot_name: str = None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("SC2Client")
 
-    ctx = SC2Context(args.connect, args.password)
-    ctx.auth = args.name
-    if ctx.server_task is None:
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+    async def main():
+        multiprocessing.freeze_support()
+        
+        ctx = SC2Context(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-    if gui_enabled:
-        ctx.run_gui()
-    ctx.run_cli()
+        ctx.ui.base_title = apname + " | StarCraft 2"
+        ctx.auth = slot_name
+        if ctx.server_task is None:
+            ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        await ctx.server_auth()
 
-    await ctx.exit_event.wait()
+        await ctx.exit_event.wait()
+        await ctx.shutdown()
 
-    await ctx.shutdown()
+    import colorama
+
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="SC2Main")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the SC2 client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, slot_name: str = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, slot_name)
 
 # These items must be given to the player if the game is generated on version 2
 API2_TO_API3_COMPAT_ITEMS: typing.Set[CompatItemHolder] = {
@@ -1624,7 +1658,13 @@ def get_location_offset(mission_id):
         else (SC2HOTS_LOC_ID_OFFSET - SC2Mission.ALL_IN.id * VICTORY_MODULO)
 
 
-def launch():
+def legacy_launch():
+    """Legacy launch function for standalone mode - no longer used by GUI"""
     colorama.just_fix_windows_console()
-    asyncio.run(main())
+    multiprocessing.freeze_support()
+    parser = get_base_parser()
+    parser.add_argument('--name', default=None, help="Slot Name to connect as.")
+    args = parser.parse_args()
+    
+    launch(args.connect, args.password, slot_name=args.name)
     colorama.deinit()

@@ -87,8 +87,10 @@ class ZillionContext(CommonContext):
 
     def __init__(self,
                  server_address: str,
-                 password: str) -> None:
+                 password: str, ready_callback=None, error_callback=None) -> None:
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.known_name = None
         self.from_game = asyncio.Queue()
         self.to_game = asyncio.Queue()
@@ -484,42 +486,70 @@ async def zillion_sync_task(ctx: ZillionContext) -> None:
         logger.info("zillion sync task ending")
 
 
-async def main() -> None:
-    parser = get_base_parser()
-    parser.add_argument("diff_file", default="", type=str, nargs="?",
-                        help="Path to a .apzl MultiworldGG Binary Patch file")
-    # SNI parser.add_argument('--loglevel', default='info', choices=['debug', 'info', 'warning', 'error', 'critical'])
-    args = parser.parse_args()
-    print(args)
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, diff_file: str = None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("ZillionClient")
 
-    if args.diff_file:
-        import Patch
-        logger.info("patch file was supplied - creating sms rom...")
-        meta, rom_file = Patch.create_rom_file(args.diff_file)
-        if "server" in meta:
-            args.connect = meta["server"]
-        logger.info(f"wrote rom file to {rom_file}")
+    async def main():
+        # Handle ROM patching if needed
+        actual_server_address = server_address
+        if diff_file:
+            try:
+                import Patch
+                logger.info("patch file was supplied - creating sms rom...")
+                meta, rom_file = Patch.create_rom_file(diff_file)
+                if "server" in meta and not actual_server_address:
+                    actual_server_address = meta["server"]
+                logger.info(f"wrote rom file to {rom_file}")
+            except Exception as ex:
+                logger.error(f"Failed to patch ROM: {ex}")
+                if error_callback:
+                    error_callback()
+                return
 
-    ctx = ZillionContext(args.connect, args.password)
-    if ctx.server_task is None:
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        ctx = ZillionContext(actual_server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-    if gui_enabled:
-        ctx.run_gui()
-    ctx.run_cli()
+        ctx.ui.base_title = apname + " | Zillion"
+        if ctx.server_task is None:
+            ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        await ctx.server_auth()
 
-    sync_task = asyncio.create_task(zillion_sync_task(ctx))
+        sync_task = asyncio.create_task(zillion_sync_task(ctx))
 
-    await ctx.exit_event.wait()
+        await ctx.exit_event.wait()
 
-    ctx.server_address = None
-    logger.debug("waiting for sync task to end")
-    await sync_task
-    logger.debug("sync task ended")
-    await ctx.shutdown()
+        ctx.server_address = None
+        logger.debug("waiting for sync task to end")
+        await sync_task
+        logger.debug("sync task ended")
+        await ctx.shutdown()
+
+    import colorama
+
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="ZillionMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Zillion client.")
+        if error_callback:
+            error_callback()
 
 
-def launch() -> None:
-    colorama.just_fix_windows_console()
-    asyncio.run(main())
-    colorama.deinit()
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, diff_file: str = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, diff_file)

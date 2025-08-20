@@ -1,6 +1,6 @@
-from . import DK64World
+from . import DK64World, DK64Web
+from .archipelago.DK64Client import launch
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import DK64Web
 
 """
 Donkey Kong 64 is a 3D collectathon platforming game. World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = DK64World
 WEB_WORLD_CLASS = DK64Web
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

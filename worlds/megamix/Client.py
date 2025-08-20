@@ -23,6 +23,9 @@ from CommonClient import (
     gui_enabled,
 )
 from NetUtils import NetworkItem, ClientStatus, Permission
+import Utils
+
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 
 
 class DivaClientCommandProcessor(ClientCommandProcessor):
@@ -58,8 +61,10 @@ class MegaMixContext(CommonContext):
 
     command_processor = DivaClientCommandProcessor
 
-    def __init__(self, server_address: Optional[str], password: Optional[str]) -> None:
+    def __init__(self, server_address: Optional[str], password: Optional[str], ready_callback=None, error_callback=None) -> None:
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
 
         self.game = "Hatsune Miku Project Diva Mega Mix+"
         self.path = settings.get_settings()["megamix_options"]["mod_path"]
@@ -364,26 +369,46 @@ class MegaMixContext(CommonContext):
         restore_originals(self.mod_pv_list)
 
 
-def launch():
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
-    Launch a client instance (wrapper / args parser)
+    Launch the client
     """
+    import logging
+    logging.getLogger("MegaMixClient")
 
-    async def main(args):
-        """
-        Launch a client instance (threaded)
-        """
-        ctx = MegaMixContext(args.connect, args.password)
+    async def main():
+        ctx = MegaMixContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Mega Mix"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
+        await ctx.server_auth()
+
         await ctx.exit_event.wait()
         await ctx.shutdown()
 
-    parser = get_base_parser(description="Mega Mix Client")
-    args, _ = parser.parse_known_args()
+    import colorama
 
-    colorama.init()
-    asyncio.run(main(args))
-    colorama.deinit()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="MegaMixMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Mega Mix client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)

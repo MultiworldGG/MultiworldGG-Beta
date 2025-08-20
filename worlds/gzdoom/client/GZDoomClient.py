@@ -7,6 +7,8 @@ from typing import Any, Dict
 
 import Utils
 from CommonClient import ClientStatus, get_base_parser, gui_enabled, server_loop, logger
+
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from .IPC import IPC
 from .Hint import GZDoomHint
 
@@ -29,9 +31,11 @@ class GZDoomContext(SuperContext):
     slot_name = None
     tags = {"AP", "DeathLink"}
 
-    def __init__(self, server_address: str, password: str, gzd_dir: str):
+    def __init__(self, server_address: str, password: str, gzd_dir: str, ready_callback=None, error_callback=None):
         self.found_gzdoom = asyncio.Event()
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.ipc = IPC(self, gzd_dir, _IPC_SIZE)
 
     def make_gui(self):
@@ -247,38 +251,50 @@ class GZDoomContext(SuperContext):
             self.last_hints = hints
 
 
-def main(*args):
-    Utils.init_logging("GZDoomClient")
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("GZDoomClient")
 
-    # Initialize the gzDoom IPC structures on disk
-    # TODO: do we want to support multiple running instances as the same user?
-    gzd_dir = os.path.join(Utils.home_path(), "gzdoom")
-    ipc_dir = os.path.join(gzd_dir, "ipc")
-    os.makedirs(ipc_dir, exist_ok=True) # communication with gzdoom
-    os.makedirs(os.path.join(gzd_dir, "logic"), exist_ok=True) # in-dev logic files
-    os.makedirs(os.path.join(gzd_dir, "tuning"), exist_ok=True) # in-dev tuning files
+    async def main():
+        # Initialize the gzDoom IPC structures on disk
+        # TODO: do we want to support multiple running instances as the same user?
+        gzd_dir = os.path.join(Utils.home_path(), "gzdoom")
+        ipc_dir = os.path.join(gzd_dir, "ipc")
+        os.makedirs(ipc_dir, exist_ok=True) # communication with gzdoom
+        os.makedirs(os.path.join(gzd_dir, "logic"), exist_ok=True) # in-dev logic files
+        os.makedirs(os.path.join(gzd_dir, "tuning"), exist_ok=True) # in-dev tuning files
 
-    # Preallocate input lump
-    ipc_lump = os.path.join(ipc_dir, 'GZAPIPC')
-    with open(ipc_lump, 'w') as fd:
-        fd.write('.' * _IPC_SIZE)
+        # Preallocate input lump
+        ipc_lump = os.path.join(ipc_dir, 'GZAPIPC')
+        with open(ipc_lump, 'w') as fd:
+            fd.write('.' * _IPC_SIZE)
 
-    # Create empty logfile if it doesn't exist
-    ipc_log = os.path.join(gzd_dir, 'gzdoom.log')
-    with open(ipc_log, "a"):
-        pass
+        # Create empty logfile if it doesn't exist
+        ipc_log = os.path.join(gzd_dir, 'gzdoom.log')
+        with open(ipc_log, "a"):
+            pass
 
-    print(f"GZDoom IPC files created. Host encoding: {locale.getencoding()}. IPC encoding: UTF-8.")
+        print(f"GZDoom IPC files created. Host encoding: {locale.getencoding()}. IPC encoding: UTF-8.")
 
-    async def actual_main(args, ipc_dir, ipc_log):
-        ctx = GZDoomContext(args.connect, args.password, gzd_dir)
+        ctx = GZDoomContext(server_address, password, gzd_dir, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | GZDoom"
         await ctx.start_tasks()
+        await ctx.server_auth()
+
         if tracker_loaded:
             logger.info("Initializing tracker...")
             ctx.run_generator()
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
 
         await asyncio.sleep(1)
 
@@ -287,7 +303,7 @@ def main(*args):
         # Use forward slashes unconditionally here; windows will accept either,
         # but preferentially generates backslashes, which then are treated as
         # escapes when invoking gzdoom.
-        logger.info(f"    -file \"{ipc_dir}\" +logfile \"{ipc_log}\"")
+        logger.info(f"    -file \"{ipc_dir.replace('\\', '/')}\" +logfile \"{ipc_log.replace('\\', '/')}\"")
         logger.info("*after* any other arguments (e.g. for wad/pk3 loading).")
         logger.info("*" * 80)
 
@@ -299,14 +315,23 @@ def main(*args):
 
     import colorama
 
-    parser = get_base_parser()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="GZDoomMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the GZDoom client.")
+        if error_callback:
+            error_callback()
 
-    colorama.init()
-    args = parser.parse_args(args)
-    asyncio.run(
-        actual_main(args, ipc_dir.replace("\\", "/"), ipc_log.replace("\\", "/")),
-        debug=True)
-    colorama.deinit()
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)
 
 
 if __name__ == '__main__':

@@ -10,6 +10,8 @@ import ast
 import Utils
 import ModuleUpdate
 
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
+
 osu_base_id = 727000000
 
 ModuleUpdate.update()
@@ -434,8 +436,10 @@ class APosuContext(CommonContext):
     items_handling = 0b111  # full remote
     want_slot_data = True
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super(APosuContext, self).__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.send_index: int = 0
         self.pairs: dict = {}
         self.last_scores: list = []
@@ -875,13 +879,27 @@ async def game_watcher(ctx: APosuContext):
         await asyncio.sleep(0.1)
 
 
-def main():
-    async def _main(args):
-        ctx = APosuContext(args.connect, args.password)
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("OsuClient")
+
+    async def main():
+        ctx = APosuContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | osu!"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
+        await ctx.server_auth()
+
         progression_watcher = asyncio.create_task(
             game_watcher(ctx), name="osu!ProgressionWatcher")
 
@@ -889,17 +907,27 @@ def main():
         ctx.server_address = None
 
         await progression_watcher
-
         await ctx.shutdown()
 
     import colorama
 
-    parser = get_base_parser(description="osu! Client, for text interfacing.")
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="OsuMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the osu! client.")
+        if error_callback:
+            error_callback()
 
-    args, rest = parser.parse_known_args()
-    colorama.init()
-    asyncio.run(_main(args))
-    colorama.deinit()
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
-from . import Rac2World
+from . import Rac2World, Rac2Web
+from .Rac2Client import launch
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import Rac2Web
 
 """
 Ratchet & Clank 2 World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = Rac2World
 WEB_WORLD_CLASS = Rac2Web
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

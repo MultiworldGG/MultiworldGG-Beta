@@ -17,6 +17,9 @@ dependencies = [
     "dolphin_memory_engine >= 1.1.3",
 ]
 
+[project.entry-points."mwgg.client"]
+sms.Client = "sms.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.sms"]

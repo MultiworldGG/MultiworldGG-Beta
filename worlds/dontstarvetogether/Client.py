@@ -36,9 +36,11 @@ class DSTContext(CommonContext):
     locations_hinted = set()
     _eventqueue:List[Dict] = []
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         self.dst_handler = DSTHandler(self)
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
 
     def on_deathlink(self, data:Dict):
         self.dst_handler.enqueue({
@@ -865,23 +867,50 @@ async def main(args):
     await ctx.shutdown()
 
 
-def launch():
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, slot_name: str = None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("DontStarveTogetherClient")
+
+    async def main():
+        ctx = DSTContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Don't Starve Together"
+        ctx.auth = slot_name
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+        await ctx.server_auth()
+
+        dst_handler_task = asyncio.create_task(ctx.dst_handler.run_reader(), name="DST Handler")
+
+        await ctx.exit_event.wait()
+        dst_handler_task.cancel()
+        await ctx.shutdown()
+
     import colorama
 
-    parser = get_base_parser(description="DST MultiworldGG Client for interfacing with Don't Starve Together.")
-    parser.add_argument("--name", default=None, help="Slot Name to connect as.")
-    parser.add_argument("url", nargs="?", help="MultiworldGG connection url")
-    args = parser.parse_args()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="DontStarveTogetherMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Don't Starve Together client.")
+        if error_callback:
+            error_callback()
 
-    if args.url:
-        url = urllib.parse.urlparse(args.url)
-        args.connect = url.netloc
-        if url.username:
-            args.name = urllib.parse.unquote(url.username)
-        if url.password:
-            args.password = urllib.parse.unquote(url.password)
 
-    colorama.init()
-
-    asyncio.run(main(args))
-    colorama.deinit()
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, slot_name: str = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, slot_name)

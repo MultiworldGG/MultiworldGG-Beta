@@ -7,6 +7,8 @@ import dolphin_memory_engine
 
 import Utils
 from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser, gui_enabled, logger, server_loop
+
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from NetUtils import ClientStatus
 
 from .Items import ITEM_TABLE, LOOKUP_ID_TO_NAME
@@ -123,15 +125,19 @@ class TWWContext(CommonContext):
     game: str = "The Wind Waker"
     items_handling: int = 0b111
 
-    def __init__(self, server_address: Optional[str], password: Optional[str]) -> None:
+    def __init__(self, server_address: Optional[str], password: Optional[str], ready_callback=None, error_callback=None) -> None:
         """
         Initialize the TWW context.
 
         :param server_address: Address of the MultiworldGG server.
         :param password: Password for server authentication.
+        :param ready_callback: Callback for when client is ready.
+        :param error_callback: Callback for errors.
         """
 
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.dolphin_sync_task: Optional[asyncio.Task[None]] = None
         self.dolphin_status: str = CONNECTION_INITIAL_STATUS
         self.awaiting_rom: bool = False
@@ -696,23 +702,28 @@ async def dolphin_sync_task(ctx: TWWContext) -> None:
             continue
 
 
-def main(connect: Optional[str] = None, password: Optional[str] = None) -> None:
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
-    Run the main async loop for the Wind Waker client.
-
-    :param connect: Address of the MultiworldGG server.
-    :param password: Password for server authentication.
+    Launch the client
     """
-    Utils.init_logging("The Wind Waker Client")
+    import logging
+    logging.getLogger("TWWClient")
 
-    async def _main(connect: Optional[str], password: Optional[str]) -> None:
-        ctx = TWWContext(connect, password)
+    async def main():
+        ctx = TWWContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | The Wind Waker"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
-        await asyncio.sleep(1)
+        await ctx.server_auth()
 
+        await asyncio.sleep(1)
         ctx.dolphin_sync_task = asyncio.create_task(dolphin_sync_task(ctx), name="DolphinSync")
 
         await ctx.exit_event.wait()
@@ -728,9 +739,23 @@ def main(connect: Optional[str] = None, password: Optional[str] = None) -> None:
 
     import colorama
 
-    colorama.init()
-    asyncio.run(_main(connect, password))
-    colorama.deinit()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="TWWMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the TWW client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)
 
 
 if __name__ == "__main__":

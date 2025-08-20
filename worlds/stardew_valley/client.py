@@ -8,6 +8,8 @@ import urllib.parse
 import Utils
 from BaseClasses import MultiWorld, CollectionState
 from CommonClient import logger, get_base_parser, gui_enabled, server_loop
+
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from MultiServer import mark_raw
 from NetUtils import JSONMessagePart
 from kvui import CommandPromptTextInput
@@ -150,6 +152,11 @@ class StardewClientContext(TrackerGameContext):
     command_processor = StardewCommandProcessor
     previous_explanation: RuleExplanation | None = None
 
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
+        super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
+
     def make_gui(self):
         ui = super().make_gui()  # before the kivy imports so kvui gets loaded first
 
@@ -234,37 +241,52 @@ def get_updated_state(ctx: TrackerGameContext) -> CollectionState:
     return updateTracker(ctx).state
 
 
-async def main(args):
-    ctx = StardewClientContext(args.connect, args.password)
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, slot_name: str = None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("StardewClient")
 
-    ctx.auth = args.name
-    ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+    async def main():
+        ctx = StardewClientContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-    if tracker_loaded:
-        ctx.run_generator()
-    else:
-        logger.warning("Could not find Universal Tracker.")
+        ctx.ui.base_title = apname + " | Stardew Valley"
+        ctx.auth = slot_name
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+        await ctx.server_auth()
 
-    if gui_enabled:
-        ctx.run_gui()
-    ctx.run_cli()
+        if tracker_loaded:
+            ctx.run_generator()
+        else:
+            logger.warning("Could not find Universal Tracker.")
 
-    await ctx.exit_event.wait()
-    await ctx.shutdown()
+        await ctx.exit_event.wait()
+        await ctx.shutdown()
+
+    import colorama
+
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="StardewMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Stardew Valley client.")
+        if error_callback:
+            error_callback()
 
 
-def launch(*args):
-    parser = get_base_parser(description="Gameless Archipelago Client, for text interfacing.")
-    parser.add_argument('--name', default=None, help="Slot Name to connect as.")
-    parser.add_argument("url", nargs="?", help="Archipelago connection url")
-    args = parser.parse_args(args)
-
-    if args.url:
-        url = urllib.parse.urlparse(args.url)
-        args.connect = url.netloc
-        if url.username:
-            args.name = urllib.parse.unquote(url.username)
-        if url.password:
-            args.password = urllib.parse.unquote(url.password)
-
-    asyncio.run(main(args))
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, slot_name: str = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, slot_name)

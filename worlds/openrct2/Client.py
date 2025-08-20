@@ -8,6 +8,8 @@ import Utils
 import re
 from .OpenRCT2Socket import OpenRCT2Socket
 
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
+
 if __name__ == "__main__":
     print("\n\n\n\n\n\n==================================\n")
     Utils.init_logging("TextClient", exception_logger="Client")
@@ -22,8 +24,10 @@ class OpenRCT2Context(CommonContext):
     items_handling = 0b111  # receive all items for /received
     want_slot_data = True 
 
-    def __init__(self, server_address: typing.Optional[str], password: typing.Optional[str]) -> None:
+    def __init__(self, server_address: typing.Optional[str], password: typing.Optional[str], ready_callback=None, error_callback=None) -> None:
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.gamesock = OpenRCT2Socket(self)
         self.game_connection_established = False
         #kivy.set_title("OpenRCT2 Client")
@@ -74,25 +78,46 @@ class OpenRCT2Context(CommonContext):
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
 
-def main():
-    Utils.init_logging("OpenRCT2Client", exception_logger="Client")
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("OpenRCT2Client")
 
-    async def _main():
-        ctx = OpenRCT2Context(None, None)
+    async def main():
+        ctx = OpenRCT2Context(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | OpenRCT2"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
-
-        if gui_enabled:
-            ctx.run_gui()
-
-        ctx.run_cli()
+        await ctx.server_auth()
 
         await ctx.exit_event.wait()
         await ctx.shutdown()
 
     import colorama
 
-    colorama.init()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="OpenRCT2Main")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the OpenRCT2 client.")
+        if error_callback:
+            error_callback()
 
-    asyncio.run(_main())
 
-    colorama.deinit()
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)

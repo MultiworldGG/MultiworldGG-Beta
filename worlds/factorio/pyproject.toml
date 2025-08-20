@@ -21,6 +21,9 @@ dependencies = [
     "factorio-rcon-py>=2.1.2",
 ]
 
+[project.entry-points."mwgg.client"]
+factorio.Client = "factorio.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.factorio"]

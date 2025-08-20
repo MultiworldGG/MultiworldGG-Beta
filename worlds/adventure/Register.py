@@ -1,4 +1,5 @@
 from . import AdventureWorld, AdventureWeb
+from .Client import launch
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -17,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = AdventureWorld
 WEB_WORLD_CLASS = AdventureWeb
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

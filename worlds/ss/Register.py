@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = SSWorld
 WEB_WORLD_CLASS = SSWeb
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

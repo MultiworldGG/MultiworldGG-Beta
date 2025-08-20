@@ -175,14 +175,18 @@ class LMContext(CommonContext):
     items_handling = 0b111
     wallet: Wallet
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         """
         Initialize the LM context.
 
         :param server_address: Address of the Archipelago server.
         :param password: Password for server authentication.
+        :param ready_callback: Callback for when client is ready.
+        :param error_callback: Callback for errors.
         """
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
 
         # Handle various Dolphin connection related tasks
         self.dolphin_sync_task: Optional[asyncio.Task[None]] = None
@@ -931,27 +935,42 @@ async def display_received_items(ctx: LMContext):
         # Reset the list so next time we enter this function we don't display anything
         ctx.item_display_queue = []
 
-def main(output_data: Optional[str] = None, lm_connect=None, lm_password=None):
-    Utils.init_logging("Luigi's Mansion Client")
-    logger.info(f"Starting LM Client {CLIENT_VERSION}")
-    server_address: str = ""
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, output_data: str = None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("LuigisMansionClient")
 
-    if output_data:
-        lm_usa_patch = LMUSAAPPatch()
-        try:
-            lm_usa_manifest = lm_usa_patch.read_contents(output_data)
-            server_address = lm_usa_manifest["server"]
-            lm_usa_patch.patch(output_data)
-        except Exception as ex:
-            logger.error("Unable to patch your Luigi's Mansion ROM as expected. Additional details:\n" + str(ex))
-            Utils.messagebox("Cannot Patch Luigi's Mansion", "Unable to patch your Luigi's Mansion ROM as " +
-                "expected. Additional details:\n" + str(ex), True)
-            raise ex
+    async def main():
+        # Handle ROM patching if needed
+        actual_server_address = server_address
+        if output_data:
+            lm_usa_patch = LMUSAAPPatch()
+            try:
+                lm_usa_manifest = lm_usa_patch.read_contents(output_data)
+                actual_server_address = lm_usa_manifest["server"]
+                lm_usa_patch.patch(output_data)
+            except Exception as ex:
+                logger.error("Unable to patch your Luigi's Mansion ROM as expected. Additional details:\n" + str(ex))
+                Utils.messagebox("Cannot Patch Luigi's Mansion", "Unable to patch your Luigi's Mansion ROM as " +
+                    "expected. Additional details:\n" + str(ex), True)
+                if error_callback:
+                    error_callback()
+                return
 
+        ctx = LMContext(actual_server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-    async def _main(connect, password):
-        ctx = LMContext(server_address if server_address else connect, password)
+        ctx.ui.base_title = apname + " | Luigi's Mansion"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        await ctx.server_auth()
 
         # Runs Universal Tracker's internal generator
         if tracker_loaded:
@@ -960,9 +979,6 @@ def main(output_data: Optional[str] = None, lm_connect=None, lm_password=None):
         else:
             logger.warning("Could not find Universal Tracker.")
 
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
         await asyncio.sleep(1)
 
         ctx.dolphin_sync_task = asyncio.create_task(dolphin_sync_task(ctx), name="DolphinSync")
@@ -979,9 +995,23 @@ def main(output_data: Optional[str] = None, lm_connect=None, lm_password=None):
 
     import colorama
 
-    colorama.just_fix_windows_console()
-    asyncio.run(_main(lm_connect, lm_password))
-    colorama.deinit()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="LuigisMansionMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Luigi's Mansion client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, output_data: str = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, output_data)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
-from . import Sims4World
+from . import Sims4World, Sims4Web
+from .Client import launch
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import Sims4Web
 
 """
 The Sims 4 World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = Sims4World
 WEB_WORLD_CLASS = Sims4Web
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

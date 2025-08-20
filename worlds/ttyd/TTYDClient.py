@@ -106,8 +106,10 @@ class TTYDContext(CommonContext):
     checked_locations = set()
     previous_room = None
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
@@ -276,28 +278,53 @@ async def ttyd_sync_task(ctx: TTYDContext):
                 continue
 
 
-def launch(*args):
-    async def main(args):
-        if args.patch_file:
-            await asyncio.create_task(_patch_and_run_game(args.patch_file))
-        ctx = TTYDContext(args.connect, args.password)
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("TTYDClient")
+
+    async def main():
+        if patch_file:
+            await asyncio.create_task(_patch_and_run_game(patch_file))
+            
+        ctx = TTYDContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Paper Mario TTYD"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
-        ctx.gl_sync_task = asyncio.create_task(ttyd_sync_task(ctx), name="Gauntlet Legends Sync Task")
+        await ctx.server_auth()
+
+        ctx.gl_sync_task = asyncio.create_task(ttyd_sync_task(ctx), name="TTYD Sync Task")
 
         await ctx.exit_event.wait()
         ctx.server_address = None
 
         await ctx.shutdown()
 
-    parser = get_base_parser()
-    parser.add_argument("patch_file", default="", type=str, nargs="?", help="Path to an APTTYD file")
-    args = parser.parse_args(args)
-
     import colorama
 
-    colorama.just_fix_windows_console()
-    asyncio.run(main(args))
-    colorama.deinit()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="TTYDMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the TTYD client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, patch_file)

@@ -1,5 +1,5 @@
 from .world import ZorkGrandInquisitorWorld, ZorkGrandInquisitorWebWorld
-from .client import main
+from .client import launch
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = ZorkGrandInquisitorWorld
 WEB_WORLD_CLASS = ZorkGrandInquisitorWebWorld
-CLIENT_FUNCTION = main
+CLIENT_FUNCTION = launch

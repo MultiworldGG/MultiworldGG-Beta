@@ -11,6 +11,8 @@ from .DeathLink import handle_check_deathlink
 from NetUtils import ClientStatus
 import Utils
 from .CivVIInterface import CivVIInterface, ConnectionState
+
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from .Enum import CivVICheckType
 from .Items import CivVIItemData, generate_item_table, get_item_by_civ_name
 from .Locations import CivVILocationData, generate_era_location_table
@@ -70,8 +72,10 @@ class CivVIContext(CommonContext):
         item.name: item.code for item in generate_item_table().values()}
     connection_state = ConnectionState.DISCONNECTED
 
-    def __init__(self, server_address: Optional[str], password: Optional[str], apcivvi_file: Optional[str] = None):
+    def __init__(self, server_address: Optional[str], password: Optional[str], apcivvi_file: Optional[str] = None, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.slot_data: Dict[str, Any] = {}
         self.game_interface = CivVIInterface(logger)
         location_by_era = generate_era_location_table()
@@ -283,35 +287,42 @@ async def _handle_game_ready(ctx: CivVIContext):
         await asyncio.sleep(3)
 
 
-def main(connect: Optional[str] = None, password: Optional[str] = None, name: Optional[str] = None):
-    Utils.init_logging("Civilization VI Client")
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, slot_name: str = None, apcivvi_file: str = None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("Civ6Client")
 
-    async def _main(connect: Optional[str], password: Optional[str], name: Optional[str]):
-        parser = get_base_parser()
-        parser.add_argument("apcivvi_file", default="", type=str, nargs="?", help="Path to apcivvi file")
-        args = parser.parse_args()
-        ctx = CivVIContext(connect, password, args.apcivvi_file)
+    async def main():
+        ctx = CivVIContext(server_address, password, apcivvi_file or "", ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-        if args.apcivvi_file:
-            parent_dir: str = os.path.dirname(args.apcivvi_file)
-            target_name: str = os.path.basename(args.apcivvi_file).replace(".apcivvi", "-MOD-FILES")
+        ctx.ui.base_title = apname + " | Civilization VI"
+        
+        if apcivvi_file:
+            parent_dir: str = os.path.dirname(apcivvi_file)
+            target_name: str = os.path.basename(apcivvi_file).replace(".apcivvi", "-MOD-FILES")
             target_path: str = os.path.join(parent_dir, target_name)
             if not os.path.exists(target_path):
                 os.makedirs(target_path, exist_ok=True)
                 logger.info("Extracting mod files to %s", target_path)
-                with zipfile.ZipFile(args.apcivvi_file, "r") as zip_ref:
+                with zipfile.ZipFile(apcivvi_file, "r") as zip_ref:
                     for member in zip_ref.namelist():
                         zip_ref.extract(member, target_path)
 
-        ctx.auth = name
-        ctx.server_task = asyncio.create_task(
-            server_loop(ctx), name="ServerLoop")
-        if gui_enabled:
-            ctx.run_gui()
+        ctx.auth = slot_name
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        await ctx.server_auth()
         await asyncio.sleep(1)
 
-        ctx.tuner_sync_task = asyncio.create_task(
-            tuner_sync_task(ctx), name="TunerSync")
+        ctx.tuner_sync_task = asyncio.create_task(tuner_sync_task(ctx), name="TunerSync")
 
         await ctx.exit_event.wait()
         ctx.server_address = None
@@ -324,9 +335,23 @@ def main(connect: Optional[str] = None, password: Optional[str] = None, name: Op
 
     import colorama
 
-    colorama.init()
-    asyncio.run(_main(connect, password, name))
-    colorama.deinit()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="Civ6Main")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Civ6 client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, slot_name: str = None, apcivvi_file: str = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, slot_name, apcivvi_file)
 
 
 def debug_main():

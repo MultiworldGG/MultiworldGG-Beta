@@ -1,5 +1,6 @@
 from . import ZillionWebWorld, ZillionWorld
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
+from .client import launch
 
 """
 Zillion World Registration
@@ -17,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = ZillionWorld
 WEB_WORLD_CLASS = ZillionWebWorld
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

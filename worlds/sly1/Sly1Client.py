@@ -11,6 +11,8 @@ os.chdir(launcher_dir)
 from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser, logger, server_loop, gui_enabled
 import Utils
 
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
+
 from .Sly1Interface import Sly1Interface, Sly1Episode
 from .Callbacks import init, update
 from .data.Constants import LEVELS, MOVES
@@ -84,8 +86,10 @@ class Sly1Context(CommonContext):
         else:
             all_moves |= move
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.game_interface = Sly1Interface(logger)
 
     async def server_auth(self, password_requested: bool = False) -> None:
@@ -179,23 +183,29 @@ async def _handle_game_not_ready(ctx: Sly1Context):
     ctx.game_interface.connect_to_game()
     await asyncio.sleep(3)
 
-def launch_client():
-    Utils.init_logging("Sly1 Client")
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("Sly1Client")
 
     async def main():
         multiprocessing.freeze_support()
-        logger.info("main")
-        parser = get_base_parser()
-        args = parser.parse_args()
-        ctx = Sly1Context(args.connect, args.password)
+        
+        ctx = Sly1Context(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-        logger.info("Connecting to server...")
+        ctx.ui.base_title = apname + " | Sly Cooper"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="Server Loop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
+        await ctx.server_auth()
 
-        logger.info("Running game...")
         ctx.pcsx2_sync_task = asyncio.create_task(pcsx2_sync_task(ctx), name="PCSX2 Sync")
 
         await ctx.exit_event.wait()
@@ -209,10 +219,23 @@ def launch_client():
 
     import colorama
 
-    colorama.init()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="Sly1Main")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Sly1 client.")
+        if error_callback:
+            error_callback()
 
-    asyncio.run(main())
-    colorama.deinit()
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)
 
 if __name__ == "__main__":
     launch_client()

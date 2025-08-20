@@ -1,6 +1,6 @@
 from . import DiddyKongRacingWorld, DiddyKongRacingWeb
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from .DKRClient import main
+from .DKRClient import launch
 
 """
 Diddy Kong Racing World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = DiddyKongRacingWorld
 WEB_WORLD_CLASS = DiddyKongRacingWeb
-CLIENT_FUNCTION = main
+CLIENT_FUNCTION = launch

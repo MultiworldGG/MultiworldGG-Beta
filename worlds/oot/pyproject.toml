@@ -20,6 +20,9 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 
+[project.entry-points."mwgg.client"]
+oot.Client = "oot.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.oot"]

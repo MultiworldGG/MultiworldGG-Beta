@@ -300,9 +300,11 @@ class XenobladeXContext(CommonContext):
     cemu_process: Optional[subprocess.Popen[bytes]] = None
     locations_checked: Set[int]
 
-    def __init__(self, server_address: Optional[str], password: Optional[str], debug: bool = False) -> None:
-        self.http_server = XenobladeXHttpServer(('::', 45872), debug=debug)
+    def __init__(self, server_address: Optional[str], password: Optional[str], debug: bool = False, ready_callback=None, error_callback=None) -> None:
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
+        self.http_server = XenobladeXHttpServer(('::', 45872), debug=debug)
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
@@ -522,51 +524,57 @@ async def xenoblade_x_sync_task(ctx: XenobladeXContext) -> None:
         await asyncio.sleep(0.5)
 
 
-async def main(args) -> None:
-    Utils.init_logging("XenobladeXClient", exception_logger="Client")
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, debug: bool = False):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("XenobladeXClient")
 
-    # handle if launched using the "archipelago://name:pass@host:port" url from webhost
-    if args.url:
-        url = urllib.parse.urlparse(args.url)
-        if url.scheme == "archipelago" or url.scheme == "mwgg":
-            args.connect = url.netloc
-            if url.username:
-                args.name = urllib.parse.unquote(url.username)
-            if url.password:
-                args.password = urllib.parse.unquote(url.password)
+    async def main():
+        ctx = XenobladeXContext(server_address, password, debug, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
         else:
-            logger.error(f"bad url, found {args.url}, expected url in form of archipelago/mwgg://multiworld.gg:38281")
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-    ctx = XenobladeXContext(args.connect, args.password, args.debug)
-    ctx.auth = args.name
-    if ctx.server_task is None:
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        ctx.ui.base_title = apname + " | Xenoblade Chronicles X"
+        if ctx.server_task is None:
+            ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        await ctx.server_auth()
 
-    if gui_enabled:
-        ctx.run_gui()
-    ctx.run_cli()
+        asyncio.get_event_loop().run_in_executor(None, ctx.http_server.serve_forever)
+        sync_task = asyncio.create_task(xenoblade_x_sync_task(ctx))
 
-    asyncio.get_event_loop().run_in_executor(None, ctx.http_server.serve_forever)
-    sync_task = asyncio.create_task(xenoblade_x_sync_task(ctx))
+        await ctx.exit_event.wait()
 
-    await ctx.exit_event.wait()
+        ctx.server_address = None
+        await asyncio.get_event_loop().run_in_executor(None, ctx.http_server.shutdown)
+        await sync_task
+        await ctx.shutdown()
 
-    ctx.server_address = None
-    await asyncio.get_event_loop().run_in_executor(None, ctx.http_server.shutdown)
-    await sync_task
-    await ctx.shutdown()
+    import colorama
+
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="XenobladeXMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Xenoblade X client.")
+        if error_callback:
+            error_callback()
 
 
-def launch(*args) -> None:
-    parser = get_base_parser()
-    parser.add_argument("-d", "--debug", action="store_true", help="Enable full server exposure for debugging purposes")
-    parser.add_argument('--name', default=None, help="Slot Name to connect as.")
-    parser.add_argument("url", nargs="?", help="Archipelago connection url")
-    args = parser.parse_args(args)
-
-    colorama.init()
-    asyncio.run(main(args))
-    colorama.deinit()
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, debug: bool = False):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, debug)
 
 
 if __name__ == '__main__':

@@ -17,6 +17,9 @@ dependencies = [
     "gclib[speedups] @ git+https://github.com/LagoLunatic/gclib.git@62df9574d99249ea16ec90dbcee9ea6b0759da29",
 ]
 
+[project.entry-points."mwgg.client"]
+ttyd.Client = "ttyd.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.ttyd"]

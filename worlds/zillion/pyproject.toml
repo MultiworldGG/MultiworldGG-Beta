@@ -11,6 +11,9 @@ dependencies = [
     "typing-extensions>=4.7, <5",
 ]
 
+[project.entry-points."mwgg.client"]
+zillion.Client = "zillion.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.zillion"]

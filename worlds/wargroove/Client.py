@@ -132,8 +132,10 @@ class WargrooveContext(CommonContext):
         "witch",
     }
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super(WargrooveContext, self).__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.send_index: int = 0
         self.syncing = False
         self.awaiting_bridge = False
@@ -572,14 +574,27 @@ def print_error_and_close(msg):
     Utils.messagebox("Error", msg, error=True)
     sys.exit(1)
 
-def launch(*launch_args: str):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("WargrooveClient")
+
     async def main():
-        args = parser.parse_args(launch_args)
-        ctx = WargrooveContext(args.connect, args.password)
+        ctx = WargrooveContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Wargroove"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
+        await ctx.server_auth()
+
         progression_watcher = asyncio.create_task(
             game_watcher(ctx), name="WargrooveProgressionWatcher")
 
@@ -587,13 +602,24 @@ def launch(*launch_args: str):
         ctx.server_address = None
 
         await progression_watcher
-
         await ctx.shutdown()
 
     import colorama
 
-    parser = get_base_parser(description="Wargroove Client, for text interfacing.")
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="WargrooveMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Wargroove client.")
+        if error_callback:
+            error_callback()
 
-    colorama.just_fix_windows_console()
-    asyncio.run(main())
-    colorama.deinit()
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)

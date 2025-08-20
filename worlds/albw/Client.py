@@ -48,8 +48,10 @@ class ALBWClientContext(CommonContext):
     GAME_LOCATION: int = 0x709df8
     TASK_MAIN_GAME_VTABLE: int = 0x6d1db4
 
-    def __init__(self, server_address: Optional[str], password: Optional[str]):
+    def __init__(self, server_address: Optional[str], password: Optional[str], ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.citra_connected = False
         self.server_connected = False
         self.slot_data = None
@@ -291,21 +293,29 @@ async def game_watcher(ctx: ALBWClientContext) -> None:
             ctx.show_citra_connect_message = True
         await asyncio.sleep(0.25)
 
-def launch() -> None:
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("ALBWClient")
+
     async def main():
-        parser = get_base_parser()
-        parser.add_argument("patch_file", default="", type=str, nargs="?", help="Path to a MultiworldGG patch file")
-        args = parser.parse_args()
+        ctx = ALBWClientContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-        if args.patch_file != "":
-            create_rom_file(args.patch_file)
-
-        ctx = ALBWClientContext(args.connect, args.password)
+        ctx.ui.base_title = apname + " | A Link Between Worlds"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        await ctx.server_auth()
 
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
+        if patch_file:
+            create_rom_file(patch_file)
 
         watcher_task = asyncio.create_task(game_watcher(ctx), name="GameWatcher")
 
@@ -318,6 +328,21 @@ def launch() -> None:
         await ctx.shutdown()
 
     import colorama
-    colorama.init()
-    asyncio.run(main())
-    colorama.deinit()
+
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="ALBWMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the ALBW client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, patch_file)

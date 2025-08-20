@@ -12,7 +12,11 @@ authors = [
 classifiers = [
     "Private :: Do Not Upload"
 ]
+
 requires-python = ">=3.12"
+
+[project.entry-points."mwgg.client"]
+xenobladex.Client = "xenobladex.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

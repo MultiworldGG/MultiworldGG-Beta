@@ -4,6 +4,8 @@ import CommonClient
 import NetUtils
 import Utils
 
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
+
 from typing import Any, Dict, List, Optional, Set
 
 from .data_funcs import (
@@ -87,8 +89,10 @@ class ZorkGrandInquisitorContext(CommonClient.CommonContext):
     process_attached_at_least_once: bool
     can_display_process_message: bool
 
-    def __init__(self, server_address: Optional[str], password: Optional[str]) -> None:
+    def __init__(self, server_address: Optional[str], password: Optional[str], ready_callback=None, error_callback=None) -> None:
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
 
         self.game_controller = GameController(logger=CommonClient.logger)
 
@@ -414,30 +418,51 @@ class ZorkGrandInquisitorContext(CommonClient.CommonContext):
                     self.game_controller.outgoing_death_link = (False, None)
 
 
-def main() -> None:
-    Utils.init_logging("ZorkGrandInquisitorClient", exception_logger="Client")
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("ZorkGrandInquisitorClient")
 
-    async def _main():
-        ctx: ZorkGrandInquisitorContext = ZorkGrandInquisitorContext(None, None)
+    async def main():
+        ctx: ZorkGrandInquisitorContext = ZorkGrandInquisitorContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
+        ctx.ui.base_title = apname + " | Zork Grand Inquisitor"
         ctx.server_task = asyncio.create_task(CommonClient.server_loop(ctx), name="server loop")
+        await ctx.server_auth()
+
         ctx.controller_task = asyncio.create_task(ctx.controller(), name="ZorkGrandInquisitorController")
-
-        if CommonClient.gui_enabled:
-            ctx.run_gui()
-
-        ctx.run_cli()
 
         await ctx.exit_event.wait()
         await ctx.shutdown()
 
     import colorama
 
-    colorama.just_fix_windows_console()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="ZorkMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Zork client.")
+        if error_callback:
+            error_callback()
 
-    asyncio.run(_main())
 
-    colorama.deinit()
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)
 
 
 if __name__ == "__main__":

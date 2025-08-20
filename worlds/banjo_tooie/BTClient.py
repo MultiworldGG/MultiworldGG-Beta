@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import hashlib
 import io
 import json
+import logging
 import os
 import multiprocessing
 import copy
@@ -291,8 +292,10 @@ class BanjoTooieContext(CommonContext):
     command_processor = BanjoTooieCommandProcessor
     items_handling = 0b111 #full
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.game = "Banjo-Tooie"
         self.n64_streams: (StreamReader, StreamWriter) = None # type: ignore
         self.n64_sync_task = None
@@ -1213,22 +1216,25 @@ def close_program():
     program.kill()
     program = None
 
-def main():
-    Utils.init_logging("Banjo-Tooie Client")
-    parser = get_base_parser()
-    args = sys.argv[1:]  # the default for parse_args()
-    if "Banjo-Tooie Client" in args:
-        args.remove("Banjo-Tooie Client")
-    args = parser.parse_args(args)
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    logging.getLogger("Banjo-Tooie Client")
 
-    async def _main():
-        multiprocessing.freeze_support()
+    async def main():
+        ctx = BanjoTooieContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-        ctx = BanjoTooieContext(args.connect, args.password)
+        ctx.ui.base_title = apname + " | Banjo-Tooie"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="Server Loop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
+        await ctx.server_auth()
 
         await ctx.exit_event.wait()
         ctx.server_address = None
@@ -1240,10 +1246,23 @@ def main():
 
     import colorama
 
-    colorama.init()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="BanjoTooieMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Banjo-Tooie client.")
+        if error_callback:
+            error_callback()
 
-    asyncio.run(_main())
-    colorama.deinit()
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)
 
 
 if __name__ == "__main__":

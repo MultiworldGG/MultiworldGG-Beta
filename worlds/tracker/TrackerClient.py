@@ -12,6 +12,9 @@ from typing import Union, Any, TYPE_CHECKING
 from BaseClasses import CollectionState, MultiWorld, LocationProgressType, ItemClassification
 from worlds.generic.Rules import exclusion_rules
 from Utils import __version__, output_path, open_filename,async_start
+import Utils
+
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from worlds import AutoWorld
 from . import TrackerWorld, UTMapTabData, CurrentTrackerState,UT_VERSION
 from .TrackerCore import TrackerCore
@@ -231,7 +234,7 @@ class TrackerGameContext(CommonContext):
                                                  "locations": unknown_locations,
                                                  "create_as_hint": 0}]))
 
-    def __init__(self, server_address, password, no_connection: bool = False, print_list: bool = False, print_count: bool = False):
+    def __init__(self, server_address, password, no_connection: bool = False, print_list: bool = False, print_count: bool = False, ready_callback=None, error_callback=None):
         if no_connection:
             from worlds import network_data_package
             self.item_names = self.NameLookupDict(self, "item")
@@ -239,6 +242,8 @@ class TrackerGameContext(CommonContext):
             self.update_data_package(network_data_package)
         else:
             super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.items_handling = ITEMS_HANDLING
         self.quit_after_update = print_list or print_count
         self.print_list = print_list
@@ -1063,37 +1068,53 @@ async def wait_for_items(ctx: TrackerGameContext)-> None:
         ctx.updateTracker() #if it timed out, we need to manually trigger this
         #if it didn't, then game_watcher will handle it
 
-async def main(args):
-    ctx = TrackerGameContext(args.connect, args.password, print_count=args.count, print_list=args.list)
-    ctx.auth = args.name
-    ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
-    ctx.run_generator()
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, 
+          slot_name: str = None, print_count: bool = False, print_list: bool = False):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("TrackerClient")
 
-    if gui_enabled:
-        ctx.run_gui()
-    ctx.run_cli()
-
-    await ctx.exit_event.wait()
-    await ctx.shutdown()
-
-
-def launch(*args):
-    parser = get_base_parser(description="Gameless Archipelago Client, for text interfacing.")
-    parser.add_argument('--name', default=None, help="Slot Name to connect as.")
-    if sys.stdout:  # If terminal output exists, offer gui-less mode
-        parser.add_argument('--count', default=False, action='store_true', help="just return a count of in logic checks")
-        parser.add_argument('--list', default=False, action='store_true', help="just return a list of in logic checks")
-    parser.add_argument("url", nargs="?", help="Archipelago connection url")
-    args = handle_url_arg(parser.parse_args(args))
-
-    if args.nogui and (args.count or args.list):
-        if not args.name or not args.connect:
-            logger.error("You need a valid URL when running in CLI mode")
+    async def main():
+        ctx = TrackerGameContext(server_address, password, print_count=print_count, print_list=print_list, 
+                               ready_callback=ready_callback, error_callback=error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
             return
-        from logging import ERROR
-        logger.setLevel(ERROR)
 
-    asyncio.run(main(args))
+        ctx.ui.base_title = apname + " | Universal Tracker"
+        ctx.auth = slot_name
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+        await ctx.server_auth()
+        
+        ctx.run_generator()
+
+        await ctx.exit_event.wait()
+        await ctx.shutdown()
+
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="TrackerMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Tracker client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, 
+         slot_name: str = None, print_count: bool = False, print_list: bool = False):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, slot_name, print_count, print_list)
 
 
 if __name__ == "__main__":

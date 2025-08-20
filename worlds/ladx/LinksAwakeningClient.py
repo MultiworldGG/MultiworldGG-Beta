@@ -606,7 +606,7 @@ class LinksAwakeningContext(CommonContext):
     def slot_storage_key(self):
         return f"{self.slot_info[self.slot].name}_{storage_key}"
 
-    def __init__(self, server_address: str | None, password: str | None, magpie: bool, retroarch_host: str | None) -> None:
+    def __init__(self, server_address: str | None, password: str | None, magpie: bool, retroarch_host: str | None, ready_callback=None, error_callback=None) -> None:
         self.client = LinksAwakeningClient(retroarch_host)
         self.slot_data = {}
 
@@ -614,6 +614,8 @@ class LinksAwakeningContext(CommonContext):
             self.magpie_enabled = True
             self.magpie = MagpieBridge()
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
 
     def run_gui(self) -> None:
         import webbrowser
@@ -871,45 +873,71 @@ def run_game(romfile: str) -> None:
         except FileNotFoundError:
             logger.error(f"Couldn't launch ROM, {args[0]} is missing")
 
-def launch(*launch_args):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, 
+          magpie: bool = True, retroarch_host: str = "127.0.0.1:55355", diff_file: str = None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("LinksAwakeningClient")
+
     async def main():
-        parser = get_base_parser(description="Link's Awakening Client.")
-        parser.add_argument("--url", help="Archipelago connection url")
-        parser.add_argument("--no-magpie", dest='magpie', default=True, action='store_false', help="Disable magpie bridge")
-        parser.add_argument("--retroarch-host", default="127.0.0.1:55355", help="Retroarch connection address and port")
-        parser.add_argument('diff_file', default="", type=str, nargs="?",
-                            help='Path to a .apladx Archipelago Binary Patch file')
+        # Handle ROM patching if needed
+        rom_file = None
+        actual_server_address = server_address
+        if diff_file:
+            try:
+                import Patch
+                logger.info("patch file was supplied - creating rom...")
+                meta, rom_file = Patch.create_rom_file(diff_file)
+                if "server" in meta and not actual_server_address:
+                    actual_server_address = meta["server"]
+                logger.info(f"wrote rom file to {rom_file}")
+            except Exception as ex:
+                logger.error(f"Failed to patch ROM: {ex}")
+                if error_callback:
+                    error_callback()
+                return
 
-        args = parser.parse_args(launch_args)
+        ctx = LinksAwakeningContext(actual_server_address, password, magpie, retroarch_host, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-        if args.diff_file:
-            import Patch
-            logger.info("patch file was supplied - creating rom...")
-            meta, rom_file = Patch.create_rom_file(args.diff_file)
-            if "server" in meta and not args.connect:
-                args.connect = meta["server"]
-            logger.info(f"wrote rom file to {rom_file}")
-
-
-        ctx = LinksAwakeningContext(args.connect, args.password, args.magpie, args.retroarch_host)
-
+        ctx.ui.base_title = apname + " | Link's Awakening"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+        await ctx.server_auth()
 
-        # TODO: nothing about the lambda about has to be in a lambda
         ctx.la_task = create_task_log_exception(ctx.run_game_loop())
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
 
-        # Down below run_gui so that we get errors out of the process
-        if args.diff_file:
+        # Start the game if ROM was patched
+        if rom_file:
             run_game(rom_file)
 
         await ctx.exit_event.wait()
         await ctx.shutdown()
 
-    Utils.init_logging("LinksAwakeningContext", exception_logger="Client")
+    import colorama
 
-    colorama.just_fix_windows_console()
-    asyncio.run(main())
-    colorama.deinit()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="LinksAwakeningMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Link's Awakening client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, 
+         magpie: bool = True, retroarch_host: str = "127.0.0.1:55355", diff_file: str = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, magpie, retroarch_host, diff_file)

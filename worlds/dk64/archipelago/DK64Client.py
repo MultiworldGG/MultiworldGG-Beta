@@ -825,7 +825,7 @@ class DK64Context(CommonContext):
         self.found_checks = []
         self.client.flag_lookup = None
 
-    def __init__(self, server_address: typing.Optional[str], password: typing.Optional[str]) -> None:
+    def __init__(self, server_address: typing.Optional[str], password: typing.Optional[str], ready_callback=None, error_callback=None) -> None:
         """Initialize the DK64 context."""
         self.client = DK64Client()
         self.client.game = self.game.upper()
@@ -833,6 +833,8 @@ class DK64Context(CommonContext):
         self.reset_checks()
 
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
 
     def already_running(self) -> bool:
         """Check if the GUI is already running."""
@@ -1299,31 +1301,54 @@ class DK64Context(CommonContext):
                 await asyncio.sleep(1.0)
 
 
-def launch():
-    """Launch the DK64 client."""
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("DK64Client")
 
     async def main():
-        """Entrypoint of codebase."""
-        parser = get_base_parser(description="Donkey Kong 64 Client.")
-        parser.add_argument("--url", help=f"{apname} connection url")
-
-        args = parser.parse_args()
         check_version()
 
-        ctx = DK64Context(args.connect, args.password)
+        ctx = DK64Context(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Donkey Kong 64"
         ctx.items_handling = 0b001
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+        await ctx.server_auth()
+
         ctx.la_task = create_task_log_exception(ctx.run_game_loop())
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
 
         await ctx.exit_event.wait()
         await ctx.shutdown()
 
-    colorama.init()
-    asyncio.run(main())
-    colorama.deinit()
+    import colorama
+
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="DK64Main")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the DK64 client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)
 
 
 if __name__ == "__main__":

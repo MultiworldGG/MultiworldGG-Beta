@@ -1,6 +1,6 @@
-from . import CivVIWorld
+from . import CivVIWorld, CivVIWeb
+from .Civ6Client import launch
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import CivVIWeb
 
 """
 Civilization VI World Registration
@@ -18,4 +18,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = CivVIWorld
 WEB_WORLD_CLASS = CivVIWeb
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

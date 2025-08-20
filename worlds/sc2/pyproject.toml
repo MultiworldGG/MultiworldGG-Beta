@@ -23,6 +23,9 @@ dependencies = [
     "protobuf==3.20.3"
 ]
 
+[project.entry-points."mwgg.client"]
+sc2.Client = "sc2.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.sc2"]

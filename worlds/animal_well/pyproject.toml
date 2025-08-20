@@ -21,6 +21,9 @@ dependencies = [
     "pywin32>=306; sys_platform == 'win32'",
 ]
 
+[project.entry-points."mwgg.client"]
+animal_well.Client = "animal_well.Register:CLIENT_FUNCTION"
+
 [tool.setuptools.packages.find]
 where = ["src/"]
 include = ["worlds.animal_well"]

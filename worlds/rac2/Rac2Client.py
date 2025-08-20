@@ -79,8 +79,10 @@ class Rac2Context(CommonContext):
     queued_deaths: int = 0
     previous_decoy_glove_ammo: int = 0
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.game_interface = Rac2Interface(logger)
         self.notification_manager = NotificationManager(HUD_MESSAGE_DURATION)
 
@@ -297,31 +299,35 @@ def get_pcsx2_crc(iso_path: str) -> Optional[int]:
     return crc
 
 
-def launch():
-    Utils.init_logging("RAC2 Client")
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, aprac2_file: str = None):
+    """
+    Launch the client
+    """
+    import logging
+    logging.getLogger("Rac2Client")
 
     async def main():
         multiprocessing.freeze_support()
-        logger.info("main")
-        parser = get_base_parser()
-        parser.add_argument('aprac2_file', default="", type=str, nargs="?",
-                            help='Path to an aprac2 file')
-        args = parser.parse_args()
+        
+        ctx = Rac2Context(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-        ctx = Rac2Context(args.connect, args.password)
+        ctx.ui.base_title = apname + " | Ratchet & Clank: Going Commando"
 
-        if os.path.isfile(args.aprac2_file):
+        if aprac2_file and os.path.isfile(aprac2_file):
             logger.info("aprac2 file supplied, beginning patching process...")
-            await patch_and_run_game(args.aprac2_file)
-            ctx.auth = get_name_from_aprac2(args.aprac2_file)
+            await patch_and_run_game(aprac2_file)
+            ctx.auth = get_name_from_aprac2(aprac2_file)
 
-        logger.info("Connecting to server...")
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="Server Loop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
+        await ctx.server_auth()
 
-        logger.info("Running game...")
         ctx.pcsx2_sync_task = asyncio.create_task(pcsx2_sync_task(ctx), name="PCSX2 Sync")
 
         await ctx.exit_event.wait()
@@ -335,10 +341,23 @@ def launch():
 
     import colorama
 
-    colorama.init()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="Rac2Main")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Ratchet & Clank client.")
+        if error_callback:
+            error_callback()
 
-    asyncio.run(main())
-    colorama.deinit()
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, aprac2_file: str = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, aprac2_file)
 
 
 if __name__ == '__main__':

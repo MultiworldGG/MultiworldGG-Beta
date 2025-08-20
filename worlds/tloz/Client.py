@@ -57,8 +57,10 @@ class ZeldaContext(CommonContext):
     overworld_item = 0x5F
     armos_item = 0x24
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.bonus_items = []
         self.nes_streams: (StreamReader, StreamWriter) = None
         self.nes_sync_task = None
@@ -336,13 +338,11 @@ async def nes_sync_task(ctx: ZeldaContext):
                 continue
 
 
-def main():
-    # Text Mode to use !hint and such with games that have no text entry
-    Utils.init_logging("ZeldaClient")
-
-    options = Utils.get_options()
-    DISPLAY_MSGS = options["tloz_options"]["display_msgs"]
-
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+    """
+    Launch the client
+    """
+    logging.getLogger("ZeldaClient")
 
     async def run_game(romfile: str) -> None:
         auto_start = typing.cast(typing.Union[bool, str],
@@ -354,21 +354,30 @@ def main():
             subprocess.Popen([auto_start, romfile],
                              stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+    async def main():
+        ctx = ZeldaContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-    async def main(args):
-        if args.diff_file:
+        ctx.ui.base_title = apname + " | The Legend of Zelda"
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        await ctx.server_auth()
+
+        if patch_file:
             import Patch
             logging.info("Patch file was supplied. Creating nes rom..")
-            meta, romfile = Patch.create_rom_file(args.diff_file)
-            if "server" in meta:
-                args.connect = meta["server"]
+            meta, romfile = Patch.create_rom_file(patch_file)
+            if "server" in meta and not server_address:
+                # Only use metadata server if no server_address was provided
+                ctx.server_address = meta["server"]
             logging.info(f"Wrote rom file to {romfile}")
             async_start(run_game(romfile))
-        ctx = ZeldaContext(args.connect, args.password)
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
+
         ctx.nes_sync_task = asyncio.create_task(nes_sync_task(ctx), name="NES Sync")
 
         await ctx.exit_event.wait()
@@ -379,14 +388,22 @@ def main():
         if ctx.nes_sync_task:
             await ctx.nes_sync_task
 
-
     import colorama
 
-    parser = get_base_parser()
-    parser.add_argument('diff_file', default="", type=str, nargs="?",
-                        help='Path to a MultiworldGG Binary Patch file')
-    args = parser.parse_args()
-    colorama.just_fix_windows_console()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="ZeldaMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Zelda client.")
+        if error_callback:
+            error_callback()
 
-    asyncio.run(main(args))
-    colorama.deinit()
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback, patch_file)

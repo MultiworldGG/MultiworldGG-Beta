@@ -87,14 +87,18 @@ class MkddContext(CommonContext):
     game: str = "Mario Kart Double Dash"
     items_handling: int = 0b111
 
-    def __init__(self, server_address: Optional[str], password: Optional[str]) -> None:
+    def __init__(self, server_address: Optional[str], password: Optional[str], ready_callback=None, error_callback=None) -> None:
         """
         Initialize the Mkdd context.
 
         :param server_address: Address of the Archipelago server.
         :param password: Password for server authentication.
+        :param ready_callback: Callback for when client is ready.
+        :param error_callback: Callback for errors.
         """
         super().__init__(server_address, password)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         # Client data.
         self.items_received_2: list[tuple[NetworkItem, int]] = []
         self.last_item_handled: int = -1
@@ -1024,27 +1028,32 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
             continue
 
 
-def main(connect: Optional[str] = None, password: Optional[str] = None) -> None:
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
-    Run the main async loop for Mario Kart Double Dash client.
-
-    :param connect: Address of the Archipelago server.
-    :param password: Password for server authentication.
+    Launch the client
     """
-    Utils.init_logging("Mario Kart Double Dash Client")
+    import logging
+    logging.getLogger("MarioKartDoubleDashClient")
 
-    async def _main(connect: Optional[str], password: Optional[str]) -> None:
-        ctx = MkddContext(connect, password)
+    async def main():
+        ctx = MkddContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
+
+        ctx.ui.base_title = apname + " | Mario Kart Double Dash"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        await ctx.server_auth()
 
         # Runs Universal Tracker's internal generator
         if tracker_loaded:
             ctx.run_generator()
             ctx.tags.remove("Tracker")
 
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
         await asyncio.sleep(1)
 
         ctx.dolphin_sync_task = asyncio.create_task(dolphin_sync_task(ctx), name="DolphinSync")
@@ -1060,9 +1069,23 @@ def main(connect: Optional[str] = None, password: Optional[str] = None) -> None:
 
     import colorama
 
-    colorama.init()
-    asyncio.run(_main(connect, password))
-    colorama.deinit()
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="MarioKartDoubleDashMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Mario Kart Double Dash client.")
+        if error_callback:
+            error_callback()
+
+
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, password, ready_callback, error_callback)
 
 
 if __name__ == "__main__":

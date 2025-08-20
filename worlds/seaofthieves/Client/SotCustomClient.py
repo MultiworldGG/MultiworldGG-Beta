@@ -199,8 +199,10 @@ class SOT_CommandProcessor(ClientCommandProcessor):
 class SOT_Context(CommonContext):
     command_processor = SOT_CommandProcessor
 
-    def __init__(self, serverAddress: typing.Optional[str] = None, serverPassword: typing.Optional[str] = None):
+    def __init__(self, serverAddress: typing.Optional[str] = None, serverPassword: typing.Optional[str] = None, ready_callback=None, error_callback=None):
         super().__init__(serverAddress, serverPassword)
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         Utils.init_logging("Sea of Thieves Client")
         self.stop_application: bool = False
 
@@ -225,24 +227,6 @@ class SOT_Context(CommonContext):
 
     async def updaterLoopa(self):
         await self.updaterLoop()
-
-    def create_tasks(self):
-        self.active_tasks.append(asyncio.create_task(CommonClient.server_loop(self), name="server loop"))
-
-        try:
-            apsot_file = Utils.open_filename('Select APSOT file', (('APSOT File', ('.apsot',)),))
-            client_input: ClientInput = ClientInput()
-            client_input.from_fire(apsot_file)
-            self.userInformation.generationData = client_input
-        except Exception as e:
-            self.output("Error uploading sotci file, was your filepath correct? {}".format(e))
-            exit(1)
-        self.active_tasks.append(asyncio.create_task(self.updaterLoopa(), name="game watcher"))
-
-    def run_gui_and_cli(self):
-        if CommonClient.gui_enabled:
-            self.run_gui()
-        self.run_cli()
 
     async def application_exit(self):
         await self.exit_event.wait()
