@@ -8,7 +8,7 @@ from worlds.seaofthieves import ClientInput
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, apsot_file: str = None):
+def launch(server_address: str = None, password: str = None, apsot_file: str = None,ready_callback=None, error_callback=None):
     """
     Launch the client
     """
@@ -16,6 +16,18 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     logging.getLogger("SeaOfThievesClient")
 
     async def main():
+        # Validate apsot_file early to ensure parameter is accessed
+        try:
+            if not apsot_file:
+                apsot_file = Utils.open_filename('Select APSOT file', (('APSOT File', ('.apsot',)),))
+            client_input: ClientInput = ClientInput()
+            client_input.from_fire(apsot_file)
+        except Exception as e:
+            logger.critical("Error with APSOT file: {}".format(e))
+            if error_callback:
+                error_callback()
+            return
+
         ctx = SOT_Context(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
@@ -28,18 +40,8 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
         ctx.ui.base_title = apname + " | Sea of Thieves"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
         await ctx.server_auth()
-
-        try:
-            if not apsot_file:
-                apsot_file = Utils.open_filename('Select APSOT file', (('APSOT File', ('.apsot',)),))
-            client_input: ClientInput = ClientInput()
-            client_input.from_fire(apsot_file)
-            ctx.userInformation.generationData = client_input
-        except Exception as e:
-            ctx.output("Error uploading sotci file, was your filepath correct? {}".format(e))
-            if error_callback:
-                error_callback()
-            return
+        
+        ctx.userInformation.generationData = client_input
 
         ctx.active_tasks.append(asyncio.create_task(ctx.updaterLoopa(), name="game watcher"))
         
@@ -61,10 +63,6 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, apsot_file: str = None):
+def main(server_address: str = None, password: str = None, apsot_file: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback, apsot_file)
-
-
-if __name__ == '__main__':
-    launch()
+    launch(server_address, password, apsot_file, ready_callback, error_callback)

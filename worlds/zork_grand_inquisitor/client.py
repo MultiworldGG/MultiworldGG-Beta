@@ -423,7 +423,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     Launch the client
     """
     import logging
-    logging.getLogger("ZorkGrandInquisitorClient")
+    logger = logging.getLogger("ZorkGrandInquisitorClient")
 
     async def main():
         ctx: ZorkGrandInquisitorContext = ZorkGrandInquisitorContext(server_address, password, ready_callback, error_callback)

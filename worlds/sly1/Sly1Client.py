@@ -236,6 +236,3 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
 def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
     launch(server_address, password, ready_callback, error_callback)
-
-if __name__ == "__main__":
-    launch_client()

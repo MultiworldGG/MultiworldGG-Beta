@@ -7,7 +7,7 @@ from copy import deepcopy
 from typing import List, Any, Iterable
 from NetUtils import decode, encode, JSONtoTextParser, NetworkItem, NetworkPlayer
 from MultiServer import Endpoint
-from CommonClient import CommonContext, gui_enabled, ClientCommandProcessor, logger, get_base_parser
+from CommonClient import CommonContext, server_loop, gui_enabled, ClientCommandProcessor, logger, get_base_parser
 
 DEBUG = False
 

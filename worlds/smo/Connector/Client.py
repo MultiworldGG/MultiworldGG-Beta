@@ -7,7 +7,7 @@ import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from NetUtils import decode, encode, NetworkPlayer, NetworkItem, JSONtoTextParser, JSONMessagePart, ClientStatus
 from MultiServer import Endpoint
-from CommonClient import get_base_parser, gui_enabled, logger, CommonContext, ClientCommandProcessor
+from CommonClient import get_base_parser, gui_enabled, logger, server_loop, CommonContext, ClientCommandProcessor
 from typing import List, Any, Iterable
 from .Packets import PacketHeader, PacketType, Packet
 

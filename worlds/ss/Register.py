@@ -1,6 +1,6 @@
-from . import SSWorld
+from . import SSWorld, SSWeb
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
-from . import SSWeb
+from .SSClient import launch
 
 """
 What if that's Zelda down there, and she's sending me a signal? It's a sign! World Registration

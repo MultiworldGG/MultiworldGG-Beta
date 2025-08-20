@@ -1,4 +1,4 @@
-import colorama, asyncio, bsdiff4, pathlib, os, Utils, hashlib, sys, zipfile, settings, atexit, time, typing, logging, urllib.parse
+import colorama, asyncio, bsdiff4, pathlib, os, Utils, hashlib, sys, zipfile, settings, atexit, time, typing, logging, urllib.parse, io
 from CommonClient import CommonContext, ClientCommandProcessor, get_base_parser, gui_enabled, logger, server_loop
 from NetUtils import ClientStatus
 
@@ -669,11 +669,3 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
 def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
     launch(server_address, password, ready_callback, error_callback)
-
-
-def run(*args):
-    """Legacy run function for backward compatibility"""
-    main()
-
-if __name__ == '__main__':
-  run(*sys,argv[1:])

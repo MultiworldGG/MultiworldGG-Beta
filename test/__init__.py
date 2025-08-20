@@ -1,5 +1,13 @@
 import pathlib
 import warnings
+import os
+
+# Set Kivy environment variables before any imports to prevent GUI initialization
+os.environ["KIVY_NO_CONSOLELOG"] = "1"
+os.environ["KIVY_NO_FILELOG"] = "1"
+os.environ["KIVY_NO_ARGS"] = "1"
+os.environ["KIVY_LOG_ENABLE"] = "0"
+os.environ["KIVY_WINDOW"] = "sdl2,headless"
 
 import settings
 

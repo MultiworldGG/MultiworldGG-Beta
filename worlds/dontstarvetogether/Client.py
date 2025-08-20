@@ -7,7 +7,7 @@ import time
 import socket
 import random
 from NetUtils import ClientStatus
-from CommonClient import CommonContext, get_base_parser
+from CommonClient import CommonContext, get_base_parser, server_loop
 from Utils import async_start, is_windows, is_macos
 from pathlib import Path
 import os
@@ -872,7 +872,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     Launch the client
     """
     import logging
-    logging.getLogger("DontStarveTogetherClient")
+    logger = logging.getLogger("DontStarveTogetherClient")
 
     async def main():
         ctx = DSTContext(server_address, password, ready_callback, error_callback)

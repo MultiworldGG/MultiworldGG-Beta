@@ -17,6 +17,12 @@ from typing import Dict, Any
 from CommonClient import CommonContext, server_loop, gui_enabled, ClientCommandProcessor, logger, get_base_parser
 from NetUtils import ClientStatus
 import Utils
+
+try:
+    from Utils import apname
+except ImportError:
+    apname = "Archipelago"
+
 from settings import get_settings
 
 from .. import AWSettings
@@ -477,7 +483,7 @@ class AnimalWellContext(CommonContext):
                 ("Client", "Archipelago"),
                 ("BeanLogger", "Animal Well Log")
             ]
-            base_title = "Archipelago Animal Well Client"
+            base_title = f"{apname} Animal Well Client"
 
         self.ui = AnimalWellManager(self)
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
