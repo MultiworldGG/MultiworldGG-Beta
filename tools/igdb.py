@@ -18,13 +18,17 @@ with open(client_id_path, 'r') as file:
 with open(key_path, 'r') as file:
     igdb_key = file.readline().strip()
 
-# url = f"https://id.twitch.tv/oauth2/token?client_id={igdb_client_id}&client_secret={igdb_key}&grant_type=client_credentials"
-# response = requests.post(url)
-# print(url)
-# print(response.json())
-# igdb_token = response.json()['access_token']
 igdb_token = ""
-
+with open("access_token", "r") as file:
+    if file.readline().strip():
+        igdb_token = file.readline().strip()
+        print(f"Using cached IGDB token: {igdb_token}")
+    else:
+        url = f"https://id.twitch.tv/oauth2/token?client_id={igdb_client_id}&client_secret={igdb_key}&grant_type=client_credentials"
+        response = requests.post(url)
+        igdb_token = response.json()['access_token']
+        with open("access_token", "w") as file:
+            file.write(igdb_token)
 
 def get_igdb_game_keywords(game_id: int) -> list:
     """
@@ -194,7 +198,7 @@ def generate_game_details_json() -> dict:
     result = {}
     
     for world, data in game_ids.items():
-
+        world = world.split("\\")[-1]
         if data["igdb_id"]:
             # Get IGDB details for worlds with IGDB IDs
             igdb_details = get_igdb_game_details(data["igdb_id"])

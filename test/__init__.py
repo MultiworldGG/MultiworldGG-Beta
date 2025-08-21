@@ -25,3 +25,8 @@ import Utils
 file_path = pathlib.Path(__file__).parent.parent
 Utils.local_path.cached_path = file_path
 Utils.user_path()  # initialize cached_path
+
+# Load all worlds upfront for testing
+from data.game_index import GameIndex
+all_game_names = GameIndex.get_all_game_names()
+Utils.set_game_names(all_game_names)

@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from typing import Dict, Set, Any
+import os
 
 def clean_value(value: Any) -> str:
     """
@@ -140,7 +141,7 @@ def generate_index_file():
     """Generate the game_index.py file with pre-built index."""
     try:
         # Load game data
-        with open("tools/output/game_details.json", "r", encoding="utf-8") as file:
+        with open(os.path.join(os.path.dirname(__file__), 'output', 'game_details.json'), "r", encoding="utf-8") as file:
             games_data = json.load(file)
         
         # Clean the game data
@@ -188,7 +189,10 @@ def generate_index_file():
     
     return True
 
-if __name__ == "__main__":
+def main():
     success = generate_index_file()
     if not success:
         exit(1) 
+
+if __name__ == "__main__":
+    main()

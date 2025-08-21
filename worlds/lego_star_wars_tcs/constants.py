@@ -1,13 +1,10 @@
-from enum import auto, IntFlag
-
-GAME_NAME = "Lego Star Wars: The Complete Saga"
-
+GAME_NAME: str = "Lego Star Wars: The Complete Saga"
+AUTHOR: str = "Mysteryem"
+IGDB_ID: int = 2682
 AP_WORLD_VERSION: tuple[int, int, int] = (1, 1, 3)
-IGDB_ID = 2682
-VERSION =  str(AP_WORLD_VERSION)
+VERSION: str = str(AP_WORLD_VERSION)
 
-
-AUTHOR = "Mysteryem"
+from enum import auto, IntFlag
 # todo: These are the abilities from the manual logic, not the real abilities.
 class CharacterAbility(IntFlag):
     NONE = 0

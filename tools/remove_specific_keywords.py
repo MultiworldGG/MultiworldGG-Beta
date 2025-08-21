@@ -1,5 +1,6 @@
 import json
 from collections import Counter
+import os
 
 def remove_specific_keywords(data, keywords_to_remove):
     """Remove specific keywords from all games regardless of frequency."""
@@ -14,7 +15,7 @@ def remove_specific_keywords(data, keywords_to_remove):
 
 def process_game_details():
     # Read the JSON file
-    with open(r'output\game_details.json', 'r', encoding='utf-8') as file:
+    with open(os.path.join(os.path.dirname(__file__), 'output', 'game_details.json'), 'r', encoding='utf-8') as file:
         data = json.load(file)
     
     # List of keywords to remove
@@ -179,7 +180,7 @@ def process_game_details():
     print("\nSaved unique keywords and their counts to 'unique_keywords.json'")
 
     # Write the updated data back to the file
-    with open(r'output\game_details.json', 'w', encoding='utf-8') as file:
+    with open(os.path.join(os.path.dirname(__file__), 'output', 'game_details.json'), 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4)
 
 if __name__ == '__main__':

@@ -12,7 +12,7 @@ from ..param import classvar_matrix
 
 class MultiworldTestBase(TestCase):
     multiworld: MultiWorld
-
+    '''TODO: FIX THIS TEST - it's dependent on having all worlds loaded and we now only load the worlds we need (so here it's none)'''
     # similar to the implementation in WorldTestBase.test_fill
     # but for multiple players and doesn't allow minimal accessibility
     def fulfills_accessibility(self) -> bool:
