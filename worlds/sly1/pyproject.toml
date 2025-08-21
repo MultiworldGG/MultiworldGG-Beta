@@ -15,7 +15,7 @@ classifiers = [
 requires-python = ">=3.12"
 
 [project.entry-points."mwgg.client"]
-sly1.Client = "sly1.Register:CLIENT_FUNCTION"
+"worlds.sly1.Client" = "worlds.sly1.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

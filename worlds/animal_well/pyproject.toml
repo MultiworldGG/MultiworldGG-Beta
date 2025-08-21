@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.entry-points."mwgg.client"]
-animal_well.Client = "animal_well.Register:CLIENT_FUNCTION"
+"worlds.animal_well.Client" = "worlds.animal_well.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

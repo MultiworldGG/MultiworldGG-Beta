@@ -15,7 +15,7 @@ classifiers = [
 requires-python = ">=3.12"
 
 [project.entry-points."mwgg.client"]
-kh1.Client = "kh1.Register:CLIENT_FUNCTION"
+"worlds.kh1.Client" = "worlds.kh1.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

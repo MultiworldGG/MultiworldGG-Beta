@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.entry-points."mwgg.client"]
-factorio.Client = "factorio.Register:CLIENT_FUNCTION"
+"worlds.factorio.Client" = "worlds.factorio.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

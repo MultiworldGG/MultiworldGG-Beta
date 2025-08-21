@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.entry-points."mwgg.client"]
-"worlds.kh2.Client" = "worlds.kh2.Register:CLIENT_FUNCTION"
+"worlds."worlds.kh2.Client" = "worlds.kh2.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

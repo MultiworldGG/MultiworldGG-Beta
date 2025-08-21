@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.entry-points."mwgg.client"]
-tloz.Client = "tloz.Register:CLIENT_FUNCTION"
+"worlds.tloz.Client" = "worlds.tloz.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

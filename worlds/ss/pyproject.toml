@@ -17,7 +17,7 @@ dependencies = [
     "dolphin-memory-engine>=1.3.0",
 
 [project.entry-points."mwgg.client"]
-ss.Client = "ss.Register:CLIENT_FUNCTION"
+"worlds.ss.Client" = "worlds.ss.Register:CLIENT_FUNCTION"
 
 
 [tool.setuptools.packages.find]

@@ -24,7 +24,7 @@ dependencies = [
 ]
 
 [project.entry-points."mwgg.client"]
-sc2.Client = "sc2.Register:CLIENT_FUNCTION"
+"worlds.sc2.Client" = "worlds.sc2.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

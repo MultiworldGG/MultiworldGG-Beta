@@ -19,7 +19,7 @@ classifiers = [
 requires-python = ">=3.12"
 
 [project.entry-points."mwgg.client"]
-ladx.Client = "ladx.Register:CLIENT_FUNCTION"
+"worlds.ladx.Client" = "worlds.ladx.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

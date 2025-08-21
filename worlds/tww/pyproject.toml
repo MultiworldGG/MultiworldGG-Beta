@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.entry-points."mwgg.client"]
-tww.Client = "tww.Register:CLIENT_FUNCTION"
+"worlds.tww.Client" = "worlds.tww.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

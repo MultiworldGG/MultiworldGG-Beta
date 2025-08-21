@@ -15,7 +15,7 @@ classifiers = [
 requires-python = ">=3.12"
 
 [project.entry-points."mwgg.client"]
-mmbn3.Client = "mmbn3.Register:CLIENT_FUNCTION"
+"worlds.mmbn3.Client" = "worlds.mmbn3.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

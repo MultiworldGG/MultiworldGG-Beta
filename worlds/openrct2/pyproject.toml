@@ -15,7 +15,7 @@ classifiers = [
 requires-python = ">=3.12"
 
 [project.entry-points."mwgg.client"]
-openrct2.Client = "openrct2.Register:CLIENT_FUNCTION"
+"worlds.openrct2.Client" = "worlds.openrct2.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.entry-points."mwgg.client"]
-osu.Client = "osu.Register:CLIENT_FUNCTION"
+"worlds.osu.Client" = "worlds.osu.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

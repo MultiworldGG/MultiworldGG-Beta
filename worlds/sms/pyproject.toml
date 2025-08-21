@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.entry-points."mwgg.client"]
-sms.Client = "sms.Register:CLIENT_FUNCTION"
+"worlds.sms.Client" = "worlds.sms.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

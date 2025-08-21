@@ -15,7 +15,7 @@ classifiers = [
 requires-python = ">=3.12"
 
 [project.entry-points."mwgg.client"]
-ahit.Client = "ahit.Register:CLIENT_FUNCTION"
+"worlds.ahit.Client" = "worlds.ahit.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

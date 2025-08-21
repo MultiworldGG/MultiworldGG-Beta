@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.entry-points."mwgg.client"]
-jakanddaxter.Client = "jakanddaxter.Register:CLIENT_FUNCTION"
+"worlds.jakanddaxter.Client" = "worlds.jakanddaxter.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.entry-points."mwgg.client"]
-luigismansion.Client = "luigismansion.Register:CLIENT_FUNCTION"
+"worlds.luigismansion.Client" = "worlds.luigismansion.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

@@ -15,7 +15,7 @@ classifiers = [
 requires-python = ">=3.12"
 
 [project.entry-points."mwgg.client"]
-star_fox_64.Client = "star_fox_64.Register:CLIENT_FUNCTION"
+"worlds.star_fox_64.Client" = "worlds.star_fox_64.Register:CLIENT_FUNCTION"
 
 
 [tool.setuptools.packages.find]

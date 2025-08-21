@@ -15,7 +15,7 @@ classifiers = [
 requires-python = ">=3.12"
 
 [project.entry-points."mwgg.client"]
-mario_kart_double_dash.Client = "mario_kart_double_dash.Register:CLIENT_FUNCTION"
+"worlds.mario_kart_double_dash.Client" = "worlds.mario_kart_double_dash.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]

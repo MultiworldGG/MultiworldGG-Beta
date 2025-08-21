@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.entry-points."mwgg.client"]
-zillion.Client = "zillion.Register:CLIENT_FUNCTION"
+"worlds.zillion.Client" = "worlds.zillion.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = ["src/"]
