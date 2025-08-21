@@ -5,8 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "worlds.mlss"
 dynamic = ["version"]
-description = "MultiWorld: Mario"},
-    {name = "Luigi Superstar Saga"
+description = "MultiWorld: Mario and Luigi Superstar Saga"
 authors = [
     {name = "jamesbrq"}
 ]

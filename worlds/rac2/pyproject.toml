@@ -5,8 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "worlds.rac2"
 dynamic = ["version"]
-description = "MultiWorld: Ratchet"},
-    {name = "Clank 2"
+description = "MultiWorld: Ratchet and Clank 2"
 authors = [
     {name = "Evilwb"}
 ]
