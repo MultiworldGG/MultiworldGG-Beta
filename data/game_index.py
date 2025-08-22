@@ -8540,6 +8540,14 @@ GAMES_DATA = {
 } # type: ignore
 
 SEARCH_INDEX = {
+    "popular": [
+        "alttp",
+        "sc2",
+        "oot",
+        "kh2",
+        "hk"
+        "sm64ex"
+    ],
     "adventure": [
         "mm_recomp",
         "sadx",

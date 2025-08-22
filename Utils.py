@@ -98,6 +98,14 @@ _worlds_to_load: typing.List[str] = []
 def set_game_names(value: typing.List[str]):
     for game in value:
         _worlds_to_load.append(get_module_for_game(game))
+    _worlds_to_install: typing.List[str] = []
+    for module_name in _worlds_to_load:
+        try:
+            importlib.import_module(module_name)
+        except ModuleNotFoundError:
+            _worlds_to_install.append(module_name)
+    if _worlds_to_install:
+        ModuleUpdate.update(force=True, worlds=_worlds_to_install)
 
 def game_names() -> typing.List[str]:
     """Get a list of only the game names that we're using"""
@@ -122,10 +130,20 @@ def get_available_worlds() -> typing.List[str]:
 
 def discover_and_launch_module(module_name: str, **kwargs) -> None:
     """Discover and launch module via entrypoints"""
+    module_name = "worlds.{}".format(module_name)
+    # First, try to import the module to see if it exists
+    try:
+        importlib.import_module(module_name)
+    except ModuleNotFoundError:
+        # Module doesn't exist, try to update it
+        ModuleUpdate.update(force=True, worlds=[module_name])
+    except Exception as e:
+        logging.error(f"Failed to update module {module_name}: {e}")
+        raise e
     try:
         # 1. Check for explicit entry point first
         entry_points = importlib.metadata.entry_points(group="mwgg.client")
-        entry_point_name = f"worlds.{module_name}.Client"
+        entry_point_name = "{}.Client".format(module_name)
         
         # Check if the entry point exists by looking through the entry points
         module_entry_point = None

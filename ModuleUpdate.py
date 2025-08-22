@@ -79,7 +79,7 @@ def update_worlds(worlds: list[str]):
         # TODO: Commented out until public beta because we know that there aren't any worlds on pypi yet
         # pypi_response = subprocess.call([sys.executable, "-m", "pip", "install", world, "--upgrade"])
         # if pypi_response == 1:
-        subprocess.call([sys.executable, "-m", "pip", "install", "-i", "https://pypi.multiworld.gg/worlds", f"worlds.{world}", "--upgrade"])
+        subprocess.call([sys.executable, "-m", "pip", "install", "-i", "https://pypi.multiworld.gg/mwgg/apworlds", world, "--upgrade"])
 
 def update_world_wheels():
     check_pip()
@@ -102,20 +102,20 @@ def install_packaging(yes=False):
         subprocess.call([sys.executable, "-m", "pip", "install", "--upgrade", "packaging"])
 
 
-def update(yes: bool = False, force: bool = False, worlds: list[str] = None) -> None:
+def update(yes: bool = True, force: bool = False, worlds: list[str] = None) -> None:
     global update_ran
     if not update_ran:
         update_ran = True
-
-        install_packaging(yes=yes)
-        import packaging.requirements
-        import importlib.metadata
 
         if force:
             if worlds:
                 update_worlds(worlds)
             update_command()
             return
+
+        install_packaging(yes=yes)
+        import packaging.requirements
+        import importlib.metadata
 
         update_world_wheels() #install wheels if they aren't
 
@@ -187,6 +187,11 @@ def update(yes: bool = False, force: bool = False, worlds: list[str] = None) -> 
                     except packaging.requirements.InvalidRequirement:
                         # Skip invalid requirement lines (like comments, empty lines, etc.)
                         continue
+    if force:
+        if worlds:
+            update_worlds(worlds)
+        update_world_wheels()
+    return
 
 
 if __name__ == "__main__":

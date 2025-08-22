@@ -393,8 +393,8 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.add_widget(self.launchergrid)
         self.add_widget(self.bottom_appbar)
 
-        self.launcher_hero_from = self.important_appbar.launcher_hero_to
-        self.launcher_hero_to = self.important_appbar.launcher_hero_to
+        self.launcher_hero_from = self.important_appbar.launcher_hero_from
+        self.launcher_hero_to = self.important_appbar.launcher_hero_from
         self.heroes_from = [self.launcher_hero_from]
         self.heroes_to = [self.launcher_hero_to]
 

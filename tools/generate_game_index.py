@@ -56,8 +56,17 @@ def build_search_index(games_data: dict) -> Dict[str, Set[str]]:
         
     Returns:
         Dictionary mapping search terms to sets of game names
+        Prepends the "popular" key to the index with a list of popular games
     """
-    search_index = {}
+    search_index = {
+        "popular": [
+        "alttp",
+        "sc2",
+        "oot",
+        "kh2",
+        "hk"
+        "sm64ex"
+    ]}
     
     # Fields that should be indexed
     searchable_fields = {
