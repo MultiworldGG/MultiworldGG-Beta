@@ -39,7 +39,7 @@ import ssl
 
 if typing.TYPE_CHECKING:
     import argparse
-    import gui.Gui
+    import Gui
     from typing import Optional
 
 logger = logging.getLogger("Client")

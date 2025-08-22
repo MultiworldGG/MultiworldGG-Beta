@@ -10,7 +10,7 @@ from Utils import Version
 from NetUtils import NetworkItem
 from ClientState import ClientState
 
-from gui import Gui
+import Gui
 
 if TYPE_CHECKING:
     from CommonClient import CommonContext, InitContext

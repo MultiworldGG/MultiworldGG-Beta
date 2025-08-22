@@ -5,6 +5,7 @@ import os
 import re
 import subprocess
 import time
+from importlib import metadata
 
 #os.environ["KCFG_GRAPHICS_WINDOW_STATE"] = "visible"
 os.environ["KIVY_NO_CONSOLELOG"] = "0"
@@ -32,8 +33,7 @@ def launch_splash_screen():
     """Launch the splash screen as a separate process"""
     try:
         # Get the directory of the current script
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        splash_path = os.path.join(script_dir, "gui", "splashscreen.py")
+        splash_path = metadata.("mwgg_gui.splashscreen")
         
         # Launch the splash screen process
         if sys.platform == "win32":

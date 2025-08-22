@@ -15,6 +15,7 @@ import collections
 import importlib
 import logging
 import warnings
+
 import re
 
 from argparse import Namespace
@@ -23,6 +24,7 @@ from time import sleep
 from typing import BinaryIO, Coroutine, Optional, Set, Dict, Any, Union, TypeGuard
 from yaml import load, load_all, dump
 from zipfile import ZipFile
+from dataclasses import dataclass
 import ModuleUpdate
 
 try:
@@ -36,6 +38,12 @@ if typing.TYPE_CHECKING:
     from BaseClasses import Region
     import multiprocessing
 
+@dataclass
+class PythonToExe:
+    script_name: str
+    frozen_name: str
+    icon: str
+    cli: str
 
 def normalize_tag(tag: str) -> str:
     return tag[1:] if tag and tag[0].lower() == "v" else tag
@@ -945,7 +953,7 @@ def open_directory(title: str, suggest: str = "") -> typing.Optional[str]:
 
 def messagebox(title: str, text: str, error: bool = False) -> None:
     if is_kivy_running():
-        from gui.dialog import MessageBox
+        from Gui import MessageBox
         MessageBox(title, text, error).open()
         return
 

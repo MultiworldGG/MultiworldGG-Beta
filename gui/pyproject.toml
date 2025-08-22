@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mwgg_gui"
+version = "0.0.1a"
+description = "GUI package for MultiWorldGG"
+authors = [
+    {name = "DelilahIsDidi"}
+]
+requires-python = ">=3.12"
+dependencies = [
+    "kivy>=2.3.1",
+    "kivymd @ git+https://github.com/kivymd/KivyMD@d2f7740",
+    "kivymd>=2.0.1.dev0",
+    "pillow>=11.3.0",
+    "asynckivy>=0.6.4",
+    "numpy>=2.3.2"
+]
+
+[project.scripts]
+splashscreen = "mwgg_gui.splashscreen:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mwgg_gui*"]
+
+[tool.setuptools.package-data]
+mwgg_gui = [
+    "images/*",
+    "fonts/*"
+]
