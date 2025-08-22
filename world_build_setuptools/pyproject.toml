@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds"
+version = "0.6.4"
+description = "MultiWorld: Worlds Namespace Package"
+authors = [
+    {name = "DelilahIsDidi"},
+    {name = "TreZc0"},
+    {name = "Archipelago Core Dev Team"}
+]
+classifiers = [
+    "Private :: Do Not Upload"
+]
+requires-python = ">=3.12"
+readme = "src/README.md"
+license = "GPL-3.0-or-later"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["worlds"]
+exclude = ["worlds.*"]
+namespaces = true

@@ -1,0 +1,8 @@
+# Include only the namespace package files
+include pyproject.toml
+include src/worlds/README.md
+include src/worlds/__init__.py
+include src/worlds/AutoWorld.py
+include src/worlds/Files.py
+include src/worlds/LauncherComponents.py
+include WorldsREADME.md
