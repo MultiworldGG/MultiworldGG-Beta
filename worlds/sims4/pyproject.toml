@@ -22,7 +22,7 @@ requires-python = ">=3.12"
 "worlds.sims4.Client" = "worlds.sims4.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.sims4"]
 namespaces = true
 

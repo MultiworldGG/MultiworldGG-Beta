@@ -19,7 +19,7 @@ requires-python = ">=3.12"
 "worlds.smo.Client" = "worlds.smo.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.smo"]
 namespaces = true
 

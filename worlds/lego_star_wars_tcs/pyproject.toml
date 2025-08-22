@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.lego_star_wars_tcs"]
 namespaces = true
 

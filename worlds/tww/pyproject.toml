@@ -21,7 +21,7 @@ dependencies = [
 "worlds.tww.Client" = "worlds.tww.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.tww"]
 namespaces = true
 

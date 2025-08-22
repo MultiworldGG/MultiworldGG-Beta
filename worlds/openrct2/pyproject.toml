@@ -18,7 +18,7 @@ requires-python = ">=3.12"
 "worlds.openrct2.Client" = "worlds.openrct2.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.openrct2"]
 namespaces = true
 

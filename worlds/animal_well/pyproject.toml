@@ -25,7 +25,7 @@ dependencies = [
 "worlds.animal_well.Client" = "worlds.animal_well.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.animal_well"]
 namespaces = true
 

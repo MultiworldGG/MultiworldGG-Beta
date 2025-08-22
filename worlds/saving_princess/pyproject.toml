@@ -18,7 +18,7 @@ requires-python = ">=3.12"
 "worlds.saving_princess.Client" = "worlds.saving_princess.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.saving_princess"]
 namespaces = true
 

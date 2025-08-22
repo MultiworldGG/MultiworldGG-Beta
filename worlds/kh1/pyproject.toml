@@ -18,7 +18,7 @@ requires-python = ">=3.12"
 "worlds.kh1.Client" = "worlds.kh1.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.kh1"]
 namespaces = true
 

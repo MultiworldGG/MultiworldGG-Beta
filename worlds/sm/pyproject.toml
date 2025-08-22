@@ -20,7 +20,7 @@ classifiers = [
 requires-python = ">=3.12"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.sm"]
 exclude = ["sm_*", "sm6*", "smo*", "sms*", "smw*", "smz*", "*test*", "test*"]
 namespaces = true

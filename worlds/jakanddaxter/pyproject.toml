@@ -21,7 +21,7 @@ dependencies = [
 "worlds.jakanddaxter.Client" = "worlds.jakanddaxter.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.jakanddaxter"]
 namespaces = true
 

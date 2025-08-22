@@ -18,7 +18,7 @@ requires-python = ">=3.12"
 "worlds.banjo_tooie.Client" = "worlds.banjo_tooie.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.banjo_tooie"]
 namespaces = true
 

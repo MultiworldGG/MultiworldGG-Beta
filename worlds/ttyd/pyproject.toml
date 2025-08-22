@@ -21,7 +21,7 @@ dependencies = [
 "worlds.ttyd.Client" = "worlds.ttyd.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.ttyd"]
 namespaces = true
 

@@ -18,7 +18,7 @@ requires-python = ">=3.12"
 "worlds.diddy_kong_racing.Client" = "worlds.diddy_kong_racing.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.diddy_kong_racing"]
 namespaces = true
 

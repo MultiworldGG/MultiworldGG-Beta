@@ -22,7 +22,7 @@ dependencies = [
 "worlds.osu.Client" = "worlds.osu.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.osu"]
 namespaces = true
 

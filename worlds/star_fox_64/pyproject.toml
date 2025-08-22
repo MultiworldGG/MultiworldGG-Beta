@@ -19,7 +19,7 @@ requires-python = ">=3.12"
 
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.star_fox_64"]
 namespaces = true
 

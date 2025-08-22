@@ -43,7 +43,7 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.sm_map_rando"]
 namespaces = true
 

@@ -22,7 +22,7 @@ requires-python = ">=3.12"
 "worlds.megamix.Client" = "worlds.megamix.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.megamix"]
 namespaces = true
 

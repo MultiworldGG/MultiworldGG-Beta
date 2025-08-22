@@ -25,7 +25,7 @@ dependencies = [
 "worlds.factorio.Client" = "worlds.factorio.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.factorio"]
 namespaces = true
 

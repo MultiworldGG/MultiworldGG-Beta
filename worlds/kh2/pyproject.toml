@@ -20,10 +20,10 @@ dependencies = [
 ]
 
 [project.entry-points."mwgg.client"]
-"worlds."worlds.kh2.Client" = "worlds.kh2.Register:CLIENT_FUNCTION"
+"worlds.kh2.Client" = "worlds.kh2.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.kh2"]
 
 [tool.setuptools.dynamic]

@@ -15,7 +15,7 @@ dependencies = [
 "worlds.zillion.Client" = "worlds.zillion.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.zillion"]
 namespaces = true
 

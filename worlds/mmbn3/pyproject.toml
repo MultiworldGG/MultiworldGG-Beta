@@ -18,7 +18,7 @@ requires-python = ">=3.12"
 "worlds.mmbn3.Client" = "worlds.mmbn3.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.mmbn3"]
 namespaces = true
 

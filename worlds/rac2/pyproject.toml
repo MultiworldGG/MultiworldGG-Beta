@@ -22,7 +22,7 @@ requires-python = ">=3.12"
 "worlds.rac2.Client" = "worlds.rac2.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.rac2"]
 namespaces = true
 

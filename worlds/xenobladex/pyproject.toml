@@ -19,7 +19,7 @@ requires-python = ">=3.12"
 "worlds.xenobladex.Client" = "worlds.xenobladex.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.xenobladex"]
 namespaces = true
 

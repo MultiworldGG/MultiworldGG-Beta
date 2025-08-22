@@ -18,7 +18,7 @@ requires-python = ">=3.12"
 "worlds.wargroove.Client" = "worlds.wargroove.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.wargroove"]
 namespaces = true
 

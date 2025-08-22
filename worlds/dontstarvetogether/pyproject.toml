@@ -18,7 +18,7 @@ requires-python = ">=3.12"
 "worlds.dontstarvetogether.Client" = "worlds.dontstarvetogether.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src/"]
+where = ["src"]
 include = ["worlds.dontstarvetogether"]
 namespaces = true
 
