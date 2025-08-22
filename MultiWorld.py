@@ -83,6 +83,9 @@ def run_client(*args):
     
     async def main(args):
         from CommonClient import InitContext
+        from Utils import init_logging
+        init_logging("MultiWorld")
+
         ctx = InitContext()
         ctx.splash_process = splash_process  # Pass the splash process to the context
         
