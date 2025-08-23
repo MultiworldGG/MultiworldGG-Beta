@@ -5,11 +5,11 @@ try:
     from Utils import instance_name as apname
 except ImportError:
     apname = "Archipelago"
-from NetUtils import JSONMessagePart
-from kvui import GameManager, HoverBehavior, ServerToolTip, KivyJSONtoTextParser
+from NetUtils import JSONMessagePart, KivyJSONtoTextParser
 from kivy.app import App
 from kivy.clock import Clock
 from kivymd.uix.tab import MDTabsItem, MDTabsItemText
+from kivymd.uix.behaviors import HoverBehavior
 from kivy.uix.gridlayout import GridLayout
 from kivy.lang import Builder
 from kivy.uix.label import Label
@@ -17,6 +17,7 @@ from kivy.uix.button import Button
 from kivymd.uix.tooltip import MDTooltip
 from kivy.uix.scrollview import ScrollView
 from kivy.properties import StringProperty
+from kivymd.uix.screen import MDScreen
 
 from .Client import SC2Context, calc_unfinished_missions, parse_unlock
 from .MissionTables import (lookup_id_to_mission, lookup_name_to_mission, campaign_race_exceptions, SC2Mission, SC2Race,
@@ -35,7 +36,7 @@ class MissionButton(HoverableButton, MDTooltip):
 
     def __init__(self, *args, **kwargs):
         super(HoverableButton, self).__init__(**kwargs)
-        self._tooltip = ServerToolTip(text=self.text, markup=True)
+        self._tooltip = MDTooltip(text=self.text, markup=True)
         self._tooltip.padding = [5, 2, 5, 2]
 
     def on_enter(self):
@@ -78,7 +79,7 @@ class SC2JSONtoKivyParser(KivyJSONtoTextParser):
             return super()._handle_text(node)
 
 
-class SC2Manager(GameManager):
+class SC2Manager(MDScreen):
     logging_pairs = [
         ("Client", "Archipelago"),
         ("Starcraft2", "Starcraft2"),

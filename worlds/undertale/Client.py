@@ -173,17 +173,17 @@ class UndertaleContext(CommonContext):
             self.game = self.slot_info[self.slot].game
         async_start(process_undertale_cmd(self, cmd, args))
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class UTManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = apname + " Undertale Client"
+    #     class UTManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = apname + " Undertale Client"
 
-        self.ui = UTManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = UTManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     def on_deathlink(self, data: typing.Dict[str, typing.Any]):
         self.got_deathlink = True

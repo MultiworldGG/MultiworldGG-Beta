@@ -11,17 +11,17 @@ from zipfile import ZipFile
 from Utils import is_windows, messagebox, open_file, tuplize_version
 
 if TYPE_CHECKING:
-    from kvui import ButtonsPrompt
+    from mwgg_gui.components.dialog import MessageBox
 
 
 MOD_URL = "https://api.github.com/repos/alwaysintreble/TheMessengerRandomizerModAP/releases/latest"
 
 
-def create_yes_no_popup(title: str, text: str, callback: Callable[[str], None]) -> "ButtonsPrompt":
-    from kvui import ButtonsPrompt
+def create_yes_no_popup(title: str, text: str, callback: Callable[[str], None]) -> "MessageBox":
+    from mwgg_gui.components.dialog import MessageBox
     buttons = ["Yes", "No", "Cancel"]
 
-    prompt = ButtonsPrompt(title, text, callback, *buttons)
+    prompt = MessageBox(title, text, callback, *buttons)
     prompt.open()
     return prompt
 

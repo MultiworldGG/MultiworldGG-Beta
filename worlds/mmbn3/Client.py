@@ -92,17 +92,17 @@ class MMBN3Context(CommonContext):
         logger.info("Connecting as "+self.auth)
         await self.send_connect(name=self.auth)
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class MMBN3Manager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = apname + " MegaMan Battle Network 3 Client"
+    #     class MMBN3Manager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = apname + " MegaMan Battle Network 3 Client"
 
-        self.ui = MMBN3Manager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = MMBN3Manager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     def on_package(self, cmd: str, args: dict):
         if cmd == 'Connected':

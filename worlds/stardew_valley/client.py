@@ -12,7 +12,7 @@ from CommonClient import logger, get_base_parser, gui_enabled, server_loop
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from MultiServer import mark_raw
 from NetUtils import JSONMessagePart
-from kvui import CommandPromptTextInput
+#from kvui import CommandPromptTextInput
 from .logic.logic import StardewLogic
 from .stardew_rule.rule_explain import explain, ExplainMode, RuleExplanation
 
@@ -157,28 +157,28 @@ class StardewClientContext(TrackerGameContext):
         self.ready_callback = ready_callback
         self.error_callback = error_callback
 
-    def make_gui(self):
-        ui = super().make_gui()  # before the kivy imports so kvui gets loaded first
+    # def make_gui(self):
+    #     ui = super().make_gui()  # before the kivy imports so kvui gets loaded first
 
-        class StardewManager(ui):
-            base_title = f"Stardew Valley Tracker with UT {UT_VERSION} for AP version"  # core appends ap version so this works
-            ctx: StardewClientContext
+    #     class StardewManager(ui):
+    #         base_title = f"Stardew Valley Tracker with UT {UT_VERSION} for AP version"  # core appends ap version so this works
+    #         ctx: StardewClientContext
 
-            def build(self):
-                container = super().build()
-                if not tracker_loaded:
-                    logger.info("To enable the tracker page, install Universal Tracker.")
+    #         def build(self):
+    #             container = super().build()
+    #             if not tracker_loaded:
+    #                 logger.info("To enable the tracker page, install Universal Tracker.")
 
-                # Until self.ctx.ui.last_autofillable_command allows for / commands, this is needed to remove the "!" before the /commands when using intended text autofill.
-                def on_text_remove_hardcoded_exclamation_mark_garbage(textinput: CommandPromptTextInput, text: str) -> None:
-                    if text.startswith("!/"):
-                        textinput.text = text[1:]
+    #             # Until self.ctx.ui.last_autofillable_command allows for / commands, this is needed to remove the "!" before the /commands when using intended text autofill.
+    #             def on_text_remove_hardcoded_exclamation_mark_garbage(textinput: CommandPromptTextInput, text: str) -> None:
+    #                 if text.startswith("!/"):
+    #                     textinput.text = text[1:]
 
-                self.textinput.bind(text=on_text_remove_hardcoded_exclamation_mark_garbage)
+    #             self.textinput.bind(text=on_text_remove_hardcoded_exclamation_mark_garbage)
 
-                return container
+    #             return container
 
-        return StardewManager
+    #     return StardewManager
 
     def get_logic(self) -> StardewLogic | None:
         if self.player_id is None:

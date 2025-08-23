@@ -255,18 +255,18 @@ class SNIContext(CommonContext):
         if self.client_handler is not None:
             self.client_handler.on_package(self, cmd, args)
 
-    def run_gui(self) -> None:
-        from kvui import GameManager
+    # def run_gui(self) -> None:
+    #     from kvui import GameManager
 
-        class SNIManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago"),
-                ("SNES", "SNES"),
-            ]
-            base_title = apname + " SNI Client"
+    #     class SNIManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago"),
+    #             ("SNES", "SNES"),
+    #         ]
+    #         base_title = apname + " SNI Client"
 
-        self.ui = SNIManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")  # type: ignore
+    #     self.ui = SNIManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")  # type: ignore
 
 
 async def deathlink_kill_player(ctx: SNIContext) -> None:

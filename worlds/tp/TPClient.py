@@ -29,9 +29,6 @@ from CommonClient import (
 
 from NetUtils import NetworkItem, ClientStatus
 
-if TYPE_CHECKING:
-    import kvui
-
 CONNECTION_REFUSED_GAME_STATUS = "Dolphin failed to connect. Please load a ROM for Twilight Princess. Trying again in 5 seconds..."
 CONNECTION_REFUSED_SAVE_STATUS = "Dolphin failed to connect. Please load into the save file. Trying again in 5 seconds..."
 CONNECTION_LOST_STATUS = "Dolphin connection was lost. Please restart your emulator and make sure Twilight Princess is running."
@@ -273,15 +270,15 @@ class TPContext(CommonContext):
         super().on_deathlink(data)
         _give_death(self)
 
-    def make_gui(self) -> type["kvui.GameManager"]:
-        """
-        Initialize the GUI for Twilight Princess client.
+    # def make_gui(self) -> type["kvui.GameManager"]:
+    #     """
+    #     Initialize the GUI for Twilight Princess client.
 
-        :return: The client's GUI.
-        """
-        ui = super().make_gui()
-        ui.base_title = f"{apname} Twilight Princess Client"
-        return ui
+    #     :return: The client's GUI.
+    #     """
+    #     ui = super().make_gui()
+    #     ui.base_title = f"{apname} Twilight Princess Client"
+    #     return ui
 
 
 def read_byte(console_address: int) -> int:

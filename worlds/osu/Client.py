@@ -517,18 +517,18 @@ class APosuContext(CommonContext):
             if not os.path.exists(self.game_communication_path):
                 os.makedirs(self.game_communication_path)
 
-    def run_gui(self):
-        """Import kivy UI system and start running it as self.ui_task."""
-        from kvui import GameManager
+    # def run_gui(self):
+    #     """Import kivy UI system and start running it as self.ui_task."""
+    #     from kvui import GameManager
 
-        class OsuManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = "MultiworldGG osu! Client"
+    #     class OsuManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = "MultiworldGG osu! Client"
 
-        self.ui = OsuManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = OsuManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
 
 def count_item(ctx, code) -> int:

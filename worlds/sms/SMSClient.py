@@ -128,18 +128,18 @@ class SmsContext(CommonContext):
         else:
             return []
 
-    def run_gui(self):
-        """Import kivy UI system and start running it as self.ui_task."""
-        from kvui import GameManager
+    # def run_gui(self):
+    #     """Import kivy UI system and start running it as self.ui_task."""
+    #     from kvui import GameManager
 
-        class SmsManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = "MultiworldGG Super Mario Sunshine Client"
+    #     class SmsManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = "MultiworldGG Super Mario Sunshine Client"
 
-        self.ui = SmsManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = SmsManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     def on_package(self, cmd: str, args: dict):
         if cmd == "Connected":

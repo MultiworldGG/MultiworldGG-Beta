@@ -63,14 +63,14 @@ class ALBWClientContext(CommonContext):
         self.last_error = ""
         self.show_citra_connect_message = True
 
-    def run_gui(self) -> None:
-        from kvui import GameManager
+    # def run_gui(self) -> None:
+    #     from kvui import GameManager
 
-        class ALBWManager(GameManager):
-            base_title: str = apname + " A Link Between Worlds Client"
+    #     class ALBWManager(GameManager):
+    #         base_title: str = apname + " A Link Between Worlds Client"
 
-        self.ui = ALBWManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = ALBWManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
     
     def error(self, error: str) -> None:
         if error != self.last_error:

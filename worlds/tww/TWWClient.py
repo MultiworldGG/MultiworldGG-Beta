@@ -15,8 +15,8 @@ from .Items import ITEM_TABLE, LOOKUP_ID_TO_NAME
 from .Locations import ISLAND_NAME_TO_SALVAGE_BIT, LOCATION_TABLE, TWWLocation, TWWLocationData, TWWLocationType
 from .randomizers.Charts import ISLAND_NUMBER_TO_NAME
 
-if TYPE_CHECKING:
-    import kvui
+# if TYPE_CHECKING:
+#     import kvui
 
 CONNECTION_REFUSED_GAME_STATUS = (
     "Dolphin failed to connect. Please load a randomized ROM for The Wind Waker. Trying again in 5 seconds..."
@@ -241,15 +241,15 @@ class TWWContext(CommonContext):
         super().on_deathlink(data)
         _give_death(self)
 
-    def make_gui(self) -> type["kvui.GameManager"]:
-        """
-        Initialize the GUI for The Wind Waker client.
+    # def make_gui(self) -> type["kvui.GameManager"]:
+    #     """
+    #     Initialize the GUI for The Wind Waker client.
 
-        :return: The client's GUI.
-        """
-        ui = super().make_gui()
-        ui.base_title = "MultiworldGG The Wind Waker Client"
-        return ui
+    #     :return: The client's GUI.
+    #     """
+    #     ui = super().make_gui()
+    #     ui.base_title = "MultiworldGG The Wind Waker Client"
+    #     return ui
 
     async def update_visited_stages(self, newly_visited_stage_name: str) -> None:
         """

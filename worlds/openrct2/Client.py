@@ -64,18 +64,18 @@ class OpenRCT2Context(CommonContext):
         super().on_deathlink(data)
         self.gamesock.sendobj({'cmd': 'DeathLink'})
 
-    def run_gui(self): #Sets the title of the client
-        """Import kivy UI system and start running it as self.ui_task."""
-        from kvui import GameManager
+    # def run_gui(self): #Sets the title of the client
+    #     """Import kivy UI system and start running it as self.ui_task."""
+    #     from kvui import GameManager
 
-        class TextManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = "OpenRCT2 Client"
+    #     class TextManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = "OpenRCT2 Client"
 
-        self.ui = TextManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = TextManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
 
 def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):

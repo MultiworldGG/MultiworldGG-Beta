@@ -588,7 +588,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         # Check if we're in initial state by checking if ctx has a 'game' attribute
         if not hasattr(current_ctx, 'game'):
             if not self.selected_game:
-                from kivydi.components.dialog import show_error_dialog
+                from mwgg_gui.components.dialog import show_error_dialog
                 show_error_dialog("No Game Selected", "Please select a game before connecting.")
                 return
             
@@ -641,7 +641,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 # Hide loading layout on error
                 self.app.loading_layout.hide_loading()
                 # Show error dialog and stay on launcher screen
-                from kivydi.components.dialog import show_error_dialog
+                from mwgg_gui.components.dialog import show_error_dialog
                 show_error_dialog("Launch Error", f"Failed to launch {self.selected_game[1]}: {str(e)}")
         
         else:
@@ -649,7 +649,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             if hasattr(current_ctx, 'game') and current_ctx.game != self.selected_game[1]:
                 # Game mismatch - need to rebuild to InitContext first
                 logger.info(f"Game mismatch: current={current_ctx.game}, selected={self.selected_game[1]}")
-                from kivydi.components.dialog import show_error_dialog
+                from mwgg_gui.components.dialog import show_error_dialog
                 show_error_dialog("Game Mismatch", 
                                 f"Current game ({current_ctx.game}) doesn't match selected game ({self.selected_game[1]}). "
                                 "Please restart the client to change games.")
@@ -669,7 +669,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 server_address = f"{server_field.text}:{port_field.text}" if server_field.text and port_field.text else None
                 
                 if not server_address:
-                    from kivydi.components.dialog import show_error_dialog
+                    from mwgg_gui.components.dialog import show_error_dialog
                     show_error_dialog("Connection Error", "Please enter a valid server address and port.")
                     return
                 
@@ -688,5 +688,5 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             except Exception as e:
                 logger.error(f"Failed to connect: {e}")
                 self.app.loading_layout.hide_loading()
-                from kivydi.components.dialog import show_error_dialog
+                from mwgg_gui.components.dialog import show_error_dialog
                 show_error_dialog("Connection Error", f"Failed to connect: {str(e)}")

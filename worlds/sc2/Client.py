@@ -695,9 +695,9 @@ class SC2Context(CommonContext):
 
         super(SC2Context, self).on_print_json(args)
 
-    def run_gui(self) -> None:
-        from .ClientGui import start_gui
-        start_gui(self)
+    # def run_gui(self) -> None:
+    #     from .ClientGui import start_gui
+    #     start_gui(self)
 
 
     async def shutdown(self) -> None:

@@ -119,17 +119,17 @@ class Rac2Context(CommonContext):
                 "locations": list(self.locations_scouted)
             }]))
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class Rac2Manager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = f"{apname} Ratchet & Clank 2 Client"
+    #     class Rac2Manager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = f"{apname} Ratchet & Clank 2 Client"
 
-        self.ui = Rac2Manager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = Rac2Manager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
 
 def update_connection_status(ctx: Rac2Context, status: bool):

@@ -114,17 +114,17 @@ class OoTContext(CommonContext):
         self.deathlink_pending = True
         super().on_deathlink(data)
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class OoTManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = apname + " Ocarina of Time Client"
+    #     class OoTManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = apname + " Ocarina of Time Client"
 
-        self.ui = OoTManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = OoTManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     def on_package(self, cmd, args):
         if cmd == 'Connected':

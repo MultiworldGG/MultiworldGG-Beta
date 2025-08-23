@@ -341,15 +341,15 @@ class HadesContext(CommonContext):
 
     # ------------ gui section ------------------------------------------------
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class HadesManager(GameManager):
-            # logging_pairs for any separate logging tabs
-            base_title = f"{apname} Hades Client"
+    #     class HadesManager(GameManager):
+    #         # logging_pairs for any separate logging tabs
+    #         base_title = f"{apname} Hades Client"
 
-        self.ui = HadesManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = HadesManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
 
 def print_error_and_close(msg):

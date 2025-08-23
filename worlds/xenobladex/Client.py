@@ -362,17 +362,17 @@ class XenobladeXContext(CommonContext):
             self.http_server.upload_message("Reached Goal", self.player_names[args["slot"]])
         super(XenobladeXContext, self).on_print_json(args)
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class XenobladeXManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = apname + " Xenoblade X Client"
+    #     class XenobladeXManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = apname + " Xenoblade X Client"
 
-        self.ui = XenobladeXManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = XenobladeXManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     def get_level(self, archipelago_item_id: int) -> int:
         return len([item.item for item in self.items_received if item.item == archipelago_item_id])

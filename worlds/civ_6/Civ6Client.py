@@ -117,17 +117,17 @@ class CivVIContext(CommonContext):
         self.tags = set()
         await self.send_connect()
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class CivVIManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = "MultiworldGG Civilization VI Client"
+    #     class CivVIManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = "MultiworldGG Civilization VI Client"
 
-        self.ui = CivVIManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = CivVIManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     def on_package(self, cmd: str, args: Dict[str, Any]):
         if cmd == "Connected":

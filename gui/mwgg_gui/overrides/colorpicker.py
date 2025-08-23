@@ -9,13 +9,13 @@ from kivy.lang import Builder
 from kivymd.theming import ThemableBehavior
 from kivy.utils import get_hex_from_color, get_color_from_hex
 from kivy.core.window import Window
-
+import os
 import re
 import logging
 
 logger = logging.getLogger("MultiWorld")
 
-color_info_kv = """
+KV = """
 <ColorInfoLayout>:
     apply_color_button: apply_color_button
     revert_color_button: revert_color_button
@@ -100,7 +100,7 @@ color_info_kv = """
 """
 
 # Load KV string once at module level
-Builder.load_string(color_info_kv)
+Builder.load_string(KV)
 
 class ColorHintText(MDTextFieldHintText, ThemableBehavior):
 
@@ -219,7 +219,7 @@ class MWColorPicker(MDBoxLayout):
         self.height = 250  # Set a fixed height for the color picker
         
         # Create and configure the image
-        self.image = FitImage(source="../images/palette.png", fit_mode='scale-down')  
+        self.image = FitImage(source=os.path.join(os.path.dirname(__file__), "..", "images", "palette.png"), fit_mode='scale-down')  
         # Create and configure the info layout
         self.info_layout = ColorInfoLayout(old_hex_color=self.old_hex_color)
         

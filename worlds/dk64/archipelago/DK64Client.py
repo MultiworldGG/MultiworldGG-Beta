@@ -846,26 +846,26 @@ class DK64Context(CommonContext):
         except Exception:
             return False
 
-    def run_gui(self) -> None:
-        """Run the GUI."""
-        if self.already_running():
-            print("GUI already running.")
-            sys.exit(1)
-        from kvui import GameManager
+    # def run_gui(self) -> None:
+    #     """Run the GUI."""
+    #     if self.already_running():
+    #         print("GUI already running.")
+    #         sys.exit(1)
+    #     from kvui import GameManager
 
-        class DK64Manager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago"),
-                ("Tracker", "Tracker"),
-            ]
-            base_title = f"{apname} Donkey Kong 64 Client (Version {ap_version})"
+    #     class DK64Manager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago"),
+    #             ("Tracker", "Tracker"),
+    #         ]
+    #         base_title = f"{apname} Donkey Kong 64 Client (Version {ap_version})"
 
-            def build(self):
-                b = super().build()
-                return b
+    #         def build(self):
+    #             b = super().build()
+    #             return b
 
-        self.ui = DK64Manager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = DK64Manager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     async def send_checks(self):
         """Send the checks to the server."""

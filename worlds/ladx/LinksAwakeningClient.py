@@ -617,33 +617,33 @@ class LinksAwakeningContext(CommonContext):
         self.ready_callback = ready_callback
         self.error_callback = error_callback
 
-    def run_gui(self) -> None:
-        import webbrowser
-        from kvui import GameManager
-        from kivy.metrics import dp
-        from kivymd.uix.button import MDButton, MDButtonText
+    # def run_gui(self) -> None:
+    #     import webbrowser
+    #     from kvui import GameManager
+    #     from kivy.metrics import dp
+    #     from kivymd.uix.button import MDButton, MDButtonText
 
-        class LADXManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago"),
-                ("Tracker", "Tracker"),
-            ]
-            base_title = f"{apname} {Common.LINKS_AWAKENING} Client"
+    #     class LADXManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago"),
+    #             ("Tracker", "Tracker"),
+    #         ]
+    #         base_title = f"{apname} {Common.LINKS_AWAKENING} Client"
 
-            def build(self):
-                b = super().build()
+    #     #     def build(self):
+    #     #         b = super().build()
 
-                if self.ctx.magpie_enabled:
-                    button = MDButton(MDButtonText(text="Open Tracker"), style="filled", size=(dp(100), dp(70)), radius=5,
-                                      size_hint_x=None, size_hint_y=None, pos_hint={"center_y": 0.55},
-                                      on_press=lambda _: webbrowser.open('https://magpietracker.us/?enable_autotracker=1'))
-                    button.height = self.server_connect_bar.height
-                    self.connect_layout.add_widget(button)
+    #     #         if self.ctx.magpie_enabled:
+    #     #             button = MDButton(MDButtonText(text="Open Tracker"), style="filled", size=(dp(100), dp(70)), radius=5,
+    #     #                               size_hint_x=None, size_hint_y=None, pos_hint={"center_y": 0.55},
+    #     #                               on_press=lambda _: webbrowser.open('https://magpietracker.us/?enable_autotracker=1'))
+    #     #             button.height = self.server_connect_bar.height
+    #     #             self.connect_layout.add_widget(button)
 
-                return b
+    #     #         return b
 
-        self.ui = LADXManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = LADXManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     async def send_new_entrances(self, entrances: typing.Dict[str, str]):
         # Store the entrances we find on the server for future sessions

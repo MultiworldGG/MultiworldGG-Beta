@@ -469,24 +469,24 @@ class AnimalWellContext(CommonContext):
         self.got_data_storage = False
         await super().disconnect(allow_autoreconnect)
 
-    def run_gui(self):
-        """
-        Run the GUI
-        """
-        from kvui import GameManager
+    # def run_gui(self):
+    #     """
+    #     Run the GUI
+    #     """
+    #     from kvui import GameManager
 
-        class AnimalWellManager(GameManager):
-            """
-            Animal Well Manager
-            """
-            logging_pairs = [
-                ("Client", "Archipelago"),
-                ("BeanLogger", "Animal Well Log")
-            ]
-            base_title = f"{apname} Animal Well Client"
+    #     class AnimalWellManager(GameManager):
+    #         """
+    #         Animal Well Manager
+    #         """
+    #         logging_pairs = [
+    #             ("Client", "Archipelago"),
+    #             ("BeanLogger", "Animal Well Log")
+    #         ]
+    #         base_title = f"{apname} Animal Well Client"
 
-        self.ui = AnimalWellManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = AnimalWellManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     def on_package(self, cmd: str, args: dict):
         if cmd == "Connected":

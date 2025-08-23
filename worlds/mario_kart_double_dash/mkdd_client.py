@@ -25,8 +25,8 @@ except ImportError:
     from CommonClient import ClientCommandProcessor, CommonContext
 
 
-if TYPE_CHECKING:
-    import kvui
+# if TYPE_CHECKING:
+#     import kvui
 
 CONNECTION_REFUSED_GAME_STATUS = (
     "Dolphin failed to connect. Please load a ROM for Mario Kart Double Dash (USA). Trying again in 5 seconds..."
@@ -254,18 +254,18 @@ class MkddContext(CommonContext):
         super().on_deathlink(data)
         _give_death(self)
 
-    def make_gui(self) -> type["kvui.GameManager"]:
-        """
-        Initialize the GUI for Mario Kart Double Dash client.
+    # def make_gui(self) -> type["kvui.GameManager"]:
+    #     """
+    #     Initialize the GUI for Mario Kart Double Dash client.
 
-        :return: The client's GUI.
-        """
-        ui = super().make_gui()
-        ui.base_title = f"{apname} Mario Kart Double Dash Client {version.get_str()}"
-        if tracker_loaded:
-            ui.base_title += f" | Universal Tracker {UT_VERSION}"
-        ui.base_title +=  f" | {apname} v"
-        return ui
+    #     :return: The client's GUI.
+    #     """
+    #     ui = super().make_gui()
+    #     ui.base_title = f"{apname} Mario Kart Double Dash Client {version.get_str()}"
+    #     if tracker_loaded:
+    #         ui.base_title += f" | Universal Tracker {UT_VERSION}"
+    #     ui.base_title +=  f" | {apname} v"
+    #     return ui
 
 ###### Dolphin connection ######
 def _apply_ar_code(code: list[int]):

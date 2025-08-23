@@ -705,23 +705,23 @@ class LegoStarWarsTheCompleteSagaContext(CommonContext):
     def is_location_sendable(self, location_id: int):
         return location_id not in self.disabled_locations
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class LegoStarWarsTheCompleteSagaManager(GameManager):
-            if not Utils.is_frozen():
-                logging_pairs = [
-                    ("Client", "Archipelago"),
-                    ("TCS Debug", "Debug"),
-                ]
-            else:
-                logging_pairs = [
-                    ("Client", "Archipelago"),
-                ]
-            base_title = f"{apname} Lego Star Wars: The Complete Saga Client"
+    #     class LegoStarWarsTheCompleteSagaManager(GameManager):
+    #         if not Utils.is_frozen():
+    #             logging_pairs = [
+    #                 ("Client", "Archipelago"),
+    #                 ("TCS Debug", "Debug"),
+    #             ]
+    #         else:
+    #             logging_pairs = [
+    #                 ("Client", "Archipelago"),
+    #         ]
+    #         base_title = f"{apname} Lego Star Wars: The Complete Saga Client"
 
-        self.ui = LegoStarWarsTheCompleteSagaManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = LegoStarWarsTheCompleteSagaManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     async def server_auth(self, password_requested: bool = False):
         self.password_requested = password_requested

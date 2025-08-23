@@ -410,25 +410,25 @@ class BanjoTooieContext(CommonContext):
                 "source": self.instance_id,
                 "tag": True}}])
 
-    def run_gui(self):
-        from kvui import GameManager, Window, UILog
+    # def run_gui(self):
+    #     from kvui import GameManager, Window, UILog
 
-        Window.bind(on_request_close=self.on_request_close)
-        asyncio.create_task(patch_and_run(True))
+    #     Window.bind(on_request_close=self.on_request_close)
+    #     asyncio.create_task(patch_and_run(True))
 
-        class BanjoTooieManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = f"Banjo-Tooie Client "+ version + " for {apname}"
+    #     class BanjoTooieManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = f"Banjo-Tooie Client "+ version + " for {apname}"
 
-            def build(self):
-                ret = super().build()
-                self.ctx.tab_items = self.add_client_tab("Items", UILog())
-                return ret
+    #         def build(self):
+    #             ret = super().build()
+    #             self.ctx.tab_items = self.add_client_tab("Items", UILog())
+    #             return ret
 
-        self.ui = BanjoTooieManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = BanjoTooieManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     def on_request_close(self, *args):
         title = "Warning: Autostart program still running!"

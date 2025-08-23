@@ -159,17 +159,17 @@ class TrackmaniaContext(CommonContext):
             if cmd != "PrintJSON":
                 self.server_msgs.append(encode([args]))
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class TrackmaniaManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = f"{apname} Trackmania Client"
+    #     class TrackmaniaManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = f"{apname} Trackmania Client"
 
-        self.ui = TrackmaniaManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = TrackmaniaManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
 
 async def proxy(websocket, path: str = "/", ctx: TrackmaniaContext = None):

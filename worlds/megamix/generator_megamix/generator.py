@@ -2,7 +2,11 @@ import os
 import pkgutil
 import re
 
-from kvui import ThemedApp, ScrollBox, MDTextField, MDBoxLayout, MDLabel
+from kivymd.app import MDApp
+from kivymd.uix.scrollview import MDScrollView
+from kivymd.uix.textfield import MDTextField
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.label import MDLabel
 from kivy.core.clipboard import Clipboard
 from kivy.lang.builder import Builder
 from kivy.properties import ObjectProperty
@@ -33,9 +37,9 @@ class AssociatedMDLabel(MDLabel):
 class MDBoxLayoutHover(MDBoxLayout, HoverBehavior):
     pass
 
-class DivaJSONGenerator(ThemedApp):
+class DivaJSONGenerator(MDApp):
     container: MDBoxLayout = ObjectProperty(None)
-    pack_list_scroll: ScrollBox = ObjectProperty(None)
+    pack_list_scroll: MDScrollView = ObjectProperty(None)
     filter_input: MDTextField = ObjectProperty(None)
 
     mods_folder = settings.get_settings()["megamix_options"]["mod_path"]

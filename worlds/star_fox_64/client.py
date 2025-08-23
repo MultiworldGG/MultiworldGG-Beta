@@ -314,22 +314,22 @@ class StarFox64Context(CommonContext):
     self.ready_callback = ready_callback
     self.error_callback = error_callback
 
-  def make_gui(self):
-    from kvui import GameManager, Window, UILog
+  # def make_gui(self):
+  #   from kvui import GameManager, Window, UILog
 
-    Window.bind(on_request_close=self.on_request_close)
-    asyncio.create_task(patch_and_run(True))
+  #   Window.bind(on_request_close=self.on_request_close)
+  #   asyncio.create_task(patch_and_run(True))
 
-    class StarFox64Manager(GameManager):
-      base_title = f"Star Fox 64 Client {version.as_string()} | AP"
+  #   class StarFox64Manager(GameManager):
+  #     base_title = f"Star Fox 64 Client {version.as_string()} | AP"
 
-      def build(self):
-        ret = super().build()
-        self.ctx.tab_items = self.add_client_tab("Items", UILog())
-        self.ctx.tab_locations = self.add_client_tab("Tracker", UILog())
-        return ret
+  #     def build(self):
+  #       ret = super().build()
+  #       self.ctx.tab_items = self.add_client_tab("Items", UILog())
+  #       self.ctx.tab_locations = self.add_client_tab("Tracker", UILog())
+  #       return ret
 
-    return StarFox64Manager
+  #   return StarFox64Manager
 
   def on_request_close(self, *args):
     title = "Warning: Autostart program still running!"

@@ -84,7 +84,7 @@ from mwgg_gui.components.topappbar import TopAppBarLayout
 from mwgg_gui.launcher.launcher import LauncherScreen
 from mwgg_gui.loadanimlayout import MWGGLoadingLayout
 from mwgg_gui.components.bottomappbar import BottomAppBar, BottomBarTextInput
-from mwgg_gui.guidataclasses import UIPlayerData, UIHint
+from mwgg_gui.components.guidataclasses import UIPlayerData, UIHint
 
 if typing.TYPE_CHECKING:
     import CommonClient

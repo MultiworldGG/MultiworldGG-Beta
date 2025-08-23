@@ -49,19 +49,19 @@ class DSTContext(CommonContext):
             "timestamp": time.time(),
         })
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class DSTManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago"),
-                ("DSTInterface", "Don't Starve Together"),
-            ]
-            base_title = apname + " Don't Starve Together Client"
+    #     class DSTManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago"),
+    #             ("DSTInterface", "Don't Starve Together"),
+    #         ]
+    #         base_title = apname + " Don't Starve Together Client"
 
-        self.ui = DSTManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
-        async_start(self.handle_eventqueue())
+    #     self.ui = DSTManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     async_start(self.handle_eventqueue())
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:

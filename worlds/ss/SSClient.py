@@ -24,10 +24,6 @@ from .Locations import LOCATION_TABLE, SSLocation, SSLocFlag, SSLocType, SSLocCh
 from .Hints import HINT_TABLE, SSHint
 from .SSClientUtils import *
 
-if TYPE_CHECKING:
-    import kvui
-
-
 class SSCommandProcessor(ClientCommandProcessor):
     """
     Command Processor for SS client commands.
@@ -191,15 +187,15 @@ class SSContext(CommonContext):
         super().on_deathlink(data)
         _give_death(self)
 
-    def make_gui(self) -> type["kvui.GameManager"]:
-        """
-        Initialize the GUI for SS client.
+    # def make_gui(self) -> type["kvui.GameManager"]:
+    #     """
+    #     Initialize the GUI for SS client.
 
-        :return: The client's GUI.
-        """
-        ui = super().make_gui()
-        ui.base_title = f"{apname} Skyward Sword Client"
-        return ui
+    #     :return: The client's GUI.
+    #     """
+    #     ui = super().make_gui()
+    #     ui.base_title = f"{apname} Skyward Sword Client"
+    #     return ui
 
     async def update_visited_stages(self, newly_visited_stage_name: str) -> None:
         """

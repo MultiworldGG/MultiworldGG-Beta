@@ -141,98 +141,98 @@ class ZillionContext(CommonContext):
         logger.info("logging in to server...")
         await self.send_connect()
 
-    @override
-    def run_gui(self) -> None:
-        from kvui import GameManager
-        from kivy.core.text import Label as CoreLabel
-        from kivy.graphics import Ellipse, Color, Rectangle
-        from kivy.graphics.texture import Texture
-        from kivy.uix.layout import Layout
-        from kivy.uix.image import CoreImage
-        from kivy.uix.widget import Widget
+    # @override
+    # def run_gui(self) -> None:
+    #     from kvui import GameManager
+    #     from kivy.core.text import Label as CoreLabel
+    #     from kivy.graphics import Ellipse, Color, Rectangle
+    #     from kivy.graphics.texture import Texture
+    #     from kivy.uix.layout import Layout
+    #     from kivy.uix.image import CoreImage
+    #     from kivy.uix.widget import Widget
 
-        class ZillionManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago"),
-            ]
-            base_title = apname + " Zillion Client"
+    #     class ZillionManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago"),
+    #         ]
+    #         base_title = apname + " Zillion Client"
 
-            class MapPanel(Widget):
-                MAP_WIDTH: ClassVar[int] = 281
+    #         class MapPanel(Widget):
+    #             MAP_WIDTH: ClassVar[int] = 281
 
-                map_background: CoreImage
-                _number_textures: list[Texture] = []
-                rooms: list[list[int]] = []
+    #             map_background: CoreImage
+    #             _number_textures: list[Texture] = []
+    #             rooms: list[list[int]] = []
 
-                def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
-                    super().__init__(**kwargs)
+    #             def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
+    #                 super().__init__(**kwargs)
 
-                    FILE_NAME = "empty-zillion-map-row-col-labels-281.png"
-                    image_file_data = pkgutil.get_data(__name__, FILE_NAME)
-                    if not image_file_data:
-                        raise FileNotFoundError(f"{__name__=} {FILE_NAME=}")
-                    data = io.BytesIO(image_file_data)
-                    self.map_background = CoreImage(data, ext="png")
-                    assert self.map_background.texture.size[0] == ZillionManager.MapPanel.MAP_WIDTH
+    #                 FILE_NAME = "empty-zillion-map-row-col-labels-281.png"
+    #                 image_file_data = pkgutil.get_data(__name__, FILE_NAME)
+    #                 if not image_file_data:
+    #                     raise FileNotFoundError(f"{__name__=} {FILE_NAME=}")
+    #                 data = io.BytesIO(image_file_data)
+    #                 self.map_background = CoreImage(data, ext="png")
+    #                 assert self.map_background.texture.size[0] == ZillionManager.MapPanel.MAP_WIDTH
 
-                    self.rooms = [[0 for _ in range(8)] for _ in range(16)]
+    #                 self.rooms = [[0 for _ in range(8)] for _ in range(16)]
 
-                    self._make_numbers()
-                    self.update_map()
+    #                 self._make_numbers()
+    #                 self.update_map()
 
-                    self.bind(pos=self.update_map)
-                    # self.bind(size=self.update_bg)
+    #                 self.bind(pos=self.update_map)
+    #                 # self.bind(size=self.update_bg)
 
-                def _make_numbers(self) -> None:
-                    self._number_textures = []
-                    for n in range(10):
-                        label = CoreLabel(text=str(n), font_size=22, color=(0.1, 0.9, 0, 1))
-                        label.refresh()
-                        self._number_textures.append(label.texture)
+    #             def _make_numbers(self) -> None:
+    #                 self._number_textures = []
+    #                 for n in range(10):
+    #                     label = CoreLabel(text=str(n), font_size=22, color=(0.1, 0.9, 0, 1))
+    #                     label.refresh()
+    #                     self._number_textures.append(label.texture)
 
-                def update_map(self, *args: Any) -> None:  # noqa: ANN401
-                    self.canvas.clear()
+    #             def update_map(self, *args: Any) -> None:  # noqa: ANN401
+    #                 self.canvas.clear()
 
-                    with self.canvas:
-                        Color(1, 1, 1, 1)
-                        Rectangle(texture=self.map_background.texture,
-                                  pos=self.pos,
-                                  size=self.map_background.texture.size)
-                        for y in range(16):
-                            for x in range(8):
-                                num = self.rooms[15 - y][x]
-                                if num > 0:
-                                    Color(0, 0, 0, 0.4)
-                                    pos = [self.pos[0] + 17 + x * 32, self.pos[1] + 14 + y * 24]
-                                    Ellipse(size=[22, 22], pos=pos)
-                                    Color(1, 1, 1, 1)
-                                    pos = [self.pos[0] + 22 + x * 32, self.pos[1] + 12 + y * 24]
-                                    num_texture = self._number_textures[num]
-                                    Rectangle(texture=num_texture, size=num_texture.size, pos=pos)
+    #                 with self.canvas:
+    #                     Color(1, 1, 1, 1)
+    #                     Rectangle(texture=self.map_background.texture,
+    #                               pos=self.pos,
+    #                               size=self.map_background.texture.size)
+    #                     for y in range(16):
+    #                         for x in range(8):
+    #                             num = self.rooms[15 - y][x]
+    #                             if num > 0:
+    #                                 Color(0, 0, 0, 0.4)
+    #                                 pos = [self.pos[0] + 17 + x * 32, self.pos[1] + 14 + y * 24]
+    #                                 Ellipse(size=[22, 22], pos=pos)
+    #                                 Color(1, 1, 1, 1)
+    #                                 pos = [self.pos[0] + 22 + x * 32, self.pos[1] + 12 + y * 24]
+    #                                 num_texture = self._number_textures[num]
+    #                                 Rectangle(texture=num_texture, size=num_texture.size, pos=pos)
 
-            @override
-            def build(self) -> Layout:
-                container = super().build()
-                self.map_widget = ZillionManager.MapPanel(size_hint_x=None, width=ZillionManager.MapPanel.MAP_WIDTH)
-                self.main_area_container.add_widget(self.map_widget)
-                return container
+    #         @override
+    #         def build(self) -> Layout:
+    #             container = super().build()
+    #             self.map_widget = ZillionManager.MapPanel(size_hint_x=None, width=ZillionManager.MapPanel.MAP_WIDTH)
+    #             self.main_area_container.add_widget(self.map_widget)
+    #             return container
 
-            def toggle_map_width(self) -> None:
-                if self.map_widget.width == 0:
-                    self.map_widget.width = ZillionManager.MapPanel.MAP_WIDTH
-                else:
-                    self.map_widget.width = 0
-                self.container.do_layout()
+    #         def toggle_map_width(self) -> None:
+    #             if self.map_widget.width == 0:
+    #                 self.map_widget.width = ZillionManager.MapPanel.MAP_WIDTH
+    #             else:
+    #                 self.map_widget.width = 0
+    #             self.container.do_layout()
 
-            def set_rooms(self, rooms: list[list[int]]) -> None:
-                self.map_widget.rooms = rooms
-                self.map_widget.update_map()
+    #         def set_rooms(self, rooms: list[list[int]]) -> None:
+    #             self.map_widget.rooms = rooms
+    #             self.map_widget.update_map()
 
-        self.ui = ZillionManager(self)
-        self.ui_toggle_map = lambda: isinstance(self.ui, ZillionManager) and self.ui.toggle_map_width()
-        self.ui_set_rooms = lambda rooms: isinstance(self.ui, ZillionManager) and self.ui.set_rooms(rooms)
-        run_co: Coroutine[Any, Any, None] = self.ui.async_run()
-        self.ui_task = asyncio.create_task(run_co, name="UI")
+    #     self.ui = ZillionManager(self)
+    #     self.ui_toggle_map = lambda: isinstance(self.ui, ZillionManager) and self.ui.toggle_map_width()
+    #     self.ui_set_rooms = lambda rooms: isinstance(self.ui, ZillionManager) and self.ui.set_rooms(rooms)
+    #     run_co: Coroutine[Any, Any, None] = self.ui.async_run()
+    #     self.ui_task = asyncio.create_task(run_co, name="UI")
 
     @override
     def on_package(self, cmd: str, args: dict[str, Any]) -> None:

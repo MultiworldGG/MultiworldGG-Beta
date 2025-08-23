@@ -100,18 +100,18 @@ class DiddyKongRacingContext(CommonContext):
     def set_message(self, msg: dict) -> None:
         self.messages.update({len(self.messages)+1: msg})
 
-    def run_gui(self) -> None:
-        from kvui import GameManager
+    # def run_gui(self) -> None:
+    #     from kvui import GameManager
 
-        class DiddyKongRacingManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = f"{apname} Diddy Kong Racing Client"
+    #     class DiddyKongRacingManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = f"{apname} Diddy Kong Racing Client"
 
-        self.ui = DiddyKongRacingManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
-        asyncio.create_task(apply_patch(version_number))
+    #     self.ui = DiddyKongRacingManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     asyncio.create_task(apply_patch(version_number))
 
     def on_package(self, cmd: str, args: dict) -> None:
         if cmd == "Connected":

@@ -213,18 +213,18 @@ class KH1Context(CommonContext):
             f.write(str(int(data["time"])))
             f.close()
 
-    def run_gui(self):
-        """Import kivy UI system and start running it as self.ui_task."""
-        from kvui import GameManager
+    # def run_gui(self):
+    #     """Import kivy UI system and start running it as self.ui_task."""
+    #     from kvui import GameManager
 
-        class KH1Manager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = apname + " KH1 Client"
+    #     class KH1Manager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = apname + " KH1 Client"
 
-        self.ui = KH1Manager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = KH1Manager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
 
 async def game_watcher(ctx: KH1Context):

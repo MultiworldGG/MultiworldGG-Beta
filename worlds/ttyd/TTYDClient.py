@@ -138,15 +138,15 @@ class TTYDContext(CommonContext):
         self.seed_name = None
         self.seed_verified = False
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class TTYDManager(GameManager):
-            logging_pairs = [("Client", "Archipelago")]
-            base_title = f"{apname} TTYD Client"
+    #     class TTYDManager(GameManager):
+    #         logging_pairs = [("Client", "Archipelago")]
+    #         base_title = f"{apname} TTYD Client"
 
-        self.ui = TTYDManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = TTYDManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     async def receive_items(self):
         current_length = dolphin.read_word(RECEIVED_LENGTH)

@@ -32,18 +32,15 @@ logger = logging.getLogger("MultiWorld")
 def launch_splash_screen():
     """Launch the splash screen as a separate process"""
     try:
-        # Get the directory of the current script
-        splash_path = metadata.("mwgg_gui.splashscreen")
-        
-        # Launch the splash screen process
+        # Launch the splash screen process using the installed script
         if sys.platform == "win32":
             splash_process = subprocess.Popen(
-                [sys.executable, splash_path],
+                ["splashscreen"],
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
             )
         else:
             splash_process = subprocess.Popen(
-                [sys.executable, splash_path]
+                ["splashscreen"]
             )
         
         logging.info(f"Splash screen launched with PID: {splash_process.pid}")

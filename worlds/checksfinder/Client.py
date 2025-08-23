@@ -106,18 +106,18 @@ class ChecksFinderContext(CommonContext):
                     with open(os.path.join(self.game_communication_path, filename), 'w') as f:
                         f.close()
 
-    def run_gui(self):
-        """Import kivy UI system and start running it as self.ui_task."""
-        from kvui import GameManager
+    # def run_gui(self):
+    #     """Import kivy UI system and start running it as self.ui_task."""
+    #     from kvui import GameManager
 
-        class ChecksFinderManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = apname + " ChecksFinder Client"
+    #     class ChecksFinderManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = apname + " ChecksFinder Client"
 
-        self.ui = ChecksFinderManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = ChecksFinderManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
 
 async def game_watcher(ctx: ChecksFinderContext):

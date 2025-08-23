@@ -259,17 +259,17 @@ class SMOContext(CommonContext):
                 if cmd != "PrintJSON":
                     self.server_msgs.append(args)
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class SMOManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = f"{apname} Super Mario Odyssey Client"
+    #     class SMOManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = f"{apname} Super Mario Odyssey Client"
 
-        self.ui = SMOManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = SMOManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
 async def ping_loop(ctx : SMOContext):
     while not ctx.exit_event.is_set():

@@ -28,10 +28,9 @@ from ClientBuilder import GameClient
 
 # Import MDApp for GUI access
 from kivymd.app import MDApp
-from gui.Gui import MultiMDApp
+from Gui import MultiMDApp
 # Import GUI components
-from gui import Gui
-from gui.dialog import MessageBox
+from mwgg_gui.components.dialog import MessageBox
 
 from Utils import Version, stream_input, async_start
 import os
@@ -944,7 +943,7 @@ class CommonContext(InitContext):
         if not self.ui:
             return None
         title = title or "Error"
-        from gui.dialog import MessageBox
+        from mwgg_gui.components.dialog import MessageBox
         if self._messagebox:
             self._messagebox.dismiss()
         # make "Multiple exceptions" look nice

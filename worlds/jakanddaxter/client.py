@@ -124,17 +124,17 @@ class JakAndDaxterContext(CommonContext):
         # self.memr.load_data()
         super().__init__(server_address, password)
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class JakAndDaxterManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = "Jak and Daxter ArchipelaGOAL Client"
+    #     class JakAndDaxterManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = "Jak and Daxter ArchipelaGOAL Client"
 
-        self.ui = JakAndDaxterManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = JakAndDaxterManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:

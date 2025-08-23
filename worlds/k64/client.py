@@ -15,7 +15,7 @@ from .rom import slot_data, crystal_requirements
 
 if TYPE_CHECKING:
     from worlds._bizhawk.context import BizHawkClientContext
-    from kvui import Label
+    from kivy.uix.label import Label
 else:
     BizHawkClientContext = Any
 

@@ -355,24 +355,24 @@ class PathOfExileContext(CommonContext):
         task = asyncio.create_task(save_settings(self))
         task.add_done_callback(set_settings)
 
-    def run_gui(self) -> None:
-        #from .ClientGui import start_gui # custom UI
-        #start_gui(self)
+    # def run_gui(self) -> None:
+    #     #from .ClientGui import start_gui # custom UI
+    #     #start_gui(self)
 
-        super().run_gui()
+    #     super().run_gui()
 
-async def main():
-    Utils.init_logging("PathOfExileContext", exception_logger="Client")
+# async def main():
+#     Utils.init_logging("PathOfExileContext", exception_logger="Client")
 
-    ctx = PathOfExileContext(None, None)
+#     ctx = PathOfExileContext(None, None)
 
-    #if gui_enabled:
-    if True: # we can disable GUI for testing here
-        ctx.run_gui()
-    ctx.run_cli()
+#     #if gui_enabled:
+#     if True: # we can disable GUI for testing here
+#         ctx.run_gui()
+#     ctx.run_cli()
 
-    await ctx.exit_event.wait()
-    await ctx.shutdown()
+#     await ctx.exit_event.wait()
+#     await ctx.shutdown()
 
 
 def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
@@ -394,6 +394,11 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
 
         ctx.ui.base_title = apname + " | Path of Exile"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+        from kivymd.app import MDApp
+        from .ClientGui import PoeOptionsTab
+        app = MDApp.get_running_app()
+        app.screen_manager.add_widget(PoeOptionsTab(ctx))
+
         await ctx.server_auth()
 
         await ctx.exit_event.wait()

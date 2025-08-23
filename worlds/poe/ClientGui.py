@@ -1,29 +1,31 @@
 import asyncio
-import kvui
+#import kvui
 from typing import TYPE_CHECKING
 
 from kivy.clock import Clock
 from kivy.metrics import dp
+from kivymd.uix.screen import MDScreen
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDButton, MDButtonText
 from kivymd.uix.label import MDLabel
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.filemanager import MDFileManager
 
-from kvui import GameManager
+#from kvui import GameManager
 from pathlib import Path
 
 if TYPE_CHECKING:
     from .Client import PathOfExileContext
 
 
-class PoeOptionsTab(MDBoxLayout):
+class PoeOptionsTab(MDScreen):
     """Tab containing Path of Exile specific controls."""
 
-    def __init__(self, manager: "PoeManager", **kwargs) -> None:
-        super().__init__(orientation="vertical", spacing=dp(5), padding=dp(10), **kwargs)
-        self.manager = manager
-        self.ctx: "PathOfExileContext" = manager.ctx
+    def __init__(self, ctx: "PathOfExileContext", **kwargs) -> None:
+        super().__init__()
+        self.box_layout = MDBoxLayout(orientation="vertical", spacing=dp(5), padding=dp(10))
+        self.add_widget(self.box_layout)
+        self.ctx: "PathOfExileContext" = ctx
 
         # Initialize file manager
         self.file_manager = MDFileManager(
@@ -69,25 +71,25 @@ class PoeOptionsTab(MDBoxLayout):
         filter_layout.add_widget(self.filter_input)
 
         # Add the layout to the main container
-        self.add_widget(filter_layout)
+        self.box_layout.add_widget(filter_layout)
 
         # auth button
         auth_btn = MDButton(MDButtonText(text="Auth"), style="filled")
-        auth_btn.bind(on_release=lambda *_: self.manager.commandprocessor._cmd_poe_auth())
-        self.add_widget(auth_btn)
+        auth_btn.bind(on_release=lambda *_: self.ctx.commandprocessor._cmd_poe_auth())
+        self.box_layout.add_widget(auth_btn)
 
         # start/stop buttons
         start_btn = MDButton(MDButtonText(text="Start Client"), style="filled")
         start_btn.bind(on_release=lambda *_: self.manager.commandprocessor._cmd_start_poe())
-        self.add_widget(start_btn)
+        self.box_layout.add_widget(start_btn)
 
         stop_btn = MDButton(MDButtonText(text="Stop Client"), style="filled")
         stop_btn.bind(on_release=lambda *_: self.manager.commandprocessor._cmd_stop())
-        self.add_widget(stop_btn)
+        self.box_layout.add_widget(stop_btn)
 
         # status label
         self.status_label = MDLabel(text="Client not running")
-        self.add_widget(self.status_label)
+        self.box_layout.add_widget(self.status_label)
         Clock.schedule_interval(self.update_status, 1)
 
         # TTS controls
@@ -100,11 +102,11 @@ class PoeOptionsTab(MDBoxLayout):
         if self.ctx.tts_options.speed:
             self.tts_speed_input.text = str(self.ctx.tts_options.speed)
         tts_layout.add_widget(self.tts_speed_input)
-        self.add_widget(tts_layout)
+        self.box_layout.add_widget(tts_layout)
 
         generate_tts_btn = MDButton(MDButtonText(text="Generate TTS"), style="filled")
-        generate_tts_btn.bind(on_release=lambda *_: self.manager.commandprocessor._cmd_generate_tts())
-        self.add_widget(generate_tts_btn)
+        generate_tts_btn.bind(on_release=lambda *_: self.ctx.commandprocessor._cmd_generate_tts())
+        self.box_layout.add_widget(generate_tts_btn)
 
     def open_file_manager(self, *_):
         """Open the file manager to select a file."""
@@ -129,18 +131,18 @@ class PoeOptionsTab(MDBoxLayout):
     def select_client_path(self, path: str):
         """Handle the selected file path."""
         self.client_path_label.text = path  # Update the label with the selected path
-        self.manager.commandprocessor._cmd_set_client_text_path(path)  # Update the context
+        self.ctx.command_processor._cmd_set_client_text_path(path)  # Update the context
         self.close_file_manager()
 
     def set_filter(self, *_):
         filt = self.filter_input.text.strip()
         if filt:
-            self.manager.commandprocessor._cmd_base_item_filter(filt)
+            self.ctx.command_processor._cmd_base_item_filter(filt)
 
     def set_tts_speed(self, *_):
         speed = self.tts_speed_input.text.strip()
         if speed:
-            self.manager.commandprocessor._cmd_tts_speed(speed)
+            self.ctx.command_processor._cmd_tts_speed(speed)
 
     def update_status(self, _dt):
         if self.ctx.running_task and not self.ctx.running_task.done():
@@ -149,19 +151,19 @@ class PoeOptionsTab(MDBoxLayout):
             self.status_label.text = "Client not running"
 
 
-class PoeManager(GameManager):
-    logging_pairs = [
-        ("Client", "Archipelago"),
-    ]
-    base_title = "Archipelago Path of Exile Client"
-    ctx: "PathOfExileContext"
+# class PoeManager(GameManager):
+#     logging_pairs = [
+#         ("Client", "Archipelago"),
+#     ]
+#     base_title = "Archipelago Path of Exile Client"
+#     ctx: "PathOfExileContext"
 
-    def build(self):
-        container = super().build()
-        self.add_client_tab("Path of Exile client", PoeOptionsTab(self))
-        return container
+#     def build(self):
+#         container = super().build()
+#         self.add_client_tab("Path of Exile client", PoeOptionsTab(self))
+#         return container
 
 
-def start_gui(context: "PathOfExileContext") -> None:
-    context.ui = PoeManager(context)
-    context.ui_task = asyncio.create_task(context.ui.async_run(), name="UI")
+# def start_gui(context: "PathOfExileContext") -> None:
+#     context.ui = PoeManager(context)
+#     context.ui_task = asyncio.create_task(context.ui.async_run(), name="UI")

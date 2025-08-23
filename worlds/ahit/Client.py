@@ -149,17 +149,17 @@ class AHITContext(CommonContext):
             if cmd != "PrintJSON":
                 self.server_msgs.append(encode([args]))
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class AHITManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = apname + " A Hat in Time Client"
+    #     class AHITManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = apname + " A Hat in Time Client"
 
-        self.ui = AHITManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = AHITManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
 
 async def proxy(websocket, path: str = "/", ctx: AHITContext = None):

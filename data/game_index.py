@@ -8545,8 +8545,9 @@ SEARCH_INDEX = {
         "sc2",
         "oot",
         "kh2",
-        "hk"
-        "sm64ex"
+        "hk",
+        "sm64ex",
+        "pokemon_frlg"
     ],
     "adventure": [
         "mm_recomp",

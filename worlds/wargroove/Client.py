@@ -324,99 +324,99 @@ class WargrooveContext(CommonContext):
                     with open(os.path.join(self.game_communication_path, filename), 'w') as f:
                         pass
 
-    def run_gui(self):
-        """Import kivy UI system and start running it as self.ui_task."""
-        from kvui import GameManager, HoverBehavior, ServerToolTip
-        from kivymd.uix.tab import MDTabsItem, MDTabsItemText
-        from kivy.lang import Builder
-        from kivy.uix.togglebutton import ToggleButton
-        from kivy.uix.boxlayout import BoxLayout
-        from kivy.uix.label import Label
-        import pkgutil
+    # def run_gui(self):
+    #     """Import kivy UI system and start running it as self.ui_task."""
+    #     from kvui import GameManager, HoverBehavior, ServerToolTip
+    #     from kivymd.uix.tab import MDTabsItem, MDTabsItemText
+    #     from kivy.lang import Builder
+    #     from kivy.uix.togglebutton import ToggleButton
+    #     from kivy.uix.boxlayout import BoxLayout
+    #     from kivy.uix.label import Label
+    #     import pkgutil
 
-        class TrackerLayout(BoxLayout):
-            pass
+    #     class TrackerLayout(BoxLayout):
+    #         pass
 
-        class CommanderSelect(BoxLayout):
-            pass
+    #     class CommanderSelect(BoxLayout):
+    #         pass
 
-        class CommanderButton(ToggleButton):
-            pass
+    #     class CommanderButton(ToggleButton):
+    #         pass
 
-        class FactionBox(BoxLayout):
-            pass
+    #     class FactionBox(BoxLayout):
+    #         pass
 
-        class CommanderGroup(BoxLayout):
-            pass
+    #     class CommanderGroup(BoxLayout):
+    #         pass
 
-        class ItemTracker(BoxLayout):
-            pass
+    #     class ItemTracker(BoxLayout):
+    #         pass
 
-        class ItemLabel(Label):
-            pass
+    #     class ItemLabel(Label):
+    #         pass
 
-        class WargrooveManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago"),
-                ("WG", "WG Console"),
-            ]
-            base_title = f"{apname} Wargroove Client"
-            ctx: WargrooveContext
-            unit_tracker: ItemTracker
-            trigger_tracker: BoxLayout
-            boost_tracker: BoxLayout
-            commander_buttons: Dict[int, List[CommanderButton]]
-            tracker_items = {
-                "Swordsman": ItemData(None, "Unit", False),
-                "Dog": ItemData(None, "Unit", False),
-                **item_table
-            }
+    #     class WargrooveManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago"),
+    #             ("WG", "WG Console"),
+    #         ]
+    #         base_title = f"{apname} Wargroove Client"
+    #         ctx: WargrooveContext
+    #         unit_tracker: ItemTracker
+    #         trigger_tracker: BoxLayout
+    #         boost_tracker: BoxLayout
+    #         commander_buttons: Dict[int, List[CommanderButton]]
+    #         tracker_items = {
+    #                 "Swordsman": ItemData(None, "Unit", False),
+    #                 "Dog": ItemData(None, "Unit", False),
+    #                 **item_table
+    #         }
 
-            def build(self):
-                container = super().build()
-                self.add_client_tab("Wargroove", self.build_tracker())
-                return container
+    #     #     def build(self):
+    #     #         container = super().build()
+    #     #         self.add_client_tab("Wargroove", self.build_tracker())
+    #     #         return container
 
-            def build_tracker(self) -> TrackerLayout:
-                try:
-                    tracker = TrackerLayout(orientation="horizontal")
-                    commander_select = CommanderSelect(orientation="vertical")
-                    self.commander_buttons = {}
+    #     #     def build_tracker(self) -> TrackerLayout:
+    #     #         try:
+    #     #             tracker = TrackerLayout(orientation="horizontal")
+    #     #             commander_select = CommanderSelect(orientation="vertical")
+    #     #             self.commander_buttons = {}
 
-                    for faction, commanders in faction_table.items():
-                        faction_box = FactionBox(size_hint=(None, None), width=100 * len(commanders), height=70)
-                        commander_group = CommanderGroup()
-                        commander_buttons = []
-                        for commander in commanders:
-                            commander_button = CommanderButton(text=commander.name, group="commanders")
-                            if faction == "Starter":
-                                commander_button.disabled = False
-                            commander_button.bind(on_press=lambda instance: self.ctx.set_commander(instance.text))
-                            commander_buttons.append(commander_button)
-                            commander_group.add_widget(commander_button)
-                        self.commander_buttons[faction] = commander_buttons
-                        faction_box.add_widget(Label(text=faction, size_hint_x=None, pos_hint={'left': 1}, size_hint_y=None, height=10))
-                        faction_box.add_widget(commander_group)
-                        commander_select.add_widget(faction_box)
-                    item_tracker = ItemTracker(padding=[0,20])
-                    self.unit_tracker = BoxLayout(orientation="vertical")
-                    other_tracker = BoxLayout(orientation="vertical")
-                    self.trigger_tracker = BoxLayout(orientation="vertical")
-                    self.boost_tracker = BoxLayout(orientation="vertical")
-                    other_tracker.add_widget(self.trigger_tracker)
-                    other_tracker.add_widget(self.boost_tracker)
-                    item_tracker.add_widget(self.unit_tracker)
-                    item_tracker.add_widget(other_tracker)
-                    tracker.add_widget(commander_select)
-                    tracker.add_widget(item_tracker)
-                    self.update_tracker()
-                    return tracker
-                except Exception as e:
-                    print(e)
+    #     #             for faction, commanders in faction_table.items():
+    #     #                 faction_box = FactionBox(size_hint=(None, None), width=100 * len(commanders), height=70)
+    #     #                 commander_group = CommanderGroup()
+    #     #                 commander_buttons = []
+    #     #                 for commander in commanders:
+    #     #                         commander_button = CommanderButton(text=commander.name, group="commanders")
+    #     #                         if faction == "Starter":
+    #     #                         commander_button.disabled = False
+    #     #                         commander_button.bind(on_press=lambda instance: self.ctx.set_commander(instance.text))
+    #     #                         commander_buttons.append(commander_button)
+    #     #                         commander_group.add_widget(commander_button)
+    #     #                 self.commander_buttons[faction] = commander_buttons
+    #     #                 faction_box.add_widget(Label(text=faction, size_hint_x=None, pos_hint={'left': 1}, size_hint_y=None, height=10))
+    #     #                 faction_box.add_widget(commander_group)
+    #     #                 commander_select.add_widget(faction_box)
+    #     #             item_tracker = ItemTracker(padding=[0,20])
+    #     #             self.unit_tracker = BoxLayout(orientation="vertical")
+    #     #             other_tracker = BoxLayout(orientation="vertical")
+    #     #             self.trigger_tracker = BoxLayout(orientation="vertical")
+    #     #             self.boost_tracker = BoxLayout(orientation="vertical")
+    #     #             other_tracker.add_widget(self.trigger_tracker)
+    #     #             other_tracker.add_widget(self.boost_tracker)
+    #     #             item_tracker.add_widget(self.unit_tracker)
+    #     #             item_tracker.add_widget(other_tracker)
+    #     #             tracker.add_widget(commander_select)
+    #     #             tracker_tracker.add_widget(item_tracker)
+    #     #             self.update_tracker()
+    #     #             return tracker
+    #     #         except Exception as e:
+    #     #             print(e)
 
-            def update_tracker(self):
-                received_ids = [item.item for item in self.ctx.items_received]
-                for faction, item_id in self.ctx.faction_item_ids.items():
+    #     #     def update_tracker(self):
+    #     #         received_ids = [item.item for item in self.ctx.items_received]
+    #     #         for faction, item_id in self.ctx.faction_item_ids.items():
                     for commander_button in self.commander_buttons[faction]:
                         commander_button.disabled = not (faction == "Starter" or item_id in received_ids)
                 self.unit_tracker.clear_widgets()
@@ -437,10 +437,10 @@ class WargrooveContext(CommonContext):
                 self.boost_tracker.add_widget(income_boost)
                 self.boost_tracker.add_widget(defense_boost)
 
-        self.ui = WargrooveManager(self)
-        data = pkgutil.get_data(WargrooveWorld.__module__, "Wargroove.kv").decode()
-        Builder.load_string(data)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = WargrooveManager(self)
+    #     data = pkgutil.get_data(WargrooveWorld.__module__, "Wargroove.kv").decode()
+    #     Builder.load_string(data)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     def update_commander_data(self):
         if self.can_choose_commander:

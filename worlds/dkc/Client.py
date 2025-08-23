@@ -418,9 +418,9 @@ class DKCSNIClient(SNIClient):
 
     async def handle_barrel_label(self, ctx):
         try:
-            from kvui import MDLabel as Label
+            from kivymd.uix.label import MDLabel as Label
         except ImportError:
-            from kvui import Label
+            from kivy.uix.label import Label
         from worlds._sni.client import  snes_read
 
         if not self.barrel_label:

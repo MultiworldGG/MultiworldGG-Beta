@@ -28,7 +28,7 @@ from mwgg_gui.components.bottomappbar import BottomAppBar
 import typing
 import asynckivy
 
-hint_kv = '''
+KV = '''
 <HintFeaturebar>:
     hints_hero_to: hints_hero_to
     MDHeroTo:
@@ -37,7 +37,7 @@ hint_kv = '''
         size: dp(256), dp(161)
         pos_hint: {"center_x": 0.5, "top": 1}
         FitImage:
-            source: "../images/logo_bg.png"
+            source: os.path.join(os.path.dirname(__file__), "..", "images", "logo_bg.png")
             size_hint: None,None
             size: dp(128), dp(80)
             pos_hint: {"x": 0, "top": 1}
@@ -340,4 +340,4 @@ class HintListPanel(GameListPanel):
     def on_shop(self, hint: UIHint):
         hint.set_status(mwgg_status=MWGGUIHintStatus.HINT_SHOP)
 
-Builder.load_string(hint_kv)
+Builder.load_string(KV)

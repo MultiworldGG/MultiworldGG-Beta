@@ -121,17 +121,17 @@ class ZeldaContext(CommonContext):
                 msg = self.raw_text_parser(copy.deepcopy(args["data"]))
                 self._set_message(msg, item.item)
 
-    def run_gui(self):
-        from kvui import GameManager
+    # def run_gui(self):
+    #     from kvui import GameManager
 
-        class ZeldaManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = apname + " Zelda 1 Client"
+    #     class ZeldaManager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago")
+    #         ]
+    #         base_title = apname + " Zelda 1 Client"
 
-        self.ui = ZeldaManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = ZeldaManager(self)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
 
 def get_payload(ctx: ZeldaContext):

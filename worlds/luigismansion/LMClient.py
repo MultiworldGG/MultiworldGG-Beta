@@ -384,9 +384,9 @@ class LMContext(CommonContext):
     async def get_wallet_value(self):
         # KivyMD support, also keeps support with regular Kivy (hopefully)
         try:
-            from kvui import MDLabel as Label
+            from kivymd.uix.label import MDLabel as Label
         except ImportError:
-            from kvui import Label
+            from kivy.uix.label import Label
 
         if not hasattr(self, "wallet_ui"):
             self.wallet_ui = Label(text="", size_hint_x=None, width=120, halign="center")
@@ -401,9 +401,9 @@ class LMContext(CommonContext):
     async def update_boo_count_label(self):
         # KivyMD support, also keeps support with regular Kivy (hopefully)
         try:
-            from kvui import MDLabel as Label
+            from kivymd.uix.label import MDLabel as Label
         except ImportError:
-            from kvui import Label
+            from kivy.uix.label import Label
 
         if not hasattr(self, "boo_count"):
             self.boo_count = Label(text="", size_hint_x=None, width=120, halign="center")

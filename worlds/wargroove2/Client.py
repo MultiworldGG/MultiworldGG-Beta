@@ -337,101 +337,102 @@ class Wargroove2Context(CommonContext):
         if cmd in {"Retrieved"}:
             self.ui.update_levels()
 
-    def run_gui(self):
-        """Import kivy UI system and start running it as self.ui_task."""
-        from kvui import GameManager
-        from kivy.lang import Builder
-        from kivy.uix.togglebutton import ToggleButton
-        from kivy.uix.boxlayout import BoxLayout
-        from kivy.uix.gridlayout import GridLayout
-        from kivy.uix.label import Label
-        import pkgutil
+    # def run_gui(self):
+    #     """Import kivy UI system and start running it as self.ui_task."""
+    #     from kvui import GameManager
+    #     from kivy.lang import Builder
+    #     from kivy.uix.togglebutton import ToggleButton
+    #     from kivy.uix.boxlayout import BoxLayout
+    #     from kivy.uix.gridlayout import GridLayout
+    #     from kivy.uix.label import Label
+    #     import pkgutil
 
-        class TrackerLayout(BoxLayout):
-            pass
+    #     class TrackerLayout(BoxLayout):
+    #         pass
 
-        class LevelsLayout(BoxLayout):
-            pass
+    #     class LevelsLayout(BoxLayout):
+    #         pass
 
-        class CommanderSelect(BoxLayout):
-            pass
+    #     class CommanderSelect(BoxLayout):
+    #         pass
 
-        class CommanderButton(ToggleButton):
-            pass
+    #     class CommanderButton(ToggleButton):
+    #         pass
 
-        class FactionBox(BoxLayout):
-            pass
+    #     class FactionBox(BoxLayout):
+    #         pass
 
-        class CommanderGroup(BoxLayout):
-            pass
+    #     class CommanderGroup(BoxLayout):
+    #         pass
 
-        class ItemTracker(BoxLayout):
-            pass
+    #     class ItemTracker(BoxLayout):
+    #         pass
 
-        class LevelTracker(BoxLayout):
-            pass
+    #     class LevelTracker(BoxLayout):
+    #         pass
 
-        class ItemLabel(Label):
-            pass
+    #     class ItemLabel(Label):
+    #         pass
 
-        class Wargroove2Manager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago"),
-                ("WG2", "WG2 Console"),
-            ]
-            base_title = "Archipelago Wargroove 2 Client"
-            ctx: Wargroove2Context
-            unit_tracker: ItemTracker
-            level_tracker: LevelTracker
-            level_1_Layout: GridLayout
-            level_2_Layout: GridLayout
-            level_3_Layout: GridLayout
-            level_4_Layout: GridLayout
-            trigger_tracker: BoxLayout
-            boost_tracker: BoxLayout
-            commander_buttons: Dict[str, List[CommanderButton]]
-            tracker_items = {
-                "Swordsman": ItemData(None, "Unit"),
-                "Dog": ItemData(None, "Unit"),
-                **item_table
-            }
+    #     class Wargroove2Manager(GameManager):
+    #         logging_pairs = [
+    #             ("Client", "Archipelago"),
+    #             ("WG2", "WG2 Console"),
+    #         ]
+    #         base_title = "Archipelago Wargroove 2 Client"
+    #         ctx: Wargroove2Context
+    #         unit_tracker: ItemTracker
+    #         level_tracker: LevelTracker
+    #         level_1_Layout: GridLayout
+    #         level_2_Layout: GridLayout
+    #         level_3_Layout: GridLayout
+    #         level_4_Layout: GridLayout
+    #         trigger_tracker: BoxLayout
+    #         boost_tracker: BoxLayout
+    #         commander_buttons: Dict[str, List[CommanderButton]]
+    #         tracker_items = {
+    #                 "Swordsman": ItemData(None, "Unit"),
+    #                 "Dog": ItemData(None, "Unit"),
+    #                 **item_table
+    #         }
 
-            def build(self):
-                container = super().build()
-                self.add_client_tab("WG2 Tracker", self.build_tracker())
-                self.add_client_tab("WG2 Levels", self.build_levels())
-                return container
+    #     #     def build(self):
+    #     #         container = super().build()
+    #     #         self.add_client_tab("WG2 Tracker", self.build_tracker())
+    #     #         self.add_client_tab("WG2 Levels", self.build_levels())
+    #     #         return container
 
-            def build_levels(self) -> LevelsLayout:
-                levels_layout = LevelsLayout(orientation="horizontal")
-                try:
-                    level_tracker = LevelTracker(padding=[0, 20])
-                    self.level_1_Layout = GridLayout(cols=1)
-                    self.level_2_Layout = GridLayout(cols=1)
-                    self.level_3_Layout = GridLayout(cols=1)
-                    self.level_4_Layout = GridLayout(cols=1)
-                    level_tracker.add_widget(self.level_1_Layout)
-                    level_tracker.add_widget(self.level_2_Layout)
-                    level_tracker.add_widget(self.level_3_Layout)
-                    level_tracker.add_widget(self.level_4_Layout)
-                    levels_layout.add_widget(level_tracker)
-                    self.update_levels()
-                except Exception as e:
-                    print(e)
-                return levels_layout
+    #     #     def build_levels(self) -> LevelsLayout:
+    #     #         levels_layout = LevelsLayout(orientation="horizontal")
+    #     #         try:
+    #     #             level_tracker = LevelTracker(padding=[0, 20])
+    #     #             self.level_1_Layout = GridLayout(cols=1)
+    #     #             self.level_2_Layout = GridLayout(cols=1)
+    #     #             self.level_2_Layout = GridLayout(cols=1)
+    #     #             self.level_3_Layout = GridLayout(cols=1)
+    #     #             self.level_4_Layout = GridLayout(cols=1)
+    #     #             level_tracker.add_widget(self.level_1_Layout)
+    #     #             level_tracker.add_widget(self.level_2_Layout)
+    #     #             level_tracker.add_widget(self.level_3_Layout)
+    #     #             level_tracker.add_widget(self.level_4_Layout)
+    #     #             levels_layout.add_widget(level_tracker)
+    #     #             self.update_levels()
+    #     #         except Exception as e:
+    #     #             print(e)
+    #     #         return levels_layout
 
-            def update_levels(self):
-                received_names = [item_id_name[item.item] for item in self.ctx.items_received]
-                levels = low_victory_checks_levels + high_victory_checks_levels
-                level_rules = {level.name: level.location_rules for level in levels}
-                region_filter = Wargroove2LogicFilter(received_names)
-                self.level_1_Layout.clear_widgets()
-                self.level_2_Layout.clear_widgets()
-                self.level_3_Layout.clear_widgets()
-                self.level_4_Layout.clear_widgets()
-                level_counter = 1
-                unreachable_levels = list(range(5, 28 + 1))
-                for region_name in region_names:
+    #     #     def update_levels(self):
+    #     #         received_names = [item_id_name[item.item] for item in self.ctx.items_received]
+    #     #         levels = low_victory_checks_levels + high_victory_checks_levels
+    #     #         level_rules = {level.name: level.location_rules for level in levels}
+    #     #         region_filter = Wargroove2LogicFilter(received_names)
+    #     #         self.level_1_Layout.clear_widgets()
+    #     #         self.level_2_Layout.clear_widgets()
+    #     #         self.level_3_Layout.clear_widgets()
+    #     #         self.level_4_Layout.clear_widgets()
+    #     #         level_counter = 1
+    #     #         unreachable_levels = list(range(5, 28 + 1))
+    #     #         for region_name in region_names:
                     fully_beaten_text = ""
                     level_name_text = "\n"
                     status_color = (0.6, 0.2, 0.2, 1)
@@ -673,10 +674,10 @@ class Wargroove2Context(CommonContext):
                 self.update_tracker()
                 self.update_levels()
 
-        self.ui = Wargroove2Manager(self)
-        data = pkgutil.get_data(Wargroove2World.__module__, "Wargroove2.kv").decode()
-        Builder.load_string(data)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    #     self.ui = Wargroove2Manager(self)
+    #     data = pkgutil.get_data(Wargroove2World.__module__, "Wargroove2.kv").decode()
+    #     Builder.load_string(data)
+    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     def update_commander_data(self):
         if self.can_choose_commander:
