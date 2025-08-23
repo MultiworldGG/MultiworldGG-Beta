@@ -83,7 +83,7 @@ SettingsNavLayout:
                 size: dp(256), dp(161)
                 pos_hint: {"center_x": 0.5, "top": 1}
                 FitImage:
-                    source: os.path.join(os.path.dirname(__file__), "..", "images", "logo_bg.png")
+                    source: os.path.join(os.getenv["KIVY_DATA_DIR"], "images", "logo_bg.png")
                     size_hint: None,None
                     size: dp(256), dp(161)
                     pos_hint: {"center_x": 0.5, "top": 1}

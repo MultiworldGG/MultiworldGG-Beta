@@ -146,7 +146,7 @@ class SplashScreen:
 def main():
    
     # Get the PNG file path
-    png_path = os.path.join(os.path.dirname(__file__), "images", "loading_animation.png")
+    png_path = os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "loading_animation.png")
     
     # Check if the file exists
     if not os.path.isfile(png_path):

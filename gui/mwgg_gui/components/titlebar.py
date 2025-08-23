@@ -53,7 +53,7 @@ KV = '''
     Image:
         halign: "left"
         valign: "top"
-        source: os.path.join(os.path.dirname(__file__), "..", "images", "titlebards.png")
+        source: os.path.join(os.getenv["KIVY_DATA_DIR"], "images", "titlebards.png")
         size: self.texture_size
         size_hint: None,None
 

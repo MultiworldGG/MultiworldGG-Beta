@@ -71,16 +71,16 @@ Builder.load_string('''
 # and will be the input for primary_palette
 # The colors in hex are actual color for the theme
 THEME_OPTIONS = {
-    "Light": [("Gray","97f0ff"), #default
-              ("Chocolate","ffdbc9"),
-              ("Goldenrod","ffdea0"),
-              ("Pink","ffd9df"),
-              ("Olivedrab","cbef86")],
-    "Dark": [("Purple","551353"), #default
-             ("Pink","5f112a"),
-             ("Brown","5f1414"),
-             ("Cyan","003737"),
-             ("Green","003a00")]
+    "Light": [("Gray","97f0ff, #default
+              ("Chocolate","ffdbc9,
+              ("Goldenrod","ffdea0,
+              ("Pink","ffd9df,
+              ("Olivedrab","cbef86],
+    "Dark": [("Purple","551353, #default
+             ("Pink","5f112a,
+             ("Brown","5f1414,
+             ("Cyan","003737,
+             ("Green","003a00]
 }
 
 @dataclass
@@ -212,10 +212,8 @@ class DefaultTheme(ThemableBehavior):
         """Recolor the atlas image by replacing pixels close to target colors with their respective theme colors.
         """
         try:
-            # Get the base directory for assets
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            atlas_path = os.path.join(base_dir, "images", "defaulttheme-0.png")
-            output_path = os.path.join(os.environ["KIVY_HOME"], "images","defaulttheme-0.png")
+            atlas_path = os.path.join(os.getenv["KIVY_DATA_DIR"], "images", "defaulttheme-0.png")
+            output_path = os.path.join(os.getenv["KIVY_HOME"], "images", "defaulttheme-0.png")
 
             # Open and convert the image
             atlas = Image.open(atlas_path)
@@ -263,7 +261,7 @@ class DefaultTheme(ThemableBehavior):
             new_atlas.save(output_path)
             
         except Exception as e:
-            print(f"Error recoloring atlas: {str(e)}")
+            print(f"Error recoloring atlas: {str(e)}
             # You might want to log this error or handle it differently
 
     def init_global_theme(self):
@@ -304,49 +302,48 @@ class DefaultTheme(ThemableBehavior):
 ### Full unicode fonts, finally
 def RegisterFonts(app: MDApp, monospace_font: str = 'Argon'):
     LabelBase.register('Inter',
-                        os.path.join(local_path(),"data","fonts","Inter-Regular.ttf"),
-                        os.path.join(local_path(),"data","fonts","Inter-Italic.ttf"),
-                        os.path.join(local_path(),"data","fonts","Inter-Bold.ttf"),
-                        os.path.join(local_path(),"data","fonts","Inter-BoldItalic.ttf"))
+                        "Inter-Regular.ttf,
+                        "Inter-Italic.ttf,
+                        "Inter-Bold.ttf,
+                        "Inter-BoldItalic.ttf")
     LabelBase.register('Neon',
-                        os.path.join(local_path(),"data","fonts","MonaspaceNeonFrozen-Regular.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceNeonFrozen-Italic.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceNeonFrozen-ExtraBold.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceNeonFrozen-ExtraBoldItalic.ttf")),
+                        "MonaspaceNeonFrozen-Regular.ttf,
+                        "MonaspaceNeonFrozen-Italic.ttf,
+                        "MonaspaceNeonFrozen-ExtraBold.ttf,
+                        "MonaspaceNeonFrozen-ExtraBoldItalic.ttf")
     LabelBase.register('Argon',
-                        os.path.join(local_path(),"data","fonts","MonaspaceArgonFrozen-Regular.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceArgonFrozen-Italic.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceArgonFrozen-ExtraBold.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceArgonFrozen-ExtraBoldItalic.ttf")),
+                        "MonaspaceArgonFrozen-Regular.ttf,
+                        "MonaspaceArgonFrozen-Italic.ttf,
+                        "MonaspaceArgonFrozen-ExtraBold.ttf,
+                        "MonaspaceArgonFrozen-ExtraBoldItalic.ttf")
     LabelBase.register('Xenon',
-                        os.path.join(local_path(),"data","fonts","MonaspaceXenonFrozen-Regular.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceXenonFrozen-Italic.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceXenonFrozen-ExtraBold.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceXenonFrozen-ExtraBoldItalic.ttf")),
+                        "MonaspaceXenonFrozen-Regular.ttf,
+                        "MonaspaceXenonFrozen-Italic.ttf,
+                        "MonaspaceXenonFrozen-ExtraBold.ttf,
+                        "MonaspaceXenonFrozen-ExtraBoldItalic.ttf")
     LabelBase.register('Radon',
-                        os.path.join(local_path(),"data","fonts","MonaspaceRadonFrozen-Regular.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceRadonFrozen-Italic.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceRadonFrozen-ExtraBold.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceRadonFrozen-ExtraBoldItalic.ttf")),
+                        "MonaspaceRadonFrozen-Regular.ttf,
+                        "MonaspaceRadonFrozen-Italic.ttf,
+                        "MonaspaceRadonFrozen-ExtraBold.ttf,
+                        "MonaspaceRadonFrozen-ExtraBoldItalic.ttf")
     LabelBase.register('Krypton',
-                        os.path.join(local_path(),"data","fonts","MonaspaceKryptonFrozen-Regular.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceKryptonFrozen-Italic.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceKryptonFrozen-ExtraBold.ttf"),
-                        os.path.join(local_path(),"data","fonts","MonaspaceKryptonFrozen-ExtraBoldItalic.ttf"))
+                        "MonaspaceKryptonFrozen-Regular.ttf",
+                        "MonaspaceKryptonFrozen-Italic.ttf",
+                        "MonaspaceKryptonFrozen-ExtraBold.ttf",
+                        "MonaspaceKryptonFrozen-ExtraBoldItalic.ttf")
     LabelBase.register('GothicA1',
-                        os.path.join(local_path(),"data","fonts","GothicA1-Regular.ttf"),
+                        "GothicA1-Regular.ttf",
                         None,
-                        os.path.join(local_path(),"data","fonts","GothicA1-Bold.ttf"),
+                        "GothicA1-Bold.ttf",
                         None)
     LabelBase.register('Mincho',
-                       os.path.join(local_path(),"data","fonts","Mincho-Regular.ttf"),
-                       )
+                       "Mincho-Regular.ttf",
+
     LabelBase.register('LibreFranklin',
-                       os.path.join(local_path(),"data","fonts","LibreFranklin-ExtraBold.ttf"),
-                       )
+                       "LibreFranklin-ExtraBold.ttf",
+
     LabelBase.register('Icons',
-                       fn_regular=os.path.join(local_path(),"data","fonts","materialdesignicons-fa-webfont.ttf"),
-                       )
+                       fn_regular="materialdesignicons-fa-webfont.ttf")
     app.theme_cls.font_styles = {
         "Icon": {
             "large": {

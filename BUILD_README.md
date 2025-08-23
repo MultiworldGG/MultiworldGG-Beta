@@ -1,0 +1,265 @@
+# MultiWorldGG Build System
+
+This directory contains the build system for creating standalone executables of MultiWorldGG using cx_Freeze.
+
+## Files
+
+- `setup.py` - Main cx_Freeze setup script
+- `pyproject.toml` - Modern Python project configuration (alternative to setup.py)
+- `build_exe.py` - Automated build script with dependency management
+- `BUILD_README.md` - This file
+
+## Prerequisites
+
+- Python 3.12 or higher
+- pip
+- Virtual environment (recommended)
+
+## Quick Start
+
+### Option 1: Using the automated build script (Recommended)
+
+```bash
+# Navigate to the src directory
+cd src
+
+# Run the build script
+python build_exe.py --verify
+```
+
+The build script will:
+1. Install cx_Freeze if needed
+2. Install requirements from requirements.txt
+3. Install wheels from ../default_wheels
+4. Update modules using ModuleUpdate
+5. Run the cx_Freeze build
+6. Verify the build output
+
+### Option 2: Manual build using setup.py
+
+```bash
+# Navigate to the src directory
+cd src
+
+# Install cx_Freeze
+pip install cx-Freeze>=6.15.0
+
+# Install requirements
+pip install -r requirements.txt
+
+# Install wheels from default_wheels
+for wheel in ../default_wheels/*.whl; do
+    pip install "$wheel" --no-deps --force-reinstall
+done
+
+# Update modules
+python -c "import ModuleUpdate; ModuleUpdate.update(yes=True)"
+
+# Run the build
+python setup.py build_exe
+```
+
+### Option 3: Using pyproject.toml
+
+```bash
+# Navigate to the src directory
+cd src
+
+# Install build dependencies
+pip install cx-Freeze>=6.15.0 setuptools>=68.0.0
+
+# Run build using pyproject.toml
+python -m cx_Freeze.build_exe
+```
+
+## Build Script Options
+
+The `build_exe.py` script supports several command-line options:
+
+```bash
+python build_exe.py [OPTIONS]
+
+Options:
+  --clean              Clean build directory before building
+  --skip-requirements  Skip requirements installation
+  --skip-wheels        Skip wheel installation
+  --skip-modules       Skip module update
+  --verify             Verify build output after building
+```
+
+### Examples
+
+```bash
+# Clean build with verification
+python build_exe.py --clean --verify
+
+# Skip requirements installation (if already installed)
+python build_exe.py --skip-requirements
+
+# Skip wheel installation (if already installed)
+python build_exe.py --skip-wheels
+
+# Minimal build (skip all optional steps)
+python build_exe.py --skip-requirements --skip-wheels --skip-modules
+```
+
+## Generated Executables
+
+The build process creates the following executables:
+
+- **MultiWorld.exe** - GUI application (main client)
+- **MultiWorldDebug.exe** - Console version for debugging (Windows only)
+- **MultiServer.exe** - Command-line server
+- **Generate.exe** - Command-line generator
+- **Patch.exe** - Command-line patcher
+
+## Build Output
+
+The build output is located in:
+```
+build/exe.{platform}-{python_version}/
+```
+
+For example:
+```
+build/exe.win-amd64-3.12/
+```
+
+### Contents
+
+The build directory contains:
+- Executable files (.exe on Windows)
+- `data/` - Application data files
+- `lib/` - Python libraries and dependencies
+- `LICENSE` - License file
+- `README.md` - README file
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Missing dependencies**
+   - Run `python build_exe.py --clean` to ensure a fresh build
+   - Check that all requirements are installed: `pip list`
+
+2. **Wheel installation failures**
+   - Ensure wheels are compatible with your Python version
+   - Try installing wheels manually: `pip install ../default_wheels/*.whl`
+
+3. **Module update failures**
+   - Check network connectivity
+   - Try running ModuleUpdate manually: `python -c "import ModuleUpdate; ModuleUpdate.update(yes=True)"`
+
+4. **Build failures**
+   - Check Python version (requires 3.12+)
+   - Ensure cx_Freeze is installed: `pip install cx-Freeze>=6.15.0`
+   - Check for conflicting packages
+
+### Debug Mode
+
+For debugging build issues, you can run the build script with verbose output:
+
+```bash
+python build_exe.py --verify 2>&1 | tee build.log
+```
+
+### Manual Verification
+
+To manually verify the build output:
+
+```bash
+# Check executables
+ls build/exe.*/*.exe
+
+# Check directories
+ls build/exe.*/
+
+# Test an executable
+./build/exe.*/MultiWorld.exe --help
+```
+
+## Platform Support
+
+- **Windows**: Full support with .exe files and icons
+- **Linux**: Support for ELF binaries
+- **macOS**: Support for .app bundles (requires additional setup)
+
+## Customization
+
+### Modifying Executables
+
+Edit `setup.py` to modify executable configurations:
+
+```python
+executables = [
+    Executable(
+        script="MultiWorld.py",
+        target_name="MultiWorld.exe",
+        icon="data/khapicon.ico",
+        base="Win32GUI",  # GUI mode
+        # base=None,      # Console mode
+    ),
+    # ... other executables
+]
+```
+
+### Adding Files
+
+To include additional files, modify the `include_files` list in `setup.py`:
+
+```python
+"include_files": [
+    ("../data", "data"),
+    ("custom_file.txt", "custom_file.txt"),
+    ("custom_dir", "custom_dir"),
+]
+```
+
+### Package Configuration
+
+Modify package includes/excludes in `setup.py`:
+
+```python
+"packages": [
+    "worlds",
+    "kivy",
+    # Add more packages here
+],
+"excludes": [
+    "Cython",
+    "pytest",
+    # Add packages to exclude here
+]
+```
+
+## Dependencies
+
+### Required Python Packages
+
+See `requirements.txt` for the complete list. Key dependencies include:
+- cx-Freeze>=6.15.0
+- kivy>=2.3.1
+- kivymd>=2.0.1.dev0
+- websockets>=13.0.1,<14
+- PyYAML>=6.0.2
+- numpy>=1.26.1
+- Pillow>=11.2.1
+
+### System Dependencies
+
+- **Windows**: Visual Studio Build Tools (for some packages)
+- **Linux**: Development headers (python3-dev, etc.)
+- **macOS**: Xcode Command Line Tools
+
+## Contributing
+
+When modifying the build system:
+
+1. Test on multiple platforms if possible
+2. Update this README with any changes
+3. Ensure backward compatibility
+4. Add appropriate error handling
+
+## License
+
+This build system is part of MultiWorldGG and is licensed under the same terms as the main project.

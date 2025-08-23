@@ -22,9 +22,15 @@ if not is_frozen():
     worlds_modules_dir = os.path.abspath(os.path.join("worlds"))
     if worlds_modules_dir not in sys.path:
         sys.path.insert(0, worlds_modules_dir)
+    gui_modules_dir = os.path.abspath(os.path.join("gui", "mwgg_gui"))
+    if gui_modules_dir not in sys.path:
+        sys.path.insert(0, gui_modules_dir)
         
-os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"venv","Lib","site-packages","kivy","data")
-os.environ["KIVY_HOME"] = os.path.join(local_path(),"data", "kivy_home")
+if is_frozen():
+    os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"lib", "kivy")
+else:
+    os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"data", "kivy")
+os.environ["KIVY_HOME"] = os.path.join(local_path(),"data")
 os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
 
 logger = logging.getLogger("MultiWorld")

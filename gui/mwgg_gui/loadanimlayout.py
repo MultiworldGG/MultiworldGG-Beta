@@ -25,11 +25,7 @@ MIN_SPEED = 0.016  # Fastest speed (60fps)
 MAX_SPEED = 0.050   # Slowest speed (10fps)
 DEFAULT_SPEED = 0.040  # Default speed (40ms)
 
-try:
-    img_path = os.path.join(os.getenv("KIVY_HOME"),"images", "loading_animation.png")
-except:
-    img_path = os.path.join(os.path.dirname(__file__), "images", "loading_animation.png")
-
+img_path = os.path.join(os.getenv("KIVY_DATA_DIR"),"images", "loading_animation.png")
 
 class MWGGLoadingLayout(MDRelativeLayout):
     frames = ListProperty([])
