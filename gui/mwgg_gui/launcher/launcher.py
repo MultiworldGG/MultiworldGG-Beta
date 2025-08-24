@@ -37,13 +37,13 @@ from typing import Any
 
 from kivy.clock import Clock
 from kivy.app import App
-from data.game_index import GameIndex
+from mwgg_gui.game_index import GameIndex
 
 from mwgg_gui.overrides.expansionlist import *
 from mwgg_gui.components.bottomappbar import BottomAppBar
 from mwgg_gui.launcher.launcher_sliver_appbar import LauncherSliverAppbar
 
-from Utils import discover_and_launch_module
+from Utils import discover_and_launch_module, get_available_worlds
 
 game_index = GameIndex()
 logger = logging.getLogger("Client")
@@ -350,6 +350,8 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     important_appbar: MDSliverAppbar
     launcher_view: LauncherView
     game_filter: list
+    game_index: GameIndex
+    available_games: list
     game_tag_filter: StringProperty
     bottom_appbar: BottomAppBar
     selected_game: tuple[str, str] = ("", "")
@@ -364,7 +366,8 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.game_tag_filter = "popular"
         self.selected_game = ""
         self.app = App.get_running_app()
-
+        self.available_games = get_available_worlds()
+        self.game_index = GameIndex()
         # Load favorite games from config
         self.load_favorite_games()
 
@@ -411,8 +414,8 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         Clock.schedule_once(lambda dt: self.populate_favorites(), 0.2)
 
     async def set_game_list(self):
-        game_index = GameIndex()
-        matching_games = game_index.search(self.game_tag_filter)
+        matching_games = self.game_index.search(self.game_tag_filter)
+        matching_games = [game for game in matching_games if game in self.available_games]
         self.games_mdlist.clear_widgets()
         for module_name, game_data in matching_games.items():
             await asynckivy.sleep(0)

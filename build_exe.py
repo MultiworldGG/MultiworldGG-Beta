@@ -81,9 +81,6 @@ def install_wheels():
 def update_modules():
     """Update modules using ModuleUpdate"""
     try:
-        import os
-        # Set environment variable to skip world requirements installation
-        os.environ["SKIP_REQUIREMENTS_UPDATE"] = "1"
         import ModuleUpdate
         print("Updating modules...")
         ModuleUpdate.update(yes=True)

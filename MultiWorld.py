@@ -41,16 +41,28 @@ logger = logging.getLogger("MultiWorld")
 def launch_splash_screen():
     """Launch the splash screen as a separate process"""
     try:
-        # Launch the splash screen process using the installed script
-        if sys.platform == "win32":
-            splash_process = subprocess.Popen(
-                [sys.executable, "-m", "splashscreen"],
-                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
-            )
+        if is_frozen():
+            # When frozen, call the splashscreen executable directly
+            if sys.platform == "win32":
+                splash_exe = os.path.join(local_path(), "lib", "bin", "splashscreen.exe")
+                splash_process = subprocess.Popen(
+                    [splash_exe],
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+                )
+            else:
+                splash_exe = os.path.join(local_path(), "lib", "bin", "splashscreen")
+                splash_process = subprocess.Popen([splash_exe])
         else:
-            splash_process = subprocess.Popen(
-                [sys.executable, "-m", "splashscreen"]
-            )
+            # When not frozen, use Python module execution
+            if sys.platform == "win32":
+                splash_process = subprocess.Popen(
+                    [sys.executable, "-m", "splashscreen"],
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+                )
+            else:
+                splash_process = subprocess.Popen(
+                    [sys.executable, "-m", "splashscreen"]
+                )
         
         logging.info(f"Splash screen launched with PID: {splash_process.pid}")
         return splash_process

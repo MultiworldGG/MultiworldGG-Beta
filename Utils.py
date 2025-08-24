@@ -121,20 +121,14 @@ def game_names() -> typing.List[str]:
     return _worlds_to_load
 
 def get_module_for_game(game_name: str) -> str:
-    from data.game_index import GAMES_DATA
-    for game, game_data in GAMES_DATA.items():
-        if game_data['game_name'] == game_name:
-            return "worlds.{}".format(game)
-    return None
+    from mwgg_gui.game_index import GameIndex
+    return GameIndex.get_module_for_game(game_name)
 
 def get_available_worlds() -> typing.List[str]:
     """Get a list of all of the available worlds"""
 
-    available_worlds = []
-    entry_points = importlib.metadata.entry_points(group="worlds")
-    for entrypoint in entry_points:
-        if "worlds" in entrypoint.name and entrypoint.name not in available_worlds:
-            available_worlds.append(entrypoint.name)
+    from ModuleUpdate import find_world_modules
+    available_worlds = find_world_modules()
     return available_worlds
 
 def discover_and_launch_module(module_name: str, **kwargs) -> None:

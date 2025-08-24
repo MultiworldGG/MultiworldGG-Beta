@@ -147,7 +147,7 @@ def build_client():
 The launcher screen will use the pre-generated GameIndex.
 
 ```python
-from data.game_index import GameIndex
+from mwgg_gui.game_index import GameIndex
 
 class LauncherScreen(MDScreen, ThemableBehavior):
     def __init__(self, **kwargs):

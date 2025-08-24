@@ -10,12 +10,12 @@ authors = [
     {name = "DelilahIsDidi"},
     {name = "TreZc0"}
 ]
+license = "GPL-3.0-or-later AND (MIT)"
 readme = "README.md"
 requires-python = ">=3.12"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Topic :: Games/Entertainment",
@@ -69,6 +69,7 @@ multiworld-gui = "MultiWorld:main"
 packages = [
     "kivy",
     "kivymd",
+    "kivy_deps",
     "websockets",
     "cymem",
     "bsdiff4",
@@ -107,26 +108,28 @@ excludes = [
     "pandas",
     "matplotlib",
     "scipy",
+    "pygments",
     "pytest",
     "unittest",
     "test",
     "tests",
     "__pycache__",
-    ".pytest_cache"
+    ".pytest_cache",
+    "gui"
 ]
 
 zip_include_packages = ["*"]
-zip_exclude_packages = ["worlds", "kivymd", "kivy", "mwgg_gui"]
+zip_exclude_packages = ["worlds", "kivymd", "kivy", "kivy_deps", "mwgg_gui"]
 include_msvcr = false
 replace_paths = ["*."]
 optimize = 1
 
 [tool.cx_Freeze.build_exe]
 include_files = [
-    ["../data", "data"],
+    ["data", "data"],
     ["LICENSE", "LICENSE"],
     ["README.md", "README.md"],
-    ["_persistent_storage.yaml", "_persistent_storage.yaml"],
+    ["*.yaml", "*.yaml"],
     ["kivy/include", "lib/kivy/include"],
     ["kivy/data", "lib/kivy/data"]
 ]
@@ -167,3 +170,9 @@ target_name = "MultiWorldGGClientDebug.exe"
 icon = "data/khapicon.ico"
 shortcut_name = "MultiWorldGG Debug"
 shortcut_dir = "DesktopFolder"
+
+[[tool.cx_Freeze.executables.splashscreen]]
+script = "gui/mwgg_gui/splashscreen.py"
+target_name = "lib/bin/splashscreen.exe"
+icon = "data/icon.ico"
+base = "Win32GUI"

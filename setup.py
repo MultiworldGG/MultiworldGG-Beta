@@ -10,8 +10,15 @@ import subprocess
 import shutil
 from pathlib import Path
 
-# Set environment variable to skip world requirements installation immediately
-os.environ["SKIP_REQUIREMENTS_UPDATE"] = "1"
+# Because worlds is a namespace, it wants to include the entire folder, and there's no
+# way to exclude it but also include the wheels worlds packages.
+# Rename the folder, and we'll put it back afterwards.
+
+if os.path.exists("worlds"):
+    print("Renaming worlds folder to build_is_running_worlds to avoid cx_Freeze including it")
+    os.rename("worlds", "build_is_running_worlds")
+    os.environ["MWGG_BUILD_IS_RUNNING"] = "1"
+
 
 from cx_Freeze import setup, Executable, build_exe
 
@@ -58,6 +65,7 @@ build_exe_options = {
     "excludes": [
         "Cython", 
         "PySide2", 
+        "pygments",
         "pandas",
         "matplotlib",
         "scipy",
@@ -66,12 +74,14 @@ build_exe_options = {
         "test",
         "tests",
         "__pycache__",
-        ".pytest_cache"
+        ".pytest_cache",
+        "build_is_running_worlds",
+        "gui"
     ],
     "zip_include_packages": ["*"],
-    "zip_exclude_packages": ["worlds", "kivymd", "mwgg_gui", "kivy"],
+    "zip_exclude_packages": ["worlds", "kivymd", "mwgg_gui", "kivy", "kivy_deps"],
     "include_files": [
-        ("../data", "data"),
+        ("data", "data"),
         ("LICENSE", "LICENSE"),
         ("README.md", "README.md"),
         ("_persistent_storage.yaml", "_persistent_storage.yaml"),
@@ -122,6 +132,12 @@ executables = [
         base=None,  # Console application
         shortcut_name="MultiWorldGGPatch",
         shortcut_dir="DesktopFolder"
+    ),
+    Executable(
+        script="gui/mwgg_gui/splashscreen.py",
+        target_name="lib/bin/splashscreen.exe" if is_windows else "lib/bin/splashscreen",
+        icon="data/icon.ico" if is_windows else "data/icon.png", 
+        base="Win32GUI" if is_windows else None,  # Console application
     )
 ]
 
@@ -145,13 +161,23 @@ def install_wheels():
         print("Installing wheels from default_wheels...")
         for wheel_file in wheels_dir.glob("*.whl"):
             try:
+                # First try with dependencies to ensure all required packages are installed
                 subprocess.check_call([
                     sys.executable, "-m", "pip", "install", 
-                    str(wheel_file), "--no-deps", "--force-reinstall"
+                    str(wheel_file), "--force-reinstall"
                 ])
-                print(f"Installed {wheel_file.name}")
+                print(f"Installed {wheel_file.name} with dependencies")
             except subprocess.CalledProcessError as e:
-                print(f"Failed to install {wheel_file.name}: {e}")
+                print(f"Failed to install {wheel_file.name} with dependencies: {e}")
+                # Fallback to no-deps if dependency installation fails
+                try:
+                    subprocess.check_call([
+                        sys.executable, "-m", "pip", "install", 
+                        str(wheel_file), "--no-deps", "--force-reinstall"
+                    ])
+                    print(f"Installed {wheel_file.name} without dependencies")
+                except subprocess.CalledProcessError as e2:
+                    print(f"Failed to install {wheel_file.name}: {e2}")
 
 def install_requirements():
     """Install requirements from main requirements.txt only"""
@@ -180,9 +206,6 @@ def pre_build_setup():
     
     # Update modules (skip world requirements)
     try:
-        import os
-        # Set environment variable to skip world requirements installation
-        os.environ["SKIP_REQUIREMENTS_UPDATE"] = "1"
         import ModuleUpdate
         ModuleUpdate.update(yes=True)
         print("Module update completed")
@@ -199,7 +222,7 @@ def post_build_setup(build_exe_dir):
             print("Including SDL2 and GLEW dependencies...")
             for folder in sdl2.dep_bins + glew.dep_bins:
                 if os.path.exists(folder):
-                    dest_path = os.path.join(build_exe_dir, os.path.basename(folder))
+                    dest_path = os.path.join(build_exe_dir, "share", folder.rsplit(os.path.sep, 2)[1])
                     if os.path.exists(dest_path):
                         shutil.rmtree(dest_path)
                     shutil.copytree(folder, dest_path)
@@ -208,29 +231,7 @@ def post_build_setup(build_exe_dir):
                     print(f"Warning: SDL2/GLEW folder not found: {folder}")
         except ImportError as e:
             print(f"Warning: kivy_deps not available: {e}")
-            print("Attempting to find SDL2 DLLs manually...")
-            
-            # Try to find SDL2 DLLs in common locations
-            import kivy
-            kivy_dir = os.path.dirname(kivy.__file__)
-            sdl2_dlls = [
-                os.path.join(kivy_dir, "core", "window", "_window_sdl2.pyd"),
-                os.path.join(kivy_dir, "core", "audio", "_audio_sdl2.pyd"),
-                os.path.join(kivy_dir, "core", "image", "_img_sdl2.pyd"),
-            ]
-            
-            # Look for SDL2 DLLs in the system PATH or Kivy installation
-            import ctypes.util
-            sdl2_dll = ctypes.util.find_library("SDL2")
-            if sdl2_dll:
-                print(f"Found SDL2 DLL at: {sdl2_dll}")
-                # Copy SDL2 DLL to build directory
-                dest_dll = os.path.join(build_exe_dir, "SDL2.dll")
-                shutil.copy2(sdl2_dll, dest_dll)
-                print(f"Copied SDL2.dll to build directory")
-            else:
-                print("SDL2 DLL not found in system PATH")
-                print("SDL2 and GLEW dependencies may not be included properly")
+
         except Exception as e:
             print(f"Error copying SDL2/GLEW dependencies: {e}")
 
@@ -244,6 +245,10 @@ class CustomBuildExe(build_exe):
         # Get the build directory
         build_dir = self.build_exe
         if build_dir:
+            if os.environ.get("MWGG_BUILD_IS_RUNNING"):
+                print("Renaming worlds folder back to worlds")
+                os.rename("build_is_running_worlds", "worlds")
+                del os.environ["MWGG_BUILD_IS_RUNNING"]
             print(f"Build completed in: {build_dir}")
             # Run post-build setup
             post_build_setup(build_dir)

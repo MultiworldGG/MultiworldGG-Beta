@@ -4,9 +4,9 @@ import subprocess
 import multiprocessing
 import warnings
 import json
-from importlib import metadata
+import urllib.request
 from pathlib import Path
-from typing import List, Set, Optional
+from typing import List, Optional
 
 # Version compatibility checks
 if sys.platform in ("win32", "darwin") and sys.version_info < (3, 12, 0):
@@ -19,8 +19,7 @@ elif sys.version_info < (3, 12, 0):
 # Skip update if environment is frozen/compiled or if not the parent process
 _skip_update = bool(
     getattr(sys, "frozen", False) or 
-    multiprocessing.parent_process() or 
-    os.environ.get("SKIP_REQUIREMENTS_UPDATE", "").lower() in ("1", "true", "yes")
+    multiprocessing.parent_process()
 )
 
 update_ran = _skip_update
@@ -159,7 +158,7 @@ def check_for_updates() -> List[str]:
     try:
         response = subprocess.run(
             [sys.executable, "-m", "pip", "list", "-o", "--format", "json", 
-             "-i", "https://pypi.python.org/simple", "--extra-index-url", 
+             "-i", "https://pypi.org/simple", "--extra-index-url", 
              "https://pypi.multiworld.gg/mwgg/apworlds/+simple"],
             capture_output=True, text=True, timeout=45
         )
@@ -220,6 +219,40 @@ def check_for_updates() -> List[str]:
         print(f"Warning: Could not check for updates: {e}")
         return []
 
+
+def find_world_modules() -> List[str]:
+    """Find all world modules in the multiworld repository."""
+    try:
+        # Fetch the simple index page from the multiworld PyPI repository
+        url = "https://pypi.multiworld.gg/mwgg/apworlds/+simple"
+        
+        # Set up request with timeout
+        req = urllib.request.Request(url)
+        req.add_header('User-Agent', 'MultiWorldGG/1.0')
+        
+        with urllib.request.urlopen(req, timeout=15) as response:
+            html_content = response.read().decode('utf-8')
+        
+        # Parse the HTML to extract package names
+        # The simple index format is: <a href="package_name/">package_name</a>
+        import re
+        package_pattern = r'<a href="([^/"]+)/">\1</a>'
+        packages = re.findall(package_pattern, html_content)
+        
+        # Filter for world packages and strip the "worlds-" prefix
+        world_modules = []
+        for package in packages:
+            if package.startswith("worlds-"):
+                world_modules.append(package[7:])  # Remove "worlds-" prefix
+        
+        return world_modules
+        
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
+        print(f"Warning: Failed to fetch world modules from {url}: {e}")
+        return []
+    except Exception as e:
+        print(f"Warning: Unexpected error while fetching world modules: {e}")
+        return []
 
 def install_world(world: str) -> None:
     """Install a single world from the multiworld repository."""
