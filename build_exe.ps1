@@ -172,7 +172,7 @@ if ($Verify) {
     Write-Host "Checking build output in: $($exeDir.FullName)" -ForegroundColor Cyan
     
     # Check for expected executables
-    $expectedExes = @("MultiWorld.exe", "MultiServer.exe", "Generate.exe", "Patch.exe", "MultiWorldDebug.exe")
+    $expectedExes = @("MultiWorldGG.exe", "MultiWorldGGClientDebug.exe", "MultiWorldGGServer.exe", "MultiWorldGGGenerate.exe", "MultiWorldGGPatch.exe")
     $missingExes = @()
     
     foreach ($exe in $expectedExes) {

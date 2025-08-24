@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mwgg_gui"
-version = "0.0.1a"
+version = "0.0.2a"
 description = "GUI package for MultiWorldGG"
 authors = [
     {name = "DelilahIsDidi"}
@@ -25,9 +25,3 @@ splashscreen = "mwgg_gui.splashscreen:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["mwgg_gui*"]
-
-[tool.setuptools.package-data]
-mwgg_gui = [
-    "images/*",
-    "fonts/*"
-]

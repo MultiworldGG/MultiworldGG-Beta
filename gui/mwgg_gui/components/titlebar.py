@@ -25,6 +25,7 @@ from kivy.lang import Builder
 archipelago_name = "multiworld.gg"    ## need to fix in the future
 
 KV = '''
+#:import os os
 <TitleBarButton>:
     style: "standard"
     adaptive_size: True
@@ -53,7 +54,7 @@ KV = '''
     Image:
         halign: "left"
         valign: "top"
-        source: os.path.join(os.getenv["KIVY_DATA_DIR"], "images", "titlebards.png")
+        source: os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "titlebards.png")
         size: self.texture_size
         size_hint: None,None
 

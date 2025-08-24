@@ -71,16 +71,16 @@ Builder.load_string('''
 # and will be the input for primary_palette
 # The colors in hex are actual color for the theme
 THEME_OPTIONS = {
-    "Light": [("Gray","97f0ff, #default
-              ("Chocolate","ffdbc9,
-              ("Goldenrod","ffdea0,
-              ("Pink","ffd9df,
-              ("Olivedrab","cbef86],
-    "Dark": [("Purple","551353, #default
-             ("Pink","5f112a,
-             ("Brown","5f1414,
-             ("Cyan","003737,
-             ("Green","003a00]
+    "Light": [("Gray","97f0ff"), #default
+              ("Chocolate","ffdbc9"),
+              ("Goldenrod","ffdea0"),
+              ("Pink","ffd9df"),
+              ("Olivedrab","cbef86")],
+    "Dark": [("Purple","551353"), #default
+             ("Pink","5f112a"),
+             ("Brown","5f1414"),
+             ("Cyan","003737"),
+             ("Green","003a00")]
 }
 
 @dataclass
@@ -212,8 +212,8 @@ class DefaultTheme(ThemableBehavior):
         """Recolor the atlas image by replacing pixels close to target colors with their respective theme colors.
         """
         try:
-            atlas_path = os.path.join(os.getenv["KIVY_DATA_DIR"], "images", "defaulttheme-0.png")
-            output_path = os.path.join(os.getenv["KIVY_HOME"], "images", "defaulttheme-0.png")
+            atlas_path = os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "defaulttheme-orig.png")
+            output_path = os.path.join(os.getenv("KIVY_DATA_DIR"), "images","defaulttheme-0.png")
 
             # Open and convert the image
             atlas = Image.open(atlas_path)
@@ -261,7 +261,7 @@ class DefaultTheme(ThemableBehavior):
             new_atlas.save(output_path)
             
         except Exception as e:
-            print(f"Error recoloring atlas: {str(e)}
+            print(f"Error recoloring atlas: {str(e)}")
             # You might want to log this error or handle it differently
 
     def init_global_theme(self):
@@ -302,48 +302,49 @@ class DefaultTheme(ThemableBehavior):
 ### Full unicode fonts, finally
 def RegisterFonts(app: MDApp, monospace_font: str = 'Argon'):
     LabelBase.register('Inter',
-                        "Inter-Regular.ttf,
-                        "Inter-Italic.ttf,
-                        "Inter-Bold.ttf,
-                        "Inter-BoldItalic.ttf")
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","Inter-Regular.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","Inter-Italic.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","Inter-Bold.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","Inter-BoldItalic.ttf"))
     LabelBase.register('Neon',
-                        "MonaspaceNeonFrozen-Regular.ttf,
-                        "MonaspaceNeonFrozen-Italic.ttf,
-                        "MonaspaceNeonFrozen-ExtraBold.ttf,
-                        "MonaspaceNeonFrozen-ExtraBoldItalic.ttf")
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceNeonFrozen-Regular.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceNeonFrozen-Italic.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceNeonFrozen-ExtraBold.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceNeonFrozen-ExtraBoldItalic.ttf")),
     LabelBase.register('Argon',
-                        "MonaspaceArgonFrozen-Regular.ttf,
-                        "MonaspaceArgonFrozen-Italic.ttf,
-                        "MonaspaceArgonFrozen-ExtraBold.ttf,
-                        "MonaspaceArgonFrozen-ExtraBoldItalic.ttf")
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceArgonFrozen-Regular.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceArgonFrozen-Italic.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceArgonFrozen-ExtraBold.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceArgonFrozen-ExtraBoldItalic.ttf")),
     LabelBase.register('Xenon',
-                        "MonaspaceXenonFrozen-Regular.ttf,
-                        "MonaspaceXenonFrozen-Italic.ttf,
-                        "MonaspaceXenonFrozen-ExtraBold.ttf,
-                        "MonaspaceXenonFrozen-ExtraBoldItalic.ttf")
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceXenonFrozen-Regular.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceXenonFrozen-Italic.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceXenonFrozen-ExtraBold.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceXenonFrozen-ExtraBoldItalic.ttf")),
     LabelBase.register('Radon',
-                        "MonaspaceRadonFrozen-Regular.ttf,
-                        "MonaspaceRadonFrozen-Italic.ttf,
-                        "MonaspaceRadonFrozen-ExtraBold.ttf,
-                        "MonaspaceRadonFrozen-ExtraBoldItalic.ttf")
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceRadonFrozen-Regular.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceRadonFrozen-Italic.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceRadonFrozen-ExtraBold.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceRadonFrozen-ExtraBoldItalic.ttf")),
     LabelBase.register('Krypton',
-                        "MonaspaceKryptonFrozen-Regular.ttf",
-                        "MonaspaceKryptonFrozen-Italic.ttf",
-                        "MonaspaceKryptonFrozen-ExtraBold.ttf",
-                        "MonaspaceKryptonFrozen-ExtraBoldItalic.ttf")
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceKryptonFrozen-Regular.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceKryptonFrozen-Italic.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceKryptonFrozen-ExtraBold.ttf"),
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","MonaspaceKryptonFrozen-ExtraBoldItalic.ttf"))
     LabelBase.register('GothicA1',
-                        "GothicA1-Regular.ttf",
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","GothicA1-Regular.ttf"),
                         None,
-                        "GothicA1-Bold.ttf",
+                        os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","GothicA1-Bold.ttf"),
                         None)
     LabelBase.register('Mincho',
-                       "Mincho-Regular.ttf",
-
+                       os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","Mincho-Regular.ttf"),
+                       )
     LabelBase.register('LibreFranklin',
-                       "LibreFranklin-ExtraBold.ttf",
-
+                       os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","LibreFranklin-ExtraBold.ttf"),
+                       )
     LabelBase.register('Icons',
-                       fn_regular="materialdesignicons-fa-webfont.ttf")
+                       fn_regular=os.path.join(os.getenv("KIVY_DATA_DIR"),"fonts","materialdesignicons-fa-webfont.ttf"),
+                       )
     app.theme_cls.font_styles = {
         "Icon": {
             "large": {

@@ -15,8 +15,7 @@ __all__ = ('LauncherScreen',
            'LauncherView', 
            'LauncherAuthTextField', 
            'FavoritesCarousel', 
-           'Favorite',
-           'TagChip',
+           'Favorite'
            )
 import asynckivy
 from kivy.metrics import dp
@@ -45,8 +44,6 @@ from mwgg_gui.components.bottomappbar import BottomAppBar
 from mwgg_gui.launcher.launcher_sliver_appbar import LauncherSliverAppbar
 
 from Utils import discover_and_launch_module
-
-import sys
 
 game_index = GameIndex()
 logger = logging.getLogger("Client")

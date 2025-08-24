@@ -978,7 +978,7 @@ class CommonContext(InitContext):
         
         # Show error message box using MDDialog
         if self.ui:
-            from gui.dialog import show_error_dialog
+            from mwgg_gui.components.dialog import show_error_dialog
             error_text = str(exc_info[1]) if exc_info[1] else msg
             self._messagebox_connection_loss = show_error_dialog("Connection Error", error_text + "\n" + error_msg)
         else:
@@ -995,7 +995,7 @@ class CommonContext(InitContext):
         ex. `logging_pairs.append(("Foo", "Bar"))`
         will add a "Bar" tab which follows the logger returned from `logging.getLogger("Foo")`
         """
-        from gui.Gui import MultiMDApp
+        from Gui import MultiMDApp
         return MultiMDApp
 
     def run_cli(self):

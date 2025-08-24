@@ -11,7 +11,6 @@ authors = [
     {name = "TreZc0"}
 ]
 readme = "README.md"
-license = {text = "GPL-3.0-or-later"}
 requires-python = ">=3.12"
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -88,6 +87,7 @@ packages = [
     "schema",
     "asynckivy",
     "mwgg_gui",
+    "worlds",
     "PIL"
 ]
 
@@ -112,8 +112,7 @@ excludes = [
     "test",
     "tests",
     "__pycache__",
-    ".pytest_cache",
-    "worlds"
+    ".pytest_cache"
 ]
 
 zip_include_packages = ["*"]
@@ -127,7 +126,9 @@ include_files = [
     ["../data", "data"],
     ["LICENSE", "LICENSE"],
     ["README.md", "README.md"],
-    ["_persistent_storage.yaml", "_persistent_storage.yaml"]
+    ["_persistent_storage.yaml", "_persistent_storage.yaml"],
+    ["kivy/include", "lib/kivy/include"],
+    ["kivy/data", "lib/kivy/data"]
 ]
 
 [tool.cx_Freeze.executables]

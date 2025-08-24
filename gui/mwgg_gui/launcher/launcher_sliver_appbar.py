@@ -19,6 +19,7 @@ from kivymd.uix.textfield import MDTextField
 import asynckivy
 
 Builder.load_string('''
+#:import os os
 <LauncherSliverAppbar>:
     pos_hint: {"x": 0, "top": 1}
     width: dp(260)
@@ -34,7 +35,7 @@ Builder.load_string('''
             tag: "logo"
             size_hint: 1,1
             Image:
-                source: os.path.join(os.getenv["KIVY_DATA_DIR"], "images", "logo_bg.png")
+                source: os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "logo_bg.png")
                 pos_hint: {"center_y": 0.5}
                 fit_mode: "scale-down"
     SearchBar:
@@ -85,13 +86,7 @@ class SearchBar(MDTopAppBar):
             pos_hint = {"center_y": 0.5}
         )
         self.add_widget(self.search_box)
-        Clock.schedule_once(lambda x: self.remove_widgets())
         self.search_box.bind(on_text_validate=self.on_enter)
-    
-    def remove_widgets(self):
-        for child in self.children:
-            if not isinstance(child, MDTextField):
-                self.remove_widget(child)
 
     def add_widget(self, widget):
         if isinstance(widget, MDTextField):

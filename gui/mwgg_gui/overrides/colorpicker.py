@@ -219,7 +219,7 @@ class MWColorPicker(MDBoxLayout):
         self.height = 250  # Set a fixed height for the color picker
         
         # Create and configure the image
-        self.image = FitImage(source=os.path.join(os.getenv["KIVY_DATA_DIR"], "images", "palette.png"), fit_mode='scale-down')  
+        self.image = FitImage(source=os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "palette.png"), fit_mode='scale-down')  
         # Create and configure the info layout
         self.info_layout = ColorInfoLayout(old_hex_color=self.old_hex_color)
         

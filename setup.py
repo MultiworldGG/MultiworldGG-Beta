@@ -13,7 +13,7 @@ from pathlib import Path
 # Set environment variable to skip world requirements installation immediately
 os.environ["SKIP_REQUIREMENTS_UPDATE"] = "1"
 
-from cx_Freeze import setup, Executable
+from cx_Freeze import setup, Executable, build_exe
 
 # Import project utilities
 sys.path.insert(0, os.path.dirname(__file__))
@@ -24,6 +24,7 @@ build_exe_options = {
     "packages": [
         "kivy", 
         "kivymd", 
+        "kivy_deps",
         "websockets", 
         "cymem", 
         "bsdiff4",
@@ -70,20 +71,14 @@ build_exe_options = {
     "zip_include_packages": ["*"],
     "zip_exclude_packages": ["worlds", "kivymd", "mwgg_gui", "kivy"],
     "include_files": [
-        # Data directory
         ("../data", "data"),
-        # License and README files
         ("LICENSE", "LICENSE"),
         ("README.md", "README.md"),
-        # Application configuration
         ("_persistent_storage.yaml", "_persistent_storage.yaml"),
-        # Kivy data files - copy to the path Kivy expects in the frozen executable
-        # SNI directory 
         ("data/SNI", "SNI") if os.path.exists("data/SNI") else None,
-        # EnemizerCLI directory (if exists)
         ("EnemizerCLI", "EnemizerCLI") if os.path.exists("EnemizerCLI") else None,
-        ("data/kivy/include", "lib/kivy/include"),
-        ("data/kivy/data", "lib/kivy/data"),
+        ("kivy/include", "lib/kivy/include"),
+        ("kivy/data", "lib/kivy/data"),
     ],
     "include_msvcr": False,
     "replace_paths": ["*."],
@@ -194,6 +189,65 @@ def pre_build_setup():
     except Exception as e:
         print(f"Module update failed: {e}")
 
+def post_build_setup(build_exe_dir):
+    """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
+    print("Running post-build setup...")
+    
+    if is_windows:
+        try:
+            from kivy_deps import sdl2, glew  # type: ignore
+            print("Including SDL2 and GLEW dependencies...")
+            for folder in sdl2.dep_bins + glew.dep_bins:
+                if os.path.exists(folder):
+                    dest_path = os.path.join(build_exe_dir, os.path.basename(folder))
+                    if os.path.exists(dest_path):
+                        shutil.rmtree(dest_path)
+                    shutil.copytree(folder, dest_path)
+                    print(f"Copied {folder} -> {dest_path}")
+                else:
+                    print(f"Warning: SDL2/GLEW folder not found: {folder}")
+        except ImportError as e:
+            print(f"Warning: kivy_deps not available: {e}")
+            print("Attempting to find SDL2 DLLs manually...")
+            
+            # Try to find SDL2 DLLs in common locations
+            import kivy
+            kivy_dir = os.path.dirname(kivy.__file__)
+            sdl2_dlls = [
+                os.path.join(kivy_dir, "core", "window", "_window_sdl2.pyd"),
+                os.path.join(kivy_dir, "core", "audio", "_audio_sdl2.pyd"),
+                os.path.join(kivy_dir, "core", "image", "_img_sdl2.pyd"),
+            ]
+            
+            # Look for SDL2 DLLs in the system PATH or Kivy installation
+            import ctypes.util
+            sdl2_dll = ctypes.util.find_library("SDL2")
+            if sdl2_dll:
+                print(f"Found SDL2 DLL at: {sdl2_dll}")
+                # Copy SDL2 DLL to build directory
+                dest_dll = os.path.join(build_exe_dir, "SDL2.dll")
+                shutil.copy2(sdl2_dll, dest_dll)
+                print(f"Copied SDL2.dll to build directory")
+            else:
+                print("SDL2 DLL not found in system PATH")
+                print("SDL2 and GLEW dependencies may not be included properly")
+        except Exception as e:
+            print(f"Error copying SDL2/GLEW dependencies: {e}")
+
+class CustomBuildExe(build_exe):
+    """Custom build command that includes post-build setup"""
+    
+    def run(self):
+        # Run the normal build
+        super().run()
+        
+        # Get the build directory
+        build_dir = self.build_exe
+        if build_dir:
+            print(f"Build completed in: {build_dir}")
+            # Run post-build setup
+            post_build_setup(build_dir)
+
 if __name__ == "__main__":
     # Run pre-build setup
     pre_build_setup()
@@ -205,5 +259,6 @@ if __name__ == "__main__":
         description=f"{instance_name} - MultiWorld.GG - More, and Faster",
         author="DelilahIsDidi, TreZc0",
         options={"build_exe": build_exe_options},
-        executables=executables
+        executables=executables,
+        cmdclass={"build_exe": CustomBuildExe}
     )

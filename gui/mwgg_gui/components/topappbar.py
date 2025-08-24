@@ -124,7 +124,6 @@ class TopAppBar(MDTopAppBar):
         self.timer = self.ids.timer
         self.address_bar_label = self.ids.address_bar_label
         self.item_data = None
-        Clock.schedule_once(lambda x: self.remove_widget(self.ids.title_box), 0.1)
 
     def toggle_timer(self):
         """Toggle timer on/off (pause/resume)"""

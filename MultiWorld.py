@@ -27,9 +27,12 @@ if not is_frozen():
         sys.path.insert(0, gui_modules_dir)
         
 if is_frozen():
-    os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"lib", "kivy")
+    os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"lib", "kivy", "data")
+    splashscreen_dir = os.path.join(local_path(),"lib","mwgg_gui")
+    if splashscreen_dir not in sys.path:
+        sys.path.insert(0, splashscreen_dir)
 else:
-    os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"data", "kivy")
+    os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"kivy", "data")
 os.environ["KIVY_HOME"] = os.path.join(local_path(),"data")
 os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
 
@@ -41,12 +44,12 @@ def launch_splash_screen():
         # Launch the splash screen process using the installed script
         if sys.platform == "win32":
             splash_process = subprocess.Popen(
-                ["splashscreen"],
+                [sys.executable, "-m", "splashscreen"],
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
             )
         else:
             splash_process = subprocess.Popen(
-                ["splashscreen"]
+                [sys.executable, "-m", "splashscreen"]
             )
         
         logging.info(f"Splash screen launched with PID: {splash_process.pid}")
@@ -129,6 +132,9 @@ def run_client(*args):
     asyncio.run(main(args))
     colorama.deinit()
     
+# from ModuleUpdate import update
+# update()
+
 if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(logging.DEBUG)
     run_client(*sys.argv[1:])

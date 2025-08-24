@@ -29,6 +29,7 @@ import typing
 import asynckivy
 
 KV = '''
+#:import os os
 <HintFeaturebar>:
     hints_hero_to: hints_hero_to
     MDHeroTo:
@@ -37,7 +38,7 @@ KV = '''
         size: dp(256), dp(161)
         pos_hint: {"center_x": 0.5, "top": 1}
         FitImage:
-            source: os.path.join(os.getenv["KIVY_DATA_DIR"], "images", "logo_bg.png")
+            source: os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "logo_bg.png")
             size_hint: None,None
             size: dp(128), dp(80)
             pos_hint: {"x": 0, "top": 1}
@@ -152,8 +153,6 @@ class HintLayout(MDBoxLayout):
         )
 
         self.show_all_hints_switch = MDSwitch(
-            size_hint_y=None,
-            height=dp(40),
             icon_inactive="eye-off",
             icon_active="eye",
             on_active=self.on_show_all_hints
