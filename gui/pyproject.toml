@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mwgg_gui"
-version = "0.0.2a"
+version = "0.0.4a"
 description = "GUI package for MultiWorldGG"
 authors = [
     {name = "DelilahIsDidi"}
@@ -18,9 +18,6 @@ dependencies = [
     "asynckivy>=0.6.4",
     "numpy>=2.3.2"
 ]
-
-[project.scripts]
-splashscreen = "mwgg_gui.splashscreen:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

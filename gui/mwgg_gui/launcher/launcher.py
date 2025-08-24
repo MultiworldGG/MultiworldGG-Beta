@@ -415,7 +415,10 @@ class LauncherScreen(MDScreen, ThemableBehavior):
 
     async def set_game_list(self):
         matching_games = self.game_index.search(self.game_tag_filter)
-        matching_games = [game for game in matching_games if game in self.available_games]
+        not_in_available_games = [game_module for game_module in matching_games.keys() \
+                                  if game_module not in self.available_games]
+        for game_module in not_in_available_games:
+            matching_games.pop(game_module)
         self.games_mdlist.clear_widgets()
         for module_name, game_data in matching_games.items():
             await asynckivy.sleep(0)

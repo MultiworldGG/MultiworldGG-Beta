@@ -113,7 +113,7 @@ executables = [
         script="MultiServer.py", 
         target_name="MultiWorldGGServer.exe" if is_windows else "MultiWorldGGServer",
         icon="data/icon.ico" if is_windows else "data/icon.png",
-        base=None,  # Console application
+        base=None,
         shortcut_name="MultiWorldGGServer",
         shortcut_dir="DesktopFolder"
     ),
@@ -121,7 +121,7 @@ executables = [
         script="Generate.py",
         target_name="MultiWorldGGGenerate.exe" if is_windows else "MultiWorldGGGenerate", 
         icon="data/icon.ico" if is_windows else "data/icon.png",
-        base=None,  # Console application
+        base=None,
         shortcut_name="MultiWorldGGGenerate",
         shortcut_dir="DesktopFolder"
     ),
@@ -129,15 +129,9 @@ executables = [
         script="Patch.py",
         target_name="MultiWorldGGPatch.exe" if is_windows else "MultiWorldGGPatch",
         icon="data/icon.ico" if is_windows else "data/icon.png", 
-        base=None,  # Console application
+        base=None,
         shortcut_name="MultiWorldGGPatch",
         shortcut_dir="DesktopFolder"
-    ),
-    Executable(
-        script="gui/mwgg_gui/splashscreen.py",
-        target_name="lib/bin/splashscreen.exe" if is_windows else "lib/bin/splashscreen",
-        icon="data/icon.ico" if is_windows else "data/icon.png", 
-        base="Win32GUI" if is_windows else None,  # Console application
     )
 ]
 
@@ -241,7 +235,6 @@ class CustomBuildExe(build_exe):
     def run(self):
         # Run the normal build
         super().run()
-        
         # Get the build directory
         build_dir = self.build_exe
         if build_dir:

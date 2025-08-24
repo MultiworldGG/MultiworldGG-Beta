@@ -7,7 +7,6 @@ import subprocess
 import time
 from importlib import metadata
 
-#os.environ["KCFG_GRAPHICS_WINDOW_STATE"] = "visible"
 os.environ["KIVY_NO_CONSOLELOG"] = "0"
 os.environ["KIVY_NO_FILELOG"] = "0"
 os.environ["KIVY_NO_ARGS"] = "1"
@@ -18,51 +17,39 @@ os.environ["KIVY_LOG_ENABLE"] = "1"
 # apname = "Archipelago" if not Utils.archipelago_name else Utils.archipelago_name
 
 from BaseUtils import local_path, is_frozen
-if not is_frozen():
-    worlds_modules_dir = os.path.abspath(os.path.join("worlds"))
-    if worlds_modules_dir not in sys.path:
-        sys.path.insert(0, worlds_modules_dir)
-    gui_modules_dir = os.path.abspath(os.path.join("gui", "mwgg_gui"))
-    if gui_modules_dir not in sys.path:
-        sys.path.insert(0, gui_modules_dir)
         
 if is_frozen():
     os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"lib", "kivy", "data")
-    splashscreen_dir = os.path.join(local_path(),"lib","mwgg_gui")
-    if splashscreen_dir not in sys.path:
-        sys.path.insert(0, splashscreen_dir)
+    # Set KIVY_DEPS_ROOT for ANGLE dependency
+    os.environ["KIVY_DEPS_ROOT"] = os.path.join(local_path(),"lib")
 else:
     os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"kivy", "data")
+
 os.environ["KIVY_HOME"] = os.path.join(local_path(),"data")
 os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
+
+# Debug logging for Kivy paths
+logging.debug(f"KIVY_DATA_DIR: {os.environ.get('KIVY_DATA_DIR')}")
+logging.debug(f"KIVY_DEPS_ROOT: {os.environ.get('KIVY_DEPS_ROOT')}")
+logging.debug(f"KIVY_HOME: {os.environ.get('KIVY_HOME')}")
+
+from mwgg_splash import main
 
 logger = logging.getLogger("MultiWorld")
 
 def launch_splash_screen():
     """Launch the splash screen as a separate process"""
     try:
-        if is_frozen():
-            # When frozen, call the splashscreen executable directly
-            if sys.platform == "win32":
-                splash_exe = os.path.join(local_path(), "lib", "bin", "splashscreen.exe")
-                splash_process = subprocess.Popen(
-                    [splash_exe],
-                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
-                )
-            else:
-                splash_exe = os.path.join(local_path(), "lib", "bin", "splashscreen")
-                splash_process = subprocess.Popen([splash_exe])
+        # When not frozen, use Python module execution
+        if sys.platform == "win32":
+            splash_process = subprocess.Popen(
+                [sys.executable, "-m", "mwgg_splash"],
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+            )
         else:
-            # When not frozen, use Python module execution
-            if sys.platform == "win32":
-                splash_process = subprocess.Popen(
-                    [sys.executable, "-m", "splashscreen"],
-                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
-                )
-            else:
-                splash_process = subprocess.Popen(
-                    [sys.executable, "-m", "splashscreen"]
-                )
+            splash_process = subprocess.Popen(
+                [sys.executable, "-m", "mwgg_splash"]
+            )
         
         logging.info(f"Splash screen launched with PID: {splash_process.pid}")
         return splash_process

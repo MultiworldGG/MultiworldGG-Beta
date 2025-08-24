@@ -13,6 +13,3 @@ from .constants import (
     CONSOLE_ACTIONS,
     LAUNCHER_ACTIONS,
 )
-from .splashscreen import (
-    SplashScreen,
-)

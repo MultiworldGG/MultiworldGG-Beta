@@ -170,9 +170,3 @@ target_name = "MultiWorldGGClientDebug.exe"
 icon = "data/khapicon.ico"
 shortcut_name = "MultiWorldGG Debug"
 shortcut_dir = "DesktopFolder"
-
-[[tool.cx_Freeze.executables.splashscreen]]
-script = "gui/mwgg_gui/splashscreen.py"
-target_name = "lib/bin/splashscreen.exe"
-icon = "data/icon.ico"
-base = "Win32GUI"
