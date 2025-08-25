@@ -69,7 +69,6 @@ multiworld-gui = "MultiWorld:main"
 packages = [
     "kivy",
     "kivymd",
-    "kivy_deps",
     "websockets",
     "cymem",
     "bsdiff4",
@@ -114,12 +113,11 @@ excludes = [
     "test",
     "tests",
     "__pycache__",
-    ".pytest_cache",
-    "gui"
+    ".pytest_cache"
 ]
 
 zip_include_packages = ["*"]
-zip_exclude_packages = ["worlds", "kivymd", "mwgg_gui"]
+zip_exclude_packages = ["worlds", "kivymd", "mwgg_gui", "kivy"]
 include_msvcr = false
 replace_paths = ["*."]
 optimize = 1
@@ -130,27 +128,7 @@ include_files = [
     ["LICENSE", "LICENSE"],
     ["README.md", "README.md"],
     ["*.yaml", "*.yaml"],
-    ["kivy/include", "lib/kivy/include"],
     ["kivy/data", "lib/kivy/data"]
-]
-bin_includes = [
-        "*.cp312-win_amd64.pyd",
-        "kivy/graphics/*.pyd",
-        "kivy/graphics/cgl_backend/*.pyd",
-        "kivy/core/*.pyd",
-        "kivy/core/audio/*.pyd",
-        "kivy/core/clipboard/*.pyd",
-        "kivy/core/image/*.pyd",
-        "kivy/core/text/*.pyd",
-        "kivy/core/window/*.pyd",
-        "kivy/input/*.pyd",
-        "kivy/input/providers/*.pyd",
-        "kivy/lang/*.pyd",
-        "kivy/metrics/*.pyd",
-        "kivy/resources/*.pyd",
-        "kivy/support/*.pyd",
-        "kivy/utils/*.pyd",
-        "kivy/uix/*.pyd"
 ]
 
 [tool.cx_Freeze.executables]
@@ -186,6 +164,6 @@ shortcut_dir = "DesktopFolder"
 [[tool.cx_Freeze.executables.multi_world_debug]]
 script = "MultiWorld.py"
 target_name = "MultiWorldGGClientDebug.exe"
-icon = "data/khapicon.ico"
+icon = "data/icon.ico"
 shortcut_name = "MultiWorldGG Debug"
 shortcut_dir = "DesktopFolder"

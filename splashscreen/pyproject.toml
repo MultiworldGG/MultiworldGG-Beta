@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mwgg_splash"
-version = "0.0.1a"
+version = "0.0.2a"
 description = "MultiWorldGG Splash Screen"
 authors = [
     {name = "DelilahIsDidi"}

@@ -24,57 +24,77 @@ logger = logging.getLogger("MultiWorld")
 
 class SplashScreen:
     def __init__(self, png_path, loop_count=1):
-        # Initialize the main window
-        self.loop_done = False
-        self.root = tk.Tk()
-        self.root.overrideredirect(True)  # Remove window decorations
-        self.root.attributes("-transparent", "black")  # Enable transparency
-        self.root.attributes("-topmost", True)  # Keep window on top
-        
-        # Load the animated PNG
-        self.img = Image.open(png_path)
-        
-        # Get image dimensions
-        self.width, self.height = self.img.size
-        
-        # Center the window on the screen
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        x = (screen_width - self.width) // 2
-        y = (screen_height - self.height) // 2
-        self.root.geometry(f"{self.width}x{self.height}+{x}+{y}")
-        
-        # Create a canvas for displaying the image
-        self.canvas = tk.Canvas(self.root, width=self.width, height=self.height, 
-                                highlightthickness=0, borderwidth=0, bg='black')
-        self.canvas.pack()
-        
-        # Configuration
-        self.loop_count = loop_count
-        self.current_loop = 0
-        self.frames = []
-        self.frame_durations = []
-        
-        # Store all frames and their durations
-        for frame in ImageSequence.Iterator(self.img):
-            # Convert to RGBA if not already
-            if frame.mode != 'RGBA':
-                frame = frame.convert('RGBA')
+        try:
+            # Initialize the main window
+            self.loop_done = False
+            self.root = tk.Tk()
+            self.root.overrideredirect(True)  # Remove window decorations
+            self.root.attributes("-transparent", "black")  # Enable transparency
+            self.root.attributes("-topmost", True)  # Keep window on top
             
-            # Get frame duration in milliseconds
-            duration = int(frame.info.get('duration', 100))  # Default to 100ms if not specified
+            # Load the animated PNG
+            try:
+                self.img = Image.open(png_path)
+            except Exception as e:
+                logging.error(f"Failed to load image '{png_path}': {e}")
+                raise
             
-            photoframe = ImageTk.PhotoImage(frame)
-            self.frames.append(photoframe)
-            self.frame_durations.append(duration)
-        
-        # Start animation
-        self.current_frame = 0
-        self.animate()
-        
-        # Add termination monitoring
-        self.termination_flag = False
-        self.monitor_thread = None
+            # Get image dimensions
+            self.width, self.height = self.img.size
+            
+            # Center the window on the screen
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+            x = (screen_width - self.width) // 2
+            y = (screen_height - self.height) // 2
+            self.root.geometry(f"{self.width}x{self.height}+{x}+{y}")
+            
+            # Create a canvas for displaying the image
+            self.canvas = tk.Canvas(self.root, width=self.width, height=self.height, 
+                                    highlightthickness=0, borderwidth=0, bg='black')
+            self.canvas.pack()
+            
+            # Configuration
+            self.loop_count = loop_count
+            self.current_loop = 0
+            self.frames = []
+            self.frame_durations = []
+            
+            # Store all frames and their durations
+            frame_count = 0
+            for frame in ImageSequence.Iterator(self.img):
+                try:
+                    # Convert to RGBA if not already
+                    if frame.mode != 'RGBA':
+                        frame = frame.convert('RGBA')
+                    
+                    # Get frame duration in milliseconds
+                    duration = int(frame.info.get('duration', 100))  # Default to 100ms if not specified
+                    
+                    photoframe = ImageTk.PhotoImage(frame)
+                    self.frames.append(photoframe)
+                    self.frame_durations.append(duration)
+                    frame_count += 1
+                except Exception as e:
+                    logging.error(f"Failed to process frame {frame_count}: {e}")
+                    raise
+            
+            if frame_count == 0:
+                raise ValueError("No valid frames found in the image")
+            
+            # Start animation
+            self.current_frame = 0
+            self.animate()
+            
+            # Add termination monitoring
+            self.termination_flag = False
+            self.monitor_thread = None
+            
+        except Exception as e:
+            logging.error(f"Failed to initialize splash screen: {e}")
+            if hasattr(self, 'root') and self.root:
+                self.root.destroy()
+            raise
     
     def animate(self):
         # Display the current frame
@@ -107,14 +127,32 @@ class SplashScreen:
     
     def listen_for_termination(self):
         """Monitor for termination signals from the main application"""
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        flag_path = os.path.join(script_dir, "terminate_splash.flag")
+        # Use KIVY_DATA_DIR for the flag file location
+        kivy_data_dir = os.getenv("KIVY_DATA_DIR")
+        if not kivy_data_dir:
+            kivy_data_dir = os.getenv("KIVY_HOME")
+        if not kivy_data_dir:
+            # Fallback to script directory if environment variables not set
+            kivy_data_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        flag_path = os.path.join(kivy_data_dir, "terminate_splash.flag")
+        
+        # Add timeout to prevent infinite running (5 minutes)
+        start_time = time.time()
+        timeout = 300  # 5 minutes
         
         while not self.termination_flag:
             if os.path.exists(flag_path):
                 logging.info("Termination flag detected")
                 self.termination_flag = True
                 self.cleanup_and_exit()
+            
+            # Check for timeout
+            if time.time() - start_time > timeout:
+                logging.warning("Splash screen timeout reached, terminating")
+                self.termination_flag = True
+                self.cleanup_and_exit()
+            
             time.sleep(0.1)
     
     def cleanup_and_exit(self):
@@ -144,25 +182,36 @@ class SplashScreen:
             self.cleanup_and_exit()
 
 def main():
-   
-    # Get the PNG file path
-    png_path = os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "loading_animation.png")
-    
-    # Check if the file exists
-    if not os.path.isfile(png_path):
-        logging.warning(f"Error: File '{png_path}' not found.")
+    try:
+        # Check if required environment variables are set
+        kivy_data_dir = os.getenv("KIVY_DATA_DIR")
+        if not kivy_data_dir:
+            logging.error("Error: KIVY_DATA_DIR environment variable is not set.")
+            sys.exit(1)
+        
+        # Get the PNG file path
+        png_path = os.path.join(kivy_data_dir, "images", "loading_animation.png")
+        
+        # Check if the file exists
+        if not os.path.isfile(png_path):
+            logging.error(f"Error: Loading animation file '{png_path}' not found.")
+            sys.exit(1)
+        
+        # Check if the file is a PNG
+        if not png_path.lower().endswith('.png'):
+            logging.error(f"Error: File '{png_path}' does not have a .png extension.")
+            sys.exit(1)
+        
+        # Set loop count
+        loop_count = 1
+        
+        # Create and run the viewer
+        viewer = SplashScreen(png_path, loop_count)
+        viewer.run()
+        
+    except Exception as e:
+        logging.error(f"Error starting splash screen: {e}")
         sys.exit(1)
-    
-    # Check if the file is a PNG
-    if not png_path.lower().endswith('.png'):
-        logging.warning("Warning: File does not have a .png extension. It may not be a PNG file.")
-    
-    # Set loop count
-    loop_count = 1
-    
-    # Create and run the viewer
-    viewer = SplashScreen(png_path, loop_count)
-    viewer.run()
 
 if __name__ == "__main__":
     main()

@@ -20,18 +20,10 @@ from BaseUtils import local_path, is_frozen
         
 if is_frozen():
     os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"lib", "kivy", "data")
-    # Set KIVY_DEPS_ROOT for ANGLE dependency
-    os.environ["KIVY_DEPS_ROOT"] = os.path.join(local_path(),"lib")
 else:
     os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"kivy", "data")
-
 os.environ["KIVY_HOME"] = os.path.join(local_path(),"data")
 os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
-
-# Debug logging for Kivy paths
-logging.debug(f"KIVY_DATA_DIR: {os.environ.get('KIVY_DATA_DIR')}")
-logging.debug(f"KIVY_DEPS_ROOT: {os.environ.get('KIVY_DEPS_ROOT')}")
-logging.debug(f"KIVY_HOME: {os.environ.get('KIVY_HOME')}")
 
 from mwgg_splash import main
 
@@ -51,6 +43,12 @@ def launch_splash_screen():
                 [sys.executable, "-m", "mwgg_splash"]
             )
         
+        # Check if the process started successfully
+        if splash_process.poll() is not None:
+            # Process exited immediately, something went wrong
+            logging.error("Splash screen process exited immediately")
+            return None
+        
         logging.info(f"Splash screen launched with PID: {splash_process.pid}")
         return splash_process
     except Exception as e:
@@ -60,9 +58,15 @@ def launch_splash_screen():
 def terminate_splash_screen(splash_process=None):
     """Send termination signal to the splash screen"""
     try:
-        # Create a termination file
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        flag_path = os.path.join(script_dir, "gui", "terminate_splash.flag")
+        # Create a termination file in KIVY_DATA_DIR
+        kivy_data_dir = os.getenv("KIVY_DATA_DIR")
+        if not kivy_data_dir:
+            kivy_data_dir = os.getenv("KIVY_HOME")
+        if not kivy_data_dir:
+            # Fallback to script directory if environment variables not set
+            kivy_data_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        flag_path = os.path.join(kivy_data_dir, "terminate_splash.flag")
         
         with open(flag_path, "w") as f:
             f.write("terminate")

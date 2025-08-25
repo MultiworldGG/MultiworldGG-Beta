@@ -29,7 +29,7 @@ from Utils import version_tuple, instance_name, archipelago_guid, is_windows, lo
 # Build configuration
 build_exe_options = {
     "packages": [
-        "kivy",  # Include Kivy package - the hook will handle the rest
+        "kivy",
         "kivymd", 
         "websockets", 
         "cymem", 
@@ -78,7 +78,7 @@ build_exe_options = {
         "gui"
     ],
     "zip_include_packages": ["*"],
-    "zip_exclude_packages": ["worlds", "kivymd", "mwgg_gui"],
+    "zip_exclude_packages": ["worlds", "kivymd", "mwgg_gui", "kivy"],
     "include_files": [
         ("data", "data"),
         ("LICENSE", "LICENSE"),
@@ -86,12 +86,23 @@ build_exe_options = {
         ("_persistent_storage.yaml", "_persistent_storage.yaml"),
         ("data/SNI", "SNI") if os.path.exists("data/SNI") else None,
         ("EnemizerCLI", "EnemizerCLI") if os.path.exists("EnemizerCLI") else None,
+        ("kivy/data", "lib/kivy/data")
     ],
     "include_msvcr": False,
     "replace_paths": ["*."],
     "optimize": 1,
-    "bin_includes": ["libffi.so", "libcrypt.so"] if platform.system() == "Linux" else []
+    "bin_includes": ["libffi.so", "libcrypt.so", "kivy"] if platform.system() == "Linux" else []
 }
+# Include Kivy deps
+# if is_windows:
+#     try:
+#         from kivy_deps import sdl2, glew, angle  # type: ignore
+#         for folder in sdl2.dep_bins + glew.dep_bins + angle.dep_bins:
+#             build_exe_options["include_files"].append((folder, "lib"))
+#     except ImportError as e:
+#         print(f"Warning: kivy_deps not available: {e}")
+#     except Exception as e:
+#         print(f"Error including SDL2, GLEW, and ANGLE dependencies: {e}")
 
 # Remove None entries from include_files
 build_exe_options["include_files"] = [item for item in build_exe_options["include_files"] if item is not None]
@@ -196,52 +207,102 @@ def pre_build_setup():
     install_wheels()
     
     # Update modules (skip world requirements)
+    # try:
+    #     import ModuleUpdate
+    #     ModuleUpdate.update(yes=True)
+    #     print("Module update completed")
+    # except Exception as e:
+    #     print(f"Module update failed: {e}")
+    
+    # Import our custom kivy hook to ensure it's loaded
     try:
-        import ModuleUpdate
-        ModuleUpdate.update(yes=True)
-        print("Module update completed")
-    except Exception as e:
-        print(f"Module update failed: {e}")
+        import cx_custom_hooks._kivy_ as kivy
+    except ImportError as e:
+        print(f"Warning: Could not load custom kivy hook: {e}")
 
 def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
     print("Running post-build setup...")
     
-    if is_windows:
-        try:
-            from kivy_deps import sdl2, glew, angle  # type: ignore
-            print("Including SDL2, GLEW, and ANGLE dependencies...")
-            for folder in sdl2.dep_bins + glew.dep_bins + angle.dep_bins:
-                if os.path.exists(folder):
-                    dest_path = os.path.join(build_exe_dir, "share", folder.rsplit(os.path.sep, 2)[1])
-                    if os.path.exists(dest_path):
-                        shutil.rmtree(dest_path)
-                    shutil.copytree(folder, dest_path)
-                    print(f"Copied {folder} -> {dest_path}")
-                else:
-                    print(f"Warning: SDL2/GLEW/ANGLE folder not found: {folder}")
-        except ImportError as e:
-            print(f"Warning: kivy_deps not available: {e}")
+    # if is_windows:
+    #     try:
+    #         from kivy_deps import sdl2, glew, angle  # type: ignore
+    #         print("Including SDL2, GLEW, and ANGLE dependencies...")
+    #         for folder in sdl2.dep_bins + glew.dep_bins + angle.dep_bins:
+    #             if os.path.exists(folder):
+    #                 for file in os.listdir(folder):
+    #                     src_file = os.path.join(folder, file)
+    #                     dst_file = os.path.join(build_exe_dir, file)
+    #                     if os.path.isfile(src_file):
+    #                         shutil.copy2(src_file, dst_file)
+    #                         print(f"Copied {src_file} -> {dst_file}")
+    #             else:
+    #                 print(f"Warning: SDL2/GLEW/ANGLE folder not found: {folder}")
+    #     except ImportError as e:
+    #         print(f"Warning: kivy_deps not available: {e}")
 
-        except Exception as e:
-            print(f"Error copying SDL2/GLEW/ANGLE dependencies: {e}")
+    #     except Exception as e:
+    #         print(f"Error copying SDL2/GLEW/ANGLE dependencies: {e}")
 
 class CustomBuildExe(build_exe):
-    """Custom build command that includes post-build setup"""
+    """Custom build command that includes post-build setup and custom hooks"""
     
     def run(self):
+        # Register our custom hooks before building
+        self._register_custom_hooks()
+        
         # Run the normal build
         super().run()
         # Get the build directory
         build_dir = self.build_exe
         if build_dir:
-            if os.environ.get("MWGG_BUILD_IS_RUNNING"):
+            if os.environ.get("MWGG_BUILD_IS_RUNNING") or os.path.exists("build_is_running_worlds"):
                 print("Renaming worlds folder back to worlds")
                 os.rename("build_is_running_worlds", "worlds")
                 del os.environ["MWGG_BUILD_IS_RUNNING"]
             print(f"Build completed in: {build_dir}")
             # Run post-build setup
             post_build_setup(build_dir)
+    
+    def _register_custom_hooks(self):
+        """Register our custom hooks with cx_Freeze
+        
+        This is not quite set up correctly but my brain is
+        done fighting Claude.
+        
+        Info is here:
+        https://github.com/marcelotduarte/cx_Freeze/blob/8.4.0/cx_Freeze/module.py#L412
+        """
+        try:
+            # Import our custom hook
+            import cx_custom_hooks._kivy_ as kivy
+            
+            # Monkey-patch cx_Freeze.hooks to include our hook
+            import cx_Freeze.hooks
+            
+            # Add our hook functions to cx_Freeze.hooks
+            if hasattr(kivy.Hook, 'kivy'):
+                # Create function-based hooks from our class-based hook
+                def load_kivy(finder, module):
+                    hook = kivy.Hook(module)
+                    hook.kivy(finder, module)
+                
+                def load_kivy_binaries(finder, module):
+                    hook = kivy.Hook(module)
+                    hook.kivy_binaries(finder, module)
+                
+                # Add the functions to cx_Freeze.hooks
+                cx_Freeze.hooks.load_kivy = load_kivy
+                cx_Freeze.hooks.load_kivy_binaries = load_kivy_binaries
+                
+                print("Custom kivy hook registered with cx_Freeze")
+            else:
+                print("Warning: Custom kivy hook does not have required methods")
+                
+        except ImportError as e:
+            print(f"Warning: Could not register custom kivy hook: {e}")
+        except Exception as e:
+            print(f"Error registering custom kivy hook: {e}")
 
 if __name__ == "__main__":
     # Run pre-build setup
