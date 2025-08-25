@@ -119,7 +119,7 @@ excludes = [
 ]
 
 zip_include_packages = ["*"]
-zip_exclude_packages = ["worlds", "kivymd", "kivy", "kivy_deps", "mwgg_gui"]
+zip_exclude_packages = ["worlds", "kivymd", "mwgg_gui"]
 include_msvcr = false
 replace_paths = ["*."]
 optimize = 1
@@ -132,6 +132,25 @@ include_files = [
     ["*.yaml", "*.yaml"],
     ["kivy/include", "lib/kivy/include"],
     ["kivy/data", "lib/kivy/data"]
+]
+bin_includes = [
+        "*.cp312-win_amd64.pyd",
+        "kivy/graphics/*.pyd",
+        "kivy/graphics/cgl_backend/*.pyd",
+        "kivy/core/*.pyd",
+        "kivy/core/audio/*.pyd",
+        "kivy/core/clipboard/*.pyd",
+        "kivy/core/image/*.pyd",
+        "kivy/core/text/*.pyd",
+        "kivy/core/window/*.pyd",
+        "kivy/input/*.pyd",
+        "kivy/input/providers/*.pyd",
+        "kivy/lang/*.pyd",
+        "kivy/metrics/*.pyd",
+        "kivy/resources/*.pyd",
+        "kivy/support/*.pyd",
+        "kivy/utils/*.pyd",
+        "kivy/uix/*.pyd"
 ]
 
 [tool.cx_Freeze.executables]

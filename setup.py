@@ -29,9 +29,8 @@ from Utils import version_tuple, instance_name, archipelago_guid, is_windows, lo
 # Build configuration
 build_exe_options = {
     "packages": [
-        "kivy", 
+        "kivy",  # Include Kivy package - the hook will handle the rest
         "kivymd", 
-        "kivy_deps",
         "websockets", 
         "cymem", 
         "bsdiff4",
@@ -79,7 +78,7 @@ build_exe_options = {
         "gui"
     ],
     "zip_include_packages": ["*"],
-    "zip_exclude_packages": ["worlds", "kivymd", "mwgg_gui", "kivy", "kivy_deps"],
+    "zip_exclude_packages": ["worlds", "kivymd", "mwgg_gui"],
     "include_files": [
         ("data", "data"),
         ("LICENSE", "LICENSE"),
@@ -87,8 +86,6 @@ build_exe_options = {
         ("_persistent_storage.yaml", "_persistent_storage.yaml"),
         ("data/SNI", "SNI") if os.path.exists("data/SNI") else None,
         ("EnemizerCLI", "EnemizerCLI") if os.path.exists("EnemizerCLI") else None,
-        ("kivy/include", "lib/kivy/include"),
-        ("kivy/data", "lib/kivy/data"),
     ],
     "include_msvcr": False,
     "replace_paths": ["*."],
@@ -212,9 +209,9 @@ def post_build_setup(build_exe_dir):
     
     if is_windows:
         try:
-            from kivy_deps import sdl2, glew  # type: ignore
-            print("Including SDL2 and GLEW dependencies...")
-            for folder in sdl2.dep_bins + glew.dep_bins:
+            from kivy_deps import sdl2, glew, angle  # type: ignore
+            print("Including SDL2, GLEW, and ANGLE dependencies...")
+            for folder in sdl2.dep_bins + glew.dep_bins + angle.dep_bins:
                 if os.path.exists(folder):
                     dest_path = os.path.join(build_exe_dir, "share", folder.rsplit(os.path.sep, 2)[1])
                     if os.path.exists(dest_path):
@@ -222,12 +219,12 @@ def post_build_setup(build_exe_dir):
                     shutil.copytree(folder, dest_path)
                     print(f"Copied {folder} -> {dest_path}")
                 else:
-                    print(f"Warning: SDL2/GLEW folder not found: {folder}")
+                    print(f"Warning: SDL2/GLEW/ANGLE folder not found: {folder}")
         except ImportError as e:
             print(f"Warning: kivy_deps not available: {e}")
 
         except Exception as e:
-            print(f"Error copying SDL2/GLEW dependencies: {e}")
+            print(f"Error copying SDL2/GLEW/ANGLE dependencies: {e}")
 
 class CustomBuildExe(build_exe):
     """Custom build command that includes post-build setup"""
