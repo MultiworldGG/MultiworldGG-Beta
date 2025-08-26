@@ -69,6 +69,7 @@ multiworld-gui = "MultiWorld:main"
 packages = [
     "kivy",
     "kivymd",
+    "kivy_deps",
     "websockets",
     "cymem",
     "bsdiff4",
@@ -128,7 +129,8 @@ include_files = [
     ["LICENSE", "LICENSE"],
     ["README.md", "README.md"],
     ["*.yaml", "*.yaml"],
-    ["kivy/data", "lib/kivy/data"]
+    ["kivy/data", "lib/kivy/data"],
+    ["kivy/include", "lib/kivy/include"]
 ]
 
 [tool.cx_Freeze.executables]

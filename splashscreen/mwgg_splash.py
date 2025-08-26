@@ -203,7 +203,7 @@ def main():
             sys.exit(1)
         
         # Set loop count
-        loop_count = 1
+        loop_count = 20
         
         # Create and run the viewer
         viewer = SplashScreen(png_path, loop_count)

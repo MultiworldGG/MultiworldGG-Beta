@@ -9,7 +9,6 @@ import sys
 import typing
 import time
 import functools
-import warnings
 
 import ModuleUpdate
 ModuleUpdate.update()
@@ -269,7 +268,7 @@ class InitContext:
         self.exit_event = asyncio.Event()
         self._state = ClientState.INITIAL
         self._is_transitioning = False
-        self.splash_process = None
+        #self.splash_process = None
 
     def run_gui(self):
         """Run the GUI as self.ui_task."""
@@ -938,7 +937,7 @@ class CommonContext(InitContext):
         if old_tags != self.tags and self.server and not self.server.socket.closed:
             await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
 
-    def gui_error(self, title: str, text: typing.Union[Exception, str]) -> typing.Optional["gui.dialog.MessageBox"]:
+    def gui_error(self, title: str, text: typing.Union[Exception, str]) -> typing.Optional["Gui.MessageBox"]:
         """Displays an error messagebox in the loaded Kivy UI. Override if using a different UI framework"""
         if not self.ui:
             return None

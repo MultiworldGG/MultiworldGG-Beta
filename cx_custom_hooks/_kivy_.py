@@ -14,13 +14,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from cx_Freeze.module import Module, ModuleHook
-from cx_Freeze._compat import IS_MACOS, IS_MINGW, IS_WINDOWS
+from cx_Freeze._compat import IS_MACOS, IS_WINDOWS, IS_LINUX
 
 if TYPE_CHECKING:
     from cx_Freeze import ModuleFinder
 
 
-__all__ = ["Hook"]
+__all__ = ("Hook",)
 
 
 class Hook(ModuleHook):
@@ -28,61 +28,47 @@ class Hook(ModuleHook):
 
     def kivy(self, finder: "ModuleFinder", module: "Module") -> None:
         """The kivy package."""
-        # Include core Kivy packages
+        # Essential modules from PyInstaller hook
+        finder.include_module("xml.etree.cElementTree")
+        finder.include_module("kivy.core.gl")
+        finder.include_module("kivy.weakmethod") 
+        finder.include_module("kivy.core.window.window_info")
+        
+        # Core Kivy packages
         finder.include_package("kivy.core")
         finder.include_package("kivy.graphics")
         finder.include_package("kivy.uix")
         finder.include_package("kivy.input")
         finder.include_package("kivy.lang")
-        finder.include_package("kivy.metrics")
+        finder.include_package("kivy.utils")
         finder.include_package("kivy.resources")
         finder.include_package("kivy.support")
-        finder.include_package("kivy.utils")
-        finder.include_package("kivy.extras")
         finder.include_package("kivy.effects")
-        finder.include_package("kivy.eventmanager")
-        finder.include_package("kivy.garden")
-        finder.include_package("kivy.lib")
-        finder.include_package("kivy.modules")
-        finder.include_package("kivy.network")
-        finder.include_package("kivy.storage")
-
-        # Include Kivy deps
-        finder.include_package("kivy_deps.sdl2")
-        finder.include_package("kivy_deps.glew")
-        finder.include_package("kivy_deps.angle")
-
-        if IS_MINGW or IS_WINDOWS:
-            extension = "*.pyd"
-        elif IS_MACOS:
-            extension = "*.dylib"
-        else:
-            extension = "*.so*"
-
-        source_lib = module.file.parent
-        for folder in source_lib.glob(f"*/lib/{extension}"):
-            library = folder.relative_to(source_lib).as_posix()
-            finder.lib_files[folder] = f"lib/{library}"
-
-        if IS_MACOS:
-            for folder in source_lib.glob(f"*/lib/*.so"):
-                library = folder.relative_to(source_lib).as_posix()
-                finder.lib_files[folder] = f"lib/{library}"
-
-        if IS_MINGW or IS_WINDOWS:
-            extension = "*.dll"
-
+        
+        # Dynamically include kivy_deps modules
         try:
-            sdl2_package = importlib.import_module('kivy_deps.sdl2')
-            glew_package = importlib.import_module('kivy_deps.glew')
-            angle_package = importlib.import_module('kivy_deps.angle')
-
-            for folder in sdl2_package.dep_bins + glew_package.dep_bins + angle_package.dep_bins:
-                if Path(folder).exists():
-                    for source in Path(folder).glob(extension):
-                        library = source.relative_to(folder).as_posix()
-                        finder.lib_files[source] = f"lib/{library}"
-
+            import kivy_deps
+            import pkgutil
+            import importlib.util
+            
+            for importer, modname, ispkg in pkgutil.iter_modules(kivy_deps.__path__):
+                if ispkg:  # Only include packages
+                    full_name = f"kivy_deps.{modname}"
+                    try:
+                        finder.include_package(full_name)
+                        print(f"Including kivy_deps package: {full_name}")
+                    except Exception as e:
+                        print(f"Failed to include {full_name}: {e}")
+                        
+        except ImportError as e:
+            print(f"Warning: Could not import kivy_deps: {e}")
+        
+        # Include Factory-registered modules
+        try:
+            from kivy.factory import Factory
+            for cls_info in Factory.classes.values():
+                if cls_info.get('module'):
+                    finder.include_module(cls_info['module'])
         except ImportError:
             pass
 
@@ -102,128 +88,63 @@ class Hook(ModuleHook):
         """Ignore PyInstaller hooks."""
         module.ignore_names.add("kivy.tools.packaging.pyinstaller_hooks")
 
-    def kivy_data(self, finder: "ModuleFinder", module: "Module") -> None:
-        """Include Kivy data files."""
-        try:
-            kivy_package = importlib.import_module('kivy')
-            kivy_path = Path(kivy_package.__file__).parent
-            
-            # Commenting out data directory - we're overriding quite a bit of those files.
-            # data_path = kivy_path / 'data'
-            # if data_path.exists():
-            #     finder.include_files.append((str(data_path), 'lib/kivy/data'))
-            
-            # Include include directory
-            include_path = kivy_path / 'include'
-            if include_path.exists():
-                finder.include_files.append((str(include_path), 'lib/kivy/include'))
-                
-        except ImportError:
-            # Kivy not installed, skip data files
-            pass
-
     def kivy_binaries(self, finder: "ModuleFinder", module: "Module") -> None:
         """Add platform-specific binary patterns."""
-        pass
-        # if sys.platform == 'win32':
-        #     binary_patterns = [
-        #         '*.pyd',
-        #         'kivy/graphics/*.pyd',
-        #         'kivy/graphics/cgl_backend/*.pyd',
-        #         'kivy/core/*.pyd',
-        #         'kivy/core/audio/*.pyd',
-        #         'kivy/core/clipboard/*.pyd',
-        #         'kivy/core/image/*.pyd',
-        #         'kivy/core/text/*.pyd',
-        #         'kivy/core/window/*.pyd',
-        #         'kivy/input/*.pyd',
-        #         'kivy/input/providers/*.pyd',
-        #         'kivy/lang/*.pyd',
-        #         'kivy/metrics/*.pyd',
-        #         'kivy/resources/*.pyd',
-        #         'kivy/support/*.pyd',
-        #         'kivy/utils/*.pyd',
-        #         'kivy/uix/*.pyd',
-        #         'kivy/deps/sdl2/*.pyd',
-        #         'kivy/deps/glew/*.pyd',
-        #         'kivy/deps/angle/*.pyd',
-        #     ]
-        #     try:
-        #         sdl2_package = importlib.import_module('kivy_deps.sdl2')
-        #         glew_package = importlib.import_module('kivy_deps.glew')
-        #         angle_package = importlib.import_module('kivy_deps.angle')
-                
-        #         if sdl2_package.dep_bins:
-        #             finder.include_files.append((str(sdl2_package.dep_bins), 'lib'))
-        #         if glew_package.dep_bins:
-        #             finder.include_files.append((str(glew_package.dep_bins), 'lib'))
-        #         if angle_package.dep_bins:
-        #             finder.include_files.append((str(angle_package.dep_bins), 'lib'))
-        #     except ImportError:
-        #         pass
-            
 
-        # elif sys.platform == 'linux':
-        #     binary_patterns = [
-        #         '*.so',
-        #         'kivy/graphics/*.so',
-        #         'kivy/graphics/cgl_backend/*.so',
-        #         'kivy/core/*.so',
-        #         'kivy/core/audio/*.so',
-        #         'kivy/core/clipboard/*.so',
-        #         'kivy/core/image/*.so',
-        #         'kivy/core/text/*.so',
-        #         'kivy/core/window/*.so',
-        #         'kivy/input/*.so',
-        #         'kivy/input/providers/*.so',
-        #         'kivy/lang/*.so',
-        #         'kivy/metrics/*.so',
-        #         'kivy/resources/*.so',
-        #         'kivy/support/*.so',
-        #         'kivy/utils/*.so',
-        #         'kivy/uix/*.so',
-        #     ]
-        # elif sys.platform == 'darwin':
-        #     binary_patterns = [
-        #         '*.so',
-        #         '*.dylib',
-        #         'kivy/graphics/*.so',
-        #         'kivy/graphics/*.dylib',
-        #         'kivy/graphics/cgl_backend/*.so',
-        #         'kivy/graphics/cgl_backend/*.dylib',
-        #         'kivy/core/*.so',
-        #         'kivy/core/*.dylib',
-        #         'kivy/core/audio/*.so',
-        #         'kivy/core/audio/*.dylib',
-        #         'kivy/core/clipboard/*.so',
-        #         'kivy/core/clipboard/*.dylib',
-        #         'kivy/core/image/*.so',
-        #         'kivy/core/image/*.dylib',
-        #         'kivy/core/text/*.so',
-        #         'kivy/core/text/*.dylib',
-        #         'kivy/core/window/*.so',
-        #         'kivy/core/window/*.dylib',
-        #         'kivy/input/*.so',
-        #         'kivy/input/*.dylib',
-        #         'kivy/input/providers/*.so',
-        #         'kivy/input/providers/*.dylib',
-        #         'kivy/lang/*.so',
-        #         'kivy/lang/*.dylib',
-        #         'kivy/metrics/*.so',
-        #         'kivy/metrics/*.dylib',
-        #         'kivy/resources/*.so',
-        #         'kivy/resources/*.dylib',
-        #         'kivy/support/*.so',
-        #         'kivy/support/*.dylib',
-        #         'kivy/utils/*.so',
-        #         'kivy/utils/*.dylib',
-        #         'kivy/uix/*.so',
-        #         'kivy/uix/*.dylib',
-        #     ]
-        # else:
-        #     binary_patterns = []
+        if IS_WINDOWS:
+            binary_patterns = [
+                'weakproxy*.pyd',
+                'properties*.pyd', 
+                '_clock*.pyd',
+                '_event*.pyd',
+                '_metrics*.pyd',
+                'graphics/*.pyd',
+                'graphics/cgl_backend/*.pyd'
+            ]
+            try:
+                from kivy_deps import sdl2, glew
+
+                for folder in sdl2.dep_bins + glew.dep_bins:
+                    if Path(folder).exists():
+                        for source in Path(folder).glob("*.dll"):
+                            library = source.relative_to(folder).as_posix()
+                            finder.lib_files[source] = f"lib/{library}"
+
+            except ImportError:
+                pass
+            
+        elif IS_LINUX:
+            binary_patterns = [
+                # Use wildcards to catch different naming conventions
+                'weakproxy*.so',
+                'properties*.so', 
+                '_clock*.so',
+                '_event*.so',
+                '_metrics*.so',
+                'graphics/*.so',
+                'graphics/cgl_backend/*.so'
+            ]
+        elif IS_MACOS:
+            binary_patterns = [
+                # Check for both .so and .dylib
+                'weakproxy*.so',
+                'properties*.so',
+                '_clock*.so', 
+                '_event*.so',
+                '_metrics*.so',
+                'graphics/*.so',
+                'graphics/cgl_backend/*.so',
+                # Also check for .dylib variants (less common for Python extensions)
+                'graphics/*.dylib',
+                'graphics/cgl_backend/*.dylib'
+            ]
+        else:
+            binary_patterns = []
         
-        # # Add binary patterns to bin_includes
-        # for pattern in binary_patterns:
-        #     if pattern not in finder.bin_includes:
-        #         finder.bin_includes.append(pattern)
+        source_lib = module.file.parent
+        # Add binary patterns to bin_includes
+        for pattern in binary_patterns:
+            for source in Path(source_lib).glob(pattern):
+                library = source.relative_to(source_lib).as_posix()
+                if library not in finder.lib_files:
+                    finder.lib_files[source] = f"lib/{library}"
