@@ -2,29 +2,48 @@ import os
 import sys
 import subprocess
 import multiprocessing
+from multiprocessing import Process
 import warnings
 import json
 import urllib.request
 from pathlib import Path
 from typing import List, Optional
 
+def is_frozen() -> bool:
+    return getattr(sys, 'frozen', False)
+
+def is_windows() -> bool:
+    return sys.platform in ("win32", "cygwin", "msys")
+
+def is_macos() -> bool:
+    return sys.platform == "darwin"
+
+def is_linux() -> bool:
+    return sys.platform.startswith("linux")
+
 # Version compatibility checks
-if sys.platform in ("win32", "darwin") and sys.version_info < (3, 12, 0):
+if (is_windows() or is_macos()) and sys.version_info < (3, 12, 0):
     raise RuntimeError(f"Incompatible Python Version found: {sys.version_info}. Official 3.12.+ is supported.")
-elif sys.platform in ("win32", "darwin") and sys.version_info < (3, 12, 7):
+elif (is_windows() or is_macos()) and sys.version_info < (3, 12, 7):
     warnings.warn(f"Python Version {sys.version_info} has security issues. Don't use in production.")
 elif sys.version_info < (3, 12, 0):
     raise RuntimeError(f"Incompatible Python Version found: {sys.version_info}. 3.12.+ is supported.")
 
-# Skip update if environment is frozen/compiled or if not the parent process
+# Skip update if running in splash screen process
+# Allow updates in main process and main client process
 _skip_update = bool(
-    getattr(sys, "frozen", False) or 
-    multiprocessing.parent_process()
+    multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiWorldGG"
 )
 
 update_ran = _skip_update
 need_update: List[str] = []
-
+if is_frozen():
+    if is_windows():
+        python_cmd = "python"
+    elif is_macos() or is_linux():
+        python_cmd = "python3"
+else:
+    python_cmd = sys.executable
 
 class RequirementsSet(set):
     """Custom set that tracks whether updates have been run."""
@@ -147,22 +166,22 @@ def check_for_updates() -> List[str]:
     Check which packages need updates by querying PyPI.
     Returns a list of package names that need updating.
     """
+    if is_frozen():
+        return []
     # Ensure packaging is available
     try:
         import packaging.requirements
     except ImportError:
         print("Warning: packaging module not available, installing...")
-        subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "packaging"])
+        executable_args = [python_cmd, "-m", "pip", "install", "--upgrade", "packaging"]
+        subprocess.run(executable_args)
         import packaging.requirements
     
     try:
-        response = subprocess.run(
-            [sys.executable, "-m", "pip", "list", "-o", "--format", "json", 
+        executable_args = [python_cmd, "-m", "pip", "list", "-o", "--format", "json", 
              "-i", "https://pypi.org/simple", "--extra-index-url", 
-             "https://pypi.multiworld.gg/mwgg/apworlds/+simple"],
-            capture_output=True, text=True, timeout=45
-        )
-        
+             "https://pypi.multiworld.gg/mwgg/apworlds/+simple"]
+        response = subprocess.run(executable_args, capture_output=True, text=True, timeout=45)
         if response.returncode != 0:
             print(f"Warning: Could not check for updates: {response.stderr}")
             return []
@@ -254,36 +273,71 @@ def find_world_modules() -> List[str]:
         print(f"Warning: Unexpected error while fetching world modules: {e}")
         return []
 
-def install_world(world: str) -> None:
-    """Install a single world from the multiworld repository."""
-    check_pip()
-    
-    print(f"Installing world: {world}")
-    result = subprocess.run([
-        sys.executable, "-m", "pip", "install", 
-        "-i", "https://pypi.multiworld.gg/mwgg/apworlds", 
-        world, "--upgrade"
-    ])
-    
-    if result.returncode != 0:
-        print(f"Warning: Failed to install {world}")
+def _pip_install_worker(args):
+    """Worker function for pip install in separate process."""
+    try:
+        import subprocess
+        result = subprocess.run(args, capture_output=True, text=True)
+        return result.returncode, result.stdout, result.stderr
+    except Exception as e:
+        return 1, "", str(e)
 
+def install_worlds(worlds: List[str]) -> None:
+    """Install worlds from the multiworld repository."""
+    check_pip()
+    for world in worlds:
+        executable_args = [python_cmd, "-m", "pip", "install", 
+                "-i", "https://pypi.multiworld.gg/mwgg/apworlds", 
+                world, "--upgrade"]
+        if is_frozen():
+            print(f"Installing world: {world}")
+            process = Process(target=_pip_install_worker, args=(executable_args,), name=f"PipInstall-{world}")
+            process.start()
+            process.join()
+            
+            if process.exitcode != 0:
+                print(f"Warning: Failed to install {world}")
+            else:
+                print(f"Successfully installed {world}")
+        else:
+            print(f"Installing world: {world}")
+            result = subprocess.run(executable_args)
+            if result.returncode != 0:
+                print(f"Warning: Failed to install {world}")
+            else:
+                print(f"Successfully installed {world}")
 
 def update_world_wheels() -> None:
     """Install/update wheel files from custom_wheels directory."""
     check_pip()
-    
-    for wheel in wheels_files:
-        print(f"Installing wheel: {wheel}")
-        result = subprocess.run([sys.executable, "-m", "pip", "install", wheel, "--upgrade"])
-        if result.returncode != 0:
-            print(f"Warning: Failed to install wheel {wheel}")
+    # Use multiprocessing version if frozen, otherwise use subprocess
+    if is_frozen():
+        for wheel in wheels_files:
+            print(f"Installing wheel: {wheel}")
+            executable_args = [python_cmd, "-m", "pip", "install", wheel, "--upgrade"]
+            process = Process(target=_pip_install_worker, args=(executable_args,), name=f"PipInstall-{Path(wheel).name}")
+            process.start()
+            process.join()
+            if process.exitcode != 0:
+                print(f"Warning: Failed to install wheel {wheel}")
+            else:
+                print(f"Successfully installed wheel {wheel}")
+    else:
+        for wheel in wheels_files:
+            print(f"Installing wheel: {wheel}")
+            executable_args = [python_cmd, "-m", "pip", "install", wheel, "--upgrade"]
+            result = subprocess.run(executable_args)
+            if result.returncode != 0:
+                print(f"Warning: Failed to install wheel {wheel}")
+            else:
+                print(f"Successfully installed wheel {wheel}")
 
 
 def update_requirements(needed_packages: List[str]) -> None:
     """Update packages from requirements.txt files and install worlds."""
+    if is_frozen():
+        return
     check_pip()
-    
     # Ensure packaging is available
     try:
         import packaging.requirements
@@ -318,7 +372,8 @@ def update_requirements(needed_packages: List[str]) -> None:
         if packages_to_update:
             print(f"Installing/updating packages: {[req.split('==')[0] if '==' in req else req.split('>=')[0] if '>=' in req else req for req in packages_to_update]}")
             for package in packages_to_update:
-                result = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", package])
+                executable_args = [python_cmd, "-m", "pip", "install", "--upgrade", package]
+                result = subprocess.run(executable_args)
                 if result.returncode != 0:
                     print(f"Warning: Failed to install/update {package}")
         else:
@@ -328,19 +383,21 @@ def update_requirements(needed_packages: List[str]) -> None:
     worlds_to_install = [pkg for pkg in needed_packages if pkg.startswith("worlds") or pkg == "mwgg_gui"]
     if worlds_to_install:
         print(f"Installing/updating worlds: {worlds_to_install}")
-        for world in worlds_to_install:
-            install_world(world)
+        install_worlds(worlds_to_install)
 
 
 def install_packaging(yes: bool = False) -> None:
     """Install packaging module if not available."""
+    if is_frozen():
+        return
     try:
         import packaging.requirements  # noqa: F401
     except ImportError:
         check_pip()
         if not yes:
             confirm("packaging not found, press enter to install it")
-        subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "packaging"])
+        executable_args = [python_cmd, "-m", "pip", "install", "--upgrade", "packaging"]
+        subprocess.run(executable_args)
 
 
 def check_requirements_satisfied(yes: bool = False) -> bool:
@@ -348,6 +405,8 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
     Check if all requirements are satisfied.
     Returns True if all requirements are met, False otherwise.
     """
+    if is_frozen():
+        return True
     install_packaging(yes=yes)
     
     try:

@@ -19,7 +19,6 @@ if os.path.exists("worlds"):
     os.rename("worlds", "build_is_running_worlds")
     os.environ["MWGG_BUILD_IS_RUNNING"] = "1"
 
-
 from cx_Freeze import setup, Executable, build_exe
 
 # Import project utilities
@@ -91,7 +90,6 @@ build_exe_options = {
         ("EnemizerCLI", "EnemizerCLI") if os.path.exists("EnemizerCLI") else None,
         ("kivy/data", "lib/kivy/data"),
         ("kivy/include", "lib/kivy/include")
-        #("kivy/modules", "lib/kivy/modules")
     ],
     "include_msvcr": False,
     "replace_paths": ["*."],

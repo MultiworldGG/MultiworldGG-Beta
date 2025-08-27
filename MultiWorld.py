@@ -1,3 +1,4 @@
+from multiprocessing import freeze_support, Process
 import asyncio
 import sys
 import logging
@@ -25,66 +26,36 @@ else:
 os.environ["KIVY_HOME"] = os.path.join(local_path(),"data")
 os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
 
-from mwgg_splash import main
+# mwgg_splash is imported dynamically when needed to avoid bundling it into frozen executable
 
 logger = logging.getLogger("MultiWorld")
 
-def launch_splash_screen():
-    """Launch the splash screen as a separate process"""
-    try:
-        if sys.platform == "win32":
-            splash_process = subprocess.Popen(
-                [sys.executable, "-m", "mwgg_splash", "20"],
-                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
-            )
-        else:
-            splash_process = subprocess.Popen(
-                [sys.executable, "-m", "mwgg_splash", "20"]
-            )
-        
-        # Check if the process started successfully
-        if splash_process.poll() is not None:
-            # Process exited immediately, something went wrong
-            logging.error("Splash screen process exited immediately")
-            return None
-        
-        logging.info(f"Splash screen launched with PID: {splash_process.pid}")
-        return splash_process
-    except Exception as e:
-        logging.error(f"Failed to launch splash screen: {e}")
-        return None
 
-def terminate_splash_screen(splash_process=None):
-    """Send termination signal to the splash screen"""
+def terminate_splash_screen():
+    """Terminate the splash screen process by name"""
     try:
-        # Create a termination file in KIVY_DATA_DIR
-        kivy_data_dir = os.getenv("KIVY_DATA_DIR")
-        if not kivy_data_dir:
-            kivy_data_dir = os.getenv("KIVY_HOME")
-        if not kivy_data_dir:
-            # Fallback to script directory if environment variables not set
-            kivy_data_dir = os.path.dirname(os.path.abspath(__file__))
+        # Search for processes by name using multiprocessing
+        import multiprocessing
+        active_processes = multiprocessing.active_children()
         
-        flag_path = os.path.join(kivy_data_dir, "terminate_splash.flag")
+        for proc in active_processes:
+            if proc.name == "SplashScreen" and proc.is_alive():
+                logging.info(f"Found splash screen process by name (PID: {proc.pid})")
+                proc.terminate()
+                proc.join(timeout=2)
+                if proc.is_alive():
+                    logging.warning("Splash process didn't terminate gracefully, forcing kill")
+                    proc.kill()
+                    proc.join()
+                logging.info("Splash screen process terminated successfully")
+                return
         
-        with open(flag_path, "w") as f:
-            f.write("terminate")
+        logging.info("No splash screen process found to terminate")
         
-        logging.info("Termination signal sent to splash screen")
-        
-        # Clean up the flag file
-        if os.path.exists(flag_path):
-            os.remove(flag_path)
-            
-        # If the process is still running, terminate it
-        if splash_process and splash_process.poll() is None:
-            splash_process.terminate()
-            splash_process.wait(timeout=2)
-
     except Exception as e:
         logging.error(f"Failed to terminate splash screen: {e}")
 
-def run_client(*args, splash_process=None):
+def run_client(*args):
     """Start the MWGG client"""
     
     async def main(args):
@@ -93,7 +64,6 @@ def run_client(*args, splash_process=None):
         init_logging("MultiWorld")
 
         ctx = InitContext()
-        ctx.splash_process = splash_process  # Pass the splash process to the context
         
         # Check if a specific module was requested
         if len(args) > 1 and args[1].startswith("--game="):
@@ -147,6 +117,15 @@ def run_client(*args, splash_process=None):
         colorama.deinit()
 
 if __name__ == "__main__":
+    # Multiprocessing protection for frozen executables
+    # This prevents fork bombs when creating subprocesses in cx_Freeze builds
+    freeze_support()
     logging.getLogger().setLevel(logging.INFO)
-    splash_process = launch_splash_screen()
-    run_client(*sys.argv[1:], splash_process)
+    from mwgg_splash import main as splash_main
+    
+    # Start splash screen in separate process
+    splash_process = Process(target=splash_main, name="SplashScreen", args=(["mwgg_splash", "20"],))
+    splash_process.start()
+    
+    # Run the main client in the current process instead of spawning another process
+    run_client(*sys.argv[1:])

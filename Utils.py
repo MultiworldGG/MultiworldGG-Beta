@@ -113,8 +113,7 @@ def set_game_names(value: typing.List[str]):
         except ModuleNotFoundError:
             _worlds_to_install.append(module_name)
     if _worlds_to_install:
-        for world in _worlds_to_install:
-            ModuleUpdate.install_world(world)
+        ModuleUpdate.install_worlds(_worlds_to_install)
 
 def game_names() -> typing.List[str]:
     """Get a list of only the game names that we're using"""
@@ -139,7 +138,7 @@ def discover_and_launch_module(module_name: str, **kwargs) -> None:
         importlib.import_module(module_name)
     except ModuleNotFoundError:
         # Module doesn't exist, try to update it
-        ModuleUpdate.install_world(module_name)
+        ModuleUpdate.install_worlds([module_name])
     except Exception as e:
         logging.error(f"Failed to update module {module_name}: {e}")
         raise e

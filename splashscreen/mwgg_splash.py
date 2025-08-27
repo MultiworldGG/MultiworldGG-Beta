@@ -11,6 +11,7 @@ application is loading.
 
 __all__ = ('SplashScreen',)
 
+from multiprocessing import freeze_support, Process
 import os
 import sys
 import time
@@ -97,6 +98,11 @@ class SplashScreen:
             raise
     
     def animate(self):
+        # Check for termination signal before continuing animation
+        if self.termination_flag:
+            self.cleanup_and_exit()
+            return
+            
         # Display the current frame
         self.canvas.delete("all")
         self.canvas.create_image(0, 0, anchor=tk.NW, image=self.frames[self.current_frame])
@@ -127,31 +133,17 @@ class SplashScreen:
     
     def listen_for_termination(self):
         """Monitor for termination signals from the main application"""
-        # Use KIVY_DATA_DIR for the flag file location
-        kivy_data_dir = os.getenv("KIVY_DATA_DIR")
-        if not kivy_data_dir:
-            kivy_data_dir = os.getenv("KIVY_HOME")
-        if not kivy_data_dir:
-            # Fallback to script directory if environment variables not set
-            kivy_data_dir = os.path.dirname(os.path.abspath(__file__))
-        
-        flag_path = os.path.join(kivy_data_dir, "terminate_splash.flag")
-        
         # Add timeout to prevent infinite running (5 minutes)
         start_time = time.time()
         timeout = 300  # 5 minutes
         
         while not self.termination_flag:
-            if os.path.exists(flag_path):
-                logging.info("Termination flag detected")
-                self.termination_flag = True
-                self.cleanup_and_exit()
-            
             # Check for timeout
             if time.time() - start_time > timeout:
                 logging.warning("Splash screen timeout reached, terminating")
                 self.termination_flag = True
                 self.cleanup_and_exit()
+                break
             
             time.sleep(0.1)
     
@@ -213,4 +205,5 @@ def main(argv):
         sys.exit(1)
 
 if __name__ == "__main__":
-    main(sys.argv)
+    freeze_support()
+    Process(target=main, args=(sys.argv)).start()

@@ -268,7 +268,6 @@ class InitContext:
         self.exit_event = asyncio.Event()
         self._state = ClientState.INITIAL
         self._is_transitioning = False
-        self.splash_process = None
 
     def run_gui(self):
         """Run the GUI as self.ui_task."""

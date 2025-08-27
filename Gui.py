@@ -226,7 +226,7 @@ class MultiMDApp(MDApp):
     def terminate_splash_screen_wrapper(self):
         """Wrapper to call the terminate_splash_screen function from MultiWorld"""
         from MultiWorld import terminate_splash_screen
-        terminate_splash_screen(self.ctx.splash_process)
+        terminate_splash_screen()
         Clock.schedule_once(self.set_opacity)
 
     @staticmethod
