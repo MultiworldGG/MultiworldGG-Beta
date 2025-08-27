@@ -44,25 +44,7 @@ class Hook(ModuleHook):
         finder.include_package("kivy.resources")
         finder.include_package("kivy.support")
         finder.include_package("kivy.effects")
-        
-        # Dynamically include kivy_deps modules
-        try:
-            import kivy_deps
-            import pkgutil
-            import importlib.util
-            
-            for importer, modname, ispkg in pkgutil.iter_modules(kivy_deps.__path__):
-                if ispkg:  # Only include packages
-                    full_name = f"kivy_deps.{modname}"
-                    try:
-                        finder.include_package(full_name)
-                        print(f"Including kivy_deps package: {full_name}")
-                    except Exception as e:
-                        print(f"Failed to include {full_name}: {e}")
-                        
-        except ImportError as e:
-            print(f"Warning: Could not import kivy_deps: {e}")
-        
+
         # Include Factory-registered modules
         try:
             from kivy.factory import Factory

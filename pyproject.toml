@@ -114,7 +114,10 @@ excludes = [
     "test",
     "tests",
     "__pycache__",
-    ".pytest_cache"
+    ".pytest_cache",
+    "kivy_deps.sdl2",
+    "kivy_deps.glew",
+    "kivy_deps.angle"
 ]
 
 zip_include_packages = ["*"]

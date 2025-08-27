@@ -181,7 +181,7 @@ class SplashScreen:
         finally:
             self.cleanup_and_exit()
 
-def main():
+def main(argv):
     try:
         # Check if required environment variables are set
         kivy_data_dir = os.getenv("KIVY_DATA_DIR")
@@ -203,8 +203,7 @@ def main():
             sys.exit(1)
         
         # Set loop count
-        loop_count = 20
-        
+        loop_count = int(argv[1]) if len(argv) > 1 else 1
         # Create and run the viewer
         viewer = SplashScreen(png_path, loop_count)
         viewer.run()
@@ -214,4 +213,4 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)

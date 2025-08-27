@@ -76,7 +76,9 @@ build_exe_options = {
         "__pycache__",
         ".pytest_cache",
         "build_is_running_worlds",
-        "gui"
+        "kivy_deps.sdl2",
+        "kivy_deps.glew",
+        "kivy_deps.angle"
     ],
     "zip_include_packages": ["*"],
     "zip_exclude_packages": ["worlds", "kivymd", "mwgg_gui", "kivy"],

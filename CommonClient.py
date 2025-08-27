@@ -268,7 +268,7 @@ class InitContext:
         self.exit_event = asyncio.Event()
         self._state = ClientState.INITIAL
         self._is_transitioning = False
-        #self.splash_process = None
+        self.splash_process = None
 
     def run_gui(self):
         """Run the GUI as self.ui_task."""
@@ -552,7 +552,7 @@ class CommonContext(InitContext):
     def _create_new_gui(self):
         """Create new GUI instance (existing behavior)"""
         # Original run_gui implementation
-        from gui import MultiMDApp
+        from Gui import MultiMDApp
         self.ui = MultiMDApp(self)
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
