@@ -43,17 +43,17 @@ def terminate_splash_screen():
         
         for proc in active_processes:
             if proc.name == "SplashScreen" and proc.is_alive():
-                logging.info(f"Found splash screen process by name (PID: {proc.pid})")
+                logging.debug(f"Found splash screen process by name (PID: {proc.pid})")
                 proc.terminate()
                 proc.join(timeout=2)
                 if proc.is_alive():
                     logging.warning("Splash process didn't terminate gracefully, forcing kill")
                     proc.kill()
                     proc.join()
-                logging.info("Splash screen process terminated successfully")
+                logging.debug("Splash screen process terminated successfully")
                 return
         
-        logging.info("No splash screen process found to terminate")
+        logging.debug("No splash screen process found to terminate")
         
     except Exception as e:
         logging.error(f"Failed to terminate splash screen: {e}")

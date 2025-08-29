@@ -794,16 +794,17 @@ class CommonContext(InitContext):
                                    remote_data_package_checksums: typing.Dict[str, str]):
         """Validate that all data is present for the current multiworld.
         Download, assimilate and cache missing data from the server."""
-        
+        # by documentation any game can use Archipelago locations/items -> always relevant
+        relevant_games.add("Archipelago")
+
         from worlds import network_data_package, network_data_package_single_game
         network_data_package, network_data_package_single_game = set_local_network_data_package()
 
         for game in relevant_games:
-            self.checksums[game] = network_data_package["games"][game]["checksum"]
-        self.update_data_package(network_data_package)
+            if game in network_data_package["games"]:
+                self.checksums[game] = network_data_package["games"][game]["checksum"]
 
-        # by documentation any game can use Archipelago locations/items -> always relevant
-        relevant_games.add("Archipelago")
+        self.update_data_package(network_data_package)
 
         needed_updates: typing.Set[str] = set()
         for game in relevant_games:

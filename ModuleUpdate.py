@@ -9,6 +9,13 @@ import urllib.request
 import shutil
 import tempfile
 import zipfile
+
+import logging
+logger = logging.getLogger("MultiWorld")
+
+if not logging.getLogger().hasHandlers():
+    logging.basicConfig(level=logging.DEBUG, format='%(message)s', stream=sys.stdout)
+
 from pathlib import Path
 from typing import List, Optional
 
@@ -93,7 +100,7 @@ def confirm(msg: str) -> None:
     try:
         input(f"\n{msg}")
     except KeyboardInterrupt:
-        print("\nAborting")
+        logger.info("\nAborting")
         sys.exit(1)
 
 
@@ -180,7 +187,7 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
     try:
         import packaging.requirements
     except ImportError:
-        print("Warning: packaging module not available, installing...")
+        logger.warning("packaging module not available, installing...")
         executable_args = [python_cmd, "-m", "pip", "install", "--upgrade", "packaging"]
         subprocess.run(executable_args)
         import packaging.requirements
@@ -194,7 +201,7 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
                 "-i", "https://pypi.org/simple", "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds"]
         response = subprocess.run(executable_args, capture_output=True, text=True, timeout=45)
         if response.returncode != 0:
-            print(f"Warning: Could not check for updates: {response.stderr}")
+            logger.warning(f"Could not check for updates: {response.stderr}")
             return []
         
         outdated_packages = json.loads(response.stdout)
@@ -235,10 +242,10 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
                         if latest_ver in requirement.specifier:
                             packages_to_update.append(pkg_name)
                         else:
-                            print(f"Skipping {pkg_name}: latest version {latest_version} doesn't satisfy requirement {requirement}")
+                            logger.debug(f"Skipping {pkg_name}: latest version {latest_version} doesn't satisfy requirement {requirement}")
                 except Exception as e:
                     # If we can't parse the version, skip it
-                    print(f"Skipping {pkg_name}: couldn't check version constraint: {e}")
+                    logger.debug(f"Skipping {pkg_name}: couldn't check version constraint: {e}")
             else:
                 # Package not in requirements.txt, so we can update it
                 packages_to_update.append(pkg_name)
@@ -246,7 +253,7 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
         return packages_to_update
     
     except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError) as e:
-        print(f"Warning: Could not check for updates: {e}")
+        logger.warning(f"Could not check for updates: {e}")
         return []
 
 
@@ -278,10 +285,10 @@ def find_world_modules() -> List[str]:
         return world_modules
         
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
-        print(f"Warning: Failed to fetch world modules from {url}: {e}")
+        logger.warning(f"Failed to fetch world modules from {url}: {e}")
         return []
     except Exception as e:
-        print(f"Warning: Unexpected error while fetching world modules: {e}")
+        logger.warning(f"Unexpected error while fetching world modules: {e}")
         return []
 
 def _pip_install_worker(args, return_queue):
@@ -293,27 +300,30 @@ def _pip_install_worker(args, return_queue):
     except Exception as e:
         return_queue.put((1, "", str(e)))
 
-def move_pycache_files_to_parent(directory: Path) -> None:
-    """Move all .pyc files from __pycache__ directories to their parent directories."""
+def _move_compiled_files(directory: Path) -> None:
+    """Moving .pyc files to parent directory for frozen builds
+    Doing it this way to prevent users from editing .py files"""
     for pycache_dir in directory.rglob("__pycache__"):
         if pycache_dir.is_dir():
             parent_dir = pycache_dir.parent
-            print(f"Moving .pyc files from {pycache_dir} to {parent_dir}")
-            
+            logger.debug(f"Moving .pyc files from {pycache_dir} to {parent_dir}")
             for pyc_file in pycache_dir.glob("*.pyc"):
                 # Move .pyc file to parent directory
-                target_path = parent_dir / pyc_file.name
+                if ".cpython" in pyc_file.name:
+                    file_name = pyc_file.name.replace(f".cpython-{sys.version_info.major}{sys.version_info.minor}", "")
+                else:
+                    file_name = pyc_file.name
+                target_path = parent_dir / file_name
                 shutil.move(str(pyc_file), str(target_path))
-                print(f"  Moved {pyc_file.name}")
-            
+                logger.debug(f"Moved {pyc_file.name} to {target_path}")
             # Remove empty __pycache__ directory
             try:
                 pycache_dir.rmdir()
             except OSError:
                 pass  # Directory not empty, leave it
 
-def add_to_library_zip(exe_dir: Path, source_path: Path) -> None:
-    """Add a file or directory to the library zip file."""
+def _add_to_library_zip(exe_dir: Path, source_path: Path) -> None:
+    """Adding a modules to the library.zip file for frozen builds"""
     library_zip = exe_dir / "lib" / "library.zip"
     with zipfile.ZipFile(library_zip, "a") as zipf:
         if source_path.is_file():
@@ -321,7 +331,7 @@ def add_to_library_zip(exe_dir: Path, source_path: Path) -> None:
         elif source_path.is_dir():
             # Add the entire directory tree to the zip
             for file_path in source_path.rglob("*"):
-                if file_path.is_file():
+                if file_path.is_file() and not file_path.name.endswith(".py"):
                     # Calculate the relative path within the directory
                     arcname = source_path.name / file_path.relative_to(source_path)
                     zipf.write(file_path, str(arcname))
@@ -330,7 +340,7 @@ def install_worlds(worlds: List[str]) -> None:
     """Install worlds from the multiworld repository."""
     check_pip()
     for world in worlds:
-        print(f"Installing world: {world}")
+        logger.info(f"Installing world: {world}")
         
         if is_frozen():
             # In frozen environments, we need to install to a location that's in the Python path
@@ -353,40 +363,28 @@ def install_worlds(worlds: List[str]) -> None:
                 stderr = "Failed to get process result"
             
             if returncode != 0:
-                print(f"Warning: Failed to install {world} into {worlds_install_dir}")
+                logger.warning(f"Failed to install {world} into {worlds_install_dir}")
                 if stderr:
-                    print(f"Error: {stderr}")
+                    logger.error(f"{stderr}")
             else:
-                print(f"Successfully installed {world} into {worlds_install_dir}")
-                
                 # Before moving files, process all installed packages
-                print(f"Processing installed packages...")
-                
+                logger.debug(f"Processing downloaded packages...")
                 # First, move all .pyc files from __pycache__ to parent directories
-                move_pycache_files_to_parent(pip_install_dir)
+                _move_compiled_files(pip_install_dir)
                 
                 # Process each item in the install directory
                 for item in pip_install_dir.iterdir():
                     if item.name != 'worlds':
                         # Add dependency packages to library.zip
-                        print(f"Adding {item.name} to library.zip")
-                        add_to_library_zip(exe_dir, item)
+                        logger.debug(f"Adding dependency {item.name} to library")
+                        _add_to_library_zip(exe_dir, item)
                     else:
-                        # For worlds, copy only .pyc files to the lib directory
-                        print(f"Copying worlds tree (pyc files only)...")
-                        
-                        # Create worlds directory structure and copy only .pyc files
-                        for pyc_file in item.rglob("*.pyc"):
-                            # Calculate target path maintaining directory structure
-                            relative_path = pyc_file.relative_to(item)
-                            target_file = worlds_install_dir / relative_path
-                            
-                            # Create parent directories if they don't exist
-                            target_file.parent.mkdir(parents=True, exist_ok=True)
-                            
-                            # Copy the .pyc file
-                            shutil.copy2(pyc_file, target_file)
-                            print(f"  Copied {relative_path}")
+                        # Copy everything from pip_install_dir to worlds_install_dir, excluding .py files
+                        logger.debug(f"Installing worlds...")
+                        shutil.copytree(pip_install_dir / "worlds", 
+                                    worlds_install_dir / "worlds", 
+                                    dirs_exist_ok=True, 
+                                    ignore=lambda src, files: [f for f in files if f.endswith('.py')])
                 
                 # Clean up temporary directory
                 shutil.rmtree(pip_install_dir)
@@ -396,9 +394,9 @@ def install_worlds(worlds: List[str]) -> None:
                     world, "--compile"]
             result = subprocess.run(executable_args)
             if result.returncode != 0:
-                print(f"Warning: Failed to install {world}")
+                logger.warning(f"Failed to install {world}")
             else:
-                print(f"Successfully installed {world}")
+                logger.info(f"Successfully installed {world}")
 
 def update_world_wheels() -> None:
     """Install/update wheel files from custom_wheels directory."""
@@ -406,7 +404,7 @@ def update_world_wheels() -> None:
     # Use multiprocessing version if frozen, otherwise use subprocess
     if is_frozen():
         for wheel in wheels_files:
-            print(f"Installing wheel: {wheel}")
+            logger.info(f"Installing wheel: {wheel}")
             executable_args = [python_cmd, "-m", "pip", "install", wheel, "--upgrade", "--target", str(pip_install_dir)]
             process = Process(target=_pip_install_worker, args=(executable_args,), name=f"PipInstall-{Path(wheel).name}")
             process.start()
@@ -414,18 +412,18 @@ def update_world_wheels() -> None:
             for obj in pip_install_dir.glob("*"):
                 obj.rename(worlds_install_dir / obj.name)
             if process.exitcode != 0:
-                print(f"Warning: Failed to install wheel {wheel}")
+                logger.warning(f"Failed to install wheel {wheel}")
             else:
-                print(f"Successfully installed wheel {wheel}")
+                logger.info(f"Successfully installed wheel {wheel}")
     else:
         for wheel in wheels_files:
-            print(f"Installing wheel: {wheel}")
+            logger.info(f"Installing wheel: {wheel}")
             executable_args = [python_cmd, "-m", "pip", "install", wheel, "--upgrade"]
             result = subprocess.run(executable_args)
             if result.returncode != 0:
-                print(f"Warning: Failed to install wheel {wheel}")
+                logger.warning(f"Failed to install wheel {wheel}")
             else:
-                print(f"Successfully installed wheel {wheel}")
+                logger.info(f"Successfully installed wheel {wheel}")
 
 
 def update_requirements(needed_packages: List[str]) -> None:
@@ -437,7 +435,7 @@ def update_requirements(needed_packages: List[str]) -> None:
     try:
         import packaging.requirements
     except ImportError:
-        print("Warning: packaging module not available, installing...")
+        logger.warning("packaging module not available, installing...")
         subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "packaging"])
         import packaging.requirements
     
@@ -447,10 +445,10 @@ def update_requirements(needed_packages: List[str]) -> None:
     # Handle regular requirements from files
     for req_file in requirements_files:
         if not req_file.exists():
-            print(f"Warning: Requirements file not found: {req_file}")
+            logger.warning(f"Requirements file not found: {req_file}")
             continue
             
-        print(f"Processing requirements from: {req_file}")
+        logger.debug(f"Processing requirements from: {req_file}")
         requirements = parse_requirements_file(req_file)
         
         packages_to_update = []
@@ -461,23 +459,23 @@ def update_requirements(needed_packages: List[str]) -> None:
                 if update_all or requirement.name in needed_packages:
                     packages_to_update.append(req_line)
             except packaging.requirements.InvalidRequirement:
-                print(f"Warning: Invalid requirement line: {req_line}")
+                logger.warning(f"Invalid requirement line: {req_line}")
                 continue
         
         if packages_to_update:
-            print(f"Installing/updating packages: {[req.split('==')[0] if '==' in req else req.split('>=')[0] if '>=' in req else req for req in packages_to_update]}")
+            logger.info(f"Installing/updating packages: {[req.split('==')[0] if '==' in req else req.split('>=')[0] if '>=' in req else req for req in packages_to_update]}")
             for package in packages_to_update:
                 executable_args = [python_cmd, "-m", "pip", "install", "--upgrade", package]
                 result = subprocess.run(executable_args)
                 if result.returncode != 0:
-                    print(f"Warning: Failed to install/update {package}")
+                    logger.warning(f"Failed to install/update {package}")
         else:
-            print("No packages from this requirements file need updating.")
+            logger.info("No packages from this requirements file need updating.")
     
     # Handle worlds (these are not in requirements.txt files)
     worlds_to_install = [pkg for pkg in needed_packages if pkg.startswith("worlds") or pkg.startswith("mwgg")]
     if worlds_to_install:
-        print(f"Installing/updating worlds: {worlds_to_install}")
+        logger.info(f"Installing/updating worlds: {worlds_to_install}")
         install_worlds(worlds_to_install)
 
 
@@ -514,7 +512,7 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
     
     for req_file in requirements_files:
         if not req_file.exists():
-            print(f"Warning: Requirements file not found: {req_file}")
+            logger.warning(f"Requirements file not found: {req_file}")
             continue
         
         requirements = parse_requirements_file(req_file)
@@ -525,12 +523,12 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
                 try:
                     importlib.metadata.distribution(requirement.name)
                 except importlib.metadata.PackageNotFoundError:
-                    print(f"Missing requirement: {requirement.name}")
+                    logger.warning(f"Missing requirement: {requirement.name}")
                     all_satisfied = False
                     if not yes:
                         confirm(f"Requirement {requirement.name} is not satisfied, press enter to install it")
             except packaging.requirements.InvalidRequirement:
-                print(f"Warning: Invalid requirement line: {req_line}")
+                logger.warning(f"Invalid requirement line: {req_line}")
                 continue
     
     return all_satisfied
@@ -547,16 +545,16 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
     """
     if is_frozen():
         if (exe_dir / "custom_wheels").exists():
-            print("Worlds wheels found, updating...")
+            logger.debug("Worlds wheels found, updating...")
             update_world_wheels()
         updates = check_for_updates(worlds_only=True)
         if updates:
-            print(f"Found updates for: {updates}")
+            logger.info(f"Found updates for: {updates}")
             if not yes:
                 confirm("Updates available. Press enter to continue with updates.")
             install_worlds(updates)
         else:
-            print("No updates found.")
+            logger.debug("No updates found.")
         return
     global update_ran
     
@@ -566,40 +564,35 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
     update_ran = True
     
     if force:
-        print("Force update requested - skipping update checks")
+        logger.debug("Force update requested - skipping update checks")
         # Force mode updates all requirements and worlds
         update_requirements([])  # Empty list means update all
         return
     
     # Check for available updates
-    print("Checking for available updates...")
+    logger.debug("Checking for available updates...")
     available_updates = check_for_updates()
     
     if available_updates:
-        print(f"Found updates for: {available_updates}")
+        logger.debug(f"Found updates for: {available_updates}")
         if not yes:
             confirm("Updates available. Press enter to continue with updates.")
     else:
-        print("No updates found.")
+        logger.debug("No updates found.")
     
     # Check if requirements are satisfied
-    print("Checking if all requirements are satisfied...")
+    logger.debug("Checking if all requirements are satisfied...")
     if not check_requirements_satisfied(yes=yes):
-        print("Installing missing requirements...")
+        logger.debug("Installing missing requirements...")
         update_requirements([])  # Empty list means update all missing requirements
         return
     
     # Update packages that need updates (including worlds)
     if available_updates:
-        print("Updating packages that need updates...")
+        logger.debug("Updating packages that need updates...")
         update_requirements(available_updates)
     
-    # Update world wheels
-    # if wheels_files:
-    #     print("Updating world wheels...")
-    #     update_world_wheels()
-    
-    print("Update process completed.")
+    logger.debug("Update process completed.")
 
 
 if __name__ == "__main__":
