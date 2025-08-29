@@ -8,6 +8,7 @@ import subprocess
 import time
 from importlib import metadata
 
+
 os.environ["KIVY_NO_CONSOLELOG"] = "0"
 os.environ["KIVY_NO_FILELOG"] = "0"
 os.environ["KIVY_NO_ARGS"] = "1"
@@ -21,6 +22,8 @@ from BaseUtils import local_path, is_frozen
 
 if is_frozen():
     os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"lib", "kivy", "data")
+    sys.path.append(os.path.join(os.path.dirname(__file__), "world_plugins", "lib", "python", \
+        sys.winver, "site-packages", "worlds"))
 else:
     os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"kivy", "data")
 os.environ["KIVY_HOME"] = os.path.join(local_path(),"data")
@@ -124,7 +127,7 @@ if __name__ == "__main__":
     from mwgg_splash import main as splash_main
     
     # Start splash screen in separate process
-    splash_process = Process(target=splash_main, name="SplashScreen", args=(["mwgg_splash", "20"],))
+    splash_process = Process(target=splash_main, name="SplashScreen", args=([["splashscreen/mwgg_splash.py", "20"]]))
     splash_process.start()
     
     # Run the main client in the current process instead of spawning another process

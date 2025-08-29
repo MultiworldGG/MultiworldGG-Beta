@@ -294,8 +294,26 @@ def home_path(*path: str) -> str:
             else:
                 os.makedirs(home_path.cached_path, 0o700, exist_ok=True)
     elif sys.platform == 'darwin':
-        import platformdirs
-        home_path.cached_path = platformdirs.user_data_dir("Archipelago", False)
+        try:
+            import platformdirs
+            home_path.cached_path = platformdirs.user_data_dir("Archipelago", False)
+        except (AttributeError, OSError, ImportError) as e:
+            # Fallback for macOS if platformdirs fails
+            import warnings
+            warnings.warn(f"platformdirs failed on macOS ({type(e).__name__}: {e}), using fallback")
+            home_path.cached_path = os.path.expanduser(f'~/Library/Application Support/{instance_name}')
+        os.makedirs(home_path.cached_path, 0o700, exist_ok=True)
+    elif sys.platform.startswith('win'):
+        # Temporary fix for Windows: SHGetFolderPathW was deprecated and removed
+        try:
+            import platformdirs
+            home_path.cached_path = platformdirs.user_data_dir(instance_name, False)
+        except (AttributeError, OSError, ImportError) as e:
+            import warnings
+            warnings.warn(f"platformdirs failed on Windows ({type(e).__name__}: {e}), using fallback")
+            # Use AppData\Roaming fallback for Windows user data
+            appdata_roaming = os.environ.get('APPDATA', os.path.expanduser('~\\AppData\\Roaming'))
+            home_path.cached_path = os.path.join(appdata_roaming, instance_name)
         os.makedirs(home_path.cached_path, 0o700, exist_ok=True)
     else:
         # not implemented
@@ -335,8 +353,22 @@ def cache_path(*path: str) -> str:
     if hasattr(cache_path, "cached_path"):
         pass
     else:
-        import platformdirs
-        cache_path.cached_path = platformdirs.user_cache_dir(instance_name, False)
+        try:
+            import platformdirs
+            cache_path.cached_path = platformdirs.user_cache_dir(instance_name, False)
+        except (AttributeError, OSError, ImportError) as e:
+            # Temporary fix for Windows: SHGetFolderPathW was deprecated and removed
+            import warnings
+            warnings.warn(f"platformdirs failed ({type(e).__name__}: {e}), using fallback cache directory")
+            
+            if sys.platform.startswith('win'):
+                # Use AppData\Local fallback for Windows
+                appdata_local = os.environ.get('LOCALAPPDATA', os.path.expanduser('~\\AppData\\Local'))
+                cache_path.cached_path = os.path.join(appdata_local, instance_name)
+            else:
+                # Fallback for other platforms
+                cache_path.cached_path = os.path.expanduser(f'~/.cache/{instance_name}')
+        
         # Ensure the cache directory exists
         os.makedirs(cache_path.cached_path, exist_ok=True)
 

@@ -32,7 +32,7 @@ build_exe_options = {
         "kivy_deps",
         "kivymd", 
         "websockets", 
-        "cymem", 
+        "cymem",
         "bsdiff4",
         "platformdirs",
         "certifi",
@@ -48,9 +48,9 @@ build_exe_options = {
         "jinja2",
         "schema",
         "asynckivy",
+        "PIL",
         "mwgg_gui",
         "worlds",
-        "PIL"
     ],
     "includes": [
         "ModuleUpdate",
@@ -74,13 +74,13 @@ build_exe_options = {
         "tests",
         "__pycache__",
         ".pytest_cache",
-        "build_is_running_worlds",
+        "worlds",
         "kivy_deps.sdl2",
         "kivy_deps.glew",
         "kivy_deps.angle"
     ],
     "zip_include_packages": ["*"],
-    "zip_exclude_packages": ["worlds", "kivymd", "mwgg_gui", "kivy"],
+    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy"],
     "include_files": [
         ("data", "data"),
         ("LICENSE", "LICENSE"),
@@ -89,7 +89,8 @@ build_exe_options = {
         ("data/SNI", "SNI") if os.path.exists("data/SNI") else None,
         ("EnemizerCLI", "EnemizerCLI") if os.path.exists("EnemizerCLI") else None,
         ("kivy/data", "lib/kivy/data"),
-        ("kivy/include", "lib/kivy/include")
+        ("kivy/include", "lib/kivy/include"),
+        ("worlds_wheels", "worlds_wheels")
     ],
     "include_msvcr": False,
     "replace_paths": ["*."],
@@ -149,11 +150,11 @@ if is_windows:
         )
     )
 
-def install_wheels():
+def install_wheels(type="default"):
     """Install wheels from default_wheels directory"""
-    wheels_dir = Path("default_wheels")
+    wheels_dir = Path(f"{type}_wheels")
     if wheels_dir.exists():
-        print("Installing wheels from default_wheels...")
+        print(f"Installing wheels from {type}_wheels...")
         for wheel_file in wheels_dir.glob("*.whl"):
             try:
                 # First try with dependencies to ensure all required packages are installed
@@ -197,7 +198,7 @@ def pre_build_setup():
     install_requirements()
     
     # Install wheels
-    install_wheels()
+    install_wheels("default")
         
     # Import our custom kivy hook to ensure it's loaded
     try:
@@ -208,7 +209,10 @@ def pre_build_setup():
 def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
     print("Running post-build setup...")
-    pass
+    os.environ["PIP_PREFIX"] = str(Path(build_exe_dir) / "world_plugins")
+    install_wheels("worlds")
+    print("Worlds installed successfully")
+
 class CustomBuildExe(build_exe):
     """Custom build command that includes post-build setup and custom hooks"""
     
@@ -272,6 +276,9 @@ class CustomBuildExe(build_exe):
             print(f"Error registering custom kivy hook: {e}")
 
 if __name__ == "__main__":
+    # Ensure DISTUTILS_DEBUG is not set to avoid debug output
+    os.environ.pop('DISTUTILS_DEBUG', None)
+    
     # Run pre-build setup
     pre_build_setup()
     
@@ -285,3 +292,4 @@ if __name__ == "__main__":
         executables=executables,
         cmdclass={"build_exe": CustomBuildExe}
     )
+

@@ -87,8 +87,6 @@ class SplashScreen:
             self.current_frame = 0
             self.animate()
             
-            # Add termination monitoring
-            self.termination_flag = False
             self.monitor_thread = None
             
         except Exception as e:
@@ -98,10 +96,17 @@ class SplashScreen:
             raise
     
     def animate(self):
-        # Check for termination signal before continuing animation
-        if self.termination_flag:
+        # Check for timeout before continuing animation
+        from datetime import timedelta, datetime, UTC
+        timeout = timedelta(seconds=60)
+
+        start_time = datetime.now(UTC)
+
+        if start_time + timeout < datetime.now(UTC):
+            logging.warning("Splash screen timeout reached, terminating")
             self.cleanup_and_exit()
             return
+
             
         # Display the current frame
         self.canvas.delete("all")
@@ -128,24 +133,8 @@ class SplashScreen:
     def handle_signal(self, sig, frame):
         """Handle termination signals"""
         logging.info(f"Received signal {sig}, terminating splash screen")
-        self.termination_flag = True
         self.cleanup_and_exit()
     
-    def listen_for_termination(self):
-        """Monitor for termination signals from the main application"""
-        # Add timeout to prevent infinite running (5 minutes)
-        start_time = time.time()
-        timeout = 300  # 5 minutes
-        
-        while not self.termination_flag:
-            # Check for timeout
-            if time.time() - start_time > timeout:
-                logging.warning("Splash screen timeout reached, terminating")
-                self.termination_flag = True
-                self.cleanup_and_exit()
-                break
-            
-            time.sleep(0.1)
     
     def cleanup_and_exit(self):
         """Clean up resources and exit gracefully"""
@@ -159,11 +148,6 @@ class SplashScreen:
         # Set up signal handlers for graceful exit
         signal.signal(signal.SIGINT, self.handle_signal)
         signal.signal(signal.SIGTERM, self.handle_signal)
-        
-        # Start the termination monitor in a separate thread
-        self.monitor_thread = threading.Thread(target=self.listen_for_termination)
-        self.monitor_thread.daemon = True
-        self.monitor_thread.start()
         
         # Start the main loop
         try:

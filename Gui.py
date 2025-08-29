@@ -13,8 +13,6 @@ from logging.handlers import QueueHandler
 if "pytest" not in sys.modules and "unittest" not in sys.modules and "test" not in sys.argv[0]:
     assert "kivy" not in sys.modules, "gui needs instansiation first"
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "kivydi"))
-
 # if sys.platform == "win32":
 #     #import ctypes
 

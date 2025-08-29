@@ -6,6 +6,9 @@ from multiprocessing import Process
 import warnings
 import json
 import urllib.request
+import shutil
+import tempfile
+import zipfile
 from pathlib import Path
 from typing import List, Optional
 
@@ -71,6 +74,11 @@ if not update_ran:
         for wheel_file in custom_wheels_dir.glob("*.whl"):
             wheels_files.add(str(wheel_file))
 
+if is_frozen():
+    # For frozen builds, install adjacent to the executable
+    exe_dir = Path(sys.exec_prefix)
+    install_dir = exe_dir / "world_plugins"
+    os.environ["PIP_PREFIX"] = str(install_dir)
 
 def check_pip() -> None:
     """Verify pip is available."""
@@ -286,11 +294,14 @@ def install_worlds(worlds: List[str]) -> None:
     """Install worlds from the multiworld repository."""
     check_pip()
     for world in worlds:
-        executable_args = [python_cmd, "-m", "pip", "install", 
-                "-i", "https://pypi.multiworld.gg/mwgg/apworlds", 
-                world, "--upgrade"]
+        print(f"Installing world: {world}")
+        
         if is_frozen():
-            print(f"Installing world: {world}")
+            # In frozen environments, we need to install to a location that's in the Python path
+            # and ensure we use the correct target directory
+            executable_args = [python_cmd, "-m", "pip", "install", 
+                    "-i", "https://pypi.multiworld.gg/mwgg/apworlds", 
+                    world, "--compile", "--user"]
             process = Process(target=_pip_install_worker, args=(executable_args,), name=f"PipInstall-{world}")
             process.start()
             process.join()
@@ -299,8 +310,17 @@ def install_worlds(worlds: List[str]) -> None:
                 print(f"Warning: Failed to install {world}")
             else:
                 print(f"Successfully installed {world}")
+                # # Find and add the specific dist-info directory for the installed world
+                # lib_dir = Path(exe_dir, "lib")
+                # # Look for dist-info directories that match the specific world
+                # # This covers both: worlds_worldname-X.X.X.dist-info and worlds-X.X.X.dist-info
+                # for pattern in [f"**/worlds_{world}-*.dist-info", "**/worlds-*.dist-info"]:
+                #     for dist_info_dir in lib_dir.glob(pattern):
+                #         add_to_library_zip(exe_dir, dist_info_dir)
         else:
-            print(f"Installing world: {world}")
+            executable_args = [python_cmd, "-m", "pip", "install", 
+                    "-i", "https://pypi.multiworld.gg/mwgg/apworlds", 
+                    world, "--compile=true"]
             result = subprocess.run(executable_args)
             if result.returncode != 0:
                 print(f"Warning: Failed to install {world}")
@@ -380,7 +400,7 @@ def update_requirements(needed_packages: List[str]) -> None:
             print("No packages from this requirements file need updating.")
     
     # Handle worlds (these are not in requirements.txt files)
-    worlds_to_install = [pkg for pkg in needed_packages if pkg.startswith("worlds") or pkg == "mwgg_gui"]
+    worlds_to_install = [pkg for pkg in needed_packages if pkg.startswith("worlds") or pkg.startswith("mwgg")]
     if worlds_to_install:
         print(f"Installing/updating worlds: {worlds_to_install}")
         install_worlds(worlds_to_install)
@@ -450,6 +470,14 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
         force: Force update without checking
         worlds: List of specific worlds to update
     """
+    if is_frozen():
+        if os.path.exists(exe_dir.glob("worlds_wheels/worlds-*.whl")):
+            print("Worlds wheels found, updating...")
+            update_world_wheels()
+            return
+        else:
+            print("No worlds wheels found, skipping update...")
+            return
     global update_ran
     
     if update_ran:
@@ -466,13 +494,6 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
     # Check for available updates
     print("Checking for available updates...")
     available_updates = check_for_updates()
-    
-    # Add worlds to requirements if specified
-    if worlds:
-        for world in worlds:
-            # Add world as a requirement to be processed
-            if world not in available_updates:
-                available_updates.append(world)
     
     if available_updates:
         print(f"Found updates for: {available_updates}")
@@ -494,9 +515,9 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
         update_requirements(available_updates)
     
     # Update world wheels
-    if wheels_files:
-        print("Updating world wheels...")
-        update_world_wheels()
+    # if wheels_files:
+    #     print("Updating world wheels...")
+    #     update_world_wheels()
     
     print("Update process completed.")
 
