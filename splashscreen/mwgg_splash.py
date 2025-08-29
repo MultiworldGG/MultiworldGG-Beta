@@ -24,10 +24,9 @@ from PIL import Image, ImageTk, ImageSequence
 logger = logging.getLogger("MultiWorld")
 
 class SplashScreen:
-    def __init__(self, png_path, loop_count=1):
+    def __init__(self, png_path):
         try:
             # Initialize the main window
-            self.loop_done = False
             self.root = tk.Tk()
             self.root.overrideredirect(True)  # Remove window decorations
             self.root.attributes("-transparent", "black")  # Enable transparency
@@ -56,8 +55,6 @@ class SplashScreen:
             self.canvas.pack()
             
             # Configuration
-            self.loop_count = loop_count
-            self.current_loop = 0
             self.frames = []
             self.frame_durations = []
             
@@ -121,11 +118,6 @@ class SplashScreen:
         # If we've reached the end of the frames
         if self.current_frame >= len(self.frames):
             self.current_frame = 0
-            self.current_loop += 1
-            
-            # If we've completed all loops, exit
-            if self.loop_count > 0 and self.current_loop >= self.loop_count:
-                return
         
         # Schedule the next frame
         self.root.after(duration, self.animate)
@@ -157,7 +149,7 @@ class SplashScreen:
         finally:
             self.cleanup_and_exit()
 
-def main(argv):
+def main(argv=None):
     try:
         # Check if required environment variables are set
         kivy_data_dir = os.getenv("KIVY_DATA_DIR")
@@ -178,10 +170,8 @@ def main(argv):
             logging.error(f"Error: File '{png_path}' does not have a .png extension.")
             sys.exit(1)
         
-        # Set loop count
-        loop_count = int(argv[1]) if len(argv) > 1 else 1
         # Create and run the viewer
-        viewer = SplashScreen(png_path, loop_count)
+        viewer = SplashScreen(png_path)
         viewer.run()
         
     except Exception as e:
@@ -190,4 +180,7 @@ def main(argv):
 
 if __name__ == "__main__":
     freeze_support()
-    Process(target=main, args=(sys.argv)).start()
+    if not sys.argv:
+        Process(target=main).start()
+    else:
+        Process(target=main, args=(sys.argv)).start()

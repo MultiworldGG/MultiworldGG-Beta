@@ -108,6 +108,7 @@ def set_game_names(value: typing.List[str]):
         _worlds_to_load.append(get_module_for_game(game))
     _worlds_to_install: typing.List[str] = []
     for module_name in _worlds_to_load:
+        module_name = "worlds.{}".format(module_name) if not module_name.startswith("worlds.") else module_name
         try:
             importlib.import_module(module_name)
         except ModuleNotFoundError:
@@ -132,7 +133,7 @@ def get_available_worlds() -> typing.List[str]:
 
 def discover_and_launch_module(module_name: str, **kwargs) -> None:
     """Discover and launch module via entrypoints"""
-    module_name = "worlds.{}".format(module_name)
+    module_name = "worlds.{}".format(module_name) if not module_name.startswith("worlds.") else module_name
     # First, try to import the module to see if it exists
     try:
         importlib.import_module(module_name)

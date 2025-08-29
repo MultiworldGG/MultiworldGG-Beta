@@ -127,8 +127,8 @@ if __name__ == "__main__":
     from mwgg_splash import main as splash_main
     
     # Start splash screen in separate process
-    splash_process = Process(target=splash_main, name="SplashScreen", args=([["splashscreen/mwgg_splash.py", "20"]]))
+    splash_process = Process(target=splash_main, name="SplashScreen")
     splash_process.start()
     
-    # Run the main client in the current process instead of spawning another process
+    # Run the main client in the current process
     run_client(*sys.argv[1:])

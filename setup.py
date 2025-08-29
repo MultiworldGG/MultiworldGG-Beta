@@ -74,13 +74,12 @@ build_exe_options = {
         "tests",
         "__pycache__",
         ".pytest_cache",
-        "worlds",
         "kivy_deps.sdl2",
         "kivy_deps.glew",
         "kivy_deps.angle"
     ],
     "zip_include_packages": ["*"],
-    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy"],
+    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds"],
     "include_files": [
         ("data", "data"),
         ("LICENSE", "LICENSE"),
@@ -89,8 +88,7 @@ build_exe_options = {
         ("data/SNI", "SNI") if os.path.exists("data/SNI") else None,
         ("EnemizerCLI", "EnemizerCLI") if os.path.exists("EnemizerCLI") else None,
         ("kivy/data", "lib/kivy/data"),
-        ("kivy/include", "lib/kivy/include"),
-        ("worlds_wheels", "worlds_wheels")
+        ("kivy/include", "lib/kivy/include")
     ],
     "include_msvcr": False,
     "replace_paths": ["*."],
@@ -199,6 +197,7 @@ def pre_build_setup():
     
     # Install wheels
     install_wheels("default")
+    install_wheels("worlds")
         
     # Import our custom kivy hook to ensure it's loaded
     try:
@@ -209,9 +208,6 @@ def pre_build_setup():
 def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
     print("Running post-build setup...")
-    os.environ["PIP_PREFIX"] = str(Path(build_exe_dir) / "world_plugins")
-    install_wheels("worlds")
-    print("Worlds installed successfully")
 
 class CustomBuildExe(build_exe):
     """Custom build command that includes post-build setup and custom hooks"""

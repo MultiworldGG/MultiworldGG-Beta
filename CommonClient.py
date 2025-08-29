@@ -789,25 +789,12 @@ class CommonContext(InitContext):
             msg["status"] = status
         async_start(self.send_msgs([msg]), name="update_hint")
     
-    def register_new_games(self, multiworld_games: typing.Set[str]) -> None:
-        Utils.set_game_names(list(multiworld_games))
-        from worlds import AutoWorldRegister, WorldSource
-        new_world_sources: typing.List[WorldSource] = []
-        for game in multiworld_games:
-            if game not in AutoWorldRegister.world_types:
-                new_world_sources.append(WorldSource(Utils.get_module_for_game(game)))
-        new_world_sources.sort()
-        for world in new_world_sources:
-            world.load()
-
-        from worlds.AutoWorld import AutoWorldRegister
-
     # DataPackage
     async def prepare_data_package(self, relevant_games: typing.Set[str],
                                    remote_data_package_checksums: typing.Dict[str, str]):
         """Validate that all data is present for the current multiworld.
         Download, assimilate and cache missing data from the server."""
-        self.register_new_games(relevant_games)
+        
         from worlds import network_data_package, network_data_package_single_game
         network_data_package, network_data_package_single_game = set_local_network_data_package()
 

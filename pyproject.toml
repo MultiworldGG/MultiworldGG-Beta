@@ -87,8 +87,10 @@ packages = [
     "jinja2",
     "schema",
     "asynckivy",
+    "PIL",
     "mwgg_gui",
-    "PIL"
+    "mwgg_splash",
+    "worlds"
 ]
 
 includes = [
@@ -114,14 +116,13 @@ excludes = [
     "tests",
     "__pycache__",
     ".pytest_cache",
-    "worlds",
     "kivy_deps.sdl2",
     "kivy_deps.glew",
     "kivy_deps.angle"
 ]
 
 zip_include_packages = ["*"]
-zip_exclude_packages = ["kivymd", "mwgg_gui", "kivy"]
+zip_exclude_packages = ["kivymd", "mwgg_gui", "kivy", "worlds"]
 include_msvcr = false
 replace_paths = ["*."]
 optimize = 1

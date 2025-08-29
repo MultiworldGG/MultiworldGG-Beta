@@ -77,8 +77,8 @@ if not update_ran:
 if is_frozen():
     # For frozen builds, install adjacent to the executable
     exe_dir = Path(sys.exec_prefix)
-    install_dir = exe_dir / "world_plugins"
-    os.environ["PIP_PREFIX"] = str(install_dir)
+    pip_install_dir = exe_dir / "worlds_wheels"
+    worlds_install_dir = exe_dir / "lib"
 
 def check_pip() -> None:
     """Verify pip is available."""
@@ -169,7 +169,7 @@ def _parse_custom_pep508_requirement(line: str) -> str:
     return result
 
 
-def check_for_updates() -> List[str]:
+def check_for_updates(worlds_only: bool = False) -> List[str]:
     """
     Check which packages need updates by querying PyPI.
     Returns a list of package names that need updating.
@@ -186,9 +186,12 @@ def check_for_updates() -> List[str]:
         import packaging.requirements
     
     try:
-        executable_args = [python_cmd, "-m", "pip", "list", "-o", "--format", "json", 
-             "-i", "https://pypi.org/simple", "--extra-index-url", 
-             "https://pypi.multiworld.gg/mwgg/apworlds/+simple"]
+        if worlds_only:
+            executable_args = [python_cmd, "-m", "pip", "list", "-o", "--format", "json", 
+                "-i", "https://pypi.multiworld.gg/mwgg/apworlds/+simple"]
+        else:
+            executable_args = [python_cmd, "-m", "pip", "list", "-o", "--format", "json", 
+                "-i", "https://pypi.org/simple", "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds"]
         response = subprocess.run(executable_args, capture_output=True, text=True, timeout=45)
         if response.returncode != 0:
             print(f"Warning: Could not check for updates: {response.stderr}")
@@ -281,14 +284,47 @@ def find_world_modules() -> List[str]:
         print(f"Warning: Unexpected error while fetching world modules: {e}")
         return []
 
-def _pip_install_worker(args):
+def _pip_install_worker(args, return_queue):
     """Worker function for pip install in separate process."""
     try:
         import subprocess
         result = subprocess.run(args, capture_output=True, text=True)
-        return result.returncode, result.stdout, result.stderr
+        return_queue.put((result.returncode, result.stdout, result.stderr))
     except Exception as e:
-        return 1, "", str(e)
+        return_queue.put((1, "", str(e)))
+
+def move_pycache_files_to_parent(directory: Path) -> None:
+    """Move all .pyc files from __pycache__ directories to their parent directories."""
+    for pycache_dir in directory.rglob("__pycache__"):
+        if pycache_dir.is_dir():
+            parent_dir = pycache_dir.parent
+            print(f"Moving .pyc files from {pycache_dir} to {parent_dir}")
+            
+            for pyc_file in pycache_dir.glob("*.pyc"):
+                # Move .pyc file to parent directory
+                target_path = parent_dir / pyc_file.name
+                shutil.move(str(pyc_file), str(target_path))
+                print(f"  Moved {pyc_file.name}")
+            
+            # Remove empty __pycache__ directory
+            try:
+                pycache_dir.rmdir()
+            except OSError:
+                pass  # Directory not empty, leave it
+
+def add_to_library_zip(exe_dir: Path, source_path: Path) -> None:
+    """Add a file or directory to the library zip file."""
+    library_zip = exe_dir / "lib" / "library.zip"
+    with zipfile.ZipFile(library_zip, "a") as zipf:
+        if source_path.is_file():
+            zipf.write(source_path, source_path.name)
+        elif source_path.is_dir():
+            # Add the entire directory tree to the zip
+            for file_path in source_path.rglob("*"):
+                if file_path.is_file():
+                    # Calculate the relative path within the directory
+                    arcname = source_path.name / file_path.relative_to(source_path)
+                    zipf.write(file_path, str(arcname))
 
 def install_worlds(worlds: List[str]) -> None:
     """Install worlds from the multiworld repository."""
@@ -300,27 +336,64 @@ def install_worlds(worlds: List[str]) -> None:
             # In frozen environments, we need to install to a location that's in the Python path
             # and ensure we use the correct target directory
             executable_args = [python_cmd, "-m", "pip", "install", 
-                    "-i", "https://pypi.multiworld.gg/mwgg/apworlds", 
-                    world, "--compile", "--user"]
-            process = Process(target=_pip_install_worker, args=(executable_args,), name=f"PipInstall-{world}")
+                    "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds", 
+                    world, "--compile", "--target", str(pip_install_dir), "--upgrade"]
+            # Use a Queue to get the return values from the worker process
+            return_queue = multiprocessing.Queue()
+            process = Process(target=_pip_install_worker, args=(executable_args, return_queue), name=f"PipInstall-{world}")
             process.start()
             process.join()
             
-            if process.exitcode != 0:
-                print(f"Warning: Failed to install {world}")
+            # Get the return values from the worker process
+            try:
+                returncode, stdout, stderr = return_queue.get_nowait()
+            except:
+                returncode = 1  # Assume failure if we can't get the result
+                stdout = ""
+                stderr = "Failed to get process result"
+            
+            if returncode != 0:
+                print(f"Warning: Failed to install {world} into {worlds_install_dir}")
+                if stderr:
+                    print(f"Error: {stderr}")
             else:
-                print(f"Successfully installed {world}")
-                # # Find and add the specific dist-info directory for the installed world
-                # lib_dir = Path(exe_dir, "lib")
-                # # Look for dist-info directories that match the specific world
-                # # This covers both: worlds_worldname-X.X.X.dist-info and worlds-X.X.X.dist-info
-                # for pattern in [f"**/worlds_{world}-*.dist-info", "**/worlds-*.dist-info"]:
-                #     for dist_info_dir in lib_dir.glob(pattern):
-                #         add_to_library_zip(exe_dir, dist_info_dir)
+                print(f"Successfully installed {world} into {worlds_install_dir}")
+                
+                # Before moving files, process all installed packages
+                print(f"Processing installed packages...")
+                
+                # First, move all .pyc files from __pycache__ to parent directories
+                move_pycache_files_to_parent(pip_install_dir)
+                
+                # Process each item in the install directory
+                for item in pip_install_dir.iterdir():
+                    if item.name != 'worlds':
+                        # Add dependency packages to library.zip
+                        print(f"Adding {item.name} to library.zip")
+                        add_to_library_zip(exe_dir, item)
+                    else:
+                        # For worlds, copy only .pyc files to the lib directory
+                        print(f"Copying worlds tree (pyc files only)...")
+                        
+                        # Create worlds directory structure and copy only .pyc files
+                        for pyc_file in item.rglob("*.pyc"):
+                            # Calculate target path maintaining directory structure
+                            relative_path = pyc_file.relative_to(item)
+                            target_file = worlds_install_dir / relative_path
+                            
+                            # Create parent directories if they don't exist
+                            target_file.parent.mkdir(parents=True, exist_ok=True)
+                            
+                            # Copy the .pyc file
+                            shutil.copy2(pyc_file, target_file)
+                            print(f"  Copied {relative_path}")
+                
+                # Clean up temporary directory
+                shutil.rmtree(pip_install_dir)
         else:
             executable_args = [python_cmd, "-m", "pip", "install", 
-                    "-i", "https://pypi.multiworld.gg/mwgg/apworlds", 
-                    world, "--compile=true"]
+                    "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds", 
+                    world, "--compile"]
             result = subprocess.run(executable_args)
             if result.returncode != 0:
                 print(f"Warning: Failed to install {world}")
@@ -334,10 +407,12 @@ def update_world_wheels() -> None:
     if is_frozen():
         for wheel in wheels_files:
             print(f"Installing wheel: {wheel}")
-            executable_args = [python_cmd, "-m", "pip", "install", wheel, "--upgrade"]
+            executable_args = [python_cmd, "-m", "pip", "install", wheel, "--upgrade", "--target", str(pip_install_dir)]
             process = Process(target=_pip_install_worker, args=(executable_args,), name=f"PipInstall-{Path(wheel).name}")
             process.start()
             process.join()
+            for obj in pip_install_dir.glob("*"):
+                obj.rename(worlds_install_dir / obj.name)
             if process.exitcode != 0:
                 print(f"Warning: Failed to install wheel {wheel}")
             else:
@@ -471,13 +546,18 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
         worlds: List of specific worlds to update
     """
     if is_frozen():
-        if os.path.exists(exe_dir.glob("worlds_wheels/worlds-*.whl")):
+        if (exe_dir / "custom_wheels").exists():
             print("Worlds wheels found, updating...")
             update_world_wheels()
-            return
+        updates = check_for_updates(worlds_only=True)
+        if updates:
+            print(f"Found updates for: {updates}")
+            if not yes:
+                confirm("Updates available. Press enter to continue with updates.")
+            install_worlds(updates)
         else:
-            print("No worlds wheels found, skipping update...")
-            return
+            print("No updates found.")
+        return
     global update_ran
     
     if update_ran:
