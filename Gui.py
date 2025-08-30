@@ -13,13 +13,13 @@ from logging.handlers import QueueHandler
 if "pytest" not in sys.modules and "unittest" not in sys.modules and "test" not in sys.argv[0]:
     assert "kivy" not in sys.modules, "gui needs instansiation first"
 
-# if sys.platform == "win32":
-#     #import ctypes
+if sys.platform == "win32":
+    #import ctypes
 
-#     # kivy 2.2.0 introduced DPI awareness on Windows, but it makes the UI enter an infinitely recursive re-layout
-#     # by setting the application to not DPI Aware, Windows handles scaling the entire window on its own, ignoring kivy's
-#     from ctypes import windll, c_int64
-#     windll.user32.SetProcessDpiAwarenessContext(c_int64(-4))
+    # kivy 2.2.0 introduced DPI awareness on Windows, but it makes the UI enter an infinitely recursive re-layout
+    # by setting the application to not DPI Aware, Windows handles scaling the entire window on its own, ignoring kivy's
+    from ctypes import windll, c_int64
+    #windll.user32.SetProcessDpiAwarenessContext(c_int64(-4))
     
 # from CommonClient import console_loop
 # from MultiServer import console

@@ -33,6 +33,9 @@ build_exe_options = {
         "kivymd", 
         "websockets", 
         "cymem",
+        "ctypes",
+        "cffi",
+        "pymem",
         "bsdiff4",
         "platformdirs",
         "certifi",
@@ -50,7 +53,7 @@ build_exe_options = {
         "asynckivy",
         "PIL",
         "mwgg_gui",
-        "worlds",
+        "worlds"
     ],
     "includes": [
         "ModuleUpdate",
@@ -90,11 +93,19 @@ build_exe_options = {
         ("kivy/data", "lib/kivy/data"),
         ("kivy/include", "lib/kivy/include")
     ],
-    "include_msvcr": False,
+    "include_msvcr": True,
     "replace_paths": ["*."],
     "optimize": 1,
     "bin_includes": ["libffi.so", "libcrypt.so"] if platform.system() == "Linux" else []
 }
+
+#need to figure out these dependencies so we don't keep downloading
+# gclib @ git+https://github.com/LagoLunatic/gclib.git
+# gclib
+# PyFastYaz0Yay0 @ git+https://github.com/LagoLunatic/PyFastYaz0Yay0.git
+# PyFastYaz0Yay0
+# PyFastBTI @ git+https://github.com/LagoLunatic/PyFastBTI.git
+# PyFastBTI
 
 # Remove None entries from include_files
 build_exe_options["include_files"] = [item for item in build_exe_options["include_files"] if item is not None]
@@ -174,7 +185,8 @@ def install_wheels(type="default"):
                     print(f"Failed to install {wheel_file.name}: {e2}")
 
 def install_requirements():
-    """Install requirements from main requirements.txt only"""
+    """Install requirements from requirements.txt file(s)"""
+    # Install main requirements.txt
     req_file = Path("requirements.txt")
     if req_file.exists():
         print("Installing requirements from main requirements.txt...")
@@ -187,6 +199,32 @@ def install_requirements():
             print("Requirements installed successfully")
         except subprocess.CalledProcessError as e:
             print(f"Failed to install requirements: {e}")
+    
+    # # Install world-specific requirements
+    # # Check if worlds folder was renamed during build process
+    # worlds_folder = Path("build_is_running_worlds") if Path("build_is_running_worlds").exists() else Path("worlds")
+    
+    # if worlds_folder.exists():
+    #     print(f"Searching for world requirements in {worlds_folder}...")
+    #     world_req_files = list(worlds_folder.glob("*/requirements.txt"))
+        
+    #     if world_req_files:
+    #         print(f"Found {len(world_req_files)} world-specific requirements files")
+            
+    #         for world_req_file in world_req_files:
+    #             world_name = world_req_file.parent.name
+    #             print(f"Installing requirements for {world_name}...")
+    #             try:
+    #                 subprocess.check_call([
+    #                     sys.executable, "-m", "pip", "install", "-r", str(world_req_file.absolute())
+    #                 ])
+    #                 print(f"Requirements for {world_name} installed successfully")
+    #             except subprocess.CalledProcessError as e:
+    #                 print(f"Failed to install requirements for {world_name}: {e}")
+    #     else:
+    #         print("No world-specific requirements found")
+    # else:
+    #     print("No worlds folder found")
 
 def pre_build_setup():
     """Run pre-build setup tasks"""

@@ -1,4 +1,3 @@
-import os
 import sys
 import subprocess
 import multiprocessing
@@ -7,7 +6,6 @@ import warnings
 import json
 import urllib.request
 import shutil
-import tempfile
 import zipfile
 
 import logging
@@ -198,7 +196,7 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
                 "-i", "https://pypi.multiworld.gg/mwgg/apworlds/+simple"]
         else:
             executable_args = [python_cmd, "-m", "pip", "list", "-o", "--format", "json", 
-                "-i", "https://pypi.org/simple", "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds"]
+                "-i", "https://pypi.org/simple", "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds/+simple"]
         response = subprocess.run(executable_args, capture_output=True, text=True, timeout=45)
         if response.returncode != 0:
             logger.warning(f"Could not check for updates: {response.stderr}")
