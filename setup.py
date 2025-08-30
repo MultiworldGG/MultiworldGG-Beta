@@ -114,7 +114,7 @@ build_exe_options = {
         ("data", "data"),
         ("LICENSE", "LICENSE"),
         ("README.md", "README.md"),
-        ("_persistent_storage.yaml", "_persistent_storage.yaml"),
+        ("application.yaml", "application.yaml"),
         ("data/SNI", "SNI") if os.path.exists("data/SNI") else None,
         ("EnemizerCLI", "EnemizerCLI") if os.path.exists("EnemizerCLI") else None,
         ("kivy/data", "lib/kivy/data"),
