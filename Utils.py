@@ -38,8 +38,6 @@ if typing.TYPE_CHECKING:
     from BaseClasses import Region
     import multiprocessing
 
-from mwgg_igdb import get_module_for_game
-
 @dataclass
 class PythonToExe:
     script_name: str
@@ -106,14 +104,18 @@ is_windows = sys.platform in ("win32", "cygwin", "msys")
 _worlds_to_load: typing.List[str] = []
 
 def set_game_names(value: typing.List[str]):
+    """Set the game names to the list of game names"""
+    from mwgg_igdb import GameIndex
+    # lazy import
     for game in value:
-        _worlds_to_load.append(get_module_for_game(game))
+        _worlds_to_load.append(GameIndex.get_module_for_game(game))
     _worlds_to_install: typing.List[str] = []
     for module_name in _worlds_to_load:
         module_name = "worlds.{}".format(module_name) if not module_name.startswith("worlds.") else module_name
         try:
             importlib.import_module(module_name)
         except ModuleNotFoundError:
+            logging.warning(f"Module {module_name} not found, looking in worlds pypi index.")
             _worlds_to_install.append(module_name)
     if _worlds_to_install:
         ModuleUpdate.install_worlds(_worlds_to_install)

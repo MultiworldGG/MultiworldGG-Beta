@@ -14,14 +14,13 @@ from itertools import chain
 from typing import Any
 
 import ModuleUpdate
-
 ModuleUpdate.update()
 
 import Utils
 import Options
 from BaseClasses import seeddigits, get_seed, PlandoOptions
 from Utils import parse_yamls, version_tuple, __version__, tuplize_version, set_game_names
-from mwgg_igdb import get_module_for_game
+from mwgg_igdb import GameIndex
 
 def mystery_argparse():
     from settings import get_settings
@@ -508,7 +507,7 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
             raise Exception(f"Option {option_key} has to be in a game's section, not on its own.")
 
     ret.game = get_choice("game", weights)
-    ret.module_name = get_module_for_game(ret.game)
+    ret.module_name = GameIndex.get_module_for_game(ret.game)
     if not isinstance(ret.game, str):
         if ret.game is None:
             raise Exception('"game" not specified')
