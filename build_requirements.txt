@@ -1,0 +1,12 @@
+# Build-only requirements - these are only needed during the build process
+# and should not be included in the final package distribution
+
+# Python-to-C compiler for building extensions
+cython>=3.0.12
+
+# Package building tools
+setuptools>=70.0.0
+build>=1.0.0
+
+# cx_Freeze for building executables (if not already installed)
+cx_Freeze>=7.0.0

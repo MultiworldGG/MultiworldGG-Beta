@@ -1,3 +1,4 @@
+# Core runtime dependencies
 colorama>=0.4.6
 websockets>=13.0.1,<14
 PyYAML>=6.0.2
@@ -8,13 +9,44 @@ kivy>=2.3.1
 bsdiff4>=1.2.6
 platformdirs>=4.3.6
 certifi>=2025.4.26
-cython>=3.0.12
 cymem>=2.0.11
 orjson>=3.10.15
 typing_extensions>=4.12.2
-dolphin_memory_engine>=1.2.0
 pyshortcuts>=1.9.1
 tqdm>=4.67.1
 numpy>=1.26.1
 Pillow>=11.2.1
+pywin32>=306
+
+# world specific dependencies
+# these are included by default because they're small and common
+
+# needed for alttp
+xxtea>=3.0.0
+
+# needed for celeste
+openpyxl>=3.1.2
+
+# needed for ff4fe
+chardet>=5.0.0
+cherrypy>=18.8.0
+lark>=1.1.7
+markdown>=3.5.0
+pymongo>=4.5.0
+python-dotenv>=1.0.0
+
+# needed for kh2, animal_well, jakanddaxter
 pymem>=1.10.0
+
+# needed for minecraft, gstlas
+requests>=2.28.1
+
+# needed for sc2
+aiohttp>=3.8.4
+loguru>=0.7.0
+mpyq>=0.2.5
+portpicker>=1.5.2
+protobuf==3.20.3
+
+# needed for sms, tww
+dolphin_memory_engine>=1.2.0

@@ -40,7 +40,6 @@ dependencies = [
     "typing_extensions>=4.12.2",
     "dolphin_memory_engine>=1.2.0",
     "pyshortcuts>=1.9.1",
-    "kivymd @ git+https://github.com/kivymd/KivyMD@d2f7740",
     "kivymd>=2.0.1.dev0",
     "tqdm>=4.67.1",
     "numpy>=1.26.1",

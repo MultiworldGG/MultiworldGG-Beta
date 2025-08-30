@@ -1,2 +1,1 @@
 Pymem>=1.10.0
-werkzeug>=3.1.0

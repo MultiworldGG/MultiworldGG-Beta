@@ -14,12 +14,26 @@ __all__ = ('SplashScreen',)
 from multiprocessing import freeze_support, Process
 import os
 import sys
-import time
+from datetime import datetime, UTC, timedelta
 import logging
 import threading
 import signal
 import tkinter as tk
 from PIL import Image, ImageTk, ImageSequence
+
+def is_windows() -> bool:
+    return sys.platform == "win32"
+
+# Windows-specific imports
+if is_windows():
+    try:
+        import win32gui
+        import win32con
+        HAS_WIN32 = True
+    except ImportError:
+        HAS_WIN32 = False
+else:
+    HAS_WIN32 = False
 
 logger = logging.getLogger("MultiWorld")
 
@@ -80,6 +94,13 @@ class SplashScreen:
             if frame_count == 0:
                 raise ValueError("No valid frames found in the image")
             
+            # Initialize timeout tracking
+            self.start_time = datetime.now(UTC)
+            self.timeout = timedelta(seconds=60)
+            
+            # Store window handle for Windows API termination
+            self.hwnd = None
+            
             # Start animation
             self.current_frame = 0
             self.animate()
@@ -94,16 +115,12 @@ class SplashScreen:
     
     def animate(self):
         # Check for timeout before continuing animation
-        from datetime import timedelta, datetime, UTC
-        timeout = timedelta(seconds=60)
-
-        start_time = datetime.now(UTC)
-
-        if start_time + timeout < datetime.now(UTC):
+        current_time = datetime.now(UTC)
+        
+        if self.start_time + self.timeout <= current_time:
             logging.warning("Splash screen timeout reached, terminating")
             self.cleanup_and_exit()
             return
-
             
         # Display the current frame
         self.canvas.delete("all")
@@ -131,15 +148,21 @@ class SplashScreen:
     def cleanup_and_exit(self):
         """Clean up resources and exit gracefully"""
         logging.info("Cleaning up and exiting splash screen")
+        
         if self.root:
             self.root.quit()
             self.root.destroy()
         sys.exit(0)
     
     def run(self):
-        # Set up signal handlers for graceful exit
-        signal.signal(signal.SIGINT, self.handle_signal)
-        signal.signal(signal.SIGTERM, self.handle_signal)
+        # Set up signal handlers for graceful exit (works in console builds)
+        if not HAS_WIN32:
+            signal.signal(signal.SIGINT, self.handle_signal)
+            signal.signal(signal.SIGTERM, self.handle_signal)
+
+        if HAS_WIN32:
+            # Set up WM_CLOSE handler for Windows
+            self.root.protocol("WM_DELETE_WINDOW", self.cleanup_and_exit)
         
         # Start the main loop
         try:
@@ -148,6 +171,7 @@ class SplashScreen:
             logging.error(f"Error in splash screen main loop: {e}")
         finally:
             self.cleanup_and_exit()
+    
 
 def main(argv=None):
     try:

@@ -41,8 +41,8 @@ The build script will:
 # Navigate to the src directory
 cd src
 
-# Install cx_Freeze
-pip install cx-Freeze>=6.15.0
+# Install build requirements & cx_Freeze
+pip install -r build_requirements.txt
 
 # Install requirements
 pip install -r requirements.txt

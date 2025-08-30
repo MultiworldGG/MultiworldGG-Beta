@@ -46,17 +46,35 @@ def terminate_splash_screen():
         
         for proc in active_processes:
             if proc.name == "SplashScreen" and proc.is_alive():
-                logging.debug(f"Found splash screen process by name (PID: {proc.pid})")
+                # Try signal-based termination first
                 proc.terminate()
                 proc.join(timeout=2)
+                
+                # If still alive, try Windows API termination as fallback
+                if proc.is_alive() and sys.platform == "win32":
+                    import win32gui
+                    import win32con
+                    
+                    def enum_windows_callback(hwnd, windows):
+                        if win32gui.IsWindowVisible(hwnd):
+                            _, window_pid = win32gui.GetWindowThreadProcessId(hwnd)
+                            if window_pid == proc.pid:
+                                windows.append(hwnd)
+                        return True
+                    
+                    windows = []
+                    win32gui.EnumWindows(enum_windows_callback, windows)
+                    
+                    for hwnd in windows:
+                        win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)
+                    
+                    proc.join(timeout=3)
+                
+                # Final fallback - force kill
                 if proc.is_alive():
-                    logging.warning("Splash process didn't terminate gracefully, forcing kill")
                     proc.kill()
                     proc.join()
-                logging.debug("Splash screen process terminated successfully")
                 return
-        
-        logging.debug("No splash screen process found to terminate")
         
     except Exception as e:
         logging.error(f"Failed to terminate splash screen: {e}")

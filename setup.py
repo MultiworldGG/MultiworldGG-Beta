@@ -8,18 +8,28 @@ import sys
 import platform
 import subprocess
 import shutil
+import logging
+
+logger = logging.getLogger("MultiWorld")
+if not logging.getLogger().hasHandlers():
+    logging.basicConfig(level=logging.WARNING, format='%(name)s: %(message)s', stream=sys.stdout)
+if not logging.getLogger("MultiWorld").hasHandlers():
+    logger.addHandler(logging.StreamHandler(sys.stdout))
+    logger.setFormatter(logging.Formatter('%(message)s'))
+    logger.setLevel(logging.DEBUG)
+
 from pathlib import Path
+
+from cx_Freeze import setup, Executable, build_exe
 
 # Because worlds is a namespace, it wants to include the entire folder, and there's no
 # way to exclude it but also include the wheels worlds packages.
 # Rename the folder, and we'll put it back afterwards.
-
 if os.path.exists("worlds"):
-    print("Renaming worlds folder to build_is_running_worlds to avoid cx_Freeze including it")
+    logger.debug("Renaming worlds folder to build_is_running_worlds to avoid cx_Freeze including it")
     os.rename("worlds", "build_is_running_worlds")
     os.environ["MWGG_BUILD_IS_RUNNING"] = "1"
 
-from cx_Freeze import setup, Executable, build_exe
 
 # Import project utilities
 sys.path.insert(0, os.path.dirname(__file__))
@@ -28,31 +38,49 @@ from Utils import version_tuple, instance_name, archipelago_guid, is_windows, lo
 # Build configuration
 build_exe_options = {
     "packages": [
+        # GUI/Graphics frameworks (complex packages with data files)
         "kivy",
-        "kivy_deps",
-        "kivymd", 
-        "websockets", 
-        "cymem",
-        "pymem",
-        "cffi",
-        "bsdiff4",
-        "platformdirs",
-        "certifi",
-        "orjson",
-        "typing_extensions",
-        "dolphin_memory_engine",
-        "pyshortcuts",
-        "tqdm",
-        "numpy",
-        "colorama",
-        "yaml",
-        "jellyfish",
-        "jinja2",
-        "schema",
+        "kivy_deps", 
+        "kivymd",
         "asynckivy",
+        
+        # Core utilities (might be dynamically loaded or conditional)
+        "websockets",
+        "cymem",
+        "cffi",
+        "numpy",
         "PIL",
+        
+        # Platform-specific memory access (conditional imports)
+        "pymem",
+        "dolphin_memory_engine",
+        
+        # System utilities (might be conditionally imported)
+        "pyshortcuts",
+        
+        # World-specific packages (used by plugin system)
+        "aiohttp",          # sc2 world
+        "requests",         # multiple worlds
+        "google.protobuf",  # sc2 world
+        "pymongo",          # ff4fe world
+        "loguru",           # sc2 world
+        
+        # Custom packages
         "mwgg_gui",
-        "worlds"
+        "worlds",
+        
+        # # Auto-detected candidates (remove if build works without them)
+        # "bsdiff4",          # Try removing - likely auto-detected
+        # "platformdirs",     # Try removing - likely auto-detected  
+        # "certifi",          # Try removing - usually auto-detected with requests
+        # "orjson",           # Try removing if directly imported
+        # "typing_extensions", # Try removing - usually auto-detected
+        # "tqdm",             # Try removing if directly imported
+        # "colorama",         # Try removing if directly imported
+        # "yaml",             # Try removing - likely auto-detected as PyYAML
+        # "jellyfish",        # Try removing if directly imported
+        # "jinja2",           # Try removing - likely auto-detected
+        # "schema",           # Try removing if directly imported
     ],
     "includes": [
         "ModuleUpdate",
@@ -150,93 +178,21 @@ if is_windows:
         )
     )
 
-def install_wheels(type="default"):
-    """Install wheels from default_wheels directory"""
-    wheels_dir = Path(f"{type}_wheels")
-    if wheels_dir.exists():
-        print(f"Installing wheels from {type}_wheels...")
-        for wheel_file in wheels_dir.glob("*.whl"):
-            try:
-                # First try with dependencies to ensure all required packages are installed
-                subprocess.check_call([
-                    sys.executable, "-m", "pip", "install", 
-                    str(wheel_file), "--force-reinstall"
-                ])
-                print(f"Installed {wheel_file.name} with dependencies")
-            except subprocess.CalledProcessError as e:
-                print(f"Failed to install {wheel_file.name} with dependencies: {e}")
-                # Fallback to no-deps if dependency installation fails
-                try:
-                    subprocess.check_call([
-                        sys.executable, "-m", "pip", "install", 
-                        str(wheel_file), "--no-deps", "--force-reinstall"
-                    ])
-                    print(f"Installed {wheel_file.name} without dependencies")
-                except subprocess.CalledProcessError as e2:
-                    print(f"Failed to install {wheel_file.name}: {e2}")
-
-def install_requirements():
-    """Install requirements from requirements.txt file(s)"""
-    # Install main requirements.txt
-    req_file = Path("requirements.txt")
-    if req_file.exists():
-        print("Installing requirements from main requirements.txt...")
-        try:
-            # Use absolute path to ensure we're using the correct requirements.txt
-            abs_req_file = req_file.absolute()
-            subprocess.check_call([
-                sys.executable, "-m", "pip", "install", "-r", str(abs_req_file)
-            ])
-            print("Requirements installed successfully")
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to install requirements: {e}")
-    
-    # # Install world-specific requirements
-    # # Check if worlds folder was renamed during build process
-    # worlds_folder = Path("build_is_running_worlds") if Path("build_is_running_worlds").exists() else Path("worlds")
-    
-    # if worlds_folder.exists():
-    #     print(f"Searching for world requirements in {worlds_folder}...")
-    #     world_req_files = list(worlds_folder.glob("*/requirements.txt"))
-        
-    #     if world_req_files:
-    #         print(f"Found {len(world_req_files)} world-specific requirements files")
-            
-    #         for world_req_file in world_req_files:
-    #             world_name = world_req_file.parent.name
-    #             print(f"Installing requirements for {world_name}...")
-    #             try:
-    #                 subprocess.check_call([
-    #                     sys.executable, "-m", "pip", "install", "-r", str(world_req_file.absolute())
-    #                 ])
-    #                 print(f"Requirements for {world_name} installed successfully")
-    #             except subprocess.CalledProcessError as e:
-    #                 print(f"Failed to install requirements for {world_name}: {e}")
-    #     else:
-    #         print("No world-specific requirements found")
-    # else:
-    #     print("No worlds folder found")
-
 def pre_build_setup():
     """Run pre-build setup tasks"""
-    print("Running pre-build setup...")
-    
-    # Install requirements
-    install_requirements()
-    
-    # Install wheels
-    install_wheels("default")
-    install_wheels("worlds")
-        
+    logger.debug("Running pre-build setup...")
+
+    # Build requirements are in the wrapper build script
+
     # Import our custom kivy hook to ensure it's loaded
     try:
         import cx_custom_hooks._kivy_ as kivy
     except ImportError as e:
-        print(f"Warning: Could not load custom kivy hook: {e}")
+        logger.warning(f"Warning: Could not load custom kivy hook: {e}")
 
 def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
-    print("Running post-build setup...")
+    logger.debug("Running post-build setup...")
 
 class CustomBuildExe(build_exe):
     """Custom build command that includes post-build setup and custom hooks"""
@@ -251,11 +207,11 @@ class CustomBuildExe(build_exe):
         build_dir = self.build_exe
         if build_dir:
             if os.environ.get("MWGG_BUILD_IS_RUNNING") or os.path.exists("build_is_running_worlds"):
-                print("Renaming worlds folder back to worlds")
+                logger.debug("Renaming worlds folder back to worlds")
                 os.rename("build_is_running_worlds", "worlds")
                 if "MWGG_BUILD_IS_RUNNING" in os.environ:
                     del os.environ["MWGG_BUILD_IS_RUNNING"]
-            print(f"Build completed in: {build_dir}")
+            logger.info(f"Build completed in: {build_dir}")
             # Run post-build setup
             post_build_setup(build_dir)
     
@@ -291,19 +247,16 @@ class CustomBuildExe(build_exe):
                 cx_Freeze.hooks.load_kivy = load_kivy
                 cx_Freeze.hooks.load_kivy_binaries = load_kivy_binaries
 
-                print("Custom kivy hook registered with cx_Freeze")
+                logger.debug("Custom kivy hook registered with cx_Freeze")
             else:
-                print("Warning: Custom kivy hook does not have required methods")
+                logger.debug("Warning: Custom kivy hook does not have required methods")
 
         except ImportError as e:
-            print(f"Warning: Could not register custom kivy hook: {e}")
+            logger.debug(f"Warning: Could not register custom kivy hook: {e}")
         except Exception as e:
-            print(f"Error registering custom kivy hook: {e}")
+            logger.debug(f"Error registering custom kivy hook: {e}")
 
-if __name__ == "__main__":
-    # Ensure DISTUTILS_DEBUG is not set to avoid debug output
-    os.environ.pop('DISTUTILS_DEBUG', None)
-    
+if __name__ == "__main__": 
     # Run pre-build setup
     pre_build_setup()
     
