@@ -12,7 +12,12 @@ import argparse
 import logging
 
 logger = logging.getLogger("MultiWorld")
-logging.basicConfig(level=logging.DEBUG, format='%(message)s', stream=sys.stdout)
+if not logging.getLogger().hasHandlers():
+    logging.basicConfig(level=logging.WARNING, format='%(name)s: %(message)s', stream=sys.stdout)
+if not logging.getLogger("MultiWorld").hasHandlers():
+    logger.addHandler(logging.StreamHandler(sys.stdout))
+    logger.setFormatter(logging.Formatter('%(message)s'))
+    logger.setLevel(logging.INFO)
 
 def is_windows() -> bool:
     return sys.platform in ("win32", "cygwin", "msys")
@@ -158,13 +163,13 @@ def verify_build_output() -> bool:
     for exe in expected_exes:
         exe_path = exe_dir / exe
         if exe_path.exists():
-            logger.debug(f"✓ Found {exe}")
+            logger.info(f"✓ Found {exe}")
         else:
-            logger.debug(f"✗ Missing {exe}")
+            logger.info(f"✗ Missing {exe}")
             missing_exes.append(exe)
     
     if missing_exes:
-        logger.debug(f"Build verification failed: {len(missing_exes)} executables missing")
+        logger.info(f"Build verification failed: {len(missing_exes)} executables missing")
         return False
     
     # Check for required directories
@@ -173,16 +178,16 @@ def verify_build_output() -> bool:
     for dir_name in required_dirs:
         dir_path = exe_dir / dir_name
         if dir_path.exists():
-            logger.debug(f"✓ Found {dir_name}/")
+            logger.info(f"✓ Found {dir_name}/")
         else:
-            logger.debug(f"✗ Missing {dir_name}/")
+            logger.info(f"✗ Missing {dir_name}/")
             missing_dirs.append(dir_name)
     
     if missing_dirs:
-        logger.debug(f"Build verification failed: {len(missing_dirs)} directories missing")
+        logger.info(f"Build verification failed: {len(missing_dirs)} directories missing")
         return False
     
-    logger.debug("Build verification passed!")
+    logger.info("Build verification passed!")
     return True
 
 def main():
@@ -192,12 +197,12 @@ def main():
     parser.add_argument("--skip-wheels", action="store_true", help="Skip wheel installation")
     parser.add_argument("--skip-modules", action="store_true", help="Skip module update")
     parser.add_argument("--verify", action="store_true", help="Verify build output after building")
-    
+    parser.add_argument("--logger-level", action="store", help="Set logger level", default="INFO")
     args = parser.parse_args()
-    
-    logger.debug("MultiWorldGG Build Script")
-    logger.debug("=" * 50)
-    
+    logger.setLevel(args.logger_level)
+
+    logger.info("MultiWorldGG Build Script")
+    logger.info("=" * 50)
     # Change to src directory
     os.chdir(Path(__file__).parent)
     
@@ -238,15 +243,15 @@ def main():
         if not verify_build_output():
             sys.exit(1)
     
-    logger.debug("=" * 50)
-    logger.debug("Build completed successfully!")
+    logger.info("=" * 50)
+    logger.info("Build completed successfully!")
     
     # Show build location
     build_dir = Path("build")
     if build_dir.exists():
         exe_dirs = list(build_dir.glob("exe.*"))
         if exe_dirs:
-            logger.debug(f"Executables are located in: {exe_dirs[0].absolute()}")
+            logger.info(f"Executables are located in: {exe_dirs[0].absolute()}")
 
 if __name__ == "__main__":
     main()

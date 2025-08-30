@@ -10,18 +10,22 @@ import subprocess
 import shutil
 import logging
 
+from pathlib import Path
+
+from cx_Freeze import setup, Executable, build_exe
+
 logger = logging.getLogger("MultiWorld")
+
 if not logging.getLogger().hasHandlers():
     logging.basicConfig(level=logging.WARNING, format='%(name)s: %(message)s', stream=sys.stdout)
 if not logging.getLogger("MultiWorld").hasHandlers():
     logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.setFormatter(logging.Formatter('%(message)s'))
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
-from pathlib import Path
-
-from cx_Freeze import setup, Executable, build_exe
-
+# Does not respect root logger level.
+logging.getLogger("cx_Freeze").setLevel(logging.getLogger().level)
+logging.getLogger("kivy").setLevel(logging.getLogger().level)
 # Because worlds is a namespace, it wants to include the entire folder, and there's no
 # way to exclude it but also include the wheels worlds packages.
 # Rename the folder, and we'll put it back afterwards.
@@ -193,6 +197,7 @@ def pre_build_setup():
 def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
     logger.debug("Running post-build setup...")
+    os.mkdir(os.path.join(build_exe_dir, "Players"))
 
 class CustomBuildExe(build_exe):
     """Custom build command that includes post-build setup and custom hooks"""
