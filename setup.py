@@ -33,9 +33,8 @@ build_exe_options = {
         "kivymd", 
         "websockets", 
         "cymem",
-        "ctypes",
-        "cffi",
         "pymem",
+        "cffi",
         "bsdiff4",
         "platformdirs",
         "certifi",
@@ -93,19 +92,11 @@ build_exe_options = {
         ("kivy/data", "lib/kivy/data"),
         ("kivy/include", "lib/kivy/include")
     ],
-    "include_msvcr": True,
+    "include_msvcr": False,
     "replace_paths": ["*."],
     "optimize": 1,
     "bin_includes": ["libffi.so", "libcrypt.so"] if platform.system() == "Linux" else []
 }
-
-#need to figure out these dependencies so we don't keep downloading
-# gclib @ git+https://github.com/LagoLunatic/gclib.git
-# gclib
-# PyFastYaz0Yay0 @ git+https://github.com/LagoLunatic/PyFastYaz0Yay0.git
-# PyFastYaz0Yay0
-# PyFastBTI @ git+https://github.com/LagoLunatic/PyFastBTI.git
-# PyFastBTI
 
 # Remove None entries from include_files
 build_exe_options["include_files"] = [item for item in build_exe_options["include_files"] if item is not None]

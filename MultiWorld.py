@@ -20,6 +20,9 @@ os.environ["KIVY_LOG_ENABLE"] = "1"
 
 from BaseUtils import local_path, is_frozen
 
+# Ensure ctypes is imported early (fixes WinDLL issues in frozen builds)
+import ctypes
+
 if is_frozen():
     os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"lib", "kivy", "data")
     sys.path.append(os.path.join(os.path.dirname(__file__), "world_plugins", "lib", "python", \

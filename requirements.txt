@@ -19,3 +19,10 @@ kivymd>=2.0.1.dev0
 tqdm>=4.67.1
 numpy>=1.26.1
 Pillow>=11.2.1
+pymem>=1.10.0
+gclib @ git+https://github.com/LagoLunatic/gclib.git
+gclib
+PyFastYaz0Yay0 @ git+https://github.com/LagoLunatic/PyFastYaz0Yay0.git
+PyFastYaz0Yay0
+PyFastBTI @ git+https://github.com/LagoLunatic/PyFastBTI.git
+PyFastBTI
