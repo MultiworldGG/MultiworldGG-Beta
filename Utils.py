@@ -108,13 +108,13 @@ def set_game_names(value: typing.List[str]):
     from mwgg_igdb import GameIndex
     # lazy import
     for game in value:
-        _worlds_to_load.append(GameIndex.get_module_for_game(game))
+        module_name = GameIndex.get_module_for_game(game_name=game, worlds=True)
+        _worlds_to_load.append(module_name)
     _worlds_to_install: typing.List[str] = []
     for module_name in _worlds_to_load:
-        module_name = "worlds.{}".format(module_name) if not module_name.startswith("worlds.") else module_name
         try:
-            importlib.import_module(module_name)
-        except ModuleNotFoundError:
+            importlib.metadata.distribution(module_name)
+        except importlib.metadata.PackageNotFoundError:
             logging.warning(f"Module {module_name} not found, looking in worlds pypi index.")
             _worlds_to_install.append(module_name)
     if _worlds_to_install:
@@ -279,6 +279,9 @@ def cache_self1(function: typing.Callable[[S, T], RetType]) -> typing.Callable[[
     return wrap
 
 from BaseUtils import is_frozen, local_path
+
+if is_frozen():
+    os.environ["KIVY_NO_ARGS"] = "1"
 
 def home_path(*path: str) -> str:
     """Returns path to a file in the user home's MultiworldGG directory."""
@@ -1089,15 +1092,15 @@ class DeprecateDict(dict):
 
 
 def _extend_freeze_support() -> None:
-    """Extend multiprocessing.freeze_support() to also work on Non-Windows for spawn."""
-    # upstream issue: https://github.com/python/cpython/issues/76327
+    """Extend multiprocessing.freeze_support() to also work on Non-Windows and without setting spawn method first."""
+    # original upstream issue: https://github.com/python/cpython/issues/76327
     # code based on https://github.com/pyinstaller/pyinstaller/blob/develop/PyInstaller/hooks/rthooks/pyi_rth_multiprocessing.py#L26
     import multiprocessing
     import multiprocessing.spawn
 
     def _freeze_support() -> None:
         """Minimal freeze_support. Only apply this if frozen."""
-        from subprocess import _args_from_interpreter_flags
+        from subprocess import _args_from_interpreter_flags  # noqa
 
         # Prevent `spawn` from trying to read `__main__` in from the main script
         multiprocessing.process.ORIGINAL_DIR = None
@@ -1124,16 +1127,12 @@ def _extend_freeze_support() -> None:
             multiprocessing.spawn.spawn_main(**kwargs)
             sys.exit()
 
-    if not is_windows and is_frozen():
-        multiprocessing.freeze_support = multiprocessing.spawn.freeze_support = _freeze_support
+    def _noop() -> None:
+        pass
 
+    multiprocessing.freeze_support = multiprocessing.spawn.freeze_support = _freeze_support if is_frozen() else _noop
 
-def freeze_support() -> None:
-    """This behaves like multiprocessing.freeze_support but also works on Non-Windows."""
-    import multiprocessing
-    _extend_freeze_support()
-    multiprocessing.freeze_support()
-
+_extend_freeze_support()
 
 def visualize_regions(root_region: Region, file_name: str, *,
                       show_entrance_names: bool = False, show_locations: bool = True, show_other_regions: bool = True,

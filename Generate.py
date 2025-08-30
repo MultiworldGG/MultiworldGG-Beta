@@ -168,6 +168,9 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
     for player, yaml in weights_cache.items():
         games_to_load.append(yaml[0]['game'])
     set_game_names(games_to_load)
+    from worlds import AutoWorldRegister
+    """ Load worlds *after* setting the game names
+    """
 
     from EntranceRandomizer import parse_arguments
     erargs = parse_arguments(['--multi', str(args.multi)])
@@ -507,7 +510,7 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
             raise Exception(f"Option {option_key} has to be in a game's section, not on its own.")
 
     ret.game = get_choice("game", weights)
-    ret.module_name = GameIndex.get_module_for_game(ret.game)
+    ret.module_name = GameIndex.get_module_for_game(game_name=ret.game, worlds=True)
     if not isinstance(ret.game, str):
         if ret.game is None:
             raise Exception('"game" not specified')
