@@ -38,6 +38,8 @@ if typing.TYPE_CHECKING:
     from BaseClasses import Region
     import multiprocessing
 
+from mwgg_igdb import get_module_for_game
+
 @dataclass
 class PythonToExe:
     script_name: str
@@ -119,10 +121,6 @@ def set_game_names(value: typing.List[str]):
 def game_names() -> typing.List[str]:
     """Get a list of only the game names that we're using"""
     return _worlds_to_load
-
-def get_module_for_game(game_name: str) -> str:
-    from mwgg_gui.game_index import GameIndex
-    return GameIndex.get_module_for_game(game_name)
 
 def get_available_worlds() -> typing.List[str]:
     """Get a list of all of the available worlds"""

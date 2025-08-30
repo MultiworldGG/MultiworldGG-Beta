@@ -5,7 +5,7 @@ The current implementation loads all games immediately into the UI. We need to m
 
 ## Architecture
 
-### 1. Game Index Module (`data/game_index.py`)
+### 1. Game Index Module (`game_index/mwgg_igdb.py`)
 This module will contain the pre-generated search index for games. The index will be generated during the build process and included in the final executable.
 
 ```python
@@ -147,7 +147,7 @@ def build_client():
 The launcher screen will use the pre-generated GameIndex.
 
 ```python
-from mwgg_gui.game_index import GameIndex
+from mwgg_igdb import GameIndex
 
 class LauncherScreen(MDScreen, ThemableBehavior):
     def __init__(self, **kwargs):

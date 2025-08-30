@@ -37,7 +37,7 @@ from typing import Any
 
 from kivy.clock import Clock
 from kivy.app import App
-from mwgg_gui.game_index import GameIndex
+from mwgg_igdb import GameIndex
 
 from mwgg_gui.overrides.expansionlist import *
 from mwgg_gui.components.bottomappbar import BottomAppBar

@@ -20,7 +20,8 @@ ModuleUpdate.update()
 import Utils
 import Options
 from BaseClasses import seeddigits, get_seed, PlandoOptions
-from Utils import parse_yamls, version_tuple, __version__, tuplize_version, get_module_for_game, set_game_names, game_names
+from Utils import parse_yamls, version_tuple, __version__, tuplize_version, set_game_names
+from mwgg_igdb import get_module_for_game
 
 def mystery_argparse():
     from settings import get_settings

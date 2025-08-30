@@ -36,7 +36,7 @@ def setup_options_from_slot_data(world: "TunicWorld") -> None:
             world.options.decoupled = world.passthrough.get("decoupled", 0)
             world.options.laurels_location.value = LaurelsLocation.option_anywhere
             world.options.combat_logic.value = world.passthrough.get("combat_logic", 0)
-            world.options.true_end.value = world.passthrough.get("true_end", 0)
+            world.options.true_end.value = world.passthrough["true_end"]
         else:
             world.using_ut = False
     else:

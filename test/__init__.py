@@ -27,6 +27,6 @@ Utils.local_path.cached_path = file_path
 Utils.user_path()  # initialize cached_path
 
 # Load all worlds upfront for testing
-from mwgg_gui.game_index import GameIndex
+from mwgg_igdb import GameIndex
 all_game_names = GameIndex.get_all_game_names()
 Utils.set_game_names(all_game_names)

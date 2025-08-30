@@ -4,15 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mwgg_gui"
-version = "0.0.4a"
+version = "0.0.5a"
 description = "GUI package for MultiWorldGG"
 authors = [
     {name = "DelilahIsDidi"}
 ]
 requires-python = ">=3.12"
+classifiers = [
+    "Private :: Do Not Upload"
+]
 dependencies = [
     "kivy>=2.3.1",
-    "kivymd @ git+https://github.com/kivymd/KivyMD@d2f7740",
     "kivymd>=2.0.1.dev0",
     "pillow>=11.3.0",
     "asynckivy>=0.6.4",
