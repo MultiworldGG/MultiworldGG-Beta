@@ -63,7 +63,7 @@ class InitialClient(ClientBuilder):
         
         try:
             self._kivy_ui = Gui.MultiMDApp(self.ctx)
-            self._ui_task = asyncio.create_task(self._run_gui())
+            self._ui_task = asyncio.create_task(self._run_gui(splash_queue=self.ctx._splash_queue))
 
             return {
                 "ui_task": self._ui_task
@@ -73,7 +73,10 @@ class InitialClient(ClientBuilder):
             self._is_running = False
             raise e
         
-    async def _run_gui(self):
+    async def _run_gui(self, splash_queue: "Queue" = None):
+        pass
+
+    async def _run_cli(self):
         pass
     
     async def cleanup(self) -> None:
@@ -121,6 +124,7 @@ class GameClient(ClientBuilder):
     def can_transition_to(self, new_state: ClientState) -> bool:
         """Check if can transition to new state"""
         return False  # Game clients don't transition to other states
+        #TODO: Figure out how to do this
 
 class Client():
     def __init__(self):

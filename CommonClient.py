@@ -10,9 +10,6 @@ import typing
 import time
 import functools
 
-import ModuleUpdate
-ModuleUpdate.update()
-
 import websockets
 
 import Utils
@@ -24,6 +21,7 @@ from NetUtils import (Endpoint, ClientStatus, encode, decode, NetworkItem, Netwo
                       RawJSONtoTextParser, add_json_text, add_json_location, add_json_item, JSONTypes)
 from ClientState import ClientState
 from ClientBuilder import GameClient
+from multiprocessing import Queue
 
 # Import MDApp for GUI access
 from kivymd.app import MDApp
@@ -31,7 +29,7 @@ from Gui import MultiMDApp
 # Import GUI components
 from mwgg_gui.components.dialog import MessageBox
 
-from Utils import Version, stream_input, async_start
+from Utils import Version, stream_input, async_start, init_logging
 import os
 import ssl
 
@@ -40,6 +38,7 @@ if typing.TYPE_CHECKING:
     import Gui
     from typing import Optional
 
+init_logging("Client")
 logger = logging.getLogger("Client")
 
 # without terminal, we have to use gui mode
@@ -268,9 +267,12 @@ class InitContext:
         self.exit_event = asyncio.Event()
         self._state = ClientState.INITIAL
         self._is_transitioning = False
+        self._splash_queue: Optional[Queue] = None
 
-    def run_gui(self):
+    def run_gui(self, splash_queue: Optional[Queue] = None):
         """Run the GUI as self.ui_task."""
+        if splash_queue:
+            self._splash_queue = splash_queue
         self.ui = MultiMDApp(self)
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
@@ -437,7 +439,6 @@ class CommonContext(InitContext):
         self._is_transitioning = False
         self._initial_ctx: dict[Gui.MultiMDApp, asyncio.Task] = {}
         self._main_task: Optional[asyncio.Task] = None
-        
         # server state
         self.server_address = server_address
         self.username = None
@@ -1298,9 +1299,11 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
 
 
 async def console_loop(ctx: CommonContext):
+    from rich import Console
+    console = Console(force_terminal=True, force_interactive=True)
     commandprocessor = ctx.command_processor(ctx)
     queue = asyncio.Queue()
-    stream_input(sys.stdin, queue)
+    stream_input(console.input(prompt=f"{ctx.server_address}: "), queue)
     while not ctx.exit_event.is_set():
         try:
             input_text = await queue.get()

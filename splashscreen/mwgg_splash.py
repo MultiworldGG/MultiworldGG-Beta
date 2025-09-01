@@ -11,7 +11,8 @@ application is loading.
 
 __all__ = ('SplashScreen',)
 
-from multiprocessing import freeze_support, Process
+from multiprocessing import freeze_support, Process, Queue
+from queue import Empty
 import os
 import sys
 from datetime import datetime, UTC, timedelta
@@ -21,26 +22,13 @@ import signal
 import tkinter as tk
 from PIL import Image, ImageTk, ImageSequence
 
-def is_windows() -> bool:
-    return sys.platform == "win32"
-
-# Windows-specific imports
-if is_windows():
-    try:
-        import win32gui
-        import win32con
-        HAS_WIN32 = True
-    except ImportError:
-        HAS_WIN32 = False
-else:
-    HAS_WIN32 = False
-
 logger = logging.getLogger("MultiWorld")
 
 class SplashScreen:
-    def __init__(self, png_path):
+    def __init__(self, png_path, queue: Queue):
         try:
             # Initialize the main window
+            self.queue = queue
             self.root = tk.Tk()
             self.root.overrideredirect(True)  # Remove window decorations
             self.root.attributes("-transparent", "black")  # Enable transparency
@@ -122,6 +110,17 @@ class SplashScreen:
             self.cleanup_and_exit()
             return
             
+        # Check for queue kill message (non-blocking):
+        try:
+            message = self.queue.get(block=False)
+            if message:
+                logging.info("Received queue kill message, terminating splash screen")
+                self.cleanup_and_exit()
+                return
+        except Empty:
+            # No message in queue, continue animation
+            pass
+        
         # Display the current frame
         self.canvas.delete("all")
         self.canvas.create_image(0, 0, anchor=tk.NW, image=self.frames[self.current_frame])
@@ -139,12 +138,6 @@ class SplashScreen:
         # Schedule the next frame
         self.root.after(duration, self.animate)
     
-    def handle_signal(self, sig, frame):
-        """Handle termination signals"""
-        logging.info(f"Received signal {sig}, terminating splash screen")
-        self.cleanup_and_exit()
-    
-    
     def cleanup_and_exit(self):
         """Clean up resources and exit gracefully"""
         logging.info("Cleaning up and exiting splash screen")
@@ -155,15 +148,6 @@ class SplashScreen:
         sys.exit(0)
     
     def run(self):
-        # Set up signal handlers for graceful exit (works in console builds)
-        if not HAS_WIN32:
-            signal.signal(signal.SIGINT, self.handle_signal)
-            signal.signal(signal.SIGTERM, self.handle_signal)
-
-        if HAS_WIN32:
-            # Set up WM_CLOSE handler for Windows
-            self.root.protocol("WM_DELETE_WINDOW", self.cleanup_and_exit)
-        
         # Start the main loop
         try:
             self.root.mainloop()
@@ -173,8 +157,9 @@ class SplashScreen:
             self.cleanup_and_exit()
     
 
-def main(argv=None):
+def main(queue: Queue, argv=None):
     try:
+
         # Check if required environment variables are set
         kivy_data_dir = os.getenv("KIVY_DATA_DIR")
         if not kivy_data_dir:
@@ -195,16 +180,9 @@ def main(argv=None):
             sys.exit(1)
         
         # Create and run the viewer
-        viewer = SplashScreen(png_path)
+        viewer = SplashScreen(png_path, queue)
         viewer.run()
         
     except Exception as e:
         logging.error(f"Error starting splash screen: {e}")
         sys.exit(1)
-
-if __name__ == "__main__":
-    freeze_support()
-    if not sys.argv:
-        Process(target=main).start()
-    else:
-        Process(target=main, args=(sys.argv)).start()

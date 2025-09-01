@@ -14,11 +14,11 @@ if "pytest" not in sys.modules and "unittest" not in sys.modules and "test" not 
     assert "kivy" not in sys.modules, "gui needs instansiation first"
 
 if sys.platform == "win32":
-    #import ctypes
+    import ctypes
 
     # kivy 2.2.0 introduced DPI awareness on Windows, but it makes the UI enter an infinitely recursive re-layout
     # by setting the application to not DPI Aware, Windows handles scaling the entire window on its own, ignoring kivy's
-    from ctypes import windll, c_int64
+
     #windll.user32.SetProcessDpiAwarenessContext(c_int64(-4))
     
 # from CommonClient import console_loop
@@ -248,7 +248,7 @@ class MultiMDApp(MDApp):
     def terminate_splash_screen_wrapper(self):
         """Wrapper to call the terminate_splash_screen function from MultiWorld"""
         from MultiWorld import terminate_splash_screen
-        terminate_splash_screen()
+        terminate_splash_screen(self.ctx._splash_queue)
         Clock.schedule_once(self.set_opacity)
 
     @staticmethod

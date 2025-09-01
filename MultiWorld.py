@@ -1,4 +1,4 @@
-from multiprocessing import freeze_support, Process
+from multiprocessing import freeze_support, Process, Queue, set_start_method
 import asyncio
 import sys
 import logging
@@ -8,10 +8,8 @@ import subprocess
 import time
 from importlib import metadata
 
-
 os.environ["KIVY_NO_CONSOLELOG"] = "0"
 os.environ["KIVY_NO_FILELOG"] = "0"
-os.environ["KIVY_NO_ARGS"] = "1"
 os.environ["KIVY_LOG_ENABLE"] = "1"
 
 # from CommonClient import console_loop
@@ -19,6 +17,9 @@ os.environ["KIVY_LOG_ENABLE"] = "1"
 # apname = "Archipelago" if not Utils.archipelago_name else Utils.archipelago_name
 
 from BaseUtils import local_path, is_frozen
+
+if is_frozen():
+    os.environ["KIVY_NO_ARGS"] = "1"
 
 # Ensure ctypes is imported early (fixes WinDLL issues in frozen builds)
 import ctypes
@@ -36,40 +37,21 @@ os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
 
 logger = logging.getLogger("MultiWorld")
 
-
-def terminate_splash_screen():
+def terminate_splash_screen(queue: "Queue" ):
     """Terminate the splash screen process by name"""
     try:
+        # Try queue-based termination first if queue is provided
+        queue.put_nowait(True)
+        
         # Search for processes by name using multiprocessing
         import multiprocessing
         active_processes = multiprocessing.active_children()
         
         for proc in active_processes:
             if proc.name == "SplashScreen" and proc.is_alive():
-                # Try signal-based termination first
+                # Try process termination
                 proc.terminate()
                 proc.join(timeout=2)
-                
-                # If still alive, try Windows API termination as fallback
-                if proc.is_alive() and sys.platform == "win32":
-                    import win32gui
-                    import win32con
-                    
-                    def enum_windows_callback(hwnd, windows):
-                        if win32gui.IsWindowVisible(hwnd):
-                            _, window_pid = win32gui.GetWindowThreadProcessId(hwnd)
-                            if window_pid == proc.pid:
-                                windows.append(hwnd)
-                        return True
-                    
-                    windows = []
-                    win32gui.EnumWindows(enum_windows_callback, windows)
-                    
-                    for hwnd in windows:
-                        win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)
-                    
-                    proc.join(timeout=3)
-                
                 # Final fallback - force kill
                 if proc.is_alive():
                     proc.kill()
@@ -79,13 +61,11 @@ def terminate_splash_screen():
     except Exception as e:
         logging.error(f"Failed to terminate splash screen: {e}")
 
-def run_client(*args):
+def run_client(*args, queue=None):
     """Start the MWGG client"""
     
     async def main(args):
         from CommonClient import InitContext
-        from Utils import init_logging
-        init_logging("MultiWorld")
 
         ctx = InitContext()
         
@@ -107,7 +87,7 @@ def run_client(*args):
         # Default initial client behavior
         logger.info("Launching default GUI")
         try:
-            ctx.run_gui()
+            ctx.run_gui(splash_queue=queue)
             await ctx.exit_event.wait()
         except Exception as e:
             logger.error(f"Error during GUI execution: {e}", exc_info=True)
@@ -144,12 +124,13 @@ if __name__ == "__main__":
     # Multiprocessing protection for frozen executables
     # This prevents fork bombs when creating subprocesses in cx_Freeze builds
     freeze_support()
-    logging.getLogger().setLevel(logging.INFO)
+    from BaseUtils import init_logging
+    init_logging("MultiWorld")
     from mwgg_splash import main as splash_main
-    
-    # Start splash screen in separate process
-    splash_process = Process(target=splash_main, name="SplashScreen")
-    splash_process.start()
+
+    set_start_method("spawn")
+    splash_queue = Queue()
+    Process(target=splash_main, name="SplashScreen", args=(splash_queue,)).start()
     
     # Run the main client in the current process
-    run_client(*sys.argv[1:])
+    run_client(*sys.argv[1:], queue=splash_queue)
