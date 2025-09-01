@@ -22,9 +22,8 @@ import typing
 import weakref
 import zlib
 
-import ModuleUpdate
-
-ModuleUpdate.update()
+# import ModuleUpdate
+# ModuleUpdate.update()
 
 if typing.TYPE_CHECKING:
     import ssl

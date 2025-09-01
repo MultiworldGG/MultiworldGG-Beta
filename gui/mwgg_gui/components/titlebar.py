@@ -136,7 +136,7 @@ class Titlebar(MDBoxLayout):
         self.tbclose.bind(on_release=lambda x: MDApp.get_running_app().stop(x))
         self.add_widget(self.tbclose)
 
-    def tb_max(self):
+    def tb_max(self, instance):
         Window.maximize()
 
     def tb_onmax(self, instance):
@@ -149,7 +149,7 @@ class Titlebar(MDBoxLayout):
         except:
             return
 
-    def tb_res(self):
+    def tb_res(self, instance):
         Window.restore()
 
     def tb_onres(self, instance):
@@ -162,7 +162,7 @@ class Titlebar(MDBoxLayout):
         except:
             return
         
-    def tb_min(self):
+    def tb_min(self, instance):
         Window.minimize()
 
 Builder.load_string(KV)

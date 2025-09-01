@@ -25,7 +25,8 @@ from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.label import MDLabel
 from kivymd.uix.scrollview import MDScrollView
 from kivymd.uix.textfield import MDTextField, MDTextFieldHelperText
-from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogSupportingText, MDDialogContentContainer 
+from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogSupportingText, MDDialogContentContainer
+from kivymd.uix.snackbar import MDSnackbar, MDSnackbarText 
 
 from mwgg_gui.components.mw_theme import THEME_OPTIONS, DEFAULT_TEXT_COLORS
 from mwgg_gui.overrides.colorpicker import MWColorPicker
@@ -177,7 +178,7 @@ class LabeledSwitch(MDBoxLayout):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.ids.switch.bind(on_active = lambda x: self.on_switch(self, self.active))
+        self.ids.switch.bind(active = lambda x, value: self.on_switch(self, value))
 
     def on_switch(self, instance, value):
         pass
@@ -382,134 +383,245 @@ class SettingsScrollBox(MDScrollView):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        logger.debug("Initializing SettingsScrollBox")
         self.layout = self.ids.layout
-        logger.debug(f"Retrieved layout: {self.layout}")
 
 class ConnectionSettings(SettingsScrollBox):
     """Connection settings section"""
     def __init__(self, **kwargs):
-        logger.debug("Initializing ConnectionSettings")
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
-        logger.debug("Got running app")
         
         # Profile section
-        logger.debug("Creating profile section")
         profile_section = SettingsSection(name="profile_settings", title="Profile")
         
         # Alias
-        logger.debug("Adding alias field")
         alias_box = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=dp(55), padding=dp(4), spacing=dp(4))
         alias_box.add_widget(MDLabel(text="Alias", theme_text_color="Primary", size_hint_x=0.7))
-        alias_input = MDTextField(
+        self.alias_input = MDTextField(
             text=self.app.app_config.get('client', 'alias', fallback=''),
+            on_text_validate=self.save_alias
         )
-        alias_box.add_widget(alias_input)
+        alias_box.add_widget(self.alias_input)
         profile_section.add_widget(alias_box)
         
         # Pronouns
-        logger.debug("Adding pronouns field")
         pronouns_box = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=dp(55), padding=dp(4), spacing=dp(4))
         pronouns_box.add_widget(MDLabel(text="Pronouns", theme_text_color="Primary", size_hint_x=0.7))
-        pronouns_input = MDTextField(
+        self.pronouns_input = MDTextField(
             MDTextFieldHelperText(
                 text="he/him she/her they/them any/any - freeform",
                 mode="persistent",
                 theme_text_color="Secondary",
             ),
             text=self.app.app_config.get('client', 'pronouns', fallback=''),
+            on_text_validate=self.save_pronouns
         )
-        pronouns_box.add_widget(pronouns_input)
+        pronouns_box.add_widget(self.pronouns_input)
         profile_section.add_widget(pronouns_box)
         
         # Status toggles
-        logger.debug("Creating status section")
         status_section = SettingsSection(name="status_settings", title="Status")
-        status_section.add_widget(LabeledSwitch(
+        self.in_call_switch = LabeledSwitch(
             text="In Call",
             on_switch=self.toggle_in_call
-        ))
-        status_section.add_widget(LabeledSwitch(
+        )
+        # Set initial state from config
+        self.in_call_switch.ids.switch.active = self.app.app_config.getboolean('client', 'in_call', fallback=False)
+        status_section.add_widget(self.in_call_switch)
+        
+        self.in_bk_switch = LabeledSwitch(
             text="In BK",
             on_switch=self.toggle_in_bk
-        ))
+        )
+        # Set initial state from config
+        self.in_bk_switch.ids.switch.active = self.app.app_config.getboolean('client', 'in_bk', fallback=False)
+        status_section.add_widget(self.in_bk_switch)
         
         # Host settings
-        logger.debug("Creating host settings section")
         host_section = SettingsSection(name="multiworld_settings", title="Multiworld Settings")
         
         # Hostname & Port
-        logger.debug("Adding hostname field")
         hostname_box = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=dp(55), padding=dp(4), spacing=dp(4))
         hostname_box.add_widget(MDLabel(text="Hostname", theme_text_color="Primary"))
-        hostname_input = MDTextField(
+        self.hostname_input = MDTextField(
             text=self.app.app_config.get('client', 'hostname', fallback='multiworld.gg'),
+            on_text_validate=self.save_hostname
         )
-        hostname_box.add_widget(hostname_input)
+        hostname_box.add_widget(self.hostname_input)
         hostname_box.add_widget(MDLabel(text="Port", theme_text_color="Primary"))
-        port_input = MDTextField(
+        self.port_input = MDTextField(
             text=self.app.app_config.get('client', 'port', fallback='38281'),
+            on_text_validate=self.save_port
         )
-        hostname_box.add_widget(port_input)
+        hostname_box.add_widget(self.port_input)
         host_section.add_widget(hostname_box)
  
         # Player Slot
-        logger.debug("Adding player slot field")
         slot_box = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=dp(55), padding=dp(4), spacing=dp(4))
         slot_box.add_widget(MDLabel(text="Player Slot", theme_text_color="Primary"))
-        slot_input = MDTextField(
+        self.slot_input = MDTextField(
             text=self.app.app_config.get('client', 'slot', fallback=''),
+            on_text_validate=self.save_slot
         )
-        slot_box.add_widget(slot_input)
+        slot_box.add_widget(self.slot_input)
         slot_box.add_widget(MDLabel(text="Password", theme_text_color="Primary"))
-        slot_input = MDTextField(
+        self.password_input = MDTextField(
             text='',
             password=True,
+            on_text_validate=self.save_password
         )
-        slot_box.add_widget(slot_input)
+        slot_box.add_widget(self.password_input)
         host_section.add_widget(slot_box)
         
         # Admin Password
-        logger.debug("Adding admin password field")
         admin_box = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=dp(50))
         admin_box.add_widget(MDLabel(text="Admin Password", theme_text_color="Primary", size_hint_x=0.7))
-        admin_input = MDTextField(
+        self.admin_input = MDTextField(
             MDTextFieldHelperText(
                 text="Login for the multiworld server to run admin commands",
                 mode="persistent",
                 theme_text_color="Secondary",
             ),
             text="********" if self.app.app_config.get('client', 'admin_password', fallback='') else '',
-            password=True
+            password=True,
+            on_text_validate=self.save_admin_password
         )
-        admin_box.add_widget(admin_input)
+        admin_box.add_widget(self.admin_input)
         host_section.add_widget(admin_box)
         
         # Add all sections to the layout
-        logger.debug("Adding all sections to layout")
         self.layout.add_widget(profile_section)
         self.layout.add_widget(status_section)
         self.layout.add_widget(host_section)
-        logger.debug("Finished initializing ConnectionSettings")
+
+    def show_feedback(self, message: str, is_error: bool = False):
+        """Show feedback message to user"""
+        try:
+            # Create snackbar with message
+            snackbar = MDSnackbar(
+                MDSnackbarText(
+                    text=message,
+                ),
+                y=dp(24),
+                pos_hint={"center_x": 0.5},
+                size_hint_x=0.8,
+                md_bg_color=self.app.theme_cls.errorColor if is_error else self.app.theme_cls.primaryColor,
+            )
+            snackbar.open()
+        except Exception as e:
+            logger.error(f"Error showing feedback: {e}", exc_info=True)
     
     def toggle_in_call(self, instance, value):
         try:
-            logger.debug(f"Toggling in_call to {value}")
             self.app.app_config.set('client', 'in_call', str(value))
             self.app.app_config.write()
-            logger.debug("In call toggle complete")
+            # Update local player data if it exists
+            if hasattr(self.app, 'local_player_data') and self.app.local_player_data:
+                self.app.local_player_data.in_call = value
         except Exception as e:
             logger.error(f"Error in toggle_in_call: {e}", exc_info=True)
     
     def toggle_in_bk(self, instance, value):
         try:
-            logger.debug(f"Toggling in_bk to {value}")
             self.app.app_config.set('client', 'in_bk', str(value))
             self.app.app_config.write()
-            logger.debug("In BK toggle complete")
+            # Update local player data if it exists
+            if hasattr(self.app, 'local_player_data') and self.app.local_player_data:
+                self.app.local_player_data.bk_mode = value
         except Exception as e:
             logger.error(f"Error in toggle_in_bk: {e}", exc_info=True)
+
+    def save_alias(self, instance):
+        try:
+            self.app.app_config.set('client', 'alias', instance.text)
+            self.app.app_config.write()
+            # Update local player data if it exists
+            if hasattr(self.app, 'local_player_data') and self.app.local_player_data:
+                self.app.local_player_data.slot_name = instance.text
+            logger.info(f"Alias saved: {instance.text}")
+            self.show_feedback(f"Alias saved: {instance.text}")
+        except Exception as e:
+            logger.error(f"Error saving alias: {e}", exc_info=True)
+            self.show_feedback("Error saving alias", is_error=True)
+
+    def save_pronouns(self, instance):
+        try:
+            self.app.app_config.set('client', 'pronouns', instance.text)
+            self.app.app_config.write()
+            # Update local player data if it exists
+            if hasattr(self.app, 'local_player_data') and self.app.local_player_data:
+                self.app.local_player_data.pronouns = instance.text
+            # Update server tags if connected
+            if hasattr(self.app, 'ctx') and self.app.ctx and hasattr(self.app.ctx, 'slot'):
+                self.app.set_pronouns()
+            logger.info(f"Pronouns saved: {instance.text}")
+            self.show_feedback(f"Pronouns saved: {instance.text}")
+        except Exception as e:
+            logger.error(f"Error saving pronouns: {e}", exc_info=True)
+            self.show_feedback("Error saving pronouns", is_error=True)
+
+    def save_hostname(self, instance):
+        try:
+            self.app.app_config.set('client', 'hostname', instance.text)
+            self.app.app_config.write()
+            logger.info(f"Hostname saved: {instance.text}")
+        except Exception as e:
+            logger.error(f"Error saving hostname: {e}", exc_info=True)
+
+    def save_port(self, instance):
+        try:
+            # Validate port number
+            port_value = instance.text.strip()
+            if port_value:
+                port_num = int(port_value)
+                if 1 <= port_num <= 65535:
+                    self.app.app_config.set('client', 'port', port_value)
+                    self.app.app_config.write()
+                    logger.info(f"Port saved: {port_value}")
+                    self.show_feedback(f"Port saved: {port_value}")
+                else:
+                    error_msg = f"Invalid port: {port_value}. Must be between 1 and 65535."
+                    logger.error(error_msg)
+                    self.show_feedback(error_msg, is_error=True)
+                    instance.text = self.app.app_config.get('client', 'port', fallback='38281')
+            else:
+                # Reset to default if empty
+                instance.text = self.app.app_config.get('client', 'port', fallback='38281')
+                self.show_feedback("Port reset to default: 38281")
+        except ValueError:
+            error_msg = f"Invalid port: {instance.text}. Must be a number."
+            logger.error(error_msg)
+            self.show_feedback(error_msg, is_error=True)
+            instance.text = self.app.app_config.get('client', 'port', fallback='38281')
+        except Exception as e:
+            logger.error(f"Error saving port: {e}", exc_info=True)
+            self.show_feedback("Error saving port", is_error=True)
+
+    def save_slot(self, instance):
+        try:
+            self.app.app_config.set('client', 'slot', instance.text)
+            self.app.app_config.write()
+            logger.info(f"Slot saved: {instance.text}")
+        except Exception as e:
+            logger.error(f"Error saving slot: {e}", exc_info=True)
+
+    def save_password(self, instance):
+        try:
+            self.app.app_config.set('client', 'password', instance.text)
+            self.app.app_config.write()
+            logger.info("Password saved")
+        except Exception as e:
+            logger.error(f"Error saving password: {e}", exc_info=True)
+
+    def save_admin_password(self, instance):
+        try:
+            # Only save if it's not the placeholder text
+            if instance.text != "********":
+                self.app.app_config.set('client', 'admin_password', instance.text)
+                self.app.app_config.write()
+                logger.info("Admin password saved")
+        except Exception as e:
+            logger.error(f"Error saving admin password: {e}", exc_info=True)
 
 class ThemingSettings(SettingsScrollBox):
     """Theming settings section"""
@@ -699,51 +811,39 @@ class ThemingSettings(SettingsScrollBox):
 class InterfaceSettings(SettingsScrollBox):
     """Interface settings section"""
     def __init__(self, **kwargs):
-        logger.debug("Initializing InterfaceSettings")
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
-        logger.debug("Got running app")
         
         # Display section
-        logger.debug("Creating display section")
         display_section = SettingsSection(name="display_settings", title="Display")
         display_section.add_widget(LabeledSwitch(
             text="Fullscreen",
             theme_text_color="Secondary",
             on_switch=self.toggle_fullscreen
         ))
-        logger.debug("Added fullscreen switch")
         
         # Layout section
-        logger.debug("Creating layout section")
         layout_section = SettingsSection(name="layout_settings", title="Layout")
         layout_section.add_widget(LabeledSwitch(
             text="Compact Mode",
             theme_text_color="Secondary",
             on_switch=self.toggle_device_orientation
         ))
-        logger.debug("Added device orientation (compact mode) switch")
         
         # Add all sections to the layout
-        logger.debug("Adding sections to layout")
         self.layout.add_widget(display_section)
         self.layout.add_widget(layout_section)
-        logger.debug("Finished initializing InterfaceSettings")
     
     def toggle_fullscreen(self, instance, value):
         try:
-            logger.debug(f"Toggling fullscreen to {value}")
             self.app.config.set('graphics', 'fullscreen', str(value))
             self.app.config.write()
-            logger.debug("Fullscreen toggle complete")
         except Exception as e:
             logger.error(f"Error in toggle_fullscreen: {e}", exc_info=True)
     
     def toggle_device_orientation(self, instance, value):
         try:
-            logger.debug(f"Toggling device orientation to {value}")
             self.app.app_config.set('client', 'device_orientation', str(value))
             self.app.app_config.write()
-            logger.debug("Device orientation toggle complete")
         except Exception as e:
             logger.error(f"Error in toggle_device_orientation: {e}", exc_info=True) 

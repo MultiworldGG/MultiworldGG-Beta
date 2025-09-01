@@ -130,6 +130,7 @@ class MultiMDApp(MDApp):
 
     ui_player_data: dict[int, UIPlayerData]
     ui_hint_data: dict[int, dict[int, list[UIHint]]]
+    local_player_data: UIPlayerData
     text_buffer: Queue
 
     _show_all_hints: BooleanProperty(False)
@@ -165,6 +166,20 @@ class MultiMDApp(MDApp):
         self.text_buffer = Queue(maxsize=1000) 
         self.ui_hint_data = {}
         self.ui_player_data = {}
+        
+        # Initialize local player data from config
+        self.local_player_data = UIPlayerData(
+            slot_id=-1,  # Use -1 to indicate local/unconnected player
+            slot_name=self.app_config.get('client', 'alias', fallback=''),
+            avatar="",
+            pronouns=self.app_config.get('client', 'pronouns', fallback=''),
+            bk_mode=self.app_config.getboolean('client', 'in_bk', fallback=False),
+            in_call=self.app_config.getboolean('client', 'in_call', fallback=False),
+            end_user=True,
+            game_status="OFFLINE",
+            game="",
+            hints={},
+        )
 
         self._show_all_hints = False
 
@@ -209,6 +224,15 @@ class MultiMDApp(MDApp):
                         } for size, style_data in sizes.items()
                     } for style, sizes in self.theme_cls.font_styles.items()
                 }
+            # Update local player data for profile-related changes
+            elif key == 'alias':
+                self.local_player_data.slot_name = value
+            elif key == 'pronouns':
+                self.local_player_data.pronouns = value
+            elif key == 'in_call':
+                self.local_player_data.in_call = value == 'True'
+            elif key == 'in_bk':
+                self.local_player_data.bk_mode = value == 'True'
         elif section == 'graphics':
             if key == 'fullscreen':
                 Window.fullscreen = value == '1'
@@ -543,31 +567,40 @@ class MultiMDApp(MDApp):
         This function is called when the connection is established.
         It sets up the UI player data and updates the hints.
         '''
-          
-        pronouns = ""
-        in_call = False
-        in_bk = False
         
         for slot, name in self.ctx.player_names.items():
-            if self.ctx.slot_concerns_self(slot):
-                pronouns = self.app_config.get('client', 'pronouns', fallback='')
             self.ui_hint_data[slot] = {}
-            self.ui_player_data[slot] = UIPlayerData(
-                slot_id=slot,
-                slot_name=name,
-                avatar="",
-                pronouns = pronouns,
-                bk_mode=in_bk,
-                in_call=in_call,
-                end_user=self.ctx.slot_concerns_self(slot),
-                game_status="PLAYING",
-                game=self.ctx.slot_info[slot].game,
-                hints=self.ui_hint_data[slot],
-            )
+            
+            if self.ctx.slot_concerns_self(slot):
+                # For the user's own slot, update local player data with server info
+                self.local_player_data.slot_id = slot
+                self.local_player_data.slot_name = name if not self.local_player_data.slot_name else self.local_player_data.slot_name
+                self.local_player_data.game_status = "PLAYING"
+                self.local_player_data.game = self.ctx.slot_info[slot].game
+                self.local_player_data.hints = self.ui_hint_data[slot]
+                
+                # Use the local player data for this slot
+                self.ui_player_data[slot] = self.local_player_data
+            else:
+                # For other players, create new UIPlayerData with default values
+                self.ui_player_data[slot] = UIPlayerData(
+                    slot_id=slot,
+                    slot_name=name,
+                    avatar="",
+                    pronouns="",
+                    bk_mode=False,
+                    in_call=False,
+                    end_user=False,
+                    game_status="PLAYING",
+                    game=self.ctx.slot_info[slot].game,
+                    hints=self.ui_hint_data[slot],
+                )
 
         self.update_mwgg_hints()
         self.update_hints()
         self.set_pronouns()
+        self.set_deafen()
+        self.set_bk()
         self._create_screen("hint")
 
 
@@ -581,7 +614,7 @@ class MultiMDApp(MDApp):
         self.text_buffer.put_nowait(text)
 
     def set_pronouns(self):
-        pronouns = self.ui_player_data[self.ctx.slot].pronouns
+        pronouns = self.local_player_data.pronouns
         tags = list(self.ctx.tags)
         if any(tag.startswith("pronouns") for tag in tags):
             tags.remove(next(tag for tag in tags if tag.startswith("pronouns")))

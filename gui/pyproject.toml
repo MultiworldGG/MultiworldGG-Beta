@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mwgg_gui"
-version = "0.0.6a"
+version = "0.0.8a"
 description = "GUI package for MultiWorldGG"
 authors = [
     {name = "DelilahIsDidi"}

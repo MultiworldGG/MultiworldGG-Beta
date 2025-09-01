@@ -29,18 +29,17 @@ from BaseUtils import local_path
 
 DEFAULT_TEXT_COLORS = {
     "default_color":["080808", "fafafa"],
-    "location_color":["006f10", "00c51b"],
+    "command_echo_color":["a75600", "ff9334"],
     "player1_color":["b42f88", "ff87d7"],
     "player2_color":["206cb8", "5fafff"],
-    "entrance_color":["2985a0", "60b7e8"],
-    "trap_item_color":["8f1515", "d75f5f"],
-    "regular_item_color":["3b3b3b", "b2b2b2"],
-    "useful_item_color":["419F44", "6EC471"],
-    "skip_item_color":["419F44", "6EC471"],
-    "progression_deprioritized_item_color":["6a8300", "d2ff49"],
     "progression_goal_item_color":["a56c00", "ffa700"],
     "progression_item_color":["a46a00", "ffbe00"],
-    "command_echo_color":["a75600", "ff9334"]
+    "progression_deprioritized_item_color":["6a8300", "d2ff49"],
+    "useful_item_color":["419F44", "6EC471"],
+    "regular_item_color":["3b3b3b", "b2b2b2"],
+    "trap_item_color":["8f1515", "d75f5f"],
+    "location_color":["006f10", "00c51b"],
+    "entrance_color":["2985a0", "60b7e8"]
 }
 ''' Default markup text colors
 [Light Mode, Dark Mode]
@@ -86,49 +85,46 @@ THEME_OPTIONS = {
 @dataclass
 class MarkupTagsTheme:
     default_color: list[str]
-    location_color: list[str]
+    command_echo_color: list[str]
     player1_color: list[str]
     player2_color: list[str]
-    entrance_color: list[str]
-    trap_item_color: list[str]
-    regular_item_color: list[str]
-    useful_item_color: list[str]
-    skip_item_color: list[str]
     progression_goal_item_color: list[str]
     progression_item_color: list[str]
     progression_deprioritized_item_color: list[str]
-    command_echo_color: list[str]
+    useful_item_color: list[str]
+    regular_item_color: list[str]
+    trap_item_color: list[str]  
+    location_color: list[str]
+    entrance_color: list[str]
 
     def __init__(self, **kwargs):
         # Light, Dark
         self.default_color=DEFAULT_TEXT_COLORS["default_color"]
-        self.location_color=DEFAULT_TEXT_COLORS["location_color"]
+        self.command_echo_color=DEFAULT_TEXT_COLORS["command_echo_color"]
         self.player1_color=DEFAULT_TEXT_COLORS["player1_color"]
         self.player2_color=DEFAULT_TEXT_COLORS["player2_color"]
-        self.entrance_color=DEFAULT_TEXT_COLORS["entrance_color"]
-        self.trap_item_color=DEFAULT_TEXT_COLORS["trap_item_color"]
-        self.regular_item_color=DEFAULT_TEXT_COLORS["regular_item_color"]
-        self.useful_item_color=DEFAULT_TEXT_COLORS["useful_item_color"]
-        self.skip_item_color=DEFAULT_TEXT_COLORS["skip_item_color"]
         self.progression_goal_item_color=DEFAULT_TEXT_COLORS["progression_goal_item_color"]
         self.progression_item_color=DEFAULT_TEXT_COLORS["progression_item_color"]
         self.progression_deprioritized_item_color=DEFAULT_TEXT_COLORS["progression_deprioritized_item_color"]
-        self.command_echo_color=DEFAULT_TEXT_COLORS["command_echo_color"]
+        self.useful_item_color=DEFAULT_TEXT_COLORS["useful_item_color"]
+        self.regular_item_color=DEFAULT_TEXT_COLORS["regular_item_color"]
+        self.trap_item_color=DEFAULT_TEXT_COLORS["trap_item_color"]
+        self.location_color=DEFAULT_TEXT_COLORS["location_color"]
+        self.entrance_color=DEFAULT_TEXT_COLORS["entrance_color"]
 
     def name(self, color_attr):
         if color_attr == self.default_color: return "Default Text:"
-        if color_attr == self.location_color: return "Location:"
-        if color_attr == self.player1_color: return "Slot:"
-        if color_attr == self.player2_color: return "Other Players:"
-        if color_attr == self.entrance_color: return "Entrance:"
-        if color_attr == self.trap_item_color: return "Trap Item:"
-        if color_attr == self.regular_item_color: return "Regular Item:"
-        if color_attr == self.useful_item_color: return "Useful Item:"
-        if color_attr == self.skip_item_color: return "Necessary Duplicate Item:"
-        if color_attr == self.progression_item_color: return "Progression:"
-        if color_attr == self.progression_deprioritized_item_color: return "Progression - Deprioritized Item:"
-        if color_attr == self.progression_goal_item_color: return "Progression - Goal Item:"
         if color_attr == self.command_echo_color: return "Command Echo:"
+        if color_attr == self.player1_color: return "Your Player Slot:"
+        if color_attr == self.player2_color: return "Other Players:"
+        if color_attr == self.progression_goal_item_color: return "Goal Item:"
+        if color_attr == self.progression_item_color: return "Required Item:"
+        if color_attr == self.progression_deprioritized_item_color: return "Logically Required Item:"
+        if color_attr == self.useful_item_color: return "Useful Item:"
+        if color_attr == self.regular_item_color: return "Regular or Filler Item:"
+        if color_attr == self.trap_item_color: return "Trap Item:"
+        if color_attr == self.location_color: return "Location:"
+        if color_attr == self.entrance_color: return "Entrance:"
 
     def save_color(self, app_config, color_name, color_value):
         """Save a single color value to the config file"""

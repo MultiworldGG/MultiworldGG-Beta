@@ -46,11 +46,11 @@ KV = """
             padding: 5
             pos_hint: {"x": 0, "y": 0}
             theme_font_name: "Custom"
-            font_name: self.theme_cls.font_styles.monospace['large']['font-name'] 
+            font_name: app.theme_cls.font_styles.Monospace['large']['font-name'] 
             theme_font_size: "Custom"
-            font_size: self.theme_cls.font_styles.monospace['large']['font-size']
+            font_size: app.theme_cls.font_styles.Monospace['large']['font-size']
             theme_line_spacing: "Custom"
-            line_spacing: self.theme_cls.font_styles.monospace['large']['line-height']
+            line_spacing: app.theme_cls.font_styles.Monospace['large']['line-height']
             theme_text_color: "Custom"
             text_color_focus: root.color
             text_color_normal: root.color

@@ -133,7 +133,6 @@ def get_available_worlds() -> typing.List[str]:
 
 def discover_and_launch_module(module_name: str, **kwargs) -> None:
     """Discover and launch module via entrypoints"""
-    module_name = "worlds.{}".format(module_name) if not module_name.startswith("worlds.") else module_name
     # First, try to import the module to see if it exists
     try:
         importlib.import_module(module_name)

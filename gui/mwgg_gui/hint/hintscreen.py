@@ -34,6 +34,7 @@ KV = '''
     hints_hero_to: hints_hero_to
     MDHeroTo:
         id: hints_hero_to
+        tag: "logo"
         size_hint: None,None
         size: dp(256), dp(161)
         pos_hint: {"center_x": 0.5, "top": 1}
@@ -306,9 +307,9 @@ class HintListPanel(GameListPanel):
             hint_item = HintListItem(hint_data=hint, game_status=self.item_data.game_status, shadow_colors=item_colors,
                                      hint_icon_status=status_icons[hint.hint_status], hint_status_text=status_names[hint.hint_status]
                                      )
-            hint_item.bind(on_bkmode=lambda x: self.on_bkmode(hint))
-            hint_item.bind(on_goal=lambda x: self.on_goal(hint))
-            hint_item.bind(on_shop=lambda x: self.on_shop(hint))
+            hint_item.bind(on_bkmode=lambda instance, value: self.on_bkmode(hint))
+            hint_item.bind(on_goal=lambda instance, value: self.on_goal(hint))
+            hint_item.bind(on_shop=lambda instance, value: self.on_shop(hint))
             
             # Only add dropdown for non-found items
             if not (hint.hint_status == HintStatus.HINT_FOUND or hint.found):
