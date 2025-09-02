@@ -278,8 +278,6 @@ class MultiMDApp(MDApp):
             self.loading_layout.size = (self.root.width, self.root.height)
             self.loading_layout.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
             self.root_layout.add_widget(self.loading_layout)
-            self.top_appbar_layout.top_appbar.ui_built()
-
 
         super().on_start()
         Clock.schedule_once(on_start)
@@ -601,6 +599,7 @@ class MultiMDApp(MDApp):
         self.set_pronouns()
         self.set_deafen()
         self.set_bk()
+        self.top_appbar_layout.top_appbar.ui_built()
         self._create_screen("hint")
 
 

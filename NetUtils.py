@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
 import typing
 import enum
 import warnings
@@ -361,19 +360,12 @@ class KivyMarkupJSONtoTextParser(JSONtoTextParser):
     def _handle_text(self, node: JSONMessagePart):
         return node.get("text", "")
 
-# I duno lets try this
-from rich.color import Color
-class ANSI_COLORS(dict):
-    def get(self, color_name: str):
-        if color_name in self:
-            return self[color_name]
-        else:
-            return Color(color_name).get_truecolor()
-
 # setting ansi colors - Added many 8 bit to go with the 4 bit.
-color_codes = ANSI_COLORS()
-
-for key, value in {'default_color': 37, #white
+color_codes = {'reset': 0, 'bold': 1, 'underline': 4, 'black': 30, 'red': 31, 'green': 32, 'yellow': 33, 'blue': 34,
+                'magenta': 35, 'cyan': 36, 'white': 37, 'black_bg': 40, 'red_bg': 41, 'green_bg': 42, 'yellow_bg': 43,
+                'blue_bg': 44, 'magenta_bg': 45, 'cyan_bg': 46, 'white_bg': 47,
+                'plum': 33, 'slateblue': 32, 'salmon': 31, 'limegreen': 32, 'lightgray': 37, 'gold': 33,
+                'default_color': 37, #white
                 'location_color': '38;5;34', #green
                 'player1_color': '38;5;212', #atzpink
                 'player2_color': '38;5;75', #ltblue
@@ -384,8 +376,7 @@ for key, value in {'default_color': 37, #white
                 'progression_skip_item_color': '38;5;220', #gold
                 'progression_item_color': '38;5;220', #gold
                 'command_echo_color': '38;5;208' #orange
-}.items():
-    color_codes[key] = value
+}
 
 def color_code(*args):
     return '\033[' + ';'.join([str(color_codes[arg]) for arg in args]) + 'm'
