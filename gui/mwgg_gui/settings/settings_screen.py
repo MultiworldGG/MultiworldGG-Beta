@@ -122,6 +122,7 @@ SettingsNavLayout:
 <SettingsScreenSection>:
     orientation: "vertical"
     size_hint_y: None
+    pos_hint: {"center_x": 0.5}
     height: Window.height-103
     md_bg_color: app.theme_cls.backgroundColor
 '''
@@ -138,14 +139,23 @@ class NavDrawerMenu(MDNavigationDrawerMenu):
         self.ids.menu.width = self.width - dp(8)
 
 class NavDrawerLabel(MDNavigationDrawerLabel):
+    """
+    Setting labels (Connection, Theming, Interface)
+
+    TODO: This isn't quite right, needs to be redesigned
+    """
     pass
 
 class NavDrawerItem(MDNavigationDrawerItem):
-    screen = StringProperty("")
+    """
+    Setting items (Hostname, Host Authentication, etc.)
+    """
     icon = StringProperty("")
     text = StringProperty("")
     trailing_text = StringProperty("")
+    screen = StringProperty("")
     manager = ObjectProperty(None)
+
 
     def __init__(self, manager, *args, **kwargs):
         super().__init__(*args, **kwargs)

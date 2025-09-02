@@ -125,7 +125,7 @@ if __name__ == "__main__":
     # This prevents fork bombs when creating subprocesses in cx_Freeze builds
     freeze_support()
     from BaseUtils import init_logging
-    init_logging("MultiWorld")
+    init_logging("MultiWorld", logging.DEBUG)
     from mwgg_splash import main as splash_main
 
     set_start_method("spawn")

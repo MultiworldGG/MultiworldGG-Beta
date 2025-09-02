@@ -84,11 +84,12 @@ KV = '''
     MDLabel:
         text: root.text
         theme_text_color: "Primary"
+        size_hint_x: 1
     PaletteButtonLayout:
         id: palette_buttons
         orientation: "horizontal"
-        size_hint_x: 0.7
         pos_hint: {"right": 1, "center_y": 0.5}
+        width: dp(395)
         spacing: dp(4)
 
 <PaletteButton>:
@@ -120,46 +121,57 @@ KV = '''
     orientation: "horizontal"
     size_hint_y: None
     height: dp(48)
+    padding: dp(4)
+    spacing: dp(4)
     MDLabel:
         id: text_color_label
         theme_text_color: "Custom"
         text_color: root.color
+        font_style: "Monospace"
+        role: "medium"
         text: root.text
-        size_hint_x: 0.7
-    MDButton:
-        id: reset_color_button
-        style: "filled"
-        size: dp(32), dp(32)
-        theme_bg_color: "Custom"
-        md_bg_color: root.default_color
-        on_release: root.reset_color()
-        MDButtonText:
-            text: "Reset"
+        size_hint_x: 0.8
     ColorPreviewBox:
         id: color_preview_box
         index: root.index
         color_attr: root.color_attr
         color: root.color
         attr_name: root.attr_name
+        size_hint_x: None
+        pos_hint: {"top": 1}
+    MDButton:
+        style: "filled"
+        size: dp(50), dp(32)
+        theme_bg_color: "Custom"
+        md_bg_color: root.default_color
+        on_release: root.reset_color()
+        size_hint_x: None
+        pos_hint: {"top": 1}
+        MDButtonText:
+            theme_text_color: "Custom"
+            text_color: app.theme_cls.surfaceContainerLowColor
+            text: "Reset"
 
 <ColorPreviewBox>:
     orientation: "horizontal"
-    size_hint_y: None
     height: dp(48)
     MDButton:
         style: "filled"
-        size: dp(32), dp(32)
+        size: dp(50), dp(32)
+        pos_hint: {"top": 1}
         theme_bg_color: "Custom"
         md_bg_color: root.color
         on_release: root.open_color_picker(root.color, root.index, root.color_attr, self.pos)
 
 <SettingsScrollBox>:
+    pos_hint: {"center_x": 0.5}
     MDBoxLayout:
         id: layout
         orientation: "vertical"
         padding: [dp(16), dp(8)]
         spacing: dp(8)
         size_hint_y: None
+        size_hint_x: .8
         height: self.minimum_height
         pos_hint: {"top": 1}
 '''

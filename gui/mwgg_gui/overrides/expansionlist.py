@@ -27,7 +27,6 @@ from kivymd.uix.expansionpanel import *
 
 from kivymd.uix.tooltip import MDTooltip
 
-import logging
 from kivy.lang import Builder
 import os
 from kivy.clock import Clock
@@ -40,8 +39,6 @@ if TYPE_CHECKING:
     from CommonClient import CommonContext
 
 from mwgg_gui.components.guidataclasses import UIPlayerData, UIHint, HintStatus
-
-logger = logging.getLogger(__name__)
 
 with open(os.path.join(os.path.dirname(__file__), "expansionlist.kv"), encoding="utf-8") as kv_file:
     Builder.load_string(kv_file.read())

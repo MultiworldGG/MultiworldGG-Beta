@@ -278,6 +278,7 @@ class MultiMDApp(MDApp):
             self.loading_layout.size = (self.root.width, self.root.height)
             self.loading_layout.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
             self.root_layout.add_widget(self.loading_layout)
+            self.top_appbar_layout.top_appbar.ui_built()
 
 
         super().on_start()
@@ -318,7 +319,6 @@ class MultiMDApp(MDApp):
         # Top appbar layout
         self.top_appbar_layout = TopAppBarLayout()
         self.top_appbar_menu = None
-        #self.top_appbar_layout.top_appbar.address_bar_label = MW_ServerLabel()
         
         # Screen manager
         # Screens are under the appbar and titlebar
