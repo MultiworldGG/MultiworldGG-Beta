@@ -12,7 +12,7 @@ from kivy.properties import ObjectProperty, StringProperty, NumericProperty, Boo
 from kivy.clock import Clock
 from kivymd.uix.tooltip import MDTooltip
 from time import time, strftime, gmtime
-import asyncio
+from Utils import async_start
 
 __all__ = ("TopAppBarLayout", "TopAppBar")
 
@@ -178,7 +178,6 @@ class ServerLabel(ServerTooltip, MDTopAppBarTitle):
     game_info: StringProperty
     game_pages: ListProperty
     current_page: NumericProperty
-    _update_event: ObjectProperty(None)
     _connected: BooleanProperty(False)
 
     def __init__(self, **kwargs):
@@ -186,7 +185,6 @@ class ServerLabel(ServerTooltip, MDTopAppBarTitle):
         self.game_info = self.game_pages[0]
         self.server_name = "Not Connected"
         self._connected = False
-        self._update_event = None
         super().__init__(**kwargs)
         self.theme_font_style = "Custom"
         self.font_style = "Monospace"
@@ -196,9 +194,8 @@ class ServerLabel(ServerTooltip, MDTopAppBarTitle):
         self.ctx = App.get_running_app().ctx
         self.slot_info = self.ctx.slot_info
         self._connected = True
-        # Only schedule if not already scheduled
-        if self._update_event is None:
-            self._update_event = Clock.schedule_interval(self._get_server_info_wrapper, 1)
+        # Update server info immediately on connection
+        self.update_server_info()
 
     def on_open(self):
         # Don't open tooltip until ui_built() has been called
@@ -243,32 +240,28 @@ You currently have {ctx.hint_points} points.""")
         self.game_info = self.game_pages[0] if self.game_pages else "No information available"
         super().on_open()
 
-    def _get_server_info_wrapper(self, dt):
-        """Non-blocking wrapper for server info updates"""
-        try:
-            self.get_server_info()
-        except Exception as e:
-            print(f"Server info update error: {e}")
-    
-    def get_server_info(self):
-        """Update server info display"""
-        if not self.ctx:
+    def update_server_info(self, ctx=None):
+        """Update server info display - called directly from on_connect"""
+        if not ctx:
+            ctx = self.ctx
+        if not ctx:
             return
             
-        if self.ctx.slot is not None:
-            ctx = self.ctx
-            if ctx.slot is None:
-                self.server_name = f"{ctx.server_address}"
-            else:
-                name = ctx.player_names[ctx.slot]
-                # if ctx.alias:
-                #     name = ctx.alias
-                self.server_name = f"{ctx.server_address}, Hello {name}"
-        elif self.ctx.slot is None:
-            self.server_name = "Not Connected"
-            self.game_pages = [f"No current server connection. \nPlease connect to a server."]
-            self.current_page = 0
-            self.game_info = self.game_pages[self.current_page]
+        if ctx.slot is not None:
+            name = ctx.player_names[ctx.slot]
+            # if ctx.alias:
+            #     name = ctx.alias
+            self.server_name = f"{ctx.server_address}, Hello {name}"
+        else:
+            self.server_name = f"{ctx.server_address}"
+    
+    def on_disconnect(self):
+        """Called when disconnected from server"""
+        self._connected = False
+        self.server_name = "Not Connected"
+        self.game_pages = [f"No current server connection. \nPlease connect to a server."]
+        self.current_page = 0
+        self.game_info = self.game_pages[self.current_page]
 
     def next(self):
         if len(self.game_pages) > 1:
@@ -278,11 +271,9 @@ You currently have {ctx.hint_points} points.""")
             self.game_info = self.game_pages[0]
     
     def on_parent(self, instance, parent):
-        """Clean up scheduled events when widget is removed"""
+        """Clean up when widget is removed"""
         if parent is None:
-            if self._update_event:
-                Clock.unschedule(self._update_event)
-                self._update_event = None
+            self._connected = False
 
     # def previous(self):
     #     if len(self.game_pages) > 1:
@@ -316,6 +307,14 @@ class TopAppBar(MDTopAppBar):
     def ui_built(self):
         self.timer.on_ui_built()
         self.address_bar_label.on_ui_built()
+    
+    def update_server_info(self, ctx):
+        """Update server info from on_connect - called from Gui.py"""
+        self.address_bar_label.update_server_info(ctx)
+    
+    def on_disconnect(self):
+        """Handle disconnect - called from Gui.py"""
+        self.address_bar_label.on_disconnect()
 
     def open_profile(self):
         print("open profile")
