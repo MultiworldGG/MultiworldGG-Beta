@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from kivymd.uix.behaviors.elevation import CommonElevationBehavior
+from kivy.properties import ColorProperty
+from kivymd.uix.imagelist import MDSmartTileImage
 from kivy.properties import NumericProperty
 from kivy.clock import Clock
 from kivy.animation import Animation
@@ -61,34 +63,52 @@ Builder.load_string('''
     do_y_scroll: False
     effect_y: "ScrollEffect"
     size_hint_x: None
-
-    size_hint_y: 1
+    size_hint_y: None
     bar_color: [0,0,0,0]
     inactive_bar_color: [0,0,0,0]
-    height: dp(75)
+    height: dp(65)
 
 <Favorite>:
     size_hint_x: None
     size_hint_y: None
-    width: dp(100)
-    height: dp(75)
-    MDSmartTileImage:
+    width: dp(85)
+    height: dp(65)
+    pos_hint: {"center_y": 0.5}
+    favorite_image: favorite_image
+
+    FavoriteImage:
         source: root.game_cover_url
-        height: dp(75)
+        id: favorite_image
+
+        canvas:
+            Color:
+                rgba: app.theme_cls.primaryColor if root.favorite_state == "selected" else app.theme_cls.transparentColor
+            BoxShadow:
+                inset: True
+                size: dp(85), dp(65)
+                offset: 0, 0
+                spread_radius: 5, 5
+                blur_radius: 10
+
     MDSmartTileOverlayContainer:
         overlap: True
         overlay_mode: 'footer'
+
         MDLabel:
+
             pos_hint: {"x": 0, "y": 0}
             size_hint_y: .5
             text: root.game_name
-            valign: 'bottom'
             halign: 'center'
             theme_font_style: "Custom"
-            font_style: "Title"
-            role: "small"
+            font_style: "Monospace-SM"
+            role: "medium"
+            bold: True
+            outline_color: app.theme_cls.onSurfaceVariantColor
+            outline_width: 1
             theme_text_color: "Custom"
-            text_color: app.theme_cls.onSurfaceVariantColor
+            text_color: app.theme_cls.surfaceContainerHighestColor
+        
 
 
 <LauncherScreen>:
@@ -303,32 +323,43 @@ class FavoritesScroll(MDScrollView):
     favorites: ObjectProperty
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.favorites = MDBoxLayout(orientation='horizontal', spacing=dp(10), size_hint_x=None, size_hint_y=None, height=dp(75), width=dp(1000))
+        self.favorites = MDBoxLayout(orientation='horizontal', spacing=dp(10), size_hint_x=None, size_hint_y=None, height=dp(75), width=dp(1000), pos_hint={"center_x": 0.5, "center_y": 0.5})
         self.add_widget(self.favorites)
 
-class Favorite(MDSmartTile, CommonElevationBehavior):
+class FavoriteImage(MDSmartTileImage):
+    pass
+    # favorite_state = StringProperty("normal")
+
+    # def __init__(self, **kwargs):
+    #     super().__init__(**kwargs)
+    #     self.favorite_state = "normal"
+
+    # def highlight(self):
+    #     self.favorite_state = "selected"
+
+    # def unhighlight(self):
+    #     self.favorite_state = "normal"
+
+class Favorite(MDSmartTile):
     """Custom Layout for displaying favorite games"""
     game_module = StringProperty("")
     game_name = StringProperty("")
+    label_bg_color = ColorProperty([0,0,0,0])
     click_down_pos = ListProperty([])
     app = ObjectProperty()
+    favorite_image: ObjectProperty
+    favorite_state = StringProperty("normal")
+    img_pos = ListProperty([0,0])
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.app = App.get_running_app()
-        self.theme_shadow_color = "Custom"
-        self.shadow_color = self.app.theme_cls.primaryColor
-        self.theme_shadow_softness = "Custom"
-        self.shadow_softness = 0
-        self.theme_elevation_level = "Custom"
-        self.elevation_level = 0
-
+        self.favorite_state = "normal"
     @property
     def game_cover_url(self):
         """Get the cover URL for the game"""
         if not self.game_module:
             return ""
-        
         try:
             game_index = GameIndex()
             game_data = game_index.get_game(self.game_module)
@@ -347,18 +378,14 @@ class Favorite(MDSmartTile, CommonElevationBehavior):
                 self.app.launcher_screen.set_favorite_highlight(self)
             self.click_down_pos = []
             return super().on_touch_up(touch)
-    
+
     def highlight(self):
-        # Set to highlighted state directly for now
-        self.elevation_level = 5
-        self.shadow_softness = 20
-    
+        #self.img_pos = self.favorite_image.pos
+        self.favorite_state = "selected"
+
     def unhighlight(self):
-        # Set back to normal state directly
-        self.elevation_level = 0
-        self.shadow_softness = 0
-
-
+        #self.img_pos = self.favorite_image.pos
+        self.favorite_state = "normal"
 
 class LauncherScreen(MDScreen, ThemableBehavior):
     '''

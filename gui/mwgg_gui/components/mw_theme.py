@@ -468,4 +468,21 @@ def RegisterFonts(app: MDApp, monospace_font: str = 'Argon'):
                 "font-size": sp(12),
             },
         },
+        "Monospace-SM": {
+            "large": {
+                "line-height": 1.0,
+                "font-name": f"{monospace_font}",
+                "font-size": sp(12),
+            },
+            "medium": {
+                "line-height": 1.0,
+                "font-name": f"{monospace_font}",
+                "font-size": sp(10),
+            },
+            "small": {
+                "line-height": 1.0,
+                "font-name": f"{monospace_font}",
+                "font-size": sp(8),
+            },
+        },
     }
