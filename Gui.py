@@ -171,7 +171,7 @@ class MultiMDApp(MDApp):
         self.local_player_data = UIPlayerData(
             slot_id=-1,  # Use -1 to indicate local/unconnected player
             slot_name=self.app_config.get('client', 'alias', fallback=''),
-            avatar="",
+            avatar=self.app_config.get('client', 'avatar', fallback=''),
             pronouns=self.app_config.get('client', 'pronouns', fallback=''),
             bk_mode=self.app_config.getboolean('client', 'in_bk', fallback=False),
             in_call=self.app_config.getboolean('client', 'in_call', fallback=False),
@@ -193,6 +193,7 @@ class MultiMDApp(MDApp):
             'slot': '',
             'alias': '',
             'pronouns': '',
+            'avatar': '',
             'in_call': 'False',
             'in_bk': 'False',
             'hostname': 'multiworld.gg',
@@ -229,6 +230,8 @@ class MultiMDApp(MDApp):
                 self.local_player_data.slot_name = value
             elif key == 'pronouns':
                 self.local_player_data.pronouns = value
+            elif key == 'avatar':
+                self.local_player_data.avatar = value
             elif key == 'in_call':
                 self.local_player_data.in_call = value == 'True'
             elif key == 'in_bk':
@@ -600,7 +603,8 @@ class MultiMDApp(MDApp):
         self.set_deafen()
         self.set_bk()
         self.top_appbar_layout.top_appbar.ui_built()
-        self._create_screen("hint")
+        if not "hint" in self.screen_manager.screens:
+            self._create_screen("hint")
 
 
     def print_json(self, data: typing.List[JSONMessagePart]):

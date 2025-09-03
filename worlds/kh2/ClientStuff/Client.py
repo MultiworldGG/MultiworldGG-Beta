@@ -58,6 +58,7 @@ class KH2Context(CommonContext):
         self.kh2_item_name_to_id = None
         self.lookup_id_to_item = None
         self.lookup_id_to_location = None
+        self.pause_game = False
         self.sora_ability_dict = {k: v.quantity for dic in [
                 GreatActionAbility_Table, UsefulActionAbility_Table, JunkActionAbility_Table, 
                 GreatSupportAbility_Table, UsefulSupportAbility_Table, JunkSupportAbility_Table
@@ -690,6 +691,9 @@ class KH2Context(CommonContext):
 async def kh2_watcher(ctx: KH2Context):
     while not ctx.exit_event.is_set():
         try:
+            if ctx.pause_game:
+                await asyncio.sleep(5)
+                continue
             if ctx.kh2connected and ctx.serverconnected:
                 ctx.sending = []
                 await asyncio.create_task(ctx.checkWorldLocations())
@@ -717,10 +721,16 @@ async def kh2_watcher(ctx: KH2Context):
                     await asyncio.create_task(ctx.displayInfoTextinGame(ctx.queued_info_popup[0]))
 
             elif not ctx.kh2connected and ctx.serverconnected:
+                if ctx.pause_game:
+                    await asyncio.sleep(5)
+                    continue
                 logger.info("Game Connection lost. trying to reconnect.")
                 ctx.kh2 = None
                 while not ctx.kh2connected and ctx.serverconnected:
                     try:
+                        if ctx.pause_game:
+                            await asyncio.sleep(5)
+                            continue
                         ctx.kh2 = pymem.Pymem(process_name="KINGDOM HEARTS II FINAL MIX")
                         ctx.get_addresses()
                         logger.info("Game Connection Established.")

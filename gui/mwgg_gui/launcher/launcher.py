@@ -1,4 +1,10 @@
 from __future__ import annotations
+
+from kivymd.uix.behaviors.elevation import CommonElevationBehavior
+from kivy.properties import NumericProperty
+from kivy.clock import Clock
+from kivy.animation import Animation
+
 """
 LAUNCHER SCREEN
 
@@ -74,7 +80,7 @@ Builder.load_string('''
         overlay_mode: 'footer'
         MDLabel:
             pos_hint: {"x": 0, "y": 0}
-            size_hint_y: 1
+            size_hint_y: .5
             text: root.game_name
             valign: 'bottom'
             halign: 'center'
@@ -300,15 +306,22 @@ class FavoritesScroll(MDScrollView):
         self.favorites = MDBoxLayout(orientation='horizontal', spacing=dp(10), size_hint_x=None, size_hint_y=None, height=dp(75), width=dp(1000))
         self.add_widget(self.favorites)
 
-class Favorite(MDSmartTile):
+class Favorite(MDSmartTile, CommonElevationBehavior):
     """Custom Layout for displaying favorite games"""
     game_module = StringProperty("")
     game_name = StringProperty("")
     click_down_pos = ListProperty([])
     app = ObjectProperty()
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.app = App.get_running_app()
+        self.theme_shadow_color = "Custom"
+        self.shadow_color = self.app.theme_cls.primaryColor
+        self.theme_shadow_softness = "Custom"
+        self.shadow_softness = 0
+        self.theme_elevation_level = "Custom"
+        self.elevation_level = 0
 
     @property
     def game_cover_url(self):
@@ -331,9 +344,21 @@ class Favorite(MDSmartTile):
         if self.click_down_pos:
             if self.collide_point(*self.click_down_pos):
                 self.app.launcher_screen.on_favorite_clicked(self.game_module)
+                self.app.launcher_screen.set_favorite_highlight(self)
             self.click_down_pos = []
             return super().on_touch_up(touch)
     
+    def highlight(self):
+        # Set to highlighted state directly for now
+        self.elevation_level = 5
+        self.shadow_softness = 20
+    
+    def unhighlight(self):
+        # Set back to normal state directly
+        self.elevation_level = 0
+        self.shadow_softness = 0
+
+
 
 class LauncherScreen(MDScreen, ThemableBehavior):
     '''
@@ -355,6 +380,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     game_tag_filter: StringProperty
     bottom_appbar: BottomAppBar
     selected_game: tuple[str, str] = ("", "")
+    highlighted_favorite: ObjectProperty(None, allownone=True)
     app: App
     result: Any
     favorite_games: ListProperty = ListProperty([])
@@ -365,6 +391,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.games_mdlist = MDList(width=260)
         self.game_tag_filter = "popular"
         self.selected_game = ""
+        self.highlighted_favorite = None
         self.app = App.get_running_app()
         self.available_games = get_available_worlds()
         self.game_index = GameIndex()
@@ -579,6 +606,17 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 logger.info(f"Selected favorite game: {game_name}")
         except Exception as e:
             logger.error(f"Failed to select favorite game {module_name}: {e}")
+    
+    def set_favorite_highlight(self, favorite_widget):
+        """Set which favorite is highlighted, unhighlighting the previous one"""
+        # Unhighlight the previously highlighted favorite
+        if self.highlighted_favorite and self.highlighted_favorite != favorite_widget:
+            self.highlighted_favorite.unhighlight()
+        
+        # Set and highlight the new favorite
+        self.highlighted_favorite = favorite_widget
+        if favorite_widget:
+            favorite_widget.highlight()
 
 
     def connect(self):

@@ -23,11 +23,11 @@ Builder.load_string('''
 
 <ServerTooltip>:
     MDTooltipRich:
-        id: server_tooltip
+        id: server_tooltip_label
         MDTooltipRichSubhead:
-            text: root.server_name
+            text: root.server_tooltip
         MDTooltipRichSupportingText:
-            text: root.game_info
+            text: root.game_tooltip
         MDTooltipRichActionButton:
             on_press: root.next()
             MDButtonText:
@@ -165,9 +165,21 @@ class ServerTooltip(MDTooltip):
     """
     Tooltip for the server and information
     """
+    server_tooltip: StringProperty
+    game_tooltip: StringProperty
+    tooltip_pages: ListProperty
+    current_tooltip_page: NumericProperty
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.tooltip_display_delay = 4 
+
+    def next(self):
+        if len(self.tooltip_pages) > 1:
+            self.current_tooltip_page = (self.current_tooltip_page + 1) % len(self.tooltip_pages)
+            self.game_tooltip = self.tooltip_pages[self.current_tooltip_page]
+        else:
+            self.game_tooltip = self.tooltip_pages[0] if self.tooltip_pages else "No information available"
 
 class ServerLabel(ServerTooltip, MDTopAppBarTitle):
     """
@@ -181,11 +193,12 @@ class ServerLabel(ServerTooltip, MDTopAppBarTitle):
     _connected: BooleanProperty(False)
 
     def __init__(self, **kwargs):
-        self.game_pages = ["No current server connection. \nPlease connect to a server."]
-        self.game_info = self.game_pages[0]
-        self.server_name = "Not Connected"
         self._connected = False
         super().__init__(**kwargs)
+        self.game_pages = self.tooltip_pages = ["No current server connection. \nPlease connect to a server."]
+        self.game_info = self.game_tooltip = self.game_pages[0]
+        self.server_name = self.server_tooltip = "Not Connected"
+        self.current_page = self.current_tooltip_page = 0
         self.theme_font_style = "Custom"
         self.font_style = "Monospace"
         self.role = "large"
@@ -204,19 +217,41 @@ class ServerLabel(ServerTooltip, MDTopAppBarTitle):
         if self.ctx.slot is None:
             return
         # We have a valid connection, proceed with tooltip setup
-        ctx = self.ctx
-        self.game_pages = []  # Reset pages
+        # Rebuild tooltip data to ensure it's current
+        self._build_tooltip_data(self.ctx)
+        super().on_open()
+
+    def update_server_info(self, ctx=None):
+        """Update server info display - called directly from on_connect"""
+        if not ctx:
+            ctx = self.ctx
+        if not ctx:
+            return
+        
+        # Rebuild complete tooltip data
+        self._build_tooltip_data(ctx)
+        
+        # Update main label text
+        if ctx.slot is not None:
+            name = ctx.player_names[ctx.slot]
+            # if ctx.alias:
+            #     name = ctx.alias
+            self.text = f"{ctx.server_address}, Hello {name}"
+        else:
+            self.text = f"{ctx.server_address}"
+    
+    def _build_tooltip_data(self, ctx):
+        """Build complete tooltip data from context"""
+        self.game_pages = self.tooltip_pages = []  # Reset pages
         
         if ctx.slot is None:
-            self.server_name = f"{ctx.server_address}"
-            self.game_pages = [f"You are not authenticated yet."]
-            self.current_page = 0
-            self.game_info = self.game_pages[self.current_page]
+            self.server_name = self.server_tooltip = f"{ctx.server_address}"
+            self.game_pages = self.tooltip_pages = [f"You are not authenticated yet."]
         else:
             name = ctx.player_names[ctx.slot]
             # if ctx.alias:
             #     name = ctx.alias
-            self.server_name = f"{ctx.server_address}, Hello {name}"
+            self.server_name = self.server_tooltip = f"{ctx.server_address}, Hello {name}"
             
             if ctx.total_locations:
                 self.game_pages.append(
@@ -236,39 +271,30 @@ You can get more info on missing checks with /missing.
 For you this means every {max(min_cost, int(ctx.hint_cost * 0.01 * ctx.total_locations))} location checks.
 You currently have {ctx.hint_points} points.""")
         
-        self.current_page = 0
-        self.game_info = self.game_pages[0] if self.game_pages else "No information available"
-        super().on_open()
-
-    def update_server_info(self, ctx=None):
-        """Update server info display - called directly from on_connect"""
-        if not ctx:
-            ctx = self.ctx
-        if not ctx:
-            return
-            
-        if ctx.slot is not None:
-            name = ctx.player_names[ctx.slot]
-            # if ctx.alias:
-            #     name = ctx.alias
-            self.server_name = f"{ctx.server_address}, Hello {name}"
-        else:
-            self.server_name = f"{ctx.server_address}"
+        # Sync both sets of properties
+        self.tooltip_pages = self.game_pages.copy()
+        self.current_page = self.current_tooltip_page = 0
+        self.game_info = self.game_tooltip = self.game_pages[0] if self.game_pages else "No information available"
     
     def on_disconnect(self):
         """Called when disconnected from server"""
         self._connected = False
-        self.server_name = "Not Connected"
-        self.game_pages = [f"No current server connection. \nPlease connect to a server."]
-        self.current_page = 0
-        self.game_info = self.game_pages[self.current_page]
+        self.server_name = self.server_tooltip = "Not Connected"
+        self.text = "Not Connected"  # Update main label text
+        self.game_pages = self.tooltip_pages = [f"No current server connection. \nPlease connect to a server."]
+        self.current_page = self.current_tooltip_page = 0
+        self.game_info = self.game_tooltip = self.game_pages[self.current_page]
 
     def next(self):
         if len(self.game_pages) > 1:
             self.current_page = (self.current_page + 1) % len(self.game_pages)
             self.game_info = self.game_pages[self.current_page]
+            # Also update tooltip properties
+            self.current_tooltip_page = self.current_page
+            self.game_tooltip = self.game_info
         else:
-            self.game_info = self.game_pages[0]
+            self.game_info = self.game_pages[0] if self.game_pages else "No information available"
+            self.game_tooltip = self.game_info
     
     def on_parent(self, instance, parent):
         """Clean up when widget is removed"""

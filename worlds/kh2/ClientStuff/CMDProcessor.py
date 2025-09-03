@@ -1,5 +1,6 @@
 from CommonClient import ClientCommandProcessor
 from typing import TYPE_CHECKING
+import asyncio
 
 # I don't know what is going on here, but it works.
 if TYPE_CHECKING:
@@ -57,14 +58,10 @@ class KH2CommandProcessor(ClientCommandProcessor):
             self.output(f"Unknown priority: {priority}. Valid Inputs: PlayerName, ItemName")
 
     def _cmd_deathlink(self):
-        """Toggles Deathlink"""
-        if self.ctx.deathlink_toggle:
-            # self.ctx.tags.add("DeathLink")
-            self.ctx.deathlink_toggle = False
-            self.output(f"Death Link turned off")
-        else:
-            self.ctx.deathlink_toggle = True
-            self.output(f"Death Link turned on")
+        """Toggles deathlink"""
+        if isinstance(self.ctx, KH2Context):
+            self.ctx.death_link = not self.ctx.death_link
+            asyncio.create_task((self.ctx.update_death_link(self.ctx.death_link)), name="Update Deathlink")
 
     def _cmd_add_to_blacklist(self, player_name: str = ""):
         """Adds player to deathlink blacklist"""
@@ -75,6 +72,14 @@ class KH2CommandProcessor(ClientCommandProcessor):
         """Removes player from the deathlink blacklist"""
         if player_name in self.ctx.deathlink_blacklist:
             self.ctx.deathlink_blacklist.remove(player_name)
+
+    def _cmd_pause_game(self):
+        """Pauses the game process search for the game"""
+        self.ctx.pause_game = not self.ctx.pause_game
+        if self.ctx.pause_game:
+            self.output("Game process search paused")
+        else:
+            self.output("Game process search restarted")
 
     #def _cmd_kill(self):
     #    self.ctx.kh2_write_byte(0x810000, 1)
