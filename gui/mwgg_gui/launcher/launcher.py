@@ -6,6 +6,7 @@ from kivymd.uix.imagelist import MDSmartTileImage
 from kivy.properties import NumericProperty
 from kivy.clock import Clock
 from kivy.animation import Animation
+from kivymd.uix.button import MDIconButton
 
 """
 LAUNCHER SCREEN
@@ -68,6 +69,12 @@ Builder.load_string('''
     inactive_bar_color: [0,0,0,0]
     height: dp(65)
 
+<FavoriteToggleButton>:
+    style: "standard"
+    pos_hint:{"x": 0, "top": 1}
+    theme_text_color: "Custom"
+    text_color: app.theme_cls.onPrimaryColor
+
 <Favorite>:
     size_hint_x: None
     size_hint_y: None
@@ -92,10 +99,12 @@ Builder.load_string('''
 
     MDSmartTileOverlayContainer:
         overlap: True
+        orientation: 'vertical'
         overlay_mode: 'footer'
-
+        FavoriteToggleButton:
+            icon: "heart" if root.game_module in app.launcher_screen.saved_games else "heart-outline"
+            on_release: root.toggle_favorite()
         MDLabel:
-
             pos_hint: {"x": 0, "y": 0}
             size_hint_y: .5
             text: root.game_name
@@ -108,8 +117,6 @@ Builder.load_string('''
             outline_width: 1
             theme_text_color: "Custom"
             text_color: app.theme_cls.surfaceContainerHighestColor
-        
-
 
 <LauncherScreen>:
     size_hint: 1,1
@@ -328,17 +335,18 @@ class FavoritesScroll(MDScrollView):
 
 class FavoriteImage(MDSmartTileImage):
     pass
-    # favorite_state = StringProperty("normal")
 
-    # def __init__(self, **kwargs):
-    #     super().__init__(**kwargs)
-    #     self.favorite_state = "normal"
+class FavoriteToggleButton(MDIconButton):
 
-    # def highlight(self):
-    #     self.favorite_state = "selected"
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            return super().on_touch_down(touch)
+        return False
 
-    # def unhighlight(self):
-    #     self.favorite_state = "normal"
+    def on_touch_up(self, touch):
+        if self.collide_point(*touch.pos):
+            return super().on_touch_up(touch)
+        return False
 
 class Favorite(MDSmartTile):
     """Custom Layout for displaying favorite games"""
@@ -379,6 +387,9 @@ class Favorite(MDSmartTile):
             self.click_down_pos = []
             return super().on_touch_up(touch)
 
+    def toggle_favorite(self):
+        self.app.launcher_screen.toggle_favorite(self.game_module)
+
     def highlight(self):
         #self.img_pos = self.favorite_image.pos
         self.favorite_state = "selected"
@@ -411,6 +422,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     app: App
     result: Any
     favorite_games: ListProperty = ListProperty([])
+    saved_games: ListProperty = ListProperty([])
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
@@ -492,9 +504,8 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         # Update button text based on context
         self.update_connect_button_text()
 
-        # if not self.is_favorite(game_info[0]):
-        #     self.add_to_favorites(game_info[0])
-        # self.highlight_selected_game()
+        if not self.is_favorite(game_info[0]):
+            self.add_to_favorite_bar(game_info[0])
    
     def set_filter(self, active, tag):
         if active:
@@ -521,43 +532,37 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             connect_button._button_text.text = f'Reconnect ({game_name})'
             connect_button._button_icon.icon = 'refresh'
 
-    def highlight_selected_game(self):
-        """Highlight the selected game tab"""
-        try:
-            # Set the active tab by game name
-            if self.selected_game and self.selected_game[1]:
-                self.favorites_tabs.switch_tab(text=self.selected_game[1])
-        except Exception as e:
-            logger.error(f"Failed to highlight selected game: {e}")
-        
-
     def load_favorite_games(self):
         """Load favorite games from app config"""
         try:
             favorites_str = self.app.app_config.get('game_settings', 'favorite_games', fallback='')
             if favorites_str:
-                self.favorite_games = favorites_str.split(',')
+                self.saved_games = favorites_str.split(',')
+                self.favorite_games = self.saved_games
             else:
-                self.favorite_games = []
+                self.saved_games = []
+                self.favorite_games = self.saved_games
         except (KeyError):
-            self.favorite_games = []
+            self.saved_games = []
         logger.debug(f"Loaded {len(self.favorite_games)} favorite games")
 
-    def save_favorite_games(self):
+    def save_favorite_games(self, module_name: str = None):
         """Save favorite games to app config"""
         try:
-            self.app.app_config.set('game_settings', 'favorite_games', ','.join(self.favorite_games))
+            if module_name:
+                self.saved_games.append(module_name)
+            self.app.app_config.set('game_settings', 'favorite_games', ','.join(self.saved_games))
             self.app.app_config.write()
             logger.debug(f"Saved {len(self.favorite_games)} favorite games")
         except Exception as e:
             logger.error(f"Failed to save favorite games: {e}")
 
-    def populate_favorites(self):
+    def populate_favorites(self, game_module: str = None):
         """Populate the favorites with favorite games"""
         try:
             self.favorites_layout.clear_widgets()
             
-            if not self.favorite_games:
+            if not self.favorite_games and not game_module:
                 # Add a placeholder item when no favorites
                 placeholder = Favorite(game_name="", game_module="")
                 self.favorites_layout.add_widget(placeholder)
@@ -571,38 +576,38 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                     if game_name:
                         favorite_tab = Favorite(game_name=game_name, game_module=name)
                         self.favorites_layout.add_widget(favorite_tab)
+                        if game_module and game_module == name:
+                            self.set_favorite_highlight(favorite_tab)
                 except Exception as e:
                     logger.error(f"Failed to add favorite {name}: {e}")
                     
         except Exception as e:
             logger.error(f"Failed to populate favorites tabs: {e}")
 
-    def add_to_favorites(self, module_name: str):
+    def add_to_favorite_bar(self, module_name: str):
         """Add a game to favorites"""
         if module_name not in self.favorite_games:
             self.favorite_games.append(module_name)
-            self.save_favorite_games()
-            self.populate_favorites_tabs()
-            logger.info(f"Added {module_name} to favorites")
+            self.populate_favorites(module_name)
 
     def remove_from_favorites(self, module_name: str):
         """Remove a game from favorites"""
-        if module_name in self.favorite_games:
-            self.favorite_games.remove(module_name)
+        if module_name in self.saved_games:
+            self.saved_games.remove(module_name)
             self.save_favorite_games()
-            self.populate_favorites_tabs()
+            self.populate_favorites()
             logger.info(f"Removed {module_name} from favorites")
 
     def toggle_favorite(self, module_name: str):
         """Toggle favorite status for a game"""
-        if module_name in self.favorite_games:
+        if module_name in self.saved_games:
             self.remove_from_favorites(module_name)
         else:
-            self.add_to_favorites(module_name)
+            self.save_favorite_games(module_name)
 
     def is_favorite(self, module_name: str) -> bool:
         """Check if a game is in favorites"""
-        return module_name in self.favorite_games
+        return module_name in self.saved_games
 
     def swipe_to_favorite(self, module_name: str):
         """Switch to a specific favorite game tab"""
@@ -614,7 +619,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             game_index = GameIndex()
             game_name = game_index.get_game_name_for_module(module_name)
             if game_name:
-                self.favorites_tabs.switch_tab(text=game_name)
+                self.favorites_layout.switch_tab(text=game_name)
                 logger.info(f"Switched to favorite {module_name}")
             else:
                 logger.warning(f"Game {module_name} not found in favorites")
