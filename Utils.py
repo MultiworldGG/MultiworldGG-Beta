@@ -135,17 +135,58 @@ def get_available_worlds() -> typing.List[str]:
 
 def discover_and_launch_module(module_name: str, **kwargs) -> None:
     """Discover and launch module via entrypoints"""
+    import threading
+    import asyncio
+    from kivy.clock import Clock
+    
     # First, try to import the module to see if it exists
     if not module_name.startswith("worlds."):
         module_name = f"worlds.{module_name}"
+    
+    def _install_module_threaded():
+        """Install module in a separate thread"""
+        try:
+            ModuleUpdate.install_worlds([module_name])
+            # Schedule the actual launch on the main thread after installation
+            Clock.schedule_once(lambda dt: _launch_module_after_install(), 0)
+        except Exception as e:
+            logging.error(f"Failed to update module {module_name}: {e}")
+            # Schedule error handling on main thread
+            Clock.schedule_once(lambda dt: _handle_install_error(e), 0)
+    
+    def _launch_module_after_install():
+        """Launch the module after successful installation"""
+        try:
+            _perform_module_launch(module_name, **kwargs)
+        except Exception as e:
+            logging.error(f"Failed to launch module {module_name} after install: {e}")
+            _handle_install_error(e)
+    
+    def _handle_install_error(error):
+        """Handle installation errors on the main thread"""
+        # Get error callback from kwargs if provided
+        error_callback = kwargs.get('error_callback')
+        if error_callback:
+            error_callback()
+        # Log the error but don't raise it since we're in a Clock callback
+        logging.error(f"Module installation failed: {error}")
+    
     try:
         importlib.import_module(module_name)
+        # Module exists, launch directly
+        _perform_module_launch(module_name, **kwargs)
     except ModuleNotFoundError:
-        # Module doesn't exist, try to update it
-        ModuleUpdate.install_worlds([module_name])
+        # Module doesn't exist, install it in a separate thread
+        logging.info(f"Module {module_name} not found, installing in background...")
+        install_thread = threading.Thread(target=_install_module_threaded, daemon=True)
+        install_thread.start()
+        return  # Return early, launch will be scheduled after installation
     except Exception as e:
-        logging.error(f"Failed to update module {module_name}: {e}")
+        logging.error(f"Failed to import module {module_name}: {e}")
         raise e
+
+def _perform_module_launch(module_name: str, **kwargs):
+    """Perform the actual module launch logic"""
     try:
         # 1. Check for explicit entry point first
         entry_points = importlib.metadata.entry_points(group="mwgg.client")

@@ -1,8 +1,5 @@
 from __future__ import annotations
-import ModuleUpdate
 import Utils
-
-ModuleUpdate.update()
 
 import os
 import asyncio

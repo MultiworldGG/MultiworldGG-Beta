@@ -8,13 +8,10 @@ import webbrowser
 import time
 import ast
 import Utils
-import ModuleUpdate
 
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 
 osu_base_id = 727000000
-
-ModuleUpdate.update()
 
 if __name__ == "__main__":
     Utils.init_logging("osu!Client", exception_logger="Client")

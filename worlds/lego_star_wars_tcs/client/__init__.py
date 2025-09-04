@@ -4,12 +4,9 @@ import colorama
 import hashlib
 import random
 
-import ModuleUpdate
 import Utils
 from NetUtils import ClientStatus
 from worlds._bizhawk.context import AuthStatus
-
-ModuleUpdate.update()
 
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 import logging

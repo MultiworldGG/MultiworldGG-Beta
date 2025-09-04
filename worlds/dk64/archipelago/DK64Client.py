@@ -1,9 +1,5 @@
 """Donkey Kong 64 client for Archipelago."""
 
-import ModuleUpdate
-
-ModuleUpdate.update()
-
 import Utils
 
 if __name__ == "__main__":

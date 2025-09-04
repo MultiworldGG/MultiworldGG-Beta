@@ -18,7 +18,6 @@ import pymem
 from pymem.exception import ProcessNotFound
 
 # Archipelago imports
-import ModuleUpdate
 import Utils
 
 try:
@@ -37,7 +36,6 @@ from .agents.repl_client import JakAndDaxterReplClient
 from . import JakAndDaxterWorld
 
 
-ModuleUpdate.update()
 logger = logging.getLogger("JakClient")
 all_tasks: set[Task] = set()
 

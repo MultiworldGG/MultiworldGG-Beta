@@ -22,9 +22,6 @@ import typing
 import weakref
 import zlib
 
-# import ModuleUpdate
-# ModuleUpdate.update()
-
 if typing.TYPE_CHECKING:
     import ssl
     from NetUtils import ServerConnection

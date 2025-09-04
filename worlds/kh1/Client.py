@@ -9,9 +9,6 @@ import re
 import time
 from calendar import timegm
 
-import ModuleUpdate
-ModuleUpdate.update()
-
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 death_link = False

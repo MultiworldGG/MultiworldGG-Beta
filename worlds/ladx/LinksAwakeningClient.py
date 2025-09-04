@@ -1,6 +1,3 @@
-import ModuleUpdate
-ModuleUpdate.update()
-
 import Utils
 
 import asyncio

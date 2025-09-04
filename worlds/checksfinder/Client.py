@@ -4,9 +4,6 @@ import sys
 import asyncio
 import shutil
 
-import ModuleUpdate
-ModuleUpdate.update()
-
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 if __name__ == "__main__":

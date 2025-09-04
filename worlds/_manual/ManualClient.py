@@ -13,9 +13,6 @@ from worlds.LauncherComponents import icon_paths
 import json
 import traceback
 
-import ModuleUpdate
-ModuleUpdate.update()
-
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 

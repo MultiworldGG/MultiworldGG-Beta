@@ -9,7 +9,6 @@ import random
 import Utils
 import json
 import logging
-import ModuleUpdate
 
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from typing import Tuple, List, Iterable, Dict, Any
@@ -25,8 +24,6 @@ from .RegionFilter import Wargroove2LogicFilter
 from NetUtils import ClientStatus
 from CommonClient import gui_enabled, logger, get_base_parser, ClientCommandProcessor, \
     CommonContext, server_loop
-
-ModuleUpdate.update()
 
 if __name__ == "__main__":
     Utils.init_logging("Wargroove2Client", exception_logger="Client")

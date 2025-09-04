@@ -7,7 +7,6 @@ import traceback
 from typing import Any, Dict, List, Optional, Set, Tuple
 from dataclasses import dataclass
 
-import ModuleUpdate
 from .options import SmsOptions
 from .bit_helper import change_endian, bit_flagger, extract_bits
 import dolphin_memory_engine as dme
@@ -15,8 +14,6 @@ from . import addresses
 import Utils
 
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
-
-ModuleUpdate.update()
 
 ''' "Comment-Dictionary"
     #Gravi01    Preventing Crash when game is closed/disconnected before Client + Allowing client to reconnect
