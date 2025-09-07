@@ -4,41 +4,49 @@ TopAppBar class - creates the top app bar that will be added to
 the top of the screen.  Additionally creates helper functions to bind
 to the mouse and window events to display the appropriate icon
 """
-from kivymd.app import App
+from kivymd.app import MDApp
 from kivymd.uix.appbar import MDTopAppBar, MDTopAppBarTitle
+from kivymd.uix.tooltip import (
+    MDTooltip,
+    MDTooltipRich,
+    MDTooltipRichSubhead,
+    MDTooltipRichSupportingText,
+    MDTooltipRichActionButton,
+)
+from kivymd.uix.button import MDButtonText, MDButton
+from kivymd.uix.behaviors import HoverBehavior
 from kivy.lang import Builder
 from kivy.uix.anchorlayout import AnchorLayout
-from kivy.properties import ObjectProperty, StringProperty, NumericProperty, BooleanProperty, ListProperty
+from kivy.properties import (ObjectProperty, 
+                             StringProperty, 
+                             ColorProperty, 
+                             NumericProperty, 
+                             BooleanProperty,
+                             ListProperty)
+from .progress_overlay import ProgressOverlay
 from kivy.clock import Clock
-from kivymd.uix.tooltip import MDTooltip
-from time import time, strftime, gmtime
-from Utils import async_start
+from time import time, strftime, gmtime, localtime
+from kivy.metrics import dp
+import re
+import asyncio
 
 __all__ = ("TopAppBarLayout", "TopAppBar")
 
 Builder.load_string('''
+<MDTooltipRichSubhead>:
+    markup: True
+<MDTooltipRichSupportingText>:
+    markup: True
+
 <Timer>:
 
 <ServerLabel>:
 
 <ServerTooltip>:
-    MDTooltipRich:
-        id: server_tooltip_label
-        MDTooltipRichSubhead:
-            text: root.server_tooltip
-        MDTooltipRichSupportingText:
-            text: root.game_tooltip
-        MDTooltipRichActionButton:
-            on_press: root.next()
-            MDButtonText:
-                text: "More"
+
+<TopAppBarLayout>:
 
 <TopAppBar>:
-    type: "small"
-    padding: 0,0,0,0
-    spacing: dp(10)
-    size_hint_x: 1
-    md_bg_color: app.theme_cls.backgroundColor
     MDTopAppBarLeadingButtonContainer:
         MDActionTopAppBarButton:
             icon: "menu"
@@ -46,13 +54,15 @@ Builder.load_string('''
             on_release: app.open_top_appbar_menu(self)
     ServerLabel:
         size_hint_x: .7
-        id: address_bar_label
+        id: server_info_label
         text: "Not Connected"
+    ClockLabel:
+        id: clock_label
+        size_hint_x: .3
     Timer:
         id: timer
         size_hint_x: .3
         text: "00:00:00"
-
 
     MDTopAppBarTrailingButtonContainer:
         MDActionTopAppBarButton:
@@ -62,6 +72,22 @@ Builder.load_string('''
             icon: "account-circle-outline"
             on_release: root.open_profile()
 ''')
+
+class ClockLabel(MDTopAppBarTitle):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.ctx = MDApp.get_running_app().ctx
+        self.theme_font_style = "Custom"
+        self.font_style = "Monospace"
+        self.role = "large"
+        self.text = strftime("%H:%M", localtime())
+        asyncio.create_task(self.update_clock(), name="Clock")
+
+    async def update_clock(self):
+        while not self.ctx.exit_event.is_set():
+            self.text = strftime("%H:%M", localtime())
+            await asyncio.sleep(60)
+
 
 class Timer(MDTopAppBarTitle):
     # Properly declare properties
@@ -83,7 +109,7 @@ class Timer(MDTopAppBarTitle):
         self.bind(elapsed_time=self.on_elapsed_time)
         
     def on_ui_built(self):
-        self.ctx = App.get_running_app().ctx
+        self.ctx = MDApp.get_running_app().ctx
         self.slot_info = self.ctx.slot_info
         # Only schedule if not already scheduled
         if self._update_event is None:
@@ -160,66 +186,162 @@ class Timer(MDTopAppBarTitle):
             Clock.unschedule(self._update_event)
             self._update_event = None
  
-
-class ServerTooltip(MDTooltip):
-    """
-    Tooltip for the server and information
-    """
-    server_tooltip: StringProperty
-    game_tooltip: StringProperty
-    tooltip_pages: ListProperty
-    current_tooltip_page: NumericProperty
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.tooltip_display_delay = 4 
-
-    def next(self):
-        if len(self.tooltip_pages) > 1:
-            self.current_tooltip_page = (self.current_tooltip_page + 1) % len(self.tooltip_pages)
-            self.game_tooltip = self.tooltip_pages[self.current_tooltip_page]
+class ServerRichTooltip(MDTooltipRich, HoverBehavior):
+    """Rich tooltip with hover behavior for ServerLabel"""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.server_label = None  # Will be set by parent
+        self.auto_dismiss = False
+    
+    def on_leave(self, *args):
+        """Override to prevent early dismissal while allowing normal KivyMD behavior"""
+        print("Mouse left tooltip")
+        # Add a small delay before dismissing to prevent accidental early dismissal
+        # This gives users time to move mouse back if they accidentally moved off
+        Clock.schedule_once(self._delayed_leave, 1)
+    
+    def _delayed_leave(self, dt):
+        """Delayed leave that calls the parent's on_leave for proper dismissal"""
+        # Check if mouse is still outside tooltip bounds
+        from kivy.core.window import Window
+        mouse_pos = Window.mouse_pos
+        
+        if not self.collide_point(*mouse_pos):
+            print("Confirmed mouse left tooltip - dismissing")
+            # Clean up tooltip reference before dismissing
+            if self.server_label:
+                self.server_label.tooltip = None
+            super().on_leave()
         else:
-            self.game_tooltip = self.tooltip_pages[0] if self.tooltip_pages else "No information available"
+            print("Mouse returned to tooltip - not dismissing")
 
-class ServerLabel(ServerTooltip, MDTopAppBarTitle):
+class ServerLabel(MDTooltip, MDTopAppBarTitle):
     """
     Label for the server and information
     """
     ctx: ObjectProperty
-    server_name: StringProperty
-    game_info: StringProperty
+    _server_name: StringProperty
+    _game_info: StringProperty
     game_pages: ListProperty
     current_page: NumericProperty
     _connected: BooleanProperty(False)
 
     def __init__(self, **kwargs):
         self._connected = False
+        self._server_name = "Not Connected"
+        self._game_info = "No current server connection. \nPlease connect to a server."
         super().__init__(**kwargs)
-        self.game_pages = self.tooltip_pages = ["No current server connection. \nPlease connect to a server."]
-        self.game_info = self.game_tooltip = self.game_pages[0]
-        self.server_name = self.server_tooltip = "Not Connected"
-        self.current_page = self.current_tooltip_page = 0
+        self.game_pages = ["No current server connection. \nPlease connect to a server."]
+        self.game_info = self.game_pages[0]
+        self.server_name = "Not Connected"
+        self.current_page = 0
         self.theme_font_style = "Custom"
         self.font_style = "Monospace"
         self.role = "large"
+        self.tooltip = None  # Single tooltip instance
+
+        self.tooltip_display_delay = 4
+
+        
+        # Initialize tooltip content
+        self._update_tooltip_content()
+
+    def _update_tooltip_content(self):
+        """Update the tooltip widgets based on current state"""
+        print(f"_update_tooltip_content called, tooltip exists: {hasattr(self, 'tooltip') and self.tooltip is not None}")
+        self.shift_left = dp(220) if len(self.game_pages) == 1 else dp(100)
+        self.shift_y = dp(1) if len(self.game_pages) == 1 else dp(-80)
+        # Clean up any existing tooltips from window first
+        self._cleanup_old_tooltips()
+        
+        # If tooltip already exists and is displayed, update its content
+        if hasattr(self, 'tooltip') and self.tooltip is not None:
+            print("Updating existing tooltip content")
+            # Clear existing children
+            self.tooltip.clear_widgets()
+            
+            # Add updated content
+            self.tooltip.add_widget(MDTooltipRichSubhead(text=self.server_name))
+            self.tooltip.add_widget(MDTooltipRichSupportingText(text=self.game_info))
+            
+            # Add "More" button if multiple pages exist
+            if hasattr(self, 'game_pages') and len(self.game_pages) > 1:
+                self.tooltip.add_widget(
+                    MDTooltipRichActionButton(
+                        MDButtonText(text="More"),
+                        on_release=lambda x: self.next_page()
+                    )
+                )
+        else:
+            print("Creating new tooltip")
+            # Build base tooltip components
+            tooltip_widgets = [
+                MDTooltipRichSubhead(text=self.server_name),
+                MDTooltipRichSupportingText(text=self.game_info),
+            ]
+            
+            # Add "More" button if multiple pages exist
+            if hasattr(self, 'game_pages') and len(self.game_pages) > 1:
+                tooltip_widgets.append(
+                    MDTooltipRichActionButton(
+                        MDButtonText(text="More"),
+                        on_release=lambda x: self.next_page()
+                    )
+                )
+            
+            # Create the tooltip with all components
+            self.tooltip = ServerRichTooltip(*tooltip_widgets)
+            self.tooltip.server_label = self  # Back-reference for communication
+            self.widgets = [self.tooltip]
+    
+    def _cleanup_old_tooltips(self):
+        """Remove any old ServerRichTooltip instances from the window, except the current one"""
+        from kivy.core.window import Window
+        
+        # Find and remove any ServerRichTooltip instances that aren't our current tooltip
+        tooltips_to_remove = []
+        for child in Window.children[:]:  # Copy list to avoid modification during iteration
+            if isinstance(child, ServerRichTooltip) and child != self.tooltip:
+                tooltips_to_remove.append(child)
+        
+        for old_tooltip in tooltips_to_remove:
+            print(f"Removing old tooltip from window: {old_tooltip}")
+            try:
+                Window.remove_widget(old_tooltip)
+            except Exception as e:
+                print(f"Error removing old tooltip: {e}")
+
+    @property
+    def server_name(self):
+        return self._server_name
+
+    @server_name.setter
+    def server_name(self, value):
+        if self._server_name != value:
+            self._server_name = value
+            self._update_tooltip_content()  # Update tooltip when server name changes
+
+    @property
+    def game_info(self):
+        return self._game_info
+
+    @game_info.setter
+    def game_info(self, value):
+        if self._game_info != value:
+            self._game_info = value
+            self._update_tooltip_content()  # Update tooltip when game info changes
 
     def on_ui_built(self):
-        self.ctx = App.get_running_app().ctx
+        self.ctx = MDApp.get_running_app().ctx
         self.slot_info = self.ctx.slot_info
         self._connected = True
         # Update server info immediately on connection
         self.update_server_info()
 
-    def on_open(self):
-        # Don't open tooltip until ui_built() has been called
-        if not self._connected:
-            return
-        if self.ctx.slot is None:
-            return
-        # We have a valid connection, proceed with tooltip setup
-        # Rebuild tooltip data to ensure it's current
-        self._build_tooltip_data(self.ctx)
-        super().on_open()
+    def on_open(self, *args):
+        """Called when tooltip opens - content should already be current"""
+        print("Tooltip opened")
 
     def update_server_info(self, ctx=None):
         """Update server info display - called directly from on_connect"""
@@ -230,36 +352,39 @@ class ServerLabel(ServerTooltip, MDTopAppBarTitle):
         
         # Rebuild complete tooltip data
         self._build_tooltip_data(ctx)
-        
+        server_address = re.sub(r"^ws?://", "", ctx.server_address)
         # Update main label text
         if ctx.slot is not None:
             name = ctx.player_names[ctx.slot]
             # if ctx.alias:
             #     name = ctx.alias
-            self.text = f"{ctx.server_address}, Hello {name}"
+            self.text = f"{server_address} hosting {name} and friends"
         else:
-            self.text = f"{ctx.server_address}"
+            self.text = f"{server_address}"
+        
     
     def _build_tooltip_data(self, ctx):
         """Build complete tooltip data from context"""
-        self.game_pages = self.tooltip_pages = []  # Reset pages
-        
+        from NetUtils import TEXT_COLORS
+        self.game_pages = []  # Reset pages
+        server_address = re.sub(r"^ws?://", "", ctx.server_address)
         if ctx.slot is None:
-            self.server_name = self.server_tooltip = f"{ctx.server_address}"
-            self.game_pages = self.tooltip_pages = [f"You are not authenticated yet."]
+            self.server_name = f"{server_address}"
+            self.game_pages = [f"You are not authenticated yet."]
         else:
             name = ctx.player_names[ctx.slot]
             # if ctx.alias:
             #     name = ctx.alias
-            self.server_name = self.server_tooltip = f"{ctx.server_address}, Hello {name}"
+            self.server_name = f"{name}@{server_address}"
             
             if ctx.total_locations:
                 self.game_pages.append(
-                    f"""You are Slot Number {ctx.slot} named {name}.
-You have received {len(ctx.items_received)} items.
-You can list them in order with /received.
-You have checked {len(ctx.checked_locations)} out of {ctx.total_locations} locations.
-You can get more info on missing checks with /missing.
+                    f"""You are Slot Number {ctx.slot} named [color={TEXT_COLORS['player1_color']}]{name}[/color].
+You have received [color={TEXT_COLORS['progression_item_color']}]{len(ctx.items_received)}[/color] items.
+You can list them in order with [b][color={TEXT_COLORS['command_echo_color']}]/received[/color][/b].
+You have checked [color={TEXT_COLORS['location_color']}]{len(ctx.checked_locations)}[/color] 
+    out of [color={TEXT_COLORS['location_color']}]{ctx.total_locations}[/color] locations.
+You can get more info on missing checks with [b][color={TEXT_COLORS['command_echo_color']}]/missing[/color][/b].
 """)
             if ctx.permissions:
                 txt = "Permissions:\n"
@@ -267,57 +392,88 @@ You can get more info on missing checks with /missing.
                 self.game_pages.append(txt)
             if ctx.hint_cost is not None and ctx.total_locations:
                 min_cost = int(ctx.server_version >= (0, 3, 9))
-                self.game_pages.append(f"""A new !hint <itemname> or !hint_location <locationname> costs {ctx.hint_cost}% of checks made.
-For you this means every {max(min_cost, int(ctx.hint_cost * 0.01 * ctx.total_locations))} location checks.
-You currently have {ctx.hint_points} points.""")
+                self.game_pages.append(f"""New hints cost [color={TEXT_COLORS['command_echo_color']}]{ctx.hint_cost}%[/color] of checks made.
+Commands are:
+[b][color={TEXT_COLORS['command_echo_color']}]!hint[/color] [color={TEXT_COLORS['progression_item_color']}]<itemname>[/color][/b]
+[b][color={TEXT_COLORS['command_echo_color']}]!hint_location[/color] [color={TEXT_COLORS['location_color']}]<locationname>[/color][/b]
+For you this means every [color={TEXT_COLORS['command_echo_color']}]{max(min_cost, int(ctx.hint_cost * 0.01 * ctx.total_locations))}[/color] location checks.
+You currently have [color={TEXT_COLORS['command_echo_color']}]{ctx.hint_points}[/color] points.""")
         
-        # Sync both sets of properties
-        self.tooltip_pages = self.game_pages.copy()
-        self.current_page = self.current_tooltip_page = 0
-        self.game_info = self.game_tooltip = self.game_pages[0] if self.game_pages else "No information available"
+        self.game_info = self.game_pages[0] if self.game_pages else "No information available"
+        # Tooltip will be updated automatically via the game_info setter
     
     def on_disconnect(self):
         """Called when disconnected from server"""
         self._connected = False
-        self.server_name = self.server_tooltip = "Not Connected"
         self.text = "Not Connected"  # Update main label text
-        self.game_pages = self.tooltip_pages = [f"No current server connection. \nPlease connect to a server."]
-        self.current_page = self.current_tooltip_page = 0
-        self.game_info = self.game_tooltip = self.game_pages[self.current_page]
+        self.game_pages = [f"No current server connection. \nPlease connect to a server."]
+        self.current_page = 0
+        self.game_info = self.game_pages[self.current_page]
+        self.server_name = self.text
 
-    def next(self):
-        if len(self.game_pages) > 1:
+    def next_page(self):
+        """Navigate to next page and refresh tooltip"""
+        if hasattr(self, 'game_pages') and len(self.game_pages) > 1:
             self.current_page = (self.current_page + 1) % len(self.game_pages)
-            self.game_info = self.game_pages[self.current_page]
-            # Also update tooltip properties
-            self.current_tooltip_page = self.current_page
-            self.game_tooltip = self.game_info
+            self.game_info = self.game_pages[self.current_page]  # This will trigger _update_tooltip_content via setter
+            print(f"Next page: {self.current_page}")
         else:
-            self.game_info = self.game_pages[0] if self.game_pages else "No information available"
-            self.game_tooltip = self.game_info
+            self.game_info = self.game_pages[0] if hasattr(self, 'game_pages') and self.game_pages else "No information available"
+            print(f"No more pages: {self.current_page}")
     
     def on_parent(self, instance, parent):
         """Clean up when widget is removed"""
         if parent is None:
             self._connected = False
 
-    # def previous(self):
-    #     if len(self.game_pages) > 1:
-    #         self.current_page = (self.current_page - 1) % len(self.game_pages)
-    #         self.game_info = self.game_pages[self.current_page]
-    #     else:
-    #         self.current_page = 0
-    #         self.game_info = self.game_pages[0]
-
-
 class TopAppBar(MDTopAppBar):
+    """
+    Custom top app bar with integrated progress tracking.
+    
+    Extends MDTopAppBar to include progress tracking functionality that
+    updates based on location completion in the connected game session.
+    The app bar is made transparent to allow an underlying progress overlay
+    to show completion status.
+    
+    Properties:
+        timer: Reference to the timer widget
+        server_info_label: Reference to the server information label
+        p_width: Current progress width in pixels for the progress bar
+    """
+    
     timer: ObjectProperty
-    address_bar_label: ObjectProperty
+    server_info_label: ObjectProperty
+    p_width: NumericProperty = NumericProperty(0)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.app = MDApp.get_running_app()
         self.timer = self.ids.timer
-        self.address_bar_label = self.ids.address_bar_label
+        self.server_info_label = self.ids.server_info_label
+        self.theme_bg_color = "Custom"
+        self.md_bg_color = self.theme_cls.transparentColor
+        self.theme_shadow_color = "Custom"
+        self.shadow_color = self.theme_cls.transparentColor
+        asyncio.create_task(self.update_progress_width(), name="ProgressBar")
+
+    async def update_progress_width(self):
+        """
+        Continuously update progress bar width based on location completion.
+        
+        Monitors the connected game session and updates the progress bar width
+        to reflect the percentage of locations that have been checked. Updates
+        every 30 seconds while the app is running.
+        """
+        while not self.app.ctx.exit_event.is_set():
+            if self.app.ctx and hasattr(self.app.ctx, 'total_locations'):
+                locs = len(self.app.ctx.checked_locations)
+                total = self.app.ctx.total_locations
+                new_width = self.width * (locs/total) if total > 0 else 0
+                if new_width != self.p_width:
+                    self.p_width = new_width
+            else:
+                self.p_width = 0
+            await asyncio.sleep(30)
 
     def toggle_timer(self):
         """Toggle timer on/off (pause/resume)"""
@@ -332,21 +488,35 @@ class TopAppBar(MDTopAppBar):
 
     def ui_built(self):
         self.timer.on_ui_built()
-        self.address_bar_label.on_ui_built()
+        self.server_info_label.on_ui_built()
     
     def update_server_info(self, ctx):
         """Update server info from on_connect - called from Gui.py"""
-        self.address_bar_label.update_server_info(ctx)
+        self.server_info_label.update_server_info(ctx)
     
     def on_disconnect(self):
         """Handle disconnect - called from Gui.py"""
-        self.address_bar_label.on_disconnect()
+        self.server_info_label.on_disconnect()
 
     def open_profile(self):
-        print("open profile")
+        """Open user profile interface (placeholder implementation)."""
+        pass  # TODO: Implement profile interface
 
 class TopAppBarLayout(AnchorLayout):
+    """
+    Layout container for the top app bar with progress overlay.
+    
+    Manages the layering and positioning of the progress overlay and
+    top app bar components. The progress overlay is positioned behind
+    the transparent app bar to provide visual progress feedback.
+    
+    Properties:
+        top_appbar: The main app bar widget
+        progress_overlay: The progress tracking overlay widget
+    """
+    
     top_appbar: ObjectProperty
+    progress_overlay: ObjectProperty
     anchor_x = "left"
     anchor_y = "top"
     size_hint_x = 1
@@ -354,8 +524,35 @@ class TopAppBarLayout(AnchorLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        
+        # Add progress overlay FIRST (provides both background and progress)
+        self.progress_overlay = ProgressOverlay()
+        self.progress_overlay.size_hint = (None, None)
+        self.add_widget(self.progress_overlay)
+        
+        # Add the app bar on top of the progress overlay
         self.top_appbar = TopAppBar()
         self.top_appbar.id = "top_appbar"
         self.add_widget(self.top_appbar)
-
+        
+        # Size and position the overlay to match the app bar
+        self.progress_overlay.size = self.top_appbar.size
+        self.progress_overlay.pos = self.top_appbar.pos
+        
+        # Bind the progress overlay to the app bar's progress and size
+        self.top_appbar.bind(p_width=self._update_progress_overlay)
+        self.top_appbar.bind(size=self._update_progress_overlay_size)
+        self.top_appbar.bind(pos=self._update_progress_overlay_pos)
+    
+    def _update_progress_overlay(self, instance, value):
+        """Update progress overlay width when app bar progress changes"""
+        self.progress_overlay.p_width = value
+    
+    def _update_progress_overlay_size(self, instance, value):
+        """Update progress overlay size when app bar size changes"""
+        self.progress_overlay.size = self.top_appbar.size
+    
+    def _update_progress_overlay_pos(self, instance, value):
+        """Update progress overlay position when app bar position changes"""
+        self.progress_overlay.pos = self.top_appbar.pos
 

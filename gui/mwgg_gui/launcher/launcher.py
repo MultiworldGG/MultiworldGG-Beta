@@ -454,7 +454,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     def remove_from_favorites(self, module_name: str):
         """Remove a game from favorites"""
         if module_name in self.saved_games:
-            self.saved_games.remove(module_name)
+            self.saved_games.remove(module_name+",")
             self.save_favorite_games()
             self.populate_favorites()
             logger.info(f"Removed {module_name} from favorites")
