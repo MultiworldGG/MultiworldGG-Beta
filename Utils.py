@@ -34,6 +34,16 @@ try:
 except ImportError:
     from yaml import Loader as UnsafeLoader, SafeLoader, Dumper
 
+'''
+Change to use a FileUtils singleton that can process the correct
+dialog for the platform. For convenience the functions are aliased
+to the original names.
+'''
+from FileUtils import FileUtils
+open_directory = FileUtils.open_directory
+open_filename = FileUtils.open_file_input_dialog
+open_file_input_dialog = FileUtils.open_file_input_dialog
+
 if typing.TYPE_CHECKING:
     import tkinter
     import pathlib
@@ -739,7 +749,7 @@ def is_kivy_running() -> bool:
 def _mp_open_filename(res: "multiprocessing.Queue[typing.Optional[str]]", *args: Any) -> None:
     if is_kivy_running():
         raise RuntimeError("kivy should not be running in multiprocess")
-    res.put(open_filename(*args))
+    res.put(open_file_input_dialog(*args))
 
 
 def _run_for_stdout(*args: str):
@@ -750,46 +760,46 @@ def _run_for_stdout(*args: str):
     return subprocess.run(args, capture_output=True, text=True, env=env).stdout.split("\n", 1)[0] or None
 
 
-def open_filename(title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") \
-        -> typing.Optional[str]:
-    logging.info(f"Opening file input dialog for {title}.")
+# def open_filename(title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") \
+#         -> typing.Optional[str]:
+#     logging.info(f"Opening file input dialog for {title}.")
 
-    if is_linux:
-        # prefer native dialog
-        from shutil import which
-        kdialog = which("kdialog")
-        if kdialog:
-            k_filters = '|'.join((f'{text} (*{" *".join(ext)})' for (text, ext) in filetypes))
-            return _run_for_stdout(kdialog, f"--title={title}", "--getopenfilename", suggest or ".", k_filters)
-        zenity = which("zenity")
-        if zenity:
-            z_filters = (f'--file-filter={text} ({", ".join(ext)}) | *{" *".join(ext)}' for (text, ext) in filetypes)
-            selection = (f"--filename={suggest}",) if suggest else ()
-            return _run_for_stdout(zenity, f"--title={title}", "--file-selection", *z_filters, *selection)
+#     if is_linux:
+#         # prefer native dialog
+#         from shutil import which
+#         kdialog = which("kdialog")
+#         if kdialog:
+#             k_filters = '|'.join((f'{text} (*{" *".join(ext)})' for (text, ext) in filetypes))
+#             return _run_for_stdout(kdialog, f"--title={title}", "--getopenfilename", suggest or ".", k_filters)
+#         zenity = which("zenity")
+#         if zenity:
+#             z_filters = (f'--file-filter={text} ({", ".join(ext)}) | *{" *".join(ext)}' for (text, ext) in filetypes)
+#             selection = (f"--filename={suggest}",) if suggest else ()
+#             return _run_for_stdout(zenity, f"--title={title}", "--file-selection", *z_filters, *selection)
 
-    # fall back to tk
-    try:
-        import tkinter
-        import tkinter.filedialog
-    except Exception as e:
-        logging.error('Could not load tkinter, which is likely not installed. '
-                      f'This attempt was made because open_filename was used for "{title}".')
-        raise e
-    else:
-        if is_macos and is_kivy_running():
-            # on macOS, mixing kivy and tk does not work, so spawn a new process
-            # FIXME: performance of this is pretty bad, and we should (also) look into alternatives
-            from multiprocessing import Process, Queue
-            res: "Queue[typing.Optional[str]]" = Queue()
-            Process(target=_mp_open_filename, args=(res, title, filetypes, suggest)).start()
-            return res.get()
-        try:
-            root = tkinter.Tk()
-        except tkinter.TclError:
-            return None  # GUI not available. None is the same as a user clicking "cancel"
-        root.withdraw()
-        return tkinter.filedialog.askopenfilename(title=title, filetypes=((t[0], ' '.join(t[1])) for t in filetypes),
-                                                  initialfile=suggest or None)
+#     # fall back to tk
+#     try:
+#         import tkinter
+#         import tkinter.filedialog
+#     except Exception as e:
+#         logging.error('Could not load tkinter, which is likely not installed. '
+#                       f'This attempt was made because open_filename was used for "{title}".')
+#         raise e
+#     else:
+#         if is_macos and is_kivy_running():
+#             # on macOS, mixing kivy and tk does not work, so spawn a new process
+#             # FIXME: performance of this is pretty bad, and we should (also) look into alternatives
+#             from multiprocessing import Process, Queue
+#             res: "Queue[typing.Optional[str]]" = Queue()
+#             Process(target=_mp_open_filename, args=(res, title, filetypes, suggest)).start()
+#             return res.get()
+#         try:
+#             root = tkinter.Tk()
+#         except tkinter.TclError:
+#             return None  # GUI not available. None is the same as a user clicking "cancel"
+#         root.withdraw()
+#         return tkinter.filedialog.askopenfilename(title=title, filetypes=((t[0], ' '.join(t[1])) for t in filetypes),
+#                                                   initialfile=suggest or None)
 
 
 def _mp_open_directory(res: "multiprocessing.Queue[typing.Optional[str]]", *args: Any) -> None:
@@ -798,42 +808,42 @@ def _mp_open_directory(res: "multiprocessing.Queue[typing.Optional[str]]", *args
     res.put(open_directory(*args))
 
 
-def open_directory(title: str, suggest: str = "") -> typing.Optional[str]:
-    if is_linux:
-        # prefer native dialog
-        from shutil import which
-        kdialog = which("kdialog")
-        if kdialog:
-            return _run_for_stdout(kdialog, f"--title={title}", "--getexistingdirectory",
-                       os.path.abspath(suggest) if suggest else ".")
-        zenity = which("zenity")
-        if zenity:
-            z_filters = ("--directory",)
-            selection = (f"--filename={os.path.abspath(suggest)}/",) if suggest else ()
-            return _run_for_stdout(zenity, f"--title={title}", "--file-selection", *z_filters, *selection)
+# def open_directory(title: str, suggest: str = "") -> typing.Optional[str]:
+#     if is_linux:
+#         # prefer native dialog
+#         from shutil import which
+#         kdialog = which("kdialog")
+#         if kdialog:
+#             return _run_for_stdout(kdialog, f"--title={title}", "--getexistingdirectory",
+#                        os.path.abspath(suggest) if suggest else ".")
+#         zenity = which("zenity")
+#         if zenity:
+#             z_filters = ("--directory",)
+#             selection = (f"--filename={os.path.abspath(suggest)}/",) if suggest else ()
+#             return _run_for_stdout(zenity, f"--title={title}", "--file-selection", *z_filters, *selection)
 
-    # fall back to tk
-    try:
-        import tkinter
-        import tkinter.filedialog
-    except Exception as e:
-        logging.error('Could not load tkinter, which is likely not installed. '
-                      f'This attempt was made because open_directory was used for "{title}".')
-        raise e
-    else:
-        if is_macos and is_kivy_running():
-            # on macOS, mixing kivy and tk does not work, so spawn a new process
-            # FIXME: performance of this is pretty bad, and we should (also) look into alternatives
-            from multiprocessing import Process, Queue
-            res: "Queue[typing.Optional[str]]" = Queue()
-            Process(target=_mp_open_directory, args=(res, title, suggest)).start()
-            return res.get()
-        try:
-            root = tkinter.Tk()
-        except tkinter.TclError:
-            return None  # GUI not available. None is the same as a user clicking "cancel"
-        root.withdraw()
-        return tkinter.filedialog.askdirectory(title=title, mustexist=True, initialdir=suggest or None)
+#     # fall back to tk
+#     try:
+#         import tkinter
+#         import tkinter.filedialog
+#     except Exception as e:
+#         logging.error('Could not load tkinter, which is likely not installed. '
+#                       f'This attempt was made because open_directory was used for "{title}".')
+#         raise e
+#     else:
+#         if is_macos and is_kivy_running():
+#             # on macOS, mixing kivy and tk does not work, so spawn a new process
+#             # FIXME: performance of this is pretty bad, and we should (also) look into alternatives
+#             from multiprocessing import Process, Queue
+#             res: "Queue[typing.Optional[str]]" = Queue()
+#             Process(target=_mp_open_directory, args=(res, title, suggest)).start()
+#             return res.get()
+#         try:
+#             root = tkinter.Tk()
+#         except tkinter.TclError:
+#             return None  # GUI not available. None is the same as a user clicking "cancel"
+#         root.withdraw()
+#         return tkinter.filedialog.askdirectory(title=title, mustexist=True, initialdir=suggest or None)
 
 
 def messagebox(title: str, text: str, error: bool = False) -> None:

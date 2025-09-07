@@ -11,7 +11,7 @@ __all__ = (
     "BottomBarTextInput"
 )
 from kivymd.uix.appbar import MDBottomAppBar, MDActionBottomAppBarButton
-from kivy.properties import StringProperty, NumericProperty
+from kivy.properties import StringProperty, NumericProperty, ObjectProperty
 from kivy.lang import Builder
 from kivymd.app import MDApp
 from kivymd.uix.floatlayout import MDFloatLayout
@@ -39,8 +39,9 @@ Builder.load_string('''
     id: text_input
     hint_text: "Enter text"
     write_tab: False
+    leading_icon: leading_icon
     MDTextFieldLeadingIcon:
-        icon: root.icon
+        id: leading_icon
     MDTextFieldHintText:
         text: root.hint_text
 ''')
@@ -50,6 +51,7 @@ def is_command_input(string: str) -> bool:
 
 class BottomBarTextInput(MDTextField):
     action_type: StringProperty
+    leading_icon: ObjectProperty
     icon: StringProperty
     hint_text: StringProperty
     silent_prefix: StringProperty
@@ -62,11 +64,12 @@ class BottomBarTextInput(MDTextField):
     
     #BottomAppBar is a MDFloatLayout already, so we can place the TextField in it without shenanigans
     def __init__(self, *args, **kwargs):
-        self.icon = "blank"
         self.hint_text = "Enter text"
         self.silent_prefix = ""
         self.action_type = "console"
         super().__init__(*args, **kwargs)
+        self.leading_icon = self.ids.leading_icon
+        self.icon = "blank"
         self.dropdown = MDDropdownMenu(caller=self, position="top", border_margin=dp(2), width=self.width)
         self.bind(on_text_validate=self.on_fork)
         self.bind(width=lambda instance, x: setattr(self.dropdown, "width", x))
@@ -86,6 +89,14 @@ class BottomBarTextInput(MDTextField):
             self.on_admin_message(instance)
         else:
             MDApp.get_running_app().on_message(instance)
+
+    @property
+    def icon(self):
+        return self.leading_icon.icon
+
+    @icon.setter
+    def icon(self, value):
+        self.leading_icon.icon = value
 
     def on_admin_message(self, instance):
         MDApp.get_running_app().commandprocessor("!admin "+instance.text)
@@ -121,7 +132,7 @@ class BottomBarTextInput(MDTextField):
                 except ValueError:
                     pass  # substring not found
                 else:
-                    text = text[:index]+text[index:index+len(value)]+text[index+len(value):]
+                    text = hint_name[:index]+hint_name[index:index+len(value)]+hint_name[index+len(value):]
                     self.dropdown.items.append({
                         "text": text,
                         "on_release": lambda txt=text: on_press(txt),

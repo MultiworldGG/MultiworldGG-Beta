@@ -412,7 +412,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         try:
             if module_name:
                 self.saved_games.append(module_name)
-            self.app.app_config.set('game_settings', 'favorite_games', ','.join(self.saved_games))
+            self.app.app_config.set('game_settings', 'favorite_games', ','.join(self.saved_games).lstrip(","))
             self.app.app_config.write()
             logger.debug(f"Saved {len(self.favorite_games)} favorite games")
         except Exception as e:
@@ -454,7 +454,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     def remove_from_favorites(self, module_name: str):
         """Remove a game from favorites"""
         if module_name in self.saved_games:
-            self.saved_games.remove(module_name+",")
+            self.saved_games.remove(module_name)
             self.save_favorite_games()
             self.populate_favorites()
             logger.info(f"Removed {module_name} from favorites")

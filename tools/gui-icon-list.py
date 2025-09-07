@@ -1,14 +1,18 @@
 from kivy.lang import Builder
 from kivy.properties import StringProperty
+import os
 
-from kivymd.icon_definitions import md_icons
 from kivymd.uix.screen import MDScreen
 from kivymd.app import MDApp
 from kivymd.uix.list import MDListItem
-from mw_theme import RegisterFonts, md_icons
+from base_fonts import RegisterFonts
+from fa_icons import md_icons
 from kivy.core.text import LabelBase
 from kivy.metrics import sp
 from kivymd.theming import ThemableBehavior
+
+
+os.environ["KIVY_DATA_DIR"] = os.path.join(os.path.dirname(__file__), "..", "kivy", "data")
 
 Builder.load_string('''
 #:import images_path kivymd.images_path

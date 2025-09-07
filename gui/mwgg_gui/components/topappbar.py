@@ -24,11 +24,15 @@ from kivy.properties import (ObjectProperty,
                              BooleanProperty,
                              ListProperty)
 from .progress_overlay import ProgressOverlay
+from .profile import show_profile
 from kivy.clock import Clock
 from time import time, strftime, gmtime, localtime
 from kivy.metrics import dp
+import logging
 import re
 import asyncio
+
+logger = logging.getLogger("MultiWorld")
 
 __all__ = ("TopAppBarLayout", "TopAppBar")
 
@@ -146,7 +150,7 @@ class Timer(MDTopAppBarTitle):
         try:
             self.update_timer()
         except Exception as e:
-            print(f"Timer update error: {e}")
+            logger.exception(e)
     
     def update_timer(self):
         """Update the elapsed time and check for goal condition"""
@@ -196,7 +200,6 @@ class ServerRichTooltip(MDTooltipRich, HoverBehavior):
     
     def on_leave(self, *args):
         """Override to prevent early dismissal while allowing normal KivyMD behavior"""
-        print("Mouse left tooltip")
         # Add a small delay before dismissing to prevent accidental early dismissal
         # This gives users time to move mouse back if they accidentally moved off
         Clock.schedule_once(self._delayed_leave, 1)
@@ -208,13 +211,10 @@ class ServerRichTooltip(MDTooltipRich, HoverBehavior):
         mouse_pos = Window.mouse_pos
         
         if not self.collide_point(*mouse_pos):
-            print("Confirmed mouse left tooltip - dismissing")
             # Clean up tooltip reference before dismissing
             if self.server_label:
                 self.server_label.tooltip = None
             super().on_leave()
-        else:
-            print("Mouse returned to tooltip - not dismissing")
 
 class ServerLabel(MDTooltip, MDTopAppBarTitle):
     """
@@ -249,7 +249,6 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
 
     def _update_tooltip_content(self):
         """Update the tooltip widgets based on current state"""
-        print(f"_update_tooltip_content called, tooltip exists: {hasattr(self, 'tooltip') and self.tooltip is not None}")
         self.shift_left = dp(220) if len(self.game_pages) == 1 else dp(100)
         self.shift_y = dp(1) if len(self.game_pages) == 1 else dp(-80)
         # Clean up any existing tooltips from window first
@@ -257,7 +256,6 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
         
         # If tooltip already exists and is displayed, update its content
         if hasattr(self, 'tooltip') and self.tooltip is not None:
-            print("Updating existing tooltip content")
             # Clear existing children
             self.tooltip.clear_widgets()
             
@@ -274,7 +272,6 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
                     )
                 )
         else:
-            print("Creating new tooltip")
             # Build base tooltip components
             tooltip_widgets = [
                 MDTooltipRichSubhead(text=self.server_name),
@@ -306,11 +303,10 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
                 tooltips_to_remove.append(child)
         
         for old_tooltip in tooltips_to_remove:
-            print(f"Removing old tooltip from window: {old_tooltip}")
             try:
                 Window.remove_widget(old_tooltip)
             except Exception as e:
-                print(f"Error removing old tooltip: {e}")
+                pass
 
     @property
     def server_name(self):
@@ -341,7 +337,7 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
 
     def on_open(self, *args):
         """Called when tooltip opens - content should already be current"""
-        print("Tooltip opened")
+        pass
 
     def update_server_info(self, ctx=None):
         """Update server info display - called directly from on_connect"""
@@ -356,8 +352,8 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
         # Update main label text
         if ctx.slot is not None:
             name = ctx.player_names[ctx.slot]
-            # if ctx.alias:
-            #     name = ctx.alias
+            if ctx.slot_info[ctx.slot].alias:
+                name = ctx.slot_info[ctx.slot].alias
             self.text = f"{server_address} hosting {name} and friends"
         else:
             self.text = f"{server_address}"
@@ -373,8 +369,8 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
             self.game_pages = [f"You are not authenticated yet."]
         else:
             name = ctx.player_names[ctx.slot]
-            # if ctx.alias:
-            #     name = ctx.alias
+            if ctx.slot_info[ctx.slot].alias:
+                name = ctx.slot_info[ctx.slot].alias
             self.server_name = f"{name}@{server_address}"
             
             if ctx.total_locations:
@@ -416,10 +412,8 @@ You currently have [color={TEXT_COLORS['command_echo_color']}]{ctx.hint_points}[
         if hasattr(self, 'game_pages') and len(self.game_pages) > 1:
             self.current_page = (self.current_page + 1) % len(self.game_pages)
             self.game_info = self.game_pages[self.current_page]  # This will trigger _update_tooltip_content via setter
-            print(f"Next page: {self.current_page}")
         else:
             self.game_info = self.game_pages[0] if hasattr(self, 'game_pages') and self.game_pages else "No information available"
-            print(f"No more pages: {self.current_page}")
     
     def on_parent(self, instance, parent):
         """Clean up when widget is removed"""
@@ -500,7 +494,7 @@ class TopAppBar(MDTopAppBar):
 
     def open_profile(self):
         """Open user profile interface (placeholder implementation)."""
-        pass  # TODO: Implement profile interface
+        show_profile()
 
 class TopAppBarLayout(AnchorLayout):
     """

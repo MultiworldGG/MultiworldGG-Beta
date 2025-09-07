@@ -398,7 +398,11 @@ class SettingsScrollBox(MDScrollView):
         self.layout = self.ids.layout
 
 class ConnectionSettings(SettingsScrollBox):
-    """Connection settings section"""
+    """Connection settings section
+    This is the settings section for the connection settings.
+    It includes the profile settings, status settings, and host settings.
+    
+    TODO: pull from the profile component"""
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()

@@ -537,11 +537,12 @@ class MultiMDApp(MDApp):
             textinput.text = ""
             textinput.update_history(input_text)
 
-            if self.ctx.input_requests > 0:
+            if hasattr(self.ctx, 'input_requests') and self.ctx.input_requests > 0:
                 self.ctx.input_requests -= 1
                 self.ctx.input_queue.put_nowait(input_text)
             elif is_command_input(input_text):
-                self.ctx.on_ui_command(input_text)
+                if hasattr(self.ctx, 'on_ui_command'):
+                    self.ctx.on_ui_command(input_text)
                 self.commandprocessor(input_text)
             elif input_text:
                 self.commandprocessor(input_text)
