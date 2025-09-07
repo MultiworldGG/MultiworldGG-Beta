@@ -300,7 +300,6 @@ class MMX3SNIClient(SNIClient):
 
         from .Rom import weapon_rom_data, ride_armor_rom_data, upgrades_rom_data, boss_access_rom_data, refill_rom_data, chip_rom_data
         from .Levels import location_id_to_level_id
-        from worlds import AutoWorldRegister
 
         bit_byte_vile = await snes_read(ctx, MMX3_BIT_BYTE_VILE, 0x01)
         defeated_bosses = list(await snes_read(ctx, MMX3_DEFEATED_BOSSES, 0x20))
@@ -313,7 +312,7 @@ class MMX3SNIClient(SNIClient):
         pickupsanity_enabled = await snes_read(ctx, MMX3_PICKUPSANITY_ACTIVE, 0x1)
         new_checks = []
         for loc_name, data in location_id_to_level_id.items():
-            loc_id = AutoWorldRegister.world_types[ctx.game].location_name_to_id[loc_name]
+            loc_id = ctx.location_names[loc_name]
             if loc_id not in ctx.locations_checked:
                 level_id = data[0]
                 internal_id = data[1]

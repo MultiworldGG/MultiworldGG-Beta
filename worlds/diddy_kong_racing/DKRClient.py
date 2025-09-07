@@ -9,8 +9,9 @@ import sys
 # CommonClient import first to trigger ModuleUpdater
 from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser, gui_enabled, logger, server_loop
 from Utils import async_start, init_logging, instance_name
+import Utils
 apname = instance_name if instance_name else "Archipelago"
-from worlds import network_data_package
+
 
 from .RomPatcher import apply_patch
 
@@ -40,9 +41,8 @@ Payload: client -> lua
 
 """
 
-logger.info(network_data_package["games"].keys())
-dkr_loc_name_to_id: dict[str, int] = network_data_package["games"]["Diddy Kong Racing"]["location_name_to_id"]
-dkr_itm_name_to_id: dict[str, int] = network_data_package["games"]["Diddy Kong Racing"]["item_name_to_id"]
+dkr_loc_name_to_id: dict[str, int] = {}
+dkr_itm_name_to_id: dict[str, int] = {}
 
 version_number: str = "v1.0.0"
 apworld_version: str = "DKR" + version_number
@@ -84,6 +84,11 @@ class DiddyKongRacingContext(CommonContext):
         self.startup = False
         self.current_map = 0
 
+    def data_package_cache(self, location_names_to_id, item_names_to_id):
+        global dkr_loc_name_to_id, dkr_itm_name_to_id
+        dkr_loc_name_to_id = location_names_to_id
+        dkr_itm_name_to_id = item_names_to_id
+
     async def server_auth(self, password_requested: bool = False) -> None:
         if password_requested and not self.password:
             await super(DiddyKongRacingContext, self).server_auth(password_requested)
@@ -123,8 +128,16 @@ class DiddyKongRacingContext(CommonContext):
                 logger.error(error_message)
                 raise Exception(error_message)
 
-            logger.info("Please open Diddy Kong Racing and load connector_diddy_kong_racing.lua")
-            self.n64_sync_task = asyncio.create_task(n64_sync_task(self), name="N64 Sync")
+            self.dkr_data_package = Utils.load_data_package_for_checksum(
+                    "Diddy Kong Racing", self.checksums["Diddy Kong Racing"])
+
+            if "location_name_to_id" in self.dkr_data_package:
+                self.data_package_cache(
+                        self.dkr_data_package["location_name_to_id"], self.dkr_data_package["item_name_to_id"])
+                logger.info("Please open Diddy Kong Racing and load connector_diddy_kong_racing.lua")
+                self.n64_sync_task = asyncio.create_task(n64_sync_task(self), name="N64 Sync")
+            else:
+                asyncio.create_task(self.send_msgs([{"cmd": "GetDataPackage", "games": ["Diddy Kong Racing"]}]))
         elif cmd == "ReceivedItems":
             if not self.startup:
                 for item in args["items"]:
@@ -142,6 +155,13 @@ class DiddyKongRacingContext(CommonContext):
                     logger.info(player + " sent " + item_name)
                 logger.info("The above items will be sent when Diddy Kong Racing is loaded.")
                 self.startup = True
+        elif cmd == "DataPackage":
+            if "Diddy Kong Racing" in args["data"]["games"]:
+                self.dkr_data_package = args["data"]["games"]["Diddy Kong Racing"]
+                self.data_package_cache(
+                        self.dkr_data_package["location_name_to_id"], self.dkr_data_package["item_name_to_id"])
+                logger.info("Please open Diddy Kong Racing and load connector_diddy_kong_racing.lua")
+                self.n64_sync_task = asyncio.create_task(n64_sync_task(self), name="N64 Sync")
 
     def on_print_json(self, args: dict) -> None:
         if self.ui:

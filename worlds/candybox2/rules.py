@@ -3,7 +3,6 @@ from enum import IntEnum
 from json import JSONEncoder
 from typing import TYPE_CHECKING, Dict
 
-import worlds
 from BaseClasses import CollectionState
 from .locations import locations, CandyBox2LocationName, CandyBox2Location, CandyBox2LocationData
 from .regions import CandyBox2Region, CandyBox2RoomRegion

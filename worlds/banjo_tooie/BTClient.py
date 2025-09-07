@@ -23,7 +23,7 @@ from CommonClient import CommonContext, server_loop, gui_enabled, \
 import Utils
 import settings
 from Utils import async_start, instance_name
-from worlds import network_data_package
+
 apname = instance_name if instance_name else "Archipelago"
 
 SYSTEM_MESSAGE_ID = 0
@@ -64,8 +64,8 @@ deathlink_sent_this_death: we interacted with the multiworld on this death, wait
 
 """
 
-bt_loc_name_to_id = network_data_package["games"]["Banjo-Tooie"]["location_name_to_id"]
-bt_itm_name_to_id = network_data_package["games"]["Banjo-Tooie"]["item_name_to_id"]
+bt_loc_name_to_id = {}
+bt_itm_name_to_id = {}
 script_version: int = 5
 version: str = "V4.9"
 patch_md5: str = "641211b87e10ff64ed869a7b2479b9e4"
@@ -352,6 +352,11 @@ class BanjoTooieContext(CommonContext):
         self.startup = False
         self.handled_scouts = []
 
+    def data_package_bt_cache(self, location_names_to_id, item_names_to_id):
+        global bt_loc_name_to_id, bt_itm_name_to_id
+        bt_loc_name_to_id = location_names_to_id
+        bt_itm_name_to_id = item_names_to_id
+
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
             await super(BanjoTooieContext, self).server_auth(password_requested)
@@ -455,7 +460,16 @@ class BanjoTooieContext(CommonContext):
                                 "Your version: "+version+" | Generated version: "+self.slot_data["version"])
             self.deathlink_enabled = bool(self.slot_data["death_link"])
             self.taglink_enabled = bool(self.slot_data["tag_link"])
-            self.n64_sync_task = asyncio.create_task(n64_sync_task(self), name="N64 Sync")
+
+            self.banjo_tooie_data_package = Utils.load_data_package_for_checksum(
+                    "Banjo-Tooie", self.checksums["Banjo-Tooie"])
+
+            if "location_name_to_id" in self.banjo_tooie_data_package:
+                self.data_package_bt_cache(
+                        self.banjo_tooie_data_package["location_name_to_id"], self.banjo_tooie_data_package["item_name_to_id"])
+                self.n64_sync_task = asyncio.create_task(n64_sync_task(self), name="N64 Sync")
+            else:
+                asyncio.create_task(self.send_msgs([{"cmd": "GetDataPackage", "games": ["Banjo-Tooie"]}]))
         elif cmd == "ReceivedItems":
             self.tracker.refresh_items()
             if self.startup == False:
@@ -473,6 +487,12 @@ class BanjoTooieContext(CommonContext):
                     logger.info(player + " sent " + item_name)
                 logger.info("The above items will be sent when Banjo-Tooie is loaded.")
                 self.startup = True
+        elif cmd == "DataPackage":
+            if "Banjo-Tooie" in args["data"]["games"]:
+                self.banjo_tooie_data_package = args["data"]["games"]["Banjo-Tooie"]
+                self.data_package_bt_cache(
+                        self.banjo_tooie_data_package["location_name_to_id"], self.banjo_tooie_data_package["item_name_to_id"])
+                self.n64_sync_task = asyncio.create_task(n64_sync_task(self), name="N64 Sync")
         if isinstance(args, dict) and isinstance(args.get("data", {}), dict):
             source_name = args.get("data", {}).get("source", None)
             if not hasattr(self, "instance_id"):

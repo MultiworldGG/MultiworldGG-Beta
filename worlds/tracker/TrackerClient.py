@@ -15,7 +15,6 @@ from Utils import __version__, output_path, open_filename,async_start
 import Utils
 
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
-from worlds import AutoWorld
 from . import TrackerWorld, UTMapTabData, CurrentTrackerState,UT_VERSION
 from .TrackerCore import TrackerCore
 from collections import Counter, defaultdict
@@ -107,6 +106,7 @@ class TrackerCommandProcessor(ClientCommandProcessor):
             logger.info("Game not yet loaded")
             return
 
+        from worlds import AutoWorld
         location_name_to_id = AutoWorld.AutoWorldRegister.world_types[self.ctx.game].location_name_to_id
         if location_name not in location_name_to_id:
             logger.info(f"Unrecognized location {location_name}")
@@ -123,6 +123,7 @@ class TrackerCommandProcessor(ClientCommandProcessor):
             logger.info("Game not yet loaded")
             return
 
+        from worlds import AutoWorld
         location_name_to_id = AutoWorld.AutoWorldRegister.world_types[self.ctx.game].location_name_to_id
         if location_name not in location_name_to_id:
             logger.info(f"Unrecognized location {location_name}")
@@ -403,6 +404,7 @@ class TrackerGameContext(CommonContext):
                 return
             m = self.maps[map_id]
         self.map_id = map_id
+        from worlds import AutoWorld
         location_name_to_id = AutoWorld.AutoWorldRegister.world_types[self.game].location_name_to_id
         # m = [m for m in self.maps if m["name"] == map_name]
         if self.tracker_world.external_pack_key:
@@ -574,6 +576,7 @@ class TrackerGameContext(CommonContext):
             
             def get_text(self):
                 ctx = manager.get_running_app().ctx
+                from worlds import AutoWorld
                 location_id_to_name = AutoWorld.AutoWorldRegister.world_types[ctx.game].location_id_to_name
                 sReturn = []
                 for loc,status in self.locationDict.items():
@@ -773,6 +776,7 @@ class TrackerGameContext(CommonContext):
                             from NetUtils import HintStatus
                             found = data["status"]["hint"]["status"] == HintStatus.HINT_FOUND
                         else:
+                            from worlds import AutoWorld
                             prefix = len("[color=00FF7F]")
                             suffix = len("[/color]")
                             loc_name = data["location"]["text"][prefix:-1*suffix]
@@ -890,6 +894,7 @@ class TrackerGameContext(CommonContext):
                     self.scout_checked_locations()
                 self.updateTracker()
             elif cmd == 'SetReply' or cmd == 'Retrieved':
+                from worlds import AutoWorld
                 if self.ui is not None and hasattr(AutoWorld.AutoWorldRegister.world_types.get(self.game), "tracker_world") and self.tracker_world:
                     key = self.tracker_world.map_page_setting_key or f"{self.slot}_{self.team}_{UT_MAP_TAB_KEY}"
                     icon_key = self.tracker_world.location_setting_key

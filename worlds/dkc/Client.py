@@ -133,7 +133,6 @@ class DKCSNIClient(SNIClient):
             return
         
         from .Levels import location_id_to_level_id
-        from worlds import AutoWorldRegister
 
         new_checks = []
         current_level = int.from_bytes(current_level, "little")
@@ -161,7 +160,7 @@ class DKCSNIClient(SNIClient):
             # Do not process locations if in a map or a transition
             if nmi_pointer == 0xE6B1 or brightness & 0x0F != 0x0F:
                 break 
-            loc_id = AutoWorldRegister.world_types[ctx.game].location_name_to_id[loc_name]
+            loc_id = ctx.location_names[loc_name]
             if loc_id not in ctx.locations_checked:
                 loc_type = data[0]
                 level_num = data[1]

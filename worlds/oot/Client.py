@@ -4,7 +4,6 @@ import os
 import multiprocessing
 import subprocess
 import zipfile
-import logging
 from asyncio import StreamReader, StreamWriter
 
 # CommonClient import first to trigger ModuleUpdater
@@ -13,7 +12,6 @@ from CommonClient import CommonContext, server_loop, gui_enabled, \
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from Utils import async_start
-from worlds import network_data_package
 from . import OOTWorld
 from .Rom import Rom, compress_rom_file
 from .N64Patch import apply_patch_file
@@ -52,7 +50,7 @@ deathlink_sent_this_death: we interacted with the multiworld on this death, wait
 
 """
 
-oot_loc_name_to_id = network_data_package["games"]["Ocarina of Time"]["location_name_to_id"]
+oot_loc_name_to_id = {}
 
 script_version: int = 3
 
@@ -100,6 +98,10 @@ class OoTContext(CommonContext):
         self.deathlink_client_override = False
         self.version_warning = False
 
+    def data_package_cache(self, location_names_to_id):
+        global oot_loc_name_to_id
+        oot_loc_name_to_id = location_names_to_id
+
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
             await super(OoTContext, self).server_auth(password_requested)
@@ -114,24 +116,24 @@ class OoTContext(CommonContext):
         self.deathlink_pending = True
         super().on_deathlink(data)
 
-    # def run_gui(self):
-    #     from kvui import GameManager
-
-    #     class OoTManager(GameManager):
-    #         logging_pairs = [
-    #             ("Client", "Archipelago")
-    #         ]
-    #         base_title = apname + " Ocarina of Time Client"
-
-    #     self.ui = OoTManager(self)
-    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
-
     def on_package(self, cmd, args):
         if cmd == 'Connected':
             slot_data = args.get('slot_data', None)
             if slot_data:
                 self.collectible_override_flags_address = slot_data.get('collectible_override_flags', 0)
                 self.collectible_offsets = slot_data.get('collectible_flag_offsets', {})
+
+            self.oot_data_package = Utils.load_data_package_for_checksum(
+                    "Ocarina of Time", self.checksums["Ocarina of Time"])
+
+            if "location_name_to_id" in self.oot_data_package:
+                self.data_package_cache(self.oot_data_package["location_name_to_id"])
+            else:
+                asyncio.create_task(self.send_msgs([{"cmd": "GetDataPackage", "games": ["Ocarina of Time"]}]))
+        elif cmd == "DataPackage":
+            if "Ocarina of Time" in args["data"]["games"]:
+                self.oot_data_package = args["data"]["games"]["Ocarina of Time"]
+                self.data_package_cache(self.oot_data_package["location_name_to_id"])
 
 
 def get_payload(ctx: OoTContext):
@@ -213,6 +215,7 @@ async def parse_payload(payload: dict, ctx: OoTContext, force: bool):
 
 async def n64_sync_task(ctx: OoTContext): 
     logger.info("Starting n64 connector. Use /n64 for status information.")
+    ctx.ready_callback()
     while not ctx.exit_event.is_set():
         error_status = None
         if ctx.n64_streams:
@@ -323,11 +326,15 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     """
     Launch the client
     """
-    logging.getLogger("OoTClient")
+    Utils.init_logging("OoTClient")
 
     async def main():
         multiprocessing.freeze_support()
-        
+
+        if patch_file:
+            logger.info("APZ5 file supplied, beginning patching process...")
+            async_start(patch_and_run_game(patch_file))
+
         ctx = OoTContext(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
@@ -340,10 +347,6 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
         ctx.ui.base_title = apname + " | Ocarina of Time"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="Server Loop")
         await ctx.server_auth()
-
-        if patch_file:
-            logger.info("APZ5 file supplied, beginning patching process...")
-            async_start(patch_and_run_game(patch_file))
 
         ctx.n64_sync_task = asyncio.create_task(n64_sync_task(ctx), name="N64 Sync")
 

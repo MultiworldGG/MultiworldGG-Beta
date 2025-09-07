@@ -8,7 +8,6 @@ import typing
 from typing import Any, Optional
 
 import requests
-from worlds import AutoWorldRegister, network_data_package
 from worlds.LauncherComponents import icon_paths
 import json
 import traceback
@@ -110,25 +109,20 @@ class ManualContext(SuperContext):
         if password_requested and not self.password:
             await super(ManualContext, self).server_auth(password_requested)
 
-        if "Manual_" not in self.ui.game_bar_text.text:
-            raise Exception("The Manual client can only be used for Manual games.")
+        # Assume self.game is correct as set up by the launcher
+        if not self.game:
+            raise Exception("No game specified for Manual client.")
 
-        self.game = self.ui.game_bar_text.text
-
-        world = AutoWorldRegister.world_types.get(self.game)
-        if not self.location_table and not self.item_table and world is None:
-            raise Exception(f"Cannot load {self.game}, please add the apworld to lib/worlds/")
-
-        data_package = network_data_package["games"].get(self.game, {})
+        # Try to get data package from server first
+        data_package = {}
+        if hasattr(self, 'data_package') and self.game in self.data_package.get("games", {}):
+            data_package = self.data_package["games"][self.game]
 
         self.update_ids(data_package)
 
-        if world is not None and hasattr(world, "victory_names"):
-            self.victory_names = world.victory_names
-            self.goal_location = self.get_location_by_name(world.victory_names[0])
-        else:
-            self.victory_names = ["__Manual Game Complete__"]
-            self.goal_location = self.get_location_by_name("__Manual Game Complete__")
+        # Default victory condition for manual games
+        self.victory_names = ["__Manual Game Complete__"]
+        self.goal_location = self.get_location_by_name("__Manual Game Complete__")
 
         await self.get_username()
         await self.send_connect()
@@ -146,8 +140,7 @@ class ManualContext(SuperContext):
     def get_location_by_name(self, name) -> dict[str, Any]:
         location = self.location_table.get(name)
         if not location:
-            # It is absolutely possible to pull categories from the data_package via self.update_game. I have not done this yet.
-            location = AutoWorldRegister.world_types[self.game].location_name_to_location.get(name, {"name": name})
+            location = {"name": name}
         return location
 
     def get_location_by_id(self, id) -> dict[str, Any]:
@@ -157,7 +150,7 @@ class ManualContext(SuperContext):
     def get_item_by_name(self, name):
         item = self.item_table.get(name)
         if not item:
-            item = AutoWorldRegister.world_types[self.game].item_name_to_item.get(name, {"name": name})
+            item = {"name": name}
         return item
 
     def get_item_by_id(self, id):
@@ -350,11 +343,8 @@ class ManualContext(SuperContext):
                 self.manual_game_layout = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(30))
 
                 game_bar_label = Label(text="Manual Game ID", size=(dp(150), dp(30)), size_hint_y=None, size_hint_x=None)
-                manuals = [w for w in AutoWorldRegister.world_types.keys() if "Manual_" in w]
-                manuals.sort()  # Sort by alphabetical order, not load order
                 self.manual_game_layout.add_widget(game_bar_label)
-                self.game_bar_text = Spinner(text=self.ctx.suggested_game, size_hint_y=None, height=dp(30), sync_height=True,
-                                             values=manuals, option_cls=GameSelectOption, dropdown_cls=GameSelectDropDown)
+                self.game_bar_text = Label(text=self.ctx.game or "No game selected", size_hint_y=None, height=dp(30))
                 self.manual_game_layout.add_widget(self.game_bar_text)
 
                 self.grid.add_widget(self.manual_game_layout, 3)
@@ -466,10 +456,10 @@ class ManualContext(SuperContext):
                 self.controls_panel.add_widget(controls_styled_layout)
 
                 # seed all category names to start
-                for item in self.ctx.item_table.values() or AutoWorldRegister.world_types[self.ctx.game].item_name_to_item.values():
+                for item in self.ctx.item_table.values():
                     if "category" in item and len(item["category"]) > 0:
                         for category in item["category"]:
-                            category_settings = self.ctx.category_table.get(category) or getattr(AutoWorldRegister.world_types[self.ctx.game], "category_table", {}).get(category, {})
+                            category_settings = self.ctx.category_table.get(category, {})
                             if "hidden" in category_settings and category_settings["hidden"]:
                                 continue
                             if category not in self.item_categories:
