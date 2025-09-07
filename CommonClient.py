@@ -619,11 +619,11 @@ class CommonContext(InitContext):
             self.ui.ui_player_data = {slot: {} for team, slot, alias, name in package if self.team == team}
 
     def event_invalid_slot(self):
-        self.messagebox.show_error('Invalid Slot; please verify that you have connected to the correct world.')
+        self.gui_error('Invalid Slot; please verify that you have connected to the correct world.')
         logger.error('Invalid Slot; please verify that you have connected to the correct world.')
 
     def event_invalid_game(self):
-        self.messagebox.show_error('Invalid Game; please verify that you connected with the right game to the correct world.')
+        self.gui_error('Invalid Game; please verify that you connected with the right game to the correct world.')
         logger.error('Invalid Game; please verify that you connected with the right game to the correct world.')
 
     async def server_auth(self, password_requested: bool = False):

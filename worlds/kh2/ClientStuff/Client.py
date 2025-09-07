@@ -750,7 +750,7 @@ async def kh2_watcher(ctx: KH2Context):
 
 
 def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
-    logging.getLogger("KH2Client")
+    Utils.init_logging("KH2Client")
 
     async def main(args):
         ctx = KH2Context(server_address, slot_name, password, ready_callback, error_callback)

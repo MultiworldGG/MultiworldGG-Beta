@@ -465,7 +465,7 @@ class TopAppBar(MDTopAppBar):
         every 30 seconds while the app is running.
         """
         while not self.app.ctx.exit_event.is_set():
-            if self.app.ctx and hasattr(self.app.ctx, 'total_locations'):
+            if self.app.ctx and hasattr(self.app.ctx, 'total_locations') and self.app.ctx.total_locations:
                 locs = len(self.app.ctx.checked_locations)
                 total = self.app.ctx.total_locations
                 new_width = self.width * (locs/total) if total > 0 else 0
