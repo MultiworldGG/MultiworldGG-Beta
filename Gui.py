@@ -173,8 +173,8 @@ class MultiMDApp(MDApp):
             slot_name=self.app_config.get('client', 'alias', fallback=''),
             avatar=self.app_config.get('client', 'avatar', fallback=''),
             pronouns=self.app_config.get('client', 'pronouns', fallback=''),
-            bk_mode=self.app_config.getboolean('client', 'in_bk', fallback=False),
-            in_call=self.app_config.getboolean('client', 'in_call', fallback=False),
+            bk_mode=False,
+            in_call=False,
             end_user=True,
             game_status="OFFLINE",
             game="",
@@ -194,8 +194,6 @@ class MultiMDApp(MDApp):
             'alias': '',
             'pronouns': '',
             'avatar': '',
-            'in_call': 'False',
-            'in_bk': 'False',
             'hostname': 'multiworld.gg',
             'port': '38281',
             'password': '',
@@ -232,10 +230,6 @@ class MultiMDApp(MDApp):
                 self.local_player_data.pronouns = value
             elif key == 'avatar':
                 self.local_player_data.avatar = value
-            elif key == 'in_call':
-                self.local_player_data.in_call = value == 'True'
-            elif key == 'in_bk':
-                self.local_player_data.bk_mode = value == 'True'
         elif section == 'graphics':
             if key == 'fullscreen':
                 Window.fullscreen = value == '1'
@@ -600,8 +594,6 @@ class MultiMDApp(MDApp):
         self.update_mwgg_hints()
         self.update_hints()
         self.set_pronouns()
-        self.set_deafen()
-        self.set_bk()
         self.top_appbar_layout.top_appbar.ui_built()
         if not "hint" in self.screen_manager.screens:
             self._create_screen("hint")
