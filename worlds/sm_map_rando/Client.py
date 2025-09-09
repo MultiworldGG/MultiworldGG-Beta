@@ -56,7 +56,8 @@ class SMMRSNIClient(SNIClient):
     use_new_comm = None
 
     async def deathlink_kill_player(self, ctx):
-        from worlds._sni.client import  DeathState, snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni.context import DeathState
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
         snes_buffered_write(ctx, WRAM_START + 0x09C2, bytes([1, 0]))  # set current health to 1 (to prevent saving with 0 energy)
         snes_buffered_write(ctx, WRAM_START + 0x0A50, bytes([255])) # deal 255 of damage at next opportunity
         if not ctx.death_link_allow_survive:
@@ -75,7 +76,7 @@ class SMMRSNIClient(SNIClient):
 
 
     async def validate_rom(self, ctx):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         rom_name = await snes_read(ctx, SM_ROMNAME_START, ROMNAME_SIZE)
         if rom_name is None or rom_name == bytes([0] * ROMNAME_SIZE) or rom_name[:4] != b"SMMR":
@@ -99,7 +100,7 @@ class SMMRSNIClient(SNIClient):
 
 
     async def game_watcher(self, ctx):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
         if ctx.server is None or ctx.slot is None:
             # not successfully connected to a multiworld server, cannot process the game sending items
             return

@@ -35,7 +35,7 @@ char* _postVeinList(char* stringStartPtr, char* stringCurrentPtr, char* stringEn
 #ifdef V101E
 moduleMatches = 0xF882D5CF, 0x30B6E091, 0x218F6E07 ; 1.0.1E, 1.0.2U, 1.0.0E
 
-changeTime = 0x022b36f4 #::GameManager
+changeTime = 0x022b36f4 #::MultiMDApp
 writeSystemLog = 0x02c74290 #::MenuTask
 
 __sprintf_s = 0x03133354

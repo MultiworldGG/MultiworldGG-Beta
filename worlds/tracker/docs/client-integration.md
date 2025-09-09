@@ -22,7 +22,7 @@ class YourGameContext(SuperContext):
     tags = {"AP"}
 ```
 
-if you edit your GameManager at all, just use super().make_gui() to inheret UT's ui if it got loaded
+if you edit your MultiMDApp at all, just use super().make_gui() to inheret UT's ui if it got loaded
 ```py
 def make_gui(self):
     ui = super().make_gui()

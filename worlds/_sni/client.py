@@ -85,7 +85,7 @@ class AutoSNIClientRegister(abc.ABCMeta):
         for game_name in AutoSNIClientRegister.game_handlers.keys():
             # Normalize both names for comparison
             game_normalized = game_name.lower().replace(' ', '_').replace('-', '_')
-            module_normalized = module_name.lower().replace('-', '_')
+            module_normalized = module_name.lower().replace(' ', '_').replace('-', '_')
             
             if (module_normalized in game_normalized or 
                 game_normalized in module_normalized):

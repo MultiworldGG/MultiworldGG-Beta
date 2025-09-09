@@ -616,11 +616,11 @@ class LinksAwakeningContext(CommonContext):
 
     # def run_gui(self) -> None:
     #     import webbrowser
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
     #     from kivy.metrics import dp
     #     from kivymd.uix.button import MDButton, MDButtonText
 
-    #     class LADXManager(GameManager):
+    #     class LADXManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago"),
     #             ("Tracker", "Tracker"),

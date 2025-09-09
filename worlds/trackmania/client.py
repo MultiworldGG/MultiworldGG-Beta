@@ -160,9 +160,9 @@ class TrackmaniaContext(CommonContext):
                 self.server_msgs.append(encode([args]))
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class TrackmaniaManager(GameManager):
+    #     class TrackmaniaManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

@@ -106,7 +106,7 @@ class DKC2SNIClient(SNIClient):
 
 
     async def validate_rom(self, ctx: "SNIContext"):
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
 
         setting_data = await snes_read(ctx, DKC2_SETTINGS, 0x40)
         rom_name = await snes_read(ctx, DKC2_ROMHASH_START, ROMHASH_SIZE)
@@ -149,7 +149,7 @@ class DKC2SNIClient(SNIClient):
 
 
     async def game_watcher(self, ctx: "SNIContext"):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         setting_data = await snes_read(ctx, DKC2_SETTINGS, 0x40)
         general_data = await snes_read(ctx, WRAM_START + 0x00D0, 0x0F)
@@ -528,7 +528,7 @@ class DKC2SNIClient(SNIClient):
             await snes_flush_writes(ctx)
 
     async def handle_energy_link(self, ctx: "SNIContext"):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         # Deposits EnergyLink into pool
         energy_packet = await snes_read(ctx, DKC2_ENERGY_LINK_TRANSFER, 0x2)
@@ -596,7 +596,7 @@ class DKC2SNIClient(SNIClient):
             from kivymd.uix.label import MDLabel as Label
         except ImportError:
             from kivy.uix.label import Label
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
 
         if not self.barrel_label:
             self.barrel_label = Label(text=f"", size_hint_x=None, width=120, halign="center")
@@ -608,7 +608,7 @@ class DKC2SNIClient(SNIClient):
             self.barrel_label.text = f"Barrels: {barrel_count}"
 
     async def handle_trap_link(self, ctx: "SNIContext"):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
         from .Rom import trap_data
         
         setting_data = await snes_read(ctx, DKC2_SETTINGS, 0x40)
@@ -630,7 +630,7 @@ class DKC2SNIClient(SNIClient):
 
 
     async def handle_messages(self, ctx: "SNIContext"):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
         from .Text import message_received_to_bytes, item_names, item_order
         
         nmi_pointer = await snes_read(ctx, WRAM_START + 0x0020, 0x02)
@@ -791,7 +791,8 @@ class DKC2SNIClient(SNIClient):
 
 
     async def deathlink_kill_player(self, ctx: "SNIContext"):
-        from worlds._sni.client import  DeathState, snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni.context import DeathState
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         # Discard killing from death link
         death_link_flag = await snes_read(ctx, DKC2_DEATH_LINK_FLAG, 0x01)

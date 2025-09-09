@@ -12,7 +12,7 @@ from CommonClient import logger, get_base_parser, gui_enabled, server_loop
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from MultiServer import mark_raw
 from NetUtils import JSONMessagePart
-#from kvui import CommandPromptTextInput
+#from Gui import CommandPromptTextInput
 from .logic.logic import StardewLogic
 from .stardew_rule.rule_explain import explain, ExplainMode, RuleExplanation
 
@@ -158,7 +158,7 @@ class StardewClientContext(TrackerGameContext):
         self.error_callback = error_callback
 
     # def make_gui(self):
-    #     ui = super().make_gui()  # before the kivy imports so kvui gets loaded first
+    #     ui = super().make_gui()  # before the kivy imports so Gui gets loaded first
 
     #     class StardewManager(ui):
     #         base_title = f"Stardew Valley Tracker with UT {UT_VERSION} for AP version"  # core appends ap version so this works

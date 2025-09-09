@@ -1,0 +1,106 @@
+<YamlDialog>:
+    size_hint: 1,1
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+    Widget:
+        canvas:
+            Color:
+                rgba: app.theme_cls.shadowColor[:-1] + [0.6]
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+<OptionsView>:
+    size_hint: .7,.7
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+    theme_bg_color: "Custom"
+    md_bg_color: app.theme_cls.secondaryContainerColor
+
+<OptionsScroll>:
+    size_hint: 1, 1
+    do_scroll_x: False
+    do_scroll_y: True
+
+<OptionsLayout>:
+    id: options_layout
+    adaptive_height: True
+    padding: dp(30)
+    orientation: 'vertical'
+    spacing: dp(10)
+
+<OptionGroupCard>:
+    orientation: 'vertical'
+    adaptive_height: True
+    padding: dp(15)
+    spacing: dp(10)
+    radius: dp(10)
+    elevation: 2
+
+<OptionItem>:
+    orientation: 'vertical'
+    adaptive_height: True
+    spacing: dp(5)
+    padding: dp(10)
+    radius: dp(5)
+
+<OptionLabel>:
+    adaptive_height: True
+
+<OptionDescription>:
+    adaptive_height: True
+    opacity: 0.8
+
+<OptionDict>:
+    MDScrollView:
+        do_scroll_x: False
+        MDGridLayout:
+            id: dict_grid
+            cols: 2
+            spacing: dp(10)
+            padding: dp(10)
+            adaptive_height: True
+
+<ListBasedOption>:
+    orientation: 'vertical'
+    spacing: dp(10)
+    adaptive_height: True
+    
+    MDBoxLayout:
+        id: search_layout
+        orientation: 'horizontal'
+        spacing: dp(10)
+        adaptive_height: True
+    
+    MDGridLayout:
+        id: selected_grid
+        cols: 3
+        spacing: dp(5)
+        adaptive_height: True
+
+<ChoiceOption>:
+    MDButton:
+        id: choice_button
+        adaptive_height: True
+        on_release: root.open_dropdown()
+
+<RangeOption>:
+    MDSlider:
+        id: range_slider
+        min: 0
+        max: 100
+        value: 0
+        step: 1
+        on_value: root.on_value_changed(*args)
+        MDSliderHandle:
+        MDSliderValueLabel:
+
+<ToggleOption>:
+    MDSwitch:
+        id: toggle_switch
+        active: False
+        on_active: root.on_value_changed(*args)
+
+<FreeTextOption>:
+    MDTextField:
+        id: text_field
+        text: ""
+        on_text: root.on_value_changed(*args)

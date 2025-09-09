@@ -174,9 +174,9 @@ class UndertaleContext(CommonContext):
         async_start(process_undertale_cmd(self, cmd, args))
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class UTManager(GameManager):
+    #     class UTManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

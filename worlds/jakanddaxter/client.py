@@ -123,9 +123,9 @@ class JakAndDaxterContext(CommonContext):
         super().__init__(server_address, password)
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class JakAndDaxterManager(GameManager):
+    #     class JakAndDaxterManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

@@ -187,7 +187,7 @@ class SSContext(CommonContext):
         super().on_deathlink(data)
         _give_death(self)
 
-    # def make_gui(self) -> type["kvui.GameManager"]:
+    # def make_gui(self) -> type["Gui.MultiMDApp"]:
     #     """
     #     Initialize the GUI for SS client.
 

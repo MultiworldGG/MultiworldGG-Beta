@@ -93,9 +93,9 @@ class MMBN3Context(CommonContext):
         await self.send_connect(name=self.auth)
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class MMBN3Manager(GameManager):
+    #     class MMBN3Manager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

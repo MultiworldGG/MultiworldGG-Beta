@@ -203,7 +203,7 @@ class K64Client(BizHawkClient):
         return True
 
     async def update_crystal_label(self, ctx: BizHawkClientContext):
-        from kvui import TooltipLabel
+        from Gui import TooltipLabel
 
         if not self.crystal_label:
             self.crystal_label = TooltipLabel(text=f"", size_hint_x=None, width=125, halign="center", valign="center")

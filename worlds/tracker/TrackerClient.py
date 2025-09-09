@@ -26,7 +26,7 @@ from . import TrackerCore
 from Generate import main as GMain, mystery_argparse
 
 if TYPE_CHECKING:
-    from kvui import GameManager
+    from Gui import MultiMDApp
     from argparse import Namespace
 
 if not sys.stdout:  # to make sure sm varia's "i'm working" dots don't break UT in frozen
@@ -39,7 +39,7 @@ ITEMS_HANDLING = 0b111
 UT_MAP_TAB_KEY = "UT_MAP"
 
 def get_ut_color(color: str)->str:
-    from kvui import Widget
+    from Gui import Widget
     from typing import ClassVar
     from kivy.properties import StringProperty
     class UTTextColor(Widget):
@@ -493,14 +493,14 @@ class TrackerGameContext(CommonContext):
     def set_glitches_callback(self, func: Callable[[list[str]], bool] | None = None):
         self.glitches_callback = func
 
-    def build_gui(self, manager: "GameManager"):
+    def build_gui(self, manager: "MultiMDApp"):
         from kivy.uix.boxlayout import BoxLayout
-        from kvui import MDRecycleView, HoverBehavior, MDLabel, MDDivider
+        from Gui import MDRecycleView, HoverBehavior, MDLabel, MDDivider
         from kivymd.uix.tooltip import MDTooltip
         from kivy.uix.widget import Widget
         from kivy.properties import StringProperty, NumericProperty, BooleanProperty
         from kivy.metrics import dp
-        from kvui import ApAsyncImage, ToolTip
+        from Gui import ApAsyncImage, ToolTip
         from .TrackerKivy import SomethingNeatJustToMakePythonHappy
 
         class TrackerLayout(BoxLayout):
@@ -735,10 +735,10 @@ class TrackerGameContext(CommonContext):
 
 
     def make_gui(self):
-        ui = super().make_gui()  # before the kivy imports so kvui gets loaded first
-        from kvui import HintLog, HintLabel, TooltipLabel
+        ui = super().make_gui()  # before the kivy imports so Gui gets loaded first
+        from Gui import HintLog, HintLabel, TooltipLabel
         from kivy.properties import StringProperty, NumericProperty, BooleanProperty
-        from kvui import ImageLoader
+        from Gui import ImageLoader
 
         class TrackerManager(ui):
             source = StringProperty("")

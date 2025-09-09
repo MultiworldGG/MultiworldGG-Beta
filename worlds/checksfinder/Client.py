@@ -105,9 +105,9 @@ class ChecksFinderContext(CommonContext):
 
     # def run_gui(self):
     #     """Import kivy UI system and start running it as self.ui_task."""
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class ChecksFinderManager(GameManager):
+    #     class ChecksFinderManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

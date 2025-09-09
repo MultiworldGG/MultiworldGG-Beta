@@ -352,7 +352,7 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
         # Update main label text
         if ctx.slot is not None:
             name = ctx.player_names[ctx.slot]
-            if ctx.slot_info[ctx.slot].alias:
+            if hasattr(ctx.slot_info[ctx.slot], 'alias') and ctx.slot_info[ctx.slot].alias:
                 name = ctx.slot_info[ctx.slot].alias
             self.text = f"{server_address} hosting {name} and friends"
         else:
@@ -369,7 +369,7 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
             self.game_pages = [f"You are not authenticated yet."]
         else:
             name = ctx.player_names[ctx.slot]
-            if ctx.slot_info[ctx.slot].alias:
+            if hasattr(ctx.slot_info[ctx.slot], 'alias') and ctx.slot_info[ctx.slot].alias:
                 name = ctx.slot_info[ctx.slot].alias
             self.server_name = f"{name}@{server_address}"
             

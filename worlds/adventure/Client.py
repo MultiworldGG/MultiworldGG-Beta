@@ -137,9 +137,9 @@ class AdventureContext(CommonContext):
         super().on_deathlink(data)
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class AdventureManager(GameManager):
+    #     class AdventureManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

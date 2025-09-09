@@ -64,9 +64,9 @@ class ALBWClientContext(CommonContext):
         self.show_citra_connect_message = True
 
     # def run_gui(self) -> None:
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class ALBWManager(GameManager):
+    #     class ALBWManager(MultiMDApp):
     #         base_title: str = apname + " A Link Between Worlds Client"
 
     #     self.ui = ALBWManager(self)

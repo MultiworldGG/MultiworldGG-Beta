@@ -65,7 +65,7 @@ class TetrisAttackSNIClient(SNIClient):
     looked_through_locations = False
 
     async def validate_rom(self, ctx: "SNIContext") -> bool:
-        from worlds._sni.client import snes_read
+        from worlds._sni import snes_read
         from Utils import __version__
 
         rom_prefix = await snes_read(ctx, TETRISATTACK_APVERSION, APVERSION_SIZE)
@@ -86,7 +86,8 @@ class TetrisAttackSNIClient(SNIClient):
         return True
 
     async def deathlink_kill_player(self, ctx):
-        from worlds._sni.client import snes_buffered_write, snes_flush_writes, DeathState
+        from worlds._sni.context import DeathState
+        from worlds._sni import snes_buffered_write, snes_flush_writes
         self.awaiting_deathlink_event = True
         snes_buffered_write(ctx, SRAM_SNI_BAND_START + SNI_DEATHLINK_EVENT, pack("H", 1))
         await snes_flush_writes(ctx)
@@ -94,7 +95,7 @@ class TetrisAttackSNIClient(SNIClient):
         ctx.last_death_link = time.time()
 
     async def game_watcher(self, ctx: "SNIContext") -> None:
-        from worlds._sni.client import snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         rom = await snes_read(ctx, TETRISATTACK_ROMHASH_START, ROMHASH_SIZE)
         if rom != ctx.rom:

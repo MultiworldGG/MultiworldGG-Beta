@@ -43,11 +43,13 @@ _skip_update = bool(
     multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiWorldGG"
 )
 
+local_dir = Path(__file__).parent
+
 update_ran = _skip_update
 need_update: List[str] = []
 if is_frozen():
     if is_windows():
-        python_cmd = "python"
+        python_cmd = Path(local_dir.parent / "python.exe")
     elif is_macos() or is_linux():
         python_cmd = "python3"
 else:
@@ -68,7 +70,7 @@ class RequirementsSet(set):
 
 
 # Initialize file sets
-local_dir = Path(__file__).parent
+
 requirements_files = RequirementsSet({local_dir / "requirements.txt"})
 wheels_files = RequirementsSet()
 

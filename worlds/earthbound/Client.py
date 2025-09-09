@@ -66,7 +66,8 @@ class EarthBoundClient(SNIClient):
     hinted_shop_locations = []
 
     async def deathlink_kill_player(self, ctx: "SNIContext") -> None:
-        from worlds._sni.client import  DeathState, snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni.context import DeathState
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
         battle_hp = {
             1: WRAM_START + 0x9FBF,
             2: WRAM_START + 0xA00D,
@@ -127,7 +128,7 @@ class EarthBoundClient(SNIClient):
             self.slot_data = args.get("slot_data", None)
 
     async def validate_rom(self, ctx) -> bool:
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
 
         rom_name = await snes_read(ctx, EB_ROMHASH_START, ROMHASH_SIZE)
         apworld_version = await snes_read(ctx, WORLD_VERSION, 16)
@@ -155,7 +156,7 @@ class EarthBoundClient(SNIClient):
         return True
 
     async def game_watcher(self, ctx) -> None:
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read, snes_write
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read, snes_write
         giygas_clear = await snes_read(ctx, GIYGAS_CLEAR, 0x1)
         game_clear = await snes_read(ctx, GAME_CLEAR, 0x1)
         item_received = await snes_read(ctx, ITEM_RECEIVED, 0x1)

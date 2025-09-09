@@ -66,9 +66,9 @@ class OpenRCT2Context(CommonContext):
 
     # def run_gui(self): #Sets the title of the client
     #     """Import kivy UI system and start running it as self.ui_task."""
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class TextManager(GameManager):
+    #     class TextManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

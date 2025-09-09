@@ -416,12 +416,12 @@ class BanjoTooieContext(CommonContext):
                 "tag": True}}])
 
     # def run_gui(self):
-    #     from kvui import GameManager, Window, UILog
+    #     from Gui import MultiMDApp, Window, UILog
 
     #     Window.bind(on_request_close=self.on_request_close)
     #     asyncio.create_task(patch_and_run(True))
 
-    #     class BanjoTooieManager(GameManager):
+    #     class BanjoTooieManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

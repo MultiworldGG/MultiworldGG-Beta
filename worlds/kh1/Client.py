@@ -212,9 +212,9 @@ class KH1Context(CommonContext):
 
     # def run_gui(self):
     #     """Import kivy UI system and start running it as self.ui_task."""
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class KH1Manager(GameManager):
+    #     class KH1Manager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

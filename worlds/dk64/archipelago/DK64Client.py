@@ -847,9 +847,9 @@ class DK64Context(CommonContext):
     #     if self.already_running():
     #         print("GUI already running.")
     #         sys.exit(1)
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class DK64Manager(GameManager):
+    #     class DK64Manager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago"),
     #             ("Tracker", "Tracker"),

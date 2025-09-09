@@ -118,9 +118,9 @@ class CivVIContext(CommonContext):
         await self.send_connect()
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class CivVIManager(GameManager):
+    #     class CivVIManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

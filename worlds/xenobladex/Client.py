@@ -363,9 +363,9 @@ class XenobladeXContext(CommonContext):
         super(XenobladeXContext, self).on_print_json(args)
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class XenobladeXManager(GameManager):
+    #     class XenobladeXManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

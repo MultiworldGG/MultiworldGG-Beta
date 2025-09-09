@@ -33,7 +33,7 @@ class FF4FEClient(SNIClient):
         self.logged_version = False
 
     async def validate_rom(self, ctx: SNIContext) -> bool:
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
 
         rom_name: bytes = await snes_read(ctx, Rom.ROM_NAME, 20)
         if rom_name is None or rom_name[:3] != b"4FE":
@@ -56,7 +56,7 @@ class FF4FEClient(SNIClient):
         return True
 
     async def game_watcher(self, ctx: SNIContext) -> None:
-        from worlds._sni.client import  snes_flush_writes
+        from worlds._sni import snes_flush_writes
         # We check victory before the connection check because victory is set in a cutscene.
         # Thus, we would no longer be in a "valid" state to send or receive items.
         if await self.connection_check(ctx) == False:
@@ -69,7 +69,7 @@ class FF4FEClient(SNIClient):
         await snes_flush_writes(ctx)
 
     async def connection_check(self, ctx: SNIContext):
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
         rom: bytes = await snes_read(ctx, Rom.ROM_NAME, 20)
         if rom != ctx.rom:
             ctx.rom = None
@@ -139,7 +139,7 @@ class FF4FEClient(SNIClient):
         return True
 
     async def load_json_data(self, ctx: SNIContext):
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
         import json
         json_length_data = await snes_read(ctx, Rom.json_doc_length_location, 4)
         if json_length_data is None:
@@ -159,7 +159,7 @@ class FF4FEClient(SNIClient):
 
 
     async def location_check(self, ctx: SNIContext):
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
         treasure_data = await snes_read(ctx, Rom.treasure_found_locations_start, Rom.treasure_found_size)
         if treasure_data is None:
             return False
@@ -181,7 +181,7 @@ class FF4FEClient(SNIClient):
 
 
     async def reward_check(self, ctx: SNIContext):
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
         reward_data = await snes_read(ctx, Rom.checked_reward_locations_start, Rom.checked_reward_size)
         if reward_data is None:
             return False
@@ -224,7 +224,7 @@ class FF4FEClient(SNIClient):
 
 
     async def objective_check(self, ctx):
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
         objective_progress_data = await snes_read(ctx, Rom.objective_progress_start_location, Rom.objective_progress_size)
         if objective_progress_data is None:
             return False
@@ -269,7 +269,7 @@ class FF4FEClient(SNIClient):
 
 
     async def received_items_check(self, ctx: SNIContext):
-        from worlds._sni.client import  snes_buffered_write, snes_read
+        from worlds._sni import snes_buffered_write, snes_read
         items_received_data = await snes_read(ctx, Rom.items_received_location_start, Rom.items_received_size)
         if items_received_data is None:
             return
@@ -372,7 +372,7 @@ class FF4FEClient(SNIClient):
                 break
 
     async def check_victory(self, ctx):
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
         for sentinel in Rom.sentinel_addresses: # Defend against RAM initialized to static values everywhere.
             sentinel_data = await snes_read(ctx, sentinel, 1)
             if sentinel_data is None:
@@ -390,7 +390,7 @@ class FF4FEClient(SNIClient):
 
     async def resolve_key_items(self, ctx):
         # We need to write key items into the ingame tracker.
-        from worlds._sni.client import  snes_buffered_write, snes_read
+        from worlds._sni import snes_buffered_write, snes_read
         tracker_data = await snes_read(ctx, Rom.key_items_tracker_start_location, Rom.key_items_tracker_size)
         if tracker_data is None:
             return
@@ -453,7 +453,7 @@ class FF4FEClient(SNIClient):
 
 
     def increment_items_received(self, ctx, items_received_amount):
-        from worlds._sni.client import  snes_buffered_write
+        from worlds._sni import snes_buffered_write
         new_count = items_received_amount + 1
         lower_byte = new_count % 256
         upper_byte = new_count // 256

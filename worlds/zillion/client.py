@@ -143,7 +143,7 @@ class ZillionContext(CommonContext):
 
     # @override
     # def run_gui(self) -> None:
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
     #     from kivy.core.text import Label as CoreLabel
     #     from kivy.graphics import Ellipse, Color, Rectangle
     #     from kivy.graphics.texture import Texture
@@ -151,7 +151,7 @@ class ZillionContext(CommonContext):
     #     from kivy.uix.image import CoreImage
     #     from kivy.uix.widget import Widget
 
-    #     class ZillionManager(GameManager):
+    #     class ZillionManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago"),
     #         ]

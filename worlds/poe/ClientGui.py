@@ -1,5 +1,5 @@
 import asyncio
-#import kvui
+#import Gui
 from typing import TYPE_CHECKING
 
 from kivy.clock import Clock
@@ -11,7 +11,7 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.filemanager import MDFileManager
 
-#from kvui import GameManager
+#from Gui import MultiMDApp
 from pathlib import Path
 
 if TYPE_CHECKING:
@@ -151,7 +151,7 @@ class PoeOptionsTab(MDScreen):
             self.status_label.text = "Client not running"
 
 
-# class PoeManager(GameManager):
+# class PoeManager(MultiMDApp):
 #     logging_pairs = [
 #         ("Client", "Archipelago"),
 #     ]

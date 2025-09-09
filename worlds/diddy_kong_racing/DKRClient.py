@@ -106,9 +106,9 @@ class DiddyKongRacingContext(CommonContext):
         self.messages.update({len(self.messages)+1: msg})
 
     # def run_gui(self) -> None:
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class DiddyKongRacingManager(GameManager):
+    #     class DiddyKongRacingManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

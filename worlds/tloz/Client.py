@@ -122,9 +122,9 @@ class ZeldaContext(CommonContext):
                 self._set_message(msg, item.item)
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class ZeldaManager(GameManager):
+    #     class ZeldaManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

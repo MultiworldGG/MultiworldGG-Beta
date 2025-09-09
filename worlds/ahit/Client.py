@@ -150,9 +150,9 @@ class AHITContext(CommonContext):
                 self.server_msgs.append(encode([args]))
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class AHITManager(GameManager):
+    #     class AHITManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

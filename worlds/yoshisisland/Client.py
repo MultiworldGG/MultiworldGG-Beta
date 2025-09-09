@@ -39,7 +39,8 @@ class YoshisIslandSNIClient(SNIClient):
     patch_suffix = ".apyi"
 
     async def deathlink_kill_player(self, ctx: "SNIContext") -> None:
-        from worlds._sni.client import  DeathState, snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni.context import DeathState
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
         game_state = await snes_read(ctx, GAME_MODE, 0x1)
         if game_state[0] != 0x0F:
             return
@@ -55,7 +56,7 @@ class YoshisIslandSNIClient(SNIClient):
         ctx.last_death_link = time.time()
 
     async def validate_rom(self, ctx: "SNIContext") -> bool:
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
 
         rom_name = await snes_read(ctx, YOSHISISLAND_ROMHASH_START, ROMHASH_SIZE)
         if rom_name is None or rom_name[:7] != b"YOSHIAP":
@@ -71,7 +72,7 @@ class YoshisIslandSNIClient(SNIClient):
         return True
 
     async def game_watcher(self, ctx: "SNIContext") -> None:
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         game_mode = await snes_read(ctx, GAME_MODE, 0x1)
         item_received = await snes_read(ctx, ITEM_RECEIVED, 0x1)

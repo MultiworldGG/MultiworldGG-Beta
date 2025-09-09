@@ -139,9 +139,9 @@ class TTYDContext(CommonContext):
         self.seed_verified = False
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class TTYDManager(GameManager):
+    #     class TTYDManager(MultiMDApp):
     #         logging_pairs = [("Client", "Archipelago")]
     #         base_title = f"{apname} TTYD Client"
 

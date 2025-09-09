@@ -703,9 +703,9 @@ class LegoStarWarsTheCompleteSagaContext(CommonContext):
         return location_id not in self.disabled_locations
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class LegoStarWarsTheCompleteSagaManager(GameManager):
+    #     class LegoStarWarsTheCompleteSagaManager(MultiMDApp):
     #         if not Utils.is_frozen():
     #             logging_pairs = [
     #                 ("Client", "Archipelago"),

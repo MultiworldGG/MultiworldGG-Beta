@@ -333,7 +333,7 @@ def should_collect(ctx, location_id: int) -> bool:
 
 
 async def track_locations(ctx, roomid, roomdata) -> bool:
-    from worlds._sni.client import  snes_read, snes_buffered_write, snes_flush_writes
+    from worlds._sni import snes_read, snes_buffered_write, snes_flush_writes
     location_id: int
     new_locations = []
 
@@ -475,7 +475,8 @@ class ALTTPSNIClient(SNIClient):
     patch_suffix = [".aplttp", ".apz3"]
 
     async def deathlink_kill_player(self, ctx):
-        from worlds._sni.client import  DeathState, snes_read, snes_buffered_write, snes_flush_writes
+        from worlds._sni.context import DeathState
+        from worlds._sni import snes_read, snes_buffered_write, snes_flush_writes
         invincible = await snes_read(ctx, WRAM_START + 0x037B, 1)
         last_health = await snes_read(ctx, WRAM_START + 0xF36D, 1)
         await asyncio.sleep(0.25)
@@ -497,7 +498,7 @@ class ALTTPSNIClient(SNIClient):
             ctx.death_state = DeathState.dead
 
     async def validate_rom(self, ctx) -> bool:
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
 
         # Handle ROM adjustment for .aplttp files
         if hasattr(ctx, 'rom_file') and ctx.rom_file and ctx.rom_file.endswith('.aplttp'):
@@ -526,7 +527,7 @@ class ALTTPSNIClient(SNIClient):
         return True
 
     async def game_watcher(self, ctx):
-        from worlds._sni.client import  snes_read, snes_buffered_write, snes_flush_writes
+        from worlds._sni import snes_read, snes_buffered_write, snes_flush_writes
         gamemode = await snes_read(ctx, WRAM_START + 0x10, 1)
         if "DeathLink" in ctx.tags and gamemode and ctx.last_death_link + 1 < time.time():
             currently_dead = gamemode[0] in DEATH_MODES

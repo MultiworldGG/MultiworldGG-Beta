@@ -13,7 +13,7 @@ except ImportError:
     apname = "Archipelago"
 
 
-# class ZorkGrandInquisitorManager(GameManager):
+# class ZorkGrandInquisitorManager(MultiMDApp):
 #     ctx: ZorkGrandInquisitorContext
 
 #     logging_pairs: List[Tuple[str, str]] = [("Client", "Archipelago")]

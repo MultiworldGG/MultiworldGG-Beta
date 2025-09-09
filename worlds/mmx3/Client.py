@@ -115,7 +115,8 @@ class MMX3SNIClient(SNIClient):
 
 
     async def deathlink_kill_player(self, ctx):
-        from worlds._sni.client import  DeathState, snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni.context import DeathState
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         validation = await snes_read(ctx, MMX3_VALIDATION_CHECK, 0x2)
         validation = validation[0] | (validation[1] << 8)
@@ -149,7 +150,7 @@ class MMX3SNIClient(SNIClient):
 
 
     async def validate_rom(self, ctx):
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
 
         energy_link = await snes_read(ctx, MMX3_ENERGY_LINK_ENABLED, 0x1)
         rom_name = await snes_read(ctx, MMX3_ROMHASH_START, ROMHASH_SIZE)
@@ -219,7 +220,7 @@ class MMX3SNIClient(SNIClient):
 
 
     async def game_watcher(self, ctx):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         game_state = await snes_read(ctx, MMX3_GAME_STATE, 0x1)
         menu_state = await snes_read(ctx, MMX3_MENU_STATE, 0x1)
@@ -599,7 +600,7 @@ class MMX3SNIClient(SNIClient):
 
 
     async def handle_hp_trade(self, ctx):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         validation = await snes_read(ctx, MMX3_VALIDATION_CHECK, 0x2)
         if validation is None:
@@ -643,7 +644,7 @@ class MMX3SNIClient(SNIClient):
         
 
     async def handle_energy_link(self, ctx):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         # Handle validation
         validation = await snes_read(ctx, MMX3_VALIDATION_CHECK, 0x2)
@@ -768,7 +769,7 @@ class MMX3SNIClient(SNIClient):
 
 
     async def handle_item_queue(self, ctx):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
         from .Rom import weapon_rom_data, ride_armor_rom_data, upgrades_rom_data, chip_rom_data
 
         if not hasattr(self, "item_queue") or len(self.item_queue) == 0:
@@ -969,7 +970,7 @@ class MMX3SNIClient(SNIClient):
 
 
     async def handle_data_storage(self, ctx):
-        from worlds._sni.client import  snes_read, snes_buffered_write, snes_flush_writes
+        from worlds._sni import snes_read, snes_buffered_write, snes_flush_writes
         # Only do arsenal after the map's initial load or the intro stage is selected
         menu_state = int.from_bytes(await snes_read(ctx, MMX3_MENU_STATE, 0x1))
         gameplay_state = int.from_bytes(await snes_read(ctx, MMX3_GAMEPLAY_STATE, 0x1))

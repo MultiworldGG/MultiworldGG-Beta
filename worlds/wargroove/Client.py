@@ -323,7 +323,7 @@ class WargrooveContext(CommonContext):
 
     # def run_gui(self):
     #     """Import kivy UI system and start running it as self.ui_task."""
-    #     from kvui import GameManager, HoverBehavior, ServerToolTip
+    #     from Gui import MultiMDApp, HoverBehavior, ServerToolTip
     #     from kivymd.uix.tab import MDTabsItem, MDTabsItemText
     #     from kivy.lang import Builder
     #     from kivy.uix.togglebutton import ToggleButton
@@ -352,7 +352,7 @@ class WargrooveContext(CommonContext):
     #     class ItemLabel(Label):
     #         pass
 
-    #     class WargrooveManager(GameManager):
+    #     class WargrooveManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago"),
     #             ("WG", "WG Console"),

@@ -50,9 +50,9 @@ class DSTContext(CommonContext):
         })
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class DSTManager(GameManager):
+    #     class DSTManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago"),
     #             ("DSTInterface", "Don't Starve Together"),

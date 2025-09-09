@@ -315,12 +315,12 @@ class StarFox64Context(CommonContext):
     self.error_callback = error_callback
 
   # def make_gui(self):
-  #   from kvui import GameManager, Window, UILog
+  #   from Gui import MultiMDApp, Window, UILog
 
   #   Window.bind(on_request_close=self.on_request_close)
   #   asyncio.create_task(patch_and_run(True))
 
-  #   class StarFox64Manager(GameManager):
+  #   class StarFox64Manager(MultiMDApp):
   #     base_title = f"Star Fox 64 Client {version.as_string()} | AP"
 
   #     def build(self):

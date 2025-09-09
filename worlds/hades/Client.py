@@ -342,9 +342,9 @@ class HadesContext(CommonContext):
     # ------------ gui section ------------------------------------------------
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class HadesManager(GameManager):
+    #     class HadesManager(MultiMDApp):
     #         # logging_pairs for any separate logging tabs
     #         base_title = f"{apname} Hades Client"
 

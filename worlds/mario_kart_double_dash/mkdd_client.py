@@ -26,7 +26,7 @@ except ImportError:
 
 
 # if TYPE_CHECKING:
-#     import kvui
+#     import Gui
 
 CONNECTION_REFUSED_GAME_STATUS = (
     "Dolphin failed to connect. Please load a ROM for Mario Kart Double Dash (USA). Trying again in 5 seconds..."
@@ -254,7 +254,7 @@ class MkddContext(CommonContext):
         super().on_deathlink(data)
         _give_death(self)
 
-    # def make_gui(self) -> type["kvui.GameManager"]:
+    # def make_gui(self) -> type["Gui.MultiMDApp"]:
     #     """
     #     Initialize the GUI for Mario Kart Double Dash client.
 

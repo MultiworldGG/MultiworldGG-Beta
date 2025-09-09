@@ -28,7 +28,7 @@ except ModuleNotFoundError:
     from CommonClient import CommonContext as SuperContext
 
 if typing.TYPE_CHECKING:
-    import kvui
+    import Gui
 
 class ManualClientCommandProcessor(ClientCommandProcessor):
     def _cmd_resync(self) -> bool:
@@ -252,12 +252,12 @@ class ManualContext(SuperContext):
     #     self.ui = ui_class(self)
     #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
-    def make_gui(self) -> typing.Type["kvui.GameManager"]:
+    def make_gui(self) -> typing.Type["Gui.MultiMDApp"]:
         if hasattr(SuperContext, "make_gui"):
-            ui = super().make_gui()  # before the kivy imports so kvui gets loaded first
+            ui = super().make_gui()  # before the kivy imports so Gui gets loaded first
         else:
-            from kvui import GameManager
-            ui = GameManager
+            from Gui import MultiMDApp
+            ui = MultiMDApp
 
         from kivy.metrics import dp
         from kivy.uix.button import Button

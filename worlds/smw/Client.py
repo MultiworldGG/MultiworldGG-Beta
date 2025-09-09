@@ -84,7 +84,8 @@ class SMWSNIClient(SNIClient):
     slot_data: dict[str, Any] | None
 
     async def deathlink_kill_player(self, ctx):
-        from worlds._sni.client import  DeathState, snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni.context import DeathState
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
         game_state = await snes_read(ctx, SMW_GAME_STATE_ADDR, 0x1)
         if game_state[0] != 0x14:
             return
@@ -173,7 +174,8 @@ class SMWSNIClient(SNIClient):
         snes_logger.info(f"Sent linked {trap_name}")
 
     async def send_ring_link(self, ctx: SNIClient, amount: int):
-        from worlds._sni.client import  DeathState, snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni.context import DeathState
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         if "RingLink" not in ctx.tags or ctx.slot == None:
             return
@@ -196,7 +198,7 @@ class SMWSNIClient(SNIClient):
 
 
     async def validate_rom(self, ctx):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         rom_name = await snes_read(ctx, SMW_ROMHASH_START, ROMHASH_SIZE)
         if rom_name is None or rom_name == bytes([0] * ROMHASH_SIZE) or rom_name[:3] != b"SMW":
@@ -250,7 +252,7 @@ class SMWSNIClient(SNIClient):
 
 
     async def handle_message_queue(self, ctx):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         if not hasattr(self, "message_queue") or len(self.message_queue) == 0:
             return
@@ -304,7 +306,7 @@ class SMWSNIClient(SNIClient):
 
 
     async def handle_trap_queue(self, ctx):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         if (not hasattr(self, "trap_queue") or len(self.trap_queue) == 0) and\
             (not hasattr(self, "priority_trap") or self.priority_trap == 0):
@@ -419,7 +421,7 @@ class SMWSNIClient(SNIClient):
 
 
     async def handle_ring_link(self, ctx):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         if "RingLink" not in ctx.tags:
             return
@@ -470,7 +472,7 @@ class SMWSNIClient(SNIClient):
 
 
     async def game_watcher(self, ctx):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
         
         boss_state = await snes_read(ctx, SMW_BOSS_STATE_ADDR, 0x1)
         game_state = await snes_read(ctx, SMW_GAME_STATE_ADDR, 0x1)

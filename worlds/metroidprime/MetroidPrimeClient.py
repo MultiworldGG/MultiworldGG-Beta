@@ -161,9 +161,9 @@ class MetroidPrimeContext(CommonContext):
                 )
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class MetroidPrimeManager(GameManager):
+    #     class MetroidPrimeManager(MultiMDApp):
     #         logging_pairs = [("Client", "Archipelago")]
     #         base_title = f"{apname} Metroid Prime Client"
 

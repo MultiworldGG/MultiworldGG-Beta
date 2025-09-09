@@ -35,7 +35,7 @@ class SMZ3SNIClient(SNIClient):
     patch_suffix = ".apsmz3"
 
     async def validate_rom(self, ctx):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         rom_name = await snes_read(ctx, SMZ3_ROMNAME_START, ROMNAME_SIZE)
         if rom_name is None or rom_name == bytes([0] * ROMNAME_SIZE) or rom_name[:3] != b"ZSM":
@@ -51,7 +51,7 @@ class SMZ3SNIClient(SNIClient):
 
 
     async def game_watcher(self, ctx):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
         if ctx.server is None or ctx.slot is None:
             # not successfully connected to a multiworld server, cannot process the game sending items
             return

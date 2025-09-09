@@ -473,9 +473,9 @@ class AnimalWellContext(CommonContext):
     #     """
     #     Run the GUI
     #     """
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class AnimalWellManager(GameManager):
+    #     class AnimalWellManager(MultiMDApp):
     #         """
     #         Animal Well Manager
     #         """

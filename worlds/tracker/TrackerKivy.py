@@ -1,4 +1,4 @@
-from kvui import ImageLoaderPkgutil
+from Gui import ImageLoaderPkgutil
 from kivy.core.image import ImageData
 
 

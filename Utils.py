@@ -195,12 +195,12 @@ def discover_and_launch_module(module_name: str, **kwargs) -> None:
         logging.error(f"Failed to import module {module_name}: {e}")
         raise e
 
-def _perform_module_launch(module_name: str, **kwargs):
+def _perform_module_launch(module_id: str, **kwargs):
     """Perform the actual module launch logic"""
     try:
         # 1. Check for explicit entry point first
         entry_points = importlib.metadata.entry_points(group="mwgg.client")
-        entry_point_name = "{}.Client".format(module_name)
+        entry_point_name = "{}.Client".format(module_id)
         
         # Check if the entry point exists by looking through the entry points
         module_entry_point = None
@@ -216,18 +216,20 @@ def _perform_module_launch(module_name: str, **kwargs):
             
             # Check if the launch function returned a task (GUI mode)
             if hasattr(result, '_coro'):
-                logging.info(f"Launch function returned a task for {module_name}, running in GUI mode")
+                logging.info(f"Launch function returned a task for {module_id}, running in GUI mode")
                 # The task is already scheduled in the event loop
                 return result
             else:
-                logging.info(f"Launch function completed synchronously for {module_name}")
+                logging.info(f"Launch function completed synchronously for {module_id}")
                 return result
                         
-        # 2. Check SNI registry  
+        # 2. Check SNI registry
+        from mwgg_igdb import GameIndex
+        game_name = GameIndex.get_game_name_for_module(module_name=module_id.strip("worlds."))
         try:
             from worlds._sni.client import AutoSNIClientRegister
-            if AutoSNIClientRegister.is_sni_world(module_name):
-                logging.info(f"Detected SNI client for {module_name}")
+            if AutoSNIClientRegister.is_sni_world(module_name=game_name):
+                logging.info(f"Detected SNI client for {game_name}")
                 from worlds._sni.context import launch
                 return launch(**kwargs)
         except ImportError:
@@ -236,8 +238,8 @@ def _perform_module_launch(module_name: str, **kwargs):
         # 3. Check BizHawk registry
         try:
             from worlds._bizhawk.client import AutoBizHawkClientRegister
-            if AutoBizHawkClientRegister.is_bizhawk_world(module_name):
-                logging.info(f"Detected BizHawk client for {module_name}")
+            if AutoBizHawkClientRegister.is_bizhawk_world(module_name=game_name):
+                logging.info(f"Detected BizHawk client for {game_name}")
                 from worlds._bizhawk.context import launch
                 return launch(**kwargs)
         except ImportError:
@@ -245,7 +247,7 @@ def _perform_module_launch(module_name: str, **kwargs):
 
         
         # 4. Fallback to text client
-        logging.info(f"No specialized client found for {module_name}, using text client")
+        logging.info(f"No specialized client found for {module_id}, using text client")
         from CommonClient import main_textclient
         result = main_textclient(**kwargs)
 
@@ -259,7 +261,7 @@ def _perform_module_launch(module_name: str, **kwargs):
             return result
 
     except Exception as e:
-        logging.error(f"Failed to launch module {module_name}: {e}")
+        logging.error(f"Failed to launch module {module_id}: {e}")
         # Call error callback if provided
         if 'error_callback' in kwargs and kwargs['error_callback']:
             try:

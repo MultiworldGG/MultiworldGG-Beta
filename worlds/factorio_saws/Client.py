@@ -202,9 +202,9 @@ class FactorioContext(CommonContext):
         self.print_to_game(announcement)
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class FactorioManager(GameManager):
+    #     class FactorioManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago"),
     #             ("FactorioServer", "Factorio Server Log"),

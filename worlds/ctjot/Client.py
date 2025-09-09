@@ -488,7 +488,7 @@ class CTJoTSNIClient(SNIClient):
         :param ctx: SNIContext used to communicate with the SNES/Emulator
         :param items: List of items that have been found for this player
         """
-        from worlds._sni.client import  snes_read, snes_buffered_write, snes_flush_writes
+        from worlds._sni import snes_read, snes_buffered_write, snes_flush_writes
 
         # Check how many items have been delivered so far
         data = await snes_read(ctx, cls._convert_to_sni_addressing(RECEIVED_ITEM_COUNT_ADDR), 1)
@@ -531,7 +531,7 @@ class CTJoTSNIClient(SNIClient):
 
         :param ctx: SNIContext for this SNI connection
         """
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
 
         if not ctx.allow_collect or ctx.server is None or ctx.slot is None:
             # We're not fully connected yet, to the server or emulator/hardware
@@ -613,7 +613,7 @@ class CTJoTSNIClient(SNIClient):
         # TODO: Do something with version info
         # TODO: This identifies the player, but not necessarily the AP seed.
         #       Need to expand on this a bit.
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
         data = await snes_read(ctx, VALIDATION_ADDR, VALIDATION_SIZE)
         if data is None or data[0:2] != b"AP":
             return False

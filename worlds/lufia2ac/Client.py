@@ -33,7 +33,7 @@ class L2ACSNIClient(SNIClient):
     patch_suffix = ".apl2ac"
 
     async def validate_rom(self, ctx: SNIContext) -> bool:
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
 
         rom_name: Optional[bytes] = await snes_read(ctx, L2AC_ROMNAME_START, 0x15)
         if rom_name is None or rom_name[:4] != b"L2AC":
@@ -47,7 +47,7 @@ class L2ACSNIClient(SNIClient):
         return True
 
     async def game_watcher(self, ctx: SNIContext) -> None:
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         rom: Optional[bytes] = await snes_read(ctx, L2AC_ROMNAME_START, 0x15)
         if rom != ctx.rom:
@@ -157,7 +157,8 @@ class L2ACSNIClient(SNIClient):
         await snes_flush_writes(ctx)
 
     async def deathlink_kill_player(self, ctx: SNIContext) -> None:
-        from worlds._sni.client import  DeathState, snes_buffered_write, snes_flush_writes
+        from worlds._sni.context import DeathState
+        from worlds._sni import snes_buffered_write, snes_flush_writes
 
         # DeathLink RX
         if "DeathLink" in ctx.tags:

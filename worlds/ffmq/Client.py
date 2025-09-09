@@ -63,7 +63,7 @@ class FFMQClient(SNIClient):
     game = "Final Fantasy Mystic Quest"
 
     async def validate_rom(self, ctx):
-        from worlds._sni.client import  snes_read
+        from worlds._sni import snes_read
         rom_name = await snes_read(ctx, *ROM_NAME)
         if rom_name is None:
             return False
@@ -76,7 +76,7 @@ class FFMQClient(SNIClient):
         return True
 
     async def game_watcher(self, ctx):
-        from worlds._sni.client import  snes_buffered_write, snes_flush_writes, snes_read
+        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read
 
         check_1 = await snes_read(ctx, 0xF53749, 6)
         received = await snes_read(ctx, RECEIVED_DATA[0], RECEIVED_DATA[1])

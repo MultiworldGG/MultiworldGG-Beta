@@ -29,17 +29,19 @@ from kivymd.uix.sliverappbar import MDSliverAppbar
 from kivymd.theming import ThemableBehavior
 from kivymd.uix.list import MDList
 from kivymd.uix.textfield import MDTextField
+from kivymd.uix.dialog import MDDialog
 import logging
 from typing import Any
 
 from kivy.clock import Clock
-from kivy.app import App
+from kivymd.app import MDApp
 from mwgg_igdb import GameIndex
 
 from mwgg_gui.overrides.expansionlist import *
 from mwgg_gui.components.bottomappbar import BottomAppBar
 from mwgg_gui.launcher.launcher_sliver_appbar import LauncherSliverAppbar
 from mwgg_gui.launcher.launcher_favorite_bar import FavoritesScroll, Favorite
+from mwgg_gui.launcher.launcher_yaml import YamlDialog
 
 from Utils import discover_and_launch_module, get_available_worlds
 
@@ -118,6 +120,7 @@ Builder.load_string('''
                             icon: "file-edit"
                     MDButton:
                         id: game_yaml_button
+                        on_release: app.launcher_screen.create_yaml()
                         pos_hint: {"center_x": 0.5}
                         width: dp(200)
                         radius: dp(10)
@@ -275,10 +278,11 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     bottom_appbar: BottomAppBar
     selected_game: tuple[str, str] = ("", "")
     highlighted_favorite: ObjectProperty(None, allownone=True)
-    app: App
+    app: MDApp
     result: Any
     favorite_games: ListProperty = ListProperty([])
     saved_games: ListProperty = ListProperty([])
+    yaml_dialog_layout: ObjectProperty = ObjectProperty(None)
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
@@ -287,7 +291,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.game_tag_filter = "popular"
         self.selected_game = ""
         self.highlighted_favorite = None
-        self.app = App.get_running_app()
+        self.app = MDApp.get_running_app()
         self.available_games = get_available_worlds()
         self.game_index = GameIndex()
         # Load favorite games from config
@@ -511,6 +515,48 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         if favorite_widget:
             favorite_widget.highlight()
 
+    def generate(self):
+        """Generate a new game"""
+        self.gui.message_box("Generate", "Generate a new game")
+        self.gui.message_box.open()
+
+    def host(self):
+        """Host a new game"""
+        self.gui.message_box("Host", "Host a new game")
+        self.gui.message_box.open()
+    
+    def patch_game(self):
+        """Patch the selected game"""
+        self.gui.message_box("Patch Game", "Patch the selected game")
+        self.gui.message_box.open()
+    
+    def create_yaml(self):
+        """Create YAML file for the selected game"""
+        if not self.selected_game:
+            from mwgg_gui.components.dialog import show_error_dialog
+            show_error_dialog("No Game Selected", "Please select a game before creating YAML.")
+            return
+
+        try:
+            self.yaml_dialog_layout = YamlDialog(
+                selected_game=self.selected_game
+            )
+            self.yaml_dialog_layout.bind(on_dismiss=self.on_yaml_dialog_dismiss)
+
+            self.app.root.add_widget(self.yaml_dialog_layout)
+            
+
+            
+        except Exception as e:
+            logger.error(f"Failed to create YAML for {self.selected_game[1]}: {e}", exc_info=True, stack_info=True)
+            from mwgg_gui.components.dialog import show_error_dialog
+            show_error_dialog("YAML Creation Error", f"Failed to create YAML for {self.selected_game[1]}: {str(e)}")
+
+    def on_yaml_dialog_dismiss(self, *args):
+        """Handle dismissal of the YAML dialog"""
+        if hasattr(self, 'yaml_dialog_layout') and self.yaml_dialog_layout:
+            self.app.root.remove_widget(self.yaml_dialog_layout)
+            self.yaml_dialog_layout = None
 
     def connect(self):
         """Connect to server and launch the selected game module"""

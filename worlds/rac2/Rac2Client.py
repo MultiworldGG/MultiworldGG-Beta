@@ -120,9 +120,9 @@ class Rac2Context(CommonContext):
             }]))
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class Rac2Manager(GameManager):
+    #     class Rac2Manager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

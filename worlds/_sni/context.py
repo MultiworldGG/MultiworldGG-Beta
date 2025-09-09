@@ -150,9 +150,11 @@ class SNIContext(CommonContext):
     hud_message_queue: typing.List[str]  # TODO: str is a guess, is this right?
     death_link_allow_survive: bool
 
-    def __init__(self, snes_address: str, server_address: str, password: str) -> None:
+    def __init__(self, snes_address: str, server_address: str, password: str, ready_callback=None, error_callback=None) -> None:
         super(SNIContext, self).__init__(server_address, password)
-
+        # callbacks
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         # snes stuff
         self.snes_address = snes_address
         self.snes_socket = None
@@ -252,13 +254,20 @@ class SNIContext(CommonContext):
                 # this will no longer be needed.
                 async_start(self.send_msgs([{"cmd": "LocationScouts", "locations": list(new_locations)}]))
                 
+        # Call ready_callback after successful server connection
+        if cmd == "Connected" and self.ready_callback:
+            try:
+                self.ready_callback()
+            except Exception as e:
+                snes_logger.error(f"Error in ready callback: {e}")
+                
         if self.client_handler is not None:
             self.client_handler.on_package(self, cmd, args)
 
     # def run_gui(self) -> None:
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class SNIManager(GameManager):
+    #     class SNIManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago"),
     #             ("SNES", "SNES"),
@@ -359,13 +368,13 @@ async def run_game(romfile: str) -> None:
                          stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, snes_address: str = "localhost:23074", diff_file: str = None) -> None:
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, snes_address: str = "localhost:23074", diff_file: str = None) -> None:
     logging.getLogger("SNIClient")
 
     async def main():
         multiprocessing.freeze_support()
         
-        ctx = SNIContext(snes_address, server_address, password)
+        ctx = SNIContext(snes_address, server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -446,4 +455,5 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
 
 
 def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, snes_address: str = "localhost:23074", diff_file: str = None):
-    launch(server_address, password, ready_callback, error_callback, snes_address, diff_file)
+    slot_name = None
+    launch(server_address, slot_name, password, ready_callback, error_callback, snes_address, diff_file)

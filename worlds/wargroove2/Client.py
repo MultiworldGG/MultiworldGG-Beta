@@ -336,7 +336,7 @@ class Wargroove2Context(CommonContext):
 
     # def run_gui(self):
     #     """Import kivy UI system and start running it as self.ui_task."""
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
     #     from kivy.lang import Builder
     #     from kivy.uix.togglebutton import ToggleButton
     #     from kivy.uix.boxlayout import BoxLayout
@@ -371,7 +371,7 @@ class Wargroove2Context(CommonContext):
     #     class ItemLabel(Label):
     #         pass
 
-    #     class Wargroove2Manager(GameManager):
+    #     class Wargroove2Manager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago"),
     #             ("WG2", "WG2 Console"),

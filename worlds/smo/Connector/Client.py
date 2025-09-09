@@ -260,9 +260,9 @@ class SMOContext(CommonContext):
                     self.server_msgs.append(args)
 
     # def run_gui(self):
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class SMOManager(GameManager):
+    #     class SMOManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]

@@ -127,9 +127,9 @@ class SmsContext(CommonContext):
 
     # def run_gui(self):
     #     """Import kivy UI system and start running it as self.ui_task."""
-    #     from kvui import GameManager
+    #     from Gui import MultiMDApp
 
-    #     class SmsManager(GameManager):
+    #     class SmsManager(MultiMDApp):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]
