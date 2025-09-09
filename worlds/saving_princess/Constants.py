@@ -2,7 +2,7 @@ GAME_NAME: str = "Saving Princess"
 BASE_ID: int = 0x53565052494E  # SVPRIN
 IGDB_ID: int = 0
 AUTHOR: str = "LeonarthCG"
-VERSION: str = "1.0.0"
+VERSION: str = "1.0.1"
 
 # client installation data
 CLIENT_NAME = f"{GAME_NAME.replace(' ', '')}Client"

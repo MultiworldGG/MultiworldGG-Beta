@@ -1,4 +1,4 @@
 GAME_NAME: str = "ULTRAKILL"
 AUTHOR: str = "TRPG"
 IGDB_ID: int = 124333
-VERSION: str = "1.0.0"
+VERSION: str = "1.0.1"

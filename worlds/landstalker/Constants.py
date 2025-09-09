@@ -1,7 +1,7 @@
 GAME_NAME: str = "Landstalker - The Treasures of King Nole"
 AUTHOR: str = "Dinopony"
 IGDB_ID: int = 15072
-VERSION: str = "0.4.4"
+VERSION: str = "0.4.5"
 
 BASE_ITEM_ID = 4000
 

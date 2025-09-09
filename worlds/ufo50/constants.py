@@ -3,7 +3,7 @@ from typing import Dict
 GAME_NAME: str = "UFO 50"
 AUTHOR: str = "LeonarthCG & ScipioWright"
 IGDB_ID: int = 54555
-VERSION: str = "1.0.0"
+VERSION: str = "1.0.1"
 
 BASE_ID: int = 21061550_00_000  # UFO50, 2 digits for the game number, 3 digits for its items/locations
 

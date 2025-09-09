@@ -6,7 +6,7 @@ from datetime import datetime
 GAME_NAME: str = "Shivers"
 AUTHOR: str = "GodlFire & korydondzila"
 IGDB_ID: int = 12477
-VERSION: str = "1.0.0"
+VERSION: str = "1.0.1"
 
 def load_data_file(*args) -> dict:
     fname = "/".join(["data", *args])

@@ -1,7 +1,7 @@
 GAME_NAME: str = "Majora's Mask Recompiled"
 AUTHOR: str = "LittleCube"
 IGDB_ID: int = 1030
-VERSION: str = "1.0.0"
+VERSION: str = "1.0.1"
 
 SHOP_ID_WITCH_POTION_3 = 0x00 # SI_POTION_RED_1
 SHOP_ID_WITCH_POTION_2 = 0x01 # SI_POTION_GREEN_1
