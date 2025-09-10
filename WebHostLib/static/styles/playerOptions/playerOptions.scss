@@ -139,6 +139,37 @@ html{
             box-sizing: border-box;
             width: 200px;
         }
+        select {
+            min-width: 200px;
+            flex-grow: 1;
+            appearance: none;
+
+            background: hsl(278 22% 33%);
+            color: #E6E6E8;
+            border-radius: 10px;
+            padding: 5px 10px 5px 10px;
+
+            background-image: url("data:image/svg+xml;utf8,\
+                <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'>\
+                <path d='M6 9l6 6 6-6' fill='none' stroke='rgb(226,232,240)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/>\
+                </svg>");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 14px;
+
+            &:hover { border-color: hsl(220 10% 40%); }
+            &:focus-visible {
+                outline: none;
+                border-color: hsl(220 90% 56%);
+                box-shadow: 0 0 0 3px hsl(220 90% 56% / .45);
+            }
+            &:disabled {
+                background: hsl(220 12% 22%);
+                color: hsl(220 10% 65%);
+                border-color: hsl(220 8% 28%);
+                cursor: not-allowed;
+            }
+        }
     }
 
     .left, .right{
@@ -155,12 +186,35 @@ html{
         flex-direction: row;
         max-width: 270px;
 
-        select{
+        select {
             min-width: 200px;
             flex-grow: 1;
+            appearance: none;
 
-            &:disabled{
-                background-color: lightgray;
+            background: hsl(278 22% 33%);
+            color: #E6E6E8;
+            border-radius: 10px;
+            padding: 5px 10px 5px 10px;
+
+            background-image: url("data:image/svg+xml;utf8,\
+                <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'>\
+                <path d='M6 9l6 6 6-6' fill='none' stroke='rgb(226,232,240)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/>\
+                </svg>");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 14px;
+
+            &:hover { border-color: hsl(220 10% 40%); }
+            &:focus-visible {
+                outline: none;
+                border-color: hsl(220 90% 56%);
+                box-shadow: 0 0 0 3px hsl(220 90% 56% / .45);
+            }
+            &:disabled {
+                background: hsl(220 12% 22%);
+                color: hsl(220 10% 65%);
+                border-color: hsl(220 8% 28%);
+                cursor: not-allowed;
             }
         }
     }
@@ -216,8 +270,36 @@ html{
             flex-direction: row;
             margin-bottom: 0.25rem;
 
-            select{
+            select {
+                min-width: 200px;
                 flex-grow: 1;
+                appearance: none;
+
+                background: hsl(278 22% 33%);
+                color: #E6E6E8;
+                border-radius: 10px;
+                padding: 5px 10px 5px 10px;
+
+                background-image: url("data:image/svg+xml;utf8,\
+                    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'>\
+                    <path d='M6 9l6 6 6-6' fill='none' stroke='rgb(226,232,240)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/>\
+                    </svg>");
+                background-repeat: no-repeat;
+                background-position: right 10px center;
+                background-size: 14px;
+
+                &:hover { border-color: hsl(220 10% 40%); }
+                &:focus-visible {
+                    outline: none;
+                    border-color: hsl(220 90% 56%);
+                    box-shadow: 0 0 0 3px hsl(220 90% 56% / .45);
+                }
+                &:disabled {
+                    background: hsl(220 12% 22%);
+                    color: hsl(220 10% 65%);
+                    border-color: hsl(220 8% 28%);
+                    cursor: not-allowed;
+                }
             }
         }
     }
@@ -339,7 +421,7 @@ html{
         }
 
         &:has(input[type=checkbox]:checked){
-            background-color: #ffef00; /* Same as .interactive in globalStyles.css */
+            background-color: #ea166c; /* Same as .interactive in globalStyles.css */
 
             &:hover{
                 background-color: #eedd27;

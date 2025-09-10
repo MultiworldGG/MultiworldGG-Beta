@@ -13,11 +13,14 @@ from randomizer.Enums.Items import Items
 from randomizer.Enums.Kongs import Kongs
 from randomizer.Enums.Levels import Levels
 from randomizer.Enums.Locations import Locations
+from randomizer.Enums.Minigames import Minigames
+from randomizer.Enums.MinigameType import MinigameType
 from randomizer.Enums.Regions import Regions
 from randomizer.Enums.Settings import HelmSetting, FungiTimeSetting, FasterChecksSelected, ShuffleLoadingZones, WinConditionComplex
 from randomizer.Enums.Transitions import Transitions
 from randomizer.Enums.Types import Types
 from randomizer.Lists import Location as DK64RLocation, Item as DK64RItem
+from randomizer.Lists.Minigame import MinigameRequirements
 from randomizer.LogicClasses import Collectible, Event, LocationLogic, TransitionFront, Region as DK64Region
 from randomizer.Patching.Library.Generic import IsItemSelected
 from archipelago.Items import DK64Item
@@ -166,9 +169,8 @@ def create_region(
                     continue
                 elif not logic_holder.checkFastCheck(FasterChecksSelected.factory_arcade_round_1) and region_name == "FactoryBaboonBlast":
                     continue
-            # Starting move locations and Kongs may be shuffled but their locations are not relevant ever due to item placement restrictions
-            # V1 LIMITATION: Kong locations are always empty because we can't put the vast majority of items (including AP items) there yet
-            if location_obj.type in (Types.TrainingBarrel, Types.PreGivenMove, Types.Kong):
+            # Starting move locations may be shuffled but their locations are not relevant ever due to item placement restrictions
+            if location_obj.type in (Types.TrainingBarrel, Types.PreGivenMove):
                 continue
             # Dropsanity would otherwise flood the world with irrelevant locked locations, greatly slowing seed gen
             if location_obj.type == Types.Enemies and Types.Enemies not in logic_holder.settings.shuffled_location_types:
@@ -179,6 +181,9 @@ def create_region(
                 continue
             # Skip enemy photos if the win condition is not Krem Kapture.
             if location_obj.type == Types.EnemyPhoto and logic_holder.settings.win_condition_item != WinConditionComplex.krem_kapture:
+                continue
+            # Skip locations marked as inaccessible by smaller shops
+            if hasattr(location_obj, "smallerShopsInaccessible") and location_obj.smallerShopsInaccessible and logic_holder.settings.smaller_shops:
                 continue
             loc_id = all_locations.get(location_obj.name, 0)
             # Universal Tracker: don't add this location if it has no item
@@ -198,19 +203,53 @@ def create_region(
             # Quickly test and see if we can reach this location with zero items
             quick_success = False
             try:
-                quick_success = location.logic(None)
+                quick_success = location.logic(None) and not location_logic.bonusBarrel
             except Exception:
                 pass
             # If we can, we can greatly simplify the logic at this location
             if quick_success:
                 set_rule(location, lambda state: True)
             # Otherwise we have to work our way through the logic proper
-            # V1 LIMITATION: this will ignore minigame logic, so bonus barrels and Helm barrels must be autocompleted
             else:
                 set_rule(location, lambda state, player=player, location_logic=location_logic: hasDK64RLocation(state, player, location_logic))
             # Our Fill checks for Shockwave independent of the location's logic, so we must do the same
             if location_obj.type == Types.RainbowCoin:
                 add_rule(location, lambda state: state.has("Shockwave", player))
+            # If this is a bonus barrel location, add logic to check that we can complete the bonus barrel.
+            match location_logic.bonusBarrel:
+                case MinigameType.BonusBarrel:
+                    if not logic_holder.settings.bonus_barrel_auto_complete:
+                        add_rule(location, lambda state, player=player, location_logic=location_logic: canDoBonusBarrel(state, player, location_logic))
+                        if logic_holder.settings.win_condition_item == WinConditionComplex.req_bonuses:
+                            token_location = DK64Location(player, location_obj.name + " Token", None, new_region)
+                            set_rule(
+                                token_location,
+                                lambda state, player=player, location_logic=location_logic: hasDK64RLocation(state, player, location_logic) and canDoBonusBarrel(state, player, location_logic),
+                            )
+                            token_location.place_locked_item(DK64Item("Bonus Completed", ItemClassification.progression_skip_balancing, None, player))
+                            new_region.locations.append(token_location)
+                case MinigameType.HelmBarrelFirst:
+                    if logic_holder.settings.helm_room_bonus_count > 0:
+                        add_rule(location, lambda state, player=player, location_logic=location_logic: canDoBonusBarrel(state, player, location_logic))
+                        if logic_holder.settings.win_condition_item == WinConditionComplex.req_bonuses:
+                            token_location = DK64Location(player, location_obj.name + " Token", None, new_region)
+                            set_rule(
+                                token_location,
+                                lambda state, player=player, location_logic=location_logic: hasDK64RLocation(state, player, location_logic) and canDoBonusBarrel(state, player, location_logic),
+                            )
+                            token_location.place_locked_item(DK64Item("Bonus Completed", ItemClassification.progression_skip_balancing, None, player))
+                            new_region.locations.append(token_location)
+                case MinigameType.HelmBarrelSecond:
+                    if logic_holder.settings.helm_room_bonus_count == 2:
+                        add_rule(location, lambda state, player=player, location_logic=location_logic: canDoBonusBarrel(state, player, location_logic))
+                        if logic_holder.settings.win_condition_item == WinConditionComplex.req_bonuses:
+                            token_location = DK64Location(player, location_obj.name + " Token", None, new_region)
+                            set_rule(
+                                token_location,
+                                lambda state, player=player, location_logic=location_logic: hasDK64RLocation(state, player, location_logic) and canDoBonusBarrel(state, player, location_logic),
+                            )
+                            token_location.place_locked_item(DK64Item("Bonus Completed", ItemClassification.progression_skip_balancing, None, player))
+                            new_region.locations.append(token_location)
             # Item placement limitations! These only apply to items in your own world, as other worlds' items will be AP items, and those can be anywhere.
             # Fairy locations cannot have your own world's blueprints on them for technical reasons.
             if location_obj.type == Types.Fairy:
@@ -221,6 +260,11 @@ def create_region(
             # Shops cannot have shopkeepers for the time being due to funny haha display bug
             if location_obj.type == Types.Shop:
                 add_item_rule(location, lambda item: not (item.player == player and item.name in ["Cranky", "Funky", "Candy", "Snide"]))
+            if location_obj.type == Types.Key and logic_holder.settings.win_condition_item == WinConditionComplex.req_bosses:
+                token_location = DK64Location(player, location_obj.name + " Token", None, new_region)
+                set_rule(token_location, lambda state, player=player, location_logic=location_logic: hasDK64RLocation(state, player, location_logic))
+                token_location.place_locked_item(DK64Item("Boss Defeated", ItemClassification.progression_skip_balancing, None, player))
+                new_region.locations.append(token_location)
             new_region.locations.append(location)
             # print("Adding location: " + location.name + " | " + str(loc_id))
 
@@ -455,3 +499,8 @@ def hasDK64RCollectible(state: CollectionState, player: int, collectible: Collec
 def hasDK64REvent(state: CollectionState, player: int, event: Event):
     """Check if the given event is accessible in the given state."""
     return event.logic(state.dk64_logic_holder[player])
+
+
+def canDoBonusBarrel(state: CollectionState, player: int, location: LocationLogic):
+    """Check if we can complete the bonus barrel in the given state."""
+    return MinigameRequirements[state.dk64_logic_holder[player].spoiler.shuffled_barrel_data[location.id].minigame].logic(state.dk64_logic_holder[player])

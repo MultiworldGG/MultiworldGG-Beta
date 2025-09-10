@@ -12,8 +12,10 @@ from Utils import get_settings
 class DK64MemoryMap:
     """DK64MemoryMap is a class that contains memory addresses and offsets used in the game Donkey Kong 64."""
 
-    name_location = 0xD0A0A6F8
+    name_location = 0x807E2EE0  # Location where the player's name is stored (16 bytes)
     memory_pointer = 0x807FFF1C
+    rom_flags = 0x807FF8C4
+    rom_flag_ap_status = 0x10
     counter_offset = 0x000
     start_flag = 0x002
     arch_items = 0x004
@@ -47,6 +49,9 @@ class DK64MemoryMap:
     # 5 = Random
 
     can_tag = 0x061
+    is_trapped = 0x062
+    sent_trap = 0x063
+    helm_hurry_item = 0x064
     current_kong = 0x8074E77C
     count_struct_pointer = 0x807FFFB8  # Pointer to CountStruct containing item counts
 

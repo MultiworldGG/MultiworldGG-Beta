@@ -29,6 +29,14 @@ class GameMode(Choice):
     option_poltergust_hunt = 1
     default = 0
 
+class SendHints(DefaultOnToggle):
+    """
+    If enabled, in-game hints will be sent out to the multiworld when discovered.
+
+    This is automatically disabled if hint distribution is set to Junk, Disabled or Vague
+    """
+    display_name = "Send Hints"
+    internal_name = "send_hints"
 
 class RandomMusic(Toggle):
     """Randomize Music"""
@@ -488,7 +496,7 @@ class BooHealthValue(Range):
     """
     Choose the health value all Boos will have if the Boo Health Option is Choice. Range between 1 and 999
     If boo_health_option is set to random_values, if you set this to "100: 50", the max value used will be 100 instead.
-    If you want a custom range, use a random range function: https://multiworld.gg/tutorial/Archipelago/advanced_settings_en#random-numbers
+    If you want a custom range, use a random range function: https://archipelago.gg/tutorial/Archipelago/advanced_settings_en#random-numbers
 
     Values over 150 may not be catchable within the current room and logic cannot account for where they move
 
@@ -533,9 +541,9 @@ class BooAnger(Toggle):
 
 class EnergyLink(Toggle):
     """
-    Games that support energylink will be able to send and retrieve 'energy' from the team's pool. 
+    Games that support energylink will be able to send and retrieve 'energy' from the team's pool.
     If no team is present, the default team will be used (0).
-    
+
     'Energy' in the context of Luigi's Mansion will be money.
     """
     display_name = "EnergyLink"
@@ -704,6 +712,7 @@ class LMOptions(DeathLinkMixin, PerGameCommonOptions):
     random_spawn: RandomSpawn
     portrait_hints: PortraitHints
     hint_distribution: HintDistribution
+    send_hints: SendHints
     toadsanity: Toadsanity
     gold_mice: GoldMice
     furnisanity: Furnisanity

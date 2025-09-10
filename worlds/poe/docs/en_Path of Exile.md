@@ -97,6 +97,6 @@ I want to use my own end-game character, and go from nothing to mapping to a bos
 ## What do I do if I encounter a bug with the game?
 - Please reach out to the discord channel for Path of Exile archipelago
 #### OR
-- Create an issue here: https://github.com/stubobis1/Archipelago/issues
+- Create an issue here: [github.com/stubobis1/Archipelago/issues](https://github.com/stubobis1/Archipelago/issues)
 
 

@@ -13,7 +13,7 @@
 
 ## Setup
 
-1. Find your MultiworldGG directory, and put tloz_ph.apworld in the 'custom_worlds' folder (not needed usually)
+1. Find your MultiworldGG directory, and put tloz_ph.apworld in the 'custom_worlds' folder (not needed if you use MultiworldGG)
 2. Create a yaml settings file, and put it in the MultiworldGG directories 'players' folder. You can generate a template yaml with the MultiworldGG launcher.
 3. Generate your game
 4. Host the game, either locally or via the MultiworldGG web hosting service

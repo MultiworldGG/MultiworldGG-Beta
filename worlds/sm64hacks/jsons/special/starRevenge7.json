@@ -695,7 +695,7 @@
             {
                 "exists": true,
                 "StarRequirement": "0",
-                "Requirements": ["Ultra      Badge", "Triple Jump Badge"],
+                "Requirements": ["Ultra Badge", "Triple Jump Badge"],
                 "ConditionalRequirements": []
             },
             {

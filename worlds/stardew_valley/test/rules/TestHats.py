@@ -5,6 +5,7 @@ from ...content.feature.hatsanity import to_location_name
 from ...data.hats_data import Hats
 from ...locations import LocationTags
 from ...options import Hatsanity, SeasonRandomization, FestivalLocations, Shipsanity, Eatsanity, Cooksanity, Fishsanity, Craftsanity
+from ...strings.ap_names.ap_option_names import HatsanityOptionName
 
 
 class TestHatsLogic(SVTestBase):
@@ -12,7 +13,7 @@ class TestHatsLogic(SVTestBase):
         SeasonRandomization.internal_name: SeasonRandomization.option_randomized,
         FestivalLocations.internal_name: FestivalLocations.option_hard,
         Shipsanity.internal_name: Shipsanity.option_everything,
-        Hatsanity.internal_name: Hatsanity.option_post_perfection,
+        Hatsanity.internal_name: Hatsanity.preset_all,
         "start_inventory": {"Fall": 1}
     }
 
@@ -31,7 +32,7 @@ class TestHatsLogic(SVTestBase):
             self.assert_can_reach_location(location)
 
     def test_reach_frog_hat(self):
-        required_item_names = ["Progressive Fishing Rod", "Wizard Invitation", "Island Obelisk", "Island West Turtle", "Island Farmhouse"]
+        required_item_names = ["Progressive Fishing Rod", "Island Obelisk", "Island West Turtle", "Island Farmhouse"]
         required_items = [self.create_item(item_name) for item_name in required_item_names]
         location = to_location_name(Hats.frog_hat)
         for required_item in required_items:
@@ -59,7 +60,7 @@ class TestNoHatsLogic(SVTestBase):
         Cooksanity.internal_name: Cooksanity.option_all,
         Craftsanity.internal_name: Craftsanity.option_all,
         Eatsanity.internal_name: Eatsanity.preset_all,
-        Hatsanity.internal_name: Hatsanity.option_none,
+        Hatsanity.internal_name: Hatsanity.preset_none,
         "start_inventory": {"Fall": 1}
     }
 
@@ -82,3 +83,21 @@ class TestHatLocations(SVTestBase):
                     self.assertNotIn(hat_location.name, location_names, "The Panda Hat cannot be obtained on the standard edition of the game")
                 else:
                     self.assertIn(hat_location.name, location_names)
+
+
+class TestHatsOptionSetIndependence(SVTestBase):
+    options = {
+        Hatsanity.internal_name: frozenset({HatsanityOptionName.difficult}),
+    }
+
+    def test_only_difficult_hats_are_added(self):
+        difficult_hats = [Hats.magic_cowboy_hat, Hats.plum_chapeau, Hats.watermelon_band]
+        not_difficult_hats = [Hats.steel_pan_hat, Hats.party_hat_blue, Hats.frog_hat, Hats.cowboy, Hats.elegant_turban]
+        location_names = [location.name for location in self.multiworld.get_locations()]
+        for hat in difficult_hats:
+            with self.subTest(hat.name):
+                self.assertIn(to_location_name(hat), location_names)
+        for hat in not_difficult_hats:
+            with self.subTest(hat.name):
+                self.assertNotIn(to_location_name(hat), location_names)
+

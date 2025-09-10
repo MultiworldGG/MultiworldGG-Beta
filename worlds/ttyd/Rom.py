@@ -9,11 +9,10 @@ from worlds.Files import APProcedurePatch, APTokenMixin, APPatchExtension, AutoP
 from .Items import items_by_id, ItemData, item_type_dict
 from .Locations import locationName_to_data, location_table
 from .Data import Rels, shop_items, item_prices, rel_filepaths, location_to_unit
-from .StateLogic import westside
 from .TTYDPatcher import TTYDPatcher
 
 if TYPE_CHECKING:
-    from . import TTYDWorld, location_id_to_name
+    from . import TTYDWorld
 
 
 class TTYDPatchExtension(APPatchExtension):
@@ -35,6 +34,9 @@ class TTYDPatchExtension(APPatchExtension):
         tattlesanity = seed_options.get("tattlesanity", None)
         fast_travel = seed_options.get("fast_travel", None)
         succeed_conditions = seed_options.get("succeed_conditions", None)
+        cutscene_skip = seed_options.get("cutscene_skip", None)
+        experience_multiplier = seed_options.get("experience_multiplier", 1)
+        starting_level = seed_options.get("starting_level", 1)
         caller.patcher.dol.data.seek(0x1FF)
         caller.patcher.dol.data.write(name_length.to_bytes(1, "big"))
         caller.patcher.dol.data.seek(0x200)
@@ -50,7 +52,7 @@ class TTYDPatchExtension(APPatchExtension):
         caller.patcher.dol.data.seek(0x223)
         caller.patcher.dol.data.write((1).to_bytes(1, "big"))
         caller.patcher.dol.data.seek(0x224)
-        caller.patcher.dol.data.write((0x80003240).to_bytes(4, "big"))
+        caller.patcher.dol.data.write((0x80003260).to_bytes(4, "big"))
         if palace_skip is not None:
             caller.patcher.dol.data.seek(0x229)
             caller.patcher.dol.data.write(palace_skip.to_bytes(1, "big"))
@@ -88,7 +90,14 @@ class TTYDPatchExtension(APPatchExtension):
         if succeed_conditions is not None:
             caller.patcher.dol.data.seek(0x23A)
             caller.patcher.dol.data.write(succeed_conditions.to_bytes(1, "big"))
-        caller.patcher.dol.data.seek(0x240)
+        if cutscene_skip is not None:
+            caller.patcher.dol.data.seek(0x23C)
+            caller.patcher.dol.data.write(cutscene_skip.to_bytes(1, "big"))
+        caller.patcher.dol.data.seek(0x23D)
+        caller.patcher.dol.data.write(experience_multiplier.to_bytes(1, "big"))
+        caller.patcher.dol.data.seek(0x23E)
+        caller.patcher.dol.data.write(starting_level.to_bytes(1, "big"))
+        caller.patcher.dol.data.seek(0x260)
         caller.patcher.dol.data.write(seed_options["yoshi_name"].encode("utf-8")[0:8] + b"\x00")
         caller.patcher.dol.data.seek(0xEB6B6)
         caller.patcher.dol.data.write(int.to_bytes(seed_options["starting_coins"], 2, "big"))
@@ -214,7 +223,7 @@ def write_files(world: "TTYDWorld", patch: TTYDProcedurePatch) -> None:
         "yoshi_name": world.options.yoshi_name.value,
         "yoshi_color": world.options.yoshi_color.value,
         "starting_partner": world.options.starting_partner.value,
-        "chapter_clears": world.options.chapter_clears.value,
+        "chapter_clears": world.options.palace_stars.value, # TODO: rename this option
         "starting_coins": world.options.starting_coins.value,
         "palace_skip": world.options.palace_skip.value,
         "westside": world.options.open_westside.value,
@@ -227,7 +236,10 @@ def write_files(world: "TTYDWorld", patch: TTYDProcedurePatch) -> None:
         "required_chapters": world.required_chapters,
         "tattlesanity": world.options.tattlesanity.value,
         "fast_travel": world.options.fast_travel.value,
-        "succeed_conditions": world.options.succeed_conditions.value
+        "succeed_conditions": world.options.succeed_conditions.value,
+        "cutscene_skip": world.options.cutscene_skip.value,
+        "experience_multiplier": world.options.experience_multiplier.value,
+        "starting_level": world.options.starting_level.value
     }
     patch.write_file("options.json", json.dumps(options_dict).encode("UTF-8"))
     patch.write_file(f"locations.json", json.dumps(locations_to_dict(world.multiworld.get_locations(world.player))).encode("UTF-8"))

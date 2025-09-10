@@ -5,18 +5,19 @@ from randomizer.Enums.Items import Items
 from randomizer.Enums.Kongs import Kongs
 from randomizer.Enums.Levels import Levels
 from randomizer.Enums.Locations import Locations
-from randomizer.Enums.Settings import MicrohintsEnabled
+from randomizer.Enums.Settings import ItemRandoListSelected, MicrohintsEnabled, TrainingBarrels
 from randomizer.Enums.VendorType import VendorType
 from randomizer.Enums.Types import Types
 from randomizer.Lists.Item import ItemList
 from randomizer.Patching.Library.DataTypes import intf_to_float
 from randomizer.Patching.Library.Generic import setItemReferenceName
-from randomizer.Patching.Library.ItemRando import getModelFromItem, getItemPreviewText, getPropFromItem, getModelMask, getItemDBEntry, item_shop_text_mapping, BuyText
+from randomizer.Patching.Library.ItemRando import getModelFromItem, getItemPreviewText, getPropFromItem, getModelMask, getItemDBEntry, item_shop_text_mapping, BuyText, TrackerItems
 from randomizer.Patching.Library.Assets import getPointerLocation, TableNames, CompTextFiles, ItemPreview
-from randomizer.Patching.Library.ASM import getItemTableWriteAddress, populateOverlayOffsets, getSym, getROMAddress, Overlay, writeValue
+from randomizer.Patching.Library.ASM import getItemTableWriteAddress, populateOverlayOffsets, getSym, getROMAddress, Overlay, writeValue, patchBonus, getBonusIndex
 from randomizer.Patching.Patcher import LocalROM
 from randomizer.CompileHints import getHelmProgItems, GetRegionIdOfLocation
 import randomizer.ItemPool as ItemPool
+import unicodedata
 
 TRAINING_LOCATIONS = (
     Locations.IslesSwimTrainingBarrel,
@@ -162,6 +163,21 @@ def getItemPatchingFromList(list_set: list, item: Items, type_str: str, throw_er
     return list_set.index(item)
 
 
+ice_trap_data = [
+    [Items.IceTrapBubble, Items.IceTrapBubbleBean, Items.IceTrapBubbleKey, Items.IceTrapBubbleFairy],
+    [Items.IceTrapReverse, Items.IceTrapReverseBean, Items.IceTrapReverseKey, Items.IceTrapReverseFairy],
+    [Items.IceTrapSlow, Items.IceTrapSlowBean, Items.IceTrapSlowKey, Items.IceTrapSlowFairy],
+    [],  # Super Bubble
+    [Items.IceTrapDisableA, Items.IceTrapDisableABean, Items.IceTrapDisableAKey, Items.IceTrapDisableAFairy],
+    [Items.IceTrapDisableB, Items.IceTrapDisableBBean, Items.IceTrapDisableBKey, Items.IceTrapDisableBFairy],
+    [Items.IceTrapDisableZ, Items.IceTrapDisableZBean, Items.IceTrapDisableZKey, Items.IceTrapDisableZFairy],
+    [Items.IceTrapDisableCU, Items.IceTrapDisableCUBean, Items.IceTrapDisableCUKey, Items.IceTrapDisableCUFairy],
+    [Items.IceTrapGetOutGB, Items.IceTrapGetOutBean, Items.IceTrapGetOutKey, Items.IceTrapGetOutFairy],
+    [Items.IceTrapDryGB, Items.IceTrapDryBean, Items.IceTrapDryKey, Items.IceTrapDryFairy],
+    [Items.IceTrapFlipGB, Items.IceTrapFlipBean, Items.IceTrapFlipKey, Items.IceTrapFlipFairy],
+]
+
+
 def getItemPatchingData(item_type: Types, item: Items) -> ItemPatchingInfo:
     """Get the data associated with how an item is patched into ROM from various attributes."""
     simple_types = {
@@ -190,27 +206,9 @@ def getItemPatchingData(item_type: Types, item: Items) -> ItemPatchingInfo:
         key_index = getItemPatchingFromList(ItemPool.Keys(), item, "Key")
         return ItemPatchingInfo(6, key_index)
     elif item_type == Types.FakeItem:
-        idx_lst = [Items.IceTrapBubble, Items.IceTrapBubbleBean, Items.IceTrapBubbleKey]
-        if item in idx_lst:
-            return ItemPatchingInfo(13, 0, 1)
-        idx_lst = [Items.IceTrapReverse, Items.IceTrapReverseBean, Items.IceTrapReverseKey]
-        if item in idx_lst:
-            return ItemPatchingInfo(13, 0, 2)
-        idx_lst = [Items.IceTrapSlow, Items.IceTrapSlowBean, Items.IceTrapSlowKey]
-        if item in idx_lst:
-            return ItemPatchingInfo(13, 0, 3)
-        idx_lst = [Items.IceTrapDisableA, Items.IceTrapDisableABean, Items.IceTrapDisableAKey]
-        if item in idx_lst:
-            return ItemPatchingInfo(13, 0, 5)
-        idx_lst = [Items.IceTrapDisableB, Items.IceTrapDisableBBean, Items.IceTrapDisableBKey]
-        if item in idx_lst:
-            return ItemPatchingInfo(13, 0, 6)
-        idx_lst = [Items.IceTrapDisableZ, Items.IceTrapDisableZBean, Items.IceTrapDisableZKey]
-        if item in idx_lst:
-            return ItemPatchingInfo(13, 0, 7)
-        idx_lst = [Items.IceTrapDisableCU, Items.IceTrapDisableCUBean, Items.IceTrapDisableCUKey]
-        if item in idx_lst:
-            return ItemPatchingInfo(13, 0, 8)
+        for effect_index, idx_lst in enumerate(ice_trap_data):
+            if item in idx_lst:
+                return ItemPatchingInfo(13, idx_lst.index(item), effect_index + 1)
         raise Exception("Ice Trap Type provided, but invalid Ice Trap item provided resulting in search mismatch")
     elif item_type == Types.Blueprint:
         bp_index = getItemPatchingFromList(ItemPool.Blueprints(), item, "BP")
@@ -285,13 +283,13 @@ def getItemPatchingData(item_type: Types, item: Items) -> ItemPatchingInfo:
         if item == Items.Climbing:
             return ItemPatchingInfo(2, 11, 0, 1)
         raise Exception("Could not find valid move")
-    elif item is None or item == Items.NoItem:
+    elif item is None or item == Items.NoItem or item_type is None or item_type == Types.NoItem:
         return ItemPatchingInfo(0)
     elif item_type in (Types.Cranky, Types.Funky, Types.Candy, Types.Snide):
         shopkeeper_lst = [Items.Cranky, Items.Funky, Items.Candy, Items.Snide]
         shopkeeper_index = getItemPatchingFromList(shopkeeper_lst, item, "Shopkeeper")
         return ItemPatchingInfo(20, 0, shopkeeper_index)
-    raise Exception("Invalid item for patching")
+    raise Exception(f"Invalid item for patching: {item_type.name}, {item}")
 
 
 def appendTextboxChange(spoiler, file_index: int, textbox_index: int, search: str, target: str):
@@ -312,6 +310,319 @@ def writeBuyText(item: Items, address: int, ROM_COPY: LocalROM):
     data = item_shop_text_mapping.get(item, (0, 0))
     ROM_COPY.write(data[0])
     ROM_COPY.write(data[1] + BuyText.terminator)
+
+
+COUNT_STRUCT_SIZE = 0x1A  # This is technically 1 byte more than it should actually uses, but kong specific stuff does get 2-byte aligned
+KONG_STRUCT_SIZE = 0x3
+EXTRA_STRUCT_OFFSET = COUNT_STRUCT_SIZE + (5 * KONG_STRUCT_SIZE)
+TRACKER_ITEM_PAIRING = {
+    TrackerItems.COCONUT: {
+        "item": Items.Coconut,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.donkey * KONG_STRUCT_SIZE) + 1, "mode": "or", "value": 1}],
+    },
+    TrackerItems.BONGOS: {
+        "item": Items.Bongos,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.donkey * KONG_STRUCT_SIZE) + 2, "mode": "or", "value": 1}],
+    },
+    TrackerItems.GRAB: {
+        "item": Items.GorillaGrab,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.donkey * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 4}],
+    },
+    TrackerItems.STRONG: {
+        "item": Items.StrongKong,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.donkey * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 2}],
+    },
+    TrackerItems.BLAST: {
+        "item": Items.BaboonBlast,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.donkey * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 1}],
+    },
+    TrackerItems.PEANUT: {
+        "item": Items.Peanut,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.diddy * KONG_STRUCT_SIZE) + 1, "mode": "or", "value": 1}],
+    },
+    TrackerItems.GUITAR: {
+        "item": Items.Guitar,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.diddy * KONG_STRUCT_SIZE) + 2, "mode": "or", "value": 1}],
+    },
+    TrackerItems.CHARGE: {
+        "item": Items.ChimpyCharge,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.diddy * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 1}],
+    },
+    TrackerItems.ROCKET: {
+        "item": Items.RocketbarrelBoost,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.diddy * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 2}],
+    },
+    TrackerItems.SPRING: {
+        "item": Items.SimianSpring,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.diddy * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 4}],
+    },
+    TrackerItems.GRAPE: {
+        "item": Items.Grape,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.lanky * KONG_STRUCT_SIZE) + 1, "mode": "or", "value": 1}],
+    },
+    TrackerItems.TROMBONE: {
+        "item": Items.Trombone,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.lanky * KONG_STRUCT_SIZE) + 2, "mode": "or", "value": 1}],
+    },
+    TrackerItems.OSTAND: {
+        "item": Items.Orangstand,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.lanky * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 1}],
+    },
+    TrackerItems.OSPRINT: {
+        "item": Items.OrangstandSprint,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.lanky * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 4}],
+    },
+    TrackerItems.BALLOON: {
+        "item": Items.BaboonBalloon,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.lanky * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 2}],
+    },
+    TrackerItems.FEATHER: {
+        "item": Items.Feather,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.tiny * KONG_STRUCT_SIZE) + 1, "mode": "or", "value": 1}],
+    },
+    TrackerItems.SAX: {
+        "item": Items.Saxophone,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.tiny * KONG_STRUCT_SIZE) + 2, "mode": "or", "value": 1}],
+    },
+    TrackerItems.PTT: {
+        "item": Items.PonyTailTwirl,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.tiny * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 2}],
+    },
+    TrackerItems.MINI: {
+        "item": Items.MiniMonkey,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.tiny * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 1}],
+    },
+    TrackerItems.MONKEYPORT: {
+        "item": Items.Monkeyport,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.tiny * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 4}],
+    },
+    TrackerItems.PINEAPPLE: {
+        "item": Items.Pineapple,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.chunky * KONG_STRUCT_SIZE) + 1, "mode": "or", "value": 1}],
+    },
+    TrackerItems.TRIANGLE: {
+        "item": Items.Triangle,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.chunky * KONG_STRUCT_SIZE) + 2, "mode": "or", "value": 1}],
+    },
+    TrackerItems.PUNCH: {
+        "item": Items.PrimatePunch,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.chunky * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 2}],
+    },
+    TrackerItems.HUNKY: {
+        "item": Items.HunkyChunky,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.chunky * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 1}],
+    },
+    TrackerItems.GONE: {
+        "item": Items.GorillaGone,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (Kongs.chunky * KONG_STRUCT_SIZE) + 0, "mode": "or", "value": 4}],
+    },
+    TrackerItems.HOMING: {
+        "item": Items.HomingAmmo,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (x * KONG_STRUCT_SIZE) + 1, "mode": "or", "value": 2} for x in range(5)],
+    },
+    TrackerItems.SNIPER: {
+        "item": Items.SniperSight,
+        "packets": [{"offset": COUNT_STRUCT_SIZE + (x * KONG_STRUCT_SIZE) + 1, "mode": "or", "value": 4} for x in range(5)],
+    },
+    TrackerItems.DIVE: {
+        "item": Items.Swim,
+        "packets": [{"offset": 0x18, "mode": "or", "value": 0x80}],
+    },
+    TrackerItems.ORANGE: {
+        "item": Items.Oranges,
+        "packets": [{"offset": 0x18, "mode": "or", "value": 0x40}],
+    },
+    TrackerItems.BARREL: {
+        "item": Items.Barrels,
+        "packets": [{"offset": 0x18, "mode": "or", "value": 0x20}],
+    },
+    TrackerItems.VINE: {
+        "item": Items.Vines,
+        "packets": [{"offset": 0x18, "mode": "or", "value": 0x10}],
+    },
+    TrackerItems.CAMERA: {
+        "item": Items.Camera,
+        "packets": [{"offset": 0x18, "mode": "or", "value": 0x8}],
+    },
+    TrackerItems.SHOCKWAVE: {
+        "item": Items.Shockwave,
+        "packets": [{"offset": 0x18, "mode": "or", "value": 0x4}],
+    },
+    TrackerItems.CLIMB: {
+        "item": Items.Climbing,
+        "packets": [{"offset": EXTRA_STRUCT_OFFSET + 3, "mode": "set", "value": 1}],
+    },
+}
+TRACKER_SHOPKEEPER_PAIRING = {
+    TrackerItems.CRANKY: Items.Cranky,
+    TrackerItems.FUNKY: Items.Funky,
+    TrackerItems.CANDY: Items.Candy,
+    TrackerItems.SNIDE: Items.Snide,
+}
+
+
+def calculateInitFileScreen(spoiler, ROM_COPY: LocalROM):
+    """Calculate the items that need to be shown on the file screen for a new file, as well as the struct to give starting items."""
+    OTHER_STARTING_ITEMS = {
+        Locations.IslesVinesTrainingBarrel: Items.Vines,
+        Locations.IslesSwimTrainingBarrel: Items.Swim,
+        Locations.IslesOrangesTrainingBarrel: Items.Oranges,
+        Locations.IslesBarrelsTrainingBarrel: Items.Barrels,
+        Locations.ShopOwner_Location00: Items.Cranky,
+        Locations.ShopOwner_Location01: Items.Funky,
+        Locations.ShopOwner_Location02: Items.Candy,
+        Locations.ShopOwner_Location03: Items.Snide,
+    }
+    if (not spoiler.settings.fast_start_beginning_of_game) or spoiler.settings.archipelago:
+        del OTHER_STARTING_ITEMS[Locations.IslesVinesTrainingBarrel]
+        del OTHER_STARTING_ITEMS[Locations.IslesSwimTrainingBarrel]
+        del OTHER_STARTING_ITEMS[Locations.IslesOrangesTrainingBarrel]
+        del OTHER_STARTING_ITEMS[Locations.IslesBarrelsTrainingBarrel]
+    elif spoiler.settings.training_barrels != TrainingBarrels.normal:
+        # If the training barrels are inaccessible, remove them from starting items to avoid errant training moves
+        if spoiler.LocationList[Locations.IslesVinesTrainingBarrel].inaccessible:
+            del OTHER_STARTING_ITEMS[Locations.IslesVinesTrainingBarrel]
+        if spoiler.LocationList[Locations.IslesSwimTrainingBarrel].inaccessible:
+            del OTHER_STARTING_ITEMS[Locations.IslesSwimTrainingBarrel]
+        if spoiler.LocationList[Locations.IslesOrangesTrainingBarrel].inaccessible:
+            del OTHER_STARTING_ITEMS[Locations.IslesOrangesTrainingBarrel]
+        if spoiler.LocationList[Locations.IslesBarrelsTrainingBarrel].inaccessible:
+            del OTHER_STARTING_ITEMS[Locations.IslesBarrelsTrainingBarrel]
+    found_shopkeeper = False
+    if spoiler.settings.shuffle_items:
+        for item in spoiler.item_assignment:
+            if item.location >= Locations.ShopOwner_Location00 and item.location <= Locations.ShopOwner_Location03:
+                found_shopkeeper = True
+            if item.can_have_item:
+                if item.location in list(OTHER_STARTING_ITEMS.keys()):
+                    OTHER_STARTING_ITEMS[item.location] = item.new_subitem
+    if not found_shopkeeper and ItemRandoListSelected.shopowners in spoiler.settings.item_rando_list_selected:
+        OTHER_STARTING_ITEMS[Locations.ShopOwner_Location00] = Items.NoItem
+        OTHER_STARTING_ITEMS[Locations.ShopOwner_Location01] = Items.NoItem
+        OTHER_STARTING_ITEMS[Locations.ShopOwner_Location02] = Items.NoItem
+        OTHER_STARTING_ITEMS[Locations.ShopOwner_Location03] = Items.NoItem
+    starting_slam_level = 0
+    starting_belt_level = 0
+    starting_ins_upg_level = 0
+    has_melon_2 = False
+    starting_items = list(OTHER_STARTING_ITEMS.values()) + spoiler.pregiven_items
+    for item in starting_items:
+        if item in (Items.ProgressiveSlam, Items.ProgressiveSlam2, Items.ProgressiveSlam3):
+            starting_slam_level += 1
+        elif item in (Items.ProgressiveAmmoBelt, Items.ProgressiveAmmoBelt2):
+            starting_belt_level += 1
+        elif item in (Items.ProgressiveInstrumentUpgrade, Items.ProgressiveInstrumentUpgrade2, Items.ProgressiveInstrumentUpgrade3):
+            starting_ins_upg_level += 1
+            has_melon_2 = True
+        elif item in (Items.Bongos, Items.Guitar, Items.Trombone, Items.Saxophone, Items.Triangle):
+            has_melon_2 = True
+    offset_dict = populateOverlayOffsets(ROM_COPY)
+    base_addr = getROMAddress(getSym("pregiven_status"), Overlay.Custom, offset_dict)
+    starting_move_packets = []
+    for x in range(TrackerItems.TERMINATOR):
+        value = 0
+        give_move_packets = []
+        if x in TRACKER_ITEM_PAIRING:
+            checked_items = [TRACKER_ITEM_PAIRING[x]["item"]]
+            if x in (TrackerItems.CAMERA, TrackerItems.SHOCKWAVE):
+                checked_items.append(Items.CameraAndShockwave)
+            for checked_item in checked_items:
+                if checked_item in starting_items:
+                    value = 1
+                    give_move_packets.extend(TRACKER_ITEM_PAIRING[x]["packets"])
+        elif x in [TrackerItems.SLAM, TrackerItems.SLAM_HAS]:
+            value = starting_slam_level
+            give_move_packets.append({"offset": EXTRA_STRUCT_OFFSET + 1, "mode": "set", "value": starting_slam_level})
+        elif x == TrackerItems.MELON_2:
+            if has_melon_2:
+                value = 1
+        elif x == TrackerItems.MELON_3:
+            if starting_ins_upg_level > 1:
+                value = 1
+        elif x == TrackerItems.INSUPG_1:
+            if starting_ins_upg_level > 0:
+                value = 1
+        elif x == TrackerItems.INSUPG_2:
+            if starting_ins_upg_level > 2:
+                value = 1
+        elif x == TrackerItems.BELT_1:
+            if starting_belt_level > 0:
+                value = 1
+        elif x == TrackerItems.BELT_2:
+            if starting_belt_level > 1:
+                value = 1
+        elif x == TrackerItems.AMMOBELT:
+            value = starting_belt_level
+        elif x == TrackerItems.INSTRUMENT_UPG:
+            if starting_ins_upg_level > 2:
+                value = 2
+            elif starting_ins_upg_level > 0:
+                value = 1
+        elif x >= TrackerItems.KEY1 and x <= TrackerItems.KEY8:
+            keys_turned_in = [0, 1, 2, 3, 4, 5, 6, 7]
+            if len(spoiler.settings.krool_keys_required) > 0:
+                for key in spoiler.settings.krool_keys_required:
+                    key_index = key - 4
+                    if key_index in keys_turned_in:
+                        keys_turned_in.remove(key_index)
+            key = x - TrackerItems.KEY1
+            if key in keys_turned_in:
+                value = 1
+                give_move_packets.append({"offset": 0xA, "mode": "or", "value": 1 << key})
+        elif x in list(TRACKER_SHOPKEEPER_PAIRING.keys()):
+            matching_item = TRACKER_SHOPKEEPER_PAIRING[x]
+            if matching_item in list(OTHER_STARTING_ITEMS.values()):
+                value = 1
+        ROM_COPY.seek(base_addr + x)
+        ROM_COPY.writeMultipleBytes(value, 1)
+        starting_move_packets.extend(give_move_packets)
+    # Melons
+    melon_count = 1
+    if starting_ins_upg_level > 1:
+        melon_count = 3
+    elif has_melon_2:
+        melon_count = 2
+    starting_move_packets.append({"offset": EXTRA_STRUCT_OFFSET + 0, "mode": "set", "value": melon_count})
+    # Instrument Upgrades
+    if starting_ins_upg_level > 0:
+        starting_move_packets.extend([{"offset": COUNT_STRUCT_SIZE + (x * KONG_STRUCT_SIZE) + 2, "mode": "or", "value": (2 << starting_ins_upg_level) - 2} for x in range(5)])
+    # Belts
+    starting_move_packets.append({"offset": EXTRA_STRUCT_OFFSET + 2, "mode": "set", "value": starting_belt_level})
+    # Kongs
+    # Unlock All Kongs
+    kong_items = [Items.Donkey, Items.Diddy, Items.Lanky, Items.Tiny, Items.Chunky]
+    starting_kongs = []
+    if spoiler.settings.starting_kongs_count == 5:
+        starting_move_packets.append({"offset": 0xB, "mode": "set", "value": 0x1F})
+        starting_kongs = kong_items.copy()
+    else:
+        bin_value = 0
+        for x in spoiler.settings.starting_kong_list:
+            bin_value |= 1 << x
+            starting_kongs.append(kong_items[x])
+        starting_move_packets.append({"offset": 0xB, "mode": "set", "value": bin_value})
+    for kong in starting_kongs:
+        setItemReferenceName(spoiler, kong, 0, "Starting Kong", 0)
+
+    # Starting moves writer
+    starting_item_base_addr = getROMAddress(getSym("starting_item_data"), Overlay.Custom, offset_dict)
+    ROM_COPY.seek(starting_item_base_addr)
+    for _ in range(EXTRA_STRUCT_OFFSET + 4):
+        ROM_COPY.writeMultipleBytes(0, 1)  # Clear cache
+    for packet in starting_move_packets:
+        ROM_COPY.seek(starting_item_base_addr + packet["offset"])
+        mode = packet["mode"]
+        value = packet["value"]
+        size = packet.get("size", 1)
+        if mode == "set":
+            ROM_COPY.writeMultipleBytes(value, size)
+        else:
+            old_value = int.from_bytes(ROM_COPY.readBytes(size), "big")
+            ROM_COPY.seek(starting_item_base_addr + packet["offset"])
+            if mode == "add":
+                ROM_COPY.writeMultipleBytes(value + old_value, size)
+            elif mode == "or":
+                ROM_COPY.writeMultipleBytes(old_value | value, size)
 
 
 NUMBERS_AS_WORDS = ["ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE"]
@@ -502,9 +813,7 @@ model_two_items = [
     0x1B4,  # Pearls
 ]
 
-POINTER_ROM_BONUSES = 0x1FF1200
 POINTER_ROM_ENEMIES = 0x1FF9000
-POINTER_ROM_IPDTABLE = 0x1FF2000
 
 items_needing_ipd = (
     Types.Blueprint,
@@ -641,6 +950,14 @@ def getDefaultIPD(shuffled_types: list[Types]) -> list:
     return output_ipd
 
 
+def normalize_location_name(name: str):
+    """Normalize a location name so it can be patched in."""
+    res = "".join([x for xi, x in enumerate([*name]) if x != "\n" and xi < 30])
+    res = unicodedata.normalize("NFKD", res)
+    res = "".join(char for char in res if char.isascii())
+    return res
+
+
 def place_randomized_items(spoiler, ROM_COPY: LocalROM):
     """Place randomized items into ROM."""
     sav = spoiler.settings.rom_data
@@ -656,7 +973,6 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
 
         map_items = {}
         bonus_table_offset = 0
-        ipd_data = getDefaultIPD(spoiler.settings.shuffled_location_types)
         offset_dict = populateOverlayOffsets(ROM_COPY)
         pushItemMicrohints(spoiler)
         pregiven_shop_owners = None
@@ -695,17 +1011,9 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
                         if not FAST_START:
                             # Add to bonus table
                             old_tflag = 0x182 + TRAINING_LOCATIONS.index(item.location)
-                            ROM_COPY.seek(POINTER_ROM_BONUSES + (4 * bonus_table_offset))
-                            ROM_COPY.writeMultipleBytes(old_tflag, 2)
-                            ROM_COPY.writeMultipleBytes(getActorIndex(item), 2)
-                            bonus_table_offset += 1
-                            # Append to FLUT
-                            data = [old_tflag]
-                            if item.new_item is None:
-                                data.append(0)
-                            else:
-                                data.append(item.new_flag)
-                            ipd_data.append(data)
+                            bonus_index = getBonusIndex(ROM_COPY, offset_dict, old_tflag)
+                            if bonus_index is not None:
+                                patchBonus(ROM_COPY, bonus_index, offset_dict, spawn_actor=getActorIndex(item), level=item_properties.level, item_kong=item_properties.kong)
                     for placement in item.placement_index:
                         write_space = movespaceOffset + (6 * placement)
                         if item.new_item is None:
@@ -743,7 +1051,7 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
                                     "flag": 0,
                                     "upscale": 1,
                                     "shared": False,
-                                    "subitem": 0,
+                                    "subitem": Items.NoItem,
                                 }
                             )
                         else:
@@ -791,10 +1099,9 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
                     elif item.location in (Locations.ForestDonkeyBaboonBlast, Locations.CavesDonkeyBaboonBlast):
                         # Autocomplete bonus barrel fix
                         actor_index = getActorIndex(item)
-                        ROM_COPY.seek(POINTER_ROM_BONUSES + (4 * bonus_table_offset))
-                        ROM_COPY.writeMultipleBytes(item.old_flag, 2)
-                        ROM_COPY.writeMultipleBytes(actor_index, 2)
-                        bonus_table_offset += 1
+                        bonus_index = getBonusIndex(ROM_COPY, offset_dict, item.old_flag)
+                        if bonus_index is not None:
+                            patchBonus(ROM_COPY, bonus_index, offset_dict, spawn_actor=actor_index, level=item_properties.level, item_kong=item_properties.kong)
                 else:
                     if item.old_item != Types.Medal:
                         actor_index = getActorIndex(item)
@@ -804,23 +1111,32 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
                         addr = getItemTableWriteAddress(ROM_COPY, Types.Blueprint, item.old_flag - 469, offset_dict)
                         ROM_COPY.seek(addr)
                         ROM_COPY.writeMultipleBytes(actor_index, 2)
+                        ROM_COPY.writeMultipleBytes(item_properties.level, 1)
+                        ROM_COPY.writeMultipleBytes(item_properties.kong, 1)
+                        patchBonus(ROM_COPY, (item.old_flag - 469) + 54, offset_dict, spawn_actor=actor_index, level=item_properties.level, item_kong=item_properties.kong)
                     elif item.old_item == Types.Crown:
                         # Write to Crown Table
                         crown_flags = [0x261, 0x262, 0x263, 0x264, 0x265, 0x268, 0x269, 0x266, 0x26A, 0x267]
                         addr = getItemTableWriteAddress(ROM_COPY, Types.Crown, crown_flags.index(item.old_flag), offset_dict)
                         ROM_COPY.seek(addr)
                         ROM_COPY.writeMultipleBytes(actor_index, 2)
+                        ROM_COPY.writeMultipleBytes(item_properties.level, 1)
+                        ROM_COPY.writeMultipleBytes(item_properties.kong, 1)
                     elif item.old_item == Types.Key:
                         key_flags = [26, 74, 138, 168, 236, 292, 317, 380]
                         addr = getItemTableWriteAddress(ROM_COPY, Types.Key, key_flags.index(item.old_flag), offset_dict)
                         ROM_COPY.seek(addr)
                         ROM_COPY.writeMultipleBytes(actor_index, 2)
+                        ROM_COPY.writeMultipleBytes(item_properties.level, 1)
+                        ROM_COPY.writeMultipleBytes(item_properties.kong, 1)
                     elif item.old_item == Types.RainbowCoin:
                         index = item.location - Locations.RainbowCoin_Location00
                         if index < 16:
                             addr = getItemTableWriteAddress(ROM_COPY, Types.RainbowCoin, index, offset_dict)
                             ROM_COPY.seek(addr)
                             ROM_COPY.writeMultipleBytes(actor_index, 2)
+                            ROM_COPY.writeMultipleBytes(item_properties.level, 1)
+                            ROM_COPY.writeMultipleBytes(item_properties.kong, 1)
                         else:
                             raise Exception("Dirt Patch Item Placement Error")
                     elif item.old_item == Types.CrateItem:
@@ -829,6 +1145,8 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
                             addr = getItemTableWriteAddress(ROM_COPY, Types.CrateItem, index, offset_dict)
                             ROM_COPY.seek(addr)
                             ROM_COPY.writeMultipleBytes(actor_index, 2)
+                            ROM_COPY.writeMultipleBytes(item_properties.level, 1)
+                            ROM_COPY.writeMultipleBytes(item_properties.kong, 1)
                         else:
                             raise Exception("Melon Crate Item Placement Error")
                     elif item.old_item == Types.BoulderItem:
@@ -839,20 +1157,29 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
                             ROM_COPY.writeMultipleBytes(actor_index, 2)
                             ROM_COPY.writeMultipleBytes(HOLDABLE_LOCATION_INFO[item.location]["map_id"], 2)
                             ROM_COPY.writeMultipleBytes(HOLDABLE_LOCATION_INFO[item.location]["spawner_id"], 2)
+                            ROM_COPY.writeMultipleBytes(item_properties.level, 1)
+                            ROM_COPY.writeMultipleBytes(item_properties.kong, 1)
                         else:
                             raise Exception("Melon Crate Item Placement Error")
                     elif item.old_item == Types.Enemies:
                         index = item.location - Locations.JapesMainEnemy_Start
-                        ROM_COPY.seek(POINTER_ROM_ENEMIES + (index * 4))
+                        ROM_COPY.seek(POINTER_ROM_ENEMIES + (index * 8))
                         ROM_COPY.writeMultipleBytes(spoiler.enemy_location_list[item.location].map, 1)
                         ROM_COPY.writeMultipleBytes(spoiler.enemy_location_list[item.location].id, 1)
                         ROM_COPY.writeMultipleBytes(actor_index, 2)
-                    elif item.old_item in (Types.Medal, Types.Hint):
+                        ROM_COPY.writeMultipleBytes(item_properties.response_type, 1)
+                        ROM_COPY.writeMultipleBytes(item_properties.level, 1)
+                        ROM_COPY.writeMultipleBytes(item_properties.kong, 1)
+                        ROM_COPY.writeMultipleBytes(item_properties.audiovisual_medal, 1)
+                    elif item.old_item in (Types.Medal, Types.Hint, Types.HalfMedal):
                         offset = None
-                        if item.old_item == Types.Medal:
-                            offset = item.old_flag - 549
-                            if item.old_flag >= 0x3C6 and item.old_flag < 0x3CB:  # Isles Medals
-                                offset = 40 + (item.old_flag - 0x3C6)
+                        if item.old_item in (Types.Medal, Types.HalfMedal):
+                            if item.old_item == Types.Medal:
+                                offset = item.old_flag - 549
+                                if item.old_flag >= 0x3C6 and item.old_flag < 0x3CB:  # Isles Medals
+                                    offset = 40 + (item.old_flag - 0x3C6)
+                            elif item.old_item == Types.HalfMedal:
+                                offset = 45 + (item.old_flag - 0x3D6)
                         elif item.old_item == Types.Hint:
                             offset = item.old_flag - 0x384
                         addr = getItemTableWriteAddress(ROM_COPY, item.old_item, offset, offset_dict)
@@ -861,18 +1188,22 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
                         ROM_COPY.write(item_properties.level)
                         ROM_COPY.write(item_properties.kong)
                         ROM_COPY.write(item_properties.audiovisual_medal)
-                    elif item.location == Locations.JapesChunkyBoulder:
-                        # Write to Boulder Spawn Location
-                        spoiler.japes_rock_actor = actor_index
-                    elif item.location == Locations.AztecLankyVulture:
-                        # Write to Vulture Spawn Location
-                        spoiler.aztec_vulture_actor = actor_index
+                    elif item.location in (Locations.JapesChunkyBoulder, Locations.AztecLankyVulture):
+                        # Write to Boulder/Vulture Spawn Location
+                        offset = 0
+                        if item.location == Locations.AztecLankyVulture:
+                            offset = 4
+                        ram_start = getSym("extra_actor_spawns")
+                        rom_addr = getROMAddress(ram_start + offset, Overlay.Custom, offset_dict)
+                        ROM_COPY.seek(rom_addr)
+                        ROM_COPY.writeMultipleBytes(actor_index, 2)
+                        ROM_COPY.writeMultipleBytes(item_properties.level, 1)
+                        ROM_COPY.writeMultipleBytes(item_properties.kong, 1)
                     elif item.old_item == Types.Banana:
                         # Bonus GB Table
-                        ROM_COPY.seek(POINTER_ROM_BONUSES + (4 * bonus_table_offset))
-                        ROM_COPY.writeMultipleBytes(item.old_flag, 2)
-                        ROM_COPY.writeMultipleBytes(actor_index, 2)
-                        bonus_table_offset += 1
+                        bonus_index = getBonusIndex(ROM_COPY, offset_dict, item.old_flag)
+                        if bonus_index is not None:
+                            patchBonus(ROM_COPY, bonus_index, offset_dict, spawn_actor=actor_index, level=item_properties.level, item_kong=item_properties.kong)
                     elif item.old_item == Types.Fairy:
                         # Fairy Item
                         model = getModelFromItem(item.new_subitem, item.new_item, item.new_flag, item.shared)
@@ -896,7 +1227,7 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
                             model = getModelFromItem(item.new_subitem, item.new_item, item.new_flag, item.shared)
                             if model is not None:
                                 idx = kong_idx[item.location]
-                                has_no_textures = item.new_item in (
+                                no_texture_tuple = (
                                     Types.Candy,
                                     Types.Climbing,
                                     Types.Cranky,
@@ -907,6 +1238,7 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
                                     Types.Shop,
                                     Types.TrainingBarrel,
                                 )
+                                has_no_textures = item.new_item in no_texture_tuple or getModelMask(item.new_subitem) in no_texture_tuple
                                 addr = getItemTableWriteAddress(ROM_COPY, Types.Kong, idx, offset_dict)
                                 ROM_COPY.seek(addr)
                                 ROM_COPY.writeMultipleBytes(model, 2)
@@ -920,33 +1252,6 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
                 offset = item.new_flag - 0x384
                 tied_region = GetRegionIdOfLocation(spoiler, item.location)
                 spoiler.tied_hint_regions[offset] = spoiler.RegionList[tied_region].hint_name
-            helm_medals = (
-                Locations.HelmDonkeyMedal,
-                Locations.HelmDiddyMedal,
-                Locations.HelmLankyMedal,
-                Locations.HelmTinyMedal,
-                Locations.HelmChunkyMedal,
-            )
-            placed_items = (
-                # Anything that's pre-placed into the world or spawns an item that's grabbed physically by the player
-                Types.Blueprint,
-                Types.CrateItem,
-                Types.BoulderItem,
-                Types.Key,
-                Types.RainbowCoin,
-                Types.Banana,
-                Types.NintendoCoin,
-                Types.RarewareCoin,
-                Types.Enemies,
-                Types.Crown,
-                Types.Pearl,
-                Types.Bean,
-            )
-            if item.old_item in placed_items or item.location in helm_medals:
-                if item.new_item in items_needing_ipd:
-                    # Write item placement data
-                    ipd = getItemPatchingData(item.new_item, item.new_subitem)
-                    ipd_data.append([item.old_flag, ipd.level, ipd.kong])
             ref_index = 0
             if item.new_subitem == Items.ProgressiveAmmoBelt:
                 ref_index = item.new_flag - 0x292
@@ -994,7 +1299,7 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
                 # Check if this is an Archipelago item and we have location data
                 archipelago_item_name = None
                 if spoiler.settings.archipelago and hasattr(spoiler, "archipelago_locations") and textbox.location in spoiler.archipelago_locations:
-                    archipelago_item_name = spoiler.archipelago_locations[textbox.location]
+                    archipelago_item_name = normalize_location_name(spoiler.archipelago_locations[textbox.location])
 
                 if not textbox.force_pipe or archipelago_item_name:
                     if archipelago_item_name:
@@ -1046,7 +1351,7 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
                     # Check if this is an Archipelago item and we have location data
                     archipelago_item_name = None
                     if spoiler.settings.archipelago and hasattr(spoiler, "archipelago_locations") and item.location in spoiler.archipelago_locations:
-                        archipelago_item_name = spoiler.archipelago_locations[item.location]
+                        archipelago_item_name = normalize_location_name(spoiler.archipelago_locations[item.location])
 
                     if archipelago_item_name:
                         # Use the Archipelago item name, limit length to fit in textbox
@@ -1069,13 +1374,6 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
             placed_text = major_item if new_item in major_items else minor_item
             spoiler.text_changes[8].append({"textbox_index": 0, "mode": "replace", "search": "FOR MY AMAZING SURPRISE", "target": placed_text})
 
-        # Terminate IPD
-        ipd_data.append([0xFFFF, 0xFF, 0xFF])
-        ROM_COPY.seek(POINTER_ROM_IPDTABLE)
-        for ipd_info in sorted(ipd_data, key=lambda x: x[0]):
-            ROM_COPY.writeMultipleBytes(ipd_info[0], 2)
-            ROM_COPY.writeMultipleBytes(ipd_info[1], 1)
-            ROM_COPY.writeMultipleBytes(ipd_info[2], 1)
         # Setup Changes
         for map_id in map_items:
             cont_map_setup_address = getPointerLocation(TableNames.Setups, map_id)
@@ -1095,6 +1393,12 @@ def place_randomized_items(spoiler, ROM_COPY: LocalROM):
                     ROM_COPY.seek(start + 0x28)
                     item_obj_index = getPropFromItem(item_slot["subitem"], item_slot["obj"], item_slot["flag"], item_slot["shared"])
                     ROM_COPY.writeMultipleBytes(item_obj_index, 2)
+                    extra_data = getItemPatchingData(item_slot["obj"], item_slot["subitem"])
+                    if extra_data is not None:
+                        ROM_COPY.seek(start + 0x10)
+                        ROM_COPY.writeMultipleBytes(extra_data.response_type, 1)
+                        ROM_COPY.writeMultipleBytes(extra_data.level, 1)
+                        ROM_COPY.writeMultipleBytes(extra_data.kong, 1)
                     if item_slot["loc"] == Locations.IslesChunkyPoundtheX:
                         writeValue(ROM_COPY, 0x80747D4A, Overlay.Static, item_obj_index, offset_dict)
                     # Scaling fix

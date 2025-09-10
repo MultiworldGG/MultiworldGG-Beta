@@ -27,6 +27,7 @@ def launch_client():
 components.append(Component(display_name="KH2Client", func=launch_client, component_type=Type.CLIENT, icon='khapicon'))
 icon_paths['khapicon'] = local_path('data', 'khapicon.png')
 
+components.append(Component(display_name="KH2 Client", func=launch_client, component_type=Type.CLIENT))
 
 class KingdomHearts2Web(WebWorld):
     tutorials = [Tutorial(

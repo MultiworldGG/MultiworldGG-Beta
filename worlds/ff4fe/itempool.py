@@ -1,4 +1,5 @@
 import typing
+from copy import copy
 
 from . import items
 from .items import ItemData
@@ -95,6 +96,9 @@ def create_general_pool(world: "FF4FEWorld", location_count: int, key_item_count
             pass
     refined_filler = [item for item in refined_filler if item.tier >= world.options.MinTier.value]
     refined_useful = [item for item in refined_useful if item.tier <= world.options.MaxTier.value]
+    if world.options.JItems > 1: # If JItems is set to No Itempool or None
+        refined_filler = [item for item in refined_filler if item not in items.j_items]
+        refined_useful = [item for item in refined_useful if item not in items.j_items]
     refined_set = [*refined_useful, *refined_filler]
     if world.options.ItemRandomization.current_key == "standard":
         refined_set = [item for item in refined_set if item.tier < 6]
@@ -105,8 +109,15 @@ def create_general_pool(world: "FF4FEWorld", location_count: int, key_item_count
     if not world.is_vanilla_game():
         required_useful_count += 1
     item_pool = world.random.choices(refined_useful, k=required_useful_count - key_item_count)
+    refined_minor_locations = copy(minor_locations)
+    if len(item_pool) == 0:
+        world.random.shuffle(refined_minor_locations)
+        refined_minor_locations = refined_minor_locations[:(required_useful_count - key_item_count)]
     location_list = []
-    for location in minor_locations:
+    for location in refined_minor_locations:
+        if location.name not in world.options.priority_locations.value:
+            location_list.append(location)
+    for location in major_locations:
         if location.name not in world.options.priority_locations.value:
             location_list.append(location)
     world.random.shuffle(location_list)

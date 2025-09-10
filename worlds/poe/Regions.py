@@ -25,7 +25,7 @@ def create_and_populate_regions(world: "PathOfExileWorld", multiworld: MultiWorl
         region_name = ""
         maps_region = False
         if act["act"] == 0.2:
-            region_name = "The Twilight Strand"
+            region_name = "early act 1"
         elif act["act"] == 11:
             region_name = "Maps"
             maps_region = True

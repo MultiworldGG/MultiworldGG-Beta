@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from math import ceil
 from typing import TYPE_CHECKING, Any, List, Optional, Set, Tuple, Union
 from functools import lru_cache
@@ -202,7 +203,7 @@ def should_skip_location(location, location_obj, spoiler, settings, region):
             or (location.bonusBarrel is MinigameType.HelmBarrelSecond and (settings.helm_barrels == MinigameBarrels.skip or settings.helm_room_bonus_count != HelmBonuses.two))
             or (location.bonusBarrel is MinigameType.TrainingBarrel and settings.training_barrels_minigames == MinigameBarrels.skip)
         ):
-            if not MinigameRequirements[BarrelMetaData[location.id].minigame].logic(spoiler.LogicVariables):
+            if not MinigameRequirements[spoiler.shuffled_barrel_data[location.id].minigame].logic(spoiler.LogicVariables):
                 return True
 
     # Skip hint doors if the wrong Kong
@@ -609,6 +610,11 @@ def VerifyWorld(spoiler: Spoiler) -> bool:
                 Locations.IslesLankyMedal,
                 Locations.IslesTinyMedal,
                 Locations.IslesChunkyMedal,
+                Locations.IslesDonkeyHalfMedal,
+                Locations.IslesDiddyHalfMedal,
+                Locations.IslesLankyHalfMedal,
+                Locations.IslesTinyHalfMedal,
+                Locations.IslesChunkyHalfMedal,
             ]
         ]
     allLocationsReached = len(unreachables) == 0
@@ -739,7 +745,7 @@ def VerifyWorldWithWorstCoinUsage(spoiler: Spoiler) -> bool:
                 locationsToPurchase.append(shopLocationId)
                 anythingAddedToPurchaseOrder = True
             # These items will never practically give progression. Helm doors are not really relevant here, as any theoretical coin lock will happen WELL before this point.
-            if shopItem in (Items.BattleCrown, Items.FillerCrown, Items.IceTrapBubble, Items.RarewareCoin, Items.NintendoCoin):
+            if shopItem in (Items.BattleCrown, Items.FillerCrown, Items.RarewareCoin, Items.NintendoCoin) or ItemList[shopItem].type == Types.FakeItem:
                 locationsToPurchase.append(shopLocationId)
                 anythingAddedToPurchaseOrder = True
         # If we added anything to the purchase order, short-circuit back to the top of the loop and keep going with a (hopefully) greatly expanded purchase list
@@ -946,6 +952,7 @@ def PareWoth(spoiler: Spoiler, PlaythroughLocations: List[Sphere]) -> List[Union
                 Types.Fairy,
                 Types.RainbowCoin,
                 Types.CrateItem,
+                Types.HalfMedal,
                 Types.BoulderItem,
                 Types.Enemies,
             )
@@ -1101,6 +1108,7 @@ def CalculateWothPaths(spoiler: Spoiler, WothLocations: List[Union[Locations, in
             Types.Fairy,
             Types.RainbowCoin,
             Types.CrateItem,
+            Types.HalfMedal,
             Types.Enemies,
         )
     ]
@@ -1941,7 +1949,10 @@ def FillBossLocations(spoiler: Spoiler, placed_types: List[Types], placed_items:
     # Rig the valid_locations for all relevant items to only be able to place things on bosses
     for typ in [x for x in spoiler.settings.shuffled_location_types if x not in placed_types]:  # Shops would already be placed
         # Any item eligible to be on a boss can be on any boss
-        spoiler.settings.valid_locations[typ] = empty_boss_locations
+        if typ in spoiler.settings.valid_locations:
+            empty_boss_local_list = [x for x in spoiler.settings.valid_locations[typ] if x in empty_boss_locations]
+            if len(empty_boss_local_list) > 0:
+                spoiler.settings.valid_locations[typ] = empty_boss_local_list
     # Now we get the full list of items we could place here
     unplaced_items = ItemPool.GetItemsNeedingToBeAssumed(spoiler.settings, placed_types)
     # Checkless can be on bosses, but we need shops in the pool in order to have room to do this reliably
@@ -2386,6 +2397,9 @@ def Fill(spoiler: Spoiler) -> None:
     if Types.CrateItem in spoiler.settings.shuffled_location_types:
         placed_types.append(Types.CrateItem)
         # Crates hold nothing, so leave this one empty
+    if Types.HalfMedal in spoiler.settings.shuffled_location_types:
+        placed_types.append(Types.HalfMedal)
+        # Half medals hold nothing, so leave this one empty
     if Types.BoulderItem in spoiler.settings.shuffled_location_types:
         placed_types.append(Types.BoulderItem)
         # Boulders/Vases/Kegs hold nothing, so leave this one empty
@@ -2478,6 +2492,9 @@ def FillTrainingMoves(spoiler: Spoiler, preplacedMoves: List[Items]):
         # We can expect that all locations in this region are starting move locations, Training Barrels, or starting shopkeeper locations
         for locationLogic in spoiler.RegionList[Regions.GameStart].locations:
             location = spoiler.LocationList[locationLogic.id]
+            if location.type == Types.TrainingBarrel and spoiler.settings.training_barrels == TrainingBarrels.normal:
+                # Patching expects these locations to be empty to fill in all the training moves
+                continue
             if location.item is None and location.type not in (Types.Cranky, Types.Funky, Types.Candy, Types.Snide):  # Don't put moves in shopkeeper locations!
                 placedMove = movesToPlace.pop()
                 location.inaccessible = False
@@ -3637,6 +3654,20 @@ def BlockCompletionOfLevelSet(settings: Settings, lockedLevels):
             settings.BossBananas[i] = 1000
 
 
+def HandleArchipelagoBLockers(settings: Settings) -> None:
+    """Handle chaos locker logic for Archipelago."""
+    # Only process if we're using chaos lockers
+    if settings.blocker_selection_behavior == BLockerSetting.chaos:
+        # Handle helm blocker maximization for chaos lockers
+        if settings.maximize_helm_blocker:
+            # When maximizing, use the chaos ratio maximum
+            settings.BLockerEntryCount[7] = ceil(settings.blocker_limits[settings.BLockerEntryItems[7]] * settings.blocker_text)
+        else:
+            # If not maximizing, use a random value between 1 and the chaos ratio maximum
+            chaos_max = ceil(settings.blocker_limits[settings.BLockerEntryItems[7]] * settings.blocker_text)
+            settings.BLockerEntryCount[7] = settings.random.randint(1, chaos_max)
+
+
 def Generate_Spoiler(spoiler: Spoiler) -> Tuple[bytes, Spoiler]:
     """Generate a complete spoiler based on input settings."""
     # Check for settings incompatibilities
@@ -3651,6 +3682,8 @@ def Generate_Spoiler(spoiler: Spoiler) -> Tuple[bytes, Spoiler]:
     # Handle misc randomizations
     ShuffleMisc(spoiler)
     if spoiler.settings.archipelago:
+        # For Archipelago, we still need to handle chaos lockers and helm blocker logic
+        HandleArchipelagoBLockers(spoiler.settings)
         return
     # Handle Loading Zones - this will handle LO and LZR appropriately
     if spoiler.settings.shuffle_loading_zones != ShuffleLoadingZones.none:
@@ -3702,6 +3735,7 @@ def ShuffleMisc(spoiler: Spoiler) -> None:
     """Shuffle miscellaneous objects outside of main fill algorithm, including Kasplats, Bonus barrels, and bananaport warps."""
     resetCustomLocations(spoiler)
     ResetPorts()
+    spoiler.shuffled_barrel_data = deepcopy(BarrelMetaData)
     if spoiler.settings.bananaport_placement_rando != ShufflePortLocations.off:
         port_replacements = {}
         port_human_replacements = {}
@@ -3799,8 +3833,7 @@ def ShuffleMisc(spoiler: Spoiler) -> None:
         or spoiler.settings.helm_barrels == MinigameBarrels.random
         or spoiler.settings.training_barrels_minigames == MinigameBarrels.random
     ):
-        BarrelShuffle(spoiler.settings)
-        spoiler.UpdateBarrels()
+        spoiler.shuffled_barrel_data = BarrelShuffle(spoiler.settings)
     # CB Shuffle
     if spoiler.settings.cb_rando_enabled:
         ShuffleCBs(spoiler)

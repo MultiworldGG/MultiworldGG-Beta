@@ -58,7 +58,7 @@ from ..data.museum_data import all_museum_items
 from ..data.recipe_data import all_cooking_recipes
 from ..mods.logic.magic_logic import MagicLogicMixin
 from ..mods.logic.mod_logic import ModLogicMixin
-from ..options import StardewValleyOptions, BundleRandomization
+from ..options import StardewValleyOptions, BundleRandomization, IncludeEndgameLocations
 from ..stardew_rule import False_, StardewRule, Or, Reach
 from ..strings.animal_names import Animal
 from ..strings.animal_product_names import AnimalProduct
@@ -196,7 +196,7 @@ class StardewLogic(ReceivedLogicMixin, HasLogicMixin, RegionLogicMixin, Travelin
             AnimalProduct.void_egg_starter: self.money.can_spend_at(Region.sewer, 5000) | (self.building.has_building(Building.fish_pond) & self.has(Fish.void_salmon)),
             ArtisanGood.aged_roe: self.artisan.can_preserves_jar(AnimalProduct.roe),
             ArtisanGood.battery_pack: (self.has(Machine.lightning_rod) & self.season.has_any_not_winter()) | self.has(Machine.solar_panel),
-            ArtisanGood.cheese: (self.has(AnimalProduct.cow_milk) & self.has(Machine.cheese_press)) | (self.region.can_reach(Region.desert) & self.has(Mineral.emerald)),
+            ArtisanGood.cheese: (self.has(AnimalProduct.cow_milk) & self.has(Machine.cheese_press)) | (self.region.can_reach(Region.desert) & self.artisan.can_replicate_gem(Mineral.emerald)),
             ArtisanGood.cloth: (self.has(AnimalProduct.wool) & self.has(Machine.loom)) | (self.region.can_reach(Region.desert) & self.has(Mineral.aquamarine)),
             ArtisanGood.dinosaur_mayonnaise: self.artisan.can_mayonnaise(AnimalProduct.dinosaur_egg),
             ArtisanGood.duck_mayonnaise: self.artisan.can_mayonnaise(AnimalProduct.duck_egg),
@@ -240,6 +240,7 @@ class StardewLogic(ReceivedLogicMixin, HasLogicMixin, RegionLogicMixin, Travelin
             Fish.snail: self.fishing.can_crab_pot_at(Region.town),
             Fishing.curiosity_lure: self.monster.can_kill(self.monster.all_monsters_by_name[Monster.mummy]),
             Fishing.lead_bobber: self.skill.has_level(Skill.fishing, 6) & self.money.can_spend_at(Region.fish_shop, 200),
+            Fishing.golden_bobber: self.region.can_reach(LogicRegion.desert_festival) & self.fishing.can_fish_chests,
             Forageable.hay: self.building.has_building(Building.silo) & self.tool.has_scythe(), #
             Forageable.journal_scrap: self.region.can_reach_all(Region.island_west, Region.island_north, Region.island_south, Region.volcano_floor_10) & (self.ability.can_chop_trees() | self.mine.can_mine_in_the_mines_floor_1_40()),#
             Forageable.secret_note: self.region.can_reach(LogicRegion.secret_notes), #
@@ -261,7 +262,7 @@ class StardewLogic(ReceivedLogicMixin, HasLogicMixin, RegionLogicMixin, Travelin
             Geode.omni: self.count(2, *(self.mine.can_mine_in_the_mines_floor_81_120(), self.region.can_reach_all((Region.desert, Region.oasis, Region.sewer)), self.tool.has_pan(ToolMaterial.iron), (self.has(Fish.octopus) & self.building.has_building(Building.fish_pond)), (self.region.can_reach_all((Region.island_west, Region.island_north,)) & self.has(Consumable.treasure_totem)))),
             Gift.bouquet: self.relationship.has_hearts_with_any_bachelor(8) & self.money.can_spend_at(Region.pierre_store, 100),
             Gift.golden_pumpkin: self.festival.has_golden_pumpkin(),
-            Gift.mermaid_pendant: self.region.can_reach(Region.tide_pools) & self.relationship.has_hearts_with_any_bachelor(10) & self.building.has_building(Building.kitchen) & self.has(Consumable.rain_totem),
+            Gift.mermaid_pendant: self.region.can_reach(Region.tide_pools) & self.relationship.has_hearts_with_any_bachelor(10) & self.building.has_building(Building.kitchen) & (self.has(Consumable.rain_totem) | self.season.has_any_not_winter()),
             Gift.movie_ticket: self.money.can_spend_at(Region.movie_ticket_stand, 1000),
             Gift.pearl: (self.has(Fish.blobfish) & self.building.has_building(Building.fish_pond)) | self.action.can_open_geode(Geode.artifact_trove),
             Gift.tea_set: self.season.has(Season.winter) & self.time.has_lived_max_months,
@@ -283,6 +284,7 @@ class StardewLogic(ReceivedLogicMixin, HasLogicMixin, RegionLogicMixin, Travelin
             Machine.enricher: self.money.can_trade_at(Region.qi_walnut_room, Currency.qi_gem, 20),
             Machine.pressure_nozzle: self.money.can_trade_at(Region.qi_walnut_room, Currency.qi_gem, 20),
             Machine.sewing_machine: (self.region.can_reach(Region.haley_house) & self.has(ArtisanGood.cloth)) | (self.received(Machine.sewing_machine) & self.region.can_reach(Region.secret_woods)),
+            Machine.statue_endless_fortune: self.has_statue_of_endless_fortune(),
             Material.cinder_shard: self.region.can_reach(Region.volcano_floor_5),
             Material.clay: self.region.can_reach_any(Region.farm, Region.beach, Region.quarry) & self.tool.has_tool(Tool.hoe),
             Material.coal: self.mine.can_mine_in_the_mines_floor_41_80() | self.tool.has_pan(),
@@ -434,3 +436,12 @@ class StardewLogic(ReceivedLogicMixin, HasLogicMixin, RegionLogicMixin, Travelin
         if items:
             rule = rule & self.has_all(*items)
         return rule
+
+    def can_purchase_statue_of_endless_fortune(self) -> StardewRule:
+        return self.money.can_spend_at(Region.casino, 1_000_000)
+
+    def has_statue_of_endless_fortune(self) -> StardewRule:
+        can_purchase_rule = self.can_purchase_statue_of_endless_fortune()
+        if self.options.include_endgame_locations == IncludeEndgameLocations.option_true:
+            return can_purchase_rule & self.received(Machine.statue_endless_fortune)
+        return can_purchase_rule

@@ -45,8 +45,15 @@ def great_tree(state, player):
 def glitzville(state, player):
     return state.has("Blimp Ticket", player)
 
+def twilight_town(state, player):
+    return (
+        (sewer_westside(state, player) and state.has("Yoshi", player)) or
+        (sewer_westside_ground(state, player) and ultra_boots(state, player))
+    )
+
+
 def twilight_trail(state, player):
-    return tube_curse(state, player)
+    return twilight_town(state, player) and tube_curse(state, player)
 
 
 def steeple(state, player):
@@ -58,7 +65,7 @@ def keelhaul_key(state, player):
             or (ultra_hammer(state, player) and super_boots(state, player)))
 
 
-def pirates_grottos(state, player):
+def pirates_grotto(state, player):
     return state.has("Yoshi", player) and state.has("Bobbery", player) and state.has("Skull Gem", player) and super_boots(state, player)
 
 
@@ -67,15 +74,15 @@ def excess_express(state, player):
 
 
 def riverside(state, player):
-    return state.has("Vivian", player) and state.has("Autograph", player) and state.has("Ragged Diary", player) and state.has("Blanket", player) and state.has("Vital Paper", player)
+    return state.has("Vivian", player) and state.has("Autograph", player) and state.has("Ragged Diary", player) and state.has("Blanket", player) and state.has("Vital Paper", player) and state.has("Train Ticket", player)
 
 
 def poshley_heights(state, player):
-    return state.has("Station Key 1", player) and state.has("Elevator Key", player) and super_hammer(state, player) and ultra_boots(state, player)
+    return state.has("Station Key 1", player) and state.has("Elevator Key (Riverside)", player) and super_hammer(state, player) and ultra_boots(state, player)
 
 
 def fahr_outpost(state, player):
-    return ultra_hammer(state, player) and ((state.can_reach("Rogueport Sewers Westside Ground", "Region", player) and ultra_boots(state, player)) or (state.can_reach("Rogueport Sewers Westside", "Region", player) and state.has("Yoshi", player)))
+    return ultra_hammer(state, player) and twilight_town(state, player)
 
 
 def moon(state, player):

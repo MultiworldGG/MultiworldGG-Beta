@@ -45,12 +45,13 @@ html{
 }
 
 #base-header a, #base-header-mobile-menu a, #base-header-popover-text, #base-header-popover-text-2{
-    color: #ea166c;;
+    color: #ea166c;
     text-decoration: none;
     cursor: pointer;
     margin-right: 1.2rem;
-    font-size: 22px;
-    font-family: LondrinaSolid-Light, sans-serif;
+    font-size: 19px;
+    font-weight: 500;
+    font-family: Inter-Regular, sans-serif;
     text-transform: uppercase;
 }
 
@@ -63,7 +64,7 @@ html{
 #base-header-mobile-menu{
     display: none;
     flex-direction: column;
-    background-color: #ffffff;
+    background-color: #09194F;
     text-align: center;
     overflow-y: auto;
     z-index: 10000;
@@ -80,8 +81,8 @@ html{
     padding: 3rem 1.5rem;
     font-size: 4rem;
     line-height: 5rem;
-    color: #699ca8;
-    border-top: 1px solid #d3d3d3;
+    color: #ea166c;
+    border-top: 1px solid #093C4F;
 }
 
 #base-header-mobile-menu :first-child, #base-header-popover-menu :first-child, #base-header-popover-menu-2 :first-child{
@@ -114,7 +115,7 @@ html{
     color: #ea166c;
     border-top: 1px solid #d3d3d3;
     text-align: center;
-    font-size: 1.5rem;
+    font-size: 1rem;
     line-height: 3rem;
     margin-right: 2px;
     padding: 0.25rem 1rem;
@@ -149,9 +150,6 @@ html{
     #base-header-mobile-menu{
         top: 3.3rem;
         width: unset;
-        border-left: 2px solid #d0ebe6;
-        border-bottom: 2px solid #d0ebe6;
-        filter: drop-shadow(-6px 6px 2px #2e3e83);
         border-top-left-radius: 10px;
     }
 

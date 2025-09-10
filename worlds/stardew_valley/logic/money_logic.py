@@ -4,6 +4,7 @@ from .base_logic import BaseLogicMixin, BaseLogic
 from ..content.vanilla.qi_board import qi_board_content_pack
 from ..data.shop import ShopSource, HatMouseSource
 from ..stardew_rule import StardewRule, True_, HasProgressionPercent, False_, true_
+from ..strings.animal_names import Animal
 from ..strings.ap_names.event_names import Event
 from ..strings.artisan_good_names import ArtisanGood
 from ..strings.building_names import Building
@@ -128,9 +129,11 @@ class MoneyLogic(BaseLogic):
             return self.logic.season.has(Season.fall) & self.logic.season.has_any([Season.spring, Season.summer, Season.winter]) & \
                 self.logic.has(Vegetable.pumpkin) & self.logic.money.can_spend(amount * 100)
         if currency == MemeCurrency.missed_fish:
-            return self.logic.fishing.can_catch_many_fish(amount)
+            return self.logic.fishing.can_catch_many_fish(max(1, amount // 4))
         if currency == MemeCurrency.honeywell:
             return self.logic.has(ArtisanGood.honey) & self.logic.building.has_building(Building.well)
+        if currency == MemeCurrency.goat:
+            return self.logic.animal.has_animal(Animal.goat)
 
         if currency == MemeCurrency.sleep_days:
             if not self.options.multiple_day_sleep_enabled.value:

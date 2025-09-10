@@ -3,7 +3,7 @@ import typing
 from BaseClasses import Region
 from .Locations import (TTYDLocation, rogueport, sewers, sewers_westside, sewers_westside_ground, petal_left,
                         petal_right, hooktails_castle, boggly_woods, great_tree, glitzville, twilight_trail,
-                        twilight_town, creepy_steeple, keelhaul_key, pirates_grotto, excess_express, riverside,
+                        twilight_town_region, creepy_steeple, keelhaul_key, pirates_grotto, excess_express, riverside,
                         poshley_heights, fahr_outpost, xnaut_fortress, palace, pit, rogueport_westside, riddle_tower,
                         shadow_queen, LocationData, tattlesanity_region)
 from . import StateLogic
@@ -28,7 +28,7 @@ def get_regions_dict() -> dict[str, list[LocationData]]:
         "Boggly Woods": boggly_woods,
         "Great Tree": great_tree,
         "Glitzville": glitzville,
-        "Twilight Town": twilight_town,
+        "Twilight Town": twilight_town_region,
         "Twilight Trail": twilight_trail,
         "Creepy Steeple": creepy_steeple,
         "Keelhaul Key": keelhaul_key,
@@ -70,9 +70,9 @@ def get_region_connections_dict(world: "TTYDWorld") -> dict[tuple[str, str], typ
         ("Rogueport Sewers", "Pit of 100 Trials"):
             lambda state: StateLogic.pit(state, world.player),
         ("Rogueport", "Shadow Queen"):
-            lambda state: StateLogic.palace(state, world.player, world.options.chapter_clears.value),
+            lambda state: StateLogic.palace(state, world.player, world.options.palace_stars.value),
         ("Rogueport", "Palace of Shadow"):
-            lambda state: StateLogic.palace(state, world.player, world.options.chapter_clears.value),
+            lambda state: StateLogic.palace(state, world.player, world.options.palace_stars.value),
         ("Palace of Shadow", "Palace of Shadow (Post-Riddle Tower)"):
             lambda state: StateLogic.riddle_tower(state, world.player),
         ("Palace of Shadow (Post-Riddle Tower)", "Shadow Queen"):
@@ -84,7 +84,7 @@ def get_region_connections_dict(world: "TTYDWorld") -> dict[tuple[str, str], typ
         ("Rogueport", "Keelhaul Key"):
             lambda state: StateLogic.keelhaul_key(state, world.player),
         ("Keelhaul Key", "Pirate's Grotto"):
-            lambda state: StateLogic.pirates_grottos(state, world.player),
+            lambda state: StateLogic.pirates_grotto(state, world.player),
         ("Rogueport", "Rogueport (Westside)"):
             lambda state: StateLogic.westside(state, world.player),
         ("Rogueport (Westside)", "Glitzville"):
@@ -154,6 +154,13 @@ def connect_regions(world: "TTYDWorld"):
             # Skip connections where the region doesn't exist
             # This could happen if one region was excluded by a different mechanism
             continue
+
+
+def register_indirect_connections(world: "TTYDWorld"):
+    world.multiworld.register_indirect_condition(world.get_region("Rogueport Sewers Westside Ground"),
+                                                 world.get_entrance("Fahr Outpost"))
+    world.multiworld.register_indirect_condition(world.get_region("Rogueport Sewers Westside"),
+                                                 world.get_entrance("Fahr Outpost"))
 
 
 def create_region(world: "TTYDWorld", name: str, locations: list[LocationData]):

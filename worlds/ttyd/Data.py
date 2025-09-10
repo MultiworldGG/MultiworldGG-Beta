@@ -443,7 +443,7 @@ location_gsw_info = {
     78780533: (GSWType.GSWF, 5560, 1),
     78780534: (GSWType.GSWF, 5652, 1),
     78780535: (GSWType.GSWF, 6116, 1),
-    78780536: (GSWType.GSW, 1720, 2),
+    78780536: (GSWType.GSWF, 6118, 1),
     78780537: (GSWType.GSWF, 3745, 1),
     78780538: (GSWType.GSWF, 5653, 1),
     78780539: (GSWType.GSWF, 6059, 1),
@@ -751,11 +751,12 @@ location_gsw_info = {
 
 item_prices = {
     77772000: 10,  # 10 Coins
-    77772002: 20,  # All or Nothing
-    77772003: 20,  # Attack FX G
-    77772004: 20,  # Attack FX P
-    77772005: 20,  # Attack FX R
-    77772006: 20,  # Attack FX Y
+    77772002: 50,  # All or Nothing - 50 buy price
+    77772220: 50,  # Attack FX B - 50 buy price
+    77772003: 50,  # Attack FX G - 50 buy price
+    77772004: 50,  # Attack FX P - 50 buy price
+    77772005: 50,  # Attack FX R - 50 buy price
+    77772006: 50,  # Attack FX Y - 50 buy price
     77772007: 30,  # Autograph
     77772008: 30,  # Black Key (Plane Curse)
     77772009: 30,  # Black Key (Paper Curse)
@@ -768,7 +769,7 @@ item_prices = {
     77772016: 30,  # Bobbery
     77772017: 20,  # Boo's Sheet
     77772018: 30,  # Briefcase
-    77772019: 20,  # Bump Attack
+    77772019: 80,  # Bump Attack - 80 buy price
     77772020: 5,  # Cake Mix
     77772021: 30,  # Card Key 1
     77772022: 30,  # Card Key 2
@@ -776,44 +777,44 @@ item_prices = {
     77772024: 130,  # Card Key 4
     77772025: 30,  # Castle Key
     77772026: 30,  # Champ's Belt
-    77772027: 20,  # Charge
-    77772028: 20,  # Charge P
-    77772029: 20,  # Chill Out
+    77772027: 30,  # Charge - 30 buy price
+    77772028: 40,  # Charge P - 40 buy price
+    77772029: 40,  # Chill Out - 40 buy price
     77772030: 30,  # Chuckola Cola
-    77772031: 20,  # Close Call
-    77772032: 20,  # Close Call P
+    77772031: 50,  # Close Call - 50 buy price
+    77772032: 50,  # Close Call P - 50 buy price
     77772033: 30,  # Coconut
     77772034: 30,  # Cog
     77772036: 30,  # Contact Lens
     77772037: 30,  # Cookbook
     77772038: 4,  # Courage Shell
     77772039: 30,  # Crystal Star
-    77772040: 20,  # Damage Dodge
-    77772041: 20,  # Damage Dodge P
-    77772042: 20,  # Defend Plus
-    77772043: 20,  # Defend Plus P
+    77772040: 80,  # Damage Dodge - 80 buy price
+    77772041: 80,  # Damage Dodge P - 80 buy price
+    77772042: 80,  # Defend Plus - 80 buy price
+    77772043: 80,  # Defend Plus P - 80 buy price
     77772044: 30,  # Diamond Star
     77772045: 8,  # Dizzy Dial
-    77772046: 20,  # Double Dip
-    77772047: 20,  # Double Dip P
-    77772048: 20,  # Double Pain
+    77772046: 50,  # Double Dip - 50 buy price
+    77772047: 50,  # Double Dip P - 50 buy price
+    77772048: 20,  # Double Pain - 20 buy price
     77772049: 1,  # Dried Shroom
     77772051: 10,  # Earth Quake
-    77772052: 30,  # Elevator Key
+    77772052: 30,  # Elevator Key (Riverside)
     77772053: 30,  # Elevator Key 1
     77772054: 30,  # Elevator Key 2
     77772055: 30,  # Emerald Star
-    77772056: 20,  # Feeling Fine
-    77772057: 20,  # Feeling Fine P
-    77772058: 20,  # Fire Drive
+    77772056: 80,  # Feeling Fine - 80 buy price
+    77772057: 80,  # Feeling Fine P - 80 buy price
+    77772058: 50,  # Fire Drive - 50 buy price
     77772059: 5,  # Fire Flower
-    77772060: 20,  # First Attack
-    77772061: 20,  # Flower Finder
-    77772062: 20,  # Flower Saver
-    77772063: 20,  # Flower Saver P
+    77772060: 50,  # First Attack - 50 buy price
+    77772061: 50,  # Flower Finder - 50 buy price
+    77772062: 60,  # Flower Saver - 60 buy price
+    77772063: 60,  # Flower Saver P - 60 buy price
     77772064: 30,  # Flurrie
-    77772065: 20,  # FP Drain
-    77772066: 20,  # FP Plus
+    77772065: 50,  # FP Drain - 50 buy price
+    77772066: 80,  # FP Plus - 80 buy price
     77772067: 30,  # Fresh Pasta
     77772068: 5,  # Fright Mask
     77772069: 30,  # Galley Pot
@@ -828,83 +829,83 @@ item_prices = {
     77772078: 30,  # Goombella
     77772079: 10,  # Gradual Syrup
     77772080: 30,  # Grotto Key
-    77772081: 20,  # Hammer Throw
-    77772082: 20,  # Hammerman
-    77772083: 20,  # Happy Flower
-    77772084: 20,  # Happy Heart
-    77772085: 20,  # Happy Heart P
-    77772086: 20,  # Head Rattle
-    77772087: 20,  # Heart Finder
+    77772081: 40,  # Hammer Throw - 40 buy price
+    77772082: 80,  # Hammerman - 80 buy price
+    77772083: 80,  # Happy Flower - 80 buy price
+    77772084: 80,  # Happy Heart - 80 buy price
+    77772085: 80,  # Happy Heart P - 80 buy price
+    77772086: 50,  # Head Rattle - 50 buy price
+    77772087: 50,  # Heart Finder - 50 buy price
     77772088: 5,  # Honey Syrup
     77772089: 4,  # Horsetail
     77772090: 8,  # Hot Dog
     77772091: 10,  # HP Drain
-    77772092: 20,  # HP Drain (Badge)
-    77772093: 20,  # HP Drain P
-    77772094: 20,  # HP Plus
-    77772095: 20,  # HP Plus P
-    77772096: 20,  # Ice Power
-    77772097: 20,  # Ice Smash
+    77772092: 50,  # HP Drain (Badge) - 50 buy price
+    77772093: 50,  # HP Drain P - 50 buy price
+    77772094: 80,  # HP Plus - 80 buy price
+    77772095: 80,  # HP Plus P - 80 buy price
+    77772096: 40,  # Ice Power - 40 buy price
+    77772097: 40,  # Ice Smash - 40 buy price
     77772098: 10,  # Ice Storm
     77772099: 8,  # Inn Coupon
-    77772100: 20,  # Item Hog
+    77772100: 50,  # Item Hog - 50 buy price
     77772101: 50,  # Jammin' Jelly
-    77772102: 20,  # Jumpman
+    77772102: 80,  # Jumpman - 80 buy price
     77772103: 5,  # Keel Mango
     77772104: 30,  # Koops
-    77772105: 20,  # L Emblem
-    77772106: 20,  # Last Stand
-    77772107: 20,  # Last Stand P
+    77772105: 80,  # L Emblem - 80 buy price
+    77772106: 30,  # Last Stand - 30 buy price
+    77772107: 30,  # Last Stand P - 30 buy price
     77772108: 50,  # Life Shroom
-    77772110: 20,  # Lucky Day
-    77772111: 20,  # Lucky Start
+    77772110: 80,  # Lucky Day - 80 buy price
+    77772111: 50,  # Lucky Start - 50 buy price
     77772112: 10,  # Maple Syrup
-    77772113: 20,  # Mega Rush
-    77772114: 20,  # Mega Rush P
+    77772113: 30,  # Mega Rush - 30 buy price
+    77772114: 30,  # Mega Rush P - 30 buy price
     77772115: 10,  # Mini Mr.Mini
-    77772116: 20,  # Money Money
+    77772116: 90,  # Money Money - 90 buy price
     77772117: 30,  # Moon Stone
     77772118: 8,  # Mr. Softener
     77772222: 20,  # Ms. Mowz
-    77772119: 20,  # Multibounce
+    77772119: 40,  # Multibounce - 40 buy price
     77772120: 5,  # Mushroom
     77772121: 3,  # Mystery
     77772122: 4,  # Mystic Egg
     77772123: 30,  # Necklace
     77772124: 30,  # Old Letter
     77772125: 12,  # Omelette Meal
-    77772126: 20,  # P-Down D-Up
-    77772127: 20,  # P-Down D-Up P
-    77772128: 20,  # P-Up D-Down
-    77772129: 20,  # P-Up D-Down P
+    77772126: 80,  # P-Down D-Up - 80 buy price
+    77772127: 50,  # P-Down D-Up P - 50 buy price
+    77772128: 50,  # P-Up D-Down - 50 buy price
+    77772129: 60,  # P-Up D-Down P - 60 buy price
     77772130: 30,  # Palace Key
     77772131: 30,  # Palace Key (Riddle Tower)
     77772132: 30,  # Paper Curse
     77772133: 5,  # Peachy Peach
-    77772134: 20,  # Peekaboo
-    77772135: 20,  # Piercing Blow
-    77772136: 20,  # Pity Flower
+    77772134: 50,  # Peekaboo - 50 buy price
+    77772135: 40,  # Piercing Blow - 40 buy price
+    77772136: 50,  # Pity Flower - 50 buy price
     77772137: 30,  # Plane Curse
     77772138: 5,  # Point Swap
     77772139: 5,  # POW Block
-    77772140: 20,  # Power Bounce
-    77772141: 20,  # Power Jump
-    77772142: 20,  # Power Plus
-    77772143: 20,  # Power Plus P
+    77772140: 50,  # Power Bounce - 50 buy price
+    77772141: 30,  # Power Jump - 30 buy price
+    77772142: 100,  # Power Plus - 100 buy price
+    77772143: 100,  # Power Plus P - 100 buy price
     77772144: 15,  # Power Punch
-    77772145: 20,  # Power Rush
-    77772146: 20,  # Power Rush P
-    77772147: 20,  # Power Smash
-    77772148: 20,  # Pretty Lucky
-    77772149: 20,  # Pretty Lucky P
+    77772145: 30,  # Power Rush - 30 buy price
+    77772146: 30,  # Power Rush P - 30 buy price
+    77772147: 30,  # Power Smash - 30 buy price
+    77772148: 80,  # Pretty Lucky - 80 buy price
+    77772149: 80,  # Pretty Lucky P - 80 buy price
     77772150: 30,  # Puni Orb
-    77772151: 20,  # Quake Hammer
-    77772152: 20,  # Quick Change
+    77772151: 50,  # Quake Hammer - 50 buy price
+    77772152: 80,  # Quick Change - 80 buy price
     77772153: 30,  # Ragged Diary
     77772154: 30,  # Red Key
-    77772155: 20,  # Refund
+    77772155: 30,  # Refund - 30 buy price
     77772156: 15,  # Repel Cape
-    77772157: 20,  # Return Postage
+    77772157: 170,  # Return Postage - 170 buy price
     77772158: 30,  # Ruby Star
     77772159: 15,  # Ruin Powder
     77772160: 30,  # Sapphire Star
@@ -912,15 +913,16 @@ item_prices = {
     77772162: 15,  # Shine Sprite
     77772164: 30,  # Shooting Star
     77772165: 30,  # Shop Key
-    77772166: 20,  # Shrink Stomp
-    77772167: 20,  # Simplifier
+    77772166: 40,  # Shrink Stomp - 40 buy price
+    77772167: 30,  # Simplifier - 30 buy price
     77772168: 30,  # Skull Gem
     77772169: 8,  # Sleepy Sheep
-    77772170: 20,  # Slow Go
+    77772219: 50,  # Sleepy Sheep
+    77772170: 10,  # Slow Go - 10 buy price
     77772171: 15,  # Slow Shroom
-    77772172: 20,  # Soft Stomp
+    77772172: 40,  # Soft Stomp - 40 buy price
     77772173: 12,  # Space Food
-    77772174: 20,  # Spike Shield
+    77772174: 80,  # Spike Shield - 80 buy price
     77772175: 10,  # Spite Pouch
     77772176: 30,  # Star Key
     77772177: 15,  # Star Piece
@@ -932,32 +934,32 @@ item_prices = {
     77772184: 30,  # Storage Key 2
     77772185: 20,  # Strange Sack
     77772186: 30,  # Sun Stone
-    77772187: 20,  # Super Appeal
-    77772188: 20,  # Super Appeal P
+    77772187: 30,  # Super Appeal - 30 buy price
+    77772188: 30,  # Super Appeal P - 30 buy price
     77772190: 30,  # Progressive Hammer
     77772191: 15,  # Super Shroom
     77772192: 30,  # Superbombomb
     77772193: 3,  # Tasty Tonic
-    77772194: 30,  # The Letter "P"
+    77772194: 30,  # The Letter "p"
     77772195: 12,  # Thunder Bolt
     77772196: 20,  # Thunder Rage
-    77772197: 20,  # Timing Tutor
-    77772198: 20,  # Tornado Jump
+    77772197: 50,  # Timing Tutor - 50 buy price
+    77772198: 50,  # Tornado Jump - 50 buy price
     77772199: 30,  # Train Ticket
     77772200: 30,  # Tube Curse
     77772201: 2,  # Turtley Leaf
     77772202: 30,  # Progressive Boots
     77772204: 50,  # Ultra Shroom
-    77772205: 30,  # Unsimplifier
+    77772205: 30,  # Unsimplifier - 30 buy price
     77772206: 20,  # Up Arrow
     77772207: 30,  # Vital Paper
     77772208: 30,  # Vivian
     77772209: 10,  # Volt Shroom
-    77772210: 20,  # W Emblem
+    77772210: 80,  # W Emblem - 80 buy price
     77772211: 30,  # Wedding Ring
     77772212: 50,  # Whacka Bump
     77772213: 30,  # Yoshi
-    77772214: 20,  # Zap Tap
+    77772214: 50,  # Zap Tap - 50 buy price
 }
 
 location_to_unit = {
@@ -1234,9 +1236,9 @@ chapter_items = {
     1: ["Castle Key", "Sun Stone", "Moon Stone", "Black Key (Paper Curse)"],
     2: ["Puni Orb", "Necklace", "Red Key", "Blue Key"],
     3: ["Storage Key 1", "Storage Key 2"],
-    4: ["Shop Key", "Black Key (Tube Curse)", "Steeple Key", "The Letter \"P\"", "Superbombomb"],
+    4: ["Shop Key", "Black Key (Tube Curse)", "Steeple Key", "The Letter \"p\"", "Superbombomb"],
     5: ["Chuckola Cola", "Skull Gem", "Gate Handle", "Grotto Key", "Wedding Ring", "Coconut", "Black Key (Boat Curse)"],
-    6: ["Elevator Key", "Ragged Diary", "Blanket", "Autograph", "Shell Earrings", "Gold Ring", "Briefcase", "Galley Pot", "Vital Paper", "Station Key 1", "Station Key 2"],
+    6: ["Elevator Key (Riverside)", "Ragged Diary", "Blanket", "Autograph", "Shell Earrings", "Gold Ring", "Briefcase", "Galley Pot", "Vital Paper", "Station Key 1", "Station Key 2"],
     7: ["Goldbob Guide", "Elevator Key 1", "Elevator Key 2", "Cog", "Card Key 1", "Card Key 2", "Card Key 3", "Card Key 4"],
     8: ["Palace Key", "Palace Key (Riddle Tower)", "Star Key"],
 }

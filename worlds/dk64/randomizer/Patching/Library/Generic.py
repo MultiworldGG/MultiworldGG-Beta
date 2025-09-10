@@ -653,6 +653,18 @@ def getBLockerThresholds(settings) -> tuple:
     return (min_v, max_v)
 
 
+MEDAL_PROGRESSIVE_RATIOS = [
+    0.50,
+    0.57,
+    0.64,
+    0.71,
+    0.79,
+    0.86,
+    0.93,
+    1.00,
+]
+
+
 EXPONENT = 1.7
 OFFSET_DIVISOR = 15
 
@@ -818,7 +830,6 @@ plando_colors = {
         "keys",
         "donkey",
         "aztec",
-        "freekongs",
         "dogadon1",
     ],
     "\x05": [
@@ -856,6 +867,7 @@ plando_colors = {
         "caves",
         "fridge",
         "dillo2",
+        "freekongs",
     ],
     "\x0b": [
         "rust",

@@ -394,7 +394,32 @@ hundoMonkeysCount = {
     0x14: 13, # City
     0x15: 10, # Factory
     0x16: 12, # TV
-    0x18: 24 # Specter
+    0x18: 24, # Specter
+    0x1E: 0 # Specter2
+}
+hundoCoinsCount = {
+    0x01: 1, # Fossil
+    0x02: 1, # Primordial
+    0x03: 1, # Molten
+    0x04: 4, # Thick
+    0x05: 4, # Dark
+    0x06: 1, # Cryptic
+    0x07: 5, # Stadium
+    0x08: 1, # Crabby
+    0x09: 1, # Coral
+    0x0A: 3, # Dexter
+    0x0B: 1, # Snowy
+    0x0C: 3, # Frosty
+    0x0D: 2, # Hot
+    0x0E: 5, # Gladiator
+    0x0F: 3, # Sushi
+    0x10: 3, # Wabi
+    0x11: 4, # Crumbling
+    0x14: 3, # City
+    0x15: 2, # Factory
+    0x16: 2, # TV
+    0x18: 10, # Specter
+    0x1E: 0 # Specter2
 }
 
 # These values are the room ID of the room, and the door ID the room is entered through. To get these, stand near the transition that leads to that entrance. As an example, {45, 5} will spawn Spike at the top of the Bell Tower, as though he entered from outside. 

@@ -139,7 +139,7 @@ if __name__ == "__main__":
     multiprocessing.set_start_method('spawn')
     logging.basicConfig(format='[%(asctime)s] %(message)s', level=logging.INFO)
 
-
+    from WebHostLib.lttpsprites import update_sprites_lttp
     from WebHostLib.autolauncher import autohost, autogen, stop
     from WebHostLib.options import create as create_options_files
 

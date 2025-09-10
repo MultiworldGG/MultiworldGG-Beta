@@ -18,6 +18,6 @@ Once installation is complete, navigate back to your Risk of Rain (2013) install
 
 Run `RoRML Launcher` once again and you should now have a new window displaying currently installed mods.  If you followed the prior step, you should see `Archipelago Randomizer` listed in the `Disabled` box.  Click on it and click the "Enable" button.
 
-## Connecting to Archipelago Game
+## Connecting to MultiworldGG Game
 
 In RoRML Launcher, click on the `Archipelago Ranomizer` mod.  Once selected, on the right side of the screen will be the mod options.  Input your server address, slot name, and password into the corresponding boxes.

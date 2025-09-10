@@ -4,7 +4,7 @@
 
 ### Server Värd
 
-- [Minecraft Forge](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.16.5.html)
+- [Forge v1.20.4](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.4.html)
 - [Minecraft Archipelago Randomizer Mod](https://github.com/KonoTyran/Minecraft_AP_Randomizer/releases)
 
 ### Spelare

@@ -49,9 +49,9 @@ html{
     text-decoration: none;
     text-shadow: 1px 1px 7px #000000;
     color: #ffffff;
-    font-size: 25px;
+    font-size: 19px;
     text-transform: uppercase;
-    font-family: LondrinaSolid-Light, sans-serif;
+    font-family: Inter-Light, sans-serif;
 }
 
 #far-left-button{
@@ -159,7 +159,7 @@ html{
 }
 
 #landing #first-line{
-    font-family: LondrinaSolid-Light, sans-serif;
+    font-family: Inter-Light, sans-serif;
     font-size: 25px;
     margin: 20px 0;
     text-transform: uppercase;
@@ -265,7 +265,7 @@ html{
 }
 
 #landing-body{
-    font-family: LexendDeca-Light, sans-serif;
+    font-family: Inter-Light, sans-serif;
     font-size: 18px;
     color: #ffffff;
     line-height: 25px;

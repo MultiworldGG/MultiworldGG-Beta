@@ -4,6 +4,7 @@
 
 - Minecraft Java Edition from
   the [Minecraft Java Edition Store Page](https://www.minecraft.net/en-us/store/minecraft-java-edition)
+- [Forge v1.20.4](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.4.html)
 - MultiworldGG from the [MultiworldGG Releases Page](https://github.com/MultiworldGG/MultiworldGG/releases)
 
 ## Configuring your YAML file
@@ -49,7 +50,7 @@ everyone is ready use the command `/start`.
 ## Non-Windows Installation
 
 The Minecraft Client will install forge and the mod for other operating systems but Java has to be provided by the
-user. Head to [minecraft_versions.json on the MC AP GitHub](https://raw.githubusercontent.com/KonoTyran/Minecraft_AP_Randomizer/master/versions/minecraft_versions.json)
+user. Head to [minecraft_versions.json on the MC AP GitHub](https://raw.githubusercontent.com/Seatori/Minecraft_AP_Randomizer/refs/heads/transfer-ownership/versions/minecraft_versions.json)
 to see which java version is required. New installations will default to the topmost "release" version.
 - Install the matching Amazon Corretto JDK
     - see [Manual Installation Software Links](#manual-installation-software-links)

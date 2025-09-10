@@ -13,7 +13,7 @@ from randomizer.Enums.Kongs import Kongs
 from randomizer.Enums.Settings import CharacterColors, ColorblindMode, KongModels, WinConditionComplex
 from randomizer.Enums.Maps import Maps
 from randomizer.Enums.Types import BarrierItems
-from randomizer.Patching.Cosmetics.CustomTextures import writeTransition, writeCustomPaintings, writeCustomPortal, writeCustomArcadeSprites
+from randomizer.Patching.Cosmetics.CustomTextures import writeTransition, writeCustomPaintings, writeCustomPortal, writeCustomArcadeSprites, writeCustomReels
 from randomizer.Patching.Cosmetics.Krusha import placeKrushaHead, fixBaboonBlasts, kong_index_mapping, fixModelSmallKongCollision
 from randomizer.Patching.Cosmetics.Colorblind import (
     recolorKlaptraps,
@@ -143,6 +143,7 @@ def apply_cosmetic_colors(settings: Settings, ROM_COPY: ROM):
         writeTransition(settings, ROM_COPY)
         writeCustomPortal(settings, ROM_COPY)
         writeCustomPaintings(settings, ROM_COPY)
+        writeCustomReels(settings, ROM_COPY)
         writeCustomArcadeSprites(settings, ROM_COPY)
         settings.gb_colors = CharacterColors[js.document.getElementById("gb_colors").value]
         settings.gb_custom_color = js.document.getElementById("gb_custom_color").value
@@ -698,12 +699,12 @@ def showWinCondition(settings: Settings, ROM_COPY: LocalROM):
         # Default, don't alter image
         return
     if win_con == WinConditionComplex.get_key8:
-        output_image = Image.open(BytesIO(js.getFile("./base-hack/assets/displays/key8.png")))
+        output_image = Image.open(BytesIO(js.getFile("base-hack/assets/displays/key8.png")))
         output_image = output_image.resize((32, 32))
         writeColorImageToROM(output_image, 14, 195, 32, 32, False, TextureFormat.RGBA5551, ROM_COPY)
         return
     if win_con == WinConditionComplex.req_bean:
-        output_image = Image.open(BytesIO(js.getFile("./base-hack/assets/arcade_jetpac/arcade/bean.png")))
+        output_image = Image.open(BytesIO(js.getFile("base-hack/assets/arcade_jetpac/arcade/bean.png")))
         output_image = output_image.resize((32, 32))
         writeColorImageToROM(output_image, 14, 195, 32, 32, False, TextureFormat.RGBA5551, ROM_COPY)
         return
@@ -733,7 +734,7 @@ def showWinCondition(settings: Settings, ROM_COPY: LocalROM):
         return
     item_data = win_con_data[win_con]
     if win_con == WinConditionComplex.req_pearl:
-        base_im = Image.open(BytesIO(js.getFile("./base-hack/assets/arcade_jetpac/arcade/pearl.png")))
+        base_im = Image.open(BytesIO(js.getFile("base-hack/assets/arcade_jetpac/arcade/pearl.png")))
     else:
         item_im = getImageFile(
             ROM_COPY,

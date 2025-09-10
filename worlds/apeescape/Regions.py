@@ -1,12 +1,14 @@
 from typing import TYPE_CHECKING
 
-from BaseClasses import Region, Entrance, ItemClassification
+from BaseClasses import Region, Entrance, ItemClassification, CollectionState
 from .Locations import location_table, ApeEscapeLocation
-from .Strings import AEDoor, AELocation
+from .Strings import AEDoor, AELocation, AEItem
 from .Items import ApeEscapeItem
+from worlds.generic.Rules import add_rule, set_rule
 
 if TYPE_CHECKING:
     from . import ApeEscapeWorld
+
 
 class ApeEscapeLevel:
     # Example call: level = ApeEscapeLevel("Fossil Field", 0x01, 0)
@@ -34,10 +36,10 @@ def __add_event_location(self, region: Region, name: str, event_name: str) -> No
 
 def create_event_items(self):
     # Buttons and state changes.
-    __add_event_location(self, self.get_region(AEDoor.DR_OUTSIDE_OBELISK_TOP.value), "Dark Ruins - Floor Broken",
-                         "DR-Block")
-    __add_event_location(self, self.get_region(AEDoor.DI_SLIDE_ROOM_GALLERY.value), "Dexter's Island - Button Reached",
-                         "DI-Button")
+    __add_event_location(self, self.get_region(AEDoor.DR_OUTSIDE_OBELISK_TOP.value),
+                         "Dark Ruins - Floor Broken", "DR-Block")
+    __add_event_location(self, self.get_region(AEDoor.DI_SLIDE_ROOM_GALLERY.value),
+                         "Dexter's Island - Button Reached", "DI-Button")
     __add_event_location(self, self.get_region(AEDoor.CC_BASEMENT_BUTTON_DOWN.value),
                          "Crumbling Castle - Button Reached", "CC-Button")
     __add_event_location(self, self.get_region(AEDoor.MM_SIDE_ENTRY_OUTSIDE_CASTLE.value),
@@ -47,10 +49,10 @@ def create_event_items(self):
     __add_event_location(self, self.get_region(AEDoor.MM_OUTSIDE_CLIMB_CASTLE_MAIN.value),
                          "Monkey Madness - Specter 1 Open", "MM-Painting")
     # Monkey Madness UFO monkeys - specifically for the door.
-    __add_event_location(self, self.get_region(AELocation.W9L1Donovan.value), "Monkey Madness UFO Monkey 1",
-                         "MM UFO Monkey")
-    __add_event_location(self, self.get_region(AELocation.W9L1Laura.value), "Monkey Madness UFO Monkey 2",
-                         "MM UFO Monkey")
+    __add_event_location(self, self.get_region(AELocation.W9L1Donovan.value),
+                         "Monkey Madness UFO Monkey 1", "MM UFO Monkey")
+    __add_event_location(self, self.get_region(AELocation.W9L1Laura.value),
+                         "Monkey Madness UFO Monkey 2", "MM UFO Monkey")
 
     # ''' Event items for monkeys - mostly useful for debugging. NOTE: Add "# " to the beginning to uncomment.
     # Monkeys by level, for lamps and Specter 2 vanilla condition.
@@ -1287,16 +1289,28 @@ def create_regions(world: "ApeEscapeWorld"):
     multiworld.regions.extend(regions)
     create_event_items(world)
 
+
 def connect_regions(world: "ApeEscapeWorld", source: str, target: str, rule=None):
     source_region = world.get_region(source)
     target_region = world.get_region(target)
 
     connection = Entrance(world.player, source + "_to_" + target, source_region)
-    if rule:
-        connection.access_rule = rule
+    try:
+        varEntrance = world.get_entrance(connection.name)
+        connectionExist = True
+    except:
+        varEntrance = ""
+        connectionExist = False
 
-    source_region.exits.append(connection)
-    connection.connect(target_region)
+    # Connection exists only when this is an UT re-gen.
+    if rule and connectionExist:
+        glitched_rule = lambda state: state.has(AEItem.FAKE_OOL_ITEM.value, world.player) and rule(state)
+        add_rule(varEntrance, glitched_rule, "or")
+    elif rule:
+        connection.access_rule = rule
+    if not connectionExist:
+        source_region.exits.append(connection)
+        connection.connect(target_region)
 
 
 def get_range(i, j):

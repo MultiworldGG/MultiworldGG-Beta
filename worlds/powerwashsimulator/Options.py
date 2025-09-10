@@ -1,7 +1,7 @@
 import logging
 from typing import List, Union
 from dataclasses import dataclass
-from Options import Range, Toggle, PerGameCommonOptions, OptionSet, OptionError, Choice
+from Options import Range, Toggle, PerGameCommonOptions, OptionSet, OptionError, Choice, Accessibility
 from .Locations import land_vehicles, water_vehicles, air_vehicles, places, bonus_jobs, midgar, tomb_raider, \
     raw_location_dict, wallace_and_gromit, shrek, alice, warhammer_40k, back_to_the_future, spongebob
 from settings import Group, Bool
@@ -285,7 +285,7 @@ class PowerwashSimulatorOptions(PerGameCommonOptions):
 
     def get_goal_levels(self) -> List[str]:
         locations = self.get_locations()
-        return self.flatten_locations(locations, self.levels_to_goal)
+        return [loc for loc in self.flatten_locations(locations, self.levels_to_goal) if loc in locations]
 
     def has_percentsanity(self) -> bool:
         return "Percentsanity" in self.sanities
@@ -307,9 +307,13 @@ class PowerwashSimulatorSettings(Group):
     class AllowBelowLocalfillMinimums(Bool):
         """Allow players to have local fill below the defined minimums"""
 
+    class AllowPotentiallyExcessiveReleases(Bool):
+        """Allow players to have less than 50% levels be required for level hunt, this can cause very large releases"""
+
     allow_percentsanity_below_7: Union[AllowPercentsanityBelow7, bool] = False
     allow_objectsanity: Union[AllowObjectsanity, bool] = False
     allow_below_localfill_minimums: Union[AllowBelowLocalfillMinimums, bool] = False
+    allow_potentially_excessive_releases: Union[AllowPotentiallyExcessiveReleases, bool] = False
 
 
 def check_options(world):
@@ -318,13 +322,17 @@ def check_options(world):
     locations: List[str] = options.get_locations()
     random: Random = world.random
 
+    if options.accessibility == Accessibility.option_minimal:
+        print("Powerwash simulator doesn't support accessibility minimal, defaulting accessibility to full")
+        options.accessibility = Accessibility(Accessibility.option_full)
+
     if len(locations) < 0:
         raise_yaml_error(world.player_name, "Does not have locations listed in their yaml")
 
     if options.goal_type == 1:
         raw_goal_levels = options.get_goal_levels()
 
-        if len(raw_goal_levels) == 0:
+        if len(raw_goal_levels) == 0 and "Random" not in options.levels_to_goal:
             raise_yaml_error(world.player_name,
                              "Can't pick goal levels from 0 possible levels, make sure goal levels are included in their respective locations")
 
@@ -333,13 +341,17 @@ def check_options(world):
         if amount_to_goal == 0:
             amount_to_goal = len(raw_goal_levels)
 
-        if amount_to_goal < 0 or amount_to_goal > len(locations):
-            amount_to_goal = random.randint(1, min(7,
-                                                   len(locations) if "Random" not in options.levels_to_goal else len(
-                                                       locations)))
+        max_random = len(locations)
+        allow_below_50 = settings.allow_potentially_excessive_releases
+        if amount_to_goal < max_random / 2 or (amount_to_goal > len(locations) and not allow_below_50):
+            amount_to_goal = random.randint(int(max_random / 2), max_random)
 
-        levels_to_goal = random.sample(locations, random.randint(amount_to_goal,
-                                                                 len(locations))) if "Random" in options.levels_to_goal else raw_location_dict
+        if "Random" in options.levels_to_goal or amount_to_goal > len(raw_goal_levels):
+            levels_to_goal = random.sample(locations, random.randint(amount_to_goal, max_random))
+        elif "All" in options.levels_to_goal:
+            levels_to_goal = locations
+        else:
+            levels_to_goal = raw_goal_levels
 
         options.levels_to_goal = LevelsToGoal(levels_to_goal)
         options.amount_of_levels_to_goal = AmountOfLevelsToGoal(amount_to_goal)
@@ -374,7 +386,7 @@ def check_options(world):
 
             possible_locations = locations
 
-        world.player_starting_location[world.player_name] = world.random.choice(possible_locations)
+        world.starting_location = world.random.choice(possible_locations)
 
 
 def set_local_fill(player_name, options, amount):

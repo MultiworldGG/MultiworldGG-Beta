@@ -32,6 +32,9 @@
 # Sudoku (APSudoku)
 /worlds/apsudoku/ @EmilyV99
 
+# Archipela-Go!
+/worlds/apgo/ @agilbert1412 @aki665
+
 # Aquaria
 /worlds/aquaria/ @tioui
 
@@ -73,6 +76,9 @@
 
 # Celeste
 /worlds/celeste/ @doshyw
+
+# Celeste (Open World)
+/worlds/celeste_open_world/ @PoryGone
 
 # Celeste 64
 /worlds/celeste64/ @PoryGone
@@ -165,6 +171,9 @@
 # Final Fantasy Tactics Advance
 /worlds/ffta/ @spicynun
 
+# Frogmonster
+/worlds/frogmonster @Rooby-Roo
+
 # Getting Over It
 /worlds/getting_over_it/ @BlastSlimey
 
@@ -206,6 +215,9 @@
 
 # Jigsaw
 /worlds/jigsaw/ @spinerak
+
+# Kindergarten 2
+/worlds/kindergarten_2 @agilbert1412
 
 # Kirby 64
 /worlds/k64/ @Silvris
@@ -298,10 +310,10 @@
 /worlds/openrct2/ @Crazycolbster
 
 # Oracle of Ages
-/worlds/tloz_ooa/ @Dinopony
+/worlds/tloz_ooa/ @SenPierre
 
 # Oracle of Seasons
-/worlds/tloz_oos/ @SenPierre
+/worlds/tloz_oos/ @Ishigh1
 
 # Ori and the Blind Forest
 /worlds/oribf/ @c-ostic

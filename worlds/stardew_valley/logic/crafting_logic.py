@@ -1,9 +1,9 @@
 from Utils import cache_self1
 from .base_logic import BaseLogicMixin, BaseLogic
 from .. import options
-from ..data.craftable_data import CraftingRecipe, all_crafting_recipes
+from ..data.craftable_data import CraftingRecipe, all_crafting_recipes, all_crafting_recipes_by_name
 from ..data.recipe_source import CutsceneSource, ShopTradeSource, ArchipelagoSource, LogicSource, SpecialOrderSource, \
-    FestivalShopSource, QuestSource, StarterSource, ShopSource, SkillSource, MasterySource, FriendshipSource, SkillCraftsanitySource
+    FestivalShopSource, QuestSource, StarterSource, ShopSource, SkillSource, MasterySource, FriendshipSource, SkillCraftsanitySource, ShopWithKnownRecipeSource
 from ..options import Craftsanity, SpecialOrderLocations
 from ..stardew_rule import StardewRule, True_, False_
 from ..strings.region_names import Region
@@ -55,6 +55,8 @@ class CraftingLogic(BaseLogic):
             return self.logic.received_all(*recipe.source.ap_item)
         if isinstance(recipe.source, ShopTradeSource):
             return self.logic.money.can_trade_at(recipe.source.region, recipe.source.currency, recipe.source.price)
+        if isinstance(recipe.source, ShopWithKnownRecipeSource):
+            return self.knows_recipe(all_crafting_recipes_by_name[recipe.source.recipe_required]) & self.logic.money.can_spend_at(recipe.source.region, recipe.source.price)
         if isinstance(recipe.source, ShopSource):
             return self.logic.money.can_spend_at(recipe.source.region, recipe.source.price)
         if isinstance(recipe.source, SkillCraftsanitySource):

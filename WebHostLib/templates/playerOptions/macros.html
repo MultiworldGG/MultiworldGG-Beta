@@ -134,6 +134,7 @@
 
 {% macro OptionList(option_name, option) %}
     {{ OptionTitle(option_name, option) }}
+    <input type="hidden" id="{{ option_name }}-{{ key }}-hidden" name="{{ option_name }}" value="_ensure-empty-list"/>
     <div class="option-container" name="OptionList">
         {% for key in (option.valid_keys if option.valid_keys is ordered else option.valid_keys|sort) %}
             <div class="option-entry">
@@ -146,7 +147,8 @@
 
 {% macro LocationSet(option_name, option) %}
     {{ OptionTitle(option_name, option) }}
-    <div class="option-container" name="LocationSet">
+    <input type="hidden" id="{{ option_name }}-{{ key }}-hidden" name="{{ option_name }}" value="_ensure-empty-list"/>
+    <div class="option-container"  name="LocationSet">
         {% for group_name in world.location_name_groups.keys()|sort %}
             {% if group_name != "Everywhere" %}
                 <div class="option-entry">
@@ -169,7 +171,8 @@
 
 {% macro ItemSet(option_name, option) %}
     {{ OptionTitle(option_name, option) }}
-    <div class="option-container" name="ItemSet">
+    <input type="hidden" id="{{ option_name }}-{{ key }}-hidden" name="{{ option_name }}" value="_ensure-empty-list"/>
+    <div class="option-container"  name="ItemSet">
         {% for group_name in world.item_name_groups.keys()|sort %}
             {% if group_name != "Everything" %}
                 <div class="option-entry">
@@ -192,7 +195,8 @@
 
 {% macro OptionSet(option_name, option) %}
     {{ OptionTitle(option_name, option) }}
-    <div class="option-container" name="OptionSet">
+    <input type="hidden" id="{{ option_name }}-{{ key }}-hidden" name="{{ option_name }}" value="_ensure-empty-list"/>
+    <div class="option-container"  name="OptionSet">
         {% for key in (option.valid_keys if option.valid_keys is ordered else option.valid_keys|sort) %}
             <div class="option-entry">
                 <input type="checkbox" id="{{ option_name }}-{{ key }}" name="{{ option_name }}" value="{{ key }}" {{ "checked" if key in option.default }} />

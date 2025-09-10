@@ -23,11 +23,11 @@ class OoAPatchExtensions(APPatchExtension):
     @staticmethod
     def apply_patches(caller: APProcedurePatch, rom: bytes, patch_file: str) -> bytes:
         rom_data = RomData(rom)
-        patch_data = yaml.load(caller.get_file(patch_file).decode("utf-8"), yaml.Loader)
+        patch_data = yaml.safe_load(caller.get_file(patch_file).decode("utf-8"))
 
-        if patch_data["version"] != VERSION:
+        if not (patch_data["version"] in RETRO_COMPAT_VERSION):
             raise Exception(f"Invalid version: this seed was generated on v{patch_data['version']}, "
-                            f"you are currently using v{VERSION}")
+                            f"and is not compatible with current : v{VERSION}")
 
         #if patch_data["options"]["enforce_potion_in_shop"]:
         #    patch_data["locations"]["Horon Village: Shop #3"] = "Potion"

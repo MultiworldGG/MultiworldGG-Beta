@@ -132,12 +132,40 @@ html {
   flex-direction: row;
   max-width: 270px;
 }
-#player-options .select-container select {
+#player-options .select-container select, #player-options .text-choice-container .text-choice-wrapper select, #player-options #meta-options select {
   min-width: 200px;
   flex-grow: 1;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: hsl(278 22% 33%);
+  color: #E6E6E8;
+  border-radius: 10px;
+  padding: 5px 10px 5px 10px;
+  background-image: url("data:image/svg+xml;utf8,\
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'>\
+      <path d='M6 9l6 6 6-6' fill='none' stroke='rgb(226,232,240)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/>\
+    </svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+
+  transition: border-color .15s ease, box-shadow .15s ease;
+  cursor: pointer;
 }
-#player-options .select-container select:disabled {
-  background-color: lightgray;
+#player-options .select-container select:hover, #player-options .text-choice-container .text-choice-wrapper select:hover, #player-options #meta-options select:hover {
+  border-color: hsl(220 10% 40%);
+}
+#player-options .select-container select:focus-visible, #player-options .text-choice-container .text-choice-wrapper select:focus-visible, #player-options #meta-options select:focus-visible {
+  outline: none;
+  border-color: hsl(220 90% 56%);
+  box-shadow: 0 0 0 3px hsl(220 90% 56% / .45);
+}
+#player-options .select-container select:disabled, #player-options .text-choice-container .text-choice-wrapper select:disabled, #player-options #meta-options select:disabled {
+  background: hsl(220 12% 22%);
+  color: hsl(220 10% 65%);
+  border-color: hsl(220 8% 28%);
+  cursor: not-allowed;
 }
 #player-options .range-container {
   display: flex;
@@ -275,7 +303,7 @@ html {
   display: none;
 }
 #player-options .randomize-button:has(input[type=checkbox]:checked) {
-  background-color: #ffef00; /* Same as .interactive in globalStyles.css */
+  background-color: #ea166c; /* Same as .interactive in globalStyles.css */
 }
 #player-options .randomize-button:has(input[type=checkbox]:checked):hover {
   background-color: #eedd27;

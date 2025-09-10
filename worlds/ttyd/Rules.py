@@ -1,7 +1,9 @@
 import typing
 from typing import Any
 from worlds.generic.Rules import add_rule
-from . import StateLogic, location_id_to_name, tattlesanity_region
+from . import StateLogic, location_id_to_name, tattlesanity_region, Goal, PitItems, limit_pit, \
+    pit_exclusive_tattle_stars_required
+from .Options import PalaceSkip
 
 if typing.TYPE_CHECKING:
     from . import TTYDWorld
@@ -22,15 +24,24 @@ def set_tattle_rules(world: "TTYDWorld"):
             continue
         if len(locations) == 0:
             # Require access to Shadow Queen
-            extra_condition = lambda state: state.can_reach("Shadow Queen", "Location", world.player)
+            if world.options.palace_skip == PalaceSkip.option_true and world.options.goal != Goal.option_shadow_queen:
+                extra_condition = lambda state: state.has("stars", world.player, world.options.palace_stars)
+            elif world.options.goal == Goal.option_shadow_queen:
+                extra_condition = lambda state: state.can_reach("Shadow Queen", "Location", world.player)
+            else:
+                extra_condition = lambda state: state.can_reach("Palace of Shadow Final Staircase: Ultra Shroom", "Location", world.player)
         else:
             # Require access to any of the listed locations
+            if world.options.pit_items != PitItems.option_all and location_name not in pit_exclusive_tattle_stars_required:
+                locations = [loc for loc in locations if loc not in limit_pit]
+                if len(locations) == 0:
+                    continue
             valid_locations = [
                 location_id_to_name[loc] for loc in locations
                 if location_id_to_name[loc] not in world.disabled_locations
             ]
-            if "Bowser" in location_name:
-                valid_locations.append("Shadow Queen")
+            if len(valid_locations) == 0:
+                continue
             extra_condition = lambda state, locs=valid_locations: any(
                 state.can_reach(loc, "Location", world.player) for loc in locs
             )
@@ -73,7 +84,7 @@ def get_rules_dict(world: "TTYDWorld") -> dict[str, Any]:
         "Creepy Steeple Main Hall: Lucky Start":
             lambda state: StateLogic.super_hammer(state, world.player),
         "Creepy Steeple Upper Room: Ruby Star":
-            lambda state: state.has("Steeple Key", world.player) and state.has("The Letter \"P\"", world.player),
+            lambda state: state.has("Steeple Key", world.player) and state.has("The Letter \"p\"", world.player),
         "Creepy Steeple Underground Tube Passage: Shine Sprite":
             lambda state: state.has("Vivian", world.player),
         "Creepy Steeple Boo Chest Room: Star Piece":
@@ -86,7 +97,7 @@ def get_rules_dict(world: "TTYDWorld") -> dict[str, Any]:
             lambda state: state.has("Vivian", world.player),
         "Creepy Steeple Parrot Room: Steeple Key 2":
             lambda state: state.has("Vivian", world.player),
-        "Creepy Steeple Parrot Room: The Letter \"P\"":
+        "Creepy Steeple Parrot Room: The Letter \"p\"":
             lambda state: state.has("Vivian", world.player),
         "Excess Express Middle Passenger Car: Blanket":
             lambda state: state.has("Autograph", world.player) and state.has("Vivian", world.player)
@@ -125,7 +136,7 @@ def get_rules_dict(world: "TTYDWorld") -> dict[str, Any]:
             lambda state: StateLogic.super_boots(state, world.player),
         "Fahr Outpost Entrance: Star Piece":
             lambda state: StateLogic.super_boots(state, world.player),
-        "Fahr Outpost Town: Star Piece 2":
+        "Fahr Outpost Town: Star Piece 1":
             lambda state: StateLogic.super_boots(state, world.player),
         "Glitzville Lobby: Storage Key 2":
             lambda state: state.has("Flurrie", world.player),
@@ -528,7 +539,7 @@ def get_rules_dict(world: "TTYDWorld") -> dict[str, Any]:
                            and StateLogic.tube_curse(state, world.player)
                            and (StateLogic.ultra_boots(state, world.player) or state.has("Koops", world.player))
                            and state.has("Flurrie", world.player)),
-        "Riverside Station Ultra Boots Room: Elevator Key":
+        "Riverside Station Ultra Boots Room: Elevator Key (Riverside)":
             lambda state: (state.has("Station Key 1", world.player) and state.has("Station Key 2", world.player)
                            and StateLogic.tube_curse(state, world.player) and StateLogic.ultra_boots(state, world.player)
                            and state.has("Flurrie", world.player) and state.has("Yoshi", world.player)),
@@ -541,15 +552,15 @@ def get_rules_dict(world: "TTYDWorld") -> dict[str, Any]:
             lambda state: state.has("Station Key 1", world.player) and StateLogic.ultra_boots(state, world.player),
         "Poshley Heights Sanctum Altar: Garnet Star":
             lambda state: (StateLogic.riverside(state, world.player) and state.has("Station Key 1", world.player)
-                           and StateLogic.ultra_boots(state, world.player) and state.has("Elevator Key", world.player)
+                           and StateLogic.ultra_boots(state, world.player) and state.has("Elevator Key (Riverside)", world.player)
                            and state.has("Plane Curse", world.player) and StateLogic.super_hammer(state, world.player)),
         "Poshley Heights Sanctum Altar: L Emblem":
             lambda state: (StateLogic.riverside(state, world.player) and state.has("Station Key 1", world.player)
-                           and StateLogic.ultra_boots(state, world.player) and state.has("Elevator Key", world.player)
+                           and StateLogic.ultra_boots(state, world.player) and state.has("Elevator Key (Riverside)", world.player)
                            and state.has("Plane Curse", world.player) and StateLogic.super_hammer(state, world.player)),
         "Poshley Heights Sanctum Altar: Shine Sprite":
             lambda state: (StateLogic.riverside(state, world.player) and state.has("Station Key 1", world.player)
-                           and StateLogic.ultra_boots(state, world.player) and state.has("Elevator Key", world.player)
+                           and StateLogic.ultra_boots(state, world.player) and state.has("Elevator Key (Riverside)", world.player)
                            and state.has("Plane Curse", world.player) and StateLogic.super_hammer(state, world.player)),
         "Rogueport Sewers Boggly Woods Pipe: Star Piece":
             lambda state: StateLogic.super_boots(state, world.player) and (state.has("Paper Curse", world.player) or StateLogic.super_hammer(state, world.player)),
@@ -678,8 +689,7 @@ def get_rules_dict(world: "TTYDWorld") -> dict[str, Any]:
             lambda state: (state.has("Elevator Key 1", world.player) and state.has("Elevator Key 2", world.player)
                            and state.has("Card Key 1", world.player) and state.has("Card Key 2", world.player)
                            and state.has("Card Key 3", world.player) and state.has("Card Key 4", world.player)
-                           and state.has("Paper Curse", world.player) and state.has("Vivian", world.player)
-                           and state.has("Plane Curse", world.player)),
+                           and state.has("Paper Curse", world.player) and state.has("Vivian", world.player)),
         "Rogueport Sewers Black Chest Room: Plane Curse":
             lambda state: state.has("Black Key (Plane Curse)", world.player),
         "Rogueport Docks: HP Drain":
@@ -782,7 +792,7 @@ def get_tattle_rules_dict() -> dict[str, typing.List[int]]:
         "Tattle: Vivian": [78780215],
         "Tattle: Marilyn": [78780215, 78780622],
         "Tattle: Beldam": [78780215, 78780622],
-        "Tattle: X-Naut": [78780300],
+        "Tattle: X-Naut": [78780231, 78780584],
         "Tattle: Yux": [78780231],
         "Tattle: Mini-Yux": [78780231],
         "Tattle: Pider": [78780241, 78780267, 78780639],
@@ -826,7 +836,7 @@ def get_tattle_rules_dict() -> dict[str, typing.List[int]]:
         "Tattle: Spike Top": [78780450],
         "Tattle: Atomic Boo": [78780434],
         "Tattle: Boo": [78780434],
-        "Tattle: Doopliss": [78780437],
+        "Tattle: Doopliss": [78780437, 78780622],
         "Tattle: Ember": [78780503],
         "Tattle: Putrid Piranha": [78780470],
         "Tattle: Lava Bubble": [78780495, 78780642],
@@ -862,7 +872,7 @@ def get_tattle_rules_dict() -> dict[str, typing.List[int]]:
         "Tattle: Sir Grodus": [],
         "Tattle: Grodus X": [],
         "Tattle: Kammy Koopa": [],
-        "Tattle: Bowser": [78780296],
+        "Tattle: Bowser": [],
         "Tattle: Shadow Queen": [],
         "Tattle: Gloomba": [78780638],
         "Tattle: Paragloomba": [78780639],

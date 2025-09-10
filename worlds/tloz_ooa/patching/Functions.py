@@ -38,7 +38,7 @@ def alter_treasures(rom: RomData):
 
     set_treasure_data(rom, "Potion", 0x6d)
 
-    # Set data for remote MultiworldGG items
+    # Set data for remote Archipelago items
     set_treasure_data(rom, "Archipelago Item", 0x57, 0x5a)
     set_treasure_data(rom, "Archipelago Progression Item", 0x57, 0x59)
     set_treasure_data(rom, "King Zora's Potion", 0x45, 0x5e)

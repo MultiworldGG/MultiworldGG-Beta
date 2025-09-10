@@ -192,6 +192,10 @@ _speedups.html
 #undertale stuff
 /Undertale/
 
+#Path of Exile Generated Files
+poe_access_token.pkl
+poe_settings.pkl
+
 # OS General Files
 .DS_Store
 .AppleDouble
@@ -208,6 +212,9 @@ gunicorn.conf.py
 selflaunch.yaml
 local_build_win.ps1
 
+#tools
+tools/access_token
+
 # Sprites
 data/sprites/remote/*.zspr
 
@@ -220,4 +227,11 @@ gzdoom/cache/*
 
 # Minecraft
 minecraft_versions.json
-tools/access_token
+
+
+# PoE
+lib/poe_client_vendor/*
+
+# Minecraft
+Minecraft Forge server/*
+jdk*/*

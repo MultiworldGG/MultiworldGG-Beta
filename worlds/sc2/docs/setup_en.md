@@ -6,7 +6,7 @@ where to obtain a config file for StarCraft 2.
 ## Required Software
 
 - [StarCraft 2](https://starcraft2.com/en-us/)
-   - While StarCraft 2 Archipelago supports all four campaigns, they are not mandatory to play the randomizer. 
+   - While StarCraft 2 for AP/MWGG supports all four campaigns, they are not mandatory to play the randomizer. 
    If you do not own certain campaigns, you only need to exclude them in the configuration file of your world.
 - [The most recent MultiworldGG release](https://github.com/MultiworldGG/MultiworldGG/releases)
 
@@ -16,11 +16,11 @@ where to obtain a config file for StarCraft 2.
 MultiworldGG installer.
    - Linux users should also follow the instructions found at the bottom of this page 
      (["Running in Linux"](#running-in-linux)).
-2. Run MultiworldGGStarcraft2Client.exe.
+2. Run Starcraft II Launcher from the MultiworldGG Launcher.
    - macOS users should instead follow the instructions found at ["Running in macOS"](#running-in-macos) for this step 
    only.
 3. Type the command `/download_data`. 
-This will automatically install the Maps and Data files needed to play StarCraft 2 Archipelago.
+This will automatically install the Maps and Data files needed to play StarCraft 2 AP/MWGG.
 
 ## Where do I get a config file (aka "YAML") for this game?
 
@@ -57,7 +57,7 @@ If you don't like terminals, you can also check the log file in the `logs/` fold
 #### What does Progression Balancing do?
 
 For StarCraft 2, this option doesn't have much impact. 
-It is an Archipelago option designed to balance world progression by swapping items in spheres. 
+It is an MultiworldGG option designed to balance world progression by swapping items in spheres. 
 If the Progression Balancing of one world is greater than that of others, items in that world are more likely to be 
 obtained early, and vice versa if its value is smaller. 
 However, StarCraft 2 is more permissive regarding the items that can be used to progress, so this option has little 
@@ -104,14 +104,14 @@ You can also look up a complete list of the item names in the
 [Icon Repository](https://matthewmarinets.github.io/ap_sc2_icons/) page.
 This page also contains supplementary information of each item.
 However, the items shown in that page might differ from those shown in the datapackage page of MultiworldGG since the 
-former is generated, most of the time, from beta versions of StarCraft 2 Archipelago undergoing development.
+former is generated, most of the time, from beta versions of StarCraft 2 AP/MWGG undergoing development.
 
 As for the locations, you can see all the locations associated to a mission in your world by placing your cursor over 
 the mission in the 'StarCraft 2 Launcher' tab in the client.
 
 ## How do I join a MultiWorld game?
 
-1. Run MultiworldGGStarcraft2Client.exe.
+1. Run the Starcraft II Client from the MultiworldGG Launcher
    - macOS users should instead follow the instructions found at ["Running in macOS"](#running-in-macos) for this step 
    only.
 2. Type `/connect [server ip]`.
@@ -135,7 +135,7 @@ For your keyboard shortcuts profile to work in MultiworldGG, you need to copy yo
 `Documents/StarCraft II/Accounts/######/Hotkeys` to `Documents/StarCraft II/Hotkeys`. 
 If the folder doesn't exist, create it.
 
-To enable StarCraft 2 Archipelago to use your profile, follow these steps:
+To enable StarCraft 2 AP/MWGG to use your profile, follow these steps:
 1. Launch StarCraft 2 via the Battle.net application.
 2. Change your hotkey profile to the standard mode and accept.
 3. Select your custom profile and accept.
@@ -145,7 +145,7 @@ You will only need to do this once.
 ## Running in macOS
 
 To run StarCraft 2 through MultiworldGG in macOS, you will need to run the client via source as seen here: 
-[macOS Guide](/tutorial/MultiworldGG/mac/en). 
+[macOS Guide](/tutorial/Archipelago/mac/en). 
 Note: to launch the client, you will need to run the command `python3 Starcraft2Client.py`.
 
 ## Running in Linux
@@ -159,7 +159,7 @@ You will not need to copy the `.dll` files.
 If you're having trouble installing or running StarCraft 2 on Linux, it is recommend to use the Lutris installer.
 
 Copy the following into a .sh file, replacing the values of **WINE** and **SC2PATH** variables with the relevant
-locations, as well as setting **PATH_TO_ARCHIPELAGO** to the directory containing the AppImage if it is not in the same
+locations, as well as setting **PATH_TO_MultiworldGG** to the directory containing the AppImage if it is not in the same
 folder as the script.
 
 ```sh
@@ -173,16 +173,16 @@ export WINE="/usr/bin/wine"
 # FIXME Replace with path to StarCraft II install folder
 export SC2PATH="/home/user/Games/starcraft-ii/drive_c/Program Files (x86)/StarCraft II/"
 
-# FIXME Set to directory which contains Archipelago AppImage file
-PATH_TO_ARCHIPELAGO=
+# FIXME Set to directory which contains MultiworldGG AppImage file
+PATH_TO_MWGG=
 
-# Gets the latest version of MultiworldGG AppImage in PATH_TO_ARCHIPELAGO.
-# If PATH_TO_ARCHIPELAGO is not set, this defaults to the directory containing
+# Gets the latest version of MWGG AppImage in PATH_TO_MWGG.
+# If PATH_TO_MWGG is not set, this defaults to the directory containing
 # this script file.
-ARCHIPELAGO="$(ls ${PATH_TO_ARCHIPELAGO:-$(dirname $0)}/Archipelago_*.AppImage | sort -r | head -1)"
+MWGG="$(ls ${PATH_TO_MWGG:-$(dirname $0)}/MultiworldGG_*.AppImage | sort -r | head -1)"
 
-# Start the MultiworldGG client
-$ARCHIPELAGO Starcraft2Client
+# Start the MWGG client
+$MWGG Starcraft2Client
 ```
 
 For Lutris installs, you can run `lutris -l` to get the numerical ID of your StarCraft II install, then run the command

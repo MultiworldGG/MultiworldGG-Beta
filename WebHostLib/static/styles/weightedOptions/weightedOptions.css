@@ -72,7 +72,7 @@ html {
   padding: 5px;
 }
 #weighted-options table .td-left {
-  font-family: LexendDeca-Regular, sans-serif;
+  font-family: Inter-Regular, sans-serif;
   padding-right: 1rem;
   width: 200px;
 }
@@ -126,7 +126,7 @@ html {
   border-bottom: 1px solid #ffffff;
   width: 100%;
   margin-bottom: 0.5rem;
-  color: #ffe993;
+  color: #ea166c;
   text-transform: none;
   text-shadow: 1px 1px 2px #000000;
 }
@@ -141,7 +141,7 @@ html {
   font-weight: bold;
 }
 #weighted-options a {
-  color: #ffef00;
+  color: #ea166c;
   cursor: pointer;
 }
 #weighted-options input:not([type]) {

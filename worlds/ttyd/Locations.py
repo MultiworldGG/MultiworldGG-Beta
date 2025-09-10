@@ -111,7 +111,7 @@ rogueport_westside: typing.List[LocationData] = [
     #LocationData("Rogueport Westside: Maple Syrup", 78780701, Rels.dol, [0x3C7288]),
     #LocationData("Rogueport Westside: Money Money", 78780081, Rels.dol, [0x3C72C8]),
     #LocationData("Rogueport Westside: Multibounce", 78780700, Rels.dol, [0x3C72A8]),
-    LocationData("Rogueport Westside: Mushroom", 78780082, Rels.gor, [0x59E18]),
+    LocationData("Rogueport Westside: Lottery", 78780082, Rels.gor, [0x59E18]),
     #LocationData("Rogueport Westside: Power Jump", 78780083, Rels.dol, [0x3C728C]),
     #LocationData("Rogueport Westside: Power Rush", 78780084, Rels.dol, [0x3C72B4]),
     #LocationData("Rogueport Westside: Power Rush P", 78780085, Rels.dol, [0x3C72BC]),
@@ -361,7 +361,7 @@ glitzville: typing.List[LocationData] = [
     LocationData("Glitzville Storage Back Room: Star Piece", 78780299, Rels.tou, [0x3F3DC])
 ]
 
-twilight_town: typing.List[LocationData] = [
+twilight_town_region: typing.List[LocationData] = [
     LocationData("Twilight Town Leftside: Coin", 78780300, Rels.usu, [0xBC7C]),
     LocationData("Twilight Town Leftside: Peachy Peach", 78780301, Rels.usu, [0xAEF8]),
     LocationData("Twilight Town Leftside: Star Piece 1", 78780302, Rels.usu, [0xBC18]),
@@ -418,7 +418,7 @@ creepy_steeple: typing.List[LocationData] = [
     LocationData("Creepy Steeple Parrot Room: Power Plus", 78780446, Rels.jin, [0x13DB0]),
     LocationData("Creepy Steeple Parrot Room: Star Piece", 78780447, Rels.jin, [0x14050]),
     LocationData("Creepy Steeple Parrot Room: Steeple Key 2", 78780448, Rels.jin, [0x13798]),
-    LocationData("Creepy Steeple Parrot Room: The Letter \"P\"", 78780449, Rels.jin, [0x13674]),
+    LocationData("Creepy Steeple Parrot Room: The Letter \"p\"", 78780449, Rels.jin, [0x13674]),
     LocationData("Creepy Steeple Well Entrance: Shine Sprite", 78780450, Rels.jin, [0x14244]),
     LocationData("Creepy Steeple Buzzy Room: Tornado Jump", 78780451, Rels.jin, [0x14DB8]),
     LocationData("Creepy Steeple Underground Tube Passage: Shine Sprite", 78780452, Rels.jin, [0x15060])
@@ -527,7 +527,7 @@ riverside: typing.List[LocationData] = [
     LocationData("Riverside Station Back Exterior: Thunder Rage", 78780542, Rels.eki, [0xDD20]),
     LocationData("Riverside Station Tube Mode Maze: Dried Shroom", 78780543, Rels.eki, [0xE628]),
     LocationData("Riverside Station Tube Mode Maze: P-Up D-Down", 78780544, Rels.eki, [0xE650]),
-    LocationData("Riverside Station Ultra Boots Room: Elevator Key", 78780545, Rels.eki, [0xEB7C, 0xEA28]),
+    LocationData("Riverside Station Ultra Boots Room: Elevator Key (Riverside)", 78780545, Rels.eki, [0xEB7C, 0xEA28]),
     LocationData("Riverside Station Ultra Boots Room: Ultra Boots", 78780546, Rels.eki, [0xE990]),
     LocationData("Riverside Station Goomba Room: Shine Sprite", 78780547, Rels.eki, [0xF5D4])
 ]
@@ -791,7 +791,7 @@ shadow_queen: typing.List[LocationData] = [
 
 all_locations: typing.List[LocationData] = (rogueport + rogueport_westside + sewers + sewers_westside + sewers_westside_ground +
                                             petal_left + petal_right + hooktails_castle + boggly_woods +
-                                            great_tree + glitzville + twilight_town + twilight_trail + creepy_steeple +
+                                            great_tree + glitzville + twilight_town_region + twilight_trail + creepy_steeple +
                                             keelhaul_key + pirates_grotto + excess_express + riverside + poshley_heights +
                                             fahr_outpost + xnaut_fortress + palace + riddle_tower + pit + shadow_queen + tattlesanity_region)
 

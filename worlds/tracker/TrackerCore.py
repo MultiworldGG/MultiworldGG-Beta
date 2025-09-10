@@ -53,12 +53,14 @@ class TrackerCore():
         self.tracker_items_received = []
         self.manual_items = []
         self.player_folder_override = None
+        self.gen_error:str = ""
 
         self.ignored_locations: set[int] = set()
         self.missing_locations: set[int] = set()
 
     def disconnect(self):
         self.re_gen_passthrough = None
+        self.player_id = None
         self.multiworld = None
         self.manual_items.clear()
         self.player_folder_override = None
@@ -195,7 +197,7 @@ class TrackerCore():
                 args.player_files_path = yaml_path
             self.player_folder_override = args.player_files_path
             args.skip_output = True
-
+            args.multi = 0
             if self.quit_after_update:
                 from logging import ERROR
                 args.log_level = ERROR
@@ -491,5 +493,9 @@ class TrackerCore():
                     self.logger.error(tb)
                     return
             else:
-                self.log_to_tab(f"Player's Yaml not in tracker's list. Known players: {list(self.launch_multiworld.world_name_lookup.keys())}", False)
+                known_slots = [f"{slot_name} ({self.launch_multiworld.worlds[slot_id].game})" for slot_name, slot_id in self.launch_multiworld.world_name_lookup.items() if self.launch_multiworld.worlds[slot_id].game != "Archipelago"]
+                if known_slots:
+                    self.logger.error(f"Player's Yaml not in tracker's list. Known players: {known_slots}")
+                else:
+                    self.logger.error(f"Player's Yaml not in tracker's list. All known players are Yaml-less")
                 return

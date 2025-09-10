@@ -13,6 +13,7 @@ from randomizer.Patching.Library.Generic import (
 )
 from randomizer.Patching.Library.Image import getBonusSkinOffset, ExtraTextures, getRandomHueShift, hueShiftImageFromAddress, TextureFormat
 from randomizer.Patching.MiscSetupChanges import SpeedUpFungiRabbit
+from randomizer.Enums.Kongs import Kongs
 from randomizer.Enums.Models import Model, Sprite
 from randomizer.Enums.Settings import ColorblindMode, ExcludedSongs, KongModels, ColorOptions
 from randomizer.Patching.Patcher import ROM
@@ -93,8 +94,24 @@ def modelCosmetics(ROM_COPY: ROM, settings, offset_dict: dict):
     for kong_index, value in enumerate(kong_model_setting_values):
         if value in (KongModels.cranky, KongModels.candy, KongModels.funky):
             writeValue(ROM_COPY, 0x8075C410 + (kong_index * 0x10) + 0xC, Overlay.Static, 0, offset_dict, 4)
+        elif value == KongModels.disco_chunky and kong_index == Kongs.chunky:
+            writeValue(ROM_COPY, 0x806CF37C, Overlay.Static, 0, offset_dict, 4)  # Fix object holding
+            writeValue(ROM_COPY, 0x806F1274, Overlay.Static, 0, offset_dict, 4)  # Prevent model change for GGone
+            writeValue(ROM_COPY, 0x806CBB84, Overlay.Static, 0, offset_dict, 4)  # Enable opacity filter GGone
+            writeValue(ROM_COPY, 0x8075BF3E, Overlay.Static, 0x2F5C, offset_dict)  # Make CS Model Behave normally
+    if settings.beetle_model == Model.Rabbit:
+        writeValue(ROM_COPY, 0x8075ECD2, Overlay.Static, 0x47, offset_dict)  # Model
+        writeValue(ROM_COPY, 0x8075ECD4, Overlay.Static, 0x309, offset_dict)
+        writeValue(ROM_COPY, 0x80024ADE, Overlay.Race, 0x305, offset_dict)
+        writeValue(ROM_COPY, 0x80025006, Overlay.Race, 0x305, offset_dict)
+        writeValue(ROM_COPY, 0x800241E6, Overlay.Race, 0x303, offset_dict)
+        writeValue(ROM_COPY, 0x800251B2, Overlay.Race, 0x307, offset_dict)
+        writeValue(ROM_COPY, 0x80025246, Overlay.Race, 0x308, offset_dict)
+        # Fix spinning
+        writeValue(ROM_COPY, 0x80025112, Overlay.Race, 0xEE, offset_dict)
+        writeValue(ROM_COPY, 0x80025114, Overlay.Race, 0x0140C021, offset_dict, 4)
 
-        # Refill Count
+    # Refill Count
     if ENABLE_MINIGAME_SPRITE_RANDO:
         projectile_mapping = {
             Sprite.BouncingMelon: Sprite.VerticalRollingMelon,
@@ -205,6 +222,15 @@ def musicCosmetics(ROM_COPY: ROM, settings, offset_dict: dict):
     if settings.music_disable_reverb:
         # Disable volume changes that would counteract the dynamic reverb's volume loss
         writeValue(ROM_COPY, 0x80603DB8, Overlay.Static, 0x10000011, offset_dict, 4)  # B 80603E00
+    if settings.music_rando_enabled:
+        writeFloat(ROM_COPY, 0x807565D8, Overlay.Static, 1, offset_dict)  # Funky and Candy volumes
+        writeValue(ROM_COPY, 0x80604B50, Overlay.Static, 0, offset_dict, 4)  # Disable galleon outside track isolation
+        writeValue(ROM_COPY, 0x80604A54, Overlay.Static, 0, offset_dict, 4)  # Disable galleon outside track isolation
+        writeValue(ROM_COPY, 0x80028F3E, Overlay.Boss, 10000, offset_dict)  # Crowd Volume
+        writeValue(ROM_COPY, 0x8002904E, Overlay.Boss, 10000, offset_dict)  # Crowd Volume
+        writeValue(ROM_COPY, 0x80025192, Overlay.Bonus, 10000, offset_dict)  # Crowd Volume
+        writeValue(ROM_COPY, 0x80025166, Overlay.Bonus, 10000, offset_dict)  # Crowd Volume
+        writeValue(ROM_COPY, 0x80025112, Overlay.Bonus, 10000, offset_dict)  # Crowd Volume
 
 
 def arcadeCosmetics(ROM_COPY: ROM, settings, offset_dict: dict):

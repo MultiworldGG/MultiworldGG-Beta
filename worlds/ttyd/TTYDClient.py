@@ -2,6 +2,8 @@ import asyncio
 import struct
 import subprocess
 import traceback
+import typing
+
 import settings
 
 import Patch
@@ -105,6 +107,7 @@ class TTYDContext(CommonContext):
     slot_data: dict | None = {}
     checked_locations = set()
     previous_room = None
+    death_sent: bool = False
 
     def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
@@ -122,12 +125,18 @@ class TTYDContext(CommonContext):
             self.slot = args["slot"]
             self.slot_data = args["slot_data"]
             self.team = args["team"]
+            if "death_link" in args["slot_data"]:
+                Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
         elif cmd == "Retrieved":
             if "keys" not in args:
                 logger.warning(f"invalid Retrieved packet to TTYDClient: {args}")
                 return
         elif cmd == "RoomInfo":
             self.seed_name = args["seed_name"]
+
+    def on_deathlink(self, data: typing.Dict[str, typing.Any]) -> None:
+        super().on_deathlink(data)
+        trigger_death(self)
 
     async def disconnect(self, allow_autoreconnect: bool = False):
         await super().disconnect()
@@ -184,6 +193,13 @@ class TTYDContext(CommonContext):
         except Exception as e:
             logger.error(traceback.format_exc())
 
+    async def check_death(self):
+        if dolphin.read_byte(0x80003240) == 1:
+            dolphin.write_byte(0x80003240, 0)
+            if not self.death_sent:
+                await self.send_death(self.player_names[self.slot] + " had no life shrooms.")
+            self.death_sent = False
+
     def save_loaded(self) -> bool:
         value = dolphin.read_byte(0x80003228)
         return value > 0
@@ -231,6 +247,9 @@ async def ttyd_sync_task(ctx: TTYDContext):
                             await asyncio.sleep(3)
                             continue
                         ctx.seed_verified = True
+                        logger.info("ROM Seed verified successfully.")
+                    if "DeathLink" in ctx.tags:
+                        await ctx.check_death()
                     if not ctx.save_loaded():
                         await asyncio.sleep(0.5)
                         continue
@@ -246,8 +265,15 @@ async def ttyd_sync_task(ctx: TTYDContext):
                         }])
                     await ctx.receive_items()
                     await ctx.check_ttyd_locations()
-                    if not ctx.finished_game and gsw_check(1708) >= 18:
-                        await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
+                    if ctx.slot_data["goal"] == 0: # Shadow Queen
+                        if not ctx.finished_game and gsw_check(1708) >= 18:
+                            await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
+                    elif ctx.slot_data["goal"] == 1: # Crystal Stars
+                        if not ctx.finished_game and dolphin.read_byte(0x8000323B) >= ctx.slot_data["goal_stars"]:
+                            await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
+                    else:
+                        if not ctx.finished_game and gswf_check(5085):
+                            await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
                     await asyncio.sleep(.5)
                 except Exception as e:
                     logger.info(traceback.format_exc())
@@ -276,6 +302,11 @@ async def ttyd_sync_task(ctx: TTYDContext):
                 await ctx.disconnect()
                 await asyncio.sleep(3)
                 continue
+
+def trigger_death(ctx: TTYDContext):
+    if ctx.slot is not None and dolphin.is_hooked() and ctx.dolphin_connected:
+        ctx.death_sent = True
+        dolphin.write_byte(0x8000323F, 1)
 
 
 def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):

@@ -203,8 +203,7 @@ def create_items(world: 'GSTLAWorld', player: int):
         sum_locations -= 1
     summon_classification = None
     if "Summon Hunt" in world.goal_conditions:
-        # summon_classification = ItemClassification.progression_deprioritized_skip_balancing
-        summon_classification = ItemClassification.progression_skip_balancing
+        summon_classification = ItemClassification.progression_deprioritized_skip_balancing
     for item in summon_list:
         #Ignore summons that are obtained by gaining X djinn
         if item.id < 3856:
@@ -289,6 +288,13 @@ def create_items(world: 'GSTLAWorld', player: int):
 
     #We guarentee a number of filler items when item shuffle all is on, it adds a hefty amount of hidden locations that do not support having a mimic and fail generation.
     #On repeated generations it results into 65-70 mimics failing to be placed, otherwise it works fine.
+    if world.options.trap_chance > 0 and world.options.mimic_trap_weight > 0:
+        for i in range(40):
+            item = get_filler_item(world, False)
+            ap_item = create_item_direct(item, player)
+            world.multiworld.itempool.append(ap_item)
+            sum_locations -= 1
+
     if world.options.item_shuffle > 2 and world.options.trap_chance > 0 and world.options.mimic_trap_weight > 0:
         for i in range(60):
             item = get_filler_item(world, False)

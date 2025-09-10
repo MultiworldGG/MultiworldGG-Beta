@@ -208,3 +208,13 @@ minecraft_versions.json
 .LSOverride
 Thumbs.db
 [Dd]esktop.ini
+
+# Sprites
+data/sprites/remote/*.zspr
+
+# SMO
+/atmosphere
+
+# gzDoom
+gzdoom/
+gzdoom/cache/

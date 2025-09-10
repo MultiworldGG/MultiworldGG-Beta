@@ -20,6 +20,7 @@ Currently, the following games are supported:
 * A Hat in Time
 * Animal Well
 * Ape Escape
+* Archipela-Go!
 * A Short Hike
 * Aquaria
 * Archipidle
@@ -31,7 +32,7 @@ Currently, the following games are supported:
 * Bumper Stickers
 * Candy Box 2
 * Cat Quest
-* Celeste
+* Celeste (+ Open World)
 * Celeste 64
 * Chained Echoes
 * Chatipelago
@@ -59,7 +60,6 @@ Currently, the following games are supported:
 * Doom (1993)
 * Doom II
 * Doronko Wanko
-* Dungeon Crawler
 * EarthBound
 * Ender Lilies
 * Factorio (+SAWS)
@@ -68,6 +68,7 @@ Currently, the following games are supported:
 * Final Fantasy IV: Free Enterprise
 * Final Fantasy Mystic Quest
 * Final Fantasy Tactics Advance
+* Frogmonster
 * Getting Over It
 * Golden Sun: The Lost Age
 * GZDoom
@@ -82,6 +83,7 @@ Currently, the following games are supported:
 * Inscryption
 * Jak and Daxter: The Precursor Legacy
 * Jigsaw Puzzles
+* Kindergarten 2
 * Kingdom Hearts
 * Kingdom Hearts II
 * Kirby's Dream Land 3

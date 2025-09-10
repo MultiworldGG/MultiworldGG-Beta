@@ -6,18 +6,18 @@ import os
 import subprocess
 import time
 import typing
-from asyncio import StreamReader, StreamWriter
-from typing import List
-
 import Utils
+
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from Utils import async_start
-from CommonClient import CommonContext, server_loop, gui_enabled, console_loop, ClientCommandProcessor, logger, \
+from CommonClient import CommonContext, server_loop, gui_enabled, ClientCommandProcessor, logger, \
     get_base_parser
 
 from .Items import item_game_ids
 from .Locations import location_ids
 from . import Locations, Rom
+
+from settings import get_settings
 
 SYSTEM_MESSAGE_ID = 0
 
@@ -121,18 +121,35 @@ class ZeldaContext(CommonContext):
                 msg = self.raw_text_parser(copy.deepcopy(args["data"]))
                 self._set_message(msg, item.item)
 
-    # def run_gui(self):
-    #     from Gui import MultiMDApp
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+    """
+    Launch the client
+    """
+    logging.getLogger("ZeldaClient")
 
-    #     class ZeldaManager(MultiMDApp):
-    #         logging_pairs = [
-    #             ("Client", "Archipelago")
-    #         ]
-    #         base_title = apname + " Zelda 1 Client"
+    async def run_game(romfile: str) -> None:
+        auto_start = typing.cast(typing.Union[bool, str],
+                                 Utils.get_options()["tloz_options"].get("rom_start", True))
+        if auto_start is True:
+            import webbrowser
+            webbrowser.open(romfile)
+        elif isinstance(auto_start, str) and os.path.isfile(auto_start):
+            subprocess.Popen([auto_start, romfile],
+                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    #     self.ui = ZeldaManager(self)
-    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    async def main():
+        ctx = ZeldaContext(server_address, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
+        ctx.ui.base_title = apname + " | The Legend of Zelda"
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        await ctx.server_auth()
 
 def get_payload(ctx: ZeldaContext):
     current_time = time.time()
@@ -192,6 +209,15 @@ async def parse_locations(locations_array, ctx: ZeldaContext, force: bool, zone=
         location = None
         for location in ctx.missing_locations:
             location_name = ctx.location_names.lookup_in_game(location)
+        if patch_file:
+            import Patch
+            logging.info("Patch file was supplied. Creating nes rom..")
+            meta, romfile = Patch.create_rom_file(patch_file)
+            if "server" in meta and not server_address:
+                # Only use metadata server if no server_address was provided
+                ctx.server_address = meta["server"]
+            logging.info(f"Wrote rom file to {romfile}")
+            async_start(run_game(romfile))
 
             if location_name in Locations.overworld_locations and zone == "overworld":
                 status = locations_array[Locations.major_location_offsets[location_name]]
@@ -248,7 +274,8 @@ async def parse_locations(locations_array, ctx: ZeldaContext, force: bool, zone=
                  "locations": locations_checked}
             ])
 
-
+            current_item_name = ctx.item_names.lookup_in_game(item, ctx.game)
+        await ctx.shutdown()
 async def nes_sync_task(ctx: ZeldaContext):
     logger.info("Starting nes connector. Use /nes for status information")
     while not ctx.exit_event.is_set():
@@ -338,15 +365,16 @@ async def nes_sync_task(ctx: ZeldaContext):
                 continue
 
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
-    """
-    Launch the client
-    """
-    logging.getLogger("ZeldaClient")
+def main(*launcher_args: str):
+    # Text Mode to use !hint and such with games that have no text entry
+    Utils.init_logging("ZeldaClient")
+
+    global DISPLAY_MSGS
+    DISPLAY_MSGS = get_settings()["tloz_options"]["display_msgs"]
 
     async def run_game(romfile: str) -> None:
         auto_start = typing.cast(typing.Union[bool, str],
-                                 Utils.get_options()["tloz_options"].get("rom_start", True))
+                                 get_settings()["tloz_options"].get("rom_start", True))
         if auto_start is True:
             import webbrowser
             webbrowser.open(romfile)
@@ -355,33 +383,26 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
                              stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     async def main():
-        ctx = ZeldaContext(server_address, password, ready_callback, error_callback)
-        if ctx._can_takeover_existing_gui():
-            await ctx._takeover_existing_gui() 
-        else:
-            logger.critical("Client did not launch properly, exiting.")
-            if error_callback:
-                error_callback()
-            return
+        parser = get_base_parser()
+        parser.add_argument('diff_file', default="", type=str, nargs="?",
+                            help='Path to a MultiworldGG Binary Patch file')
+        args = parser.parse_args(launcher_args)
 
-        ctx.ui.base_title = apname + " | The Legend of Zelda"
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
-        await ctx.server_auth()
-
-        if patch_file:
+        if args.diff_file:
             import Patch
             logging.info("Patch file was supplied. Creating nes rom..")
-            meta, romfile = Patch.create_rom_file(patch_file)
-            if "server" in meta and not server_address:
-                # Only use metadata server if no server_address was provided
-                ctx.server_address = meta["server"]
+            meta, romfile = Patch.create_rom_file(args.diff_file)
+            if "server" in meta:
+                args.connect = meta["server"]
             logging.info(f"Wrote rom file to {romfile}")
             async_start(run_game(romfile))
-
+        ctx = ZeldaContext(args.connect, args.password)
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        if gui_enabled:
+            ctx.run_gui()
+        ctx.run_cli()
         ctx.nes_sync_task = asyncio.create_task(nes_sync_task(ctx), name="NES Sync")
-
-        await ctx.exit_event.wait()
-        ctx.server_address = None
+        self.bonus_items.clear()
 
         await ctx.shutdown()
 

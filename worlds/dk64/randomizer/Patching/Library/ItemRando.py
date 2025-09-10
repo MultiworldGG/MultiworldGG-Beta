@@ -6,35 +6,55 @@ from randomizer.Enums.Items import Items
 from randomizer.Enums.Types import Types
 from randomizer.Enums.Locations import Locations
 
-IceTrapItems = [
-    Items.IceTrapBubble,
-    Items.IceTrapReverse,
-    Items.IceTrapSlow,
-    Items.IceTrapBubbleBean,
-    Items.IceTrapReverseBean,
-    Items.IceTrapSlowBean,
-    Items.IceTrapBubbleKey,
-    Items.IceTrapReverseKey,
-    Items.IceTrapSlowKey,
-    Items.IceTrapDisableA,
-    Items.IceTrapDisableB,
-    Items.IceTrapDisableZ,
-    Items.IceTrapDisableCU,
-    Items.IceTrapDisableABean,
-    Items.IceTrapDisableBBean,
-    Items.IceTrapDisableZBean,
-    Items.IceTrapDisableCUBean,
-    Items.IceTrapDisableAKey,
-    Items.IceTrapDisableBKey,
-    Items.IceTrapDisableZKey,
-    Items.IceTrapDisableCUKey,
-]
+IceTrapMasks = {
+    Items.IceTrapBubble: Types.Banana,
+    Items.IceTrapReverse: Types.Banana,
+    Items.IceTrapSlow: Types.Banana,
+    Items.IceTrapBubbleBean: Types.Bean,
+    Items.IceTrapReverseBean: Types.Bean,
+    Items.IceTrapSlowBean: Types.Bean,
+    Items.IceTrapBubbleKey: Types.Key,
+    Items.IceTrapReverseKey: Types.Key,
+    Items.IceTrapSlowKey: Types.Key,
+    Items.IceTrapDisableA: Types.Banana,
+    Items.IceTrapDisableABean: Types.Bean,
+    Items.IceTrapDisableAKey: Types.Key,
+    Items.IceTrapDisableB: Types.Banana,
+    Items.IceTrapDisableBBean: Types.Bean,
+    Items.IceTrapDisableBKey: Types.Key,
+    Items.IceTrapDisableZ: Types.Banana,
+    Items.IceTrapDisableZBean: Types.Bean,
+    Items.IceTrapDisableZKey: Types.Key,
+    Items.IceTrapDisableCU: Types.Banana,
+    Items.IceTrapDisableCUBean: Types.Bean,
+    Items.IceTrapDisableCUKey: Types.Key,
+    Items.IceTrapGetOutGB: Types.Banana,
+    Items.IceTrapGetOutBean: Types.Bean,
+    Items.IceTrapGetOutKey: Types.Key,
+    Items.IceTrapDryGB: Types.Banana,
+    Items.IceTrapDryBean: Types.Bean,
+    Items.IceTrapDryKey: Types.Key,
+    Items.IceTrapFlipGB: Types.Banana,
+    Items.IceTrapFlipBean: Types.Bean,
+    Items.IceTrapFlipKey: Types.Key,
+    Items.IceTrapBubbleFairy: Types.Fairy,
+    Items.IceTrapReverseFairy: Types.Fairy,
+    Items.IceTrapSlowFairy: Types.Fairy,
+    Items.IceTrapDisableAFairy: Types.Fairy,
+    Items.IceTrapDisableBFairy: Types.Fairy,
+    Items.IceTrapDisableZFairy: Types.Fairy,
+    Items.IceTrapDisableCUFairy: Types.Fairy,
+    Items.IceTrapGetOutFairy: Types.Fairy,
+    Items.IceTrapDryFairy: Types.Fairy,
+    Items.IceTrapFlipFairy: Types.Fairy,
+}
+IceTrapMaskIndexes = [Types.Banana, Types.Bean, Types.Key, Types.Fairy]
 
 
 class CustomActors(IntEnum):
     """Custom Actors Enum."""
 
-    NintendoCoin = 0x8000  # Starts at 0x8000
+    NintendoCoin = 345
     RarewareCoin = auto()
     Null = auto()
     PotionDK = auto()
@@ -53,9 +73,9 @@ class CustomActors(IntEnum):
     Bean = auto()
     Pearl = auto()
     Fairy = auto()
-    IceTrapBubble = auto()
-    IceTrapReverse = auto()
-    IceTrapSlow = auto()
+    IceTrapGB = auto()
+    IceTrapBean = auto()
+    IceTrapKey = auto()
     Medal = auto()
     JetpacItemOverlay = auto()
     CrankyItem = auto()
@@ -71,18 +91,7 @@ class CustomActors(IntEnum):
     HintItemTiny = auto()
     HintItemChunky = auto()
     ArchipelagoItem = auto()
-    IceTrapDisableAGB = auto()
-    IceTrapDisableBGB = auto()
-    IceTrapDisableZGB = auto()
-    IceTrapDisableCUGB = auto()
-    IceTrapDisableABean = auto()
-    IceTrapDisableBBean = auto()
-    IceTrapDisableZBean = auto()
-    IceTrapDisableCUBean = auto()
-    IceTrapDisableAKey = auto()
-    IceTrapDisableBKey = auto()
-    IceTrapDisableZKey = auto()
-    IceTrapDisableCUKey = auto()
+    IceTrapFairy = auto()
 
 
 class GraphicOverlay(IntEnum):
@@ -261,6 +270,114 @@ class NoBuyText(IntEnum):
     kong = auto()
 
 
+class TrackerItems(IntEnum):
+    """Tracker Items Enum."""
+
+    COCONUT = 0
+    BONGOS = auto()
+    GRAB = auto()
+    STRONG = auto()
+    BLAST = auto()
+    PEANUT = auto()
+    GUITAR = auto()
+    CHARGE = auto()
+    ROCKET = auto()
+    SPRING = auto()
+    GRAPE = auto()
+    TROMBONE = auto()
+    OSTAND = auto()
+    OSPRINT = auto()
+    BALLOON = auto()
+    FEATHER = auto()
+    SAX = auto()
+    PTT = auto()
+    MINI = auto()
+    MONKEYPORT = auto()
+    PINEAPPLE = auto()
+    TRIANGLE = auto()
+    PUNCH = auto()
+    HUNKY = auto()
+    GONE = auto()
+    SLAM = auto()
+    SLAM_HAS = auto()
+    HOMING = auto()
+    SNIPER = auto()
+    AMMOBELT = auto()
+    INSTRUMENT_UPG = auto()
+    DIVE = auto()
+    ORANGE = auto()
+    BARREL = auto()
+    VINE = auto()
+    CAMERA = auto()
+    SHOCKWAVE = auto()
+    KEY1 = auto()
+    KEY2 = auto()
+    KEY3 = auto()
+    KEY4 = auto()
+    KEY5 = auto()
+    KEY6 = auto()
+    KEY7 = auto()
+    KEY8 = auto()
+    MELON_2 = auto()
+    MELON_3 = auto()
+    INSUPG_1 = auto()
+    INSUPG_2 = auto()
+    BELT_1 = auto()
+    BELT_2 = auto()
+    CRANKY = auto()
+    FUNKY = auto()
+    CANDY = auto()
+    SNIDE = auto()
+    CLIMB = auto()
+    TERMINATOR = auto()
+
+
+pregiven_item_order = [
+    Items.BaboonBlast,
+    Items.StrongKong,
+    Items.GorillaGrab,
+    Items.ChimpyCharge,
+    Items.RocketbarrelBoost,
+    Items.SimianSpring,
+    Items.Orangstand,
+    Items.BaboonBalloon,
+    Items.OrangstandSprint,
+    Items.MiniMonkey,
+    Items.PonyTailTwirl,
+    Items.Monkeyport,
+    Items.HunkyChunky,
+    Items.PrimatePunch,
+    Items.GorillaGone,
+    Items.ProgressiveSlam,
+    Items.ProgressiveSlam,
+    Items.ProgressiveSlam,
+    Items.Coconut,
+    Items.Peanut,
+    Items.Grape,
+    Items.Feather,
+    Items.Pineapple,
+    Items.Bongos,
+    Items.Guitar,
+    Items.Trombone,
+    Items.Saxophone,
+    Items.Triangle,
+    Items.ProgressiveAmmoBelt,
+    Items.ProgressiveAmmoBelt,
+    Items.HomingAmmo,
+    Items.SniperSight,
+    Items.ProgressiveInstrumentUpgrade,
+    Items.ProgressiveInstrumentUpgrade,
+    Items.ProgressiveInstrumentUpgrade,
+    Items.Swim,
+    Items.Oranges,
+    Items.Barrels,
+    Items.Vines,
+    Items.Camera,
+    Items.Shockwave,
+    Items.Climbing,
+]
+
+
 class ItemPlacementData:
     """Class to store information pertaining to writing Item Rando data."""
 
@@ -415,57 +532,18 @@ item_db = {
         seal_preview_text="\x04WEIRD MONKEY\x04",
     ),
     Types.FakeItem: ItemPlacementData(
-        model_index=[0x103, 0x103, 0x103, 0x127, 0x127, 0x127, 0x128, 0x128, 0x128, 0x103, 0x103, 0x103, 0x103, 0x127, 0x127, 0x127, 0x127, 0x128, 0x128, 0x128, 0x128],
-        model_two_index=[0x25D, 0x264, 0x265, 0x292, 0x293, 0x294, 0x295, 0x296, 0x297, 0x2A6, 0x299, 0x29A, 0x29B, 0x29C, 0x29D, 0x29E, 0x29F, 0x2A0, 0x2A1, 0x2A4, 0x2A5],
+        model_index=[0x103, 0x127, 0x128, 0x12B],
+        model_two_index=[0x25D, 0x264, 0x265, 0x299],
         actor_index=[
-            CustomActors.IceTrapBubble,
-            CustomActors.IceTrapReverse,
-            CustomActors.IceTrapSlow,
-            151,
-            152,
-            153,
-            154,
-            155,
-            157,
-            CustomActors.IceTrapDisableAGB,
-            CustomActors.IceTrapDisableBGB,
-            CustomActors.IceTrapDisableZGB,
-            CustomActors.IceTrapDisableCUGB,
-            CustomActors.IceTrapDisableABean,
-            CustomActors.IceTrapDisableBBean,
-            CustomActors.IceTrapDisableZBean,
-            CustomActors.IceTrapDisableCUBean,
-            CustomActors.IceTrapDisableAKey,
-            CustomActors.IceTrapDisableBKey,
-            CustomActors.IceTrapDisableZKey,
-            CustomActors.IceTrapDisableCUKey,
+            CustomActors.IceTrapGB,
+            CustomActors.IceTrapBean,
+            CustomActors.IceTrapKey,
+            CustomActors.IceTrapFairy,
         ],
-        arcade_reward_index=[ArcadeRewards.IceTrap] * (3 * 7),
-        jetpac_reward_index=[JetpacRewards.IceTrap] * (3 * 7),
-        overlay=[
-            GraphicOverlay.IceTrapBubble,
-            GraphicOverlay.IceTrapReverse,
-            GraphicOverlay.IceTrapSlow,
-            GraphicOverlay.IceTrapBubble,
-            GraphicOverlay.IceTrapReverse,
-            GraphicOverlay.IceTrapSlow,
-            GraphicOverlay.IceTrapBubble,
-            GraphicOverlay.IceTrapReverse,
-            GraphicOverlay.IceTrapSlow,
-            GraphicOverlay.IceTrapDisableA,
-            GraphicOverlay.IceTrapDisableB,
-            GraphicOverlay.IceTrapDisableZ,
-            GraphicOverlay.IceTrapDisableCU,
-            GraphicOverlay.IceTrapDisableA,
-            GraphicOverlay.IceTrapDisableB,
-            GraphicOverlay.IceTrapDisableZ,
-            GraphicOverlay.IceTrapDisableCU,
-            GraphicOverlay.IceTrapDisableA,
-            GraphicOverlay.IceTrapDisableB,
-            GraphicOverlay.IceTrapDisableZ,
-            GraphicOverlay.IceTrapDisableCU,
-        ],
-        index_getter=lambda item, flag, shared: IceTrapItems.index(item),
+        arcade_reward_index=[ArcadeRewards.IceTrap] * 4,
+        jetpac_reward_index=[JetpacRewards.IceTrap] * 4,
+        overlay=[GraphicOverlay.IceTrapBubble] * 4,
+        index_getter=lambda item, flag, shared: IceTrapMaskIndexes.index(IceTrapMasks[item]),
         preview_text="\x04GLODEN BANANE\x04",
         seal_preview_text="\x04BANANA OF FOOLS GOLD\x04",
     ),
@@ -713,31 +791,6 @@ def getPropFromItem(item: Items, item_type: Types, flag: int, shared: bool = Fal
     return getItemDBEntry(item_type).model_two_index[index]
 
 
-IceTrapMasks = {
-    Items.IceTrapBubble: Types.Banana,
-    Items.IceTrapReverse: Types.Banana,
-    Items.IceTrapSlow: Types.Banana,
-    Items.IceTrapBubbleBean: Types.Bean,
-    Items.IceTrapReverseBean: Types.Bean,
-    Items.IceTrapSlowBean: Types.Bean,
-    Items.IceTrapBubbleKey: Types.Key,
-    Items.IceTrapReverseKey: Types.Key,
-    Items.IceTrapSlowKey: Types.Key,
-    Items.IceTrapDisableA: Types.Banana,
-    Items.IceTrapDisableABean: Types.Bean,
-    Items.IceTrapDisableAKey: Types.Key,
-    Items.IceTrapDisableB: Types.Banana,
-    Items.IceTrapDisableBBean: Types.Bean,
-    Items.IceTrapDisableBKey: Types.Key,
-    Items.IceTrapDisableZ: Types.Banana,
-    Items.IceTrapDisableZBean: Types.Bean,
-    Items.IceTrapDisableZKey: Types.Key,
-    Items.IceTrapDisableCU: Types.Banana,
-    Items.IceTrapDisableCUBean: Types.Bean,
-    Items.IceTrapDisableCUKey: Types.Key,
-}
-
-
 def getModelMask(item: Items) -> Types:
     """Get the model mask for an ice trap."""
     return IceTrapMasks.get(item, Types.Banana)
@@ -868,6 +921,25 @@ item_shop_text_mapping = {
     Items.IceTrapDisableCU: (BuyText.ice_trap, NoBuyText.misc_item),
     Items.IceTrapDisableCUBean: (BuyText.ice_trap, NoBuyText.misc_item),
     Items.IceTrapDisableCUKey: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapGetOutGB: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapGetOutBean: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapGetOutKey: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapDryGB: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapDryBean: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapDryKey: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapFlipGB: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapFlipBean: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapFlipKey: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapBubbleFairy: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapReverseFairy: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapSlowFairy: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapDisableAFairy: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapDisableBFairy: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapDisableZFairy: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapDisableCUFairy: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapGetOutFairy: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapDryFairy: (BuyText.ice_trap, NoBuyText.misc_item),
+    Items.IceTrapFlipFairy: (BuyText.ice_trap, NoBuyText.misc_item),
     # Items not yet considered
     # Items.RainbowCoin: (BuyText.blueprint, NoBuyText.misc_item),
     # Items.JunkCrystal: (BuyText.blueprint, NoBuyText.misc_item),

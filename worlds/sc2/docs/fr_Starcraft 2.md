@@ -85,18 +85,18 @@ plus larges de les traverser sans être coincés dans des endroits étranges.
 
 ## Quels sont les *items* qui peuvent être dans le monde d'un autre joueur? 
 
-Par défaut, tous les *items* de *StarCraft 2 Archipelago* (voir la section précédente) peuvent être dans le monde d'un 
+Par défaut, tous les *items* de *StarCraft 2 MultiworldGG* (voir la section précédente) peuvent être dans le monde d'un 
 autre joueur.
-Consulter [*Advanced YAML Guide*](/tutorial/MultiworldGG/advanced_settings/en) pour savoir comment 
+Consulter [*Advanced YAML Guide*](/tutorial/Archipelago/advanced_settings/en) pour savoir comment 
 changer ça.
 
 ## Commandes du client qui sont uniques à ce jeu
 
-Les commandes qui suivent sont seulement disponibles uniquement pour le client de *StarCraft 2 Archipelago*.
-Vous pouvez les afficher en utilisant la commande `/help` dans le client de *StarCraft 2 Archipelago*.
+Les commandes qui suivent sont seulement disponibles uniquement pour le client de *StarCraft 2 MultiworldGG*.
+Vous pouvez les afficher en utilisant la commande `/help` dans le client de *StarCraft 2 MultiworldGG*.
 Toutes ces commandes affectent seulement le client où elles sont utilisées.
 
-* `/download_data` Télécharge les versions les plus récentes des fichiers pour jouer à *StarCraft 2 Archipelago*.
+* `/download_data` Télécharge les versions les plus récentes des fichiers pour jouer à *StarCraft 2 MultiworldGG*.
 Les fichiers existants vont être écrasés.
 * `/difficulty [difficulty]` Remplace la difficulté choisie pour le monde. 
     * Les options sont *casual*, *normal*, *hard*, et *brutal*.
@@ -112,10 +112,6 @@ supplémentaires données au début des missions, la capacité de contrôler les
 * `/disable_mission_check` Désactive les requit pour lancer les missions.
 Cette option a pour but de permettre de jouer en mode coopératif en permettant à un joueur de jouer à la prochaine 
 mission de la chaîne qu'un autre joueur est en train d'entamer.
-* `/play [mission_id]` Lance la mission correspondant à l'identifiant donné.
-* `/available` Affiche les missions qui sont présentement accessibles.
-* `/unfinished` Affiche les missions qui sont présentement accessibles et dont certains des objectifs permettant 
-l'accès à un *item* n'ont pas été accomplis.
 * `/set_path [path]` Permet de définir manuellement où *StarCraft 2* est installé ce qui est pertinent seulement si la 
 détection automatique de cette dernière échoue.
 

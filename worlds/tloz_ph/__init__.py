@@ -20,8 +20,8 @@ from .data.Constants import *
 from .data.Items import ITEMS_DATA
 from .data.Regions import REGIONS
 from .data.LogicPredicates import *
-from .data.Entrances import EntranceGroups, OPPOSITE_ENTRANCE_GROUPS, ENTRANCES
 from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+from .data.Entrances import EntranceGroups, OPPOSITE_ENTRANCE_GROUPS, ENTRANCES, entrance_id_to_region
 
 from .Client import PhantomHourglassClient  # Unused, but required to register with BizHawkClient
 
@@ -29,7 +29,6 @@ logger = logging.getLogger("Client")
 
 
 class PhantomHourglassWeb(WebWorld):
-    theme = "grass"
     display_name = "The Legend of Zelda: Phantom Hourglass"
     setup_en = Tutorial(
         "Phantom Hourglass Setup Guide",
@@ -57,6 +56,9 @@ class PhantomHourglassWeb(WebWorld):
     )
 
     tutorials = [setup_en, faq, tricks]
+    game = "The Legend of Zelda - Phantom Hourglass"
+    theme = "ocean"
+    option_groups = ph_option_groups
 
 
 # Adds a consistent count of items to pool, independent of how many are from locations
@@ -111,7 +113,7 @@ class PhantomHourglassWorld(World):
     igdb_id: int = IGDB_ID
     options_dataclass = PhantomHourglassOptions
     options: PhantomHourglassOptions
-    required_client_version = (0, 6, 1)
+    required_client_version = (0, 6, 3)
     web = PhantomHourglassWeb()
     topology_present = True
 
@@ -120,11 +122,14 @@ class PhantomHourglassWorld(World):
     location_name_to_id = build_location_name_to_id_dict()
     item_name_to_id = build_item_name_to_id_dict()
     item_name_groups = ITEM_GROUPS
-    origin_region_name = "mercay island"
+    origin_region_name = "mercay sw"
 
     glitches_item_name = "_UT_Glitched_logic"
     ut_can_gen_without_yaml = True
     location_id_to_alias: Dict[int, str]
+    tracker_world = {"map_page_folder": "tracker", "map_page_maps": "maps/maps.json",
+                     "map_page_locations": "locations/locations.json"}
+    found_entrances_datastorage_key = "ph_checked_entrances_{player}"
 
     def __init__(self, multiworld, player):
         super().__init__(multiworld, player)
@@ -138,9 +143,13 @@ class PhantomHourglassWorld(World):
         self.ut_locations_to_exclude = set()
         self.extra_filler_items = []
         self.excluded_dungeons = []
+        self.ut_pairings = {}
 
         self.entrances = {}
         self.er_placement_state = None
+        self.ut_connected_entrances = set()
+        self.disconnected_entrances_map = {}
+        self.disconnected_exits_map = {}
 
     def generate_early(self):
         re_gen_passthrough = getattr(self.multiworld, "re_gen_passthrough", {})
@@ -158,9 +167,13 @@ class PhantomHourglassWorld(World):
             # Set randomized data that effects exclusions etc
             self.required_dungeons = slot_data["required_dungeons"]
             self.boss_reward_items_pool = slot_data["boss_reward_items_pool"]
+            self.ut_pairings = slot_data.get("er_pairings", {})
 
         else:
             self.pick_required_dungeons()
+            if self.options.shuffle_dungeon_entrances:
+                self.options.dungeon_shortcuts.value = 0
+
         self.restrict_non_local_items()
 
     def restrict_non_local_items(self):
@@ -323,11 +336,17 @@ class PhantomHourglassWorld(World):
         self.create_event("post tof", "_beat_tof")
         self.create_event("post toc", "_beat_toc")
         self.create_event("post tow", "_beat_tow")
+        self.create_event("post gt", "_beat_gt")
         self.create_event("spawn pirate ambush", "_beat_ghost_ship")
         # Farmable minigame events
         self.create_event("bannan cannon game", "_can_play_cannon_game")
         self.create_event("harrow dig", "_can_play_harrow")
         self.create_event("ds race", "_can_play_goron_race")
+        self.create_event("totok b1 phantom", "_can_farm_totok")
+        # Shop stuff
+        self.create_event("mercay treasure teller", "_has_treasure_teller")
+        # Switch states etc
+        self.create_event("bremeur kings key", "_ruins_lower_water")
         # Goal
         self.create_event("goal", "_beaten_game")
 
@@ -359,22 +378,40 @@ class PhantomHourglassWorld(World):
             self.multiworld.get_location(name, self.player).progress_type = LocationProgressType.EXCLUDED
 
     def connect_entrances(self) -> None:
-        do_er = False  # Sneaky beta setting
+        do_er = True   # Sneaky beta setting
         coupled = True
+        full_er = False  # dev setting!
         if do_er:
+
+            # Filter entrances to disconnect by yaml settings
+            randomized_entrances = []
+            if full_er:  # Randomize everything, dev setting
+                randomized_entrances = [e for e in self.entrances.values()]
+            else:
+                if self.options.shuffle_dungeon_entrances:
+                    randomized_entrances += [e for e in self.entrances.values() if e.randomization_group & EntranceGroups.AREA_MASK == EntranceGroups.DUNGEON_ENTRANCE]
+                if self.options.shuffle_island_entrances:
+                    randomized_entrances += [e for e in self.entrances.values() if e.randomization_group & EntranceGroups.AREA_MASK == EntranceGroups.ISLAND]
+
             # Disconnect entrances to shuffle
-            for entrance in self.entrances.values():
+            for entrance in randomized_entrances:
                 entrance_rando.disconnect_entrance_for_randomization(entrance)
                 # print(f"disconnected {entrance.name}, parent {entrance.parent_region}, child {entrance.connected_region}, group {entrance.randomization_group}")
 
-            def get_target_groups(group: int) -> list[int]:
-                direction = group & EntranceGroups.DIRECTION_MASK
-                area = group & EntranceGroups.AREA_MASK
-                return list({OPPOSITE_ENTRANCE_GROUPS[direction] | area, area, OPPOSITE_ENTRANCE_GROUPS[direction]})
+            def get_target_groups(g: int) -> list[int]:
+                direction = g & EntranceGroups.DIRECTION_MASK
+                area = g & EntranceGroups.AREA_MASK
+                return list({OPPOSITE_ENTRANCE_GROUPS[direction] | area})
 
-            groups = {direction | area << 3: get_target_groups(direction | area << 3) for direction in range(0, 5) for area in range(0, 11)}
-
-            self.er_placement_state = entrance_rando.randomize_entrances(self, coupled, groups)
+            groups = {direction | area << 3: get_target_groups(direction | area << 3) for direction in range(0, 7) for area in range(0, 11)}
+            # for i in groups.items():
+            #     print(f"\t{i}")
+            # Manually connect entrances if UT
+            if getattr(self.multiworld, "generation_is_fake", False):
+                pass
+            # Do ER!
+            else:
+                self.er_placement_state = entrance_rando.randomize_entrances(self, coupled, groups)
 
     def set_rules(self):
         create_connections(self.multiworld, self.player, self.origin_region_name, self.options)
@@ -391,8 +428,6 @@ class PhantomHourglassWorld(World):
             if name in ["Sand of Hours", "Heart Container"]:
                 classification = ItemClassification.useful
         if name == "Heart Container" and self.options.ph_heart_time == 0:
-            classification = ItemClassification.useful
-        if name == "Phantom Hourglass" and self.options.ph_time_logic.value == 5:
             classification = ItemClassification.useful
 
         ap_code = self.item_name_to_id[name]
@@ -454,6 +489,12 @@ class PhantomHourglassWorld(World):
             if item_name == "Triforce Crest" and not self.options.randomize_triforce_crest:
                 filler_item_count += 1
                 continue
+            # Goal locations are for UT, and should not have actual items
+            if "GOAL" in item_name:
+                forced_item = self.create_item(item_name)
+                self.multiworld.get_location(loc_name, self.player).place_locked_item(forced_item)
+                continue
+
             if (item_name in ["Treasure", "Ship Part", "Nothing!", "Potion", "Red Potion", "Purple Potion",
                               "Yellow Potion", "Power Gem", "Wisdom Gem", "Courage Gem", "Heart Container",
                               "Bombs (Progressive)", "Bow (Progressive)", "Bombchus (Progressive)",
@@ -595,7 +636,6 @@ class PhantomHourglassWorld(World):
         # before anything else.
         for dung_name in DUNGEON_NAMES:
             # Build a list of locations in this dungeon
-            print(f"Pre-filling {dung_name}")
             dungeon_location_names = [name for name, loc in LOCATIONS_DATA.items()
                                       if "dungeon" in loc and loc["dungeon"] == dung_name]
             dungeon_locations = [loc for loc in self.multiworld.get_locations(self.player)
@@ -652,7 +692,7 @@ class PhantomHourglassWorld(World):
             # Beedle randomization
             "randomize_masked_beedle", "randomize_beedle_membership",
             # World Settings
-            "fog_settings", "skip_ocean_fights",
+            "fog_settings", "skip_ocean_fights", "dungeon_shortcuts",
             # Spirit Packs
             "spirit_gem_packs", "additional_spirit_gems",
             # Hint settings
@@ -661,6 +701,8 @@ class PhantomHourglassWorld(World):
             "ph_time_logic", "ph_starting_time", "ph_time_increment", "ph_heart_time", "ph_required",
             # Cosmetic
             "additional_metal_names",
+            # ER
+            "shuffle_dungeon_entrances", "shuffle_island_entrances",
             # Deathlink
             "death_link"
         ]
@@ -679,7 +721,7 @@ class PhantomHourglassWorld(World):
         pairings = {}
         if self.er_placement_state:
             for e1, e2 in self.er_placement_state.pairings:
-                pairings[ENTRANCES[e1]["id"]] = ENTRANCES[e2]["id"]
+                pairings[ENTRANCES[e1].id] = ENTRANCES[e2].id
         slot_data["er_pairings"] = pairings
 
         return slot_data
@@ -703,3 +745,36 @@ class PhantomHourglassWorld(World):
     @staticmethod
     def interpret_slot_data(slot_data: dict[str, any]):
         return slot_data
+
+    # UT reconnect entrances
+    def reconnect_found_entrances(self, key, stored_data):
+        print(f"UT Tried to defer entrances! key {key}")
+
+        # Create a lookup for disconnected entrances if you haven't already.
+        if not self.disconnected_entrances_map:
+            entrance_name_to_id = {name: e.id for name, e in ENTRANCES.items()}
+            self.disconnected_entrances_map = {entrance_name_to_id[e.name]: e for region in self.get_regions()
+                                               for e in region.entrances if not e.parent_region}
+            self.disconnected_exits_map = {entrance_name_to_id[e.name]: e for region in self.get_regions()
+                                               for e in region.exits if not e.connected_region}
+
+        if stored_data:
+            new_entrances = set(stored_data) - self.ut_connected_entrances
+            print(f"new entrances: {new_entrances}")
+
+            for i in new_entrances:
+                pairing = self.ut_pairings.get(str(i), None)
+                if pairing is not None:
+                    dangling_entrance = self.disconnected_entrances_map.get(i, None)
+                    dangling_exit = self.disconnected_exits_map.get(i, None)
+
+                    entrance_region = self.get_region(entrance_id_to_region[i])
+                    exit_region = self.get_region(entrance_id_to_region[pairing])
+
+                    exit_region.connect(entrance_region)
+                    dangling_exit.connect(entrance_region)
+                    dangling_entrance.connect(exit_region)
+
+                    self.disconnected_entrances_map.pop(i)
+            self.ut_connected_entrances |= new_entrances
+

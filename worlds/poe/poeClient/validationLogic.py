@@ -31,6 +31,10 @@ logger = logging.getLogger("poeClient.validationLogic")
 logger.setLevel(logging.DEBUG)
 
 PASSIVE_POINT_ITEM_ID = Items.get_by_name("Progressive passive point")["id"]
+TIMEOUT_FOR_TTS_GENERATION_ON_NEW_ZONE = 2.5
+INVALID_STATE_TTS_ERROR_MESSAGE = "Invalid state ... "
+INVALID_STATE_CHAT_ERROR_MESSAGE = "Invalid state"
+
 
 last_zone = None
 # Timeouts (seconds)
@@ -47,7 +51,7 @@ async def when_enter_new_zone(ctx: "PathOfExileContext", line: str):
     found_items_list: list[Locations.LocationDict] = []
     if ctx.character_name is None or ctx.character_name == "":
         logger.info("Character name is not set, cannot validate.")
-        await asyncio.wait_for(send_multiple_poe_text(["/itemfilter __invalid", "Character name is not set, cannot validate."]), TIMEOUT)
+        await asyncio.wait_for(send_multiple_poe_text([f"/itemfilter {itemFilter.INVALID_FILTER_NAME}", "Character name is not set, cannot validate."]), TIMEOUT)
         return
     try:
         char = (await asyncio.wait_for(gggAPI.get_character(ctx.character_name),TIMEOUT)).character
@@ -59,7 +63,7 @@ async def when_enter_new_zone(ctx: "PathOfExileContext", line: str):
         logger.error(f"Error fetching character {ctx.character_name}: {e}\nTraceback:\n{tb_str}")
         raise
 
-    logic_errors = await validate_and_update(ctx, char, found_items_list)
+    logic_errors = await validate_and_update(ctx, char, found_items_list) # this updates the filter if needed.
     victory_task = check_for_victory(ctx, zone, char)
 
     # THIS IS FOR DEBUGGING PURPOSES, I'm tired of respeccing my character to test the logic, lol
@@ -68,17 +72,17 @@ async def when_enter_new_zone(ctx: "PathOfExileContext", line: str):
 
     if not is_char_in_logic:
         error_msg = ", and ".join(logic_errors) if logic_errors else "unknown errors"
-        await asyncio.wait_for(send_multiple_poe_text(["/itemfilter __invalid", f"@{ctx.character_name} you are out of logic: {error_msg}"]), TIMEOUT)
+        await asyncio.wait_for(send_multiple_poe_text([f"/itemfilter {itemFilter.INVALID_FILTER_NAME}", f"@{ctx.character_name} {INVALID_STATE_CHAT_ERROR_MESSAGE}: {error_msg}"]), TIMEOUT)
     elif victory_task:
         pass # callback handles victory and chat sending
     else:
-        await asyncio.wait_for(inputHelper.important_send_poe_text("/itemfilter __ap", retry_times=40, retry_delay=0.5), TIMEOUT)
+        await asyncio.wait_for(inputHelper.important_send_poe_text(f"/itemfilter {itemFilter.AP_FILTER_NAME}", retry_times=9, retry_delay=0.5), TIMEOUT)
 
 def check_for_victory(ctx: "PathOfExileContext", zone: str, char: gggAPI.Character) -> asyncio.Task | None:
     goal = ctx.game_options.get("goal", -1)
     return_task: asyncio.Task | None = None
     if goal == -1:
-        logger.info("ERROR: No goal set in client options.")
+        logger.error("No goal set in client options.")
         raise ValueError("No goal set in client options.")
 
     def send_goal():
@@ -158,7 +162,7 @@ async def validate_and_update(ctx: "PathOfExileContext", char, found_items_list:
         logger.info("Character name is not set, cannot validate.")
         validate_errors.append("Character name is not set, cannot validate.")
         return validate_errors
-    # defenseive programming end.
+    # defensive programming end.
 
     total_received_items = [
         item for network_item in ctx.items_received
@@ -194,16 +198,16 @@ async def validate_and_update(ctx: "PathOfExileContext", char, found_items_list:
     validate_errors.extend(validate_passive_points(char, ctx, total_received_items, passives))
     is_char_in_logic = True if len(validate_errors) == 0 else False
 
-    if len(location_ids_to_check) > 0:
+    if len(location_ids_to_check) > 0 and is_char_in_logic:
         logger.debug(f"[DEBUG] Locations to check: {location_ids_to_check}")
         location_ids_to_check = await ctx.check_locations(location_ids_to_check)
     else:
         logger.debug("[DEBUG] No locations to check, skipping check_locations.")
 
     if not is_char_in_logic:
-        await update_filter_to_invalid_char_filter(errors=validate_errors, enable_tts=ctx.tts_options.enable, tts_speed=ctx.tts_options.speed)
+        await update_filter_to_invalid_char_filter(errors=validate_errors, enable_tts=ctx.filter_options.tts_enabled, tts_speed=ctx.filter_options.tts_speed)
     else:
-        itemFilter.update_item_filter_from_context(ctx, recently_checked_locations=location_ids_to_check)
+        itemFilter.update_item_filter_from_context(ctx, exclude_locations=location_ids_to_check)
     return validate_errors
 
 
@@ -234,7 +238,7 @@ def validate_char_equipment(character: gggAPI.Character, ctx: "PathOfExileContex
     if not total_received_items:
         logger.error("No valid items found in total_received_items. Are you sure the item table is correct?")
         return ["No items received from the server... are you sure you are connected?"]
-
+    total_received_items_names = [i["name"] for i in total_received_items]
     simple_equipment_slots = ["BodyArmour","Amulet","Belt","Boots","Gloves","Helmet"]
 
     normal_flask_count = 0
@@ -243,7 +247,7 @@ def validate_char_equipment(character: gggAPI.Character, ctx: "PathOfExileContex
 
     # --------- VALIDATION LOGIC STARTS HERE ---------
 
-    if character.class_ not in [i["name"] for i in total_received_items]:
+    if character.class_ not in total_received_items_names:
         errors.append(f"Class {character.class_}")
 
     gucci_rarity_check = {}
@@ -254,36 +258,47 @@ def validate_char_equipment(character: gggAPI.Character, ctx: "PathOfExileContex
         # simple checks.
         for slot in simple_equipment_slots:
             if equipped_item.inventoryId == slot:
-                errors.append(rarity_check(total_received_items, rarity, slot))
+                errors.append(rarity_check(total_received_items_names, rarity, slot))
                 
         if equipped_item.inventoryId == "Ring":
-            errors.append(rarity_check(total_received_items, rarity, "Ring (left)"))
+            errors.append(rarity_check(total_received_items_names, rarity, "Ring (left)"))
         if equipped_item.inventoryId == "Ring2":
-            errors.append(rarity_check(total_received_items, rarity, "Ring (right)"))
+            errors.append(rarity_check(total_received_items_names, rarity, "Ring (right)"))
  #       if equipped_item.inventoryId == "Offhand":
  #           if equipped_item.baseType in Items.quiver_base_types:
- #               errors.append(rarity_check(total_received_items, rarity, "Quiver"))
+ #               errors.append(rarity_check(ctx, total_received_items, rarity, "Quiver"))
  #           else:
- #               errors.append(rarity_check(total_received_items, rarity, "Shield"))
+ #               errors.append(rarity_check(ctx, total_received_items, rarity, "Shield"))
         if equipped_item.inventoryId == "Weapon" or equipped_item.inventoryId == "Offhand":
             for prop in equipped_item.properties:
                 prop_name = prop.name
                 for weapon_base_type in Items.held_equipment_types:
                     if prop_name.lower().endswith(weapon_base_type.lower()):
-                        errors.append(rarity_check(total_received_items, rarity, weapon_base_type))
+                        errors.append(rarity_check(total_received_items_names, rarity, weapon_base_type))
 
         equipped_sockets = 0
         if equipped_item.socketedItems is not None:
             for socketed_item in equipped_item.socketedItems:
                 if socketed_item.support:
                     equipped_sockets += 1
-                if (socketed_item.baseType not in [i["name"] for i in total_received_items] and
-                        "eye jewel" not in socketed_item.baseType.lower()): # eye jewels are not tracked right now.
-                    errors.append(f"Socketed {socketed_item.baseType} in {equipped_item.inventoryId}")
+                if socketed_item.baseType not in total_received_items_names:
+                    if "eye jewel" in socketed_item.baseType.lower():
+                        continue     # eye jewels are not tracked right now.
+                    # Check for alternate gems
+                    elif socketed_item.baseType.startswith("Vaal "):
+                        if not "Vaal Gems" in total_received_items_names:
+                            errors.append(f"Socketed Vaal Gem {socketed_item.baseType} in {equipped_item.inventoryId} ")
+
+                    elif socketed_item.baseType in Items.alternate_gems:
+                        if not Items.alternate_gems[socketed_item.baseType].get("baseGem") in total_received_items_names:
+                            errors.append(f"Socketed Alternate Gem {socketed_item.baseType} in {equipped_item.inventoryId} ")
+
+                    else:
+                        errors.append(f"Socketed {socketed_item.baseType} in {equipped_item.inventoryId}")
 
         links = [i["name"] for i in total_received_items if i["name"] == f"Progressive max links - {equipped_item.inventoryId}"]
         if len(links) < equipped_sockets:
-            errors.append(f"Too many links for {equipped_item.baseType}")
+            errors.append(f"Too many supports linked in {equipped_item.baseType}")
 
         if equipped_item.inventoryId == "Flask":
             flask_rarity = equipped_item.rarity
@@ -295,15 +310,33 @@ def validate_char_equipment(character: gggAPI.Character, ctx: "PathOfExileContex
                 unique_flask_count += 1
                 
     # get count of items.name that match the progressive unlocks
-    if normal_flask_count > len([i["name"] for i in total_received_items if i["name"] == 'Progressive Normal Flask Unlock']):
+
+    normal_flasks_usable = len([i for i in total_received_items_names if i == 'Progressive Normal Flask'])
+    magic_flasks_usable = len([i for i in total_received_items_names if i == 'Progressive Magic Flask'])
+    unique_flask_usable = len([i for i in total_received_items_names if i == 'Progressive Unique Flask'])
+    
+    total_progressive_flasks_usable = len([i for i in total_received_items_names if i == 'Progressive Flask Unlock'])
+    normal_flasks_usable += min(total_progressive_flasks_usable, (5 - normal_flasks_usable))
+    total_progressive_flasks_usable -= normal_flasks_usable
+
+    magic_flasks_usable += min(total_progressive_flasks_usable, (5 - magic_flasks_usable))
+    total_progressive_flasks_usable -= magic_flasks_usable
+
+    unique_flask_usable += min(total_progressive_flasks_usable, (5 - unique_flask_usable))
+
+
+
+    if normal_flask_count > normal_flasks_usable:
         errors.append("Normal Flasks")
-    if magic_flask_count > len([i["name"] for i in total_received_items if i["name"] == 'Progressive Magic Flask Unlock']):
+    if magic_flask_count > magic_flasks_usable:
         errors.append("Magic Flasks")
-    if unique_flask_count > len([i["name"] for i in total_received_items if i["name"] == 'Progressive Unique Flask Unlock']):
+    if unique_flask_count > unique_flask_usable:
         errors.append("Unique Flasks")
 
     gucci_hobo_mode = ctx.game_options.get("gucciHobo", False)
-    if gucci_hobo_mode == 1 or gucci_hobo_mode == 2 or gucci_hobo_mode ==3:
+    if (gucci_hobo_mode == Options.GucciHoboMode.option_allow_one_slot_of_any_rarity or
+            gucci_hobo_mode == Options.GucciHoboMode.option_allow_one_slot_of_normal_rarity or
+            gucci_hobo_mode == Options.GucciHoboMode.option_no_non_unique_items):
         normal_gear = gucci_rarity_check.setdefault("Normal", 0)
         magic_gear = gucci_rarity_check.setdefault("Magic", 0)
         rare_gear = gucci_rarity_check.setdefault("Rare", 0)
@@ -321,22 +354,37 @@ def validate_char_equipment(character: gggAPI.Character, ctx: "PathOfExileContex
         logger.info("YOU ARE OUT OF LOGIC: " + ", ".join(errors))
         logger.info("YOU ARE OUT OF LOGIC: " + ", ".join(errors))
         logger.info("YOU ARE OUT OF LOGIC: " + ", ".join(errors))
+        logger.error("YOU ARE OUT OF LOGIC: " + ", ".join(errors))
     return errors
     
 
-def rarity_check(total_recieved_items, rarity: str, equipmentId: str) -> str | None:
+def rarity_check(total_received_items_names, rarity: str, equipment_id: str) -> str | None:
+    """
+    Checks if the character has the correct rarity of the given equipment.
+    Returns the item if the rarity is incorrect, otherwise returns None.
+    """
     valid = True
-    if rarity == "Unique":
-        valid = True if f"Unique {equipmentId}" in [i["name"] for i in total_recieved_items] else False
-    elif rarity == "Rare":
-        valid = True if f"Rare {equipmentId}" in [i["name"] for i in total_recieved_items] else False
-    elif rarity == "Magic":
-        valid = True if f"Magic {equipmentId}" in [i["name"] for i in total_recieved_items] else False
-    else:
-        valid = True if f"Normal {equipmentId}" in [i["name"] for i in total_recieved_items] else False
+    unlocked_rarity = set()
     
+    prog = len([i for i in total_received_items_names if i == f'Progressive {equipment_id}'])
+    unlocked_rarity.add("Unique") if prog >= 4 else None
+    unlocked_rarity.add("Rare") if prog >= 3 else None
+    unlocked_rarity.add("Magic") if prog >= 2 else None
+    unlocked_rarity.add("Normal") if prog >= 1 else None
+        
+    if rarity == "Unique":
+        valid = f"Unique {equipment_id}" in total_received_items_names or "Unique" in unlocked_rarity
+    elif rarity == "Rare":
+        valid = f"Rare {equipment_id}" in total_received_items_names or "Rare" in unlocked_rarity
+    elif rarity == "Magic":
+        valid = f"Magic {equipment_id}" in total_received_items_names or "Magic" in unlocked_rarity
+    else:
+        valid = f"Normal {equipment_id}" in total_received_items_names or "Normal" in unlocked_rarity
+
+       
+        
     if not valid:
-        return equipmentId
+        return equipment_id
     else: 
         return None
 
@@ -359,24 +407,32 @@ def rarity_check(total_recieved_items, rarity: str, equipmentId: str) -> str | N
 #    return True
 
 async def update_filter_to_invalid_char_filter(errors: list[str], enable_tts: bool = True, tts_speed: int = 250) -> None:
-
+    invalid_item_filter_string = ""
     if enable_tts:
         if len(errors) > 1:
-            error_text = " and ... ".join(errors)
+            error_text = "... and ... ".join(errors)
         else:
             error_text = errors[0]
         filename = f"{fileHelper.short_hash(error_text)}_{tts.WPM}.wav" # this could be a long text, so we use a hash
-        full_error_text = f"YOU ARE OUT OF LOGIC: {error_text}"
-        await tts.safe_tts_async(
-            text=full_error_text,
-            filename=itemFilter.filter_sounds_path / f"{filename}",
-            rate=tts_speed
-        )
-        invalid_item_filter_string = itemFilter.generate_invalid_item_filter_block(f"{itemFilter.filter_sounds_dir_name}/{filename}")
-        itemFilter.write_item_filter(item_filter=invalid_item_filter_string, item_filter_import=None, file_path=itemFilter.invalid_filter_file_path)
+        full_error_text = f"{INVALID_STATE_TTS_ERROR_MESSAGE} {error_text}"
+
+        try:
+            await asyncio.wait_for(tts.safe_tts_async(
+                text=full_error_text,
+                filename=itemFilter.poe_doc_path / itemFilter.TTS_FILTER_SOUNDS_DIR_NAME / f"{filename}",
+                rate=tts_speed
+            ), TIMEOUT_FOR_TTS_GENERATION_ON_NEW_ZONE)
+        except Exception as e:
+            logger.error(f"Error generating TTS for invalid character: {full_error_text}")
+            logger.error(''.join(traceback.format_exception(type(e), e, e.__traceback__)))
+            filename = None
+        if filename:
+            invalid_item_filter_string = itemFilter.generate_invalid_item_filter_block(f"{itemFilter.TTS_FILTER_SOUNDS_DIR_NAME}/{filename}")
+        else:
+            invalid_item_filter_string = itemFilter.generate_invalid_item_filter_block_without_sound()
     else:
         invalid_item_filter_string = itemFilter.generate_invalid_item_filter_block_without_sound()
-        itemFilter.write_item_filter(item_filter=invalid_item_filter_string, item_filter_import=None, file_path=itemFilter.invalid_filter_file_path)
+    itemFilter.write_item_filter(item_filter=invalid_item_filter_string, item_filter_import=None, file_path=(itemFilter.poe_doc_path / f"{itemFilter.INVALID_FILTER_NAME}.filter"))
 
 def get_held_item_names_ilvls_from_char(char: gggAPI.Character) -> list[tuple[str, int]]:
     """

@@ -62,7 +62,7 @@ from randomizer.Enums.Types import Types, BarrierItems
 from randomizer.Lists.Item import ItemList
 from randomizer.Enums.Maps import Maps
 from randomizer.Lists.Warps import BananaportVanilla
-from randomizer.Patching.Library.Generic import getProgHintBarrierItem, IsDDMSSelected
+from randomizer.Patching.Library.Generic import getProgHintBarrierItem, sumChecks, getCompletableBonuses, IsDDMSSelected
 from randomizer.Prices import AnyKongCanBuy, CanBuy
 from archipelago.Items import use_original_name_or_trap_name
 
@@ -109,6 +109,9 @@ class LogicVarHolder:
 
         # Archipelago really wants the number of locations to match the number of items. Keep track of how many locations we've made here
         self.location_pool_size = 0
+
+        self.bosses_beaten = 0
+        self.bonuses_beaten = 0
 
         self.startkong = self.settings.starting_kong
         # AGL
@@ -162,6 +165,7 @@ class LogicVarHolder:
         self.vines = self.settings.training_barrels == TrainingBarrels.normal
         self.swim = self.settings.training_barrels == TrainingBarrels.normal
         self.oranges = self.settings.training_barrels == TrainingBarrels.normal
+        self.adv_orange_usage = self.oranges and self.advanced_grenading
         self.barrels = self.settings.training_barrels == TrainingBarrels.normal
         self.climbing = self.settings.climbing_status == ClimbingStatus.normal
         self.can_use_vines = self.vines  # and self.climbing to restore old behavior
@@ -371,12 +375,18 @@ class LogicVarHolder:
         ownedItems = []
         cbArchItems = []
         eventArchItems = []
+        bossesDefeated = 0
+        bonusesCompleted = 0
         for item_name, item_count in collectionState.prog_items[self.ap_player].items():
             if item_name.startswith("Collectible CBs"):
                 for i in range(item_count):
                     cbArchItems.append(item_name)
             elif item_name.startswith("Event, "):
                 eventArchItems.append(item_name)
+            elif item_name.startswith("Boss Defeated"):
+                bossesDefeated += 1
+            elif item_name.startswith("Bonus Completed"):
+                bonusesCompleted += 1
             else:
                 corresponding_item_id = logic_item_name_to_id[item_name]
                 for i in range(item_count):
@@ -392,6 +402,9 @@ class LogicVarHolder:
             event = Events[item_data[1]]
             event_list.append(event)
         self.Events = event_list
+
+        self.bosses_beaten = bossesDefeated
+        self.bonuses_beaten = bonusesCompleted
 
         self.Update(ownedItems)
 
@@ -412,7 +425,6 @@ class LogicVarHolder:
 
     def AddArchipelagoItem(self, ap_item):
         """Add an Archipelago item to the owned items list."""
-        ownedItems = self.latest_owned_items.copy()  # Start with the current owned items list
         if ap_item.name.startswith("Collectible CBs"):
             # CBs are carefully named in the following format:
             # index 0: "Collectible CBs" - needed to identify this as a collectible item
@@ -430,12 +442,227 @@ class LogicVarHolder:
             # index 1: the Events enum name as a string
             item_data = ap_item.name.split(", ")
             event = Events[item_data[1]]
+            if event in [Events.ForestEntered, Events.CastleEntered] and Items.HomingAmmo in self.latest_owned_items:
+                self.homing = True
             self.AddEvent(event)
+        elif ap_item.name.startswith("Boss Defeated"):
+            self.bosses_beaten += 1
+        elif ap_item.name.startswith("Bonus Completed"):
+            self.bonuses_beaten += 1
         else:
             corresponding_item_id = logic_item_name_to_id[ap_item.name]
-            ownedItems.append(corresponding_item_id)
-
-        self.Update(ownedItems)
+            self.latest_owned_items.append(corresponding_item_id)
+            match corresponding_item_id:
+                case Items.Donkey:
+                    self.donkey = True
+                    self.isdonkey = True
+                    self.blast = Items.BaboonBlast in self.latest_owned_items
+                    self.strongKong = Items.StrongKong in self.latest_owned_items
+                    self.grab = Items.GorillaGrab in self.latest_owned_items
+                    self.coconut = Items.Coconut in self.latest_owned_items
+                    self.bongos = Items.Bongos in self.latest_owned_items
+                case Items.Diddy:
+                    self.diddy = True
+                    self.isdiddy = True
+                    self.charge = Items.ChimpyCharge in self.latest_owned_items
+                    self.jetpack = Items.RocketbarrelBoost in self.latest_owned_items
+                    self.spring = Items.SimianSpring in self.latest_owned_items
+                    self.peanut = Items.Peanut in self.latest_owned_items
+                    self.guitar = Items.Guitar in self.latest_owned_items
+                case Items.Lanky:
+                    self.lanky = True
+                    self.islanky = True
+                    self.handstand = Items.Orangstand in self.latest_owned_items
+                    self.balloon = Items.BaboonBalloon in self.latest_owned_items
+                    self.sprint = Items.OrangstandSprint in self.latest_owned_items
+                    self.grape = Items.Grape in self.latest_owned_items
+                    self.trombone = Items.Trombone in self.latest_owned_items
+                case Items.Tiny:
+                    self.tiny = True
+                    self.istiny = True
+                    self.mini = Items.MiniMonkey in self.latest_owned_items
+                    self.twirl = Items.PonyTailTwirl in self.latest_owned_items
+                    self.monkeyport = Items.Monkeyport in self.latest_owned_items
+                    self.feather = Items.Feather in self.latest_owned_items
+                    self.saxophone = Items.Saxophone in self.latest_owned_items
+                case Items.Chunky:
+                    self.chunky = True
+                    self.ischunky = True
+                    self.hunkyChunky = Items.HunkyChunky in self.latest_owned_items
+                    self.punch = Items.PrimatePunch in self.latest_owned_items
+                    self.gorillaGone = Items.GorillaGone in self.latest_owned_items
+                    self.pineapple = Items.Pineapple in self.latest_owned_items
+                    self.triangle = Items.Triangle in self.latest_owned_items
+                case Items.Climbing:
+                    self.climbing = True
+                case Items.Vines:
+                    self.vines = True
+                    self.can_use_vines = True
+                case Items.Swim:
+                    self.swim = True
+                case Items.Oranges:
+                    self.oranges = True
+                    self.adv_orange_usage = self.oranges and self.advanced_grenading
+                case Items.Barrels:
+                    self.barrels = True
+                case Items.BaboonBlast:
+                    self.blast = self.donkey
+                case Items.StrongKong:
+                    self.strongKong = self.donkey
+                case Items.GorillaGrab:
+                    self.grab = self.donkey
+                case Items.ChimpyCharge:
+                    self.charge = self.diddy
+                case Items.RocketbarrelBoost:
+                    self.jetpack = self.diddy
+                case Items.SimianSpring:
+                    self.spring = self.diddy
+                case Items.Orangstand:
+                    self.handstand = self.lanky
+                case Items.BaboonBalloon:
+                    self.balloon = self.lanky
+                case Items.OrangstandSprint:
+                    self.sprint = self.lanky
+                case Items.MiniMonkey:
+                    self.mini = self.tiny
+                case Items.PonyTailTwirl:
+                    self.twirl = self.tiny
+                case Items.Monkeyport:
+                    self.monkeyport = self.tiny
+                case Items.HunkyChunky:
+                    self.hunkyChunky = self.chunky
+                case Items.PrimatePunch:
+                    self.punch = self.chunky
+                case Items.GorillaGone:
+                    self.gorillaGone = self.chunky
+                case Items.Coconut:
+                    self.coconut = self.donkey
+                case Items.Peanut:
+                    self.peanut = self.diddy
+                case Items.Grape:
+                    self.grape = self.lanky
+                case Items.Feather:
+                    self.feather = self.tiny
+                case Items.Pineapple:
+                    self.pineapple = self.chunky
+                case Items.Bongos:
+                    self.bongos = self.donkey
+                    if self.Melons < 2:
+                        self.Melons = 2
+                case Items.Guitar:
+                    self.guitar = self.diddy
+                    if self.Melons < 2:
+                        self.Melons = 2
+                case Items.Trombone:
+                    self.trombone = self.lanky
+                    if self.Melons < 2:
+                        self.Melons = 2
+                case Items.Saxophone:
+                    self.saxophone = self.tiny
+                    if self.Melons < 2:
+                        self.Melons = 2
+                case Items.Triangle:
+                    self.triangle = self.chunky
+                    if self.Melons < 2:
+                        self.Melons = 2
+                case Items.Cranky:
+                    self.crankyAccess = True
+                case Items.Funky:
+                    self.funkyAccess = True
+                case Items.Candy:
+                    self.candyAccess = True
+                case Items.Snide:
+                    self.snideAccess = True
+                case Items.NintendoCoin:
+                    self.nintendoCoin = True
+                case Items.RarewareCoin:
+                    self.rarewareCoin = True
+                case Items.JungleJapesKey:
+                    self.JapesKey = True
+                case Items.AngryAztecKey:
+                    self.AztecKey = True
+                case Items.FranticFactoryKey:
+                    self.FactoryKey = True
+                case Items.GloomyGalleonKey:
+                    self.GalleonKey = True
+                case Items.FungiForestKey:
+                    self.ForestKey = True
+                case Items.CrystalCavesKey:
+                    self.CavesKey = True
+                case Items.CreepyCastleKey:
+                    self.CastleKey = True
+                case Items.HideoutHelmKey:
+                    self.HelmKey = True
+                case Items.HelmDonkey1:
+                    self.HelmDonkey1 = True
+                case Items.HelmDonkey2:
+                    self.HelmDonkey2 = True
+                case Items.HelmDiddy1:
+                    self.HelmDiddy1 = True
+                case Items.HelmDiddy2:
+                    self.HelmDiddy2 = True
+                case Items.HelmLanky1:
+                    self.HelmLanky1 = True
+                case Items.HelmLanky2:
+                    self.HelmLanky2 = True
+                case Items.HelmTiny1:
+                    self.HelmTiny1 = True
+                case Items.HelmTiny2:
+                    self.HelmTiny2 = True
+                case Items.HelmChunky1:
+                    self.HelmChunky1 = True
+                case Items.HelmChunky2:
+                    self.HelmChunky2 = True
+                case Items.ProgressiveSlam:
+                    self.Slam += 1
+                    if self.Slam >= 2:
+                        self.superSlam = True
+                    if self.Slam >= 3:
+                        self.superDuperSlam = True
+                case Items.ProgressiveAmmoBelt:
+                    self.AmmoBelts += 1
+                case Items.ProgressiveInstrumentUpgrade:
+                    self.InstUpgrades += 1
+                    if self.InstUpgrades >= 2:
+                        self.Melons = 3
+                    else:
+                        self.Melons = 2
+                case Items.GoldenBanana | Items.FillerBanana:
+                    self.GoldenBananas += 1
+                case Items.BananaFairy | Items.FillerFairy:
+                    self.BananaFairies += 1
+                case Items.BananaMedal | Items.FillerMedal:
+                    self.BananaMedals += 1
+                case Items.BattleCrown | Items.FillerCrown:
+                    self.BattleCrowns += 1
+                case Items.RainbowCoin:
+                    self.RainbowCoins += 1
+                    for x in range(5):
+                        self.Coins[x] += 5
+                case Items.CameraAndShockwave:
+                    self.camera = True
+                    self.shockwave = True
+                case Items.Camera:
+                    self.camera = True
+                case Items.Shockwave:
+                    self.shockwave = True
+                case Items.SniperSight:
+                    self.scope = True
+                case Items.HomingAmmo:
+                    self.homing = Events.ForestEntered in self.Events or Events.CastleEntered in self.Events or self.assumeFillSuccess
+                case Items.Bean:
+                    self.Beans += 1
+                case Items.Pearl | Items.FillerPearl:
+                    self.Pearls += 1
+                case Items.BananaHoard:
+                    self.bananaHoard = True
+                case _:
+                    if corresponding_item_id >= Items.JungleJapesDonkeyBlueprint and corresponding_item_id <= Items.DKIslesChunkyBlueprint:
+                        self.Blueprints.append(corresponding_item_id)
+                    if corresponding_item_id >= Items.JapesDonkeyHint and corresponding_item_id <= Items.CastleChunkyHint:
+                        self.Hints.append(corresponding_item_id)
+                    if corresponding_item_id >= Items.PhotoBat and corresponding_item_id <= Items.PhotoBug:
+                        self.Photos[corresponding_item_id] = 1
 
     def RemoveArchipelagoItem(self, ap_item):
         """Add an Archipelago item to the owned items list."""
@@ -458,6 +685,10 @@ class LogicVarHolder:
             item_data = ap_item.name.split(", ")
             event = Events[item_data[1]]
             self.Events = [evt for evt in self.Events if evt != event]
+        elif ap_item.name.startswith("Boss Defeated"):
+            self.bosses_beaten -= 1
+        elif ap_item.name.startswith("Bonus Completed"):
+            self.bonuses_beaten -= 1
         else:
             corresponding_item_id = logic_item_name_to_id[ap_item.name]
             if corresponding_item_id in ownedItems:
@@ -641,8 +872,7 @@ class LogicVarHolder:
             Items.PhotoKop,
             Items.PhotoTomato,
         ]
-        for subject in photo_subjects:
-            self.Photos[subject] = sum(1 for x in ownedItems if x == subject)
+        self.Photos = {x: 1 for x in ownedItems if x in photo_subjects}
 
         self.UpdateCoins()
 
@@ -760,6 +990,15 @@ class LogicVarHolder:
             return kong_data and instrument_abilities[data.kong]
         elif data.switch_type == SwitchType.SlamSwitch:
             return kong_data and self.CanSlamSwitch(level, default_slam_level)
+        elif data.switch_type == SwitchType.GunInstrumentCombo:
+            gun_abilities = [self.coconut, self.peanut, self.grape, self.feather, self.pineapple]
+            instrument_abilities = [self.bongos, self.guitar, self.trombone, self.saxophone, self.triangle]
+            return kong_data and gun_abilities[data.kong] and instrument_abilities[data.kong]
+        elif data.switch_type == SwitchType.PushableButton:
+            if data.kong == Kongs.diddy:
+                return kong_data and self.charge
+            if data.kong == Kongs.chunky:
+                return kong_data and self.punch
         return False
 
     def CanPhaseswim(self):
@@ -989,73 +1228,54 @@ class LogicVarHolder:
 
     def CanFreeDiddy(self):
         """Check if the cage locking Diddy's vanilla location can be opened."""
-        return self.HasGun(self.settings.diddy_freeing_kong)  # In Archipelago, we can't put a Kong in the cage (yet?)
-        # return self.spoiler.LocationList[Locations.DiddyKong].item == Items.NoItem or self.HasGun(self.settings.diddy_freeing_kong)
+        return self.spoiler.LocationList[Locations.DiddyKong].item == Items.NoItem or self.hasMoveSwitchsanity(Switches.JapesFreeKong)
 
     def CanOpenJapesGates(self):
         """Check if we can pick up the item inside Diddy's cage, thus opening the gates in Japes."""
-        # In Archipelago, we can't know what item is in this location, but we do know that it will always contain something
-        # caged_item_id = self.spoiler.LocationList[Locations.JapesDonkeyFreeDiddy].item
+        caged_item_id = self.spoiler.LocationList[Locations.JapesDonkeyFreeDiddy].item
         # If it's NoItem, then the gates are already open
-        # if caged_item_id == Items.NoItem:
-        #     return True
+        if caged_item_id == Items.NoItem:
+            return True
         # If we can't free Diddy, then we can't access the item so we can't reach the item
-        # if not self.CanFreeDiddy():
-        #     return False
+        if not self.CanFreeDiddy():
+            return False
         # If we are the right kong, then we can always get the item
         if self.IsKong(self.settings.diddy_freeing_kong):
             return True
         # If we aren't the right kong, we need free trade to be on
         elif self.settings.free_trade_items:
-            return True  # In Archipelago, we can't know what item is in this location. We must assume full FTA, so the rest of this is irrelevant
-            # # During the fill we can't assume this item is accessible quite yet - this could cause errors with placing items in the back of Japes
-            # if caged_item_id is None:
-            #     return False
-            # # If it's not a blueprint, free trade gets us the item
-            # if ItemList[caged_item_id].type != Types.Blueprint:
-            #     return True
-            # # But if it is a blueprint, we need to check blueprint access (which checks blueprint free trade)
-            # else:
-            #     return self.BlueprintAccess(ItemList[caged_item_id])
+            # During the fill we can't assume this item is accessible quite yet - this could cause errors with placing items in the back of Japes
+            if caged_item_id is None:
+                return False
+            # If it's not a blueprint, free trade gets us the item
+            if ItemList[caged_item_id].type != Types.Blueprint:
+                return True
+            # But if it is a blueprint, we need to check blueprint access (which checks blueprint free trade)
+            else:
+                return self.BlueprintAccess(ItemList[caged_item_id])
         # If we failed to hit a successful condition, we failed to reach the caged item
         return False
 
     def CanFreeTiny(self):
-        """Check if kong at Tiny location can be freed, requires either chimpy charge or primate punch."""
-        # In Archipelago, we can't put a Kong in the cage (yet?)
-        return self.IsKong(self.settings.tiny_freeing_kong) or self.settings.free_trade_items
-        # if self.spoiler.LocationList[Locations.TinyKong].item == Items.NoItem:
-        #     return self.IsKong(self.settings.tiny_freeing_kong) or self.settings.free_trade_items
-        # elif self.settings.tiny_freeing_kong == Kongs.diddy:
-        #     return self.charge and self.isdiddy
-        # elif self.settings.tiny_freeing_kong == Kongs.chunky:
-        #     return self.punch and self.ischunky
-        # # Used only as placeholder during fill when kong puzzles are not yet assigned
-        # elif self.settings.tiny_freeing_kong == Kongs.any:
-        #     return True
+        """Check if kong at Tiny location can be freed."""
+        return self.spoiler.LocationList[Locations.TinyKong].item == Items.NoItem or self.hasMoveSwitchsanity(Switches.AztecOKONGPuzzle)
 
     def CanLlamaSpit(self):
         """Check if the Llama spit can be triggered."""
         return self.HasInstrument(self.settings.lanky_freeing_kong)
 
     def CanFreeLanky(self):
-        """Check if kong at Lanky location can be freed, requires freeing kong to have its gun and instrument."""
-        # In Archipelago, we can't put a Kong in the cage (yet?)
-        return (self.swim and self.HasInstrument(self.settings.lanky_freeing_kong)) or self.CanPhase() or self.CanPhaseswim()
-        # return (self.HasGun(self.settings.lanky_freeing_kong) or self.spoiler.LocationList[Locations.LankyKong].item == Items.NoItem) and (
-        #     (self.swim and self.HasInstrument(self.settings.lanky_freeing_kong)) or self.CanPhase() or self.CanPhaseswim()
-        # )
+        """Check if kong at Lanky location can be freed."""
+        return self.spoiler.LocationList[Locations.LankyKong].item == Items.NoItem or self.hasMoveSwitchsanity(Switches.AztecLlamaPuzzle)
 
     def CanFreeChunky(self):
         """Check if kong at Chunky location can be freed."""
-        # In Archipelago, we can't put a Kong in the cage (yet?)
-        return self.IsKong(self.settings.chunky_freeing_kong) or self.settings.free_trade_items
-        # # If the cage is empty, the item is just lying on the ground
-        # if self.spoiler.LocationList[Locations.ChunkyKong].item == Items.NoItem:
-        #     return self.IsKong(self.settings.chunky_freeing_kong) or self.settings.free_trade_items
-        # # Otherwise you need the right slam level (usually 1)
-        # else:
-        #     return self.CanSlamSwitch(Levels.FranticFactory, 1) and self.IsKong(self.settings.chunky_freeing_kong)
+        # If the cage is empty, the item is just lying on the ground
+        if self.spoiler.LocationList[Locations.ChunkyKong].item == Items.NoItem:
+            return self.IsKong(self.settings.chunky_freeing_kong) or self.settings.free_trade_items
+        # Otherwise you need the right slam level (usually 1)
+        else:
+            return self.hasMoveSwitchsanity(Switches.FactoryFreeKong, level=Levels.FranticFactory, default_slam_level=1) and (self.slope_resets or self.handstand)
 
     def CanOpenForestLobbyGoneDoor(self):
         """Check if the player can open the door to the gone pad in forest lobby."""
@@ -1423,6 +1643,10 @@ class LogicVarHolder:
                 if not k:
                     return False
             return True
+        elif self.settings.win_condition_item == WinConditionComplex.req_bosses:
+            return self.bosses_beaten >= self.settings.win_condition_count
+        elif self.settings.win_condition_item == WinConditionComplex.req_bonuses:
+            return self.bonuses_beaten >= self.settings.win_condition_count
         # Get X amount of Y item win cons
         win_con_table = {
             WinConditionComplex.req_bean: BarrierItems.Bean,

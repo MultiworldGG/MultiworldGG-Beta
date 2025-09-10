@@ -10,10 +10,15 @@ import Utils
 from BaseClasses import ItemClassification
 from worlds.Files import APDeltaPatch, APProcedurePatch, APTokenMixin, APPatchExtension
 
+NA10CHECKSUM = 'd9a1631d5c32d35594b9484862a26cba'
+NES2HEADER = bytes([ 0x4E, 0x45, 0x53, 0x1A, 0x08, 0x00, 0x12, 0x08, 0x00, 0x00, 0x70, 0x07, 0x00, 0x00, 0x00, 0x01])
 
-NA10CHECKSUM = '337bd6f1a1163df31bf2633665589ab0'
-ROM_PLAYER_LIMIT = 65535
-ROM_NAME = 0x10
+rom_name_location = 0x00
+rom_name_length = 0x20
+header_length = 0x10
+player_name_location = 0x20
+player_name_length = 0x40
+major_offsets_location = 0x60
 bit_positions = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80]
 candle_shop = bit_positions[4]
 arrow_shop = bit_positions[3]
@@ -100,10 +105,18 @@ cave_type_flags = {
 }
 
 warp_cave_offset = 0x19344
-starting_sword_cave_location_byte = 0x50
-white_sword_pond_location_byte = 0x51
-magical_sword_grave_location_byte = 0x52
-letter_cave_location_byte = 0x53
+starting_sword_cave_location_byte = 0x70
+white_sword_pond_location_byte = 0x71
+magical_sword_grave_location_byte = 0x72
+letter_cave_location_byte = 0x73
+
+shop_correspondance = {
+    "Arrow Shop": arrow_shop,
+    "Candle Shop": candle_shop,
+    "Blue Ring Shop": ring_shop,
+    "Shield Shop": shield_shop,
+    "Potion Shop": potion_shop
+}
 
 
 class TLoZDeltaPatch(APDeltaPatch):
@@ -121,24 +134,22 @@ def get_base_rom_bytes(file_name: str = "") -> bytes:
     base_rom_bytes = getattr(get_base_rom_bytes, "base_rom_bytes", None)
     if not base_rom_bytes:
         file_name = get_base_rom_path(file_name)
-        base_rom_bytes = bytes(Utils.read_snes_rom(open(file_name, "rb")))
-
+        base_rom_bytes = bytes(Utils.read_snes_rom(open(file_name, "rb"), strip_header=False))
+        if len(base_rom_bytes) == 131088: # Headered rom length
+            base_rom_bytes = base_rom_bytes[16:]
         basemd5 = hashlib.md5()
         basemd5.update(base_rom_bytes)
         if NA10CHECKSUM != basemd5.hexdigest():
             raise Exception('Supplied Base Rom does not match known MD5 for NA (1.0) release. '
                             'Get the correct game and version, then dump it')
+        base_rom_bytes = NES2HEADER + base_rom_bytes
         get_base_rom_bytes.base_rom_bytes = base_rom_bytes
     return base_rom_bytes
 
 
 def get_base_rom_path(file_name: str = "") -> str:
-    options = Utils.get_options()
-    if not file_name:
-        file_name = options["tloz_options"]["rom_file"]
-    if not os.path.exists(file_name):
-        file_name = Utils.user_path(file_name)
-    return file_name
+    from worlds.tloz import TLoZWorld
+    return TLoZWorld.settings.rom_file
 
 class TLOZPatchExtension(APPatchExtension):
     game = "The Legend of Zelda"
@@ -155,7 +166,7 @@ class TLOZPatchExtension(APPatchExtension):
         # Removing a bit from the boss roars flags, so we can have more dungeon items. This allows us to
         # go past 0x1F items for dungeon items.
         base_patch = get_data(__name__, "z1_base_patch.bsdiff4")
-        rom_data = bsdiff4.patch(rom.read(), base_patch)
+        rom_data = bsdiff4.patch(rom, base_patch)
         rom_data = bytearray(rom_data)
         # Set every item to the new nothing value, but keep room flags. Type 2 boss roars should
         # become type 1 boss roars, so we at least keep the sound of roaring where it should be.
@@ -209,15 +220,14 @@ class TLOZPatchExtension(APPatchExtension):
         from worlds.tloz import (shop_price_location_ids, shop_locations, item_game_ids, location_ids,
                                  item_prices, secret_money_ids)
         placements: dict[str, any] = json.loads(caller.get_file(placement_file))
-        with open(get_base_rom_path(), 'rb') as rom:
-            rom_data = TLOZPatchExtension.apply_base_patch(rom)
-            rom_data = TLOZPatchExtension.write_entrances(rom_data, placements["entrance_randomizer_set"])
-        rom_name = bytearray(placements["meta"]["rom_name"][:0x20], "utf8")[:0x20]
-        rom_name.extend([0] * (0x20 - len(rom_name)))
-        rom_data[0x10:0x30] = rom_name
-        player_name = bytearray(placements["meta"]["player_name"], 'utf8')[:0x20]
-        player_name.extend([0] * (0x20 - len(player_name)))
-        rom_data[0x30:0x50] = player_name
+        rom_data = TLOZPatchExtension.apply_base_patch(rom)
+        rom_data = TLOZPatchExtension.write_entrances(rom_data, placements["entrance_randomizer_set"])
+        rom_name = bytearray(placements["meta"]["rom_name"][:rom_name_length], "utf8")[:rom_name_length]
+        rom_name.extend([0] * (rom_name_length - len(rom_name)))
+        rom_data[rom_name_location + header_length:rom_name_location + header_length + rom_name_length] = rom_name
+        player_name = bytearray(placements["meta"]["player_name"], 'utf8')[:player_name_length]
+        player_name.extend([0] * (player_name_length - len(player_name)))
+        rom_data[player_name_location + header_length:player_name_location + header_length + player_name_length] = player_name
 
         # Write each location's new data in
         for location, item in placements.items():

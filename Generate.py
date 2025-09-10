@@ -199,7 +199,6 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
                         for yaml in weights_cache[yaml_filename]:
                             if category_name is None:
                                 for category in yaml:
-                                    from worlds import AutoWorldRegister
                                     world_class = AutoWorldRegister.world_types[category]
                                     if world_class is not None and \
                                             key in Options.CommonOptions.type_hints:
@@ -213,7 +212,7 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
     for player in range(1, args.multi + 1):
         player_yaml_cache[player] = player_files.get(player, args.weights_file_path)
     name_counter = Counter()
-    erargs.player_options = {}
+    args.player_options = {}
 
     player = 1
     while player <= args.multi:
@@ -226,21 +225,21 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
                     for k, v in vars(settingsObject).items():
                         if v is not None:
                             try:
-                                getattr(erargs, k)[player] = v
+                                getattr(args, k)[player] = v
                             except AttributeError:
-                                setattr(erargs, k, {player: v})
+                                setattr(args, k, {player: v})
                             except Exception as e:
                                 raise Exception(f"Error setting {k} to {v} for player {player}") from e
 
                     # name was not specified
-                    if player not in erargs.name:
+                    if player not in args.name:
                         if yaml_filename == args.weights_file_path:
                             # weights file, so we need to make the name unique
-                            erargs.name[player] = f"Player{player}"
+                            args.name[player] = f"Player{player}"
                         else:
                             # use the filename
-                            erargs.name[player] = os.path.splitext(os.path.split(yaml_filename)[-1])[0]
-                    erargs.name[player] = handle_name(erargs.name[player], player, name_counter)
+                            args.name[player] = os.path.splitext(os.path.split(path)[-1])[0]
+                    args.name[player] = handle_name(args.name[player], player, name_counter)
 
                     player += 1
             except Exception as e:
@@ -248,10 +247,10 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
         else:
             raise RuntimeError(f'No weights specified for player {player}')
 
-    if len(set(name.lower() for name in erargs.name.values())) != len(erargs.name):
-        raise Exception(f"Names have to be unique. Names: {Counter(name.lower() for name in erargs.name.values())}")
+    if len(set(name.lower() for name in args.name.values())) != len(args.name):
+        raise Exception(f"Names have to be unique. Names: {Counter(name.lower() for name in args.name.values())}")
 
-    return erargs, seed
+    return args, seed
 
 
 def read_weights_yamls(path) -> tuple[Any, ...]:

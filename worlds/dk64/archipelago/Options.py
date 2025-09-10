@@ -1,27 +1,147 @@
 """Options for DK64R."""
 
 from dataclasses import dataclass
+import numbers
 import typing
 
-from Options import Choice, PerGameCommonOptions, Range, Option, Toggle, DeathLink, DefaultOnToggle, OptionList
-
+from BaseClasses import PlandoOptions
+from Options import Choice, PerGameCommonOptions, Range, Option, OptionDict, OptionError, OptionList, Toggle, DeathLink, DefaultOnToggle, OptionGroup
+from typing import List
 from randomizer.Enums.Settings import SettingsStringEnum
 from randomizer.Enums.Settings import SettingsStringTypeMap
 from randomizer.Enums.Settings import SettingsStringDataType
 from randomizer.Enums.Settings import SettingsMap as DK64RSettingsMap
+from worlds.AutoWorld import World
 
 
 # DK64_TODO: Get Options from DK64R
 
 
 class Goal(Choice):
-    """Determines the goal of the seed."""
+    """Determines the goal of the seed.
+
+    Options:
+    - beat_k_rool: Defeat K. Rool! K. Rool can be fought by finding all 8 keys, then entering the ship that appears at the back of DK Isle.
+    - acquire_key_8: Win by obtaining Key 8, which is normally found at the end of Hideout Helm.
+    - kremling_kapture: Take a picture of every enemy to win.
+    - dk_rap: Obtain all items mentioned in the DK Rap to win.
+    - golden_bananas: Find a certain number of Golden Bananas to win. See goal_quantity option for more info.
+    - blueprints: Find a certain number of Blueprints to win. See goal_quantity option for more info.
+    - company_coins: Find the Nintendo and/or Rareware Coin to win. See goal_quantity option for more info.
+    - keys: Find a certain number of Boss Keys to win. See goal_quantity option for more info.
+    - medals: Find a certain number of Banana Medals to win. See goal_quantity option for more info.
+    - crowns: Find a certain number of Battle Crowns to win. See goal_quantity option for more info.
+    - fairies: Find a certain number of Banana Fairies to win. See goal_quantity option for more info.
+    - rainbow_coins: Find a certain number of Rainbow Coins to win. See goal_quantity option for more info.
+    - bean: Find The Bean to win.
+    - pearls: Find a certain number of Pearls to win. See goal_quantity option for more info.
+    - bosses: Defeat a certain number of bosses to win. See goal_quantity option for more info.
+    - bonuses: Complete a certain number of Bonus Barrels to win. Automatically disables auto_complete_bonus_barrels if set. See goal_quantity option for more info.
+    - treasure_hurry: Run down the timer by collecting treasure! You win when the timer reaches 0.
+    """
 
     display_name = "Goal"
-    option_krool = 0
-    option_all_keys = 1
-    option_dk_rap = 2
+    option_beat_k_rool = 0
+    option_acquire_key_8 = 1
+    option_kremling_kapture = 2
+    option_dk_rap = 3
+    option_golden_bananas = 4
+    option_blueprints = 5
+    option_company_coins = 6
+    option_keys = 7
+    option_medals = 8
+    option_crowns = 9
+    option_fairies = 10
+    option_rainbow_coins = 11
+    option_bean = 12
+    option_pearls = 13
+    option_bosses = 14
+    option_bonuses = 15
+    option_treasure_hurry = 16
     default = 0
+
+
+class GoalQuantity(OptionDict):
+    """Determines how many of a particular item you need to goal.
+
+    You can set multiple values to account for any win conditions above, but it will only use the one that matches the win condition.
+    (i.e. if you set your win condition to "blueprints", the "keys" field will be ignored) This is useful in case you randomize your win condition.
+
+    Valid Keys:
+    - "golden_bananas"
+    - "blueprints"
+    - "company_coins"
+    - "keys"
+    - "medals"
+    - "crowns"
+    - "fairies"
+    - "rainbow_coins"
+    - "pearls"
+    - "bosses"
+    - "bonuses"
+
+    Valid Values:
+    - a number from 1 to the maximum value for the key type
+    - "random", which will pick a random valid value for you
+    - a range in the form "x-y", which will pick a random valid value between x and y
+    """
+
+    min = 1
+    max_values_dict: dict[str, int] = {
+        "golden_bananas": 201,
+        "blueprints": 40,
+        "company_coins": 2,
+        "keys": 8,
+        "medals": 40,
+        "crowns": 10,
+        "fairies": 20,
+        "rainbow_coins": 16,
+        "pearls": 5,
+        "bosses": 7,
+        "bonuses": 53,
+    }
+
+    def verify(self, world: type[World], player_name: str, plando_options: PlandoOptions) -> None:
+        """Verify Goal Quantity."""
+        super(GoalQuantity, self).verify(world, player_name, plando_options)
+
+        for key in self.value.keys():
+            if key not in self.max_values_dict.keys():
+                raise OptionError(f"{key} is not a valid key for goal_quantity.")
+
+        accumulated_errors = []
+
+        for key, value in self.value.items():
+            print(f"Checking {key}: {value}")
+            max = self.max_values_dict[key]
+            if isinstance(value, numbers.Integral):
+                value = int(value)
+                if value > max:
+                    accumulated_errors.append(f"{key}: {value} is higher than maximum allowed value {max}")
+                elif value < self.min:
+                    accumulated_errors.append(f"{key}: {value} is lower than minimum allowed value {self.min}")
+            else:
+                if value == "random":
+                    continue
+                split = value.split("-")
+                if len(split) != 2:
+                    accumulated_errors.append(f'{key}: {value} is not an integer or range, nor is it "random".')
+                else:
+                    for bound in split:
+                        try:
+                            bound = int(bound)
+                        except (ValueError, TypeError):
+                            accumulated_errors.append(f'{key}: {value} is not an integer or range, nor is it "random".')
+                            continue
+                        if bound > max:
+                            accumulated_errors.append(f"{key}: Upper edge of range {bound} is higher than maximum allowed value {max}")
+                        elif bound < self.min:
+                            accumulated_errors.append(f"{key}: Lower edge of range {bound} is lower than minimum allowed value {self.min}")
+        print("\n".join(accumulated_errors))
+        if accumulated_errors:
+            raise OptionError("Found errors with option goal_quantity:\n" + "\n".join(accumulated_errors))
+
+    default = {"golden_bananas": 100, "blueprints": 20, "company_coins": 2, "keys": 8, "medals": 15, "crowns": 5, "fairies": 15, "rainbow_coins": 10, "pearls": 3, "bosses": 7, "bonuses": 15}
 
 
 class OpenLobbies(Toggle):
@@ -124,25 +244,43 @@ class SlowTrapWeight(BaseTrapWeight):
 class DisableAWeight(BaseTrapWeight):
     """Likelihood of receiving a trap which disables your A button."""
 
-    display_name = "Disable A Trap"
+    display_name = "Disable A Trap Weight"
 
 
 class DisableBWeight(BaseTrapWeight):
     """Likelihood of receiving a trap which disables your B button."""
 
-    display_name = "Disable B Trap"
+    display_name = "Disable B Trap Weight"
 
 
 class DisableZWeight(BaseTrapWeight):
     """Likelihood of receiving a trap which disables your Z button."""
 
-    display_name = "Disable Z Trap"
+    display_name = "Disable Z Trap Weight"
 
 
 class DisableCWeight(BaseTrapWeight):
     """Likelihood of receiving a trap which disables your C buttons."""
 
-    display_name = "Disable C Trap"
+    display_name = "Disable C Trap Weight"
+
+
+class GetOutTrapWeight(BaseTrapWeight):
+    """Likelihood of receiving a trap which tells you to Get Out."""
+
+    display_name = "Get Out Trap Weight"
+
+
+class DryTrapWeight(BaseTrapWeight):
+    """Likelihood of receiving a trap which removes all of your consumables."""
+
+    display_name = "Dry Trap Weight"
+
+
+class FlipTrapWeight(BaseTrapWeight):
+    """Likelihood of receiving a trap which flips the camera."""
+
+    display_name = "Flip Trap Weight"
 
 
 class KroolPhaseCount(Range):
@@ -170,6 +308,26 @@ class MedalColorBananaRequirement(Range):
     range_start = 1
     range_end = 100
     default = 40
+
+
+class MedalDistribution(Choice):
+    """Determines how the CB requirement is determined.
+
+    Options:
+    pre_selected: Player chooses a specific value for CB requirements
+    easy_random: Random values are chosen with an easier progression curve
+    medium_random: Random values are chosen with a medium progression curve
+    hard_random: Random values are chosen with a hard progression curve
+    progressive: CB requirements increase progressively through levels depending on your medal_cb_requirement.
+    """
+
+    display_name = "CB Requirement Setting"
+    option_pre_selected = 0
+    option_easy_random = 1
+    option_medium_random = 2
+    option_hard_random = 3
+    option_progressive = 4
+    default = 0
 
 
 class RarewareGBRequirement(Range):
@@ -305,6 +463,15 @@ class TagLink(Toggle):
     display_name = "Tag Link"
 
 
+class TrapLink(Toggle):
+    """Determines if the Trap Link is enabled.
+
+    If enabled, your received Traps will link to other players with Trap Link enabled, and their received traps will link to you
+    """
+
+    display_name = "Trap Link"
+
+
 class MirrorMode(Toggle):
     """Determines whether the game will be horizontally Mirrored."""
 
@@ -394,14 +561,14 @@ class HintItemRandomization(Toggle):
 class RandomizeBlockers(Toggle):
     """Determines if B. Locker values are randomized."""
 
-    display_name = "Randomizer B. Lockers"
+    display_name = "Randomize B. Lockers"
     default = True
 
 
 class MaximumBLocker(Range):
     """Determines the Maximum Value for B. Lockers if Randomize B.Lockers are enabled."""
 
-    display_name = "Randomizer B. Lockers"
+    display_name = "Maximum B. Locker"
     range_start = 0
     range_end = 201
     default = 64
@@ -413,8 +580,16 @@ class ChaosBLockers(Toggle):
     display_name = "Chaos B. Lockers"
 
 
+class MaximizeHelmBLocker(Toggle):
+    """Ensures that Level 8's B. Locker will always be at the maximum value."""
+
+    display_name = "Maximize Helm B. Locker"
+
+
 class Level1Blocker(Range):
     """Determines the value of Level 1's B. Locker if Randomize B. Lockers are turned off."""
+
+    display_name = "Level 1 B. Locker"
 
     range_start = 0
     range_end = 201
@@ -424,6 +599,8 @@ class Level1Blocker(Range):
 class Level2Blocker(Range):
     """Determines the value of Level 2's B. Locker if Randomize B. Lockers are turned off."""
 
+    display_name = "Level 2 B. Locker"
+
     range_start = 0
     range_end = 201
     default = 0
@@ -431,6 +608,8 @@ class Level2Blocker(Range):
 
 class Level3Blocker(Range):
     """Determines the value of Level 3's B. Locker if Randomize B. Lockers are turned off."""
+
+    display_name = "Level 3 B. Locker"
 
     range_start = 0
     range_end = 201
@@ -440,6 +619,8 @@ class Level3Blocker(Range):
 class Level4Blocker(Range):
     """Determines the value of Level 4's B. Locker if Randomize B. Lockers are turned off."""
 
+    display_name = "Level 4 B. Locker"
+
     range_start = 0
     range_end = 201
     default = 0
@@ -447,6 +628,8 @@ class Level4Blocker(Range):
 
 class Level5Blocker(Range):
     """Determines the value of Level 5's B. Locker if Randomize B. Lockers are turned off."""
+
+    display_name = "Level 5 B. Locker"
 
     range_start = 0
     range_end = 201
@@ -456,6 +639,8 @@ class Level5Blocker(Range):
 class Level6Blocker(Range):
     """Determines the value of Level 6's B. Locker if Randomize B. Lockers are turned off."""
 
+    display_name = "Level 6 B. Locker"
+
     range_start = 0
     range_end = 201
     default = 0
@@ -464,6 +649,8 @@ class Level6Blocker(Range):
 class Level7Blocker(Range):
     """Determines the value of Level 7's B. Locker if Randomize B. Lockers are turned off."""
 
+    display_name = "Level 7 B. Locker"
+
     range_start = 0
     range_end = 201
     default = 0
@@ -471,6 +658,8 @@ class Level7Blocker(Range):
 
 class Level8Blocker(Range):
     """Determines the value of Level 8's B. Locker if Randomize B. Lockers are turned off."""
+
+    display_name = "Level 8 B. Locker"
 
     range_start = 0
     range_end = 201
@@ -510,6 +699,211 @@ class ShopKeepers(Toggle):
     display_name = "Shop Keepers in Pool"
 
 
+class HelmKeyLock(DefaultOnToggle):
+    """Determines if a key will be locked at the end of Helm."""
+
+    display_name = "Lock Helm Key"
+
+
+class ShuffleHelmLevel(Toggle):
+    """Determined if Helm is shuffled into the level order."""
+
+    display_name = "Shuffle Helm"
+
+
+class ShopkeeperHints(DefaultOnToggle):
+    """Determines if entering a shop with Shopkeepers in the pool will give you a hint on where the shopkeeper is."""
+
+    display_name = "Shopkeeper Hint"
+
+
+class HintStyle(Choice):
+    """Choose the style of Wrinkly hints you'd like to play with. These do not affect shopkeeper or microhints.
+
+    - off: No in-game hints at all.
+    - no_woth: Hints can tell you about your K. Rool phases, and directly hint important items and hard locations.
+    - woth: Same as no_woth, but Way of the Hoard hints can appear, which will tell you a location is required but not what item is at that location. Increases gen time significantly, especially in larger multiworlds.
+    """
+
+    display_name = "Hint Style"
+
+    option_off = 0
+    option_no_woth = 1
+    option_woth = 2
+    default = 1
+
+
+class MicroHints(Choice):
+    """Extra hints are placed in late-game to provide extra information if you are stuck on where an item is.
+
+    - Monkeyport will be hinted upon touching the lower Monkeyport pad in Isles with the B. Locker requirements to enter all of the first 7 levels.
+    - Gorilla Gone will be hinted upon touching the pad inside Helm Lobby with the B. Locker requirement to enter Helm.
+    - Instruments will be hinted upon touching their pad in Helm.
+    """
+
+    display_name = "Micro Hints"
+
+    option_Off = 0
+    option_some = 1
+    option_all = 2
+    default = 2
+
+
+class HalfMedals(Toggle):
+    """Determines if Half Medals are added to the pool.
+
+    If medal_cb_req is set to 50, you will get a check at 25 Colored Bananas.
+    """
+
+    display_name = "Half Medals in Pool"
+
+    default = False
+
+
+class ShuffledBonusBarrels(OptionList):
+    """Determines which minigames are shuffled into the barrel pool.
+
+    Valid Keys:
+    "batty_barrel_bandit"
+    "big_bug_bash"
+    "busy_barrel_barrage"
+    "mad_maze_maul"
+    "minecart_mayhem"
+    "beaver_bother"
+    "teetering_turtle_trouble"
+    "stealthy_snoop"
+    "stash_snatch"
+    "splish_splash_salvage"
+    "speedy_swing_sortie"
+    "krazy_kong_klamour"
+    "searchlight_seek"
+    "kremling_kosh"
+    "peril_path_panic"
+    "helm_minigames"
+    "arenas"
+    "training_minigames"
+    "arcade"
+    """
+
+    display_name = "Shuffled Bonus Barrels"
+
+    valid_keys = {
+        "batty_barrel_bandit",
+        "big_bug_bash",
+        "busy_barrel_barrage",
+        "mad_maze_maul",
+        "minecart_mayhem",
+        "beaver_bother",
+        "teetering_turtle_trouble",
+        "stealthy_snoop",
+        "stash_snatch",
+        "splish_splash_salvage",
+        "speedy_swing_sortie",
+        "krazy_kong_klamour",
+        "searchlight_seek",
+        "kremling_kosh",
+        "peril_path_panic",
+        "helm_minigames",
+        "arenas",
+        "training_minigames",
+        "arcade",
+    }
+
+    default = [
+        "batty_barrel_bandit",
+        "big_bug_bash",
+        "busy_barrel_barrage",
+        "mad_maze_maul",
+        "minecart_mayhem",
+        "beaver_bother",
+        "teetering_turtle_trouble",
+        "stealthy_snoop",
+        "stash_snatch",
+        "splish_splash_salvage",
+        "speedy_swing_sortie",
+        "krazy_kong_klamour",
+        "searchlight_seek",
+        "kremling_kosh",
+        "peril_path_panic",
+        "helm_minigames",
+        "arenas",
+        "training_minigames",
+        "arcade",
+    ]
+
+
+class HardMinigames(Toggle):
+    """Determines if hard minigames are shuffled into the barrel pool."""
+
+    display_name = "Hard Minigames"
+
+
+class AutoCompleteBonusBarrels(Toggle):
+    """If turned on, bonus barrels will instantly spawn their reward instead of requiring a minigame to complete.
+
+    This option does NOT autocomplete Helm barrels! Use the helm_room_bonus_count option.
+    """
+
+    display_name = "Auto Complete Bonus Barrels"
+
+
+class HelmRoomBonusCount(Range):
+    """Determines how many bonus barrels need to be done in each Helm room.
+
+    If set to 0, there will be no bonus barrels and Blast-O-Matic sections will turn off immediately upon playing the instrument pad to open the room.
+    """
+
+    display_name = "Helm Room Bonus Count"
+
+    range_start = 0
+    range_end = 2
+    default = 0
+
+
+class SmallerShops(Toggle):
+    """If enabled, shops would have a max of 3 items to sell."""
+
+    default = True
+    display_name = "Smaller Shops"
+
+
+class HardBosses(OptionList):
+    """Determines which bosses are harder.
+
+    Valid Keys:
+    "fast_mad_jack": Mad Jack will move at quantum speeds.
+    "alternative_mad_jack_kongs": Logic can expect Donkey, Chunky, or Tiny without twirl to fight Mad Jack.
+    "pufftoss_star_rando": The stars in the Pufftoss fight are now in random locations.
+    "pufftoss_star_raised": The stars in the Pufftoss fight are now slightly raised to require you to jump to activate the stars.
+    "kut_out_phase_rando": Kutout phases are now in random order and also a chance to see the secret 4th phase.
+    "k_rool_toes_rando": The toes in Tiny phase K. Rool now attack in a random order.
+    "beta_lanky_phase": K. Rool is now distracted by shooting a balloon rather than playing an instrument.
+    """
+
+    display_name = "Hard Bosses"
+
+    valid_keys: {"fast_mad_jack", "alternative_mad_jack_kongs", "pufftoss_star_rando", "pufftoss_star_raised", "kut_out_phase_rando", "k_rool_toes_rando", "beta_lanky_phase"}
+
+
+class PuzzleRando(Choice):
+    """Determines the difficulty of puzzle randomization.
+
+    off: Puzzle solutions are NOT randomized.
+    easy: Easy boundaries.
+    medium: Medium boundaries.
+    hard: Hard boundaries, Castle Car Race is randomized.
+    chaos: Any value in the easy, medium, or hard bounds.
+    """
+
+    display_name = "Puzzle Randomization"
+    option_off = 0
+    option_easy = 1
+    option_medium = 2
+    option_hard = 3
+    option_chaos = 4
+    default = 2
+
+
 @dataclass
 class DK64Options(PerGameCommonOptions):
     """Options for DK64R."""
@@ -517,19 +911,24 @@ class DK64Options(PerGameCommonOptions):
     death_link: DeathLink
     ring_link: RingLink
     tag_link: TagLink
+    trap_link: TrapLink
     goal: Goal
     krool_key_count: KeysRequiredToBeatKrool
+    helm_key_lock: HelmKeyLock
+    shuffle_helm_level_order: ShuffleHelmLevel
     krool_phase_count: KroolPhaseCount
     helm_phase_count: HelmPhaseCount
     krool_in_boss_pool: KroolInBossPool
     remove_barriers_selected: RemoveBarriers
     medal_cb_req: MedalColorBananaRequirement
+    medal_distribution: MedalDistribution
     mermaid_gb_pearls: MermaidRequirement
-    medal_requirement: JetpacRequirement
+    jetpac_requirement: JetpacRequirement
     rareware_gb_fairies: RarewareGBRequirement
     randomize_blocker_required_amounts: RandomizeBlockers
     blocker_max: MaximumBLocker
     enable_chaos_blockers: ChaosBLockers
+    maximize_helm_blocker: MaximizeHelmBLocker
     chaos_ratio: ChaosRatio
     level1_blocker: Level1Blocker
     level2_blocker: Level2Blocker
@@ -547,6 +946,7 @@ class DK64Options(PerGameCommonOptions):
     shopowners_in_pool: ShopKeepers
     logic_type: LogicType
     tricks_selected: TricksSelected
+    half_medals_in_pool: HalfMedals
     glitches_selected: GlitchesSelected
     hard_mode: HardModeEnabled
     hard_mode_selected: HardModeSelected
@@ -554,12 +954,149 @@ class DK64Options(PerGameCommonOptions):
     hints_in_item_pool: HintItemRandomization
     boulders_in_pool: BouldersInPool
     dropsanity: Dropsanity
+    shopkeeper_hints: ShopkeeperHints
+    microhints: MicroHints
     trap_fill_percentage: TrapFillPercentage
     bubble_trap_weight: BubbleTrapWeight
     reverse_trap_weight: ReverseTrapWeight
     slow_trap_weight: SlowTrapWeight
-    disable_a_trap: DisableAWeight
-    disable_b_trap: DisableBWeight
-    disable_c_trap: DisableCWeight
-    disable_z_trap: DisableZWeight
+    disable_a_trap_weight: DisableAWeight
+    disable_b_trap_weight: DisableBWeight
+    disable_c_trap_weight: DisableCWeight
+    disable_z_trap_weight: DisableZWeight
+    get_out_trap_weight: GetOutTrapWeight
+    dry_trap_weight: DryTrapWeight
+    flip_trap_weight: FlipTrapWeight
     receive_notifications: ReceiveNotifications
+    hint_style: HintStyle
+    shuffled_bonus_barrels: ShuffledBonusBarrels
+    hard_minigames: HardMinigames
+    auto_complete_bonus_barrels: AutoCompleteBonusBarrels
+    helm_room_bonus_count: HelmRoomBonusCount
+    smaller_shops: SmallerShops
+    harder_bosses: HardBosses
+    puzzle_rando: PuzzleRando
+    goal_quantity: GoalQuantity
+
+
+dk64_option_groups: List[OptionGroup] = [
+    OptionGroup(
+        "Victory Conditions",
+        [
+            Goal,
+            GoalQuantity,
+            KeysRequiredToBeatKrool,
+            HelmPhaseCount,
+            KroolPhaseCount,
+            KroolInBossPool,
+        ],
+    ),
+    OptionGroup(
+        "B. Locker Settings",
+        [
+            RandomizeBlockers,
+            MaximumBLocker,
+            ChaosBLockers,
+            MaximizeHelmBLocker,
+            ChaosRatio,
+            Level1Blocker,
+            Level2Blocker,
+            Level3Blocker,
+            Level4Blocker,
+            Level5Blocker,
+            Level6Blocker,
+            Level7Blocker,
+            Level8Blocker,
+        ],
+    ),
+    OptionGroup(
+        "Item Pool",
+        [
+            StartingKongCount,
+            StartingMoveCount,
+            HelmKeyLock,
+            ClimbingShuffle,
+            ShopKeepers,
+            BouldersInPool,
+            Dropsanity,
+            HintItemRandomization,
+            HalfMedals,
+            SmallerShops,
+        ],
+    ),
+    OptionGroup(
+        "Levels/Barriers",
+        [
+            ShuffleHelmLevel,
+            OpenLobbies,
+            SwitchSanity,
+            RemoveBarriers,
+        ],
+    ),
+    OptionGroup(
+        "Logic",
+        [
+            LogicType,
+            TricksSelected,
+            GlitchesSelected,
+            MedalColorBananaRequirement,
+            MedalDistribution,
+            MermaidRequirement,
+            RarewareGBRequirement,
+            JetpacRequirement,
+            PuzzleRando,
+        ],
+    ),
+    OptionGroup(
+        "Bonus Barrels",
+        [
+            ShuffledBonusBarrels,
+            HardMinigames,
+            AutoCompleteBonusBarrels,
+            HelmRoomBonusCount,
+        ],
+    ),
+    OptionGroup(
+        "Hard Mode",
+        [
+            HardModeEnabled,
+            HardModeSelected,
+            HardBosses,
+            MirrorMode,
+        ],
+    ),
+    OptionGroup(
+        "Hints",
+        [
+            HintStyle,
+            ShopkeeperHints,
+            MicroHints,
+        ],
+    ),
+    OptionGroup(
+        "Trap Weights",
+        [
+            TrapFillPercentage,
+            BubbleTrapWeight,
+            SlowTrapWeight,
+            ReverseTrapWeight,
+            DisableAWeight,
+            DisableBWeight,
+            DisableCWeight,
+            DisableZWeight,
+            GetOutTrapWeight,
+            DryTrapWeight,
+            FlipTrapWeight,
+        ],
+    ),
+    OptionGroup(
+        "Links",
+        [
+            TagLink,
+            RingLink,
+            TrapLink,
+            DeathLink,
+        ],
+    ),
+    OptionGroup("Notifications", [ReceiveNotifications]),
+]

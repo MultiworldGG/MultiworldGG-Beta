@@ -76,7 +76,7 @@ async def chat_commands_callback(ctx: "PathOfExileContext", line: str):
 
     if "!ap char" in message:
         _random_string = random.randbytes(8).hex()
-        await inputHelper.send_poe_text(f"char_{_random_string}")
+        await inputHelper.send_poe_text(f"char_{_random_string}") # don't know the char name yet, so we can't whisper.
     if "char_" in message:
         parts = line.split("char_")
         if parts[1] == _random_string:
@@ -162,7 +162,7 @@ async def chat_commands_callback(ctx: "PathOfExileContext", line: str):
         if link_counts:
             link_message = ', '.join(f"{name}: {count}" for name, count in link_counts.items())
         else:
-            link_message = "No link items found"
+            link_message = "No links"
         
         await split_send_message(ctx, link_message)
 
@@ -181,7 +181,7 @@ async def chat_commands_callback(ctx: "PathOfExileContext", line: str):
         if flask_counts:
             flask_message = ', '.join(f"{name}: {count}" for name, count in flask_counts.items())
         else:
-            flask_message = "No flask items found"
+            flask_message = "No flasks"
 
         await split_send_message(ctx, flask_message)
 

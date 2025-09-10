@@ -1,3 +1,6 @@
+from worlds.apeescape.Strings import AEDoor
+
+
 class RAM:
     monkeyListGlobal = {
         1: 0x0DF828,
@@ -317,10 +320,10 @@ class RAM:
             64: 0x0E5C6A
         },
         23: {  # second room
-            65: 0x0E5A1A,
+            65: 0x0E557A,
             67: 0x0E57CA,
             68: 0x0E5C6A,
-            66: 0x0E557A
+            66: 0x0E5A1A
         },
         24: {  # 4-3
             69: 0x0E57CA,
@@ -606,7 +609,7 @@ class RAM:
             32, 33, 34, 37, 42, 35, 36, 38, 41, 43, 39, 40, 44
         },
         6: {
-            49, 51, 45, 47, 50, 46, 48, 52
+            49, 51, 45, 47, 50, 46, 52
         },
         7: {
 
@@ -621,10 +624,10 @@ class RAM:
             69, 70, 71, 77, 78, 72, 73, 74, 75, 76, 79
         },
         11: {
-            80, 81, 84, 83, 85, 82
+            80, 81, 84, 85, 82
         },
         12: {
-            86, 87, 91, 92, 93, 94, 88, 90, 89
+            91, 92, 93, 94, 88, 90, 89
         },
         13: {
             95, 96, 99, 100, 101, 102, 103, 98, 97
@@ -654,6 +657,156 @@ class RAM:
             181, 182, 183, 184, 185, 187, 186, 188, 189, 190, 192, 191,
             194, 195, 196, 193, 197, 198, 199, 200, 201, 202, 203, 204
         }
+    }
+    roomsperlevel = {
+        1: {
+            1
+        },
+        2: {
+            2
+        },
+        3: {
+            3, 4, 5
+        },
+        4: {
+            6, 7, 8, 9, 10
+        },
+        5: {
+            11, 12, 13, 14
+        },
+        6: {
+            15, 16, 17, 18
+        },
+        7: {
+            19
+        },
+        8: {
+            20, 21
+        },
+        9: {
+            22, 23
+        },
+        10: {
+            24, 25, 26, 27, 28
+        },
+        11: {
+            29
+        },
+        12: {
+            30, 31, 32
+        },
+        13: {
+            33, 34, 35
+        },
+        14: {
+            36
+        },
+        15: {
+            37, 38, 39
+        },
+        16: {
+            40, 41, 42, 43, 44
+        },
+        17: {
+            45, 46, 47, 49, 50, 51 # Removed boss room
+        },
+        20: {
+            53, 54, 55
+        },
+        21: {
+            56, 57, 58, 59, 60, 61, 62
+        },
+        22: {
+            63, 64, 65, 66, 67 # Removed boss room
+        },
+        24: {
+            69, 72, 75, 76, 77, 78, 79, 80, 81, 82, 84, 85 # Removed boss rooms and coaster spawns
+        },
+        30:{
+            87
+        }
+    }
+    roomstostring = {
+            1 : AEDoor.FF_ENTRY.value,
+            2 : AEDoor.PO_ENTRY.value,
+            3 : AEDoor.ML_ENTRY.value,
+            4 : AEDoor.ML_VOLCANO_ENTRY.value,
+            5 : AEDoor.ML_TRICERATOPS_ENTRY.value,
+            6 : AEDoor.TJ_ENTRY.value,
+            7 : AEDoor.TJ_MUSHROOM_ENTRY .value,
+            8 : AEDoor.TJ_FISH_ENTRY.value,
+            9 : AEDoor.TJ_TENT_FISH.value,
+            10: AEDoor.TJ_BOULDER_ENTRY.value,
+            11: AEDoor.DR_ENTRY.value,
+            12: AEDoor.DR_FAN_OUTSIDE_HOLE.value,
+            13: AEDoor.DR_OBELISK_BOTTOM.value,
+            14: AEDoor.DR_WATER_SIDE.value,
+            15: AEDoor.CR_ENTRY.value,
+            16: AEDoor.CR_SIDE_ROOM_ENTRY.value,
+            17: AEDoor.CR_MAIN_RUINS_ENTRY.value,
+            18: AEDoor.CR_PILLAR_ROOM_MAIN_RUINS.value,
+            19: AEDoor.SA_ENTRY.value,
+            20: AEDoor.CB_ENTRY.value,
+            21: AEDoor.CB_SECOND_ROOM_ENTRY.value,
+            22: AEDoor.CCAVE_ENTRY.value,
+            23: AEDoor.CCAVE_SECOND_ROOM_ENTRY.value,
+            24: AEDoor.DI_ENTRY.value,
+            25: AEDoor.DI_STOMACH_ENTRY.value,
+            26: AEDoor.DI_GALLERY_SLIDE_ELEVATOR.value,
+            27: AEDoor.DI_TENTACLE.value, # Invalid starting room when lamps and doors are not shuffled
+            28: AEDoor.DI_SLIDE_ROOM_STOMACH.value,
+            29: AEDoor.SM_ENTRY.value,
+            30: AEDoor.FR_ENTRY.value,
+            31: AEDoor.FR_WATER_CAVERNS.value,
+            32: AEDoor.FR_CAVERNS_ENTRY.value,
+            33: AEDoor.HS_ENTRY.value,
+            34: AEDoor.HS_HOT_SPRING.value,
+            35: AEDoor.HS_POLAR_BEAR_CAVE.value,
+            36: AEDoor.GA_ENTRY.value,
+            37: AEDoor.ST_ENTRY.value,
+            38: AEDoor.ST_TEMPLE.value,
+            39: AEDoor.ST_WELL.value,
+            40: AEDoor.WSW_ENTRY.value,
+            41: AEDoor.WSW_GONG_ENTRY.value,
+            42: AEDoor.WSW_MIDDLE_GONG.value,
+            43: AEDoor.WSW_OBSTACLE_MIDDLE.value,
+            44: AEDoor.WSW_BARREL_OBSTACLE.value,
+            45: AEDoor.CC_ENTRY.value,
+            46: AEDoor.CC_CASTLEMAIN_ENTRY.value,
+            47: AEDoor.CC_BASEMENT_ENTRY.value,
+            49: AEDoor.CC_BUTTON_BASEMENT_WATER.value,
+            50: AEDoor.CC_ELEVATOR_CASTLEMAIN.value,
+            51: AEDoor.CC_BELL_CASTLE.value,
+            53: AEDoor.CP_ENTRY.value,
+            54: AEDoor.CP_SEWERSFRONT_OUTSIDE.value,
+            55: AEDoor.CP_BARREL_SEWERS_FRONT.value,
+            56: AEDoor.SF_ENTRY.value,
+            57: AEDoor.SF_FACTORY_OUTSIDE.value,
+            58: AEDoor.SF_RC_CAR_FACTORY.value,
+            59: AEDoor.SF_LAVA_MECH.value,
+            60: AEDoor.SF_WHEEL_FACTORY_BOTTOM.value,
+            61: AEDoor.SF_CONVEYOR_LAVA.value,
+            62: AEDoor.SF_MECH_FACTORY.value,
+            63: AEDoor.TVT_ENTRY.value,
+            64: AEDoor.TVT_WATER_LOBBY.value, # This starting room may currently be a softlock.
+            65: AEDoor.TVT_LOBBY_OUTSIDE.value,
+            66: AEDoor.TVT_TANK_LOBBY.value,
+            67: AEDoor.TVT_FAN_TANK.value,
+            69: AEDoor.MM_SL_HUB.value,
+            72: AEDoor.MM_COASTER_ENTRY_SL_HUB.value,
+            73: AEDoor.MM_COASTER1_ENTRY.value,
+            74: AEDoor.MM_COASTER2_ENTRY.value,
+            75: AEDoor.MM_HAUNTED_HOUSE_DISEMBARK.value,
+            76: AEDoor.MM_COFFIN_HAUNTED_HOUSE.value,
+            77: AEDoor.MM_WESTERN_SL_HUB.value,
+            78: AEDoor.MM_CRATER_SL_HUB.value,
+            79: AEDoor.MM_OUTSIDE_CASTLE_CRATER.value,
+            80: AEDoor.MM_CASTLE_MAIN_OUTSIDE_CASTLE.value,
+            81: AEDoor.MM_INSIDE_CLIMB_CASTLE_MAIN.value,
+            82: AEDoor.MM_OUTSIDE_CLIMB_INSIDE_CLIMB.value,
+            84: AEDoor.MM_MONKEY_HEAD_CASTLE_MAIN.value,
+            85: AEDoor.MM_SIDE_ENTRY_OUTSIDE_CASTLE.value,
+            87: AEDoor.PPM_ENTRY.value
     }
     # To check if red mailboxes are already checked in the current room
     redMailboxes = {
@@ -722,6 +875,12 @@ class RAM:
         }
     }
 
+    timeStationMailboxStart = 0x0C1798
+    gotMailAddress = 0x0BBD99
+    # Seems to be shared with other variables,
+    # Detect when readingMail = 2 then check what mailbox it is
+    mailboxIDAddress = 0x0A6CD2
+    # Associate by room just to be sure, since some of them have the same ID (Ex.: Thick Jungle have 2 IDs = 71)
 
     mailboxListLocal = {
         1: {  # 1-1: Entry
@@ -929,7 +1088,9 @@ class RAM:
         "BananaPeelTrap": 0x250,
         "GadgetShuffleTrap": 0x251,
         "MonkeyMashTrap": 0x252,
-        "RainbowCookie": 0x270
+        "IcyHotPantsTrap": 0x253,
+        "RainbowCookie": 0x270,
+        "FAKE_OOL_ITEM": 0x999,
 
     }
 
@@ -1026,6 +1187,32 @@ class RAM:
 
     # Array order: bytesToWrite, OpenValue, ClosedValue
     doors_addresses = {
+        41:{ # WSW_GongRoom
+            0x0BFCCB: [1, 0xF7, 0xFB], # WSW_Gong_BackDoorVisual1
+            0x0BFCCE: [1, 0x00, 0xFF], # WSW_Gong_CoinDoorVisual1
+            0x0BFCCF: [1, 0x00, 0xFF], # WSW_Gong_CoinDoorVisual2
+            0x0BFCEB: [1, 0xF7, 0xFB], # WSW_Gong_CoinDoorVisual3
+            0x0BFBCE: [1, 0xFF, 0x00], # WSW_Gong_StairVisual1
+            0x0BFBCF: [1, 0xFF, 0x00], # WSW_Gong_StairVisual2
+            0x0BFBEE: [1, 0xFF, 0x00], # WSW_Gong_StairVisual3
+            0x0BFBEF: [1, 0xFF, 0x00], # WSW_Gong_StairVisual4
+            0x15F7DB: [1, 0xF7, 0xFB], # WSW_Gong_BackDoorHitBox
+            0x15FAEB: [1, 0xF7, 0xFB], # WSW_Gong_CoinDoorHitBox
+            0x15FC7B: [1, 0x02, 0x00], # WSW_Gong_Stair1HitBox
+            0x15FCB3: [1, 0x01, 0x00], # WSW_Gong_Stair2HitBox
+
+        },
+        44: {  # WSW_BarrelRoom
+            0x0C040A: [2, 0xE5E9, 0xE200], # WSW_Barrel_DoorVisual
+            0x170FCA: [2, 0xE5E9, 0xE200], # WSW_Barrel_DoorHitbox
+        },
+        67: {  # TVT_FanRoom
+            0x0C028A: [2, 0xF3F2, 0xF000],  # TVT_FanDoorVisual
+            0x1648C6: [2, 0xF3F2, 0xF000],  # TVT_FanDoorHitBox
+            #0x0BFFAE: [2, 0xFFFF, 0x0000],  # TVT_GlassDoorVisual1
+            #0x0BFFCE: [2, 0xFFFF, 0x0000],  # TVT_GlassDoorVisual2
+
+        },
         69: { # MM_DoubleDoor
             0x0E7901: [1,0x00,0x10],  # MM_DoubleDoorVisualL1
             0x0E7905: [1,0x10,0x00],  # MM_DoubleDoorVisualL2
@@ -1043,6 +1230,12 @@ class RAM:
             0x170B70: [2,0x1680,0x18D0],  # MM_DoubleDoorHitboxR2
             0x170B72: [2,0x0050,0x0200],  # MM_DoubleDoorHitboxR3
             0x170B76: [2,0x0200,0x0050],  # MM_DoubleDoorHitboxR4
+        },
+        75: {  # Haunted Mansion
+            #Nothing to activate there
+        },
+        76:{
+            #Nothing, event is triggering even after the monkeys are manually set
         }
     }
 
@@ -1052,6 +1245,7 @@ class RAM:
     #globalLamp_globalUpdate = 0x097568  # 0x097568 Default: 1444000F. Set this to 0 to disable
 
     # More precise addresses for local monkeys/events
+
     localLamp_MonkeyDetect = 0x097464
     globalLamp_MonkeyDetect1 = 0x097564
     globalLamp_MonkeyDetect2 = 0x097560
@@ -1147,6 +1341,15 @@ class RAM:
         },
     }
 
+    localMonkeyHitbox ={
+        0x0E557A : 0x0E5525,
+        0x0E57CA : 0x0E5775,
+        0x0E5A1A : 0x0E59C5,
+        0x0E5C6A : 0x0E5C15,
+        0x0E5EBA : 0x0E5E65,
+        0x0E610A : 0x0E60B5
+
+    }
     # A bit is 1 if the gadget is unlocked. First bit is club, second is net, etc.
     unlockedGadgetsAddress = 0x0F51C4
     # the gadgets on triangle, square, circle, X on successive bytes
@@ -1205,6 +1408,8 @@ class RAM:
     GOLDEN_ON_VALUE = 0x01      # Value to write to SPIKE_GOLDEN_FORM_ADDR to activate golden form
     GOLDEN_OFF_VALUE = 0x00     # Value to write to SPIKE_GOLDEN_FORM_ADDR to revert form
 
+    lockCamera = 0x162057 # Lock Camera (WsW Gong Room) Locked = 0x80, Free = 0x60
+
     isUnderwater = 0x0F4DCA
     canDiveAddress = 0x061970 #08018664 - default value (4 bytes)
     canWaterCatchAddress = 0x063C35 # 04 - default value
@@ -1243,11 +1448,13 @@ class RAM:
     currentLevelAddress = 0x0F4474
     gameStateAddress = 0x0F4470
 
+
     jakeVictoryAddress = 0x0F447A
     unlockedLevelAddress = 0x0DFC70
     requiredApesAddress = 0x0F44D8
     currentApesAddress = 0x0F44B6
     hundoApesAddress = 0x0F44D6
+    hundoCoinsAddress = 0x0F44DA
     localApeStartAddress = 0x0DFE00
     startingCoinAddress = 0x0DFB70
     endingCoinAddress = 0x0DFBD2 # Not used,could be used for a loop if current coin system is buggy
@@ -1315,7 +1522,7 @@ class RAM:
     MM_LampAddress = 0x0E00FB
 
     tokenCountFromServer = 0x0E00FC
-
+    Specter2CompleteAddress = 0x0E00FD
 
     DR_Block_Pushed = 0x18459A # Address is more of "Entry is open", but same result at the end
 
@@ -1414,6 +1621,7 @@ class RAM:
     # LevelSelection addresses (Number -1)
     selectedWorldAddress = 0x139BC4
     selectedLevelAddress = 0x139BCC
+    preventRoomOverride = 0x1380DC #False = 0xA6420126, True = 0
     worldIsScrollingRight = 0x139BD9 # 2 bytes: 0xFFFF = you are changing to the next world
     worldScrollToRightDPAD = 0x1381D4 # 2 bytes: Enabled = 0009, Disabled = 0000
     worldScrollToRightR1 = 0x138270  # 2 bytes: Enabled = 0009, Disabled = 0000
@@ -1498,21 +1706,39 @@ class RAM:
     spikeGroundStateAddress = 0x0EC23D
     spikeHittableAddress = 0x0EC227
     spikeUltraInstinctAddress = 0x0EC2E2
-    spikeColor = 0x0EC1E5
+    spikeSkinPalette = 0x0EC1E5
+    spikeColor = 0x0EC2D4
     #spikeColor2 = 0x0EC1E6
+    spike_RedColorUpdate = 0x063AEC
+    spike_GreenColorUpdate = 0x063B00
+    spike_BlueColorUpdate = 0x063B04
+    spike_LavaOrIceTimer = 0x0EC2D0 # 0100 means Spike is being launched in the air
 
     colortable = {
+        "vanilla": 0, #This value is not important as the value is overwritten in the client
+        "dark": 0x000000,
+        "white": 0xFFFFFF,
+        "red": 0x0000FF,
+        "green": 0x00FF00,
+        "blue": 0xFF0000,
+        "yellow": 0x00FFFF,
+        "cyan": 0xFFFF00,
+        "magenta": 0xFF00FF
+    }
+
+    skinpallettable = {
         "vanilla": 0x1030,
-        "white": 0x7617,
+        #"white": 0x7617,
+        "white": 0x101F, # Pallet seems consistent in all levels, used as base for spikecolor
         "grey": 0x5E03,
         "purple": 0x1000,
         "orange": 0x2F2F,
         "green": 0x35F6,
         "red": 0x2F00,
         "yellow": 0x1065,
-        "darkblue": 0x2600,#6F65
+        "darkblue": 0x2600, #6F65
         "voidwhite": 0x2E05,
-        "voidpurple": 0x4DFA,#
+        "voidpurple": 0x4DFA,
         "voidorange": 0x0007,
         #"voidred": 0x372E, #More like voidbrown sometimes
         "neonpink": 0x3BFF,
@@ -1526,7 +1752,6 @@ class RAM:
         "rave": 0x1D2F
     }
 
-
     # Specter bosses values
     S1_P1_Life = 0x1408FB
     S1_P2_State = 0x144A04
@@ -1539,16 +1764,6 @@ class RAM:
     # S1_LArm_Life = 0x14474E
     # S1_RArm_Life = 0x1446B6
 
-    timeStationMailboxStart = 0x0C1798
-    gotMailAddress = 0x0BBD99
-    gotMailAddress_PAL = 0x0BBE59
-    # DIFF = NTSC + C0
-    # Seems to be shared with other variables,
-    # Detect when readingMail = 2 then check what mailbox it is
-    mailboxIDAddress = 0x0A6CD2
-    mailboxIDAddress_PAL = 0x0A6DB2
-    #DIFF = NTSC + E0
-    # Associate by room just to be sure, since some of them have the same ID (Ex.: Thick Jungle have 2 IDs = 71)
     levels = {
         "Fossil": 0x01,
         "Primordial": 0x02,
@@ -1581,3 +1796,5 @@ class RAM:
         "Training": 0x20
     }
 
+    baselevelids = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x14, 0x15, 0x16, 0x18, 0x1E]
+    firstroomids = [0x01, 0x02, 0x03, 0x06, 0x0B, 0x0F, 0x13, 0x14, 0x16, 0x18, 0x1D, 0x1E, 0x21, 0x24, 0x25, 0x28, 0x2D, 0x35, 0x38, 0x3F, 0x45, 0x57]

@@ -5,6 +5,7 @@ import math
 import io
 import randomizer.ItemPool as ItemPool
 from typing import Union
+from randomizer.Patching.Library.Assets import getPointerLocation
 from randomizer.Patching.Library.Generic import Overlay, IsItemSelected, TableNames, IsDDMSSelected
 from randomizer.Patching.Library.Image import getImageFile, TextureFormat
 from randomizer.Patching.Library.ItemRando import CustomActors
@@ -90,6 +91,7 @@ HARDER_CRUSHERS = True
 BOULDERS_DONT_DESTROY = True
 CAN_THROW_KEGS = True
 CAN_THROW_APPLES = True
+DISABLE_LONG_JUMP = False
 
 WARPS_JAPES = [
     0x20,  # FLAG_WARP_JAPES_W1_PORTAL,
@@ -468,18 +470,6 @@ def writeActorHealth(ROM_COPY, actor_index: int, new_health: int):
     writeValue(ROM_COPY, start, Overlay.Custom, new_health, {})
 
 
-def updateActorFunctionInt(ROM_COPY, actor_index: int, new_function: int):
-    """Update the actor function in the table based on a int value."""
-    start = getSym("actor_functions") + (4 * actor_index)
-    writeValue(ROM_COPY, start, Overlay.Custom, new_function, {}, 4)
-
-
-def updateActorFunction(ROM_COPY, actor_index: int, new_function_sym: str):
-    """Update the actor function in the table based on a sym value."""
-    start = getSym("actor_functions") + (4 * actor_index)
-    writeLabelValue(ROM_COPY, start, Overlay.Custom, new_function_sym, {})
-
-
 def disableDynamicReverb(ROM_COPY: ROM):
     """Disable the dynamic FXMix (Reverb) that would otherwise be applied in tunnels and underwater."""
     for index in range(1, 175):
@@ -560,6 +550,22 @@ def patchVersionStack(ROM_COPY: LocalROM, settings: Settings):
     ROM_COPY.writeBytes(bytes(string_to_write, "ascii"))
 
 
+def getModelTwoAllowances(ROM_COPY: LocalROM) -> dict:
+    """Get the total amount of model 2 items in each map."""
+    max_default = 0
+    output = {}
+    for x in range(216):
+        file_start = getPointerLocation(TableNames.Setups, x)
+        ROM_COPY.seek(file_start)
+        model2_count = int.from_bytes(ROM_COPY.readBytes(4), "big")
+        if x in (7, 0x1A, 0x1E, 0x26, 0x30):
+            output[x] = model2_count
+        elif max_default < model2_count:
+            max_default = model2_count
+    output["default"] = max_default
+    return output
+
+
 def patchAssembly(ROM_COPY, spoiler):
     """Patch all assembly instructions."""
     patchVersionStack(ROM_COPY, spoiler.settings)
@@ -623,6 +629,9 @@ def patchAssembly(ROM_COPY, spoiler):
         writeValue(ROM_COPY, 0x8062F09C, Overlay.Static, 0x240F1F40, offset_dict, 4)
 
     adjustKongModelHandlers(ROM_COPY, settings, offset_dict)
+    krushaChanges(ROM_COPY, settings, offset_dict)
+    writeHook(ROM_COPY, 0x8061A4C8, Overlay.Static, "AlterHeadSize", offset_dict)
+    writeHook(ROM_COPY, 0x806198D4, Overlay.Static, "AlterHeadSize_0", offset_dict)
 
     writeHook(ROM_COPY, 0x8063EE08, Overlay.Static, "InstanceScriptCheck", offset_dict)
     writeHook(ROM_COPY, 0x806FF384, Overlay.Static, "ModifyCameraColor", offset_dict)
@@ -652,6 +661,8 @@ def patchAssembly(ROM_COPY, spoiler):
     writeHook(ROM_COPY, 0x806A7474, Overlay.Static, "disableHelmKeyBounce", offset_dict)
     writeHook(ROM_COPY, 0x80600674, Overlay.Static, "updateLag", offset_dict)
     writeHook(ROM_COPY, 0x806FC990, Overlay.Static, "ApplyTextRecolorHints", offset_dict)
+
+    writeValue(ROM_COPY, 0x8002DECE, Overlay.Bonus, 0x58, offset_dict, 1)
 
     if CAMERA_RESET_REDUCTION:
         # Credit: Retroben
@@ -793,12 +804,14 @@ def patchAssembly(ROM_COPY, spoiler):
     writeFloat(ROM_COPY, 0x807533DC, Overlay.Static, 260, offset_dict)  # Lanky Air
     writeFloat(ROM_COPY, 0x807533E0, Overlay.Static, 260, offset_dict)  # Tiny Air
     # Bump Model Two Allowance
-    writeValue(ROM_COPY, 0x80632026, Overlay.Static, 550, offset_dict)  # Japes
-    writeValue(ROM_COPY, 0x80632006, Overlay.Static, 550, offset_dict)  # Aztec
-    writeValue(ROM_COPY, 0x80631FF6, Overlay.Static, 550, offset_dict)  # Factory
-    writeValue(ROM_COPY, 0x80632016, Overlay.Static, 550, offset_dict)  # Galleon
-    writeValue(ROM_COPY, 0x80631FE6, Overlay.Static, 550, offset_dict)  # Fungi
-    writeValue(ROM_COPY, 0x80632036, Overlay.Static, 550, offset_dict)  # Others
+    allowances = getModelTwoAllowances(ROM_COPY)
+    buffer = 25
+    writeValue(ROM_COPY, 0x80632026, Overlay.Static, allowances[7] + buffer, offset_dict)  # Japes
+    writeValue(ROM_COPY, 0x80632006, Overlay.Static, allowances[0x26] + buffer, offset_dict)  # Aztec
+    writeValue(ROM_COPY, 0x80631FF6, Overlay.Static, allowances[0x1A] + buffer, offset_dict)  # Factory
+    writeValue(ROM_COPY, 0x80632016, Overlay.Static, allowances[0x1E] + buffer, offset_dict)  # Galleon
+    writeValue(ROM_COPY, 0x80631FE6, Overlay.Static, allowances[0x30] + buffer, offset_dict)  # Fungi
+    writeValue(ROM_COPY, 0x80632036, Overlay.Static, allowances["default"] + buffer, offset_dict)  # Others
 
     writeFunction(ROM_COPY, 0x80732314, Overlay.Static, "CrashHandler", offset_dict)
     writeFunction(ROM_COPY, 0x8073231C, Overlay.Static, "CrashHandler", offset_dict)
@@ -967,7 +980,7 @@ def patchAssembly(ROM_COPY, spoiler):
     writeFunction(ROM_COPY, 0x806FBE44, Overlay.Static, "getCharWidthMask", offset_dict)
 
     # Alter data for zinger flamethrower enemy
-    writeValue(ROM_COPY, 0x8075F210, Overlay.Static, 345 + (CustomActors.ZingerFlamethrower - 0x8000), offset_dict)
+    writeValue(ROM_COPY, 0x8075F210, Overlay.Static, CustomActors.ZingerFlamethrower, offset_dict)
     writeValue(ROM_COPY, 0x8075F212, Overlay.Static, Model.Zinger + 1, offset_dict)
     writeValue(ROM_COPY, 0x8075F214, Overlay.Static, 0x250, offset_dict)
     writeValue(ROM_COPY, 0x8075F216, Overlay.Static, 0, offset_dict)
@@ -981,7 +994,7 @@ def patchAssembly(ROM_COPY, spoiler):
     writeValue(ROM_COPY, 0x806B3E38, Overlay.Static, 0x5700, offset_dict)  # BEQL -> BNEL
 
     # Alter data for bug enemy
-    writeValue(ROM_COPY, 0x8075F0F0, Overlay.Static, 345 + (CustomActors.Scarab - 0x8000), offset_dict)
+    writeValue(ROM_COPY, 0x8075F0F0, Overlay.Static, CustomActors.Scarab, offset_dict)
     writeValue(ROM_COPY, 0x8075F0F2, Overlay.Static, 0x118 + 1, offset_dict)
     writeValue(ROM_COPY, 0x8075F0F4, Overlay.Static, 0x281, offset_dict)
     writeValue(ROM_COPY, 0x8075F0F6, Overlay.Static, 0, offset_dict)
@@ -1212,10 +1225,7 @@ def patchAssembly(ROM_COPY, spoiler):
     lowerReplenishibles(ROM_COPY, settings, offset_dict)
 
     donkInTheManySettings(ROM_COPY, settings, offset_dict)
-    if settings.medal_cb_req > 0:
-        writeValue(ROM_COPY, 0x806F934E, Overlay.Static, settings.medal_cb_req, offset_dict)  # Acquisition
-        writeValue(ROM_COPY, 0x806F935A, Overlay.Static, settings.medal_cb_req, offset_dict)  # Acquisition
-        writeValue(ROM_COPY, 0x806AA942, Overlay.Static, settings.medal_cb_req, offset_dict)  # Pause Menu Tick
+    writeValue(ROM_COPY, 0x806AA8E8, Overlay.Static, 0x00005825, offset_dict, 4)  # Disable rendering the medal icon in the pause menu
 
     if settings.fungi_time_internal == FungiTimeSetting.dusk:
         writeValue(ROM_COPY, 0x806C5614, Overlay.Static, 0x50000006, offset_dict, 4)
@@ -1542,7 +1552,6 @@ def patchAssembly(ROM_COPY, spoiler):
 
     # Uncontrollable Fixes
     writeFunction(ROM_COPY, 0x806F56E0, Overlay.Static, "getFlagIndex_Corrected", offset_dict)  # BP Acquisition - Correct for character
-    writeFunction(ROM_COPY, 0x806F9374, Overlay.Static, "getFlagIndex_MedalCorrected", offset_dict)  # Medal Acquisition - Correct for character
     # Inverted Controls Option
     writeValue(ROM_COPY, 0x8060D04C, Overlay.Static, 0x1000, offset_dict)  # Prevent inverted controls overwrite
     # Disable Sprint Music in Fungi Forest
@@ -1680,6 +1689,10 @@ def patchAssembly(ROM_COPY, spoiler):
         # Can throw the Apple
         writeValue(ROM_COPY, 0x806E4C94, Overlay.Static, 0, offset_dict, 4)  # Apple (Grounded)
         writeValue(ROM_COPY, 0x806E4D38, Overlay.Static, 0, offset_dict, 4)  # Apple (Non-Grounded)
+
+    if DISABLE_LONG_JUMP:
+        writeFloatUpper(ROM_COPY, 0x806E30E6, Overlay.Static, 8000000, offset_dict)
+        writeValue(ROM_COPY, 0x806D81E4, Overlay.Static, 0, offset_dict, 4)  # Removes a set to 0 for backflips, making them feel better
 
     if settings.shops_dont_cost:
         writeValue(ROM_COPY, 0x8064EA8C, Overlay.Static, 0, offset_dict, 4)  # Remove Arcade Costing Coins
@@ -2009,6 +2022,10 @@ def patchAssembly(ROM_COPY, spoiler):
 
     writeLabelValue(ROM_COPY, 0x80748088, Overlay.Static, "CrownDoorCheck", offset_dict)  # Update check on Crown Door
 
+    writeHook(ROM_COPY, 0x806321FC, Overlay.Static, "SetupModelTwoHandler", offset_dict)  # Setup transfer for model 2
+    writeHook(ROM_COPY, 0x806F7924, Overlay.Static, "ActorToModelTwoHandler", offset_dict)  # Actor transfer for model 2
+    writeHook(ROM_COPY, 0x8063BA04, Overlay.Static, "ModelTwoToSetupState", offset_dict)  # Model 2 transfer to setup
+
     # Fast Start: Beginning of game
     if settings.fast_start_beginning_of_game:
         writeValue(ROM_COPY, 0x80714540, Overlay.Static, 0, offset_dict, 4)
@@ -2020,6 +2037,8 @@ def patchAssembly(ROM_COPY, spoiler):
                 0x180,  # First Slam Given
             ]
         )
+        for x in range(4):
+            patchBonus(ROM_COPY, 95 + x, offset_dict, flag=0)
     else:
         writeValue(ROM_COPY, 0x80755F4C, Overlay.Static, 0, offset_dict)  # Remove escape cutscene
     if settings.auto_keys:

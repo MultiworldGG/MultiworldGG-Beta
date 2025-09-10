@@ -23,8 +23,16 @@ def launch_client(*args):
     launch_componenent(main, name="MinecraftClient", args=args)
 
 
-components.append(Component(display_name="Minecraft Client", func=launch_client, component_type=Type.CLIENT,
-                            file_identifier=SuffixIdentifier('.apmc')))
+
+# Add support for both CLI and GUI modes
+components.append(Component(
+    display_name="Minecraft Client", 
+    func=launch_client, 
+    component_type=Type.CLIENT,
+    file_identifier=SuffixIdentifier('.apmc'),
+    supports_uri=True,
+    game_name="Minecraft"
+))
 
 class MinecraftSettings(settings.Group):
     class ForgeDirectory(settings.OptionalUserFolderPath):
@@ -41,7 +49,7 @@ class MinecraftSettings(settings.Group):
         Path to Java executable. If not set, will attempt to fall back to Java system installation.
         """
 
-    forge_directory: ForgeDirectory = ForgeDirectory("Minecraft NeoForge server")
+    forge_directory: ForgeDirectory = ForgeDirectory("Minecraft Forge Server")
     max_heap_size: str = "2G"
     release_channel: ReleaseChannel = ReleaseChannel("release")
     java: JavaExecutable = JavaExecutable("")

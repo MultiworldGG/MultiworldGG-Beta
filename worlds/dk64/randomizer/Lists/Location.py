@@ -68,12 +68,17 @@ class Location:
             if self.level in (Levels.DKIsles, Levels.HideoutHelm):
                 level_index = 7
             self.map_id_list = [MapIDCombo(0, -1, 469 + self.kong + (5 * level_index), self.kong)]
-        elif self.type in [Types.Medal, Types.IslesMedal] and self.level != Levels.HideoutHelm:
+        elif self.type in [Types.Medal, Types.IslesMedal, Types.HalfMedal] and self.level != Levels.HideoutHelm:
             level_index = int(self.level)
-            if self.level == Levels.DKIsles:
-                self.map_id_list = [MapIDCombo(0, -1, 0x3C6 + self.kong, self.kong)]
+            if self.type == Types.HalfMedal:
+                if self.level == Levels.DKIsles:
+                    level_index = 7
+                self.map_id_list = [MapIDCombo(0, -1, 0x3D6 + (5 * level_index) + self.kong)]
             else:
-                self.map_id_list = [MapIDCombo(0, -1, 549 + self.kong + (5 * level_index), self.kong)]
+                if self.level == Levels.DKIsles:
+                    self.map_id_list = [MapIDCombo(0, -1, 0x3C6 + self.kong, self.kong)]
+                else:
+                    self.map_id_list = [MapIDCombo(0, -1, 549 + self.kong + (5 * level_index), self.kong)]
         elif self.type == Types.Hint:
             level_index = int(self.level)
             self.map_id_list = [MapIDCombo(0, -1, 0x384 + self.kong + (5 * level_index), self.kong)]
@@ -143,7 +148,7 @@ class Location:
                     location_obj.inaccessible = False
 
 
-DROPSANITY_FLAG_START = 0x3D6
+DROPSANITY_FLAG_START = 0x3FE
 
 
 LocationListOriginal = {
@@ -244,7 +249,7 @@ LocationListOriginal = {
     Locations.JapesLankyMedal: Location(Levels.JungleJapes, "Japes Lanky Medal", Items.BananaMedal, Types.Medal, Kongs.lanky),
     Locations.JapesTinyMedal: Location(Levels.JungleJapes, "Japes Tiny Medal", Items.BananaMedal, Types.Medal, Kongs.tiny),
     Locations.JapesChunkyMedal: Location(Levels.JungleJapes, "Japes Chunky Medal", Items.BananaMedal, Types.Medal, Kongs.chunky),
-    Locations.DiddyKong: Location(Levels.JungleJapes, "Diddy Kong's Cage", Items.Diddy, Types.Kong, Kongs.donkey, [MapIDCombo(0, -1, 6)], logically_relevant=True),
+    Locations.DiddyKong: Location(Levels.JungleJapes, "Japes Cage: Diddy Kong", Items.Diddy, Types.Kong, Kongs.donkey, [MapIDCombo(0, -1, 6)], logically_relevant=True),
     Locations.JapesDonkeyFrontofCage: Location(Levels.JungleJapes, "Japes in Front of Diddy Cage", Items.GoldenBanana, Types.Banana, Kongs.any, [MapIDCombo(Maps.JungleJapes, 0x69, 4, Kongs.donkey)], logically_relevant=True),  # Can be assigned to other kongs
     Locations.JapesDonkeyFreeDiddy: Location(Levels.JungleJapes, "Japes Free Diddy Item", Items.GoldenBanana, Types.Banana, Kongs.any, [MapIDCombo(Maps.JungleJapes, 0x48, 5, Kongs.donkey)]),  # Can be assigned to other kongs
     Locations.JapesDonkeyCagedBanana: Location(Levels.JungleJapes, "Japes Donkey Floor Cage Banana", Items.GoldenBanana, Types.Banana, Kongs.donkey, [MapIDCombo(Maps.JungleJapes, 0x44, 20, Kongs.donkey)]),
@@ -286,7 +291,7 @@ LocationListOriginal = {
     Locations.AztecKasplatOnTinyTemple: Location(Levels.AngryAztec, "Aztec Kasplat: On Tiny Temple", Items.AngryAztecDiddyBlueprint, Types.Blueprint, Kongs.diddy, [Maps.AngryAztec]),
     Locations.AztecTinyKlaptrapRoom: Location(Levels.AngryAztec, "Aztec Tiny Klaptrap Room", Items.GoldenBanana, Types.Banana, Kongs.tiny, [MapIDCombo(Maps.AztecTinyTemple, 0x7E, 65, Kongs.tiny)]),
     Locations.AztecChunkyKlaptrapRoom: Location(Levels.AngryAztec, "Aztec Chunky Klaptrap Room", Items.GoldenBanana, Types.Banana, Kongs.chunky, [MapIDCombo(Maps.AztecTinyTemple, 0x9, 64, Kongs.chunky)]),
-    Locations.TinyKong: Location(Levels.AngryAztec, "Tiny Kong's Cage", Items.Tiny, Types.Kong, Kongs.diddy, [MapIDCombo(0, -1, 66)], logically_relevant=True),
+    Locations.TinyKong: Location(Levels.AngryAztec, "Aztec Cage: Tiny Kong", Items.Tiny, Types.Kong, Kongs.diddy, [MapIDCombo(0, -1, 66)], logically_relevant=True),
     Locations.AztecDiddyFreeTiny: Location(Levels.AngryAztec, "Aztec Free Tiny Item", Items.GoldenBanana, Types.Banana, Kongs.any, [MapIDCombo(Maps.AztecTinyTemple, 0x5B, 67, Kongs.diddy)]),  # Can be assigned to other kongs
     Locations.AztecLankyVulture: Location(Levels.AngryAztec, "Aztec Lanky Vulture Shooting", Items.GoldenBanana, Types.Banana, Kongs.lanky, [MapIDCombo(0, -1, 68, Kongs.lanky)]),
     Locations.AztecBattleArena: Location(Levels.AngryAztec, "Aztec Battle Arena (Tiny Temple: Vulture Room)", Items.BattleCrown, Types.Crown, Kongs.any, [MapIDCombo(Maps.AztecCrown, -1, 610)]),
@@ -303,7 +308,7 @@ LocationListOriginal = {
     Locations.AztecChunky5DoorTemple: Location(Levels.AngryAztec, "Aztec Chunky 5 Door Temple", Items.GoldenBanana, Types.Banana, Kongs.chunky, [MapIDCombo(0, -1, 59, Kongs.chunky)]),
     Locations.AztecKasplatChunky5DT: Location(Levels.AngryAztec, "Aztec Kasplat: Chunky 5-Door Temple", Items.AngryAztecChunkyBlueprint, Types.Blueprint, Kongs.chunky, [Maps.AztecChunky5DTemple]),
     Locations.AztecTinyBeetleRace: Location(Levels.AngryAztec, "Aztec Tiny Beetle Race", Items.GoldenBanana, Types.Banana, Kongs.tiny, [MapIDCombo(Maps.AztecTinyRace, 0x48, 75, Kongs.tiny)]),
-    Locations.LankyKong: Location(Levels.AngryAztec, "Lanky Kong's Cage", Items.Lanky, Types.Kong, Kongs.donkey, [MapIDCombo(0, -1, 70)], logically_relevant=True),
+    Locations.LankyKong: Location(Levels.AngryAztec, "Aztec Cage: Lanky Kong", Items.Lanky, Types.Kong, Kongs.donkey, [MapIDCombo(0, -1, 70)], logically_relevant=True),
     Locations.AztecDonkeyFreeLanky: Location(Levels.AngryAztec, "Aztec Free Lanky Item", Items.GoldenBanana, Types.Banana, Kongs.any, [MapIDCombo(Maps.AztecLlamaTemple, 0x6C, 77, Kongs.donkey)]),  # Can be assigned to other kongs
     Locations.AztecLankyLlamaTempleBarrel: Location(Levels.AngryAztec, "Aztec Lanky Llama Temple Barrel", Items.GoldenBanana, Types.Banana, Kongs.lanky, [MapIDCombo(0, -1, 73, Kongs.lanky)]),
     Locations.AztecLankyMatchingGame: Location(Levels.AngryAztec, "Aztec Lanky Matching Game", Items.GoldenBanana, Types.Banana, Kongs.lanky, [MapIDCombo(Maps.AztecLlamaTemple, 0x2B, 72, Kongs.lanky)]),
@@ -332,7 +337,7 @@ LocationListOriginal = {
     Locations.FactoryTinyCarRace: Location(Levels.FranticFactory, "Factory Tiny Car Race", Items.GoldenBanana, Types.Banana, Kongs.tiny, [MapIDCombo(Maps.FactoryTinyRace, 0x62, 139, Kongs.tiny)]),
     Locations.FactoryDiddyChunkyRoomBarrel: Location(Levels.FranticFactory, "Factory Diddy Storage Room Barrel", Items.GoldenBanana, Types.Banana, Kongs.diddy, [MapIDCombo(0, -1, 134, Kongs.diddy)]),
     Locations.FactoryDonkeyPowerHut: Location(Levels.FranticFactory, "Factory Donkey Power Hut", Items.GoldenBanana, Types.Banana, Kongs.donkey, [MapIDCombo(Maps.FactoryPowerHut, 0x2, 112, Kongs.donkey)]),
-    Locations.ChunkyKong: Location(Levels.FranticFactory, "Chunky Kong's Cage", Items.Chunky, Types.Kong, Kongs.lanky, [MapIDCombo(0, -1, 117)], logically_relevant=True),
+    Locations.ChunkyKong: Location(Levels.FranticFactory, "Factory Cage: Chunky Kong", Items.Chunky, Types.Kong, Kongs.lanky, [MapIDCombo(0, -1, 117)], logically_relevant=True),
     Locations.NintendoCoin: Location(Levels.FranticFactory, "DK Arcade Round 2", Items.NintendoCoin, Types.NintendoCoin, Kongs.donkey, [MapIDCombo(Maps.FranticFactory, 0x13E, 132)]),
     Locations.FactoryDonkeyDKArcade: Location(Levels.FranticFactory, "Factory Donkey DK Arcade Round 1", Items.GoldenBanana, Types.Banana, Kongs.donkey, [MapIDCombo(Maps.FranticFactory, 0x108, 130, Kongs.donkey), MapIDCombo(Maps.FactoryBaboonBlast, 0, 130, Kongs.donkey)]),
     Locations.FactoryLankyFreeChunky: Location(Levels.FranticFactory, "Factory Free Chunky Item", Items.GoldenBanana, Types.Banana, Kongs.any, [MapIDCombo(Maps.FranticFactory, 0x78, 118, Kongs.lanky)]),  # Can be assigned to other kongs
@@ -1213,25 +1218,25 @@ LocationListOriginal = {
     # Locations.CastleTrashEnemy_Gauntlet4: Location(Levels.CreepyCastle, "Castle Trash Can Enemy: Gauntlet4", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.CastleTrashCan, -1, DROPSANITY_FLAG_START + 0x18c)]),
     Locations.CastleTreeEnemy_StartRoom0: Location(Levels.CreepyCastle, "Castle Tree Enemy: Start Room (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.CastleTree, -1, DROPSANITY_FLAG_START + 0x18d)]),
     Locations.CastleTreeEnemy_StartRoom1: Location(Levels.CreepyCastle, "Castle Tree Enemy: Start Room (1)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.CastleTree, -1, DROPSANITY_FLAG_START + 0x18e)]),
-    Locations.HelmMainEnemy_Start0: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Start (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x18f)]),
-    Locations.HelmMainEnemy_Start1: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Start (1)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x190)]),
-    Locations.HelmMainEnemy_Hill: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Hill", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x191)]),
-    Locations.HelmMainEnemy_SwitchRoom0: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Switch Room (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x192)]),
-    Locations.HelmMainEnemy_SwitchRoom1: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Switch Room (1)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x193)]),
-    Locations.HelmMainEnemy_MiniRoom0: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Mini Room (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x194)]),
-    Locations.HelmMainEnemy_MiniRoom1: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Mini Room (1)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x195)]),
-    Locations.HelmMainEnemy_MiniRoom2: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Mini Room (2)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x196)]),
-    Locations.HelmMainEnemy_MiniRoom3: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Mini Room (3)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x197)]),
-    Locations.HelmMainEnemy_DKRoom: Location(Levels.HideoutHelm, "Hideout Helm Enemy: DKRoom", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x198)]),
-    Locations.HelmMainEnemy_ChunkyRoom0: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Chunky Room (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x199)]),
-    Locations.HelmMainEnemy_ChunkyRoom1: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Chunky Room (1)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x19a)]),
-    Locations.HelmMainEnemy_TinyRoom: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Tiny Room", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x19b)]),
-    Locations.HelmMainEnemy_LankyRoom0: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Lanky Room (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x19c)]),
-    Locations.HelmMainEnemy_LankyRoom1: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Lanky Room (1)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x19d)]),
-    Locations.HelmMainEnemy_DiddyRoom0: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Diddy Room (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x19e)]),
-    Locations.HelmMainEnemy_DiddyRoom1: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Diddy Room (1)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x19f)]),
-    Locations.HelmMainEnemy_NavRight: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Nav Right", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x1a0)]),
-    Locations.HelmMainEnemy_NavLeft: Location(Levels.HideoutHelm, "Hideout Helm Enemy: Nav Left", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x1a1)]),
+    Locations.HelmMainEnemy_Start0: Location(Levels.HideoutHelm, "Helm Enemy: Start (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x18f)]),
+    Locations.HelmMainEnemy_Start1: Location(Levels.HideoutHelm, "Helm Enemy: Start (1)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x190)]),
+    Locations.HelmMainEnemy_Hill: Location(Levels.HideoutHelm, "Helm Enemy: Hill", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x191)]),
+    Locations.HelmMainEnemy_SwitchRoom0: Location(Levels.HideoutHelm, "Helm Enemy: Switch Room (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x192)]),
+    Locations.HelmMainEnemy_SwitchRoom1: Location(Levels.HideoutHelm, "Helm Enemy: Switch Room (1)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x193)]),
+    Locations.HelmMainEnemy_MiniRoom0: Location(Levels.HideoutHelm, "Helm Enemy: Mini Room (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x194)]),
+    Locations.HelmMainEnemy_MiniRoom1: Location(Levels.HideoutHelm, "Helm Enemy: Mini Room (1)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x195)]),
+    Locations.HelmMainEnemy_MiniRoom2: Location(Levels.HideoutHelm, "Helm Enemy: Mini Room (2)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x196)]),
+    Locations.HelmMainEnemy_MiniRoom3: Location(Levels.HideoutHelm, "Helm Enemy: Mini Room (3)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x197)]),
+    Locations.HelmMainEnemy_DKRoom: Location(Levels.HideoutHelm, "Helm Enemy: DKRoom", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x198)]),
+    Locations.HelmMainEnemy_ChunkyRoom0: Location(Levels.HideoutHelm, "Helm Enemy: Chunky Room (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x199)]),
+    Locations.HelmMainEnemy_ChunkyRoom1: Location(Levels.HideoutHelm, "Helm Enemy: Chunky Room (1)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x19a)]),
+    Locations.HelmMainEnemy_TinyRoom: Location(Levels.HideoutHelm, "Helm Enemy: Tiny Room", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x19b)]),
+    Locations.HelmMainEnemy_LankyRoom0: Location(Levels.HideoutHelm, "Helm Enemy: Lanky Room (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x19c)]),
+    Locations.HelmMainEnemy_LankyRoom1: Location(Levels.HideoutHelm, "Helm Enemy: Lanky Room (1)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x19d)]),
+    Locations.HelmMainEnemy_DiddyRoom0: Location(Levels.HideoutHelm, "Helm Enemy: Diddy Room (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x19e)]),
+    Locations.HelmMainEnemy_DiddyRoom1: Location(Levels.HideoutHelm, "Helm Enemy: Diddy Room (1)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x19f)]),
+    Locations.HelmMainEnemy_NavRight: Location(Levels.HideoutHelm, "Helm Enemy: Nav Right", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x1a0)]),
+    Locations.HelmMainEnemy_NavLeft: Location(Levels.HideoutHelm, "Helm Enemy: Nav Left", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.HideoutHelm, -1, DROPSANITY_FLAG_START + 0x1a1)]),
     Locations.IslesMainEnemy_PineappleCage0: Location(Levels.DKIsles, "Isles Enemy: Pineapple Cage (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.Isles, -1, DROPSANITY_FLAG_START + 0x1a2)]),
     Locations.IslesMainEnemy_FungiCannon0: Location(Levels.DKIsles, "Isles Enemy: Fungi Cannon (0)", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.Isles, -1, DROPSANITY_FLAG_START + 0x1a3)]),
     Locations.IslesMainEnemy_JapesEntrance: Location(Levels.DKIsles, "Isles Enemy: Japes Entrance", Items.EnemyItem, Types.Enemies, Kongs.any, [MapIDCombo(Maps.Isles, -1, DROPSANITY_FLAG_START + 0x1a4)]),
@@ -1644,25 +1649,25 @@ LocationListOriginal = {
     # Locations.KremKap_CastleTrashEnemy_Gauntlet4: Location(Levels.CreepyCastle, "Photo of Castle Trash Can Enemy: Gauntlet4", Items.PhotoBug, Types.EnemyPhoto, Kongs.any, []),
     Locations.KremKap_CastleTreeEnemy_StartRoom0: Location(Levels.CreepyCastle, "Photo of Castle Tree Enemy: Start Room (0)", Items.PhotoBat, Types.EnemyPhoto, Kongs.any, []),
     Locations.KremKap_CastleTreeEnemy_StartRoom1: Location(Levels.CreepyCastle, "Photo of Castle Tree Enemy: Start Room (1)", Items.PhotoBat, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_Start0: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Start (0)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_Start1: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Start (1)", Items.PhotoKremling, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_Hill: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Hill", Items.PhotoKlump, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_SwitchRoom0: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Switch Room (0)", Items.PhotoKlump, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_SwitchRoom1: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Switch Room (1)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_MiniRoom0: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Mini Room (0)", Items.PhotoKremling, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_MiniRoom1: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Mini Room (1)", Items.PhotoKremling, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_MiniRoom2: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Mini Room (2)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_MiniRoom3: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Mini Room (3)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_DKRoom: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: DKRoom", Items.PhotoKremling, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_ChunkyRoom0: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Chunky Room (0)", Items.PhotoKremling, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_ChunkyRoom1: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Chunky Room (1)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_TinyRoom: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Tiny Room", Items.PhotoKlump, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_LankyRoom0: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Lanky Room (0)", Items.PhotoKlump, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_LankyRoom1: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Lanky Room (1)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_DiddyRoom0: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Diddy Room (0)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_DiddyRoom1: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Diddy Room (1)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_NavRight: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Nav Right", Items.PhotoKremling, Types.EnemyPhoto, Kongs.any, []),
-    Locations.KremKap_HelmMainEnemy_NavLeft: Location(Levels.HideoutHelm, "Photo of Hideout Helm Enemy: Nav Left", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_Start0: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Start (0)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_Start1: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Start (1)", Items.PhotoKremling, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_Hill: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Hill", Items.PhotoKlump, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_SwitchRoom0: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Switch Room (0)", Items.PhotoKlump, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_SwitchRoom1: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Switch Room (1)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_MiniRoom0: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Mini Room (0)", Items.PhotoKremling, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_MiniRoom1: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Mini Room (1)", Items.PhotoKremling, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_MiniRoom2: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Mini Room (2)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_MiniRoom3: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Mini Room (3)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_DKRoom: Location(Levels.HideoutHelm, "Photo of Helm Enemy: DKRoom", Items.PhotoKremling, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_ChunkyRoom0: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Chunky Room (0)", Items.PhotoKremling, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_ChunkyRoom1: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Chunky Room (1)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_TinyRoom: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Tiny Room", Items.PhotoKlump, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_LankyRoom0: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Lanky Room (0)", Items.PhotoKlump, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_LankyRoom1: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Lanky Room (1)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_DiddyRoom0: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Diddy Room (0)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_DiddyRoom1: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Diddy Room (1)", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_NavRight: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Nav Right", Items.PhotoKremling, Types.EnemyPhoto, Kongs.any, []),
+    Locations.KremKap_HelmMainEnemy_NavLeft: Location(Levels.HideoutHelm, "Photo of Helm Enemy: Nav Left", Items.PhotoKlaptrapGreen, Types.EnemyPhoto, Kongs.any, []),
     Locations.KremKap_IslesMainEnemy_PineappleCage0: Location(Levels.DKIsles, "Photo of Isles Enemy: Pineapple Cage (0)", Items.PhotoBeaverBlue, Types.EnemyPhoto, Kongs.any, []),
     Locations.KremKap_IslesMainEnemy_FungiCannon0: Location(Levels.DKIsles, "Photo of Isles Enemy: Fungi Cannon (0)", Items.PhotoBeaverBlue, Types.EnemyPhoto, Kongs.any, []),
     Locations.KremKap_IslesMainEnemy_JapesEntrance: Location(Levels.DKIsles, "Photo of Isles Enemy: Japes Entrance", Items.PhotoBeaverBlue, Types.EnemyPhoto, Kongs.any, []),
@@ -1673,6 +1678,47 @@ LocationListOriginal = {
     Locations.KremKap_IslesMainEnemy_PineappleCage1: Location(Levels.DKIsles, "Photo of Isles Enemy: Pineapple Cage (1)", Items.PhotoZingerCharger, Types.EnemyPhoto, Kongs.any, []),
     Locations.KremKap_IslesMainEnemy_LowerFactoryPath0: Location(Levels.DKIsles, "Photo of Isles Enemy: Lower Factory Path (0)", Items.PhotoZingerLime, Types.EnemyPhoto, Kongs.any, []),
     Locations.KremKap_IslesMainEnemy_LowerFactoryPath1: Location(Levels.DKIsles, "Photo of Isles Enemy: Lower Factory Path (1)", Items.PhotoZingerLime, Types.EnemyPhoto, Kongs.any, []),
+    # Half Medals
+    Locations.JapesDonkeyHalfMedal: Location(Levels.JungleJapes, "Japes Donkey Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.donkey),
+    Locations.JapesDiddyHalfMedal: Location(Levels.JungleJapes, "Japes Diddy Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.diddy),
+    Locations.JapesLankyHalfMedal: Location(Levels.JungleJapes, "Japes Lanky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.lanky),
+    Locations.JapesTinyHalfMedal: Location(Levels.JungleJapes, "Japes Tiny Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.tiny),
+    Locations.JapesChunkyHalfMedal: Location(Levels.JungleJapes, "Japes Chunky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.chunky),
+    Locations.AztecDonkeyHalfMedal: Location(Levels.AngryAztec, "Aztec Donkey Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.donkey),
+    Locations.AztecDiddyHalfMedal: Location(Levels.AngryAztec, "Aztec Diddy Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.diddy),
+    Locations.AztecLankyHalfMedal: Location(Levels.AngryAztec, "Aztec Lanky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.lanky),
+    Locations.AztecTinyHalfMedal: Location(Levels.AngryAztec, "Aztec Tiny Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.tiny),
+    Locations.AztecChunkyHalfMedal: Location(Levels.AngryAztec, "Aztec Chunky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.chunky),
+    Locations.FactoryDonkeyHalfMedal: Location(Levels.FranticFactory, "Factory Donkey Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.donkey),
+    Locations.FactoryDiddyHalfMedal: Location(Levels.FranticFactory, "Factory Diddy Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.diddy),
+    Locations.FactoryLankyHalfMedal: Location(Levels.FranticFactory, "Factory Lanky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.lanky),
+    Locations.FactoryTinyHalfMedal: Location(Levels.FranticFactory, "Factory Tiny Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.tiny),
+    Locations.FactoryChunkyHalfMedal: Location(Levels.FranticFactory, "Factory Chunky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.chunky),
+    Locations.GalleonDonkeyHalfMedal: Location(Levels.GloomyGalleon, "Galleon Donkey Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.donkey),
+    Locations.GalleonDiddyHalfMedal: Location(Levels.GloomyGalleon, "Galleon Diddy Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.diddy),
+    Locations.GalleonLankyHalfMedal: Location(Levels.GloomyGalleon, "Galleon Lanky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.lanky),
+    Locations.GalleonTinyHalfMedal: Location(Levels.GloomyGalleon, "Galleon Tiny Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.tiny),
+    Locations.GalleonChunkyHalfMedal: Location(Levels.GloomyGalleon, "Galleon Chunky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.chunky),
+    Locations.ForestDonkeyHalfMedal: Location(Levels.FungiForest, "Forest Donkey Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.donkey),
+    Locations.ForestDiddyHalfMedal: Location(Levels.FungiForest, "Forest Diddy Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.diddy),
+    Locations.ForestLankyHalfMedal: Location(Levels.FungiForest, "Forest Lanky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.lanky),
+    Locations.ForestTinyHalfMedal: Location(Levels.FungiForest, "Forest Tiny Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.tiny),
+    Locations.ForestChunkyHalfMedal: Location(Levels.FungiForest, "Forest Chunky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.chunky),
+    Locations.CavesDonkeyHalfMedal: Location(Levels.CrystalCaves, "Caves Donkey Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.donkey),
+    Locations.CavesDiddyHalfMedal: Location(Levels.CrystalCaves, "Caves Diddy Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.diddy),
+    Locations.CavesLankyHalfMedal: Location(Levels.CrystalCaves, "Caves Lanky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.lanky),
+    Locations.CavesTinyHalfMedal: Location(Levels.CrystalCaves, "Caves Tiny Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.tiny),
+    Locations.CavesChunkyHalfMedal: Location(Levels.CrystalCaves, "Caves Chunky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.chunky),
+    Locations.CastleDonkeyHalfMedal: Location(Levels.CreepyCastle, "Castle Donkey Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.donkey),
+    Locations.CastleDiddyHalfMedal: Location(Levels.CreepyCastle, "Castle Diddy Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.diddy),
+    Locations.CastleLankyHalfMedal: Location(Levels.CreepyCastle, "Castle Lanky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.lanky),
+    Locations.CastleTinyHalfMedal: Location(Levels.CreepyCastle, "Castle Tiny Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.tiny),
+    Locations.CastleChunkyHalfMedal: Location(Levels.CreepyCastle, "Castle Chunky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.chunky),
+    Locations.IslesDonkeyHalfMedal: Location(Levels.DKIsles, "Isles Donkey Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.donkey),
+    Locations.IslesDiddyHalfMedal: Location(Levels.DKIsles, "Isles Diddy Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.diddy),
+    Locations.IslesLankyHalfMedal: Location(Levels.DKIsles, "Isles Lanky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.lanky),
+    Locations.IslesTinyHalfMedal: Location(Levels.DKIsles, "Isles Tiny Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.tiny),
+    Locations.IslesChunkyHalfMedal: Location(Levels.DKIsles, "Isles Chunky Half-Medal", Items.HalfMedal, Types.HalfMedal, Kongs.chunky),
 }
 
 TrainingBarrelLocations = {

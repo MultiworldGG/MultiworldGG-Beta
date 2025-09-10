@@ -83,7 +83,7 @@ advancement_table = {
     #Heavenly Lilies
    "Heavenly Lily - Koho Village": AdvData(26400, "Koho Village"),
    "Heavenly Lily 1 - Old Sanctuary": AdvData(8100, "Old Sanctuary"),
-   "Heavenly Lily 2 - Old Sanctuary": AdvData(12900, "Old Sanctuary"),
+   "Heavenly Lily 2 - Old Sanctuary": AdvData(12900, "Old Sanctuary Continued"),
    "Heavenly Lily 1 - Springleaf Path": AdvData(2800, "Springleaf Path"),
    "Heavenly Lily 2 - Springleaf Path": AdvData(8400, "Springleaf Path"),
    "Heavenly Lily 1 - Lun Tree Roots": AdvData(11800, "Lun Tree Roots"),
@@ -140,7 +140,7 @@ advancement_table = {
    "Lun Berry - Demon Frontier": AdvData(29500, "Demon Frontier Continued"),
    "Lun Berry - Fount of Rebirth": AdvData(34100, "Fount of Rebirth"),
    #Stamina Berries
-   "Peach - Springleaf Path": AdvData(20100, "Springleaf Path"),
+   "Peach - Springleaf Path": AdvData(20100, "Springleaf Path Continued"),
    "Peach - Fairy Springs": AdvData(20300, "Fairy Springs"),
    "Peach - Ashen Hinterlands": AdvData(30300, "Ashen Hinterlands Continued"),
    "Peach - Meikan Village": AdvData(33100, "Meikan Village"),

@@ -8,7 +8,7 @@ JSONs with Advanced at the end of their name include all humanly viable tricks, 
 If you've made a JSON file and want to share it here, either message @DNVIC on discord with the JSON file, or make a pull request, and I'll add it.
 
 JSON Author credit:
-* DNVIC (me!) - Super Mario Fantasy 64, Ztar Attack Rebooted, Star Revenge 8, Super Mario 64, 24 Hour Hack, Star Revenge 3.5, Super Mario Treasure World, Star Revenge 0, every JSON other than SR8 Advanced in special folder
+* DNVIC (me!) - Super Mario Fantasy 64, Ztar Attack Rebooted, Star Revenge 8, Super Mario 64, 24 Hour Hack, Star Revenge 3.5, Super Mario Treasure World, Star Revenge 0, Another Mario Adventure, Star Revenge 5.5, every JSON other than SR8 Advanced in special folder
 * Kingtoad74EE/Awesome7285 - Star Revenge 4.5
 * SheepSquared - SM64 - The Green Stars
 * Catzador - Super Mario Star Road
@@ -16,6 +16,6 @@ JSON Author credit:
 * LudwigVonKoopa - Cursed Castles, Shining Stars Repainted, SM64 and the Koopa Power, SM64 and the Grand Star, Eureka, Mario's New Earth, Phenomena, Despairs Mario Gambit, Aventure Alpha Redone, SM64 Sapphire
 * duckSM64/mr.zebra - SM74 Ten Years After
 * zuils - Super Mario 74
-* GraymonDgt - Unoriginal Cringe Meme Hack
+* GraymonDgt - Unoriginal Cringe Meme Hack, Kaizo Mario 64
 * Awesome7285 - Star Revenge 6.5, Star Revenge 7, Star Revenge 1, Star Revenge 2 TTM, Star Revenge 3, Star Revenge 5, Star Revenge 1.5, Star Revenge 8 Advanced, Peach's Memory, Star Revenge 4, Star Revenge 6
-* Iwer Sonsch - Ztar Attack 2
+* Iwer Sonsch - Ztar Attack 2, Plutonium Mario 64

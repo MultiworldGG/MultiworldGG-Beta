@@ -63,11 +63,7 @@ Finally, new players often forget the following locations: the heart piece hidde
 
 ### Color Dungeon
 
-<h3>Logic</h3>
-<p>You can only steal after you find the sword.</p>
-<p>Do not forget that there are two items in the rafting ride. You can access this with just Hookshot or Flippers.</p>
-<p>Killing enemies with bombs is in normal logic. You can switch to casual logic if you do not want this.</p>
-<p>D7 confuses some people, but by dropping down pits on the 2nd floor you can access almost all of this dungeon, even without feather and power bracelet.</p>
+The Color Dungeon is part of the item shuffle, and the red/blue tunics are shuffled in the item pool. Which means the fairy at the end of the color dungeon gives out two random items.
 
 To access the color dungeon, you need the power bracelet, and you need to push the gravestones in the right order: "down, left, up, right, up", going from the lower right gravestone, to the one left of it, above it, and then to the right.
 

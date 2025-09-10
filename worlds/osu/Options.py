@@ -217,7 +217,7 @@ class MiscKeyMaximumDifficulty(Range):
 
 class EnableExplicitLyrics(Toggle):
     """Allows Songs with 18+ Lyrics to generate.
-    While this can be played on the main MultiworldGG Server, Streaming them there is not reccomended."""
+    While this can be played on the main Archipelago Server, Streaming them there is not reccomended."""
     display_name = "Include Explicit Lyrics"
 
 

@@ -97,12 +97,20 @@ class LMWeb(WebWorld):
             LuigiOptions.StartHiddenMansion,
             LuigiOptions.HintDistribution,
             LuigiOptions.PortraitHints,
+            LuigiOptions.SendHints,
             LuigiOptions.BooHealthOption,
             LuigiOptions.BooHealthValue,
             LuigiOptions.BooSpeed,
             LuigiOptions.BooEscapeTime,
             LuigiOptions.BooAnger,
             LuigiOptions.ExtraBooSpots,
+        ]),
+        OptionGroup("Cosmetics", [
+            LuigiOptions.RandomMusic,
+            LuigiOptions.DoorModelRando,
+            LuigiOptions.ChestTypes,
+            LuigiOptions.TrapChestType,
+            LuigiOptions.CallMario,
         ]),
         OptionGroup("Filler Weights", [
             LuigiOptions.BundleWeight,
@@ -124,13 +132,6 @@ class LMWeb(WebWorld):
             LuigiOptions.NothingWeight,
             LuigiOptions.HeartWeight,
         ]),
-        OptionGroup("Cosmetics", [
-            LuigiOptions.RandomMusic,
-            LuigiOptions.DoorModelRando,
-            LuigiOptions.ChestTypes,
-            LuigiOptions.TrapChestType,
-            LuigiOptions.CallMario,
-        ])
     ]
 
     tutorials = [
@@ -394,7 +395,8 @@ class LMWorld(World):
                 entry = LMLocation(self.player, location, region, data)
                 entry.address = None
                 entry.place_locked_item(Item("Boo", ItemClassification.progression, None, self.player))
-                add_rule(entry, lambda state: state.has("Boo Radar", self.player), "and")
+                if self.options.boo_gates:
+                    add_rule(entry, lambda state: state.has("Boo Radar", self.player), "and")
                 add_rule(entry, lambda state: state.has("Progressive Vacuum", self.player), "and")
                 if entry.region == "Twins' Room" and self.open_doors.get(28) == 0:
                     add_rule(entry, lambda state: state.has("Twins Bedroom Key", self.player), "and")
@@ -478,6 +480,10 @@ class LMWorld(World):
         if self.options.vacuum_start.value:
             self.multiworld.push_precollected(self.create_item("Progressive Vacuum"))
 
+        if self.options.hint_distribution.value in (1, 4, 5):
+            self.options.send_hints.value = 0
+
+
         if self.using_ut:
             # We know we're in second gen
             self.origin_region_name = passthrough["spawn_region"]  # this should be the same region from slot data
@@ -530,7 +536,7 @@ class LMWorld(World):
             self.options.balcony_boo_count.value = 31
 
         # If spawn region is past Boolossus, make sure the gate is possible
-        if self.origin_region_name in ("Telephone Room", "Clockwork Room"):
+        if self.origin_region_name in ("Telephone Room", "Clockwork Room", "Armory", "Ceramics Studio"):
             if self.options.balcony_boo_count.value > 4 and self.options.boosanity.value == 0:
                 self.options.balcony_boo_count.value = 4
 
@@ -860,6 +866,9 @@ class LMWorld(World):
             "call_mario": self.options.call_mario.value,
             "luigi max health": self.options.luigi_max_health.value,
             "pickup animation": self.options.enable_pickup_animation.value,
+            "send_hints": self.options.send_hints.value,
+            "portrait_hints": self.options.portrait_hints.value,
+            "hints": self.hints,
             "apworld version": CLIENT_VERSION,
             "seed": self.multiworld.seed,
         }

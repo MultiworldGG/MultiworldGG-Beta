@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from randomizer.Enums.Levels import Levels
 from randomizer.Lists import Item as DK64RItem
 from randomizer.Enums.Items import Items as DK64RItems
+from randomizer.Enums.Settings import WinConditionComplex
 from randomizer.Enums.Types import Types as DK64RTypes, BarrierItems
 import randomizer.ItemPool as DK64RItemPoolUtility
 
@@ -181,13 +182,14 @@ def setup_items(world: World) -> typing.List[DK64Item]:
     # The Bean and Pearls are handled correctly by GetItemsNeedingToBeAssumed via MiscItemRandoItems(), so no manual addition needed
     # Junk moves are never assumed because they're just not needed for anything
     all_shuffled_items.extend(DK64RItemPoolUtility.JunkSharedMoves)
+    key_in_helm = DK64RItemPoolUtility.getHelmKey(world.spoiler.settings)
     # Key 8 may not be included from the assumption method, but we need it in this list to complete the item table. It won't count towards the item pool size if it is statically placed later.
-    if DK64RItems.HideoutHelmKey not in all_shuffled_items:
-        all_shuffled_items.append(DK64RItems.HideoutHelmKey)
+    if key_in_helm not in all_shuffled_items:
+        all_shuffled_items.append(key_in_helm)
 
     for seed_item in all_shuffled_items:
         item = DK64RItem.ItemList[seed_item]
-        if item.type in [DK64RItems.JunkCrystal, DK64RItems.JunkMelon, DK64RItems.JunkAmmo, DK64RItems.JunkFilm, DK64RItems.JunkOrange, DK64RItems.CrateMelon]:
+        if item.type in [DK64RItems.JunkCrystal, DK64RItems.JunkMelon, DK64RItems.JunkAmmo, DK64RItems.JunkFilm, DK64RItems.JunkOrange, DK64RItems.CrateMelon, DK64RItems.HalfMedal]:
             classification = ItemClassification.filler
         elif item.type in [
             DK64RItems.IceTrapBubble,
@@ -197,6 +199,9 @@ def setup_items(world: World) -> typing.List[DK64Item]:
             DK64RItems.IceTrapDisableB,
             DK64RItems.IceTrapDisableCU,
             DK64RItems.IceTrapDisableZ,
+            DK64RItems.IceTrapGetOutGB,
+            DK64RItems.IceTrapDryGB,
+            DK64RItems.IceTrapFlipGB,
         ]:
             classification = ItemClassification.trap
         elif item.type == DK64RTypes.Key:
@@ -214,12 +219,21 @@ def setup_items(world: World) -> typing.List[DK64Item]:
             classification = ItemClassification.progression
         else:  # double check jetpac, eh?
             classification = ItemClassification.useful
-        if seed_item == DK64RItems.HideoutHelmKey and world.spoiler.settings.key_8_helm:
-            world.multiworld.get_location("The End of Helm", world.player).place_locked_item(DK64Item("Key 8", ItemClassification.progression, full_item_table[item.name].code, world.player))
+        if seed_item == DK64RItemPoolUtility.getHelmKey(world.spoiler.settings) and world.spoiler.settings.key_8_helm:
+            helm_level = 0
+            for key, value in world.spoiler.settings.level_order.items():
+                if value == Levels.HideoutHelm:
+                    helm_level = key
+                    break
+            if helm_level == 0:
+                # Very bad, we can't place the Helm Key even though we were asked to
+                raise Exception("Could not determine Helm level for Key 8 placement.")
+            world.multiworld.get_location("The End of Helm", world.player).place_locked_item(
+                DK64Item(f"Key {helm_level}", ItemClassification.progression, full_item_table[item.name].code, world.player)
+            )
             world.spoiler.settings.location_pool_size -= 1
             continue
         item_table.append(DK64Item(use_original_name_or_trap_name(item), classification, full_item_table[item.name].code, world.player))
-        # print("Adding item: " + seed_item.name + " | " + str(classification))
 
     # Extract starting moves from the item table - these items will be placed in your starting inventory directly
     for move in world.options.start_inventory:
@@ -255,11 +269,6 @@ def setup_items(world: World) -> typing.List[DK64Item]:
     all_eligible_starting_moves.extend(DK64RItemPoolUtility.JunkSharedMoves)
     all_eligible_starting_moves.append(DK64RItems.Camera)
     all_eligible_starting_moves.append(DK64RItems.Shockwave)
-    # Add shop keepers as possible starting items
-    all_eligible_starting_moves.append(DK64RItems.Cranky)
-    all_eligible_starting_moves.append(DK64RItems.Funky)
-    all_eligible_starting_moves.append(DK64RItems.Candy)
-    all_eligible_starting_moves.append(DK64RItems.Snide)
     # Either include Climbing as an eligible starting move or place it in the starting inventory
     if world.options.climbing_shuffle:
         all_eligible_starting_moves.extend(DK64RItemPoolUtility.ClimbingAbilities())
@@ -299,10 +308,13 @@ def setup_items(world: World) -> typing.List[DK64Item]:
     trap_weights += [DK64RItems.IceTrapBubble] * world.options.bubble_trap_weight.value
     trap_weights += [DK64RItems.IceTrapReverse] * world.options.reverse_trap_weight.value
     trap_weights += [DK64RItems.IceTrapSlow] * world.options.slow_trap_weight.value
-    trap_weights += [DK64RItems.IceTrapDisableA] * world.options.disable_a_trap.value
-    trap_weights += [DK64RItems.IceTrapDisableB] * world.options.disable_b_trap.value
-    trap_weights += [DK64RItems.IceTrapDisableZ] * world.options.disable_z_trap.value
-    trap_weights += [DK64RItems.IceTrapDisableCU] * world.options.disable_c_trap.value
+    trap_weights += [DK64RItems.IceTrapDisableA] * world.options.disable_a_trap_weight.value
+    trap_weights += [DK64RItems.IceTrapDisableB] * world.options.disable_b_trap_weight.value
+    trap_weights += [DK64RItems.IceTrapDisableZ] * world.options.disable_z_trap_weight.value
+    trap_weights += [DK64RItems.IceTrapDisableCU] * world.options.disable_c_trap_weight.value
+    trap_weights += [DK64RItems.IceTrapGetOutGB] * world.options.get_out_trap_weight.value
+    trap_weights += [DK64RItems.IceTrapDryGB] * world.options.dry_trap_weight.value
+    trap_weights += [DK64RItems.IceTrapFlipGB] * world.options.flip_trap_weight.value
 
     trap_count = 0 if (len(trap_weights) == 0) else math.ceil(filler_item_count * (world.options.trap_fill_percentage.value / 100.0))
     filler_item_count -= trap_count
@@ -325,7 +337,7 @@ def setup_items(world: World) -> typing.List[DK64Item]:
     # print("projected items to place: " + str(len(item_table)))
 
     # Example of accessing Option result
-    if world.options.goal == "krool":
+    if world.options.goal.value == "krool":
         pass
 
     # DEBUG

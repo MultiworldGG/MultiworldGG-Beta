@@ -71,6 +71,8 @@ class ApeEscapeWorld(World):
     item_name_groups = GROUPED_ITEMS
     location_name_groups = GROUPED_LOCATIONS
 
+    glitches_item_name = AEItem.FAKE_OOL_ITEM.value
+    ut_can_gen_without_yaml = True  # class var that tells it to ignore the player yaml
     using_ut: bool  # so we can check if we're using UT only once
     passthrough: Dict[str, Any]
 
@@ -83,6 +85,7 @@ class ApeEscapeWorld(World):
         self.infinitejump: Optional[int] = 0
         self.superflyer: Optional[int] = 0
         self.entrance: Optional[int] = 0
+        self.randomizestartingroom: Optional[int] = 0
         self.unlocksperkey: Optional[int] = 0
         self.extrakeys: Optional[int] = 0
         self.coin: Optional[int] = 0
@@ -92,12 +95,12 @@ class ApeEscapeWorld(World):
         self.shufflenet: Optional[int] = 0
         self.shufflewaternet: Optional[int] = 0
         self.lowoxygensounds: Optional[int] = 0
-        self.trapfillpercentage: Optional[int] = 0
+        self.trappercentage: Optional[int] = 0
         self.itemdisplay: Optional[int] = 0
         self.itempool: List[ApeEscapeItem] = []
         self.levellist: List[ApeEscapeLevel] = []
         self.entranceorder: List[ApeEscapeLevel] = []
-
+        self.firstrooms = []
         super(ApeEscapeWorld, self).__init__(multiworld, player)
 
 
@@ -110,6 +113,7 @@ class ApeEscapeWorld(World):
         self.infinitejump = self.options.infinitejump.value
         self.superflyer = self.options.superflyer.value
         self.entrance = self.options.entrance.value
+        self.randomizestartingroom = self.options.randomizestartingroom.value
         self.unlocksperkey = self.options.unlocksperkey.value
         self.extrakeys = self.options.extrakeys.value
         self.coin = self.options.coin.value
@@ -119,7 +123,7 @@ class ApeEscapeWorld(World):
         self.shufflenet = self.options.shufflenet.value
         self.shufflewaternet = self.options.shufflewaternet.value
         self.lowoxygensounds = self.options.lowoxygensounds.value
-        self.trapfillpercentage = self.options.trapfillpercentage.value
+        self.trappercentage = self.options.trappercentage.value
         self.itemdisplay = self.options.itemdisplay.value
         self.itempool = []
 
@@ -136,6 +140,7 @@ class ApeEscapeWorld(World):
                 self.options.infinitejump.value = self.passthrough["infinitejump"]
                 self.options.superflyer.value = self.passthrough["superflyer"]
                 self.options.entrance.value = self.passthrough["entrance"]
+                self.options.randomizestartingroom.value = self.passthrough["randomizestartingroom"]
                 self.options.unlocksperkey.value = self.passthrough["unlocksperkey"]
                 self.options.extrakeys.value = self.passthrough["extrakeys"]
                 self.options.coin.value = self.passthrough["coin"]
@@ -145,7 +150,7 @@ class ApeEscapeWorld(World):
                 self.options.shufflenet.value = self.passthrough["shufflenet"]
                 self.options.shufflewaternet.value = self.passthrough["shufflewaternet"]
                 self.options.lowoxygensounds.value = self.passthrough["lowoxygensounds"]
-                self.options.trapfillpercentage.value = self.passthrough["trapfillpercentage"]
+                self.options.trappercentage.value = self.passthrough["trappercentage"]
                 self.options.itemdisplay.value = self.passthrough["itemdisplay"]
             else:
                 self.using_ut = False
@@ -198,7 +203,6 @@ class ApeEscapeWorld(World):
 
         item = ApeEscapeItem(name, classification, item_id, self.player)
         return item
-
 
     def create_items(self):
         reservedlocations = 0
@@ -309,10 +313,20 @@ class ApeEscapeWorld(World):
         # This is where creating items for increasing special pellet maximums would go.
 
         # Trap item fill: randomly pick items according to a set of weights.
-        # Trap weights: Banana Peel, Gadget Shuffle
-        if self.options.trapfillpercentage != 0:
-            trap_weights = [50, 25, 25]
-            trap_percentage = self.options.trapfillpercentage / 100
+        # Trap weights: Banana Peel, Gadget Shuffle (Disabled), Monkey Mash, Icy Hot Pants
+        if self.options.trappercentage != 0:
+            custom_trapweights = [
+                self.options.trapweights[AEItem.BananaPeelTrap.value],
+                self.options.trapweights[AEItem.MonkeyMashTrap.value],
+                self.options.trapweights[AEItem.IcyHotPantsTrap.value]
+            ]
+            # If custom_trapweights are all zeros, reset to default values
+            if not any(y > 0 for y in custom_trapweights):
+                trap_weights = [15, 5, 10]
+            else:
+                trap_weights = list(custom_trapweights)
+
+            trap_percentage = self.options.trappercentage / 100
             trap_count = round((len(self.multiworld.get_unfilled_locations(self.player)) - len(self.itempool) - reservedlocations) * trap_percentage, None)
 
             for x in range(1, len(trap_weights)):
@@ -323,47 +337,81 @@ class ApeEscapeWorld(World):
                 if 0 < randomTrap <= trap_weights[0]:
                     self.itempool += [self.create_item_trap(AEItem.BananaPeelTrap.value)]
                 elif trap_weights[0] < randomTrap <= trap_weights[1]:
-                    # Deactivated for now
-                    # self.itempool += [self.create_item_trap(AEItem.GadgetShuffleTrap.value)]
-                    self.itempool += [self.create_item_trap(AEItem.BananaPeelTrap.value)]
-                else:
-                    #self.itempool += [self.create_item_trap(AEItem.BananaPeelTrap.value)]
                     self.itempool += [self.create_item_trap(AEItem.MonkeyMashTrap.value)]
+                else:
+                    self.itempool += [self.create_item_trap(AEItem.IcyHotPantsTrap.value)]
 
         # Junk item fill: randomly pick items according to a set of weights.
         # Filler item weights are for 1 Jacket, 1/5 Cookies, 1/5/25 Energy Chips, 1/3 Explosive/Guided Pellets, Rainbow Cookie and Nothing, respectively.
-        # TODO: expose these weights as a YAML option.
-        weights = [7, 16, 3, 31, 14, 4, 9, 3, 9, 3, 6, 0]
+        custom_fillervalues = [
+            self.options.customfillerweights[AEItem.Shirt.value],
+            self.options.customfillerweights[AEItem.Cookie.value],
+            self.options.customfillerweights[AEItem.FiveCookies.value],
+            self.options.customfillerweights[AEItem.Triangle.value],
+            self.options.customfillerweights[AEItem.BigTriangle.value],
+            self.options.customfillerweights[AEItem.BiggerTriangle.value],
+            self.options.customfillerweights[AEItem.Flash.value],
+            self.options.customfillerweights[AEItem.ThreeFlash.value],
+            self.options.customfillerweights[AEItem.Rocket.value],
+            self.options.customfillerweights[AEItem.ThreeRocket.value],
+            self.options.customfillerweights[AEItem.RainbowCookie.value],
+            self.options.customfillerweights[AEItem.Nothing.value]
+        ]
 
+        # Set filler item weights
+        allnothing = False
+        if self.options.fillerpreset == 0x00: # Normal
+            weights = [7, 16, 3, 31, 14, 4, 9, 3, 9, 3, 6, 0]
+        elif self.options.fillerpreset == 0x01: # Bountiful
+            weights = [11, 3, 8, 1, 4, 12, 2, 6, 2, 6, 5, 0] # Total of 60
+        elif self.options.fillerpreset == 0x02: # Stingy
+            weights = [3, 7, 1, 28, 7, 2, 5, 1, 5, 1, 3, 7] # Total of 70
+        elif self.options.fillerpreset == 0x03: # Nothing
+            allnothing = True
+            weights = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 99]
+        elif self.options.fillerpreset == 0x04: # Custom
+            # Failsafe: if the list is all zeroes, make every item a "Nothing"
+            if not any(y > 0 for y in custom_fillervalues):
+                allnothing = True
+                weights = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 99]
+            else:
+                weights = list(custom_fillervalues)
+
+        # Create filler items
         for x in range(1, len(weights)):
             weights[x] = weights[x] + weights[x - 1]
         filler_count = len(self.multiworld.get_unfilled_locations(self.player)) - len(self.itempool) - reservedlocations
-        for _ in range(filler_count):
-            randomFiller = self.random.randint(1, weights[len(weights) - 1])
-            if 0 < randomFiller <= weights[0]:
-                self.itempool += [self.create_item_useful(AEItem.Shirt.value)]
-            elif weights[0] < randomFiller <= weights[1]:
-                self.itempool += [self.create_item_filler(AEItem.Cookie.value)]
-            elif weights[1] < randomFiller <= weights[2]:
-                self.itempool += [self.create_item_filler(AEItem.FiveCookies.value)]
-            elif weights[2] < randomFiller <= weights[3]:
-                self.itempool += [self.create_item_filler(AEItem.Triangle.value)]
-            elif weights[3] < randomFiller <= weights[4]:
-                self.itempool += [self.create_item_filler(AEItem.BigTriangle.value)]
-            elif weights[4] < randomFiller <= weights[5]:
-                self.itempool += [self.create_item_filler(AEItem.BiggerTriangle.value)]
-            elif weights[5] < randomFiller <= weights[6]:
-                self.itempool += [self.create_item_filler(AEItem.Flash.value)]
-            elif weights[6] < randomFiller <= weights[7]:
-                self.itempool += [self.create_item_useful(AEItem.ThreeFlash.value)]
-            elif weights[7] < randomFiller <= weights[8]:
-                self.itempool += [self.create_item_filler(AEItem.Rocket.value)]
-            elif weights[8] < randomFiller <= weights[9]:
-                self.itempool += [self.create_item_useful(AEItem.ThreeRocket.value)]
-            elif weights[9] < randomFiller <= weights[10]:
-                self.itempool += [self.create_item_useful(AEItem.RainbowCookie.value)]
-            else:
+        # Don't use weights if every filler item will be set to Nothing, as an optimization.
+        if allnothing == True:
+            for _ in range(filler_count):
                 self.itempool += [self.create_item_filler(AEItem.Nothing.value)]
+        else:
+            for _ in range(filler_count):
+                randomFiller = self.random.randint(1, weights[len(weights) - 1])
+                if 0 < randomFiller <= weights[0]:
+                    self.itempool += [self.create_item_useful(AEItem.Shirt.value)]
+                elif weights[0] < randomFiller <= weights[1]:
+                    self.itempool += [self.create_item_filler(AEItem.Cookie.value)]
+                elif weights[1] < randomFiller <= weights[2]:
+                    self.itempool += [self.create_item_filler(AEItem.FiveCookies.value)]
+                elif weights[2] < randomFiller <= weights[3]:
+                    self.itempool += [self.create_item_filler(AEItem.Triangle.value)]
+                elif weights[3] < randomFiller <= weights[4]:
+                    self.itempool += [self.create_item_filler(AEItem.BigTriangle.value)]
+                elif weights[4] < randomFiller <= weights[5]:
+                    self.itempool += [self.create_item_filler(AEItem.BiggerTriangle.value)]
+                elif weights[5] < randomFiller <= weights[6]:
+                    self.itempool += [self.create_item_filler(AEItem.Flash.value)]
+                elif weights[6] < randomFiller <= weights[7]:
+                    self.itempool += [self.create_item_useful(AEItem.ThreeFlash.value)]
+                elif weights[7] < randomFiller <= weights[8]:
+                    self.itempool += [self.create_item_filler(AEItem.Rocket.value)]
+                elif weights[8] < randomFiller <= weights[9]:
+                    self.itempool += [self.create_item_useful(AEItem.ThreeRocket.value)]
+                elif weights[9] < randomFiller <= weights[10]:
+                    self.itempool += [self.create_item_useful(AEItem.RainbowCookie.value)]
+                else:
+                    self.itempool += [self.create_item_filler(AEItem.Nothing.value)]
 
         self.multiworld.itempool += self.itempool
 
@@ -372,16 +420,14 @@ class ApeEscapeWorld(World):
         bytestowrite = []
         entranceids = []
         newpositions = []
-        firstroomids = [0x01, 0x02, 0x03, 0x06, 0x0B, 0x0F, 0x13, 0x14, 0x16, 0x18, 0x1D, 0x1E, 0x21, 0x24, 0x25, 0x28,
-                        0x2D, 0x35, 0x38, 0x3F, 0x45, 0x57]
-        orderedfirstroomids = []
+        orderedfirstroomids = list(self.firstrooms)
         for x in range(0, 22):
             newpositions.append(self.levellist[x].newpos)
             entranceids.append(self.entranceorder[x].entrance)
-            orderedfirstroomids.append(firstroomids[self.entranceorder[x].vanillapos])
             bytestowrite += self.entranceorder[x].bytes
             bytestowrite.append(0)  # We need a separator byte after each level name.
-
+        #self.firstrooms = orderedfirstroomids
+        #print(f"INIT_FirstRooms{self.firstrooms}")
         return {
             "goal": self.options.goal.value,
             "requiredtokens": self.options.requiredtokens.value,
@@ -391,6 +437,8 @@ class ApeEscapeWorld(World):
             "infinitejump": self.options.infinitejump.value,
             "superflyer": self.options.superflyer.value,
             "entrance": self.options.entrance.value,
+            "randomizestartingroom": self.options.randomizestartingroom.option_off,
+            #"randomizestartingroom": self.options.randomizestartingroom.value,
             "unlocksperkey": self.options.unlocksperkey.value,
             "extrakeys": self.options.extrakeys.value,
             "coin": self.options.coin.value,
@@ -400,7 +448,11 @@ class ApeEscapeWorld(World):
             "shufflenet": self.options.shufflenet.value,
             "shufflewaternet": self.options.shufflewaternet.value,
             "lowoxygensounds": self.options.lowoxygensounds.value,
-            "trapfillpercentage": self.options.trapfillpercentage.value,
+            "fillerpreset": self.options.fillerpreset.value,
+            "customfillerweights":self.options.customfillerweights.value,
+            "trappercentage": self.options.trappercentage.value,
+            "trapweights": self.options.trapweights.value,
+            "trapsonreconnect": self.options.trapsonreconnect.value,
             "itemdisplay": self.options.itemdisplay.value,
             "kickoutprevention": self.options.kickoutprevention.value,
             "autoequip": self.options.autoequip.value,

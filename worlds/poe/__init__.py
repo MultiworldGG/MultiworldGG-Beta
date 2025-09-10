@@ -16,6 +16,8 @@ from . import Items
 from . import Locations
 from . import Regions as poeRegions
 from . import Rules as poeRules
+from . import Options
+from .Version import POE_VERSION
 
 logger = logging.getLogger("poe")
 logger.setLevel(logging.DEBUG)
@@ -52,6 +54,9 @@ class PathOfExileWebWorld(WebWorld):
         authors=["StuBob"]
     )
     tutorials = [setup_en]
+
+    option_groups = Options.poe_options_groups
+    options_presets = Options.poe_presets
 
 # ----- PathOfExile World ----- #
 
@@ -113,13 +118,13 @@ class PathOfExileWorld(World):
         self.items_to_place = copy.deepcopy(Items.item_table)
 
 
-    def remove_and_create_item_by_itemdict(self, item: Items.ItemDict) -> list[Items.PathOfExileItem]:
+    def remove_and_create_items_by_itemdict(self, item: Items.ItemDict) -> list[Items.PathOfExileItem]:
         item_id = item["id"]
         item_to_place = self.items_to_place.pop(item_id)  # Remove from items to place
         item_objs = []
         count = item.get("count", 1)
         for i in range(count):
-            item_obj = Items.PathOfExileItem(item_to_place["name"], ItemClassification.progression, item_id, self.player)
+            item_obj = Items.PathOfExileItem(item_to_place["name"], item.get("classification", ItemClassification.filler), item_id, self.player)
             item_objs.append(item_obj)
         return item_objs
 
@@ -134,6 +139,10 @@ class PathOfExileWorld(World):
         self.multiworld.push_precollected(item_obj)
     
     def generate_early(self):
+       # # Clear performance cache for fresh generation
+       # from . import Rules as poeRules
+       # poeRules.clear_item_cache()
+        
         opt: PathOfExileOptions = self.options
         self.goal_act = get_goal_act(self, opt)
 
@@ -160,7 +169,6 @@ class PathOfExileWorld(World):
             self.total_items_to_place_count = sum(item.get("count", 1) for item in self.items_to_place.values())
             logger.debug(
                 f"[DEBUG]: total items to place before culling: {self.total_items_to_place_count} / {table_total_item_count} possible")
-
             self.items_to_place = Items.cull_items_to_place(self, self.items_to_place, self.locations_to_place)
             self.total_items_to_place_count = sum(item.get("count", 1) for item in self.items_to_place.values())
             logger.debug(
@@ -200,7 +208,7 @@ class PathOfExileWorld(World):
         options: PathOfExileOptions = self.options
         # iterate over a copy to be safe while modifying the dictionary
         for item in list(self.items_to_place.values()):
-            list_of_items = self.remove_and_create_item_by_itemdict(item)
+            list_of_items = self.remove_and_create_items_by_itemdict(item)
             for item in list_of_items:
                 self.multiworld.itempool.append(item)
 
@@ -211,7 +219,7 @@ class PathOfExileWorld(World):
 
         # get the item from the item table, by name
         id = self.item_name_to_id.get(item_name)
-        item = ItemTable.item_table.get(id)
+        item = Items.item_table.get(id)
         if item is None:
             if "defeat" in item_name:
                 #its a boss
@@ -233,12 +241,15 @@ class PathOfExileWorld(World):
             "gucciHobo": options.gucci_hobo_mode.value,
             "passivePointsAsItems": options.add_passive_skill_points_to_item_pool.value,
             "LevelingUpAsLocations": options.add_leveling_up_to_location_pool.value,
+            "ProgressiveGear": options.progressive_gear.value,
             "goal": options.goal.value,
             "starting_character": Options.option_starting_character_to_class_name(options.starting_character.value),
             "bosses_for_goal": self.bosses_for_goal,
             "deathlink": options.death_link.value,
         }
         client_options = {
+            "lootFilterSounds": options.loot_filter_sounds.value,
+            "lootFilterDisplay": options.loot_filter_display.value,
             "ttsSpeed" : options.tts_speed.value,
             "ttsEnabled": options.enable_tts.value,
         }
@@ -246,6 +257,7 @@ class PathOfExileWorld(World):
             "game_options": game_options,
             "client_options": client_options,
             "poe-uuid": base64.urlsafe_b64encode(self.random.randbytes(8)).strip(b'=').decode('utf-8'), # used for generation id
+            "generated_version": POE_VERSION,
         }
 
         
@@ -257,11 +269,27 @@ class PathOfExileWorld(World):
                             regions_to_highlight=self.multiworld.get_all_state(self.player).reachable_regions[
                                 self.player])
 
-
 # ---------
-def setup_early_items(world, options):
+def setup_early_items(world: PathOfExileWorld, options: PathOfExileOptions):
     setup_character_items(world, options)
     max_level = Locations.acts[world.goal_act]["maxMonsterLevel"]
+    
+    if options.progressive_gear.value == options.progressive_gear.option_enabled:
+        for item in Items.get_by_category(category="Random Gear", table=world.items_to_place):
+            world.items_to_place.pop(world.item_name_to_id[item["name"]], None)
+    elif options.progressive_gear.value == options.progressive_gear.option_disabled:
+        for item in Items.get_by_category(category="Progressive Gear", table=world.items_to_place):
+            world.items_to_place.pop(world.item_name_to_id[item["name"]], None)
+    elif options.progressive_gear.value == options.progressive_gear.option_progressive_except_for_unique:
+        for item in Items.get_by_category(category="Progressive Gear", table=world.items_to_place):
+            if "Flask" not in item["category"]:
+                item["count"] -= 1
+            elif "Flask" in item["category"]:
+                item["count"] -= 5
+        for item in Items.get_by_category(category="Random Gear", table=world.items_to_place):
+            if "Unique" not in item["category"]:
+                world.items_to_place.pop(world.item_name_to_id[item["name"]], None)
+    
     if options.gucci_hobo_mode.value != options.gucci_hobo_mode.option_disabled:
         uniques = [item for item in Items.item_table.values() if "Unique" in item["category"]]
         for unique in uniques:
@@ -281,11 +309,12 @@ def setup_early_items(world, options):
     # remove passive skill points from item pool
     # we are using the slot_data to tell the client to chill out when it comes to passive skill points
     if options.add_passive_skill_points_to_item_pool.value == False:
-        item = Items.get_by_name("Progressive passive point")
+        item = Items.get_by_name("Progressive passive point", world.items_to_place)
         if item:
+            # there is only one itemDict for passive points, but has a count of how many items to add. This removal should work
             world.items_to_place.pop(item["id"], None)
     else:
-        item = Items.get_by_name("Progressive passive point")
+        item = Items.get_by_name("Progressive passive point", world.items_to_place)
         if item:
             item["count"] = poeRules.passives_required_for_act[world.goal_act + 1]
     items_to_remove = {}
@@ -313,20 +342,35 @@ def setup_early_items(world, options):
         all_gear_items = Items.get_gear_items(table=world.items_to_place)
         gear_upgrades = [item for item in all_gear_items if set(item["category"]).intersection(categories)]
         for item in gear_upgrades:
-            item_objs = world.remove_and_create_item_by_itemdict(item)
+            item_objs = world.remove_and_create_items_by_itemdict(item)
             for item_obj in item_objs:
                 world.precollect(item_obj)
-    if options.add_flask_slots_to_item_pool.value == False:
+    if options.add_flasks_to_item_pool.value == False:
         flask_slots = Items.get_flask_items(table=world.items_to_place)
         for item in flask_slots:
-            item_objs = world.remove_and_create_item_by_itemdict(item)
+            item_objs = world.remove_and_create_items_by_itemdict(item)
             for item_obj in item_objs:
                 world.precollect(item_obj)
     if options.add_max_links_to_item_pool.value == False:
         support_gem_slots = Items.get_max_links_items(table=world.items_to_place)
         for item in support_gem_slots:
-            item_obj = world.remove_and_create_item_by_itemdict(item)
-            world.precollect(item_obj)
+            item_objs = world.remove_and_create_items_by_itemdict(item)
+            for item_obj in item_objs:
+                world.precollect(item_obj)
+
+    if options.add_skill_gems_to_item_pool == False:
+        skill_gems = Items.get_by_has_any_category({"MainSkillGem", "UtilSkillGem"}, table=world.items_to_place)
+        for item in skill_gems:
+            item_objs = world.remove_and_create_items_by_itemdict(item)
+            for item_obj in item_objs:
+                world.precollect(item_obj)
+
+    if options.add_support_gems_to_item_pool == False:
+        support_gems = Items.get_support_gem_items(table=world.items_to_place)
+        for item in support_gems:
+            item_objs = world.remove_and_create_items_by_itemdict(item)
+            for item_obj in item_objs:
+                world.precollect(item_obj)
 
 def setup_character_items(world, options):
     def handle_starting_character(char):

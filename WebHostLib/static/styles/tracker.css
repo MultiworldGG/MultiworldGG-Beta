@@ -90,12 +90,12 @@ table.dataTable {
 }
 
 table.dataTable thead {
-    font-family: LexendDeca-Regular, sans-serif;
+    font-family: Inter-Regular, sans-serif;
 }
 
 table.dataTable tbody, table.dataTable tfoot {
     background-color: #dce2bd;
-    font-family: LexendDeca-Light, sans-serif;
+    font-family: Inter-Light, sans-serif;
 }
 
 table.dataTable tbody tr:hover, table.dataTable tfoot tr:hover {

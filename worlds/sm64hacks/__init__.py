@@ -55,7 +55,7 @@ class SM64HackWorld(World):
     location_name_to_id = {name: id for
                        id, name in enumerate(location_names(), base_id)}
     
-    required_client_version: Tuple[int, int, int] = (0, 4, 0)
+    required_client_version: Tuple[int, int, int] = (0, 4, 3)
 
     def __init__(self,multiworld, player: int):
         super().__init__(multiworld, player)
@@ -77,6 +77,10 @@ class SM64HackWorld(World):
                 self.progressive_keys = self.data.locations["Other"]["Settings"]["prog_key"]
             except TypeError:
                 raise ValueError("JSON is too old and does not have a default for progressive keys")
+        
+        non_local_traps = [trap for trap in traps if trap != "Mario Choir"]
+        self.options.non_local_items.value |= set(non_local_traps)
+
 
     @staticmethod
     def normalize_to_json_filename(name: str) -> str:
@@ -85,7 +89,7 @@ class SM64HackWorld(World):
         (case-insensitive) if hack was selected on webworld frontend.
         """
         # 1. Replace _
-        sanitized = name.replace('_', '')
+        sanitized = name.replace('_', '').replace('dot', '.')
         # 2. Check for .json suffix (case-insensitive)
         if not sanitized.lower().endswith('.json'):
             sanitized += '.json'
@@ -94,7 +98,7 @@ class SM64HackWorld(World):
     def create_item(self, item: str) -> SM64HackItem:
         if item == "Power Star":
             if self.stars_created < self.data.maxstarcount: #only create progression stars up to the max starcount for the hack
-                classification = ItemClassification.progression_skip_balancing
+                classification = ItemClassification.progression_deprioritized_skip_balancing
                 self.stars_created += 1
             else:
                 classification = ItemClassification.useful
@@ -109,7 +113,7 @@ class SM64HackWorld(World):
             classification = ItemClassification.progression if item_is_important(item, self.data) else ItemClassification.useful
 
         if hasattr(self.multiworld, "generation_is_fake") and classification == ItemClassification.useful: #UT shenanigans
-            classification = ItemClassification.progression if item != "Power Star" else ItemClassification.progression_skip_balancing
+            classification = ItemClassification.progression if item != "Power Star" else ItemClassification.progression_deprioritized_skip_balancing
         return SM64HackItem(item, classification, self.item_name_to_id[item], self.player)
 
     def create_event(self, event: str):
@@ -162,6 +166,10 @@ class SM64HackWorld(World):
             if self.data.locations["Other"]["Stars"][item]["exists"]:
                 self.multiworld.itempool += [self.create_item(sm64hack_items[item])]
         
+        if(self.options.randomize_moat):
+            if self.data.locations["Other"]["Stars"][5]["exists"]:
+                self.multiworld.itempool += [self.create_item("Castle Moat")]
+        
         if("sr7" in self.data.locations["Other"]["Settings"]):
             for item in range(5):
                 if item < 2:
@@ -198,7 +206,7 @@ class SM64HackWorld(World):
             match course:
                 case "Other":
                     course_region.add_locations(
-                        dict(filter(lambda location: location[0] in sm64hack_items[:5], location_names_that_exist_to_id.items())),
+                        dict(filter(lambda location: location[0] in list(sm64hack_items[:5]) + [sm64hack_items[-1]], location_names_that_exist_to_id.items())),
                         SM64HackLocation
                     )
                     course_region.add_locations(
@@ -315,11 +323,17 @@ class SM64HackWorld(World):
     def set_rules(self) -> None:
         for course in self.data.locations:
             if course == "Other":
-                for item in range(5):
+                for item in range(6):
                     star_data = self.data.locations[course]["Stars"][item]
                     if(star_data.get("exists")):
-                        add_rule(self.multiworld.get_location(sm64hack_items[item], self.player),
-                            lambda state, star_data=self.data.locations[course]["Stars"][item]: self.can_access_location(state, star_data))
+                        if item == 5:
+                            add_rule(self.multiworld.get_location("Castle Moat", self.player),
+                                     lambda state, star_data=self.data.locations[course]["Stars"][item]: self.can_access_location(state, star_data))
+                        else:
+                            add_rule(self.multiworld.get_location(sm64hack_items[item], self.player),
+                                lambda state, star_data=self.data.locations[course]["Stars"][item]: self.can_access_location(state, star_data))
+
+                    
                     
                 
                 if("sr7" in self.data.locations["Other"]["Settings"]):
@@ -362,7 +376,7 @@ class SM64HackWorld(World):
                     lambda state, star_data=self.data.locations[course]["Cannon"]: self.can_access_location(state, star_data))
                     
             star_data = self.data.locations[course]["Troll Star"]
-            if(star_data.get("exists")):
+            if(star_data.get("exists") and self.options.troll_stars):
                 add_rule(self.multiworld.get_location(f"{course} Troll Star", self.player),
                     lambda state, star_data=self.data.locations[course]["Troll Star"]: self.can_access_location(state, star_data))
 
@@ -375,6 +389,8 @@ class SM64HackWorld(World):
     
     def generate_basic(self) -> None:
         self.multiworld.get_location("Victory Location", self.player).place_locked_item(self.create_event("Victory"))
+        if not self.options.randomize_moat.value and self.data.locations["Other"]["Stars"][5]["exists"]:
+            self.multiworld.get_location("Castle Moat", self.player).place_locked_item(self.create_item("Castle Moat"))
         self.multiworld.completion_condition[self.player] = lambda state: state.has("Victory", self.player)
 
     def fill_slot_data(self) -> Mapping[str, Any]:
@@ -384,5 +400,6 @@ class SM64HackWorld(World):
             "DeathLink": self.options.death_link.value == True, # == True so it turns it into a boolean value
             "Badges": "sr7" in self.data.locations["Other"]["Settings"],
             "sr6.25": "sr6.25" in self.data.locations["Other"]["Settings"],
-            "sr3.5": "sr3.5" in self.data.locations["Other"]["Settings"]
+            "sr3.5": "sr3.5" in self.data.locations["Other"]["Settings"],
+            "moat": True #so the client doesnt break on games generated on old versions, will be removed in the next major version
         }

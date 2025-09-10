@@ -5,8 +5,7 @@ name: Release
 on:
   push:
     tags:
-      - '*.*.*'
-    workflow_dispatch:
+      - 'v?[0-9]+.[0-9]+.[0-9]*'
 
 env:
   ENEMIZER_VERSION: 7.1

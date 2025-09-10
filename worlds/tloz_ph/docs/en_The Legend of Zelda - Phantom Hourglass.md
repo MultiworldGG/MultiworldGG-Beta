@@ -4,7 +4,7 @@
 The [player options page for this game](../player-options) contains all the options you need to configure and export a config file.
 
 ## What is this?
-This is an Archipelago Randomizer for Zelda: Phantom Hourglass that doesn't use modding or romhacking to function. All randomization 
+This is a MultiworldGG/AP Randomizer for Zelda: Phantom Hourglass that doesn't use modding or romhacking to function. All randomization 
 is done by reading and writing active memory with a lua script connected to the client. This means that item models and 
 text boxes in game will look vanilla, but they will still give the correct items. The main way to tell what you actually 
 got is with the client.

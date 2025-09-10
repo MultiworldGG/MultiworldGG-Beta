@@ -48,8 +48,14 @@
 # Maximum number of players that are allowed to be rolled on the server. After this limit, one should roll locally and upload the results.
 #MAX_ROLL: 20
 
-# TODO
+# Cache configuration for improved performance
 #CACHE_TYPE: "simple"
+#CACHE_DEFAULT_TIMEOUT: 300  # 5 minutes default
+#CACHE_KEY_PREFIX: "multiworld_"
+
+# For production deployments, consider using Redis for better cache performance:
+#CACHE_TYPE: "redis"
+#CACHE_REDIS_URL: "redis://localhost:6379/0"
 
 # Host Address.  This is the address encoded into the patch that will be used for client auto-connect.
 #HOST_ADDRESS: multiworld.gg

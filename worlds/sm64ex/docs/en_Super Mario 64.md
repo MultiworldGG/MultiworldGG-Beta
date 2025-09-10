@@ -2,8 +2,7 @@
 
 ## Where is the options page?
 
-The player options page for this game contains all the options you need to configure and export a config file. Player
-options page link: [SM64EX Player Options Page](../player-options).
+The player options page for this game contains all the options you need to configure and export a config file. [SM64EX Player Options Page](../player-options).
 
 ## What does randomization do to this game?
 All 120 Stars, the 3 Cap Switches, the Basement and Second Floor Key are now location checks and may contain items for different games as well

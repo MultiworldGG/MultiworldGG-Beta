@@ -18,12 +18,13 @@ from .content.feature.special_order_locations import get_qi_gem_amount
 from .content.feature.walnutsanity import get_walnut_amount
 from .items import item_table, ItemData, Group, items_by_group, create_items, generate_filler_choice_pool, \
     setup_early_items
+from .items.item_data import FILLER_GROUPS
 from .locations import location_table, create_locations, LocationData, locations_by_tag
 from .logic.combat_logic import valid_weapons
 from .logic.logic import StardewLogic
 from .options import StardewValleyOptions, SeasonRandomization, Goal, BundleRandomization, EnabledFillerBuffs, \
     NumberOfMovementBuffs, BuildingProgression, EntranceRandomization, FarmType, ToolProgression, BackpackProgression, TrapDistribution, BundlePrice, \
-    BundlePlando, BundlePerRoom
+    BundleWhitelist, BundleBlacklist, BundlePerRoom
 from .options.forced_options import force_change_options_if_incompatible, force_change_options_if_banned
 from .options.jojapocalypse_options import JojaAreYouSure
 from .options.option_groups import sv_option_groups
@@ -33,6 +34,7 @@ from .options.worlds_group import apply_most_restrictive_options
 from .regions import create_regions, prepare_mod_data
 from .rules import set_rules
 from .stardew_rule import True_, StardewRule, HasProgressionPercent
+from .strings.ap_names.ap_option_names import StartWithoutOptionName
 from .strings.ap_names.ap_weapon_names import APWeapon
 from .strings.ap_names.event_names import Event
 from .strings.goal_names import Goal as GoalName
@@ -204,14 +206,14 @@ class StardewValleyWorld(World):
         self.multiworld.regions.extend(world_regions.values())
 
     def create_items(self):
-        self.precollect_early_keys()
+        self.precollect_start_without_items()
         self.precollect_starting_season()
         self.precollect_building_items()
         self.precollect_starting_backpacks()
         items_to_exclude = [excluded_items
                             for excluded_items in self.multiworld.precollected_items[self.player]
                             if item_table[excluded_items.name].has_any_group(Group.MAXIMUM_ONE)
-                            or not item_table[excluded_items.name].has_any_group(Group.RESOURCE_PACK, Group.FRIENDSHIP_PACK)]
+                            or not item_table[excluded_items.name].has_any_group(*FILLER_GROUPS, Group.FRIENDSHIP_PACK)]
 
         if self.options.season_randomization == SeasonRandomization.option_disabled:
             items_to_exclude = [item for item in items_to_exclude
@@ -241,24 +243,19 @@ class StardewValleyWorld(World):
         self.total_progression_items += sum(1 for i in created_items if i.advancement)
         self.total_progression_items -= 1  # -1 for the victory event
 
-    def precollect_early_keys(self):
-        # Very small worlds might be unable to escape early spheres without some of these items
-        early_keys = ["Community Center Key", "Wizard Invitation", "Forest Magic", "Landslide Removed"]
-        number_locations = len([location for location in self.get_locations()])
-        if number_locations < 80:
-            number_precollected = 4
-        elif number_locations < 90:
-            number_precollected = 3
-        elif number_locations < 100:
-            number_precollected = 2
-        elif number_locations < 120:
-            number_precollected = 1
-        else:
-            return
+        player_state = self.multiworld.state.prog_items[self.player]
+        self.update_received_progression_percent(player_state)
 
-        starting_keys = self.random.sample(early_keys, number_precollected)
-        for starting_key in starting_keys:
-            self.multiworld.push_precollected(self.create_item(starting_key))
+    def precollect_start_without_items(self):
+        if StartWithoutOptionName.landslide not in self.options.start_without:
+            self.multiworld.push_precollected(self.create_item("Landslide Removed"))
+        if StartWithoutOptionName.community_center not in self.options.start_without:
+            self.multiworld.push_precollected(self.create_item("Community Center Key"))
+            self.multiworld.push_precollected(self.create_item("Forest Magic"))
+            self.multiworld.push_precollected(self.create_item("Wizard Invitation"))
+        if StartWithoutOptionName.buildings not in self.options.start_without:
+            self.multiworld.push_precollected(self.create_item("Shipping Bin"))
+            self.multiworld.push_precollected(self.create_item("Pet Bowl"))
 
     def precollect_starting_season(self):
         if self.options.season_randomization == SeasonRandomization.option_progressive:
@@ -294,8 +291,9 @@ class StardewValleyWorld(World):
                 self.multiworld.push_precollected(self.create_item(item))
 
     def precollect_starting_backpacks(self):
-        if self.options.backpack_progression != BackpackProgression.option_vanilla and self.options.tool_progression & ToolProgression.value_no_starting_tools:
-            num_starting_slots = max(4, self.options.backpack_size.value)
+        if self.options.backpack_progression != BackpackProgression.option_vanilla and StartWithoutOptionName.backpack in self.options.start_without:
+            minimum_start_slots = 4 if StartWithoutOptionName.tools in self.options.start_without else 6
+            num_starting_slots = max(minimum_start_slots, self.options.backpack_size.value)
             num_starting_backpacks = math.ceil(num_starting_slots / self.options.backpack_size.value)
             num_already_starting_backpacks = 0
             for precollected_item in self.multiworld.precollected_items[self.player]:
@@ -480,8 +478,8 @@ class StardewValleyWorld(World):
                 for i, item in enumerate(bundle.items):
                     bundles[room.name][bundle.name][i] = f"{item.get_item()}|{item.amount}|{item.quality}"
 
-        excluded_options = [BundleRandomization, BundlePrice, BundlePerRoom, NumberOfMovementBuffs,
-                            EnabledFillerBuffs, TrapDistribution, BundlePlando, JojaAreYouSure]
+        excluded_options = [BundleRandomization, BundlePerRoom, NumberOfMovementBuffs,
+                            EnabledFillerBuffs, TrapDistribution, BundleWhitelist, BundleBlacklist, JojaAreYouSure]
         excluded_option_names = [option.internal_name for option in excluded_options]
         generic_option_names = [option_name for option_name in PerGameCommonOptions.type_hints]
         excluded_option_names.extend(generic_option_names)
@@ -493,7 +491,7 @@ class StardewValleyWorld(World):
             "randomized_entrances": self.randomized_entrances,
             "trash_bear_requests": self.trash_bear_requests,
             "modified_bundles": bundles,
-            "client_version": "7.0.0",
+            "client_version": "7.2.0",
         })
 
         return slot_data
@@ -506,11 +504,7 @@ class StardewValleyWorld(World):
         player_state = state.prog_items[self.player]
         player_state.update(item.events_to_collect)
 
-        if self.total_progression_items:
-            received_progression_count = player_state[Event.received_progression_item]
-            # Total progression items is not set until all items are created, but collect will be called during the item creation when an item is precollected.
-            # We can't update the percentage if we don't know the total progression items, can't divide by 0.
-            player_state[Event.received_progression_percent] = received_progression_count * 100 // self.total_progression_items
+        self.update_received_progression_percent(player_state)
 
         if item.name in APWeapon.all_weapons:
             player_state[Event.received_progressive_weapon] = max(player_state[Event.received_progressive_weapon], player_state[item.name])
@@ -525,13 +519,16 @@ class StardewValleyWorld(World):
         player_state = state.prog_items[self.player]
         player_state.subtract(item.events_to_collect)
 
-        if self.total_progression_items:
-            received_progression_count = player_state[Event.received_progression_item]
-            # Total progression items is not set until all items are created, but collect will be called during the item creation when an item is precollected.
-            # We can't update the percentage if we don't know the total progression items, can't divide by 0.
-            player_state[Event.received_progression_percent] = received_progression_count * 100 // self.total_progression_items
+        self.update_received_progression_percent(player_state)
 
         if item.name in APWeapon.all_weapons:
             player_state[Event.received_progressive_weapon] = max(player_state[weapon] for weapon in APWeapon.all_weapons)
 
         return True
+
+    def update_received_progression_percent(self, player_state: Counter[str]) -> None:
+        if self.total_progression_items:
+            received_progression_count = player_state[Event.received_progression_item]
+            # Total progression items is not set until all items are created, but collect will be called during the item creation when an item is precollected.
+            # We can't update the percentage if we don't know the total progression items, can't divide by 0.
+            player_state[Event.received_progression_percent] = received_progression_count * 100 // self.total_progression_items

@@ -40,10 +40,13 @@ jobs:
         os: [ubuntu-latest]
         python:
           - {version: '3.12'}
+          - {version: '3.13'}
         include:
-          - python: {version: '3.12'}  # current
+          - python: {version: '3.12'}  # old compat
             os: windows-latest
-          - python: {version: '3.12'}  # current
+          - python: {version: '3.13'}  # current
+            os: windows-latest
+          - python: {version: '3.13'}  # current
             os: macos-latest
 
     steps:
@@ -71,7 +74,7 @@ jobs:
         os:
           - ubuntu-latest
         python:
-          - {version: '3.12'}  # current
+          - {version: '3.13'}  # current
 
     steps:
     - uses: actions/checkout@v4

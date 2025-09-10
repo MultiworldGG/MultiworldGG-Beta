@@ -19,6 +19,7 @@ from randomizer.Enums.SwitchTypes import SwitchType
 from randomizer.Enums.Settings import (
     BananaportRando,
     BLockerSetting,
+    CBRequirement,
     DKPortalRando,
     GlitchesSelected,
     LogicType,
@@ -52,6 +53,7 @@ from randomizer.Lists.Minigame import (
 )
 from randomizer.Lists.Multiselectors import FasterCheckSelector, RemovedBarrierSelector, QoLSelector
 from randomizer.Lists.EnemyTypes import EnemySelector, enemy_location_list
+from randomizer.Lists.WrinklyHints import HintSet
 from randomizer.Logic import CollectibleRegionsOriginal, LogicVarHolder, RegionsOriginal
 from randomizer.Prices import ProgressiveMoves
 from randomizer.Settings import Settings
@@ -120,6 +122,44 @@ class Spoiler:
             Maps.ForestMinecarts: 50,
             Maps.CastleMinecarts: 25,
         }
+        self.valid_photo_items = [
+            Items.PhotoBat,
+            Items.PhotoBeaverBlue,
+            # Items.PhotoBeaverGold,
+            Items.PhotoBook,
+            # Items.PhotoBug,
+            # Items.PhotoFireball,
+            Items.PhotoGimpfish,
+            Items.PhotoGhost,
+            Items.PhotoKaboom,
+            Items.PhotoKasplatDK,
+            Items.PhotoKasplatDiddy,
+            Items.PhotoKasplatLanky,
+            Items.PhotoKasplatTiny,
+            Items.PhotoKasplatChunky,
+            Items.PhotoKlaptrapGreen,
+            Items.PhotoKlaptrapPurple,
+            # Items.PhotoKlaptrapRed,
+            Items.PhotoKlobber,
+            Items.PhotoKlump,
+            # Items.PhotoKop,
+            Items.PhotoKosha,
+            Items.PhotoKremling,
+            Items.PhotoKrossbones,
+            Items.PhotoMrDice0,
+            Items.PhotoMrDice1,
+            Items.PhotoMushroomMan,
+            Items.PhotoPufftup,
+            Items.PhotoRoboKremling,
+            Items.PhotoZingerRobo,
+            # Items.PhotoRuler,
+            Items.PhotoSirDomino,
+            # Items.PhotoSpider,
+            Items.PhotoShuri,
+            Items.PhotoTomato,
+            Items.PhotoZingerLime,
+            Items.PhotoZingerCharger,
+        ]
 
         self.move_data = []
         # 0: Cranky, 1: Funky, 2: Candy
@@ -153,11 +193,7 @@ class Spoiler:
                     master_moves = [{"move_type": None}]
             self.move_data.append(master_moves)
 
-        self.hint_list = {}
-        self.short_hint_list = {}
-        self.tied_hint_locations = {}
-        self.show_tied_info_on_log = {}
-        self.tied_hint_items = {}
+        self.hintset = HintSet()
         self.tied_hint_flags = {}
         self.tied_hint_regions = [HintRegion.NoRegion] * 35
         self.settings.finalize_world_settings(self)
@@ -243,6 +279,7 @@ class Spoiler:
             Types.FakeItem: "Ice Traps",
             Types.JunkItem: "Junk Items",
             Types.CrateItem: "Melon Crates",
+            Types.HalfMedal: "Half-Medals",
             Types.BoulderItem: "Holdable Objects",
             Types.Enemies: "Enemy Drops",
             Types.Cranky: "Shop Owners",
@@ -336,7 +373,6 @@ class Spoiler:
         settings["Coin Door Open"] = self.settings.coin_door_item == BarrierItems.Nothing
         settings["Shockwave Shuffle"] = self.settings.shockwave_status.name
         settings["Random Jetpac Medal Requirement"] = self.settings.random_medal_requirement
-        settings["Bananas Required for Medal"] = self.settings.medal_cb_req
         settings["Fairies Required for Rareware GB"] = self.settings.rareware_gb_fairies
         settings["Pearls Required for Mermaid GB"] = self.settings.mermaid_gb_pearls
         settings["Random Shop Prices"] = self.settings.random_prices.name
@@ -612,6 +648,8 @@ class Spoiler:
                 Types.Snide,
             ) and location.item in (None, Items.NoItem):
                 continue
+            if location.type == Types.HalfMedal and Types.HalfMedal not in self.settings.shuffled_location_types:
+                continue
             # Separate Kong locations
             if location.type == Types.Kong:
                 humanspoiler["Items"]["Kongs"][location.name] = item.name
@@ -725,7 +763,7 @@ class Spoiler:
             or self.settings.training_barrels_minigames == MinigameBarrels.random
         ):
             shuffled_barrels = OrderedDict()
-            for location, minigame in self.shuffled_barrel_data.items():
+            for location, minigame in [(location, value.minigame) for location, value in self.shuffled_barrel_data.items()]:
                 if location in HelmMinigameLocations and self.settings.helm_barrels == MinigameBarrels.skip:
                     continue
                 if location in TrainingMinigameLocations and self.settings.training_barrels_minigames == MinigameBarrels.skip:
@@ -1061,6 +1099,24 @@ class Spoiler:
             }
             if self.settings.shuffle_helm_location:
                 humanspoiler["Level Switch Strength"]["Hideout Helm"] = SLAM_NAMES[self.settings.switch_allocation[Levels.HideoutHelm]]
+        humanspoiler["Medal CB Requirements"] = {}
+        levels = [
+            "Jungle Japes",
+            "Angry Aztec",
+            "Frantic Factory",
+            "Gloomy Galleon",
+            "Fungi Forest",
+            "Crystal Caves",
+            "Creepy Castle",
+            "DK Isles",
+        ]
+        for xi, x in enumerate(self.settings.medal_cb_req_level):
+            if xi == 7 and not IsItemSelected(self.settings.cb_rando_enabled, self.settings.cb_rando_list_selected, Levels.DKIsles):
+                continue
+            text = x
+            if Types.HalfMedal in self.settings.shuffled_location_types:  # Half Medals
+                text = f"{x} ({max(1, int(x >> 1))})"
+            humanspoiler["Medal CB Requirements"][levels[xi]] = text
 
         if len(self.microhints) > 0:
             human_microhints = {}
@@ -1077,11 +1133,11 @@ class Spoiler:
                 filtered_hint = filtered_hint.replace("\x0d", "")
                 human_microhints[name] = filtered_hint
             humanspoiler["Direct Item Hints"] = human_microhints
-        if len(self.hint_list) > 0:
+        if len(self.hintset.hints) > 0:
             human_hint_list = {}
             # Here it filters out the coloring from the hints to make it actually readable in the spoiler log
-            for name, hint in self.hint_list.items():
-                filtered_hint = hint.replace("\x04", "")
+            for hint_info in self.hintset.hints:
+                filtered_hint = hint_info.hint.replace("\x04", "")
                 filtered_hint = filtered_hint.replace("\x05", "")
                 filtered_hint = filtered_hint.replace("\x06", "")
                 filtered_hint = filtered_hint.replace("\x07", "")
@@ -1091,11 +1147,12 @@ class Spoiler:
                 filtered_hint = filtered_hint.replace("\x0b", "")
                 filtered_hint = filtered_hint.replace("\x0c", "")
                 filtered_hint = filtered_hint.replace("\x0d", "")
-                human_hint_list[name] = filtered_hint
-                if name in self.tied_hint_locations:
-                    if self.tied_hint_locations[name] is not None:
-                        if self.show_tied_info_on_log[name]:
-                            human_hint_list[name] += f" | (Hinting towards: {self.tied_hint_items[name]} at {self.tied_hint_locations[name]})"
+                human_hint_list[hint_info.name] = filtered_hint
+                if hint_info.related_location is not None:
+                    location = self.LocationList[hint_info.related_location]
+                    if location.item is not None and location.item != Items.NoItem and not (hint_info.related_location in TrainingBarrelLocations or hint_info.related_location in PreGivenLocations):
+                        item = ItemList[location.item]
+                        human_hint_list[hint_info.name] += f" | (Hinting towards: {item.name} at {location.name})"
             humanspoiler["Wrinkly Hints"] = human_hint_list
             # humanspoiler["Unhinted Score"] = self.unhinted_score
             # humanspoiler["Potentially Awful Locations"] = {}

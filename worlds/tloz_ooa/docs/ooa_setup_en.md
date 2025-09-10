@@ -4,12 +4,12 @@
 
 - [Oracle of Ages .apworld](https://github.com/SenPierre/ArchipelagoOoA/releases/latest)
 - [Bizhawk 2.9.1 (x64)](https://tasvideos.org/BizHawk/ReleaseHistory)
-- Your legally obtained Oracle of Agess US ROM file
+- Your legally obtained Oracle of Ages US ROM file
 
 ## Installation Instructions
 
 1. Put your **Oracle of Ages US ROM** inside your MultiworldGG install folder (named "Legend of Zelda, The - Oracle of Ages (USA).gbc")
-2. Download the **Oracle of Ages .apworld file** and double-click it to install it the "custom_worlds/" subdirectory of your Archipelago install directory
+2. Download the **Oracle of Ages .apworld file** and double-click it to install it the "custom_worlds/" subdirectory of your Archipelago install directory (not needed with MultiworldGG)
 3. Generate a seed using your .yaml settings file (see below if you don't know how to get the template)
 4. Download the .apooa patch file that was built by the server while generating, this will be used to generate your modified ROM
 5. Open this patch file using the Archipelago Launcher

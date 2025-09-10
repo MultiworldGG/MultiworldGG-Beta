@@ -2,7 +2,7 @@ html{
     background-image: url('../../static/backgrounds/ocean.png');
     background-repeat: repeat;
     background-size: 126px 126px;
-    font-family: LexendDeca-Light, sans-serif;
+    font-family: Inter-Light, sans-serif;
     font-size: 18px;
     color: #ffffff;
     line-height: 30px;
@@ -13,14 +13,14 @@ html{
 }
 
 div header{
-    font-family: LondrinaSolid-Light, sans-serif;
+    font-family: Inter-Light, sans-serif;
     font-size: 25px;
     margin: 20px 0;
     text-transform: uppercase;
 }
 
 h1{
-    font-family: LondrinaSolid-Light, sans-serif;
+    font-family: Inter-Light, sans-serif;
     text-transform: uppercase;
     color: #ffffff;
     margin-top: 10px;

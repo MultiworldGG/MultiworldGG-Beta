@@ -1,7 +1,7 @@
 import logging
 import os
 
-from Fill import fast_fill, fill_restrictive
+from Fill import fill_restrictive
 from typing import List, Dict, ClassVar, Any
 from settings import UserFilePath, Group
 from BaseClasses import Tutorial, ItemClassification, CollectionState, Item
@@ -11,9 +11,9 @@ from .Data import starting_partners, limit_eight, stars, chapter_items, limited_
 from .Constants import GAME_NAME, AUTHOR, IGDB_ID
 from .Locations import all_locations, location_table, pit, location_id_to_name, TTYDLocation, locationName_to_data, \
     palace, riddle_tower, tattlesanity_region
-from .Options import TTYDOptions, YoshiColor, StartingPartner, PitItems, LimitChapterEight
+from .Options import TTYDOptions, YoshiColor, StartingPartner, PitItems, LimitChapterEight, Goal
 from .Items import TTYDItem, itemList, item_frequencies, item_table, ItemData
-from .Regions import create_regions, connect_regions, get_regions_dict
+from .Regions import create_regions, connect_regions, get_regions_dict, register_indirect_connections
 from .Rom import TTYDProcedurePatch, write_files
 from .Rules import set_rules, get_tattle_rules_dict, set_tattle_rules
 from worlds.LauncherComponents import Component, SuffixIdentifier, Type, components, launch_subprocess
@@ -86,18 +86,17 @@ class TTYDWorld(World):
     disabled_locations: set
     excluded_regions: set
     items: List[TTYDItem]
-    pit_items: List[TTYDItem]
     required_chapters: List[int]
     limited_chapters: List[int]
     limited_chapter_locations: set
     limited_item_names: set
     limited_items: List[TTYDItem]
+    limited_state: CollectionState = None
 
     def generate_early(self) -> None:
         self.disabled_locations = set()
         self.excluded_regions = set()
         self.items = []
-        self.pit_items = []
         self.required_chapters = []
         self.limited_chapters = []
         self.limited_chapter_locations = set()
@@ -107,25 +106,37 @@ class TTYDWorld(World):
             logging.warning(f"{self.player_name}'s has enabled both Palace Skip and Limit Chapter 8. "
                             f"Disabling the Limit Chapter 8 option due to incompatibility.")
             self.options.limit_chapter_eight.value = LimitChapterEight.option_false
+        if self.options.goal == Goal.option_bonetail and self.options.goal_stars < 5:
+            logging.warning(f"{self.player_name}'s has Bonetail as the goal with less than 5 stars required. "
+                            f"Increasing number of goal stars to 5 for accessibility.")
+            self.options.goal_stars.value = 5
+        if self.options.goal != Goal.option_shadow_queen and self.options.palace_stars > self.options.goal_stars:
+            logging.warning(f"{self.player_name}'s has more palace stars required than goal stars. "
+                            f"Reducing number of stars required to enter the palace of shadow for accessibility.")
+            self.options.palace_stars.value = self.options.goal_stars.value
         chapters = [i for i in range(1, 8)]
-        for i in range(self.options.chapter_clears.value):
+        for i in range((self.options.palace_stars.value if self.options.goal == Goal.option_shadow_queen else self.options.goal_stars.value)):
             self.required_chapters.append(chapters.pop(self.multiworld.random.randint(0, len(chapters) - 1)))
         if self.options.limit_chapter_logic:
             self.limited_chapters += chapters
         if self.options.limit_chapter_eight:
             self.limited_chapters += [8]
-        if self.options.pit_items == PitItems.option_vanilla:
-            self.disabled_locations.update(location.name for location in pit if "Pit of 100 Trials" in location.name)
+        elif self.options.pit_items == PitItems.option_filler:
+            self.options.exclude_locations.value.update(location.name for location in pit if "Pit of 100 Trials" in location.name)
         if self.options.palace_skip:
             self.excluded_regions.update(["Palace of Shadow", "Palace of Shadow (Post-Riddle Tower)"])
         if not self.options.tattlesanity:
             self.excluded_regions.update(["Tattlesanity"])
+        if self.options.goal != Goal.option_shadow_queen:
+            self.excluded_regions.update(["Shadow Queen"])
+            if self.options.tattlesanity:
+                self.disabled_locations.update(["Tattle: Shadow Queen"])
         if self.options.tattlesanity and self.options.disable_intermissions:
             self.disabled_locations.update(["Tattle: Lord Crump"])
         if self.options.starting_partner == StartingPartner.option_random_partner:
             self.options.starting_partner.value = self.random.randint(1, 7)
         if self.options.yoshi_color == YoshiColor.option_random_color:
-            self.options.yoshi_color.value = self.random.randint(1, 7)
+            self.options.yoshi_color.value = self.random.randint(0, 6)
         if self.options.tattlesanity:
             extra_disabled = [location.name for name, locations in get_regions_dict().items()
                 if name in self.excluded_regions for location in locations]
@@ -140,6 +151,7 @@ class TTYDWorld(World):
     def create_regions(self) -> None:
         create_regions(self)
         connect_regions(self)
+        register_indirect_connections(self)
         for chapter in self.limited_chapters:
             self.limited_chapter_locations.update([self.get_location(location_id_to_name[location]) for location in limited_location_ids[chapter - 1]])
         if self.options.tattlesanity:
@@ -152,7 +164,8 @@ class TTYDWorld(World):
         self.lock_item("Pirate's Grotto Cortez' Hoard: Sapphire Star", "Sapphire Star")
         self.lock_item("Poshley Heights Sanctum Altar: Garnet Star", "Garnet Star")
         self.lock_item("X-Naut Fortress Boss Room: Crystal Star", "Crystal Star")
-        self.lock_item("Shadow Queen", "Victory")
+        if self.options.goal == Goal.option_shadow_queen:
+            self.lock_item("Shadow Queen", "Victory")
         if self.options.limit_chapter_eight:
             for location in [location for location in palace + riddle_tower if "Palace Key" in location.name]:
                 if "Palace Key (Riddle Tower)" in location.name:
@@ -160,6 +173,17 @@ class TTYDWorld(World):
                 elif "Palace Key" in location.name:
                     self.lock_item(location.name, "Palace Key")
             self.lock_item("Palace of Shadow Gloomtail Room: Star Key", "Star Key")
+        if self.options.pit_items == PitItems.option_vanilla:
+            self.lock_item("Pit of 100 Trials Floor 10: Sleepy Stomp", "Sleepy Stomp")
+            self.lock_item("Pit of 100 Trials Floor 20: Fire Drive", "Fire Drive")
+            self.lock_item("Pit of 100 Trials Floor 30: Zap Tap", "Zap Tap")
+            self.lock_item("Pit of 100 Trials Floor 40: Pity Flower", "Pity Flower")
+            self.lock_item("Pit of 100 Trials Floor 50: Strange Sack", "Strange Sack")
+            self.lock_item("Pit of 100 Trials Floor 60: Double Dip", "Double Dip")
+            self.lock_item("Pit of 100 Trials Floor 70: Double Dip P", "Double Dip P")
+            self.lock_item("Pit of 100 Trials Floor 80: Bump Attack", "Bump Attack")
+            self.lock_item("Pit of 100 Trials Floor 90: Lucky Day", "Lucky Day")
+            self.lock_item("Pit of 100 Trials Floor 100: Return Postage", "Return Postage")
 
 
     def limit_tattle_locations(self):
@@ -188,14 +212,10 @@ class TTYDWorld(World):
     def create_items(self) -> None:
         # First add in all progression items
         self.items = []
-        self.pit_items = []
         self.limited_items = []
-        test_items = {}
-        for item in itemList:
-            test_items[item.itemName] = 0
+        self.limited_state = CollectionState(self.multiworld)
         required_items = []
-        precollected = [item for item in itemList if item in self.multiworld.precollected_items]
-        precollected += [item_table[starting_partners[self.options.starting_partner.value - 1]]]
+        precollected = [item for item in itemList if item in self.multiworld.precollected_items[self.player]]
         added_items = 0
         for chapter in self.limited_chapters:
             self.limited_item_names.update(chapter_items[chapter])
@@ -206,23 +226,23 @@ class TTYDWorld(World):
         for itemName in required_items:
             if itemName in ["Star Key", "Palace Key", "Palace Key (Riddle Tower)"] and self.options.palace_skip:
                 continue
+            item = self.create_item(itemName)
             if itemName in self.limited_item_names:
                 if itemName not in ["Star Key", "Palace Key", "Palace Key (Riddle Tower)"]:
-                    self.limited_items.append(self.create_item(itemName))
-                    test_items[itemName] += 1
+                    self.limited_items.append(item)
                     added_items += 1
             else:
-                self.multiworld.itempool.append(self.create_item(itemName))
-                test_items[itemName] += 1
+                self.limited_state.collect(item, prevent_sweep=True)
+                self.multiworld.itempool.append(item)
                 added_items += 1
 
         useful_items = []
         for item in [item for item in itemList if item.progression == ItemClassification.useful]:
-            freq = item_frequencies.get(item.itemName, 1)
-            useful_items += [item.itemName for _ in range(freq)]
+            if item.itemName != starting_partners[self.options.starting_partner.value - 1]:
+                freq = item_frequencies.get(item.itemName, 1)
+                useful_items += [item.itemName for _ in range(freq)]
         for itemName in useful_items:
             self.items.append(self.create_item(itemName))
-            test_items[itemName] += 1
             added_items += 1
 
 
@@ -240,16 +260,9 @@ class TTYDWorld(World):
         remaining = len(self.multiworld.get_unfilled_locations(self.player)) - added_items
         for i in range(remaining):
             filler_item_name = self.multiworld.random.choice(filler_items)
-            test_items[filler_item_name] += 1
             item = self.create_item(filler_item_name)
             self.items.append(item)
             filler_items.remove(filler_item_name)
-
-
-        if self.options.pit_items == PitItems.option_filler:
-            self.multiworld.random.shuffle(self.items)
-            for i in range(10):
-                self.pit_items.append(self.items.pop())
 
         if len(self.limited_chapter_locations) > 0:
             self.multiworld.random.shuffle(self.items)
@@ -259,36 +272,38 @@ class TTYDWorld(World):
         for item in self.items:
             self.multiworld.itempool.append(item)
 
-        for name, item in test_items.items():
-            if item_table[name].progression == ItemClassification.progression:
-                if item > item_frequencies.get(name, 1):
-                    raise Exception(f"Item {name} is in the item pool {item} times, but should only be in {item_frequencies.get(name, 1)} times.")
-
     def pre_fill(self) -> None:
-        if self.pit_items:
-            fast_fill(self.multiworld, self.pit_items, [self.multiworld.get_location(location.name, self.player) for location in pit if "Pit of 100 Trials" in location.name])
-        limited_state = CollectionState(self.multiworld)
-        _ = [limited_state.collect(item) for item in self.multiworld.itempool]
-        _ = [limited_state.collect(location.item) for location in self.get_locations() if location.item is not None and location.item.name not in stars]
+        _ = [self.limited_state.collect(location.item, prevent_sweep=True) for location in self.get_locations() if
+             location.item is not None and location.item.name not in stars]
         self.multiworld.random.shuffle(self.limited_items)
         self.multiworld.random.shuffle(list(self.limited_chapter_locations))
-        fill_restrictive(self.multiworld, limited_state, list(self.limited_chapter_locations), self.limited_items, single_player_placement=True, lock=True, swap=True)
+        fill_restrictive(self.multiworld, self.limited_state, list(self.limited_chapter_locations), self.limited_items, single_player_placement=True, swap=True)
 
     def set_rules(self) -> None:
         set_rules(self)
         set_tattle_rules(self)
-        self.multiworld.completion_condition[self.player] = lambda state: state.has("Victory", self.player)
+        if self.options.goal == Goal.option_shadow_queen:
+            self.multiworld.completion_condition[self.player] = lambda state: state.has("Victory", self.player)
+        elif self.options.goal == Goal.option_crystal_stars:
+            self.multiworld.completion_condition[self.player] = lambda state: state.has("stars", self.player, self.options.goal_stars.value)
+        else:
+            self.multiworld.completion_condition[self.player] = lambda state: state.can_reach("Pit of 100 Trials Floor 100: Return Postage", "Location", self.player)
 
     def fill_slot_data(self) -> Dict[str, Any]:
         return {
-            "chapter_clears": self.options.chapter_clears.value,
+            "goal": self.options.goal.value,
+            "goal_stars": self.options.goal_stars.value,
+            "chapter_clears": self.options.palace_stars.value, # TODO: Update name to palace_stars once ready to deprecate
             "pit_items": self.options.pit_items.value,
             "limit_chapter_logic": self.options.limit_chapter_logic.value,
             "limit_chapter_eight": self.options.limit_chapter_eight.value,
             "palace_skip": self.options.palace_skip.value,
             "yoshi_color": self.options.yoshi_color.value,
             "westside": self.options.open_westside.value,
-            "tattlesanity": self.options.tattlesanity.value
+            "tattlesanity": self.options.tattlesanity.value,
+            "disable_intermissions": self.options.disable_intermissions.value,
+            "cutscene_skip": self.options.cutscene_skip.value,
+            "death_link": self.options.death_link.value,
         }
 
     def create_item(self, name: str) -> TTYDItem:

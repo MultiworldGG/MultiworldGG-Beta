@@ -1253,7 +1253,8 @@
         ],
         "Settings": {
             "cannons": true,
-            "prog_key": 1
+            "prog_key": 1,
+            "sr3.5": true
         },
         "Troll Star": {
             "exists": false

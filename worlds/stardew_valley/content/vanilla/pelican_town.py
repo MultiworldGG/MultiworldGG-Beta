@@ -1,9 +1,10 @@
 from ..game_content import ContentPack
 from ...data import villagers_data, fish_data
 from ...data.building import Building
-from ...data.game_item import GenericSource, ItemTag, Tag, CustomRuleSource
+from ...data.game_item import GenericSource, ItemTag, Tag, CustomRuleSource, AllRegionsSource
 from ...data.harvest import ForagingSource, SeasonalForagingSource, ArtifactSpotSource
 from ...data.hats_data import Hats
+from ...data.monster_data import MonsterSource
 from ...data.requirement import ToolRequirement, BookRequirement, SkillRequirement, YearRequirement, \
     GrangeDisplayRequirement, EggHuntRequirement, MuseumCompletionRequirement, BuildingRequirement, \
     NumberOfFriendsRequirement, HelpWantedRequirement, FishingCompetitionRequirement, MovieRequirement, LuauDelightRequirementRequirement, \
@@ -12,6 +13,7 @@ from ...data.requirement import ToolRequirement, BookRequirement, SkillRequireme
 from ...data.shop import ShopSource, MysteryBoxSource, ArtifactTroveSource, PrizeMachineSource, \
     FishingTreasureChestSource, HatMouseSource
 from ...logic.tailoring_logic import TailoringSource
+from ...logic.time_logic import MAX_MONTHS
 from ...strings.artisan_good_names import ArtisanGood
 from ...strings.book_names import Book
 from ...strings.building_names import Building as BuildingNames
@@ -26,6 +28,7 @@ from ...strings.fruit_tree_names import Sapling
 from ...strings.generic_names import Generic
 from ...strings.material_names import Material
 from ...strings.metal_names import MetalBar
+from ...strings.monster_names import Monster
 from ...strings.region_names import Region, LogicRegion
 from ...strings.season_names import Season
 from ...strings.seed_names import Seed, TreeSeed
@@ -249,87 +252,87 @@ pelican_town = ContentPack(
             ShopSource(price=5000, shop_region=Region.ranch, other_requirements=(YearRequirement(2),)),),
         Book.book_of_mysteries: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
-            MysteryBoxSource(amount=38),),  # After 38 boxes, there are 49.99% chances player received the book.
+            MysteryBoxSource(amount=50),),  # After 38 boxes, there are 49.99% chances player received the book.
         Book.dwarvish_safety_manual: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
-            ShopSource(price=4000, shop_region=LogicRegion.mines_dwarf_shop),
-            ShopSource(price=20000, shop_region=LogicRegion.bookseller_3),),
+            ShopSource(price=4000, shop_region=LogicRegion.mines_dwarf_shop),),
+        #   ShopSource(price=20000, shop_region=LogicRegion.bookseller_rare),),  # Repeatable, so no need for bookseller
         Book.friendship_101: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
             PrizeMachineSource(amount=9),
-            ShopSource(price=20000, shop_region=LogicRegion.bookseller_3),),
+            ShopSource(price=20000, shop_region=LogicRegion.bookseller_rare),),
         Book.horse_the_book: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
-            ShopSource(price=25000, shop_region=LogicRegion.bookseller_2),),
+            ShopSource(price=25000, shop_region=LogicRegion.bookseller_permanent),),
         Book.jack_be_nimble_jack_be_thick: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
-            ShopSource(price=20000, shop_region=LogicRegion.bookseller_3),),
+            ShopSource(price=20000, shop_region=LogicRegion.bookseller_rare),),
         Book.jewels_of_the_sea: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
-            FishingTreasureChestSource(amount=21),  # After 21 chests, there are 49.44% chances player received the book.
-            ShopSource(price=20000, shop_region=LogicRegion.bookseller_3),),
+            FishingTreasureChestSource(amount=25),  # After 21 chests, there are 49.44% chances player received the book.
+            ShopSource(price=20000, shop_region=LogicRegion.bookseller_rare),),
         Book.mapping_cave_systems: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
-            GenericSource(regions=(Region.adventurer_guild_bedroom,)),
+            AllRegionsSource(regions=(Region.adventurer_guild_bedroom, LogicRegion.bookseller_rare,)),
             # Disabling the shop source for better game design.
             # ShopSource(price=20000, shop_region=LogicRegion.bookseller_3),
         ),
         Book.monster_compendium: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
             CustomRuleSource(create_rule=lambda logic: logic.monster.can_kill_many(Generic.any)),
-            ShopSource(price=20000, shop_region=LogicRegion.bookseller_3),),
+            ShopSource(price=20000, shop_region=LogicRegion.bookseller_rare),),
         Book.ol_slitherlegs: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
-            ShopSource(price=25000, shop_region=LogicRegion.bookseller_2),),
+            ShopSource(price=25000, shop_region=LogicRegion.bookseller_permanent),),
         Book.price_catalogue: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
-            ShopSource(price=3000, shop_region=LogicRegion.bookseller_2),),
+            ShopSource(price=3000, shop_region=LogicRegion.bookseller_permanent),),
         Book.the_alleyway_buffet: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
             GenericSource(regions=(Region.town,),
                           other_requirements=(ToolRequirement(Tool.axe, ToolMaterial.iron), ToolRequirement(Tool.pickaxe, ToolMaterial.iron))),
-            ShopSource(price=20000, shop_region=LogicRegion.bookseller_3),),
+            ShopSource(price=20000, shop_region=LogicRegion.bookseller_rare),),
         Book.the_art_o_crabbing: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
             CustomRuleSource(create_rule=lambda logic: logic.festival.has_squidfest_day_1_iridium_reward()),
-            ShopSource(price=20000, shop_region=LogicRegion.bookseller_3),),
+            ShopSource(price=20000, shop_region=LogicRegion.bookseller_rare),),
         Book.treasure_appraisal_guide: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
-            ArtifactTroveSource(amount=18),  # After 18 troves, there is 49,88% chances player received the book.
-            ShopSource(price=20000, shop_region=LogicRegion.bookseller_3),),
+            ArtifactTroveSource(amount=20),  # After 18 troves, there is 49,88% chances player received the book.
+            ShopSource(price=20000, shop_region=LogicRegion.bookseller_rare),),
         Book.raccoon_journal: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
-            ShopSource(price=20000, shop_region=LogicRegion.bookseller_3),
+            #  ShopSource(price=20000, shop_region=LogicRegion.bookseller_rare),  # Repeatable, so no need for bookseller
             ShopSource(items_price=((999, Material.fiber),), shop_region=LogicRegion.raccoon_shop),),
         Book.way_of_the_wind_pt_1: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
-            ShopSource(price=15000, shop_region=LogicRegion.bookseller_2),),
+            ShopSource(price=15000, shop_region=LogicRegion.bookseller_permanent),),
         Book.way_of_the_wind_pt_2: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
-            ShopSource(price=35000, shop_region=LogicRegion.bookseller_2, other_requirements=(BookRequirement(Book.way_of_the_wind_pt_1),)),),
+            ShopSource(price=35000, shop_region=LogicRegion.bookseller_permanent, other_requirements=(BookRequirement(Book.way_of_the_wind_pt_1),)),),
         Book.woodys_secret: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_POWER),
-            ShopSource(price=20000, shop_region=LogicRegion.bookseller_3),),
+            ShopSource(price=20000, shop_region=LogicRegion.bookseller_rare),),
 
         # Experience Books
         Book.book_of_stars: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_SKILL),
-            ShopSource(price=5000, shop_region=LogicRegion.bookseller_1),),
+            ShopSource(price=5000, shop_region=LogicRegion.bookseller_permanent),),
         Book.bait_and_bobber: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_SKILL),
-            ShopSource(price=5000, shop_region=LogicRegion.bookseller_1),),
+            ShopSource(price=5000, shop_region=LogicRegion.bookseller_experience),),
         Book.combat_quarterly: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_SKILL),
-            ShopSource(price=5000, shop_region=LogicRegion.bookseller_1),),
+            ShopSource(price=5000, shop_region=LogicRegion.bookseller_experience),),
         Book.mining_monthly: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_SKILL),
-            ShopSource(price=5000, shop_region=LogicRegion.bookseller_1),),
+            ShopSource(price=5000, shop_region=LogicRegion.bookseller_experience),),
         Book.stardew_valley_almanac: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_SKILL),
-            ShopSource(price=5000, shop_region=LogicRegion.bookseller_1),),
+            ShopSource(price=5000, shop_region=LogicRegion.bookseller_experience),),
         Book.woodcutters_weekly: (
             Tag(ItemTag.BOOK, ItemTag.BOOK_SKILL),
-            ShopSource(price=5000, shop_region=LogicRegion.bookseller_1),),
+            ShopSource(price=5000, shop_region=LogicRegion.bookseller_experience),),
 
         # Catalogues
         Catalogue.wizard: (ShopSource(price=150000, shop_region=Region.sewer),),
@@ -337,6 +340,8 @@ pelican_town = ContentPack(
 
         # Furniture
         Furniture.single_bed: (ShopSource(price=500, shop_region=Region.carpenter),),
+        Furniture.crane_game_house_plant: (ShopSource(price=500, shop_region=Region.movie_theater),),
+        Furniture.cursed_mannequin: (MonsterSource(monsters=(Monster.haunted_skull,), amount_tier=MAX_MONTHS),),
     },
     fishes=(
         fish_data.albacore,
@@ -715,8 +720,8 @@ pelican_town = ContentPack(
         Hats.sports_cap: (Tag(ItemTag.HAT), HatMouseSource(price=5000, unlock_requirements=(PrizeMachineRequirement(11),)),),
 
         Hats.emilys_magic_hat: (Tag(ItemTag.HAT), ShopSource(price=10000, shop_region=LogicRegion.lost_items_shop,
-                                                                  other_requirements=(
-                                                                      SpecificFriendRequirement(NPC.emily, 14), RegionRequirement(Region.farm))),),
+                                                             other_requirements=(
+                                                                 SpecificFriendRequirement(NPC.emily, 14), RegionRequirement(Region.farm))),),
         Hats.fedora: (Tag(ItemTag.HAT), ShopSource(price=500, currency=Currency.star_token, shop_region=LogicRegion.fair),),
         Hats.cone_hat: (Tag(ItemTag.HAT), ShopSource(price=5000, shop_region=LogicRegion.night_market),),
         Hats.red_fez: (Tag(ItemTag.HAT), ShopSource(price=8000, shop_region=LogicRegion.traveling_cart),),
@@ -725,16 +730,16 @@ pelican_town = ContentPack(
         Hats.mystery_hat: (Tag(ItemTag.HAT), MysteryBoxSource(amount=100),),
 
         Hats.fishing_hat: (Tag(ItemTag.HAT), TailoringSource(tailoring_items=(Fish.stonefish, Fish.ice_pip, Fish.scorpion_carp, Fish.spook_fish,
-                                                                                   Fish.midnight_squid, Fish.void_salmon, Fish.slimejack,)),),
+                                                                              Fish.midnight_squid, Fish.void_salmon, Fish.slimejack,)),),
         Hats.bucket_hat: (Tag(ItemTag.HAT), CustomRuleSource(create_rule=lambda logic: logic.hat.has_bucket_hat),),
 
         Hats.leprechaun_hat: (Tag(ItemTag.HAT), ForagingSource(regions=(Region.forest,), seasons=(Season.spring,), ),),
         Hats.mushroom_cap: (Tag(ItemTag.HAT), ForagingSource(regions=(Region.farm,), seasons=(Season.fall,), ),),
 
         Hats.raccoon_hat: (Tag(ItemTag.HAT), CustomRuleSource(create_rule=lambda logic: logic.quest.has_raccoon_shop(3) &
-                                                                                             logic.region.can_reach(LogicRegion.raccoon_shop)),),
+                                                                                        logic.region.can_reach(LogicRegion.raccoon_shop)),),
 
-        Hats.squid_hat: (Tag(ItemTag.HAT), CustomRuleSource(create_rule=lambda logic: logic.festival.can_squidfest_day_1_iridium_reward()),),
+        Hats.squid_hat: (Tag(ItemTag.HAT), CustomRuleSource(create_rule=lambda logic: logic.festival.can_squidfest_iridium_reward()),),
 
     }
 )

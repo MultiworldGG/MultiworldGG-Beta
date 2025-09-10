@@ -20,7 +20,7 @@ def run_client():
     p.start()
 
 
-components.append(Component("Osu! Client", func=run_client, component_type=Type.CLIENT))
+components.append(Component("osu! Client", func=run_client, component_type=Type.CLIENT))
 
 
 class OsuWebWorld(WebWorld):

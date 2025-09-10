@@ -16,12 +16,13 @@ import asyncio
 import threading
 import time
 import logging
+import pkgutil
+
 from pynput import keyboard
 from pathlib import Path
 
 
 logger = logging.getLogger("poeClient.main")
-_generate_wav = True  # Set to True if you want to generate the wav files
 _debug = True  # Set to True for debug output, False for production
 validate_char_debounce_time = 2  # seconds
 loop_timer = 0.1  # Time in seconds to wait before reloading the item filter
@@ -73,16 +74,55 @@ async def async_load(ctx: "PathOfExileContext" = None):
     global context
     ctx = ctx if ctx is not None else context
 
-    if ctx.tts_options.enable:
-        tts.generate_tts_tasks_from_missing_locations(ctx, ctx.tts_options.speed)
+    # Extract jingle sound files from package data to the filter sounds directory
+    jingle_dir = itemFilter.poe_doc_path / itemFilter.JINGLE_FILTER_SOUNDS_DIR_NAME
+    jingle_dir.mkdir(parents=True, exist_ok=True)
+
+    tts_dir = itemFilter.poe_doc_path / itemFilter.TTS_FILTER_SOUNDS_DIR_NAME
+    tts_dir.mkdir(parents=True, exist_ok=True)
+
+    if ctx.filter_options.tts_enabled:
+        tts.generate_tts_tasks_from_missing_locations(ctx, ctx.filter_options.tts_speed)
         threading.Thread(target=tts.run_tts_tasks, daemon=True).start()  # Run TTS tasks in a separate thread
+
+    try:
+        # All files to extract from the jingles directory (including documentation)
+        jingle_files = [
+            "Filler.wav",
+            "Useful.wav", 
+            "Trap.wav",
+            "ProgUseful.wav",
+            "Progression.wav",
+            "LICENSE.md",
+            "README.md"
+        ]
+        
+        for filename in jingle_files:
+            if filename is None:
+                continue
+                
+            try:
+                src_data = pkgutil.get_data("worlds.poe.data", f"sounds/jingles/{filename}")
+                if src_data is not None:
+                    dest_path = jingle_dir / filename
+                    dest_path.write_bytes(src_data)
+                    logger.debug(f"Extracted jingle file: {filename}")
+                else:
+                    logger.warning(f"Could not find jingle file: {filename}")
+            except Exception as file_error:
+                logger.warning(f"Could not extract jingle file {filename}: {file_error}")
+                continue
+                
+    except Exception as e:
+        logger.error(f"Could not extract jingles: {e}")
+        # Continue execution - jingles are optional
 
     itemFilter.update_item_filter_from_context(ctx)
 
     listener = keyboard.Listener(on_press=on_press)
     listener.start()
 
-    await inputHelper.important_send_poe_text("/itemfilter __ap")
+    await inputHelper.important_send_poe_text(f"/itemfilter {itemFilter.AP_FILTER_NAME}")
 
 
 

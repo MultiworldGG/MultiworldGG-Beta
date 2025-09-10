@@ -162,15 +162,27 @@ starting_items_table = {
     },
 }
 
-
+alternate_gems = json.loads(pkgutil.get_data("worlds.poe.data", "AlternateGems.json").decode("utf-8"))
 item_array = json.loads(pkgutil.get_data("worlds.poe.data", "Items.json").decode("utf-8"))
 item_table = {}
-for i, item in enumerate(item_array, start=1):
-    item["id"] = i
-    item["classification"] = ItemClassification(item.get("classification", ItemClassification.filler))
-    item_table[i] = item
+existing_ids = {item['id'] for item in item_array if item.get('id')}
+next_available_default_id = 1
+while next_available_default_id in existing_ids:
+    next_available_default_id += 1
 
-data = pkgutil.get_data("worlds.poe.data", "Bosses.json")
+for i, item in enumerate(item_array, start=1):
+    item_id: int
+    if item.get('id'):
+        item_id = item['id']
+    else:
+        item_id = next_available_default_id
+        item['id'] = item_id
+        next_available_default_id += 1
+        while next_available_default_id in existing_ids:
+            next_available_default_id += 1
+    
+    item["classification"] = ItemClassification(item.get("classification", ItemClassification.filler))
+    item_table[item_id] = item
 
 if __name__ == "__main__":
     import json

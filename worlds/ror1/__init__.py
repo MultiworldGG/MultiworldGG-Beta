@@ -11,18 +11,10 @@ from typing import List, Dict, Any
 
 class RiskOfWeb(WebWorld):
     tutorials = [Tutorial(
-        "Risk of Rain 2013 Setup Guide",
+        "Multiworld Setup Guide",
         "A guide to setting up the Risk of Rain 1 integration for MultiworldGG multiworld games.",
         "English",
-        "setup_RoR1_en.md",
-        "setup/en",
-        ["studkid"]
-    ),
-    Tutorial(
-        "Risk of Rain Returns Setup Guide",
-        "A guide to setting up the Risk of Rain Returns integration for MultiworldGG multiworld games.",
-        "English",
-        "setup_RoRR_en.md",
+        "setup_en.md",
         "setup/en",
         ["studkid"]
     )]

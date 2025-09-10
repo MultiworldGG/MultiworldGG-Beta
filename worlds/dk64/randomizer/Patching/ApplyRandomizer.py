@@ -8,6 +8,7 @@ import time
 from tempfile import mktemp
 from randomizer.Enums.Settings import (
     BananaportRando,
+    CBRequirement,
     CrownEnemyDifficulty,
     DamageAmount,
     FasterChecksSelected,
@@ -43,7 +44,7 @@ from randomizer.Patching.BananaPortRando import randomize_bananaport, move_banan
 from randomizer.Patching.BarrelRando import randomize_barrels
 from randomizer.Patching.CoinPlacer import randomize_coins
 from randomizer.Patching.Cosmetics.TextRando import writeBootMessages
-from randomizer.Patching.Cosmetics.Puzzles import updateMillLeverTexture, updateCryptLeverTexture, updateDiddyDoors
+from randomizer.Patching.Cosmetics.Puzzles import updateMillLeverTexture, updateCryptLeverTexture, updateDiddyDoors, updateHelmFaces
 from randomizer.Patching.CosmeticColors import (
     applyHelmDoorCosmetics,
     applyKongModelSwaps,
@@ -60,7 +61,7 @@ from randomizer.Patching.EntranceRando import (
     placeLevelOrder,
 )
 from randomizer.Patching.FairyPlacer import PlaceFairies
-from randomizer.Patching.ItemRando import place_randomized_items, alterTextboxRequirements
+from randomizer.Patching.ItemRando import place_randomized_items, alterTextboxRequirements, calculateInitFileScreen
 from randomizer.Patching.KasplatLocationRando import randomize_kasplat_locations
 from randomizer.Patching.KongRando import apply_kongrando_cosmetic
 from randomizer.Patching.Library.Generic import setItemReferenceName, addNewScript, IsItemSelected, getProgHintBarrierItem, getHintRequirementBatch, IsDDMSSelected
@@ -81,7 +82,6 @@ from randomizer.Patching.ShopRandomizer import ApplyShopRandomizer
 from randomizer.Patching.UpdateHints import (
     PushHints,
     replaceIngameText,
-    wipeHints,
     PushItemLocations,
     PushHelpfulHints,
     PushHintTiedRegions,
@@ -189,22 +189,6 @@ def patching_response(spoiler):
             level_order.append(vanilla_lobby_exit_order.index(spoiler.shuffled_exit_data[int(level)].reverse))
         placeLevelOrder(spoiler, level_order, ROM_COPY)
 
-    # Unlock All Kongs
-    kong_items = [Items.Donkey, Items.Diddy, Items.Lanky, Items.Tiny, Items.Chunky]
-    starting_kongs = []
-    if spoiler.settings.starting_kongs_count == 5:
-        ROM_COPY.seek(sav + 0x02C)
-        ROM_COPY.write(0x1F)
-        starting_kongs = kong_items.copy()
-    else:
-        bin_value = 0
-        for x in spoiler.settings.starting_kong_list:
-            bin_value |= 1 << x
-            starting_kongs.append(kong_items[x])
-        ROM_COPY.seek(sav + 0x02C)
-        ROM_COPY.write(bin_value)
-    for kong in starting_kongs:
-        setItemReferenceName(spoiler, kong, 0, "Starting Kong", 0)
     ROM_COPY.seek(sav + 0x151)
     ROM_COPY.writeMultipleBytes(spoiler.settings.starting_kong, 1)
 
@@ -618,23 +602,11 @@ def patching_response(spoiler):
                 or spoiler.settings.puzzle_rando_difficulty != PuzzleRando.off
             ):
                 data = {"textbox_index": 21, "mode": "replace", "search": "21132", "target": mill_text}
-                for file in [CompTextFiles.Wrinkly, CompTextFiles.WrinklyShort]:
+                for file in [CompTextFiles.Wrinkly]:
                     if file in spoiler.text_changes:
                         spoiler.text_changes[file].append(data)
                     else:
                         spoiler.text_changes[file] = [data]
-
-    keys_turned_in = [0, 1, 2, 3, 4, 5, 6, 7]
-    if len(spoiler.settings.krool_keys_required) > 0:
-        for key in spoiler.settings.krool_keys_required:
-            key_index = key - 4
-            if key_index in keys_turned_in:
-                keys_turned_in.remove(key_index)
-    key_bitfield = 0
-    for key in keys_turned_in:
-        key_bitfield = key_bitfield | (1 << key)
-    ROM_COPY.seek(sav + 0x127)
-    ROM_COPY.write(key_bitfield)
 
     if spoiler.settings.rareware_gb_fairies != 20:
         ROM_COPY.seek(sav + 0x36)
@@ -643,20 +615,30 @@ def patching_response(spoiler):
     ROM_COPY.seek(sav + 0x1EB)
     ROM_COPY.write(spoiler.settings.mermaid_gb_pearls)
 
-    if spoiler.settings.medal_cb_req != 75:
-        ROM_COPY.seek(sav + 0x112)
-        ROM_COPY.write(spoiler.settings.medal_cb_req)
-
     if spoiler.settings.random_starting_region:
         ROM_COPY.seek(sav + 0x10C)
         ROM_COPY.write(spoiler.settings.starting_region["map"])
-        ROM_COPY.write(spoiler.settings.starting_region["exit"])
+        exit_val = spoiler.settings.starting_region["exit"]
+        if exit_val == -1:
+            exit_val = 0xFF
+        ROM_COPY.write(exit_val)
     if spoiler.settings.alter_switch_allocation:
         ROM_COPY.seek(sav + 0x103)
         ROM_COPY.write(1)
         for x in range(7):  # Shouldn't need index 8 since Helm has no slam switches in it
             ROM_COPY.seek(sav + 0x104 + x)
             ROM_COPY.write(spoiler.settings.switch_allocation[x])
+    # Dartboard order
+    ROM_COPY.seek(sav + 0x173)
+    for x in range(6):
+        ROM_COPY.writeMultipleBytes(spoiler.settings.dartboard_order[x], 1)
+
+    ROM_COPY.seek(sav + 0x060)
+    for x in spoiler.settings.medal_cb_req_level:
+        ROM_COPY.writeMultipleBytes(x, 1)
+    if Types.HalfMedal in spoiler.settings.shuffled_location_types:
+        ROM_COPY.seek(sav + 0x068)
+        ROM_COPY.write(1)
 
     # Helm Required Minigames - Always set to 2 for now
     ROM_COPY.seek(sav + 0x2D)
@@ -715,14 +697,13 @@ def patching_response(spoiler):
     PushItemLocations(spoiler, ROM_COPY)
 
     if spoiler.settings.wrinkly_hints != WrinklyHints.off:
-        wipeHints()
         PushHints(spoiler, ROM_COPY)
         if spoiler.settings.dim_solved_hints:
             PushHelpfulHints(spoiler, ROM_COPY)
     if Types.Hint in spoiler.settings.shuffled_location_types and spoiler.settings.progressive_hint_item == ProgressiveHintItem.off:
         PushHintTiedRegions(spoiler, ROM_COPY)
 
-    writeBootMessages(ROM_COPY, spoiler.settings.random)
+    writeBootMessages(ROM_COPY, spoiler)
     enableTriggerText(spoiler, ROM_COPY)
     shortenCastleMinecart(spoiler, ROM_COPY)
     alterStoryCutsceneWarps(spoiler, ROM_COPY)
@@ -734,9 +715,12 @@ def patching_response(spoiler):
         updateDiddyDoors(spoiler.settings, ROM_COPY)
         applyHelmDoorCosmetics(spoiler.settings, ROM_COPY)
         applyKongModelSwaps(spoiler.settings, ROM_COPY)
+        updateHelmFaces(spoiler.settings, ROM_COPY)
 
         patchAssembly(ROM_COPY, spoiler)
         ApplyMirrorMode(spoiler.settings, ROM_COPY)
+
+    calculateInitFileScreen(spoiler, ROM_COPY)
 
     # Apply Hash
     order = 0

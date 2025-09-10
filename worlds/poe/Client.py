@@ -19,6 +19,9 @@ from .poeClient.fileHelper import load_settings, save_settings, find_possible_cl
 from .poeClient import main as poe_main
 from .poeClient import gggAPI
 from .poeClient import textUpdate
+from .poeClient import itemFilter
+from . import Options
+from .Version import POE_VERSION, BACKWARDS_COMPATIBLE_VERSIONS
 
 
 CLIENT_VERSION=VERSION
@@ -28,8 +31,36 @@ class PathOfExileCommandProcessor(ClientCommandProcessor):
         ctx: "PathOfExileContext"
     logger = logging.getLogger("poeClient.PathOfExileCommandProcessor")
 
-    def _cmd_enable_tts(self, enable: bool | str = True) -> bool:
+    def _cmd_loot_filter_sounds(self, sounds: str = "") -> bool:
+        """Set the lootfilter drop sound. no_sound = 0; TTS = 1; jingles = 2"""
+        int_mapping = {0: "no_sound", 1: "TTS", 2: "jingles"}
+        if sounds not in {"0", "1", "2"}:
+            self.output(f"To set, please provide a valid sounds configuration (0, 1, 2).\nCurrent setting is: {int_mapping.get(self.ctx.filter_options.loot_filter_sounds, 'unknown')}")
+            return False
+        self.ctx.filter_options.loot_filter_sounds = int(sounds)
+        self.ctx.update_settings()
+        sound_string = int_mapping.get(int(sounds), "unknown")
+        self.output(f"Loot filter drop sounds set to: {sound_string}")
+        return True
+    
+    def _cmd_loot_filter_display(self, display: str = "") -> bool:
+        """Set the lootfilter display mode. show_classification = 0; hide_classification = 1; randomize_lootfilter_style = 2"""
+        int_mapping = {0: "show_classification", 1: "hide_classification", 2: "randomize_lootfilter_style"}
+        if display not in {"0", "1", "2"}:
+            self.output(f"To set, please provide a valid display configuration (0, 1, 2).\nCurrent setting is: {int_mapping.get(self.ctx.filter_options.loot_filter_display, 'unknown')}")
+            return False
+        self.ctx.filter_options.loot_filter_display = int(display)
+        self.ctx.update_settings()
+        display_string = int_mapping.get(int(display), "unknown")
+        self.output(f"Loot filter display mode set to: {display_string}")
+        return True
+
+    def _cmd_enable_tts(self, enable: bool | str | None = None) -> bool:
         """Enable or disable TTS generation."""
+        if enable is None:
+            tts_enabled_implied = not self.ctx.filter_options.tts_enabled
+            self.output(f"Turning TTS {'on' if tts_enabled_implied else 'off'}")
+            enable = tts_enabled_implied
         if isinstance(enable, str):
             lowered = enable.lower()
             if lowered in {"true", "1", "yes", "y", "on"}:
@@ -45,7 +76,7 @@ class PathOfExileCommandProcessor(ClientCommandProcessor):
             self.output("ERROR: Please provide a valid boolean value for enabling TTS (True/False).")
             return False
 
-        self.ctx.tts_options.enable = enable_bool
+        self.ctx.filter_options.tts_enabled = enable_bool
         self.ctx.update_settings()
         if enable_bool:
             self.output("TTS generation enabled.")
@@ -63,20 +94,41 @@ class PathOfExileCommandProcessor(ClientCommandProcessor):
         if speed <= 0:
             self.output("ERROR: Please provide a valid positive integer for TTS speed.")
             return False
-        self.ctx.tts_options.speed = speed
+        self.ctx.filter_options.tts_speed = speed
         self.ctx.update_settings()
         self.output(f"TTS speed set to {speed} words per minute.")
         return True
+    
+    def _cmd_poe_documents_directory(self, path:str) -> bool:
+        r"""Change the default directory for poe item filters -- by default it's at C:\Users\<USER>\Documents\My Games\Path of Exile.
+        this may be needed if running on linux. (or maybe onedrive?)"""
+        global logger
+        if not path:
+            self.output("The current directory for poe item filters is:")
+            self.output(f"  {itemFilter.get_poe_doc_path()}")
+            return False
+        filter_path = Path(path)
+        if not filter_path.exists():
+            self.output(f"ERROR: The provided path does not exist: {path}")
+            return False
+        if not filter_path.is_dir():
+            self.output(f"ERROR: The provided path is not a directory: {path}")
+            return False
+        itemFilter.set_poe_doc_path(filter_path)
+        self.ctx.poe_doc_path = str(filter_path)
+        self.ctx.update_settings()
+        logger.debug(f"[DEBUG] Set poe documents directory to: {filter_path}")
+        return True
 
     def _cmd_generate_tts(self) -> bool:
-        """Generate TTS for missing locations."""
+        """Generate TTS for missing locations. Run this after connecting to the server."""
         from .poeClient import tts
 
         if not self.ctx.missing_locations:
             self.output("No missing locations to generate TTS for, are you connected to the server?")
             return False
-        if not self.ctx.tts_options.enable:
-            self.output("TTS is disabled in the client options, please enable it to generate TTS.")
+        if not self.ctx.filter_options.tts_enabled:
+            self.output("TTS is disabled, please enable it using '/enable_tts' to generate TTS.")
             return False
         tts.generate_tts_tasks_from_missing_locations(self.ctx)
         tts.run_tts_tasks()
@@ -132,7 +184,7 @@ class PathOfExileCommandProcessor(ClientCommandProcessor):
         self.ctx.update_settings()
         self.output(f"Character name set to: {character_name}")
         return True
-        
+
 
     #def _cmd_set_current_character(self) -> bool:
     #    self.ctx.player_verify_code = Random.randint()
@@ -141,11 +193,16 @@ class PathOfExileCommandProcessor(ClientCommandProcessor):
         """Set the base item filter. (this needs to be a local file, and remember to add the .filter extension)"""
         filter_name = Path(filter_name).name
         if not filter_name:
-            self.output("ERROR: Please provide a valid item filter name.")
+            self.output(f"Please provide a valid item filter name. The current item filter is: {self.ctx.base_item_filter or 'None'}")
             return False
         if not filter_name.endswith(".filter"):
             filter_name += ".filter"
             self.output(f"adding .filter extension to the filter name: {filter_name}")
+
+        if filter_name == f"{itemFilter.AP_FILTER_NAME}.filter" or filter_name == f"{itemFilter.INVALID_FILTER_NAME}.filter":
+            self.output(f"ERROR: The filter name '{filter_name}' is reserved, please choose a different name.")
+            return False
+
         self.ctx.base_item_filter = filter_name
         self.ctx.update_settings()  # Save the settings
         self.output(f"Base item filter set to: {filter_name}")
@@ -154,8 +211,8 @@ class PathOfExileCommandProcessor(ClientCommandProcessor):
     def _cmd_start_poe(self) -> bool:
         """Start the Path of Exile client."""
         #required
-        self.logger.info(f"Path of Exile apworld version: {CLIENT_VERSION}")
-        self.output(f"Path of Exile apworld version: {CLIENT_VERSION}")
+        self.logger.info(f"Path of Exile apworld version: {POE_VERSION}")
+        self.output(f"Path of Exile apworld version: {POE_VERSION}")
         if not self.ctx.client_text_path:
             possible_path = find_possible_client_txt_path()
             if possible_path:
@@ -183,6 +240,23 @@ class PathOfExileCommandProcessor(ClientCommandProcessor):
 
         return True
 
+    def _cmd_client(self, path: str = "") -> bool:
+        """Shortcut for setting the client text path."""
+        return self._cmd_set_client_text_path(path)
+
+    def _cmd_char(self, character_name: str = "") -> bool:
+        """Shortcut for setting the character name. (can also be done by typing '@<charname> !ap char' into the in game chat)"""
+        return self._cmd_char_name(character_name)
+
+
+    def _cmd_filter(self, filter_name: str = "") -> bool:
+        """Shortcut for setting the base item filter."""
+        return self._cmd_base_item_filter(filter_name)
+
+    def _cmd_start(self) -> bool:
+        """Shortcut for starting the Path of Exile client."""
+        return self._cmd_start_poe()
+
     def _cmd_stop(self) -> bool:
         """Stop the Path of Exile client."""
         if self.ctx.running_task:
@@ -196,24 +270,7 @@ class PathOfExileCommandProcessor(ClientCommandProcessor):
         else:
             self.output("Path of Exile client is not running.")
             return False
-
-    def _cmd_client(self, path: str = "") -> bool:
-        """Shortcut for setting the client text path."""
-        return self._cmd_set_client_text_path(path)
-
-    def _cmd_char(self, character_name: str = "") -> bool:
-        """shortcut for setting the character name."""
-        return self._cmd_char_name(character_name)
-
-
-    def _cmd_filter(self, filter_name: str = "") -> bool:
-        """shortcut for setting the base item filter."""
-        return self._cmd_base_item_filter(filter_name)
-
-    def _cmd_start(self) -> bool:
-        """shortcut for starting the Path of Exile client."""
-        return self._cmd_start_poe()
-
+    
     def _cmd_deathlink(self):
         """Toggles deathlink"""
         def on_complete(task):
@@ -239,10 +296,14 @@ def handle_task_errors(task: asyncio.Task, ctx: "PathOfExileContext", cmdprocess
         cmdprocessor._cmd_start_poe()
 
 @dataclass
-class TTSOptions:
+class FilterOptions:
     """Options for Text-to-Speech (TTS) generation."""
-    speed: int = 250  # Default TTS speed in words per minute
-    enable: bool = True  # Default TTS enabled state
+    tts_speed: int = 250  # Default TTS speed in words per minute
+    tts_enabled: bool = False  # Default TTS enabled state
+    loot_filter_display: int = 0  #    option_show_classification = 0    option_hide_classification = 1    option_randomize_lootfilter_style = 2
+    loot_filter_sounds: int = 0  #    option_no_sound = 0    option_TTS = 1    option_jingles = 2
+    #    sfx_enabled: bool = True  # Whether to play random sound effects for item pickups (trap)
+    
 class PathOfExileContext(CommonContext):
     game = "Path of Exile"
     command_processor = PathOfExileCommandProcessor
@@ -258,13 +319,15 @@ class PathOfExileContext(CommonContext):
     character_name: str = ""
     client_text_path: Path = ""
     base_item_filter: str = ""
+    poe_doc_path: str = ""
+    generated_version: str = ""
     slot_data = {}
     game_options = {}
     client_options = {}
 
     running_task : asyncio.Task | None = None
 
-    tts_options = TTSOptions()
+    filter_options = FilterOptions()
 
     _debug = True  # Enable debug mode for poe client
 
@@ -297,6 +360,17 @@ class PathOfExileContext(CommonContext):
             self.slot_data = args.get('slot_data', {})
             self.game_options = self.slot_data.get('game_options', {})
             self.client_options = self.slot_data.get('client_options', {})
+            self.generated_version = self.slot_data.get('generated_version', 'unknown')
+
+            if self.generated_version != POE_VERSION:
+                if self.generated_version in BACKWARDS_COMPATIBLE_VERSIONS:
+                    log = f"Connected to server with different version: {self.generated_version}, but it is marked as backwards compatible."
+                    self.logger.info(log)
+                    self.command_processor.output(self=self.command_processor, text=log)
+                else:
+                    log = f"--------------------------------------------------------------------------------------------\nServer generated with unsupported version!\nServer:{self.generated_version}\nClient:{POE_VERSION}\nThis may cause issues!!!\n--------------------------------------------------------------------------------------------"
+                    self.logger.warning(log)
+                    self.command_processor.output(self=self.command_processor, text=log)
 
             if self.game_options.get("deathlink", False):
                 asyncio.create_task(self.update_death_link(True)).add_done_callback(
@@ -313,14 +387,24 @@ class PathOfExileContext(CommonContext):
                 try:
                     settings = task.result()
                     if settings:
-                        self.tts_options.enable = settings.get("tts_enabled", self.client_options.get('ttsEnabled', True) == True)
-                        self.tts_options.speed = settings.get("tts_speed", int(self.client_options.get('ttsSpeed', 250)))
+                        # if there are local settings, use those first -- otherwise use server settings -- otherwise use defaults.
+                        tts_settings = settings.get("tts_enabled") # can be True, False, or None
+                        self.filter_options.tts_enabled = tts_settings if isinstance(tts_settings, bool) else bool(self.client_options.get('ttsEnabled', False))
+                        self.filter_options.loot_filter_sounds = settings.get("loot_filter_sounds") or int(self.client_options.get('lootFilterSounds')) or Options.LootFilterSounds.default
+                        self.filter_options.loot_filter_display = settings.get("loot_filter_display") or int(self.client_options.get('lootFilterDisplay')) or  Options.LootFilterDisplay.default
+                        self.filter_options.tts_speed = settings.get("tts_speed", int(self.client_options.get('ttsSpeed', 250)))
                         self.client_text_path = settings.get("client_txt", self.client_text_path)
                         self.character_name = settings.get("last_char", self.character_name)
                         self.base_item_filter = settings.get("base_item_filter", self.base_item_filter)
+                        self.poe_doc_path = settings.get("poe_doc_path", self.poe_doc_path)
                         logger.debug(f"[DEBUG] Loaded settings: {settings}")
+                    if self.poe_doc_path:
+                        itemFilter.set_poe_doc_path(self.poe_doc_path)
                 except Exception as e:
                     logger.info(f"[ERROR] Failed to load settings: {e}")
+
+                msg = f"Starting Character: {self.game_options.get('starting_character', 'no starting character found')}"
+                self.command_processor.output(self=self.command_processor, text=msg)
             def load_client_settings(task=None):
                 if not self.seed_name:
                     self.logger.info("ERROR: No seed name found in RoomInfo!!!!! STILL IDK WHY.")
@@ -330,16 +414,16 @@ class PathOfExileContext(CommonContext):
             if not self.seed_name:
 
                 self.logger.info("ERROR: No seed name found in RoomInfo. IDK WHY.")
-                asyncio.create_task(asyncio.sleep(1)).add_done_callback(load_client_settings)
+                asyncio.create_task(asyncio.sleep(0.2)).add_done_callback(load_client_settings)
 
             else:
                 if self._debug:
                     self.logger.info(f"[DEBUG] RoomInfo received with seed name: {self.seed_name}")
                 load_client_settings()
 
-            msg = f"Starting Character: {self.game_options.get('starting_character', 'no starting character found')}"
+
             # self.command_processor.output(self=self, text=f"[color=green]{msg}[/color]") #TODO: color in GUI
-            self.command_processor.output(self=self, text=msg)
+
 
     def update_settings(self):
         """Update a setting and save it to the settings file."""
@@ -382,7 +466,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     import logging
     logger = logging.getLogger("PathOfExileClient")
 
-    async def main():
+async def main():
         ctx = PathOfExileContext(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
@@ -401,8 +485,8 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
 
         await ctx.server_auth()
 
-        await ctx.exit_event.wait()
-        await ctx.shutdown()
+    await ctx.exit_event.wait()
+    await ctx.shutdown()
 
     import colorama
 

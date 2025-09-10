@@ -391,7 +391,8 @@ class EnemyEResShuffle(Choice):
     internal_name = "enemy_elemental_resistance"
     display_name = "Enemy Elemental Resistance Shuffle"
     option_vanilla = 0
-    option_shuffle_elemmental_res = 1
+    option_shuffle_elemental_res = 1
+    alias_shuffle_elemmental_res = option_shuffle_elemental_res
     option_randomize_elemental_res = 2
     default = 0
 
@@ -717,6 +718,22 @@ class DisableShopGameTickets(Toggle):
     display_name = "Disable Shopkeeper Gametickets"
     default = 1
 
+
+class ShortcutMarsLighthouse(Toggle):
+    """The 4 elemental wing puzzles to unlock the teleport pad can be accessed with just the Mars Star instead of requiring to heatup the lighthouse.
+    Note the lighthouse is still frozen so the Mars Djinni Fugue is still inaccessible and requires heating up the lighthouse."""
+    internal_name = "shortcut_mars_lighthouse"
+    display_name = "Shortcut Mars Lighthouse"
+    default = 0
+
+
+class ShortcutMagmaRock(Toggle):
+    """The pushable pillars at the groundfloor and 1st floor in Magma Rock are pushed downwards allowing you to access the Interior immediately without navigating the exterior.
+    Note that you can not leave Magma Rock interior from the top to get outside at the top of Magma Rock exterior."""
+    internal_name = "shortcut_magma_rock"
+    display_name = "Shortcut Magma Rock"
+    default = 0
+
 @dataclass
 class GSTLAOptions(PerGameCommonOptions):
     #Pool and Logic settings
@@ -727,6 +744,8 @@ class GSTLAOptions(PerGameCommonOptions):
     item_shuffle: ItemShuffle
     reveal_hidden_item: RevealHiddenItem
     omit_locations: OmitLocations
+    shortcut_mars_lighthouse: ShortcutMarsLighthouse
+    shortcut_magma_rock: ShortcutMagmaRock
     add_elvenshirt_clericsring: AddGs1Items
     add_non_obtainable_items: AddDummyItems
 

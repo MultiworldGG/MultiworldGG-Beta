@@ -8,7 +8,7 @@
     background-color: rgba(0, 0, 0, 0.15);
     border-radius: 8px;
     padding: 25px 30px 30px;
-    font-family: LexendDeca-Light, sans-serif;
+    font-family: Inter-Light, sans-serif;
     font-size: 19px;
 }
 
@@ -26,15 +26,15 @@
 .markdown h1, .markdown details summary.h1{
     font-size: 52px;
     font-weight: normal;
-    font-family: LondrinaSolid-Regular, sans-serif;
+    font-family: Inter-Regular, sans-serif;
     width: 100%;
     text-shadow: 1px 1px 4px #000000;
 }
 
 .markdown h2, .markdown details summary.h2{
-    font-size: 38px;
+    font-size: 30px;
     font-weight: normal;
-    font-family: LondrinaSolid-Light, sans-serif;
+    font-family: Inter-Light, sans-serif;
     width: 100%;
     margin-top: 20px;
     margin-bottom: 0.5rem;
@@ -44,7 +44,7 @@
 
 .markdown h3, .markdown details summary.h3{
     font-size: 26px;
-    font-family: LexendDeca-Regular, sans-serif;
+    font-family: Inter-Regular, sans-serif;
     text-transform: none;
     text-align: left;
     width: 100%;
@@ -52,22 +52,22 @@
 }
 
 .markdown h4, .markdown details summary.h4{
-    font-family: LexendDeca-Regular, sans-serif;
+    font-family: Inter-Regular, sans-serif;
     text-transform: none;
     font-size: 24px;
     margin-bottom: 24px;
 }
 
 .markdown h5, .markdown details summary.h5{
-    font-family: LexendDeca-Regular, sans-serif;
+    font-family: Inter-Regular, sans-serif;
     text-transform: none;
-    font-size: 22px;
+    font-size: 20px;
 }
 
 .markdown h6, .markdown details summary.h6{
-    font-family: LexendDeca-Regular, sans-serif;
+    font-family: Inter-Regular, sans-serif;
     text-transform: none;
-    font-size: 20px;
+    font-size: 18px;
 }
 
 .markdown h4, .markdown h5, .markdown h6{
@@ -117,7 +117,7 @@
     padding: 10px;
     border: 1px solid white;
     font-size: 20px;
-    font-family: LexendDeca-Regular, sans-serif;
+    font-family: Inter-Regular, sans-serif;
 }
 
 .markdown table td{
@@ -131,6 +131,6 @@
 }
 
 strong{
-    font-family: LexendDeca-Medium, sans-serif;
+    font-family: Inter-Medium, sans-serif;
     font-weight: normal;
 }

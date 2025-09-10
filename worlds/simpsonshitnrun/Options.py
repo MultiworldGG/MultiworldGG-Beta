@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from Options import (DefaultOnToggle, Toggle, Choice, Range, PerGameCommonOptions, DeathLink)
-from .Locations import victory_names
+from Options import (Toggle, Choice, Range, PerGameCommonOptions, DeathLink)
+from .Data import category_table, game_table
 from .Items import item_table
 
 
@@ -21,9 +21,13 @@ class Goal(Choice):
 
 
 class LevelSanity(Choice):
-    """Choose how you want missions to be sent in the multiworld. Levels logically require the level access item and at least 1 car from that level or higher. You're guaranteed to start with a level and it's default car with either option.
-       Linear will add progressive levels to the pool. You'll start with Level 1 and the Family Sedan, then get the next level each time you receive a progressive level item.
-       Levels will add levels to the pool. You'll start the game with a random level and it's required items and receive levels from the multiworld.
+    """Choose how you want missions to be sent in the multiworld. Levels logically
+       require the level access item and at least 1 car from that level or higher.
+       You're guaranteed to start with a level and it's default car with either option.
+       Linear will add progressive levels to the pool. You'll start with Level 1 and
+       the Family Sedan, then get the next level each time you receive a progressive
+       level item. Levels will add levels to the pool. You'll start the game with
+       a random level and it's required items and receive levels from the multiworld.
        Regardless of your choice, missions can be played in any order on an unlocked level.
        """
     display_name = "Levelsanity"
@@ -40,6 +44,24 @@ class MoveRando(Toggle):
 
     default = True
     display_name = "Move Randomizer"
+
+class ShuffleGagfinder(Toggle):
+    """If enabled, add a Gagfinder to the pool for each Character that will be
+       required to unlock gags as that character. If disabled, gags will instead
+       be locked until you receive their Level.
+       """
+
+    default = True
+    display_name = "Shuffle Gagfinder"
+
+class ShuffleCheckeredFlags(Toggle):
+    """If enabled, add a Checkered Flag to the pool for each Character that will be
+       required to unlock races as that character. If disabled, races will instead
+       be locked until you receive their Level.
+       """
+
+    default = True
+    display_name = "Shuffle Checkered Flags"
 
 class ShuffleEBrakes(Toggle):
     """Choose whether or not to shuffle ability to use the E-Brake
@@ -81,6 +103,15 @@ class CardPercent(Range):
     range_end = 100
     default = 50
 
+class ShuffleCards(Toggle):
+    """Randomize card locations. This option adds several possible locations for
+       cards. There will still be 49 total cards with 7 in each level.
+       ***THIS OPTION IS UNIMPLEMENTED***"""
+
+    default = True
+    display_name = "Shuffle Cards"
+
+
 class MinShopPrice(Range):
     """The minimum cost of any item in Gil's Shop. If this is greater than the max shop price, then the max will be used instead."""
     display_name = "Min Shop Price"
@@ -103,11 +134,33 @@ class ShopScaleMod(Range):
     range_end = 5
     default = 2
 
+class EjectTraps(Toggle):
+    """Whether to include Eject traps in the item pool."""
+    default = True
+    display_name = "Enable Eject Traps"
+
+class DuffTraps(Toggle):
+    """Whether to include Duff traps in the item pool."""
+    default = True
+    display_name = "Enable Duff Traps"
+
+class LaunchTraps(Toggle):
+    """Whether to include Launch traps in the item pool."""
+    default = True
+    display_name = "Enable Launch Traps"
+
+class HNRTraps(Toggle):
+    """Whether to include Hit N Run traps in the item pool."""
+    default = True
+    display_name = "Enable Hit N Run Traps"
+
 @dataclass
 class SimpsonsHitAndRunOptions(PerGameCommonOptions):
     goal: Goal
     levelsanity: LevelSanity
     moverandomizer: MoveRando
+    shufflegagfinder: ShuffleGagfinder
+    shufflecheckeredflags: ShuffleCheckeredFlags
     shuffleebrake: ShuffleEBrakes
     EnableWaspPercent: EnableWaspPercent
     wasppercent: WaspPercent
@@ -117,6 +170,10 @@ class SimpsonsHitAndRunOptions(PerGameCommonOptions):
     maxprice: MaxShopPrice
     shopscalemod: ShopScaleMod
     filler_traps: FillerTrapPercent
+    eject: EjectTraps
+    duff: DuffTraps
+    launch: LaunchTraps
+    hnr: HNRTraps
     death_link: DeathLink
 
 

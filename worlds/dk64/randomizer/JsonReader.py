@@ -116,6 +116,7 @@ def generate_globals(path):
     path = pathlib.Path(path).name
     path = "randomizer/Enums/" + path
     root, ext = os.path.splitext(path)
+    # Handle case of cx_freeze turning jsonc into jsoncc
     if ext in (".py", ".pyc"):
         path = root + ".jsonc"
 

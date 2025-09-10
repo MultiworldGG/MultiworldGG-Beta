@@ -4,7 +4,8 @@
 
 - Minecraft Java Edition à partir de
    la [page de la boutique Minecraft Java Edition](https://www.minecraft.net/en-us/store/minecraft-java-edition)
-- Archipelago depuis la [page des versions d'Archipelago](https://github.com/MultiworldGG/MultiworldGG/releases)
+- [Forge v1.20.4](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.4.html)
+- MultiworldGG depuis la [page des versions de MultiworldGG](https://github.com/MultiworldGG/MultiworldGG/releases)
      - (sélectionnez `Minecraft Client` lors de l'installation.)
 
 ## Configuration de votre fichier YAML
@@ -50,7 +51,7 @@ que tout le monde est prêt utilisez la commande `/start`.
 ## Installation non Windows
 
 Le client Minecraft installera forge et le mod pour d'autres systèmes d'exploitation, mais Java doit être fourni par l'
-utilisateur. Rendez-vous sur [minecraft_versions.json sur le MC AP GitHub](https://raw.githubusercontent.com/KonoTyran/Minecraft_AP_Randomizer/master/versions/minecraft_versions.json)
+utilisateur. Rendez-vous sur [minecraft_versions.json sur le MC AP GitHub](https://raw.githubusercontent.com/Seatori/Minecraft_AP_Randomizer/refs/heads/transfer-ownership/versions/minecraft_versions.json)
 pour voir quelle version de Java est requise. Les nouvelles installations utiliseront par défaut la version "release" la plus élevée.
 - Installez le JDK Amazon Corretto correspondant
      - voir les [Liens d'installation manuelle du logiciel](#manual-installation-software-links)

@@ -327,6 +327,12 @@ class ToontownLocationName(Enum):
     THREE_STORY =                               "Three Story Building Clear"
     FOUR_STORY =                                "Four Story Building Clear"
     FIVE_STORY =                                "Five Story Building Clear"
+    TOONTOWN_CENTRAL_BUILDING =                 "Toontown Central Building Clear"
+    DONALDS_DOCK_BUILDING =                     "Donald's Dock Building Clear"
+    DAISYS_GARDENS_BUILDING =                   "Daisy Gardens Building Clear"
+    MINNIES_MELODYLAND_BUILDING =               "Minnie's Melodyland Building Clear"
+    THE_BRRRGH_BUILDING =                       "The Brrrgh Building Clear"
+    DONALDS_DREAMLAND_BUILDING =                "Donald's Dreamland Building Clear"
     TTC_SHOP_1 =                                "Thickie (TTC Pet Shop)"
     TTC_SHOP_2 =                                "Bowser (TTC Pet Shop)"
     TTC_SHOP_3 =                                "Snowman (TTC Pet Shop)"
@@ -697,7 +703,12 @@ class ToontownLocationType(IntEnum):
     PLAYGROUND_4    = auto()  # Locations for discovering playground treasures
     PLAYGROUND_5    = auto()  # Locations for discovering playground treasures
     PLAYGROUND_6    = auto()  # Locations for discovering playground treasures
-    GAG_TRAINING    = auto()  # Locations for training gags
+    SUPPORT_GAG_TRAINING    = auto()  # Locations for training support gags
+    TRAP_GAG_TRAINING       = auto()  # Locations for training trap gags
+    SOUND_GAG_TRAINING      = auto()  # Locations for training sound gags
+    THROW_GAG_TRAINING      = auto()  # Locations for training throw gags
+    SQUIRT_GAG_TRAINING     = auto()  # Locations for training squirt gags
+    DROP_GAG_TRAINING       = auto()  # Locations for training drop gags
     PET_SHOP        = auto()  # Locations for purchasing checks from pet shop clerks
     TTC_TASKS       = auto()  # Locations for TTC tasks
     DD_TASKS        = auto()  # Locations for DD tasks
@@ -1450,6 +1461,12 @@ LOCATION_DEFINITIONS: List[ToontownLocationDefinition] = [
     ToontownLocationDefinition(ToontownLocationName.THREE_STORY,                ToontownLocationType.BUILDINGS, ToontownRegionName.BUILDINGS, [Rule.HasLevelFiveOffenseGag,  Rule.ThreeStory]),
     ToontownLocationDefinition(ToontownLocationName.FOUR_STORY,                 ToontownLocationType.BUILDINGS, ToontownRegionName.BUILDINGS, [Rule.HasLevelSixOffenseGag,   Rule.FourStory]),
     ToontownLocationDefinition(ToontownLocationName.FIVE_STORY,                 ToontownLocationType.BUILDINGS, ToontownRegionName.BUILDINGS, [Rule.HasLevelSevenOffenseGag, Rule.FiveStory]),
+    ToontownLocationDefinition(ToontownLocationName.TOONTOWN_CENTRAL_BUILDING,  ToontownLocationType.BUILDINGS, ToontownRegionName.TTC,       [Rule.HasLevelThreeOffenseGag, Rule.OneStory,   Rule.CanReachTTC]),
+    ToontownLocationDefinition(ToontownLocationName.DONALDS_DOCK_BUILDING,      ToontownLocationType.BUILDINGS, ToontownRegionName.DD,        [Rule.HasLevelFourOffenseGag,  Rule.TwoStory,   Rule.CanReachDD]),
+    ToontownLocationDefinition(ToontownLocationName.DAISYS_GARDENS_BUILDING,    ToontownLocationType.BUILDINGS, ToontownRegionName.DG,        [Rule.HasLevelFourOffenseGag,  Rule.TwoStory,   Rule.CanReachDG]),
+    ToontownLocationDefinition(ToontownLocationName.MINNIES_MELODYLAND_BUILDING,ToontownLocationType.BUILDINGS, ToontownRegionName.MML,       [Rule.HasLevelFiveOffenseGag,  Rule.ThreeStory, Rule.CanReachMML]),
+    ToontownLocationDefinition(ToontownLocationName.THE_BRRRGH_BUILDING,        ToontownLocationType.BUILDINGS, ToontownRegionName.TB,        [Rule.HasLevelFiveOffenseGag,  Rule.ThreeStory, Rule.CanReachTB]),
+    ToontownLocationDefinition(ToontownLocationName.DONALDS_DREAMLAND_BUILDING, ToontownLocationType.BUILDINGS, ToontownRegionName.DDL,       [Rule.HasLevelSixOffenseGag,   Rule.FourStory,  Rule.CanReachDDL]),
     # endregion
 ] + TREASURE_LOCATION_DEFINITIONS + KNOCK_KNOCK_LOCATION_DEFINITIONS + [
     # region Facilities
@@ -1515,55 +1532,55 @@ LOCATION_DEFINITIONS: List[ToontownLocationDefinition] = [
     ToontownLocationDefinition(ToontownLocationName.CLEAR_BACK_THREE,       ToontownLocationType.FACILITIES, ToontownRegionName.BBHQ, [Rule.BackThreeKey,    Rule.HasLevelSevenOffenseGag, Rule.Has60PercentMax]),
     # endregion
     # region Gag Unlocks
-    ToontownLocationDefinition(ToontownLocationName.TOONUP_FEATHER_UNLOCKED,      ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ToonUpOne, Rule.HasLevelOneOffenseGag]),
-    ToontownLocationDefinition(ToontownLocationName.TOONUP_MEGAPHONE_UNLOCKED,    ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ToonUpTwo, Rule.HasLevelOneOffenseGag]),
-    ToontownLocationDefinition(ToontownLocationName.TOONUP_LIPSTICK_UNLOCKED,     ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ToonUpThree, Rule.HasLevelTwoOffenseGag]),
-    ToontownLocationDefinition(ToontownLocationName.TOONUP_CANE_UNLOCKED,         ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ToonUpFour, Rule.HasLevelThreeOffenseGag]),
-    ToontownLocationDefinition(ToontownLocationName.TOONUP_PIXIE_UNLOCKED,        ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ToonUpFive, Rule.HasLevelFourOffenseGag]),
-    ToontownLocationDefinition(ToontownLocationName.TOONUP_JUGGLING_UNLOCKED,     ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ToonUpSix, Rule.HasLevelFiveOffenseGag]),
-    ToontownLocationDefinition(ToontownLocationName.TOONUP_HIGHDIVE_UNLOCKED,     ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ToonUpSeven, Rule.HasLevelSixOffenseGag]),
-    ToontownLocationDefinition(ToontownLocationName.TRAP_BANANA_UNLOCKED,         ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.TrapOne]),
-    ToontownLocationDefinition(ToontownLocationName.TRAP_RAKE_UNLOCKED,           ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.TrapTwo]),
-    ToontownLocationDefinition(ToontownLocationName.TRAP_MARBLES_UNLOCKED,        ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.TrapThree]),
-    ToontownLocationDefinition(ToontownLocationName.TRAP_QUICKSAND_UNLOCKED,      ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.TrapFour]),
-    ToontownLocationDefinition(ToontownLocationName.TRAP_TRAPDOOR_UNLOCKED,       ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.TrapFive]),
-    ToontownLocationDefinition(ToontownLocationName.TRAP_TNT_UNLOCKED,            ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.TrapSix]),
-    ToontownLocationDefinition(ToontownLocationName.TRAP_TRAIN_UNLOCKED,          ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.TrapSeven]),
-    ToontownLocationDefinition(ToontownLocationName.LURE_ONEBILL_UNLOCKED,        ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.LureOne]),
-    ToontownLocationDefinition(ToontownLocationName.LURE_SMALLMAGNET_UNLOCKED,    ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.LureTwo]),
-    ToontownLocationDefinition(ToontownLocationName.LURE_FIVEBILL_UNLOCKED,       ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.LureThree]),
-    ToontownLocationDefinition(ToontownLocationName.LURE_BIGMAGNET_UNLOCKED,      ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.LureFour]),
-    ToontownLocationDefinition(ToontownLocationName.LURE_TENBILL_UNLOCKED,        ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.LureFive]),
-    ToontownLocationDefinition(ToontownLocationName.LURE_HYPNO_UNLOCKED,          ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.LureSix]),
-    ToontownLocationDefinition(ToontownLocationName.LURE_PRESENTATION_UNLOCKED,   ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.LureSeven]),
-    ToontownLocationDefinition(ToontownLocationName.SOUND_BIKEHORN_UNLOCKED,      ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SoundOne]),
-    ToontownLocationDefinition(ToontownLocationName.SOUND_WHISTLE_UNLOCKED,       ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SoundTwo]),
-    ToontownLocationDefinition(ToontownLocationName.SOUND_BUGLE_UNLOCKED,         ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SoundThree]),
-    ToontownLocationDefinition(ToontownLocationName.SOUND_AOOGAH_UNLOCKED,        ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SoundFour]),
-    ToontownLocationDefinition(ToontownLocationName.SOUND_TRUNK_UNLOCKED,         ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SoundFive]),
-    ToontownLocationDefinition(ToontownLocationName.SOUND_FOG_UNLOCKED,           ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SoundSix]),
-    ToontownLocationDefinition(ToontownLocationName.SOUND_OPERA_UNLOCKED,         ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SoundSeven]),
-    ToontownLocationDefinition(ToontownLocationName.THROW_CUPCAKE_UNLOCKED,       ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ThrowOne]),
-    ToontownLocationDefinition(ToontownLocationName.THROW_FRUITPIESLICE_UNLOCKED, ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ThrowTwo]),
-    ToontownLocationDefinition(ToontownLocationName.THROW_CREAMPIESLICE_UNLOCKED, ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ThrowThree]),
-    ToontownLocationDefinition(ToontownLocationName.THROW_WHOLEFRUIT_UNLOCKED,    ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ThrowFour]),
-    ToontownLocationDefinition(ToontownLocationName.THROW_WHOLECREAM_UNLOCKED,    ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ThrowFive]),
-    ToontownLocationDefinition(ToontownLocationName.THROW_CAKE_UNLOCKED,          ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ThrowSix]),
-    ToontownLocationDefinition(ToontownLocationName.THROW_WEDDING_UNLOCKED,       ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ThrowSeven]),
-    ToontownLocationDefinition(ToontownLocationName.SQUIRT_SQUIRTFLOWER_UNLOCKED, ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SquirtOne]),
-    ToontownLocationDefinition(ToontownLocationName.SQUIRT_GLASS_UNLOCKED,        ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SquirtTwo]),
-    ToontownLocationDefinition(ToontownLocationName.SQUIRT_SQUIRTGUN_UNLOCKED,    ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SquirtThree]),
-    ToontownLocationDefinition(ToontownLocationName.SQUIRT_SELTZER_UNLOCKED,      ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SquirtFour]),
-    ToontownLocationDefinition(ToontownLocationName.SQUIRT_HOSE_UNLOCKED,         ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SquirtFive]),
-    ToontownLocationDefinition(ToontownLocationName.SQUIRT_CLOUD_UNLOCKED,        ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SquirtSix]),
-    ToontownLocationDefinition(ToontownLocationName.SQUIRT_GEYSER_UNLOCKED,       ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SquirtSeven]),
-    ToontownLocationDefinition(ToontownLocationName.DROP_FLOWERPOT_UNLOCKED,      ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.DropOne]),
-    ToontownLocationDefinition(ToontownLocationName.DROP_SANDBAG_UNLOCKED,        ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.DropTwo]),
-    ToontownLocationDefinition(ToontownLocationName.DROP_ANVIL_UNLOCKED,          ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.DropThree]),
-    ToontownLocationDefinition(ToontownLocationName.DROP_BIGWEIGHT_UNLOCKED,      ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.DropFour]),
-    ToontownLocationDefinition(ToontownLocationName.DROP_SAFE_UNLOCKED,           ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.DropFive]),
-    ToontownLocationDefinition(ToontownLocationName.DROP_PIANO_UNLOCKED,          ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.DropSix]),
-    ToontownLocationDefinition(ToontownLocationName.DROP_BOAT_UNLOCKED,           ToontownLocationType.GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.DropSeven]),
+    ToontownLocationDefinition(ToontownLocationName.TOONUP_FEATHER_UNLOCKED,      ToontownLocationType.SUPPORT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ToonUpOne, Rule.HasLevelOneOffenseGag]),
+    ToontownLocationDefinition(ToontownLocationName.TOONUP_MEGAPHONE_UNLOCKED,    ToontownLocationType.SUPPORT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ToonUpTwo, Rule.HasLevelOneOffenseGag]),
+    ToontownLocationDefinition(ToontownLocationName.TOONUP_LIPSTICK_UNLOCKED,     ToontownLocationType.SUPPORT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ToonUpThree, Rule.HasLevelTwoOffenseGag]),
+    ToontownLocationDefinition(ToontownLocationName.TOONUP_CANE_UNLOCKED,         ToontownLocationType.SUPPORT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ToonUpFour, Rule.HasLevelThreeOffenseGag]),
+    ToontownLocationDefinition(ToontownLocationName.TOONUP_PIXIE_UNLOCKED,        ToontownLocationType.SUPPORT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ToonUpFive, Rule.HasLevelFourOffenseGag]),
+    ToontownLocationDefinition(ToontownLocationName.TOONUP_JUGGLING_UNLOCKED,     ToontownLocationType.SUPPORT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ToonUpSix, Rule.HasLevelFiveOffenseGag]),
+    ToontownLocationDefinition(ToontownLocationName.TOONUP_HIGHDIVE_UNLOCKED,     ToontownLocationType.SUPPORT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ToonUpSeven, Rule.HasLevelSixOffenseGag]),
+    ToontownLocationDefinition(ToontownLocationName.TRAP_BANANA_UNLOCKED,         ToontownLocationType.TRAP_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.TrapOne]),
+    ToontownLocationDefinition(ToontownLocationName.TRAP_RAKE_UNLOCKED,           ToontownLocationType.TRAP_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.TrapTwo]),
+    ToontownLocationDefinition(ToontownLocationName.TRAP_MARBLES_UNLOCKED,        ToontownLocationType.TRAP_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.TrapThree]),
+    ToontownLocationDefinition(ToontownLocationName.TRAP_QUICKSAND_UNLOCKED,      ToontownLocationType.TRAP_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.TrapFour]),
+    ToontownLocationDefinition(ToontownLocationName.TRAP_TRAPDOOR_UNLOCKED,       ToontownLocationType.TRAP_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.TrapFive]),
+    ToontownLocationDefinition(ToontownLocationName.TRAP_TNT_UNLOCKED,            ToontownLocationType.TRAP_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.TrapSix]),
+    ToontownLocationDefinition(ToontownLocationName.TRAP_TRAIN_UNLOCKED,          ToontownLocationType.TRAP_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.TrapSeven]),
+    ToontownLocationDefinition(ToontownLocationName.LURE_ONEBILL_UNLOCKED,        ToontownLocationType.SUPPORT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.LureOne]),
+    ToontownLocationDefinition(ToontownLocationName.LURE_SMALLMAGNET_UNLOCKED,    ToontownLocationType.SUPPORT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.LureTwo]),
+    ToontownLocationDefinition(ToontownLocationName.LURE_FIVEBILL_UNLOCKED,       ToontownLocationType.SUPPORT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.LureThree]),
+    ToontownLocationDefinition(ToontownLocationName.LURE_BIGMAGNET_UNLOCKED,      ToontownLocationType.SUPPORT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.LureFour]),
+    ToontownLocationDefinition(ToontownLocationName.LURE_TENBILL_UNLOCKED,        ToontownLocationType.SUPPORT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.LureFive]),
+    ToontownLocationDefinition(ToontownLocationName.LURE_HYPNO_UNLOCKED,          ToontownLocationType.SUPPORT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.LureSix]),
+    ToontownLocationDefinition(ToontownLocationName.LURE_PRESENTATION_UNLOCKED,   ToontownLocationType.SUPPORT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.LureSeven]),
+    ToontownLocationDefinition(ToontownLocationName.SOUND_BIKEHORN_UNLOCKED,      ToontownLocationType.SOUND_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SoundOne]),
+    ToontownLocationDefinition(ToontownLocationName.SOUND_WHISTLE_UNLOCKED,       ToontownLocationType.SOUND_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SoundTwo]),
+    ToontownLocationDefinition(ToontownLocationName.SOUND_BUGLE_UNLOCKED,         ToontownLocationType.SOUND_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SoundThree]),
+    ToontownLocationDefinition(ToontownLocationName.SOUND_AOOGAH_UNLOCKED,        ToontownLocationType.SOUND_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SoundFour]),
+    ToontownLocationDefinition(ToontownLocationName.SOUND_TRUNK_UNLOCKED,         ToontownLocationType.SOUND_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SoundFive]),
+    ToontownLocationDefinition(ToontownLocationName.SOUND_FOG_UNLOCKED,           ToontownLocationType.SOUND_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SoundSix]),
+    ToontownLocationDefinition(ToontownLocationName.SOUND_OPERA_UNLOCKED,         ToontownLocationType.SOUND_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SoundSeven]),
+    ToontownLocationDefinition(ToontownLocationName.THROW_CUPCAKE_UNLOCKED,       ToontownLocationType.THROW_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ThrowOne]),
+    ToontownLocationDefinition(ToontownLocationName.THROW_FRUITPIESLICE_UNLOCKED, ToontownLocationType.THROW_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ThrowTwo]),
+    ToontownLocationDefinition(ToontownLocationName.THROW_CREAMPIESLICE_UNLOCKED, ToontownLocationType.THROW_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ThrowThree]),
+    ToontownLocationDefinition(ToontownLocationName.THROW_WHOLEFRUIT_UNLOCKED,    ToontownLocationType.THROW_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ThrowFour]),
+    ToontownLocationDefinition(ToontownLocationName.THROW_WHOLECREAM_UNLOCKED,    ToontownLocationType.THROW_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ThrowFive]),
+    ToontownLocationDefinition(ToontownLocationName.THROW_CAKE_UNLOCKED,          ToontownLocationType.THROW_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ThrowSix]),
+    ToontownLocationDefinition(ToontownLocationName.THROW_WEDDING_UNLOCKED,       ToontownLocationType.THROW_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.ThrowSeven]),
+    ToontownLocationDefinition(ToontownLocationName.SQUIRT_SQUIRTFLOWER_UNLOCKED, ToontownLocationType.SQUIRT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SquirtOne]),
+    ToontownLocationDefinition(ToontownLocationName.SQUIRT_GLASS_UNLOCKED,        ToontownLocationType.SQUIRT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SquirtTwo]),
+    ToontownLocationDefinition(ToontownLocationName.SQUIRT_SQUIRTGUN_UNLOCKED,    ToontownLocationType.SQUIRT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SquirtThree]),
+    ToontownLocationDefinition(ToontownLocationName.SQUIRT_SELTZER_UNLOCKED,      ToontownLocationType.SQUIRT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SquirtFour]),
+    ToontownLocationDefinition(ToontownLocationName.SQUIRT_HOSE_UNLOCKED,         ToontownLocationType.SQUIRT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SquirtFive]),
+    ToontownLocationDefinition(ToontownLocationName.SQUIRT_CLOUD_UNLOCKED,        ToontownLocationType.SQUIRT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SquirtSix]),
+    ToontownLocationDefinition(ToontownLocationName.SQUIRT_GEYSER_UNLOCKED,       ToontownLocationType.SQUIRT_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.SquirtSeven]),
+    ToontownLocationDefinition(ToontownLocationName.DROP_FLOWERPOT_UNLOCKED,      ToontownLocationType.DROP_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.DropOne]),
+    ToontownLocationDefinition(ToontownLocationName.DROP_SANDBAG_UNLOCKED,        ToontownLocationType.DROP_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.DropTwo]),
+    ToontownLocationDefinition(ToontownLocationName.DROP_ANVIL_UNLOCKED,          ToontownLocationType.DROP_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.DropThree]),
+    ToontownLocationDefinition(ToontownLocationName.DROP_BIGWEIGHT_UNLOCKED,      ToontownLocationType.DROP_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.DropFour]),
+    ToontownLocationDefinition(ToontownLocationName.DROP_SAFE_UNLOCKED,           ToontownLocationType.DROP_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.DropFive]),
+    ToontownLocationDefinition(ToontownLocationName.DROP_PIANO_UNLOCKED,          ToontownLocationType.DROP_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.DropSix]),
+    ToontownLocationDefinition(ToontownLocationName.DROP_BOAT_UNLOCKED,           ToontownLocationType.DROP_GAG_TRAINING, ToontownRegionName.TRAINING, [Rule.DropSeven]),
     # endregion
     ] + BOSS_LOCATION_DEFINITIONS + BOSS_EVENT_DEFINITIONS
 
@@ -1659,7 +1676,7 @@ def get_location_groups():
     "LBHQ Facilities": [loc_def.name.value for loc_def in LOCATION_DEFINITIONS if loc_def.type == ToontownLocationType.FACILITIES and loc_def.region == ToontownRegionName.LBHQ],
     "Bossbot HQ": [loc_def.name.value for loc_def in LOCATION_DEFINITIONS if loc_def.region == ToontownRegionName.BBHQ and loc_def.type != ToontownLocationType.BOSS_META],
     "BBHQ Facilities": [loc_def.name.value for loc_def in LOCATION_DEFINITIONS if loc_def.type == ToontownLocationType.FACILITIES and loc_def.region == ToontownRegionName.BBHQ],
-    "Buildings": [loc_def.name.value for loc_def in LOCATION_DEFINITIONS if loc_def.region == ToontownRegionName.BUILDINGS],
+    "Buildings": [loc_def.name.value for loc_def in LOCATION_DEFINITIONS if loc_def.type == ToontownLocationType.BUILDINGS],
     "Golfing": [loc_def.name.value for loc_def in LOCATION_DEFINITIONS if loc_def.type == ToontownLocationType.GOLF],
     "Racing": [loc_def.name.value for loc_def in LOCATION_DEFINITIONS if loc_def.type == ToontownLocationType.RACING],
     }

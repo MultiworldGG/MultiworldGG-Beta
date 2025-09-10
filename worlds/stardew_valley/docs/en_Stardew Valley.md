@@ -110,7 +110,7 @@ There are a few extra vanilla items, which are added to the pool for convenience
 - [Return Scepter](https://stardewvalleywiki.com/Return_Scepter)
 - [Qi Walnut Room QoL items](https://stardewvalleywiki.com/Qi%27s_Walnut_Room#Stock)
 
-And lastly, some MultiworldGG-exclusive items exist in the pool, which are designed around game balance and QoL. These include:
+And lastly, some AP/MWGG-exclusive items exist in the pool, which are designed around game balance and QoL. These include:
 
 - Arcade Machine buffs (Only if the arcade machines are randomized)
     - Journey of the Prairie King has drop rate increases, extra lives, and equipment
@@ -167,7 +167,7 @@ Some of these mods might need a patch mod to tie the randomizer with the mod. Th
 
 ## Multiplayer
 
-You cannot play an MultiworldGG Slot in multiplayer at the moment. There are no short-term plans to support that feature.
+You cannot play a MultiworldGG Slot in multiplayer at the moment. There are no short-term plans to support that feature.
 
 You can, however, send Stardew Valley objects as gifts from one Stardew Player to another Stardew , or a player in another game that supports gifting, using
 in-game Joja Prime delivery, for a fee. This exclusive feature can be turned off if you don't want to send and receive gifts.

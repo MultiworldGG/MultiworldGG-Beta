@@ -138,7 +138,6 @@ REGIONS = [
     "beat bellumbeck",
 
     # SW Ocean
-    "sw ocean",
     "sw ocean east",
     "sw ocean west",
     "sw ocean crest salvage",
@@ -146,6 +145,25 @@ REGIONS = [
     "sw ocean frog phi",
     "sw ocean nyave",
     "sw ocean nyave trade",
+    "frog warps",
+
+    # Ocean ER
+    "mercay boat",
+    "cannon boat",
+    "ember boat",
+    "molida boat",
+    "spirit boat",
+    "gust boat",
+    "bannan boat",
+    "uncharted boat",
+    "zauz boat",
+    "goron boat",
+    "frost boat",
+    "harrow boat",
+    "ds boat",
+    "dead boat",
+    "maze boat",
+    "ruins boat",
 
     # Cannon Island
     "cannon island",
@@ -191,6 +209,7 @@ REGIONS = [
 
     # Molida Island
     "molida island",
+    "molida port house",
     "molida dig",
     "molida grapple",
     "molida cave back",
@@ -201,6 +220,7 @@ REGIONS = [
     "molida archery",
 
     # Temple of Courage
+    "toc gates",
     "toc",
     "toc bomb alcove",
     "toc b1",
@@ -295,6 +315,7 @@ REGIONS = [
 
     # Goron Island
     "goron",
+    "goron port house",
     "goron chus",
     "goron grapple",
     "goron quiz",
@@ -305,6 +326,7 @@ REGIONS = [
 
     # Goron Temple
     "gt",
+    "gt 2",
     "gt bow",
     "gt b1",
     "gt b2",
@@ -312,9 +334,11 @@ REGIONS = [
     "gt b3",
     "gt bk chest",
     "gt dongo",
+    "post gt",
 
     # Harrow Island
     "harrow",
+    "harrow sword",
     "harrow dig",
     "harrow dig 2",
 
@@ -326,6 +350,7 @@ REGIONS = [
 
     # Isle of Frost
     "iof",
+    "iof smart house",
     "iof grapple",
     "iof dig",
     "iof grapple dig",
@@ -360,13 +385,53 @@ REGIONS = [
     "iotd dig",
     "iotd cave",
 
-    # Isle of Ruins
-    "ruins",
-    "ruins dig",
-    "ruins water",
+    # ruins er
+    "ruins port",
+    "ruins geozard cave east",
+    "ruins geozard cave west",
+    "ruins sw maze upper",
+    "ruins sw maze lower",
+    "ruins sw maze lower exit",
+    "ruins sw port cliff",
+
+    "ruins nw maze lower exit",
+    "ruins nw maze upper exit",
+    "ruins nw maze lower chest",
+    "ruins nw boulders",
+    "ruins nw dig",
+    "ruins nw across bridge",
+    "ruins nw cave",
+    "ruins nw alcove",
+    "ruins nw port cliff",
+    "ruins nw lower",
+    "ruins nw return",
+
+    "bremeur",
+    "bremeur kings key",
+
+    "ruins ne doylan bridge",
+    "ruins ne lower",
+    "ruins ne behind temple",
+    "ruins ne enter upper",
+    "doylan temple",
+    "doylan chamber",
+    "ruins ne secret chest",
+    "ruins ne geozards",
+    "ruins ne outside temple",
+
+    "ruins se lower",
+    "ruins se return bridge east",
+    "ruins se return bridge west",
+    "ruins se outside max",
+    "max",
+    "ruins se coast",
+    "ruins se path to temple",
+
+
 
     # Mutoh's Temple
     "mutoh",
+    "mutoh landing",
     "mutoh hammer",
     "mutoh water",
     "mutoh bk chest",
@@ -374,6 +439,7 @@ REGIONS = [
 
     # Maze Island
     "maze",
+    "maze sword",
     "maze east",
     "maze normal",
     "maze expert",
@@ -434,321 +500,11 @@ REGIONS = [
     "salvage 31",
 ]
 
-salvage_manual = [
-    {
-        "name": "SW Salvage #0 Courage Crest",
-        "region": "SW Ocean East",
-        "category": [
-            "Ocean SW",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Courage Crest| and |Cannon|"
-    },
-    {
-        "name": "SW Salvage #1 Molida SW",
-        "region": "SW Ocean West",
-        "category": [
-            "Ocean SW",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #1 Molida SW|"
-    },
-    {
-        "name": "SW Salvage #2 Mercay NE",
-        "region": "SW Ocean East",
-        "category": [
-            "Ocean SW",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #2 Mercay NE|"
-    },
-    {
-        "name": "NW Salvage #3 Gusts SW",
-        "region": "NW Ocean",
-        "category": [
-            "Ocean NW",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #3 Gusts SW|"
-    },
-    {
-        "name": "NW Salvage #4 Bannan SE",
-        "region": "NE Ocean",
-        "category": [
-            "Ocean NE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |NW Sea Chart| and |Treasure Map #4 Bannan SE|"
-    },
-    {
-        "name": "SW Salvage #5 Molida N",
-        "region": "SW Ocean West",
-        "category": [
-            "Ocean SW",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #5 Molida N|"
-    },
-    {
-        "name": "NW Salvage #6 Bannan W",
-        "region": "NW Ocean",
-        "category": [
-            "Ocean NW",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #6 Bannan W|"
-    },
-    {
-        "name": "NW Salvage #7 Gusts E",
-        "region": "NW Ocean",
-        "category": [
-            "Ocean NW",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #7 Gusts E|"
-    },
-    {
-        "name": "SW Salvage #8 Mercay SE",
-        "region": "SW Ocean East",
-        "category": [
-            "Ocean SW",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #8 Mercay SE|"
-    },
-    {
-        "name": "SW Salvage #9 Cannon W",
-        "region": "SW Ocean East",
-        "category": [
-            "Ocean SW",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #9 Cannon W|"
-    },
-    {
-        "name": "NW Salvage #10 Gusts SE",
-        "region": "NW Ocean",
-        "category": [
-            "Ocean NW",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #10 Gusts SE|"
-    },
-    {
-        "name": "NW Salvage #11 Gusts N",
-        "region": "NW Ocean",
-        "category": [
-            "Ocean NW",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #11 Gusts N|"
-    },
-    {
-        "name": "SE Salvage #12 Dee Ess N",
-        "region": "SE Ocean",
-        "category": [
-            "Ocean SE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #12 Dee Ess N|"
-    },
-    {
-        "name": "SE Salvage #13 Harrow E",
-        "region": "SE Ocean",
-        "category": [
-            "Ocean SE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #13 Harrow E|"
-    },
-    {
-        "name": "SE Salvage #14 Goron NW",
-        "region": "SE Ocean",
-        "category": [
-            "Ocean SE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #14 Goron NW|"
-    },
-    {
-        "name": "SE Salvage #15 Goron W",
-        "region": "SE Ocean",
-        "category": [
-            "Ocean SE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #15 Goron W|"
-    },
-    {
-        "name": "SE Salvage #16 Goron NE",
-        "region": "SE Ocean",
-        "category": [
-            "Ocean SE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #16 Goron NE|"
-    },
-    {
-        "name": "SE Salvage #17 Frost S",
-        "region": "SE Ocean",
-        "category": [
-            "Ocean SE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #17 Frost S|"
-    },
-    {
-        "name": "SW Salvage #18 Cannon S",
-        "region": "SW Ocean East",
-        "category": [
-            "Ocean SW",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #18 Cannon S|"
-    },
-    {
-        "name": "NW Salvage #19 Gusts NE",
-        "region": "NW Ocean",
-        "category": [
-            "Ocean NW",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #19 Gusts NE|"
-    },
-    {
-        "name": "NW Salvage #20 Bannan E",
-        "region": "NE Ocean",
-        "category": [
-            "Ocean NE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |NW Sea Chart| and |Treasure Map #20 Bannan E|"
-    },
-    {
-        "name": "SW Salvage #21 Molida NW",
-        "region": "SW Ocean West",
-        "category": [
-            "Ocean SW",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #21 Molida NW|"
-    },
-    {
-        "name": "SE Salvage #22 Harrow S",
-        "region": "SE Ocean",
-        "category": [
-            "Ocean SE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #22 Harrow S|"
-    },
-    {
-        "name": "SE Salvage #23 Frost NW",
-        "region": "SE Ocean",
-        "category": [
-            "Ocean SE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #23 Frost NW|"
-    },
-    {
-        "name": "NE Salvage #24 Ruins W",
-        "region": "NE Ocean",
-        "category": [
-            "Ocean NE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #24 Ruins W|"
-    },
-    {
-        "name": "NE Salvage #25 Dead E",
-        "region": "NE Ocean",
-        "category": [
-            "Ocean NE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #25 Dead E|"
-    },
-    {
-        "name": "NE Salvage #26 Ruins SW",
-        "region": "NE Ocean",
-        "category": [
-            "Ocean NE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Regal Necklace| and |Treasure Map #26 Ruins SW|"
-    },
-    {
-        "name": "NE Salvage #27 Maze E",
-        "region": "NE Ocean",
-        "category": [
-            "Ocean NE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #27 Maze E|"
-    },
-    {
-        "name": "NE Salvage #28 Ruins NW",
-        "region": "NE Ocean",
-        "category": [
-            "Ocean NE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Regal Necklace| and |Treasure Map #28 Ruins NW|"
-    },
-    {
-        "name": "NE Salvage #29 Maze W",
-        "region": "NE Ocean",
-        "category": [
-            "Ocean NE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #29 Maze W|"
-    },
-    {
-        "name": "NE Salvage #30 Ruins S",
-        "region": "NE Ocean",
-        "category": [
-            "Ocean NE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #30 Ruins S|"
-    },
-    {
-        "name": "NE Salvage #31 Dead S",
-        "region": "NE Ocean",
-        "category": [
-            "Ocean NE",
-            "Randomize Salvage"
-        ],
-        "requires": "|Salvage Hook| and |Treasure Map #31 Dead S|"
-    }
-]
 
 if __name__ == "__main__":
     ocean_lookup = ["SW", "NW", "SE", "NE"]
     for i in range(31):
         print(f"\t\"salvage {i+1}\",")
 
-
-    for data in salvage_manual:
-            name = data["name"]
-            ident = name[name.find("#")+1:name.find(" ", name.find("#"))]
-            ocean = name[:2]
-            ocean_index = ocean_lookup.index(ocean)
-            # \t\t["sw ocean", "fishing", False, lambda state: ph_has_fishing_rod(state, player)],
-            print(f"\t\t[\"{ocean.lower()} ocean salvage\", \"salvage {ident}\", "
-                  f"False, lambda state: ph_has_treasure_map(state, player, {ident})],")
-
-            """    
-            print(f"\t\"Ocean {data["name"]}\": " + "{")
-            print(f"\t\t\"region_id\": \"salvage {ident}\",")
-            print(f"\t\t\"stage_id\": 0,")
-            print(f"\t\t\"floor_id\": {ocean_index},")
-            print(f"\t\t\"conditional\": True,")
-            print(f"\t\t\"address\": fix,")
-            print(f"\t\t\"value\": fix,")
-            print("\t},")
-            """
 
 

@@ -3,7 +3,7 @@ from .Constants import GAME_NAME, AUTHOR, IGDB_ID
 from .Locations import MomodoraAdvancement, advancement_table, exclusion_table
 from .Regions import momodora_regions, link_momodora_areas
 from worlds.generic.Rules import exclusion_rules
-from BaseClasses import Region, Entrance, Tutorial, Item
+from BaseClasses import Region, Entrance, Tutorial, Item, ItemClassification
 from .Options import MomodoraOptions
 from .Rules import set_rules, set_completion_rules
 from worlds.AutoWorld import World, WebWorld
@@ -89,6 +89,7 @@ class MomodoraWorld(World):
                 itempool += [name] * num    
        #Add Oracle Sigil if enabled
         if self.options.oracle_sigil:
+            item_table["Progressive Lumen Fairy"] = item_table["Progressive Lumen Fairy"]._replace(classification=ItemClassification.progression)
             for name, num in optional_sigil_items.items():
                 itempool += [name] * num
       

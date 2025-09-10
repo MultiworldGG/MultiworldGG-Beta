@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from Options import Choice, Range, DeathLink, PerGameCommonOptions, OptionDict, FreeText
-
+from Options import Choice, Range, DeathLink, PerGameCommonOptions, OptionDict, FreeText, OptionSet, OptionCounter
+from .Items import AEItem
 
 class GoalOption(Choice):
     """Choose the victory condition for this world.
@@ -116,7 +116,7 @@ class SuperFlyerOption(Choice):
 
 
 class EntranceOption(Choice):
-    """Choose which level entrances should be randomized. Peak Point Matrix will always be the last level. Races will be included in randomization if coin shuffle is on, and excluded otherwise.
+    """Choose which level entrances should be randomized. Peak Point Matrix will always be the last level when it's postgame or the goal level. Races will be included in randomization if coin shuffle is on, and excluded otherwise.
 
         off: Levels will be in the vanilla order.
         on: Levels will be in a random order.
@@ -131,6 +131,23 @@ class EntranceOption(Choice):
     option_on = 0x01
     option_lockmm = 0x02
     default = option_on
+
+
+class RandomizeStartingRoomOption(Choice):
+    """**CURRENTLY DISABLED FOR TOO MANY ISSUES**
+    Choose if the starting room for each level should be randomized.
+
+        off: The starting room for each level is the original starting room.
+        on: The starting room for each level is a random room from within that level.
+
+        Supported values: off, on
+        Default value: on
+    """
+
+    display_name = "Randomize Starting Room"
+    option_off = 0x00
+    option_on = 0x01
+    default = option_off
 
 
 class KeyOption(Choice):
@@ -298,14 +315,115 @@ class LowOxygenSounds(Choice):
     default = option_half
 
 
-class TrapFillPercentage(Range):
+class FillerPreset(Choice):
+    """Choose the distribution of filler items.
+
+        Normal: Balanced distribution with better items appearing less often.
+        Bountiful: Nearly every filler item will be useful.
+        Stingy: Nearly every filler item will be its smallest quantity.
+        Nothing: Replace all filler items with Nothing.
+        Custom: Use custom weights set with the option "customfillerweights".
+
+        Supported values: normal, bountiful, stingy, nothing, custom
+        Default value: normal
     """
-    Replace a percentage of filler items in the item pool with random traps.
+    display_name = "Filler Preset"
+    option_normal = 0x00
+    option_bountiful = 0x01
+    option_stingy = 0x02
+    option_nothing = 0x03
+    option_custom = 0x04
+    default = option_normal
+
+
+class CustomFillerWeights(OptionCounter):
+    """Use custom weights for filler item distribution by choosing "Custom" in the "Filler Preset" option.
+        This works the same way as other weighted options.
+        You can use a weight of 0 to prevent that filler item from appearing.
+        If all weights are set to 0, then all filler items will be Nothing.
+
+        Range: 0 - 100
+        Default values are the same as the Normal preset.
     """
-    display_name = "Trap Fill Percentage"
+    internal_name = "customfillerweights"
+    display_name = "Custom Filler Weights"
+    default_weight = 10
+    min = 0
+    max = 100
+    valid_keys = frozenset({
+        AEItem.Shirt.value, AEItem.Cookie.value, AEItem.FiveCookies.value, AEItem.Triangle.value,
+        AEItem.BigTriangle.value, AEItem.BiggerTriangle.value, AEItem.Flash.value, AEItem.ThreeFlash.value,
+        AEItem.Rocket.value, AEItem.ThreeRocket.value, AEItem.RainbowCookie.value, AEItem.Nothing.value})
+    default = {
+        AEItem.Shirt.value: 7,
+        AEItem.Cookie.value: 16,
+        AEItem.FiveCookies.value: 3,
+        AEItem.Triangle.value: 31,
+        AEItem.BigTriangle.value: 14,
+        AEItem.BiggerTriangle.value: 4,
+        AEItem.Flash.value: 9,
+        AEItem.ThreeFlash.value: 3,
+        AEItem.Rocket.value: 9,
+        AEItem.ThreeRocket.value: 3,
+        AEItem.RainbowCookie.value: 6,
+        AEItem.Nothing.value: 0
+    }
+
+
+class TrapPercentage(Range):
+    """Replace a percentage of filler items in the item pool with random traps.
+
+        Range: 0 - 100
+        Default value: 0
+    """
+    display_name = "Trap Percentage"
     range_start = 0
     range_end = 100
     default = 0
+
+
+class TrapWeights(OptionCounter):
+    """Specify the weighted chance of rolling individual trap items.
+
+        You can use a weight of 0 to guarantee a particular trap will never appear.
+        **This option is ignored when "TrapPercentage" option is set to an other value than "custom"
+
+        Range: 0 - 100
+        Default values: 15, 5, 10
+    """
+    internal_name = "customtrapweights"
+    display_name = "Custom Trap Weights"
+    min = 0
+    max = 100
+    valid_keys = frozenset({
+        AEItem.BananaPeelTrap.value, AEItem.MonkeyMashTrap.value, AEItem.IcyHotPantsTrap.value
+    })
+    default = {
+        AEItem.BananaPeelTrap.value: 15, AEItem.MonkeyMashTrap.value: 5, AEItem.IcyHotPantsTrap.value: 10
+    }
+
+
+class TrapsOnReconnect(OptionSet):
+    """Determine which traps are sent when reconnecting.
+
+        This option determines which traps will be sent when reconnecting to the client.
+        Removing a trap from this list means it will only activate if received while playing/connected.
+
+        Supported values: "Banana Peel Trap", "Monkey Mash Trap", "Icy Hot Pants Trap"
+    """
+    internal_name = "trapsonreconnect"
+    display_name = "Traps On Reconnect"
+    supports_weighting = False
+    valid_keys = frozenset({
+        AEItem.BananaPeelTrap.value, AEItem.MonkeyMashTrap.value, AEItem.IcyHotPantsTrap.value
+    })
+#   valid_keys = frozenset({"Banana Peel Trap", "Monkey Mash Trap", "Icy Hot Pants Trap"})
+    preset_none = frozenset()
+    preset_all = valid_keys
+#   default = frozenset({"Banana Peel Trap", "Monkey Mash Trap", "Icy Hot Pants Trap"})
+    default = frozenset({
+        AEItem.BananaPeelTrap.value, AEItem.MonkeyMashTrap.value, AEItem.IcyHotPantsTrap.value
+    })
 
 
 class ItemDisplayOption(Choice):
@@ -352,47 +470,39 @@ class AutoEquipOption(Choice):
     option_on = 0x01
     default = option_on
 
+
 class SpikeColor(Choice):
-    """
-    Determine the color of Spike in-game.
-    Can select between these presets or choose "custom" to use a custom color set with the "CustomSpikeColor" option.
-    This can be changed in the client at any time with the command "/spikecolor <NameOrHexOfColor>".
+    """Determine the color of Spike in-game. This can be changed in the client at any time.
+        Can select between the following presets, or choose "custom" to use a custom color set with the "CustomSpikeColor" option.
+
+        Supported values: vanilla, dark, white, red, green, blue, yellow, cyan, magenta, custom
+        Default value: vanilla
     """
     display_name = "Spike Color"
     option_vanilla = 0
-    option_white = 1
-    option_grey = 2
-    option_purple = 3
+    option_dark = 1
+    option_white = 2
+    option_red = 3
     option_green = 4
-    option_red = 5
+    option_blue = 5
     option_yellow = 6
-    option_darkblue = 7
-    option_voidwhite = 8
-    option_voidpurple = 9
-    option_voidorange = 10
-    option_neonpink = 11
-    option_neongreen = 12
-    option_greenskin = 13
-    option_blueskin = 14
-    option_purpleskin = 15
-    option_alien = 16
-    option_alien2 = 17
-    option_metal = 18
-    option_rave = 19
+    option_cyan = 7
+    option_magenta = 8
     option_custom = -1
     default = option_vanilla
 
+
 class CustomSpikeColor(FreeText):
+    """Use a custom color for Spike by choosing "Custom" in the "Spike Color" option.
+        Enter an RGB hexadecimal value for the desired color. Note that a value of FFFFFF will result in the default Spike color.
+        **Note: If an invalid color is entered, it will be set to the "Vanilla" preset!
+
+        Range: 000000 to FFFFFF
+        Default value: FFFFFF
     """
-    Use a custom color for Spike by choosing "Custom" in the "Spike Color" option.
-    Enter an hexadecimal value of 4 characters with the desired color.
-    Range: 0000 to FFFF (1030 is the vanilla color)
-    **Note: If an invalid color is entered, it will be set to "Vanilla"!
-    **TODO: document the color format
-    """
-    default = {
-      "Custom": "1030"
-    }
+    display_name = "Custom Spike Color"
+    default = "FFFFFF"
+
 
 @dataclass
 class ApeEscapeOptions(PerGameCommonOptions):
@@ -404,6 +514,7 @@ class ApeEscapeOptions(PerGameCommonOptions):
     infinitejump: InfiniteJumpOption
     superflyer: SuperFlyerOption
     entrance: EntranceOption
+    randomizestartingroom: RandomizeStartingRoomOption
     unlocksperkey: KeyOption
     extrakeys: ExtraKeysOption
     coin: CoinOption
@@ -413,7 +524,11 @@ class ApeEscapeOptions(PerGameCommonOptions):
     shufflenet: ShuffleNetOption
     shufflewaternet: ShuffleWaterNetOption
     lowoxygensounds: LowOxygenSounds
-    trapfillpercentage: TrapFillPercentage
+    fillerpreset: FillerPreset
+    customfillerweights: CustomFillerWeights
+    trappercentage: TrapPercentage
+    trapweights: TrapWeights
+    trapsonreconnect: TrapsOnReconnect
     itemdisplay: ItemDisplayOption
     kickoutprevention: KickoutPreventionOption
     autoequip: AutoEquipOption

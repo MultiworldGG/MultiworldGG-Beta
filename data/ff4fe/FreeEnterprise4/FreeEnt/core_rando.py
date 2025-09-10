@@ -842,7 +842,13 @@ def apply(env):
             treasure = treasure_dbview.find_one(lambda t: [t.map, t.index] == CHEST_NUMBERS[slot])
             areas.setdefault(treasure.area, []).append(slot)
         for area in areas:
-            new_chests = env.rnd.sample(treasure_dbview.find_all(lambda t: t.area == area), len(areas[area]))
+            area_chests = treasure_dbview.find_all(lambda t: t.area == area)
+            miab_chests = []
+            for chest in area_chests:
+                ap_item = env.options.ap_data[str(chest.flag)]
+                if ap_item["miab_reward_code"] != 0:
+                    miab_chests.append(chest)
+            new_chests = miab_chests
             for i,slot in enumerate(areas[area]):
                 id = new_chests[i].flag
                 ap_item = env.options.ap_data[str(id)]

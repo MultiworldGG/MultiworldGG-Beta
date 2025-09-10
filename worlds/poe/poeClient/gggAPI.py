@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 # if gggOAuth.access_token does not exist, run get_access_token to set it
 
 access_token = gggOAuth.access_token if gggOAuth.access_token else None
-access_token_file = Path("poe_access_token")
+access_token_file = Path("poe_access_token.pkl")
 API_BASE = "https://api.pathofexile.com"
 _debug = True
 logger = logging.getLogger("poeClient.gggAPI")

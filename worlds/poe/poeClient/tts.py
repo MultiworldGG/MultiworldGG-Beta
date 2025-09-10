@@ -70,42 +70,46 @@ async def safe_tts_async(text, filename, rate=250, volume=1, voice_id=None, over
     tasks.append((text, filename, rate))
     await async_run_tts_tasks()
 
-def generate_tts_from_missing_locations(ctx: "PathOfExileContext", WPM: int = WPM) -> None:
-    """Generate TTS files for missing locations."""
-    if not ctx or not ctx.missing_locations:
-        logger.info("[DEBUG] No missing locations to generate TTS for.")
-        return
-    
-    missing_location_ids = ctx.missing_locations
-    logger.debug(f"[DEBUG] Generating TTS for {len(missing_location_ids)} items...")
-    for base_item_location_id in missing_location_ids:
-        network_item = ctx.locations_info[base_item_location_id]
-        item_text = get_item_name_tts_text(ctx, network_item)
-        filename = fileHelper.safe_filename(f"{item_text.lower()}_{WPM}.wav")
-
-        relative_path = f"{itemFilter.filter_sounds_dir_name}/{filename.lower()}"
-        full_path = itemFilter.filter_sounds_path / f"{filename}"
-
-        if not os.path.exists(full_path):
-            if _verbose:
-                logger.info(f"[DEBUG] Generating TTS for item: {item_text} at {full_path}")
-                safe_tts(
-                    text=item_text,
-                    filename=full_path
-                )
-        itemFilter.base_item_id_to_relative_wav_path[base_item_location_id] = relative_path
+#def generate_tts_from_missing_locations(ctx: "PathOfExileContext", WPM: int = WPM) -> None:
+#    """Generate TTS files for missing locations."""
+#    if not ctx or not ctx.missing_locations:
+#        logger.info("[DEBUG] No missing locations to generate TTS for.")
+#        return
+#
+#    missing_location_ids = ctx.missing_locations
+#    logger.debug(f"[DEBUG] Generating TTS for {len(missing_location_ids)} items...")
+#    for base_item_location_id in missing_location_ids:
+#        network_item = ctx.locations_info[base_item_location_id]
+#        item_text = get_item_name_tts_text(ctx, network_item)
+#        filename = fileHelper.safe_filename(f"{item_text.lower()}_{WPM}.wav")
+#
+#        relative_path = f"{itemFilter.TTS_FILTER_SOUNDS_DIR_NAME}/{filename.lower()}"
+#        full_path = itemFilter.filter_sounds_path / f"{filename}"
+#
+#        if not os.path.exists(full_path):
+#            if _verbose:
+#                logger.info(f"[DEBUG] Generating TTS for item: {item_text} at {full_path}")
+#                safe_tts(
+#                    text=item_text,
+#                    filename=full_path
+#                )
+#        itemFilter.base_item_id_to_relative_wav_path[base_item_location_id] = relative_path
 
 
 def generate_tts_tasks_from_missing_locations(ctx: "PathOfExileContext", tts_speed: int = None) -> None:
+
+    tts_dir = itemFilter.poe_doc_path / itemFilter.TTS_FILTER_SOUNDS_DIR_NAME
+    tts_dir.mkdir(parents=True, exist_ok=True)
+
     """Generate TTS files for missing locations."""
     if not ctx or not ctx.missing_locations:
         logger.info("[DEBUG] No missing locations to generate TTS for.")
         return
     speed = 250
     if tts_speed is None:
-        if not ctx.tts_options: logger.error("[Error] No client options available for TTS.")
+        if not ctx.filter_options: logger.error("[Error] No client options available for TTS.")
     else:
-        speed = int(ctx.tts_options.speed)
+        speed = int(ctx.filter_options.tts_speed)
 
     missing_location_ids = ctx.missing_locations
     logger.debug(f"[DEBUG] Generating TTS for {len(missing_location_ids)} items...")
@@ -114,8 +118,8 @@ def generate_tts_tasks_from_missing_locations(ctx: "PathOfExileContext", tts_spe
         item_text = get_item_name_tts_text(ctx, network_item)
         filename = fileHelper.safe_filename(f"{item_text.lower()}_{speed}.wav")
 
-        relative_path = f"{itemFilter.filter_sounds_dir_name}/{filename.lower()}"
-        full_path = itemFilter.filter_sounds_path / f"{filename}"
+        relative_path = f"{itemFilter.TTS_FILTER_SOUNDS_DIR_NAME}/{filename.lower()}"
+        full_path = itemFilter.poe_doc_path / itemFilter.TTS_FILTER_SOUNDS_DIR_NAME / f"{filename}"
 
         if not os.path.exists(full_path):
             if _debug:
@@ -125,7 +129,7 @@ def generate_tts_tasks_from_missing_locations(ctx: "PathOfExileContext", tts_spe
                     full_path,
                     speed
                 ))
-        itemFilter.base_item_id_to_relative_wav_path[base_item_location_id] = relative_path
+        itemFilter.base_item_id_to_relative_tts_wav_path[base_item_location_id] = relative_path
 
 
 def run_tts_tasks(use_daemon: bool = True):
