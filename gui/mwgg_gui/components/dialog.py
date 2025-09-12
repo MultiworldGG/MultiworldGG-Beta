@@ -2,7 +2,7 @@
 Dialog class - MessageBox override for dialogs
 """
 from __future__ import annotations
-__all__ = ("MessageBox", "ConsoleBox", "show_info_dialog", "show_error_dialog")
+__all__ = ("MessageBox", "ConsoleBox")
 
 from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogSupportingText, MDDialogButtonContainer
 from kivymd.uix.button import MDButton, MDButtonText
