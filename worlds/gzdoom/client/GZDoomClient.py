@@ -38,6 +38,10 @@ class GZDoomContext(SuperContext):
         self.error_callback = error_callback
         self.ipc = IPC(self, gzd_dir, _IPC_SIZE)
 
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
+
     def make_gui(self):
         ui = super().make_gui()
         ui.base_title = "GZDoom Client"

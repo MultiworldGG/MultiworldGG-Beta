@@ -91,6 +91,9 @@ class Sly1Context(CommonContext):
         self.ready_callback = ready_callback
         self.error_callback = error_callback
         self.game_interface = Sly1Interface(logger)
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     async def server_auth(self, password_requested: bool = False) -> None:
         if password_requested and not self.password:

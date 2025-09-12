@@ -7,7 +7,7 @@ import asyncio
 import copy
 import enum
 import subprocess
-from typing import Any
+from typing import Any, Callable
 
 import settings
 from CommonClient import CommonContext, ClientCommandProcessor, get_base_parser, server_loop, logger, gui_enabled
@@ -132,7 +132,7 @@ class BizHawkClientContext(CommonContext):
     watcher_timeout: float
     """The maximum amount of time the game watcher loop will wait for an update from the server before executing"""
 
-    def __init__(self, server_address: str | None, password: str | None):
+    def __init__(self, server_address: str | None, password: str | None, ready_callback: Callable[[], None] | None = None):
         super().__init__(server_address, password)
         self.text_passthrough_categories = set()
         self.auth_status = AuthStatus.NOT_AUTHENTICATED
@@ -140,6 +140,11 @@ class BizHawkClientContext(CommonContext):
         self.client_handler = None
         self.bizhawk_ctx = BizHawkContext()
         self.watcher_timeout = 0.5
+        self.ready_callback = ready_callback
+
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     def _categorize_text(self, args: dict) -> TextCategory:
         if "type" not in args or args["type"] in {"Hint", "Join", "Part", "TagsChanged", "Goal", "Release", "Collect",
@@ -351,7 +356,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     logger.info("BizHawkClient")
 
     async def main():
-        ctx = BizHawkClientContext(server_address, password)
+        ctx = BizHawkClientContext(server_address, password, ready_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:

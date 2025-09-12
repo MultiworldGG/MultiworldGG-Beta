@@ -126,15 +126,6 @@ class TWWContext(CommonContext):
     items_handling: int = 0b111
 
     def __init__(self, server_address: Optional[str], password: Optional[str], ready_callback=None, error_callback=None) -> None:
-        """
-        Initialize the TWW context.
-
-        :param server_address: Address of the MultiworldGG server.
-        :param password: Password for server authentication.
-        :param ready_callback: Callback for when client is ready.
-        :param error_callback: Callback for errors.
-        """
-
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
@@ -171,6 +162,9 @@ class TWWContext(CommonContext):
 
         # Length of the item get array in memory.
         self.len_give_item_array: int = 0x10
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     async def disconnect(self, allow_autoreconnect: bool = False) -> None:
         """

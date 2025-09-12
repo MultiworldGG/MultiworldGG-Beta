@@ -113,6 +113,9 @@ class UndertaleContext(CommonContext):
         self.completed_routes = {"pacifist": 0, "genocide": 0, "neutral": 0}
         # self.save_game_folder: files go in this path to pass data between us and the actual game
         self.save_game_folder = os.path.expandvars(r"%localappdata%/UNDERTALE")
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     def patch_game(self):
         with open(Utils.user_path("Undertale", "data.win"), "rb") as f:

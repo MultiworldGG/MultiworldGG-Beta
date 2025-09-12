@@ -337,6 +337,9 @@ class PathOfExileContext(CommonContext):
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     def get_is_death_linked(self) -> bool:
         """Check if the client is in death link mode."""
@@ -466,7 +469,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     import logging
     logger = logging.getLogger("PathOfExileClient")
 
-async def main():
+    async def main():
         ctx = PathOfExileContext(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
@@ -485,8 +488,8 @@ async def main():
 
         await ctx.server_auth()
 
-    await ctx.exit_event.wait()
-    await ctx.shutdown()
+        await ctx.exit_event.wait()
+        await ctx.shutdown()
 
     import colorama
 

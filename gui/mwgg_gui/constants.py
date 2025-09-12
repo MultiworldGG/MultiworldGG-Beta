@@ -42,42 +42,6 @@ CONSOLE_ACTIONS = [
 
 LAUNCHER_ACTIONS = [
 {
-    "id":           "generate",
-    "buttonicon":   "creation-outline",
-    "icon":         "creation-outline",
-    "prefill":      "",
-    "label":        "Generate",
-    "indicator":    "blank",
-    "type":         "assist",
-},
-{
-    "id":           "host",
-    "buttonicon":   "hand-extended",
-    "icon":         "hand-extended",
-    "prefill":      "",
-    "label":        "Host",
-    "indicator":    "blank",
-    "type":         "assist",
-},
-{
-    "id":           "patch",
-    "buttonicon":   "auto-fix",
-    "icon":         "auto-fix",
-    "prefill":      "",
-    "label":        "Patch",
-    "indicator":    "blank",
-    "type":         "assist",
-},
-{
-    "id":           "yaml",
-    "buttonicon":   "code-brackets",
-    "icon":         "code-brackets",
-    "prefill":      "",
-    "label":        "YAML",
-    "indicator":    "blank",
-    "type":         "assist",
-},
-{
     "id":           "connect",
     "buttonicon":   "lan-connect",
     "icon":         "lan-connect",

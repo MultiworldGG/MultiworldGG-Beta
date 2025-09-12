@@ -352,6 +352,10 @@ class BanjoTooieContext(CommonContext):
         self.startup = False
         self.handled_scouts = []
 
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
+
     def data_package_bt_cache(self, location_names_to_id, item_names_to_id):
         global bt_loc_name_to_id, bt_itm_name_to_id
         bt_loc_name_to_id = location_names_to_id

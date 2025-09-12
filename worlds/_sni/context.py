@@ -150,7 +150,7 @@ class SNIContext(CommonContext):
     hud_message_queue: typing.List[str]  # TODO: str is a guess, is this right?
     death_link_allow_survive: bool
 
-    def __init__(self, snes_address: str, server_address: str, password: str, ready_callback=None, error_callback=None) -> None:
+    def __init__(self, snes_address: str, server_address: str, password: str, ready_callback: typing.Callable[[], None] | None = None, error_callback: typing.Callable[[], None] | None = None) -> None:
         super(SNIContext, self).__init__(server_address, password)
         # callbacks
         self.ready_callback = ready_callback
@@ -174,6 +174,9 @@ class SNIContext(CommonContext):
         self.awaiting_rom = False
         self.rom = None
         self.prev_rom = None
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     async def connection_closed(self) -> None:
         await super(SNIContext, self).connection_closed()
@@ -253,13 +256,6 @@ class SNIContext(CommonContext):
                 # Once the games handled by SNIClient gets made to be remote items,
                 # this will no longer be needed.
                 async_start(self.send_msgs([{"cmd": "LocationScouts", "locations": list(new_locations)}]))
-                
-        # Call ready_callback after successful server connection
-        if cmd == "Connected" and self.ready_callback:
-            try:
-                self.ready_callback()
-            except Exception as e:
-                snes_logger.error(f"Error in ready callback: {e}")
                 
         if self.client_handler is not None:
             self.client_handler.on_package(self, cmd, args)

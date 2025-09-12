@@ -77,6 +77,12 @@ class MMBN3Context(CommonContext):
         self.patching_error = False
         self.sent_hints = []
 
+        if self.ready_callback:
+            try:
+                self.ready_callback()
+            except Exception as e:
+                logger.error(f"Error in ready callback: {e}")
+
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
             await super(MMBN3Context, self).server_auth(password_requested)

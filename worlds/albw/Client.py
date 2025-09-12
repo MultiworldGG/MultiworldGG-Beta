@@ -63,6 +63,10 @@ class ALBWClientContext(CommonContext):
         self.last_error = ""
         self.show_citra_connect_message = True
 
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
+
     # def run_gui(self) -> None:
     #     from Gui import MultiMDApp
 

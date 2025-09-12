@@ -104,6 +104,10 @@ class OoTContext(CommonContext):
         else:
             self.auth = None
 
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
+
     def data_package_cache(self, location_names_to_id):
         global oot_loc_name_to_id
         oot_loc_name_to_id = location_names_to_id
@@ -221,7 +225,6 @@ async def parse_payload(payload: dict, ctx: OoTContext, force: bool):
 
 async def n64_sync_task(ctx: OoTContext): 
     logger.info("Starting n64 connector. Use /n64 for status information.")
-    ctx.ready_callback()
     while not ctx.exit_event.is_set():
         error_status = None
         if ctx.n64_streams:

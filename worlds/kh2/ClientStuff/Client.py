@@ -288,6 +288,10 @@ class KH2Context(CommonContext):
         self.deathlink_toggle = False
         self.deathlink_blacklist = []
 
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
+
     from .ReadAndWrite import kh2_read_longlong, kh2_read_int, kh2_read_string, kh2_read_byte, kh2_write_bytes, kh2_write_int, kh2_write_short, kh2_write_byte, kh2_read_short
     from .SendChecks import checkWorldLocations, checkSlots, checkLevels, verifyChests, verifyLevel
     from .RecieveItems import displayPuzzlePieceTextinGame, displayInfoTextinGame, verifyItems, give_item, IsInShop, to_khscii
@@ -424,13 +428,6 @@ class KH2Context(CommonContext):
                 asyncio.create_task(self.send_msgs([{"cmd": "GetDataPackage", "games": ["Kingdom Hearts 2"]}]))
 
             self.locations_checked = set(args["checked_locations"])
-            
-            # Call ready_callback after successful server connection and authentication
-            if self.ready_callback:
-                try:
-                    self.ready_callback()
-                except Exception as e:
-                    logger.error(f"Error in ready callback: {e}")
 
         if cmd == "ReceivedItems":
             # Sora   Front of Ability List:0x2546

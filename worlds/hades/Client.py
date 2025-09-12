@@ -72,6 +72,10 @@ class HadesContext(CommonContext):
         subsume.AddHook(self.send_location_hint_to_server, styx_scribe_recieve_prefix \
             + "Locations hinted:", "HadesClient")
 
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
+
     async def server_auth(self, password_requested: bool = False):
         # This is called to autentificate with the server.
         if password_requested and not self.password:

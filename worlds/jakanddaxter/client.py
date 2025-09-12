@@ -121,6 +121,9 @@ class JakAndDaxterContext(CommonContext):
         # self.repl.load_data()
         # self.memr.load_data()
         super().__init__(server_address, password)
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     # def run_gui(self):
     #     from Gui import MultiMDApp

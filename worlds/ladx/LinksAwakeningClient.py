@@ -614,6 +614,10 @@ class LinksAwakeningContext(CommonContext):
         self.ready_callback = ready_callback
         self.error_callback = error_callback
 
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
+
     # def run_gui(self) -> None:
     #     import webbrowser
     #     from Gui import MultiMDApp

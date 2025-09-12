@@ -43,7 +43,7 @@ from mwgg_gui.launcher.launcher_sliver_appbar import LauncherSliverAppbar
 from mwgg_gui.launcher.launcher_favorite_bar import FavoritesScroll, Favorite
 from mwgg_gui.launcher.launcher_yaml import YamlDialog
 
-from Utils import discover_and_launch_module, get_available_worlds
+from Utils import discover_and_launch_module, get_available_worlds, persistent_load
 
 game_index = GameIndex()
 logger = logging.getLogger("Client")
@@ -175,7 +175,7 @@ Builder.load_string('''
                         id: server
                         size_hint_x: 0.8
                         pos_hint: {"center_x": 0.5}
-                        text: app.app_config.get("client", "hostname", fallback="")
+                        text: app.ctx.suggested_address.split(":")[0] if app.ctx.suggested_address else app.app_config.get("client", "hostname", fallback="")
                         MDTextFieldLeadingIcon:
                             theme_icon_color: "Custom"
                             icon: 'router-network'
@@ -188,7 +188,7 @@ Builder.load_string('''
                         input_filter: 'int'
                         size_hint_x: 0.8
                         pos_hint: {"center_x": 0.5}
-                        text: app.app_config.get("client", "port", fallback="")
+                        text: app.ctx.suggested_address.split(":")[1] if app.ctx.suggested_address else app.app_config.get("client", "port", fallback="")
                         MDTextFieldLeadingIcon:
                             theme_icon_color: "Custom"
                             icon: 'numeric'

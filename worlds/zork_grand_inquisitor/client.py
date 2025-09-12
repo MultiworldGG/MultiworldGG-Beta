@@ -104,10 +104,13 @@ class ZorkGrandInquisitorContext(CommonClient.CommonContext):
 
         self.process_attached_at_least_once = False
         self.can_display_process_message = True
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
-    def make_gui(self):
-        from .client_gui.client_gui import ZorkGrandInquisitorManager
-        return ZorkGrandInquisitorManager
+    # def make_gui(self):
+    #     from .client_gui.client_gui import ZorkGrandInquisitorManager
+    #     return ZorkGrandInquisitorManager
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:

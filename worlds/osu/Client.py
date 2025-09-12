@@ -470,6 +470,10 @@ class APosuContext(CommonContext):
                 "drive_c",
                 os.path.expandvars("users/$USER/Local Settings/Application Data/APosu"))
 
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
+
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
             await super(APosuContext, self).server_auth(password_requested)

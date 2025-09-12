@@ -31,6 +31,9 @@ class OpenRCT2Context(CommonContext):
         self.gamesock = OpenRCT2Socket(self)
         self.game_connection_established = False
         #kivy.set_title("OpenRCT2 Client")
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     async def server_auth(self, password_requested: bool = False):
         if not self.game_connection_established:

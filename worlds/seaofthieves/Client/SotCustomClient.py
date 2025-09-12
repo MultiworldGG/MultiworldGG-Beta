@@ -225,6 +225,10 @@ class SOT_Context(CommonContext):
 
         self.shop_history_queue: typing.List[int] = list()
 
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
+
     async def updaterLoopa(self):
         await self.updaterLoop()
 

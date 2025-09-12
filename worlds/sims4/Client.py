@@ -110,6 +110,9 @@ class SimsContext(SuperContext):
         self.syncing = False
         self.goal = None
         self.career = None
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     def make_gui(self):
         ui = super().make_gui()

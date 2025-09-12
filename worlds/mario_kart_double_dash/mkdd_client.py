@@ -88,14 +88,6 @@ class MkddContext(CommonContext):
     items_handling: int = 0b111
 
     def __init__(self, server_address: Optional[str], password: Optional[str], ready_callback=None, error_callback=None) -> None:
-        """
-        Initialize the Mkdd context.
-
-        :param server_address: Address of the Archipelago server.
-        :param password: Password for server authentication.
-        :param ready_callback: Callback for when client is ready.
-        :param error_callback: Callback for errors.
-        """
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
@@ -165,6 +157,10 @@ class MkddContext(CommonContext):
         # Name of the current stage as read from the game's memory. Sent to trackers whenever its value changes to
         # facilitate automatically switching to the map of the current stage.
         self.current_course: game_data.Course = game_data.Course()
+
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     async def disconnect(self, allow_autoreconnect: bool = False) -> None:
         """

@@ -203,6 +203,10 @@ class WargrooveContext(CommonContext):
             with open(destination, 'wb') as f:
                 f.write(file_data)
 
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
+
     def on_deathlink(self, data: typing.Dict[str, typing.Any]) -> None:
         with open(os.path.join(self.game_communication_path, "deathLinkReceive"), 'w+') as f:
             text = data.get("cause", "")

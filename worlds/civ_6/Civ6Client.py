@@ -91,6 +91,10 @@ class CivVIContext(CommonContext):
         for item in self.item_table.values():
             self.item_id_to_civ_item[item.code] = item
 
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
+
     async def resync(self):
         if self.processing_multiple_items:
             logger.info(

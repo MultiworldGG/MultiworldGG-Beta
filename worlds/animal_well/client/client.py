@@ -435,6 +435,9 @@ class AnimalWellContext(CommonContext):
         # self.console_task = None  # pulled out for now for compatibility with current AP
 
         self.disconnected_intentionally = True
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     def display_dialog(self, text: str, title: str, action_text: str = ""):
         if self.bean_patcher is not None and self.bean_patcher.attached_to_process:
@@ -1660,7 +1663,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     logging.getLogger("AnimalWellClient")
 
     async def main():
-        ctx = AnimalWellContext(server_address, password)
+        ctx = AnimalWellContext(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:

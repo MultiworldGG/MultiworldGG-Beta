@@ -60,8 +60,10 @@ class AdventureContext(CommonContext):
     game = 'Adventure'
     lua_connector_port: int = 17242
 
-    def __init__(self, server_address, password):
+    def __init__(self, server_address, password, ready_callback, error_callback):
         super().__init__(server_address, password)
+        self.error_callback = error_callback
+        self.ready_callback = ready_callback
         self.freeincarnates_used: int = -1
         self.freeincarnate_pending: int = 0
         self.foreign_items: [AdventureForeignItemInfo] = []
@@ -82,9 +84,12 @@ class AdventureContext(CommonContext):
         self.bat_no_touch_locations: [BatNoTouchLocation] = []
         self.local_item_locations = {}
         self.dragon_speed_info = {}
-
         options = get_settings().adventure_options
         self.display_msgs = options.display_msgs
+
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:

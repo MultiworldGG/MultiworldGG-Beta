@@ -266,6 +266,7 @@ class MultiMDApp(MDApp):
         Window.bind(on_close=lambda x: self.on_stop())
 
         self.change_screen("launcher")
+        self.commandprocessor = self.ctx.command_processor(self.ctx)
 
         def on_start(*args):
             self.root.md_bg_color = self.theme_cls.surfaceColor
@@ -555,8 +556,8 @@ class MultiMDApp(MDApp):
         This function is called when the text input is focused.
         It changes the screen to the console and focuses the text input.
         '''
-        if self.ctx.slot_info:  # Only focus console if we have slot info
-            self.change_screen("console")
+        if hasattr(self, 'console_text_input') and self.console_text_input:
+            self.console_text_input.focus = True
 
     def on_connect(self):
         '''

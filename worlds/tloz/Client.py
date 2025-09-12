@@ -74,6 +74,9 @@ class ZeldaContext(CommonContext):
         self.shop_slots_right = 0
         self.shop_slots = [self.shop_slots_left, self.shop_slots_middle, self.shop_slots_right]
         self.slot_data = dict()
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:

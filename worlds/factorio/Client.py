@@ -93,6 +93,10 @@ class FactorioContext(CommonContext):
         self.server_settings_path: str = server_settings_path
         self.additional_factorio_server_args = factorio_server_args
 
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
+
     @property
     def energylink_key(self) -> str:
         if self.generator_version >= (0, 4, 2):

@@ -51,6 +51,9 @@ class ChecksFinderContext(CommonContext):
                 wineprefix,
                 "drive_c",
                 os.path.expandvars("users/$USER/Local Settings/Application Data/ChecksFinder"))
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:

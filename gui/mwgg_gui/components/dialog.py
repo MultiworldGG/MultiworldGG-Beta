@@ -2,10 +2,11 @@
 Dialog class - MessageBox override for dialogs
 """
 from __future__ import annotations
-__all__ = ("MessageBox", "show_info_dialog", "show_error_dialog")
+__all__ = ("MessageBox", "ConsoleBox", "show_info_dialog", "show_error_dialog")
 
 from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogSupportingText, MDDialogButtonContainer
 from kivymd.uix.button import MDButton, MDButtonText
+from kivymd.uix.textfield import MDTextField, MDTextFieldHelperText
 from kivymd.app import MDApp
 from kivy.uix.widget import Widget
 from kivy.metrics import dp
@@ -61,16 +62,91 @@ class MessageBox(MDDialog):
         self.dialog.open()
 
 
-# Convenience functions for common use cases
-def show_info_dialog(title, message):
-    """Show an information dialog."""
-    message_box = MessageBox(title=title, message=message, is_error=False)
-    message_box.open()
-    return message_box
-
-
-def show_error_dialog(title, message):
-    """Show an error dialog."""
-    message_box = MessageBox(title=title, message=message, is_error=True)
-    message_box.open()
-    return message_box
+class ConsoleBox(MDDialog):
+    """
+    A dialog for interactive console-style prompts with text input.
+    Used for slot name and password prompts in the client.
+    
+    Args:
+        title (str): The dialog title
+        prompt (str): The prompt text to display
+        ctx: The context object (InitContext or CommonContext)
+        is_password (bool): If True, hides the input text (for passwords)
+    """
+    
+    def __init__(self, title="", prompt="", is_password=False):
+        super().__init__()
+        self.title = title
+        self.prompt = prompt
+        self.is_password = is_password
+        self.app = MDApp.get_running_app()
+        self.dialog = None
+        self.text_input = None
+    
+    def _submit(self, instance):
+        """Handle submit button press."""
+        if self.text_input and self.app.ctx:
+            # Send input to command processor
+            if hasattr(self.app.ctx, 'command_processor'):
+                processor = self.app.ctx.command_processor(self.app.ctx)
+                processor.process_command(self.text_input.text)
+        self.dialog.dismiss()
+        self.dialog = None
+    
+    def _cancel(self, instance):
+        """Handle cancel button press."""
+        # Just dismiss the dialog on cancel
+        self.dialog.dismiss()
+        self.dialog = None
+        
+    def open(self):
+        """Opens the dialog and displays it to the user."""
+        # Create text input field
+        self.text_input = MDTextField(
+            password=self.is_password,
+            mode="outlined",
+            size_hint_y=None,
+            height=dp(48),
+        )
+        
+        # Create button container
+        button_container = MDDialogButtonContainer(
+            Widget(),
+            MDButton(
+                MDButtonText(
+                    text="Cancel",
+                    theme_text_color="Custom",
+                    text_color=self.app.theme_cls.onSurfaceColor,
+                ),
+                on_release=self._cancel,
+            ),
+            MDButton(
+                MDButtonText(
+                    text="Submit",
+                    theme_text_color="Custom",
+                    text_color=self.app.theme_cls.primaryColor,
+                ),
+                on_release=self._submit,
+            ),
+            spacing=dp(8),
+        )
+        
+        # Create the dialog
+        self.dialog = MDDialog(
+            MDDialogHeadlineText(
+                text=self.title,
+            ),
+            MDDialogSupportingText(
+                text=self.prompt,
+                theme_text_color="Primary",
+                text_color=self.app.theme_cls.onSurfaceColor,
+            ),
+            self.text_input,
+            button_container,
+        )
+        self.dialog.state_press = 0
+        self.dialog.open()
+        
+        # Focus the text input
+        if self.text_input:
+            self.text_input.focus = True

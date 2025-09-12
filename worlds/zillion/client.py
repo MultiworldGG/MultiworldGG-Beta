@@ -105,6 +105,9 @@ class ZillionContext(CommonContext):
             self.look_for_retroarch.set()
 
         self.reset_game_state()
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     def reset_game_state(self) -> None:
         for _ in range(self.from_game.qsize()):

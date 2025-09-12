@@ -105,6 +105,10 @@ class MegaMixContext(CommonContext):
         self.obtained_items_queue = asyncio.Queue()
         self.critical_section_lock = asyncio.Lock()
 
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
+
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
             await super().server_auth(password_requested)

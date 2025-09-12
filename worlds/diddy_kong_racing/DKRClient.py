@@ -84,6 +84,10 @@ class DiddyKongRacingContext(CommonContext):
         self.startup = False
         self.current_map = 0
 
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
+
     def data_package_cache(self, location_names_to_id, item_names_to_id):
         global dkr_loc_name_to_id, dkr_itm_name_to_id
         dkr_loc_name_to_id = location_names_to_id

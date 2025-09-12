@@ -121,7 +121,7 @@ class BottomBarTextInput(MDTextField):
             self.location_names = [location for location in ctx.location_names._game_store[ctx.game].values()]
 
             def on_press(text):
-                self.set_text(self, text)
+                self.text = text
                 self.dropdown.dismiss()
                 self.focus = True
 

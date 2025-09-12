@@ -6,8 +6,7 @@ from .bottomappbar import (
 )
 from .dialog import (
     MessageBox,
-    show_info_dialog,
-    show_error_dialog,
+    ConsoleBox,
 )
 from .guidataclasses import (
     UIHint,
