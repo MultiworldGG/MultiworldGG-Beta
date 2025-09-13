@@ -103,6 +103,8 @@ class NetworkItem(typing.NamedTuple):
     """ Sending player, except in LocationInfo (from LocationScouts), where it is the receiving player. """
     flags: int = 0
 
+def escape_markup(text: str) -> str:
+    return text.replace('&', '&amp;').replace('[', '&bl;').replace(']', '&br;')
 
 def _scan_for_TypedTuples(obj: typing.Any) -> typing.Any:
     if isinstance(obj, tuple) and hasattr(obj, "_fields"):  # NamedTuple is not actually a parent class
@@ -299,16 +301,18 @@ class JSONtoTextParser(metaclass=HandlerMeta):
                     node["color"] = 'progression_goal_item_color'  # Gold for progression skip items/macguffins
         if not node["color"]:
             # if we can't find the flag set, use the command echo color to indicate it doesn't know what kind of item it is
-            node["color"] = 'command_echo_color' 
+            node["color"] = 'command_echo_color'
+        node["text"] = escape_markup(node["text"])
         return self._handle_color(node)
 
     def _handle_item_id(self, node: JSONMessagePart):
         item_id = int(node["text"])
-        node["text"] = self.ctx.item_names.lookup_in_slot(item_id, node["player"])
+        node["text"] = escape_markup(self.ctx.item_names.lookup_in_slot(item_id, node["player"]))
         return self._handle_item_name(node)
 
     def _handle_location_name(self, node: JSONMessagePart):
         node["color"] = 'location_color'
+        node["text"] = escape_markup(node["text"])
         return self._handle_color(node)
 
     def _handle_location_id(self, node: JSONMessagePart):
@@ -318,13 +322,51 @@ class JSONtoTextParser(metaclass=HandlerMeta):
 
     def _handle_entrance_name(self, node: JSONMessagePart):
         node["color"] = 'entrance_color'
+        node["text"] = escape_markup(node["text"])
         return self._handle_color(node)
 
     def _handle_hint_status(self, node: JSONMessagePart):
         node["color"] = status_colors.get(node["hint_status"], "red")
+        node["text"] = escape_markup(node["text"])
         return self._handle_color(node)
 
     def _handle_plaintext(self, node: JSONMessagePart):
+        if "[color=" in node["text"]:
+            import re
+            node_list = []
+            text = node["text"]
+            
+            # Use regex to find all [color=value]text[/color] patterns
+            pattern = r'\[color=([^\]]+)\](.*?)\[/color\]'
+            # pattern = r'\[i\](.*?)\[/i\]'
+            # pattern = r'\[b\](.*?)\[/b\]'
+            last_end = 0
+            
+            for match in re.finditer(pattern, text):
+                # Add text before the color tag
+                if match.start() > last_end:
+                    before_text = text[last_end:match.start()]
+                    if before_text:
+                        node_list.append({"color": 'default_color', "text": escape_markup(before_text)})
+                
+                # Add the color tag content
+                color_value = match.group(1)
+                tag_text = match.group(2)
+                node_list.append({"color": color_value, "text": escape_markup(tag_text)})
+                last_end = match.end()
+            
+            # Add any remaining text after the last color tag
+            if last_end < len(text):
+                remaining_text = text[last_end:]
+                if remaining_text:
+                    node_list.append({"color": 'default_color', "text": escape_markup(remaining_text)})
+            
+            return_text = ""
+            for node_part in node_list:
+                return_text += self._handle_color(node_part)
+            return return_text
+        
+        node["text"] = escape_markup(node["text"])
         node["color"] = 'default_color'
         return self._handle_color(node)
 
@@ -459,7 +501,7 @@ class Hint(typing.NamedTuple):
 
     def as_network_message(self) -> dict:
         parts = []
-        add_json_text(parts, "[Hint]: ")
+        add_json_text(parts, escape_markup("[Hint]: "))
         add_json_text(parts, self.receiving_player, type="player_id")
         add_json_text(parts, "'s ")
         add_json_item(parts, self.item, self.receiving_player, self.item_flags)

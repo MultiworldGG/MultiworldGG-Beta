@@ -68,9 +68,9 @@ class TextConsole(MarkupTextField, ThemableBehavior):
             return
         except Exception as e:
             print(e)
-        finally:
-            if self.cursor_row == self.line_count-5:
-                self.scroll_to_bottom()
+        # finally:
+        #     if self.cursor_row == self.line_count-5:
+        #         self.scroll_to_bottom()
 
     def scroll_to_bottom(self, *args):
         """Scroll the text console to the bottom"""

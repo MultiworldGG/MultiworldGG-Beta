@@ -7,6 +7,8 @@ from datetime import datetime, UTC
 from multiprocessing import Queue
 from logging.handlers import QueueHandler
 
+from CommonClient import InitCommandProcessor
+
 # Check if we're in a test environment
 
 # Allow Kivy to be imported during testing
@@ -158,6 +160,7 @@ class MultiMDApp(MDApp):
         RegisterFonts(self, self.app_config.get('client', 'monospace_font', fallback='Argon'))
         
         self.ctx = ctx
+        self.commandprocessor = self.ctx.command_processor(self.ctx)
 
         self.icon = os.path.join(os.path.curdir, "icon.ico")
         self.theme_mw = DefaultTheme(self.app_config)
@@ -266,7 +269,6 @@ class MultiMDApp(MDApp):
         Window.bind(on_close=lambda x: self.on_stop())
 
         self.change_screen("launcher")
-        self.commandprocessor = self.ctx.command_processor(self.ctx)
 
         def on_start(*args):
             self.root.md_bg_color = self.theme_cls.surfaceColor
@@ -466,8 +468,9 @@ class MultiMDApp(MDApp):
         '''
         # Prevent multiple initializations
         if hasattr(self, 'commandprocessor'):
-            return
-            
+            if not isinstance(self.commandprocessor, InitCommandProcessor):
+                return
+
         self.commandprocessor = self.ctx.command_processor(self.ctx)
         self.ui_console = self.console_screen.ui_console
         self.ui_console.text_console.text_default_color = self.theme_mw.markup_tags_theme.default_color[0 if self.theme_mw.theme_style == "Light" else 1]

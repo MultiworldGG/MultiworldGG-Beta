@@ -60,76 +60,6 @@ def set_local_network_data_package() -> typing.Tuple[typing.Dict[str, typing.Any
     }
     return local_network_data_package, local_network_data_package_single_game
 
-class InitCommandProcessor(CommandProcessor):
-    """
-    Command processor for the initial GUI state before a game is selected.
-    Handles basic commands like connect and help when no game context is available.
-    """
-    def __init__(self, ctx: InitContext):
-        self.ctx = ctx
-
-    def output(self, text: str, get_response: bool = False):
-        """Helper function to abstract logging to the InitContext UI"""
-        logger.info(text)
-
-    def _cmd_connect(self, address: str = "") -> bool:
-        """Connect to a MultiWorld Server"""
-        if not address:
-            self.output("Please specify an address.", get_response=True)
-            return False
-        
-        # Check if we have a game selected
-        if not hasattr(self.ctx, 'game') or not self.ctx.game:
-            # No game selected - offer text client option
-            def on_response(button_text):
-                if button_text == "Yes":
-                    # Launch text client with default settings
-                    from CommonClient import launch_textclient
-                    launch_textclient(
-                        server_address=address,
-                        slot_name=None,
-                        password=None,
-                        ready_callback=lambda: self.output("Text client connected successfully"),
-                        error_callback=lambda: self.output("Text client connection failed")
-                    )
-                else:
-                    self.output("Connection cancelled.")
-            
-            _consolebox = ConsoleBox(
-                title="No Game Selected",
-                message=f"You entered: {address}\nNo game was selected. Do you want to continue with a text client?",
-                buttons=["Yes", "No"],
-                on_response=on_response
-            )
-            _consolebox.open()
-            return True
-        
-        # Game is selected, proceed with normal connection
-        if hasattr(self.ctx, 'connect'):
-            async_start(self.ctx.connect(address), name="connecting")
-        else:
-            self.output("Connection not available in current context.")
-        return True
-
-    def _cmd_help(self) -> bool:
-        """Show available commands"""
-        self.output("Available commands:")
-        self.output("/connect <address> - Connect to a MultiWorld server")
-        self.output("/help - Show this help message")
-        self.output("/exit - Close the application")
-        return True
-
-    def _cmd_exit(self) -> bool:
-        """Close connections and client"""
-        self.ctx.exit_event.set()
-        return True
-
-    def default(self, raw: str):
-        """Handle unrecognized commands"""
-        self.output(f"Unknown command: {raw}")
-        self.output("Type /help for available commands")
-
-
 class ClientCommandProcessor(CommandProcessor):
     """
     The Command Processor will parse every method of the class that starts with "_cmd_" as a command to be called
@@ -317,7 +247,7 @@ class ClientCommandProcessor(CommandProcessor):
 
 class InitContext:
     """Base context for initial GUI state with minimal properties"""
-    command_processor: typing.Type[CommandProcessor] = InitCommandProcessor
+    command_processor: typing.Type[CommandProcessor] = ClientCommandProcessor
     # internals
     _messagebox: typing.Optional["Gui.MessageBox"] = None
     """Current message box through Gui"""
@@ -338,10 +268,6 @@ class InitContext:
             self._splash_queue = splash_queue
         self.ui = MultiMDApp(self)
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
-
-    @property
-    def suggested_address(self) -> str:
-        return Utils.persistent_load().get("client", {}).get("last_server_address", "")
 
     async def shutdown(self):
         if self.ui_task:
@@ -731,11 +657,13 @@ class CommonContext(InitContext):
             await self.send_msgs([{"cmd": 'LocationChecks', "locations": tuple(locations)}])
         return locations
 
-    async def console_input(self) -> str:
+    async def console_input(self, prompt: Optional[str] = "") -> str:
         if self.ui and self.ui.screen_manager.current == "console":
             self.ui.focus_textinput()
-        elif self.ui and self._consolebox:
-            self._consolebox.text_input.focus = True
+        elif self.ui:
+            if self._consolebox:
+                self._consolebox = None
+            self._consolebox = ConsoleBox(title="Response from " + self.server_address, prompt=prompt, queue=self.input_queue)
         self.input_requests += 1
         return await self.input_queue.get()
 
@@ -1358,8 +1286,6 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.stored_data.update(args["keys"])
         if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" in args["keys"]:
             ctx.ui.update_hints()
-        if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}_mwgg" in args["keys"]:
-            ctx.ui.update_hints()
 
     elif cmd == "SetReply":
         ctx.stored_data[args["key"]] = args["value"]
@@ -1466,15 +1392,14 @@ def launch_textclient(server_address: str = None, slot_name: str = None, passwor
             await self.send_connect(game="")
 
         def on_package(self, cmd: str, args: dict):
-            # Call ready_callback once the server has sent the first message
-            if self.ready_callback:
-                try:
-                    self.ready_callback()
-                except Exception as e:
-                    logger.error(f"Error in ready callback: {e}")
-
             if cmd == "Connected":
                 self.game = self.slot_info[self.slot].game
+                # Call ready_callback after successful connection
+                if self.ready_callback:
+                    try:
+                        self.ready_callback()
+                    except Exception as e:
+                        logger.error(f"Error in ready callback: {e}")
 
         async def disconnect(self, allow_autoreconnect: bool = False):
             self.game = ""

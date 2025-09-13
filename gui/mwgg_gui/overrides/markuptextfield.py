@@ -880,9 +880,8 @@ class MarkupTextField(TextInput, ThemableBehavior):
         """Fired when text is entered into a text field."""
 
         def set_text(*args):
-            if self.line_count > 1000:
-                self._lines = self._lines[-1000:] #_lines is bound to the text property
-            self.text = re.sub("\n", " ", text) if not self.multiline else text
+            ntext = text.split('\n', 1)[1] if self.line_count > 1000 else text
+            self.text = re.sub("\n", " ", ntext) if not self.multiline else ntext
             self.set_max_text_length()
 
             if self.text and self._get_has_error() or self._get_has_error():

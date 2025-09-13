@@ -1,7 +1,7 @@
 GAME_NAME:str = "Dont Starve Together"
 AUTHOR:str = "Klei Entertainment"
 IGDB_ID:int = 17832
-VERSION:str = "1.3.1.1"
+VERSION:str = "1.3.1.2"
 ITEM_ID_OFFSET:int = 264000
 LOCATION_ID_OFFSET:int = 264000
 LOCATION_DAY_OFFSET = 266000

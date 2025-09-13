@@ -11,6 +11,8 @@ from kivymd.app import MDApp
 from kivy.uix.widget import Widget
 from kivy.metrics import dp
 
+from asyncio import Queue
+
 class MessageBox(MDDialog):
     """
     A simple KivyMD dialog class that can be used throughout the codebase.
@@ -74,22 +76,19 @@ class ConsoleBox(MDDialog):
         is_password (bool): If True, hides the input text (for passwords)
     """
     
-    def __init__(self, title="", prompt="", is_password=False):
+    def __init__(self, title="", prompt="", queue: Queue = None):
         super().__init__()
         self.title = title
         self.prompt = prompt
-        self.is_password = is_password
         self.app = MDApp.get_running_app()
+        self.queue = queue
         self.dialog = None
         self.text_input = None
     
     def _submit(self, instance):
         """Handle submit button press."""
-        if self.text_input and self.app.ctx:
-            # Send input to command processor
-            if hasattr(self.app.ctx, 'command_processor'):
-                processor = self.app.ctx.command_processor(self.app.ctx)
-                processor.process_command(self.text_input.text)
+        if self.text_input and self.queue:
+            self.queue.put_nowait(self.text_input.text)
         self.dialog.dismiss()
         self.dialog = None
     
@@ -102,11 +101,16 @@ class ConsoleBox(MDDialog):
     def open(self):
         """Opens the dialog and displays it to the user."""
         # Create text input field
+        if 'password' in self.prompt.lower():
+            self.is_password = True
+        else:
+            self.is_password = False
         self.text_input = MDTextField(
             password=self.is_password,
             mode="outlined",
             size_hint_y=None,
-            height=dp(48),
+            height=dp(56),
+            on_text_validate=self._submit,
         )
         
         # Create button container
