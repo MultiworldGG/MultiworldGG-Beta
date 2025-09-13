@@ -100,7 +100,7 @@ ShamansRelic = "Shaman's Relic"
 VictoryBell = "Victory Bell"
 WisdomWand = "Wisdom Wand"
 
-# shelds
+# shields
 AkashicRecord = "Akashic Record"
 FrozenPride2 = "Frozen Pride+"
 GenjiShield = "Genji Shield"
@@ -201,7 +201,7 @@ ArmorSlotUp = "Armor Slot Up"
 AccessorySlotUp = "Accessory Slot Up"
 ItemSlotUp = "Item Slot Up"
 
-# support abilitys
+# support abilities
 Scan = "Scan"
 AerialRecovery = "Aerial Recovery"
 ComboMaster = "Combo Master"
@@ -242,7 +242,7 @@ CombinationBoost = "Combination Boost"
 OnceMore = "Once More"
 SecondChance = "Second Chance"
 
-# action abilitys
+# action abilities
 Guard = "Guard"
 UpperSlash = "Upper Slash"
 HorizontalSlash = "Horizontal Slash"
@@ -338,9 +338,6 @@ Victory = "Victory"
 LuckyEmblem = "Lucky Emblem"
 Bounty = "Bounty"
 
-#owies
-HPTrap = "You tripped on someone's foot in another universe"
-
 # UniversalKey = "Universal Key"
 # Keyblade Slots
 FAKESlot = "Kingdom Key D (Slot)"
@@ -392,7 +389,7 @@ DataZexionEvent = "Data Zexion Event"
 Oc2TitanCupEvent = "Titan Cup Event"
 Oc2GofCupEvent = "Goddess of Fate Cup Event"
 Oc2CupsEvent = "Olympus Coliseum Cups Event"
-HadesCupEvents = "Olympus Coliseum Hade's Paradox Event"
+HadesCupEvents = "Olympus Coliseum Hades Paradox Event"
 PrisonKeeperEvent = "Prison Keeper Event"
 OogieBoogieEvent = "Oogie Boogie Event"
 ExperimentEvent = "The Experiment Event"

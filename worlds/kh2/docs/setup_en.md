@@ -14,12 +14,11 @@ Kingdom Hearts II Final Mix from the [Epic Games Store](https://store.epicgames.
     2. Lua Backend from the OpenKH Mod Manager
     3. Install the mod `KH2FM-Mods-Num/GoA-ROM-Edition` using OpenKH Mod Manager
 - Needed for MultiworldGG 
-    1. [ArchipelagoKH2Client.exe](https://github.com/MultiworldGG/MultiworldGG/releases)
-    2. Install the Archipelago Companion mod from `JaredWeakStrike/APCompanion` using OpenKH Mod Manager
-    3. Install the mod from `KH2FM-Mods-equations19/auto-save` using OpenKH Mod Manager
-    4. Install the mod from `KH2FM-Mods-equations19/KH2-Lua-Library` using OpenKH Mod Manager
-    5. Install the mod from `TopazTK/EnablersAP` using OpenKH Mod Manager
-    6. AP Randomizer Seed
+    1. Install the Archipelago Companion mod from `JaredWeakStrike/APCompanion` using OpenKH Mod Manager
+    2. Install the mod from `KH2FM-Mods-equations19/auto-save` using OpenKH Mod Manager
+    3. Install the mod from `KH2FM-Mods-equations19/KH2-Lua-Library` using OpenKH Mod Manager
+    4. Install the mod from `TopazTK/EnablersAP` using OpenKH Mod Manager
+    5. AP Randomizer Seed
 - Optional Quality of Life Mods for MultiworldGG
     1. Optionally Install the Archipelago Quality Of Life mod from `JaredWeakStrike/AP_QOL` using OpenKH Mod Manager
     2. Optionally Install the Quality Of Life mod from `shananas/BearSkip` using OpenKH Mod Manager

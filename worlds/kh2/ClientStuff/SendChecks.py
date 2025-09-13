@@ -1,6 +1,7 @@
 from CommonClient import logger
 from .WorldLocations import *
 from typing import TYPE_CHECKING
+from .renamed_dict import RENAMED_DICT
 
 # I don't know what is going on here, but it works.
 if TYPE_CHECKING:
@@ -92,9 +93,14 @@ async def checkWorldLocations(self):
             for location, data in curworldid.items():
                 if location in self.kh2_loc_name_to_id.keys():
                     locationId = self.kh2_loc_name_to_id[location]
-                    if locationId not in self.locations_checked \
-                            and self.kh2_read_byte(self.Save + data.addrObtained) & 0x1 << data.bitIndex > 0:
-                        self.sending = self.sending + [(int(locationId))]
+                elif location in RENAMED_DICT.keys():
+                    location = RENAMED_DICT[location]
+                    locationId = self.kh2_loc_name_to_id[location]
+                else:
+                    raise ValueError(f"Location {location} not found in kh2_loc_name_to_id")
+                if locationId not in self.locations_checked \
+                        and self.kh2_read_byte(self.Save + data.addrObtained) & 0x1 << data.bitIndex > 0:
+                    self.sending = self.sending + [(int(locationId))]
     except Exception as e:
         if self.kh2connected:
             self.kh2connected = False
@@ -135,13 +141,25 @@ async def checkLevels(self):
 async def checkSlots(self):
     try:
         for location, data in weaponSlots.items():
-            locationId = self.kh2_loc_name_to_id[location]
+            if location in self.kh2_loc_name_to_id.keys():
+                locationId = self.kh2_loc_name_to_id[location]
+            elif location in RENAMED_DICT.keys():
+                location = RENAMED_DICT[location]
+                locationId = self.kh2_loc_name_to_id[location]
+            else:
+                raise ValueError(f"Slot Location {location} not found in kh2_loc_name_to_id")
             if locationId not in self.locations_checked:
                 if self.kh2_read_byte(self.Save + data.addrObtained) > 0:
                     self.sending = self.sending + [(int(locationId))]
 
         for location, data in formSlots.items():
-            locationId = self.kh2_loc_name_to_id[location]
+            if location in self.kh2_loc_name_to_id.keys():
+                locationId = self.kh2_loc_name_to_id[location]
+            elif location in RENAMED_DICT.keys():
+                location = RENAMED_DICT[location]
+                locationId = self.kh2_loc_name_to_id[location]
+            else:
+                raise ValueError(f"Form Slot Location {location} not found in kh2_loc_name_to_id")
             if locationId not in self.locations_checked and self.kh2_read_byte(self.Save + 0x06B2) == 0:
                 if self.kh2_read_byte(self.Save + data.addrObtained) & 0x1 << data.bitIndex > 0:
                     self.sending = self.sending + [(int(locationId))]

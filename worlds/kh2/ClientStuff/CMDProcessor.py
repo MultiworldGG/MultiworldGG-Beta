@@ -60,8 +60,8 @@ class KH2CommandProcessor(ClientCommandProcessor):
     def _cmd_deathlink(self):
         """Toggles deathlink"""
         if isinstance(self.ctx, KH2Context):
-            self.ctx.death_link = not self.ctx.death_link
-            asyncio.create_task((self.ctx.update_death_link(self.ctx.death_link)), name="Update Deathlink")
+            self.ctx.deathlink_toggle = not self.ctx.deathlink_toggle
+            asyncio.create_task((self.ctx.update_death_link(self.ctx.deathlink_toggle)), name="Update Deathlink")
 
     def _cmd_add_to_blacklist(self, player_name: str = ""):
         """Adds player to deathlink blacklist"""
