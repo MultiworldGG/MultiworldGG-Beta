@@ -42,6 +42,7 @@ from mwgg_gui.components.bottomappbar import BottomAppBar
 from mwgg_gui.launcher.launcher_sliver_appbar import LauncherSliverAppbar
 from mwgg_gui.launcher.launcher_favorite_bar import FavoritesScroll, Favorite
 from mwgg_gui.launcher.launcher_yaml import YamlDialog
+from mwgg_gui.components.dialog import MessageBox
 
 from Utils import discover_and_launch_module, get_available_worlds, persistent_load
 
@@ -517,20 +518,20 @@ class LauncherScreen(MDScreen, ThemableBehavior):
 
     def generate(self):
         """Generate a new game"""
-        self.gui.message_box("Generate", "Generate a new game").open()
+        MessageBox("Generate", "Generate a new game").open()
 
     def host(self):
         """Host a new game"""
-        self.gui.message_box("Host", "Host a new game").open()
+        MessageBox("Host", "Host a new game").open()
     
     def patch_game(self):
         """Patch the selected game"""
-        self.gui.message_box("Patch Game", "Patch the selected game").open()
+        MessageBox("Patch Game", "Patch the selected game").open()
     
     def create_yaml(self):
         """Create YAML file for the selected game"""
         if not self.selected_game:
-            self.gui.message_box("No Game Selected", "Please select a game before creating YAML.").open()
+            MessageBox("No Game Selected", "Please select a game before creating YAML.").open()
             return
 
         try:
@@ -545,7 +546,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             
         except Exception as e:
             logger.error(f"Failed to create YAML for {self.selected_game[1]}: {e}", exc_info=True, stack_info=True)
-            self.gui.message_box("YAML Creation Error", f"Failed to create YAML for {self.selected_game[1]}: {str(e)}", is_error=True).open()
+            MessageBox("YAML Creation Error", f"Failed to create YAML for {self.selected_game[1]}: {str(e)}", is_error=True).open()
 
     def on_yaml_dialog_dismiss(self, *args):
         """Handle dismissal of the YAML dialog"""
@@ -563,7 +564,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         # Check if we're in initial state by checking if ctx has a 'game' attribute
         if not hasattr(current_ctx, 'game'):
             if not self.selected_game:
-                self.gui.message_box("No Game Selected", "Please select a game before connecting.").open()
+                MessageBox("No Game Selected", "Please select a game before connecting.").open()
                 return
             
             # Get connection details from the UI
@@ -615,14 +616,14 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 # Hide loading layout on error
                 self.app.loading_layout.hide_loading()
                 # Show error dialog and stay on launcher screen
-                self.gui.message_box("Launch Error", f"Failed to launch {self.selected_game[1]}: {str(e)}", is_error=True).open()
+                MessageBox("Launch Error", f"Failed to launch {self.selected_game[1]}: {str(e)}", is_error=True).open()
         
         else:
             # We're in a game context, check if the selected game matches the current context
             if hasattr(current_ctx, 'game') and current_ctx.game != self.selected_game[1]:
                 # Game mismatch - need to rebuild to InitContext first
                 logger.info(f"Game mismatch: current={current_ctx.game}, selected={self.selected_game[1]}")
-                self.gui.message_box("Game Mismatch", 
+                MessageBox("Game Mismatch", 
                                 f"Current game ({current_ctx.game}) doesn't match selected game ({self.selected_game[1]}). "
                                 "Please restart the client to change games.", is_error=True).open()
                 return
@@ -641,7 +642,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 server_address = f"{server_field.text}:{port_field.text}" if server_field.text and port_field.text else None
                 
                 if not server_address:
-                    self.gui.message_box("Connection Error", "Please enter a valid server address and port.", is_error=True).open()
+                    MessageBox("Connection Error", "Please enter a valid server address and port.", is_error=True).open()
                     return
                 
                 logger.info(f"Attempting to connect to: {server_address}")
@@ -659,4 +660,4 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             except Exception as e:
                 logger.error(f"Failed to connect: {e}")
                 self.app.loading_layout.hide_loading()
-                self.gui.message_box("Connection Error", f"Failed to connect: {str(e)}", is_error=True).open()
+                MessageBox("Connection Error", f"Failed to connect: {str(e)}", is_error=True).open()

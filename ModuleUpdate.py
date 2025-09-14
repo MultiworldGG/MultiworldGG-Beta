@@ -1,4 +1,5 @@
 import sys
+import os
 import subprocess
 import multiprocessing
 from multiprocessing import Process
@@ -50,6 +51,12 @@ need_update: List[str] = []
 if is_frozen():
     if is_windows():
         python_cmd = "python.exe"
+        path = os.environ.get("PATH")
+        if "python" not in path.lower():
+            if not os.environ.get("PYTHONPATH"):
+                python_cmd = "python.exe"
+                os.environ["PYTHONPATH"] = local_dir
+
     elif is_macos() or is_linux():
         python_cmd = "python3"
 else:
