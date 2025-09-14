@@ -87,11 +87,48 @@ if is_frozen():
     pip_install_dir = exe_dir / "worlds_wheels"
     worlds_install_dir = exe_dir / "lib"
 
+def _pip_install_worker(args, return_queue):
+    """Worker function for pip install in separate process."""
+    try:
+        result = subprocess.run(args, capture_output=True, text=True)
+        return_queue.put((result.returncode, result.stdout, result.stderr))
+    except Exception as e:
+        return_queue.put((1, "", str(e)))
+
 def check_pip() -> None:
     """Verify pip is available."""
     try:
         import pip  # noqa: F401
     except ImportError:
+        if is_frozen():
+            # In frozen environments, we need to install to a location that's in the Python path
+            # and ensure we use the correct target directory
+            executable_args = [python_cmd, "-m", "ensurepip", "--root", str(worlds_install_dir), "--upgrade"]
+            # Use a Queue to get the return values from the worker process
+            return_queue = multiprocessing.Queue()
+            process = Process(target=_pip_install_worker, args=(executable_args, return_queue), name=f"PipInstall-ensurepip")
+            process.start()
+            process.join()
+            try:
+                returncode, stdout, stderr = return_queue.get_nowait()
+            except:
+                returncode = 1  # Assume failure if we can't get the result
+                stderr = "Failed to get process result"
+            if returncode != 0:
+                logger.warning(f"Failed to install pip: {stderr}")
+                if stderr:
+                    logger.error(f"{stderr}")
+            else:
+                logger.info(f"Successfully bootstrapped pip")
+
+        returncode = subprocess.run([sys.executable, "-m", "ensurepip", "--upgrade"])
+        if returncode != 0:
+            logger.warning(f"Failed to install pip: {returncode}")
+            raise RuntimeError("pip not available. Please install pip.")
+        else:
+            logger.info(f"Successfully bootstrapped pip")
+
+        #TODO: Fallback here, figure out how run it. https://bootstrap.pypa.io/get-pip.py
         raise RuntimeError("pip not available. Please install pip.")
 
 
@@ -293,15 +330,6 @@ def find_world_modules() -> List[str]:
     except Exception as e:
         logger.warning(f"Unexpected error while fetching world modules: {e}")
         return []
-
-def _pip_install_worker(args, return_queue):
-    """Worker function for pip install in separate process."""
-    try:
-        import subprocess
-        result = subprocess.run(args, capture_output=True, text=True)
-        return_queue.put((result.returncode, result.stdout, result.stderr))
-    except Exception as e:
-        return_queue.put((1, "", str(e)))
 
 def _move_compiled_files(directory: Path) -> None:
     """Moving .pyc files to parent directory for frozen builds

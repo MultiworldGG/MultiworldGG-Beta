@@ -348,7 +348,7 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
         
         # Rebuild complete tooltip data
         self._build_tooltip_data(ctx)
-        server_address = re.sub(r"^ws?://", "", ctx.server_address)
+        server_address = re.sub(r"^wss?://", "", ctx.server_address)
         # Update main label text
         if ctx.slot is not None:
             name = ctx.player_names[ctx.slot]
@@ -363,7 +363,7 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
         """Build complete tooltip data from context"""
         from NetUtils import TEXT_COLORS
         self.game_pages = []  # Reset pages
-        server_address = re.sub(r"^ws?://", "", ctx.server_address)
+        server_address = re.sub(r"^wss?://", "", ctx.server_address)
         if ctx.slot is None:
             self.server_name = f"{server_address}"
             self.game_pages = [f"You are not authenticated yet."]
