@@ -97,7 +97,7 @@ async def checkWorldLocations(self):
                     location = RENAMED_DICT[location]
                     locationId = self.kh2_loc_name_to_id[location]
                 else:
-                    raise ValueError(f"Location {location} not found in kh2_loc_name_to_id")
+                    continue
                 if locationId not in self.locations_checked \
                         and self.kh2_read_byte(self.Save + data.addrObtained) & 0x1 << data.bitIndex > 0:
                     self.sending = self.sending + [(int(locationId))]

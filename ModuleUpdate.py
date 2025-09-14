@@ -181,7 +181,7 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
     Check which packages need updates by querying PyPI.
     Returns a list of package names that need updating.
     """
-    if is_frozen():
+    if is_frozen() and not worlds_only:
         return []
     # Ensure packaging is available
     try:
@@ -206,6 +206,9 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
         
         outdated_packages = json.loads(response.stdout)
         
+        if worlds_only:
+            return [world["name"] for world in outdated_packages]
+
         # Get all requirements to check version constraints
         all_requirements = {}
         for req_file in requirements_files:
@@ -391,7 +394,7 @@ def install_worlds(worlds: List[str]) -> None:
         else:
             executable_args = [python_cmd, "-m", "pip", "install", 
                     "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds", 
-                    world, "--compile"]
+                    world, "--compile", "--upgrade"]
             result = subprocess.run(executable_args)
             if result.returncode != 0:
                 logger.warning(f"Failed to install {world}")
