@@ -115,11 +115,11 @@ is_windows = sys.platform in ("win32", "cygwin", "msys")
 
 _worlds_to_load: typing.List[str] = []
 
-def set_game_names(value: typing.List[str]):
+def set_game_names(game_names: typing.List[str]):
     """Set the game names to the list of game names"""
     from mwgg_igdb import GameIndex
     # lazy import
-    for game in value:
+    for game in game_names:
         module_name = GameIndex.get_module_for_game(game_name=game, worlds=True)
         _worlds_to_load.append(module_name)
     _worlds_to_install: typing.List[str] = []

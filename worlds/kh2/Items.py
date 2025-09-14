@@ -214,7 +214,7 @@ Useful_Table = {
 }
 
 Trap_Table = {
-    ItemName.HPTrap:           ItemData(12, 91, 0x368C), # 459 is DUMMY 12, 91 is Basement Map
+    #ItemName.HPTrap:           ItemData(12, 91, 0x368C), # 459 is DUMMY 12, 91 is Basement Map
 }
 
 GreatActionAbility_Table = {

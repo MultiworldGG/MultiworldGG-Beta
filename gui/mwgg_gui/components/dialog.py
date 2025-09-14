@@ -76,19 +76,19 @@ class ConsoleBox(MDDialog):
         is_password (bool): If True, hides the input text (for passwords)
     """
     
-    def __init__(self, title="", prompt="", queue: Queue = None):
+    def __init__(self, title="", prompt=""):
         super().__init__()
         self.title = title
         self.prompt = prompt
         self.app = MDApp.get_running_app()
-        self.queue = queue
         self.dialog = None
         self.text_input = None
     
     def _submit(self, instance):
         """Handle submit button press."""
-        if self.text_input and self.queue:
-            self.queue.put_nowait(self.text_input.text)
+        if hasattr(self.app.ctx, 'input_requests') and self.app.ctx.input_requests > 0:
+            self.app.ctx.input_requests -= 1
+            self.app.ctx.input_queue.put_nowait(self.text_input.text)
         self.dialog.dismiss()
         self.dialog = None
     

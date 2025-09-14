@@ -247,34 +247,17 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None)
                 }
                 slot_info: dict[int, NetUtils.NetworkSlot] = {}
                 names = [[name for player, name in sorted(multiworld.player_name.items())]]
-                logger.info(f"DEBUG: names array: {names}")
-                logger.info(f"DEBUG: multiworld.player_ids: {multiworld.player_ids}")
-                logger.info(f"DEBUG: multiworld.groups: {multiworld.groups}")
-                
                 for slot in multiworld.player_ids:
                     player_world: AutoWorld.World = multiworld.worlds[slot]
                     minimum_versions["server"] = max(minimum_versions["server"], player_world.required_server_version)
                     client_versions[slot] = player_world.required_client_version
                     games[slot] = multiworld.game[slot]
-                    logger.info(f"DEBUG: Processing slot {slot}")
-                    logger.info(f"DEBUG:   names[0][slot - 1] = {names[0][slot - 1]}")
-                    logger.info(f"DEBUG:   multiworld.game[slot] = {multiworld.game[slot]}")
-                    logger.info(f"DEBUG:   multiworld.player_types[slot] = {multiworld.player_types[slot]}")
                     slot_info[slot] = NetUtils.NetworkSlot(names[0][slot - 1], multiworld.game[slot],
                                                            multiworld.player_types[slot])
-                    logger.info(f"DEBUG:   Created NetworkSlot for slot {slot}: {slot_info[slot]}")
-                
-                logger.info(f"DEBUG: slot_info after player_ids loop: {slot_info}")
-                
                 for slot, group in multiworld.groups.items():
-                    logger.info(f"DEBUG: Processing group slot {slot}")
-                    logger.info(f"DEBUG:   group: {group}")
                     games[slot] = multiworld.game[slot]
                     slot_info[slot] = NetUtils.NetworkSlot(group["name"], multiworld.game[slot], multiworld.player_types[slot],
                                                            group_members=sorted(group["players"]))
-                    logger.info(f"DEBUG:   Created NetworkSlot for group slot {slot}: {slot_info[slot]}")
-                
-                logger.info(f"DEBUG: Final slot_info: {slot_info}")
                 precollected_items = {player: [item.code for item in world_precollected if type(item.code) == int]
                                       for player, world_precollected in multiworld.precollected_items.items()}
                 precollected_hints: dict[int, set[NetUtils.Hint]] = {

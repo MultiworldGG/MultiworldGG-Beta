@@ -7,7 +7,6 @@ from datetime import datetime, UTC
 from multiprocessing import Queue
 from logging.handlers import QueueHandler
 
-from CommonClient import InitCommandProcessor
 
 # Check if we're in a test environment
 
@@ -466,11 +465,8 @@ class MultiMDApp(MDApp):
         It sets up the command processor and the console handler.
         It cannot be called before the console screen is created.
         '''
-        # Prevent multiple initializations
-        if hasattr(self, 'commandprocessor'):
-            if not isinstance(self.commandprocessor, InitCommandProcessor):
-                return
-
+        if hasattr(self, 'console_is_initialized'):
+            return
         self.commandprocessor = self.ctx.command_processor(self.ctx)
         self.ui_console = self.console_screen.ui_console
         self.ui_console.text_console.text_default_color = self.theme_mw.markup_tags_theme.default_color[0 if self.theme_mw.theme_style == "Light" else 1]
@@ -485,6 +481,7 @@ class MultiMDApp(MDApp):
         
         # Add the new console handler
         client_logger.addHandler(self.console_handler)
+        self.console_is_initialized = True
 
 
     def client_console_init(self):

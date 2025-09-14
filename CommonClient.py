@@ -273,6 +273,12 @@ class InitContext:
         if self.ui_task:
             await self.ui_task
 
+    @property
+    def suggested_address(self) -> str:
+        if hasattr(self, 'server_address'):
+            return self.server_address
+        return Utils.persistent_load().get("client", {}).get("last_server_address", "")
+
 
 class CommonContext(InitContext):
     # The following attributes are used to Connect and should be adjusted as needed in subclasses

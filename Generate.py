@@ -39,6 +39,7 @@ def mystery_argparse():
     parser.add_argument('--spoiler', type=int, default=defaults.spoiler)
     parser.add_argument('--outputpath', default=settings.general_options.output_path,
                         help="Path to output folder. Absolute or relative to cwd.")  # absolute or relative to cwd
+    parser.add_argument('--outputname', help="Name for the output files.")
     parser.add_argument('--race', action='store_true', default=defaults.race)
     parser.add_argument('--meta_file_path', default=defaults.meta_file_path)
     parser.add_argument('--log_level', default=defaults.loglevel, help='Sets log level')

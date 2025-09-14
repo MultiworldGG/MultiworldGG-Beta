@@ -49,7 +49,7 @@ update_ran = _skip_update
 need_update: List[str] = []
 if is_frozen():
     if is_windows():
-        python_cmd = Path(local_dir.parent / "python.exe")
+        python_cmd = "python.exe"
     elif is_macos() or is_linux():
         python_cmd = "python3"
 else:

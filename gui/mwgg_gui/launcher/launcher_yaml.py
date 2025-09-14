@@ -857,14 +857,12 @@ class OptionsLayout(MDBoxLayout):
             
             logger.info(f"YAML file saved: {filepath}")
             self.dismiss = True
-            # Show success message
-            from mwgg_gui.components.dialog import show_info_dialog
-            show_info_dialog("Success", f"YAML file saved to:\n{filepath}")
+            # Show success message TODO: FIX
+            self.app.message_box("Success", f"YAML file saved to:\n{filepath}").open()
             
         except Exception as e:
             logger.error(f"Failed to save YAML: {e}", exc_info=True, stack_info=True)
-            from mwgg_gui.components.dialog import show_error_dialog
-            show_error_dialog("Save Error", f"Failed to save YAML: {str(e)}")
+            self.gui.message_box("Save Error", f"Failed to save YAML: {str(e)}", is_error=True).open()
     
     def cancel(self, instance):
         """Cancel the YAML creation and remove the layout"""

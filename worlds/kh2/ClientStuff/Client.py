@@ -36,8 +36,6 @@ class KH2Context(CommonContext):
     def __init__(self, server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
         super(KH2Context, self).__init__(server_address = server_address, password = password)
         self.slot_name = slot_name
-        self.ready_callback = ready_callback
-        self.error_callback = error_callback
         self.goofy_ability_to_slot = dict()
         self.donald_ability_to_slot = dict()
         self.all_weapon_location_id = None
@@ -288,9 +286,9 @@ class KH2Context(CommonContext):
         self.deathlink_toggle = False
         self.deathlink_blacklist = []
 
-        if self.ready_callback:
+        if ready_callback:
             from kivy.clock import Clock
-            Clock.schedule_once(self.ready_callback, 0.1)
+            Clock.schedule_once(ready_callback, 0.1)
 
     from .ReadAndWrite import kh2_read_longlong, kh2_read_int, kh2_read_string, kh2_read_byte, kh2_write_bytes, kh2_write_int, kh2_write_short, kh2_write_byte, kh2_read_short
     from .SendChecks import checkWorldLocations, checkSlots, checkLevels, verifyChests, verifyLevel
