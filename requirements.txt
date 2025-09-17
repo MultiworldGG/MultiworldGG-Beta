@@ -18,6 +18,7 @@ tqdm>=4.67.1
 numpy>=1.26.1
 Pillow>=11.2.1
 pywin32>=306
+pip>=25.0.1
 
 # world specific dependencies
 # these are included by default because they're small and common

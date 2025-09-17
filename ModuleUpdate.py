@@ -30,6 +30,8 @@ def is_macos() -> bool:
 def is_linux() -> bool:
     return sys.platform.startswith("linux")
 
+import pip
+
 # Version compatibility checks
 if (is_windows() or is_macos()) and sys.version_info < (3, 12, 0):
     raise RuntimeError(f"Incompatible Python Version found: {sys.version_info}. Official 3.12.+ is supported.")
@@ -48,19 +50,6 @@ local_dir = Path(__file__).parent
 
 update_ran = _skip_update
 need_update: List[str] = []
-if is_frozen():
-    if is_windows():
-        python_cmd = "python.exe"
-        path = os.environ.get("PATH")
-        if "python" not in path.lower():
-            if not os.environ.get("PYTHONPATH"):
-                python_cmd = "python.exe"
-                os.environ["PYTHONPATH"] = local_dir
-
-    elif is_macos() or is_linux():
-        python_cmd = "python3"
-else:
-    python_cmd = sys.executable
 
 class RequirementsSet(set):
     """Custom set that tracks whether updates have been run."""
@@ -93,6 +82,18 @@ if is_frozen():
     exe_dir = Path(sys.exec_prefix)
     pip_install_dir = exe_dir / "worlds_wheels"
     worlds_install_dir = exe_dir / "lib"
+    # set up frozen pip command
+    if is_windows():
+        python_cmd = "python.exe"
+        path = os.environ.get("PATH")
+        if "python" not in path.lower() and str(worlds_install_dir) not in path:
+            os.environ["PATH"] = str(worlds_install_dir) + ";" + path
+
+    elif is_macos() or is_linux():
+        python_cmd = "pip3"
+    else:
+        python_cmd = f"{sys.executable} -m pip"
+
 
 def _pip_install_worker(args, return_queue):
     """Worker function for pip install in separate process."""
@@ -107,35 +108,7 @@ def check_pip() -> None:
     try:
         import pip  # noqa: F401
     except ImportError:
-        if is_frozen():
-            # In frozen environments, we need to install to a location that's in the Python path
-            # and ensure we use the correct target directory
-            executable_args = [python_cmd, "-m", "ensurepip", "--root", str(worlds_install_dir), "--upgrade"]
-            # Use a Queue to get the return values from the worker process
-            return_queue = multiprocessing.Queue()
-            process = Process(target=_pip_install_worker, args=(executable_args, return_queue), name=f"PipInstall-ensurepip")
-            process.start()
-            process.join()
-            try:
-                returncode, stdout, stderr = return_queue.get_nowait()
-            except:
-                returncode = 1  # Assume failure if we can't get the result
-                stderr = "Failed to get process result"
-            if returncode != 0:
-                logger.warning(f"Failed to install pip: {stderr}")
-                if stderr:
-                    logger.error(f"{stderr}")
-            else:
-                logger.info(f"Successfully bootstrapped pip")
-
-        returncode = subprocess.run([sys.executable, "-m", "ensurepip", "--upgrade"])
-        if returncode != 0:
-            logger.warning(f"Failed to install pip: {returncode}")
-            raise RuntimeError("pip not available. Please install pip.")
-        else:
-            logger.info(f"Successfully bootstrapped pip")
-
-        #TODO: Fallback here, figure out how run it. https://bootstrap.pypa.io/get-pip.py
+        #TODO: Fallback here - run it. https://bootstrap.pypa.io/get-pip.py
         raise RuntimeError("pip not available. Please install pip.")
 
 
@@ -365,14 +338,20 @@ def _add_to_library_zip(exe_dir: Path, source_path: Path) -> None:
     library_zip = exe_dir / "lib" / "library.zip"
     with zipfile.ZipFile(library_zip, "a") as zipf:
         if source_path.is_file():
-            zipf.write(source_path, source_path.name)
+            try:
+                zipf.write(source_path, source_path.name)
+            except FileExistsError:
+                pass
         elif source_path.is_dir():
             # Add the entire directory tree to the zip
             for file_path in source_path.rglob("*"):
                 if file_path.is_file() and not file_path.name.endswith(".py"):
                     # Calculate the relative path within the directory
                     arcname = source_path.name / file_path.relative_to(source_path)
-                    zipf.write(file_path, str(arcname))
+                    try:
+                        zipf.write(file_path, str(arcname))
+                    except FileExistsError:
+                        pass       
 
 def install_worlds(worlds: List[str]) -> None:
     """Install worlds from the multiworld repository."""
@@ -395,6 +374,7 @@ def install_worlds(worlds: List[str]) -> None:
             # Get the return values from the worker process
             try:
                 returncode, stdout, stderr = return_queue.get_nowait()
+                logger.info(stdout)
             except:
                 returncode = 1  # Assume failure if we can't get the result
                 stdout = ""
