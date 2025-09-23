@@ -122,8 +122,7 @@ build_exe_options = {
         ("data/SNI", "SNI") if os.path.exists("data/SNI") else None,
         ("EnemizerCLI", "EnemizerCLI") if os.path.exists("EnemizerCLI") else None,
         ("kivy/data", "lib/kivy/data"),
-        ("kivy/include", "lib/kivy/include"),
-        ("python.exe", "lib/python.exe") if is_windows else None
+        ("kivy/include", "lib/kivy/include")
     ],
     "include_msvcr": False,
     "replace_paths": ["*."],

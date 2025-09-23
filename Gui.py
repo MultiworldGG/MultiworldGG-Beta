@@ -537,8 +537,12 @@ class MultiMDApp(MDApp):
             input_text = textinput.text.strip()
             textinput.text = ""
             textinput.update_history(input_text)
+            # TODO: Fix
 
-            if hasattr(self.ctx, 'input_requests') and self.ctx.input_requests > 0:
+            if self.screen_manager.current != "console" and \
+               hasattr(self.ctx, 'input_requests') and \
+               self.ctx.input_requests > 0:
+               
                 self.ctx.input_requests -= 1
                 self.ctx.input_queue.put_nowait(input_text)
             elif is_command_input(input_text):

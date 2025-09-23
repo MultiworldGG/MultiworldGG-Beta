@@ -448,18 +448,20 @@ class TopAppBar(MDTopAppBar):
         self.md_bg_color = self.theme_cls.transparentColor
         self.theme_shadow_color = "Custom"
         self.shadow_color = self.theme_cls.transparentColor
-        asyncio.create_task(self.update_progress_width(), name="ProgressBar")
+        asyncio.create_task(self.update_progress_info(), name="ProgressBar")
 
-    async def update_progress_width(self):
+    async def update_progress_info(self):
         """
-        Continuously update progress bar width based on location completion.
+        Continuously update progress bar width and tooltip based on location completion.
         
         Monitors the connected game session and updates the progress bar width
-        to reflect the percentage of locations that have been checked. Updates
+        to reflect the percentage of locations that have been checked and the tooltip
+        to reflect the other information that has been received. Updates
         every 30 seconds while the app is running.
         """
         while not self.app.ctx.exit_event.is_set():
             if self.app.ctx and hasattr(self.app.ctx, 'total_locations') and self.app.ctx.total_locations:
+                self.server_info_label.update_server_info(self.app.ctx)
                 locs = len(self.app.ctx.checked_locations)
                 total = self.app.ctx.total_locations
                 new_width = self.width * (locs/total) if total > 0 else 0

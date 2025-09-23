@@ -88,7 +88,7 @@ class BottomBarTextInput(MDTextField):
         elif self.action_type == "admin":
             self.on_admin_message(instance)
         else:
-            MDApp.get_running_app().on_message(instance)
+            MDApp.get_running_app().commandprocessor(instance.text)
 
     @property
     def icon(self):

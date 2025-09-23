@@ -34,7 +34,6 @@ class ConsoleFilter(logging.Filter):
 class TextConsole(MarkupTextField, ThemableBehavior):
     text_buffer: Queue
     app: MDApp
-    #text_color: ColorProperty
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -53,7 +52,7 @@ class TextConsole(MarkupTextField, ThemableBehavior):
         self.cursor_color = self.theme_cls.primaryColor
         self.text_buffer = self.app.text_buffer
 
-        Clock.schedule_interval(self.add_text_from_buffer, 0.1)
+        Clock.schedule_interval(self.add_text_from_buffer, 0.01)
 
     def add_text_from_buffer(self, dt):
         try:
