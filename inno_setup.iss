@@ -1,7 +1,7 @@
 #define source_path ReadIni(SourcePath + "\setup.ini", "Data", "source_path")
 #define min_windows ReadIni(SourcePath + "\setup.ini", "Data", "min_windows")
 
-#define MyAppName "MultiworldGG"
+#define MyAppName "MultiworldGG-AlphaGUI"
 #define MyAppExeName "MultiworldGG.exe"
 #define MyAppIcon "data/icon.ico"
 #dim VersionTuple[4]
@@ -12,14 +12,14 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
-AppId={{918BA46A-FAB8-460C-9DFF-AE691E1C865B}}
+AppId={{918BA46A-FAB8-460C-9DFF-AE691E1C865E}}
 AppName={#MyAppName}
 AppCopyright=Distributed under GPLv3 License
 AppVerName={#MyAppName} {#MyAppVersionText}
 VersionInfoVersion={#MyAppVersion}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
-DefaultGroupName=MultiworldGG
+DefaultGroupName=MultiworldGG-AlphaGUI
 OutputDir=setups
 OutputBaseFilename=Setup {#MyAppName} {#MyAppVersionText}
 Compression=lzma2
@@ -41,7 +41,6 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}";
-Name: "deletelib"; Description: "Clean existing /lib folder and subfolders including /worlds (leave checked if unsure)"; Check: ShouldShowDeleteLibTask
 
 [Types]
 Name: "full"; Description: "Full installation"

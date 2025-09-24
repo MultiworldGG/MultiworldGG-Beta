@@ -50,34 +50,73 @@ if typing.TYPE_CHECKING:
     from BaseClasses import Region
     import multiprocessing
 
-@dataclass
-class PythonToExe:
-    script_name: str
-    frozen_name: str
-    icon: str
-    cli: str
+# @dataclass
+# class PythonToExe:
+#     script_name: str
+#     frozen_name: str
+#     icon: str
+#     cli: str
 
 def normalize_tag(tag: str) -> str:
     return tag[1:] if tag and tag[0].lower() == "v" else tag
 
-def tuplize_version(version: str) -> Version:
-    return Version(*(int(piece, 10) for piece in version.split(".")))
+# def tuplize_version(version: str) -> "Version":
+#     """Parse a version string into a Version object, supporting both simple and PEP 440 formats."""
+#     try:
+#         # Try using packaging library for PEP 440 support
+#         from packaging.version import Version as PackagingVersion
+#         pkg_version = PackagingVersion(version)
+#         # Extract the release components (major.minor.micro)
+#         release = pkg_version.release
+#         if len(release) >= 3:
+#             return Version(release[0], release[1], release[2])
+#         elif len(release) == 2:
+#             return Version(release[0], release[1], 0)
+#         elif len(release) == 1:
+#             return Version(release[0], 0, 0)
+#         else:
+#             return Version(0, 0, 0)
+#     except ImportError:
+#         # Fallback to simple parsing if packaging is not available
+#         pass
+#     except Exception:
+#         # If packaging fails to parse, fall back to simple parsing
+#         pass
+    
+#     # Simple parsing fallback for backward compatibility
+#     try:
+#         parts = version.split(".")
+#         return Version(
+#             int(parts[0]) if len(parts) > 0 else 0,
+#             int(parts[1]) if len(parts) > 1 else 0,
+#             int(parts[2]) if len(parts) > 2 else 0
+#         )
+#     except (ValueError, IndexError):#         return Version(0, 0, 0)
 
 
-class Version(typing.NamedTuple):
-    major: int
-    minor: int
-    build: int
+# class Version(typing.NamedTuple):
+#     major: int
+#     minor: int
+#     build: int
 
-    def as_simple_string(self) -> str:
-        return ".".join(str(item) for item in self)
+#     def as_simple_string(self) -> str:
+#         """Return version as a simple dot-separated string."""
+#         return ".".join(str(item) for item in self)
+    
+#     def as_pep440_string(self) -> str:
+#         """Return version as a PEP 440 compliant string."""
+#         return f"{self.major}.{self.minor}.{self.build}"
+    
+#     def __str__(self) -> str:
+#         """String representation defaults to PEP 440 format."""
+#         return self.as_pep440_string()
 
 
-__version__ = "0.6.4a6"
-version_tuple = tuplize_version(__version__)
+# __version__ = "0.6.446"
+# version_tuple = tuplize_version(__version__)
 
-instance_name = "MultiworldGG"
-archipelago_guid = "{{918BA46A-FAB8-460C-9DFF-AE691E1C865D}}"
+# instance_name = "MultiworldGG"
+# archipelago_guid = "{{918BA46A-FAB8-460C-9DFF-AE691E1C865D}}"
 
 def get_config_file_path() -> str:
     if getattr(sys, 'frozen', False):

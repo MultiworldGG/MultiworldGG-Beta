@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds._manual"
-version = "1.0.0"
+version = "1.0.1"
 description = "MultiWorld: Manual Client"
 classifiers = [
     "Private :: Do Not Upload"

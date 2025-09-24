@@ -84,15 +84,16 @@ if is_frozen():
     worlds_install_dir = exe_dir / "lib"
     # set up frozen pip command
     if is_windows():
-        python_cmd = "python.exe"
+        python_cmd = Path(exe_dir) / "python.exe"
         path = os.environ.get("PATH")
         if "python" not in path.lower() and str(worlds_install_dir) not in path:
             os.environ["PATH"] = str(worlds_install_dir) + ";" + path
 
     elif is_macos() or is_linux():
-        python_cmd = "pip3"
+        os.symlink("python3", exe_dir / "python3")
+        python_cmd = Path(exe_dir) / "python3"
     else:
-        python_cmd = f"{sys.executable} -m pip"
+        raise RuntimeError("Unsupported platform")
 
 
 def _pip_install_worker(args, return_queue):
