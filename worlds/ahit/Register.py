@@ -1,4 +1,4 @@
-from . import HatInTimeWorld, HatInTimeWeb
+from . import HatInTimeWorld, AWebInTime
 from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 from .Client import launch
 
@@ -17,5 +17,5 @@ VERSION = version
 
 # Plugin entry points
 WORLD_CLASS = HatInTimeWorld
-WEB_WORLD_CLASS = HatInTimeWeb
-CLIENT_FUNCTION = launch
+WEB_WORLD_CLASS = AWebInTime
+CLIENT_FUNCTION = main

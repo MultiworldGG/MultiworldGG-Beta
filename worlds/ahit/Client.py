@@ -27,8 +27,9 @@ class AHITContext(CommonContext):
     command_processor = AHITCommandProcessor
     game = "A Hat in Time"
 
-    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
+    def __init__(self, server_address, slot_name, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
+        self.slot_name = slot_name
         self.ready_callback = ready_callback
         self.error_callback = error_callback
         self.proxy = None
@@ -43,6 +44,11 @@ class AHITContext(CommonContext):
         self.awaiting_info = False
         self.full_inventory: List[Any] = []
         self.server_msgs: List[Any] = []
+
+        if self.slot_name is not None:
+            self.auth = self.slot_name
+        else:
+            self.auth = None
 
         if self.ready_callback:
             from kivy.clock import Clock
@@ -244,7 +250,7 @@ async def proxy_loop(ctx: AHITContext):
         logger.info("Aborting AHIT Proxy Client due to errors")
 
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
     Launch the client
     """
@@ -252,7 +258,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     logging.getLogger("AHITClient")
 
     async def main():
-        ctx = AHITContext(server_address, password, ready_callback, error_callback)
+        ctx = AHITContext(server_address, slot_name, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -290,6 +296,6 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback)
+    launch(server_address, slot_name, password, ready_callback, error_callback)
