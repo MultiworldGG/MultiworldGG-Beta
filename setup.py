@@ -54,7 +54,6 @@ build_exe_options = {
         "cffi",
         "numpy",
         "PIL",
-        "pip"
         
         # Platform-specific memory access (conditional imports)
         "pymem",
@@ -124,7 +123,7 @@ build_exe_options = {
         ("EnemizerCLI", "EnemizerCLI") if os.path.exists("EnemizerCLI") else None,
         ("kivy/data", "lib/kivy/data"),
         ("kivy/include", "lib/kivy/include"),
-        ("python.exe", "python.exe")
+        # ("python.exe", "python.exe")  # Removed: Use system Python instead
     ],
     "include_msvcr": False,
     "replace_paths": ["*."],

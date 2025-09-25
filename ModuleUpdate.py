@@ -8,7 +8,7 @@ import json
 import urllib.request
 import shutil
 import zipfile
-
+import re
 import logging
 logger = logging.getLogger("MultiWorld")
 
@@ -17,6 +17,9 @@ if not logging.getLogger().hasHandlers():
 
 from pathlib import Path
 from typing import List, Optional
+
+import pip
+from importlib import metadata
 
 def is_frozen() -> bool:
     return getattr(sys, 'frozen', False)
@@ -76,7 +79,8 @@ if not update_ran:
     if custom_wheels_dir.exists():
         for wheel_file in custom_wheels_dir.glob("*.whl"):
             wheels_files.add(str(wheel_file))
-
+            
+python_cmd = sys.executable
 if is_frozen():
     # For frozen builds, install adjacent to the executable
     exe_dir = Path(sys.exec_prefix)
@@ -84,7 +88,52 @@ if is_frozen():
     worlds_install_dir = exe_dir / "lib"
     # set up frozen pip command
     if is_windows():
-        python_cmd = Path(exe_dir) / "python.exe"
+        # Try to use system Python first, fall back to local if not available
+        import shutil
+        system_python = shutil.which("python")
+        if system_python and "WindowsApps" not in system_python:
+            python_cmd = system_python
+        else:
+            system_py = shutil.which("py")
+            py_output = subprocess.run([system_py, "-0p"], capture_output=True, text=True)
+            system_python = py_output.stdout.strip()
+            # Priority order: 3.12 → 3.13 → 3.11 → 3.10 → 3.9 → 3.8
+            # Exclude venv paths and test versions (like python3.13t.exe)
+            python_versions = []
+            for line in py_output.stdout.splitlines():
+                if "venv" in line:
+                    continue
+                if "python.exe" in line:
+                    # Extract version and path - handle both formats:
+                    # Format 1: "-V:3.12          C:\Program Files\Python312\python.exe"
+                    # Format 2: "-V:3.13 *        C:\Users\Lindsay\AppData\Local\Programs\Python\Python313\python.exe"
+                    parts = line.split()
+                    if len(parts) >= 2:
+                        version_part = parts[0]
+                        # Handle the * marker in format 2
+                        path = parts[-1] if parts[-1].endswith('.exe') else parts[1]
+                        # Extract version number (e.g., "3.12" from "-V:3.12")
+                        version_match = re.search(r'3\.(\d+)', version_part)
+                        if version_match:
+                            version_num = int(version_match.group(1))
+                            if 8 <= version_num <= 13:  # Valid range
+                                python_versions.append((version_num, path))
+            
+            # Sort by priority: 3.12 first, then descending order
+            def version_priority(item):
+                version_num = item[0]
+                if version_num == 12:
+                    return 0  # Highest priority
+                else:
+                    return 20 - version_num  # 3.13=7, 3.11=9, 3.10=10, 3.9=11, 3.8=12
+            
+            python_versions.sort(key=version_priority)
+            if python_versions:
+                system_python = python_versions[0][1]
+            if system_python and "WindowsApps" not in system_python:
+                python_cmd = system_python
+            else:
+                raise RuntimeError("No Python found")
         path = os.environ.get("PATH")
         if "python" not in path.lower() and str(worlds_install_dir) not in path:
             os.environ["PATH"] = str(worlds_install_dir) + ";" + path
@@ -96,13 +145,6 @@ if is_frozen():
         raise RuntimeError("Unsupported platform")
 
 
-def _pip_install_worker(args, return_queue):
-    """Worker function for pip install in separate process."""
-    try:
-        result = subprocess.run(args, capture_output=True, text=True)
-        return_queue.put((result.returncode, result.stdout, result.stderr))
-    except Exception as e:
-        return_queue.put((1, "", str(e)))
 
 def check_pip() -> None:
     """Verify pip is available."""
@@ -201,6 +243,51 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
     """
     if is_frozen() and not worlds_only:
         return []
+    
+    # Debug environment information
+    logger.info("=== ENVIRONMENT DEBUG INFO ===")
+    logger.info(f"is_frozen(): {is_frozen()}")
+    logger.info(f"python_cmd: {python_cmd}")
+    logger.info(f"sys.executable: {sys.executable}")
+    logger.info(f"sys.exec_prefix: {sys.exec_prefix}")
+    logger.info(f"sys.prefix: {sys.prefix}")
+    logger.info(f"sys.path: {sys.path}")
+    logger.info(f"PYTHONHOME: {os.environ.get('PYTHONHOME', 'Not set')}")
+    logger.info(f"PYTHONPATH: {os.environ.get('PYTHONPATH', 'Not set')}")
+    logger.info(f"PYTHONSTARTUP: {os.environ.get('PYTHONSTARTUP', 'Not set')}")
+    logger.info(f"PYTHONPLATLIBDIR: {os.environ.get('PYTHONPLATLIBDIR', 'Not set')}")
+    logger.info(f"PYTHONCASEOK: {os.environ.get('PYTHONCASEOK', 'Not set')}")
+    logger.info(f"PYTHONIOENCODING: {os.environ.get('PYTHONIOENCODING', 'Not set')}")
+    logger.info(f"PYTHONHASHSEED: {os.environ.get('PYTHONHASHSEED', 'Not set')}")
+    logger.info(f"PYTHONMALLOC: {os.environ.get('PYTHONMALLOC', 'Not set')}")
+    logger.info(f"PYTHONCOERCECLOCALE: {os.environ.get('PYTHONCOERCECLOCALE', 'Not set')}")
+    logger.info(f"PYTHONBREAKPOINT: {os.environ.get('PYTHONBREAKPOINT', 'Not set')}")
+    logger.info(f"PYTHON_COLORS: {os.environ.get('PYTHON_COLORS', 'Not set')}")
+    logger.info(f"PYTHON_HISTORY: {os.environ.get('PYTHON_HISTORY', 'Not set')}")
+    logger.info(f"PYTHON_CPU_COUNT: {os.environ.get('PYTHON_CPU_COUNT', 'Not set')}")
+    logger.info(f"PYTHONDEBUG: {os.environ.get('PYTHONDEBUG', 'Not set')}")
+    logger.info(f"PYTHONDEVMODE: {os.environ.get('PYTHONDEVMODE', 'Not set')}")
+    logger.info(f"PYTHONDONTWRITEBYTECODE: {os.environ.get('PYTHONDONTWRITEBYTECODE', 'Not set')}")
+    logger.info(f"PYTHONFAULTHANDLER: {os.environ.get('PYTHONFAULTHANDLER', 'Not set')}")
+    logger.info(f"PYTHON_FROZEN_MODULES: {os.environ.get('PYTHON_FROZEN_MODULES', 'Not set')}")
+    logger.info(f"PYTHON_GIL: {os.environ.get('PYTHON_GIL', 'Not set')}")
+    logger.info(f"PYTHONINSPECT: {os.environ.get('PYTHONINSPECT', 'Not set')}")
+    logger.info(f"PYTHONINTMAXSTRDIGITS: {os.environ.get('PYTHONINTMAXSTRDIGITS', 'Not set')}")
+    logger.info(f"PYTHONNODEBUGRANGES: {os.environ.get('PYTHONNODEBUGRANGES', 'Not set')}")
+    logger.info(f"PYTHONNOUSERSITE: {os.environ.get('PYTHONNOUSERSITE', 'Not set')}")
+    logger.info(f"PYTHONOPTIMIZE: {os.environ.get('PYTHONOPTIMIZE', 'Not set')}")
+    logger.info(f"PYTHONPERFSUPPORT: {os.environ.get('PYTHONPERFSUPPORT', 'Not set')}")
+    logger.info(f"PYTHONPROFILEIMPORTTIME: {os.environ.get('PYTHONPROFILEIMPORTTIME', 'Not set')}")
+    logger.info(f"PYTHONPYCACHEPREFIX: {os.environ.get('PYTHONPYCACHEPREFIX', 'Not set')}")
+    logger.info(f"PYTHONSAFEPATH: {os.environ.get('PYTHONSAFEPATH', 'Not set')}")
+    logger.info(f"PYTHONTRACEMALLOC: {os.environ.get('PYTHONTRACEMALLOC', 'Not set')}")
+    logger.info(f"PYTHONUNBUFFERED: {os.environ.get('PYTHONUNBUFFERED', 'Not set')}")
+    logger.info(f"PYTHONUTF8: {os.environ.get('PYTHONUTF8', 'Not set')}")
+    logger.info(f"PYTHONVERBOSE: {os.environ.get('PYTHONVERBOSE', 'Not set')}")
+    logger.info(f"PYTHONWARNDEFAULTENCODING: {os.environ.get('PYTHONWARNDEFAULTENCODING', 'Not set')}")
+    logger.info(f"PYTHONWARNINGS: {os.environ.get('PYTHONWARNINGS', 'Not set')}")
+    logger.info(f"PATH: {os.environ.get('PATH', 'Not set')}")
+    logger.info("=== END DEBUG INFO ===")
     # Ensure packaging is available
     try:
         import packaging.requirements
@@ -217,6 +304,9 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
         else:
             executable_args = [python_cmd, "-m", "pip", "list", "-o", "--format", "json", 
                 "-i", "https://pypi.org/simple", "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds/+simple"]
+        
+        logger.info(f"Executing subprocess command: {executable_args}")
+        logger.info(f"Working directory: {os.getcwd()}")
         response = subprocess.run(executable_args, capture_output=True, text=True, timeout=45)
         if response.returncode != 0:
             logger.warning(f"Could not check for updates: {response.stderr}")
@@ -357,6 +447,52 @@ def _add_to_library_zip(exe_dir: Path, source_path: Path) -> None:
 def install_worlds(worlds: List[str]) -> None:
     """Install worlds from the multiworld repository."""
     check_pip()
+    
+    # Debug environment information
+    logger.info("=== ENVIRONMENT DEBUG INFO (install_worlds) ===")
+    logger.info(f"is_frozen(): {is_frozen()}")
+    logger.info(f"python_cmd: {python_cmd}")
+    logger.info(f"sys.executable: {sys.executable}")
+    logger.info(f"sys.exec_prefix: {sys.exec_prefix}")
+    logger.info(f"sys.prefix: {sys.prefix}")
+    logger.info(f"sys.path: {sys.path}")
+    logger.info(f"PYTHONHOME: {os.environ.get('PYTHONHOME', 'Not set')}")
+    logger.info(f"PYTHONPATH: {os.environ.get('PYTHONPATH', 'Not set')}")
+    logger.info(f"PYTHONSTARTUP: {os.environ.get('PYTHONSTARTUP', 'Not set')}")
+    logger.info(f"PYTHONPLATLIBDIR: {os.environ.get('PYTHONPLATLIBDIR', 'Not set')}")
+    logger.info(f"PYTHONCASEOK: {os.environ.get('PYTHONCASEOK', 'Not set')}")
+    logger.info(f"PYTHONIOENCODING: {os.environ.get('PYTHONIOENCODING', 'Not set')}")
+    logger.info(f"PYTHONHASHSEED: {os.environ.get('PYTHONHASHSEED', 'Not set')}")
+    logger.info(f"PYTHONMALLOC: {os.environ.get('PYTHONMALLOC', 'Not set')}")
+    logger.info(f"PYTHONCOERCECLOCALE: {os.environ.get('PYTHONCOERCECLOCALE', 'Not set')}")
+    logger.info(f"PYTHONBREAKPOINT: {os.environ.get('PYTHONBREAKPOINT', 'Not set')}")
+    logger.info(f"PYTHON_COLORS: {os.environ.get('PYTHON_COLORS', 'Not set')}")
+    logger.info(f"PYTHON_HISTORY: {os.environ.get('PYTHON_HISTORY', 'Not set')}")
+    logger.info(f"PYTHON_CPU_COUNT: {os.environ.get('PYTHON_CPU_COUNT', 'Not set')}")
+    logger.info(f"PYTHONDEBUG: {os.environ.get('PYTHONDEBUG', 'Not set')}")
+    logger.info(f"PYTHONDEVMODE: {os.environ.get('PYTHONDEVMODE', 'Not set')}")
+    logger.info(f"PYTHONDONTWRITEBYTECODE: {os.environ.get('PYTHONDONTWRITEBYTECODE', 'Not set')}")
+    logger.info(f"PYTHONFAULTHANDLER: {os.environ.get('PYTHONFAULTHANDLER', 'Not set')}")
+    logger.info(f"PYTHON_FROZEN_MODULES: {os.environ.get('PYTHON_FROZEN_MODULES', 'Not set')}")
+    logger.info(f"PYTHON_GIL: {os.environ.get('PYTHON_GIL', 'Not set')}")
+    logger.info(f"PYTHONINSPECT: {os.environ.get('PYTHONINSPECT', 'Not set')}")
+    logger.info(f"PYTHONINTMAXSTRDIGITS: {os.environ.get('PYTHONINTMAXSTRDIGITS', 'Not set')}")
+    logger.info(f"PYTHONNODEBUGRANGES: {os.environ.get('PYTHONNODEBUGRANGES', 'Not set')}")
+    logger.info(f"PYTHONNOUSERSITE: {os.environ.get('PYTHONNOUSERSITE', 'Not set')}")
+    logger.info(f"PYTHONOPTIMIZE: {os.environ.get('PYTHONOPTIMIZE', 'Not set')}")
+    logger.info(f"PYTHONPERFSUPPORT: {os.environ.get('PYTHONPERFSUPPORT', 'Not set')}")
+    logger.info(f"PYTHONPROFILEIMPORTTIME: {os.environ.get('PYTHONPROFILEIMPORTTIME', 'Not set')}")
+    logger.info(f"PYTHONPYCACHEPREFIX: {os.environ.get('PYTHONPYCACHEPREFIX', 'Not set')}")
+    logger.info(f"PYTHONSAFEPATH: {os.environ.get('PYTHONSAFEPATH', 'Not set')}")
+    logger.info(f"PYTHONTRACEMALLOC: {os.environ.get('PYTHONTRACEMALLOC', 'Not set')}")
+    logger.info(f"PYTHONUNBUFFERED: {os.environ.get('PYTHONUNBUFFERED', 'Not set')}")
+    logger.info(f"PYTHONUTF8: {os.environ.get('PYTHONUTF8', 'Not set')}")
+    logger.info(f"PYTHONVERBOSE: {os.environ.get('PYTHONVERBOSE', 'Not set')}")
+    logger.info(f"PYTHONWARNDEFAULTENCODING: {os.environ.get('PYTHONWARNDEFAULTENCODING', 'Not set')}")
+    logger.info(f"PYTHONWARNINGS: {os.environ.get('PYTHONWARNINGS', 'Not set')}")
+    logger.info(f"PATH: {os.environ.get('PATH', 'Not set')}")
+    logger.info("=== END DEBUG INFO ===")
+    
     for world in worlds:
         logger.info(f"Installing world: {world}")
         
@@ -366,15 +502,30 @@ def install_worlds(worlds: List[str]) -> None:
             executable_args = [python_cmd, "-m", "pip", "install", 
                     "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds", 
                     world, "--compile", "--target", str(pip_install_dir), "--upgrade"]
-            # Use a Queue to get the return values from the worker process
-            return_queue = multiprocessing.Queue()
-            process = Process(target=_pip_install_worker, args=(executable_args, return_queue), name=f"PipInstall-{world}")
-            process.start()
-            process.join()
             
-            # Get the return values from the worker process
+            logger.info(f"Executing subprocess command: {executable_args}")
+            logger.info(f"Working directory: {os.getcwd()}")
+            
+            # Use threading instead of multiprocessing to avoid argument contamination
+            import threading
+            import queue
+            
+            result_queue = queue.Queue()
+            
+            def _pip_install_thread():
+                try:
+                    result = subprocess.run(executable_args, capture_output=True, text=True)
+                    result_queue.put((result.returncode, result.stdout, result.stderr))
+                except Exception as e:
+                    result_queue.put((1, "", str(e)))
+            
+            install_thread = threading.Thread(target=_pip_install_thread, daemon=True)
+            install_thread.start()
+            install_thread.join()
+            
+            # Get the return values from the worker thread
             try:
-                returncode, stdout, stderr = return_queue.get_nowait()
+                returncode, stdout, stderr = result_queue.get_nowait()
                 logger.info(stdout)
             except:
                 returncode = 1  # Assume failure if we can't get the result
@@ -420,20 +571,47 @@ def install_worlds(worlds: List[str]) -> None:
 def update_world_wheels() -> None:
     """Install/update wheel files from custom_wheels directory."""
     check_pip()
-    # Use multiprocessing version if frozen, otherwise use subprocess
+    # Use threading version if frozen, otherwise use subprocess
     if is_frozen():
         for wheel in wheels_files:
             logger.info(f"Installing wheel: {wheel}")
             executable_args = [python_cmd, "-m", "pip", "install", wheel, "--upgrade", "--target", str(pip_install_dir)]
-            process = Process(target=_pip_install_worker, args=(executable_args,), name=f"PipInstall-{Path(wheel).name}")
-            process.start()
-            process.join()
-            for obj in pip_install_dir.glob("*"):
-                obj.rename(worlds_install_dir / obj.name)
-            if process.exitcode != 0:
+            
+            # Use threading instead of multiprocessing to avoid argument contamination
+            import threading
+            import queue
+            
+            result_queue = queue.Queue()
+            
+            def _pip_install_thread():
+                try:
+                    result = subprocess.run(executable_args, capture_output=True, text=True)
+                    result_queue.put((result.returncode, result.stdout, result.stderr))
+                except Exception as e:
+                    result_queue.put((1, "", str(e)))
+            
+            install_thread = threading.Thread(target=_pip_install_thread, daemon=True)
+            install_thread.start()
+            install_thread.join()
+            
+            # Get the return values from the worker thread
+            try:
+                returncode, stdout, stderr = result_queue.get_nowait()
+                logger.info(stdout)
+            except:
+                returncode = 1  # Assume failure if we can't get the result
+                stdout = ""
+                stderr = "Failed to get process result"
+            
+            if returncode != 0:
                 logger.warning(f"Failed to install wheel {wheel}")
+                if stderr:
+                    logger.error(f"{stderr}")
             else:
                 logger.info(f"Successfully installed wheel {wheel}")
+                # Move files from pip_install_dir to worlds_install_dir
+                for obj in pip_install_dir.glob("*"):
+                    obj.rename(worlds_install_dir / obj.name)
     else:
         for wheel in wheels_files:
             logger.info(f"Installing wheel: {wheel}")

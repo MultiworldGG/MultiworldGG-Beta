@@ -14,6 +14,7 @@ from itertools import chain
 from typing import Any
 
 import ModuleUpdate
+
 ModuleUpdate.update()
 
 import Utils
