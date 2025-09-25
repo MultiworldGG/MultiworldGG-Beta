@@ -44,7 +44,7 @@ build_exe_options = {
     "packages": [
         # GUI/Graphics frameworks (complex packages with data files)
         "kivy",
-        "kivy_deps", 
+        "kivy_deps" if is_windows else None,
         "kivymd",
         "asynckivy",
         
@@ -56,8 +56,8 @@ build_exe_options = {
         "PIL",
         
         # Platform-specific memory access (conditional imports)
-        "pymem",
-        "dolphin_memory_engine",
+        "pymem" if is_windows else None,
+        "dolphin_memory_engine" if is_windows else None,
         
         # System utilities (might be conditionally imported)
         "pyshortcuts",
@@ -73,18 +73,6 @@ build_exe_options = {
         "mwgg_gui",
         "worlds",
         
-        # # Auto-detected candidates (remove if build works without them)
-        # "bsdiff4",          # Try removing - likely auto-detected
-        # "platformdirs",     # Try removing - likely auto-detected  
-        # "certifi",          # Try removing - usually auto-detected with requests
-        # "orjson",           # Try removing if directly imported
-        # "typing_extensions", # Try removing - usually auto-detected
-        # "tqdm",             # Try removing if directly imported
-        # "colorama",         # Try removing if directly imported
-        # "yaml",             # Try removing - likely auto-detected as PyYAML
-        # "jellyfish",        # Try removing if directly imported
-        # "jinja2",           # Try removing - likely auto-detected
-        # "schema",           # Try removing if directly imported
     ],
     "includes": [
         "ModuleUpdate",
@@ -123,7 +111,6 @@ build_exe_options = {
         ("EnemizerCLI", "EnemizerCLI") if os.path.exists("EnemizerCLI") else None,
         ("kivy/data", "lib/kivy/data"),
         ("kivy/include", "lib/kivy/include"),
-        # ("python.exe", "python.exe")  # Removed: Use system Python instead
     ],
     "include_msvcr": False,
     "replace_paths": ["*."],
@@ -131,8 +118,9 @@ build_exe_options = {
     "bin_includes": ["libffi.so", "libcrypt.so"] if platform.system() == "Linux" else []
 }
 
-# Remove None entries from include_files
+# Remove None entries from include_files and packages
 build_exe_options["include_files"] = [item for item in build_exe_options["include_files"] if item is not None]
+build_exe_options["packages"] = [item for item in build_exe_options["packages"] if item is not None]
 
 # Executable configurations
 executables = [
