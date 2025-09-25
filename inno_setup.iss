@@ -118,6 +118,7 @@ end;
 function IsPythonInstalled: Boolean;
 var
   ResultCode: Integer;
+  Output: TExecOutput;
 begin
   Result := False;
   
@@ -154,29 +155,45 @@ begin
   end;
   
   // Method 3: Use 'where python' to find all python executables
-  if Exec('cmd.exe', '/c where python', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
+  if ExecAndCaptureOutput('cmd.exe', '/c where python', '', SW_HIDE, ewWaitUntilTerminated, ResultCode, Output) then
   begin
-    Log('Python executables found via where command');
-    // Try to use the first python found
-    if Exec('python', '-m pip --version', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
+    if GetArrayLength(Output.StdOut) > 0 then
+      Log('where python output: ' + Output.StdOut[0]);
+    // Check if output contains actual python paths (not just Windows Store aliases)
+    if (GetArrayLength(Output.StdOut) > 0) and (Pos('python.exe', Output.StdOut[0]) > 0) and (Pos('WindowsApps', Output.StdOut[0]) = 0) then
     begin
-      Log('Python and pip are ready via where-found python');
-      Result := True;
-      Exit;
-    end;
+      Log('Real Python executables found via where command');
+      // Try to use the first python found
+      if Exec('python', '-m pip --version', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
+      begin
+        Log('Python and pip are ready via where-found python');
+        Result := True;
+        Exit;
+      end;
+    end
+    else
+      Log('Only Windows Store Python aliases found via where command');
   end;
   
   // Method 4: Use 'py -0p' to list installed Python executables
-  if Exec('py', '-0p', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
+  if ExecAndCaptureOutput('py', '-0p', '', SW_HIDE, ewWaitUntilTerminated, ResultCode, Output) then
   begin
-    Log('Python installations found via py -0p');
-    // Try to use py launcher with pip
-    if Exec('py', '-m pip --version', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
+    if GetArrayLength(Output.StdOut) > 0 then
+      Log('py -0p output: ' + Output.StdOut[0]);
+    // Check if output contains actual python paths
+    if (GetArrayLength(Output.StdOut) > 0) and (Pos('python.exe', Output.StdOut[0]) > 0) then
     begin
-      Log('Python and pip are ready via py launcher');
-      Result := True;
-      Exit;
-    end;
+      Log('Python installations found via py -0p');
+      // Try to use py launcher with pip
+      if Exec('py', '-m pip --version', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
+      begin
+        Log('Python and pip are ready via py launcher');
+        Result := True;
+        Exit;
+      end;
+    end
+    else
+      Log('No Python installations found via py -0p');
   end;
   
   if not Result then
