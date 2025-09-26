@@ -21,7 +21,7 @@ def launch_client(*args):
     from .TrackerClient import launch as TCMain
     launch(TCMain, name="Universal Tracker client", args=args)
 
-UT_VERSION = "v0.2.12 UNSTABLE2.3"
+UT_VERSION = "v0.2.20"
 
 class CurrentTrackerState(NamedTuple):
     all_items: Counter
@@ -40,6 +40,12 @@ class CurrentTrackerState(NamedTuple):
         return CurrentTrackerState(Counter(),Counter(),[],[],[],[],[],[],[],None)
 
 class DeferredEntranceMode(Enum):
+    """Determines how worlds should be allowed to use deferred entrances
+    on: Force worlds to disconnect entrances
+    default: Allow worlds to decide if entrances should be deferred
+    off: Force worlds to connect all entrances
+    """
+
     forced = "on"
     default = "default"
     disabled = "off"
@@ -59,12 +65,24 @@ class TrackerSettings(Group):
     
     class UseSplitMapIcons(Bool):
         """Use split icons rather then mixed for the UT map tab"""
+    
+    class DisplayGlitchedLogic(Bool):
+        """Enable showing Glitched/yellow logic in tracker tab"""
+    
+    class SettingDeferredEntranceMode(str):
+        """Determines how worlds should be allowed to use deferred entrances
+        on: Force worlds to disconnect entrances
+        default: Allow worlds to decide if entrances should be deferred
+        off: Force worlds to connect all entrances
+        """
 
     player_files_path: TrackerPlayersPath = TrackerPlayersPath("Players")
     include_region_name: RegionNameBool | bool = False
     include_location_name: LocationNameBool | bool = True
     hide_excluded_locations: HideExcluded | bool = False
     use_split_map_icons: UseSplitMapIcons | bool = True
+    enforce_deferred_entrances: SettingDeferredEntranceMode | str = "default"
+    display_glitched_logic: DisplayGlitchedLogic | bool = True
 
 
 class TrackerWorld(World):
@@ -102,6 +120,9 @@ class UTMapTabData:
     poptracker_name_mapping: dict[str, int]
     """Mapping from [poptracker name : datapackage location id] """
 
+    poptracker_entrance_mapping: dict[str, str]
+    """Mapping from [poptracker name : ap entrance name] used for entrance tracking"""
+
     location_setting_key: str
     """Data storage key used to determine where to place the location indicator"""
 
@@ -114,7 +135,8 @@ class UTMapTabData:
             map_page_index: Callable[[Any], int] | None = None, external_pack_key: str = "",
             poptracker_name_mapping: dict[str, int] | None = None,
             location_setting_key: str|None = None,
-            location_icon_coords: Callable[[int, Any], tuple[int,int]|None]= None, **kwargs):
+            location_icon_coords: Callable[[int, Any], tuple[int,int]]|None= None,
+            poptracker_entrance_mapping: dict[str, str]|None = None, **kwargs):
         self.map_page_folder = map_page_folder
         if isinstance(map_page_maps, str):
             self.map_page_maps = [map_page_maps]
@@ -135,6 +157,10 @@ class UTMapTabData:
             self.poptracker_name_mapping = poptracker_name_mapping
         else:
             self.poptracker_name_mapping = {}
+        if poptracker_entrance_mapping:
+            self.poptracker_entrance_mapping = poptracker_entrance_mapping
+        else:
+            self.poptracker_entrance_mapping = {}
         self.external_pack_key = external_pack_key
         self.location_setting_key = location_setting_key
         if isinstance(self.location_setting_key, str):

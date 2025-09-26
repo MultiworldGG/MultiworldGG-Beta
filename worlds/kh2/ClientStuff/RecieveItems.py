@@ -174,7 +174,7 @@ async def IsInShop(self, sellable):
 
 async def verifyItems(self):
     try:
-        #All these sets include items that the player has recieved
+        # All these sets include items that the player has recieved
         # set of all the items that have an
         master_amount = list(self.kh2_seed_save_cache["AmountInvo"]["Amount"].keys())
         # set of all the items that have are abilities
@@ -321,8 +321,10 @@ async def verifyItems(self):
             item_data = self.item_name_to_data[item_name]
             amount_of_items = 0
             amount_of_items += self.kh2_seed_save_cache["AmountInvo"]["Magic"][item_name]
-            if self.kh2_read_byte(self.Save + item_data.memaddr) != amount_of_items and self.kh2_read_byte(
-                    self.Shop) in {10, 8}:
+            # - base address because it reads a pointer then in stead of reading what it points to its pointer+baseaddress which offsets
+            if self.kh2_read_byte(self.Save + item_data.memaddr) != amount_of_items and self.kh2_read_byte(self.FadeStatus) == 0 \
+                    and self.kh2_read_longlong(self.PlayerGaugePointer) != 0 \
+                    and self.kh2_read_int(self.kh2_read_longlong(self.PlayerGaugePointer) + 0x88 - self.kh2_return_base_address()) != 0:
                 self.kh2_write_byte(self.Save + item_data.memaddr, amount_of_items)
 
         for item_name in master_stat:
@@ -349,6 +351,8 @@ async def verifyItems(self):
                 elif item_name == ItemName.DriveGaugeUp:
                     current_max_drive = self.kh2_read_byte(self.Slot1 + 0x1B2)
                     # change when max drive is changed from 6 to 4
+                    # drive is maxed at 9 and base_drive is always 5 so if amount is higher set to 4 which is the max it should be
+                    amount_of_items = min(amount_of_items, 4)
                     if current_max_drive < 9 and current_max_drive != self.base_drive + amount_of_items:
                         self.kh2_write_byte(self.Slot1 + 0x1B2, self.base_drive + amount_of_items)
                 # need to do these differently when the amount is dynamic
@@ -408,4 +412,21 @@ async def displayPuzzlePieceTextinGame(self, string_to_display):
         self.kh2_write_bytes(0x800104, displayed_string)
         self.kh2_write_byte(0x800000, 2)  # displaying puzzle piece popup
         self.queued_puzzle_popup.remove(string_to_display)
+        await asyncio.sleep(0.5)
+
+
+async def displayChestTextInGame(self, string_to_display):
+    if self.kh2_read_byte(0x800000) == 0:
+
+        displayed_string = self.to_khscii(string_to_display)
+        print(f"made display string {displayed_string} from {string_to_display}")
+        self.kh2_write_byte(0x800150, 0)  # item picture. this will change from 0 when I can input icons from the items
+        print("wrote item picture")
+        self.kh2_write_bytes(0x800154, displayed_string)  # text
+        print("wrote text")
+        self.kh2_write_byte(0x800000, 3)  # displaying chest popup
+        print("called chest popup")
+        await asyncio.sleep(1)
+
+        self.queued_chest_popup.remove(string_to_display)
         await asyncio.sleep(0.5)

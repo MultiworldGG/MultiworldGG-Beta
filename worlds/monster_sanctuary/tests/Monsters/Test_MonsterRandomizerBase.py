@@ -159,6 +159,18 @@ class TestMonsterRandomizerBase(WorldTestBase):
                     state.collect(item)
                     self.assertTrue(can_use_ability(monster_data.name, state, 1))
 
+    def test_dodo_egg_is_in_item_pool(self):
+        item_names = [item.name for item in self.multiworld.itempool]
+
+        def test_item_is_in_item_pool(egg_name):
+            with self.subTest("Egg is in item pool", egg=egg_name):
+                self.assertIn(egg_name, item_names)
+
+        test_item_is_in_item_pool("Dodo Egg")
+        test_item_is_in_item_pool("Light-Shifted Dodo Egg")
+        test_item_is_in_item_pool("Dark-Shifted Dodo Egg")
+
+
 
 class TestMonsterRandomizerOff(TestMonsterRandomizerBase):
     options = {

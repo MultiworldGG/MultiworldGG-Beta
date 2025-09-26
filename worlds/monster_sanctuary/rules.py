@@ -144,6 +144,22 @@ def defeated_enough_champions_for_key_of_power(state: CollectionState, player: i
     return state.has("Champion Defeated", player, champions_to_defeat)
 
 
+def casual(state: CollectionState, player: int) -> bool:
+    return get_options(state, player).logic_difficulty.value == 0
+
+
+def advanced(state: CollectionState, player: int) -> bool:
+    return get_options(state, player).logic_difficulty.value == 1
+
+
+def expert(state: CollectionState, player: int) -> bool:
+    return get_options(state, player).logic_difficulty.value == 2
+
+
+def tedious(state: CollectionState, player: int) -> bool:
+    return get_options(state, player).tedious_checks.value
+
+
 def get_options(state: CollectionState, player: int):
     return state.multiworld.worlds[player].options
 # endregion
@@ -504,6 +520,10 @@ def forgotten_world_dracomer_defeated(state: CollectionState, player: int) -> bo
 
 def post_game(state: CollectionState, player: int) -> bool:
     return state.has("Mad Lord Defeated", player)
+
+
+def aazerach_defeated(state: CollectionState, player: int) -> bool:
+    return state.has("Aazerach Defeated", player)
 # endregion
 
 
@@ -561,6 +581,18 @@ def key_of_power(state: CollectionState, player: int) -> bool:
 
 def all_celestial_feathers(state: CollectionState, player: int) -> bool:
     return state.has("Celestial Feather", player, 3)
+
+
+def dodo_egg(state: CollectionState, player: int) -> bool:
+    return state.has("Dodo Egg", player)
+
+
+def light_shifted_dodo_egg(state: CollectionState, player: int) -> bool:
+    return state.has("Light-Shifted Dodo Egg", player)
+
+
+def dark_shifted_dodo_egg(state: CollectionState, player: int) -> bool:
+    return state.has("Dark-Shifted Dodo Egg", player)
 # endregion
 
 

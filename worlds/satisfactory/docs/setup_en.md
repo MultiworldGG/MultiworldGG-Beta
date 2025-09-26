@@ -14,7 +14,7 @@
 ## Overview
 
 This guide walks you through installing the Satisfactory Archipelago mod via the Satisfactory Mod Manager,
-configuring a MultiworldGG slot for Satisfactory,
+configuring an Archipelago slot for Satisfactory,
 and playing the game with a Satisfactory client.
 
 ### Defining Some Terms
@@ -26,7 +26,7 @@ This guide uses the following terms to refer to the software:
 
 - **MultiworldGG Server** - The central MultiworldGG server, which connects all games to each other.
 - **MultiworldGG Client** - The desktop application used by many MultiworldGG games as middleware. Satisfactory does NOT require this software, unless you would like to generate a world locally.
-- **Archipelago (Satisfactory) mod** - The Satisfactory mod which implements MultiworldGG in-game functionality and connectivity.
+- **Archipelago (Satisfactory) mod** - The Satisfactory mod which implements MultiworldGG/AP in-game functionality and connectivity.
   All Satisfactory hosts and clients must have this mod installed.
 - **Satisfactory Host** - The Satisfactory instance which will be used to host the game.
   This could be a Satisfactory Client using Singleplayer or host-and-play multiplayer, or it could be a Satisfactory dedicated server.
@@ -36,7 +36,7 @@ This guide uses the following terms to refer to the software:
 
 ### What a Playable State Looks Like
 
-- a MultiworldGG Server
+- An MultiworldGG Server
 - One running modded Satisfactory Host (game client or dedicated server) per Satisfactory world
 - Optionally, additional modded Satisfactory Clients for additional players
 
@@ -105,7 +105,7 @@ See the [Troubleshooting section below](#troubleshooting) if you encounter any i
 ## Hosting Your Own Satisfactory Game
 
 If you're hosting your own Satisfactory game,
-you will need to configure a MultiworldGG world and set up the Satisfactory Host you will be playing on.
+you will need to configure an MultiworldGG world and set up the Satisfactory Host you will be playing on.
 
 ### Create a Config (.yaml) File
 
@@ -134,7 +134,7 @@ YAML Validator page: [Yaml Validation Page](/mysterycheck)
 The Player Settings page provides a few options for controlling what materials you start with
 and when certain key technologies are unlocked.
 Any Resource Bundle type items added to your starting inventory will be delivered to your player inventory when you initally spawn,
-unless they can't fit, in which case they can be collected by building a MultiworldGG Portal.
+unless they can't fit, in which case they can be collected by building an Archipelago Portal.
 
 Advanced users can use Plando, Weighted Options, and manual yaml editing to further configure the starting inventory.
 If you don't wish to use these techniques, consider using Satisfactory's
@@ -163,22 +163,16 @@ Next, enter the connection details in the relevant fields.
 
 - **Server URI**: MultiworldGG Server URI and port, for example, `multiworld.gg:49236`
 - **User Name**: The name you entered as your Player Name when you created your config file. It's also listed in the Name column of your room page.
-- **Password**: The password for your slot, blank if you did not assign one.
+- **Password**: The password for your MultiworldGG room, blank if you did not assign or receive one.
 
 Note that the Satisfactory Host/Client does *not* need a copy of your MultiworldGG config file.
 The mod communicates with the MultiworldGG Server, which already has your config file,
 to generate the required content at runtime.
 
-Consider enabling Advanced Game Settings to allow dealing with bugs that may arise.
-Within the Advanced Game Settings menus,
-you may wish to switch the "Keep Inventory" setting to "Keep Everything" to avoid dropping items on death,
-although this will never lock you out of progression.
+Consider setting the following options in the "Options" > "Gameplay" section, especially because they are per-user and persist across your game saves:
 
-> Note: Satisfactory dedicated servers do not currently have a user interface for the Mod Savegame Setting system.
-> and [the starting inventory feature does not currently work on dedicated servers](https://github.com/Jarno458/SatisfactoryArchipelagoMod/issues/105).
-> If you are setting up a dedicated server as your Satisfactory Host, to work around these limitations,
-> create the save locally in your Satisfactory Client first,
-> then upload the save file to your server using the [Server Manager](https://satisfactory.wiki.gg/wiki/Dedicated_servers#Loading_a_save_file).
+- **Creature Hostility**: `Default` (the game's default). Some of the mod's Traps involve creatures, and having them Passive or Retaliate cheapens the experience.
+- **Keep Inventory**: `Keep Everything` or `Keep Equipment` (the game's default). Although dying and dropping items will never lock you out of progression, Free Samples and Bundles means you can easily gain items you can't easily replace.
 
 ### Verifying Connection Success
 
@@ -193,10 +187,6 @@ You may wish to use the Text Client to run commands since Satisfactory's in game
 Check out the HUB to get started!
 
 See the [Troubleshooting section below](#troubleshooting) if you encounter any issues.
-
-<!-- ## Other Settings
-
-TODO implement filter_item_sends and bridge_chat_out mentioned in the Factorio guide? -->
 
 ### Allowing Other People to Join Your Game
 
@@ -238,6 +228,3 @@ enter the updated Server URI, then save and reload the game.
   - Use the Mod Manager to generate a debug zip and attach that file.
    [Satisfactory Modding Documentation FAQ: Generating a debug zip](https://docs.ficsit.app/satisfactory-modding/latest/faq.html#_where_can_i_find_the_games_log_files)
   - Attach your MultiworldGG config file and spoiler to your report.
-- If your early game power grid is repeatedly shutting down for unclear reasons,
-  ensure you are not wearing a Hover Pack, as they draw 100 MW.
-<!-- TODO remove hoverpack note once the mod is added as a dependency -->

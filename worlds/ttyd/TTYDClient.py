@@ -100,7 +100,7 @@ class TTYDCommandProcessor(ClientCommandProcessor):
 
 class TTYDContext(CommonContext):
     command_processor = TTYDCommandProcessor
-    game = "Paper Mario The Thousand Year Door"
+    game = "Paper Mario: The Thousand-Year Door"
     items_handling = 0b101
     dolphin_connected: bool = False
     seed_verified: bool = False
@@ -268,10 +268,11 @@ async def ttyd_sync_task(ctx: TTYDContext):
                         }])
                     await ctx.receive_items()
                     await ctx.check_ttyd_locations()
-                    if ctx.slot_data["goal"] == 0: # Shadow Queen
+                    goal = ctx.slot_data.get("goal", 0)
+                    if goal == 0: # Shadow Queen
                         if not ctx.finished_game and gsw_check(1708) >= 18:
                             await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
-                    elif ctx.slot_data["goal"] == 1: # Crystal Stars
+                    elif goal == 1: # Crystal Stars
                         if not ctx.finished_game and dolphin.read_byte(0x8000323B) >= ctx.slot_data["goal_stars"]:
                             await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
                     else:

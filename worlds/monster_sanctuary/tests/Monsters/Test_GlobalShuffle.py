@@ -1,6 +1,6 @@
 from typing import Dict
 
-from worlds.monster_sanctuary import encounters as ENCOUNTERS
+from worlds.monster_sanctuary import encounters as ENCOUNTERS, MonsterSanctuaryWorld
 from worlds.monster_sanctuary.tests.Monsters.Test_MonsterRandomizerBase import TestMonsterRandomizerBase
 
 
@@ -34,10 +34,11 @@ class TestMonsterRandomizerShuffle(TestMonsterRandomizerBase):
                 self.assertEqual(1, swapped_names.count(name))
 
     def test_monster_eggs_in_item_pool(self):
+        world = self.multiworld.worlds[1]
         item_names = [item.name for item in self.multiworld.itempool]
 
-        def test_egg_is_in_item_pool(monster_name):
-            monster = self.multiworld.worlds[1].species_swap[monster_name]
+        def test_egg_is_in_item_pool(monster_name, swap_species: bool = True):
+            monster = world.species_swap[monster_name] if swap_species else ENCOUNTERS.get_monster(monster_name)
             with self.subTest("Egg is in item pool", monster=monster.name):
                 self.assertIn(monster.egg_name(), item_names)
 
@@ -46,6 +47,10 @@ class TestMonsterRandomizerShuffle(TestMonsterRandomizerBase):
         test_egg_is_in_item_pool("Tanuki")
         test_egg_is_in_item_pool("Sizzle Knight")
         test_egg_is_in_item_pool("Ninki")
+
+        test_egg_is_in_item_pool("Akhlut", False)
+        test_egg_is_in_item_pool("Krakaturtle", False)
+        test_egg_is_in_item_pool("Gryphonix", False)
 
     def test_shuffled_tanuki_is_available(self):
         monster = self.multiworld.worlds[1].species_swap["Tanuki"]

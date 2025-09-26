@@ -52,6 +52,7 @@ class Sly1Context(CommonContext):
     last_error_message: Optional[str] = None
     openable_vaults: list[str] = []
     opened_vaults: list[str] = []
+    current_scene_key = None
 
     #Game state
     current_episode: Optional[Sly1Episode] = None
@@ -104,6 +105,7 @@ class Sly1Context(CommonContext):
     def on_package(self, cmd: str, args: dict):
         if cmd == "Connected":
             self.slot_data = args["slot_data"]
+            self.current_scene_key = f"sly1_current_scene_T{self.team}_{self.slot}"
 
 def update_connection_status(ctx: Sly1Context, status: bool):
     if ctx.is_connected_to_game == status:
@@ -142,7 +144,7 @@ async def _handle_game_ready(ctx: Sly1Context) -> None:
     current_episode = ctx.game_interface.get_current_episode()
     current_level = ctx.game_interface.get_current_level_name()
 
-    ctx.game_interface.skip_cutscene()
+    ctx.game_interface.skip_cutscene(ctx)
 
     #if ctx.is_loading:
         #if not ctx.game_interface.is_loading():

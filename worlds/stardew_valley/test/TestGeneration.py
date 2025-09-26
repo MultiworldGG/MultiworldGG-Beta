@@ -149,7 +149,7 @@ class TestProgressiveElevator(SVTestBase):
 
         self.collect(last_elevator)
 
-        self.assert_can_reach_region("The Mines - Floor 120")
+        self.assert_can_reach_region(Region.mines_floor_120)
 
     def generate_items_for_mine_115(self) -> List[Item]:
         landslide = self.get_item_by_name("Landslide Removed")
@@ -184,9 +184,6 @@ class TestSkullCavernLogic(SVTestBase):
         items_for_skull_50 = self.generate_items_for_skull_50()
         items_for_skull_100 = self.generate_items_for_skull_100()
         self.collect(items_for_115)
-        self.multiworld.get_region(Region.mines_floor_115, self.player)
-        self.multiworld.get_region(Region.skull_cavern_25, self.player)
-        self.multiworld.get_region(Region.skull_cavern_75, self.player)
 
         self.assert_can_reach_region(Region.mines_floor_115)
         self.assert_cannot_reach_region(Region.skull_cavern_25)

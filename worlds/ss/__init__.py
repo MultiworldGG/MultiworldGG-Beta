@@ -44,9 +44,9 @@ from .rando.MiscRando import shuffle_batreaux_counts
 from .logic.LogicParser import parse_expression
 from .logic.Logic import ALL_REQUIREMENTS
 
-AP_VERSION = [0, 6, 1]
-WORLD_VERSION = VERSION.split(".")
-RANDO_VERSION = [2, 2, 0]
+AP_VERSION = [0, 6, 2]
+WORLD_VERSION = [0, 5, 3]
+RANDO_VERSION = [0, 5, 3]
 
 
 def run_client() -> None:
@@ -566,6 +566,8 @@ class SSWorld(World):
 
         # Output options to file.
         for field in fields(self.options):
+            if field.name =="plando_items":
+                continue # Skip adding plando_items to patchfile 
             output_data["Options"][field.name.replace("_", "-")] = getattr(
                 self.options, field.name
             ).value
@@ -728,3 +730,4 @@ class SSWorld(World):
         }
 
         return slot_data
+

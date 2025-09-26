@@ -10,7 +10,7 @@ from .options import FreeFlyLocation, JohtoOnly, BlackthornDarkCaveAccess, Goal,
 from .utils import get_fly_regions
 
 if TYPE_CHECKING:
-    from . import PokemonCrystalWorld
+    from .world import PokemonCrystalWorld
 
 # Rematches
 MAP_LOCKED = [
@@ -156,6 +156,8 @@ def create_regions(world: "PokemonCrystalWorld") -> dict[str, Region]:
                     create_wild_region(parent_region, encounter_key, world.generated_wild[encounter_key])
                 else:
                     world.logic.wild_regions[encounter_key] = LogicalAccess.OutOfLogic
+                    if world.is_universal_tracker:
+                        create_wild_region(parent_region, encounter_key, world.generated_wild[encounter_key])
 
             if wild_region_data.wild_encounters.surfing:
                 encounter_key = EncounterKey.water(wild_region_data.wild_encounters.surfing)
@@ -165,6 +167,8 @@ def create_regions(world: "PokemonCrystalWorld") -> dict[str, Region]:
                     create_wild_region(parent_region, encounter_key, world.generated_wild[encounter_key])
                 else:
                     world.logic.wild_regions[encounter_key] = LogicalAccess.OutOfLogic
+                    if world.is_universal_tracker:
+                        create_wild_region(parent_region, encounter_key, world.generated_wild[encounter_key])
 
             if wild_region_data.wild_encounters.fishing:
                 if "Fishing" in world.options.wild_encounter_methods_required:
@@ -176,6 +180,8 @@ def create_regions(world: "PokemonCrystalWorld") -> dict[str, Region]:
                     for fishing_rod in (FishingRodType.Old, FishingRodType.Good, FishingRodType.Super):
                         encounter_key = EncounterKey.fish(wild_region_data.wild_encounters.fishing, fishing_rod)
                         world.logic.wild_regions[encounter_key] = LogicalAccess.OutOfLogic
+                        if world.is_universal_tracker:
+                            create_wild_region(parent_region, encounter_key, world.generated_wild[encounter_key])
 
             if wild_region_data.wild_encounters.headbutt:
                 if "Headbutt" in world.options.wild_encounter_methods_required:
@@ -187,6 +193,8 @@ def create_regions(world: "PokemonCrystalWorld") -> dict[str, Region]:
                     for rarity in (TreeRarity.Common, TreeRarity.Rare):
                         encounter_key = EncounterKey.tree(wild_region_data.wild_encounters.headbutt, rarity)
                         world.logic.wild_regions[encounter_key] = LogicalAccess.OutOfLogic
+                        if world.is_universal_tracker:
+                            create_wild_region(parent_region, encounter_key, world.generated_wild[encounter_key])
 
             if wild_region_data.wild_encounters.rock_smash:
                 encounter_key = EncounterKey.rock_smash()
@@ -195,6 +203,8 @@ def create_regions(world: "PokemonCrystalWorld") -> dict[str, Region]:
                     create_wild_region(parent_region, encounter_key, world.generated_wild[encounter_key])
                 else:
                     world.logic.wild_regions[encounter_key] = LogicalAccess.OutOfLogic
+                    if world.is_universal_tracker:
+                        create_wild_region(parent_region, encounter_key, world.generated_wild[encounter_key])
 
         for static_id in wild_region_data.statics:
             static_encounter = world.generated_static[static_id]
@@ -205,6 +215,8 @@ def create_regions(world: "PokemonCrystalWorld") -> dict[str, Region]:
                 create_wild_region(parent_region, encounter_key, [static_encounter])
             else:
                 world.logic.wild_regions[encounter_key] = LogicalAccess.OutOfLogic
+                if world.is_universal_tracker:
+                    create_wild_region(parent_region, encounter_key, [static_encounter])
 
     def setup_mart_regions(parent_region: Region, region_data: RegionData):
         for mart in region_data.marts:
@@ -232,7 +244,7 @@ def create_regions(world: "PokemonCrystalWorld") -> dict[str, Region]:
                 setup_mart_regions(new_region, region_data)
 
             # Level Scaling
-            if world.options.level_scaling:
+            if world.options.level_scaling and not world.is_universal_tracker:
                 # Create plando locations for the trainers in their regions.
                 for trainer in region_data.trainers:
                     if exclude_scaling(trainer.name):
@@ -316,16 +328,16 @@ def create_regions(world: "PokemonCrystalWorld") -> dict[str, Region]:
         pokedex_region = Region("Pokedex", world.player, world.multiworld)
         regions["Pokedex"] = pokedex_region
         regions["Menu"].connect(regions["Pokedex"])
-    if world.options.evolution_methods_required:
+    if world.options.evolution_methods_required or world.is_universal_tracker:
         evolution_region = Region("Evolutions", world.player, world.multiworld)
         regions["Evolutions"] = evolution_region
         regions["Menu"].connect(regions["Evolutions"])
-    if world.options.breeding_methods_required:
+    if world.options.breeding_methods_required or world.is_universal_tracker:
         breeding_region = Region("Breeding", world.player, world.multiworld)
         regions["Breeding"] = breeding_region
         regions["Menu"].connect(regions["Breeding"])
 
-    if world.options.level_scaling:
+    if world.options.level_scaling and not world.is_universal_tracker:
         trainer_name_level_list.sort(key=lambda i: i[1])
         world.trainer_name_list = [i[0] for i in trainer_name_level_list]
         world.trainer_level_list = [i[1] for i in trainer_name_level_list]

@@ -95,6 +95,9 @@
 # Chrono Trigger
 /worlds/ctjot/ @Anguirel86
 
+# Choo-Choo Charles
+/worlds/cccharles/ @Yaranorgoth
+
 # Civilization VI
 /worlds/civ6/ @hesto2
 
@@ -165,11 +168,17 @@
 # Final Fantasy 4: Free Enterprise
 /worlds/ff4fe/ @Rosalie-A
 
+# Final Fantasy (1)
+/worlds/ff1/ @Rosalie-A
+
 # Final Fantasy Mystic Quest
 /worlds/ffmq/ @Alchav @wildham0
 
 # Final Fantasy Tactics Advance
 /worlds/ffta/ @spicynun
+
+# Flipwitch
+/worlds/flipwitch/ @Witchybun
 
 # Frogmonster
 /worlds/frogmonster @Rooby-Roo
@@ -253,6 +262,9 @@
 # Luigi's Mansion
 /worlds/luigismansion/ @BootsinSoots
 
+# Lunacid
+/worlds/lunacid/ @Witchybun
+
 # Majora's Mask (Recompiled)
 /worlds/mm_recomp/ @LittleCube-hax
 
@@ -278,6 +290,9 @@
 
 # Meritous
 /worlds/meritous/ @FelicitusNeko
+
+# Metroid Fusion
+/worlds/metroidfusion/ @Rosalie-A
 
 # Metroid Prime
 /worlds/metroidprime/ @Electro1512
@@ -577,9 +592,6 @@
 # The following worlds in this repo are currently unmaintained, but currently still work in core. If any update breaks
 # compatibility, these worlds may be deleted. If you are interested in stepping up as maintainer for
 # any of these worlds, please review `/docs/world maintainer.md` documentation.
-
-# Final Fantasy (1)
-# /worlds/ff1/
 
 # Ocarina of Time
 # /worlds/oot/

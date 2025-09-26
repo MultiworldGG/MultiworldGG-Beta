@@ -13,6 +13,7 @@ from .data.Constants import ADDRESSES, LEVELS, BOSSES, MOVES, MOVE_NAMES
 from .Locations import location_table, minigame_locations, bottle_amounts
 from .Items import from_id, bottles
 import logging
+import Utils
 
 SAVE_FILE = "sly1_item_progress.json"
 
@@ -171,9 +172,10 @@ async def handle_checks(ctx: 'Sly1Context') -> None:
                     if location_code not in ctx.locations_checked:
                         ctx.locations_checked.add(location_code)
                 # Minigame Caches
-                if level_name in minigame_locations:
+                minigame_name = level_name + " Key"
+                if minigame_name in minigame_locations:
                     for i in range(1, 11):
-                        location_code = minigame_locations[level_name].ap_code + i - 1
+                        location_code = minigame_locations[minigame_name].ap_code + i
                         if location_code not in ctx.locations_checked:
                             ctx.locations_checked.add(location_code)
             if ctx.vaults[episode_index][level_index]:
@@ -303,8 +305,12 @@ async def handle_received(ctx: 'Sly1Context') -> None:
 
 def load_saved_state():
     if os.path.exists(SAVE_FILE):
-        with open(SAVE_FILE, "r") as f:
-            return json.load(f)
+        try:
+            with open(SAVE_FILE, "r") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"[Warning] Failed to load save file: {e}")
+            return {}
     return {}
 
 def save_state(seed, new_state):

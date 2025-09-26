@@ -1,11 +1,14 @@
 from typing import Any, Dict, List, Set, Tuple, Union
 
+import json
+
 from BaseClasses import ItemClassification
 
 from .data.entrance_data import Entrance, EntranceRule, EntranceRuleData, endgame_entrance_data_by_goal
 from .data.item_data import item_data, ZorkGrandInquisitorItemData
 from .data.location_data import location_data, ZorkGrandInquisitorLocationData
 from .data.transform_data import item_data_transforms, location_data_transforms
+from .data.universal_tracker_data import tracker_location_groups, tracker_location_group_configuration
 
 from .enums import (
     ZorkGrandInquisitorClientSeedInformation,
@@ -197,6 +200,7 @@ def prepare_item_data(
 
     # Apply transformations
     items_to_make_filler: Set[ZorkGrandInquisitorItems] = set()
+    items_to_make_deprioritized_skip_balancing: Set[ZorkGrandInquisitorItems] = set()
 
     for context in (starting_location, goal, deathsanity, landmarksanity):
         if item_data_transforms[context] is not None:
@@ -211,11 +215,20 @@ def prepare_item_data(
                     item: ZorkGrandInquisitorItems
                     for item in items:
                         items_to_make_filler.add(item)
+                elif transform == ZorkGrandInquisitorItemTransforms.MAKE_DEPRIORITIZED_SKIP_BALANCING:
+                    item: ZorkGrandInquisitorItems
+                    for item in items:
+                        items_to_make_deprioritized_skip_balancing.add(item)
 
     item: ZorkGrandInquisitorItems
     for item in items_to_make_filler:
         transformed_item_data[item] = transformed_item_data[item]._replace(
             classification=ItemClassification.filler
+        )
+
+    for item in items_to_make_deprioritized_skip_balancing:
+        transformed_item_data[item] = transformed_item_data[item]._replace(
+            classification=ItemClassification.progression_deprioritized_skip_balancing
         )
 
     return transformed_item_data
@@ -512,3 +525,70 @@ def is_location_in_logic(
                 break
 
     return in_logic
+
+
+def generate_universal_tracker_location_data() -> None:
+    universal_tracker_data: List[Dict[str, Any]] = [
+        {
+            "name": "Zork Grand Inquisitor",
+            "children": list()
+        }
+    ]
+
+    location_size: int = 24
+    location_size_with_margin: int = int(location_size * 1.25)
+
+    location_group: str
+    locations: Tuple[ZorkGrandInquisitorLocations]
+    for location_group, locations in tracker_location_groups.items():
+        location_group_configuration: Tuple[int, int, bool, int] = tracker_location_group_configuration[location_group]
+
+        x_offset: int = location_group_configuration[0]
+        y_offset: int = location_group_configuration[1]
+        is_left_to_right: bool = location_group_configuration[2]
+        maximum_locations_per_row: int = location_group_configuration[3]
+        count: int = 1
+        overflows: int = 0
+
+        if not is_left_to_right:
+            locations = tuple(reversed(locations))
+
+        i: int
+        location: ZorkGrandInquisitorLocations
+        for i, location in enumerate(locations):
+            universal_tracker_data[0]["children"].append(
+                {
+                    "name": location.value,
+                    "map_locations": [
+                        {
+                            "map": "map",
+                            "x": x_offset,
+                            "y": y_offset,
+                            "size": location_size,
+                            "border_thickness": 2,
+                        }
+                    ],
+                    "sections": [
+                        {
+                            "name": location.value,
+                        }
+                    ]
+                }
+            )
+
+            count += 1
+
+            if count > maximum_locations_per_row:
+                overflows += 1
+                count = 1
+
+                x_offset = location_group_configuration[0]
+                y_offset = location_group_configuration[1] + (location_size_with_margin * overflows)
+            else:
+                if is_left_to_right:
+                    x_offset += location_size_with_margin
+                else:
+                    x_offset -= location_size_with_margin
+
+    with open("worlds/zork_grand_inquisitor/ut/locations/locations.json", "w") as f:
+        json.dump(universal_tracker_data, f, indent=4)

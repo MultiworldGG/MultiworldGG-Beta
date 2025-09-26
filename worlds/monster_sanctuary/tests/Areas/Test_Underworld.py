@@ -80,13 +80,13 @@ class UnderworldTests(TestArea):
         # There might be another requirement to get to this location, but that will require player experience
         self.assertNotAccessible("Underworld_Center2", "underworld_west_catacomb_7_shortcut", [])
         self.assertAccessible("Underworld_Center2", "underworld_west_catacomb_7_shortcut",
-                              ["Double Jump Boots", "Kongamato"])
+                              ["Double Jump Boots", "Kongamato", "Underworld West Catacomb 4 Access"])
 
         # Now the player needs roof access so they can do the final loop around the building
         # There might be another requirement to get to this location, but that will require player experience
         self.assertNotAccessible("Underworld_Center2", "underworld_west_catacomb_roof_access", [])
         self.assertAccessible("Underworld_Center2", "underworld_west_catacomb_roof_access",
-                              ["Double Jump Boots", "Kongamato"])
+                              ["Double Jump Boots", "Kongamato", "Worm", "Underworld West Catacomb 4 Access"])
 
         # Finally put it all together to get to the end
         self.assertAccessible("Underworld_Center2", "underworld_west_catacomb_9_interior_access",
@@ -180,5 +180,5 @@ class UnderworldWithOpenShortcuts(TestArea):
         self.assertAccessible(
             "Underworld_WestCatacomb9_ExteriorEast",
             "Underworld_WestCatacomb9_Roof_12",
-            []
+            ["Arachlich"]
         )

@@ -401,13 +401,16 @@ def alter8bitRewardImages(ROM_COPY, offset_dict: dict, arcade_item: Items = Item
         Minigame8BitImage([Items.JunkMelon], MinigameImageLoader(None, 7, 0x142, 48, 42), MinigameImageLoader("melon")),
         Minigame8BitImage([Items.NintendoCoin], None, MinigameImageLoader("nintendo")),
         Minigame8BitImage([Items.RarewareCoin], MinigameImageLoader(None, 25, 5905, 44, 44), None),
-        Minigame8BitImage([Items.RainbowCoin], MinigameImageLoader(None, 25, 5963, 48, 44), MinigameImageLoader("rainbow")),
+        Minigame8BitImage([Items.RainbowCoin, Items.FillerRainbowCoin], MinigameImageLoader(None, 25, 5963, 48, 44), MinigameImageLoader("rainbow")),
         Minigame8BitImage(
             ItemPool.HintItems(),
             MinigameImageLoader(None, 25, 0x1775, 64, 64, TextureFormat.IA8),
             MinigameImageLoader("hint"),
         ),
         Minigame8BitImage([Items.ArchipelagoItem], MinigameImageLoader("ap"), MinigameImageLoader("ap")),
+        Minigame8BitImage([Items.SpecialArchipelagoItem], MinigameImageLoader("ap_useful"), MinigameImageLoader("ap")),
+        Minigame8BitImage([Items.FoolsArchipelagoItem], MinigameImageLoader("ap_junk"), MinigameImageLoader("ap")),
+        Minigame8BitImage([Items.TrapArchipelagoItem], MinigameImageLoader("ap_trap"), MinigameImageLoader("ap")),
         Minigame8BitImage(
             [Items.Cranky],
             MinigameImageLoader(None, 25, 0x1387, 32, 32, TextureFormat.RGBA5551, [0x1388, 0x1389, 0x138A]),
@@ -1196,15 +1199,13 @@ def patchAssembly(ROM_COPY, spoiler):
     writeValue(ROM_COPY, 0x80731996, Overlay.Static, getHiSym("bonus_data"), offset_dict)
     writeValue(ROM_COPY, 0x807319A2, Overlay.Static, getLoSym("bonus_data"), offset_dict)
 
-    if settings.free_trade_setting != FreeTradeSetting.none:
+    if settings.free_trade_setting:
         # Non-BP Items
         writeValue(ROM_COPY, 0x807319C0, Overlay.Static, 0x00001025, offset_dict, 4)  # OR $v0, $r0, $r0 - Make all reward spots think no kong
         # writeValue(ROM_COPY, 0x80632E94, Overlay.Static, 0x00001025, offset_dict, 4)  # OR $v0, $r0, $r0 - Make flag mapping think no kong
         writeFunction(ROM_COPY, 0x80632E94, Overlay.Static, "getItemRequiredKong", offset_dict)  # Get required kong for item, used to set Stump GB as Tiny
-
-        if settings.free_trade_setting == FreeTradeSetting.major_collectibles:
-            writeValue(ROM_COPY, 0x806F56F8, Overlay.Static, 0, offset_dict, 4)  # Disable Flag Set for blueprints
-            writeValue(ROM_COPY, 0x806A606C, Overlay.Static, 0, offset_dict, 4)  # Disable translucency for blueprints
+        writeValue(ROM_COPY, 0x806F56F8, Overlay.Static, 0, offset_dict, 4)  # Disable Flag Set for blueprints
+        writeValue(ROM_COPY, 0x806A606C, Overlay.Static, 0, offset_dict, 4)  # Disable translucency for blueprints
 
     writeFunction(ROM_COPY, 0x806B26A0, Overlay.Static, "fireballEnemyDeath", offset_dict)
     if Types.Enemies in settings.shuffled_location_types:
@@ -1929,7 +1930,13 @@ def patchAssembly(ROM_COPY, spoiler):
     writeValue(ROM_COPY, 0x8002EA64, Overlay.Menu, 0xA64B0008, offset_dict, 4)  # Disable option 1 write
     # Menu/Shop: Snide's
     writeValue(ROM_COPY, 0x8002402C, Overlay.Menu, 0x240E000C, offset_dict, 4)  # No extra contraption cutscenes
-    writeValue(ROM_COPY, 0x80024054, Overlay.Menu, 0x24080001, offset_dict, 4)  # 1 GB Turn in
+    if settings.snide_reward_rando:
+        writeFunction(ROM_COPY, 0x80632188, Overlay.Static, "isModelTwoTiedFlag_new", offset_dict)  # Update setup to account for snide
+        writeValue(ROM_COPY, 0x8063218C, Overlay.Static, 0x02202825, offset_dict, 4)  # Modify arg
+        writeValue(ROM_COPY, 0x800248B0, Overlay.Menu, 0, offset_dict, 4)  # Remove flag set
+        writeValue(ROM_COPY, 0x800248C0, Overlay.Menu, 0, offset_dict, 4)  # Remove increment
+    else:
+        writeValue(ROM_COPY, 0x80024054, Overlay.Menu, 0x24080001, offset_dict, 4)  # 1 GB Turn in
     # Menu/Shop: Candy's
     writeValue(ROM_COPY, 0x80027678, Overlay.Menu, 0x1000, offset_dict)  # Patch Candy's Shop Glitch
     writeValue(ROM_COPY, 0x8002769C, Overlay.Menu, 0x1000, offset_dict)  # Patch Candy's Shop Glitch
@@ -2025,6 +2032,18 @@ def patchAssembly(ROM_COPY, spoiler):
     writeHook(ROM_COPY, 0x806321FC, Overlay.Static, "SetupModelTwoHandler", offset_dict)  # Setup transfer for model 2
     writeHook(ROM_COPY, 0x806F7924, Overlay.Static, "ActorToModelTwoHandler", offset_dict)  # Actor transfer for model 2
     writeHook(ROM_COPY, 0x8063BA04, Overlay.Static, "ModelTwoToSetupState", offset_dict)  # Model 2 transfer to setup
+
+    # Rainbow Ammo Static Functions
+    writeFunction(ROM_COPY, 0x80694E14, Overlay.Static, "colorRainbowAmmo", offset_dict)  # Coconut Code
+    writeFunction(ROM_COPY, 0x80692A34, Overlay.Static, "colorRainbowAmmo", offset_dict)  # Peanut Code
+    writeFunction(ROM_COPY, 0x80692F44, Overlay.Static, "colorRainbowAmmo", offset_dict)  # Grape Code
+    # writeFunction(ROM_COPY, 0x80695444, Overlay.Static, "colorRainbowAmmo", offset_dict)  # Feather Code
+    writeFunction(ROM_COPY, 0x806945B0, Overlay.Static, "colorRainbowAmmo", offset_dict)  # Pineapple Code
+    writeHook(ROM_COPY, 0x806F97A8, Overlay.Static, "loadHUDFunction", offset_dict)  # HUD Code
+    writeHook(ROM_COPY, 0x806AB528, Overlay.Static, "loadPauseHUDFunction", offset_dict)  # HUD Code - Pause Menu
+    writeValue(ROM_COPY, 0x80690CD0, Overlay.Static, 0, offset_dict, 4)  # Disable hud sprite duping
+    writeValue(ROM_COPY, 0x80690CD8, Overlay.Static, 0, offset_dict, 4)  # Disable hud sprite duping
+    writeValue(ROM_COPY, 0x80690D00, Overlay.Static, 0, offset_dict, 4)  # Disable hud sprite duping
 
     # Fast Start: Beginning of game
     if settings.fast_start_beginning_of_game:

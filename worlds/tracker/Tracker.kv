@@ -88,6 +88,34 @@
 <TrackerTooltip>:
     pos_hint: {}
 
+<ApLocationDeferred>:
+    text: "Server:"
+    size_hint_x: None
+    size: (app.loc_size, app.loc_size)
+    canvas.before:
+        PushMatrix:
+        Rotate:
+            origin: (self.x, self.y)
+            angle: 45
+        Scale:
+            origin: (self.x, self.y)
+            x: .7 # aprox sqrt(2)
+            y: .7 # aprox sqrt(2)
+    canvas:
+        Color:
+            rgb: 0,0,0 
+        Rectangle:
+            pos: self.x - app.loc_border-self.width/2, self.y - app.loc_border-self.height/2
+            size: self.width + (app.loc_border * 2), self.height + (app.loc_border * 2)
+        Color:
+            rgb: self.color #set by ApLocation.update_color()
+        Rectangle:
+            pos: self.x-self.width/2, self.y-self.height/2
+            size: self.size
+    canvas.after:
+        #close transformations in after canvas so all objects get transformed
+        PopMatrix:
+
 <ApLocationMixed>:
     text: "Server:"
     size_hint_x: None

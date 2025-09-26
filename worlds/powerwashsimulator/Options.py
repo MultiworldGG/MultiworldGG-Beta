@@ -233,6 +233,9 @@ class AmountOfLevelsToGoal(Range):
     if n == 0 then all levels specified in levels_to_goal will be required
     if n < 0 then a random amount of levels (<= 7) specified in levels_to_goal will be required
     the same will happen if n > # of levels in levels_to_goal
+
+	finally, if n < 50% of enabled levels then a random number will be chosen
+    The host setting: `allow_potentially_excessive_releases` will disable this
     """
     display_name = "Amount of Levels to Goal"
     range_start = -1
@@ -343,7 +346,7 @@ def check_options(world):
 
         max_random = len(locations)
         allow_below_50 = settings.allow_potentially_excessive_releases
-        if amount_to_goal < max_random / 2 or (amount_to_goal > len(locations) and not allow_below_50):
+        if ((amount_to_goal < max_random / 2) and not allow_below_50) or amount_to_goal > len(locations):
             amount_to_goal = random.randint(int(max_random / 2), max_random)
 
         if "Random" in options.levels_to_goal or amount_to_goal > len(raw_goal_levels):

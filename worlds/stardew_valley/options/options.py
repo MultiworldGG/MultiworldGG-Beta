@@ -34,6 +34,7 @@ class Goal(Choice):
     Legend: Earn 10 000 000g
     Mystery of the Stardrops: Find every stardrop
     Mad Hatter: Complete all your hatsanity locations. If hatsanity is disabled, will enable it on "Easy+Tailoring"
+    Ultimate Foodie: Eat all items in the game. Adapts to Eatsanity
     Allsanity: Complete every check in your slot
     Perfection: Attain Perfection
     """
@@ -55,6 +56,7 @@ class Goal(Choice):
     option_legend = 12
     option_mystery_of_the_stardrops = 13
     option_mad_hatter = 20
+    option_ultimate_foodie = 21
     # option_junimo_kart =
     # option_prairie_king =
     # option_fector_challenge =
@@ -542,7 +544,7 @@ class Shipsanity(Choice):
     """Locations for shipping items?
     None: There are no checks for shipping items
     Crops: Every crop and forageable being shipped is a check
-    Fish: Every fish being shipped is a check except legendaries
+    Fish: Every fish being shipped is a check
     Full Shipment: Every item in the Collections page is a check
     Full Shipment With Fish: Every item in the Collections page and every fish is a check
     Everything: Every item in the game that can be shipped is a check
@@ -1022,11 +1024,12 @@ all_mods = {ModNames.deepwoods, ModNames.tractor, ModNames.big_backpack,
 # These mods have been disabled because either they are not updated for the current supported version of Stardew Valley,
 # or we didn't find the time to validate that they work or fix compatibility issues if they do.
 # Once a mod is validated to be functional, it can simply be removed from this list
+# SVE specifically is disabled because their main version is significantly ahead of ours, with breaking changes, and nobody is maintaining our integration.
 disabled_mods = {ModNames.deepwoods, ModNames.magic,
                  ModNames.cooking_skill,
                  ModNames.yoba, ModNames.eugene,
                  ModNames.wellwick, ModNames.shiko, ModNames.delores, ModNames.riley,
-                 ModNames.boarding_house}
+                 ModNames.boarding_house, ModNames.sve}
 
 enabled_mods = all_mods.difference(disabled_mods)
 all_mods_except_invalid_combinations = set(all_mods)

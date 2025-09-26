@@ -36,10 +36,12 @@ The player can choose from a number of goals, using their YAML options.
 - Become a [Craft Master](https://stardewvalleywiki.com/Crafting) by crafting every item
 - Earn the title of [Legend](https://stardewvalleywiki.com/Gold) by earning 10 000 000g
 - Solve the [Mystery of the Stardrops](https://stardewvalleywiki.com/Stardrop) by finding every stardrop
+- Find and wear every [Hat](https://stardewvalleywiki.com/Hats) in the game.
+- Find and eat every item in the game.
 - Finish 100% of your randomizer slot with Allsanity: Complete every check in your slot
 - Achieve [Perfection](https://stardewvalleywiki.com/Perfection) in your save file
 
-The following goals [Community Center, Master Angler, Protector of the Valley, Full Shipment and Gourmet Chef] will adapt
+The following goals [Community Center, Master Angler, Protector of the Valley, Full Shipment, Gourmet Chef and Mad Hatter] will adapt
 to other options in your slots, and are therefore customizable in duration and difficulty. For example, if you set "Fishsanity"
 to "Exclude Legendaries", and pick the Master Angler goal, you will not need to catch the legendaries to complete the goal.
 
@@ -78,6 +80,12 @@ There also are a number of location checks that are optional, and individual pla
 - [Shipsanity](https://stardewvalleywiki.com/Shipping): Shipping individual items
 - [Booksanity](https://stardewvalleywiki.com/Books): Reading individual books
 - [Walnutsanity](https://stardewvalleywiki.com/Golden_Walnut): Collecting Walnuts on Ginger Island
+- [Hatsanity](https://stardewvalleywiki.com/Hats): Wear individual Hats
+- [Secretsanity](https://stardewvalleywiki.com/Secrets): Find secrets and easter eggs
+- [Moviesanity](https://stardewvalleywiki.com/Movie_Theater): Watch movies with villagers and optionally share snacks with them
+- Eatsanity: Eat every item in the game
+
+And more!
 
 ## Which items can be in another player's world?
 
@@ -110,7 +118,7 @@ There are a few extra vanilla items, which are added to the pool for convenience
 - [Return Scepter](https://stardewvalleywiki.com/Return_Scepter)
 - [Qi Walnut Room QoL items](https://stardewvalleywiki.com/Qi%27s_Walnut_Room#Stock)
 
-And lastly, some AP/MWGG-exclusive items exist in the pool, which are designed around game balance and QoL. These include:
+And lastly, some Archipelago-exclusive items exist in the pool, which are designed around game balance and QoL. These include:
 
 - Arcade Machine buffs (Only if the arcade machines are randomized)
     - Journey of the Prairie King has drop rate increases, extra lives, and equipment
@@ -133,17 +141,16 @@ building that they have received, so they can choose its position. This construc
 
 ## Mods
 
-Some Stardew Valley mods unrelated to MultiworldGG are officially "supported".
+Some Stardew Valley mods unrelated to Archipelago are officially "supported".
 This means that, for these specific mods, if you decide to include them in your yaml options, the multiworld will be generated
 with the assumption that you will install and play with these mods. The multiworld will contain related items and locations
 for these mods, the specifics will vary from mod to mod
 
-[Supported Mods Documentation](https://github.com/agilbert1412/StardewArchipelago/blob/6.x.x/Documentation/Supported%20Mods.md)
+[Supported Mods Documentation](https://github.com/agilbert1412/StardewArchipelago/blob/7.x.x/Documentation/Supported%20Mods.md)
 
 List of supported mods:
 
 - General
-    - [Stardew Valley Expanded](https://www.nexusmods.com/stardewvalley/mods/3753)
     - [Skull Cavern Elevator](https://www.nexusmods.com/stardewvalley/mods/963)
     - [Bigger Backpack](https://www.nexusmods.com/stardewvalley/mods/1845)
     - [Tractor Mod](https://www.nexusmods.com/stardewvalley/mods/1401)
@@ -167,7 +174,7 @@ Some of these mods might need a patch mod to tie the randomizer with the mod. Th
 
 ## Multiplayer
 
-You cannot play a MultiworldGG Slot in multiplayer at the moment. There are no short-term plans to support that feature.
+You cannot play an Archipelago Slot in multiplayer at the moment. There are no short-term plans to support that feature.
 
-You can, however, send Stardew Valley objects as gifts from one Stardew Player to another Stardew , or a player in another game that supports gifting, using
+You can, however, send Stardew Valley objects as gifts from one Stardew Player to another Stardew, or a player in another game that supports gifting, using
 in-game Joja Prime delivery, for a fee. This exclusive feature can be turned off if you don't want to send and receive gifts.

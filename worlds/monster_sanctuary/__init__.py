@@ -6,7 +6,7 @@ from typing import List, Dict, Optional
 from BaseClasses import MultiWorld, Tutorial, ItemClassification, Entrance, Item
 from Options import Range, Toggle
 from worlds.AutoWorld import World, WebWorld
-from Utils import __version__
+from Utils import __version__, visualize_regions
 
 from . import data_importer
 from . import regions as REGIONS
@@ -318,10 +318,22 @@ class MonsterSanctuaryWorld(World):
             eggs += [
                 resolve_egg_item("Mad Lord"),
                 resolve_egg_item("Plague Egg"),
-                resolve_egg_item("Ninki"),
+                resolve_egg_item("Tanuki"),
                 resolve_egg_item("Sizzle Knight"),
-                resolve_egg_item("Tanuki")
+                resolve_egg_item("Ninki"),
+
+                self.create_item(ENCOUNTERS.get_monster("Akhlut").egg_name()),
+                self.create_item(ENCOUNTERS.get_monster("Gryphonix").egg_name()),
+                self.create_item(ENCOUNTERS.get_monster("Krakaturtle").egg_name()),
             ]
+
+        # Always put dodo eggs in the pool
+        dodo_egg = ENCOUNTERS.get_monster("Dodo").egg_name()
+        eggs += [
+            self.create_item(dodo_egg),
+            self.create_item(f"Light-Shifted {dodo_egg}"),
+            self.create_item(f"Dark-Shifted {dodo_egg}"),
+        ]
 
         # Depending on the options, these eggs are either added to the pool, or locked
         # into their default location
@@ -538,7 +550,7 @@ class MonsterSanctuaryWorld(World):
     # self.multiworld.get_locations(self.player) has all locations for the player, with attribute
     # item pointing to the item. location.item.player can be used to see if it's a local item.
     def generate_output(self, output_directory: str) -> None:
-        pass
+        visualize_regions(self.multiworld.get_region("Menu", self.player), "world.puml")
 
     # fill_slot_data and modify_multidata can be used to modify the data that will be used by
     # the server to host the MultiWorld.
@@ -548,9 +560,11 @@ class MonsterSanctuaryWorld(World):
             HINTS.generate_hints(self)
 
         slot_data = {
-            "version": "1.3.5.0",
+            "version": "1.3.7.0",
             "options": {
                 "goal": self.options.goal.value,
+                "logic_difficulty": self.options.logic_difficulty.value,
+                "tedious_checks": self.options.tedious_checks.value,
 
                 "starting_gold": self.options.starting_gold.value,
                 "add_smoke_bombs": self.options.add_smoke_bombs.value,

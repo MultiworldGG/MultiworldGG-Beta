@@ -46,8 +46,8 @@ class ItemData:
         else:
             self.groups = []
 
-    def __str__(self):
-        return self.name
+    # def __str__(self):
+    #     return self.name
 
 
 class MonsterSanctuaryItem(Item):
@@ -57,8 +57,8 @@ class MonsterSanctuaryItem(Item):
     def __init__(self, player: int, id: int, name: str, classification: ItemClassification):
         super(MonsterSanctuaryItem, self).__init__(name, classification, id, player)
 
-    def __str__(self):
-        return self.name
+    # def __str__(self):
+    #     return self.name
 
 
 # This holds all the item data that is parsed from items.json file
@@ -318,7 +318,9 @@ def get_explore_ability_items(explore_ability_option: int) -> List[ItemData]:
                 if data.category == MonsterSanctuaryItemCategory.ABILITY and
                 ((explore_ability_option == 1 and name in explore_ability_types) or
                 (explore_ability_option == 2 and "Ability - " in name) or
-                (explore_ability_option == 3 and "Ability - " not in name and name not in explore_ability_types))]
+                (explore_ability_option == 3 and "Ability - " not in name and name not in explore_ability_types)) and
+                "Progressive" not in name and
+                "Combo" not in name]
 
     # Progression type
     elif explore_ability_option == 4:

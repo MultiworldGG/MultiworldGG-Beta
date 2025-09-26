@@ -4,7 +4,7 @@
 
 - A legally obtained NTSC ISO of Sly Cooper and the Thievius Raccoonus
 - [A version of PCSX2 which supports PINE (recommended: 2.2.0)](https://pcsx2.net/downloads)
-- The built-in MultiworldGG client, which can be installed [here](https://github.com/MultiworldGG/MultiworldGG/releases). 0.6.1 or higher required.
+- The built-in Archipelago client, which can be installed [here](https://github.com/ArchipelagoMW/Archipelago/releases). 0.6.1 or higher required.
 
 ## Configuring your YAML file
 
@@ -38,5 +38,5 @@ Enable PINE in PCSX2
 3. Create a New Game
 
 4. Set Up the Client
-    - Run Sly 1 Client from the MultiworldGG Launcher and connect
+    - Run Sly 1 Client from the Archipelago Launcher and connect
 

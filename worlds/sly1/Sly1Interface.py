@@ -8,7 +8,7 @@ import os
 
 from .pcsx2_interface.pine import Pine
 from .data.Constants import ADDRESSES, LEVELS
-from .Locations import bottle_amounts
+from .Locations import bottle_amounts, minigame_locations
 
 class Sly1Episode(IntEnum):
     Paris = 0
@@ -138,13 +138,18 @@ class Sly1Interface(GameInterface):
         button = self._read32(self.addresses["button pressed"])
         return button
 
-    def skip_cutscene(self) -> None:
-        if self.in_cutscene():
+    def skip_cutscene(self, ctx: 'Sly1Context') -> None:
+        if ctx.slot_data is None:
+            return
+        options = ctx.slot_data.get("options", {})
+        if self.in_cutscene() and options.get("CutsceneSkip", 1) == 1:
             cutscene_pointer = self._read32(self.addresses["cutscene pointer"])
             self._write32(cutscene_pointer + 744, 0)
-        if self.in_call():
+        if self.in_call() and options.get("CutsceneSkip", 1) == 1:
             self._write32(self.addresses["binocucom"], 0)
-        if self.in_fmv():
+        if self.in_fmv() and options.get("CutsceneSkip", 1) == 1:
+            self._write32(self.addresses["FMV skip"], 0)
+        if self.in_fmv() and self.get_button_press() == 2:
             self._write32(self.addresses["FMV skip"], 0)
         if self.get_button_press() == 2 and self.in_controllable_cutscene():
             cutscene_pointer = self._read32(self.addresses["cutscene pointer"])
@@ -248,6 +253,7 @@ class Sly1Interface(GameInterface):
         self._write32(0x12B764, 0x00000000)
 
     async def activate_trap(self, item_id: int):
+        level_name = self.get_current_level_name()
         trap = item_id - 10020025
         current_episode = self.get_current_episode()
         traps = {
@@ -259,7 +265,7 @@ class Sly1Interface(GameInterface):
 
         trap_act = traps.get(trap)
         if trap_act:
-            if current_episode == 0:
+            if current_episode == 0 or (level_name + " Key") in minigame_locations:
                 asyncio.create_task(self.delayed_trap(item_id))
             else:
                 await trap_act()

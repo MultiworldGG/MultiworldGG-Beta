@@ -8,8 +8,8 @@ from ...data.harvest import ForagingSource, HarvestFruitTreeSource, HarvestCropS
 from ...data.hats_data import Hats
 from ...data.monster_data import MonsterSource
 from ...data.requirement import WalnutRequirement, ForgeInfinityWeaponRequirement, CookedRecipesRequirement, \
-    CraftedItemsRequirement, CaughtFishRequirement, FullShipmentRequirement, RegionRequirement, \
-    AllAchievementsRequirement, PerfectionPercentRequirement, ReadAllBooksRequirement, HasItemRequirement
+    CaughtFishRequirement, FullShipmentRequirement, RegionRequirement, \
+    AllAchievementsRequirement, PerfectionPercentRequirement, ReadAllBooksRequirement, HasItemRequirement, ToolRequirement
 from ...data.shop import ShopSource, HatMouseSource
 from ...logic.tailoring_logic import TailoringSource
 from ...logic.time_logic import MAX_MONTHS
@@ -24,11 +24,12 @@ from ...strings.fruit_tree_names import Sapling
 from ...strings.generic_names import Generic
 from ...strings.geode_names import Geode
 from ...strings.material_names import Material
-from ...strings.metal_names import Fossil, Mineral, MetalBar
+from ...strings.metal_names import Fossil, Mineral
 from ...strings.monster_names import Monster
 from ...strings.region_names import Region, LogicRegion
 from ...strings.season_names import Season
 from ...strings.seed_names import Seed, TreeSeed
+from ...strings.tool_names import Tool
 
 
 class GingerIslandContentPack(ContentPack):
@@ -54,7 +55,8 @@ ginger_island_content_pack = GingerIslandContentPack(
         ),
         Forageable.ginger: (
             Tag(ItemTag.FORAGE),
-            ForagingSource(regions=(Region.island_west,)),
+            ForagingSource(regions=(Region.island_west,),
+                           other_requirements=(ToolRequirement(Tool.hoe),)),
         ),
         Mushroom.magma_cap: (
             Tag(ItemTag.FORAGE),
@@ -117,7 +119,6 @@ ginger_island_content_pack = GingerIslandContentPack(
         Hats.infinity_crown: (Tag(ItemTag.HAT), HatMouseSource(price=1000, unlock_requirements=(ForgeInfinityWeaponRequirement(),)),),
         Hats.archers_cap: (Tag(ItemTag.HAT), HatMouseSource(price=1000, unlock_requirements=(CookedRecipesRequirement(9999),)),),
         Hats.chef_hat: (Tag(ItemTag.HAT), HatMouseSource(price=1000, unlock_requirements=(CookedRecipesRequirement(9999),)),),
-        Hats.gnomes_cap: (Tag(ItemTag.HAT), HatMouseSource(price=1000, unlock_requirements=(CraftedItemsRequirement(9999),)),),
         Hats.eye_patch: (Tag(ItemTag.HAT), HatMouseSource(price=1000, unlock_requirements=(CaughtFishRequirement(9999, unique=True),)),),
         Hats.cowpoke_hat: (Tag(ItemTag.HAT), HatMouseSource(price=1000, unlock_requirements=(FullShipmentRequirement(),)),),
         Hats.goblin_mask: (Tag(ItemTag.HAT), HatMouseSource(price=10000, unlock_requirements=(FullShipmentRequirement(),)),),
@@ -142,7 +143,6 @@ ginger_island_content_pack = GingerIslandContentPack(
                                                                        require_all_regions=True),),
 
         Hats.foragers_hat: (Tag(ItemTag.HAT), TailoringSource(tailoring_items=(Forageable.ginger,)),),
-        Hats.radioactive_goggles: (Tag(ItemTag.HAT), TailoringSource(tailoring_items=(MetalBar.radioactive,)),),
         Hats.sunglasses: (Tag(ItemTag.HAT), TailoringSource(tailoring_items=(Material.cinder_shard,)),),
         Hats.swashbuckler_hat: (Tag(ItemTag.HAT), TailoringSource(tailoring_items=(Forageable.dragon_tooth,)),),
         Hats.warrior_helmet: (Tag(ItemTag.HAT), TailoringSource(tailoring_items=(AnimalProduct.ostrich_egg,)),),

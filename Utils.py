@@ -50,70 +50,17 @@ if typing.TYPE_CHECKING:
     from BaseClasses import Region
     import multiprocessing
 
-# @dataclass
-# class PythonToExe:
-#     script_name: str
-#     frozen_name: str
-#     icon: str
-#     cli: str
 
 def normalize_tag(tag: str) -> str:
     return tag[1:] if tag and tag[0].lower() == "v" else tag
 
-# def tuplize_version(version: str) -> "Version":
-#     """Parse a version string into a Version object, supporting both simple and PEP 440 formats."""
-#     try:
-#         # Try using packaging library for PEP 440 support
-#         from packaging.version import Version as PackagingVersion
-#         pkg_version = PackagingVersion(version)
-#         # Extract the release components (major.minor.micro)
-#         release = pkg_version.release
-#         if len(release) >= 3:
-#             return Version(release[0], release[1], release[2])
-#         elif len(release) == 2:
-#             return Version(release[0], release[1], 0)
-#         elif len(release) == 1:
-#             return Version(release[0], 0, 0)
-#         else:
-#             return Version(0, 0, 0)
-#     except ImportError:
-#         # Fallback to simple parsing if packaging is not available
-#         pass
-#     except Exception:
-#         # If packaging fails to parse, fall back to simple parsing
-#         pass
-    
-#     # Simple parsing fallback for backward compatibility
-#     try:
-#         parts = version.split(".")
-#         return Version(
-#             int(parts[0]) if len(parts) > 0 else 0,
-#             int(parts[1]) if len(parts) > 1 else 0,
-#             int(parts[2]) if len(parts) > 2 else 0
-#         )
-#     except (ValueError, IndexError):#         return Version(0, 0, 0)
 
 
-# class Version(typing.NamedTuple):
-#     major: int
-#     minor: int
-#     build: int
-
-#     def as_simple_string(self) -> str:
-#         """Return version as a simple dot-separated string."""
-#         return ".".join(str(item) for item in self)
-    
-#     def as_pep440_string(self) -> str:
-#         """Return version as a PEP 440 compliant string."""
-#         return f"{self.major}.{self.minor}.{self.build}"
-    
-#     def __str__(self) -> str:
-#         """String representation defaults to PEP 440 format."""
-#         return self.as_pep440_string()
 
 
-# __version__ = "0.6.446"
+# __version__ = "0.6.4"
 # version_tuple = tuplize_version(__version__)
+# version = Version(*version_tuple)
 
 # instance_name = "MultiworldGG"
 # archipelago_guid = "{{918BA46A-FAB8-460C-9DFF-AE691E1C865D}}"
@@ -145,6 +92,7 @@ if os.path.exists(config_file):
                 if new_version is not None:
                     __version__ = new_version
                     version_tuple = tuplize_version(__version__)
+                    version = Version(*version_tuple)
     except Exception as e:
         logging.warning("Failed to load configuration from %s: %s", config_file, e)
 
@@ -602,7 +550,8 @@ class RestrictedUnpickler(pickle.Unpickler):
                 self.generic_properties_module = importlib.import_module("worlds.generic")
             return getattr(self.generic_properties_module, name)
         # pep 8 specifies that modules should have "all-lowercase names" (options, not Options)
-        if module.lower().endswith("options"):
+        # check if the end module contains the word "option" in it
+        if "option" in module.lower().rsplit('.', 1)[-1]:
             if module == "Options":
                 mod = self.options_module
             else:

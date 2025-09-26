@@ -1,0 +1,4922 @@
+[
+    {
+      "name": "Great Well Surface",
+      "access_rules":[
+         "$entrances_or_off|gws_access"
+      ],
+      "children": [
+            {
+                "name": "GWS: Demi's Gift",
+                "chest_unopened_img": "images/items/check_misc_fade.png",
+                "chest_opened_img": "images/items/check_misc.png",
+                "sections": [
+                    {
+                        "name": "Crystal Shard x 3",
+                        "item_count": 1
+                    }
+                ],
+                "map_locations": [
+                    {
+                        "map": "Great Well Surface",
+                        "x": 386,
+                        "y": 256
+                    }
+                ]
+            },
+            {
+               "name": "Great Well Surface Holes",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                  "$door_locks_or_off|true"
+               ],
+               "sections": [
+                  { 
+                     "name": "Jump through the Holes",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Great Well Surface",
+                     "x": 1117,
+                     "y": 1063
+                  }
+               ]
+            },
+            {
+               "name": "Door To Laetus Chasm",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                  "$door_locks_or_off|surface_door"
+               ],
+               "sections": [
+                  { 
+                     "name": "Travel To Laetus Chasm",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Great Well Surface",
+                     "x": 809,
+                     "y": 2078
+                  }
+               ]
+            }
+      ]
+    },
+    {
+      "name": "Laetus Chasm",
+      "access_rules":[
+         "$entrances_or_off|lc_access"
+      ],
+      "children": [
+            {
+               "name": "Door to the Surface",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                  "$door_locks_or_off|surface_door"
+               ],
+               "sections": [
+                  { 
+                     "name": "Climb the cliff-side path",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Laetus Chasm",
+                     "x": 1935,
+                     "y": 666
+                  }
+               ]
+            },
+            {
+               "name": "Door to the Forbidden Archives",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                  "$door_locks_or_off|library_exit_door"
+               ],
+               "sections": [
+                  { 
+                     "name": "Climb the cliff-side path",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Laetus Chasm",
+                     "x": 1349,
+                     "y": 1759
+                  }
+               ]
+            },
+            {
+                "name": "LC: Hidden Room",
+                "chest_unopened_img": "images/items/check_spell_fade.png",
+                "chest_opened_img": "images/items/check_spell.png",
+                "access_rules": [
+                  "$secrets_or_off"
+               ],
+                "sections": [
+                    {
+                        "name": "Spell Ring (Ice Tear)",
+                        "item_count": 1
+                    }
+                ],
+                "map_locations": [
+                    {
+                        "map": "Laetus Chasm",
+                        "x": 1347,
+                        "y": 987
+                    }
+                ]
+            },
+            {
+                "name": "LC: Invisible Path to Cliffside",
+                "chest_unopened_img": "images/items/check_weapon_fade.png",
+                "chest_opened_img": "images/items/check_weapon.png",
+                "access_rules":[
+                  "dsf_checks"
+                ],
+                "sections": [
+                    {
+                        "name": "Blessed Wind",
+                        "item_count": 1
+                    }
+                ],
+                "map_locations": [
+                    {
+                        "map": "Laetus Chasm",
+                        "x": 666,
+                        "y": 144
+                    }
+                ]
+            }
+      ]
+    },
+    {
+      "name": "Yosei Forest",
+      "access_rules":[
+         "$entrances_or_off|yf_access"
+      ],
+      "children": [
+         {
+            "name": "Door to Hollow Basin",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|lower_bridge_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Cabin Door",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Yosei Forest",
+                  "x": 126,
+                  "y": 738
+               }
+            ]
+         },
+         {
+            "name": "Door to Accursed Tomb",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|tomb_secret_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Deep within the forest cave",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Yosei Forest",
+                  "x": 222,
+                  "y": 336
+               }
+            ]
+         },
+         {
+            "name": "Door to Forest Canopy",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|treetop_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Climb the trees",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Yosei Forest",
+                  "x": 1600,
+                  "y": 890
+               }
+            ]
+         },
+               {
+                  "name": "YF: Barrel Group",
+                  "chest_unopened_img": "images/items/check_item_fade.png",
+                  "chest_opened_img": "images/items/check_item.png",
+                  "sections": [
+                     { 
+                        "name": "Health Vial",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Yosei Forest",
+                        "x": 188,
+                        "y": 1036
+                     }
+                  ]
+               },
+               {
+                  "name": "YF: Patchouli",
+                  "sections": [
+                     { 
+                        "name": "Buy Ocean Elixir",
+                        "chest_unopened_img": "images/items/check_item_fade.png",
+                        "chest_opened_img": "images/items/check_item.png",
+                        "item_count": 1
+                     },
+                     { 
+                        "name": "Quest Offer",
+                        "chest_unopened_img": "images/items/check_misc_fade.png",
+                        "chest_opened_img": "images/items/check_misc.png",
+                        "item_count": 1
+                     },
+                     { 
+                        "name": "Give Josiah's Skull",
+                        "chest_unopened_img": "images/items/check_misc_fade.png",
+                        "chest_opened_img": "images/items/check_misc.png",
+                        "access_rules": [
+                           "jo_skull"
+                        ],
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Yosei Forest",
+                        "x": 1348,
+                        "y": 426
+                     }
+                  ]
+               },
+               {
+                  "name": "YF: Banches Within Tree",
+                  "chest_unopened_img": "images/items/check_spell_fade.png",
+                  "chest_opened_img": "images/items/check_spell.png",
+                  "sections": [
+                     { 
+                        "name": "Spell Ring (Holy Warmth)",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Yosei Forest",
+                        "x": 1084,
+                        "y": 1250
+                     }
+                  ]
+               },
+               {
+                  "name": "YF: Blood Pool",
+                  "chest_unopened_img": "images/items/check_spell_fade.png",
+                  "chest_opened_img": "images/items/check_spell.png",
+                  "sections": [
+                     { 
+                        "name": "Spell Ring (Blood Drain)",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Yosei Forest",
+                        "x": 742,
+                        "y": 524
+                     }
+                  ]
+               },
+               {
+                  "name": "YF: Blood Plant's Insides",
+                  "chest_unopened_img": "images/items/check_item_fade.png",
+                  "chest_opened_img": "images/items/check_item.png",
+                  "access_rules": [
+                        "ele_blood"
+                  ],
+                  "sections": [
+                     { 
+                        "name": "Health Vial",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Yosei Forest",
+                        "x": 1188,
+                        "y": 650
+                     }
+                  ]
+               },
+               {
+                  "name": "YF: Chest Near Tree",
+                  "chest_unopened_img": "images/items/check_weapon_fade.png",
+                  "chest_opened_img": "images/items/check_weapon.png",
+                  "sections": [
+                     { 
+                        "name": "Elfen Bow",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Yosei Forest",
+                        "x": 1354,
+                        "y": 978
+                     }
+                  ]
+               },
+               {
+                  "name": "YF: Hanging In The Trees",
+                  "chest_unopened_img": "images/items/check_weapon_fade.png",
+                  "chest_opened_img": "images/items/check_weapon.png",
+                  "access_rules": [
+                        "ranged_attacks"
+                  ],
+                  "sections": [
+                     { 
+                        "name": "Elfen Sword",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Yosei Forest",
+                        "x": 1842,
+                        "y": 806
+                     }
+                  ]
+               },
+               {
+                  "name": "YF: Hidden Chest",
+                  "chest_unopened_img": "images/items/check_spell_fade.png",
+                  "chest_opened_img": "images/items/check_spell.png",
+                  "access_rules": [
+                     "$secrets_or_off"
+                  ],
+                  "sections": [
+                     { 
+                        "name": "Spell Ring (Light Reveal)",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Yosei Forest",
+                        "x": 2188,
+                        "y": 280
+                     }
+                  ]
+               },
+               {
+                  "name": "YF: Room Defended by Blood Plant",
+                  "chest_unopened_img": "images/items/check_spell_fade.png",
+                  "chest_opened_img": "images/items/check_spell.png",
+                  "access_rules": [
+                        "ele_blood"
+                  ],
+                  "sections": [
+                     { 
+                        "name": "Spell Ring (Earth Strike)",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Yosei Forest",
+                        "x": 1584,
+                        "y": 282
+                     }
+                  ]
+               }
+            ]
+    },
+    {
+      "name": "Accursed Tomb",
+      "access_rules":[
+         "$entrances_or_off|at_access"
+      ],
+      "children": [
+         {
+            "name": "Door to Yosei Forest",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|tomb_secret_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Climb out of the tomb",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Accursed Tomb",
+                  "x": 817,
+                  "y": 1317
+               }
+            ]
+         },
+         {
+            "name": "Door to the Sanguine Sea",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|accursed_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Brave the Accursed Tomb",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Accursed Tomb",
+                  "x": 622,
+                  "y": 1779
+               }
+            ]
+         },
+            {
+               "name": "AT: Tomb With Sitting Corpse",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "sections": [
+                  { 
+                     "name": "Survey Banner",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 346,
+                     "y": 1327
+                  }
+               ]
+            },
+            {
+               "name": "AT: Demi Chest",
+               "chest_unopened_img": "images/items/check_spell_fade.png",
+               "chest_opened_img": "images/items/check_spell.png",
+               "access_rules": [
+                  "dsf_checks"
+               ],
+               "sections": [
+                  { 
+                     "name": "Spell Ring (Lightning)",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 191,
+                     "y": 1629
+                  }
+               ]
+            },
+            {
+               "name": "AT: Hidden Chest in Tomb",
+               "chest_unopened_img": "images/items/check_coin_fade.png",
+               "chest_opened_img": "images/items/check_coin.png",
+               "access_rules": [
+                  "$secrets_or_off"
+               ],
+               "sections": [
+                  { 
+                     "name": "100 Silver",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 944,
+                     "y": 1388
+                  }
+               ]
+            },
+            {
+               "name": "AT: Hidden Room in Tomb",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                  "$secrets_or_off"
+               ],
+               "sections": [
+                  { 
+                     "name": "Earth Elixir",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1270,
+                     "y": 984
+                  }
+               ]
+            },
+            {
+               "name": "AT: Near Light Switch",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "sections": [
+                  { 
+                     "name": "Crystal Shard",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1158,
+                     "y": 842
+                  }
+               ]
+            },
+            {
+               "name": "AT: Catacombs Coffins Near Stairs",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "sections": [
+                  { 
+                     "name": "Health Vial",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 2252,
+                     "y": 1290
+                  }
+               ]
+            },
+            {
+               "name": "AT: Catacombs Coffins With Blue Light",
+               "chest_unopened_img": "images/items/check_spell_fade.png",
+               "chest_opened_img": "images/items/check_spell.png",
+               "sections": [
+                  { 
+                     "name": "Spell Ring (Coffin)",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1762,
+                     "y": 1234
+                  }
+               ]
+            },
+            {
+               "name": "AT: Gated Tomb Near Corrupted Room",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "sections": [
+                  { 
+                     "name": "Ocean Elixir",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1400,
+                     "y": 1090
+                  }
+               ]
+            },
+            {
+               "name": "AT: Corrupted Room",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                  "ckey"
+               ],
+               "sections": [
+                  { 
+                     "name": "White Tape",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1468,
+                     "y": 944
+                  }
+               ]
+            },
+            {
+               "name": "AT: Catacombs Hidden Room",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                  "ele_light, $secrets_or_off"
+            ],
+               "sections": [
+                  { 
+                     "name": "Ocean Elixir",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1790,
+                     "y": 842
+                  }
+               ]
+            },
+            {
+               "name": "AT: TV",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                     "ele_light, vhs_tape_1, $secrets_or_off"
+               ],
+               "sections": [
+                  { 
+                     "name": "N/A",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1830,
+                     "y": 878
+                  }
+               ]
+            },
+            {
+               "name": "AT: Red Skeleton",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                     "ele_light, ele_blood"
+               ],
+               "sections": [
+                  { 
+                     "name": "Blade of Jusztina",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1754,
+                     "y": 944
+                  }
+               ]
+            },
+            {
+               "name": "AT: Deep Coffin Storage",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                     "ele_light"
+               ],
+               "sections": [
+                  { 
+                     "name": "Halbard",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1842,
+                     "y": 976
+                  }
+               ]
+            },
+            {
+               "name": "AT: Mausoleum Hidden Chest",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                     "ele_light, $secrets_or_off"
+               ],
+               "sections": [
+                  { 
+                     "name": "Twisted Staff",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1746,
+                     "y": 274
+                  }
+               ]
+            },
+            {
+               "name": "AT: Mausoleum Upper Alcove Table",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                     "ele_light, dsf_checks"
+               ],
+               "sections": [
+                  { 
+                     "name": "Black Book",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1464,
+                     "y": 628
+                  }
+               ]
+            },
+            {
+               "name": "AT: Mausoleum Maze (Early)",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                     "ele_light"
+               ],
+               "sections": [
+                  { 
+                     "name": "Holy Water",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1426,
+                     "y": 380
+                  }
+               ]
+            },
+            {
+               "name": "AT: Mausoleum Maze (Middle)",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                     "ele_light"
+               ],
+               "sections": [
+                  { 
+                     "name": "Health Vial",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1134,
+                     "y": 380
+                  }
+               ]
+            },
+            {
+               "name": "AT: Mausoleum Central Room (Right Path)",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                     "ele_light"
+               ],
+               "sections": [
+                  { 
+                     "name": "Ocean Elixir",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 654,
+                     "y": 156
+                  }
+               ]
+            },
+            {
+               "name": "AT: Mausoleum Central Room (Right)",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                     "ele_light"
+               ],
+               "sections": [
+                  { 
+                     "name": "Health Vial",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 738,
+                     "y": 420
+                  }
+               ]
+            },
+            {
+               "name": "AT: Mausoleum Central Room (Back)",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                     "ele_light"
+               ],
+               "sections": [
+                  { 
+                     "name": "Earth Elixir",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 606,
+                     "y": 506
+                  }
+               ]
+            },
+            {
+               "name": "AT: Mausoleum Central Room (Left)",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                     "ele_light"
+               ],
+               "sections": [
+                  { 
+                     "name": "Holy Water",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 728,
+                     "y": 594
+                  }
+               ]
+            },
+            {
+               "name": "AT: Mausoleum Central Room (Left Path)",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                     "ele_light"
+               ],
+               "sections": [
+                  { 
+                     "name": "Health Vial",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 802,
+                     "y": 864
+                  }
+               ]
+            },
+            {
+               "name": "AT: Kill Death",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                     "ele_light, limbo"
+               ],
+               "sections": [
+                  { 
+                     "name": "10 Strange Coins",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 728,
+                     "y": 508
+                  }
+               ]
+            },
+            {
+               "name": "AT: Tomb With Switch",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "sections": [
+                  { 
+                     "name": "Vampire Hunter Sword",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 664,
+                     "y": 1127
+                  }
+               ]
+            },
+            {
+               "name": "Accursed Tomb Main Switch",
+               "access_rules": [
+                  "$switches_or_off|at_switch_keyring"
+               ],
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "sections": [
+                  { 
+                     "name": "Locks Easy Pathing",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 648,
+                     "y": 1537
+                  }
+               ]
+            },
+            {
+               "name": "Accursed Tomb Crypt Switch",
+               "access_rules": [
+                  "$switches_or_off|at_switch_keyring"
+               ],
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "sections": [
+                  { 
+                     "name": "Locks Easy Pathing",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 681,
+                     "y": 1165
+                  }
+               ]
+            },
+            {
+               "name": "Accursed Tomb Light Switch (Near Save Crystal)",
+               "visibility_rules": [
+                  "switch_locks"
+               ],
+               "access_rules": [
+                  "$switches_or_off|at_fire_keyring"
+               ],
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "sections": [
+                  { 
+                     "name": "Locks Easy Pathing",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1054,
+                     "y": 1628
+                  }
+               ]
+            },
+            {
+               "name": "Accursed Tomb Light Switch (Near Demi)",
+               "visibility_rules": [
+                  "switch_locks"
+               ],
+               "access_rules": [
+                  "$switches_or_off|at_fire_keyring"
+               ],
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "sections": [
+                  { 
+                     "name": "Locks Easy Pathing",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 297,
+                     "y": 1852
+                  }
+               ]
+            },
+            {
+               "name": "Accursed Tomb Light Switch (In Noble Crypt)",
+               "visibility_rules": [
+                  "switch_locks"
+               ],
+               "access_rules": [
+                  "$switches_or_off|at_fire_keyring"
+               ],
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "sections": [
+                  { 
+                     "name": "Locks Easy Pathing",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Accursed Tomb",
+                     "x": 1179,
+                     "y": 739
+                  }
+               ]
+            }
+         ]
+    },
+    {
+      "name": "The Sanguine Sea",
+      "access_rules":[
+         "$entrances_or_off|ss_access"
+      ],
+      "children": [
+         {
+            "name": "Door to Accursed Tomb",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|accursed_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Enter the Accursed Tomb",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "The Sanguine Sea",
+                  "x": 1140,
+                  "y": 637
+               }
+            ]
+         },
+         {
+            "name": "Door to Fetid Mire",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|sewers_sea_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Enter the Fetid Mire",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "The Sanguine Sea",
+                  "x": 164,
+                  "y": 637
+               }
+            ]
+         },
+         {
+            "name": "Door to Castle Le Fanu",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|castle_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Enter the Castle",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "The Sanguine Sea",
+                  "x": 744,
+                  "y": 1271
+               }
+            ]
+         },
+         {
+               "name": "SS: Pillar In Front of Castle Le Fanu",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                     "dsf_checks"
+               ],
+               "sections": [
+                  { 
+                     "name": "Corrupted Dagger",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Sanguine Sea",
+                     "x": 796,
+                     "y": 894
+                  }
+               ]
+            },
+            {
+               "name": "SS: Killing the Jotunn",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                     "slayer"
+               ],
+               "sections": [
+                  { 
+                     "name": "10 Strange Coins",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Sanguine Sea",
+                     "x": 1118,
+                     "y": 1074
+                  }
+               ]
+            },
+            {
+               "name": "SS: Underblood Near Castle Le Fanu",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "sections": [
+                  { 
+                     "name": "Dark Rapier",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Sanguine Sea",
+                     "x": 820,
+                     "y": 1278
+                  }
+               ]
+            },
+            {
+               "name": "SS: Blood Island",
+               "chest_unopened_img": "images/items/check_spell_fade.png",
+               "chest_opened_img": "images/items/check_spell.png",
+               "sections": [
+                  { 
+                     "name": "Spell Ring (Summon Fairy)",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Sanguine Sea",
+                     "x": 1296,
+                     "y": 168
+                  }
+               ]
+            }
+         ]
+    },
+    {
+      "name": "The Fetid Mire",
+      "access_rules":[
+         "$entrances_or_off|fm_access"
+      ],
+      "children": [
+         {
+            "name": "Door to Hollow Basin",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|sewers_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Climb the Drain",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "The Fetid Mire",
+                  "x": 1734,
+                  "y": 2389
+               }
+            ]
+         },
+         {
+            "name": "Door to the Sanguine Sea",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|sewers_sea_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Further down the Drain",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "The Fetid Mire",
+                  "x": 538,
+                  "y": 114
+               }
+            ]
+         },
+         {
+               "name": "FM: Room Left of Foyer",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "sections": [
+                  { 
+                     "name": "Antidote",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 1568,
+                     "y": 2042
+                  }
+               ]
+            },
+            {
+               "name": "FM: Hidden Slimey Chest Near Entrance",
+               "chest_unopened_img": "images/items/check_spell_fade.png",
+               "chest_opened_img": "images/items/check_spell.png",
+               "access_rules": [
+                  "$secrets_or_off"
+               ],
+               "sections": [
+                  { 
+                     "name": "Spell Ring (Ice Spear)",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 1674,
+                     "y": 1742
+                  }
+               ]
+            },
+            {
+               "name": "FM: Slime Skeleton Chest",
+               "chest_unopened_img": "images/items/check_spell_fade.png",
+               "chest_opened_img": "images/items/check_spell.png",
+               "sections": [
+                  { 
+                     "name": "Spell Ring (Barrier)",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 1944,
+                     "y": 1678
+                  }
+               ]
+            },
+            {
+               "name": "FM: Rubble Near Overlook Bridge",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "sections": [
+                  { 
+                     "name": "Antidote",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 1910,
+                     "y": 886
+                  }
+               ]
+            },
+            {
+               "name": "FM: Bonerard's Trash",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "sections": [
+                  { 
+                     "name": "Antidote",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 1672,
+                     "y": 762
+                  }
+               ]
+            },
+            {
+               "name": "FM: Hidden Upper Overlook (Right)",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                  "$secrets_or_off",
+                  "dsf_checks"
+               ],
+               "sections": [
+                  { 
+                     "name": "Ocean Elixir",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 1172,
+                     "y": 432
+                  }
+               ]
+            },
+            {
+               "name": "FM: Hidden Upper Overlook (Left)",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                  "$secrets_or_off",
+                  "dsf_checks"
+               ],
+               "sections": [
+                  { 
+                     "name": "Crystal Shard",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 1146,
+                     "y": 632
+                  }
+               ]
+            },
+            {
+               "name": "FM: Rubble Near Illusory Wall",
+               "chest_unopened_img": "images/items/check_spell_fade.png",
+               "chest_opened_img": "images/items/check_spell.png",
+               "sections": [
+                  { 
+                     "name": "Spell Ring (Wind Dash)",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 890,
+                     "y": 524
+                  }
+               ]
+            },
+            {
+               "name": "FM: Hidden Chest Near Underworks",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                  "$secrets_or_off"
+               ],
+               "sections": [
+                  { 
+                     "name": "Earth Elixir",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 880,
+                     "y": 666
+                  }
+               ]
+            },
+            {
+               "name": "FM: Jellisha's Trash",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                  "$secrets_or_off"
+               ],
+               "sections": [
+                  { 
+                     "name": "Mana Vial",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 558,
+                     "y": 1138
+                  }
+               ]
+            },
+            {
+               "name": "FM: Jellisha's Quest Reward",
+               "chest_unopened_img": "images/items/check_spell_fade.png",
+               "chest_opened_img": "images/items/check_spell.png",
+               "access_rules": [
+                  "$secrets_or_off"
+               ],
+               "sections": [
+                  { 
+                     "name": "Spell Ring (Slime Orb)",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 658,
+                     "y": 1154
+                  }
+               ]
+            },
+            {
+               "name": "FM: Underwater Pipe",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "sections": [
+                  { 
+                     "name": "Poison Throwing Knife",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 688,
+                     "y": 1214
+                  }
+               ]
+            },
+            {
+               "name": "FM: Underworks Waterfall",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "sections": [
+                  { 
+                     "name": "Antidote",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 1086,
+                     "y": 1282
+                  }
+               ]
+            },
+            {
+               "name": "FM: Underworks Skeleton",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "sections": [
+                  { 
+                     "name": "Broken Hilt",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 1318,
+                     "y": 1656
+                  }
+               ]
+            },
+            {
+               "name": "FM: Path to Sanguine Sea (Left)",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "sections": [
+                  { 
+                     "name": "Battle Axe",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 470,
+                     "y": 198
+                  }
+               ]
+            },
+            {
+               "name": "FM: Path to Sanguine Sea (Right)",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "sections": [
+                  { 
+                     "name": "Health Vial",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 670,
+                     "y": 178
+                  }
+               ]
+            },
+            {
+               "name": "Fetid Mire Switch",
+               "access_rules": [
+                  "$switches_or_off|fm_switch_key"
+               ],
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "sections": [
+                  { 
+                     "name": "Locks Easy Pathing",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "The Fetid Mire",
+                     "x": 1717,
+                     "y": 1779
+                  }
+               ]
+            }
+         ]
+    },
+    {
+      "name": "Castle Le Fanu",
+      "access_rules":[
+         "$entrances_or_off|clf_access"
+      ],
+      "children": [
+         {
+            "name": "Door to the Sanguine Sea",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|castle_doors"
+            ],
+            "sections": [
+               { 
+                  "name": "Exit the gates",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Castle Le Fanu",
+                  "x": 1215,
+                  "y": 1898
+               }
+            ]
+         },
+         {
+            "name": "Door to the Sealed Ballroom",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|ballroom_side_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Go to a party",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Castle Le Fanu",
+                  "x": 1695,
+                  "y": 510
+               }
+            ]
+         },
+         {
+            "name": "Door to the Throne Chamber",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|queen_throne_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Greet the ruler",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Castle Le Fanu",
+                  "x": 1486,
+                  "y": 833
+               }
+            ]
+         },
+         {
+            "name": "Door to the Boiling Grotto",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|burning_hot_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Hidden in the prison",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Castle Le Fanu",
+                  "x": 790,
+                  "y": 116
+               }
+            ]
+         },
+         {
+            "name": "Hole to the Holy Battlefield",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|true"
+            ],
+            "sections": [
+               { 
+                  "name": "Jump off the bridge",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Castle Le Fanu",
+                  "x": 1138,
+                  "y": 1793
+               }
+            ]
+         },
+            {
+               "name": "CLF: Outside Corner",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "sections": [
+                  { 
+                     "name": "Mana Vial",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 1506,
+                     "y": 1216
+                  }
+               ]
+            },
+            {
+               "name": "CLF: Upper Floor Coffin Room (Small Room)",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                     "vamp_azure"
+               ],
+               "sections": [
+                  { 
+                     "name": "Earth Elixir",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 2011,
+                     "y": 522
+                  }
+               ]
+            },
+            {
+               "name": "CLF: Cattle Cell (South)",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                     "ele_blood",
+                     "vamp_azure"
+               ],
+               "sections": [
+                  { 
+                     "name": "Spectral Candle",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 406,
+                     "y": 971
+                  }
+               ]
+            },
+            {
+               "name": "CLF: Cattle Cell (West)",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                     "ele_blood",
+                     "vamp_azure"
+               ],
+               "sections": [
+                  { 
+                     "name": "Health Vial",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 153,
+                     "y": 887
+                  }
+               ]
+            },
+            {
+               "name": "CLF: Cattle Cell (Center)",
+               "chest_unopened_img": "images/items/check_spell_fade.png",
+               "chest_opened_img": "images/items/check_spell.png",
+               "access_rules": [
+                     "ele_blood, ele_fire",
+                     "vamp_azure, ele_fire"
+               ],
+               "sections": [
+                  { 
+                     "name": "Spell Ring (Summon Ice Sword)",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 517,
+                     "y": 861
+                  }
+               ]
+            },
+            {
+               "name": "CLF: Cattle Cell (North)",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                     "ele_blood"
+               ],
+               "sections": [
+                  { 
+                     "name": "Vampiric Symbol (W)",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 292,
+                     "y": 385
+                  }
+               ]
+            },
+            {
+               "name": "CLF: Hidden Cattle Cell",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                     "ele_blood , $secrets_or_off"
+               ],
+               "sections": [
+                  { 
+                     "name": "Wand of Power",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 326,
+                     "y": 283
+                  }
+               ]
+            },
+            {
+               "name": "CLF: Hallway Rubble Room",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                     "vamp_white"
+               ],
+               "sections": [
+                  { 
+                     "name": "Light Urn",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 990,
+                     "y": 982
+                  }
+               ]
+            },
+            {
+               "name": "CLF: Hallway Dining Room",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                     "vamp_white"
+               ],
+               "sections": [
+                  { 
+                     "name": "Blood Wine",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 1068,
+                     "y": 752
+                  }
+               ]
+            },
+            {
+               "name": "CLF: Garrat Resting Room (Fountain)",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                     "vamp_white"
+               ],
+               "sections": [
+                  { 
+                     "name": "Holy Water",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 1382,
+                     "y": 903
+                  }
+               ]
+            },
+            {
+               "name": "CLF: Garrat Resting Room (Wall)",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                     "vamp_white"
+               ],
+               "sections": [
+                  { 
+                     "name": "Crossbow",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 1401,
+                     "y": 821
+                  }
+               ]
+            },
+            {
+               "name": "CLF: Hallway Dead End Before Blue Doors",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                     "vamp_white"
+               ],
+               "sections": [
+                  { 
+                     "name": "Vampiric Symbol (A)",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 1407,
+                     "y": 1322
+                  }
+               ]
+            },
+            {
+               "name": "CLF: Ballroom Window",
+               "chest_unopened_img": "images/items/lock_ballroom.png",
+               "chest_opened_img": "images/items/lock_ballroom.png",
+               "access_rules": [
+                     "ele_dark, ranged_attacks",
+                     "ele_dark, dsf_checks",
+                     "ele_poison, ranged_attacks",
+                     "ele_poison, dsf_checks"
+               ],
+               "sections": [
+                  { 
+                     "name": "N/A",
+                     "item_count": 1,
+                     "hosted_item": "open_ballroom"
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 564,
+                     "y": 1288
+                  }
+               ]
+            },
+            {
+               "name": "CLF: Upper Floor Coffin Room (Large Room)",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                     "vamp_azure"
+               ],
+               "sections": [
+                  { 
+                     "name": "Ocean Elixir",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 2026,
+                     "y": 49
+                  }
+               ]
+            },
+            {
+               "name": "CLF: Upper Floor Coffin Room (Double)",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                     "vamp_emerald, $secrets_or_off"
+               ],
+               "sections": [
+                  { 
+                     "name": "Blade of Ophelia",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 2304,
+                     "y": 520
+                  }
+               ]
+            },
+            {
+               "name": "CLF:  Upper Floor Coffin Room (Hallway)",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                     "vamp_azure"
+               ],
+               "sections": [
+                  { 
+                     "name": "Vampiric Symbol (E)",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 1228,
+                     "y": 266
+                  }
+               ]
+            },
+            {
+               "name": "CLF: VCR Room",
+               "chest_unopened_img": "images/items/check_misc_fade.png",
+               "chest_opened_img": "images/items/check_misc.png",
+               "access_rules": [
+                     "vamp_azure, vhs_tape_2, $secrets_or_off"
+               ],
+               "sections": [
+                  { 
+                     "name": "N/A",
+                     "item_count": 1
+                  }
+               ],
+               "map_locations": [
+                  { 
+                     "map": "Castle Le Fanu",
+                     "x": 2208,
+                     "y": 120
+                  }
+               ]
+            }
+         ]
+    },
+    {
+      "name": "A Holy Battlefield",
+      "access_rules":[
+         "$entrances_or_off|ahb_access"
+      ],
+      "children": [
+         {
+            "name": "Rope to Castle Le Fanu",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|true"
+            ],
+            "sections": [
+               { 
+                  "name": "Clear the mirage, Scale the rope",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "A Holy Battlefield",
+                  "x": 655,
+                  "y": 136
+               }
+            ]
+         },
+         {
+            "name": "AHB: Sngula Umbra's Remains",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Black Book",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "A Holy Battlefield",
+                  "x": 818,
+                  "y": 402
+               }
+            ]
+         }
+      ]
+    },
+    {
+      "name": "Forest Canopy",
+      "access_rules":[
+         "$entrances_or_off|fc_access"
+      ],
+      "children": [
+         {
+            "name": "Door to Yosei Forest",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|treetop_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Climb back down",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forest Canopy",
+                  "x": 80,
+                  "y": 315
+               }
+            ]
+         },
+         {
+            "name": "FC: Branch Lower Edge",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Crystal Shard",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forest Canopy",
+                  "x": 399,
+                  "y": 299
+               }
+            ]
+         },
+         {
+            "name": "FC: Branch Cave",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Fairy Moss",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forest Canopy",
+                  "x": 353,
+                  "y": 68
+               }
+            ]
+         },
+         {
+            "name": "FC: Chest",
+            "chest_unopened_img": "images/items/check_spell_fade.png",
+            "chest_opened_img": "images/items/check_spell.png",
+            "sections": [
+               { 
+                  "name": "Spell Ring (Poison Mist)",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forest Canopy",
+                  "x": 803,
+                  "y": 459
+               }
+            ]
+         },
+         {
+            "name": "FC: Wooden Statue (Josiah)",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Skull of Josiah",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forest Canopy",
+                  "x": 213,
+                  "y": 359
+               }
+            ]
+         },
+         {
+            "name": "FC: Wooden Statue (Sitting)",
+            "chest_unopened_img": "images/items/check_spell_fade.png",
+            "chest_opened_img": "images/items/check_spell.png",
+            "sections": [
+               { 
+                  "name": "Spell Ring (Wind Slicer)",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forest Canopy",
+                  "x": 798,
+                  "y": 267
+               }
+            ]
+         }
+      ]
+    },
+    {
+      "name": "Sealed Ballroom",
+      "access_rules": [
+         "$entrances_or_off|open_ballroom, sb_access"
+      ],
+      "children": [
+         {
+            "name": "Door to Castle Le Fanu",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|ballroom_side_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Time to leave the party",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Sealed Ballroom",
+                  "x": 537,
+                  "y": 789
+               }
+            ]
+         },
+         {
+            "name": "SB: Entry Small Room Lounge",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Blood Wine",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Sealed Ballroom",
+                  "x": 849,
+                  "y": 537
+               }
+            ]
+         },
+         {
+            "name": "SB: Entry Hidden Couch Top",
+            "chest_unopened_img": "images/items/check_weapon_fade.png",
+            "chest_opened_img": "images/items/check_weapon.png",
+            "access_rules": [
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Steel Needle (If Not Bought)",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Sealed Ballroom",
+                  "x": 677,
+                  "y": 492
+               }
+            ]
+         },
+         {
+            "name": "SB: Entry Hidden Couch Bottom",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "access_rules": [
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Health Vial",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Sealed Ballroom",
+                  "x": 686,
+                  "y": 525
+               }
+            ]
+         },
+         {
+            "name": "SB: Entry Hidden Cave in a Lounge",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Spectral Candle",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Sealed Ballroom",
+                  "x": 924,
+                  "y": 440
+               }
+            ]
+         },
+         {
+            "name": "SB: Entry Lounge Long Table",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Health Vial",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Sealed Ballroom",
+                  "x": 780,
+                  "y": 197
+               }
+            ]
+         },
+         {
+            "name": "SB: Side Hidden Cave",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Crystal Shard",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Sealed Ballroom",
+                  "x": 428,
+                  "y": 270
+               }
+            ]
+         },
+         {
+            "name": "SB: Side Chest Near Switch",
+            "chest_unopened_img": "images/items/check_spell_fade.png",
+            "chest_opened_img": "images/items/check_spell.png",
+            "sections": [
+               { 
+                  "name": "Spell Ring (Earth Thorn)",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Sealed Ballroom",
+                  "x": 324,
+                  "y": 704
+               }
+            ]
+         },
+         {
+            "name": "SB: Side Painting Viewing Room",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Ocean Elixir",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Sealed Ballroom",
+                  "x": 152,
+                  "y": 612
+               }
+            ]
+         },
+         {
+            "name": "SB: Side Hidden Casket Room",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "access_rules": [
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Health Vial",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Sealed Ballroom",
+                  "x": 63,
+                  "y": 267
+               }
+            ]
+         },
+         {
+            "name": "SB: Side XP Drain Party Room",
+            "chest_unopened_img": "images/items/check_weapon_fade.png",
+            "chest_opened_img": "images/items/check_weapon.png",
+            "sections": [
+               { 
+                  "name": "Marauder Black Flail",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Sealed Ballroom",
+                  "x": 156,
+                  "y": 161
+               }
+            ]
+         },
+         {
+            "name": "Sealed Ballroom Switch",
+            "access_rules": [
+               "$switches_or_off|sb_switch_key"
+            ],
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Locks Easy Pathing",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Sealed Ballroom",
+                  "x": 413,
+                  "y": 620
+               }
+            ]
+         }
+      ]
+    },
+    {
+      "name": "Boiling Grotto",
+      "access_rules":[
+         "$entrances_or_off|bg_access"
+      ],
+      "children": [ 
+         {
+            "name": "Grotto",
+            "children": [
+               {
+                  "name": "Door to Castle Le Fanu",
+                  "chest_unopened_img": "images/items/check_misc_fade.png",
+                  "chest_opened_img": "images/items/check_misc.png",
+                  "access_rules": [
+                     "$door_locks_or_off|burning_hot_door"
+                  ],
+                  "sections": [
+                     { 
+                        "name": "Enter the Castle Le Fanu Cells",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 250,
+                        "y": 878
+                     }
+                  ]
+               },
+               {
+                  "name": "Tower of Abyss Coffin",
+                  "chest_unopened_img": "images/items/check_misc_fade.png",
+                  "chest_opened_img": "images/items/check_misc.png",
+                  "access_rules": [
+                     "$door_locks_or_off|tower_abyss_door"
+                  ],
+                  "sections": [
+                     { 
+                        "name": "Def not a Souls Reference",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 355,
+                        "y": 403
+                     }
+                  ]
+               },
+               {
+                  "name": "BG: Corpse Beneath Entrance",
+                  "chest_unopened_img": "images/items/check_coin_fade.png",
+                  "chest_opened_img": "images/items/check_coin.png",
+                  "sections": [
+                     { 
+                        "name": "5 Silver",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 186,
+                        "y": 775
+                     }
+                  ]
+               },
+               {
+                  "name": "BG: Slab of a Broken Bridge",
+                  "chest_unopened_img": "images/items/check_misc_fade.png",
+                  "chest_opened_img": "images/items/check_misc.png",
+                  "sections": [
+                     { 
+                        "name": "Crystal Shard",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 101,
+                        "y": 478
+                     }
+                  ]
+               },
+               {
+                  "name": "BG: Hidden Chest",
+                  "chest_unopened_img": "images/items/check_coin_fade.png",
+                  "chest_opened_img": "images/items/check_coin.png",
+                  "access_rules": [
+                     "$secrets_or_off"
+                  ],
+                  "sections": [
+                     { 
+                        "name": "25 Silver",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1135,
+                        "y": 1170
+                     }
+                  ]
+               },
+               {
+                  "name": "BG: Triple Hidden Chest",
+                  "chest_unopened_img": "images/items/check_misc_fade.png",
+                  "chest_opened_img": "images/items/check_misc.png",
+                  "access_rules": [
+                     "$secrets_or_off"
+                  ],
+                  "sections": [
+                     { 
+                        "name": "Ashes",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1135,
+                        "y": 1338
+                     }
+                  ]
+               },
+               {
+                  "name": "BG: Lava Overseeing Dragon Switch",
+                  "chest_unopened_img": "images/items/check_spell_fade.png",
+                  "chest_opened_img": "images/items/check_spell.png",
+                  "sections": [
+                     { 
+                        "name": "Spell Ring (Rock Bridge)",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1085,
+                        "y": 865
+                     }
+                  ]
+               },
+               {
+                  "name": "BG: Through Dragon Switch Tunnel",
+                  "chest_unopened_img": "images/items/check_item_fade.png",
+                  "chest_opened_img": "images/items/check_item.png",
+                  "sections": [
+                     { 
+                        "name": "Mana Vial",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 948,
+                        "y": 633
+                     }
+                  ]
+               },
+               {
+                  "name": "Boiling Grotto Fire Switch (North)",
+                  "visibility_rules": [
+                     "switch_locks"
+                  ],
+                  "access_rules": [
+                     "$switches_or_off|bg_fire_keyring"
+                  ],
+                  "chest_unopened_img": "images/items/check_misc_fade.png",
+                  "chest_opened_img": "images/items/check_misc.png",
+                  "sections": [
+                     { 
+                        "name": "Locks Sand Temple",
+                        "hosted_item": "boil_switch_1",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1069,
+                        "y": 399
+                     }
+                  ]
+               },
+               {
+                  "name": "Boiling Grotto Fire Switch (South)",
+                  "visibility_rules": [
+                     "switch_locks"
+                  ],
+                  "access_rules": [
+                     "$switches_or_off|bg_fire_keyring"
+                  ],
+                  "chest_unopened_img": "images/items/check_misc_fade.png",
+                  "chest_opened_img": "images/items/check_misc.png",
+                  "sections": [
+                     { 
+                        "name": "Locks Sand Temple",
+                        "hosted_item": "boil_switch_2",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1069,
+                        "y": 631
+                     }
+                  ]
+               }
+            ]
+         },
+         {
+            "name": "Sand Temple",
+            "access_rules":[
+               "$switches_or_off|bg_fire_keyring"
+            ],
+            "children": [
+               {
+                  "name": "ST: Top Right Sarcophagus",
+                  "chest_unopened_img": "images/items/check_item_fade.png",
+                  "chest_opened_img": "images/items/check_item.png",
+                  "sections": [
+                     { 
+                        "name": "Cloth Bandage",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1612,
+                        "y": 136
+                     }
+                  ]
+               },
+               {
+                  "name": "ST: Second Floor Snake Room",
+                  "chest_unopened_img": "images/items/check_item_fade.png",
+                  "chest_opened_img": "images/items/check_item.png",
+                  "sections": [
+                     { 
+                        "name": "Health Vial",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1875,
+                        "y": 629
+                     }
+                  ]
+               },
+               {
+                  "name": "ST: Basement Snake Pit",
+                  "chest_unopened_img": "images/items/check_misc_fade.png",
+                  "chest_opened_img": "images/items/check_misc.png",
+                  "access_rules": [
+                     "$secrets_or_off"
+                  ],
+                  "sections": [
+                     { 
+                        "name": "Staff of Osiris",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1263,
+                        "y": 962
+                     }
+                  ]
+               },
+               {
+                  "name": "ST: Room Buried in Sand",
+                  "chest_unopened_img": "images/items/check_misc_fade.png",
+                  "chest_opened_img": "images/items/check_misc.png",
+                  "sections": [
+                     { 
+                        "name": "Staff of Osiris",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 2191,
+                        "y": 532
+                     }
+                  ]
+               },
+               {
+                  "name": "ST: Basement Stone Rubble",
+                  "chest_unopened_img": "images/items/check_item_fade.png",
+                  "chest_opened_img": "images/items/check_item.png",
+                  "sections": [
+                     { 
+                        "name": "Mana Vial",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1935,
+                        "y": 919
+                     }
+                  ]
+               },
+               {
+                  "name": "ST: Hidden Sarcophagus",
+                  "chest_unopened_img": "images/items/check_item_fade.png",
+                  "chest_opened_img": "images/items/check_item.png",
+                  "access_rules": [
+                     "$secrets_or_off"
+                  ],
+                  "sections": [
+                     { 
+                        "name": "Cloth Bandage",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1417,
+                        "y": 202
+                     }
+                  ]
+               },
+               {
+                  "name": "ST: Second Floor Dead End",
+                  "chest_unopened_img": "images/items/check_item_fade.png",
+                  "chest_opened_img": "images/items/check_item.png",
+                  "sections": [
+                     { 
+                        "name": "Health Vial",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 2026,
+                        "y": 163
+                     }
+                  ]
+               },
+               {
+                  "name": "ST: Lunacid Sandwich",
+                  "chest_unopened_img": "images/items/check_weapon_fade.png",
+                  "chest_opened_img": "images/items/check_weapon.png",
+                  "sections": [
+                     { 
+                        "name": "Iron Claw",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1783,
+                        "y": 404
+                     }
+                  ]
+               },
+               {
+                  "name": "ST: Chest Near Switch",
+                  "chest_unopened_img": "images/items/check_spell_fade.png",
+                  "chest_opened_img": "images/items/check_spell.png",
+                  "sections": [
+                     { 
+                        "name": "Spell Ring (Ignis Calor)",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1282,
+                        "y": 680
+                     }
+                  ]
+               },
+               {
+                  "name": "ST: Chest Overlooking Crypt",
+                  "chest_unopened_img": "images/items/check_item_fade.png",
+                  "chest_opened_img": "images/items/check_item.png",
+                  "sections": [
+                     { 
+                        "name": "Ocean Elixir",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 2081,
+                        "y": 1235
+                     }
+                  ]
+               },
+               {
+                  "name": "ST: Floor Switch Maze",
+                  "chest_unopened_img": "images/items/check_item_fade.png",
+                  "chest_opened_img": "images/items/check_item.png",
+                  "sections": [
+                     { 
+                        "name": "Moon Vial",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 2237,
+                        "y": 692
+                     }
+                  ]
+               },
+               {
+                  "name": "ST: Triple Sarcophagus",
+                  "chest_unopened_img": "images/items/check_coin_fade.png",
+                  "chest_opened_img": "images/items/check_coin.png",
+                  "sections": [
+                     { 
+                        "name": "10 Silver",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1384,
+                        "y": 386
+                     }
+                  ]
+               },
+               {
+                  "name": "Sand Temple Main Switch",
+                  "visibility_rules": [
+                     "switch_locks"
+                  ],
+                  "access_rules": [
+                     "$switches_or_off|st_fire_keyring"
+                  ],
+                  "chest_unopened_img": "images/items/check_misc_fade.png",
+                  "chest_opened_img": "images/items/check_misc.png",
+                  "sections": [
+                     { 
+                        "name": "Locks Easy Pathing",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1278,
+                        "y": 650
+                     }
+                  ]
+               },
+               {
+                  "name": "Sand Temple Back Switch",
+                  "visibility_rules": [
+                     "switch_locks"
+                  ],
+                  "access_rules": [
+                     "$switches_or_off|st_fire_keyring"
+                  ],
+                  "chest_unopened_img": "images/items/check_misc_fade.png",
+                  "chest_opened_img": "images/items/check_misc.png",
+                  "sections": [
+                     { 
+                        "name": "Locks Easy Pathing",
+                        "item_count": 1
+                     }
+                  ],
+                  "map_locations": [
+                     { 
+                        "map": "Boiling Grotto",
+                        "x": 1596,
+                        "y": 664
+                     }
+                  ]
+               }
+            ]
+         }    
+      ]
+    },
+    {
+      "name": "Tower of Abyss",
+      "access_rules":[
+         "$entrances_or_off|toa_access"
+      ],
+      "children": [
+         {
+            "name": "TA: Floor 5",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Mana Vial",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Tower of Abyss",
+                  "x": 940,
+                  "y": 240
+               }
+            ]
+         },
+         {
+            "name": "TA: Floor 10",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Antidote",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Tower of Abyss",
+                  "x": 940,
+                  "y": 320
+               }
+            ]
+         },
+         {
+            "name": "TA: Floor 15",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Fairy Moss",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Tower of Abyss",
+                  "x": 940,
+                  "y": 395
+               }
+            ]
+         },
+         {
+            "name": "TA: Floor 20",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Spectral Candle",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Tower of Abyss",
+                  "x": 940,
+                  "y": 470
+               }
+            ]
+         },
+         {
+            "name": "TA: Floor 25",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Health Vial",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Tower of Abyss",
+                  "x": 940,
+                  "y": 550
+               }
+            ]
+         },
+         {
+            "name": "TA: Floor 30",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Crystal Lantern",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Tower of Abyss",
+                  "x": 940,
+                  "y": 620
+               }
+            ]
+         },
+         {
+            "name": "TA: Floor 35",
+            "chest_unopened_img": "images/items/check_coin_fade.png",
+            "chest_opened_img": "images/items/check_coin.png",
+            "sections": [
+               { 
+                  "name": "2 Silver",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Tower of Abyss",
+                  "x": 940,
+                  "y": 695
+               }
+            ]
+         },
+         {
+            "name": "TA: Floor 40",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Spectral Candle",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Tower of Abyss",
+                  "x": 940,
+                  "y": 770
+               }
+            ]
+         },
+         {
+            "name": "TA: Floor 45",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Earth Elixir",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Tower of Abyss",
+                  "x": 940,
+                  "y": 845
+               }
+            ]
+         },
+         {
+            "name": "TA: Floor 50",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Ocean Elixir",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Tower of Abyss",
+                  "x": 940,
+                  "y": 925
+               }
+            ]
+         },
+         {
+            "name": "TA: Prize Beneath Tree",
+            "chest_unopened_img": "images/items/check_weapon_fade.png",
+            "chest_opened_img": "images/items/check_weapon.png",
+            "sections": [
+               { 
+                  "name": "Moonlight",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Tower of Abyss",
+                  "x": 1924,
+                  "y": 301
+               }
+            ]
+         }
+      ]
+    },
+    {
+      "name": "Throne Chamber",
+      "access_rules":[
+         "$entrances_or_off|tr_access"
+      ],
+      "children": [
+         {
+            "name": "Door to Castle Le Fanu",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|queen_throne_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Enter Castle Le Fanu",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Throne Chamber",
+                  "x": 1099,
+                  "y": 2331
+               }
+            ]
+         },
+         {
+            "name": "Door to Terminus Prison",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|prison_main_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Enter the true Prison",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Throne Chamber",
+                  "x": 185,
+                  "y": 513
+               }
+            ]
+         },
+         {
+            "name": "TC: Crilall's Book Repository",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Black Book",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Throne Chamber",
+                  "x": 1504,
+                  "y": 516
+               }
+            ]
+         }
+      ]
+    },
+    {
+      "name": "Terminus Prison",
+      "access_rules":[
+         "$entrances_or_off|tp_access"
+      ],
+      "children": [
+         {
+            "name": "Door to the Throne Chamber",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|prison_main_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Ask for pardon",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 1235,
+                  "y": 234
+               }
+            ]
+         },
+         {
+            "name": "Door to Labyrinth of Ash",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|forbidden_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Enter the forbidden door",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 1671,
+                  "y": 911
+               }
+            ]
+         },
+         {
+            "name": "Door to the Forlorn Arena",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|secondary_lock_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Enter the Forlorn Arena",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 1465,
+                  "y": 1333
+               }
+            ]
+         },
+         {
+            "name": "TP: Third Floor Locked Cell Left",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "access_rules": [
+                  "term_key"
+            ],
+            "sections": [
+               { 
+                  "name": "Cloth Bandage",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 1313,
+                  "y": 381
+               }
+            ]
+         },
+         {
+            "name": "TP: Third Floor Locked Cell Right",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+                  "term_key"
+            ],
+            "sections": [
+               { 
+                  "name": "Ashes",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 1478,
+                  "y": 385
+               }
+            ]
+         },
+         {
+            "name": "TP: Third Floor Locked Cell South",
+            "chest_unopened_img": "images/items/check_weapon_fade.png",
+            "chest_opened_img": "images/items/check_weapon.png",
+            "access_rules": [
+                  "term_key"
+            ],
+            "sections": [
+               { 
+                  "name": "Broken Lance",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 1236,
+                  "y": 559
+               }
+            ]
+         },
+         {
+            "name": "TP: Almost Bottomless Pit",
+            "chest_unopened_img": "images/items/check_spell_fade.png",
+            "chest_opened_img": "images/items/check_spell.png",
+            "access_rules": [
+                  "term_key"
+            ],
+            "sections": [
+               { 
+                  "name": "Spell Ring (Icarian Flight)",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 1589,
+                  "y": 437
+               }
+            ]
+         },
+         {
+            "name": "TP: Second Floor Broken Cell",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Cloth Bandage",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 2222,
+                  "y": 380
+               }
+            ]
+         },
+         {
+            "name": "TP: Second Floor Jailer's Table",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Terminus Prison Key",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 2426,
+                  "y": 427
+               }
+            ]
+         },
+         {
+            "name": "TP: First Floor Hidden Cell",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "access_rules": [
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Holy Water",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 1559,
+                  "y": 900
+               }
+            ]
+         },
+         {
+            "name": "TP: First Floor Debris Room",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Light Urn",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 1472,
+                  "y": 776
+               }
+            ]
+         },
+         {
+            "name": "TP: First Floor Remains",
+            "chest_unopened_img": "images/items/check_weapon_fade.png",
+            "chest_opened_img": "images/items/check_weapon.png",
+            "sections": [
+               { 
+                  "name": "Fishing Spear",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 1552,
+                  "y": 834
+               }
+            ]
+         },
+         {
+            "name": "TP: Second Basement Guarded Alcove (Left)",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Moonlight Vial x2",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 2025,
+                  "y": 1150
+               }
+            ]
+         },
+         {
+            "name": "TP: Egg's Resting Place",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules":[
+               "skel_egg"
+            ],
+            "sections": [
+               { 
+                  "name": "Skeletal Rattle",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 1961,
+                  "y": 1051
+               }
+            ]
+         },
+         {
+            "name": "TP: Second Basement Long Alcove",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Earth Elixir",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 1983,
+                  "y": 1069
+               }
+            ]
+         },
+         {
+            "name": "TP: Second Basement Bone Pit",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Health Vial",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 1985,
+                  "y": 982
+               }
+            ]
+         },
+         {
+            "name": "TP: Fourth Floor Cell Hanging Remains",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "access_rules": [
+                  "term_key"
+            ],
+            "sections": [
+               { 
+                  "name": "Health Vial",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 783,
+                  "y": 509
+               }
+            ]
+         },
+         {
+            "name": "TP: Fourth Floor Maledictus Secret",
+            "chest_unopened_img": "images/items/check_spell_fade.png",
+            "chest_opened_img": "images/items/check_spell.png",
+            "access_rules": [
+                  "term_key, $secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Spell Ring (Blue Flame Arc)",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 519,
+                  "y": 649
+               }
+            ]
+         },
+         {
+            "name": "TP: Fourth Floor Hidden Jailer Sleeping Spot",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "access_rules": [
+                  "term_key, $secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Holy Water",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 457,
+                  "y": 650
+               }
+            ]
+         },
+         {
+            "name": "TP: Fourth Floor Jailer Break Room",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "access_rules": [
+                  "term_key"
+            ],
+            "sections": [
+               { 
+                  "name": "Mana Vial",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 391,
+                  "y": 747
+               }
+            ]
+         },
+         {
+            "name": "TP: Fourth Floor Collapsed Tunnel",
+            "chest_unopened_img": "images/items/check_weapon_fade.png",
+            "chest_opened_img": "images/items/check_weapon.png",
+            "access_rules": [
+                  "term_key"
+            ],
+            "sections": [
+               { 
+                  "name": "Hammer of Cruelty",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 506,
+                  "y": 280
+               }
+            ]
+         },
+         {
+            "name": "TP: Fourth Floor Monk Room",
+            "access_rules": [
+                  "term_key"
+            ],
+            "sections": [
+               { 
+                  "name": "Ectoplasm",
+                  "chest_unopened_img": "images/items/check_misc_fade.png",
+                  "chest_opened_img": "images/items/check_misc.png",
+                  "item_count": 1
+               },
+               { 
+                  "name": "Snowflake Obsidian",
+                  "chest_unopened_img": "images/items/check_misc_fade.png",
+                  "chest_opened_img": "images/items/check_misc.png",
+                  "item_count": 1
+               },
+               { 
+                  "name": "Moonpetal",
+                  "chest_unopened_img": "images/items/check_misc_fade.png",
+                  "chest_opened_img": "images/items/check_misc.png",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 536,
+                  "y": 360
+               }
+            ]
+         },
+         {
+            "name": "Terminus Prison Back Alley Switch",
+            "visibility_rules":[
+               "switch_locks"
+            ],
+            "access_rules": [
+               "$switches_or_off|tp_arena_switch_key"
+            ],
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Locks Easy Pathing",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 1193,
+                  "y": 446
+               }
+            ]
+         },
+         {
+            "name": "Forlorn Arena Switch",
+            "access_rules": [
+               "term_key, $switches_or_off|tp_arena_switch_key"
+            ],
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Locks Forlorn Arena On",
+                  "hosted_item": "arena_lock_opened",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Terminus Prison",
+                  "x": 278,
+                  "y": 497
+               }
+            ]
+         }
+      ]
+    },
+    {
+      "name": "Forlorn Arena",
+      "access_rules":[
+         "$entrances_or_off|fa_access"
+      ],
+      "children": [
+         {
+            "name": "Door to Terminus Prison",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|secondary_lock_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Self-Incarceration",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 236,
+                  "y": 1126
+               }
+            ]
+         },
+         {
+            "name": "Door to the Chamber of Fate",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|sucsarian_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Hoist the Talismans",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 1065,
+                  "y": 1126
+               }
+            ]
+         },
+         {
+            "name": "FlA: Corpse Waiting For A Full Moon",
+            "chest_unopened_img": "images/items/check_weapon_fade.png",
+            "chest_opened_img": "images/items/check_weapon.png",
+            "sections": [
+               { 
+                  "name": "Broken Sword",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 994,
+                  "y": 1213
+               }
+            ]
+         },
+         {
+            "name": "FlA: Entry Rock Parkour",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Health Vial",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 537,
+                  "y": 1406
+               }
+            ]
+         },
+         {
+            "name": "FlA: Temple of Earth Hidden Plant Haven",
+            "chest_unopened_img": "images/items/check_weapon_fade.png",
+            "chest_opened_img": "images/items/check_weapon.png",
+            "access_rules":[
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Shadow Blade",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 359,
+                  "y": 1783
+               }
+            ]
+         },
+         {
+            "name": "FlA: Temple of Earth Hidden Room",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "access_rules":[
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Earth Elixir",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 437,
+                  "y": 1711
+               }
+            ]
+         },
+         {
+            "name": "FlA: Temple of Earth Fractured Chest",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules":[
+               "dsf_checks, $secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Fractured Life",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 669,
+                  "y": 2220
+               }
+            ]
+         },
+         {
+            "name": "FlA: Temple of Earth Chest Near Switch",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Earth Talisman",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 513,
+                  "y": 1528
+               }
+            ]
+         },
+         {
+            "name": "FlA: Temple of Water Room Near Water",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Fairy Moss",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 988,
+                  "y": 725
+               }
+            ]
+         },
+         {
+            "name": "FlA: Temple of Water Corner Near Water",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Antidote",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 1091,
+                  "y": 712
+               }
+            ]
+         },
+         {
+            "name": "FlA: Temple of Water Collapsed End Near Balcony",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Health Vial",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 746,
+                  "y": 465
+               }
+            ]
+         },
+         {
+            "name": "FlA: Temple of Water Hidden Basement",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "access_rules":[
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Left Antidote",
+                  "item_count": 1
+               },
+               { 
+                  "name": "Right Antidote",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 817,
+                  "y": 303
+               }
+            ]
+         },
+         {
+            "name": "FlA: Temple of Water Hidden Laser Room",
+            "chest_unopened_img": "images/items/check_weapon_fade.png",
+            "chest_opened_img": "images/items/check_weapon.png",
+            "access_rules":[
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Obsidian Sword",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 800,
+                  "y": 353
+               }
+            ]
+         },
+         {
+            "name": "FlA: Temple of Water Hidden Alcove Before Stairs",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "access_rules":[
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Health Vial",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 509,
+                  "y": 649
+               }
+            ]
+         },
+         {
+            "name": "FlA: Temple of Water Hidden Alcove",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules":[
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Left Wisp Heart",
+                  "item_count": 1
+               },
+               { 
+                  "name": "Right Wisp Heart",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 231,
+                  "y": 510
+               }
+            ]
+         },
+         {
+            "name": "FlA: Temple of Water Hidden Alcove Before Switch",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "access_rules":[
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Ocean Elixir",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 64,
+                  "y": 762
+               }
+            ]
+         },
+         {
+            "name": "FlA: Temple of Water Fractured Chest",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules":[
+               "dsf_checks, $secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Fractured Death",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 218,
+                  "y": 150
+               }
+            ]
+         },
+         {
+            "name": "FlA: Temple of Water Chest Near Switch",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Water Talisman",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 563,
+                  "y": 707
+               }
+            ]
+         },
+         {
+            "name": "Temple of Water Switch",
+            "access_rules": [
+               "$switches_or_off|toe_switch_key"
+            ],
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Locks Easy Pathing",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 592,
+                  "y": 739
+               }
+            ]
+         },
+         {
+            "name": "Temple of Earth Switch",
+            "access_rules": [
+               "$switches_or_off|toe_switch_key"
+            ],
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Locks Easy Pathing",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Forlorn Arena",
+                  "x": 647,
+                  "y": 1545
+               }
+            ]
+         }
+      ]
+    },
+    {
+      "name": "Labyrinth of Ash",
+      "access_rules":[
+         "$entrances_or_off|la_access"
+      ],
+      "children": [
+         {
+            "name": "Door to Terminus Prison",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|forbidden_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Self-Incarceration",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Labyrinth of Ash",
+                  "x": 1102,
+                  "y": 1330
+               }
+            ]
+         },
+         {
+            "name": "LA: Entry Coffin",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Mana Vial",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Labyrinth of Ash",
+                  "x": 1072,
+                  "y": 1072
+               }
+            ]
+         },
+         {
+            "name": "LA: Jotunn Remains",
+            "chest_unopened_img": "images/items/check_item_fade.png",
+            "chest_opened_img": "images/items/check_item.png",
+            "sections": [
+               { 
+                  "name": "Health Vial",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Labyrinth of Ash",
+                  "x": 1722,
+                  "y": 748
+               }
+            ]
+         },
+         {
+            "name": "LA: Behind Statue",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Wisp Heart",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Labyrinth of Ash",
+                  "x": 1798,
+                  "y": 1287
+               }
+            ]
+         },
+         {
+            "name": "LA: Rocks Near Switch",
+            "chest_unopened_img": "images/items/check_spell_fade.png",
+            "chest_opened_img": "images/items/check_spell.png",
+            "sections": [
+               { 
+                  "name": "Spell Ring (Lava Chasm)",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Labyrinth of Ash",
+                  "x": 1499,
+                  "y": 974
+               }
+            ]
+         },
+         {
+            "name": "LA: Forbidden Light Chest",
+            "chest_unopened_img": "images/items/check_spell_fade.png",
+            "chest_opened_img": "images/items/check_spell.png",
+            "sections": [
+               { 
+                  "name": "Spell Ring (Spirit Warp)",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Labyrinth of Ash",
+                  "x": 644,
+                  "y": 847
+               }
+            ]
+         },
+         {
+            "name": "LA: Hidden Light Chest",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules":[
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Dark Urn",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Labyrinth of Ash",
+                  "x": 386,
+                  "y": 816
+               }
+            ]
+         },
+         {
+            "name": "LA: NNSNSSNSNN Lost Maze",
+            "chest_unopened_img": "images/items/check_weapon_fade.png",
+            "chest_opened_img": "images/items/check_weapon.png",
+            "access_rules":[
+               "$secrets_or_off"
+            ],
+            "sections": [
+               { 
+                  "name": "Serpent Fang",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Labyrinth of Ash",
+                  "x": 752,
+                  "y": 1070
+               }
+            ]
+         },
+         {
+            "name": "LA: Gates of Tartarus",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "ENDING",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Labyrinth of Ash",
+                  "x": 119,
+                  "y": 1104
+               }
+            ]
+         },
+         {
+            "name": "Labyrinth of Ash Switch",
+            "access_rules": [
+               "$switches_or_off|la_switch_key"
+            ],
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "Locks Easy Pathing",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Labyrinth of Ash",
+                  "x": 586,
+                  "y": 1579
+               }
+            ]
+         }
+      ]
+    },
+    {
+      "name": "Chamber of Fate",
+      "access_rules":[
+         "$entrances_or_off|cof_access"
+      ],
+      "children": [
+         {
+            "name": "Door to the Forlorn Arena",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|sucsarian_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Enter the Fighting Pits",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Chamber of Fate",
+                  "x": 475,
+                  "y": 1382
+               }
+            ]
+         },
+         {
+            "name": "Door to the Grave of the Dreamer",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|dreamer_door"
+            ],
+            "sections": [
+               { 
+                  "name": "End the world",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Chamber of Fate",
+                  "x": 475,
+                  "y": 162
+               }
+            ]
+         },
+         {
+            "name": "CF: Calamis' Weapon of Choice",
+            "chest_unopened_img": "images/items/check_weapon_fade.png",
+            "chest_opened_img": "images/items/check_weapon.png",
+            "sections": [
+               { 
+                  "name": " ",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [ 
+               { 
+                  "map": "Chamber of Fate", 
+                  "x": 474, 
+                  "y": 730 
+               } 
+            ]
+         }
+      ]
+    },
+    {
+      "name": "Grave of the Sleeper",
+      "access_rules":[
+         "$entrances_or_off|gos_access"
+      ],
+      "children": [
+         {
+            "name": "Door to the Chamber of Fate",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "access_rules": [
+               "$door_locks_or_off|dreamer_door"
+            ],
+            "sections": [
+               { 
+                  "name": "Unfinished Business",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Grave of the Sleeper",
+                  "x": 1305,
+                  "y": 115
+               }
+            ]
+         },
+         {
+            "name": "GoS: LUNACID Ending",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "ENDING",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Grave of the Sleeper",
+                  "x": 1164,
+                  "y": 1533
+               }
+            ]
+         },
+         {
+            "name": "GoS: Ending E",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "ENDING",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Grave of the Sleeper",
+                  "x": 1164,
+                  "y": 1533
+               }
+            ]
+         },
+         {
+            "name": "GoS: Ending CD",
+            "chest_unopened_img": "images/items/check_misc_fade.png",
+            "chest_opened_img": "images/items/check_misc.png",
+            "sections": [
+               { 
+                  "name": "ENDING",
+                  "item_count": 1
+               }
+            ],
+            "map_locations": [
+               { 
+                  "map": "Grave of the Sleeper",
+                  "x": 1815,
+                  "y": 1767
+               }
+            ]
+         }
+      ]
+    },
+    {
+      "name": "Dropsanity",
+      "visibility_rules": [
+         "drops_on"
+      ],
+      "children": [
+            {
+               "name": "Snail: Summon Snail Drop",
+               "chest_unopened_img": "images/items/check_spell_fade.png",
+               "chest_opened_img": "images/items/check_spell.png", 
+               "sections": [ 
+                  { 
+                     "name": "Spell Ring (Summon Snail)", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 573, 
+                     "y": 166 
+                  } 
+               ]
+            },
+            {
+               "name": "Mummy: Rusted Sword Drop",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                  "ekey_1"
+              ], 
+               "sections": [ 
+                  { 
+                     "name": "Rusted Sword", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 573, 
+                     "y": 436 
+                  } 
+               ]
+            },
+            {
+               "name": "Kodama: Summon Kodama Drop",
+               "chest_unopened_img": "images/items/check_spell_fade.png",
+               "chest_opened_img": "images/items/check_spell.png",
+               "access_rules": [
+                  "ekey_1"
+              ], 
+               "sections": [ 
+                  { 
+                     "name": "Spell Ring (Summon Kodama)", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 573, 
+                     "y": 706 
+                  } 
+               ]
+            },
+            {
+               "name": "Chimera: Quick Stride Drop",
+               "chest_unopened_img": "images/items/check_spell_fade.png",
+               "chest_opened_img": "images/items/check_spell.png", 
+               "sections": [ 
+                  { 
+                     "name": "Spell Ring (Quick Stride)", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 573, 
+                     "y": 976 
+                  } 
+               ]
+            },
+            {
+               "name": "Milk Snail: Ice Sickle Drop",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png", 
+               "sections": [ 
+                  { 
+                     "name": "Ice Sickle", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 573, 
+                     "y": 1246 
+                  } 
+               ]
+            },
+            {
+               "name": "Skeleton: Skeleton Axe Drop",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                  "ekey_1"
+              ], 
+               "sections": [ 
+                  { 
+                     "name": "Skeleton Axe", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 573, 
+                     "y": 1516 
+                  } 
+               ]
+            },
+            {
+               "name": "Skeleton: Dark Skull Drop",
+               "chest_unopened_img": "images/items/check_spell_fade.png",
+               "chest_opened_img": "images/items/check_spell.png",
+               "access_rules": [
+                  "ekey_1"
+              ], 
+               "sections": [ 
+                  { 
+                     "name": "Spell Ring (Dark Skull)", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 573, 
+                     "y": 1786 
+                  } 
+               ]
+            },
+            {
+               "name": "Phantom: Cursed Blade Drop",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                  "ekey_1"
+              ], 
+               "sections": [ 
+                  { 
+                     "name": "Cursed Blade", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 573, 
+                     "y": 2056 
+                  } 
+               ]
+            },
+            {
+               "name": "Obsidian Skeleton: Obsidian Cursebrand Drop",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                  "ekey_1, vamp_azure"
+              ], 
+               "sections": [ 
+                  { 
+                     "name": "Obsidian Cursebrand", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 1337, 
+                     "y": 166 
+                  } 
+               ]
+            },
+            {
+               "name": "Obsidian Skeleton: Obsidian Poisonguard Drop",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                  "ekey_1, vamp_azure"
+              ], 
+               "sections": [ 
+                  { 
+                     "name": "Obsidian Poisonbrand", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 1337, 
+                     "y": 436 
+                  } 
+               ]
+            },
+            {
+               "name": "Anpu: Golden Kopesh Drop",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                  "ekey_1, vamp_azure"
+              ], 
+               "sections": [ 
+                  { 
+                     "name": "Golden Kopesh", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 1337, 
+                     "y": 706 
+                  } 
+               ]
+            },
+            {
+               "name": "Anpu: Golden Sickle Drop",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                  "ekey_1, vamp_azure"
+              ], 
+               "sections": [ 
+                  { 
+                     "name": "Golden Sickle", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 1337, 
+                     "y": 976 
+                  } 
+               ]
+            },
+            {
+               "name": "Malformed Horse: Brittle Arming Sword Drop",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                  "open_ballroom"
+              ], 
+               "sections": [ 
+                  { 
+                     "name": "Brittle Arming Sword", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 1337, 
+                     "y": 1246 
+                  } 
+               ]
+            },
+            {
+               "name": "Jailor: Jailor's Candle Drop",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                  "ekey_1, vamp_emerald, term_key"
+              ], 
+               "sections": [ 
+                  { 
+                     "name": "Jailor's Candle", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 1337, 
+                     "y": 1516 
+                  } 
+               ]
+            },
+            {
+               "name": "Lyrian Longsword Drop",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png",
+               "access_rules": [
+                  "ekey_1, vamp_white",
+                  "ele_blood"
+              ], 
+               "sections": [ 
+                  { 
+                     "name": "Lyrian Longsword", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 1337, 
+                     "y": 1786 
+                  } 
+               ]
+            },
+            {
+               "name": "Sucsarian: Sucsarian Spear",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png", 
+               "sections": [ 
+                  { 
+                     "name": "Sucsarian Spear", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 1337, 
+                     "y": 2056 
+                  } 
+               ]
+            },
+            {
+               "name": "Sucsarian: Sucsarian Dagger Drop",
+               "chest_unopened_img": "images/items/check_weapon_fade.png",
+               "chest_opened_img": "images/items/check_weapon.png", 
+               "sections": [ 
+                  { 
+                     "name": "Sucsarian Dagger", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 2100, 
+                     "y": 166 
+                  } 
+               ]
+            },
+            {
+               "name": "Cetea: Tornado Drop",
+               "chest_unopened_img": "images/items/check_spell_fade.png",
+               "chest_opened_img": "images/items/check_spell.png", 
+               "sections": [ 
+                  { 
+                     "name": "Spell Ring (Tornado)", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 2100, 
+                     "y": 436 
+                  } 
+               ]
+            },
+            {
+               "name": "Abyssal Demon: Ocean Elixir Drop",
+               "chest_unopened_img": "images/items/check_item_fade.png",
+               "chest_opened_img": "images/items/check_item.png",
+               "access_rules": [
+                  "ekey_1"
+              ], 
+               "sections": [ 
+                  { 
+                     "name": "Ocean Elixir", 
+                     "item_count": 1 
+                  } 
+               ], 
+               "map_locations": [ 
+                  { 
+                     "map": "Dropsanity", 
+                     "x": 2100, 
+                     "y": 706 
+                  } 
+               ]
+            }
+      ]
+    }
+]

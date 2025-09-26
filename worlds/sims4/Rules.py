@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from worlds.AutoWorld import LogicMixin
@@ -7,6 +5,7 @@ from ..generic.Rules import set_rule
 
 from .Names import SkillNames, CareerNames, AspirationNames
 from .Options import Sims4Options
+
 
 if TYPE_CHECKING:
     from . import Sims4World
@@ -17,7 +16,7 @@ class Sims4Logic(LogicMixin):
         return True
 
 
-def set_rules(sims4_world: Sims4World):
+def set_rules(sims4_world: "Sims4World"):
     world = sims4_world.multiworld
     player = sims4_world.player
     options: Sims4Options = sims4_world.options

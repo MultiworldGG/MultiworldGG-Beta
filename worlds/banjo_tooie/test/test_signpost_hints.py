@@ -128,23 +128,18 @@ class TestCrypticSignpostsHints(TestSignpostsHints):
             location = hinted_location.name
 
             classification_keywords = {
-                ItemClassification.progression: "wonderful",
-                ItemClassification.progression_deprioritized: "wonderful",
-                ItemClassification.progression_skip_balancing: "goal",
-                ItemClassification.progression_deprioritized_skip_balancing: "great",
-                ItemClassification.useful: "good",
-                ItemClassification.filler: "useless",
+                ItemClassification.progression: ["wonderful", "legendary one-of-a-kind", "Wahay of the Duo", "Wahay of the Archipelago"],
+                ItemClassification.progression_deprioritized_skip_balancing: ["Wahay of the Duo", "Wahay of the Archipelago", "great"],
+                ItemClassification.useful: ["good"],
+                ItemClassification.filler: ["useless"],
+                ItemClassification.trap: ["bad"],
             }
-
-            if hinted_location.item.advancement and all_item_table.get(hinted_location.item.name).qty == 1:
-                keyword = "legendary one-of-a-kind"
-            else:
-                keyword = classification_keywords[hinted_location.item.classification]
-
+            keywords = classification_keywords[hinted_location.item.classification]
 
             assert 'Your' in text
             assert location in text
-            assert keyword in text, f"Item {hinted_location.item.name} should be {keyword} but was hinted differently."
+            assert any([keyword in text for keyword in keywords]), f"Item {hinted_location.item.name}\
+                    should be one of these: {keywords} but was hinted: here's the full text: {text}."
             assert not hint_data.should_add_hint
 
 

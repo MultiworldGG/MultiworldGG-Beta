@@ -1,14 +1,16 @@
 import io
 import json
 import pkgutil
+
 import bsdiff4
+import random
 
 from typing import TYPE_CHECKING, Dict, Tuple, Iterable
 from BaseClasses import Location, ItemClassification
 from worlds.Files import APProcedurePatch, APTokenMixin, APPatchExtension, AutoPatchExtensionRegister
 from .Items import items_by_id, ItemData, item_type_dict
-from .Locations import locationName_to_data, location_table
-from .Data import Rels, shop_items, item_prices, rel_filepaths, location_to_unit
+from .Locations import locationName_to_data, location_table, location_id_to_name
+from .Data import Rels, shop_items, item_prices, rel_filepaths, location_to_unit, shop_names, classification_to_color
 from .TTYDPatcher import TTYDPatcher
 
 if TYPE_CHECKING:
@@ -16,7 +18,7 @@ if TYPE_CHECKING:
 
 
 class TTYDPatchExtension(APPatchExtension):
-    game = "Paper Mario The Thousand Year Door"
+    game = "Paper Mario: The Thousand-Year Door"
 
     @staticmethod
     def patch_mod(caller: "TTYDProcedurePatch") -> None:
@@ -37,12 +39,16 @@ class TTYDPatchExtension(APPatchExtension):
         cutscene_skip = seed_options.get("cutscene_skip", None)
         experience_multiplier = seed_options.get("experience_multiplier", 1)
         starting_level = seed_options.get("starting_level", 1)
+        first_attack = seed_options.get("first_attack", None)
+        music = seed_options.get("music", 0)
+        block_visibility = seed_options.get("block_visibility", 0)
+        random.seed(seed_options["seed"] + seed_options["player"])
         caller.patcher.dol.data.seek(0x1FF)
         caller.patcher.dol.data.write(name_length.to_bytes(1, "big"))
         caller.patcher.dol.data.seek(0x200)
         caller.patcher.dol.data.write(seed_options["player_name"].encode("utf-8")[0:name_length])
         caller.patcher.dol.data.seek(0x210)
-        caller.patcher.dol.data.write(seed_options["seed"].encode("utf-8")[0:16])
+        caller.patcher.dol.data.write(seed_options["seed_name"].encode("utf-8")[0:16])
         caller.patcher.dol.data.seek(0x220)
         caller.patcher.dol.data.write(seed_options["chapter_clears"].to_bytes(1, "big"))
         caller.patcher.dol.data.seek(0x221)
@@ -97,6 +103,15 @@ class TTYDPatchExtension(APPatchExtension):
         caller.patcher.dol.data.write(experience_multiplier.to_bytes(1, "big"))
         caller.patcher.dol.data.seek(0x23E)
         caller.patcher.dol.data.write(starting_level.to_bytes(1, "big"))
+        caller.patcher.dol.data.seek(0x241)
+        caller.patcher.dol.data.write(music.to_bytes(1, "big"))
+        caller.patcher.dol.data.seek(0x242)
+        caller.patcher.dol.data.write(block_visibility.to_bytes(1, "big"))
+        if first_attack is not None:
+            caller.patcher.dol.data.seek(0x243)
+            caller.patcher.dol.data.write(first_attack.to_bytes(1, "big"))
+        caller.patcher.dol.data.seek(0x244)
+        caller.patcher.dol.data.write(random.randbytes(4))
         caller.patcher.dol.data.seek(0x260)
         caller.patcher.dol.data.write(seed_options["yoshi_name"].encode("utf-8")[0:8] + b"\x00")
         caller.patcher.dol.data.seek(0xEB6B6)
@@ -110,6 +125,8 @@ class TTYDPatchExtension(APPatchExtension):
         for file in [file for file in rel_filepaths if file != "mod"]:
             caller.patcher.iso.add_new_file(f"files/mod/subrels/{file}.rel", io.BytesIO(pkgutil.get_data(__name__, f"data/{file}.rel")))
         caller.patcher.iso.add_new_file("files/mod/mod.rel", io.BytesIO(pkgutil.get_data(__name__, f"data/mod.rel")))
+        caller.patcher.iso.add_new_file("files/msg/US/mod.txt", io.BytesIO(pkgutil.get_data(__name__, f"data/mod.txt")))
+        caller.patcher.iso.add_new_file("files/msg/US/desc.txt", io.BytesIO(caller.get_file("desc.txt")))
 
 
 
@@ -186,7 +203,7 @@ def get_rel_path(rel: Rels):
 
 
 class TTYDProcedurePatch(APProcedurePatch, APTokenMixin):
-    game = "Paper Mario The Thousand Year Door"
+    game = "Paper Mario: The Thousand-Year Door"
     hash = "4b1a5897d89d9e74ec7f630eefdfd435"
     patch_file_ending = ".apttyd"
     result_file_ending = ".iso"
@@ -217,7 +234,8 @@ class TTYDProcedurePatch(APProcedurePatch, APTokenMixin):
 
 def write_files(world: "TTYDWorld", patch: TTYDProcedurePatch) -> None:
     options_dict = {
-        "seed": world.multiworld.seed_name,
+        "seed": world.multiworld.seed,
+        "seed_name": world.multiworld.seed_name,
         "player": world.player,
         "player_name": world.multiworld.player_name[world.player],
         "yoshi_name": world.options.yoshi_name.value,
@@ -239,11 +257,38 @@ def write_files(world: "TTYDWorld", patch: TTYDProcedurePatch) -> None:
         "succeed_conditions": world.options.succeed_conditions.value,
         "cutscene_skip": world.options.cutscene_skip.value,
         "experience_multiplier": world.options.experience_multiplier.value,
-        "starting_level": world.options.starting_level.value
+        "starting_level": world.options.starting_level.value,
+        "first_attack": world.options.first_attack.value,
+        "music": world.options.music_settings.value,
+        "block_visibility": world.options.block_visibility.value
     }
+
+    buffer = io.BytesIO()
+    for i in range(len(shop_items)):
+        location = world.get_location(location_id_to_name[shop_items[i]])
+        player_name = world.multiworld.player_name[location.item.player] if location.item is not None else "Unknown Player"
+        buffer.write(f"ap_{shop_names[i // 6]}_{i % 6}".encode('utf-8'))
+        buffer.write(b'\x00')
+        buffer.write(f"{player_name}'s\n<col {classification_to_color[get_base_classification(location.item.classification)]}ff>{location.item.name}</col>".encode('utf-8'))
+        buffer.write(b'\x00')
+    buffer.write(b'\x00')  # null terminator for the end of the table
+    patch.write_file("desc.txt", buffer.getvalue())
+
     patch.write_file("options.json", json.dumps(options_dict).encode("UTF-8"))
     patch.write_file(f"locations.json", json.dumps(locations_to_dict(world.multiworld.get_locations(world.player))).encode("UTF-8"))
+
 
 def locations_to_dict(locations: Iterable[Location]) -> Dict[str, Tuple]:
     return {location.name: (location.item.code, location.item.player) if location.item is not None else (0, 0)
                     for location in locations}
+
+def get_base_classification(classification: ItemClassification = ItemClassification.filler) -> ItemClassification:
+    """Extract the primary classification for color mapping"""
+    if classification & ItemClassification.progression:
+        return ItemClassification.progression
+    elif classification & ItemClassification.trap:
+        return ItemClassification.trap
+    elif classification & ItemClassification.useful:
+        return ItemClassification.useful
+    else:
+        return ItemClassification.filler

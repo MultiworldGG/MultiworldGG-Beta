@@ -8,26 +8,27 @@ from typing import ClassVar
 
 # AP Related Imports
 import Options
-import settings
 from BaseClasses import Tutorial, Item, ItemClassification, MultiWorld
 from Utils import visualize_regions, local_path
 from worlds.AutoWorld import WebWorld, World
 from worlds.LauncherComponents import Component, SuffixIdentifier, Type, components, launch_subprocess, icon_paths
 from worlds.generic.Rules import add_rule
-from Options import OptionGroup
+from .client.luigismansion_settings import LuigisMansionSettings
+from .client.constants import CLIENT_VERSION, AP_WORLD_VERSION_NAME
 
 # Relative Imports
-from .Items import ITEM_TABLE, LMItem, get_item_names_per_category, filler_items, ALL_ITEMS_TABLE, BOO_ITEM_TABLE, \
-    trap_filler_items, other_filler_items
+from .Items import *
 from .Locations import *
-from . import LuigiOptions
+from .LuigiOptions import *
 from .Hints import get_hints_by_option, ALWAYS_HINT, PORTRAIT_HINTS
 from .Presets import lm_options_presets
 from .Regions import *
-from . import Rules
+from .Rules import *
 from .Rules import set_element_rules
 from .iso_helper.lm_rom import LMPlayerContainer
 from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+if TYPE_CHECKING:
+    from NetUtils import MultiData
 
 
 def run_client(*args):
@@ -40,25 +41,11 @@ components.append(
         file_identifier=SuffixIdentifier(".aplm"), icon="archiboolego"))
 icon_paths["archiboolego"] = f"ap:{__name__}/data/archiboolego.png"
 
-CLIENT_VERSION = VERSION
-
-class LuigisMansionSettings(settings.Group):
-    class ISOFile(settings.UserFilePath):
-        """
-        Locate your Luigi's Mansion ISO
-        """
-        description = "Luigi's Mansion (NTSC-U) ISO"
-        copy_to = "Luigi's Mansion (NTSC-U).iso"
-        md5s = ["6e3d9ae0ed2fbd2f77fa1ca09a60c494"]
-
-    iso_file: ISOFile = ISOFile(ISOFile.copy_to)
-
-
 class LMWeb(WebWorld):
     theme = "stone"
     options_presets = lm_options_presets
     option_groups = [
-        OptionGroup("Extra Locations", [
+        Options.OptionGroup("Extra Locations", [
             LuigiOptions.Furnisanity,
             LuigiOptions.Toadsanity,
             LuigiOptions.GoldMice,
@@ -68,7 +55,7 @@ class LMWeb(WebWorld):
             LuigiOptions.Lightsanity,
             LuigiOptions.Walksanity
         ]),
-        OptionGroup("Access Options", [
+        Options.OptionGroup("Access Options", [
             LuigiOptions.RankRequirement,
             LuigiOptions.GameMode,
             LuigiOptions.VacuumStart,
@@ -82,22 +69,28 @@ class LMWeb(WebWorld):
             LuigiOptions.RandomSpawn,
             LuigiOptions.EarlyFirstKey,
         ]),
-        OptionGroup("QOL Changes", [
-            LuigiOptions.TrapLink,
-            LuigiOptions.EnergyLink,
-            LuigiOptions.TrapPercentage,
-            LuigiOptions.LuigiFearAnim,
-            LuigiOptions.PickupAnim,
+        Options.OptionGroup("QOL Changes", [
             LuigiOptions.LuigiWalkSpeed,
             LuigiOptions.LuigiMaxHealth,
+            LuigiOptions.LuigiFearAnim,
+            LuigiOptions.PickupAnim,
+            LuigiOptions.ShowSelfReceivedItems,
+            LuigiOptions.DeathLink,
+            LuigiOptions.TrapLink,
+            LuigiOptions.TrapLinkClientMsgs,
+            LuigiOptions.EnergyLink,
+            LuigiOptions.RingLink,
+            LuigiOptions.RingLinkClientMsgs,
             LuigiOptions.BetterVacuum,
-            LuigiOptions.KingBooHealth,
-            LuigiOptions.BoolossusDifficulty,
             LuigiOptions.StartWithBooRadar,
             LuigiOptions.StartHiddenMansion,
             LuigiOptions.HintDistribution,
             LuigiOptions.PortraitHints,
             LuigiOptions.SendHints,
+        ]),
+        Options.OptionGroup("Enemy Stats", [
+            LuigiOptions.KingBooHealth,
+            LuigiOptions.BoolossusDifficulty,
             LuigiOptions.BooHealthOption,
             LuigiOptions.BooHealthValue,
             LuigiOptions.BooSpeed,
@@ -105,14 +98,15 @@ class LMWeb(WebWorld):
             LuigiOptions.BooAnger,
             LuigiOptions.ExtraBooSpots,
         ]),
-        OptionGroup("Cosmetics", [
+        Options.OptionGroup("Cosmetics", [
             LuigiOptions.RandomMusic,
             LuigiOptions.DoorModelRando,
             LuigiOptions.ChestTypes,
             LuigiOptions.TrapChestType,
             LuigiOptions.CallMario,
         ]),
-        OptionGroup("Filler Weights", [
+        Options.OptionGroup("Filler Weights", [
+            LuigiOptions.TrapPercentage,
             LuigiOptions.BundleWeight,
             LuigiOptions.CoinWeight,
             LuigiOptions.BillWeight,
@@ -167,7 +161,7 @@ class LMWorld(World):
     location_name_to_id: ClassVar[dict[str, int]] = {
         name: LMLocation.get_apid(data.code) for name, data in ALL_LOCATION_TABLE.items() if data.code is not None
     }
-    settings: LuigisMansionSettings
+    settings: ClassVar[LuigisMansionSettings]
     item_name_groups = get_item_names_per_category()
     required_client_version = (0, 6, 2)
     web = LMWeb()
@@ -175,17 +169,22 @@ class LMWorld(World):
     using_ut: bool # so we can check if we're using UT only once
     ut_can_gen_without_yaml = True  # class var that tells it to ignore the player yaml
 
+    # Adding these to be able to grab from other classes, such as test classes
+    ghost_affected_regions: dict[str, str] = {}
+    open_doors: dict[int, int] = {}
+    hints: dict[str, dict[str, str]] = {}
 
     def __init__(self, *args, **kwargs):
         super(LMWorld, self).__init__(*args, **kwargs)
-        self.ghost_affected_regions: dict[str, str] = GHOST_TO_ROOM.copy()
-        self.open_doors: dict[int, int] = vanilla_door_state.copy()
+        self.ghost_affected_regions: dict[str, str] = copy.deepcopy(GHOST_TO_ROOM)
+        self.open_doors: dict[int, int] = copy.deepcopy(vanilla_door_state)
         self.origin_region_name: str = "Foyer"
         self.finished_hints = threading.Event()
         self.finished_boo_scaling = threading.Event()
         self.boo_spheres: dict[str, int] = {}
         self.hints: dict[str, dict[str, str]] = {}
         self.spawn_full_locked: bool = False
+        self.local_early_key: str = ""
 
     @staticmethod
     def interpret_slot_data(slot_data):
@@ -440,9 +439,14 @@ class LMWorld(World):
         add_rule(loc, lambda state: state.has("Progressive Vacuum", self.player), "and")
 
     def generate_early(self):
+        if self.options.energy_link == 1 and self.options.ring_link == 1:
+            raise Options.OptionError("In Luigi's Mansion, both energy_link and ring_link cannot be enabled.\n"
+                                      f"This error was found in {self.player_name}'s Luigi's Mansion world."
+                                      f"Their YAML must be fixed")
+
         if (self.options.boosanity == 1 or self.options.boo_gates == 1) and self.options.boo_radar == 2:
-            raise Options.OptionError(f"When Boo Radar is excluded, neither Boosanity nor Boo Gates can be active "
-                                      f"This error was found in {self.player_name}'s Luigi's Mansion world. "
+            raise Options.OptionError(f"When Boo Radar is excluded, neither Boosanity nor Boo Gates can be active.\n"
+                                      f"This error was found in {self.player_name}'s Luigi's Mansion world."
                                       f"Their YAML must be fixed")
         if hasattr(self.multiworld, "re_gen_passthrough"):
             if "Luigi's Mansion" in self.multiworld.re_gen_passthrough:
@@ -511,7 +515,7 @@ class LMWorld(World):
             if self.options.door_rando.value == 2:
                 for door_num in [3, 42, 59, 72]: # If door is a suite_door, lock it in this option
                     self.open_doors[door_num] = 0
-            spawn_doors = copy.copy(spawn_locations[self.origin_region_name]["door_ids"])
+            spawn_doors = copy.deepcopy(spawn_locations[self.origin_region_name]["door_ids"])
             if spawn_doors:
                 for door in spawn_locations[self.origin_region_name]["door_ids"]:
                     if self.open_doors[door] == 1:
@@ -544,6 +548,17 @@ class LMWorld(World):
             self.options.final_boo_count.value = 0
             self.options.balcony_boo_count.value = 0
             # self.options.washroom_boo_count.value = 0
+
+        if self.options.early_first_key.value == 1:
+            early_key = ""
+            for key in spawn_locations[self.origin_region_name]["key"]:
+                key_data: LMItemData = ITEM_TABLE[key]
+                if self.open_doors[key_data.doorid] == 0:
+                    early_key = key
+                    break
+            if len(early_key) > 0:
+                self.local_early_key = early_key
+                self.multiworld.local_early_items[self.player].update({early_key: 1})
 
     def create_regions(self):
         # Add all randomizable regions
@@ -600,6 +615,8 @@ class LMWorld(World):
 
     def create_items(self):
         exclude = [item.name for item in self.multiworld.precollected_items[self.player]]
+        if len(self.local_early_key) > 0:
+            exclude += self.local_early_key
         loc_itempool: list[LMItem] = []
         if self.options.boosanity:
             for item, data in BOO_ITEM_TABLE.items(): # Always create 1 copy of each boo and not more
@@ -610,7 +627,6 @@ class LMWorld(World):
                 exclude += ["Progressive Vacuum"]
         if self.options.boo_radar.value == 2:
             exclude += ["Boo Radar"]
-        item_list: set = set()
         for item, data in ITEM_TABLE.items():
             copies_to_place = 1
             if data.doorid in self.open_doors.keys() and self.open_doors.get(data.doorid) == 1:
@@ -627,16 +643,7 @@ class LMWorld(World):
             if item == "Progressive Vacuum" and (curr_player_vac_count+copies_to_place) < 1:
                 raise Options.OptionError(f"{self.player_name} has excluded too many copies of Progressive Vacuum and the seed cannot be completed")
             for _ in range(copies_to_place):
-                item_list.add(item)
                 loc_itempool.append(self.create_item(item))
-        if self.options.early_first_key.value == 1:
-            early_key = ""
-            for key in spawn_locations[self.origin_region_name]["key"]:
-                if key in item_list:
-                    early_key = key
-                    break
-            if len(early_key) > 0:
-                self.multiworld.local_early_items[self.player].update({early_key: 1})
 
         # Calculate the number of additional filler items to create to fill all locations
         n_locations = len(self.multiworld.get_unfilled_locations(self.player))
@@ -754,12 +761,17 @@ class LMWorld(World):
             "Entrances": {},
             "Room Enemies": {},
             "Hints": {},
+            AP_WORLD_VERSION_NAME: CLIENT_VERSION
         }
 
         # Output relevant options to file
         for field in fields(self.options):
+            if field.name == "plando_items":
+                continue
             output_data["Options"][field.name] = getattr(self.options, field.name).value
-            output_data["Options"]["spawn"] = self.origin_region_name
+
+        # Output the spawn region name
+        output_data["Options"]["spawn"]: str = self.origin_region_name
 
         # Ourput Randomized Door info
         output_data["Entrances"] = self.open_doors
@@ -827,15 +839,12 @@ class LMWorld(World):
         patch_path = os.path.join(output_directory, f"{self.multiworld.get_out_file_name_base(self.player)}"
             f"{LMPlayerContainer.patch_file_ending}")
         # Create a zip (container) that will contain all the necessary output files for us to use during patching.
-        lm_container = LMPlayerContainer(output_data, patch_path, self.multiworld.get_out_file_name_base(self.player),
-            self.multiworld.player_name[self.player], self.player)
+        lm_container = LMPlayerContainer(output_data, patch_path, self.multiworld.player_name[self.player], self.player)
         # Write the expected output zip container to the Generated Seed folder.
         lm_container.write()
 
     # Fill slot data for LM tracker
     def fill_slot_data(self):
-        from .LMClient import CLIENT_VERSION
-
         return {
             "rank requirement": self.options.rank_requirement.value,
             "game mode": self.options.game_mode.value,
@@ -863,6 +872,7 @@ class LMWorld(World):
             "death_link": self.options.death_link.value,
             "trap_link": self.options.trap_link.value,
             "energy_link": self.options.energy_link.value,
+            "ring_link": self.options.ring_link.value,
             "call_mario": self.options.call_mario.value,
             "luigi max health": self.options.luigi_max_health.value,
             "pickup animation": self.options.enable_pickup_animation.value,
@@ -871,4 +881,50 @@ class LMWorld(World):
             "hints": self.hints,
             "apworld version": CLIENT_VERSION,
             "seed": self.multiworld.seed,
+            "disabled_traps": _get_disabled_traps(self.options),
+            "self_item_messages": self.options.self_item_messages.value,
+            "enable_ring_client_msg": self.options.enable_ring_client_msg.value,
+            "enable_trap_client_msg": self.options.enable_trap_client_msg.value,
         }
+
+    def modify_multidata(self, multidata: "MultiData") -> None:
+        if self.options.hint_distribution != 5 and self.options.hint_distribution != 1:
+            self.finished_hints.wait()
+        if self.options.boo_health_option.value == 2:
+            self.finished_boo_scaling.wait()
+
+def _get_disabled_traps(options: LuigiOptions.LMOptions) -> int:
+    """
+    Gets all traps with a weight of 0 to let trap link know they should be ignored when other players acquire them.
+    """
+    from .client.links.trap_link import TrapLinkType
+
+    def _is_disabled(weight_percent: int) -> bool:
+        return weight_percent == 0
+
+    # We cast the flag values to an int to reduce amount of data being sent to the server.
+    trap_flags: int = 0
+    if _is_disabled(options.poison_trap_weight.value):
+        trap_flags += TrapLinkType.POISON.value
+    if _is_disabled(options.banana_trap_weight.value):
+        trap_flags += TrapLinkType.BANANA.value
+    if _is_disabled(options.bomb_trap_weight.value):
+        trap_flags += TrapLinkType.BOMB.value
+    if _is_disabled(options.bonk_trap_weight.value):
+        trap_flags += TrapLinkType.BONK.value
+    if _is_disabled(options.ice_trap_weight.value):
+        trap_flags += TrapLinkType.ICE.value
+    if _is_disabled(options.poss_trap_weight.value):
+        trap_flags += TrapLinkType.POSSESSION.value
+    if _is_disabled(options.vac_trap_weight.value):
+        trap_flags += TrapLinkType.NOVAC.value
+    if _is_disabled(options.fear_weight.value):
+        trap_flags += TrapLinkType.FEAR.value
+    if _is_disabled(options.squash_weight.value):
+        trap_flags += TrapLinkType.SQUASH.value
+    if _is_disabled(options.spooky_weight.value):
+        trap_flags += TrapLinkType.SPOOKY.value
+    if _is_disabled(options.ghost_weight.value):
+        trap_flags += TrapLinkType.GHOST.value
+
+    return trap_flags

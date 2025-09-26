@@ -19,7 +19,7 @@
 
 ## Joining a Multiworld Room
 
-* In the "MultiworldGG client for REFramework" window in your game, enter the connection details for your multiworld.
+* In the "Archipelago client for REFramework" window in your game, enter the connection details for your multiworld.
   * "Host" will be the host that is shown in the console (hosting locally) or on the website (hosting there).
   * "Slot" will be the player name that you configured in the "2. YAML Options" step.
   * "Password" can be left empty, unless a password was configured for your generated multiworld. (This is usually not the case.)

@@ -2,6 +2,7 @@ from base64 import b64encode
 import logging
 import os
 import json
+import pkgutil
 from typing import Callable, Optional
 
 import Utils
@@ -16,7 +17,7 @@ from .DataValidation import runGenerationDataValidation, runPreFillDataValidatio
 from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
 
 from .Regions import create_regions
-from .Items import ManualItem
+from .Items import SimpsonsHitAndRunItem
 from .Rules import set_rules
 from .Options import SimpsonsHitAndRunOptions
 from .Helpers import is_option_enabled, is_item_enabled, get_option_value
@@ -31,8 +32,10 @@ from .hooks.World import \
     before_create_item, after_create_item, \
     before_set_rules, after_set_rules, \
     before_generate_basic, after_generate_basic, \
-    before_fill_slot_data, after_fill_slot_data, before_write_spoiler
+    before_fill_slot_data, after_fill_slot_data, before_write_spoiler, card_table
 from .hooks.Data import hook_interpret_slot_data
+
+from .SHARContainer import gen
 
 class SimpsonsHitAndRunWorld(World):
     """A 2003 Action Adventure game similar to the GTA series starring the Simpsons"""
@@ -93,8 +96,10 @@ class SimpsonsHitAndRunWorld(World):
             unused_goal.parent_region.locations.remove(unused_goal)
 
         location_game_complete.place_locked_item(
-            ManualItem("__Victory__", ItemClassification.progression, None, player=self.player))
-        after_create_regions(self, self.multiworld, self.player)
+            SimpsonsHitAndRunItem("__Victory__", ItemClassification.progression, None, player=self.player))
+
+        cards_data = json.loads(pkgutil.get_data(__name__, "data/cards.json").decode())
+        after_create_regions(self, self.multiworld, self.player, cards_data)
 
     def create_items(self):
         # Generate item pool
@@ -202,8 +207,8 @@ class SimpsonsHitAndRunWorld(World):
         if "progression_deprioritized_skip_balancing" in item and item["progression_deprioritized_skip_balancing"]:
             classification = ItemClassification.progression_deprioritized_skip_balancing
 
-        item_object = ManualItem(name, classification,
-                        self.item_name_to_id[name], player=self.player)
+        item_object = SimpsonsHitAndRunItem(name, classification,
+                                            self.item_name_to_id[name], player=self.player)
 
         item_object = after_create_item(item_object, self, self.multiworld, self.player)
 
@@ -315,6 +320,7 @@ class SimpsonsHitAndRunWorld(World):
     def fill_slot_data(self):
         slot_data = before_fill_slot_data({}, self, self.multiworld, self.player)
 
+        slot_data["version"] = "Beta 0.3.1"
         # slot_data["DeathLink"] = bool(self.multiworld.death_link[self.player].value)
         common_options = set(PerGameCommonOptions.type_hints.keys())
         for option_key, _ in self.options_dataclass.type_hints.items():
@@ -322,16 +328,15 @@ class SimpsonsHitAndRunWorld(World):
                 continue
             slot_data[option_key] = get_option_value(self.multiworld, self.player, option_key)
 
+        slot_data["card_locations"] = [card["id"] for card in card_table]
+
         slot_data = after_fill_slot_data(slot_data, self, self.multiworld, self.player)
 
         return slot_data
 
-    # Probably don't need this, but maybe it'd be useful for distributing custom launcher
-    #def generate_output(self, output_directory: str):
-        #data = self.client_data()
-        #filename = f"{self.multiworld.get_out_file_name_base(self.player)}.apmanual"
-        #with open(os.path.join(output_directory, filename), 'wb') as f:
-        #    f.write(b64encode(bytes(json.dumps(data), 'utf-8')))
+    def generate_output(self, output_directory: str):
+        filename = f"{self.multiworld.get_out_file_name_base(self.player)}_SHAR.json"
+        gen(output_directory, filename, card_table, self.player)
 
     def write_spoiler(self, spoiler_handle):
         before_write_spoiler(self, self.multiworld, spoiler_handle)
@@ -397,7 +402,6 @@ class SimpsonsHitAndRunWorld(World):
     def client_data(self):
         return {
             "game": self.game,
-            'apworld_version': "Beta 0.2.7",
             'player_name': self.multiworld.get_player_name(self.player),
             'player_id': self.player,
             'items': self.item_name_to_item,

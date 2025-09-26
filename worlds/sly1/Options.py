@@ -110,12 +110,12 @@ class ExcludeMinigames(OptionSet):
 class MinigameCaches(Range):
     """
     Determines how many checks minigames send when completed. Ignored if the minigame is excluded.
-    Allows a range from 1-10.
+    Allows a range from 0-10.
     """
     display_name = "Minigame Caches"
-    range_start = 1
+    range_start = 0
     range_end = 10
-    default = 1
+    default = 0
 
 class LocationCluesanityBundleSize(Range):
     """
@@ -136,6 +136,14 @@ class ItemCluesanityBundleSize(Range):
     range_start = 0
     range_end = 5
     default = 0
+
+class CutsceneSkip(Toggle):
+    """
+    Automatically skips dialogue and FMV cutscenes if enabled.
+    Dialogue can be skipped with the R2 button whether this option is on or off.
+    """
+    display_name = "Cutscene Skip"
+    default = 1
 
 class TrapChance(Range):
     """
@@ -202,17 +210,19 @@ class Sly1Options(PerGameCommonOptions):
     MinigameCaches:                 MinigameCaches
     LocationCluesanityBundleSize:   LocationCluesanityBundleSize
     ItemCluesanityBundleSize:       ItemCluesanityBundleSize
+    CutsceneSkip:                   CutsceneSkip
     TrapChance:                     TrapChance
     IcePhysicsTrapWeight:           IcePhysicsTrapWeight
     SpeedChangeTrapWeight:          SpeedChangeTrapWeight
-    InvisibilityTrapWeight:     InvisibilityTrapWeight
+    InvisibilityTrapWeight:         InvisibilityTrapWeight
     BallTrapWeight:                 BallTrapWeight
 
 sly1_option_groups: Dict[str, List[Any]] = {
     "General Options": [UnlockClockwerk, FastClockwerk,
                          RequiredBosses, MaxPages,
                          RequiredPages, StartingEpisode,
-                         IncludeHourglasses, HourglassesRequireRoll],
+                         IncludeHourglasses, HourglassesRequireRoll,
+                         CutsceneSkip],
     "Minigame Options": [ExcludeMinigames, MinigameCaches],
     "Cluesanity Options": [LocationCluesanityBundleSize, ItemCluesanityBundleSize],
     "Trap Options": [TrapChance, IcePhysicsTrapWeight,

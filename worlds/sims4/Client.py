@@ -23,8 +23,12 @@ from . import Sims4World
 
 # Gets the sims 4 mods folder
 
-if Sims4World.settings.mods_folder.exists():
-    mod_data_path = Path(Sims4World.settings.mods_folder) / "mod_data" / "s4ap"
+mods_folder_str = str(Sims4World.settings.mods_folder).replace(r"\_", "\u00A0")
+
+mods_folder_path = Path(mods_folder_str)
+
+if mods_folder_path.exists():
+    mod_data_path = mods_folder_path / "mod_data" / "s4ap"
 
 # reads and prints json files
 

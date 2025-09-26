@@ -235,6 +235,7 @@ class LogicVarHolder:
         self.bonuses_beaten = 0
 
         self.Blueprints = []
+        self.BlueprintsWithKong = 0
 
         self.Events = []
 
@@ -474,7 +475,7 @@ class LogicVarHolder:
         self.BananaFairies = item_counts[Items.BananaFairy] + item_counts[Items.FillerFairy]
         self.BananaMedals = item_counts[Items.BananaMedal] + item_counts[Items.FillerMedal]
         self.BattleCrowns = item_counts[Items.BattleCrown] + item_counts[Items.FillerCrown]
-        self.RainbowCoins = item_counts[Items.RainbowCoin]
+        self.RainbowCoins = item_counts[Items.RainbowCoin] + item_counts[Items.FillerRainbowCoin]
 
         self.camera = self.camera or Items.CameraAndShockwave in ownedItems or Items.Camera in ownedItems
         self.shockwave = self.shockwave or Items.CameraAndShockwave in ownedItems or Items.Shockwave in ownedItems
@@ -486,7 +487,13 @@ class LogicVarHolder:
         self.superSlam = self.Slam >= 2
         self.superDuperSlam = self.Slam >= 3
 
+        total_bp_count = 0
+        kong_ownership = [self.donkey, self.diddy, self.lanky, self.tiny, self.chunky]
+        for kong in range(5):
+            if kong_ownership[kong]:
+                total_bp_count += len([level for level in range(8) if (Items.JungleJapesDonkeyBlueprint + (level * 5) + kong) in ownedItems])
         self.Blueprints = [x for x in ownedItems if x >= Items.JungleJapesDonkeyBlueprint and x <= Items.DKIslesChunkyBlueprint]
+        self.BlueprintsWithKong = total_bp_count
         self.Hints = [x for x in ownedItems if x >= Items.JapesDonkeyHint and x <= Items.CastleChunkyHint]
         self.Beans = sum(1 for x in ownedItems if x == Items.Bean)
         self.Pearls = sum(1 for x in ownedItems if x in [Items.Pearl, Items.FillerPearl])
@@ -1325,6 +1332,9 @@ class LogicVarHolder:
                 if not k:
                     return False
             return True
+        elif condition == WinConditionComplex.krools_challenge:
+            # Krool's Challenge: Beat K. Rool + collect all Keys, Blueprints, Bosses, and Bonus Barrels
+            return Events.KRoolDefeated in self.Events and self.ItemCheck(BarrierItems.Key, 8) and self.ItemCheck(BarrierItems.Blueprint, 40) and self.bosses_beaten >= 7 and self.bonuses_beaten >= 43
         elif condition == WinConditionComplex.req_bonuses:
             return self.bonuses_beaten >= self.settings.win_condition_count
         elif condition == WinConditionComplex.req_bosses:

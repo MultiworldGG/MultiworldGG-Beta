@@ -173,10 +173,19 @@ class Data:
     def import_json(self, file_name):
         json_dir = os.path.join(Utils.local_path("data", "sm64hacks"))
         os.makedirs(json_dir, exist_ok=True)
-        json_file = list(Path(json_dir).rglob(file_name)) #external takes priority over internal
+        json_file = []
+        for file_path in Path(json_dir).rglob("*"):
+            if file_path.is_file() and file_path.name.lower() == file_name.lower():
+                json_file.append(file_path)
+                break
+        
         local_file = True
         if json_file == []:
-            json_file = list(resources.files(__package__).joinpath("jsons").rglob(file_name))
+            json_file = []
+            for file_path in resources.files(__package__).joinpath("jsons").rglob("*"):
+                if file_path.is_file() and file_path.name.lower() == file_name.lower():
+                    json_file.append(file_path)
+                    break
             local_file = False
         if len(json_file) > 1:
             raise ValueError("Multiple JSON files with the same name detected")

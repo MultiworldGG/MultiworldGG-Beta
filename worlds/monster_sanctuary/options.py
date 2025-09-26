@@ -8,6 +8,28 @@ from Options import Toggle, Choice, Range, DeathLink, PerGameCommonOptions
 #   Randomize to any monster
 # Randomize keeper's monsters
 
+# region Logic Flags
+class LogicDifficulty(Choice):
+    """Sets the difficulty of movement that is required from the player. Default is casual.
+
+    Casual: Logic will only require of you what the vanilla game expects.
+    Advanced: Logic can require difficult jumps and require using abilities in unintended ways.
+    Expert: Logic can require frame-perfect (or near frame-perfect) jumps while using abilities in ways they weren't intended."""
+
+    display_name = "Logic Difficulty"
+    option_casual = 0
+    option_advanced = 1
+    option_expert = 2
+    default = 0
+
+
+class TediousChecks(Toggle):
+    """When enabled, the logic will expect the player to use the Warp to Start feature to get out of areas that are only accessible in one direction, or to attempt failed jumps multiple times. Default is disabled"""
+
+    display_name = "Include Tedious Logic"
+    default = False
+# endregion
+
 
 # region Monster Randomization
 class RandomizeMonsters(Choice):
@@ -562,6 +584,9 @@ class Goal(Choice):
 
 @dataclass
 class MonsterSanctuaryOptions(PerGameCommonOptions):
+    logic_difficulty: LogicDifficulty
+    tedious_checks: TediousChecks
+
     randomize_monsters: RandomizeMonsters
     monster_shift_rule: RandomizeMonsterShifts
     improved_mobility_limit: ImprovedMobilityLimitation

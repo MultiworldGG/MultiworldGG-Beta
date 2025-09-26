@@ -7,9 +7,9 @@ class SnowyPeaksTests(TestArea):
         self.assertNotAccessible("SnowyPeaks_East4_Middle", "snowy_peaks_east4_upper_shortcut",
                                  ["Kongamato"])
         self.assertAccessible("SnowyPeaks_East4_Middle", "snowy_peaks_east4_upper_shortcut",
-                              ["Double Jump Boots"])
-        self.assertAccessible("SnowyPeaks_East4_Middle", "snowy_peaks_east4_upper_shortcut",
                               ["Snowy Peaks East 4 Upper Shortcut", "Kongamato"])
+        self.assertAccessible("SnowyPeaks_East4_Middle", "snowy_peaks_east4_upper_shortcut",
+                              ["Snowy Peaks East 4 Upper Shortcut", "Double Jump Boots"])
 
     def test_east_mountain_shortcut(self):
         self.assertNotAccessible("SnowyPeaks_EastMountain3_Middle", "snowy_peaks_east_mountain_3_shortcut",

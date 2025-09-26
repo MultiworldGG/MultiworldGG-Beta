@@ -115,8 +115,8 @@ def create_junk_items(world: "Sly1World", count: int) -> List[Item]:
                 trap_list[name] = world.options.IcePhysicsTrapWeight.value
             elif name == "Speed Change Trap":
                 trap_list[name] = world.options.SpeedChangeTrapWeight.value
-            elif name == "Bentley Jumpscare Trap":
-                trap_list[name] = world.options.BentleyJumpscareTrapWeight.value
+            elif name == "Invisibility Trap":
+                trap_list[name] = world.options.InvisibilityTrapWeight.value
             elif name == "Ball Trap":
                 trap_list[name] = world.options.BallTrapWeight.value
 

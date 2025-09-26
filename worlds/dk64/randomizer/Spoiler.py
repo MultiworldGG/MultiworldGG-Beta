@@ -276,6 +276,7 @@ class Spoiler:
             Types.Pearl: "Pearls",
             Types.FillerPearl: "Pearls",
             Types.RainbowCoin: "Rainbow Coins",
+            Types.FillerRainbowCoin: "Rainbow Coins",
             Types.FakeItem: "Ice Traps",
             Types.JunkItem: "Junk Items",
             Types.CrateItem: "Melon Crates",
@@ -354,7 +355,7 @@ class Spoiler:
         settings["Complex Level Order"] = self.settings.hard_level_progression
         settings["Progressive Switch Strength"] = self.settings.alter_switch_allocation
         settings["Switchsanity"] = self.settings.switchsanity_enabled
-        settings["Free Trade Agreement"] = self.settings.free_trade_setting.name
+        settings["Free Trade Agreement"] = self.settings.free_trade_setting
         settings["Randomize Pickups"] = self.settings.randomize_pickups
         settings["Randomize Patches"] = self.settings.random_patches
         settings["Randomize Crates"] = self.settings.random_crates
@@ -419,6 +420,7 @@ class Spoiler:
                 WinConditionComplex.krem_kapture: "Kremling Kapture",
                 WinConditionComplex.dk_rap_items: "Complete the Rap",
                 WinConditionComplex.req_bean: "Acquire the Bean",
+                WinConditionComplex.krools_challenge: "Beat K. Rool's Challenge",
                 WinConditionComplex.req_bp: f"{wc_count} Blueprint{'s' if wc_count != 1 else ''}",
                 WinConditionComplex.req_companycoins: f"{wc_count} Company Coin{'s' if wc_count != 1 else ''}",
                 WinConditionComplex.req_crown: f"{wc_count} Crown{'s' if wc_count != 1 else ''}",
@@ -1368,7 +1370,7 @@ class Spoiler:
             # WinConditionComplex.req_key: [Types.Key],
             WinConditionComplex.req_medal: [Types.Medal, Types.FillerMedal],
             WinConditionComplex.req_pearl: [Types.Pearl, Types.FillerPearl],
-            WinConditionComplex.req_rainbowcoin: [Types.RainbowCoin],
+            WinConditionComplex.req_rainbowcoin: [Types.RainbowCoin, Types.FillerRainbowCoin],
         }
         # Win condition items are more important than GBs but less than moves
         if self.settings.win_condition_item in win_con_type_table:

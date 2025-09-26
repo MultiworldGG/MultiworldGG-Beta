@@ -38,15 +38,9 @@
                             {% elif patch.game == "Metroid Prime" %}
                             <a href="{{ url_for("download_slot_file", room_id=room.id, player_id=patch.player_id) }}" download>
                                 Download APMP1 File...</a>
-                            {% elif patch.game == "Luigi's Mansion" %}
-                            <a href="{{ url_for("download_slot_file", room_id=room.id, player_id=patch.player_id) }}" download>
-                                Download APLM File...</a>
                             {% elif patch.game == "gzDoom" %}
                             <a href="{{ url_for("download_slot_file", room_id=room.id, player_id=patch.player_id) }}" download>
                                 Download PK3 File...</a>
-                            {% elif patch.game == "Donkey Kong 64" %}
-                            <a href="{{ url_for("download_slot_file", room_id=room.id, player_id=patch.player_id) }}" download>
-                                Download Lanky Patch File...</a>
                             {% elif patch.game == "Factorio" %}
                             <a href="{{ url_for("download_slot_file", room_id=room.id, player_id=patch.player_id) }}" download>
                                 Download Factorio Mod...</a>

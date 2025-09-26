@@ -341,11 +341,23 @@ def patching_response(spoiler):
     is_dw = IsDDMSSelected(spoiler.settings.hard_mode_selected, HardModeSelected.donk_in_the_dark_world)
     is_sky = IsDDMSSelected(spoiler.settings.hard_mode_selected, HardModeSelected.donk_in_the_sky)
     if is_dw and is_sky:
-        # Memory challenge
+        # Memory Challenge
         ROM_COPY.seek(sav + 0x0C6)
         old = int.from_bytes(ROM_COPY.readBytes(1), "big")
         ROM_COPY.seek(sav + 0x0C6)
-        ROM_COPY.write(old | 0x2)
+        ROM_COPY.write(old | 0x8 | 0x2)
+    elif is_dw and not is_sky:
+        # Dark world only
+        ROM_COPY.seek(sav + 0x0C6)
+        old = int.from_bytes(ROM_COPY.readBytes(1), "big")
+        ROM_COPY.seek(sav + 0x0C6)
+        ROM_COPY.write(old | 0x8)
+    elif is_sky and not is_dw:
+        # Sky only
+        ROM_COPY.seek(sav + 0x0C6)
+        old = int.from_bytes(ROM_COPY.readBytes(1), "big")
+        ROM_COPY.seek(sav + 0x0C6)
+        ROM_COPY.write(old | 0x4)
 
     keys = 0xFF
     if spoiler.settings.k_rool_vanilla_requirement:
@@ -453,6 +465,9 @@ def patching_response(spoiler):
         },
         WinConditionComplex.dk_rap_items: {
             "index": 4,
+        },
+        WinConditionComplex.krools_challenge: {
+            "index": 5,
         },
         WinConditionComplex.req_bean: {
             "index": 3,
@@ -585,6 +600,11 @@ def patching_response(spoiler):
         ROM_COPY.seek(sav + 0x1B0)
         byte_data, password = encPass(spoiler)
         ROM_COPY.writeMultipleBytes(byte_data, 4)
+
+    # Set K. Rool ship spawn method
+    ROM_COPY.seek(sav + 0x1B6)
+    krool_ship_spawn_method = 1 if spoiler.settings.win_condition_item == WinConditionComplex.krools_challenge else 0
+    ROM_COPY.writeMultipleBytes(krool_ship_spawn_method, 1)
 
     # Mill Levers
     if spoiler.settings.mill_levers[0] > 0:

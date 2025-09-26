@@ -43,7 +43,7 @@ app.config["JOB_TIME"] = 600
 app.config["GENERATOR_MEMORY_LIMIT"] = 4294967296
 app.config['SESSION_PERMANENT'] = True
 # set worlds requested to be removed by maintainer as hidden by default
-app.config['HIDDEN_WEBWORLDS'] = ["Super Mario World", "Sonic Adventure 2 Battle", "Celeste 64", "Donkey Kong Country 3", "Celeste (Open World) "]
+app.config['HIDDEN_WEBWORLDS'] = ["Super Mario World", "Sonic Adventure 2 Battle", "Celeste 64", "Donkey Kong Country 3", "Celeste (Open World)"]
 
 # waitress uses one thread for I/O, these are for processing of views that then get sent
 # multiworld.gg uses gunicorn + nginx; ignoring this option

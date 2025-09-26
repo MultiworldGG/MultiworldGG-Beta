@@ -94,3 +94,43 @@ The last thing you can do is inform UT that your world can generate without a YA
 class MyWorld(World):
     ut_can_gen_without_yaml = True
 ```
+
+## Deferred Entrances
+
+UT allows worlds to create "hanging" entrances and "defer" connecting them until the player physically takes the entrance.
+
+The intent for this is either to prevent spoiling Entrance Randomization or to mock the poptracker functionality of watching datastorage for the player doing things that normally would be implemented as logical events.
+
+The first step is for worlds to define a list of keys under the world attribute `found_entrances_datastorage_key` a single key can also be defined as just a string.
+
+Second the world should define a function `reconnect_found_entrances(self,found_key,data_storage_value)` that will be provided the datastorage key that was triggered and the value provided by the client.
+
+Finally the world should check the value of `multiworld.enforce_deferred_connections`
+
+This will one of the following values:
+
+ * "on"      : In this case worlds that support deferred entrances are expected to use them
+ * "off"     : In this case worlds that support deferred entrances are expected to **not** use them
+ * "default" : In this case worlds that support deferred entrances are allowed to decide to use them or not
+
+## Logic explantion
+
+UT allows worlds to define two methods that will override the default UT methods for explaining/debuging logic
+
+The first is an override for the `/get_logical_path` function
+
+By default UT will provide a list of the entrances that are expected to take in order to get to the region/location, however if a world wants to they can replace this functionality by defining a function named `get_logical_path` on the world, e.g.
+
+```python
+    def get_logical_path(self, target_name: str, state: CollectionState) -> list[JSONMessagePart]:
+        return [{"type":"text","text":"Just go get it"}]
+```
+
+The second is an override for the `/explain` function
+
+By default UT will provide a function that will use the rule builder api to explain the logic for a specific location, however if a world wants to they can replace this functionality by defining a function named `explain_rule` on the world, e.g.
+
+```python
+    def explain_rule(self, target_name: str, state: CollectionState) -> list[JSONMessagePart]:
+        return [{"type":"text","text":"You gotta pick it up"}]
+```

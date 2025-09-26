@@ -88,7 +88,7 @@ postgame_locations = [
 	"Stronghold Dungeon - Trevisan 2",
 ]
 velvet_melody_locations = [
-	"Magma Chamber - Legendary Keeper Room",
+	"Magma Chamber - Legendary Keeper Room - Velvet Melody Statue",
 	"Magma Chamber - Legendary Keeper Room - Mozzie Reward 1",
 	"Magma Chamber - Legendary Keeper Room - Mozzie Reward 2",
 	"Magma Chamber - Legendary Keeper Room - Mozzie Reward 3",

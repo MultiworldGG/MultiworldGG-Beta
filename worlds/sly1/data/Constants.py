@@ -2,21 +2,21 @@ LEVELS = {
     "Tide of Terror": [
         "Stealthy Approach",
         "Prowling the Grounds",
-        "Into the Machine",
         "High Class Heist",
-        "Fire Down Below",
+        "Into the Machine",
         "Cunning Disguise",
-        "Gunboat Graveyard",
-        "Treasure in the Depths"
+        "Fire Down Below",
+        "Treasure in the Depths",
+        "Gunboat Graveyard"
     ],
     "Sunset Snake Eyes": [
         "Rocky Start",
         "Muggshot's Turf",
-        "At the Dog Track",
-        "Murray's Big Gamble",
         "Boneyard Casino",
-        "Straight to the Top",
+        "Murray's Big Gamble",
+        "At the Dog Track",
         "Two to Tango",
+        "Straight to the Top",
         "Back Alley Heist"
     ],
     "Vicious Voodoo": [
@@ -32,12 +32,12 @@ LEVELS = {
     "Fire in the Sky": [
         "Perilous Ascent",
         "Inside the Stronghold",
-        "Unseen Foe",
         "Flaming Temple of Flame",
+        "Unseen Foe",
         "King of the Hill",
         "Rapid Fire Assault",
-        "Desperate Race",
-        "Duel by the Dragon"
+        "Duel by the Dragon",
+        "Desperate Race"
     ]
 }
 
@@ -116,21 +116,21 @@ ADDRESSES = {
             [  # Tide Of Terror
                 0x27C67C,  # Stealthy Approach
                 0x27C6F4,  # Prowling the Grounds
-                0x27C7E4,  # Into the Machine
                 0x27C76C,  # High Class Heist
-                0x27C8D4,  # Fire Down Below
+                0x27C7E4,  # Into the Machine
                 0x27C85C,  # Cunning Disguise
-                0x27C9C4,  # Gunboat Graveyard
-                0x27C94C   # Treasure in the Depths
+                0x27C8D4,  # Fire Down Below
+                0x27C94C,  # Treasure in the Depths
+                0x27C9C4   # Gunboat Graveyard
             ],
             [  # Sunset Snake Eyes
                 0x27CAC8,  # Rocky Start
                 0x27CB40,  # Muggshot's Turf
-                0x27CCA8,  # At the Dog Track
-                0x27CC30,  # Murray's Big Gamble
                 0x27CBB8,  # Boneyard Casino
-                0x27CD98,  # Straight to the Top
+                0x27CC30,  # Murray's Big Gamble
+                0x27CCA8,  # At the Dog Track
                 0x27CD20,  # Two to Tango
+                0x27CD98,  # Straight to the Top
                 0x27CE10   # Back Alley Heist
             ],
             [  # Vicious Voodoo
@@ -146,12 +146,12 @@ ADDRESSES = {
             [  # Fire In The Sky
                 0x27D360,  # Perilous Ascent
                 0x27D3D8,  # Inside the Stronghold
-                0x27D4C8,  # Unseen Foe
                 0x27D450,  # Flaming Temple of Flame
+                0x27D4C8,  # Unseen Foe
                 0x27D540,  # King of the Hill
                 0x27D5B8,  # Rapid Fire Assault
-                0x27D6A8,  # Desperate Race
-                0x27D630   # Duel by the Dragon
+                0x27D630,  # Duel by the Dragon
+                0x27D6A8   # Desperate Race
             ]
         ],
         "bottle addresses":
@@ -159,21 +159,21 @@ ADDRESSES = {
             [  # Tide Of Terror
                 0x27C6E0,  # Stealthy Approach
                 0,         # Prowling the Grounds (no bottles)
-                0x27C848,  # Into the Machine
                 0x27C7D0,  # High Class Heist
-                0x27C938,  # Fire Down Below
+                0x27C848,  # Into the Machine
                 0x27C8C0,  # Cunning Disguise
-                0x27CA28,  # Gunboat Graveyard
-                0          # Treasure in the Depths (no bottles)
+                0x27C938,  # Fire Down Below
+                0,         # Treasure in the Depths (no bottles)
+                0x27CA28   # Gunboat Graveyard
             ],
             [  # Sunset Snake Eyes
                 0x27CB2C,  # Rocky Start
                 0,         # Muggshot's Turf (no bottles)
-                0,         # At the Dog Track (no bottles)
-                0,         # Murray's Big Gamble (no bottles)
                 0x27CC1C,  # Boneyard Casino
-                0x27CDFC,  # Straight to the Top
+                0,         # Murray's Big Gamble (no bottles)
+                0,         # At the Dog Track (no bottles)
                 0x27CD84,  # Two to Tango
+                0x27CDFC,  # Straight to the Top
                 0x27CE74   # Back Alley Heist
             ],
             [  # Vicious Voodoo
@@ -189,12 +189,12 @@ ADDRESSES = {
             [  # Fire In The Sky
                 0x27D3C4,  # Perilous Ascent
                 0,         # Inside the Stronghold (no bottles)
-                0x27D52C,  # Unseen Foe
                 0x27D4B4,  # Flaming Temple of Flame
+                0x27D52C,  # Unseen Foe
                 0,         # King of the Hill (no bottles)
                 0,         # Rapid Fire Assault (no bottles)
-                0,         # Desperate Race (no bottles)
-                0x27D694   # Duel by the Dragon
+                0x27D694,  # Duel by the Dragon
+                0          # Desperate Race (no bottles)
             ]
         ],
         "maps":
@@ -221,44 +221,44 @@ ADDRESSES = {
         "name pointers":
         [
             [
-                0x247B98, #Stealthy Approach
-                0,        #Prowling the Grounds
-                0x247C1C, #Into the Machine
-                0x247BF0, #High Class Heist
-                0x247C74, #Fire Down Below
-                0x247C48, #Cunning Disguise
-                0x247CCC, #Gunboat Graveyard
-                0         #Treasure in the Depths
+                0x247B98, # Stealthy Approach
+                0,        # Prowling the Grounds
+                0x247BF0, # High Class Heist
+                0x247C1C, # Into the Machine
+                0x247C48, # Cunning Disguise
+                0x247C74, # Fire Down Below
+                0,        # Treasure in the Depths
+                0x247CCC  # Gunboat Graveyard
             ],
             [
-                0x247D24, #Rocky Start
-                0,        #Muggshot's Turf
-                0,        #At the Dog Track
-                0,        #Murray's Big Gamble
-                0x247D7C, #Boneyard Casino
-                0x247E2C, #Straight to the Top
-                0x247E00, #Two to Tango
+                0x247D24, # Rocky Start
+                0,        # Muggshot's Turf
+                0x247D7C, # Boneyard Casino
+                0,        # Murray's Big Gamble
+                0,        # At the Dog Track
+                0x247E00, # Two to Tango
+                0x247E2C, # Straight to the Top
                 0x247E58  # Back Alley Heist
             ],
             [
-                0x247EB0, #Dread Swamp Path
-                0,        #The Swamp's Dark Center
-                0x247F08, #Lair of the Beast
-                0x247F34, #Grave Undertaking
-                0,        #Piranha Lake
-                0x247F8C, #Descent into Danger
-                0,        #Ghastly Voyage
-                0         #Down Home Cooking
+                0x247EB0, # Dread Swamp Path
+                0,        # The Swamp's Dark Center
+                0x247F08, # Lair of the Beast
+                0x247F34, # Grave Undertaking
+                0,        # Piranha Lake
+                0x247F8C, # Descent into Danger
+                0,        # Ghastly Voyage
+                0         # Down Home Cooking
             ],
             [
                 0x24803C,  # Perilous Ascent
                 0,         # Inside the Stronghold
-                0x2480C0,  # Unseen Foe
                 0x248094,  # Flaming Temple of Flame
+                0x2480C0,  # Unseen Foe
                 0,         # King of the Hill
                 0,         # Rapid Fire Assault
-                0,         # Desperate Race
-                0x248144   # Duel by the Dragon
+                0x248144,  # Duel by the Dragon
+                0          # Desperate Race
             ]
         ],
         "hub name pointers":

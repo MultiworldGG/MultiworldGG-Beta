@@ -113,7 +113,8 @@ class Sly1World(World):
                 "HourglassesRequireRoll": self.options.HourglassesRequireRoll.value,
                 "AvoidEarlyBK": self.options.AvoidEarlyBK.value,
                 "LocationCluesanityBundleSize": self.options.LocationCluesanityBundleSize.value,
-                "ItemCluesanityBundleSize": self.options.ItemCluesanityBundleSize.value
+                "ItemCluesanityBundleSize": self.options.ItemCluesanityBundleSize.value,
+                "CutsceneSkip": self.options.CutsceneSkip.value
             },
             "Seed": self.multiworld.seed_name,  # to verify the server's multiworld
             "Slot": self.multiworld.player_name[self.player],  # to connect to server

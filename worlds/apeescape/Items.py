@@ -1,3 +1,4 @@
+import typing
 from typing import Optional, Dict, Set
 from BaseClasses import ItemClassification, Item
 from .Strings import AEItem
@@ -64,6 +65,7 @@ item_table = {
     AEItem.GadgetShuffleTrap.value: RAM.items["GadgetShuffleTrap"],
     AEItem.MonkeyMashTrap.value: RAM.items["MonkeyMashTrap"],
     AEItem.IcyHotPantsTrap.value: RAM.items["IcyHotPantsTrap"],
+    AEItem.StunTrap.value: RAM.items["StunTrap"],
 
     # SpecialItems
     AEItem.RainbowCookie.value: RAM.items["RainbowCookie"],
@@ -84,6 +86,46 @@ gadgetsValues = {
 
 event_table = {
 }
+
+trap_to_local_traps: typing.Dict[str, str] = {
+    # Converts received traps to local trap names
+    # Our native Traps
+    AEItem.BananaPeelTrap.value:    AEItem.BananaPeelTrap.value,
+    AEItem.GadgetShuffleTrap.value: AEItem.GadgetShuffleTrap.value,
+    AEItem.MonkeyMashTrap.value:    AEItem.MonkeyMashTrap.value,
+    AEItem.IcyHotPantsTrap.value:   AEItem.IcyHotPantsTrap.value,
+    AEItem.StunTrap.value:          AEItem.StunTrap.value,
+
+    # Common other trap names
+    "Banana Trap":          AEItem.BananaPeelTrap.value,
+    "Chaos Control Trap":   AEItem.StunTrap.value,
+    "Confuse Trap":         AEItem.MonkeyMashTrap.value,
+    "Confusion Trap":       AEItem.MonkeyMashTrap.value,
+    "Freeze Trap":          AEItem.StunTrap.value,
+    "Frozen Trap":          AEItem.StunTrap.value,
+    "Hiccup Trap":          AEItem.IcyHotPantsTrap.value,
+    "Jump Trap":            AEItem.IcyHotPantsTrap.value,
+    "Jumping Jacks Trap":   AEItem.IcyHotPantsTrap.value,
+    "Paralyze Trap":        AEItem.StunTrap.value,
+    "Push Trap":            AEItem.BananaPeelTrap.value,
+    "Spring Trap":          AEItem.IcyHotPantsTrap.value,
+    "Swap Trap" :           AEItem.GadgetShuffleTrap.value,
+
+    # Traps idea :
+    # Fast Trap (Depending on direction always set to max velocity?)
+    # Home Trap (Time Hub Trap? or maybe only warp to level entry?)
+    # Ice Trap (Slipery Floor?)
+    # Mailbox Trap (Tells a message to the player in a mailbox
+}
+
+trap_name_to_value: typing.Dict[str, int] = {
+    AEItem.BananaPeelTrap.value:    RAM.items["BananaPeelTrap"],
+    AEItem.GadgetShuffleTrap.value: RAM.items["GadgetShuffleTrap"],
+    AEItem.MonkeyMashTrap.value:    RAM.items["MonkeyMashTrap"],
+    AEItem.IcyHotPantsTrap.value:   RAM.items["IcyHotPantsTrap"],
+    AEItem.StunTrap.value:          RAM.items["StunTrap"],
+}
+
 
 def createItemGroups():
     # Alliases for items

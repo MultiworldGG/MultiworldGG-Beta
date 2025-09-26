@@ -1,27 +1,44 @@
+import enum
 import re
-from typing import List, Union
+from typing import Dict, List, Union, TYPE_CHECKING
 from dataclasses import dataclass
-from BaseClasses import ItemClassification, Location, LocationProgressType
-from worlds.AutoWorld import World
+from BaseClasses import ItemClassification, Location, LocationProgressType, CollectionState
 from .Options import HintClarity, AddSignpostHintsToArchipelagoHints
 from .Items import moves_table, bk_moves_table, progressive_ability_table
-from .Locations import MumboTokenBoss_table, MumboTokenGames_table, MumboTokenJinjo_table, all_location_table, WorldUnlocks_table
+from .Locations import (MumboTokenBoss_table, MumboTokenGames_table, MumboTokenJinjo_table, all_location_table,
+                        WorldUnlocks_table)
 from .Names import locationName
+if TYPE_CHECKING:
+    from . import BanjoTooieWorld
 
 TOTAL_HINTS = 61
 
+
 @dataclass
 class HintData:
-    text: str # The displayed text in the game.
+    text: str  # The displayed text in the game.
     location_id: Union[int, None] = None
     location_player_id: Union[int, None] = None
     should_add_hint: bool = False
 
-class Hint:
-    world: World
-    location: Location
 
-    def __init__(self, world: World, location: Location):
+class Hint:
+    @dataclass(eq=True, frozen=True)
+    class ItemRequirementCacheKey:
+        item_name: str
+        player: int
+
+    class ItemRequirement(enum.Enum):
+        REQUIRED_BY_PLAYER = 0,
+        REQUIRED_BY_MULTIWORLD = 1,
+        NOT_REQUIRED = 2
+
+    world: "BanjoTooieWorld"
+
+    # Keeps track of if items are required to beat the seed, for the cryptic hints.
+    required_item_cache: Dict[ItemRequirementCacheKey, ItemRequirement] = dict()
+
+    def __init__(self, world: "BanjoTooieWorld", location: Location):
         self.world = world
         self.location = location
 
@@ -48,6 +65,42 @@ class Hint:
                     return False
         return count == 1
 
+
+    @property
+    def is_required(self) -> ItemRequirement:
+        if not self.location.item.advancement:
+            return Hint.ItemRequirement.NOT_REQUIRED
+
+        entry = Hint.ItemRequirementCacheKey(self.location.item.name, self.location.item.player)
+
+        # The same item for the same player was already calculated, so no need to calculate it again.
+        if entry in Hint.required_item_cache.keys():
+            return Hint.required_item_cache[entry]
+
+        # Inspired from how DK64 does woth hints. It excludes the location with the
+        # unique progression item from the logic calculation,
+        # and checks to see if the seed of the Tooie player is still beatable without said item.
+        state = CollectionState(self.world.multiworld)
+        state.locations_checked.add(self.location)
+        item_required: Hint.ItemRequirement|None = None
+
+        # This is basically the end of Multiworld.can_beat_game, but more granular
+        for _ in state.sweep_for_advancements(None,
+                                            yield_each_sweep=True,
+                                            checked_locations=state.locations_checked):
+            # We can stop early if the entire multiworld is already beaten
+            if self.world.multiworld.has_beaten_game(state):
+                item_required = Hint.ItemRequirement.NOT_REQUIRED
+
+        if item_required is None:
+            # If we're here, not all seeds can be beaten, so it's required.
+            item_required = Hint.ItemRequirement.REQUIRED_BY_MULTIWORLD\
+                if self.world.multiworld.has_beaten_game(state, self.world.player)\
+                else Hint.ItemRequirement.REQUIRED_BY_PLAYER
+
+        Hint.required_item_cache[entry] = item_required
+        return item_required
+
     def __format_location(self, capitalize: bool) -> str:
         if self.location.player == self.world.player:
             return f"{'Your' if capitalize else 'your'} {self.location.name}"
@@ -67,16 +120,22 @@ class Hint:
     @property
     def __cryptic_hint_text(self) -> str:
         formatted_location = self.__format_location(capitalize=True)
-
-        if self.one_of_a_kind:
-            return f"{formatted_location} has a legendary one-of-a-kind item."
-        if self.location.item.classification == ItemClassification.progression or \
-           self.location.item.classification == ItemClassification.progression_deprioritized:
-            return f"{formatted_location} has a wonderful item."
-        if self.location.item.classification == ItemClassification.progression_skip_balancing:
-            return f"{formatted_location} has a goal required item."
-        if self.location.item.classification == ItemClassification.progression_deprioritized_skip_balancing:
-            return f"{formatted_location} has a great item."
+        if self.location.item.advancement:
+            requirement = self.is_required
+            if requirement == Hint.ItemRequirement.REQUIRED_BY_PLAYER:
+                return f"{formatted_location} is on the Wahay of the Duo."
+            if requirement == Hint.ItemRequirement.REQUIRED_BY_MULTIWORLD:
+                return f"{formatted_location} is on the Wahay of the Archipelago."
+            if self.one_of_a_kind:
+                return f"{formatted_location} has a legendary one-of-a-kind item."
+            if self.location.item.classification == ItemClassification.progression:
+                return f"{formatted_location} has a wonderful item."
+            # Either skip balancing or deprioritised
+            if self.location.item.classification & ItemClassification.progression_skip_balancing\
+                    == ItemClassification.progression_skip_balancing\
+                or self.location.item.classification & ItemClassification.progression_deprioritized\
+                    == ItemClassification.progression_deprioritized:
+                return f"{formatted_location} has a great item."
         if self.location.item.classification == ItemClassification.useful:
             return f"{formatted_location} has a good item."
         if self.location.item.classification == ItemClassification.filler:
@@ -84,7 +143,7 @@ class Hint:
         if self.location.item.classification == ItemClassification.trap:
             return f"{formatted_location} has a bad item."
 
-        # Not sure what actually fits in a multi-flag classification
+        # Not sure what actually fits in the remaining multi-flag classifications
         return f"{formatted_location} has a weiiiiiird item."
 
     @property
@@ -105,7 +164,7 @@ class Hint:
         return False
 
     @staticmethod
-    def __player_id_to_name(world: World, player: int) -> str:
+    def __player_id_to_name(world: "BanjoTooieWorld", player: int) -> str:
         return Hint.__sanitize_text(world.multiworld.player_name[player])
 
     @staticmethod
@@ -132,7 +191,7 @@ class Hint:
         return ' '.join(modified_words)
 
 
-def generate_hints(world: World):
+def generate_hints(world: "BanjoTooieWorld"):
     hints: List[Hint] = []
 
     generate_move_hints(world, hints)
@@ -145,7 +204,8 @@ def generate_hints(world: World):
     world.random.shuffle(hint_data)
     world.hints = dict(zip(get_signpost_location_ids(), hint_data))
 
-def generate_joke_hints(world: World, hints: List[HintData]):
+
+def generate_joke_hints(world: "BanjoTooieWorld", hints: List[HintData]):
     # Fills the rest of the signposts with jokes.
     if len(hints) == TOTAL_HINTS:
         return
@@ -153,17 +213,19 @@ def generate_joke_hints(world: World, hints: List[HintData]):
     generate_forced_joke_hint(world, hints)
     generate_generic_joke_hint(world, hints)
 
-def generate_forced_joke_hint(world: World, hint_datas: List[HintData]):
+
+def generate_forced_joke_hint(world: "BanjoTooieWorld", hint_datas: List[HintData]):
     if len(hint_datas) == TOTAL_HINTS:
         return
     hint_datas.append(HintData(f"Sorry {world.player_name}, but we are not adding that feature in this game."))
 
-def generate_generic_joke_hint(world: World, hint_datas: List[HintData]):
+
+def generate_generic_joke_hint(world: "BanjoTooieWorld", hint_datas: List[HintData]):
     selected_jokes = (world.random.choices([
         "A hint is what you want, but instead here's a taunt.",
         "This is an information signpost.",
         "This joke hint features no newline.",
-        "Press \x86 to read this signpost.", # That's the B button
+        "Press \x86 to read this signpost.",  # That's the B button
         "Banjo-Kazooie: Grunty's Revenge is a collectathon that was released on the GBA.",
         "Did you know that Banjo-Kazooie had 2 mobile games? Me neither.",
         "After collecting all 9 black jinjos, enter their house for a happy sound.",
@@ -178,26 +240,27 @@ def generate_generic_joke_hint(world: World, hint_datas: List[HintData]):
         "Press \x86 to doubt.",
         "The sign is a lie",
         "When life gives you wood, don't make signs! Make life take the wood back! Get mad!",
-    ], k = TOTAL_HINTS - len(hint_datas)))
+    ], k=TOTAL_HINTS - len(hint_datas)))
 
     for joke in selected_jokes:
         hint_datas.append(HintData(joke))
 
-def generate_suggestion_hint(world: World, hint_datas: List[HintData]):
+
+def generate_suggestion_hint(world: "BanjoTooieWorld", hint_datas: List[HintData]):
     non_tooie_player_names = [world.player_name for world in world.multiworld.worlds.values() if world.game != "Banjo-Tooie"]
     if not non_tooie_player_names:
         return
     hint = "You should suggest {} to try the Banjo-Tooie Randomizer.".format(world.random.choice(non_tooie_player_names))
     hint_datas.append(HintData(hint))
 
-def generate_slow_locations_hints(world: World, hints: List[Hint]):
-    already_hinted = [hint.location.name for hint in hints\
-                      if hint.location.player == world.player]
 
-    worst_locations_names = [location_name for location_name in get_worst_location_names(world)\
+def generate_slow_locations_hints(world: "BanjoTooieWorld", hints: List[Hint]):
+    already_hinted = [hint.location.name for hint in hints if hint.location.player == world.player]
+
+    worst_locations_names = [location_name for location_name in get_worst_location_names(world)
                              if location_name not in already_hinted]
-    bad_location_names = [location_name for location_name in get_bad_location_names(world)\
-                             if location_name not in already_hinted]
+    bad_location_names = [location_name for location_name in get_bad_location_names(world)
+                          if location_name not in already_hinted]
 
     local_hint_location_names = already_hinted + worst_locations_names + bad_location_names
 
@@ -206,19 +269,20 @@ def generate_slow_locations_hints(world: World, hints: List[Hint]):
             return 20
         elif hint.location.item.classification == ItemClassification.progression:
             return 10
-        elif hint.location.item.classification == ItemClassification.progression_deprioritized_skip_balancing:
-            return 7
-        elif hint.location.item.classification == ItemClassification.progression_skip_balancing:
+        elif hint.location.item.classification & ItemClassification.progression_skip_balancing\
+                == ItemClassification.progression_skip_balancing\
+            or hint.location.item.classification & ItemClassification.progression_deprioritized\
+                == ItemClassification.progression_deprioritized:
             return 5
 
         return 1
 
-    worst_hints = [Hint(world, get_location_by_name(world, location_name))\
-                for location_name in worst_locations_names if get_location_by_name(world, location_name)]
+    worst_hints = [Hint(world, get_location_by_name(world, location_name))
+                   for location_name in worst_locations_names if get_location_by_name(world, location_name)]
     worst_weights = [10 + get_weight(hint) for hint in worst_hints]
 
-    bad_hints = [Hint(world, get_location_by_name(world, location_name))\
-                for location_name in bad_location_names if get_location_by_name(world, location_name)]
+    bad_hints = [Hint(world, get_location_by_name(world, location_name))
+                 for location_name in bad_location_names if get_location_by_name(world, location_name)]
     bad_weights = [get_weight(hint) for hint in worst_hints]
 
     hint_shuffled = list(zip(bad_hints, bad_weights)) + list(zip(worst_hints, worst_weights))
@@ -230,14 +294,15 @@ def generate_slow_locations_hints(world: World, hints: List[Hint]):
 
     # At this point, we went through all the bad locations, and we still don't have enough hints.
     # So we just hint random locations in our own world that have not been picked.
-    remaining_locations = [location for location in get_player_hintable_locations(world) if location.name not in local_hint_location_names]
+    remaining_locations = [location for location in get_player_hintable_locations(world)
+                           if location.name not in local_hint_location_names]
     world.random.shuffle(remaining_locations)
 
     while len(hints) < world.options.signpost_hints:
         hints.append(Hint(world, remaining_locations.pop()))
 
 
-def get_worst_location_names(world: World):
+def get_worst_location_names(world: "BanjoTooieWorld"):
     worst_location_names = []
 
     worst_location_names.extend([
@@ -313,7 +378,8 @@ def get_worst_location_names(world: World):
 
     return worst_location_names
 
-def get_bad_location_names(world: World):
+
+def get_bad_location_names(world: "BanjoTooieWorld"):
     bad_location_names = []
 
     bad_location_names.extend([
@@ -379,40 +445,46 @@ def get_bad_location_names(world: World):
         ])
     return bad_location_names
 
-def generate_move_hints(world: World, hints: List[Hint]):
+
+def generate_move_hints(world: "BanjoTooieWorld", hints: List[Hint]):
     move_locations = get_move_locations(world)
     for location in move_locations:
         hints.append(Hint(world, location))
 
-def get_move_locations(world: World) -> List[Location]:
+
+def get_move_locations(world: "BanjoTooieWorld") -> List[Location]:
     all_moves_names = []
     if world.options.randomize_bt_moves:
-        all_moves_names.extend(moves_table.keys()) # We don't want BT moves to be hinted when they're in the vanilla location.
+        all_moves_names.extend(moves_table.keys())  # We don't want BT moves to be hinted when they're in the vanilla location.
     all_moves_names.extend(bk_moves_table.keys())
     all_moves_names.extend(progressive_ability_table.keys())
 
-    all_move_locations = [location for location in get_all_hintable_locations(world)\
-            if location.item.name in all_moves_names and location.item.player == world.player]
+    all_move_locations = [location for location in get_all_hintable_locations(world)
+                          if location.item.name in all_moves_names and location.item.player == world.player]
     world.random.shuffle(all_move_locations)
     selected_move_locations = []
 
     for location in all_move_locations:
-        if len(selected_move_locations) >= min(world.options.signpost_move_hints, world.options.signpost_hints):
+        if len(selected_move_locations) >= min(world.options.signpost_move_hints.value, world.options.signpost_hints.value):
             return selected_move_locations
         selected_move_locations.append(location)
     return selected_move_locations
 
-def get_location_by_name(world: World, name: str) -> Location:
+
+def get_location_by_name(world: "BanjoTooieWorld", name: str) -> Location | None:
     potential_match = list(filter(lambda location: location.name == name, get_player_hintable_locations(world)))
     if potential_match:
         return potential_match[0]
     return None
 
-def get_all_hintable_locations(world: World) -> List[Location]:
+
+def get_all_hintable_locations(world: "BanjoTooieWorld") -> List[Location]:
     return [location for location in world.multiworld.get_locations() if should_consider_location(location)]
 
-def get_player_hintable_locations(world: World) -> List[Location]:
+
+def get_player_hintable_locations(world: "BanjoTooieWorld") -> List[Location]:
     return [location for location in world.multiworld.get_locations(world.player) if should_consider_location(location)]
+
 
 def should_consider_location(location: Location) -> bool:
     if not location.item or not location.address:
@@ -429,6 +501,7 @@ def should_consider_location(location: Location) -> bool:
     if location.name in location_hint_blacklist:
         return False
     return True
+
 
 def get_signpost_location_ids() -> List[int]:
     location_datas = list(filter(lambda location_data: location_data.group == "Signpost", all_location_table.values()))

@@ -28,8 +28,10 @@ class MagmaChamberTests(TestArea):
 
     def test_forgotten_world_shortcut(self):
         self.assertNotAccessible("MagmaChamber_South9_East", "forgotten_world_to_magma_chamber_shortcut", [])
-        self.assertAccessible("MagmaChamber_South9_East", "forgotten_world_to_magma_chamber_shortcut",
+        self.assertNotAccessible("MagmaChamber_South9_East", "forgotten_world_to_magma_chamber_shortcut",
                               ["Forgotten World to Magma Chamber Shortcut"])
+        self.assertAccessible("MagmaChamber_South9_East", "forgotten_world_to_magma_chamber_shortcut",
+                                 ["Brutus", "Forgotten World to Magma Chamber Shortcut"])
 
     def test_forgotten_world_access(self):
         self.assertNotAccessible("MagmaChamber_South8", "MagmaChamber_South7_East_4", [])
@@ -52,14 +54,14 @@ class MagmaChamberTests(TestArea):
         self.assertNotAccessible("MagmaChamber_AlchemistLab_East", "MagmaChamber_Center6_Upper_10_0",
                                  [])
         self.assertAccessible("MagmaChamber_AlchemistLab_East", "MagmaChamber_Center6_Upper_10_0",
-                              ["Magma Chamber key"])
+                              ["Magma Chamber key", "Double Jump Boots"])
 
     def test_mozzie_room_locked_door(self):
         self.assertNotAccessible("MagmaChamber_Center9_Middle", "MagmaChamber_PuppyRoom_44200172", [])
         self.assertNotAccessible("MagmaChamber_Center9_Middle", "MagmaChamber_PuppyRoom_44200172",
-                              ["Magma Chamber key"])
+                              ["Magma Chamber key", "Double Jump Boots"])
         self.assertAccessible("MagmaChamber_Center9_Middle", "MagmaChamber_PuppyRoom_44200172",
-                              ["Magma Chamber key", "Magma Chamber key"])
+                              ["Magma Chamber key", "Magma Chamber key", "Double Jump Boots"])
 
     def test_runestone(self):
         self.assertNotAccessible("MagmaChamber_Runestone", "magma_chamber_lower_lava", [])
@@ -82,7 +84,8 @@ class MagmaChamberMinimumLockedDoorsTests(TestArea):
     }
 
     def test_mozzie_room_accessible_with_no_keys(self):
-        self.assertAccessible("MagmaChamber_Center9_Middle", "MagmaChamber_PuppyRoom_44200172", [])
+        self.assertAccessible("MagmaChamber_Center9_Middle", "MagmaChamber_PuppyRoom_44200172",
+                              ["Double Jump Boots"])
 
     def test_alchemist_lab_locked_door(self):
         self.assertNotAccessible("MagmaChamber_AlchemistLab_West", "MagmaChamber_AlchemistLab_East_27700082",
@@ -93,7 +96,7 @@ class MagmaChamberMinimumLockedDoorsTests(TestArea):
         self.assertNotAccessible("MagmaChamber_AlchemistLab_East", "MagmaChamber_Center6_Upper_10_0",
                                  [])
         self.assertAccessible("MagmaChamber_AlchemistLab_East", "MagmaChamber_Center6_Upper_10_0",
-                              ["Magma Chamber key"])
+                              ["Magma Chamber key", "Double Jump Boots"])
 
 
 class MagmaChamberNoLockedDoorsTests(TestArea):
@@ -102,11 +105,14 @@ class MagmaChamberNoLockedDoorsTests(TestArea):
     }
 
     def test_mozzie_room_accessible_with_no_keys(self):
-        self.assertAccessible("MagmaChamber_Center9_Middle", "MagmaChamber_PuppyRoom_44200172", [])
+        self.assertNotAccessible("MagmaChamber_Center9_Middle", "MagmaChamber_PuppyRoom_44200172", [])
+        self.assertAccessible("MagmaChamber_Center9_Middle", "MagmaChamber_PuppyRoom_44200172",
+                              ["Double Jump Boots"])
 
     def test_alchemist_lab_accessible_with_no_keys(self):
         self.assertAccessible("MagmaChamber_AlchemistLab_West", "MagmaChamber_AlchemistLab_East_27700082", [])
-        self.assertAccessible("MagmaChamber_AlchemistLab_East", "MagmaChamber_Center6_Upper_10_0", [])
+        self.assertAccessible("MagmaChamber_AlchemistLab_East", "MagmaChamber_Center6_Upper_10_0",
+                              ["Double Jump Boots"])
 
 
 class MagmaChamberPlotlessTests(TestArea):

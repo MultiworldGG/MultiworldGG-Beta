@@ -3,12 +3,14 @@
 ## Required Software
 
 - [MultiworldGG](https://github.com/MultiworldGG/MultiworldGG/releases)
-- An English (UE) Pokémon Crystal v1.0 or v1.1 ROM. The community cannot provide this.
+- An English (UE) Pokémon Crystal v1.0 or v1.1 ROM. The Archipelago community cannot provide this.
+    - A valid v1.1 ROM can be extracted from the 3DS eShop release of the game.
 - One of the following:
     - [BizHawk](https://tasvideos.org/BizHawk/ReleaseHistory) 2.7 or later. 2.10 is recommended.
     - [mGBA](https://mgba.io) 0.10.3 or later.
         - You will also need
-          the [mGBA to Bizhawk Client connector script](https://gist.github.com/gerbiljames/7b92dc62843794bd5902aad191b65efc). (ships with MWGG)
+          the [mGBA to Bizhawk Client connector script](https://gist.github.com/gerbiljames/7b92dc62843794bd5902aad191b65efc).
+          You should add it to `data/lua/` in your MultiworldGG install.
 
 ### Configuring BizHawk
 
@@ -16,13 +18,13 @@ Once you have installed BizHawk, open `EmuHawk.exe` and change the following set
 
 - On BizHawk 2.8 or earlier, navigate to `Config -> Customize` and click on the Advanced tab. Change the Lua core
   from `NLua+KopiLua` to `Lua+LuaInterface`, then restart EmuHawk. This step is not required on BizHawk 2.9 or later.
-- Under Config > Customize > Advanced, make sure the box for AutoSaveRAM is checked, and click the 5s button.
+- Under `Config -> Customize -> Advanced`, make sure the box for AutoSaveRAM is checked, and click the 5s button.
   This reduces the possibility of losing save data in emulator crashes.
 - In `Config -> Customize`, enable `Run in background`. This will prevent the game from losing connection to the client
   when tabbed out.
-- Open a Game Boy or Game Boy Color game (`.gb` or `.gbc`) and then navigate to `Config -> Controllers...`. This menu
-  may
-  not be available if a game is not already open.
+- To adjust controller settings, open a Game Boy or Game Boy Color game (`.gb` or `.gbc`) and then navigate to
+  `Config -> Controllers...`. This menu may not be available if a game is not already open.
+- Ensure that `Config -> Preferred Cores -> GB in SGB` is disabled.
 
 ### Configuring mGBA
 
@@ -74,8 +76,6 @@ in case you have to close and reopen a window mid-game for some reason.
     - Navigate to your MultiworldGG install folder and open `data/lua/connector_bizhawkclient_mgba.lua`.
 5. The emulator and client will eventually connect to each other. The BizHawk Client window should indicate that it
    connected and recognized Pokémon Crystal.
-6. To connect the client to the server, enter your room's address and port (e.g. `multiworld.gg:38281`) into the
-   top text field of the client and click Connect.
 
 You should now be able to receive and send items. You'll need to do these steps every time you want to reconnect. It is
 perfectly safe to make progress offline; everything will re-sync when you reconnect.
@@ -89,4 +89,4 @@ Pokémon Crystal has a fully functional map tracker that supports auto-tracking.
 2. Put the tracker pack into `packs/` in your PopTracker install.
 3. Open PopTracker, and load the Pokémon Crystal pack.
 4. For autotracking, click on the "AP" symbol at the top.
-5. Enter the MultiworldGG server address (the one you connected your client to), slot name, and password.
+5. Enter the MultiworldGG server address (the one you connected your client to), slot name, and password. If you did not set a password for your room, leave that field empty. 

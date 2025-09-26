@@ -16,7 +16,7 @@ from randomizer.Enums.Settings import RandomModels, BigHeadMode, ColorOptions
 from randomizer.Lists.Songs import ExcludedSongsSelector
 from randomizer.Patching.Cosmetics.TextRando import writeCrownNames
 from randomizer.Patching.Cosmetics.Holiday import applyHolidayMode
-from randomizer.Patching.Cosmetics.EnemyColors import writeMiscCosmeticChanges
+from randomizer.Patching.Cosmetics.EnemyColors import writeMiscCosmeticChanges, writeRainbowAmmo
 from randomizer.Patching.CosmeticColors import (
     apply_cosmetic_colors,
     overwrite_object_colors,
@@ -85,25 +85,24 @@ async def patching_response(data, from_patch_gen=False, lanky_from_history=False
     js.event_response_data = data
     if lanky_from_history:
         js.save_text_as_file(data, f"dk64r-patch-{seed_id}.lanky")
-        loop.run_until_complete(ProgressBar().reset())
+        await ProgressBar().reset()
         return
     # elif settings.download_patch_file and from_patch_gen is False:
     #     js.write_seed_history(seed_id, str(data), json.dumps(settings.seed_hash))
     #     js.load_old_seeds()
     #     js.save_text_as_file(data, f"dk64r-patch-{seed_id}.lanky")
-    #     loop.run_until_complete(ProgressBar().reset())
     #     return
     elif from_patch_gen is True:
         if (js.document.getElementById("download_patch_file").checked or js.document.getElementById("load_patch_file").checked) and js.document.getElementById(
             "generate_seed"
         ).value != "Download Seed":
             js.save_text_as_file(data, f"dk64r-patch-{seed_id}.lanky")
+            await js.apply_patch(data)
         # gif_fairy = get_hash_images("browser", "loading-fairy")
         # gif_dead = get_hash_images("browser", "loading-dead")
         # js.document.getElementById("progress-fairy").src = "data:image/jpeg;base64," + gif_fairy[0]
         # js.document.getElementById("progress-dead").src = "data:image/jpeg;base64," + gif_dead[0]
         # Apply the base patch
-        await js.apply_patch(data)
         if gen_history is False:
             js.write_seed_history(seed_id, str(data), json.dumps(settings.seed_hash))
             js.load_old_seeds()
@@ -184,6 +183,7 @@ async def patching_response(data, from_patch_gen=False, lanky_from_history=False
         if settings.override_cosmetics:
             overwrite_object_colors(settings, ROM_COPY)
             writeMiscCosmeticChanges(settings, ROM_COPY)
+            writeRainbowAmmo(settings, ROM_COPY)
             applyHolidayMode(settings, ROM_COPY)
             darkenPauseBubble(settings, ROM_COPY)
             if settings.misc_cosmetics:
@@ -295,6 +295,7 @@ async def patching_response(data, from_patch_gen=False, lanky_from_history=False
                 BooleanProperties(settings.fps_display, 0x96),  # FPS Display
                 BooleanProperties(settings.song_speed_near_win, 0x1B4),  # Song Win Con Speedup
                 BooleanProperties(settings.disable_flavor_text, 0xAF),  # Disable Flavor Text
+                BooleanProperties(settings.rainbow_ammo, 0x112),  # Rainbow Ammo
             ]
 
             for prop in boolean_props:
@@ -352,7 +353,7 @@ async def patching_response(data, from_patch_gen=False, lanky_from_history=False
         await ProgressBar().update_progress(10, "Seed Generated.")
     js.document.getElementById("nav-settings-tab").removeAttribute("hidden")
     js.document.getElementById("spoiler_log_block").style.display = ""
-    loop.run_until_complete(js.GenerateSpoiler(json.dumps(spoiler)))
+    await js.GenerateSpoiler(json.dumps(spoiler))
     js.document.getElementById("generated_seed_id").innerHTML = seed_id
     # Set the current URL to the seed ID so that it can be shared without reloading the page
     js.window.history.pushState("generated_seed", hash_id, f"/randomizer?seed_id={hash_id}")
@@ -373,7 +374,7 @@ async def patching_response(data, from_patch_gen=False, lanky_from_history=False
     if from_patch_gen is True:
         ROM_COPY.fixSecurityValue()
         ROM_COPY.save(f"dk64r-rom-{seed_id}.z64")
-        loop.run_until_complete(ProgressBar().reset())
+        await ProgressBar().reset()
     js.jq("#nav-settings-tab").tab("show")
     js.check_seed_info_tab()
 

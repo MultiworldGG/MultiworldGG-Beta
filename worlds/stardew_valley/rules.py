@@ -156,7 +156,7 @@ def set_rules(world):
 
 def set_isolated_locations_rules(logic: StardewLogic, rule_collector: StardewRuleCollector, trash_bear_requests: Dict[str, List[str]]):
     rule_collector.set_location_rule("Beach Bridge Repair", logic.grind.can_grind_item(300, "Wood"))
-    rule_collector.set_location_rule("Grim Reaper Statue", logic.combat.can_fight_at_level(Performance.basic) & logic.tool.has_tool(Tool.pickaxe))
+    rule_collector.set_location_rule("Grim Reaper Statue", logic.combat.can_fight_at_level(Performance.decent) & logic.tool.has_tool(Tool.pickaxe))
     rule_collector.set_location_rule("Galaxy Sword Shrine", logic.has("Prismatic Shard"))
     rule_collector.set_location_rule("Krobus Stardrop", logic.money.can_spend(20000))
     rule_collector.set_location_rule("Demetrius's Breakthrough", logic.money.can_have_earned_total(25000))
@@ -267,7 +267,7 @@ def set_entrance_rules(logic: StardewLogic, rule_collector: StardewRuleCollector
     rule_collector.set_entrance_rule(Entrance.enter_skull_cavern, logic.received(Wallet.skull_key))
     rule_collector.set_entrance_rule(LogicEntrance.talk_to_mines_dwarf,
                                      logic.wallet.can_speak_dwarf() & logic.tool.has_tool(Tool.pickaxe, ToolMaterial.iron))
-    rule_collector.set_entrance_rule(LogicEntrance.buy_from_traveling_merchant, logic.traveling_merchant.has_days())
+    rule_collector.set_entrance_rule(LogicEntrance.buy_from_traveling_merchant, logic.traveling_merchant.has_days() & logic.money.can_spend(1200))
     set_raccoon_rules(logic, rule_collector, bundle_rooms, world_options)
 
     rule_collector.set_entrance_rule(LogicEntrance.fish_in_waterfall,
@@ -285,7 +285,9 @@ def set_entrance_rules(logic: StardewLogic, rule_collector: StardewRuleCollector
 
     set_bedroom_entrance_rules(logic, rule_collector, content)
     set_festival_entrance_rules(logic, rule_collector)
-    rule_collector.set_island_entrance_rule(LogicEntrance.island_cooking, logic.cooking.can_cook_in_kitchen)
+    
+    # I can't remember why this was here, but clearly we do not need kitchen rules for island cooking....
+    # rule_collector.set_island_entrance_rule(LogicEntrance.island_cooking, logic.cooking.can_cook_in_kitchen)
     rule_collector.set_entrance_rule(LogicEntrance.farmhouse_cooking, logic.cooking.can_cook_in_kitchen)
     rule_collector.set_entrance_rule(LogicEntrance.shipping, logic.shipping.can_use_shipping_bin)
     rule_collector.set_entrance_rule(LogicEntrance.find_secret_notes,

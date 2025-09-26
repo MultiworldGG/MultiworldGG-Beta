@@ -1,10 +1,9 @@
 import logging
 
-from typing import Any, Dict, List, Set, TextIO, Tuple, Union
+from typing import Any, ClassVar, Dict, List, Set, TextIO, Tuple, Union
 
 from BaseClasses import Entrance, EntranceType, Item, ItemClassification, Location, Region, Tutorial
 from Options import OptionError
-from Utils import visualize_regions
 
 from entrance_rando import disconnect_entrance_for_randomization, randomize_entrances
 from worlds.AutoWorld import WebWorld, World
@@ -121,7 +120,7 @@ class ZorkGrandInquisitorWorld(World):
     item_name_groups = item_groups()
     location_name_groups = location_groups()
 
-    required_client_version: Tuple[int, int, int] = (0, 6, 0)
+    required_client_version: Tuple[int, int, int] = (0, 6, 3)
 
     web = ZorkGrandInquisitorWebWorld()
 
@@ -158,6 +157,12 @@ class ZorkGrandInquisitorWorld(World):
     trap_weights: Tuple[int, ...]
 
     ut_can_gen_without_yaml: bool = True
+
+    tracker_world: ClassVar = {
+        "map_page_folder": "ut",
+        "map_page_maps": "maps/maps.json",
+        "map_page_locations": "locations/locations.json",
+    }
 
     # Needed for item link
     def __init__(self, multiworld: "MultiWorld", player: int):
@@ -501,7 +506,6 @@ class ZorkGrandInquisitorWorld(World):
 
     def connect_entrances(self) -> None:
         if self.entrance_randomizer == ZorkGrandInquisitorEntranceRandomizer.DISABLED:
-            visualize_regions(self.multiworld.get_region("Menu", self.player), "zgi-vanilla.puml")
             return
 
         randomization_pool: List[Tuple[ZorkGrandInquisitorRegions, ZorkGrandInquisitorRegions]] = list(
@@ -524,8 +528,6 @@ class ZorkGrandInquisitorWorld(World):
 
         if self.is_universal_tracker:
             self._reconnect_entrances_for_universal_tracker()
-            visualize_regions(self.multiworld.get_region("Menu", self.player), "zgi-er-ut.puml")
-
             return
 
         entrance_randomizer_pairings: List[Tuple[str, str]] = randomize_entrances(
@@ -535,8 +537,6 @@ class ZorkGrandInquisitorWorld(World):
         ).pairings
 
         self.entrance_randomizer_pairings = self._process_entrance_randomizer_pairings(entrance_randomizer_pairings)
-
-        visualize_regions(self.multiworld.get_region("Menu", self.player), "zgi-er.puml")
 
     def generate_basic(self) -> None:
         self.multiworld.completion_condition[self.player] = lambda state: state.has("Victory", self.player)

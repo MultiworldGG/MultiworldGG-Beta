@@ -14,11 +14,11 @@ Kingdom Hearts II Final Mix from the [Epic Games Store](https://store.epicgames.
     2. Lua Backend from the OpenKH Mod Manager
     3. Install the mod `KH2FM-Mods-Num/GoA-ROM-Edition` using OpenKH Mod Manager
 - Needed for MultiworldGG 
-    1. Install the Archipelago Companion mod from `JaredWeakStrike/APCompanion` using OpenKH Mod Manager
-    2. Install the mod from `KH2FM-Mods-equations19/auto-save` using OpenKH Mod Manager
-    3. Install the mod from `KH2FM-Mods-equations19/KH2-Lua-Library` using OpenKH Mod Manager
-    4. Install the mod from `TopazTK/EnablersAP` using OpenKH Mod Manager
-    5. AP Randomizer Seed
+    1. [MultiworldGG KH2Client](https://github.com/ArchipelagoMW/Archipelago/releases)
+    2. Install the Archipelago Companion mod from `JaredWeakStrike/APCompanion` using OpenKH Mod Manager
+    3. Install the mod from `TopazTK/KH2-ArchipelagoEnablers` using OpenKH Mod manager
+       1. Do Note that if you have `KH2FM-Mods-equations19/auto-save` OR `KH2FM-Mods-equations19/soft-reset` you should download `TopazTK/KH2-ArchipelagoEnablersLITE` instead
+    4. AP Randomizer Seed
 - Optional Quality of Life Mods for MultiworldGG
     1. Optionally Install the Archipelago Quality Of Life mod from `JaredWeakStrike/AP_QOL` using OpenKH Mod Manager
     2. Optionally Install the Quality Of Life mod from `shananas/BearSkip` using OpenKH Mod Manager
@@ -29,9 +29,9 @@ Load this mod just like the <b>GoA ROM</b> you did during the KH2 Rando setup. `
 Have this mod second-highest priority below the .zip seed.<br>
 This mod is based upon Num's Garden of Assemblage Mod and requires it to work. Without Num this could not be possible. 
 
-### Required: Auto Save Mod and KH2 Lua Library
+### Required: Archipelago Enablers
 
-Load these mods just like you loaded the GoA ROM mod during the KH2 Rando setup. `KH2FM-Mods-equations19/auto-save` and `KH2FM-Mods-equations19/KH2-Lua-Library` Location doesn't matter, required in case of crashes. See [Best Practices](#best-practices) on how to load the auto save
+Load this mod just like <b> GoA ROM</b> `TopazTK/KH2-ArchipelagoEnablers`. <b>NOTE:</b> if you perfer `KH2FM-Mods-equations19/auto-save` or `KH2FM-Mods-equations19/soft-reset`you need to download `TopazTK/KH2-ArchipelagoEnablersLITE`
 
 ### Optional QoL Mods: AP QoL and Bear Skip
 
@@ -57,7 +57,7 @@ After Installing the seed click "Mod Loader -> Build/Build and Run". Every slot 
 
 ## Using the KH2 Client
 
-Start the game through OpenKH Mod Manager. If starting a new run, enter the Garden of Assemblage from a new save. If returning to a run, load the save and enter the Garden of Assemblage. Then run the [MultiworldGGKH2Client.exe](https://github.com/MultiworldGG/MultiworldGG/releases).<br>
+Start the game through OpenKH Mod Manager. If starting a new run, enter the Garden of Assemblage from a new save. If returning to a run, load the save and enter the Garden of Assemblage. Then run the MultiworldGG KH2 Client from the MWGG Launcher.
 When you successfully connect to the server the client will automatically hook into the game to send/receive checks. <br>
 If the client ever loses connection to the game, it will also disconnect from the server and you will need to reconnect.<br> 
 

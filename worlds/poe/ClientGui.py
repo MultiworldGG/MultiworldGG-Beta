@@ -17,6 +17,8 @@ from pathlib import Path
 if TYPE_CHECKING:
     from .Client import PathOfExileContext
 
+from Utils import instance_name
+apname = instance_name if instance_name else "Archipelago"
 
 class PoeOptionsTab(MDScreen):
     """Tab containing Path of Exile specific controls."""

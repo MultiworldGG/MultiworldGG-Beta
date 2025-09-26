@@ -218,7 +218,7 @@ class StardewLogic(ReceivedLogicMixin, HasLogicMixin, RegionLogicMixin, Travelin
             Consumable.fireworks_red: self.region.can_reach(Region.casino),
             Consumable.fireworks_purple: self.region.can_reach(Region.casino),
             Consumable.fireworks_green: self.region.can_reach(Region.casino),
-            Consumable.golden_animal_cracker: self.skill.has_mastery(Skill.farming),
+            Consumable.golden_animal_cracker: self.skill.has_mastery(Skill.farming) & (self.fishing.can_fish_chests | self.region.can_reach(Region.skull_cavern_25)),
             Consumable.mystery_box: self.received(CommunityUpgrade.mr_qi_plane_ride),
             Consumable.gold_mystery_box: self.received(CommunityUpgrade.mr_qi_plane_ride) & self.skill.has_mastery(Skill.foraging),
             Currency.calico_egg: self.region.can_reach(LogicRegion.desert_festival),
@@ -307,7 +307,7 @@ class StardewLogic(ReceivedLogicMixin, HasLogicMixin, RegionLogicMixin, Travelin
             Ore.gold: self.mine.can_mine_in_the_mines_floor_81_120() | self.mine.can_mine_in_the_skull_cavern() | self.tool.has_pan(ToolMaterial.gold),
             Ore.iridium: self.count(2, *(self.mine.can_mine_in_the_skull_cavern(), self.can_fish_pond(Fish.super_cucumber), self.tool.has_pan(ToolMaterial.iridium))),
             Ore.iron: self.mine.can_mine_in_the_mines_floor_41_80() | self.mine.can_mine_in_the_skull_cavern() | self.tool.has_pan(ToolMaterial.iron),
-            Ore.radioactive: self.ability.can_mine_perfectly() & self.region.can_reach(Region.qi_walnut_room),
+            Ore.radioactive: self.special_order.can_get_radioactive_ore(),
             RetainingSoil.basic: self.money.can_spend_at(Region.pierre_store, 100),
             RetainingSoil.quality: self.time.has_year_two & self.money.can_spend_at(Region.pierre_store, 150),
             SpecialItem.lucky_purple_shorts: self.special_items.has_purple_shorts(),
@@ -336,7 +336,7 @@ class StardewLogic(ReceivedLogicMixin, HasLogicMixin, RegionLogicMixin, Travelin
             WaterItem.river_jelly: self.fishing.can_fish_at(Region.town) & self.tool.has_fishing_rod(FishingRod.bamboo),
             WaterItem.sea_jelly: self.fishing.can_fish_at(Region.beach) & self.tool.has_fishing_rod(FishingRod.bamboo),
             WaterItem.seaweed: self.fishing.can_fish_at(Region.tide_pools),
-            WaterItem.white_algae: self.fishing.can_fish_at(Region.mines_floor_20),
+            WaterItem.white_algae: self.fishing.can_fish_at(Region.mines_floor_20) & self.tool.has_fishing_rod(FishingRod.bamboo),
             WildSeeds.grass_starter: self.money.can_spend_at(Region.pierre_store, 100),
         })
         # @formatter:on

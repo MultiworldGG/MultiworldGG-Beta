@@ -26,8 +26,12 @@ class ForgottenWorldTests(TestArea):
 
     def test_caves_shortcut(self):
         self.assertNotAccessible("ForgottenWorld_Caves11_Upper", "forgotten_world_caves_shortcut", [])
+        self.assertNotAccessible("ForgottenWorld_Caves11_Upper", "forgotten_world_caves_shortcut",
+                                 ["Forgotten World Caves Shortcut"])
+        self.assertNotAccessible("ForgottenWorld_Caves11_Upper", "forgotten_world_caves_shortcut",
+                              ["Forgotten World Caves Shortcut", "Yowie"])
         self.assertAccessible("ForgottenWorld_Caves11_Upper", "forgotten_world_caves_shortcut",
-                              ["Forgotten World Caves Shortcut"])
+                              ["Forgotten World Caves Shortcut", "Yowie", "Double Jump Boots"])
 
     def test_world_tree_progression(self):
         self.assertNotAccessible("ForgottenWorld_WorldTree", "ForgottenWorld_WorldTree_46100009", [])

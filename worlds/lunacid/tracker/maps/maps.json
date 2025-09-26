@@ -1,0 +1,140 @@
+[
+    {
+        "name": "Interconnections",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_interconnections.png"
+    },
+    {
+        "name": "Dropsanity",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_dropsanity.png"
+    },
+    {
+        "name": "Wing's Rest",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_wings_rest.png"
+    },
+    {
+        "name": "Hollow Basin",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_hollow_basin.png"
+    },
+    {
+        "name": "The Fetid Mire",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_fetid_mire.png"
+    },
+    {
+        "name": "The Sanguine Sea",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_sanguine_sea.png"
+    },
+    {
+        "name": "Accursed Tomb",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_accursed_tomb.png"
+    },
+    {
+        "name": "Yosei Forest",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_yosei_forest.png"
+    },
+    {
+        "name": "Forest Canopy",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_forest_canopy.png"
+    },
+    {
+        "name": "Forbidden Archives",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_forbidden_archives.png"
+    },
+    {
+        "name": "Castle Le Fanu",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_castle_le_fanu.png"
+    },
+    {
+        "name": "Sealed Ballroom",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_sealed_ballroom.png"
+    },
+    {
+        "name": "Laetus Chasm",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_laetus_chasm.png"
+    },
+    {
+        "name": "Great Well Surface",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_great_well_surface.png"
+    },
+    {
+        "name": "Throne Chamber",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_throne_chamber.png"
+    },
+    {
+        "name": "A Holy Battlefield",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_holy_battlefield.png"
+    },
+    {
+        "name": "Boiling Grotto",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_boiling_grotto.png"
+    },
+    {
+        "name": "Tower of Abyss",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_tower_of_abyss.png"
+    },
+    {
+        "name": "Terminus Prison",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_terminus_prison.png"
+    },
+    {
+        "name": "Forlorn Arena",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_forlorn_arena.png"
+    },
+    {
+        "name": "Labyrinth of Ash",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_labyrinth_of_ash.png"
+    },
+    {
+        "name": "Chamber of Fate",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_chamber_of_fate.png"
+    },
+    {
+        "name": "Grave of the Sleeper",
+        "location_size": 24,
+        "location_border_thickness": 2,
+        "img": "images/maps/map_grave_of_the_sleeper.png"
+    }
+]

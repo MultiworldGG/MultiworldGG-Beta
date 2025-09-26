@@ -102,6 +102,22 @@
                                 </tr>
                                 <tr>
                                     <td>
+                                        <label for="countdown_mode">Countdown Permission:
+                                            <span class="interactive" data-tooltip="Who in the room is allowed to use the !countdown command. Disabled means the host can still use /countdown">
+                                                (?)
+                                            </span>
+                                        </label>
+                                    </td>
+                                    <td>
+                                        <select name="countdown_mode" id="countdown_mode">
+                                            <option selected="selected" value="auto">Auto (enabled under 30 slots)</option>
+                                            <option value="disabled">Disabled for clients</option>
+                                            <option value="enabled">Enabled for clients</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
                                         <label for="item_cheat">Item Cheat:
                                             <span class="interactive" data-tooltip="Allows players to use the !getitem command.">
                                                 (?)

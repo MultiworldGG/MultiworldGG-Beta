@@ -4,12 +4,8 @@ from worlds.monster_sanctuary.tests.Areas.TestArea import TestArea
 class SunPalaceTests(TestArea):
     def test_raise_center_1(self):
         self.assertNotAccessible("SunPalace_Center", "sun_palace_raise_center_1", [])
-        self.assertNotAccessible("SunPalace_Center", "sun_palace_raise_center_1",
-                                 ["Vaero"])
         self.assertAccessible("SunPalace_Center", "sun_palace_raise_center_1",
                               ["Double Jump Boots"])
-        self.assertAccessible("SunPalace_Center", "sun_palace_raise_center_1",
-                              ["Kongamato"])
 
     def test_raise_center_2(self):
         # Test without the water lowered
@@ -46,13 +42,25 @@ class SunPalaceTests(TestArea):
 
     def test_lower_water_1(self):
         self.assertNotAccessible("SunPalace_Center", "sun_palace_lower_water_1", [])
-        self.assertAccessible("SunPalace_Center", "sun_palace_lower_water_1",
+        self.assertNotAccessible("SunPalace_Center", "sun_palace_lower_water_1",
+                                 ["Double Jump Boots"])
+        self.assertNotAccessible("SunPalace_Center", "sun_palace_lower_water_1",
                               ["Sun Palace Raise Center"])
+        self.assertAccessible("SunPalace_Center", "sun_palace_lower_water_1",
+                              ["Sun Palace Raise Center", "Double Jump Boots"])
+        self.assertAccessible("SunPalace_Center", "sun_palace_lower_water_1",
+                              ["Sun Palace Raise Center", "Kongamato"])
 
     def test_lower_water_2(self):
         self.assertNotAccessible("SunPalace_Center", "sun_palace_lower_water_1", [])
-        self.assertAccessible("SunPalace_Center", "sun_palace_lower_water_1",
+        self.assertNotAccessible("SunPalace_Center", "sun_palace_lower_water_1",
+                                 ["Double Jump Boots"])
+        self.assertNotAccessible("SunPalace_Center", "sun_palace_lower_water_1",
                               ["Sun Palace Raise Center", "Sun Palace Raise Center"])
+        self.assertAccessible("SunPalace_Center", "sun_palace_lower_water_1",
+                              ["Sun Palace Raise Center", "Sun Palace Raise Center", "Double Jump Boots"])
+        self.assertAccessible("SunPalace_Center", "sun_palace_lower_water_1",
+                              ["Sun Palace Raise Center", "Sun Palace Raise Center", "Kongamato"])
 
     # We don't need to test if we can get to the shortcut areas normally
     # because the above tests for the raise_center flags are in the same spots

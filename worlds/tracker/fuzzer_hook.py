@@ -2,7 +2,7 @@ from fuzz import BaseHook, GenOutcome
 from typing import List, Dict, Set
 import collections
 import logging
-from . import TrackerCore
+from . import TrackerCore, DeferredEntranceMode
 from BaseClasses import MultiWorld,Location,ItemClassification
 from NetUtils import NetworkItem
 logger = logging.getLogger("Fuzzer")
@@ -17,6 +17,7 @@ class Hook(BaseHook):
         self.status = None
         self.player_files_path = args.player_files_path
         self.ut_core = TrackerCore.TrackerCore(logger,False,False)
+        self.ut_core.enforce_deferred_connections = DeferredEntranceMode.disabled
         self.ut_core.run_generator(None,None,args.player_files_path) #initial UT gen
 
     def after_generate(self, mw:MultiWorld, output_path):

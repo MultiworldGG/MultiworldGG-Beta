@@ -71,6 +71,7 @@ class KH2Context(CommonContext):
         # queue for the strings to display on the screen
         self.queued_puzzle_popup = []
         self.queued_info_popup = []
+        self.queued_chest_popup = []
 
         # special characters for printing in game
         # A dictionary of all the special characters, which
@@ -131,12 +132,11 @@ class KH2Context(CommonContext):
         self.kh2slotdata = None
         self.mem_json = None
         self.itemamount = {}
-        # Default client settings
-        default_settings = {
-            "send_truncate_first":    "PlayerName",  # there is no need to truncate item names for info popup
-            "receive_truncate_first": "PlayerName",  # truncation order. Can be PlayerName or ItemName
-            "send_popup_type":        "Puzzle",  # type of popup when you receive an item
-            "receive_popup_type":     "Puzzle",  # can be Puzzle, Info or None
+        self.client_settings = {
+            "send_truncate_first":    "playername",  # there is no need to truncate item names for info popup
+            "receive_truncate_first": "playername",  # truncation order. Can be PlayerName or ItemName
+            "send_popup_type":        "chest",  # type of popup when you receive an item
+            "receive_popup_type":     "chest",  # can be Puzzle, Info, Chest or None
         }
         
         self.client_settings = default_settings.copy()
@@ -209,6 +209,9 @@ class KH2Context(CommonContext):
         self.Slot1 = 0x2A23018
         self.InfoBarPointer = 0xABE2A8
         self.isDead = 0x0BEEF28
+
+        self.FadeStatus = 0xABAF38
+        self.PlayerGaugePointer = 0x0ABCCC8
 
         self.kh2_game_version = None  # can be egs or steam
 
@@ -290,9 +293,9 @@ class KH2Context(CommonContext):
             from kivy.clock import Clock
             Clock.schedule_once(ready_callback, 0.1)
 
-    from .ReadAndWrite import kh2_read_longlong, kh2_read_int, kh2_read_string, kh2_read_byte, kh2_write_bytes, kh2_write_int, kh2_write_short, kh2_write_byte, kh2_read_short
+    from .ReadAndWrite import kh2_read_longlong, kh2_read_int, kh2_read_string, kh2_read_byte, kh2_write_bytes, kh2_write_int, kh2_write_short, kh2_write_byte, kh2_read_short, kh2_return_base_address
     from .SendChecks import checkWorldLocations, checkSlots, checkLevels, verifyChests, verifyLevel
-    from .RecieveItems import displayPuzzlePieceTextinGame, displayInfoTextinGame, verifyItems, give_item, IsInShop, to_khscii
+    from .RecieveItems import displayPuzzlePieceTextinGame, displayInfoTextinGame, displayChestTextInGame, verifyItems, give_item, IsInShop, to_khscii
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
@@ -360,6 +363,8 @@ class KH2Context(CommonContext):
         if self.kh2seedname not in {None} and self.auth not in {None}:
             with open(self.kh2_seed_save_path_join, 'w') as f:
                 f.write(json.dumps(self.kh2_seed_save, indent=4))
+        with open(self.kh2_client_settings_join, 'w') as f2:
+            f2.write(json.dumps(self.client_settings, indent=4))
         await super(KH2Context, self).shutdown()
 
     def on_package(self, cmd: str, args: dict):
@@ -493,27 +498,32 @@ class KH2Context(CommonContext):
 
         if cmd == "PrintJSON":
             # shamelessly stolen from kh1
-            if args["type"] == "ItemSend":
+            if args.get("type") == "ItemSend":
                 item = args["item"]
                 networkItem = NetworkItem(*item)
                 itemId = networkItem.item
                 receiverID = args["receiving"]
                 senderID = networkItem.player
+                receive_popup_type = self.client_settings["receive_popup_type"].lower()
+                send_popup_type = self.client_settings["send_popup_type"].lower()
+                receive_truncate_first = self.client_settings["receive_truncate_first"].lower()
+                send_truncate_first = self.client_settings["send_truncate_first"].lower()
                 # checking if sender is the kh2 player, and you aren't sending yourself the item
                 if receiverID == self.slot and senderID != self.slot:  # item is sent to you and is not from yourself
                     itemName = self.item_names.lookup_in_game(itemId)
                     playerName = self.player_names[networkItem.player]  # player that sent you the item
                     totalLength = len(itemName) + len(playerName)
-                    if self.client_settings["receive_popup_type"] == "Info":  # no restrictions on size here
+
+                    if receive_popup_type == "info":  # no restrictions on size here
                         temp_length = f"Obtained {itemName} from {playerName}"
                         if totalLength > 90:
                             self.queued_info_popup += [temp_length[:90]]  # slice it to be 90
                         else:
                             self.queued_info_popup += [temp_length]
-                    elif self.client_settings["receive_popup_type"] == "Puzzle":  # sanitize ItemName and receiver name
+                    else:  # either chest or puzzle. they are handled the same length wise
                         totalLength = len(itemName) + len(playerName)
                         while totalLength > 25:
-                            if self.client_settings["receive_truncate_first"] == "PlayerName":
+                            if receive_truncate_first == "playername":
                                 if len(playerName) > 5:
                                     playerName = playerName[:-1]
                                 else:
@@ -525,39 +535,45 @@ class KH2Context(CommonContext):
                                     playerName = playerName[:-1]
                             totalLength = len(itemName) + len(playerName)
                         # from  =6. totalLength of the string cant be over 31 or game crash
-                        self.queued_puzzle_popup += [f"{itemName} from {playerName}"]
+                        if receive_popup_type == "puzzle":  # sanitize ItemName and receiver name
+                            self.queued_puzzle_popup += [f"{itemName} from {playerName}"]
+                        else:
+                            self.queued_chest_popup += [f"{itemName} from {playerName}"]
 
                 if receiverID != self.slot and senderID == self.slot:  #item is sent to other players
                     itemName = self.item_names.lookup_in_slot(itemId, receiverID)
                     playerName = self.player_names[receiverID]
                     totalLength = len(itemName) + len(playerName)
-                    if self.client_settings["send_popup_type"] == "Info":
+                    if send_popup_type == "info":
                         if totalLength > 90:
                             temp_length = f"Sent {itemName} to {playerName}"
                             self.queued_info_popup += [temp_length[:90]]  #slice it to be 90
                         else:
                             self.queued_info_popup += [f"Sent {itemName} to {playerName}"]
-                    elif self.client_settings["send_popup_type"] == "Puzzle":  #sanitize ItemName and reciever name
-                        while totalLength > 22:
-                            if self.client_settings["send_truncate_first"] == "PlayerName":
-                                if len(playerName) > 5:
+                    else:  # else chest or puzzle. they are handled the same length wise
+                        while totalLength > 27:
+                            if send_truncate_first == "playername":
+                                if len(playerName) > 5: #limit player name to at least be 5 characters
                                     playerName = playerName[:-1]
                                 else:
                                     itemName = itemName[:-1]
                             else:
-                                if len(ItemName) > 15:
+                                if len(ItemName) > 15: # limit item name to at least be 15 characters
                                     itemName = itemName[:-1]
                                 else:
                                     playerName = playerName[:-1]
                             totalLength = len(itemName) + len(playerName)
-                        # Sent  =5. to = 4 totalLength of the string cant be over 31 or game crash
-                        self.queued_puzzle_popup += [f"Sent {itemName} to {playerName}"]
+                        if send_popup_type == "puzzle":
+                            # to = 4 totalLength of the string cant be over 31 or game crash
+                            self.queued_puzzle_popup += [f"{itemName} to {playerName}"]
+                        else:
+                            self.queued_chest_popup += [f"{itemName} to {playerName}"]
 
     def connect_to_game(self):
         if "KeybladeAbilities" in self.kh2slotdata.keys():
-                # sora ability to slot
+            # sora ability to slot
             self.AbilityQuantityDict.update(self.kh2slotdata["KeybladeAbilities"])
-                # itemid:[slots that are available for that item]
+            # itemid:[slots that are available for that item]
             self.AbilityQuantityDict.update(self.kh2slotdata["StaffAbilities"])
             self.AbilityQuantityDict.update(self.kh2slotdata["ShieldAbilities"])
 
@@ -572,7 +588,7 @@ class KH2Context(CommonContext):
         except Exception as e:
             if self.kh2connected:
                 self.kh2connected = False
-            logger.info("Game is not open.")
+            logger.info("Game is not open. If it is open run the launcher/client as admin.")
         self.serverconnected = True
         self.slot_name = self.auth
 
@@ -641,6 +657,8 @@ class KH2Context(CommonContext):
                     self.Shop = 0x7435D0
                     self.InfoBarPointer = 0xABE828
                     self.isDead = 0x0BEF4A8
+                    self.FadeStatus = 0xABB4B8
+                    self.PlayerGaugePointer = 0x0ABD248
                 elif self.kh2_read_string(0x9A9330, 4) == "KH2J":
                     self.kh2_game_version = "EGS"
                 else:
@@ -668,6 +686,8 @@ class KH2Context(CommonContext):
                                     self.Shop = int(self.mem_json[key]["Shop"], 0)
                                     self.InfoBarPointer = int(self.mem_json[key]["InfoBarPointer"], 0)
                                     self.isDead = int(self.mem_json[key]["isDead"], 0)
+                                    self.FadeStatus = int(self.mem_json[key]["FadeStatus"], 0)
+                                    self.PlayerGaugePointer = int(self.mem_json[key]["PlayerGaugePointer"], 0)
                                     self.kh2_game_version = key
 
             if self.kh2_game_version is not None:
@@ -711,6 +731,8 @@ async def kh2_watcher(ctx: KH2Context):
                     await asyncio.create_task(ctx.displayPuzzlePieceTextinGame(ctx.queued_puzzle_popup[0]))  # send the num 1 index of whats in the queue
                 if ctx.queued_info_popup:
                     await asyncio.create_task(ctx.displayInfoTextinGame(ctx.queued_info_popup[0]))
+                if ctx.queued_chest_popup:
+                    await asyncio.create_task(ctx.displayChestTextInGame(ctx.queued_chest_popup[0]))
 
             elif not ctx.kh2connected and ctx.serverconnected:
                 if ctx.pause_game:

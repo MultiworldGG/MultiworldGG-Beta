@@ -58,7 +58,7 @@ def mystery_argparse():
     parser.add_argument("--spoiler_only", action="store_true",
                         help="Skips generation assertion and multidata, outputting only a spoiler log. "
                              "Intended for debugging and testing purposes.")
-    args = parser.parse_args()
+    args = parser.parse_known_args()[0]
 
     if args.skip_output and args.spoiler_only:
         parser.error("Cannot mix --skip_output and --spoiler_only")

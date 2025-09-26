@@ -22,7 +22,7 @@ class GoalStars(Range):
     This is only used if the goal option is set to crystal_stars.
     """
     display_name = "Goal Crystal Stars"
-    range_start = 0
+    range_start = 1
     range_end = 7
     default = 7
 
@@ -133,6 +133,39 @@ class AlwaysSucceedConditions(Toggle):
     will always be fulfilled, regardless of their actual fulfillment.
     """
     display_name = "Always Succeed Conditions"
+
+
+class ZeroBPFirstAttack(Toggle):
+    """
+    The First Attack badge costs 0 BP, just like the remake.
+    """
+    display_name = "0 BP First Attack"
+
+
+class MusicSettings(Choice):
+    """
+    Choose in-game music settings.
+    normal: Music will not change.
+    silent: No music will play at all.
+    randomized: Music will be randomized.
+    """
+    display_name = "Music Settings"
+    option_normal = 0
+    option_silent = 1
+    option_randomized = 2
+    default = 0
+
+
+class BlockVisibility(Choice):
+    """
+    Choose how visible item blocks are.
+    normal: All blocks will keep their vanilla visibility.
+    all_visible: All blocks will be visible.
+    """
+    display_name = "Block Visibility"
+    option_normal = 0
+    option_all_visible = 1
+    default = 0
 
 
 class ExperienceMultiplier(Range):
@@ -255,6 +288,9 @@ class TTYDOptions(PerGameCommonOptions):
     open_westside: OpenWestside
     permanent_peekaboo: PermanentPeekaboo
     full_run_bar: FullRunBar
+    first_attack: ZeroBPFirstAttack
+    music_settings: MusicSettings
+    block_visibility: BlockVisibility
     experience_multiplier: ExperienceMultiplier
     starting_hp: StartingHP
     starting_fp: StartingFP

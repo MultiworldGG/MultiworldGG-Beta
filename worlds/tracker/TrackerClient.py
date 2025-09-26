@@ -9,7 +9,7 @@ import sys
 from typing import Union, Any, TYPE_CHECKING
 
 
-from BaseClasses import CollectionState, MultiWorld, LocationProgressType, ItemClassification
+from BaseClasses import CollectionState, MultiWorld, LocationProgressType, ItemClassification, Location
 from worlds.generic.Rules import exclusion_rules
 from Utils import __version__, output_path, open_filename,async_start
 import Utils
@@ -65,26 +65,32 @@ def get_ut_color(color: str)->str:
 class TrackerCommandProcessor(ClientCommandProcessor):
     ctx: "TrackerGameContext"
 
-    def _cmd_inventory(self):
+    @mark_raw
+    def _cmd_inventory(self, filter_text: str = ""):
         """Print the list of current items in the inventory"""
         logger.info("Current Inventory:")
         currentState = self.ctx.updateTracker()
         for item, count in sorted(currentState.all_items.items()):
-            logger.info(str(count) + "x: " + item)
+            if filter_text in item:
+                logger.info(str(count) + "x: " + item)
 
-    def _cmd_prog_inventory(self):
-        """Print the list of current items in the inventory"""
+    @mark_raw
+    def _cmd_prog_inventory(self, filter_text: str = ""):
+        """Print the list of current progression items in the inventory"""
         logger.info("Current Inventory:")
         currentState = self.ctx.updateTracker()
         for item, count in sorted(currentState.prog_items.items()):
-            logger.info(str(count) + "x: " + item)
+            if filter_text in item:
+                logger.info(str(count) + "x: " + item)
 
-    def _cmd_event_inventory(self):
-        """Print the list of current items in the inventory"""
+    @mark_raw
+    def _cmd_event_inventory(self, filter_text: str = ""):
+        """Print the list of current event items in the inventory"""
         logger.info("Current Inventory:")
         currentState = self.ctx.updateTracker()
         for event in sorted(currentState.events):
-            logger.info(event)
+            if filter_text in event:
+                logger.info(event)
 
     @mark_raw
     def _cmd_manually_collect(self, item_name: str = ""):
@@ -158,22 +164,65 @@ class TrackerCommandProcessor(ClientCommandProcessor):
         self.ctx.updateTracker()
         logger.info("Reset ignored locations.")
 
+    def _cmd_next_progression(self):
+        """Finds all items that will unlock a check immediately when collected, and a best guess of how many new checks they will unlock."""
+        updateTracker(self.ctx)
+        baseLocs = len(self.ctx.tracker_core.locations_available)
+        counter = Counter()
+        goal_items = []
+        items_to_check = {item.name for item in self.ctx.tracker_core.multiworld.get_items() if item.player == self.ctx.tracker_core.player_id and item.advancement}
+        for item in items_to_check:
+            self.ctx.tracker_core.manual_items.append(item)
+            update_ret = updateTracker(self.ctx)
+            newlocs = len(self.ctx.tracker_core.locations_available) - baseLocs
+            if newlocs:
+                counter[item] = newlocs
+            if self.ctx.tracker_core.multiworld.completion_condition[self.ctx.tracker_core.player_id](update_ret.state):
+                goal_items.append(item)
+            self.ctx.tracker_core.manual_items.pop()
+        if not counter:
+            logger.info("No item will unlock any checks right now.")
+        for (item, count) in counter.most_common():
+            logger.info(f"{item} unlocks {count} check{'s' if count > 1 else ''}{' (and goal)' if item in goal_items else ''}.")
+        updateTracker(self.ctx)
+
     def _cmd_toggle_auto_tab(self):
         """Toggle the auto map tabbing function"""
         self.ctx.auto_tab = not self.ctx.auto_tab
         logger.info(f"Auto tracking currently {'Enabled' if self.ctx.auto_tab else 'Disabled'}")
 
     @mark_raw
-    def _cmd_get_logical_path(self, location_name: str = ""):
-        """Finds a logical expected path to a particular location by name"""
+    def _cmd_get_logical_path(self, dest_name: str = ""):
+        """Finds a logical expected path to a particular location or region by name"""
         if not self.ctx.game:
             logger.info("Not yet loaded into a game")
             return
         if self.ctx.stored_data and "_read_race_mode" in self.ctx.stored_data and self.ctx.stored_data["_read_race_mode"]:
             logger.info("Logical Path is disabled during Race Mode")
             return
-        get_logical_path(self.ctx, location_name)
+        get_logical_path(self.ctx, dest_name)
+    
+    @mark_raw
+    def _cmd_explain(self,lookup_name:str=""):
+        """Explains the rule for a location, if the world supports it"""
+        if not self.ctx.game:
+            logger.info("Not yet loaded into a game")
+        if self.ctx.stored_data and "_read_race_mode" in self.ctx.stored_data and self.ctx.stored_data["_read_race_mode"]:
+            logger.info("Explain is disabled during Race Mode")
+            return
+        explain(self.ctx, lookup_name)
 
+    def _cmd_faris_asked(self):
+        """Print out the error message and any other information we think might be useful"""
+        print("We're in commands")
+        if self.ctx.tracker_core is not None:
+            logger.error(self.ctx.tracker_core.gen_error)
+            if self.ctx.tracker_core.launch_multiworld is not None:
+                known_slots = [f"{slot_name} ({self.ctx.tracker_core.launch_multiworld.worlds[slot_id].game})" for slot_name, slot_id in self.ctx.tracker_core.launch_multiworld.world_name_lookup.items() if self.ctx.tracker_core.launch_multiworld.worlds[slot_id].game != "Archipelago"]
+                logger.error(f"Known slots = [{', '.join(known_slots)}]")
+        from worlds import failed_world_loads
+        if failed_world_loads:
+            logger.error(f"Worlds that failed to load [{', '.join(failed_world_loads)}]")
 
 def cmd_load_map(self: TrackerCommandProcessor, map_id: str = "0"):
     """Force a poptracker map id to be loaded"""
@@ -200,8 +249,9 @@ class TrackerGameContext(CommonContext):
     tracker_page = None
     map_page = None
     tracker_world: UTMapTabData | None = None
-    coord_dict: dict[str, list] = {}
-    map_page_coords_func = None
+    coord_dict: dict[int, list] = {}
+    deferred_dict: dict[str, list] = {}
+    map_page_coords_func = lambda *args: {}
     watcher_task = None
     auto_tab = True
     update_callback: Callable[[list[str]], bool] | None = None
@@ -296,6 +346,8 @@ class TrackerGameContext(CommonContext):
             # ctx.load_map()
             for location in self.server_locations:
                 relevent_coords = self.coord_dict.get(location, [])
+                if not relevent_coords:
+                    continue
                 
                 if location in self.checked_locations or location in self.tracker_core.ignored_locations:
                     status = "collected"
@@ -309,6 +361,21 @@ class TrackerGameContext(CommonContext):
                     status = "hinted_"+status
                 for coord in relevent_coords:
                     coord.update_status(location, status)
+            entrance_cache = list(self.tracker_core.multiworld.regions.entrance_cache[self.tracker_core.player_id].keys())
+            for entrance_name in entrance_cache:
+                relevent_coords = self.deferred_dict.get(entrance_name,[])
+                if not relevent_coords:
+                    continue
+                temp_entrance = self.tracker_core.get_current_world().get_entrance(entrance_name)
+                if temp_entrance.can_reach(updateTracker_ret.state):
+                    if temp_entrance.connected_region:
+                        status = "passed"
+                    else:
+                        status = "passable"
+                else:
+                    status = "impassable"
+                for coord in relevent_coords:
+                    coord.update_status(entrance_name, status)
         for entrance in updateTracker_ret.unconnected_entrances:
             self.log_to_tab("[color="+get_ut_color("unconnected")+"]"+entrance.name+"[/color]",False) #keep these at the bottom
         if self.quit_after_update:
@@ -435,7 +502,7 @@ class TrackerGameContext(CommonContext):
                 map_locs.append(temp_loc)
             elif "children" in temp_loc:
                 temp_locs.extend(temp_loc["children"])
-        self.coords = {
+        coords = {
             (map_loc["x"], map_loc["y"]):
                 [location_name_to_id[section["name"]] for section in location["sections"]
                  if "name" in section and section["name"] in location_name_to_id
@@ -464,11 +531,37 @@ class TrackerGameContext(CommonContext):
                         for section in location["sections"])
             }
             for maploc, seclist in tempCoords.items():
-                if maploc in self.coords:
-                    self.coords[maploc] += seclist
+                if maploc in coords:
+                    coords[maploc] += seclist
                 else:
-                    self.coords[maploc] = seclist
-        self.coord_dict = self.map_page_coords_func(self.coords,self.use_split)
+                    coords[maploc] = seclist
+        entrance_cache = list(self.tracker_core.multiworld.regions.entrance_cache[self.tracker_core.player_id].keys())
+        dcoords = {
+            (map_loc["x"],map_loc["y"]):[section["name"] for section in location["sections"]
+                if "name" in section and section["name"] in entrance_cache ]
+            for location in map_locs
+            for map_loc in location["map_locations"]
+            if map_loc["map"] == m["name"] and any(
+                "name" in section and section["name"] in entrance_cache for section in location["sections"]
+            )
+        }
+        poptracker_entrance_mapping = self.tracker_world.poptracker_entrance_mapping
+        if poptracker_entrance_mapping:
+            tempCoords = {
+                (map_loc["x"],map_loc["y"]):[poptracker_entrance_mapping[section["name"]] for section in location["sections"]
+                    if "name" in section and  section["name"] in poptracker_entrance_mapping and poptracker_entrance_mapping[section["name"]] in entrance_cache]
+                for location in map_locs
+                for map_loc in location["map_locations"]
+                if map_loc["map"] == m["name"] and any(
+                    "name" in section and  section["name"] in poptracker_entrance_mapping and poptracker_entrance_mapping[section["name"]] in entrance_cache for section in location["sections"]
+                )
+            }
+            for maploc, seclist in tempCoords.items():
+                if maploc in dcoords:
+                    dcoords[maploc] += seclist
+                else:
+                    dcoords[maploc] = seclist
+        self.coord_dict,self.deferred_dict = self.map_page_coords_func(coords,dcoords,self.use_split)
         if self.tracker_world.location_setting_key:
             self.update_location_icon_coords()
 
@@ -592,6 +685,41 @@ class TrackerGameContext(CommonContext):
             def update_color(self, locationDict):
                 return
             
+        class ApLocationDeferred(ApLocation):
+            from kivy.properties import ColorProperty
+            color = ColorProperty("#"+get_ut_color("error"))
+            def __init__(self, sections, parent, **kwargs):
+                super().__init__(sections, parent, **kwargs)
+
+            @staticmethod
+            def update_color(self, entranceDict):
+                passable = any(status == "passable" for status in entranceDict.values())
+                impassable = any(status == "impassable" for status in entranceDict.values())
+                if passable:
+                    self.color = "#"+get_ut_color("in_logic")
+                elif impassable:
+                    self.color = "#"+get_ut_color("out_of_logic")
+                else:
+                    self.color = "#"+get_ut_color("collected")
+            
+            def get_text(self):
+                ctx = manager.get_running_app().ctx
+                host_world:AutoWorld.World = ctx.tracker_core.get_current_world()
+                sReturn = []
+                for entrance, status in self.locationDict.items():
+                    color = get_ut_color("out_of_logic")
+                    if status == "passed":
+                        color = get_ut_color("collected_light")
+                    elif status == "passable":
+                        color = get_ut_color("in_logic")
+                    sReturn.append(f"{entrance} : [color={color}]{status}[/color]")
+                    if host_world:
+                        real_entrance = host_world.get_entrance(entrance)
+                        if real_entrance.connected_region:
+                            sReturn.append(f"\tconnects to ({real_entrance.connected_region.name})")
+                return "\n".join(sReturn)
+
+            
         class APLocationMixed(ApLocation):
             from kivy.properties import ColorProperty
             color = ColorProperty("#"+get_ut_color("error"))
@@ -667,9 +795,10 @@ class TrackerGameContext(CommonContext):
 
         class VisualTracker(BoxLayout):
             location_icon: ApLocationIcon
-            def load_coords(self, coords, use_split):
+            def load_coords(self,  coords: dict[tuple,list[int]], defered_coords: dict[tuple, list[str]], use_split) -> tuple[dict[int,list], dict[str,list]]:
                 self.ids.location_canvas.clear_widgets()
-                returnDict = defaultdict(list)
+                returnDict: dict[int,list] = defaultdict(list)
+                deferredDict: dict[str,list] = defaultdict(list)
                 for coord, sections in coords.items():
                     # https://discord.com/channels/731205301247803413/1170094879142051912/1272327822630977727
                     ap_location_class = APLocationSplit if use_split else APLocationMixed
@@ -677,8 +806,13 @@ class TrackerGameContext(CommonContext):
                     self.ids.location_canvas.add_widget(temp_loc)
                     for location_id in sections:
                         returnDict[location_id].append(temp_loc)
+                for coord, sections in defered_coords.items():
+                    temp_loc = ApLocationDeferred(sections, self.ids.tracker_map, pos=(coord))
+                    self.ids.location_canvas.add_widget(temp_loc)
+                    for entrance_name in sections:
+                        deferredDict[entrance_name].append(temp_loc)
                 self.ids.location_canvas.add_widget(self.location_icon)
-                return returnDict
+                return returnDict, deferredDict
 
 
         try:
@@ -715,7 +849,7 @@ class TrackerGameContext(CommonContext):
                     self.log_to_tab(line, False)
         except Exception as e:
             # TODO back compat, fail gracefully if a kivy app doesn't have our properties
-            self.map_page_coords_func = lambda *args: None
+            self.map_page_coords_func = lambda *args: {}
             tb = traceback.format_exc()
             print(tb)
         manager.add_client_tab("Tracker Page", tracker)
@@ -831,10 +965,14 @@ class TrackerGameContext(CommonContext):
             await super(TrackerGameContext, self).server_auth(password_requested)
 
         await self.get_username()
-        await self.send_connect(game="")
+        if "Tracker" in self.tags:
+            await self.send_connect(game="")
+        else:
+            await self.send_connect()
 
     def run_generator(self):
         self.tracker_core.run_generator(None, None)
+        self.use_split = self.tracker_core.use_split #fancy hack
 
     def on_package(self, cmd: str, args: dict):
         try:
@@ -872,7 +1010,7 @@ class TrackerGameContext(CommonContext):
                 if self.defered_entrance_datastorage_keys:
                     if isinstance(self.defered_entrance_datastorage_keys,str):
                         self.defered_entrance_datastorage_keys = [self.defered_entrance_datastorage_keys]
-                    self.defered_entrance_datastorage_keys = [key.format(player=self.tracker_core.player_id, team=self.team) for key in self.defered_entrance_datastorage_keys]
+                    self.defered_entrance_datastorage_keys = [key.format(player=self.slot, team=self.team) for key in self.defered_entrance_datastorage_keys]
                     self.defered_entrance_callback = getattr(self.tracker_core.get_current_world(),"reconnect_found_entrances",None)
                     if not self.defered_entrance_callback or not callable(self.defered_entrance_callback):
                         self.defered_entrance_callback = None
@@ -885,8 +1023,6 @@ class TrackerGameContext(CommonContext):
                 if not (self.items_handling & 0b010):
                     self.scout_checked_locations()
 
-                if hasattr(connected_cls, "location_id_to_alias"):
-                    self.tracker_core.location_alias_map = connected_cls.location_id_to_alias
                 if not self.quit_after_update:
                     self.updateTracker()
                 else:
@@ -907,11 +1043,13 @@ class TrackerGameContext(CommonContext):
                             self.updateTracker()
                         elif args["key"] == icon_key:
                             self.update_location_icon_coords()
-                        elif args["key"] in self.defered_entrance_datastorage_keys:
-                            self.update_defered_entrances(args["key"])
                     elif "keys" in args:
                         if icon_key in args["keys"]:
                             self.update_location_icon_coords()
+                if self.defered_entrance_datastorage_keys:
+                    if "key" in args and args["key"] in self.defered_entrance_datastorage_keys:
+                            self.update_defered_entrances(args["key"])
+                    elif "keys" in args:
                         for key in self.defered_entrance_datastorage_keys:
                             if key in args["keys"]:
                                 self.update_defered_entrances(key)
@@ -959,7 +1097,6 @@ class TrackerGameContext(CommonContext):
             self.defered_entrance_datastorage_keys = []
             # TODO: persist these per url+slot(+seed)?
             self.tracker_core.ignored_locations.clear()
-            self.tracker_core.location_alias_map = {}
             self.set_page("Connect to a slot to start tracking!")
             if hasattr(self, "tracker_total_locs_label"):
                 self.tracker_total_locs_label.text = f"Locations: 0/0"
@@ -991,6 +1128,51 @@ def load_json_zip(pack, path):
         with parentFile.open(path) as childFile:
             return json.loads(childFile.read().decode('utf-8-sig'))
 
+def explain(ctx: TrackerGameContext, dest_name: str):
+    from NetUtils import JSONMessagePart
+    if ctx.tracker_core.player_id is None or ctx.tracker_core.multiworld is None:
+        logger.error("Player YAML not installed or Generator failed")
+        ctx.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}")
+        return
+    current_world = ctx.tracker_core.get_current_world()
+    assert current_world
+    state = ctx.updateTracker().state
+    if not state: return
+
+    if hasattr(current_world,"explain_rule"):
+        returned_json = current_world.explain_rule(dest_name,state)
+        if returned_json:
+            ctx.ui.print_json(returned_json)
+            return
+    parent_region = None
+    location = None
+    if dest_name in ctx.tracker_core.multiworld.regions.location_cache[ctx.tracker_core.player_id]:
+        dest_id = current_world.location_name_to_id[dest_name]
+        if dest_id not in ctx.server_locations:
+            logger.error("Location not found")
+            return
+        location = ctx.tracker_core.multiworld.get_location(dest_name, ctx.tracker_core.player_id)
+        if hasattr(location.access_rule,"explain_json"):
+            ctx.ui.print_json(location.access_rule.explain_json(state))
+        elif location.access_rule is Location.access_rule:
+            logger.info("Location has a default access rule")
+        else:
+            logger.info("Location doesn't have a rule that supports explanation")
+        parent_region = location.parent_region
+    elif dest_name in ctx.tracker_core.multiworld.regions.region_cache[ctx.tracker_core.player_id]:
+        parent_region = ctx.tracker_core.multiworld.get_region(dest_name,ctx.tracker_core.player_id)
+    if parent_region:
+        if location:
+            logger.info(f"Parent region ({parent_region.name})")
+        for entrance in parent_region.entrances:
+            if entrance.parent_region:
+                if hasattr(entrance.access_rule,"explain_json"):
+                    returned_json:list[JSONMessagePart] = [{"type":"text","text":f"{entrance.parent_region.name} ({entrance.parent_region.can_reach(state)}): {entrance.name} : "}]
+                    returned_json.extend(entrance.access_rule.explain_json(state))
+                    ctx.ui.print_json(returned_json)
+                else:
+                    ctx.ui.print_json([{"type":"text","text":f"{entrance.parent_region.name} ({entrance.parent_region.can_reach(state)}): {entrance.name} : {entrance.access_rule(state)}"}])
+        
 
 def get_logical_path(ctx: TrackerGameContext, dest_name: str):
     if ctx.tracker_core.player_id is None or ctx.tracker_core.multiworld is None:
@@ -1001,12 +1183,15 @@ def get_logical_path(ctx: TrackerGameContext, dest_name: str):
     state = None
     current_world = ctx.tracker_core.get_current_world()
     assert current_world
-    if dest_name in current_world.location_name_to_id:
-        
-        dest_id = current_world.location_name_to_id[dest_name]
-        if dest_id not in ctx.server_locations:
-            logger.error("Location not found")
+
+    if hasattr(current_world,"get_logical_path"):
+        state = ctx.updateTracker().state
+        returned_json = current_world.get_logical_path(dest_name,state)
+        if returned_json:
+            ctx.ui.print_json(returned_json)
             return
+
+    if dest_name in [loc.name for loc in ctx.tracker_core.multiworld.get_locations(ctx.tracker_core.player_id)]:
         location = ctx.tracker_core.multiworld.get_location(dest_name, ctx.tracker_core.player_id)
         state = ctx.updateTracker().state
         if not state: return
@@ -1105,18 +1290,15 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
         await ctx.exit_event.wait()
         await ctx.shutdown()
 
-    # Check if we're already in an event loop (GUI mode) first
-    try:
-        loop = asyncio.get_running_loop()
-        # We're in an existing event loop, create a task
-        logger.info("Running in existing event loop (GUI mode)")
-        
-        task = asyncio.create_task(main(), name="TrackerMain")
-        return task
-    except RuntimeError:
-        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Tracker client.")
-        if error_callback:
-            error_callback()
+
+def launch(*args):
+    parser = get_base_parser(description=f"Gameless {apname} Client, for text interfacing.")
+    parser.add_argument('--name', default=None, help="Slot Name to connect as.")
+    if sys.stdout:  # If terminal output exists, offer gui-less mode
+        parser.add_argument('--count', default=False, action='store_true', help="just return a count of in logic checks")
+        parser.add_argument('--list', default=False, action='store_true', help="just return a list of in logic checks")
+    parser.add_argument("url", nargs="?", help=f"{apname} connection url")
+    args = handle_url_arg(parser.parse_args(args))
 
 
 def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, 

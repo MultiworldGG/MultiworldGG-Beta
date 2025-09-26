@@ -47,7 +47,8 @@ class StrongholdDungeonWithOpenEntrances(TestArea):
     }
 
     def test_west_shortcut(self):
-        self.assertAccessible("StrongholdDungeon_West4", "BlueCave_East4_0", [])
+        self.assertAccessible("StrongholdDungeon_West4", "BlueCave_East4_0", ["Double Jump Boots"])
+        self.assertAccessible("StrongholdDungeon_West4", "BlueCave_East4_0", ["Vaero"])
 
 
 class StrongholdDungeonWithOpenShortcuts(TestArea):

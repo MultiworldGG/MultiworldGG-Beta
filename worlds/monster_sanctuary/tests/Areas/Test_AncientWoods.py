@@ -8,10 +8,10 @@ class AncientWoodsTests(TestArea):
 
     def test_center_locked_door(self):
         # Test from Center2
-        self.assertNotAccessible("AncientWoods_Center2", "AncientWoods_Center5_4", [])
-        self.assertNotAccessible("AncientWoods_Center2", "AncientWoods_Center5_4",
+        self.assertNotAccessible("AncientWoods_Center2", "AncientWoods_Center5_1_1", [])
+        self.assertNotAccessible("AncientWoods_Center2", "AncientWoods_Center5_1_1",
                                  ["Ancient Woods key"])
-        self.assertAccessible("AncientWoods_Center2", "AncientWoods_Center5_4",
+        self.assertAccessible("AncientWoods_Center2", "AncientWoods_Center5_1_1",
                                  ["Ancient Woods key", "Ancient Woods key"])
 
         # Test from Center5
@@ -52,7 +52,7 @@ class AncientWoodsTests(TestArea):
                               ["Double Jump Boots", "Nightwing", "Ancient Woods Brutus Access"])
 
         self.assertNotAccessible("AncientWoods_South4", "ancient_woods_brutus_access", [])
-        self.assertAccessible("AncientWoods_South4", "ancient_woods_brutus_access", ["Yowie"])
+        self.assertAccessible("AncientWoods_South4", "ancient_woods_brutus_access", ["Yowie", "Nightwing"])
 
         self.assertNotAccessible("AncientWoods_South4", "AncientWoods_SouthHidden4_1_0", [])
         self.assertAccessible("AncientWoods_South4", "AncientWoods_SouthHidden4_1_0",
@@ -74,10 +74,10 @@ class AncientWoodsMinimalLockedDoorsTests(TestArea):
         self.assertAccessible("AncientWoods_North2", "AncientWoods_North3_10", [])
 
     def test_center_locked_door(self):
-        self.assertNotAccessible("AncientWoods_Center2", "AncientWoods_Center5_4", [])
-        self.assertNotAccessible("AncientWoods_Center2", "AncientWoods_Center5_4",
+        self.assertNotAccessible("AncientWoods_Center2", "AncientWoods_Center5_1_1", [])
+        self.assertNotAccessible("AncientWoods_Center2", "AncientWoods_Center5_1_1",
                                  ["Ancient Woods key"])
-        self.assertAccessible("AncientWoods_Center2", "AncientWoods_Center5_4",
+        self.assertAccessible("AncientWoods_Center2", "AncientWoods_Center5_1_1",
                               ["Ancient Woods key", "Ancient Woods key"])
 
         self.assertNotAccessible("AncientWoods_Center5", "AncientWoods_Center2_1_0", [])
@@ -96,7 +96,7 @@ class AncientWoodsNoLockedDoorsTests(TestArea):
         self.assertAccessible("AncientWoods_North2", "AncientWoods_North3_10", [])
 
     def test_center_accessible_with_no_keys(self):
-        self.assertAccessible("AncientWoods_Center2", "AncientWoods_Center5_4", [])
+        self.assertAccessible("AncientWoods_Center2", "AncientWoods_Center5_1_1", [])
 
 
 class AncientWoodsWithOpenEntrances(TestArea):

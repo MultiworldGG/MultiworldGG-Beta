@@ -22,7 +22,7 @@
 ## Generating the player configuration
 
 1. Download the sadx.apworld from the release page and double click it to install it and restart the Archipelago
-   launcher.
+   launcher. (Not needed with MultiworldGG)
 2. On the AP Launcher click on `Generate Template Options`.
 3. Copy the `Sonic Adventure DX.yaml` file from the `Players/Templates` folder and edit it to your liking.
 4. Don't forget to remove the {number} from the `name` field, it should just be your nick and nothing else.
@@ -31,7 +31,7 @@
 
 1. Before launching the game, run the `SAModManager.exe`, select the SADX_Archipelago mod, and hit the `Configure Mod`
    button.
-2. For the `Server IP` field under `AP Settings`, enter the address of the server, such as archipelago.gg:54321. Your
+2. For the `Server IP` field under `AP Settings`, enter the address of the server, such as multiworld.gg:54321. Your
    server host should be able to tell you this.
 3. For the `PlayerName` field under `AP Settings`, enter your "name" field from the yaml or website config.
 4. For the `Password` field under `AP Settings`, enter the server password if one exists, otherwise leave blank.
@@ -41,9 +41,9 @@
 ## Using Universal Tracker
 
 1. Download and install the
-   latest [Universal Tracker](https://discord.com/channels/731205301247803413/1170094879142051912) version.
-2. Make sure you have installed the sadx.apworld for the current version by double-clicking it.
-3. Restart the Archipelago Launcher and open the Universal Tracker then connect with your server IP/port and slot name.
+   latest [Universal Tracker](https://discord.com/channels/731205301247803413/1170094879142051912) version. (not needed with MultiworldGG)
+2. Make sure you have installed the sadx.apworld for the current version by double-clicking it. (not needed with MultiworldGG)
+3. Restart the MultiworldGG Launcher and open the Universal Tracker then connect with your server IP/port and slot name.
     - You don't need the yaml in your players folder for the tracker to work.
 
 ## Music Randomization

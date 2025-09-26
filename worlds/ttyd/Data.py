@@ -1,5 +1,5 @@
 from enum import Enum
-
+from BaseClasses import ItemClassification
 
 class Rels(Enum):
     aaa = "aaa"
@@ -78,66 +78,29 @@ starting_partners = [
 ]
 
 shop_items = [
-    78780003,
-    78780019,
-    78780023,
-    78780030,
-    78780041,
-    78780053,
-    78780072,
-    78780073,
-    78780080,
-    78780096,
-    78780098,
-    78780102,
-    78780110,
-    78780111,
-    78780112,
-    78780118,
-    78780125,
-    78780131,
-    78780172,
-    78780173,
-    78780174,
-    78780175,
-    78780176,
-    78780177,
-    78780246,
-    78780247,
-    78780248,
-    78780249,
-    78780250,
-    78780251,
-    78780268,
-    78780271,
-    78780273,
-    78780274,
-    78780283,
-    78780284,
-    78780317,
-    78780316,
-    78780315,
-    78780313,
-    78780312,
-    78780310,
-    78780462,
-    78780463,
-    78780464,
-    78780465,
-    78780466,
-    78780469,
-    78780524,
-    78780525,
-    78780526,
-    78780529,
-    78780530,
-    78780531,
-    78780564,
-    78780566,
-    78780567,
-    78780569,
-    78780573,
-    78780574
+    78780030, 78780023, 78780053, 78780003, 78780041, 78780019,
+    78780096, 78780102, 78780073, 78780080, 78780072, 78780098,
+    78780125, 78780112, 78780131, 78780118, 78780110, 78780111,
+    78780173, 78780177, 78780172, 78780175, 78780174, 78780176,
+    78780247, 78780248, 78780251, 78780249, 78780246, 78780250,
+    78780268, 78780284, 78780273, 78780274, 78780271, 78780283,
+    78780317, 78780313, 78780315, 78780312, 78780316, 78780310,
+    78780465, 78780462, 78780466, 78780463, 78780464, 78780469,
+    78780531, 78780526, 78780524, 78780530, 78780525, 78780529,
+    78780569, 78780564, 78780567, 78780573, 78780566, 78780574
+]
+
+shop_names = [
+    "gor_01",
+    "gor_03",
+    "tik_00",
+    "nok_00",
+    "mri_07",
+    "tou_01",
+    "usu_01",
+    "muj_01",
+    "rsh_03",
+    "bom_02"
 ]
 
 location_gsw_info = {
@@ -758,14 +721,14 @@ item_prices = {
     77772005: 50,  # Attack FX R - 50 buy price
     77772006: 50,  # Attack FX Y - 50 buy price
     77772007: 30,  # Autograph
-    77772008: 30,  # Black Key (Plane Curse)
-    77772009: 30,  # Black Key (Paper Curse)
-    77772010: 30,  # Black Key (Tube Curse)
-    77772011: 30,  # Black Key (Boat Curse)
+    77772008: 30,  # Black Key (Plane)
+    77772009: 30,  # Black Key (Paper)
+    77772010: 30,  # Black Key (Tube)
+    77772011: 30,  # Black Key (Boat)
     77772012: 30,  # Blanket
     77772013: 30,  # Blimp Ticket
     77772014: 30,  # Blue Key
-    77772015: 30,  # Boat Curse
+    77772015: 30,  # Boat Mode
     77772016: 30,  # Bobbery
     77772017: 20,  # Boo's Sheet
     77772018: 30,  # Briefcase
@@ -780,6 +743,7 @@ item_prices = {
     77772027: 30,  # Charge - 30 buy price
     77772028: 40,  # Charge P - 40 buy price
     77772029: 40,  # Chill Out - 40 buy price
+    77772221: 30,  # Choco Cake
     77772030: 30,  # Chuckola Cola
     77772031: 50,  # Close Call - 50 buy price
     77772032: 50,  # Close Call P - 50 buy price
@@ -787,6 +751,7 @@ item_prices = {
     77772034: 30,  # Cog
     77772036: 30,  # Contact Lens
     77772037: 30,  # Cookbook
+    77772223: 15,  # Couple's Cake
     77772038: 4,  # Courage Shell
     77772039: 30,  # Crystal Star
     77772040: 80,  # Damage Dodge - 80 buy price
@@ -798,9 +763,10 @@ item_prices = {
     77772046: 50,  # Double Dip - 50 buy price
     77772047: 50,  # Double Dip P - 50 buy price
     77772048: 20,  # Double Pain - 20 buy price
+    77772224: 8,  # Dried Bouquet
     77772049: 1,  # Dried Shroom
     77772051: 10,  # Earth Quake
-    77772052: 30,  # Elevator Key (Riverside)
+    77772052: 30,  # Elevator Key (Station)
     77772053: 30,  # Elevator Key 1
     77772054: 30,  # Elevator Key 2
     77772055: 30,  # Emerald Star
@@ -836,9 +802,11 @@ item_prices = {
     77772085: 80,  # Happy Heart P - 80 buy price
     77772086: 50,  # Head Rattle - 50 buy price
     77772087: 50,  # Heart Finder - 50 buy price
+    77772225: 15,  # Honey Shroom
     77772088: 5,  # Honey Syrup
     77772089: 4,  # Horsetail
     77772090: 8,  # Hot Dog
+    77772226: 8,  # Hot Sauce
     77772091: 10,  # HP Drain
     77772092: 50,  # HP Drain (Badge) - 50 buy price
     77772093: 50,  # HP Drain P - 50 buy price
@@ -862,7 +830,8 @@ item_prices = {
     77772112: 10,  # Maple Syrup
     77772113: 30,  # Mega Rush - 30 buy price
     77772114: 30,  # Mega Rush P - 30 buy price
-    77772115: 10,  # Mini Mr.Mini
+    77772227: 40, # Meteor Meal
+    77772115: 10,  # Mini Mr. Mini
     77772116: 90,  # Money Money - 90 buy price
     77772117: 30,  # Moon Stone
     77772118: 8,  # Mr. Softener
@@ -874,18 +843,18 @@ item_prices = {
     77772123: 30,  # Necklace
     77772124: 30,  # Old Letter
     77772125: 12,  # Omelette Meal
-    77772126: 80,  # P-Down D-Up - 80 buy price
-    77772127: 50,  # P-Down D-Up P - 50 buy price
-    77772128: 50,  # P-Up D-Down - 50 buy price
-    77772129: 60,  # P-Up D-Down P - 60 buy price
+    77772126: 80,  # P-Down, D-Up - 80 buy price
+    77772127: 50,  # P-Down, D-Up P - 50 buy price
+    77772128: 50,  # P-Up, D-Down - 50 buy price
+    77772129: 60,  # P-Up, D-Down P - 60 buy price
     77772130: 30,  # Palace Key
-    77772131: 30,  # Palace Key (Riddle Tower)
-    77772132: 30,  # Paper Curse
+    77772131: 30,  # Palace Key (Tower)
+    77772132: 30,  # Paper Mode
     77772133: 5,  # Peachy Peach
     77772134: 50,  # Peekaboo - 50 buy price
     77772135: 40,  # Piercing Blow - 40 buy price
     77772136: 50,  # Pity Flower - 50 buy price
-    77772137: 30,  # Plane Curse
+    77772137: 30,  # Plane Mode
     77772138: 5,  # Point Swap
     77772139: 5,  # POW Block
     77772140: 50,  # Power Bounce - 50 buy price
@@ -917,9 +886,10 @@ item_prices = {
     77772167: 30,  # Simplifier - 30 buy price
     77772168: 30,  # Skull Gem
     77772169: 8,  # Sleepy Sheep
-    77772219: 50,  # Sleepy Sheep
+    77772219: 50,  # Sleepy Stomp
     77772170: 10,  # Slow Go - 10 buy price
     77772171: 15,  # Slow Shroom
+    77772228: 15,  # Snow Bunny
     77772172: 40,  # Soft Stomp - 40 buy price
     77772173: 12,  # Space Food
     77772174: 80,  # Spike Shield - 80 buy price
@@ -946,7 +916,7 @@ item_prices = {
     77772197: 50,  # Timing Tutor - 50 buy price
     77772198: 50,  # Tornado Jump - 50 buy price
     77772199: 30,  # Train Ticket
-    77772200: 30,  # Tube Curse
+    77772200: 30,  # Tube Mode
     77772201: 2,  # Turtley Leaf
     77772202: 30,  # Progressive Boots
     77772204: 50,  # Ultra Shroom
@@ -960,6 +930,8 @@ item_prices = {
     77772212: 50,  # Whacka Bump
     77772213: 30,  # Yoshi
     77772214: 50,  # Zap Tap - 50 buy price
+    77772229: 40,  # Zess Dynamite
+    77772230: 50,  # Zess Special
 }
 
 location_to_unit = {
@@ -1233,14 +1205,14 @@ stars = [
 ]
 
 chapter_items = {
-    1: ["Castle Key", "Sun Stone", "Moon Stone", "Black Key (Paper Curse)"],
+    1: ["Castle Key", "Sun Stone", "Moon Stone", "Black Key (Paper)"],
     2: ["Puni Orb", "Necklace", "Red Key", "Blue Key"],
     3: ["Storage Key 1", "Storage Key 2"],
-    4: ["Shop Key", "Black Key (Tube Curse)", "Steeple Key", "The Letter \"p\"", "Superbombomb"],
-    5: ["Chuckola Cola", "Skull Gem", "Gate Handle", "Grotto Key", "Wedding Ring", "Coconut", "Black Key (Boat Curse)"],
-    6: ["Elevator Key (Riverside)", "Ragged Diary", "Blanket", "Autograph", "Shell Earrings", "Gold Ring", "Briefcase", "Galley Pot", "Vital Paper", "Station Key 1", "Station Key 2"],
+    4: ["Shop Key", "Black Key (Tube)", "Steeple Key", "The Letter \"p\"", "Superbombomb"],
+    5: ["Chuckola Cola", "Skull Gem", "Gate Handle", "Grotto Key", "Wedding Ring", "Coconut", "Black Key (Boat)"],
+    6: ["Elevator Key (Station)", "Ragged Diary", "Blanket", "Autograph", "Shell Earrings", "Gold Ring", "Briefcase", "Galley Pot", "Vital Paper", "Station Key 1", "Station Key 2"],
     7: ["Goldbob Guide", "Elevator Key 1", "Elevator Key 2", "Cog", "Card Key 1", "Card Key 2", "Card Key 3", "Card Key 4"],
-    8: ["Palace Key", "Palace Key (Riddle Tower)", "Star Key"],
+    8: ["Palace Key", "Palace Key (Tower)", "Star Key"],
 }
 
 pit_exclusive_tattle_stars_required = {
@@ -1272,4 +1244,11 @@ pit_exclusive_tattle_stars_required = {
         "Tattle: Bob-ulk",
         "Tattle: Bonetail"
     ]
+}
+
+classification_to_color = {
+    ItemClassification.filler: "00d6d6",
+    ItemClassification.useful: "6d8be8",
+    ItemClassification.progression: "af99ef",
+    ItemClassification.trap: "fa8072",
 }

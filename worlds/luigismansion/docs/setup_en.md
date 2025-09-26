@@ -13,9 +13,11 @@
 2. Download and install the Dolphin Gamecube/Wii Emulator from the link above, making sure to install the most recent version (minimum 2503).
 Run the emulator at least once to make sure it is working.
 
-3. Acquire the most recent APWorld from the [Releases page](https://github.com/BootsinSoots/Archipelago/releases/latest) and place the luigismansion.apworld in the custom_worlds folder of your MultiworldGG install (not needed with MWGG release)
+3. Make sure Dolphin's MMU (Memory Management Unit) is disabled / un-checked. This is found under the Options Menu in Dolphin > Configuration > Advanced tab. See screenshot below for reference:
 
-4. Download the lib.zip from the releases page and unpack it. Place the contents of the /lib from what you unzipped into the /lib folder of your MultiworldGG install. (not needed with MWGG release)
+![img.png](Dolphin_Disabled_MMU.png)
+
+4. Note for Mac users: Due to additional security hardening that Apple added to MacOS, the steps from [here](https://github.com/aldelaro5/dolphin-memory-engine?tab=readme-ov-file#macos-code-signing) relating to Code Signing must be performed. Not doing so will prevent your Archipelago Client from connecting to the game appropriately.
 
 ## Create a Config (.yaml) File
 

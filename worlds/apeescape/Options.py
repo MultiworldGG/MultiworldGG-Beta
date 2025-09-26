@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from Options import Choice, Range, DeathLink, PerGameCommonOptions, OptionDict, FreeText, OptionSet, OptionCounter
+from Options import Choice, Range, DeathLink, PerGameCommonOptions, OptionDict, FreeText, OptionSet, OptionCounter, \
+    Toggle
 from .Items import AEItem
 
 class GoalOption(Choice):
@@ -134,8 +135,7 @@ class EntranceOption(Choice):
 
 
 class RandomizeStartingRoomOption(Choice):
-    """**CURRENTLY DISABLED FOR TOO MANY ISSUES**
-    Choose if the starting room for each level should be randomized.
+    """Choose if the starting room for each level should be randomized.
 
         off: The starting room for each level is the original starting room.
         on: The starting room for each level is a random room from within that level.
@@ -389,17 +389,17 @@ class TrapWeights(OptionCounter):
         **This option is ignored when "TrapPercentage" option is set to an other value than "custom"
 
         Range: 0 - 100
-        Default values: 15, 5, 10
+        Default values: 15, 13, 5, 10,7
     """
     internal_name = "customtrapweights"
     display_name = "Custom Trap Weights"
     min = 0
     max = 100
     valid_keys = frozenset({
-        AEItem.BananaPeelTrap.value, AEItem.MonkeyMashTrap.value, AEItem.IcyHotPantsTrap.value
+        AEItem.BananaPeelTrap.value, AEItem.GadgetShuffleTrap.value, AEItem.MonkeyMashTrap.value, AEItem.IcyHotPantsTrap.value, AEItem.StunTrap.value
     })
     default = {
-        AEItem.BananaPeelTrap.value: 15, AEItem.MonkeyMashTrap.value: 5, AEItem.IcyHotPantsTrap.value: 10
+        AEItem.BananaPeelTrap.value: 15,  AEItem.GadgetShuffleTrap.value : 13, AEItem.MonkeyMashTrap.value: 5, AEItem.IcyHotPantsTrap.value: 10, AEItem.StunTrap.value: 7
     }
 
 
@@ -409,21 +409,30 @@ class TrapsOnReconnect(OptionSet):
         This option determines which traps will be sent when reconnecting to the client.
         Removing a trap from this list means it will only activate if received while playing/connected.
 
-        Supported values: "Banana Peel Trap", "Monkey Mash Trap", "Icy Hot Pants Trap"
+        Supported values: "Banana Peel Trap", "Gadget Shuffle Trap", "Monkey Mash Trap", "Icy Hot Pants Trap", "Stun Trap"
     """
     internal_name = "trapsonreconnect"
     display_name = "Traps On Reconnect"
     supports_weighting = False
     valid_keys = frozenset({
-        AEItem.BananaPeelTrap.value, AEItem.MonkeyMashTrap.value, AEItem.IcyHotPantsTrap.value
+        AEItem.BananaPeelTrap.value,AEItem.GadgetShuffleTrap.value, AEItem.MonkeyMashTrap.value, AEItem.IcyHotPantsTrap.value, AEItem.StunTrap.value
     })
-#   valid_keys = frozenset({"Banana Peel Trap", "Monkey Mash Trap", "Icy Hot Pants Trap"})
+
     preset_none = frozenset()
     preset_all = valid_keys
-#   default = frozenset({"Banana Peel Trap", "Monkey Mash Trap", "Icy Hot Pants Trap"})
+
     default = frozenset({
-        AEItem.BananaPeelTrap.value, AEItem.MonkeyMashTrap.value, AEItem.IcyHotPantsTrap.value
+        AEItem.BananaPeelTrap.value,AEItem.GadgetShuffleTrap.value, AEItem.MonkeyMashTrap.value, AEItem.IcyHotPantsTrap.value, AEItem.StunTrap.value
     })
+
+class TrapLink(Toggle):
+    """
+    Whether your received traps are linked to other players
+
+    You will also receive any linked traps from other players with Trap Link enabled,
+    if you have a weight above "none" set for that trap
+    """
+    display_name = "Trap Link"
 
 
 class ItemDisplayOption(Choice):
@@ -529,6 +538,7 @@ class ApeEscapeOptions(PerGameCommonOptions):
     trappercentage: TrapPercentage
     trapweights: TrapWeights
     trapsonreconnect: TrapsOnReconnect
+    trap_link: TrapLink
     itemdisplay: ItemDisplayOption
     kickoutprevention: KickoutPreventionOption
     autoequip: AutoEquipOption
