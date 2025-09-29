@@ -29,9 +29,15 @@ from kivymd.uix.sliverappbar import MDSliverAppbar
 from kivymd.theming import ThemableBehavior
 from kivymd.uix.list import MDList
 from kivymd.uix.textfield import MDTextField
-from kivymd.uix.dialog import MDDialog
+from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogButtonContainer
+from kivymd.uix.button import MDButton, MDButtonText
 import logging
 from typing import Any
+import tempfile
+import shutil
+import zipfile
+import os
+import subprocess
 
 from kivy.clock import Clock
 from kivymd.app import MDApp
@@ -44,7 +50,7 @@ from mwgg_gui.launcher.launcher_favorite_bar import FavoritesScroll, Favorite
 from mwgg_gui.launcher.launcher_yaml import YamlDialog
 from mwgg_gui.components.dialog import MessageBox
 
-from Utils import discover_and_launch_module, get_available_worlds, persistent_load
+from Utils import discover_and_launch_module, get_available_worlds, persistent_load, open_file_input_dialog
 
 game_index = GameIndex()
 logger = logging.getLogger("Client")
@@ -134,7 +140,7 @@ Builder.load_string('''
                             icon: "code-block-brackets"
                     MDButton:
                         id: generate_button
-                        on_release: app.root.current = 'generate'
+                        on_release: app.launcher_screen.generate()
                         pos_hint: {"center_x": 0.5}
                         width: dp(200)
                         radius: dp(10)
@@ -209,6 +215,7 @@ Builder.load_string('''
                             icon: 'ticket-account'
                         MDTextFieldHintText:
                             text: "Username"
+                        on_text_validate: app.launcher_screen.connect()
                     LauncherAuthTextField:
                         id: slot_password
                         password: True
@@ -222,6 +229,7 @@ Builder.load_string('''
                             icon: 'lock'    
                         MDTextFieldHintText:
                             text: "Password"
+                        on_text_validate: app.launcher_screen.connect()
 
 <TagChip>:
     type: "filter"
@@ -518,11 +526,204 @@ class LauncherScreen(MDScreen, ThemableBehavior):
 
     def generate(self):
         """Generate a new game"""
-        MessageBox("Generate", "Generate a new game").open()
+        # Step 1: Select files (multiple .zip/.yaml files)
+        selected_files = self._select_generation_files()
+        if not selected_files:
+            return
+        
+        # Step 2: Create temporary directory and process files
+        temp_dir = self._create_temp_workspace(selected_files)
+        if not temp_dir:
+            return
+            
+        # Store temp_dir for later use
+        self._generation_temp_dir = temp_dir
+            
+        # Step 3: Show generation options dialog
+        self._show_generation_options()
+
+    def _select_generation_files(self):
+        """Select multiple .zip/.yaml files for generation"""
+        # Show file dialog for .zip and .yaml files
+        result = open_file_input_dialog(
+            "Select Generation Files (.zip/.yaml)",
+            [("YAML Files", ["*.yaml", "*.yml"]), ("ZIP Files", ["*.zip"]), ("All Supported", ["*.yaml", "*.yml", "*.zip"])]
+        )
+        
+        if not result:
+            return []
+            
+        # Handle both single file and multiple files
+        if isinstance(result, str):
+            selected_files = [result]
+        else:
+            selected_files = result
+            
+        # Show confirmation of selected files
+        if len(selected_files) == 1:
+            MessageBox("File Selected", f"Selected: {os.path.basename(selected_files[0])}").open()
+        else:
+            MessageBox("Files Selected", f"Selected {len(selected_files)} files for generation").open()
+            
+        return selected_files
+
+    def _create_temp_workspace(self, selected_files):
+        """Create temporary directory and copy/extract files"""
+        temp_dir = tempfile.mkdtemp(prefix="mwgg_generate_")
+        
+        for file_path in selected_files:
+            if file_path.lower().endswith('.zip'):
+                # Extract zip file
+                with zipfile.ZipFile(file_path, 'r') as zip_ref:
+                    zip_ref.extractall(temp_dir)
+            else:
+                # Copy yaml file
+                shutil.copy2(file_path, temp_dir)
+        
+        return temp_dir
+
+    def _show_generation_options(self):
+        """Show dialog with generation options"""
+        from kivymd.uix.textfield import MDTextField
+        
+        # Create dialog content
+        content = MDBoxLayout(
+            orientation="vertical",
+            spacing="12dp",
+            size_hint_y=None,
+            height="120dp"
+        )
+        
+        # Seed input
+        seed_field = MDTextField(
+            hint_text="Seed (leave empty for random)",
+            helper_text="Optional: specify a seed number",
+            helper_text_mode="on_focus"
+        )
+        
+        # Output path input
+        output_field = MDTextField(
+            hint_text="Output Directory",
+            text=os.path.join(os.getcwd(), 'output'),
+            helper_text="Directory where generated files will be saved"
+        )
+        
+        content.add_widget(seed_field)
+        content.add_widget(output_field)
+        
+        # Create dialog
+        dialog = MDDialog(
+            MDDialogHeadlineText(
+                text="Generation Options",
+            ),
+            content,
+            MDDialogButtonContainer(
+                MDButton(
+                    MDButtonText(text="CANCEL"),
+                    on_release=lambda x: self._on_generation_options_cancel(dialog)
+                ),
+                MDButton(
+                    MDButtonText(text="GENERATE"),
+                    on_release=lambda x: self._on_generation_options_confirm(dialog, seed_field, output_field)
+                ),
+                spacing=dp(8)
+            )
+        )
+        
+        # Store dialog reference and open it
+        self._generation_dialog = dialog
+        self._generation_result = None
+        dialog.open()
+
+    def _on_generation_options_cancel(self, dialog):
+        """Handle generation options cancellation"""
+        dialog.dismiss()
+        # Cleanup temp directory
+        self._cleanup_temp_dir(self._generation_temp_dir)
+        delattr(self, '_generation_temp_dir')
+
+    def _on_generation_options_confirm(self, dialog, seed_field, output_field):
+        """Handle generation options confirmation"""
+        try:
+            seed = seed_field.text.strip()
+            seed_value = int(seed) if seed else None
+        except ValueError:
+            MessageBox("Invalid Seed", "Seed must be a number or empty for random").open()
+            return
+            
+        output_path = output_field.text.strip()
+        if not output_path:
+            output_path = os.path.join(os.getcwd(), 'output')
+            
+        self._generation_result = {
+            'seed': seed_value,
+            'output_path': output_path
+        }
+        
+        dialog.dismiss()
+        # Continue with generation
+        self._continue_generation()
+
+    def _continue_generation(self):
+        """Continue with generation after options are confirmed"""
+        if not hasattr(self, '_generation_result') or not self._generation_result:
+            self._cleanup_temp_dir(self._generation_temp_dir)
+            return
+            
+        # Step 4: Execute MultiworldGGGenerate.exe
+        self._execute_generation(self._generation_temp_dir, self._generation_result)
+        
+        # Step 5: Cleanup
+        self._cleanup_temp_dir(self._generation_temp_dir)
+        
+        # Clear stored data
+        delattr(self, '_generation_temp_dir')
+        delattr(self, '_generation_result')
+
+    def _execute_generation(self, temp_dir, options):
+        """Execute MultiworldGGGenerate.exe with options"""
+        # Find the executable in the same directory as the running app
+        exe_name = "MultiworldGGGenerate.exe" if os.name == 'nt' else "MultiworldGGGenerate"
+        exe_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", exe_name)
+        
+        # Build command arguments
+        cmd = [exe_path, "--player_files_path", temp_dir]
+        
+        if options.get('seed'):
+            cmd.extend(["--seed", str(options['seed'])])
+            
+        if options.get('output_path'):
+            cmd.extend(["--outputpath", options['output_path']])
+        
+        # Execute the command
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd=os.path.dirname(exe_path))
+            if result.returncode == 0:
+                MessageBox("Generation Complete", "Game generation completed successfully!").open()
+            else:
+                MessageBox("Generation Failed", f"Generation failed: {result.stderr}").open()
+        except Exception as e:
+            MessageBox("Generation Error", f"Failed to execute generation: {str(e)}").open()
+
+    def _cleanup_temp_dir(self, temp_dir):
+        """Clean up temporary directory"""
+        try:
+            shutil.rmtree(temp_dir)
+        except Exception as e:
+            logger.warning(f"Failed to clean up temp directory {temp_dir}: {e}")
 
     def host(self):
         """Host a new game"""
-        MessageBox("Host", "Host a new game").open()
+        # Find the server executable in the same directory as the running app
+        exe_name = "MultiWorldGGServer.exe" if os.name == 'nt' else "MultiWorldGGServer"
+        exe_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", exe_name)
+        
+        # Launch the server
+        try:
+            subprocess.Popen([exe_path], cwd=os.path.dirname(exe_path))
+            MessageBox("Server Started", "MultiWorldGG Server has been started").open()
+        except Exception as e:
+            MessageBox("Server Error", f"Failed to start server: {str(e)}").open()
     
     def patch_game(self):
         """Patch the selected game"""

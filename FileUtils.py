@@ -16,8 +16,8 @@ class FileUtils(ABC):
     """Abstract base class for OS-specific file utilities."""
     
     @abstractmethod
-    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Optional[str]:
-        """Open a file selection dialog."""
+    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
+        """Open a file selection dialog. Returns a single file path (str) or list of file paths for multiple selection."""
         pass
     
     @abstractmethod
@@ -54,12 +54,24 @@ class WinFileUtils(FileUtils):
                 fname, customfilter, flags = win32gui.GetOpenFileNameW(
                     Title=title,
                     Filter=filter_str,
-                    FilterIndex=0
+                    FilterIndex=0,
+                    MaxFile=8192  # Increased buffer for multiple files
                 )
                 
                 if fname:
-                    print(f"Selected file: {fname}")
-                    return fname
+                    # Parse multiple files - Windows returns them as a single string with null separators
+                    files = fname.split('\0')
+                    if len(files) == 1:
+                        # Single file selected
+                        print(f"Selected file: {files[0]}")
+                        return files[0]
+                    else:
+                        # Multiple files selected - first entry is directory, rest are filenames
+                        directory = files[0]
+                        filenames = files[1:]
+                        full_paths = [os.path.join(directory, filename) for filename in filenames]
+                        print(f"Selected {len(full_paths)} files: {full_paths}")
+                        return full_paths
                 else:
                     print("No file selected.")
                     return None
@@ -184,14 +196,18 @@ class WinFileUtils(FileUtils):
 class MacFileUtils(FileUtils):
     """macOS-specific file utilities using AppleScript."""
     
-    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Optional[str]:
+    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """macOS native file dialog using AppleScript."""
         try:
-            # Build AppleScript for file selection
+            # Build AppleScript for multiple file selection
             applescript = f'''
             tell application "System Events"
-                set filePath to choose file with prompt "{title}"
-                return POSIX path of filePath
+                set filePaths to choose file with prompt "{title}" with multiple selections allowed
+                set pathList to {{}}
+                repeat with filePath in filePaths
+                    set end of pathList to POSIX path of filePath
+                end repeat
+                return pathList
             end tell
             '''
             
@@ -199,9 +215,19 @@ class MacFileUtils(FileUtils):
                                   capture_output=True, text=True, timeout=30)
             
             if result.returncode == 0:
-                file_path = result.stdout.strip()
-                print(f"Selected file: {file_path}")
-                return file_path
+                output = result.stdout.strip()
+                if output:
+                    # Parse the AppleScript list output
+                    # Format: "file1, file2, file3"
+                    files = [f.strip() for f in output.split(',')]
+                    if len(files) == 1:
+                        print(f"Selected file: {files[0]}")
+                        return files[0]
+                    else:
+                        print(f"Selected {len(files)} files: {files}")
+                        return files
+                else:
+                    return None
             else:
                 print("No file selected.")
                 return None
@@ -315,18 +341,26 @@ class MacFileUtils(FileUtils):
 class LinuxFileUtils(FileUtils):
     """Linux-specific file utilities using native dialogs."""
     
-    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Optional[str]:
+    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Linux native file dialog using kdialog or zenity."""
         from shutil import which
         from Utils import _run_for_stdout
         
-        # Try kdialog first
+        # Try kdialog first (supports multiple files)
         kdialog = which("kdialog")
         if kdialog:
             k_filters = '|'.join((f'{text} (*{" *".join(ext)})' for (text, ext) in filetypes))
-            return _run_for_stdout(kdialog, f"--title={title}", "--getopenfilename", suggest or ".", k_filters)
+            result = _run_for_stdout(kdialog, f"--title={title}", "--getopenfilename", suggest or ".", k_filters, "--multiple")
+            if result:
+                # kdialog returns multiple files separated by newlines
+                files = result.split('\n')
+                if len(files) == 1:
+                    return files[0]
+                else:
+                    return files
+            return None
         
-        # Try zenity
+        # Try zenity (doesn't support multiple files well, so use single file)
         zenity = which("zenity")
         if zenity:
             z_filters = (f'--file-filter={text} ({", ".join(ext)}) | *{" *".join(ext)}' for (text, ext) in filetypes)

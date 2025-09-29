@@ -145,9 +145,6 @@ class BottomBarTextInput(MDTextField):
         else:
             self.dropdown.dismiss()
 
-    def on_text_validate(self):
-        super().on_text_validate()
-
 class BottomAppBar(MDBottomAppBar):
     text_input: BottomBarTextInput
 

@@ -333,17 +333,17 @@ class HintListItem(MWBaseListItem):
     def on_hide(hint_instance, value):
         hint_instance.hint_data.hide = value
     
-    @staticmethod
-    def on_bkmode(instance, value):
-        pass
+    def on_bkmode(self, instance):
+        """Handle BK mode button activation"""
+        self.dispatch('on_bkmode', instance)
     
-    @staticmethod
-    def on_goal(instance, value):
-        pass
+    def on_goal(self, instance):
+        """Handle goal button activation"""
+        self.dispatch('on_goal', instance)
     
-    @staticmethod
-    def on_shop(instance, value):
-        pass
+    def on_shop(self, instance):
+        """Handle shop button activation"""
+        self.dispatch('on_shop', instance)
 
 class HintListDropdown(MDDropdownMenu):
     def __init__(self, *args, status_names: dict[HintStatus, str], status_icons: dict[HintStatus, str], 
