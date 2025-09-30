@@ -1,6 +1,4 @@
 from . import LegoStarWarsTCSWorld, LegoStarWarsTCSWebWorld
-from .constants import GAME_NAME as from BaseUtils import get_archipelago_json()
-game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
 Lego Star Wars: The Complete Saga is a 2007 compilation of the all Lego Star Wars series games. World Registration

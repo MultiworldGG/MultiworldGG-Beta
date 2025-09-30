@@ -2,11 +2,6 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
 
-GAME_NAME: str = "Brotato"
-AUTHOR: str = "RampagingHippy"
-IGDB_ID: int = 199116
-VERSION: str = "0.1.1"
-
 BASE_ID = 0x7A70_0000
 
 

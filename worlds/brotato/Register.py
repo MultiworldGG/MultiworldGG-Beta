@@ -1,6 +1,4 @@
 from . import BrotatoWorld
-from .constants import GAME_NAME as from BaseUtils import get_archipelago_json()
-game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 from . import BrotatoWeb
 
 """
