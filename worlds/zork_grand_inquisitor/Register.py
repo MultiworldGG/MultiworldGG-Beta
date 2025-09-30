@@ -11,8 +11,7 @@ This file contains the metadata and class references for the zork_grand_inquisit
 
 # Required metadata
 WORLD_NAME = "zork_grand_inquisitor"
-GAME_NAME = from BaseUtils import get_archipelago_json()
-game_name
+GAME_NAME = game_name
 IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version

@@ -11,8 +11,7 @@ This file contains the metadata and class references for the saving_princess wor
 
 # Required metadata
 WORLD_NAME = "saving_princess"
-GAME_NAME = from BaseUtils import get_archipelago_json()
-game_name
+GAME_NAME = game_name
 IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version

@@ -10,8 +10,7 @@ This file contains the metadata and class references for the mlss world.
 
 # Required metadata
 WORLD_NAME = "mlss"
-GAME_NAME = from BaseUtils import get_archipelago_json()
-game_name
+GAME_NAME = game_name
 IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version
