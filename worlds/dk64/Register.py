@@ -1,7 +1,5 @@
 from . import DK64World, DK64Web
 from .archipelago.DK64Client import launch
-from BaseUtils import get_archipelago_json()
-game_name, author, version, ap_version = get_archipelago_json()
 
 """
 Donkey Kong 64 is a 3D collectathon platforming game. World Registration
@@ -11,8 +9,11 @@ This file contains the metadata and class references for the dk64 world.
 
 # Required metadata
 WORLD_NAME = "dk64"
+
+from BaseUtils import get_archipelago_json
+game_name, author, minimum_ap_version, version = get_archipelago_json(WORLD_NAME)
+
 GAME_NAME = game_name
-IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version
 

@@ -1,6 +1,4 @@
 from . import ZillionWebWorld, ZillionWorld
-from BaseUtils import get_archipelago_json()
-game_name, author, version, ap_version = get_archipelago_json()
 from .client import launch
 
 """
@@ -11,8 +9,11 @@ This file contains the metadata and class references for the zillion world.
 
 # Required metadata
 WORLD_NAME = "zillion"
+
+from BaseUtils import get_archipelago_json
+game_name, author, minimum_ap_version, version = get_archipelago_json(WORLD_NAME)
+
 GAME_NAME = game_name
-IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version
 
