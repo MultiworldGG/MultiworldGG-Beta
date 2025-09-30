@@ -6,7 +6,7 @@
 from BaseClasses import Item, MultiWorld, Tutorial
 from Fill import fill_restrictive
 from .Items import item_table, item_groups, MeritousItem
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Locations import location_table, MeritousLocation
 from .Options import MeritousOptions, cost_scales
 from .Regions import create_regions

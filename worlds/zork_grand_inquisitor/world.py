@@ -9,7 +9,7 @@ from entrance_rando import disconnect_entrance_for_randomization, randomize_entr
 from worlds.AutoWorld import WebWorld, World
 
 from .data.entrance_data import Entrance, EntranceRuleData, entrance_rule_data
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 from .data.entrance_randomizer_data import (
     entrances_to_game_location_teleports,

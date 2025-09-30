@@ -1,6 +1,6 @@
 from BaseClasses import Tutorial
 from ..AutoWorld import World, WebWorld
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from worlds.LauncherComponents import Component, components, launch_subprocess, Type
 from functools import partial
 from typing import cast, ClassVar

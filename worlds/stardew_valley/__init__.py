@@ -38,7 +38,7 @@ from .strings.ap_names.ap_option_names import StartWithoutOptionName
 from .strings.ap_names.ap_weapon_names import APWeapon
 from .strings.ap_names.event_names import Event
 from .strings.goal_names import Goal as GoalName
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 logger = logging.getLogger(__name__)
 

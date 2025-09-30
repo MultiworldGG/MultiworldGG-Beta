@@ -5,7 +5,7 @@ from Fill import fill_restrictive
 from worlds.AutoWorld import World, WebWorld
 from .items import item_table, item_names, copy_ability_table, filler_item_weights, K64Item, copy_ability_access_table,\
     power_combo_table, friend_table
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .locations import location_table, K64Location
 from .names import LocationName, ItemName
 from .regions import create_levels, default_levels

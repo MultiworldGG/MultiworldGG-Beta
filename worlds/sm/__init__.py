@@ -16,7 +16,7 @@ from worlds.generic.Rules import add_rule, set_rule
 logger = logging.getLogger("Super Metroid")
 
 from .Options import SMOptions
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Client import SMSNIClient
 from .Rom import SM_ROM_MAX_PLAYERID, SM_ROM_PLAYERDATA_COUNT, SMProcedurePatch, get_sm_symbols
 import Utils

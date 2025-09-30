@@ -4,6 +4,7 @@ import typing
 import logging
 import io
 import warnings
+import json
 
 __all__ = ("Version", 
            "tuplize_version", 
@@ -86,7 +87,6 @@ is_windows = sys.platform in ("win32", "cygwin", "msys")
 
 def is_frozen() -> bool:
     return typing.cast(bool, getattr(sys, 'frozen', False))
-
 
 def local_path(*path: str) -> str:
     """
@@ -322,3 +322,8 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
         f" running Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
         f"{' (frozen)' if is_frozen() else ''}"
     )
+
+def get_archipelago_json(world: str) -> typing.Tuple[str, str, str, str]:
+    with open(local_path("lib", "worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return data["game"], data["author"], data["version"], data["ap_version"]

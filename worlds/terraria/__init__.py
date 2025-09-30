@@ -27,7 +27,7 @@ from .Checks import (
     armor_minions,
     accessory_minions,
 )
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Options import TerrariaOptions, Goal
 
 

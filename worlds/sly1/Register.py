@@ -1,6 +1,7 @@
 from . import Sly1World, Sly1Web
 from .Sly1Client import launch
-from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
+from BaseUtils import get_archipelago_json()
+game_name, author, version, ap_version = get_archipelago_json()
 
 """
 Sly Cooper and the Thievius Raccoonus World Registration
@@ -10,7 +11,8 @@ This file contains the metadata and class references for the sly1 world.
 
 # Required metadata
 WORLD_NAME = "sly1"
-GAME_NAME = game_name
+GAME_NAME = from BaseUtils import get_archipelago_json()
+game_name
 IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version

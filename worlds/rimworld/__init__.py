@@ -14,7 +14,7 @@ from ..generic.Rules import set_rule, add_rule
 from worlds.AutoWorld import World, WebWorld
 from BaseClasses import LocationProgressType, Region, Location, Entrance, Item, ItemClassification, Tutorial
 from Options import OptionError
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 logger = logging.getLogger("Rimworld")
 

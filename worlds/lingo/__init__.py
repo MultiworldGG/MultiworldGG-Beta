@@ -12,7 +12,7 @@ from .locations import ALL_LOCATION_TABLE, LOCATIONS_BY_GROUP
 from .options import LingoOptions, lingo_option_groups, SunwarpAccess, VictoryCondition
 from .player_logic import LingoPlayerLogic
 from .regions import create_regions
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 class LingoWebWorld(WebWorld):
     option_groups = lingo_option_groups

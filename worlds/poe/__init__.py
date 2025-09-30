@@ -10,7 +10,7 @@ import base64
 
 from worlds.poe.data import ItemTable
 
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Options import PathOfExileOptions
 from . import Items
 from . import Locations

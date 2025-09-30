@@ -6,7 +6,7 @@ from .Locations import locations
 from .Items import items, filler_items, base_id
 from .Rules import create_rules
 from .Options import CatQuestOptions
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 class CatQuestWeb(WebWorld):
     theme = "grassFlowers"

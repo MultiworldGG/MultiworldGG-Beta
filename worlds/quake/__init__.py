@@ -2,7 +2,7 @@ import json
 import math
 from random import Random
 from .levels import SL, HIPSL, ROGUESL, MG1SL
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from typing import Any, Dict, List, Optional, Set, Tuple
 from BaseClasses import CollectionState, Tutorial
 

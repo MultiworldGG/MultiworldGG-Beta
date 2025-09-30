@@ -11,7 +11,7 @@ from . import creatures
 from . import options
 from .items import item_table, group_items
 from .rules import set_rules
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 
 class SubnauticaWeb(WebWorld):

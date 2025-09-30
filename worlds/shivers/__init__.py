@@ -4,7 +4,7 @@ from BaseClasses import Item, ItemClassification, Location, Region, Tutorial
 from Fill import fill_restrictive
 from worlds.AutoWorld import WebWorld, World
 from . import Constants, Rules
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Items import ItemType, SHIVERS_ITEM_ID_OFFSET, ShiversItem, item_table
 from .Options import ShiversOptions, shivers_option_groups
 from .Rules import set_rules

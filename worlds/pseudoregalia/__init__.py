@@ -1,6 +1,6 @@
 from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Region, CollectionState, Tutorial
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .items import PseudoregaliaItem, item_table, item_groups
 from .locations import PseudoregaliaLocation, location_table, zones
 from .regions import region_table

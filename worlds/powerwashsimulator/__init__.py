@@ -6,7 +6,7 @@ from BaseClasses import Location, Region, Item, ItemClassification, LocationProg
 from .Items import raw_items, PowerwashSimulatorItem, item_table, create_items, unlock_items, filler_items
 from .Locations import location_dict, raw_location_dict, locations_percentages, land_vehicles, objectsanity_dict
 from .Options import PowerwashSimulatorOptions, PowerwashSimulatorSettings, check_options Sanities, Percentsanity
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 uuid_offset = 0x3AF4F1BC
 

@@ -5,7 +5,7 @@ from Options import OptionGroup
 from BaseClasses import Tutorial
 
 from . import options, regions, locations, items, data, rules
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .options import StarFox64Options, StarFox64OptionsList
 from .regions import StarFox64Region
 from .locations import StarFox64Location

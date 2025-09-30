@@ -6,7 +6,7 @@ from BaseClasses import CollectionState, Entrance, Item, ItemClassification, Mul
 from worlds.AutoWorld import WebWorld, World
 
 from .Items import YachtDiceItem, item_groups, item_table, all_categories, find_category_index, get_normal_categories, get_alt_categories
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Locations import YachtDiceLocation, all_locations, ini_locations, LocData, starting_index
 from .Options import (
     AddExtraPoints,

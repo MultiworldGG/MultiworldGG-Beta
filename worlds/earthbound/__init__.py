@@ -10,7 +10,7 @@ from worlds.AutoWorld import World, WebWorld
 import itertools
 import settings
 from .Items import get_item_names_per_category, item_table
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Locations import get_locations
 from .Regions import init_areas, connect_area_exits
 from .Options import EBOptions, eb_option_groups

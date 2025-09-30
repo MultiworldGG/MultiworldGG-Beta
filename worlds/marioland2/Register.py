@@ -1,5 +1,6 @@
 from . import MarioLand2World, MarioLand2WebWorld
-from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
+from BaseUtils import get_archipelago_json()
+game_name, author, version, ap_version = get_archipelago_json()
 
 """
 Super Mario Land 2 World Registration
@@ -9,7 +10,8 @@ This file contains the metadata and class references for the marioland2 world.
 
 # Required metadata
 WORLD_NAME = "marioland2"
-GAME_NAME = game_name
+GAME_NAME = from BaseUtils import get_archipelago_json()
+game_name
 IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version

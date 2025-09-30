@@ -17,7 +17,7 @@ from .regions import MkddRegionData
 from .rules import MkddRules
 from . import game_data, version
 
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 class MkddWebWorld(WebWorld):
     theme = "ocean"

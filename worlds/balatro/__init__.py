@@ -15,7 +15,7 @@ from .Options import BalatroOptions, Traps, IncludeDecksMode, StakeUnlockMode, \
 from Options import OptionError
 from .Locations import BalatroLocation, balatro_location_id_to_name, balatro_location_name_to_id, \
     balatro_location_id_to_stake, shop_id_offset, balatro_location_id_to_ante, max_shop_items, consumable_id_offset
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 
 class BalatroWebWorld(WebWorld):

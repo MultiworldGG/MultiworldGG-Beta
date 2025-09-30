@@ -16,7 +16,7 @@ from .data import (
 )
 from .options import CelesteGameOptions
 from .progression import GameLogic
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 
 class CelesteWebWorld(WebWorld):

@@ -13,7 +13,7 @@ from Fill import remaining_fill
 from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import add_rule, add_item_rule
 from . import events, items, locations, csvdb
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from . import rules
 from .Client import FF4FEClient
 from .itempool import create_itempool

@@ -7,7 +7,7 @@ from Options import OptionError
 from worlds.AutoWorld import WebWorld, World
 
 from .names import *
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .options import *
 from .items import *
 from .locations import *

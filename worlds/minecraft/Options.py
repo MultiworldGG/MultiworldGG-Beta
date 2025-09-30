@@ -1,6 +1,6 @@
 from Options import Choice, Toggle, DefaultOnToggle, Range, OptionList, DeathLink, PlandoConnections, \
     PerGameCommonOptions
-from .Constants import region_info
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from dataclasses import dataclass
 
 

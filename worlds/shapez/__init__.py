@@ -17,7 +17,7 @@ from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Item, Tutorial, LocationProgressType, MultiWorld
 from .regions import create_shapez_regions, has_x_belt_multiplier
 from ..generic.Rules import add_rule
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 
 class ShapezWeb(WebWorld):

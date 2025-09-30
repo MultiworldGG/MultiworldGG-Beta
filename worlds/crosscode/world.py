@@ -14,7 +14,7 @@ from worlds.AutoWorld import WebWorld, World
 from worlds.generic.Rules import add_rule
 
 from .common import NAME
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .logic import condition_satisfied
 from .world_data import static_world_data
 

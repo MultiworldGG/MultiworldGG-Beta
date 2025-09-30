@@ -1,7 +1,7 @@
 import string
 
 from .items import RiskOfRainItem, item_table, item_pool_weights, offset, filler_table, environment_offset
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .locations import RiskOfRainLocation, item_pickups, get_locations
 from .rules import set_rules
 from .ror2environments import environment_vanilla_table, environment_vanilla_orderedstages_table, \

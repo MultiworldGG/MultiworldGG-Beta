@@ -1,5 +1,6 @@
 from . import PaperMarioWorld
-from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
+from BaseUtils import get_archipelago_json()
+game_name, author, version, ap_version = get_archipelago_json()
 from . import PaperMarioWeb
 
 """
@@ -10,7 +11,8 @@ This file contains the metadata and class references for the papermario world.
 
 # Required metadata
 WORLD_NAME = "papermario"
-GAME_NAME = game_name
+GAME_NAME = from BaseUtils import get_archipelago_json()
+game_name
 IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version

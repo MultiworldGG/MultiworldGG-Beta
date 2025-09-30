@@ -8,7 +8,7 @@ import settings
 from BaseClasses import Tutorial, Item, ItemClassification, Region, Entrance
 from worlds.AutoWorld import World, WebWorld
 from ..LauncherComponents import Component, components, Type, icon_paths
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 # TS4 specific imports
 from .Locations import location_table, Sims4Location, skill_locations_table

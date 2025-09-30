@@ -6,7 +6,7 @@ from BaseClasses import Item, MultiWorld, Tutorial
 from worlds.AutoWorld import World, WebWorld
 
 from . import Items, Locations, Regions, Rom, Rules
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Client import MarioKart64Client  # Import to register client with BizHawkClient
 from .Locations import MK64Location
 from .Options import MK64Options, GameMode, Opt, ShuffleDriftAbilities

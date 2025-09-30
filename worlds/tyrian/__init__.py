@@ -19,7 +19,7 @@ from Options import OptionError
 from worlds.AutoWorld import WebWorld, World
 
 from .items import Episode, LocalItem, LocalItemData
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .locations import LevelLocationData, LevelRegion
 from .logic import DamageTables, set_level_rules
 from .options import TyrianOptions, tyrian_option_groups

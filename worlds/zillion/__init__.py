@@ -12,7 +12,7 @@ from typing_extensions import override
 from BaseClasses import LocationProgressType, MultiWorld, Item, CollectionState, Entrance, Tutorial
 
 from .gen_data import GenData
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .logic import ZillionLogicCache
 from .region import ZillionLocation, ZillionRegion
 from .options import ZillionOptions, validate, z_option_groups

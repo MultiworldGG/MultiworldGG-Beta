@@ -6,7 +6,7 @@ from .Locations import location_table, event_table
 from .Regions import region_exits
 from .Rules import rules
 from .Options import BombRushCyberfunkOptions, StartStyle
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 class BombRushCyberfunkWeb(WebWorld):
     theme = "ocean"

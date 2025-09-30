@@ -1,5 +1,6 @@
 from . import MM2World, MM2WebWorld
-from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
+from BaseUtils import get_archipelago_json()
+game_name, author, version, ap_version = get_archipelago_json()
 
 """
 Mega Man 2 World Registration
@@ -9,7 +10,8 @@ This file contains the metadata and class references for the mm2 world.
 
 # Required metadata
 WORLD_NAME = "mm2"
-GAME_NAME = game_name
+GAME_NAME = from BaseUtils import get_archipelago_json()
+game_name
 IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version

@@ -1,5 +1,5 @@
 from .Regions import link_aus_areas, aus_regions
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from BaseClasses import Region, Entrance, Tutorial, Item
 from .Options import AUSOptions
 from .Items import item_table, AUSItem, item_pool

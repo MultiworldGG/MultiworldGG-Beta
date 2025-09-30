@@ -2,7 +2,7 @@ import math
 from typing import Dict, Any, Union, ClassVar, Final
 from .Locations import locations, columns
 from .Items import PPDSItem, item_table, create_items
-from .Constants import GAME_NAME, IGDB_ID, AUTHOR, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Location, Region, LocationProgressType, Tutorial
 from settings import Group, Bool

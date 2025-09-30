@@ -7,7 +7,7 @@ from worlds.AutoWorld import World, WebWorld
 from .items import item_table, item_names, copy_ability_table, animal_friend_table, filler_item_weights, KDL3Item, \
     trap_item_table, copy_ability_access_table, star_item_weights, total_filler_weights, animal_friend_spawn_table,\
     lookup_item_to_id
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .locations import location_table, KDL3Location, level_consumables, consumable_locations, star_locations
 from .names.animal_friend_spawns import animal_friend_spawns, problematic_sets
 from .names.enemy_abilities import vanilla_enemies, enemy_mapping, enemy_restrictive

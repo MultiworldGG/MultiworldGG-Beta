@@ -1,4 +1,7 @@
-GAME_NAME: str = "Ratchet & Clank 2"
-AUTHOR: str = "Evilwb"
-IGDB_ID: int = 1770
-VERSION: str = "1.0.1"
+{
+    "game": "Ratchet & Clank 2",
+    "author": "Evilwb",
+    "igdb_id": 1770,
+    "version": "1.0.1",
+    "ap_version": "0.6.4"
+}

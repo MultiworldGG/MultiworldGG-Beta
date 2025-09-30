@@ -25,7 +25,7 @@ from .locations import MonsterSanctuaryLocationCategory as LocationCategory, Mon
 from .options import MonsterSanctuaryOptions
 from .regions import RegionData, MonsterSanctuaryRegion
 
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 
 class MonsterSanctuaryWebWorld(WebWorld):

@@ -1,7 +1,7 @@
 import string
 
 from .items import LethalCompanyItem, item_table, generate_items, calculate_credits, get_default_item_map
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .locations import LethalCompanyLocation, generate_locations, locations, get_default_location_map
 from .rules import set_rules
 from BaseClasses import Item, ItemClassification, Tutorial, MultiWorld, Region

@@ -2,7 +2,7 @@ from typing import Dict
 
 from BaseClasses import Tutorial
 from ..AutoWorld import WebWorld, World
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 class AP_SudokuWebWorld(WebWorld):
     options_page = False

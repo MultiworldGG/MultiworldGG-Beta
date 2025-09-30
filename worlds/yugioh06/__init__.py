@@ -9,7 +9,7 @@ import Utils
 from worlds.AutoWorld import WebWorld, World
 
 from .boosterpacks import booster_contents as booster_contents
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .boosterpacks import get_booster_locations
 from .items import (
     Banlist_Items,

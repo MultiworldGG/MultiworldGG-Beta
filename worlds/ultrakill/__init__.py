@@ -2,7 +2,7 @@ from typing import Dict, List, Any, Union
 from BaseClasses import Region, Location, Item, Tutorial, ItemClassification
 from Options import OptionError
 from worlds.AutoWorld import World, WebWorld
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Items import ItemType, base_id, item_list, fire2_weapons, item_groups
 from .Locations import LocationType, location_list, start_weapon_locations, location_groups
 from .Regions import Regions, SecretRegion

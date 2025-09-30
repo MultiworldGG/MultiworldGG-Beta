@@ -7,7 +7,7 @@ from Fill import fast_fill
 from worlds.LauncherComponents import Component, components, Type, icon_paths, launch as launch_component
 from worlds.AutoWorld import World, WebWorld
 from .Items import *
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Locations import *
 from .Names import ItemName, LocationName, RegionName
 from .OpenKH import patch_kh2

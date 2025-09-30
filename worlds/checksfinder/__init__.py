@@ -1,6 +1,6 @@
 from BaseClasses import Region, Entrance, Tutorial, ItemClassification
 from .Items import ChecksFinderItem, item_table
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Locations import ChecksFinderLocation, advancement_table
 from Options import PerGameCommonOptions
 from .Rules import set_rules, set_completion_rules

@@ -9,7 +9,7 @@ from Options import Accessibility, OptionError
 from worlds.AutoWorld import WebWorld, World
 from typing import Any, Set, List, Dict, Optional, Tuple, ClassVar, TextIO, Union
 from .Data import *
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .data.Items import *
 from .Logic import create_connections, apply_self_locking_rules
 from .Options import *

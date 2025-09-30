@@ -1,6 +1,6 @@
 from BaseClasses import Item, Region, Tutorial, ItemClassification
 from .Items import *
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Regions import *
 from Options import PerGameCommonOptions
 from .Rules import *

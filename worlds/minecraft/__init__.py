@@ -14,7 +14,7 @@ from .Structures import shuffle_structures
 from .ItemPool import build_item_pool, get_junk_item_names
 from .Rules import set_rules
 from worlds.LauncherComponents import launch as launch_componenent, components, Component, Type, SuffixIdentifier
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 client_version = VERSION
 

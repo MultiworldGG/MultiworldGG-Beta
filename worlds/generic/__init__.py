@@ -7,7 +7,7 @@ from BaseClasses import Item, Tutorial, ItemClassification
 from ..AutoWorld import InvalidItemError, World, WebWorld
 from NetUtils import SlotType
 
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 __all__ = ['WORLD_CLASS', 'WEB_WORLD_CLASS']
 

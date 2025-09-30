@@ -2,7 +2,7 @@ import typing
 import os
 import json
 from .Items import item_data_table, action_item_data_table, cannon_item_data_table, item_table, SM64Item
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Locations import location_table, SM64Location
 from .Options import sm64_options_groups, SM64Options
 from .Rules import set_rules

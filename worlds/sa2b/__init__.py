@@ -7,7 +7,7 @@ from worlds.AutoWorld import WebWorld, World
 
 from .AestheticData import chao_name_conversion, sample_chao_names, totally_real_item_names, \
                            all_exits, all_destinations, multi_rooms, single_rooms, room_to_exits_map, exit_to_room_map, valid_kindergarten_exits
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .GateBosses import get_gate_bosses, get_boss_rush_bosses, get_boss_name
 from .Items import SA2BItem, ItemData, item_table, upgrades_table, emeralds_table, junk_table, minigame_trap_table, item_groups, \
                    eggs_table, fruits_table, seeds_table, hats_table, animals_table, chaos_drives_table, event_table

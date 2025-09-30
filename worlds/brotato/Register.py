@@ -1,5 +1,6 @@
 from . import BrotatoWorld
-from .constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
+from .constants import GAME_NAME as from BaseUtils import get_archipelago_json()
+game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 from . import BrotatoWeb
 
 """
@@ -10,7 +11,8 @@ This file contains the metadata and class references for the brotato world.
 
 # Required metadata
 WORLD_NAME = "brotato"
-GAME_NAME = game_name
+GAME_NAME = from BaseUtils import get_archipelago_json()
+game_name
 IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version

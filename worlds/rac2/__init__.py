@@ -8,7 +8,7 @@ from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Item, Tutorial, ItemClassification
 
 from . import ItemPool
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .data import Items, Locations, Planets
 from .data.Items import EquipmentData
 from .data.Planets import PlanetData

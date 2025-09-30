@@ -10,7 +10,7 @@ from worlds.generic.Rules import set_rule
 from .Options import BlasphemousOptions, blas_option_groups
 from .Vanilla import unrandomized_dict, junk_locations, thorn_set, skill_dict
 from .region_data import regions, locations
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 class BlasphemousWeb(WebWorld):
     theme = "stone"

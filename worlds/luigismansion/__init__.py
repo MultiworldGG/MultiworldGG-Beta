@@ -26,7 +26,7 @@ from .Regions import *
 from .Rules import *
 from .Rules import set_element_rules
 from .iso_helper.lm_rom import LMPlayerContainer
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 if TYPE_CHECKING:
     from NetUtils import MultiData
 

@@ -1,7 +1,7 @@
 import os
 
 from .options import TrackmaniaOptions, create_option_groups
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .items import build_items, trackmania_item_groups, create_itempool, create_item, get_filler_item_name
 from .locations import build_locations
 from .regions import create_regions

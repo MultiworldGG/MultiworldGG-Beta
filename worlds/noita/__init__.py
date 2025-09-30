@@ -3,7 +3,7 @@ from worlds.AutoWorld import WebWorld, World
 from typing import Dict, Any
 from . import events, items, locations, regions, rules
 from .options import NoitaOptions
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 
 class NoitaWeb(WebWorld):

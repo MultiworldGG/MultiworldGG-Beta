@@ -2,7 +2,7 @@ from BaseClasses import Item, MultiWorld, Region, Location, Entrance, Tutorial, 
 from worlds.AutoWorld import World, WebWorld
 from datetime import datetime
 from .Items import item_table
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Rules import set_rules
 
 

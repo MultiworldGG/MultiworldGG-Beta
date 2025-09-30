@@ -7,7 +7,7 @@ from worlds.huniepop.Items import HPItem, girl_unlock_table, item_table, panties
 from worlds.huniepop.Locations import HPLocation, location_table, locationgen_to_name
 from worlds.huniepop.Options import HPOptions
 from worlds.huniepop.Rules import set_rules
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 class HuniePopWeb(WebWorld):
     rating: str = "nsfw"

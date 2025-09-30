@@ -9,7 +9,7 @@ from worlds.AutoWorld import WebWorld, World
 from .Client import OracleOfSeasonsClient  # Unused, but required to register with BizHawkClient
 from .Hints import create_region_hints, create_item_hints
 
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Logic import create_connections, apply_self_locking_rules
 from .Options import *
 from .PatchWriter import oos_create_ap_procedure_patch

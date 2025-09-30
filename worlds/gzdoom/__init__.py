@@ -16,7 +16,7 @@ import worlds.LauncherComponents as LauncherComponents
 
 from . import icons
 from .Options import GZDoomOptions
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .model import DoomItem, DoomLocation, DoomWad, init_wads, get_wad
 from .model import init_wads
 from .model.DoomItem import DoomItem

@@ -17,7 +17,7 @@ from .Options import ALBWOptions, CrackShuffle, InitialCrackState, Keysy, LogicM
 from .Patch import PatchInfo, PatchItemInfo, ALBWProcedurePatch
 from pathlib import Path
 import sys
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 # Path to the lib directory
 lib_path = Path(__file__).parent / "lib"

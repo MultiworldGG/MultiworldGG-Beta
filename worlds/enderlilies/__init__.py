@@ -6,7 +6,7 @@ from Options import Option
 from Fill import swap_location_item
 
 from .Items import ItemData, items, ItemGroup
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Locations import LocationData, locations, LocationGroup
 from .Rules import get_rules
 from .Options import *

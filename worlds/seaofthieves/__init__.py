@@ -6,7 +6,7 @@ import json
 import typing
 
 from .Items.Items import Items, SOTItem
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .Items.ItemCollection import ItemCollection
 from .Items.ItemDetail import ItemDetail
 from .Options import SOTOptions

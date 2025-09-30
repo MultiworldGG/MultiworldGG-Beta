@@ -6,7 +6,7 @@ from BaseClasses import Entrance, CollectionState, Item, Location, MultiWorld, R
 from worlds.AutoWorld import WebWorld, World
 from . import Items, Locations, Maps, Regions, Rules
 from .Options import HereticOptions
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 logger = logging.getLogger("Heretic")
 

@@ -14,7 +14,7 @@ from Options import Toggle, OptionError
 from worlds.AutoWorld import WebWorld, World
 from worlds.Files import APPlayerContainer, AutoPatchRegister
 from worlds.generic.Rules import add_item_rule
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 from worlds.LauncherComponents import (
     Component,

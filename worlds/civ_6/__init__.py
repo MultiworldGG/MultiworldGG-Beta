@@ -4,7 +4,7 @@ import os
 from typing import Any, Dict, List, Set
 
 from .ProgressiveDistricts import get_flat_progressive_districts
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from worlds.generic.Rules import forbid_item
 
 
