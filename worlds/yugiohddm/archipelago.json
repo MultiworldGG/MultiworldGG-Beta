@@ -2,6 +2,6 @@
     "game": "Yu-Gi-Oh! Dungeon Dice Monsters",
     "author": "Jumza",
     "igdb_id": 49211,
-    "version": "1.0.1",
-    "ap_version": "0.6.4"
+    "minimum_ap_version": "0.6.4",
+    "world_version": "1.0.1"
 }

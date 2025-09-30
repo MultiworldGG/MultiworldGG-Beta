@@ -2,4 +2,5 @@
     "game": "The Legend of Zelda",
     "author": "Rosalie-A & t3hf1gm3nt",
     "igdb_id": 1022,
-    "version": "1.0.1" 
+    "minimum_ap_version": "0.6.4",
+    "world_version": "1.0.1" 

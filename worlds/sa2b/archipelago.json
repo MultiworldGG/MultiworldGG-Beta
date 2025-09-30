@@ -2,6 +2,6 @@
     "game": "Sonic Adventure 2 Battle",
     "author": "PoryGone & RaspberrySpace",
     "igdb_id": 192194,
-    "version": "1.0.1",
-    "ap_version": "0.6.4"
+    "minimum_ap_version": "0.6.4",
+    "world_version": "1.0.1"
 }

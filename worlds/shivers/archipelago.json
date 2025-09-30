@@ -7,8 +7,8 @@ from datetime import datetime
     "game": "Shivers",
     "author": "GodlFire & korydondzila",
     "igdb_id": 12477,
-    "version": "1.0.1",
-    "ap_version": "0.6.4"
+    "minimum_ap_version": "0.6.4",
+    "world_version": "1.0.1"
 }
 def load_data_file(*args) -> dict:
     fname = "/".join(["data", *args])

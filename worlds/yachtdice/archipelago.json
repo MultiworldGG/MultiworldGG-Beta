@@ -2,6 +2,6 @@
     "game": "Yacht Dice",
     "author": "Spineraks",
     "igdb_id": 0,
-    "version": "2.2.4",
-    "ap_version": "0.6.4"
+    "minimum_ap_version": "0.6.4",
+    "world_version": "2.2.4"
 }

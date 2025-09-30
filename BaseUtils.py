@@ -326,4 +326,4 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
 def get_archipelago_json(world: str) -> typing.Tuple[str, str, str, str]:
     with open(local_path("lib", "worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
         data = json.load(f)
-    return data["game"], data["author"], data["version"], data["ap_version"]
+    return data["game"], data["author"], data["minimum_ap_version"], data["world_version"]

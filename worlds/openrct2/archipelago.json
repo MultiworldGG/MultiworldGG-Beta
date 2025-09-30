@@ -6,8 +6,8 @@ import pkgutil
     "game": "OpenRCT2",
     "author": "Crazycolbster",
     "igdb_id": 80720,
-    "version": "v0.1.20-beta",
-    "ap_version": "0.6.4"
+    "minimum_ap_version": "0.6.4",
+    "world_version": "v0.1.20-beta"
 }
 # Sent to the game to verify that the plugin version is compatible
 apworld_version = VERSION

@@ -2,6 +2,6 @@
     "game": "Kirby's Dream Land 3",
     "author": "Silvris",
     "igdb_id": 3720,
-    "version": "1.0.1",
-    "ap_version": "0.6.4"
+    "minimum_ap_version": "0.6.4",
+    "world_version": "1.0.1"
 }

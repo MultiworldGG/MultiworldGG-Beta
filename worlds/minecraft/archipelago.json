@@ -7,8 +7,8 @@ import pkgutil
     "game": "Minecraft",
     "author": "KonoTyran & espeon",
     "igdb_id": 121,
-    "version": "10.1",
-    "ap_version": "0.6.4"
+    "minimum_ap_version": "0.6.4",
+    "world_version": "10.1"
 }
 def load_data_file(*args) -> dict:
     fname = "/".join(["data", *args])

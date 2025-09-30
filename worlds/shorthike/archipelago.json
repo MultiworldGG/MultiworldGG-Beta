@@ -2,6 +2,6 @@
     "game": "A Short Hike",
     "author": "chandler05 & BrandenEK",
     "igdb_id": 116753,
-    "version": "1.0.1",
-    "ap_version": "0.6.4"
+    "minimum_ap_version": "0.6.4",
+    "world_version": "1.0.1"
 }

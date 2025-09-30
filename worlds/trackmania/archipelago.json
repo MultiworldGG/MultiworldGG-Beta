@@ -2,6 +2,6 @@
     "game": "Trackmania",
     "author": "SerialBoxes",
     "igdb_id": 133807,
-    "version": "1.0.1",
-    "ap_version": "0.6.4"
+    "minimum_ap_version": "0.6.4",
+    "world_version": "1.0.1"
 }

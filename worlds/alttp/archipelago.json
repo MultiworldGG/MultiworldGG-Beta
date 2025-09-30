@@ -2,6 +2,6 @@
     "game": "A Link to the Past",
     "author": "Berserker66",
     "igdb_id": 1026,
-    "version": "1.0.1",
-    "ap_version": "0.6.4"
+    "minimum_ap_version": "0.6.4",
+    "world_version": "1.0.1"
 }

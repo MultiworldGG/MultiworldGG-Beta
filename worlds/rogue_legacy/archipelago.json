@@ -2,6 +2,6 @@
     "game": "Rogue Legacy",
     "author": "Phar",
     "igdb_id": 3221,
-    "version": "0.3.6",
-    "ap_version": "0.6.4"
+    "minimum_ap_version": "0.6.4",
+    "world_version": "0.3.6"
 }

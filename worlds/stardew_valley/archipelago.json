@@ -2,4 +2,5 @@
     "game": "Stardew Valley",
     "author": "Kaito Kid & Jouramie",
     "igdb_id": 17000,
-    "version": "1.0.1" 
+    "minimum_ap_version": "0.6.4",
+    "world_version": "1.0.1" 

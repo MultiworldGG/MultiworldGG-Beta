@@ -2,8 +2,8 @@
     "game": "Majora's Mask Recompiled",
     "author": "LittleCube",
     "igdb_id": 1030,
-    "version": "1.0.1",
-    "ap_version": "0.6.4"
+    "minimum_ap_version": "0.6.4",
+    "world_version": "1.0.1"
 }
 SHOP_ID_WITCH_POTION_3 = 0x00 # SI_POTION_RED_1
 SHOP_ID_WITCH_POTION_2 = 0x01 # SI_POTION_GREEN_1

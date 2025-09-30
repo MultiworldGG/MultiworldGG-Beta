@@ -2,6 +2,6 @@
     "game": "The Wind Waker",
     "author": "tanjo3",
     "igdb_id": 1033,
-    "version": "3.0.1",
-    "ap_version": "0.6.4"
+    "minimum_ap_version": "0.6.4",
+    "world_version": "3.0.1"
 }
