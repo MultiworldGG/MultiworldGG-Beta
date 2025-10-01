@@ -1,6 +1,6 @@
 from BaseClasses import Tutorial
 from ..AutoWorld import World, WebWorld
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from worlds.LauncherComponents import Component, components, launch_subprocess, Type
 from functools import partial
 from typing import cast, ClassVar
@@ -38,9 +38,12 @@ class XenobladeXWorld(World):
      Xenoblade Chronicles X another 100+ hour game. Sounds like fun?
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("xenobladex")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     topology_present = True
     web = XenobladeXWeb()
 

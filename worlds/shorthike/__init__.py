@@ -3,7 +3,7 @@ from BaseClasses import ItemClassification, Region, Location, Item, Tutorial
 from Options import PerGameCommonOptions
 from worlds.AutoWorld import World, WebWorld
 from .Items import item_table, group_table, base_id
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import location_table
 from .Rules import create_rules, get_min_feathers
 from .Options import ShortHikeOptions, shorthike_option_groups
@@ -26,6 +26,9 @@ class ShortHikeWorld(World):
     to make your way up to the summit. Along the way you'll meet other hikers, discover hidden treasures,
     and take in the beautiful world around you.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("shorthike")
 
     game = GAME_NAME
     author: str = AUTHOR

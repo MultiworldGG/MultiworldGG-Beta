@@ -1,5 +1,5 @@
 from .PrimeUtils import setup_lib_path
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 setup_lib_path()  # NOTE: This MUST be called before importing any other metroidprime modules (other than PrimeUtils)
 # Setup local dependencies if running in an apworldimport typing
@@ -122,8 +122,11 @@ class MetroidPrimeWorld(World):
     of the Space Pirates.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("metroidprime")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     required_client_version = (0, 5, 0)
     options_dataclass = MetroidPrimeOptions

@@ -13,7 +13,7 @@ from Fill import remaining_fill
 from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import add_rule, add_item_rule
 from . import events, items, locations, csvdb
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from . import rules
 from .Client import FF4FEClient
 from .itempool import create_itempool
@@ -59,7 +59,7 @@ class FF4FEWorld(World):
     find the Crystal, and defeat Zeromus on the moon. Adapted from the open source release of FE 4.6.0."""
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = FF4FEOptions
     options: FF4FEOptions
     settings: typing.ClassVar[FF4FESettings]

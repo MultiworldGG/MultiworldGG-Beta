@@ -20,7 +20,7 @@ from .data.Constants import *
 from .data.Items import ITEMS_DATA
 from .data.Regions import REGIONS
 from .data.LogicPredicates import *
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .data.Entrances import EntranceGroups, OPPOSITE_ENTRANCE_GROUPS, ENTRANCES, entrance_id_to_region
 
 from .Client import PhantomHourglassClient  # Unused, but required to register with BizHawkClient
@@ -108,6 +108,10 @@ class PhantomHourglassWorld(World):
     """
     The Legend of Zelda: Phantom Hourglass is the sea bound handheld sequel to the Wind Waker.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tloz_ph")
+
     game = GAME_NAME
     author: str = AUTHOR
     igdb_id: int = IGDB_ID

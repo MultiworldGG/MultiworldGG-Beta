@@ -9,7 +9,7 @@ from BaseClasses import ItemClassification, Tutorial
 from worlds.AutoWorld import WebWorld, World
 from worlds.LauncherComponents import Component, components, launch_subprocess
 from .items import ALL_ITEMS_TABLE, REGULAR_PROGRESSION_ITEMS, ALL_PROGRESSION_ITEMS, TICKET_ITEMS, SmsItem
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .locations import ALL_LOCATIONS_TABLE
 from .options import SmsOptions
 from .regions import create_regions
@@ -33,7 +33,7 @@ class SmsWorld(World):
     as a jetpack), Mario must clean the graffiti off of Delfino Isle and return light to the sky.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
 
     data_version = 1

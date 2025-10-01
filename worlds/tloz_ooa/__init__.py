@@ -9,7 +9,7 @@ from Options import Accessibility, OptionError
 from worlds.AutoWorld import WebWorld, World
 from typing import Any, Set, List, Dict, Optional, Tuple, ClassVar, TextIO, Union
 from .Data import *
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .data.Items import *
 from .Logic import create_connections, apply_self_locking_rules
 from .Options import *
@@ -91,9 +91,13 @@ class OracleOfAgesWorld(World):
     Nayru, the oracle of ages, has been possessed by Veran, and she is now making a mess in Labrynna
     Gather the Essences of Times, exorcice Nayru and defeat Veran to save the timeline of Labrynna
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tloz_ooa")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = OracleOfAgesOptions
     options: OracleOfAgesOptions
     required_client_version = (0, 5, 1)

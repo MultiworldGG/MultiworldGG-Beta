@@ -5,7 +5,7 @@ import logging
 from typing import Dict, Any, TextIO
 from BaseClasses import (Tutorial, CollectionState, MultiWorld, ItemClassification as ic, LocationProgressType)
 from .modules.random_battles import get_boss_battles
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .SettingsString import load_settings_from_site_string
 from worlds.AutoWorld import World, WebWorld
 from . import Locations, options
@@ -83,7 +83,7 @@ class PaperMarioWorld(World):
     and venture through dangerous lands with the help of partners you meet along the way.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = PaperMarioWeb()
     topology_present = True

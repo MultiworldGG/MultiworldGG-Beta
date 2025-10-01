@@ -8,7 +8,7 @@ from BaseClasses import Tutorial, ItemClassification, CollectionState, Item
 from worlds.AutoWorld import WebWorld, World
 from .Data import starting_partners, limit_eight, stars, chapter_items, limited_location_ids, limit_pit, \
     pit_exclusive_tattle_stars_required
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import all_locations, location_table, pit, location_id_to_name, TTYDLocation, locationName_to_data, \
     palace, riddle_tower, tattlesanity_region
 from .Options import TTYDOptions, YoshiColor, StartingPartner, PitItems, LimitChapterEight, Goal
@@ -73,9 +73,13 @@ class TTYDWorld(World):
     In the game, when Mario and Princess Peach get involved in the search for a mystic treasure that holds great fortune, Peach is kidnapped by an alien group called the X-Nauts; 
     Mario sets out to find the treasure and save the princess.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ttyd")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = TTYDWebWorld()
 
     options_dataclass = TTYDOptions

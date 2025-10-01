@@ -5,7 +5,7 @@ from Options import OptionGroup
 from BaseClasses import Tutorial
 
 from . import options, regions, locations, items, data, rules
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .options import StarFox64Options, StarFox64OptionsList
 from .regions import StarFox64Region
 from .locations import StarFox64Location
@@ -113,7 +113,7 @@ class StarFox64World(World):
   """
   game = GAME_NAME
   author: str = AUTHOR
-  igdb_id = IGDB_ID
+  
   options_dataclass = StarFox64Options
   options: StarFox64Options
   settings: StarFox64Settings

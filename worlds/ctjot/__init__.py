@@ -6,7 +6,7 @@ from typing import Callable
 from BaseClasses import Item, Location, MultiWorld, Tutorial, Region, CollectionState, ItemClassification
 from ..AutoWorld import World, WebWorld
 
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Client import CTJoTSNIClient
 from .Items import CTJoTItemManager
 from .Locations import CTJoTLocationManager

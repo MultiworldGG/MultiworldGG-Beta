@@ -9,7 +9,7 @@ from worlds.AutoWorld import WebWorld, World
 from .Client import OracleOfSeasonsClient  # Unused, but required to register with BizHawkClient
 from .Hints import create_region_hints, create_item_hints
 
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Logic import create_connections, apply_self_locking_rules
 from .Options import *
 from .PatchWriter import oos_create_ap_procedure_patch
@@ -99,9 +99,13 @@ class OracleOfSeasonsWorld(World):
     The seasons in the world of Holodrum have been a mess since Onox captured Din, the Oracle of Seasons.
     Gather the Essences of Nature, confront Onox and rescue Din to give nature some rest in Holodrum.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tloz_oos")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = OracleOfSeasonsOptions
     options: OracleOfSeasonsOptions
     # required_client_version = (0, 5, 1)

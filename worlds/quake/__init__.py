@@ -2,7 +2,7 @@ import json
 import math
 from random import Random
 from .levels import SL, HIPSL, ROGUESL, MG1SL
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from typing import Any, Dict, List, Optional, Set, Tuple
 from BaseClasses import CollectionState, Tutorial
 
@@ -49,6 +49,9 @@ class Q1World(World):
     One of the most classic shooters of all time, now reimagined. Replace ALL the monsters and objects in a level with another of the same type. 
     That first Grunt you encounter in E1M1? Now it could be an Enforcer, a Knight... or maybe a Shambler!
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("quake")
 
     game = GAME_NAME
     author: str = AUTHOR

@@ -6,7 +6,7 @@ from worlds.AutoWorld import LogicMixin, World, WebWorld
 from .items import item_table, PaintItem, item_data_table, traps, deathlink_traps
 from .locations import location_table, PaintLocation, location_data_table
 from .options import PaintOptions
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 
 class PaintWebWorld(WebWorld):
@@ -29,6 +29,10 @@ class PaintWorld(World):
     The classic Microsoft app, reimagined as a MultiworldGG game! Find your tools, expand your canvas, and paint the
     greatest image the world has ever seen.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("paint")
+
     game = GAME_NAME
     author: str = AUTHOR
     options_dataclass = PaintOptions

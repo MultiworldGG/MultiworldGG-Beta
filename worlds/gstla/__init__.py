@@ -15,7 +15,7 @@ import os
 from typing import List, TextIO, BinaryIO, ClassVar, Type, cast, Optional, Sequence, Tuple, Any, Mapping, TYPE_CHECKING, \
     Dict, Set
 from .Option_groups import gstla_option_groups
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Option_presets import gstla_options_presets
 from .Options import GSTLAOptions
 from BaseClasses import Item, ItemClassification, Tutorial
@@ -101,7 +101,7 @@ class GSTLAWorld(World):
     It is the second installment in the Golden Sun series. 
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options_dataclass: ClassVar[Type[PerGameCommonOptions]] = GSTLAOptions
     options: GSTLAOptions

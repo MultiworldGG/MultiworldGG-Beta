@@ -30,7 +30,7 @@ class MMRWorld(World):
     """A Zelda game we're not completely burnt out on."""
 
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     data_version = VERSION
     web = MMRWebWorld()

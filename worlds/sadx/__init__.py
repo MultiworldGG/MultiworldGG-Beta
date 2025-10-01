@@ -4,7 +4,7 @@ from typing import Dict, Any
 from BaseClasses import Tutorial
 from worlds.AutoWorld import WebWorld, World
 from .CharacterUtils import get_playable_characters
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Enums import Character, SADX_BASE_ID, Area, remove_character_suffix, pascal_to_space
 from .ItemPool import create_sadx_items, get_item_names, ItemDistribution
 from .Items import SonicAdventureDXItem, group_item_table, item_name_to_info, filler_item_table
@@ -39,7 +39,7 @@ class SonicAdventureDXWorld(World):
     such as power-ups and the ring-based health system. Players can play minigames such as racing and interact with Chao, a virtual pet.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = SonicAdventureDXWeb()
     starter_setup: StarterSetup = StarterSetup()

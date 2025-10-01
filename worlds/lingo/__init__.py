@@ -12,7 +12,7 @@ from .locations import ALL_LOCATION_TABLE, LOCATIONS_BY_GROUP
 from .options import LingoOptions, lingo_option_groups, SunwarpAccess, VictoryCondition
 from .player_logic import LingoPlayerLogic
 from .regions import create_regions
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 class LingoWebWorld(WebWorld):
     option_groups = lingo_option_groups
@@ -34,7 +34,7 @@ class LingoWorld(World):
     world filled with 800 word puzzles that use a variety of different mechanics.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = LingoWebWorld()
 

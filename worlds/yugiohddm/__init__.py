@@ -8,7 +8,7 @@ from BaseClasses import CollectionState, Region, Tutorial, LocationProgressType
 from worlds.generic.Rules import set_rule
 
 from .client import YGODDMClient
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .utils import Constants
 from .items import YGODDMItem, item_name_to_item_id, create_item as fabricate_item, create_victory_event, create_victory_event_tournament
 from .locations import YGODDMLocation, DuelistLocation, DuelistFirstRematchLocation, location_name_to_id as location_map, TournamentLocation

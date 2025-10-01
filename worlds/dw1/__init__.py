@@ -8,7 +8,7 @@ from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import set_rule, add_rule, add_item_rule
 
 from .Items import DigimonWorldItem, DigimonWorldItemCategory, item_dictionary, key_item_names, key_item_categories, item_descriptions, _all_items, BuildItemPool
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import DigimonWorldLocation, DigimonWorldLocationCategory, location_tables, location_dictionary
 from .Options import DigimonWorldOption
 from .RecruitDigimon import recruit_digimon_list
@@ -35,7 +35,7 @@ class DigimonWorldWorld(World):
     """
 
     game: str = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options_dataclass = DigimonWorldOption
     options: DigimonWorldOption

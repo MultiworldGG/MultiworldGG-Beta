@@ -1,5 +1,5 @@
 from .items import RoR1Item, item_table, map_offset
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .locations import RoR1Location, item_pickups, get_locations, map_orderedstages_table, map_table, shift_by_offset
 from .options import ROROptions
 from .rules import set_rules
@@ -25,7 +25,7 @@ class RoR1World(World):
     They attempt to survive by killing monsters and collecting items that can boost their offensive and defensive abilities. 
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options_dataclass = ROROptions
     options: ROROptions

@@ -2,7 +2,7 @@ from typing import TextIO, ClassVar, Any
 from BaseClasses import Item, ItemClassification, CollectionState
 from NetUtils import Hint
 from .GameLogic import GameLogic
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Items import Items
 from .Locations import Locations, LocationData
 from .StateLogic import EventId, StateLogic
@@ -19,8 +19,11 @@ class SatisfactoryWorld(World):
     Explore an alien planet, create multi-story factories, and enter conveyor belt heaven!
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("satisfactory")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options_dataclass = SatisfactoryOptions
     options: SatisfactoryOptions

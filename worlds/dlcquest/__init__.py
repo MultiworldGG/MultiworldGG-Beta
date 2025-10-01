@@ -10,7 +10,7 @@ from .Regions import create_regions
 from .Rules import set_rules
 from .presets import dlcq_options_presets
 from .option_groups import dlcq_option_groups
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 client_version = 0
 
@@ -42,9 +42,13 @@ class DLCqworld(World):
     """
     DLCQuest is a metroid ish game where everything is an in-game dlc.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("dlcquest")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     topology_present = False
     web = DLCqwebworld()
 

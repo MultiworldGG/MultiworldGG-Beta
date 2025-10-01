@@ -8,7 +8,7 @@ import settings
 from BaseClasses import Tutorial, Item, ItemClassification, Region, Entrance
 from worlds.AutoWorld import World, WebWorld
 from ..LauncherComponents import Component, components, Type, icon_paths
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 # TS4 specific imports
 from .Locations import location_table, Sims4Location, skill_locations_table
@@ -54,6 +54,9 @@ class Sims4World(World):
     The Sims 4 is the fourth installment in The Sims franchise. Like the previous games in the series,
     The Sims 4 focuses on creating and controlling a neighborhood of virtual people, called "Sims".
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("sims4")
 
     game = GAME_NAME
     author: str = AUTHOR

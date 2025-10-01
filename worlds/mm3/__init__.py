@@ -14,7 +14,7 @@ from .rom import patch_rom, MM3ProcedurePatch, MM3LCHASH, MM3VCHASH, PROTEUSHASH
 from .options import MM3Options, Consumables
 from .client import MegaMan3Client
 from .rules import set_rules, weapon_damage, robot_masters, weapons_to_name, minimum_weakness_requirement
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 import os
 import threading
 import base64
@@ -83,6 +83,9 @@ class MM3World(World):
     Robot Masters sent to retrieve them. It's up to Mega Man to retrieve the Energy Elements and defeat the mastermind
     behind the Robot Masters' betrayal.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("mm3")
 
     game = GAME_NAME
     author: str = AUTHOR

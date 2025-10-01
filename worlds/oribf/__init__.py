@@ -3,7 +3,7 @@ from BaseClasses import ItemClassification, Region,Tutorial
 from worlds.AutoWorld import World, WebWorld
 
 from .Items import OriBlindForestItem, base_items, keystone_items, mapstone_items, filler_items, item_dict, item_alias_list
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import location_dict, tagged_locations_dict, area_tags, event_location_list
 from .Options import OriBlindForestOptions, LogicDifficulty, KeystoneLogic, MapstoneLogic, Goal, slot_data_options
 from .Rules import apply_location_rules, apply_connection_rules, create_progressive_maps
@@ -29,7 +29,7 @@ class OriBlindForestWorld(World):
     They are tasked to move between platforms and solve puzzles.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options_dataclass = OriBlindForestOptions
     options: OriBlindForestOptions

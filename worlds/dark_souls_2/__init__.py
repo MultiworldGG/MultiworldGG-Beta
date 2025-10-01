@@ -4,7 +4,7 @@ from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import set_rule, add_item_rule, add_rule
 from BaseClasses import Item, ItemClassification, Location, Region, LocationProgressType, Tutorial
 from .Items import item_list, repeatable_categories, group_table, ItemCategory, DLC
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import location_table, location_name_groups
 from .Options import DS2Options
 from typing import Optional
@@ -50,7 +50,7 @@ class DS2World(World):
     It is set in the kingdom of Drangleic and follows an undead traveler searching for a cure to their affliction.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
 
     options_dataclass = DS2Options

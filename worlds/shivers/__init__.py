@@ -4,7 +4,7 @@ from BaseClasses import Item, ItemClassification, Location, Region, Tutorial
 from Fill import fill_restrictive
 from worlds.AutoWorld import WebWorld, World
 from . import Constants, Rules
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Items import ItemType, SHIVERS_ITEM_ID_OFFSET, ShiversItem, item_table
 from .Options import ShiversOptions, shivers_option_groups
 from .Rules import set_rules
@@ -28,8 +28,11 @@ class ShiversWorld(World):
     Explore the mysteries of Windlenot's Museum of the Strange and Unusual.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("shivers")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     topology_present = False
     options_dataclass = ShiversOptions

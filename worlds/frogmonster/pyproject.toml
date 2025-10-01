@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds.frogmonster"
+dynamic = ["version"]
+description = "MultiWorld: Frogmonster"
+authors = [
+    {name = "RoobyRoo"}
+]
+classifiers = [
+    "Private :: Do Not Upload"
+]
+requires-python = ">=3.12"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["worlds.frogmonster"]
+namespaces = true
+
+[tool.setuptools.dynamic]
+version = {attr = "worlds.frogmonster.Register.VERSION"}

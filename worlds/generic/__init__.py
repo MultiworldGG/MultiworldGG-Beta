@@ -1,13 +1,14 @@
 from typing import NamedTuple, Union
 import logging
 from Utils import instance_name
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json("generic")
 
 from BaseClasses import Item, Tutorial, ItemClassification
 
 from ..AutoWorld import InvalidItemError, World, WebWorld
 from NetUtils import SlotType
 
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 
 __all__ = ['WORLD_CLASS', 'WEB_WORLD_CLASS']
 
@@ -36,7 +37,7 @@ class GenericWeb(WebWorld):
 class GenericWorld(World):
     game = GAME_NAME
     author = AUTHOR
-    igdb_id = IGDB_ID
+    
     version = VERSION
     topology_present = False
     item_name_to_id = {

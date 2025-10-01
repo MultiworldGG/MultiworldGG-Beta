@@ -9,7 +9,7 @@ from .Options import UndertaleOptions
 from worlds.AutoWorld import World, WebWorld
 from worlds.LauncherComponents import Component, components
 from multiprocessing import Process
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from worlds.LauncherComponents import Component, components, launch, Type
 
 
@@ -43,9 +43,13 @@ class UndertaleWorld(World):
     causing genocide of the monster species. Or you can spare all the enemies, befriending them and freeing them
     from their underground prison.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("undertale")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = UndertaleOptions
     options: UndertaleOptions
     web = UndertaleWeb()

@@ -2,7 +2,7 @@ import typing
 
 from BaseClasses import Item, Tutorial, ItemClassification, Region, MultiWorld
 from worlds.AutoWorld import WebWorld, World
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from Options import OptionError
 from .Items import OSRSItem, starting_area_dict, chunksanity_starting_chunks, QP_Items, ItemRow, \
     chunksanity_special_region_names
@@ -40,8 +40,11 @@ class OSRSWorld(World):
     the Green Dragon of Crandor and earning a spot in the fabled Champion's Guild!
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("osrs")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options_dataclass = OSRSOptions
     options: OSRSOptions

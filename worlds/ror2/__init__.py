@@ -1,7 +1,7 @@
 import string
 
 from .items import RiskOfRainItem, item_table, item_pool_weights, offset, filler_table, environment_offset
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .locations import RiskOfRainLocation, item_pickups, get_locations
 from .rules import set_rules
 from .ror2environments import environment_vanilla_table, environment_vanilla_orderedstages_table, \
@@ -34,7 +34,7 @@ class RiskOfRainWorld(World):
      first crash landing.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options_dataclass = ROR2Options
     options: ROR2Options

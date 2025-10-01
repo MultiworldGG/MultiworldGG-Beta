@@ -8,7 +8,7 @@ from Options import OptionError
 from worlds.AutoWorld import WebWorld, World
 
 from .client import WL4Client
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .data import Passage, data_path
 from .items import ItemType, WL4Item, ap_id_from_wl4_data, filter_item_names, filter_items, item_table
 from .locations import get_level_locations, location_name_to_id

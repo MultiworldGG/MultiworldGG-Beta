@@ -77,7 +77,7 @@ class MessengerWorld(World):
     adventure full of thrills, surprises, and humor.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options_dataclass = MessengerOptions
     options: MessengerOptions

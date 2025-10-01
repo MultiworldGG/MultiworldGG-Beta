@@ -11,7 +11,7 @@ from . import creatures
 from . import options
 from .items import item_table, group_items
 from .rules import set_rules
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 
 class SubnauticaWeb(WebWorld):
@@ -36,7 +36,7 @@ class SubnauticaWorld(World):
     You must find a cure for yourself, build an escape rocket, and leave the planet.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = SubnauticaWeb()
 

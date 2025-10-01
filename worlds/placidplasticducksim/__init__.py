@@ -2,7 +2,7 @@ import math
 from typing import Dict, Any, Union, ClassVar, Final
 from .Locations import locations, columns
 from .Items import PPDSItem, item_table, create_items
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Location, Region, LocationProgressType, Tutorial
 from settings import Group, Bool
@@ -25,7 +25,7 @@ class PPDSWebWorld(WebWorld):
 class PlacidPlasticDuckSimulator(World):
     """A game about funny ducks in a pool"""
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = PPDSWebWorld()
     location_name_to_id = {name: uuid_offset + id_offset for name, id_offset in locations.items()}

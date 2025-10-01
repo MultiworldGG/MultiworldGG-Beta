@@ -1,7 +1,7 @@
 import settings
 import typing
 from .options import DoronkoWankoOptions  # the options we defined earlier
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .items import doronko_wanko_items  # data used below to add items to the World
 from .items import base_id as items_base_id
 from .items import group_table as items_groups
@@ -40,7 +40,7 @@ class DoronkoWankoWorld(World):
     """
     game = GAME_NAME  # name of the game/world
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = DoronkoWankoOptions  # options the player can set
     options: DoronkoWankoOptions  # typing hints for option results
     topology_present = True  # show path to required location checks in spoiler

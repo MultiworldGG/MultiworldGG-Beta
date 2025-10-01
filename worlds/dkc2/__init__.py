@@ -7,7 +7,7 @@ import pkgutil
 from BaseClasses import Item, MultiWorld, Tutorial, ItemClassification, Region
 from worlds.AutoWorld import World, WebWorld
 from .Items import DKC2Item, item_table, misc_table, item_groups, STARTING_ID
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import setup_locations, all_locations, location_groups
 from .Regions import create_regions, connect_regions
 from .Names import ItemName, LocationName
@@ -79,7 +79,7 @@ class DKC2World(World):
     """
     # borrowed from DKC3's description
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = DKC2Web()
 

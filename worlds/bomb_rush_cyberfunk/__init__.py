@@ -6,7 +6,7 @@ from .Locations import location_table, event_table
 from .Regions import region_exits
 from .Rules import rules
 from .Options import BombRushCyberfunkOptions, StartStyle
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 class BombRushCyberfunkWeb(WebWorld):
     theme = "ocean"
@@ -26,7 +26,7 @@ class BombRushCyberfunkWorld(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = BombRushCyberfunkWeb()
 
     item_name_to_id = {item["name"]: (base_id + index) for index, item in enumerate(item_table)}

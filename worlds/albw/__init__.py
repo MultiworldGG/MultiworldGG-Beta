@@ -17,7 +17,7 @@ from .Options import ALBWOptions, CrackShuffle, InitialCrackState, Keysy, LogicM
 from .Patch import PatchInfo, PatchItemInfo, ALBWProcedurePatch
 from pathlib import Path
 import sys
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 # Path to the lib directory
 lib_path = Path(__file__).parent / "lib"
@@ -73,9 +73,11 @@ class ALBWWorld(World):
     and a sequel to A Link to the Past. Explore dungeons, fight monsters,
     discover magical items, and save the worlds of Hyrule and Lorule!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("albw")
+
     game: ClassVar[str] = GAME_NAME
     author: ClassVar[str] = AUTHOR
-    igdb_id: ClassVar[int] = IGDB_ID
     options_dataclass = ALBWOptions
     options: ALBWOptions
     topology_present: ClassVar[bool] = False

@@ -13,7 +13,7 @@ from .Data import Data
 from .Exceptions import RE2ROptionError
 from .Options import RE2ROptions
 from .WeaponRandomizer import WeaponRandomizer
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 
 Data.load_data('leon', 'a')

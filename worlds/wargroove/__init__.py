@@ -4,7 +4,7 @@ import typing
 
 from BaseClasses import Item, MultiWorld, Region, Location, Entrance, Tutorial, ItemClassification
 from .Items import item_table, faction_table
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import location_table
 from .Regions import create_regions
 from .Rules import set_rules
@@ -70,7 +70,7 @@ class WargrooveWorld(World):
     settings: typing.ClassVar[WargrooveSettings]
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     topology_present = True
     web = WargrooveWeb()
 

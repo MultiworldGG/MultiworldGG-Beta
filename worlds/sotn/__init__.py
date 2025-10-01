@@ -7,7 +7,7 @@ from BaseClasses import Tutorial, MultiWorld, ItemClassification, Item
 from Options import AssembleOptions
 
 from .Items import SotnItem, items, relic_table, item_id_to_name
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import locations, SotnLocation
 from .Regions import create_regions, create_regions_no_logic
 from .Rules import set_rules, set_no_logic_rules
@@ -62,7 +62,7 @@ class SotnWorld(World):
     and released for Sony Playstation and Sega Saturn in 1997.
     """
     game: ClassVar[str] = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: ClassVar[str] = AUTHOR
     web: ClassVar[WebWorld] = SotnWeb()
     settings_key = "sotn_settings"

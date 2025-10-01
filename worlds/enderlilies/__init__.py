@@ -6,7 +6,7 @@ from Options import Option
 from Fill import swap_location_item
 
 from .Items import ItemData, items, ItemGroup
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import LocationData, locations, LocationGroup
 from .Rules import get_rules
 from .Options import *
@@ -64,9 +64,12 @@ class EnderLiliesWorld(World):
     Ender Lilies: QUIETUS OF THE KNIGHTS is a dark fantasy 2D action RPG about unraveling the mysteries of a destroyed kingdom.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("enderlilies")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = EnderLiliesWeb()
     # option_definitions = options
     options_dataclass = EnderLiliesGameOptions

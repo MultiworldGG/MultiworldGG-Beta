@@ -1,7 +1,7 @@
 import typing
 import os, json
 from .Items import item_table, V6Item
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import location_table, V6Location
 from .Options import V6Options
 from .Rules import set_rules

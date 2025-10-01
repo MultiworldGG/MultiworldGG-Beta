@@ -6,7 +6,7 @@ from BaseClasses import Entrance, CollectionState, Item, Location, MultiWorld, R
 from worlds.AutoWorld import WebWorld, World
 from . import Items, Locations, Maps, Regions, Rules
 from .Options import HereticOptions
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 logger = logging.getLogger("Heretic")
 
@@ -41,7 +41,7 @@ class HereticWorld(World):
     options_dataclass = HereticOptions
     options: HereticOptions
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = HereticWeb()
     required_client_version = (0, 5, 0)  # 1.2.0-prerelease or higher

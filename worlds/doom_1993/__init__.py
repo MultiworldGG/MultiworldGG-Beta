@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 from BaseClasses import Entrance, CollectionState, Item, Location, MultiWorld, Region, Tutorial
 from worlds.AutoWorld import WebWorld, World
 from . import Items, Locations, Maps, Regions, Rules
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Options import DOOM1993Options
 
 logger = logging.getLogger("DOOM 1993")
@@ -43,7 +43,7 @@ class DOOM1993World(World):
     options: DOOM1993Options
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = DOOM1993Web()
     required_client_version = (0, 5, 0)  # 1.2.0-prerelease or higher
 

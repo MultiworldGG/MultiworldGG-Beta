@@ -17,7 +17,7 @@ from Fill import fill_restrictive, FillError
 from worlds.AutoWorld import WebWorld, World
 from entrance_rando import ERPlacementState
 from .client import PokemonFRLGClient
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .data import (data, ability_name_map, ALL_SPECIES, APWORLD_VERSION, LEGENDARY_POKEMON, NAME_TO_SPECIES_ID,
                    POPTRACKER_CHECKSUM, LocationCategory, EventData, EvolutionMethodEnum, FlyData, MapData,
                    MiscPokemonData, MoveData, move_name_map, SpeciesData, StarterData, TrainerData, TradePokemonData)
@@ -97,7 +97,7 @@ class PokemonFRLGWorld(World):
     earn Badges, help resolve the many crises on the Sevii Islands, and become the Pokémon Champion!
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = PokemonFRLGWebWorld()
     topology_present = True

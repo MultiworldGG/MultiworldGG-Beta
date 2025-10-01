@@ -14,7 +14,7 @@ from .Structures import shuffle_structures
 from .ItemPool import build_item_pool, get_junk_item_names
 from .Rules import set_rules
 from worlds.LauncherComponents import launch as launch_componenent, components, Component, Type, SuffixIdentifier
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 client_version = VERSION
 
@@ -107,7 +107,7 @@ class MinecraftWorld(World):
     victory!
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options_dataclass = MinecraftOptions
     options: MinecraftOptions

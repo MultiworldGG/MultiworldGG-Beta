@@ -26,7 +26,7 @@ from .Regions import *
 from .Rules import *
 from .Rules import set_element_rules
 from .iso_helper.lm_rom import LMPlayerContainer
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 if TYPE_CHECKING:
     from NetUtils import MultiData
 
@@ -149,7 +149,7 @@ class LMWorld(World):
     """
 
     game: ClassVar[str] = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: ClassVar[str] = AUTHOR
     options_dataclass = LuigiOptions.LMOptions
     options: LuigiOptions.LMOptions

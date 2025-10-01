@@ -8,7 +8,7 @@ from Fill import fill_restrictive
 from BaseClasses import CollectionState, Item, LocationProgressType
 from BaseClasses import ItemClassification as IC
 from BaseClasses import Tutorial
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .ClientUtils import VERSION
 from .Items import (
     ITEM_TABLE,

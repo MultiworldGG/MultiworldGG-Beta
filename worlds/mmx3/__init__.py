@@ -18,7 +18,7 @@ from .Client import MMX3SNIClient
 from .Levels import location_id_to_level_id
 from .Weaknesses import handle_weaknesses, weapon_id
 from .Rom import patch_rom, MMX3ProcedurePatch, HASH_US, HASH_LEGACY
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 from typing import Dict, Any, TYPE_CHECKING, Optional, Sequence, Tuple, ClassVar, List
 
@@ -64,6 +64,10 @@ class MMX3World(World):
     Players once again control Mega Man X, who must thwart a rebellion led by the Maverick Reploid scientist 
     Dr. Doppler. The game introduces the ability to play as Zero for limited segments, adding variety to the gameplay.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("mmx3")
+
     game = GAME_NAME
     author: str = AUTHOR
     igdb_id: int = IGDB_ID

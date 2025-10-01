@@ -1,5 +1,4 @@
-from . import GenericWorld
-from . import GenericWeb
+from . import GenericWorld, GenericWeb
 
 """
 Generic World Registration

@@ -1,7 +1,7 @@
 import string
 
 from .items import LethalCompanyItem, item_table, generate_items, calculate_credits, get_default_item_map
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .locations import LethalCompanyLocation, generate_locations, locations, get_default_location_map
 from .rules import set_rules
 from BaseClasses import Item, ItemClassification, Tutorial, MultiWorld, Region
@@ -84,6 +84,10 @@ class LethalCompanyWorld(World):
     monsters, which are often referred to as "anomalies", "entities", or "creatures", and the hostile fauna. 
     As employees of "The Company", players must sell enough scrap to meet a series of increasing profit quotas until they inevitably fail and the game starts over.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("lethal_company")
+
     game = GAME_NAME
     author: str = AUTHOR
     igdb_id: int = IGDB_ID

@@ -1,6 +1,6 @@
 from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Region, CollectionState, Tutorial
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .items import PseudoregaliaItem, item_table, item_groups
 from .locations import PseudoregaliaLocation, location_table, zones
 from .regions import region_table
@@ -30,7 +30,7 @@ class PseudoregaliaWorld(World):
     her way through the Castle Sansa. The gameplay emphasizes fluidity and responsiveness, with a focus on running and jumping.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     required_client_version = (0, 7, 0)
     item_name_to_id = {name: data.code for name, data in item_table.items() if data.code is not None}

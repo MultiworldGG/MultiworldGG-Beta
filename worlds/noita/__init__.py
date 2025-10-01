@@ -3,7 +3,7 @@ from worlds.AutoWorld import WebWorld, World
 from typing import Dict, Any
 from . import events, items, locations, regions, rules
 from .options import NoitaOptions
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 
 class NoitaWeb(WebWorld):
@@ -26,8 +26,11 @@ class NoitaWorld(World):
     burn, freeze, and evaporate your way through the procedurally generated world using wands you've created yourself.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("noita")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options: NoitaOptions
     options_dataclass = NoitaOptions

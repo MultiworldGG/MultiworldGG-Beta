@@ -7,7 +7,7 @@ import typing
 from BaseClasses import Item, Tutorial, ItemClassification
 from Options import NumericOption
 from .Items import item_table, faction_table, Wargroove2Item
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Levels import Wargroove2Level, low_victory_checks_levels, high_victory_checks_levels, first_level, \
     final_levels, region_names, FINAL_LEVEL_1, \
     FINAL_LEVEL_2, FINAL_LEVEL_3, FINAL_LEVEL_4, LEVEL_COUNT, FINAL_LEVEL_COUNT, main_filler_levels, final_filler_levels
@@ -78,7 +78,7 @@ class Wargroove2World(World):
     settings: typing.ClassVar[Wargroove2Settings]
     game = GAME_NAME
     author = "Fly Sniper"
-    igdb_id = IGDB_ID
+    
     topology_present = True
     author: str = AUTHOR
     web = Wargroove2Web()

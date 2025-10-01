@@ -8,7 +8,7 @@ import settings
 import random
 from typing import List, Dict, Set, Any
 
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Items import (EOSItem, item_table, item_frequencies, item_table_by_id, item_table_by_groups,
                     filler_item_table, filler_item_weights, trap_item_table, trap_item_weights,
                     exclusive_filler_item_table, exclusive_filler_item_weights, legendary_pool_dict, filler_items,
@@ -55,9 +55,12 @@ class EOSWorld(World):
     through dungeons, solve quests, and help out other Pokemon in the colony
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("pmd_eos")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options: EOSOptions
     options_dataclass = EOSOptions
     web = EOSWeb()

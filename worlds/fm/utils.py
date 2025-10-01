@@ -4,7 +4,7 @@ from typing import TypeVar
 from dataclasses import dataclass
 from itertools import chain
 
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 
 @dataclass

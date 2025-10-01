@@ -19,7 +19,7 @@ from .levels.levelbase import LevelData
 from .shop import ShopData
 from . import options, locations, levels, regions, items, shop, slotdata
 from . import debug as dbg
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 #from . import debug as dbg
 
 class CupheadWebWorld(WebWorld):
@@ -45,7 +45,7 @@ class CupheadWorld(World):
 
     game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = CupheadWebWorld()
     options_dataclass = CupheadOptions
     options: CupheadOptions # type: ignore

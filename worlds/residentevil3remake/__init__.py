@@ -11,7 +11,7 @@ from Fill import fill_restrictive
 
 from .Data import Data
 from .Options import RE3ROptions
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 Data.load_data('jill', 'a')
 

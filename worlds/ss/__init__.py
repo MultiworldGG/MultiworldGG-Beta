@@ -14,7 +14,7 @@ from Options import Toggle, OptionError
 from worlds.AutoWorld import WebWorld, World
 from worlds.Files import APPlayerContainer, AutoPatchRegister
 from worlds.generic.Rules import add_item_rule
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 from worlds.LauncherComponents import (
     Component,
@@ -129,7 +129,7 @@ class SSWorld(World):
     options: SSOptions
 
     game: ClassVar[str] = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     topology_present: bool = True
     web = SSWeb()

@@ -16,7 +16,6 @@ from Options import OptionGroup
 
 # Jak imports
 from . import options
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
 from .game_id import jak1_id, jak1_name, jak1_max
 from .items import (JakAndDaxterItem,
                     OrbAssoc,

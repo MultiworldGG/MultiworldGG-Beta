@@ -1,10 +1,5 @@
 # These constants are for generation purposes.
 # Constants for the client should be in SSClientUtils.py
-{
-    "game": "Skyward Sword"
-    "author": "Battlecats59"
-    "igdb_id": 534,
-    "version": "1.0.1"
 
 DUNGEON_LIST = [
     "Skyview",

@@ -15,7 +15,7 @@ import sys
 import tempfile
 from typing import Any
 
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 from BaseClasses import Location, LocationProgressType
 from worlds.dk64.ap_version import version as ap_version

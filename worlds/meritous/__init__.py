@@ -6,7 +6,7 @@
 from BaseClasses import Item, MultiWorld, Tutorial
 from Fill import fill_restrictive
 from .Items import item_table, item_groups, MeritousItem
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import location_table, MeritousLocation
 from .Options import MeritousOptions, cost_scales
 from .Regions import create_regions
@@ -37,7 +37,7 @@ class MeritousWorld(World):
     """
 
     game: str = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     topology_present: False
 

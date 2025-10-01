@@ -7,7 +7,7 @@ from Fill import fast_fill
 from worlds.LauncherComponents import Component, components, Type, icon_paths, launch as launch_component
 from worlds.AutoWorld import World, WebWorld
 from .Items import *
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import *
 from .Names import ItemName, LocationName, RegionName
 from .OpenKH import patch_kh2
@@ -47,7 +47,7 @@ class KH2World(World):
     focuses on Sora and his friends' continued battle against the Darkness.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = KingdomHearts2Web()
 

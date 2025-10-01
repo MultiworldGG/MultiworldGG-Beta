@@ -2,7 +2,7 @@ from typing import Dict, List, Any
 from BaseClasses import Region, Entrance, Location, Item, Tutorial, ItemClassification
 from worlds.generic.Rules import set_rule
 from . import Exits, Items, Locations, Rules
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Options import Hylics2Options
 from worlds.AutoWorld import WebWorld, World
 
@@ -25,7 +25,7 @@ class Hylics2World(World):
     travel the world, and gather your allies to defeat the nefarious Gibby in his Hylemxylem!
     """
     game: str = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = Hylics2Web()
 

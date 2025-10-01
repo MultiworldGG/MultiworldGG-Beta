@@ -6,7 +6,7 @@ import threading
 
 from BaseClasses import Item, MultiWorld, Tutorial, ItemClassification
 from .Items import WLItem, ItemData, item_table, junk_table
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import WLLocation, all_locations, setup_locations
 from .Options import WLOptions
 from .Regions import create_regions, connect_regions

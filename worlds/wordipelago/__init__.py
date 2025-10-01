@@ -3,7 +3,7 @@ from typing import List
 from BaseClasses import Region, Tutorial, ItemClassification
 from worlds.AutoWorld import WebWorld, World
 from .items import WordipelagoItem, item_data_table, item_table
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .locations import WordipelagoLocation, location_data_table, get_location_table
 from .options import WordipelagoOptions
 from .regions import region_data_table

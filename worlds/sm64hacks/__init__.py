@@ -4,7 +4,7 @@ from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import add_rule
 from typing import Union, Tuple, List, Dict, Set, ClassVar, Mapping, Any
 from .Options import SM64HackOptions
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Items import SM64HackItem, item_is_important
 from .Locations import SM64HackLocation, location_names, location_names_that_exist
 from .Data import sm64hack_items, star_like, traps, badges, sr6_25_locations, Data
@@ -39,7 +39,7 @@ class SM64HackWorld(World):
     """
     game = GAME_NAME
     author = "DNVIC"
-    igdb_id = IGDB_ID
+    
     options_dataclass = SM64HackOptions
     options: SM64HackOptions
 #    settings: ClassVar[SM64HackSettings]

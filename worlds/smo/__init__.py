@@ -2,7 +2,7 @@ import random
 import os
 from typing import Mapping, Any
 
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Items import item_table, SMOItem, filler_item_table, outfits, shop_items, multi_moons, \
     moon_item_table, moon_types, story_moons, world_list
 from .Locations import locations_table, SMOLocation, locations_list, post_game_locations_list, \
@@ -54,7 +54,7 @@ class SMOWebWorld(WebWorld):
 class SMOWorld(World):
     """Super Mario Odyssey is a 3-D Platformer where Mario sets off across the world with his companion Cappy to save Princess Peach and Cappy's sister Tiara from Bowser's wedding plans."""
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
 
     settings_key = "smo_settings"

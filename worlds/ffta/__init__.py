@@ -10,7 +10,7 @@ import logging
 from Utils import visualize_regions
 
 from .client import FFTAClient
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 from BaseClasses import ItemClassification, MultiWorld, Tutorial, Item
 from worlds.AutoWorld import WebWorld, World
@@ -68,7 +68,7 @@ class FFTAWorld(World):
     battlefields. Players are mostly free to decide the classes, abilities, and stats of their characters.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = FFTAWebWorld()
     topology_present = False

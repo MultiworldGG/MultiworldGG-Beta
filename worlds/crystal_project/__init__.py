@@ -1,5 +1,4 @@
 import logging
-from .constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
 from .constants.mounts import *
 from .constants.jobs import *
 from .constants.keys import *
@@ -22,7 +21,10 @@ from .mod_helper import ModLocationData, get_modded_items, get_modded_locations,
     get_modded_shopsanity_locations, get_modded_bosses, build_condition_rule, update_item_classification, ModIncrementedIdData, get_mod_info, get_removed_locations
 from typing import List, Set, Dict, Any
 from worlds.AutoWorld import World, WebWorld
-from BaseClasses import Item, Tutorial, MultiWorld, CollectionState
+from BaseClasses import Item, Tutorial, MultiWorld, CollectionState, 
+from BaseUtils import get_archipelago_json
+
+GAME_NAME, AUTHOR, VERSION, WORLD_VERSION = get_archipelago_json("crystal_project")
 
 class CrystalProjectWeb(WebWorld):
     theme = "jungle"
@@ -42,8 +44,7 @@ class CrystalProjectWeb(WebWorld):
 
 class CrystalProjectWorld(World):
     """Crystal Project is a mix of old school job based jRPG mixed with a ton of 3D platforming and exploration."""
-    apworld_version = VERSION
-    igdb_id = IGDB_ID
+    apworld_version = WORLD_VERSION
     game = GAME_NAME
     author = AUTHOR
     options_dataclass = CrystalProjectOptions

@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds.metroidfusion"
+dynamic = ["version"]
+description = "MultiWorld: Metroid Fusion"
+authors = [
+    {name = "Unknown"}
+]
+classifiers = [
+    "Private :: Do Not Upload"
+]
+requires-python = ">=3.12"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["worlds.metroidfusion"]
+namespaces = true
+
+[tool.setuptools.dynamic]
+version = {attr = "worlds.metroidfusion.Register.VERSION"}

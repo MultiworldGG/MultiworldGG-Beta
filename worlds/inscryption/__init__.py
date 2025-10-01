@@ -6,7 +6,7 @@ from typing import Dict, Any
 from . import Rules
 from BaseClasses import Region, Item, Tutorial, ItemClassification
 from worlds.AutoWorld import World, WebWorld
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 class InscrypWeb(WebWorld):
     theme = "dirt"
@@ -41,7 +41,7 @@ class InscryptionWorld(World):
     Darker still are the secrets inscrybed upon the cards...
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = InscrypWeb()
     options_dataclass = InscryptionOptions

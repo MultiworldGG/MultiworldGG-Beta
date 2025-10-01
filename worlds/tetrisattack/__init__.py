@@ -8,7 +8,7 @@ import typing
 import threading
 from BaseClasses import Region, Location, Entrance, Item, ItemClassification, MultiWorld, Tutorial
 from worlds.AutoWorld import World, WebWorld
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Logic import stage_clear_round_gates_included, stage_clear_progressive_unlocks_included, \
     stage_clear_individual_unlocks_included, get_starting_puzzle_level
 from .Options import TetrisAttackOptions, StarterPack, PuzzleGoal, PuzzleInclusion, \
@@ -57,7 +57,7 @@ class TetrisAttackWorld(World):
     In Vs, perform Chains and Combos to attack."""
     game = GAME_NAME  # name of the game/world
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = TetrisAttackOptions  # options the player can set
     options: TetrisAttackOptions  # typing hints for option results
     settings: typing.ClassVar[TetrisAttackSettings]  # will be automatically assigned from type hint

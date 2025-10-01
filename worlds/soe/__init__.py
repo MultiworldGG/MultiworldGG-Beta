@@ -13,7 +13,7 @@ from Utils import output_path
 from worlds.AutoWorld import WebWorld, World
 from worlds.generic.Rules import add_item_rule, set_rule
 from .logic import SoEPlayerLogic
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .options import Difficulty, EnergyCore, Sniffamizer, SniffIngredients, SoEOptions
 from .patch import SoEDeltaPatch, get_base_rom_path
 
@@ -174,7 +174,7 @@ class SoEWorld(World):
     """
     game: typing.ClassVar[str] = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = SoEOptions
     options: SoEOptions
     settings: typing.ClassVar[SoESettings]

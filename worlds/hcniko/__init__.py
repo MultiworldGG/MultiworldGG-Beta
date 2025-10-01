@@ -5,7 +5,7 @@ from BaseClasses import Region, Tutorial, ItemClassification
 from Utils import visualize_regions
 from worlds.AutoWorld import World, WebWorld
 from .Items import item_data_table, HereComesNikoItem, item_table, item_name_groups
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import location_data_table, HereComesNikoLocation, locked_locations, location_table, \
     location_name_groups
 from .Options import *

@@ -12,7 +12,7 @@ from typing_extensions import override
 from BaseClasses import LocationProgressType, MultiWorld, Item, CollectionState, Entrance, Tutorial
 
 from .gen_data import GenData
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .logic import ZillionLogicCache
 from .region import ZillionLocation, ZillionRegion
 from .options import ZillionOptions, validate, z_option_groups
@@ -86,9 +86,13 @@ class ZillionWorld(World):
 
     It's based on the anime Zillion (赤い光弾ジリオン, Akai Koudan Zillion).
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("zillion")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = ZillionWebWorld()
 
     options_dataclass = ZillionOptions

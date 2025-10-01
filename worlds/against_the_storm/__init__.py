@@ -7,7 +7,7 @@ from worlds.generic.Rules import set_rule
 from BaseClasses import CollectionState, MultiWorld, Region, Tutorial
 
 from .Items import ATSItemClassification, AgainstTheStormItem, item_dict
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import ATSLocationClassification, AgainstTheStormLocation, location_dict
 from .Options import AgainstTheStormOptions, RecipeShuffle
 from .Recipes import satisfies_recipe, blueprint_recipes, nonitem_blueprint_recipes
@@ -29,9 +29,12 @@ class AgainstTheStormWorld(World):
     Against the Storm is a roguelite city builder
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("against_the_storm")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = AgainstTheStormOptions
     options: AgainstTheStormOptions
     topology_present = True

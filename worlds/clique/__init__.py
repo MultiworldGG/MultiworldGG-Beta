@@ -6,7 +6,7 @@ from worlds.AutoWorld import WebWorld, World
 from .items import CliqueItem, item_data
 from .locations import CliqueLocation, location_table, location_table
 from .options import CliqueOptions
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 class CliqueWebWorld(WebWorld):
     theme = "partyTime"
@@ -38,7 +38,7 @@ class CliqueWorld(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = CliqueWebWorld()
     options: CliqueOptions
     options_dataclass = CliqueOptions

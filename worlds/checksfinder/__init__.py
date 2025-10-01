@@ -1,6 +1,6 @@
 from BaseClasses import Region, Entrance, Tutorial, ItemClassification
 from .Items import ChecksFinderItem, item_table
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import ChecksFinderLocation, advancement_table
 from Options import PerGameCommonOptions
 from .Rules import set_rules, set_completion_rules
@@ -34,6 +34,10 @@ class ChecksFinderWorld(World):
     ChecksFinder is a game where you avoid mines and collect checks by beating boards!
     You win when you get all your items and beat the last board!
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("checksfinder")
+
     game = GAME_NAME
     author: str = AUTHOR
     options_dataclass = PerGameCommonOptions

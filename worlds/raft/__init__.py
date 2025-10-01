@@ -1,7 +1,7 @@
 import typing
 
 from .Locations import location_table, lookup_name_to_id as locations_lookup_name_to_id
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Items import (createResourcePackName, item_table, progressive_table, progressive_item_list,
     lookup_name_to_item, resourcepack_items as resourcePackItems, lookup_name_to_id as items_lookup_name_to_id)
 

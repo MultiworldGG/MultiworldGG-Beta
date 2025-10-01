@@ -2,7 +2,7 @@ from BaseClasses import Item, MultiWorld, Region, Location, Entrance, Tutorial, 
 from worlds.AutoWorld import World, WebWorld
 from datetime import datetime
 from .Items import item_table
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Rules import set_rules
 
 
@@ -32,6 +32,10 @@ class ArchipIDLEWorld(World):
     """
     An idle game which sends a check every thirty to sixty seconds, up to two hundred checks.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("archipidle")
+
     game = GAME_NAME
     author: str = AUTHOR
     topology_present = False

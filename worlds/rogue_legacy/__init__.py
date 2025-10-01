@@ -8,7 +8,7 @@ from .Options import RLOptions
 from .Presets import rl_options_presets
 from .Regions import create_regions
 from .Rules import set_rules
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 
 class RLWeb(WebWorld):
@@ -34,7 +34,7 @@ class RLWorld(World):
     But that's OK, because no one is perfect, and you don't have to be to succeed.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options_dataclass = RLOptions
     options: RLOptions

@@ -7,7 +7,7 @@ import logging
 from BaseClasses import Item, Region, Tutorial, ItemClassification
 from .items import CVCotMItem, FILLER_ITEM_NAMES, ACTION_CARDS, ATTRIBUTE_CARDS, cvcotm_item_info, \
     get_item_names_to_ids, get_item_counts
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .locations import CVCotMLocation, get_location_names_to_ids, BASE_ID, get_named_locations_data, \
     get_location_name_groups
 from .options import cvcotm_option_groups, CVCotMOptions, SubWeaponShuffle, IronMaidenBehavior, RequiredSkirmishes, \
@@ -61,7 +61,7 @@ class CVCotMWorld(World):
     from a demonic ritual to restore the Count's power...
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     item_name_groups = {
         "DSS": ACTION_CARDS.union(ATTRIBUTE_CARDS),

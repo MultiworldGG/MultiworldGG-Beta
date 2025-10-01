@@ -6,7 +6,7 @@ import json
 import typing
 
 from .Items.Items import Items, SOTItem
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Items.ItemCollection import ItemCollection
 from .Items.ItemDetail import ItemDetail
 from .Options import SOTOptions
@@ -46,7 +46,7 @@ class SOTWorld(World):
 
     MAX_ISLANDS = 20  # number of hints
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     topology_present = False
 

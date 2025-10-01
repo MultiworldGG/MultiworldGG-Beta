@@ -18,7 +18,7 @@ from .Options import DragonRandoType, DifficultySwitchA, DifficultySwitchB, Adve
 from .Regions import create_regions
 from .Rom import get_base_rom_bytes, get_base_rom_path, AdventureDeltaPatch, apply_basepatch, AdventureAutoCollectLocation
 from .Rules import set_rules
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 
 def launch_client(*args):
@@ -103,10 +103,12 @@ class AdventureWorld(World):
     reach items, or defeat the three dragons.  Beware the bat
     who likes to steal your equipment!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("adventure")
+
     game: ClassVar[str] = GAME_NAME
     author: ClassVar[str] = AUTHOR
     web: ClassVar[WebWorld] = AdventureWeb()
-    igdb_id: ClassVar[int] = IGDB_ID
 
     options_dataclass = AdventureOptions
     settings: ClassVar[AdventureSettings]

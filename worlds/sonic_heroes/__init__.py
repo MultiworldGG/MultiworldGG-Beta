@@ -7,7 +7,7 @@ from Options import OptionError
 from worlds.AutoWorld import WebWorld, World
 
 from .names import *
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .options import *
 from .items import *
 from .locations import *
@@ -37,7 +37,7 @@ class SonicHeroesWorld(World):
     who each have unique abilities, to overcome obstacles.
     """
     game: str = "Sonic Heroes"
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = SonicHeroesWeb()
     options_dataclass = SonicHeroesOptions

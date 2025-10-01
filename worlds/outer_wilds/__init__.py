@@ -12,7 +12,7 @@ from .locations_and_regions import all_non_event_locations_table, location_name_
 from .options import EarlyKeyItem, OuterWildsGameOptions, RandomizeDarkBrambleLayout, Spawn, Goal, EnableEchoesOfTheEyeDLC
 from .orbits import generate_random_orbits, generate_random_rotations
 from .warp_platforms import generate_random_warp_platform_mapping
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 
 class OuterWildsWebWorld(WebWorld):
@@ -35,7 +35,7 @@ class OuterWildsWorld(World):
     Through repeated attempts, they investigate the alien ruins of the Nomai to discover their history and the cause of the time loop.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = OuterWildsWebWorld()
 

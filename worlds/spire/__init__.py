@@ -5,7 +5,7 @@ from typing import Optional, List, Set
 
 from BaseClasses import Item, ItemClassification, Location, MultiWorld, Region, Tutorial
 from Options import OptionError
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Characters import character_list, CharacterConfig, character_option_map, character_offset_map, NUM_CUSTOM
 from .Items import event_item_pairs, item_table, ItemType, chars_to_items, base_event_item_pairs, item_groups
 from .Locations import location_table, loc_ids_to_data, LocationData, LocationType, CARD_DRAW_COUNT, location_groups
@@ -36,7 +36,7 @@ class SpireWorld(World):
     options_dataclass = SpireOptions
     options: SpireOptions
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     topology_present = False
     web = SpireWeb()

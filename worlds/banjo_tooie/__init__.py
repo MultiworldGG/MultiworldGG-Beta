@@ -6,7 +6,7 @@ import warnings, settings
 from dataclasses import asdict
 
 from .Hints import HintData, generate_hints
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Items import BanjoTooieItem, ItemData, all_item_table, all_group_table, progressive_ability_breakdown
 from .Locations import LocationData, all_location_table, MTLoc_Table, GMLoc_table, WWLoc_table, JRLoc_table, TLLoc_table,\
     GILoc_table, HPLoc_table, CCLoc_table, MumboTokenGames_table, MumboTokenBoss_table, MumboTokenJinjo_table, SMLoc_table,\

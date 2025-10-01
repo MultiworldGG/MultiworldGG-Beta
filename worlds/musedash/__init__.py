@@ -5,7 +5,7 @@ from math import floor
 from Options import PerGameCommonOptions, OptionError
 
 from .Options import MuseDashOptions, md_option_groups
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Items import MuseDashSongItem, MuseDashFixedItem
 from .Locations import MuseDashLocation
 from .MuseDashCollection import MuseDashCollections
@@ -51,7 +51,7 @@ class MuseDashWorld(World):
 
     # World Options
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options_dataclass: ClassVar[Type[PerGameCommonOptions]] = MuseDashOptions
     options: MuseDashOptions

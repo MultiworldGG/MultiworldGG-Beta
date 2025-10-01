@@ -9,7 +9,7 @@ from BaseClasses import Item, MultiWorld, Tutorial, ItemClassification
 from Options import PerGameCommonOptions
 from worlds.AutoWorld import WebWorld, World
 from .Client import DKC3SNIClient
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Items import DKC3Item, ItemData, item_table, inventory_table, junk_table
 from .Levels import level_list
 from .Locations import DKC3Location, all_locations, setup_locations
@@ -54,7 +54,7 @@ class DKC3World(World):
     mystery of why Donkey Kong and Diddy disappeared while on vacation.
     """
     game: str = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     settings: typing.ClassVar[DK3Settings]
 

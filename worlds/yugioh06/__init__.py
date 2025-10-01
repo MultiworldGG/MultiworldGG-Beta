@@ -9,7 +9,7 @@ import Utils
 from worlds.AutoWorld import WebWorld, World
 
 from .boosterpacks import booster_contents as booster_contents
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .boosterpacks import get_booster_locations
 from .items import (
     Banlist_Items,
@@ -81,9 +81,12 @@ class Yugioh06World(World):
     simulator on the GBA. Featuring over 2000 cards and over 90 Challenges.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("yugioh06")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = Yugioh06Web()
     options: Yugioh06Options
     options_dataclass = Yugioh06Options

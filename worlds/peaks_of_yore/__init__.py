@@ -4,7 +4,7 @@ from typing import Any
 from Options import Toggle, OptionError
 from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Tutorial, Item
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .options import PeaksOfYoreOptions, Goal, StartingBook, RopeUnlockMode, StartingHands, poy_option_groups, \
     poy_option_presets
 from .data import *
@@ -37,9 +37,13 @@ class PeaksOfWorld(World):
     Steel your nerves and perfect your climbing skills as you ascend the rock wall, traverse difficult routes,
     and encounter many challenges and obstacles.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("peaks_of_yore")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = PeaksOfYoreOptions
     options: PeaksOfYoreOptions
     web = PeaksOfWeb()

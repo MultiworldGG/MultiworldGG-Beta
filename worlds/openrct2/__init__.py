@@ -78,9 +78,12 @@ class OpenRCT2World(World):
     roller coasters, manage finances, and build the park of their dreams!
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("openrct2")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = OpenRCT2WebWorld()
 
     options_dataclass = openRCT2Options

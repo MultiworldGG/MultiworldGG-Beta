@@ -113,7 +113,7 @@ class UFO50World(World):
     """  # Excerpt from https://50games.fun/
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = UFO50Web()
     required_client_version = (0, 5, 0)
     topology_present = False

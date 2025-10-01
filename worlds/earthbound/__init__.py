@@ -10,7 +10,7 @@ from worlds.AutoWorld import World, WebWorld
 import itertools
 import settings
 from .Items import get_item_names_per_category, item_table
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 from .Locations import get_locations
 from .Regions import init_areas, connect_area_exits
 from .Options import EBOptions, eb_option_groups
@@ -64,7 +64,7 @@ class EarthBoundWorld(World):
        across the world in search of 8 Melodies to defeat Giygas, the cosmic evil."""
     
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     option_definitions = EBOptions
     data_version = 1

@@ -5,7 +5,7 @@ from worlds.AutoWorld import WebWorld, World
 from . import Items, Locations, Regions, Rules
 from .Options import FaxanaduOptions
 from worlds.generic.Rules import set_rule
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 
 DAXANADU_VERSION = "0.3.0"
@@ -38,7 +38,7 @@ class FaxanaduWorld(World):
     options_dataclass = FaxanaduOptions
     options: FaxanaduOptions
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = FaxanaduWeb()
 

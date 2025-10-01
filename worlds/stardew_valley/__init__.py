@@ -38,7 +38,7 @@ from .strings.ap_names.ap_option_names import StartWithoutOptionName
 from .strings.ap_names.ap_weapon_names import APWeapon
 from .strings.ap_names.event_names import Event
 from .strings.goal_names import Goal as GoalName
-GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json()
+()
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +117,10 @@ class StardewValleyWorld(World):
     Stardew Valley is an open-ended country-life RPG. You can farm, fish, mine, fight, complete quests,
     befriend villagers, and uncover dark secrets.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("stardew_valley")
+
     game = GAME_NAME
     author: str = AUTHOR
     igdb_id: int = IGDB_ID
