@@ -20,4 +20,4 @@ include = ["worlds.poe"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.poe.Constants.VERSION"}
+version = {attr = "worlds.poe.Register.VERSION"}

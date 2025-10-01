@@ -20,4 +20,4 @@ include = ["worlds.wordipelago"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.wordipelago.Constants.VERSION"}
+version = {attr = "worlds.wordipelago.Register.VERSION"}

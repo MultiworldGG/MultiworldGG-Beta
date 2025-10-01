@@ -20,4 +20,4 @@ include = ["worlds.apeescape"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.apeescape.Constants.VERSION"}
+version = {attr = "worlds.apeescape.Register.VERSION"}

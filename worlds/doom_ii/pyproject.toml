@@ -25,4 +25,4 @@ include = ["worlds.doom_ii"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.doom_ii.Constants.VERSION"}
+version = {attr = "worlds.doom_ii.Register.VERSION"}

@@ -26,4 +26,4 @@ include = ["worlds.luigismansion"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.luigismansion.Constants.VERSION"}
+version = {attr = "worlds.luigismansion.Register.VERSION"}

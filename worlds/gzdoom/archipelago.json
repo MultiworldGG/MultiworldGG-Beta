@@ -1,6 +1,6 @@
 {
     "game": "gzDoom",
-    "author": "ToxicFrog",
+    "authors": ["ToxicFrog"],
     "igdb_id": 307741,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

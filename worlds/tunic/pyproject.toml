@@ -21,4 +21,4 @@ include = ["worlds.tunic"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.tunic.Constants.VERSION"}
+version = {attr = "worlds.tunic.Register.VERSION"}

@@ -1,6 +1,6 @@
 {
     "game": "Starcraft 2",
-    "author": "Ziktofel",
+    "authors": ["Ziktofel"],
     "igdb_id": 239,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

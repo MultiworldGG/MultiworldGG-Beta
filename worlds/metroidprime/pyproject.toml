@@ -29,4 +29,4 @@ include = ["worlds.metroidprime"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.metroidprime.Constants.VERSION"}
+version = {attr = "worlds.metroidprime.Register.VERSION"}

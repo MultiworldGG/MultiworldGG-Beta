@@ -1,6 +1,6 @@
 {
     "game": "Civilization VI",
-    "author": "hesto2",
+    "authors": ["hesto2"],
     "igdb_id": 293,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

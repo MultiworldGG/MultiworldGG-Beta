@@ -24,4 +24,4 @@ include = ["worlds.lego_star_wars_tcs"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.lego_star_wars_tcs.Constants.VERSION"}
+version = {attr = "worlds.lego_star_wars_tcs.Register.VERSION"}

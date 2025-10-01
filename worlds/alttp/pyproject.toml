@@ -28,4 +28,4 @@ include = ["worlds.alttp"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.alttp.Constants.VERSION"}
+version = {attr = "worlds.alttp.Register.VERSION"}

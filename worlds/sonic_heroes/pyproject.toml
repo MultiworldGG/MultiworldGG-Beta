@@ -20,4 +20,4 @@ include = ["worlds.sonic_heroes"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.sonic_heroes.Constants.VERSION"}
+version = {attr = "worlds.sonic_heroes.Register.VERSION"}

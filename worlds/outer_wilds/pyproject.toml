@@ -20,4 +20,4 @@ include = ["worlds.outer_wilds"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.outer_wilds.Constants.VERSION"}
+version = {attr = "worlds.outer_wilds.Register.VERSION"}

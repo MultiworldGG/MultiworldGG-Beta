@@ -20,4 +20,4 @@ include = ["worlds.against_the_storm"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.against_the_storm.Constants.VERSION"}
+version = {attr = "worlds.against_the_storm.Register.VERSION"}

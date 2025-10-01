@@ -1,6 +1,6 @@
 {
     "game": "Resident Evil 3 Remake",
-    "author": "TheRealSolidusSnake",
+    "authors": ["TheRealSolidusSnake"],
     "igdb_id": 115115,
     "minimum_ap_version": "0.6.4",
     "world_version": "0.2.4"

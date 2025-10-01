@@ -20,4 +20,4 @@ include = ["worlds.dark_souls_2"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.dark_souls_2.Constants.VERSION"}
+version = {attr = "worlds.dark_souls_2.Register.VERSION"}

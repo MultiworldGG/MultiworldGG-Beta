@@ -24,4 +24,4 @@ include = ["worlds.mzm"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.mzm.Constants.VERSION"}
+version = {attr = "worlds.mzm.Register.VERSION"}

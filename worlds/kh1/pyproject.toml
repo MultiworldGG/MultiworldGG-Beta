@@ -23,4 +23,4 @@ include = ["worlds.kh1"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.kh1.Constants.VERSION"}
+version = {attr = "worlds.kh1.Register.VERSION"}

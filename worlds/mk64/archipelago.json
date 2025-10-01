@@ -1,6 +1,6 @@
 {
     "game": "Mario Kart 64",
-    "author": "Edsploration",
+    "authors": ["Edsploration"],
     "igdb_id": 2342,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

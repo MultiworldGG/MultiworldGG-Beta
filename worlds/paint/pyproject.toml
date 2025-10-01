@@ -20,4 +20,4 @@ include = ["worlds.paint"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.paint.Constants.VERSION"}
+version = {attr = "worlds.paint.Register.VERSION"}

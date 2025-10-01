@@ -1,6 +1,6 @@
 {
     "game": "Castlevania 64",
-    "author": "LiquidCat64",
+    "authors": ["LiquidCat64"],
     "igdb_id": 1130,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

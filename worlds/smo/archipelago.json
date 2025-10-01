@@ -1,6 +1,6 @@
 {
     "game": "Super Mario Odyssey",
-    "author": "Kgamer77",
+    "authors": ["Kgamer77"],
     "igdb_id": 26758,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

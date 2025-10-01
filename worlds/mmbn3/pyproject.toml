@@ -23,4 +23,4 @@ include = ["worlds.mmbn3"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.mmbn3.Constants.VERSION"}
+version = {attr = "worlds.mmbn3.Register.VERSION"}

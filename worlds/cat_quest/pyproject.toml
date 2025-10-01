@@ -20,4 +20,4 @@ include = ["worlds.cat_quest"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.cat_quest.Constants.VERSION"}
+version = {attr = "worlds.cat_quest.Register.VERSION"}

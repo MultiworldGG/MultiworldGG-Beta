@@ -20,4 +20,4 @@ include = ["worlds.pmd_eos"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.pmd_eos.Constants.VERSION"}
+version = {attr = "worlds.pmd_eos.Register.VERSION"}

@@ -24,4 +24,4 @@ include = ["worlds.wl4"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.wl4.Constants.VERSION"}
+version = {attr = "worlds.wl4.Register.VERSION"}

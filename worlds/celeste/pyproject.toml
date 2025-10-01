@@ -24,4 +24,4 @@ include = ["worlds.celeste"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.celeste.Constants.VERSION"}
+version = {attr = "worlds.celeste.Register.VERSION"}

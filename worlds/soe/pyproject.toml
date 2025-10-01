@@ -23,4 +23,4 @@ include = ["worlds.soe"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.soe.Constants.VERSION"}
+version = {attr = "worlds.soe.Register.VERSION"}

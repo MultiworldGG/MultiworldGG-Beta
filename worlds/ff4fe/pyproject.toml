@@ -33,4 +33,4 @@ include = ["worlds.ff4fe"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.ff4fe.Constants.VERSION"}
+version = {attr = "worlds.ff4fe.Register.VERSION"}

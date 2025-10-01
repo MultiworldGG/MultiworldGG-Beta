@@ -23,4 +23,4 @@ include = ["worlds.ahit"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.ahit.Constants.VERSION"}
+version = {attr = "worlds.ahit.Register.VERSION"}

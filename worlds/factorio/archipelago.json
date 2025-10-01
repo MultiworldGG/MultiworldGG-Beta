@@ -1,6 +1,6 @@
 {
     "game": "Factorio",
-    "author": "Berserker66",
+    "authors": ["Berserker66"],
     "igdb_id": 7046,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

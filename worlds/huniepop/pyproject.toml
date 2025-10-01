@@ -20,4 +20,4 @@ include = ["worlds.huniepop"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.huniepop.Constants.VERSION"}
+version = {attr = "worlds.huniepop.Register.VERSION"}

@@ -1,6 +1,6 @@
 {
     "game": "osu!",
-    "author": "Kanave",
+    "authors": ["Kanave"],
     "igdb_id": 3012,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

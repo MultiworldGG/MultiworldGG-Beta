@@ -1,6 +1,6 @@
 {
     "game": "shapez",
-    "author": "Slimey",
+    "authors": ["Slimey"],
     "igdb_id": 134826,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

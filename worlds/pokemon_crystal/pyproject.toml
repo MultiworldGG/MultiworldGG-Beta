@@ -24,4 +24,4 @@ include = ["worlds.pokemon_crystal"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.pokemon_crystal.Constants.VERSION"}
+version = {attr = "worlds.pokemon_crystal.Register.VERSION"}

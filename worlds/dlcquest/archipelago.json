@@ -1,6 +1,6 @@
 {
     "game": "DLCQuest",
-    "author": "axe-y & Kaito Kid",
+    "authors": ["axe-y", "Kaito Kid"],
     "igdb_id": 3004,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

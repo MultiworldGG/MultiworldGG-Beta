@@ -24,4 +24,4 @@ include = ["worlds.sm64hacks"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.sm64hacks.Constants.VERSION"}
+version = {attr = "worlds.sm64hacks.Register.VERSION"}

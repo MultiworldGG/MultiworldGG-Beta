@@ -27,4 +27,4 @@ include = ["worlds.rac2"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.rac2.Constants.VERSION"}
+version = {attr = "worlds.rac2.Register.VERSION"}

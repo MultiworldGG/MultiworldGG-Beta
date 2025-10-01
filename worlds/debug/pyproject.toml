@@ -20,4 +20,4 @@ include = ["worlds.debug"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.debug.Constants.VERSION"}
+version = {attr = "worlds.debug.Register.VERSION"}

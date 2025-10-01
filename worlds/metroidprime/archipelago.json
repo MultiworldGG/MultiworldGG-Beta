@@ -1,6 +1,6 @@
 {
     "game": "Metroid Prime",
-    "author": "Electro15",
+    "authors": ["Electro15"],
     "igdb_id": 1105,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

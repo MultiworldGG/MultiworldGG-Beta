@@ -21,4 +21,4 @@ include = ["worlds.lufia2ac"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.lufia2ac.Constants.VERSION"}
+version = {attr = "worlds.lufia2ac.Register.VERSION"}

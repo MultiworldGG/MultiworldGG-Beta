@@ -20,4 +20,4 @@ include = ["worlds.rimworld"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.rimworld.Constants.VERSION"}
+version = {attr = "worlds.rimworld.Register.VERSION"}

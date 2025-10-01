@@ -1,6 +1,6 @@
 {
     "game": "Paper Mario The Thousand Year Door",
-    "author": "jamesbrq",
+    "authors": ["jamesbrq"],
     "igdb_id": 328663,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

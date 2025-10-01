@@ -1,6 +1,6 @@
 {
     "game": "Inscryption",
-    "author": "DrBibop",
+    "authors": ["DrBibop"],
     "igdb_id": 139090,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

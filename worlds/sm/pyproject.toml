@@ -26,4 +26,4 @@ exclude = ["sm_*", "sm6*", "smo*", "sms*", "smw*", "smz*", "*test*", "test*"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.sm.Constants.VERSION"}
+version = {attr = "worlds.sm.Register.VERSION"}

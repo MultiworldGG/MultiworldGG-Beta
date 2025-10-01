@@ -1,6 +1,6 @@
 {
     "game": "Here Comes Niko!",
-    "author": "nieli",
+    "authors": ["nieli"],
     "igdb_id": 142405,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

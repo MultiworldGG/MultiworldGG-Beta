@@ -32,4 +32,4 @@ include = ["worlds.sc2"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.sc2.Constants.VERSION"}
+version = {attr = "worlds.sc2.Register.VERSION"}

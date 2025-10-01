@@ -23,4 +23,4 @@ include = ["worlds.banjo_tooie"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.banjo_tooie.Constants.VERSION"}
+version = {attr = "worlds.banjo_tooie.Register.VERSION"}

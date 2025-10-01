@@ -20,4 +20,4 @@ include = ["worlds.tetrisattack"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.tetrisattack.Constants.VERSION"}
+version = {attr = "worlds.tetrisattack.Register.VERSION"}

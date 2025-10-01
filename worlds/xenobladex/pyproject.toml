@@ -24,4 +24,4 @@ include = ["worlds.xenobladex"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.xenobladex.Constants.VERSION"}
+version = {attr = "worlds.xenobladex.Register.VERSION"}

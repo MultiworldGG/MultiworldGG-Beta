@@ -25,4 +25,4 @@ include = ["worlds.dk64"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.dk64.Constants.VERSION"}
+version = {attr = "worlds.dk64.Register.VERSION"}

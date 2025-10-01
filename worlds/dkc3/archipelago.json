@@ -1,7 +1,7 @@
 {
     "game": "Donkey Kong Country 3",
-    "author": "PoryGone",
+    "authors": ["PoryGone"],
     "igdb_id": 1094,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "1.0.1"
+    "minimum_ap_version": "0.6.3",
+    "world_version": "1.1.0"
 }

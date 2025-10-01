@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "worlds.zillion"
 dynamic = ["version"]
@@ -20,4 +24,4 @@ include = ["worlds.zillion"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.zillion.Constants.VERSION"}
+version = {attr = "worlds.zillion.Register.VERSION"}

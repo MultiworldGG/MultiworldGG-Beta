@@ -20,4 +20,4 @@ include = ["worlds.lethal_company"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.lethal_company.Constants.VERSION"}
+version = {attr = "worlds.lethal_company.Register.VERSION"}

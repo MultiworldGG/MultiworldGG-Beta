@@ -48,4 +48,4 @@ include = ["worlds.sm_map_rando"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.sm_map_rando.Constants.VERSION"}
+version = {attr = "worlds.sm_map_rando.Register.VERSION"}

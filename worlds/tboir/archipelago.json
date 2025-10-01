@@ -1,6 +1,6 @@
 {
     "game": "The Binding of Isaac Repentance",
-    "author": "Cyb3R",
+    "authors": ["Cyb3R"],
     "igdb_id": 310643,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

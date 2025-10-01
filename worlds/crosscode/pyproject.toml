@@ -20,4 +20,4 @@ include = ["worlds.crosscode"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.crosscode.Constants.VERSION"}
+version = {attr = "worlds.crosscode.Register.VERSION"}

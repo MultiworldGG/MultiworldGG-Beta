@@ -20,4 +20,4 @@ include = ["worlds.hylics2"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.hylics2.Constants.VERSION"}
+version = {attr = "worlds.hylics2.Register.VERSION"}

@@ -21,4 +21,4 @@ include = ["worlds.dlcquest"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.dlcquest.Constants.VERSION"}
+version = {attr = "worlds.dlcquest.Register.VERSION"}

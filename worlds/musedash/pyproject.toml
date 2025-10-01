@@ -20,4 +20,4 @@ include = ["worlds.musedash"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.musedash.Constants.VERSION"}
+version = {attr = "worlds.musedash.Register.VERSION"}

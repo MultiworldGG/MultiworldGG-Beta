@@ -20,4 +20,4 @@ include = ["worlds.mm_recomp"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.mm_recomp.Constants.VERSION"}
+version = {attr = "worlds.mm_recomp.Register.VERSION"}

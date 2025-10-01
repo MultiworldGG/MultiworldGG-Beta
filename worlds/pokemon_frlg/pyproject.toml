@@ -20,4 +20,4 @@ include = ["worlds.pokemon_frlg"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.pokemon_frlg.Constants.VERSION"}
+version = {attr = "worlds.pokemon_frlg.Register.VERSION"}

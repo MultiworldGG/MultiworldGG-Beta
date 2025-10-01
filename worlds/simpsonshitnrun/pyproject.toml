@@ -20,4 +20,4 @@ include = ["worlds.simpsonshitnrun"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.simpsonshitnrun.Constants.VERSION"}
+version = {attr = "worlds.simpsonshitnrun.Register.VERSION"}

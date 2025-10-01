@@ -20,4 +20,4 @@ include = ["worlds.faxanadu"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.faxanadu.Constants.VERSION"}
+version = {attr = "worlds.faxanadu.Register.VERSION"}

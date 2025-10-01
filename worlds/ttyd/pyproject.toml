@@ -26,4 +26,4 @@ include = ["worlds.ttyd"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.ttyd.Constants.VERSION"}
+version = {attr = "worlds.ttyd.Register.VERSION"}

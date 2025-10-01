@@ -24,4 +24,4 @@ include = ["worlds.tyrian"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.tyrian.Constants.VERSION"}
+version = {attr = "worlds.tyrian.Register.VERSION"}

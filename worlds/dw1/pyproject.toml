@@ -20,4 +20,4 @@ include = ["worlds.dw1"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.dw1.Constants.VERSION"}
+version = {attr = "worlds.dw1.Register.VERSION"}

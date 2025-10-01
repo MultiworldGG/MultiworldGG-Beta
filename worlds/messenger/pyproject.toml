@@ -20,4 +20,4 @@ include = ["worlds.messenger"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.messenger.Constants.VERSION"}
+version = {attr = "worlds.messenger.Register.VERSION"}

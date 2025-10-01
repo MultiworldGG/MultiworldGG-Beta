@@ -20,4 +20,4 @@ include = ["worlds.blasphemous"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.blasphemous.Constants.VERSION"}
+version = {attr = "worlds.blasphemous.Register.VERSION"}

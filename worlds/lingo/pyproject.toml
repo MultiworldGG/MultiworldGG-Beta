@@ -20,4 +20,4 @@ include = ["worlds.lingo"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.lingo.Constants.VERSION"}
+version = {attr = "worlds.lingo.Register.VERSION"}

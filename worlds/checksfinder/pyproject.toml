@@ -23,4 +23,4 @@ include = ["worlds.checksfinder"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.checksfinder.Constants.VERSION"}
+version = {attr = "worlds.checksfinder.Register.VERSION"}

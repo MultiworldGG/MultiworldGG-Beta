@@ -1,6 +1,6 @@
 {
     "game": "ULTRAKILL",
-    "author": "TRPG",
+    "authors": ["TRPG"],
     "igdb_id": 124333,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

@@ -26,4 +26,4 @@ where = ["src"]
 include = ["worlds.kh2"]
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.kh2.Constants.VERSION"}
+version = {attr = "worlds.kh2.Register.VERSION"}

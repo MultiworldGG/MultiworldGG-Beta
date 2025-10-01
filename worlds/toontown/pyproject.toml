@@ -20,4 +20,4 @@ include = ["worlds.toontown"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.toontown.Constants.VERSION"}
+version = {attr = "worlds.toontown.Register.VERSION"}

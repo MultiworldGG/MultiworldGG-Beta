@@ -1,6 +1,6 @@
 {
     "game": "Lingo",
-    "author": "hatkirby",
+    "authors": ["hatkirby"],
     "igdb_id": 189169,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

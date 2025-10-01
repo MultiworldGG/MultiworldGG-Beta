@@ -20,4 +20,4 @@ include = ["worlds.peaks_of_yore"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.peaks_of_yore.Constants.VERSION"}
+version = {attr = "worlds.peaks_of_yore.Register.VERSION"}

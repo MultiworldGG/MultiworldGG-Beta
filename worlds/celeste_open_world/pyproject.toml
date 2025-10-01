@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds.celeste_open_world"
+dynamic = ["version"]
+description = "MultiWorld: Celeste (Open World)"
+authors = [
+    {name = "PoryGone"}
+]
+classifiers = [
+    "Private :: Do Not Upload"
+]
+requires-python = ">=3.12"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["worlds.celeste_open_world"]
+namespaces = true
+
+[tool.setuptools.dynamic]
+version = {attr = "worlds.celeste_open_world.Register.VERSION"}

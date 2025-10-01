@@ -23,4 +23,4 @@ include = ["worlds.hades"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.hades.Constants.VERSION"}
+version = {attr = "worlds.hades.Register.VERSION"}

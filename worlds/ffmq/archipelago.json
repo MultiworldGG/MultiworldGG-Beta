@@ -1,6 +1,6 @@
 {
     "game": "Final Fantasy Mystic Quest",
-    "author": "Alchav",
+    "authors": ["Alchav"],
     "igdb_id": 415,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

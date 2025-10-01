@@ -20,4 +20,4 @@ include = ["worlds.momodoramoonlitfarewell"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.momodoramoonlitfarewell.Constants.VERSION"}
+version = {attr = "worlds.momodoramoonlitfarewell.Register.VERSION"}

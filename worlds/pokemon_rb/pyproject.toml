@@ -24,4 +24,4 @@ include = ["worlds.pokemon_rb"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.pokemon_rb.Constants.VERSION"}
+version = {attr = "worlds.pokemon_rb.Register.VERSION"}

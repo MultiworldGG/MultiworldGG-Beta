@@ -1,6 +1,6 @@
 {
     "game": "Hatsune Miku Project Diva Mega Mix+",
-    "author": "Cynichill",
+    "authors": ["Cynichill"],
     "igdb_id": 120278,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

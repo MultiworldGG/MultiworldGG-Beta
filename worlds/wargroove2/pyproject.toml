@@ -23,4 +23,4 @@ include = ["worlds.wargroove2"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.wargroove2.Constants.VERSION"}
+version = {attr = "worlds.wargroove2.Register.VERSION"}

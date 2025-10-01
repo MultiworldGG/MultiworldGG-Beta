@@ -1,6 +1,6 @@
 {
     "game": "Tyrian",
-    "author": "Kaito Sinclaire",
+    "authors": ["Kaito Sinclaire"],
     "igdb_id": 14432,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

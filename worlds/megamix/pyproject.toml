@@ -27,4 +27,4 @@ include = ["worlds.megamix"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.megamix.Constants.VERSION"}
+version = {attr = "worlds.megamix.Register.VERSION"}

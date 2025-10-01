@@ -1,6 +1,6 @@
 {
     "game": "Overcooked! 2",
-    "author": "toasterparty",
+    "authors": ["toasterparty"],
     "igdb_id": 103341,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

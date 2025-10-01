@@ -1,6 +1,6 @@
 {
     "game": "Peaks of Yore",
-    "author": "c0der23",
+    "authors": ["c0der23"],
     "igdb_id": 238690,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

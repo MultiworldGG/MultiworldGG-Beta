@@ -1,6 +1,6 @@
 {
     "game": "Factorio Space Age Without Space",
-    "author": "Alchav & Berserker66",
+    "authors": ["Alchav", "Berserker66"],
     "igdb_id": 263344,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

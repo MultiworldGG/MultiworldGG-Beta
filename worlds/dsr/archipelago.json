@@ -1,6 +1,6 @@
 {
     "game": "Dark Souls Remastered",
-    "author": "ArsonAssassin",
+    "authors": ["ArsonAssassin"],
     "igdb_id": 81085,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

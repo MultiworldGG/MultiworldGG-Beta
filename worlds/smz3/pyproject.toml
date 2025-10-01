@@ -24,4 +24,4 @@ include = ["worlds.smz3"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.smz3.Constants.VERSION"}
+version = {attr = "worlds.smz3.Register.VERSION"}

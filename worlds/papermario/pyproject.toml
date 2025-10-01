@@ -24,4 +24,4 @@ include = ["worlds.papermario"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.papermario.Constants.VERSION"}
+version = {attr = "worlds.papermario.Register.VERSION"}

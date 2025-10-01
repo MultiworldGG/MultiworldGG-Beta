@@ -20,4 +20,4 @@ include = ["worlds.tboir"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.tboir.Constants.VERSION"}
+version = {attr = "worlds.tboir.Register.VERSION"}

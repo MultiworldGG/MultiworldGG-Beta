@@ -27,4 +27,4 @@ include = ["worlds.ladx"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.ladx.Constants.VERSION"}
+version = {attr = "worlds.ladx.Register.VERSION"}

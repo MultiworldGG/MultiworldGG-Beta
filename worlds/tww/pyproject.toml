@@ -26,4 +26,4 @@ include = ["worlds.tww"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.tww.Constants.VERSION"}
+version = {attr = "worlds.tww.Register.VERSION"}

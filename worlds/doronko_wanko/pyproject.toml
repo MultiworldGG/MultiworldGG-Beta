@@ -20,4 +20,4 @@ include = ["worlds.doronko_wanko"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.doronko_wanko.Constants.VERSION"}
+version = {attr = "worlds.doronko_wanko.Register.VERSION"}

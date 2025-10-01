@@ -19,4 +19,4 @@ include = ["worlds.tracker"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.tracker.Constants.VERSION"}
+version = {attr = "worlds.tracker.Register.VERSION"}

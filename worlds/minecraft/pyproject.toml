@@ -24,4 +24,4 @@ include = ["worlds.minecraft"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.minecraft.Constants.VERSION"}
+version = {attr = "worlds.minecraft.Register.VERSION"}

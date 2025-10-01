@@ -24,4 +24,4 @@ include = ["worlds.ffmq"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.ffmq.Constants.VERSION"}
+version = {attr = "worlds.ffmq.Register.VERSION"}

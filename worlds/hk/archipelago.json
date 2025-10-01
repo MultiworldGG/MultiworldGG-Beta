@@ -1,6 +1,6 @@
 {
     "game": "Hollow Knight",
-    "author": "BadMagic",
+    "authors": ["BadMagic"],
     "igdb_id": 14593,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

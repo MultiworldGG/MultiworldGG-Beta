@@ -20,4 +20,4 @@ include = ["worlds.aus"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.aus.Constants.VERSION"}
+version = {attr = "worlds.aus.Register.VERSION"}

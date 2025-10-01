@@ -23,4 +23,4 @@ include = ["worlds.gstla"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.gstla.Constants.VERSION"}
+version = {attr = "worlds.gstla.Register.VERSION"}

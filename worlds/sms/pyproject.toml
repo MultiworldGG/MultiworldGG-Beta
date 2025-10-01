@@ -26,4 +26,4 @@ include = ["worlds.sms"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.sms.Constants.VERSION"}
+version = {attr = "worlds.sms.Register.VERSION"}

@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "worlds.celeste64"
 dynamic = ["version"]
@@ -16,4 +20,4 @@ include = ["worlds.celeste64"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.celeste64.Constants.VERSION"}
+version = {attr = "worlds.celeste64.Register.VERSION"}

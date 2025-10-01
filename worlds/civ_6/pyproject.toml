@@ -27,4 +27,4 @@ include = ["worlds.civ_6"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.civ_6.Constants.VERSION"}
+version = {attr = "worlds.civ_6.Register.VERSION"}

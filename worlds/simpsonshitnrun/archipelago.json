@@ -1,6 +1,6 @@
 {
     "game": "The Simpsons Hit And Run",
-    "author": "Caesius",
+    "authors": ["Caesius"],
     "igdb_id": 2844,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

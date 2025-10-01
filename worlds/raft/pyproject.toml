@@ -20,4 +20,4 @@ include = ["worlds.raft"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.raft.Constants.VERSION"}
+version = {attr = "worlds.raft.Register.VERSION"}

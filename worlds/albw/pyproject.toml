@@ -28,4 +28,4 @@ exclude = ["test*", "*test*"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.albw.Constants.VERSION"}
+version = {attr = "worlds.albw.Register.VERSION"}

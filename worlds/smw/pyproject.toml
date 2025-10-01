@@ -20,4 +20,4 @@ include = ["worlds.smw"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.smw.Constants.VERSION"}
+version = {attr = "worlds.smw.Register.VERSION"}

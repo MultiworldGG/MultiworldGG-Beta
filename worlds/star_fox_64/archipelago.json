@@ -1,6 +1,6 @@
 {
     "game": "Star Fox 64",
-    "author": "Austin",
+    "authors": ["Austin"],
     "igdb_id": 2591,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

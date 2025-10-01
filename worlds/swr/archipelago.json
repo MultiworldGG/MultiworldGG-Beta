@@ -1,6 +1,6 @@
 {
     "game": "Star Wars Episode I Racer",
-    "author": "Johnny Hamcobbler",
+    "authors": ["Johnny Hamcobbler"],
     "igdb_id": 154,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

@@ -20,4 +20,4 @@ include = ["worlds.aquaria"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.aquaria.Constants.VERSION"}
+version = {attr = "worlds.aquaria.Register.VERSION"}

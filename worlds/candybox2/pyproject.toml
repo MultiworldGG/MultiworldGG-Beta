@@ -20,4 +20,4 @@ include = ["worlds.candybox2"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.candybox2.Constants.VERSION"}
+version = {attr = "worlds.candybox2.Register.VERSION"}

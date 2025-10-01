@@ -1,6 +1,6 @@
 {
     "game": "A Link Between Worlds",
-    "author": "randomsalience",
+    "authors": ["randomsalience"],
     "igdb_id": 2909,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

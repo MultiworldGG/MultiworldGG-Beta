@@ -25,4 +25,4 @@ include = ["worlds.heretic"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.heretic.Constants.VERSION"}
+version = {attr = "worlds.heretic.Register.VERSION"}

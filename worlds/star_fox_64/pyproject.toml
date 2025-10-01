@@ -24,4 +24,4 @@ include = ["worlds.star_fox_64"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.star_fox_64.Constants.VERSION"}
+version = {attr = "worlds.star_fox_64.Register.VERSION"}

@@ -24,4 +24,4 @@ include = ["worlds.marioland2"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.marioland2.Constants.VERSION"}
+version = {attr = "worlds.marioland2.Register.VERSION"}

@@ -23,4 +23,4 @@ include = ["worlds.sly1"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.sly1.Constants.VERSION"}
+version = {attr = "worlds.sly1.Register.VERSION"}

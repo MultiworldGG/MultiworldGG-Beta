@@ -20,4 +20,4 @@ include = ["worlds.ror2"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.ror2.Constants.VERSION"}
+version = {attr = "worlds.ror2.Register.VERSION"}

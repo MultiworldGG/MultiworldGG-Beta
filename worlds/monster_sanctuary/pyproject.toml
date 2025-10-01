@@ -20,4 +20,4 @@ include = ["worlds.monster_sanctuary"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.monster_sanctuary.Constants.VERSION"}
+version = {attr = "worlds.monster_sanctuary.Register.VERSION"}

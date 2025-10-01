@@ -1,7 +1,9 @@
 {
   "game": "Pokemon Crystal",
+  "authors": ["James"],
+  "igdb_id": 1514,
   "minimum_ap_version": "0.6.3",
-  "world_version": "5.1.4",
-  "compatible_version": 6,
+  "world_version": "5.0.4",
+  "compatible_version": 5,
   "version": 6
 }

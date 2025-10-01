@@ -1,6 +1,6 @@
 {
     "game": "Old School Runescape",
-    "author": "digiholic",
+    "authors": ["digiholic"],
     "igdb_id": 79824,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

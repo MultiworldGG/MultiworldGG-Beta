@@ -24,4 +24,4 @@ include = ["worlds.ufo50"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.ufo50.Constants.VERSION"}
+version = {attr = "worlds.ufo50.Register.VERSION"}

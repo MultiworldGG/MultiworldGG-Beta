@@ -20,4 +20,4 @@ include = ["worlds.dsr"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.dsr.Constants.VERSION"}
+version = {attr = "worlds.dsr.Register.VERSION"}

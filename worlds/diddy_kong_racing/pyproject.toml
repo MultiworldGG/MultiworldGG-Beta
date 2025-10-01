@@ -23,4 +23,4 @@ include = ["worlds.diddy_kong_racing"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.diddy_kong_racing.Constants.VERSION"}
+version = {attr = "worlds.diddy_kong_racing.Register.VERSION"}

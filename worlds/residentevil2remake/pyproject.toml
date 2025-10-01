@@ -20,4 +20,4 @@ include = ["worlds.residentevil2remake"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.residentevil2remake.Constants.VERSION"}
+version = {attr = "worlds.residentevil2remake.Register.VERSION"}

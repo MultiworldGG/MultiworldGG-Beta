@@ -20,4 +20,4 @@ include = ["worlds.seaofthieves"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.seaofthieves.Constants.VERSION"}
+version = {attr = "worlds.seaofthieves.Register.VERSION"}

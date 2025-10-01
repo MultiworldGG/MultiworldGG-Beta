@@ -20,4 +20,4 @@ include = ["worlds.ff1"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.ff1.Constants.VERSION"}
+version = {attr = "worlds.ff1.Register.VERSION"}

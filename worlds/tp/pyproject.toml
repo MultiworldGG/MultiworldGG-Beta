@@ -20,4 +20,4 @@ include = ["worlds.tp"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.tp.Constants.VERSION"}
+version = {attr = "worlds.tp.Register.VERSION"}

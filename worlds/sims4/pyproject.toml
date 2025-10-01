@@ -27,4 +27,4 @@ include = ["worlds.sims4"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.sims4.Constants.VERSION"}
+version = {attr = "worlds.sims4.Register.VERSION"}

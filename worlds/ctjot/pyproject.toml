@@ -20,4 +20,4 @@ include = ["worlds.ctjot"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.ctjot.Constants.VERSION"}
+version = {attr = "worlds.ctjot.Register.VERSION"}

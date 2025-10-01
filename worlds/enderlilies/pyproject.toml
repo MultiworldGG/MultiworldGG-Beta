@@ -20,4 +20,4 @@ include = ["worlds.enderlilies"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.enderlilies.Constants.VERSION"}
+version = {attr = "worlds.enderlilies.Register.VERSION"}

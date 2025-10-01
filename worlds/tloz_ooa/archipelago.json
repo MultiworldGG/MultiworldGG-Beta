@@ -1,6 +1,6 @@
 {
     "game": "The Legend of Zelda - Oracle of Ages",
-    "author": "Dinopony",
+    "authors": ["Dinopony"],
     "igdb_id": 1041,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

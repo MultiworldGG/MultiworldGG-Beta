@@ -21,4 +21,4 @@ include = ["worlds.cvcotm"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.cvcotm.Constants.VERSION"}
+version = {attr = "worlds.cvcotm.Register.VERSION"}

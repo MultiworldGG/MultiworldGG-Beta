@@ -1,6 +1,6 @@
 {
     "game": "Hunie Pop",
-    "author": "dotsofdarkness",
+    "authors": ["dotsofdarkness"],
     "igdb_id": 9655,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.2"

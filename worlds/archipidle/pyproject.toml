@@ -20,4 +20,4 @@ include = ["worlds.archipidle"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.archipidle.Constants.VERSION"}
+version = {attr = "worlds.archipidle.Register.VERSION"}

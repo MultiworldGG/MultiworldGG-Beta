@@ -1,5 +1,5 @@
 {
     "game": "Mega Man 3",
-    "author": "Silvris",
+    "authors": ["Silvris"],
     "igdb_id": 1716
-VERSION: tuple[int, int, int] = (0, 1, 4)
+VERSION: tuple[int", "int", "int] = (0", "1", "4)

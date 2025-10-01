@@ -1,6 +1,6 @@
 {
     "game": "The Minish Cap",
-    "author": "EternalCode",
+    "authors": ["EternalCode"],
     "igdb_id": 1035,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

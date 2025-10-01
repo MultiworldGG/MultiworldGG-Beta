@@ -1,6 +1,6 @@
 {
     "game": "Risk of Rain 2",
-    "author": "Sneaki",
+    "authors": ["Sneaki"],
     "igdb_id": 28512,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

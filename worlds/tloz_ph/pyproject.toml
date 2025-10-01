@@ -20,4 +20,4 @@ include = ["worlds.tloz_ph"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.tloz_ph.Constants.VERSION"}
+version = {attr = "worlds.tloz_ph.Register.VERSION"}

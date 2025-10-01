@@ -20,4 +20,4 @@ include = ["worlds.v6"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.v6.Constants.VERSION"}
+version = {attr = "worlds.v6.Register.VERSION"}

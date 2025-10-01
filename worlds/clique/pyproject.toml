@@ -20,4 +20,4 @@ include = ["worlds.clique"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.clique.Constants.VERSION"}
+version = {attr = "worlds.clique.Register.VERSION"}

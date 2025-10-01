@@ -20,4 +20,4 @@ include = ["worlds.inscryption"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.inscryption.Constants.VERSION"}
+version = {attr = "worlds.inscryption.Register.VERSION"}

@@ -23,4 +23,4 @@ include = ["worlds.adventure"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.adventure.Constants.VERSION"}
+version = {attr = "worlds.adventure.Register.VERSION"}

@@ -1,6 +1,6 @@
 {
     "game": "Chained Echoes",
-    "author": "SergioAlonso",
+    "authors": ["SergioAlonso"],
     "igdb_id": 117271,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

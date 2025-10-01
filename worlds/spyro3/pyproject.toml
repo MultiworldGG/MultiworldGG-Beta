@@ -20,4 +20,4 @@ include = ["worlds.spyro3"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.spyro3.Constants.VERSION"}
+version = {attr = "worlds.spyro3.Register.VERSION"}

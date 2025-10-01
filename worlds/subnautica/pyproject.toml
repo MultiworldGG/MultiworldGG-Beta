@@ -24,4 +24,4 @@ include = ["worlds.subnautica"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.subnautica.Constants.VERSION"}
+version = {attr = "worlds.subnautica.Register.VERSION"}

@@ -20,4 +20,4 @@ include = ["worlds.hcniko"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.hcniko.Constants.VERSION"}
+version = {attr = "worlds.hcniko.Register.VERSION"}

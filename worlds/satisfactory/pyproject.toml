@@ -20,4 +20,4 @@ include = ["worlds.satisfactory"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.satisfactory.Constants.VERSION"}
+version = {attr = "worlds.satisfactory.Register.VERSION"}

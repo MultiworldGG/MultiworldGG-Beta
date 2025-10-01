@@ -20,4 +20,4 @@ include = ["worlds.yugiohddm"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.yugiohddm.Constants.VERSION"}
+version = {attr = "worlds.yugiohddm.Register.VERSION"}

@@ -20,4 +20,4 @@ include = ["worlds.jigsaw"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.jigsaw.Constants.VERSION"}
+version = {attr = "worlds.jigsaw.Register.VERSION"}

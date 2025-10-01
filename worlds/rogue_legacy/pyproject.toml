@@ -20,4 +20,4 @@ include = ["worlds.rogue_legacy"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.rogue_legacy.Constants.VERSION"}
+version = {attr = "worlds.rogue_legacy.Register.VERSION"}

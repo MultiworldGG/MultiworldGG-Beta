@@ -21,4 +21,4 @@ include = ["worlds.sa2b"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.sa2b.Constants.VERSION"}
+version = {attr = "worlds.sa2b.Register.VERSION"}

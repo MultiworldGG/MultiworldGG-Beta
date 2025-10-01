@@ -1,6 +1,6 @@
 {
     "game": "SMZ3",
-    "author": "lordlou",
+    "authors": ["lordlou"],
     "igdb_id": 210231,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

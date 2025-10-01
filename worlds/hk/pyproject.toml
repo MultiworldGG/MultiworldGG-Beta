@@ -20,4 +20,4 @@ include = ["worlds.hk"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.hk.Constants.VERSION"}
+version = {attr = "worlds.hk.Register.VERSION"}

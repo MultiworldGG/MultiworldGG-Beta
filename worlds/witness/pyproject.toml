@@ -21,4 +21,4 @@ include = ["worlds.witness"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.witness.Constants.VERSION"}
+version = {attr = "worlds.witness.Register.VERSION"}

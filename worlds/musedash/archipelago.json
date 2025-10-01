@@ -1,6 +1,6 @@
 {
     "game": "Muse Dash",
-    "author": "DeamonHunter",
+    "authors": ["DeamonHunter"],
     "igdb_id": 86316,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

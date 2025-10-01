@@ -20,4 +20,4 @@ include = ["worlds.tmc"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.tmc.Constants.VERSION"}
+version = {attr = "worlds.tmc.Register.VERSION"}

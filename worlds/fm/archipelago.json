@@ -1,6 +1,6 @@
 {
     "game": "Yu-Gi-Oh! Forbidden Memories",
-    "author": "sg4e",
+    "authors": ["sg4e"],
     "igdb_id": 4108,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

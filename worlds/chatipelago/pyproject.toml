@@ -20,4 +20,4 @@ include = ["worlds.chatipelago"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.chatipelago.Constants.VERSION"}
+version = {attr = "worlds.chatipelago.Register.VERSION"}

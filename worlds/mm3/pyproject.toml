@@ -20,4 +20,4 @@ include = ["worlds.mm3"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.mm3.Constants.VERSION"}
+version = {attr = "worlds.mm3.Register.VERSION"}

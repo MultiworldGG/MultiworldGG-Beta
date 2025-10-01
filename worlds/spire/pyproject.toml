@@ -20,4 +20,4 @@ include = ["worlds.spire"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.spire.Constants.VERSION"}
+version = {attr = "worlds.spire.Register.VERSION"}

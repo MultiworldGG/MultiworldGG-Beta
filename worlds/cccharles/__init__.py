@@ -5,7 +5,8 @@ from .Rules import set_rules
 from .Regions import create_regions
 from BaseClasses import Tutorial, ItemClassification
 from worlds.AutoWorld import World, WebWorld
-
+from BaseUtils import get_archipelago_json
+game, author, minimum_ap_version, version = get_archipelago_json("cccharles")
 
 class CCCharlesWeb(WebWorld):
     """

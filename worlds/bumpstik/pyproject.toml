@@ -20,4 +20,4 @@ include = ["worlds.bumpstik"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.bumpstik.Constants.VERSION"}
+version = {attr = "worlds.bumpstik.Register.VERSION"}

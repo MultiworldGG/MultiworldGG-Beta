@@ -25,4 +25,4 @@ include = ["worlds.stardew_valley"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.stardew_valley.Constants.VERSION"}
+version = {attr = "worlds.stardew_valley.Register.VERSION"}

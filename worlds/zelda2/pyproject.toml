@@ -20,4 +20,4 @@ include = ["worlds.zelda2"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.zelda2.Constants.VERSION"}
+version = {attr = "worlds.zelda2.Register.VERSION"}

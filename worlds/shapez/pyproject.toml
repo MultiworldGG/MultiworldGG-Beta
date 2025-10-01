@@ -20,4 +20,4 @@ include = ["worlds.shapez"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.shapez.Constants.VERSION"}
+version = {attr = "worlds.shapez.Register.VERSION"}

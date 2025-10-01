@@ -20,4 +20,4 @@ include = ["worlds.overcooked2"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.overcooked2.Constants.VERSION"}
+version = {attr = "worlds.overcooked2.Register.VERSION"}

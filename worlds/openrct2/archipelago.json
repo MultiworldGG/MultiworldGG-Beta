@@ -4,7 +4,7 @@ import pkgutil
 
 {
     "game": "OpenRCT2",
-    "author": "Crazycolbster",
+    "authors": ["Crazycolbster"],
     "igdb_id": 80720,
     "minimum_ap_version": "0.6.4",
     "world_version": "v0.1.20-beta"
@@ -12,7 +12,7 @@ import pkgutil
 # Sent to the game to verify that the plugin version is compatible
 apworld_version = VERSION
 
-# ID of first item and location, could be hard-coded but code may be easier
+# ID of first item and location", "could be hard-coded but code may be easier
 # to read with this as a property.
 
 base_id = 2000000

@@ -20,4 +20,4 @@ include = ["worlds.crystal_project"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.crystal_project.Constants.VERSION"}
+version = {attr = "worlds.crystal_project.Register.VERSION"}

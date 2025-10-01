@@ -1,6 +1,6 @@
 {
     "game": "Luigi's Mansion",
-    "author": "BootsinSoots",
+    "authors": ["BootsinSoots"],
     "igdb_id": 2485,
     "minimum_ap_version": "0.6.4",
     "world_version": "0.4.11"

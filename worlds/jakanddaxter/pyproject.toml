@@ -26,4 +26,4 @@ include = ["worlds.jakanddaxter"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.jakanddaxter.Constants.VERSION"}
+version = {attr = "worlds.jakanddaxter.Register.VERSION"}

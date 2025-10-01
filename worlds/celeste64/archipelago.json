@@ -1,6 +1,6 @@
 {
     "game": "Celeste 64",
-    "author": "PoryGone",
+    "authors": ["PoryGone"],
     "igdb_id": 284430,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.4"

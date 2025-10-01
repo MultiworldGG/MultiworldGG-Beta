@@ -21,4 +21,4 @@ include = ["worlds.noita"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.noita.Constants.VERSION"}
+version = {attr = "worlds.noita.Register.VERSION"}

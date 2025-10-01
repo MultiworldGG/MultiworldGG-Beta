@@ -21,4 +21,4 @@ include = ["worlds.shorthike"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.shorthike.Constants.VERSION"}
+version = {attr = "worlds.shorthike.Register.VERSION"}

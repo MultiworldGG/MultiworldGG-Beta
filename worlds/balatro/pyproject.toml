@@ -20,4 +20,4 @@ include = ["worlds.balatro"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.balatro.Constants.VERSION"}
+version = {attr = "worlds.balatro.Register.VERSION"}

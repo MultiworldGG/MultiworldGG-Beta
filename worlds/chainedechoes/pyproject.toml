@@ -20,4 +20,4 @@ include = ["worlds.chainedechoes"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.chainedechoes.Constants.VERSION"}
+version = {attr = "worlds.chainedechoes.Register.VERSION"}

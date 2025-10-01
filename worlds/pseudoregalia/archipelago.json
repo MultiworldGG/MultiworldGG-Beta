@@ -1,6 +1,6 @@
 {
     "game": "Pseudoregalia",
-    "author": "LittleMeowMeow & qwint",
+    "authors": ["LittleMeowMeow", "qwint"],
     "igdb_id": 259465,
     "minimum_ap_version": "0.6.4",
     "world_version": "0.7.1"

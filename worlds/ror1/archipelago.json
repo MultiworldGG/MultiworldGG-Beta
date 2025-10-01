@@ -1,6 +1,6 @@
 {
     "game": "Risk of Rain",
-    "author": "studkid",
+    "authors": ["studkid"],
     "igdb_id": 3173,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

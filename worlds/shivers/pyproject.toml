@@ -21,4 +21,4 @@ include = ["worlds.shivers"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.shivers.Constants.VERSION"}
+version = {attr = "worlds.shivers.Register.VERSION"}

@@ -20,4 +20,4 @@ include = ["worlds.yachtdice"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.yachtdice.Constants.VERSION"}
+version = {attr = "worlds.yachtdice.Register.VERSION"}

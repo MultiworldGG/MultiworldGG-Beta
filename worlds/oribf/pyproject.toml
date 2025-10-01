@@ -20,4 +20,4 @@ include = ["worlds.oribf"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.oribf.Constants.VERSION"}
+version = {attr = "worlds.oribf.Register.VERSION"}

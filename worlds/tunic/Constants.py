@@ -1,9 +1,3 @@
-{
-    "game": "TUNIC"
-    "author": "SilentSR & ScipioWright"
-    "igdb_id": 23733,
-    "version": "1.0.2"
-
 base_id = 509342400
 
 laurels = "Hero's Laurels"

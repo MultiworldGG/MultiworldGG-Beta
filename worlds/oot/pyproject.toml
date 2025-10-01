@@ -29,4 +29,4 @@ include = ["worlds.oot"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.oot.Constants.VERSION"}
+version = {attr = "worlds.oot.Register.VERSION"}

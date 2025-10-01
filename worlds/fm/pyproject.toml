@@ -20,4 +20,4 @@ include = ["worlds.fm"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.fm.Constants.VERSION"}
+version = {attr = "worlds.fm.Register.VERSION"}

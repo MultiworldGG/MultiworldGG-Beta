@@ -1,6 +1,6 @@
 {
     "game": "Momodora Moonlit Farewell",
-    "author": "alditto",
+    "authors": ["alditto"],
     "igdb_id": 188088,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

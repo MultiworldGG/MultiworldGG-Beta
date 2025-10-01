@@ -30,4 +30,4 @@ include = ["worlds.factorio"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.factorio.Constants.VERSION"}
+version = {attr = "worlds.factorio.Register.VERSION"}

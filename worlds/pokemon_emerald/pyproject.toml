@@ -24,4 +24,4 @@ include = ["worlds.pokemon_emerald"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.pokemon_emerald.Constants.VERSION"}
+version = {attr = "worlds.pokemon_emerald.Register.VERSION"}

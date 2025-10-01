@@ -20,4 +20,4 @@ include = ["worlds.yoshisisland"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.yoshisisland.Constants.VERSION"}
+version = {attr = "worlds.yoshisisland.Register.VERSION"}

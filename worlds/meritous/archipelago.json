@@ -1,6 +1,6 @@
 {
     "game": "Meritous",
-    "author": "FelicitusNeko",
+    "authors": ["FelicitusNeko"],
     "igdb_id": 78479,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

@@ -27,4 +27,4 @@ include = ["worlds.ss"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.ss.Constants.VERSION"}
+version = {attr = "worlds.ss.Register.VERSION"}

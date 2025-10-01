@@ -20,4 +20,4 @@ include = ["worlds.brotato"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.brotato.Constants.VERSION"}
+version = {attr = "worlds.brotato.Register.VERSION"}

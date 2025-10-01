@@ -20,4 +20,4 @@ include = ["worlds.ultrakill"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.ultrakill.Constants.VERSION"}
+version = {attr = "worlds.ultrakill.Register.VERSION"}

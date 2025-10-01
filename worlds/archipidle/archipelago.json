@@ -1,6 +1,6 @@
 {
     "game": "ArchipIDLE",
-    "author": "LegendaryLinux",
+    "authors": ["LegendaryLinux"],
     "igdb_id": 0,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

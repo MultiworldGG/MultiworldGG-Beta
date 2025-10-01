@@ -1,6 +1,6 @@
 {
     "game": "An Untitled Story",
-    "author": "ThatOneGuy27",
+    "authors": ["ThatOneGuy27"],
     "igdb_id": 72926,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

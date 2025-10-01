@@ -1,6 +1,6 @@
 {
     "game": "Sonic Heroes",
-    "author": "xMcacutt",
+    "authors": ["xMcacutt"],
     "igdb_id": 4156,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

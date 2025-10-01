@@ -1,6 +1,6 @@
 {
     "game": "Against the Storm",
-    "author": "Ryguy9999",
+    "authors": ["Ryguy9999"],
     "igdb_id": 147519,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

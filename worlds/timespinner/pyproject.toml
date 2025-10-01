@@ -20,4 +20,4 @@ include = ["worlds.timespinner"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.timespinner.Constants.VERSION"}
+version = {attr = "worlds.timespinner.Register.VERSION"}

@@ -27,4 +27,4 @@ include = ["worlds.zork_grand_inquisitor"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.zork_grand_inquisitor.Constants.VERSION"}
+version = {attr = "worlds.zork_grand_inquisitor.Register.VERSION"}

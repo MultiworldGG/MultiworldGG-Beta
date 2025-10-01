@@ -20,4 +20,4 @@ include = ["worlds.sotn"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.sotn.Constants.VERSION"}
+version = {attr = "worlds.sotn.Register.VERSION"}

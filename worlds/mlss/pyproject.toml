@@ -20,4 +20,4 @@ include = ["worlds.mlss"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.mlss.Constants.VERSION"}
+version = {attr = "worlds.mlss.Register.VERSION"}

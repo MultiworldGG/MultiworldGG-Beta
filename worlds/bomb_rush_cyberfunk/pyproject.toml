@@ -20,4 +20,4 @@ include = ["worlds.bomb_rush_cyberfunk"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.bomb_rush_cyberfunk.Constants.VERSION"}
+version = {attr = "worlds.bomb_rush_cyberfunk.Register.VERSION"}

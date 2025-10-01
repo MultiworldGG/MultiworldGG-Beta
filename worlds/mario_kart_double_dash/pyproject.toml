@@ -23,4 +23,4 @@ include = ["worlds.mario_kart_double_dash"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.mario_kart_double_dash.Constants.VERSION"}
+version = {attr = "worlds.mario_kart_double_dash.Register.VERSION"}

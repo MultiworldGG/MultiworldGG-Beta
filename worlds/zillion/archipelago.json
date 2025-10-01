@@ -1,6 +1,6 @@
 {
     "game": "Zillion",
-    "author": "beauxq",
+    "authors": ["beauxq"],
     "igdb_id": 18141,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.0.1"

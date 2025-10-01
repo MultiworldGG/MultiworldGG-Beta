@@ -20,4 +20,4 @@ include = ["worlds.dkc"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.dkc.Constants.VERSION"}
+version = {attr = "worlds.dkc.Register.VERSION"}

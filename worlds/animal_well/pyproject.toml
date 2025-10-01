@@ -30,4 +30,4 @@ include = ["worlds.animal_well"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.animal_well.Constants.VERSION"}
+version = {attr = "worlds.animal_well.Register.VERSION"}

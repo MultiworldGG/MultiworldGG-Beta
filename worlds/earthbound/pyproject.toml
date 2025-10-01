@@ -20,4 +20,4 @@ include = ["worlds.earthbound"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.earthbound.Constants.VERSION"}
+version = {attr = "worlds.earthbound.Register.VERSION"}

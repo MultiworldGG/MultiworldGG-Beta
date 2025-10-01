@@ -23,4 +23,4 @@ include = ["worlds.saving_princess"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.saving_princess.Constants.VERSION"}
+version = {attr = "worlds.saving_princess.Register.VERSION"}

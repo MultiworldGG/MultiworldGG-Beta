@@ -27,4 +27,4 @@ include = ["worlds.osu"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.osu.Constants.VERSION"}
+version = {attr = "worlds.osu.Register.VERSION"}

@@ -21,4 +21,4 @@ include = ["worlds.pseudoregalia"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = {attr = "worlds.pseudoregalia.Constants.VERSION"}
+version = {attr = "worlds.pseudoregalia.Register.VERSION"}
