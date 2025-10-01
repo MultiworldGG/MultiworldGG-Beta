@@ -10,6 +10,8 @@ from .Options import FF1Options
 from ..AutoWorld import World, WebWorld
 from .Client import FF1Client
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ff1")
 
 class FF1Settings(settings.Group):
     display_msgs: bool = True
@@ -41,7 +43,6 @@ class FF1World(World):
     settings: typing.ClassVar[FF1Settings]
     settings_key = "ffr_options"
     game = GAME_NAME
-    
     author: str = AUTHOR
     topology_present = False
 

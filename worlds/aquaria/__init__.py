@@ -57,13 +57,14 @@ class AquariaWorld(World):
     to her in her natural form.
     From: https://en.wikipedia.org/wiki/Aquaria_(video_game)
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("aquaria")
 
     game: str = GAME_NAME
     "The name of the game"
 
     author: ClassVar[str] = AUTHOR
 
-    igdb_id: ClassVar[int] = IGDB_ID
 
     topology_present = True
     "show path to required location checks in spoiler"

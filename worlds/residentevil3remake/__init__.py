@@ -50,9 +50,11 @@ class ResidentEvil3Remake(World):
     """
     'Jill, I am your father.' - Nemesis, probably
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("residentevil3remake")
+
     game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
 
     data_version = 2
     required_client_version = (0, 5, 0)

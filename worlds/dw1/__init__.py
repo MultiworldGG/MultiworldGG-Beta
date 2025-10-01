@@ -13,6 +13,9 @@ from .Locations import DigimonWorldLocation, DigimonWorldLocationCategory, locat
 from .Options import DigimonWorldOption
 from .RecruitDigimon import recruit_digimon_list
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("dw1")
+
 class DigimonWorldWeb(WebWorld):
     bug_report_page = ""
     theme = "stone"

@@ -54,6 +54,9 @@ class YachtDiceWorld(World):
     Roll your way to victory by reaching the target score!
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("yachtdice")
+
     game: str = "Yacht Dice"
     author: str = AUTHOR
     options_dataclass = YachtDiceOptions

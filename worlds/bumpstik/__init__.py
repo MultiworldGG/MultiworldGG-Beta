@@ -12,6 +12,8 @@ from .Regions import create_regions
 from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import forbid_item
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("bumpstik")
 
 class BumpStikWeb(WebWorld):
     tutorials = [Tutorial(

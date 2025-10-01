@@ -35,6 +35,8 @@ class Spyro3World(World):
     """
     Spyro 3 is a game about a purple dragon who likes eggs.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("spyro3")
 
     game: str = GAME_NAME
     

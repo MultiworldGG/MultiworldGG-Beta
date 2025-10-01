@@ -19,6 +19,8 @@ import json
 from typing import List
 from math import floor
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("megamix")
 
 def launch_client():
     from .Client import launch

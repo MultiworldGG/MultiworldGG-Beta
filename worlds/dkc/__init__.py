@@ -17,6 +17,9 @@ from .Levels import generate_level_list, level_map, location_id_to_level_id
 from .Rules import DKCStrictRules, DKCLooseRules, DKCExpertRules
 from .Rom import patch_rom, DKCProcedurePatch, HASH_US
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("dkc")
+
 from typing import Dict, Set, List, ClassVar, Any
 
 class DKCSettings(settings.Group):
@@ -62,7 +65,6 @@ class DKCWorld(World):
     The player traverses 40 side-scrolling levels as they jump between platforms and avoid obstacles. 
     """
     game = GAME_NAME
-    
     author: str = AUTHOR
     web = DKCWeb()
 

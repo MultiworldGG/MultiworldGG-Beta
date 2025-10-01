@@ -6,9 +6,11 @@ from . import Items, Locations, Regions, Rules
 from .Options import FaxanaduOptions
 from worlds.generic.Rules import set_rule
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("faxanadu")
 
 
-DAXANADU_VERSION = "0.3.0"
+DAXANADU_VERSION = WORLD_VERSION
 
 
 class FaxanaduLocation(Location):
@@ -38,7 +40,6 @@ class FaxanaduWorld(World):
     options_dataclass = FaxanaduOptions
     options: FaxanaduOptions
     game = GAME_NAME
-    
     author: str = AUTHOR
     web = FaxanaduWeb()
 

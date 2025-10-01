@@ -67,7 +67,6 @@ class KDL3World(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     options_dataclass: ClassVar[Type[PerGameCommonOptions]] = KDL3Options
     options: KDL3Options
     item_name_to_id = lookup_item_to_id

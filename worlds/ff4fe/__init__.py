@@ -23,6 +23,8 @@ from .options import FF4FEOptions, ff4fe_option_groups, ff4fe_options_presets
 from . import topology, flags
 from .rom import FF4FEProcedurePatch
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ff4fe")
 
 class FF4FEWebWorld(WebWorld):
     theme = "grassFlowers"

@@ -57,6 +57,9 @@ class SA2BWorld(World):
     """
     Sonic Adventure 2 Battle is an action platforming game. Play as Sonic, Tails, Knuckles, Shadow, Rouge, and Eggman across 31 stages and prevent the destruction of the earth.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("sa2b")
+
     game: str = GAME_NAME
     
     author: str = AUTHOR

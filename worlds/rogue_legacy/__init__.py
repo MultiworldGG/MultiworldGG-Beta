@@ -33,8 +33,10 @@ class RLWorld(World):
     you. Every child is unique. One child might be colorblind, another might have vertigo-- they could even be a dwarf.
     But that's OK, because no one is perfect, and you don't have to be to succeed.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("rogue_legacy")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     options_dataclass = RLOptions
     options: RLOptions

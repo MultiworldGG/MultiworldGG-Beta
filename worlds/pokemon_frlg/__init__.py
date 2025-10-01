@@ -96,8 +96,10 @@ class PokemonFRLGWorld(World):
     Catch, train, and battle Pokémon, face off against the evil organization Team Rocket, challenge Gyms in order to
     earn Badges, help resolve the many crises on the Sevii Islands, and become the Pokémon Champion!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("pokemon_frlg")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     web = PokemonFRLGWebWorld()
     topology_present = True

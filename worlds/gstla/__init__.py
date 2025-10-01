@@ -35,6 +35,9 @@ from .LocationGroups import goldensuntla_location_groups
 from .Rom import GSTLAPatchExtension, GSTLADeltaPatch, CHECKSUM_GSTLA
 from .BizClient import GSTLAClient
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("gstla")
+
 if TYPE_CHECKING:
     from BaseClasses import MultiWorld
 
@@ -101,7 +104,6 @@ class GSTLAWorld(World):
     It is the second installment in the Golden Sun series. 
     """
     game = GAME_NAME
-    
     author: str = AUTHOR
     options_dataclass: ClassVar[Type[PerGameCommonOptions]] = GSTLAOptions
     options: GSTLAOptions

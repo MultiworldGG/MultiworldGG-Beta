@@ -73,6 +73,9 @@ class Wargroove2World(World):
     """
     Command an army, in the sequel to the hit turn based strategy game Wargroove!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("wargroove2")
+
     options: Wargroove2Options
     options_dataclass = Wargroove2Options
     settings: typing.ClassVar[Wargroove2Settings]

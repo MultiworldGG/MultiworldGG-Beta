@@ -33,8 +33,10 @@ class RiskOfRainWorld(World):
      Combine loot in surprising ways and master each character until you become the havoc you feared upon your
      first crash landing.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ror2")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     options_dataclass = ROR2Options
     options: ROR2Options

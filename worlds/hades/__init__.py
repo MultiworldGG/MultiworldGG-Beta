@@ -14,7 +14,8 @@ from .Rules import set_rules
 from worlds.AutoWorld import WebWorld, World
 from worlds.LauncherComponents import icon_paths, Component, components, Type, launch_subprocess
 from Utils import local_path
-
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("hades")
 
 def launch_client():
     from .Client import launch
@@ -59,7 +60,6 @@ class HadesWorld(World):
     options: HadesOptions
     options_dataclass = HadesOptions
     game = GAME_NAME
-    
     author: str = AUTHOR
     topology_present = False
     settings: typing.ClassVar[HadesSettings]

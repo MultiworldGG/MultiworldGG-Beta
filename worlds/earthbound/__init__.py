@@ -28,7 +28,8 @@ from .modules.equipamizer import EBArmor, EBWeapon
 from .modules.boss_shuffle import BossData, SlotInfo
 from worlds.generic.Rules import add_item_rule
 from Options import OptionError
-
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("earthbound")
 
 class EBSettings(settings.Group):
     class RomFile(settings.SNESRomPath):
@@ -64,7 +65,6 @@ class EarthBoundWorld(World):
        across the world in search of 8 Melodies to defeat Giygas, the cosmic evil."""
     
     game = GAME_NAME
-    
     author: str = AUTHOR
     option_definitions = EBOptions
     data_version = 1

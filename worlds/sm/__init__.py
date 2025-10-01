@@ -35,6 +35,8 @@ from .variaRandomizer.utils.doorsmanager import DoorsManager
 from .variaRandomizer.rom.rom_patches import RomPatches
 from .variaRandomizer.graph.graph_utils import GraphUtils
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("sm")
 
 class SMSettings(settings.Group):
     class RomFile(settings.SNESRomPath):
@@ -100,7 +102,6 @@ class SMWorld(World):
     """
     game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     topology_present = True
     options_dataclass = SMOptions
     options: SMOptions

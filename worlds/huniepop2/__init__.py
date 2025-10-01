@@ -33,7 +33,6 @@ class HuniePop2(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     worldversion = "2.0.0"
     item_name_to_id = item_table
     item_id_to_name = {item_table[name]: name for name in item_table}

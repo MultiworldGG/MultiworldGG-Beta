@@ -53,14 +53,16 @@ class WLWorld(World):
     """
     Wario Land: Super Mario Land 3 is a 1994 platform game developed and published by Nintendo for the Game Boy.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("wl")
+
     game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     options: WLOptions
     options_dataclass = WLOptions
     settings: typing.ClassVar[WLSettings]
     topology_present = False
-    data_version = VERSION
+    data_version = WORLD_VERSION
     required_client_version = (0, 4, 3)
 
     item_name_to_id = {name: data.code for name, data in item_table.items()}

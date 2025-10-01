@@ -111,6 +111,9 @@ class StarFox64World(World):
   """
     Star Fox 64 is a 3D rail shooter game in which the player controls one of the vehicles piloted by Fox McCloud, usually an Arwing.
   """
+  from BaseUtils import get_archipelago_json
+  GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("star_fox_64")
+
   game = GAME_NAME
   author: str = AUTHOR
   

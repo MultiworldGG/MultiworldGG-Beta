@@ -50,9 +50,11 @@ class ResidentEvil2Remake(World):
     """
     'Leon, I am your father.' - Billy Birkin, probably
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, VERSION = get_archipelago_json("residentevil2remake")
+
     game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
 
     data_version = 2
     required_client_version = (0, 5, 0)

@@ -112,7 +112,6 @@ class GZDoomWorld(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     options_dataclass = GZDoomOptions
     options: GZDoomOptions
     topology_present = True

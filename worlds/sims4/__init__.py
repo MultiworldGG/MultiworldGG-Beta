@@ -60,7 +60,6 @@ class Sims4World(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     topology_present = False
     web = Sims4Web()
 

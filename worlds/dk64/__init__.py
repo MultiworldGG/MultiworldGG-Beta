@@ -15,7 +15,8 @@ import sys
 import tempfile
 from typing import Any
 
-
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("dk64")
 
 from BaseClasses import Location, LocationProgressType
 from worlds.dk64.ap_version import version as ap_version
@@ -275,7 +276,7 @@ if baseclasses_loaded:
 
         game: str = GAME_NAME
         author: str = AUTHOR
-        igdb_id: int = IGDB_ID
+        
         options_dataclass = DK64Options
         options: DK64Options
         topology_present = False

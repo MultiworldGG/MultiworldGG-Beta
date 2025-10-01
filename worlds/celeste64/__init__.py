@@ -12,6 +12,8 @@ from .Locations import Celeste64Location, strawberry_location_data_table, friend
 from .Names import ItemName, LocationName
 from .Options import Celeste64Options, celeste_64_option_groups, resolve_options
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("celeste64")
 
 class Celeste64WebWorld(WebWorld):
     theme = "ice"

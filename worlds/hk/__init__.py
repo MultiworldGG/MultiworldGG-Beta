@@ -22,6 +22,9 @@ from worlds.AutoWorld import World, LogicMixin, WebWorld
 
 from settings import Group, Bool
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("hk")
+
 logger = logging.getLogger("Hollow Knight")
 
 
@@ -176,9 +179,8 @@ class HKWorld(World):
 
     As the enigmatic Knight, you’ll traverse the depths, unravel its mysteries and conquer its evils.
     """  # from https://www.hollowknight.com
-    game: str = "Hollow Knight"
+    game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = 14593
     options_dataclass = HKOptions
     options: HKOptions
     settings: typing.ClassVar[HollowKnightSettings]

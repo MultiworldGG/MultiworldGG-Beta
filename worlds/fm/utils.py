@@ -4,6 +4,8 @@ from typing import TypeVar
 from dataclasses import dataclass
 from itertools import chain
 
+from BaseUtils import get_archipelago_json
+REGISTERED_GAME_NAME, REGISTERED_AUTHOR, REGISTERED_AP_VERSION, REGISTERED_WORLD_VERSION = get_archipelago_json("fm")
 
 
 
@@ -12,7 +14,6 @@ class Constants:
     """Constants for the FM world."""
     GAME_NAME: str = REGISTERED_GAME_NAME
     AUTHOR: str = REGISTERED_AUTHOR
-    IGDB_ID: int = REGISTERED_IGDB_ID
     FM_ID_OFFSET: int = 0x4B1DDE000000
     CARD_ID_OFFSET: int = FM_ID_OFFSET + 0x00
     DUELIST_ID_OFFSET: int = FM_ID_OFFSET + 0x1000

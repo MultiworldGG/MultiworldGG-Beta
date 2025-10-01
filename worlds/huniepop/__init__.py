@@ -32,7 +32,6 @@ class HuniePop(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     worldversion = {
         "major":1,
         "minor":1,

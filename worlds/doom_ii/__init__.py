@@ -8,6 +8,9 @@ from . import Items, Locations, Maps, Regions, Rules
 
 from .Options import DOOM2Options
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("doom_ii")
+
 logger = logging.getLogger("DOOM II")
 
 DOOM_TYPE_LEVEL_COMPLETE = -2
@@ -43,7 +46,6 @@ class DOOM2World(World):
     options_dataclass = DOOM2Options
     options: DOOM2Options
     game = GAME_NAME
-    
     author: str = AUTHOR
     web = DOOM2Web()
     required_client_version = (0, 5, 0)  # 1.2.0-prerelease or higher

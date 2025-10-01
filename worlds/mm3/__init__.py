@@ -89,7 +89,6 @@ class MM3World(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     settings: ClassVar[MM3Settings]
     options_dataclass = MM3Options
     options: MM3Options

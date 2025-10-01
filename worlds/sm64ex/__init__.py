@@ -29,9 +29,10 @@ class SM64World(World):
     The first Super Mario game to feature 3D gameplay, it features freedom of movement within a large open world based on polygons,
     combined with traditional Mario gameplay, visual style, and characters.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("sm64ex")
 
     game: str = GAME_NAME
-    igdb_id: int = IGDB_ID
     author: str = AUTHOR
     topology_present = False
 

@@ -55,7 +55,6 @@ class Q1World(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     game_id = GAME_ID
     game_full_name = GAME_NAME
 

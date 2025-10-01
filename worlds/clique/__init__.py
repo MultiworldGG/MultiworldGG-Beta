@@ -7,6 +7,8 @@ from .items import CliqueItem, item_data
 from .locations import CliqueLocation, location_table, location_table
 from .options import CliqueOptions
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("clique")
 
 class CliqueWebWorld(WebWorld):
     theme = "partyTime"

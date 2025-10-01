@@ -54,7 +54,6 @@ class L2ACWorld(World):
     """
     game: ClassVar[str] = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
 
     options_dataclass: ClassVar[Type[PerGameCommonOptions]] = L2ACOptions
     options: L2ACOptions

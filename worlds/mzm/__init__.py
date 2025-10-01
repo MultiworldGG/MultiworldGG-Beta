@@ -59,8 +59,10 @@ class MZMWorld(World):
     new areas, items, enemies, and story! Logic based on Metroid: Zero Mission Randomizer by Biosp4rk and Dragonfangs,
     used with permission.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("mzm")
+
     game: str = GAME_NAME
-    
     author: str = AUTHOR
     options_dataclass = MZMOptions
     options: MZMOptions

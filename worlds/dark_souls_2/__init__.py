@@ -9,6 +9,9 @@ from .Locations import location_table, location_name_groups
 from .Options import DS2Options
 from typing import Optional
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("dark_souls_2")
+
 class DS2Location(Location):
     game: str = "Dark Souls II"
     default_items: list[str]
@@ -50,7 +53,6 @@ class DS2World(World):
     It is set in the kingdom of Drangleic and follows an undead traveler searching for a cure to their affliction.
     """
     game = GAME_NAME
-    
     author: str = AUTHOR
 
     options_dataclass = DS2Options

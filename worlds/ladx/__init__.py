@@ -29,6 +29,8 @@ from .Locations import (LinksAwakeningLocation,
 from .Options import DungeonItemShuffle, ShuffleInstruments, LinksAwakeningOptions, ladx_option_groups
 from .Rom import LADXProcedurePatch, write_patch_data
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ladx")
 
 DEVELOPER_MODE = False
 

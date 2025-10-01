@@ -12,6 +12,8 @@ from worlds.AutoWorld import World, WebWorld
 from .Options import WargrooveOptions, wargroove_option_groups
 from worlds.LauncherComponents import Component, components, Type, launch as launch_component
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("wargroove")
 
 def launch_client(*args: str):
     from .Client import launch

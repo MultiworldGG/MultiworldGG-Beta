@@ -18,6 +18,9 @@ from .Rules import DKC2StrictRules, DKC2LooseRules, DKC2ExpertRules
 from .Rom import patch_rom, DKC2ProcedurePatch, generate_game_trivia, HASH_US_REV_1
 from . import Tracker
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("dkc2")
+
 from typing import Dict, Set, List, ClassVar, Any, Union
 
 class DKC2Settings(settings.Group):
@@ -79,7 +82,6 @@ class DKC2World(World):
     """
     # borrowed from DKC3's description
     game = GAME_NAME
-    
     author: str = AUTHOR
     web = DKC2Web()
 

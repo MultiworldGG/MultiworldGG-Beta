@@ -28,6 +28,8 @@ from worlds.generic.Rules import add_rule
 
 from worlds.LauncherComponents import Component, components, launch as launch_component, Type, SuffixIdentifier
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tloz")
 
 def launch_client(*args: str):
     from .Client import main

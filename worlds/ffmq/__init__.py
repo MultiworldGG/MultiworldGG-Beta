@@ -13,6 +13,8 @@ from .Output import generate_output
 from .Options import FFMQOptions
 from .Client import FFMQClient
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ffmq")
 
 # removed until lists are supported
 # class FFMQSettings(settings.Group):
@@ -54,7 +56,6 @@ class FFMQWorld(World):
     # -Giga Otomia
 
     game = GAME_NAME
-    
     author: str = AUTHOR
     item_name_to_id = {name: data.id for name, data in item_table.items() if data.id is not None}
     location_name_to_id = location_table

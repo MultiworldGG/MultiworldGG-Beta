@@ -28,6 +28,9 @@ from .ips import IPS_Patch
 from .Client import SMMRSNIClient
 from importlib.metadata import version, PackageNotFoundError
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("sm_map_rando")
+
 required_pysmmaprando_version = "0.119.1"
 
 class WrongVersionError(Exception):
@@ -120,7 +123,6 @@ class SMMapRandoWorld(World):
 
     game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     topology_present = True
     data_version = VERSION
     options_dataclass = SMMROptions

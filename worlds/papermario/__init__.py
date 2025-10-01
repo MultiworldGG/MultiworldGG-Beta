@@ -82,8 +82,10 @@ class PaperMarioWorld(World):
     help you take back the Star Rod from Bowser and save Peach. You will have to defeat powerful foes
     and venture through dangerous lands with the help of partners you meet along the way.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("papermario")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     web = PaperMarioWeb()
     topology_present = True

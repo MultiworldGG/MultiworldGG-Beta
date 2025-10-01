@@ -114,7 +114,6 @@ class PhantomHourglassWorld(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     options_dataclass = PhantomHourglassOptions
     options: PhantomHourglassOptions
     required_client_version = (0, 6, 3)

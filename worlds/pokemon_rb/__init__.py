@@ -28,6 +28,9 @@ from . import logic
 from . import poke_data
 from . import client
 
+from BaseUtils import get_archipelago_json 
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("pokemon_rb")
+
 
 class PokemonSettings(settings.Group):
     class RedRomFile(settings.UserFilePath):
@@ -74,7 +77,6 @@ class PokemonRedBlueWorld(World):
     # -MuffinJets#4559
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
 
     options_dataclass = PokemonRBOptions
     options: PokemonRBOptions

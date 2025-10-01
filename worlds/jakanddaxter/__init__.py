@@ -135,7 +135,6 @@ class JakAndDaxterWorld(World):
     # ID, name, version
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     required_client_version = (0, 5, 0)
 
     # Options

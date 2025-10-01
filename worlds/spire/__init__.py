@@ -14,6 +14,8 @@ from .Regions import create_regions
 from .Rules import set_rules
 from ..AutoWorld import WebWorld, World
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("spire")
 
 class SpireWeb(WebWorld):
     tutorials = [Tutorial(
@@ -36,7 +38,6 @@ class SpireWorld(World):
     options_dataclass = SpireOptions
     options: SpireOptions
     game = GAME_NAME
-    
     author: str = AUTHOR
     topology_present = False
     web = SpireWeb()

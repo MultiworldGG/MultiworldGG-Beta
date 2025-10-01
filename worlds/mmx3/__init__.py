@@ -70,7 +70,6 @@ class MMX3World(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
 
     web = MMX3Web()
 

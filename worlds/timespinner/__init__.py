@@ -10,6 +10,9 @@ from .Regions import create_regions_and_locations
 from worlds.AutoWorld import World, WebWorld
 import logging
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("timespinner")
+
 class TimespinnerWebWorld(WebWorld):
     theme = "ice"
     setup = Tutorial(

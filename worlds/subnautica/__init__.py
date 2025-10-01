@@ -35,8 +35,10 @@ class SubnauticaWorld(World):
     an unknown bacteria. The planet's automatic quarantine will shoot you down if you try to leave.
     You must find a cure for yourself, build an escape rocket, and leave the planet.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("subnautica")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     web = SubnauticaWeb()
 

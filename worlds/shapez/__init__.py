@@ -68,6 +68,9 @@ class ShapezWorld(World):
     generated patches on an infinite canvas, without the need to manage your infinite resources or to pay for building
     your factories.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("shapez")
+
     game = GAME_NAME
     author = AUTHOR
     

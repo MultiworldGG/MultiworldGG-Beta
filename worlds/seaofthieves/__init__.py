@@ -43,10 +43,11 @@ class SOTWorld(World):
     """ 
     A pirate game made by Rare
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("seaofthieves")
 
     MAX_ISLANDS = 20  # number of hints
     game = GAME_NAME
-    
     author: str = AUTHOR
     topology_present = False
 

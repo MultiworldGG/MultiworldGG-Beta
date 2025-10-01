@@ -158,8 +158,10 @@ class OOTWorld(World):
     learn magical ocarina songs, and explore twelve dungeons on your quest. Use Link's many items and abilities
     to rescue the Seven Sages, and then confront Ganondorf to save Hyrule!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("oot")
+
     game: str = GAME_NAME
-    
     author: str = AUTHOR
     options_dataclass = OoTOptions
     options: OoTOptions

@@ -14,7 +14,8 @@ from .Options import DiddyKongRacingOptions
 from .Rules import DiddyKongRacingRules
 from .Names import ItemName, LocationName
 
-
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("diddy_kong_racing")
 
 def run_client():
     from worlds.diddy_kong_racing.DKRClient import main
@@ -39,7 +40,6 @@ class DiddyKongRacingWorld(World):
     """Diddy Kong Racing is a kart racing game with a story mode, complete with bosses and hidden collectibles."""
 
     game = GAME_NAME
-    
     author: str = AUTHOR
     apworld_version = VERSION
     web = DiddyKongRacingWeb()

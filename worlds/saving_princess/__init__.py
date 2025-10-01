@@ -9,7 +9,8 @@ from worlds.LauncherComponents import components, Component, launch_subprocess, 
 from . import Options, Items, Locations
 from .Constants import *
 
-
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("saving_princess")
 
 def launch_client(*args: str):
     from .Client import launch

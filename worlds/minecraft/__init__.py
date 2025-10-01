@@ -15,8 +15,10 @@ from .ItemPool import build_item_pool, get_junk_item_names
 from .Rules import set_rules
 from worlds.LauncherComponents import launch as launch_componenent, components, Component, Type, SuffixIdentifier
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("minecraft")
 
-client_version = VERSION
+client_version = WORLD_VERSION
 
 def launch_client(*args):
     from .Client import main
@@ -107,7 +109,6 @@ class MinecraftWorld(World):
     victory!
     """
     game = GAME_NAME
-    
     author: str = AUTHOR
     options_dataclass = MinecraftOptions
     options: MinecraftOptions

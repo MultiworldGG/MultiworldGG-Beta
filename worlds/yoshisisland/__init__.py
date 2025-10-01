@@ -49,8 +49,11 @@ class YoshisIslandWorld(World):
     During a delivery, Bowser's evil ward, Kamek, attacked the stork, kidnapping Luigi and dropping Mario onto Yoshi's Island.
     As Yoshi, you must run, jump, and throw eggs to escort the baby Mario across the island to defeat Bowser and reunite the two brothers with their parents.
     """
-    game = GAME_NAME
     
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("yoshisisland")
+
+    game = GAME_NAME
     author: str = AUTHOR
     option_definitions = YoshisIslandOptions
     required_client_version = (0, 4, 4)

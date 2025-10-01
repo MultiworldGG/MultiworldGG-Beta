@@ -8,6 +8,9 @@ from . import Items, Locations, Maps, Regions, Rules
 
 from .Options import DOOM1993Options
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("doom_1993")
+
 logger = logging.getLogger("DOOM 1993")
 
 DOOM_TYPE_LEVEL_COMPLETE = -2

@@ -61,6 +61,9 @@ class SotnWorld(World):
     Symphony of the Night is a metroidvania developed by Konami
     and released for Sony Playstation and Sega Saturn in 1997.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("sotn")
+
     game: ClassVar[str] = GAME_NAME
     
     author: ClassVar[str] = AUTHOR

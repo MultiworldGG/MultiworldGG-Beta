@@ -7,6 +7,8 @@ from .Regions import region_exits
 from .Rules import rules
 from .Options import BombRushCyberfunkOptions, StartStyle
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("bomb_rush_cyberfunk")
 
 class BombRushCyberfunkWeb(WebWorld):
     theme = "ocean"

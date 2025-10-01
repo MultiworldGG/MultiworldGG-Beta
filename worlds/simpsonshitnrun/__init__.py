@@ -39,13 +39,15 @@ from .SHARContainer import gen
 
 class SimpsonsHitAndRunWorld(World):
     """A 2003 Action Adventure game similar to the GTA series starring the Simpsons"""
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("simpsonshitnrun")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     web = world_webworld
 
     options_dataclass = SimpsonsHitAndRunOptions
-    data_version = VERSION
+    data_version = WORLD_VERSION
     required_client_version = (0, 5, 0)
 
     # These properties are set from the imports of the same name above.

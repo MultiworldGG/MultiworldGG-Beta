@@ -90,7 +90,6 @@ class LethalCompanyWorld(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     options_dataclass = LCOptions
     options: LCOptions
     topology_present = False

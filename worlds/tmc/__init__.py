@@ -78,7 +78,6 @@ class MinishCapWorld(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     version = VERSION
     web = MinishCapWebWorld()
     options_dataclass = MinishCapOptions

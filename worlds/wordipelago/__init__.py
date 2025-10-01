@@ -29,6 +29,9 @@ class WordipelagoWebWorld(WebWorld):
 class WordipelagoWorld(World):
     """A brand new take on the world famous word guessing game."""
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("wordipelago")
+
     game = GAME_NAME
     author: str = AUTHOR
     web = WordipelagoWebWorld()

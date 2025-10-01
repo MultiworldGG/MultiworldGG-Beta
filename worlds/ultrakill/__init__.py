@@ -25,6 +25,8 @@ class UltrakillWeb(WebWorld):
 
 class UltrakillWorld(World):
     """MANKIND IS DEAD. BLOOD IS FUEL. HELL IS FULL."""
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ultrakill")
 
     game = GAME_NAME
     author: str = AUTHOR

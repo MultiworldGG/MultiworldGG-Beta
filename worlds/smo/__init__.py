@@ -53,8 +53,10 @@ class SMOWebWorld(WebWorld):
 
 class SMOWorld(World):
     """Super Mario Odyssey is a 3-D Platformer where Mario sets off across the world with his companion Cappy to save Princess Peach and Cappy's sister Tiara from Bowser's wedding plans."""
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("smo")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
 
     settings_key = "smo_settings"

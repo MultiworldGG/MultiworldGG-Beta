@@ -211,7 +211,7 @@ def launch(*args: str) -> Any:
     password: str = ""
     server: str = ""
     if args:
-        parser = argparse.ArgumentParser(description=f"{GAME_NAME} Client Launcher")
+        parser = argparse.ArgumentParser(description=f"Saving Princess Client Launcher")
         parser.add_argument("url", type=str, nargs="?", help="MultiworldGG Webhost uri to auto connect to.")
         args = parser.parse_args(args)
 

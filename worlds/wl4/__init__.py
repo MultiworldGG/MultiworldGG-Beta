@@ -52,9 +52,11 @@ class WL4World(World):
     the Golden Diva.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("wl4")
+
     game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     options_dataclass = WL4Options
     options: WL4Options
     settings: ClassVar[WL4Settings]

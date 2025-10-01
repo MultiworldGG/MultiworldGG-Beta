@@ -38,8 +38,10 @@ class SonicAdventureDXWorld(World):
     Controlling one of the six characters—each with their own abilities—players complete levels to progress the story. Sonic Adventure retains many elements from prior Sonic games, 
     such as power-ups and the ring-based health system. Players can play minigames such as racing and interact with Chao, a virtual pet.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("sadx")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     web = SonicAdventureDXWeb()
     starter_setup: StarterSetup = StarterSetup()

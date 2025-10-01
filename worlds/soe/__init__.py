@@ -172,6 +172,9 @@ class SoEWorld(World):
     Secret of Evermore is a SNES action RPG. You learn alchemy spells, fight bosses and gather rocket parts to visit a
     space station where the final boss must be defeated.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("soe")
+
     game: typing.ClassVar[str] = GAME_NAME
     author: str = AUTHOR
     

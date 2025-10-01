@@ -20,6 +20,9 @@ from .shop import ShopData
 from . import options, locations, levels, regions, items, shop, slotdata
 from . import debug as dbg
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("cuphead")
+
 #from . import debug as dbg
 
 class CupheadWebWorld(WebWorld):
@@ -41,7 +44,7 @@ class CupheadWorld(World):
     A classic run and gun action game heavily focused on boss battles
     """
 
-    APWORLD_VERSION: str = VERSION
+    APWORLD_VERSION: str = WORLD_VERSION
 
     game: str = GAME_NAME
     author: str = AUTHOR

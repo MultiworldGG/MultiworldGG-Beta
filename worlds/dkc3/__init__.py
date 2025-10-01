@@ -19,6 +19,8 @@ from .Regions import create_regions, connect_regions
 from .Rom import LocalRom, patch_rom, get_base_rom_path, DKC3DeltaPatch
 from .Rules import set_rules
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("dkc3")
 
 class DK3Settings(settings.Group):
     class RomFile(settings.UserFilePath):

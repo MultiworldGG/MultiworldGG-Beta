@@ -20,4 +20,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = HatInTimeWorld
 WEB_WORLD_CLASS = AWebInTime
-CLIENT_FUNCTION = main
+CLIENT_FUNCTION = launch

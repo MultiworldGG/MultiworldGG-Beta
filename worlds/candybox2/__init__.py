@@ -15,6 +15,9 @@ from .regions import create_regions, connect_entrances, can_reach_room
 from .rooms import entrance_friendly_names, CandyBox2Room
 from .rules import CandyBox2RulesPackage, generate_rules_package
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("candybox2")
+
 class CandyBox2WebWorld(WebWorld):
     tutorials = [Tutorial(
         "Multiworld Setup Guide",
@@ -34,7 +37,6 @@ class CandyBox2World(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     web = CandyBox2WebWorld()
     base_id = 1
     location_name_to_id = {name.value: location.id for name, location in locations.items()}

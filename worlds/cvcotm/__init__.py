@@ -24,6 +24,8 @@ from .rom import RomData, patch_rom, get_base_rom_path, CVCotMProcedurePatch, CV
     # CVCOTM_VC_US_HASH
 from .client import CastlevaniaCotMClient
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("cvcotm")
 
 class CVCotMSettings(settings.Group):
     class RomFile(settings.UserFilePath):
@@ -61,7 +63,6 @@ class CVCotMWorld(World):
     from a demonic ritual to restore the Count's power...
     """
     game = GAME_NAME
-    
     author: str = AUTHOR
     item_name_groups = {
         "DSS": ACTION_CARDS.union(ATTRIBUTE_CARDS),

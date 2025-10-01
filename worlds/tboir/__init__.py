@@ -10,6 +10,8 @@ from .Locations import location_table, TheBindingOfIsaacRepentanceLocation, base
 from .Options import IsaacOptions, ItemWeights
 from .Rules import set_rules
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tboir")
 
 class TheBindingOfIsaacRepentanceWeb(WebWorld):
     tutorials = [Tutorial(
@@ -30,7 +32,6 @@ class TheBindingOfIsaacRepentanceWorld(World):
     to safety.
     """
     game = GAME_NAME
-    
     author: str = AUTHOR
     options_dataclass = IsaacOptions
     options: IsaacOptions

@@ -99,8 +99,10 @@ class PokemonEmeraldWorld(World):
     Catch, train, and battle Pokémon, explore the Hoenn region, thwart the plots
     of Team Magma and Team Aqua, challenge gyms, and become the Pokémon champion!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("pokemon_emerald")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     web = PokemonEmeraldWebWorld()
     topology_present = True

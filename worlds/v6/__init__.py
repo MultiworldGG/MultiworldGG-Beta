@@ -9,7 +9,10 @@ from .Regions import create_regions
 from BaseClasses import Item, ItemClassification, Tutorial
 from ..AutoWorld import World, WebWorld
 
-client_version = VERSION
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("v6")
+
+client_version = WORLD_VERSION
 
 
 class V6Web(WebWorld):
@@ -30,7 +33,6 @@ class V6World(World):
 
     game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     topology_present = False
     web = V6Web()
 

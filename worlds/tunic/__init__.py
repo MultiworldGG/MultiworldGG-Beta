@@ -25,6 +25,9 @@ from worlds.AutoWorld import WebWorld, World
 from Options import PlandoConnection, OptionError, PerGameCommonOptions, Removed, Range
 from settings import Group, Bool, FilePath
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tunic")
+
 
 class TunicSettings(Group):
     class DisableLocalSpoiler(Bool):

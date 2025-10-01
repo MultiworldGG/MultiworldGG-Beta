@@ -29,8 +29,10 @@ class PseudoregaliaWorld(World):
     Pseudoregalia is a 3D metroidvania/platform game hybrid, where the player character, Sybil, is tasked with making 
     her way through the Castle Sansa. The gameplay emphasizes fluidity and responsiveness, with a focus on running and jumping.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("pseudoregalia")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     required_client_version = (0, 7, 0)
     item_name_to_id = {name: data.code for name, data in item_table.items() if data.code is not None}

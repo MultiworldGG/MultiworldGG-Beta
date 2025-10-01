@@ -28,8 +28,10 @@ class OriBlindForestWorld(World):
     Players assume control of Ori, a small white spirit, and Sein, the "light and eyes" of the Forest's Spirit Tree. 
     They are tasked to move between platforms and solve puzzles.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("oribf")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     options_dataclass = OriBlindForestOptions
     options: OriBlindForestOptions

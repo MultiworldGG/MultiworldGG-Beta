@@ -24,8 +24,10 @@ class RoR1World(World):
     Risk of Rain is a 2013 roguelike platform game developed by Hopoo Games. Players control the survivor of a space freighter crash on a strange planet. 
     They attempt to survive by killing monsters and collecting items that can boost their offensive and defensive abilities. 
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ror1")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     options_dataclass = ROROptions
     options: ROROptions

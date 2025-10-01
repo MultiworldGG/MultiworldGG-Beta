@@ -7,6 +7,9 @@ from collections import Counter
 
 from enum import Enum
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tracker")
+
 def launch_client(*args):
     from Utils import messagebox, version_tuple
     if version_tuple < (0, 6, 2):

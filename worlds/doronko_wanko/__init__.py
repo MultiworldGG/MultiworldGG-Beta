@@ -12,6 +12,8 @@ from .rules import create_rules, can_get_all_badges, can_get_all_paintings
 from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Region, Location, Item, Tutorial, ItemClassification
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("doronko_wanko")
 
 class DoronkoWankoWeb(WebWorld):
     theme = "dirt"

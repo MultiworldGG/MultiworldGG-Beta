@@ -18,6 +18,8 @@ from .sprite_randomizer import randomize_enemies, randomize_platforms
 from .logic import has_pipe_up, has_pipe_down, has_pipe_left, has_pipe_right, has_level_progression, is_auto_scroll
 from . import logic
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("marioland2")
 
 class MarioLand2Settings(settings.Group):
     class SML2RomFile(settings.UserFilePath):
@@ -50,7 +52,6 @@ class MarioLand2World(World):
     game = GAME_NAME
     author: str = AUTHOR
 
-    igdb_id: int = IGDB_ID
 
     settings_key = "sml2_options"
     settings: MarioLand2Settings

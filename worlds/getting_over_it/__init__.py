@@ -7,6 +7,8 @@ from .locations import locations_list, GOILocation, instant_spots, early_spots, 
     float_only_spots, spots_list
 from .options import GOIOptions
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("getting_over_it")
 
 class GOIWeb(WebWorld):
     rich_text_options_doc = True
@@ -28,7 +30,6 @@ class GOIWorld(World):
     Getting Over It is a frustrating psychological horror game about climbing a mountain.
     """
     game = GAME_NAME
-    
     author: str = AUTHOR
     options_dataclass = GOIOptions
     options: GOIOptions

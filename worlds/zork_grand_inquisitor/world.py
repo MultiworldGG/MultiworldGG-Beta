@@ -107,12 +107,14 @@ class ZorkGrandInquisitorWorld(World):
     Foundation, and The Skull of Yoruk.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("zork_grand_inquisitor")
+
     options_dataclass = ZorkGrandInquisitorOptions
     options: ZorkGrandInquisitorOptions
 
     game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
 
     item_name_to_id = item_names_to_id()
     location_name_to_id = location_names_to_id()

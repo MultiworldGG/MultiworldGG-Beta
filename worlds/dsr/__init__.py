@@ -12,6 +12,9 @@ from .Items import DSRItem, DSRItemCategory, item_dictionary, key_item_names, it
 from .Locations import DSRLocation, DSRLocationCategory, location_tables, location_dictionary, location_skip_categories
 from .Options import DSROption
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("dsr")
+
 class DSRWeb(WebWorld):
     bug_report_page = ""
     theme = "stone"

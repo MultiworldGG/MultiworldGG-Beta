@@ -123,7 +123,6 @@ class StardewValleyWorld(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     topology_present = False
 
     item_name_to_id = {name: data.code for name, data in item_table.items()}

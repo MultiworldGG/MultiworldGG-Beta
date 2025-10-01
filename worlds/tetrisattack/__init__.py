@@ -21,6 +21,8 @@ from .Rom import get_base_rom_path, patch_rom, TATKProcedurePatch, USAHASH
 from .Rules import set_stage_clear_rules, set_goal_rules, set_puzzle_rules, set_versus_rules
 from .Client import TetrisAttackSNIClient
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tetrisattack")
 
 class TetrisAttackItem(Item):
     game = GAME_NAME

@@ -5,7 +5,7 @@ from worlds.AutoWorld import World,WebWorld
 from BaseClasses import Location, Region, Item, ItemClassification, LocationProgressType, MultiWorld, Tutorial
 from .Items import raw_items, PowerwashSimulatorItem, item_table, create_items, unlock_items, filler_items
 from .Locations import location_dict, raw_location_dict, locations_percentages, land_vehicles, objectsanity_dict
-from .Options import PowerwashSimulatorOptions, PowerwashSimulatorSettings, check_options Sanities, Percentsanity
+from .Options import PowerwashSimulatorOptions, PowerwashSimulatorSettings, check_options, Sanities, Percentsanity
 
 
 uuid_offset = 0x3AF4F1BC
@@ -27,6 +27,9 @@ class PowerwashSimulator(World):
 	Powerwash Simulator is a 2022 simulation video game where players take control of a power washing business and complete various jobs to earn money. 
 	Gameplay primarily revolves around using a power washer to clean dirt off of objects and buildings.
 	"""
+	from BaseUtils import get_archipelago_json
+	GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("powerwashsimulator")
+
 	game = GAME_NAME
 	author: str = AUTHOR
 	

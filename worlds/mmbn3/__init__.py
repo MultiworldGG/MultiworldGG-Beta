@@ -73,7 +73,6 @@ class MMBN3World(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     options_dataclass = MMBN3Options
     options: MMBN3Options
     settings: typing.ClassVar[MMBN3Settings]

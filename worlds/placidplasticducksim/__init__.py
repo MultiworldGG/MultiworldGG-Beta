@@ -24,8 +24,10 @@ class PPDSWebWorld(WebWorld):
 
 class PlacidPlasticDuckSimulator(World):
     """A game about funny ducks in a pool"""
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("placidplasticducksim")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     web = PPDSWebWorld()
     location_name_to_id = {name: uuid_offset + id_offset for name, id_offset in locations.items()}

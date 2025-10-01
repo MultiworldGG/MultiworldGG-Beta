@@ -52,10 +52,11 @@ class OsuWorld(World):
     osu! is a free to play rhythm game featuring 4 modes, an online ranking system/statistics,
     with user submitted songs downloadable from its website.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("osu")
 
     # Lots of code is taken from Mushdash, Clique, and various other APworlds
     game: str = GAME_NAME
-    
     author: str = AUTHOR
     options_dataclass = OsuOptions
     options: OsuOptions

@@ -13,7 +13,7 @@ from .Items import ALBWItem, Items, ItemData, ItemType, all_items, item_table, v
 from .Locations import ALBWLocation, LocationData, LocationType, all_locations, dungeon_table, location_table, \
     dungeon_item_excludes, starting_weapon_locations
 from .Options import ALBWOptions, CrackShuffle, InitialCrackState, Keysy, LogicMode, NiceItems, WeatherVanes, \
-    create_randomizer_settings
+    create_randomizer_settings, Cracksanity
 from .Patch import PatchInfo, PatchItemInfo, ALBWProcedurePatch
 from pathlib import Path
 import sys

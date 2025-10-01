@@ -37,7 +37,6 @@ class LandstalkerWorld(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     options_dataclass = LandstalkerOptions
     options: LandstalkerOptions
     required_client_version = (0, 4, 4)

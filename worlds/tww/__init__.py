@@ -27,6 +27,9 @@ from .randomizers.ItemPool import generate_itempool
 from .randomizers.RequiredBosses import RequiredBossesRandomizer
 from .Rules import set_rules
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, VERSION, WORLD_VERSION = get_archipelago_json("tww")
+
 
 def run_client() -> None:
     """
@@ -121,7 +124,6 @@ class TWWWorld(World):
 
     game: ClassVar[str] = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     topology_present: bool = True
 
     item_name_to_id: ClassVar[dict[str, int]] = {

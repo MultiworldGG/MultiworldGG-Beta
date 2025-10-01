@@ -174,7 +174,7 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
     """ Load worlds *after* setting the game names
     """
 
-    from EntranceRandomizer import parse_arguments
+    from entrance_rando import parse_arguments
     erargs = parse_arguments(['--multi', str(args.multi)])
     erargs.seed = seed
     erargs.plando_options = args.plando

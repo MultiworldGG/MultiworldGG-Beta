@@ -67,10 +67,12 @@ class PathOfExileWorld(World):
     and collect powerful loot. The game is known for its deep character customization, with an enormous passive skill
     tree, thousands of items, and a huge endgame full of challenging bosses, and a wide variety of skill gems that define abilities.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, VERSION = get_archipelago_json("poe")
+
     _debug = True
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     version = VERSION
     web = PathOfExileWebWorld()
     options_dataclass = PathOfExileOptions

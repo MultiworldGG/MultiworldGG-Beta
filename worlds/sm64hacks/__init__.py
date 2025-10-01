@@ -37,8 +37,11 @@ class SM64HackWorld(World):
     """
     The first Super Mario game to feature 3D gameplay, but heavily modded - with support for a lot of popular rom hacks.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("sm64hacks")
+
     game = GAME_NAME
-    author = "DNVIC"
+    author = AUTHOR
     
     options_dataclass = SM64HackOptions
     options: SM64HackOptions

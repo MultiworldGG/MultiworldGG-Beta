@@ -35,9 +35,11 @@ class YGODDMWeb(WebWorld):
 class YGODDMWorld(World):
     """Yu-Gi-Oh! Dungeon Dice Monsters is a Game Boy Advance dice-based tactics game based on an original board game
     featured in the Yu-Gi-Oh! storyline."""
-    game: str = "Yu-Gi-Oh! Dungeon Dice Monsters"
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("yugiohddm")
+
+    game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = 49211
     options_dataclass = YGODDMOptions
     options: YGODDMOptions
     required_client_version = (0, 5, 0)

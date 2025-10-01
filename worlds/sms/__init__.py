@@ -32,8 +32,10 @@ class SmsWorld(World):
     The second Super Mario game to feature 3D gameplay. Coupled with F.L.U.D.D. (a talking water tank that can be used
     as a jetpack), Mario must clean the graffiti off of Delfino Isle and return light to the sky.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("sms")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
 
     data_version = 1

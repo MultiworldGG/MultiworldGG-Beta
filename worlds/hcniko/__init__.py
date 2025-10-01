@@ -34,7 +34,6 @@ class HereComesNikoWorld(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     web = HereComesNikoWebWorld()
     options: HereComesNikoOptions
     options_dataclass = HereComesNikoOptions

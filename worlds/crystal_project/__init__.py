@@ -21,7 +21,7 @@ from .mod_helper import ModLocationData, get_modded_items, get_modded_locations,
     get_modded_shopsanity_locations, get_modded_bosses, build_condition_rule, update_item_classification, ModIncrementedIdData, get_mod_info, get_removed_locations
 from typing import List, Set, Dict, Any
 from worlds.AutoWorld import World, WebWorld
-from BaseClasses import Item, Tutorial, MultiWorld, CollectionState, 
+from BaseClasses import Item, Tutorial, MultiWorld, CollectionState
 from BaseUtils import get_archipelago_json
 
 GAME_NAME, AUTHOR, VERSION, WORLD_VERSION = get_archipelago_json("crystal_project")
