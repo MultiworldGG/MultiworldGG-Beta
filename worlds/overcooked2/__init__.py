@@ -42,11 +42,11 @@ class Overcooked2World(World):
     earning stars to unlock levels, and defeating the unbread horde. Levels are
     randomized to increase gameplay variety. Play with up to 4 friends.
     """
-
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("overcooked2")
     # Autoworld API
 
     game = GAME_NAME
-    
     author: str = AUTHOR
 
     required_client_version = (0, 3, 8)

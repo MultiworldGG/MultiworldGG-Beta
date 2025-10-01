@@ -43,6 +43,8 @@ class MuseDashWorld(World):
     """Muse Dash is a rhythm game where you hit objects to the beat of one of 400+ songs.
     Play through a selection of randomly chosen songs, collecting music sheets
     until you have enough to play and complete the goal song!"""
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("musedash")
 
     # FUTURE OPTIONS
     # - Album Rando.
@@ -51,7 +53,6 @@ class MuseDashWorld(World):
 
     # World Options
     game = GAME_NAME
-    
     author: str = AUTHOR
     options_dataclass: ClassVar[Type[PerGameCommonOptions]] = MuseDashOptions
     options: MuseDashOptions

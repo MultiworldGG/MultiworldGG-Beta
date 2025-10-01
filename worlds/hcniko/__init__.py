@@ -31,6 +31,8 @@ class HereComesNikoWebWorld(WebWorld):
 
 class HereComesNikoWorld(World):
     """A cozy little game, about frogs and being a good friend"""
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("hcniko")
 
     game = GAME_NAME
     author: str = AUTHOR

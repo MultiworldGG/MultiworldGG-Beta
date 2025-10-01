@@ -46,8 +46,10 @@ class KH1World(World):
     Kingdom Hearts is an action RPG following Sora on his journey 
     through many worlds to find Riku and Kairi.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("kh1")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     options_dataclass = KH1Options
     options: KH1Options

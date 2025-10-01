@@ -147,9 +147,10 @@ class LMWorld(World):
     Armed with the mysterious Poltergust 3000, Luigi will need to overcome his fears to kick the ghosts out
     before he can move in and save Mario!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("luigismansion")
 
     game: ClassVar[str] = GAME_NAME
-    
     author: ClassVar[str] = AUTHOR
     options_dataclass = LuigiOptions.LMOptions
     options: LuigiOptions.LMOptions

@@ -30,8 +30,10 @@ class MomodoraWorld(World):
     As she explores, she collects items which make her more powerful, and unlocks new abilities 
     which can be used to access different areas of the game world.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("momodoramoonlitfarewell")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     options_dataclass = MomodoraOptions
     options: MomodoraOptions

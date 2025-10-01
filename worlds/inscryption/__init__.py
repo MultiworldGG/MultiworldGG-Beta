@@ -40,8 +40,10 @@ class InscryptionWorld(World):
     escape-room style puzzles, and psychological horror into a blood-laced smoothie.
     Darker still are the secrets inscrybed upon the cards...
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("inscryption")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     web = InscrypWeb()
     options_dataclass = InscryptionOptions

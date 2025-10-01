@@ -52,6 +52,9 @@ class L2ACWorld(World):
     random items and find new companions on the way to face the Royal
     Jelly in the end. Can you beat it?
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("lufia2ac")
+
     game: ClassVar[str] = GAME_NAME
     author: str = AUTHOR
 

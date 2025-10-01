@@ -24,8 +24,10 @@ class Hylics2World(World):
     Hylics 2 is a surreal and unusual RPG, with a bizarre yet unique visual style. Play as Wayne,
     travel the world, and gather your allies to defeat the nefarious Gibby in his Hylemxylem!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("hylics2")
+
     game: str = GAME_NAME
-    
     author: str = AUTHOR
     web = Hylics2Web()
 

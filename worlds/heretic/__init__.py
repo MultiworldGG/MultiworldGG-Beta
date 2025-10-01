@@ -38,6 +38,9 @@ class HereticWorld(World):
     """
     Heretic is a dark fantasy first-person shooter video game released in December 1994. It was developed by Raven Software.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("heretic")
+
     options_dataclass = HereticOptions
     options: HereticOptions
     game = GAME_NAME

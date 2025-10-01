@@ -41,6 +41,8 @@ class JigsawWorld(World):
     Make a Jigsaw puzzle! But first you'll have to find your pieces.
     Connect the pieces to unlock more. Goal: solve the puzzle of course!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("jigsaw")
 
     game: str = GAME_NAME
     author: str = AUTHOR

@@ -132,6 +132,9 @@ class JakAndDaxterWorld(World):
     rogue sages Gol and Maia Acheron plan to flood the world with Dark Eco, they must stop their evil plan
     and save the world.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("jakanddaxter")
+
     # ID, name, version
     game = GAME_NAME
     author: str = AUTHOR

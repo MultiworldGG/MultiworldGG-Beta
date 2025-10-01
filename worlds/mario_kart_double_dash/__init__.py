@@ -37,8 +37,10 @@ class MkddWorld(World):
     """
     The fourth entry in Mario Kart series, Double Dash shakes up the gameplay by introducing 2 drivers per vehicle.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("mario_kart_double_dash")
+
     game = GAME_NAME
-    
     author: str = AUTHOR
     web = MkddWebWorld()
 

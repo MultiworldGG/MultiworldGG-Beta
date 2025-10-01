@@ -35,9 +35,10 @@ class MeritousWorld(World):
         Five generations after the Orcus Dome incident, strange experiments conducted in a new
         structure on the moon are tearing at the very fabric of reality...
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("meritous")
 
     game: str = GAME_NAME
-    
     author: str = AUTHOR
     topology_present: False
 
