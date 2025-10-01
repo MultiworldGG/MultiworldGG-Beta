@@ -10,7 +10,7 @@ import logging
 from Utils import visualize_regions
 
 from .client import FFTAClient
-()
+
 
 from BaseClasses import ItemClassification, MultiWorld, Tutorial, Item
 from worlds.AutoWorld import WebWorld, World

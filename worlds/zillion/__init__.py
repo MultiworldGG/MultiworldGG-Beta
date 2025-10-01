@@ -12,7 +12,7 @@ from typing_extensions import override
 from BaseClasses import LocationProgressType, MultiWorld, Item, CollectionState, Entrance, Tutorial
 
 from .gen_data import GenData
-()
+
 from .logic import ZillionLogicCache
 from .region import ZillionLocation, ZillionRegion
 from .options import ZillionOptions, validate, z_option_groups

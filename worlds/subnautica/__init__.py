@@ -11,7 +11,7 @@ from . import creatures
 from . import options
 from .items import item_table, group_items
 from .rules import set_rules
-()
+
 
 
 class SubnauticaWeb(WebWorld):

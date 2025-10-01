@@ -4,7 +4,7 @@ import os
 from typing import Any, Dict, List, Set
 
 from .ProgressiveDistricts import get_flat_progressive_districts
-()
+
 from worlds.generic.Rules import forbid_item
 
 

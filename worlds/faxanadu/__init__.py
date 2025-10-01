@@ -5,7 +5,7 @@ from worlds.AutoWorld import WebWorld, World
 from . import Items, Locations, Regions, Rules
 from .Options import FaxanaduOptions
 from worlds.generic.Rules import set_rule
-()
+
 
 
 DAXANADU_VERSION = "0.3.0"

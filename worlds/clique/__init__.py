@@ -6,7 +6,7 @@ from worlds.AutoWorld import WebWorld, World
 from .items import CliqueItem, item_data
 from .locations import CliqueLocation, location_table, location_table
 from .options import CliqueOptions
-()
+
 
 class CliqueWebWorld(WebWorld):
     theme = "partyTime"

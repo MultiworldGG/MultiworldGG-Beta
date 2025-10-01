@@ -6,7 +6,7 @@ import json
 import typing
 
 from .Items.Items import Items, SOTItem
-()
+
 from .Items.ItemCollection import ItemCollection
 from .Items.ItemDetail import ItemDetail
 from .Options import SOTOptions

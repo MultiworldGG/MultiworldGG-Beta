@@ -16,7 +16,7 @@ from .data import (
 )
 from .options import CelesteGameOptions
 from .progression import GameLogic
-()
+
 
 
 class CelesteWebWorld(WebWorld):

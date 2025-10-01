@@ -18,7 +18,7 @@ from .Options import DragonRandoType, DifficultySwitchA, DifficultySwitchB, Adve
 from .Regions import create_regions
 from .Rom import get_base_rom_bytes, get_base_rom_path, AdventureDeltaPatch, apply_basepatch, AdventureAutoCollectLocation
 from .Rules import set_rules
-()
+
 
 
 def launch_client(*args):

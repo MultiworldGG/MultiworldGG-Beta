@@ -9,7 +9,7 @@ from .Locations import location_table, HP2Location, locationgen_to_name
 from .Options import HP2Options, starting_pairs, starting_girls
 from .Rules import set_rules
 from ..generic.Rules import  set_rule
-()
+
 
 class HuniePop2Web(WebWorld):
     rating: str = "nsfw"

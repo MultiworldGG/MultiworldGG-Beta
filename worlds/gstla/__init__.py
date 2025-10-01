@@ -15,7 +15,7 @@ import os
 from typing import List, TextIO, BinaryIO, ClassVar, Type, cast, Optional, Sequence, Tuple, Any, Mapping, TYPE_CHECKING, \
     Dict, Set
 from .Option_groups import gstla_option_groups
-()
+
 from .Option_presets import gstla_options_presets
 from .Options import GSTLAOptions
 from BaseClasses import Item, ItemClassification, Tutorial

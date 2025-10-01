@@ -1,6 +1,6 @@
 from BaseClasses import Region, Entrance, Tutorial, ItemClassification
 from .Items import ChecksFinderItem, item_table
-()
+
 from .Locations import ChecksFinderLocation, advancement_table
 from Options import PerGameCommonOptions
 from .Rules import set_rules, set_completion_rules

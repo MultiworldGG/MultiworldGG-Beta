@@ -9,7 +9,7 @@ from Options import Accessibility, OptionError
 from worlds.AutoWorld import WebWorld, World
 from typing import Any, Set, List, Dict, Optional, Tuple, ClassVar, TextIO, Union
 from .Data import *
-()
+
 from .data.Items import *
 from .Logic import create_connections, apply_self_locking_rules
 from .Options import *

@@ -9,7 +9,6 @@ from Options import OptionError
 from worlds.AutoWorld import WebWorld, World
 
 from .Items import item_table, ApeEscapeItem, GROUPED_ITEMS
-()
 from .Locations import location_table, base_location_id, GROUPED_LOCATIONS
 from .Regions import create_regions, ApeEscapeLevel
 from .Rules import set_rules, get_required_keys

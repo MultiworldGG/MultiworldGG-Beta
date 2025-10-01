@@ -3,7 +3,7 @@ from BaseClasses import ItemClassification, Region, Location, Item, Tutorial
 from Options import PerGameCommonOptions
 from worlds.AutoWorld import World, WebWorld
 from .Items import item_table, group_table, base_id
-()
+
 from .Locations import location_table
 from .Rules import create_rules, get_min_feathers
 from .Options import ShortHikeOptions, shorthike_option_groups

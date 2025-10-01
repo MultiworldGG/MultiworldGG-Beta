@@ -25,7 +25,7 @@ from .Rules import set_rules
 from .EntranceRandoRules import create_entrance_randomizer_set
 from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import add_rule
-()
+
 from worlds.LauncherComponents import Component, components, launch as launch_component, Type, SuffixIdentifier
 
 

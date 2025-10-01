@@ -6,7 +6,7 @@ from .Locations import locations
 from .Items import items, filler_items, base_id
 from .Rules import create_rules
 from .Options import CatQuestOptions
-()
+
 
 class CatQuestWeb(WebWorld):
     theme = "grassFlowers"

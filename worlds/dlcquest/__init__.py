@@ -10,7 +10,7 @@ from .Regions import create_regions
 from .Rules import set_rules
 from .presets import dlcq_options_presets
 from .option_groups import dlcq_option_groups
-()
+
 
 client_version = 0
 

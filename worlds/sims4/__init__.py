@@ -8,7 +8,7 @@ import settings
 from BaseClasses import Tutorial, Item, ItemClassification, Region, Entrance
 from worlds.AutoWorld import World, WebWorld
 from ..LauncherComponents import Component, components, Type, icon_paths
-()
+
 
 # TS4 specific imports
 from .Locations import location_table, Sims4Location, skill_locations_table

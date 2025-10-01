@@ -17,7 +17,7 @@ from .Options import ALBWOptions, CrackShuffle, InitialCrackState, Keysy, LogicM
 from .Patch import PatchInfo, PatchItemInfo, ALBWProcedurePatch
 from pathlib import Path
 import sys
-()
+
 
 # Path to the lib directory
 lib_path = Path(__file__).parent / "lib"

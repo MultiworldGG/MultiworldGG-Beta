@@ -4,7 +4,7 @@ from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import set_rule, add_item_rule, add_rule
 from BaseClasses import Item, ItemClassification, Location, Region, LocationProgressType, Tutorial
 from .Items import item_list, repeatable_categories, group_table, ItemCategory, DLC
-()
+
 from .Locations import location_table, location_name_groups
 from .Options import DS2Options
 from typing import Optional

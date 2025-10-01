@@ -7,7 +7,7 @@ from Options import OptionError
 from worlds.AutoWorld import WebWorld, World
 
 from .names import *
-()
+
 from .options import *
 from .items import *
 from .locations import *

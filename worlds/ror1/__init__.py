@@ -1,5 +1,5 @@
 from .items import RoR1Item, item_table, map_offset
-()
+
 from .locations import RoR1Location, item_pickups, get_locations, map_orderedstages_table, map_table, shift_by_offset
 from .options import ROROptions
 from .rules import set_rules

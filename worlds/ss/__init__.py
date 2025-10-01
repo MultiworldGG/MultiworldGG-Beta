@@ -14,7 +14,7 @@ from Options import Toggle, OptionError
 from worlds.AutoWorld import WebWorld, World
 from worlds.Files import APPlayerContainer, AutoPatchRegister
 from worlds.generic.Rules import add_item_rule
-()
+
 
 from worlds.LauncherComponents import (
     Component,

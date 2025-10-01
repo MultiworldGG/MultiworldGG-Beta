@@ -14,7 +14,7 @@ from worlds.AutoWorld import WebWorld, World
 from worlds.generic.Rules import add_rule
 
 from .common import NAME
-()
+
 from .logic import condition_satisfied
 from .world_data import static_world_data
 

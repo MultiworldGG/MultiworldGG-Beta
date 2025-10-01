@@ -10,7 +10,7 @@ from Fill import fill_restrictive
 from worlds.AutoWorld import WebWorld, World
 
 from . import rom_data
-()
+
 from .client import MZMClient
 from .data import data_path
 from .items import item_data_table, major_item_data_table, mzm_item_name_groups, MZMItem

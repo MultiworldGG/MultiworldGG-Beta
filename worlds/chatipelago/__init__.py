@@ -1,6 +1,6 @@
 from BaseClasses import Item, Region, Tutorial, ItemClassification
 from .Items import *
-()
+
 from .Regions import *
 from Options import PerGameCommonOptions
 from .Rules import *

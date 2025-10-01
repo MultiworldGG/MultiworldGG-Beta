@@ -26,7 +26,7 @@ from .Regions import *
 from .Rules import *
 from .Rules import set_element_rules
 from .iso_helper.lm_rom import LMPlayerContainer
-()
+
 if TYPE_CHECKING:
     from NetUtils import MultiData
 

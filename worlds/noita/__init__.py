@@ -3,7 +3,7 @@ from worlds.AutoWorld import WebWorld, World
 from typing import Dict, Any
 from . import events, items, locations, regions, rules
 from .options import NoitaOptions
-()
+
 
 
 class NoitaWeb(WebWorld):

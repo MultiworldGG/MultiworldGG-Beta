@@ -14,7 +14,7 @@ from ..generic.Rules import set_rule, add_rule
 from worlds.AutoWorld import World, WebWorld
 from BaseClasses import LocationProgressType, Region, Location, Entrance, Item, ItemClassification, Tutorial
 from Options import OptionError
-()
+
 
 logger = logging.getLogger("Rimworld")
 

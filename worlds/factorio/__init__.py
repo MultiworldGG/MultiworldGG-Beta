@@ -20,8 +20,10 @@ from .Technologies import base_tech_table, recipe_sources, base_technology_table
     get_science_pack_pools, Recipe, recipes, technology_table, tech_table, factorio_base_id, useless_technologies, \
     fluids, stacking_items, valid_ingredients, progressive_rows
 from .settings import FactorioSettings
-()
 
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("factorio")
 
 def launch_client(*args: str):
     from .Client import launch
@@ -66,8 +68,6 @@ class Factorio(World):
     research new technologies, and become more efficient in your quest to build a rocket and return home.
     """
 
-    from BaseUtils import get_archipelago_json
-    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("factorio")
 
     game = GAME_NAME
     author: str = AUTHOR

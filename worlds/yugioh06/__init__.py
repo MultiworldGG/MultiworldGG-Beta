@@ -9,7 +9,7 @@ import Utils
 from worlds.AutoWorld import WebWorld, World
 
 from .boosterpacks import booster_contents as booster_contents
-()
+
 from .boosterpacks import get_booster_locations
 from .items import (
     Banlist_Items,

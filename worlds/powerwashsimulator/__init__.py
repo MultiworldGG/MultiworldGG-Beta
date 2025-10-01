@@ -6,7 +6,7 @@ from BaseClasses import Location, Region, Item, ItemClassification, LocationProg
 from .Items import raw_items, PowerwashSimulatorItem, item_table, create_items, unlock_items, filler_items
 from .Locations import location_dict, raw_location_dict, locations_percentages, land_vehicles, objectsanity_dict
 from .Options import PowerwashSimulatorOptions, PowerwashSimulatorSettings, check_options Sanities, Percentsanity
-()
+
 
 uuid_offset = 0x3AF4F1BC
 

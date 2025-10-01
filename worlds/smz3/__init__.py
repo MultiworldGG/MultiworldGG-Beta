@@ -9,7 +9,7 @@ from BaseClasses import Region, Entrance, Location, MultiWorld, Item, ItemClassi
     Tutorial
 from worlds.generic.Rules import set_rule
 from .TotalSMZ3.Item import ItemType
-()
+
 from .TotalSMZ3 import Item as TotalSMZ3Item
 from .TotalSMZ3.World import World as TotalSMZ3World
 from .TotalSMZ3.Regions.Zelda.GanonsTower import GanonsTower

@@ -6,7 +6,7 @@ from .Locations import location_table, event_table
 from .Regions import region_exits
 from .Rules import rules
 from .Options import BombRushCyberfunkOptions, StartStyle
-()
+
 
 class BombRushCyberfunkWeb(WebWorld):
     theme = "ocean"

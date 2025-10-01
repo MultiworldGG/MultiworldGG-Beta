@@ -1,6 +1,6 @@
 from BaseClasses import Tutorial
 from ..AutoWorld import World, WebWorld
-()
+
 from worlds.LauncherComponents import Component, components, launch_subprocess, Type
 from functools import partial
 from typing import cast, ClassVar

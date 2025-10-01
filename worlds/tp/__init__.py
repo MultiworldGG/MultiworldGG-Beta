@@ -8,7 +8,7 @@ from Fill import fill_restrictive
 from BaseClasses import CollectionState, Item, LocationProgressType
 from BaseClasses import ItemClassification as IC
 from BaseClasses import Tutorial
-()
+
 from .ClientUtils import VERSION
 from .Items import (
     ITEM_TABLE,

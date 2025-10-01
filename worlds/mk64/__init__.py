@@ -6,7 +6,7 @@ from BaseClasses import Item, MultiWorld, Tutorial
 from worlds.AutoWorld import World, WebWorld
 
 from . import Items, Locations, Regions, Rom, Rules
-()
+
 from .Client import MarioKart64Client  # Import to register client with BizHawkClient
 from .Locations import MK64Location
 from .Options import MK64Options, GameMode, Opt, ShuffleDriftAbilities

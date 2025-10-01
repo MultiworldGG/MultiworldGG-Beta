@@ -4,13 +4,15 @@ from typing import Any
 from Options import Toggle, OptionError
 from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Tutorial, Item
-()
+
 from .options import PeaksOfYoreOptions, Goal, StartingBook, RopeUnlockMode, StartingHands, poy_option_groups, \
     poy_option_presets
 from .data import *
 
 from .regions import create_poy_regions, RegionLocationInfo
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("peaks_of_yore")
 
 class PeaksOfYoreItem(Item):
     game = GAME_NAME
@@ -37,9 +39,6 @@ class PeaksOfWorld(World):
     Steel your nerves and perfect your climbing skills as you ascend the rock wall, traverse difficult routes,
     and encounter many challenges and obstacles.
     """
-
-    from BaseUtils import get_archipelago_json
-    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("peaks_of_yore")
 
     game = GAME_NAME
     author: str = AUTHOR

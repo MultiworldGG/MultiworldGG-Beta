@@ -7,7 +7,7 @@ from worlds.generic.Rules import set_rule
 from BaseClasses import CollectionState, MultiWorld, Region, Tutorial
 
 from .Items import ATSItemClassification, AgainstTheStormItem, item_dict
-()
+
 from .Locations import ATSLocationClassification, AgainstTheStormLocation, location_dict
 from .Options import AgainstTheStormOptions, RecipeShuffle
 from .Recipes import satisfies_recipe, blueprint_recipes, nonitem_blueprint_recipes

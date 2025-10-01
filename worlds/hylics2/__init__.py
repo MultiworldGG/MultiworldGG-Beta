@@ -2,7 +2,7 @@ from typing import Dict, List, Any
 from BaseClasses import Region, Entrance, Location, Item, Tutorial, ItemClassification
 from worlds.generic.Rules import set_rule
 from . import Exits, Items, Locations, Rules
-()
+
 from .Options import Hylics2Options
 from worlds.AutoWorld import WebWorld, World
 

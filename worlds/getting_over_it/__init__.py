@@ -6,7 +6,7 @@ from .items import items_list, GOIItem
 from .locations import locations_list, GOILocation, instant_spots, early_spots, midgame_spots, late_spots, \
     float_only_spots, spots_list
 from .options import GOIOptions
-()
+
 
 class GOIWeb(WebWorld):
     rich_text_options_doc = True

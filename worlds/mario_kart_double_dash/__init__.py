@@ -17,7 +17,7 @@ from .regions import MkddRegionData
 from .rules import MkddRules
 from . import game_data, version
 
-()
+
 
 class MkddWebWorld(WebWorld):
     theme = "ocean"

@@ -14,7 +14,7 @@ from .rom import patch_rom, MM3ProcedurePatch, MM3LCHASH, MM3VCHASH, PROTEUSHASH
 from .options import MM3Options, Consumables
 from .client import MegaMan3Client
 from .rules import set_rules, weapon_damage, robot_masters, weapons_to_name, minimum_weakness_requirement
-()
+
 import os
 import threading
 import base64

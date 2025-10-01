@@ -13,7 +13,7 @@ from .Regions import connect_regions, create_regions
 from .Options import DiddyKongRacingOptions
 from .Rules import DiddyKongRacingRules
 from .Names import ItemName, LocationName
-()
+
 
 
 def run_client():

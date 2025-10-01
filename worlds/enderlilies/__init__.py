@@ -6,7 +6,7 @@ from Options import Option
 from Fill import swap_location_item
 
 from .Items import ItemData, items, ItemGroup
-()
+
 from .Locations import LocationData, locations, LocationGroup
 from .Rules import get_rules
 from .Options import *

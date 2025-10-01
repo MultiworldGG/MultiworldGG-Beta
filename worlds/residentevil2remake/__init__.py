@@ -13,7 +13,7 @@ from .Data import Data
 from .Exceptions import RE2ROptionError
 from .Options import RE2ROptions
 from .WeaponRandomizer import WeaponRandomizer
-()
+
 
 
 Data.load_data('leon', 'a')

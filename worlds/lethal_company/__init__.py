@@ -1,7 +1,7 @@
 import string
 
 from .items import LethalCompanyItem, item_table, generate_items, calculate_credits, get_default_item_map
-()
+
 from .locations import LethalCompanyLocation, generate_locations, locations, get_default_location_map
 from .rules import set_rules
 from BaseClasses import Item, ItemClassification, Tutorial, MultiWorld, Region

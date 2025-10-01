@@ -8,7 +8,7 @@ from worlds.AutoWorld import World, WebWorld
 from worlds.LauncherComponents import components, Component, launch_subprocess, Type as ComponentType
 from . import Options, Items, Locations
 from .Constants import *
-()
+
 
 
 def launch_client(*args: str):

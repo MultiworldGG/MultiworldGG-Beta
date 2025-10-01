@@ -25,7 +25,7 @@ from .locations import MonsterSanctuaryLocationCategory as LocationCategory, Mon
 from .options import MonsterSanctuaryOptions
 from .regions import RegionData, MonsterSanctuaryRegion
 
-()
+
 
 
 class MonsterSanctuaryWebWorld(WebWorld):

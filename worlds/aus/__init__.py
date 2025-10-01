@@ -1,5 +1,5 @@
 from .Regions import link_aus_areas, aus_regions
-()
+
 from BaseClasses import Region, Entrance, Tutorial, Item
 from .Options import AUSOptions
 from .Items import item_table, AUSItem, item_pool

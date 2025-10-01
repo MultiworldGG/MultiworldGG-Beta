@@ -10,7 +10,7 @@ import base64
 
 from worlds.poe.data import ItemTable
 
-()
+
 from .Options import PathOfExileOptions
 from . import Items
 from . import Locations

@@ -9,7 +9,7 @@ from BaseClasses import Item, MultiWorld, Tutorial, ItemClassification
 from Options import PerGameCommonOptions
 from worlds.AutoWorld import WebWorld, World
 from .Client import DKC3SNIClient
-()
+
 from .Items import DKC3Item, ItemData, item_table, inventory_table, junk_table
 from .Levels import level_list
 from .Locations import DKC3Location, all_locations, setup_locations

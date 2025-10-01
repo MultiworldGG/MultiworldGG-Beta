@@ -12,7 +12,7 @@ from .locations_and_regions import all_non_event_locations_table, location_name_
 from .options import EarlyKeyItem, OuterWildsGameOptions, RandomizeDarkBrambleLayout, Spawn, Goal, EnableEchoesOfTheEyeDLC
 from .orbits import generate_random_orbits, generate_random_rotations
 from .warp_platforms import generate_random_warp_platform_mapping
-()
+
 
 
 class OuterWildsWebWorld(WebWorld):

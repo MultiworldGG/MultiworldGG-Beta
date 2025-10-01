@@ -7,7 +7,7 @@ from BaseClasses import Tutorial, MultiWorld, ItemClassification, Item
 from Options import AssembleOptions
 
 from .Items import SotnItem, items, relic_table, item_id_to_name
-()
+
 from .Locations import locations, SotnLocation
 from .Regions import create_regions, create_regions_no_logic
 from .Rules import set_rules, set_no_logic_rules

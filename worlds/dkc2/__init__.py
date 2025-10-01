@@ -7,7 +7,7 @@ import pkgutil
 from BaseClasses import Item, MultiWorld, Tutorial, ItemClassification, Region
 from worlds.AutoWorld import World, WebWorld
 from .Items import DKC2Item, item_table, misc_table, item_groups, STARTING_ID
-()
+
 from .Locations import setup_locations, all_locations, location_groups
 from .Regions import create_regions, connect_regions
 from .Names import ItemName, LocationName

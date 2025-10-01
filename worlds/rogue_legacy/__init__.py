@@ -8,7 +8,7 @@ from .Options import RLOptions
 from .Presets import rl_options_presets
 from .Regions import create_regions
 from .Rules import set_rules
-()
+
 
 
 class RLWeb(WebWorld):

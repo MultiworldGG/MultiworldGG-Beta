@@ -2,7 +2,7 @@ from typing import Dict
 
 from BaseClasses import Tutorial
 from ..AutoWorld import WebWorld, World
-()
+
 
 class AP_SudokuWebWorld(WebWorld):
     options_page = False

@@ -19,7 +19,7 @@ from .levels.levelbase import LevelData
 from .shop import ShopData
 from . import options, locations, levels, regions, items, shop, slotdata
 from . import debug as dbg
-()
+
 #from . import debug as dbg
 
 class CupheadWebWorld(WebWorld):

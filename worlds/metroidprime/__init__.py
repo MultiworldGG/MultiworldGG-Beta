@@ -1,5 +1,5 @@
 from .PrimeUtils import setup_lib_path
-()
+
 
 setup_lib_path()  # NOTE: This MUST be called before importing any other metroidprime modules (other than PrimeUtils)
 # Setup local dependencies if running in an apworldimport typing

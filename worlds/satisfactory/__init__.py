@@ -2,7 +2,7 @@ from typing import TextIO, ClassVar, Any
 from BaseClasses import Item, ItemClassification, CollectionState
 from NetUtils import Hint
 from .GameLogic import GameLogic
-()
+
 from .Items import Items
 from .Locations import Locations, LocationData
 from .StateLogic import EventId, StateLogic

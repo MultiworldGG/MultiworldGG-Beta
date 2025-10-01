@@ -7,7 +7,7 @@ import settings
 
 #Local
 from .Options import MegaMixOptions
-()
+
 from .Items import MegaMixSongItem, MegaMixFixedItem
 from .Locations import MegaMixLocation
 from .MegaMixCollection import MegaMixCollections

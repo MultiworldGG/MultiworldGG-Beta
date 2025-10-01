@@ -3,7 +3,7 @@ import random
 
 from BaseClasses import Item, Tutorial
 from ..AutoWorld import World, WebWorld
-()
+
 from .Options import *
 from .Items import *
 from .Locations import *

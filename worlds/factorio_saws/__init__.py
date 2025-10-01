@@ -19,8 +19,9 @@ from .Technologies import base_tech_table, recipe_sources, base_technology_table
     progressive_technology_table, common_tech_table, tech_to_progressive_lookup, progressive_tech_table, \
     get_science_pack_pools, Recipe, recipes, technology_table, tech_table, factorio_base_id, useless_technologies, \
     fluids, stacking_items, valid_ingredients, progressive_rows, ignored_recipes
-()
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("factorio_saws")
 
 def launch_client():
     from .Client import launch
@@ -84,10 +85,6 @@ class Factorio(World):
     Nauvis, an inhospitable world filled with dangerous creatures called biters. Build a factory,
     research new technologies, and become more efficient in your quest to build a rocket and return home.
     """
-
-    from BaseUtils import get_archipelago_json
-    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("factorio_saws")
-
     game = GAME_NAME
     author: str = AUTHOR
     

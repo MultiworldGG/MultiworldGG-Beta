@@ -7,7 +7,7 @@ from entrance_rando import ERPlacementState
 from worlds.AutoWorld import World, WebWorld
 from .component import setup_candy_box_2_component
 from .expected_client_version import EXPECTED_CLIENT_VERSION
-()
+
 from .locations import location_descriptions, locations, CandyBox2LocationName
 from .items import items, CandyBox2Item, candy_box_2_base_id, filler_items, CandyBox2ItemName
 from .options import CandyBox2Options, candy_box_2_options_groups

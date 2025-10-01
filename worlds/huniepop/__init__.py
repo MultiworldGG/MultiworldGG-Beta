@@ -7,7 +7,7 @@ from worlds.huniepop.Items import HPItem, girl_unlock_table, item_table, panties
 from worlds.huniepop.Locations import HPLocation, location_table, locationgen_to_name
 from worlds.huniepop.Options import HPOptions
 from worlds.huniepop.Rules import set_rules
-()
+
 
 class HuniePopWeb(WebWorld):
     rating: str = "nsfw"

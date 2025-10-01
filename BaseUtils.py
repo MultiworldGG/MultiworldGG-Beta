@@ -323,7 +323,15 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
         f"{' (frozen)' if is_frozen() else ''}"
     )
 
-def get_archipelago_json(world: str) -> typing.Tuple[str, str, str, str]:
+def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
+    """ Get the constants from the archipelago.json file for a given world
+    
+    Args:
+        world: The name of the world to get the constants for
+
+    Returns:
+        A tuple of the game name, authors, minimum AP version, and world version
+    """
     with open(local_path("lib", "worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
         data = json.load(f)
-    return data["game"], data["author"], data["minimum_ap_version"], data["world_version"]
+    return data["game"], data["authors"], data["minimum_ap_version"], data["world_version"]

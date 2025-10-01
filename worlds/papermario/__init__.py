@@ -5,7 +5,7 @@ import logging
 from typing import Dict, Any, TextIO
 from BaseClasses import (Tutorial, CollectionState, MultiWorld, ItemClassification as ic, LocationProgressType)
 from .modules.random_battles import get_boss_battles
-()
+
 from .SettingsString import load_settings_from_site_string
 from worlds.AutoWorld import World, WebWorld
 from . import Locations, options

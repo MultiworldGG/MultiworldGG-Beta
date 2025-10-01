@@ -10,7 +10,7 @@ from worlds.AutoWorld import World, WebWorld
 import itertools
 import settings
 from .Items import get_item_names_per_category, item_table
-()
+
 from .Locations import get_locations
 from .Regions import init_areas, connect_area_exits
 from .Options import EBOptions, eb_option_groups

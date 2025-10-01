@@ -9,7 +9,7 @@ from BaseClasses import Item, CollectionState, Tutorial, MultiWorld
 from worlds.AutoWorld import World, WebWorld, LogicMixin
 from worlds.LauncherComponents import launch as launch_component, components, Component, Type
 from .Client import ALTTPSNIClient
-()
+
 from .Dungeons import create_dungeons, Dungeon
 from .EntranceShuffle import link_entrances, link_inverted_entrances, plando_connect
 from .InvertedRegions import create_inverted_regions, mark_dark_world_regions

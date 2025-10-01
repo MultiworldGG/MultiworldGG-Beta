@@ -12,7 +12,7 @@ from .locations import ALL_LOCATION_TABLE, LOCATIONS_BY_GROUP
 from .options import LingoOptions, lingo_option_groups, SunwarpAccess, VictoryCondition
 from .player_logic import LingoPlayerLogic
 from .regions import create_regions
-()
+
 
 class LingoWebWorld(WebWorld):
     option_groups = lingo_option_groups

@@ -4,7 +4,7 @@ from typing import Any, ClassVar, NamedTuple, Callable,Optional
 from worlds.AutoWorld import World
 from BaseClasses import CollectionState,Entrance
 from collections import Counter
-()
+
 from enum import Enum
 
 def launch_client(*args):

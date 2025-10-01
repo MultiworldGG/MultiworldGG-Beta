@@ -1,7 +1,7 @@
 from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Tutorial
 from .Regions import create_regions
-()
+
 from .Locations import create_locations, location_table
 from .Items import create_items, item_table
 

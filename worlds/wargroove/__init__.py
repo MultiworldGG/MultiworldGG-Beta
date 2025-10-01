@@ -4,7 +4,7 @@ import typing
 
 from BaseClasses import Item, MultiWorld, Region, Location, Entrance, Tutorial, ItemClassification
 from .Items import item_table, faction_table
-()
+
 from .Locations import location_table
 from .Regions import create_regions
 from .Rules import set_rules

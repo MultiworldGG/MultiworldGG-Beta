@@ -8,7 +8,7 @@ import operator
 from collections import defaultdict, Counter
 
 from .Items import item_table, item_name_groups
-()
+
 from .Rules import set_rules, cost_terms, _hk_can_beat_thk, _hk_siblings_ending, _hk_can_beat_radiance
 from .Options import hollow_knight_options, hollow_knight_randomize_options, Goal, WhitePalace, CostSanity, \
     shop_to_option, HKOptions, GrubHuntGoal

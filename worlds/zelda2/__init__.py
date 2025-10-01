@@ -12,7 +12,7 @@ from Options import OptionGroup
 from Fill import fill_restrictive
 import settings
 from .Items import get_item_names_per_category, item_table
-()
+
 from .Locations import get_locations, static_locations
 from .Regions import init_areas
 from .Options import Z2Options, z2_option_groups

@@ -9,7 +9,7 @@ from .Options import UndertaleOptions
 from worlds.AutoWorld import World, WebWorld
 from worlds.LauncherComponents import Component, components
 from multiprocessing import Process
-()
+
 from worlds.LauncherComponents import Component, components, launch, Type
 
 

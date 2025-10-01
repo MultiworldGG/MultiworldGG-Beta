@@ -5,7 +5,7 @@ from math import floor
 from Options import PerGameCommonOptions, OptionError
 
 from .Options import MuseDashOptions, md_option_groups
-()
+
 from .Items import MuseDashSongItem, MuseDashFixedItem
 from .Locations import MuseDashLocation
 from .MuseDashCollection import MuseDashCollections

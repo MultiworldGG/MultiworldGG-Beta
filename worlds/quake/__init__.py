@@ -2,7 +2,7 @@ import json
 import math
 from random import Random
 from .levels import SL, HIPSL, ROGUESL, MG1SL
-()
+
 from typing import Any, Dict, List, Optional, Set, Tuple
 from BaseClasses import CollectionState, Tutorial
 

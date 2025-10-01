@@ -27,7 +27,7 @@ from .Checks import (
     armor_minions,
     accessory_minions,
 )
-()
+
 from .Options import TerrariaOptions, Goal
 
 

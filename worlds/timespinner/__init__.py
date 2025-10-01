@@ -1,7 +1,7 @@
 from typing import Dict, List, Set, Tuple, TextIO, Any, Optional
 from BaseClasses import Item, Tutorial, ItemClassification
 from .Items import get_item_names_per_category
-()
+
 from .Items import item_table, starter_melee_weapons, starter_spells, filler_items, starter_progression_items, pyramid_start_starter_progression_items
 from .Locations import get_location_datas, EventId
 from .Options import BackwardsCompatiableTimespinnerOptions, Toggle, BossRandoType

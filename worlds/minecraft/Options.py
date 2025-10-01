@@ -1,6 +1,6 @@
 from Options import Choice, Toggle, DefaultOnToggle, Range, OptionList, DeathLink, PlandoConnections, \
     PerGameCommonOptions
-()
+
 from dataclasses import dataclass
 
 
