@@ -1,6 +1,5 @@
 from BaseClasses import Item, ItemClassification
-from . import Common
-from .Constants import GAME_NAME
+from . import Common, GAME_NAME
 import typing
 from enum import IntEnum
 from .LADXR.locations.constants import CHEST_ITEMS

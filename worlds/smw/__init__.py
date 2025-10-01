@@ -21,6 +21,9 @@ from .Regions import create_regions, connect_regions
 from .Rom import LocalRom, patch_rom, get_base_rom_path, SMWDeltaPatch
 from .Rules import set_rules
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("smw")
+
 
 class SMWSettings(settings.Group):
     class RomFile(settings.SNESRomPath):
@@ -56,8 +59,7 @@ class SMWWorld(World):
     The Princess has been kidnapped by Bowser again, but Mario has somehow
     lost all of his abilities. Can he get them back in time to save the Princess?
     """
-    game: str = "Super Mario World"
-    
+    game: str = GAME_NAME
     author: str = AUTHOR
     settings: typing.ClassVar[SMWSettings]
 

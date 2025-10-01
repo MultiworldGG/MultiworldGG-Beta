@@ -58,7 +58,7 @@ class ResidentEvil3Remake(World):
 
     data_version = 2
     required_client_version = (0, 5, 0)
-    apworld_release_version = VERSION # defined to show in spoiler log
+    apworld_release_version = WORLD_VERSION # defined to show in spoiler log
 
     web = ResidentEvil3RemakeWeb()
 

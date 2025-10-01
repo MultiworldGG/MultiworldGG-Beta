@@ -42,7 +42,7 @@ class SpireWorld(World):
     topology_present = False
     web = SpireWeb()
     required_client_version = (0, 6, 1)
-    mod_version = VERSION
+    mod_version = WORLD_VERSION
     location_name_groups = location_groups
     item_name_groups = item_groups
 

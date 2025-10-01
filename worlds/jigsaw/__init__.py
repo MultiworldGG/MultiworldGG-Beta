@@ -56,7 +56,7 @@ class JigsawWorld(World):
     
     item_name_groups = item_groups
     
-    ap_world_version = VERSION
+    ap_world_version = WORLD_VERSION
 
     def _get_jigsaw_data(self):
         return {

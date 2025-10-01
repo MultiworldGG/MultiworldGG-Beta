@@ -69,7 +69,7 @@ class Sims4World(World):
     location_name_groups = location_name_groups
     item_name_groups = item_name_groups
 
-    data_version = VERSION
+    data_version = WORLD_VERSION
     base_id = 0x73340001
     required_client_version = (0, 4, 0)
 

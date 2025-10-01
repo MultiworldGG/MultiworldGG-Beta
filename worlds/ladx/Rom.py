@@ -10,8 +10,7 @@ import binascii
 import pickle
 import logging
 from typing import TYPE_CHECKING
-from . import Common
-from .Constants import GAME_NAME
+from . import Common, GAME_NAME
 from .LADXR import generator
 from .LADXR.main import get_parser
 from .LADXR.hints import generate_hint_texts

@@ -98,7 +98,7 @@ class MM3World(World):
     location_name_groups = location_groups
     web = MM3WebWorld()
     rom_name: bytearray
-    world_version: tuple[int, int, int] = VERSION
+    world_version: tuple[int, int, int] = WORLD_VERSION.split(".")
 
     def __init__(self, world: MultiWorld, player: int):
         self.rom_name = bytearray()

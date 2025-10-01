@@ -25,7 +25,7 @@ from worlds.AutoWorld import World, WebWorld
 from worlds.LauncherComponents import Component, components, Type, launch_subprocess
 
 from BaseUtils import get_archipelago_json
-GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("banjo_tooie")
+GAME_NAME, AUTHOR, AP_VERSION, VERSION = get_archipelago_json("banjo_tooie")
 
 def run_client():
     from .BTClient import main  # lazy import

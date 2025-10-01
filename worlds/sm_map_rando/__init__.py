@@ -124,7 +124,7 @@ class SMMapRandoWorld(World):
     game: str = GAME_NAME
     author: str = AUTHOR
     topology_present = True
-    data_version = VERSION
+    data_version = WORLD_VERSION
     options_dataclass = SMMROptions
     options: SMMROptions
 

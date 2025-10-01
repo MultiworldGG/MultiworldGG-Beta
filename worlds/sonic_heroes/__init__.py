@@ -13,6 +13,8 @@ from .items import *
 from .locations import *
 from .regions import *
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("sonic_heroes")
 
 class SonicHeroesWeb(WebWorld):
 
@@ -36,8 +38,7 @@ class SonicHeroesWorld(World):
     defeat robots, and collect the seven Chaos Emeralds needed to defeat Doctor Eggman. Within each level, the player switches between the team's three characters, 
     who each have unique abilities, to overcome obstacles.
     """
-    game: str = "Sonic Heroes"
-    
+    game: str = GAME_NAME
     author: str = AUTHOR
     web = SonicHeroesWeb()
     options_dataclass = SonicHeroesOptions

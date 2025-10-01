@@ -552,7 +552,7 @@ class LinksAwakeningWorld(World):
         slot_data = {
             "game_name": GAME_NAME,
             "pre_release": True,
-            "world_version": VERSION,
+            "world_version": WORLD_VERSION,
             "death_link": self.options.death_link.value,
         }
 

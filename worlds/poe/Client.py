@@ -5,7 +5,6 @@ import typing
 from random import Random
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
-from .Constants import VERSION
     
 
 import colorama
@@ -20,11 +19,10 @@ from .poeClient import main as poe_main
 from .poeClient import gggAPI
 from .poeClient import textUpdate
 from .poeClient import itemFilter
-from . import Options
-from .Version import POE_VERSION, BACKWARDS_COMPATIBLE_VERSIONS
+from . import Options, WORLD_VERSION
+from .Version import BACKWARDS_COMPATIBLE_VERSIONS
 
-
-CLIENT_VERSION=VERSION
+POE_VERSION=WORLD_VERSION
 
 class PathOfExileCommandProcessor(ClientCommandProcessor):
     if TYPE_CHECKING:

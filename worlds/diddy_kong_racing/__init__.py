@@ -15,7 +15,7 @@ from .Rules import DiddyKongRacingRules
 from .Names import ItemName, LocationName
 
 from BaseUtils import get_archipelago_json
-GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("diddy_kong_racing")
+GAME_NAME, AUTHOR, AP_VERSION, VERSION = get_archipelago_json("diddy_kong_racing")
 
 def run_client():
     from worlds.diddy_kong_racing.DKRClient import main
