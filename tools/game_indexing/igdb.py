@@ -4,14 +4,15 @@ import requests  # Changed from request to requests
 import json
 import importlib.util
 from typing import Dict, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, timedelta
+from pathlib import Path
 import sys
 import re
 
 # Get the user's home directory and convert to forward slashes
-home_dir = os.path.expanduser('~').replace('\\', '/')
-client_id_path = f"{home_dir}/.igdb/clientid"
-key_path = f"{home_dir}/.igdb/key"
+home_dir = Path.home()
+client_id_path = Path(home_dir) / ".igdb" / "clientid"
+key_path = Path(home_dir) / ".igdb" / "key"
 
 with open(client_id_path, 'r') as file:
     igdb_client_id = file.readline().strip()
@@ -19,16 +20,27 @@ with open(key_path, 'r') as file:
     igdb_key = file.readline().strip()
 
 igdb_token = ""
-with open("access_token", "r") as file:
-    if file.readline().strip():
-        igdb_token = file.readline().strip()
-        print(f"Using cached IGDB token: {igdb_token}")
-    else:
+
+if os.path.exists(Path(home_dir) / "access_token"):
+    modified_time = datetime.fromtimestamp(os.path.getmtime(Path(home_dir) / "access_token"))
+    if datetime.now() - modified_time > timedelta(days=60):
+        print("Access token file is older than 60 days, generating new token")
         url = f"https://id.twitch.tv/oauth2/token?client_id={igdb_client_id}&client_secret={igdb_key}&grant_type=client_credentials"
         response = requests.post(url)
         igdb_token = response.json()['access_token']
-        with open("access_token", "w") as file:
+        with open(Path(home_dir) / "access_token", "w") as file:
             file.write(igdb_token)
+    else:
+        with open(Path(home_dir) / "access_token", "r") as file:
+            igdb_token = file.readline().strip()
+            print(f"Using cached IGDB token: {igdb_token}")
+else:
+    print("Access token file not found, generating new token")
+    url = f"https://id.twitch.tv/oauth2/token?client_id={igdb_client_id}&client_secret={igdb_key}&grant_type=client_credentials"
+    response = requests.post(url)
+    igdb_token = response.json()['access_token']
+    with open(Path(home_dir) / "access_token", "w") as file:
+        file.write(igdb_token)
 
 def get_igdb_game_keywords(game_id: int) -> list:
     """
@@ -79,31 +91,16 @@ def get_game_and_igdb_id_from_world(init_path: str) -> Optional[Tuple[str, int]]
     try:
         # Read the file content
         with open(init_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+            content = json.load(f)
             
         # Look for game name with type annotation - handle apostrophes properly
-        game_match = re.search(r'GAME_NAME\s*:\s*str\s*=\s*(.+)', content)
-        if not game_match:
+        game_name = content["game"]
+        if not game_name:
             return None
-            
-        # Extract the value and clean it up
-        game_value = game_match.group(1).strip()
-        # Remove quotes from the beginning and end
-        if game_value.startswith('"') and game_value.endswith('"'):
-            game_name = game_value[1:-1]
-        elif game_value.startswith("'") and game_value.endswith("'"):
-            game_name = game_value[1:-1]
-        else:
-            game_name = game_value
         
         # Look for igdb_id with type annotation
-        id_match = re.search(r'IGDB_ID\s*:\s*int\s*=\s*(\d+)', content)
-        if not id_match:
-            return None
-            
-        try:
-            igdb_id = int(id_match.group(1))
-        except ValueError:
+        igdb_id = content["igdb_id"]
+        if not igdb_id:
             return None
             
         return game_name, igdb_id
@@ -118,29 +115,22 @@ def get_game_ids_from_worlds() -> dict:
     Returns a dictionary mapping game names to their IGDB IDs.
     """
     # Get all world directories from base_world_inits.txt
-    world_dirs = os.listdir(os.path.join(os.path.dirname(__file__), "..", "worlds"))
-    worlds = [os.path.join("..", "worlds", world) for world in world_dirs if os.path.isdir(os.path.join("..", "worlds", world))]
+    world_dirs = Path.cwd().parents[1] / "worlds"
+    worlds = [world_dirs / world for world in world_dirs.iterdir() if world.is_dir()]
     
     game_ids = {}
 
     for world in worlds:
-        init_file = os.path.join(world, "Constants.py")
-        print(f"\nProcessing file: {init_file}")
-        if not os.path.exists(init_file):
-            init_file = os.path.join(world, "constants.py")
-            print(f"\nProcessing file: {init_file}")
-            if not os.path.exists(init_file):
-                print(f"No file found at {init_file}")
-                continue
+        init_file = world / "archipelago.json"
             
         # Get game name and IGDB ID from the constants file
         result = get_game_and_igdb_id_from_world(init_file)
         if not result:
-            print(f"Could not find GAME_NAME and IGDB_ID constants in {init_file}")
+            print(f"Could not find game_name and and igdb_id constants in {init_file}")
             continue
             
         game_name, igdb_id = result
-        game_ids[world] = {"igdb_id": igdb_id, "game_name": game_name}
+        game_ids[world.name] = {"igdb_id": igdb_id, "game_name": game_name}
     return game_ids
 
 def get_igdb_game_details(game_id: int) -> dict:
@@ -198,7 +188,6 @@ def generate_game_details_json() -> dict:
     result = {}
     
     for world, data in game_ids.items():
-        world = world.split("\\")[-1]
         if data["igdb_id"]:
             # Get IGDB details for worlds with IGDB IDs
             igdb_details = get_igdb_game_details(data["igdb_id"])
@@ -286,10 +275,10 @@ def save_game_details_to_json(single_id: Optional[int] = None):
     else:
         game_details = generate_game_details_json()
         
-    output_path = os.path.join(os.path.dirname(__file__), 'output', 'game_details.json')
+    output_path = Path.cwd() / 'output' / 'game_details.json'
     
     # Ensure output directory exists
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(game_details, f, indent=4)
@@ -302,3 +291,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     save_game_details_to_json(args.id)
+    if not args.id:
+        from convert_to_readable_outputs import process_game_details
+        process_game_details()
+        from remove_specific_keywords import process_game_keywords
+        process_game_keywords()
+        from generate_game_index import main
+        main()

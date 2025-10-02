@@ -13,7 +13,7 @@ def remove_specific_keywords(data, keywords_to_remove):
     
     print(f"\nRemoved {removed_count} instances of specified keywords")
 
-def process_game_details():
+def process_game_keywords():
     # Read the JSON file
     with open(os.path.join(os.path.dirname(__file__), 'output', 'game_details.json'), 'r', encoding='utf-8') as file:
         data = json.load(file)
@@ -139,6 +139,9 @@ def process_game_details():
         "pre-release public testing",
         "promo vhs",
         "xbox controller support for pc",
+        "the game awards - best independent game - winner",
+        "the game awards - best score or music - nominee",
+        "the game awards - game of the year - nominee",
         
     ]
     
@@ -168,10 +171,6 @@ def process_game_details():
     print(f"\nFinal statistics:")
     print(f"Total unique keywords: {len(keyword_counts)}")
     print(f"Total keyword occurrences: {total_keywords}")
-    
-    print("\nRemaining unique keywords (alphabetically sorted with counts):")
-    for keyword in sorted(keyword_counts.keys()):
-        print(f"  '{keyword}': {keyword_counts[keyword]}")
 
     # Save unique keywords and their counts to a JSON file
     keywords_with_counts = {kw: count for kw, count in sorted(keyword_counts.items())}
@@ -184,4 +183,4 @@ def process_game_details():
         json.dump(data, file, indent=4)
 
 if __name__ == '__main__':
-    process_game_details() 
+    process_game_keywords() 

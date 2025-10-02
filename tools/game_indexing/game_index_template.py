@@ -101,11 +101,19 @@ class GameIndex:
         return [game_data['game_name'] for game_data in GAMES_DATA.values()]
 
     @staticmethod
-    def get_module_for_game(game_name: str) -> str:
-        """Get the module name for a given game name"""
+    def get_module_for_game(game_name: str, worlds: bool = False) -> str:
+        """Get the module name for a given game name
+        
+        Args:
+            game_name: The name of the game to get the module name for
+            worlds: Whether to return the full module name or the folder name
+            
+        Returns:
+            The module name for the given game name
+        """
         for module, game_data in GAMES_DATA.items():
             if game_data['game_name'] == game_name:
-                return module
+                return "worlds.{}".format(module) if worlds else module
         return None
 
     @staticmethod

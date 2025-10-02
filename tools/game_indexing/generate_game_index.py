@@ -64,7 +64,7 @@ def build_search_index(games_data: dict) -> Dict[str, Set[str]]:
         "sc2",
         "oot",
         "kh2",
-        "hk"
+        "hk",
         "sm64ex"
     ]}
     
@@ -171,7 +171,7 @@ def generate_index_file():
         search_index_str = json.dumps(search_index_json, indent=4)
         
         # Read template
-        template_path = Path("tools/game_index_template.py")
+        template_path = Path.cwd() / 'game_index_template.py'
         with open(template_path, "r") as f:
             template = f.read()
         
@@ -180,7 +180,7 @@ def generate_index_file():
         code = code.replace("SEARCH_INDEX_PLACEHOLDER", search_index_str)
         
         # Write generated file
-        output_path = Path("data/game_index.py")
+        output_path = Path.cwd().parents[1] / 'game_index' / 'mwgg_igdb.py'
         with open(output_path, "w") as f:
             f.write(code)
         

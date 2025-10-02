@@ -3,6 +3,11 @@ from datetime import datetime
 from collections import Counter
 import os
 
+def fix_cover_url(cover_url):
+    if cover_url:
+        return cover_url.replace("//", "https://")
+    return None
+
 def convert_timestamp_to_year(timestamp):
     """Convert Unix timestamp to year, or None if invalid. Leave as is if already a year or None."""
     if timestamp in (None, "", []):
@@ -30,14 +35,6 @@ def remove_infrequent_keywords(data, min_count=6):
     print(f"\nTotal unique keywords: {len(keyword_counts)}")
     print(f"Total keyword occurrences: {sum(keyword_counts.values())}")
     print(f"Removing keywords with {min_count} or fewer occurrences...")
-    print("Sample of keyword counts:")
-    for kw, count in list(keyword_counts.items())[:20]:
-        print(f"  '{kw}': {count}")
-    
-    print(f"\nKeywords that appear {min_count} or fewer times:")
-    for kw, count in keyword_counts.items():
-        if count <= min_count:
-            print(f"'{kw}': {count}")
     
     # Second pass: remove infrequent keywords
     removed_count = 0
@@ -49,17 +46,6 @@ def remove_infrequent_keywords(data, min_count=6):
     
     print(f"\nTotal keywords removed: {removed_count}")
 
-def remove_specific_keywords(data, keywords_to_remove):
-    """Remove specific keywords from all games regardless of frequency."""
-    removed_count = 0
-    for game in data.values():
-        if 'keywords' in game and isinstance(game['keywords'], list):
-            original_length = len(game['keywords'])
-            game['keywords'] = [kw for kw in game['keywords'] if kw not in keywords_to_remove]
-            removed_count += original_length - len(game['keywords'])
-    
-    print(f"\nRemoved {removed_count} instances of specified keywords")
-
 def process_game_details():
     # Read the JSON file
     with open(os.path.join(os.path.dirname(__file__), 'output', 'game_details.json'), 'r', encoding='utf-8') as file:
@@ -67,11 +53,13 @@ def process_game_details():
     
     # Convert all release dates to years or None
     for game in data.values():
+        if 'cover_url' in game:
+            game['cover_url'] = fix_cover_url(game['cover_url'])
         if 'release_date' in game:
             game['release_date'] = convert_timestamp_to_year(game['release_date'])
     
-    # Remove infrequent keywords (<= 3 times)
-    remove_infrequent_keywords(data, min_count=3)
+    # Remove infrequent keywords (<= 4 times)
+    remove_infrequent_keywords(data, min_count=5)
 
     # Write the updated data back to the file
     with open(os.path.join(os.path.dirname(__file__), 'output', 'game_details.json'), 'w', encoding='utf-8') as file:
