@@ -1,5 +1,7 @@
 {
-    "game": "Mario", "Luigi Superstar Saga",
+    "version": 6,
+    "compatible_version": 5,
+    "game": "Mario & Luigi Superstar Saga",
     "authors": ["jamesbrq"],
     "igdb_id": 3351,
     "minimum_ap_version": "0.6.4",

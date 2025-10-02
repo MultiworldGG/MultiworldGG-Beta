@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.celeste64"
-dynamic = ["version"]
+version = "1.3.1"
 description = "MultiWorld: Celeste 64"
-authors = [
-    {name = "PoryGone"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "PoryGone"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.celeste64"]
+where = [ "src",]
+include = [ "worlds.celeste64",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.celeste64.Register.VERSION"}

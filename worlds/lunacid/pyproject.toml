@@ -1,26 +1,26 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.lunacid"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Lunacid"
-authors = [
-    {name = "Albrekka"},
-    {name = "Tesseract (Advice/Direction)"},
-    {name = "Scipio (UT Help)"}, 
-    {name = "Miracee (Tracker)"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Albrekka"
+
+[[project.authors]]
+name = "Tesseract (Advice/Direction)"
+
+[[project.authors]]
+name = "Scipio (UT Help)"
+
+[[project.authors]]
+name = "Miracee (Tracker)"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.lunacid"]
+where = [ "src",]
+include = [ "worlds.lunacid",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.lunacid.Register.VERSION"}

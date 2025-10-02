@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Wargroove 2",
     "authors": ["Fly Sniper"],
     "igdb_id": 241149,

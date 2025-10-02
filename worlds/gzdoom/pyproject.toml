@@ -1,26 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.gzdoom"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: gzDoom"
-authors = [
-    {name = "ToxicFrog"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "ToxicFrog"
 
 [project.entry-points."mwgg.client"]
 "worlds.gzdoom.Client" = "worlds.gzdoom.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.gzdoom"]
+where = [ "src",]
+include = [ "worlds.gzdoom",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.gzdoom.Register.VERSION"}

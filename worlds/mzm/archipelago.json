@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Metroid Zero Mission",
     "authors": ["Noise"],
     "igdb_id": 1107,

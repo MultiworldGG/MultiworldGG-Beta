@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.yachtdice"
-dynamic = ["version"]
+version = "2.2.4"
 description = "MultiWorld: Yacht Dice"
-authors = [
-    {name = "Spineraks"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Spineraks"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.yachtdice"]
+where = [ "src",]
+include = [ "worlds.yachtdice",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.yachtdice.Register.VERSION"}

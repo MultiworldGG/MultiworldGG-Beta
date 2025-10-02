@@ -1,32 +1,22 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.metroidprime"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Metroid Prime"
-authors = [
-    {name = "Electro15"}
-]
 license = "MIT AND (GPL-3.0-only)"
-license-files = [
-    "lib/dolphin_memory_engine/LICENSE",
-    "lib/ppc_asm/LICENSE",
-    "lib/py_randomprime/LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "lib/dolphin_memory_engine/LICENSE", "lib/ppc_asm/LICENSE", "lib/py_randomprime/LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Electro15"
 
 [project.entry-points."mwgg.client"]
 "worlds.metroidprime.Client" = "worlds.metroidprime.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.metroidprime"]
+where = [ "src",]
+include = [ "worlds.metroidprime",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.metroidprime.Register.VERSION"}

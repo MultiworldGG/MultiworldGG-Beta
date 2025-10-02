@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.cat_quest"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Cat Quest"
-authors = [
-    {name = "Nikkilite"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Nikkilite"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.cat_quest"]
+where = [ "src",]
+include = [ "worlds.cat_quest",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.cat_quest.Register.VERSION"}

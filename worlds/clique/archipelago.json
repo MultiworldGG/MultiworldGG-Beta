@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Clique",
     "authors": ["Phar"],
     "igdb_id": 0,

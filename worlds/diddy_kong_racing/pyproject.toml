@@ -1,26 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.diddy_kong_racing"
-dynamic = ["version"]
+version = "0.6.2"
 description = "MultiWorld: Diddy Kong Racing"
-authors = [
-    {name = "zakwiz"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "zakwiz"
 
 [project.entry-points."mwgg.client"]
 "worlds.diddy_kong_racing.Client" = "worlds.diddy_kong_racing.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.diddy_kong_racing"]
+where = [ "src",]
+include = [ "worlds.diddy_kong_racing",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.diddy_kong_racing.Register.VERSION"}

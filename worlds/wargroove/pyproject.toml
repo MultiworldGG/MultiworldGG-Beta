@@ -1,26 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.wargroove"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Wargroove"
-authors = [
-    {name = "FlySniper"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "FlySniper"
 
 [project.entry-points."mwgg.client"]
 "worlds.wargroove.Client" = "worlds.wargroove.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.wargroove"]
+where = [ "src",]
+include = [ "worlds.wargroove",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.wargroove.Register.VERSION"}

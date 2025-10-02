@@ -1,26 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.saving_princess"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Saving Princess"
-authors = [
-    {name = "LeonarthCG"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "LeonarthCG"
 
 [project.entry-points."mwgg.client"]
 "worlds.saving_princess.Client" = "worlds.saving_princess.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.saving_princess"]
+where = [ "src",]
+include = [ "worlds.saving_princess",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.saving_princess.Register.VERSION"}

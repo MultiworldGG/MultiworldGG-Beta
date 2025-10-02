@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Civilization VI",
     "authors": ["hesto2"],
     "igdb_id": 293,

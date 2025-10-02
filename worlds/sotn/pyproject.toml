@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.sotn"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Symphony of the Night"
-authors = [
-    {name = "Lockmau"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Lockmau"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.sotn"]
+where = [ "src",]
+include = [ "worlds.sotn",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.sotn.Register.VERSION"}

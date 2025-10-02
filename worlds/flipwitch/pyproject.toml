@@ -1,25 +1,23 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.flipwitch"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: FlipWitch - Forbidden Sex Hex"
-authors = [
-    {name = "Albrekka"},
-    {name = "Prin"},
-    {name = "SomeLazyGamer"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Albrekka"
+
+[[project.authors]]
+name = "Prin"
+
+[[project.authors]]
+name = "SomeLazyGamer"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.flipwitch"]
+where = [ "src",]
+include = [ "worlds.flipwitch",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.flipwitch.Register.VERSION"}

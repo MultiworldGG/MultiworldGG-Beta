@@ -1,26 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.dontstarvetogether"
-dynamic = ["version"]
+version = "1.3.1.2"
 description = "MultiWorld: Dont Starve Together"
-authors = [
-    {name = "Dragon Wolf Leo"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Dragon Wolf Leo"
 
 [project.entry-points."mwgg.client"]
 "worlds.dontstarvetogether.Client" = "worlds.dontstarvetogether.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.dontstarvetogether"]
+where = [ "src",]
+include = [ "worlds.dontstarvetogether",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.dontstarvetogether.Register.VERSION"}

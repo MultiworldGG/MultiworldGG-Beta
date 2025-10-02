@@ -368,7 +368,7 @@ async def nes_sync_task(ctx: ZeldaContext):
                 continue
 
 
-def main(*launcher_args: str):
+def launch(server_address, password, slot_name, ready_callback, error_callback, patch_file):
     # Text Mode to use !hint and such with games that have no text entry
     Utils.init_logging("ZeldaClient")
 
@@ -394,9 +394,9 @@ def main(*launcher_args: str):
         if args.diff_file:
             import Patch
             logging.info("Patch file was supplied. Creating nes rom..")
-            meta, romfile = Patch.create_rom_file(args.diff_file)
+            meta, romfile = Patch.create_rom_file(patch_file)
             if "server" in meta:
-                args.connect = meta["server"]
+                server_address = meta["server"]
             logging.info(f"Wrote rom file to {romfile}")
             async_start(run_game(romfile))
         ctx = ZeldaContext(args.connect, args.password)
@@ -405,7 +405,7 @@ def main(*launcher_args: str):
             ctx.run_gui()
         ctx.run_cli()
         ctx.nes_sync_task = asyncio.create_task(nes_sync_task(ctx), name="NES Sync")
-        self.bonus_items.clear()
+        ctx.bonus_items.clear()
 
         await ctx.shutdown()
 

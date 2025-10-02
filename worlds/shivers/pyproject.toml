@@ -1,24 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.shivers"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Shivers"
-authors = [
-    {name = "GodlFire"},
-    {name = "korydondzila"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "GodlFire"
+
+[[project.authors]]
+name = "korydondzila"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.shivers"]
+where = [ "src",]
+include = [ "worlds.shivers",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.shivers.Register.VERSION"}

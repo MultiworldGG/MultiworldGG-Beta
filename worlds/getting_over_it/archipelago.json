@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Getting Over It",
     "authors": ["Slimey"],
     "igdb_id": 72373,

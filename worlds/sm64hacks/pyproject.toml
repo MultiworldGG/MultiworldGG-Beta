@@ -1,27 +1,19 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.sm64hacks"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: SM64 Romhack"
-authors = [
-    {name = "DNVIC"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "DNVIC"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.sm64hacks"]
+where = [ "src",]
+include = [ "worlds.sm64hacks",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.sm64hacks.Register.VERSION"}

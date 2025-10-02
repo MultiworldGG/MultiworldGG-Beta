@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Against the Storm",
     "authors": ["Ryguy9999"],
     "igdb_id": 147519,

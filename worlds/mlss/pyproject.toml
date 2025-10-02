@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.mlss"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Mario and Luigi Superstar Saga"
-authors = [
-    {name = "jamesbrq"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "jamesbrq"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.mlss"]
+where = [ "src",]
+include = [ "worlds.mlss",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.mlss.Register.VERSION"}

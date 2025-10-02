@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Candy Box 2",
     "authors": ["Victor Tran"],
     "igdb_id": 62779,

@@ -1,24 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.lufia2ac"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Lufia II: Ancient Cave"
-authors = [
-    {name = "el-u"},
-    {name = "word_fcuk"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "el-u"
+
+[[project.authors]]
+name = "word_fcuk"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.lufia2ac"]
+where = [ "src",]
+include = [ "worlds.lufia2ac",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.lufia2ac.Register.VERSION"}

@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Hollow Knight",
     "authors": ["BadMagic"],
     "igdb_id": 14593,

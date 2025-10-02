@@ -1,27 +1,18 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.celeste"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Celeste"
-authors = [
-    {name = "doshyw"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [
-    "pandas>=2.0.3",
-    "openpyxl>=3.1.2",
-]
+dependencies = [ "pandas>=2.0.3", "openpyxl>=3.1.2",]
+[[project.authors]]
+name = "doshyw"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.celeste"]
+where = [ "src",]
+include = [ "worlds.celeste",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.celeste.Register.VERSION"}

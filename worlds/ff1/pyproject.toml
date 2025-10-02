@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.ff1"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Final Fantasy"
-authors = [
-    {name = "jtoyoda (currently unmaintained)"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "jtoyoda (currently unmaintained)"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.ff1"]
+where = [ "src",]
+include = [ "worlds.ff1",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.ff1.Register.VERSION"}

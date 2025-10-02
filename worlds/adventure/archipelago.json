@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Adventure",
     "authors": ["JusticePS"],
     "igdb_id": 12239,

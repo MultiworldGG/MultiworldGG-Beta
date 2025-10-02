@@ -1,6 +1,9 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Stardew Valley",
     "authors": ["Kaito Kid", "Jouramie"],
     "igdb_id": 17000,
     "minimum_ap_version": "0.6.4",
-    "world_version": "1.0.1" 
+    "world_version": "1.0.1"
+}

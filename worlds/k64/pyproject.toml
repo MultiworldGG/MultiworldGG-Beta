@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.k64"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Kirby 64 - The Crystal Shards"
-authors = [
-    {name = "Silvris"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Silvris"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.k64"]
+where = [ "src",]
+include = [ "worlds.k64",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.k64.Register.VERSION"}

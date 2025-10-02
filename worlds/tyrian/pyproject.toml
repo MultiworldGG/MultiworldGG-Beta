@@ -1,27 +1,19 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.tyrian"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Tyrian"
-authors = [
-    {name = "Kaito Sinclaire"}
-]
 license = "Zlib"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Kaito Sinclaire"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.tyrian"]
+where = [ "src",]
+include = [ "worlds.tyrian",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.tyrian.Register.VERSION"}

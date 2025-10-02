@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.outer_wilds"
-dynamic = ["version"]
+version = "0.3.19"
 description = "MultiWorld: Outer Wilds"
-authors = [
-    {name = "Ixrec"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Ixrec"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.outer_wilds"]
+where = [ "src",]
+include = [ "worlds.outer_wilds",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.outer_wilds.Register.VERSION"}

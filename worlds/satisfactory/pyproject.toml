@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.satisfactory"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Satisfactory"
-authors = [
-    {name = "Jarno"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Jarno"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.satisfactory"]
+where = [ "src",]
+include = [ "worlds.satisfactory",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.satisfactory.Register.VERSION"}

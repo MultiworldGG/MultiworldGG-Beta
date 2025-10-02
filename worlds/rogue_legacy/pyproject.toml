@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.rogue_legacy"
-dynamic = ["version"]
+version = "0.3.6"
 description = "MultiWorld: Rogue Legacy"
-authors = [
-    {name = "Phar"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Phar"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.rogue_legacy"]
+where = [ "src",]
+include = [ "worlds.rogue_legacy",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.rogue_legacy.Register.VERSION"}

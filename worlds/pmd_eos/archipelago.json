@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Pokemon Mystery Dungeon Explorers of Sky",
     "authors": ["CrypticMonkey33"],
     "igdb_id": 2323,

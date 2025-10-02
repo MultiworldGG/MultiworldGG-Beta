@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.wl"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Wario Land"
-authors = [
-    {name = "rand0"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "rand0"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.wl"]
+where = [ "src",]
+include = [ "worlds.wl",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.wl.Register.VERSION"}

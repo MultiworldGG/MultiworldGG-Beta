@@ -1,29 +1,23 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.kh2"
-dynamic = ["version"]
+version = "1.0.5"
 description = "MultiWorld: Kingdom Hearts 2"
-authors = [
-    {name = "JaredWeakStrike"},
-    {name = "Shananas"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [
-    "Pymem>=1.10.0"
-]
+dependencies = [ "Pymem>=1.10.0",]
+[[project.authors]]
+name = "JaredWeakStrike"
+
+[[project.authors]]
+name = "Shananas"
 
 [project.entry-points."mwgg.client"]
 "worlds.kh2.Client" = "worlds.kh2.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.kh2"]
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.kh2.Register.VERSION"}
+where = [ "src",]
+include = [ "worlds.kh2",]

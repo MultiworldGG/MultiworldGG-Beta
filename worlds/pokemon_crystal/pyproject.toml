@@ -1,27 +1,19 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.pokemon_crystal"
-dynamic = ["version"]
+version = "5.0.4"
 description = "MultiWorld: Pokemon Crystal"
-authors = [
-    {name = "James"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "James"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.pokemon_crystal"]
+where = [ "src",]
+include = [ "worlds.pokemon_crystal",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.pokemon_crystal.Register.VERSION"}

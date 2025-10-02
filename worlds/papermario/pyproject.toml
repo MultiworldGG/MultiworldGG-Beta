@@ -1,27 +1,19 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.papermario"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Paper Mario"
-authors = [
-    {name = "JKB"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "JKB"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.papermario"]
+where = [ "src",]
+include = [ "worlds.papermario",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.papermario.Register.VERSION"}

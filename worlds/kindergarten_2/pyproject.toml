@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.kindergarten_2"
-dynamic = ["version"]
+version = "0.0.1"
 description = "MultiWorld: Kindergarten 2"
-authors = [
-    {name = "Kaito Kid"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Kaito Kid"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.kindergarten_2"]
+where = [ "src",]
+include = [ "worlds.kindergarten_2",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.kindergarten_2.Register.VERSION"}

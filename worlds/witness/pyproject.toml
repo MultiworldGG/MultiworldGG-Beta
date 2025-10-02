@@ -1,24 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.witness"
-dynamic = ["version"]
+version = "8.0.0"
 description = "MultiWorld: The Witness"
-authors = [
-    {name = "NewSoupVi"},
-    {name = "blastron"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "NewSoupVi"
+
+[[project.authors]]
+name = "blastron"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.witness"]
+where = [ "src",]
+include = [ "worlds.witness",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.witness.Register.VERSION"}

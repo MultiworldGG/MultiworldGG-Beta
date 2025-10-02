@@ -1,6 +1,9 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Rimworld",
     "authors": ["Phantom Of Ares"],
     "igdb_id": 9789,
     "minimum_ap_version": "0.6.4",
     "world_version": "1.2.4"
+}

@@ -1,27 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.star_fox_64"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Star Fox 64"
-authors = [
-    {name = "Austin"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Austin"
 
 [project.entry-points."mwgg.client"]
 "worlds.star_fox_64.Client" = "worlds.star_fox_64.Register:CLIENT_FUNCTION"
 
-
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.star_fox_64"]
+where = [ "src",]
+include = [ "worlds.star_fox_64",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.star_fox_64.Register.VERSION"}

@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.landstalker"
-dynamic = ["version"]
+version = "0.4.5"
 description = "MultiWorld: Landstalker - The Treasures of King Nole"
-authors = [
-    {name = "Dinopony"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Dinopony"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.landstalker"]
+where = [ "src",]
+include = [ "worlds.landstalker",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.landstalker.Register.VERSION"}

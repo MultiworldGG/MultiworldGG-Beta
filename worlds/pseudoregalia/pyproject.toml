@@ -1,24 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.pseudoregalia"
-dynamic = ["version"]
+version = "0.7.1"
 description = "MultiWorld: Pseudoregalia"
-authors = [
-    {name = "LittleMeowMeow"},
-    {name = "qwint"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "LittleMeowMeow"
+
+[[project.authors]]
+name = "qwint"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.pseudoregalia"]
+where = [ "src",]
+include = [ "worlds.pseudoregalia",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.pseudoregalia.Register.VERSION"}

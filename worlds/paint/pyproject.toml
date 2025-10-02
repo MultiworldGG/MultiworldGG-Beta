@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.paint"
-dynamic = ["version"]
+version = "0.5.1"
 description = "MultiWorld: Paint"
-authors = [
-    {name = "MairoManTAW"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "MairoManTAW"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.paint"]
+where = [ "src",]
+include = [ "worlds.paint",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.paint.Register.VERSION"}

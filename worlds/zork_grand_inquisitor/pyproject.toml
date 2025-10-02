@@ -1,30 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.zork_grand_inquisitor"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Zork Grand Inquisitor"
-authors = [
-    {name = "nbrochu"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [
-    "Pymem>=1.13.0",
-]
+dependencies = [ "Pymem>=1.13.0",]
+[[project.authors]]
+name = "nbrochu"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.zork_grand_inquisitor"]
+where = [ "src",]
+include = [ "worlds.zork_grand_inquisitor",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.zork_grand_inquisitor.Register.VERSION"}

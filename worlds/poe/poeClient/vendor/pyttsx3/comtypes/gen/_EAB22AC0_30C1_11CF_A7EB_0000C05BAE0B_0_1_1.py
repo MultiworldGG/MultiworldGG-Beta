@@ -138,10 +138,6 @@ secureLockIconSecureFortezza = 5
 secureLockIconSecure128Bit = 6
 SecureLockIconConstants = c_int  # enum
 
-# values for enumeration 'NewProcessCauseConstants'
-ProtectedModeRedirect = 1
-NewProcessCauseConstants = c_int  # enum
-
 # values for enumeration 'CommandStateChangeConstants'
 CSC_UPDATECOMMANDS = -1
 CSC_NAVIGATEFORWARD = 1
@@ -162,6 +158,1142 @@ SWC_CALLBACK = 4
 SWC_DESKTOP = 8
 ShellWindowTypeConstants = c_int  # enum
 
+# values for enumeration 'NewProcessCauseConstants'
+ProtectedModeRedirect = 1
+NewProcessCauseConstants = c_int  # enum
+
+
+
+class IShellUIHelper(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """Shell UI Helper Control Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{729FE2F8-1EA8-11D1-8F85-00C04FC2FBE1}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def ResetFirstBootMode(self) -> hints.Hresult: ...
+        def ResetSafeMode(self) -> hints.Hresult: ...
+        def RefreshOfflineDesktop(self) -> hints.Hresult: ...
+        def AddFavorite(self, URL: hints.Incomplete, Title: hints.Incomplete = ...) -> hints.Hresult: ...
+        def AddChannel(self, URL: hints.Incomplete) -> hints.Hresult: ...
+        def AddDesktopComponent(self, URL: hints.Incomplete, Type: hints.Incomplete, Left: hints.Incomplete = ..., Top: hints.Incomplete = ..., Width: hints.Incomplete = ..., Height: hints.Incomplete = ...) -> hints.Hresult: ...
+        def IsSubscribed(self, URL: hints.Incomplete) -> hints.Incomplete: ...
+        def NavigateAndFind(self, URL: hints.Incomplete, strQuery: hints.Incomplete, varTargetFrame: hints.Incomplete) -> hints.Hresult: ...
+        def ImportExportFavorites(self, fImport: hints.Incomplete, strImpExpPath: hints.Incomplete) -> hints.Hresult: ...
+        def AutoCompleteSaveForm(self, Form: hints.Incomplete = ...) -> hints.Hresult: ...
+        def AutoScan(self, strSearch: hints.Incomplete, strFailureUrl: hints.Incomplete, pvarTargetFrame: hints.Incomplete = ...) -> hints.Hresult: ...
+        def AutoCompleteAttach(self, Reserved: hints.Incomplete = ...) -> hints.Hresult: ...
+        def ShowBrowserUI(self, bstrName: hints.Incomplete, pvarIn: hints.Incomplete) -> hints.Incomplete: ...
+
+
+class IShellUIHelper2(IShellUIHelper):
+    """Shell UI Helper Control Interface 2"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{A7FE6EDA-1932-4281-B881-87B31B8BC52C}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def AddSearchProvider(self, URL: hints.Incomplete) -> hints.Hresult: ...
+        def RunOnceShown(self) -> hints.Hresult: ...
+        def SkipRunOnce(self) -> hints.Hresult: ...
+        def CustomizeSettings(self, fSQM: hints.Incomplete, fPhishing: hints.Incomplete, bstrLocale: hints.Incomplete) -> hints.Hresult: ...
+        def SqmEnabled(self) -> hints.Incomplete: ...
+        def PhishingEnabled(self) -> hints.Incomplete: ...
+        def BrandImageUri(self) -> hints.Incomplete: ...
+        def SkipTabsWelcome(self) -> hints.Hresult: ...
+        def DiagnoseConnection(self) -> hints.Hresult: ...
+        def CustomizeClearType(self, fSet: hints.Incomplete) -> hints.Hresult: ...
+        def IsSearchProviderInstalled(self, URL: hints.Incomplete) -> hints.Incomplete: ...
+        def IsSearchMigrated(self) -> hints.Incomplete: ...
+        def DefaultSearchProvider(self) -> hints.Incomplete: ...
+        def RunOnceRequiredSettingsComplete(self, fComplete: hints.Incomplete) -> hints.Hresult: ...
+        def RunOnceHasShown(self) -> hints.Incomplete: ...
+        def SearchGuideUrl(self) -> hints.Incomplete: ...
+
+
+class IShellUIHelper3(IShellUIHelper2):
+    """Shell UI Helper Control Interface 3"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{528DF2EC-D419-40BC-9B6D-DCDBF9C1B25D}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def AddService(self, URL: hints.Incomplete) -> hints.Hresult: ...
+        def IsServiceInstalled(self, URL: hints.Incomplete, Verb: hints.Incomplete) -> hints.Incomplete: ...
+        def InPrivateFilteringEnabled(self) -> hints.Incomplete: ...
+        def AddToFavoritesBar(self, URL: hints.Incomplete, Title: hints.Incomplete, Type: hints.Incomplete = ...) -> hints.Hresult: ...
+        def BuildNewTabPage(self) -> hints.Hresult: ...
+        def SetRecentlyClosedVisible(self, fVisible: hints.Incomplete) -> hints.Hresult: ...
+        def SetActivitiesVisible(self, fVisible: hints.Incomplete) -> hints.Hresult: ...
+        def ContentDiscoveryReset(self) -> hints.Hresult: ...
+        def IsSuggestedSitesEnabled(self) -> hints.Incomplete: ...
+        def EnableSuggestedSites(self, fEnable: hints.Incomplete) -> hints.Hresult: ...
+        def NavigateToSuggestedSites(self, bstrRelativeUrl: hints.Incomplete) -> hints.Hresult: ...
+        def ShowTabsHelp(self) -> hints.Hresult: ...
+        def ShowInPrivateHelp(self) -> hints.Hresult: ...
+
+
+class IShellUIHelper4(IShellUIHelper3):
+    """Shell UI Helper Control Interface 4"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{B36E6A53-8073-499E-824C-D776330A333E}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def msIsSiteMode(self) -> hints.Incomplete: ...
+        def msSiteModeShowThumbBar(self) -> hints.Hresult: ...
+        def msSiteModeAddThumbBarButton(self, bstrIconURL: hints.Incomplete, bstrTooltip: hints.Incomplete) -> hints.Incomplete: ...
+        def msSiteModeUpdateThumbBarButton(self, ButtonID: hints.Incomplete, fEnabled: hints.Incomplete, fVisible: hints.Incomplete) -> hints.Hresult: ...
+        def msSiteModeSetIconOverlay(self, IconUrl: hints.Incomplete, pvarDescription: hints.Incomplete = ...) -> hints.Hresult: ...
+        def msSiteModeClearIconOverlay(self) -> hints.Hresult: ...
+        def msAddSiteMode(self) -> hints.Hresult: ...
+        def msSiteModeCreateJumpList(self, bstrHeader: hints.Incomplete) -> hints.Hresult: ...
+        def msSiteModeAddJumpListItem(self, bstrName: hints.Incomplete, bstrActionUri: hints.Incomplete, bstrIconUri: hints.Incomplete, pvarWindowType: hints.Incomplete = ...) -> hints.Hresult: ...
+        def msSiteModeClearJumpList(self) -> hints.Hresult: ...
+        def msSiteModeShowJumpList(self) -> hints.Hresult: ...
+        def msSiteModeAddButtonStyle(self, uiButtonID: hints.Incomplete, bstrIconURL: hints.Incomplete, bstrTooltip: hints.Incomplete) -> hints.Incomplete: ...
+        def msSiteModeShowButtonStyle(self, uiButtonID: hints.Incomplete, uiStyleID: hints.Incomplete) -> hints.Hresult: ...
+        def msSiteModeActivate(self) -> hints.Hresult: ...
+        def msIsSiteModeFirstRun(self, fPreserveState: hints.Incomplete) -> hints.Incomplete: ...
+        def msAddTrackingProtectionList(self, URL: hints.Incomplete, bstrFilterName: hints.Incomplete) -> hints.Hresult: ...
+        def msTrackingProtectionEnabled(self) -> hints.Incomplete: ...
+        def msActiveXFilteringEnabled(self) -> hints.Incomplete: ...
+
+
+class IShellUIHelper5(IShellUIHelper4):
+    """Shell UI Helper Control Interface 5"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{A2A08B09-103D-4D3F-B91C-EA455CA82EFA}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def msProvisionNetworks(self, bstrProvisioningXml: hints.Incomplete) -> hints.Incomplete: ...
+        def msReportSafeUrl(self) -> hints.Hresult: ...
+        def msSiteModeRefreshBadge(self) -> hints.Hresult: ...
+        def msSiteModeClearBadge(self) -> hints.Hresult: ...
+        def msDiagnoseConnectionUILess(self) -> hints.Hresult: ...
+        def msLaunchNetworkClientHelp(self) -> hints.Hresult: ...
+        def msChangeDefaultBrowser(self, fChange: hints.Incomplete) -> hints.Hresult: ...
+
+
+class IShellUIHelper6(IShellUIHelper5):
+    """Shell UI Helper Control Interface 6"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{987A573E-46EE-4E89-96AB-DDF7F8FDC98C}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def msStopPeriodicTileUpdate(self) -> hints.Hresult: ...
+        def msStartPeriodicTileUpdate(self, pollingUris: hints.Incomplete, startTime: hints.Incomplete = ..., uiUpdateRecurrence: hints.Incomplete = ...) -> hints.Hresult: ...
+        def msStartPeriodicTileUpdateBatch(self, pollingUris: hints.Incomplete, startTime: hints.Incomplete = ..., uiUpdateRecurrence: hints.Incomplete = ...) -> hints.Hresult: ...
+        def msClearTile(self) -> hints.Hresult: ...
+        def msEnableTileNotificationQueue(self, fChange: hints.Incomplete) -> hints.Hresult: ...
+        def msPinnedSiteState(self) -> hints.Incomplete: ...
+        def msEnableTileNotificationQueueForSquare150x150(self, fChange: hints.Incomplete) -> hints.Hresult: ...
+        def msEnableTileNotificationQueueForWide310x150(self, fChange: hints.Incomplete) -> hints.Hresult: ...
+        def msEnableTileNotificationQueueForSquare310x310(self, fChange: hints.Incomplete) -> hints.Hresult: ...
+        def msScheduledTileNotification(self, bstrNotificationXml: hints.Incomplete, bstrNotificationId: hints.Incomplete, bstrNotificationTag: hints.Incomplete, startTime: hints.Incomplete = ..., expirationTime: hints.Incomplete = ...) -> hints.Hresult: ...
+        def msRemoveScheduledTileNotification(self, bstrNotificationId: hints.Incomplete) -> hints.Hresult: ...
+        def msStartPeriodicBadgeUpdate(self, pollingUri: hints.Incomplete, startTime: hints.Incomplete = ..., uiUpdateRecurrence: hints.Incomplete = ...) -> hints.Hresult: ...
+        def msStopPeriodicBadgeUpdate(self) -> hints.Hresult: ...
+        def msLaunchInternetOptions(self) -> hints.Hresult: ...
+
+
+class IShellUIHelper7(IShellUIHelper6):
+    """Shell UI Helper Control Interface 7"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{60E567C8-9573-4AB2-A264-637C6C161CB1}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def SetExperimentalFlag(self, bstrFlagString: hints.Incomplete, vfFlag: hints.Incomplete) -> hints.Hresult: ...
+        def GetExperimentalFlag(self, bstrFlagString: hints.Incomplete) -> hints.Incomplete: ...
+        def SetExperimentalValue(self, bstrValueString: hints.Incomplete, dwValue: hints.Incomplete) -> hints.Hresult: ...
+        def GetExperimentalValue(self, bstrValueString: hints.Incomplete) -> hints.Incomplete: ...
+        def ResetAllExperimentalFlagsAndValues(self) -> hints.Hresult: ...
+        def GetNeedIEAutoLaunchFlag(self, bstrUrl: hints.Incomplete) -> hints.Incomplete: ...
+        def SetNeedIEAutoLaunchFlag(self, bstrUrl: hints.Incomplete, flag: hints.Incomplete) -> hints.Hresult: ...
+        def HasNeedIEAutoLaunchFlag(self, bstrUrl: hints.Incomplete) -> hints.Incomplete: ...
+        def LaunchIE(self, bstrUrl: hints.Incomplete, automated: hints.Incomplete) -> hints.Hresult: ...
+
+
+class IShellUIHelper8(IShellUIHelper7):
+    """Shell UI Helper Control Interface 8"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{66DEBCF2-05B0-4F07-B49B-B96241A65DB2}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def GetCVListData(self) -> hints.Incomplete: ...
+        def GetCVListLocalData(self) -> hints.Incomplete: ...
+        def GetEMIEListData(self) -> hints.Incomplete: ...
+        def GetEMIEListLocalData(self) -> hints.Incomplete: ...
+        def OpenFavoritesPane(self) -> hints.Hresult: ...
+        def OpenFavoritesSettings(self) -> hints.Hresult: ...
+        def LaunchInHVSI(self, bstrUrl: hints.Incomplete) -> hints.Hresult: ...
+
+
+class IShellUIHelper9(IShellUIHelper8):
+    """Shell UI Helper Control Interface 9"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{6CDF73B0-7F2F-451F-BC0F-63E0F3284E54}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def GetOSSku(self) -> hints.Incomplete: ...
+
+
+IShellUIHelper._methods_ = [
+    COMMETHOD([dispid(1), 'hidden'], HRESULT, 'ResetFirstBootMode'),
+    COMMETHOD([dispid(2), 'hidden'], HRESULT, 'ResetSafeMode'),
+    COMMETHOD([dispid(3), 'hidden'], HRESULT, 'RefreshOfflineDesktop'),
+    COMMETHOD(
+        [dispid(4)],
+        HRESULT,
+        'AddFavorite',
+        (['in'], BSTR, 'URL'),
+        (['in', 'optional'], POINTER(VARIANT), 'Title')
+    ),
+    COMMETHOD(
+        [dispid(5)],
+        HRESULT,
+        'AddChannel',
+        (['in'], BSTR, 'URL')
+    ),
+    COMMETHOD(
+        [dispid(6)],
+        HRESULT,
+        'AddDesktopComponent',
+        (['in'], BSTR, 'URL'),
+        (['in'], BSTR, 'Type'),
+        (['in', 'optional'], POINTER(VARIANT), 'Left'),
+        (['in', 'optional'], POINTER(VARIANT), 'Top'),
+        (['in', 'optional'], POINTER(VARIANT), 'Width'),
+        (['in', 'optional'], POINTER(VARIANT), 'Height')
+    ),
+    COMMETHOD(
+        [dispid(7)],
+        HRESULT,
+        'IsSubscribed',
+        (['in'], BSTR, 'URL'),
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pBool')
+    ),
+    COMMETHOD(
+        [dispid(8)],
+        HRESULT,
+        'NavigateAndFind',
+        (['in'], BSTR, 'URL'),
+        (['in'], BSTR, 'strQuery'),
+        (['in'], POINTER(VARIANT), 'varTargetFrame')
+    ),
+    COMMETHOD(
+        [dispid(9)],
+        HRESULT,
+        'ImportExportFavorites',
+        (['in'], VARIANT_BOOL, 'fImport'),
+        (['in'], BSTR, 'strImpExpPath')
+    ),
+    COMMETHOD(
+        [dispid(10)],
+        HRESULT,
+        'AutoCompleteSaveForm',
+        (['in', 'optional'], POINTER(VARIANT), 'Form')
+    ),
+    COMMETHOD(
+        [dispid(11)],
+        HRESULT,
+        'AutoScan',
+        (['in'], BSTR, 'strSearch'),
+        (['in'], BSTR, 'strFailureUrl'),
+        (['in', 'optional'], POINTER(VARIANT), 'pvarTargetFrame')
+    ),
+    COMMETHOD(
+        [dispid(12), 'hidden'],
+        HRESULT,
+        'AutoCompleteAttach',
+        (['in', 'optional'], POINTER(VARIANT), 'Reserved')
+    ),
+    COMMETHOD(
+        [dispid(13)],
+        HRESULT,
+        'ShowBrowserUI',
+        (['in'], BSTR, 'bstrName'),
+        (['in'], POINTER(VARIANT), 'pvarIn'),
+        (['out', 'retval'], POINTER(VARIANT), 'pvarOut')
+    ),
+]
+
+################################################################
+# code template for IShellUIHelper implementation
+# class IShellUIHelper_Impl(object):
+#     def ResetFirstBootMode(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def ResetSafeMode(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def RefreshOfflineDesktop(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def AddFavorite(self, URL, Title):
+#         '-no docstring-'
+#         #return 
+#
+#     def AddChannel(self, URL):
+#         '-no docstring-'
+#         #return 
+#
+#     def AddDesktopComponent(self, URL, Type, Left, Top, Width, Height):
+#         '-no docstring-'
+#         #return 
+#
+#     def IsSubscribed(self, URL):
+#         '-no docstring-'
+#         #return pBool
+#
+#     def NavigateAndFind(self, URL, strQuery, varTargetFrame):
+#         '-no docstring-'
+#         #return 
+#
+#     def ImportExportFavorites(self, fImport, strImpExpPath):
+#         '-no docstring-'
+#         #return 
+#
+#     def AutoCompleteSaveForm(self, Form):
+#         '-no docstring-'
+#         #return 
+#
+#     def AutoScan(self, strSearch, strFailureUrl, pvarTargetFrame):
+#         '-no docstring-'
+#         #return 
+#
+#     def AutoCompleteAttach(self, Reserved):
+#         '-no docstring-'
+#         #return 
+#
+#     def ShowBrowserUI(self, bstrName, pvarIn):
+#         '-no docstring-'
+#         #return pvarOut
+#
+
+IShellUIHelper2._methods_ = [
+    COMMETHOD(
+        [dispid(14)],
+        HRESULT,
+        'AddSearchProvider',
+        (['in'], BSTR, 'URL')
+    ),
+    COMMETHOD([dispid(15)], HRESULT, 'RunOnceShown'),
+    COMMETHOD([dispid(16)], HRESULT, 'SkipRunOnce'),
+    COMMETHOD(
+        [dispid(17)],
+        HRESULT,
+        'CustomizeSettings',
+        (['in'], VARIANT_BOOL, 'fSQM'),
+        (['in'], VARIANT_BOOL, 'fPhishing'),
+        (['in'], BSTR, 'bstrLocale')
+    ),
+    COMMETHOD(
+        [dispid(18)],
+        HRESULT,
+        'SqmEnabled',
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfEnabled')
+    ),
+    COMMETHOD(
+        [dispid(19)],
+        HRESULT,
+        'PhishingEnabled',
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfEnabled')
+    ),
+    COMMETHOD(
+        [dispid(20)],
+        HRESULT,
+        'BrandImageUri',
+        (['out', 'retval'], POINTER(BSTR), 'pbstrUri')
+    ),
+    COMMETHOD([dispid(21)], HRESULT, 'SkipTabsWelcome'),
+    COMMETHOD([dispid(22)], HRESULT, 'DiagnoseConnection'),
+    COMMETHOD(
+        [dispid(23)],
+        HRESULT,
+        'CustomizeClearType',
+        (['in'], VARIANT_BOOL, 'fSet')
+    ),
+    COMMETHOD(
+        [dispid(24)],
+        HRESULT,
+        'IsSearchProviderInstalled',
+        (['in'], BSTR, 'URL'),
+        (['out', 'retval'], POINTER(c_ulong), 'pdwResult')
+    ),
+    COMMETHOD(
+        [dispid(25)],
+        HRESULT,
+        'IsSearchMigrated',
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfMigrated')
+    ),
+    COMMETHOD(
+        [dispid(26)],
+        HRESULT,
+        'DefaultSearchProvider',
+        (['out', 'retval'], POINTER(BSTR), 'pbstrName')
+    ),
+    COMMETHOD(
+        [dispid(27)],
+        HRESULT,
+        'RunOnceRequiredSettingsComplete',
+        (['in'], VARIANT_BOOL, 'fComplete')
+    ),
+    COMMETHOD(
+        [dispid(28)],
+        HRESULT,
+        'RunOnceHasShown',
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfShown')
+    ),
+    COMMETHOD(
+        [dispid(29)],
+        HRESULT,
+        'SearchGuideUrl',
+        (['out', 'retval'], POINTER(BSTR), 'pbstrUrl')
+    ),
+]
+
+################################################################
+# code template for IShellUIHelper2 implementation
+# class IShellUIHelper2_Impl(object):
+#     def AddSearchProvider(self, URL):
+#         '-no docstring-'
+#         #return 
+#
+#     def RunOnceShown(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def SkipRunOnce(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def CustomizeSettings(self, fSQM, fPhishing, bstrLocale):
+#         '-no docstring-'
+#         #return 
+#
+#     def SqmEnabled(self):
+#         '-no docstring-'
+#         #return pfEnabled
+#
+#     def PhishingEnabled(self):
+#         '-no docstring-'
+#         #return pfEnabled
+#
+#     def BrandImageUri(self):
+#         '-no docstring-'
+#         #return pbstrUri
+#
+#     def SkipTabsWelcome(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def DiagnoseConnection(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def CustomizeClearType(self, fSet):
+#         '-no docstring-'
+#         #return 
+#
+#     def IsSearchProviderInstalled(self, URL):
+#         '-no docstring-'
+#         #return pdwResult
+#
+#     def IsSearchMigrated(self):
+#         '-no docstring-'
+#         #return pfMigrated
+#
+#     def DefaultSearchProvider(self):
+#         '-no docstring-'
+#         #return pbstrName
+#
+#     def RunOnceRequiredSettingsComplete(self, fComplete):
+#         '-no docstring-'
+#         #return 
+#
+#     def RunOnceHasShown(self):
+#         '-no docstring-'
+#         #return pfShown
+#
+#     def SearchGuideUrl(self):
+#         '-no docstring-'
+#         #return pbstrUrl
+#
+
+IShellUIHelper3._methods_ = [
+    COMMETHOD(
+        [dispid(30)],
+        HRESULT,
+        'AddService',
+        (['in'], BSTR, 'URL')
+    ),
+    COMMETHOD(
+        [dispid(31)],
+        HRESULT,
+        'IsServiceInstalled',
+        (['in'], BSTR, 'URL'),
+        (['in'], BSTR, 'Verb'),
+        (['out', 'retval'], POINTER(c_ulong), 'pdwResult')
+    ),
+    COMMETHOD(
+        [dispid(37)],
+        HRESULT,
+        'InPrivateFilteringEnabled',
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfEnabled')
+    ),
+    COMMETHOD(
+        [dispid(32)],
+        HRESULT,
+        'AddToFavoritesBar',
+        (['in'], BSTR, 'URL'),
+        (['in'], BSTR, 'Title'),
+        (['in', 'optional'], POINTER(VARIANT), 'Type')
+    ),
+    COMMETHOD([dispid(33)], HRESULT, 'BuildNewTabPage'),
+    COMMETHOD(
+        [dispid(34)],
+        HRESULT,
+        'SetRecentlyClosedVisible',
+        (['in'], VARIANT_BOOL, 'fVisible')
+    ),
+    COMMETHOD(
+        [dispid(35)],
+        HRESULT,
+        'SetActivitiesVisible',
+        (['in'], VARIANT_BOOL, 'fVisible')
+    ),
+    COMMETHOD([dispid(36)], HRESULT, 'ContentDiscoveryReset'),
+    COMMETHOD(
+        [dispid(38)],
+        HRESULT,
+        'IsSuggestedSitesEnabled',
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfEnabled')
+    ),
+    COMMETHOD(
+        [dispid(39)],
+        HRESULT,
+        'EnableSuggestedSites',
+        (['in'], VARIANT_BOOL, 'fEnable')
+    ),
+    COMMETHOD(
+        [dispid(40)],
+        HRESULT,
+        'NavigateToSuggestedSites',
+        (['in'], BSTR, 'bstrRelativeUrl')
+    ),
+    COMMETHOD([dispid(41)], HRESULT, 'ShowTabsHelp'),
+    COMMETHOD([dispid(42)], HRESULT, 'ShowInPrivateHelp'),
+]
+
+################################################################
+# code template for IShellUIHelper3 implementation
+# class IShellUIHelper3_Impl(object):
+#     def AddService(self, URL):
+#         '-no docstring-'
+#         #return 
+#
+#     def IsServiceInstalled(self, URL, Verb):
+#         '-no docstring-'
+#         #return pdwResult
+#
+#     def InPrivateFilteringEnabled(self):
+#         '-no docstring-'
+#         #return pfEnabled
+#
+#     def AddToFavoritesBar(self, URL, Title, Type):
+#         '-no docstring-'
+#         #return 
+#
+#     def BuildNewTabPage(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetRecentlyClosedVisible(self, fVisible):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetActivitiesVisible(self, fVisible):
+#         '-no docstring-'
+#         #return 
+#
+#     def ContentDiscoveryReset(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def IsSuggestedSitesEnabled(self):
+#         '-no docstring-'
+#         #return pfEnabled
+#
+#     def EnableSuggestedSites(self, fEnable):
+#         '-no docstring-'
+#         #return 
+#
+#     def NavigateToSuggestedSites(self, bstrRelativeUrl):
+#         '-no docstring-'
+#         #return 
+#
+#     def ShowTabsHelp(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def ShowInPrivateHelp(self):
+#         '-no docstring-'
+#         #return 
+#
+
+IShellUIHelper4._methods_ = [
+    COMMETHOD(
+        [dispid(43)],
+        HRESULT,
+        'msIsSiteMode',
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfSiteMode')
+    ),
+    COMMETHOD([dispid(47)], HRESULT, 'msSiteModeShowThumbBar'),
+    COMMETHOD(
+        [dispid(48)],
+        HRESULT,
+        'msSiteModeAddThumbBarButton',
+        (['in'], BSTR, 'bstrIconURL'),
+        (['in'], BSTR, 'bstrTooltip'),
+        (['out', 'retval'], POINTER(VARIANT), 'pvarButtonID')
+    ),
+    COMMETHOD(
+        [dispid(46)],
+        HRESULT,
+        'msSiteModeUpdateThumbBarButton',
+        (['in'], VARIANT, 'ButtonID'),
+        (['in'], VARIANT_BOOL, 'fEnabled'),
+        (['in'], VARIANT_BOOL, 'fVisible')
+    ),
+    COMMETHOD(
+        [dispid(44)],
+        HRESULT,
+        'msSiteModeSetIconOverlay',
+        (['in'], BSTR, 'IconUrl'),
+        (['in', 'optional'], POINTER(VARIANT), 'pvarDescription')
+    ),
+    COMMETHOD([dispid(45)], HRESULT, 'msSiteModeClearIconOverlay'),
+    COMMETHOD([dispid(49)], HRESULT, 'msAddSiteMode'),
+    COMMETHOD(
+        [dispid(51)],
+        HRESULT,
+        'msSiteModeCreateJumpList',
+        (['in'], BSTR, 'bstrHeader')
+    ),
+    COMMETHOD(
+        [dispid(52)],
+        HRESULT,
+        'msSiteModeAddJumpListItem',
+        (['in'], BSTR, 'bstrName'),
+        (['in'], BSTR, 'bstrActionUri'),
+        (['in'], BSTR, 'bstrIconUri'),
+        (['in', 'optional'], POINTER(VARIANT), 'pvarWindowType')
+    ),
+    COMMETHOD([dispid(53)], HRESULT, 'msSiteModeClearJumpList'),
+    COMMETHOD([dispid(56)], HRESULT, 'msSiteModeShowJumpList'),
+    COMMETHOD(
+        [dispid(54)],
+        HRESULT,
+        'msSiteModeAddButtonStyle',
+        (['in'], VARIANT, 'uiButtonID'),
+        (['in'], BSTR, 'bstrIconURL'),
+        (['in'], BSTR, 'bstrTooltip'),
+        (['out', 'retval'], POINTER(VARIANT), 'pvarStyleID')
+    ),
+    COMMETHOD(
+        [dispid(55)],
+        HRESULT,
+        'msSiteModeShowButtonStyle',
+        (['in'], VARIANT, 'uiButtonID'),
+        (['in'], VARIANT, 'uiStyleID')
+    ),
+    COMMETHOD([dispid(58)], HRESULT, 'msSiteModeActivate'),
+    COMMETHOD(
+        [dispid(59)],
+        HRESULT,
+        'msIsSiteModeFirstRun',
+        (['in'], VARIANT_BOOL, 'fPreserveState'),
+        (['out', 'retval'], POINTER(VARIANT), 'puiFirstRun')
+    ),
+    COMMETHOD(
+        [dispid(57)],
+        HRESULT,
+        'msAddTrackingProtectionList',
+        (['in'], BSTR, 'URL'),
+        (['in'], BSTR, 'bstrFilterName')
+    ),
+    COMMETHOD(
+        [dispid(60)],
+        HRESULT,
+        'msTrackingProtectionEnabled',
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfEnabled')
+    ),
+    COMMETHOD(
+        [dispid(61)],
+        HRESULT,
+        'msActiveXFilteringEnabled',
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfEnabled')
+    ),
+]
+
+################################################################
+# code template for IShellUIHelper4 implementation
+# class IShellUIHelper4_Impl(object):
+#     def msIsSiteMode(self):
+#         '-no docstring-'
+#         #return pfSiteMode
+#
+#     def msSiteModeShowThumbBar(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def msSiteModeAddThumbBarButton(self, bstrIconURL, bstrTooltip):
+#         '-no docstring-'
+#         #return pvarButtonID
+#
+#     def msSiteModeUpdateThumbBarButton(self, ButtonID, fEnabled, fVisible):
+#         '-no docstring-'
+#         #return 
+#
+#     def msSiteModeSetIconOverlay(self, IconUrl, pvarDescription):
+#         '-no docstring-'
+#         #return 
+#
+#     def msSiteModeClearIconOverlay(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def msAddSiteMode(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def msSiteModeCreateJumpList(self, bstrHeader):
+#         '-no docstring-'
+#         #return 
+#
+#     def msSiteModeAddJumpListItem(self, bstrName, bstrActionUri, bstrIconUri, pvarWindowType):
+#         '-no docstring-'
+#         #return 
+#
+#     def msSiteModeClearJumpList(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def msSiteModeShowJumpList(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def msSiteModeAddButtonStyle(self, uiButtonID, bstrIconURL, bstrTooltip):
+#         '-no docstring-'
+#         #return pvarStyleID
+#
+#     def msSiteModeShowButtonStyle(self, uiButtonID, uiStyleID):
+#         '-no docstring-'
+#         #return 
+#
+#     def msSiteModeActivate(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def msIsSiteModeFirstRun(self, fPreserveState):
+#         '-no docstring-'
+#         #return puiFirstRun
+#
+#     def msAddTrackingProtectionList(self, URL, bstrFilterName):
+#         '-no docstring-'
+#         #return 
+#
+#     def msTrackingProtectionEnabled(self):
+#         '-no docstring-'
+#         #return pfEnabled
+#
+#     def msActiveXFilteringEnabled(self):
+#         '-no docstring-'
+#         #return pfEnabled
+#
+
+IShellUIHelper5._methods_ = [
+    COMMETHOD(
+        [dispid(62)],
+        HRESULT,
+        'msProvisionNetworks',
+        (['in'], BSTR, 'bstrProvisioningXml'),
+        (['out', 'retval'], POINTER(VARIANT), 'puiResult')
+    ),
+    COMMETHOD([dispid(63)], HRESULT, 'msReportSafeUrl'),
+    COMMETHOD([dispid(64)], HRESULT, 'msSiteModeRefreshBadge'),
+    COMMETHOD([dispid(65)], HRESULT, 'msSiteModeClearBadge'),
+    COMMETHOD([dispid(66)], HRESULT, 'msDiagnoseConnectionUILess'),
+    COMMETHOD([dispid(67)], HRESULT, 'msLaunchNetworkClientHelp'),
+    COMMETHOD(
+        [dispid(68)],
+        HRESULT,
+        'msChangeDefaultBrowser',
+        (['in'], VARIANT_BOOL, 'fChange')
+    ),
+]
+
+################################################################
+# code template for IShellUIHelper5 implementation
+# class IShellUIHelper5_Impl(object):
+#     def msProvisionNetworks(self, bstrProvisioningXml):
+#         '-no docstring-'
+#         #return puiResult
+#
+#     def msReportSafeUrl(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def msSiteModeRefreshBadge(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def msSiteModeClearBadge(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def msDiagnoseConnectionUILess(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def msLaunchNetworkClientHelp(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def msChangeDefaultBrowser(self, fChange):
+#         '-no docstring-'
+#         #return 
+#
+
+IShellUIHelper6._methods_ = [
+    COMMETHOD([dispid(69)], HRESULT, 'msStopPeriodicTileUpdate'),
+    COMMETHOD(
+        [dispid(70)],
+        HRESULT,
+        'msStartPeriodicTileUpdate',
+        (['in'], VARIANT, 'pollingUris'),
+        (['in', 'optional'], VARIANT, 'startTime'),
+        (['in', 'optional'], VARIANT, 'uiUpdateRecurrence')
+    ),
+    COMMETHOD(
+        [dispid(75)],
+        HRESULT,
+        'msStartPeriodicTileUpdateBatch',
+        (['in'], VARIANT, 'pollingUris'),
+        (['in', 'optional'], VARIANT, 'startTime'),
+        (['in', 'optional'], VARIANT, 'uiUpdateRecurrence')
+    ),
+    COMMETHOD([dispid(71)], HRESULT, 'msClearTile'),
+    COMMETHOD(
+        [dispid(72)],
+        HRESULT,
+        'msEnableTileNotificationQueue',
+        (['in'], VARIANT_BOOL, 'fChange')
+    ),
+    COMMETHOD(
+        [dispid(73)],
+        HRESULT,
+        'msPinnedSiteState',
+        (['out', 'retval'], POINTER(VARIANT), 'pvarSiteState')
+    ),
+    COMMETHOD(
+        [dispid(76)],
+        HRESULT,
+        'msEnableTileNotificationQueueForSquare150x150',
+        (['in'], VARIANT_BOOL, 'fChange')
+    ),
+    COMMETHOD(
+        [dispid(77)],
+        HRESULT,
+        'msEnableTileNotificationQueueForWide310x150',
+        (['in'], VARIANT_BOOL, 'fChange')
+    ),
+    COMMETHOD(
+        [dispid(78)],
+        HRESULT,
+        'msEnableTileNotificationQueueForSquare310x310',
+        (['in'], VARIANT_BOOL, 'fChange')
+    ),
+    COMMETHOD(
+        [dispid(79)],
+        HRESULT,
+        'msScheduledTileNotification',
+        (['in'], BSTR, 'bstrNotificationXml'),
+        (['in'], BSTR, 'bstrNotificationId'),
+        (['in'], BSTR, 'bstrNotificationTag'),
+        (['in', 'optional'], VARIANT, 'startTime'),
+        (['in', 'optional'], VARIANT, 'expirationTime')
+    ),
+    COMMETHOD(
+        [dispid(80)],
+        HRESULT,
+        'msRemoveScheduledTileNotification',
+        (['in'], BSTR, 'bstrNotificationId')
+    ),
+    COMMETHOD(
+        [dispid(81)],
+        HRESULT,
+        'msStartPeriodicBadgeUpdate',
+        (['in'], BSTR, 'pollingUri'),
+        (['in', 'optional'], VARIANT, 'startTime'),
+        (['in', 'optional'], VARIANT, 'uiUpdateRecurrence')
+    ),
+    COMMETHOD([dispid(82)], HRESULT, 'msStopPeriodicBadgeUpdate'),
+    COMMETHOD([dispid(74)], HRESULT, 'msLaunchInternetOptions'),
+]
+
+################################################################
+# code template for IShellUIHelper6 implementation
+# class IShellUIHelper6_Impl(object):
+#     def msStopPeriodicTileUpdate(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def msStartPeriodicTileUpdate(self, pollingUris, startTime, uiUpdateRecurrence):
+#         '-no docstring-'
+#         #return 
+#
+#     def msStartPeriodicTileUpdateBatch(self, pollingUris, startTime, uiUpdateRecurrence):
+#         '-no docstring-'
+#         #return 
+#
+#     def msClearTile(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def msEnableTileNotificationQueue(self, fChange):
+#         '-no docstring-'
+#         #return 
+#
+#     def msPinnedSiteState(self):
+#         '-no docstring-'
+#         #return pvarSiteState
+#
+#     def msEnableTileNotificationQueueForSquare150x150(self, fChange):
+#         '-no docstring-'
+#         #return 
+#
+#     def msEnableTileNotificationQueueForWide310x150(self, fChange):
+#         '-no docstring-'
+#         #return 
+#
+#     def msEnableTileNotificationQueueForSquare310x310(self, fChange):
+#         '-no docstring-'
+#         #return 
+#
+#     def msScheduledTileNotification(self, bstrNotificationXml, bstrNotificationId, bstrNotificationTag, startTime, expirationTime):
+#         '-no docstring-'
+#         #return 
+#
+#     def msRemoveScheduledTileNotification(self, bstrNotificationId):
+#         '-no docstring-'
+#         #return 
+#
+#     def msStartPeriodicBadgeUpdate(self, pollingUri, startTime, uiUpdateRecurrence):
+#         '-no docstring-'
+#         #return 
+#
+#     def msStopPeriodicBadgeUpdate(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def msLaunchInternetOptions(self):
+#         '-no docstring-'
+#         #return 
+#
+
+IShellUIHelper7._methods_ = [
+    COMMETHOD(
+        [dispid(85)],
+        HRESULT,
+        'SetExperimentalFlag',
+        (['in'], BSTR, 'bstrFlagString'),
+        (['in'], VARIANT_BOOL, 'vfFlag')
+    ),
+    COMMETHOD(
+        [dispid(84)],
+        HRESULT,
+        'GetExperimentalFlag',
+        (['in'], BSTR, 'bstrFlagString'),
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'vfFlag')
+    ),
+    COMMETHOD(
+        [dispid(86)],
+        HRESULT,
+        'SetExperimentalValue',
+        (['in'], BSTR, 'bstrValueString'),
+        (['in'], c_ulong, 'dwValue')
+    ),
+    COMMETHOD(
+        [dispid(87)],
+        HRESULT,
+        'GetExperimentalValue',
+        (['in'], BSTR, 'bstrValueString'),
+        (['out', 'retval'], POINTER(c_ulong), 'pdwValue')
+    ),
+    COMMETHOD([dispid(92)], HRESULT, 'ResetAllExperimentalFlagsAndValues'),
+    COMMETHOD(
+        [dispid(89)],
+        HRESULT,
+        'GetNeedIEAutoLaunchFlag',
+        (['in'], BSTR, 'bstrUrl'),
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'flag')
+    ),
+    COMMETHOD(
+        [dispid(90)],
+        HRESULT,
+        'SetNeedIEAutoLaunchFlag',
+        (['in'], BSTR, 'bstrUrl'),
+        (['in'], VARIANT_BOOL, 'flag')
+    ),
+    COMMETHOD(
+        [dispid(88)],
+        HRESULT,
+        'HasNeedIEAutoLaunchFlag',
+        (['in'], BSTR, 'bstrUrl'),
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'exists')
+    ),
+    COMMETHOD(
+        [dispid(91)],
+        HRESULT,
+        'LaunchIE',
+        (['in'], BSTR, 'bstrUrl'),
+        (['in'], VARIANT_BOOL, 'automated')
+    ),
+]
+
+################################################################
+# code template for IShellUIHelper7 implementation
+# class IShellUIHelper7_Impl(object):
+#     def SetExperimentalFlag(self, bstrFlagString, vfFlag):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetExperimentalFlag(self, bstrFlagString):
+#         '-no docstring-'
+#         #return vfFlag
+#
+#     def SetExperimentalValue(self, bstrValueString, dwValue):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetExperimentalValue(self, bstrValueString):
+#         '-no docstring-'
+#         #return pdwValue
+#
+#     def ResetAllExperimentalFlagsAndValues(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetNeedIEAutoLaunchFlag(self, bstrUrl):
+#         '-no docstring-'
+#         #return flag
+#
+#     def SetNeedIEAutoLaunchFlag(self, bstrUrl, flag):
+#         '-no docstring-'
+#         #return 
+#
+#     def HasNeedIEAutoLaunchFlag(self, bstrUrl):
+#         '-no docstring-'
+#         #return exists
+#
+#     def LaunchIE(self, bstrUrl, automated):
+#         '-no docstring-'
+#         #return 
+#
+
+IShellUIHelper8._methods_ = [
+    COMMETHOD(
+        [dispid(93)],
+        HRESULT,
+        'GetCVListData',
+        (['out', 'retval'], POINTER(BSTR), 'pbstrResult')
+    ),
+    COMMETHOD(
+        [dispid(94)],
+        HRESULT,
+        'GetCVListLocalData',
+        (['out', 'retval'], POINTER(BSTR), 'pbstrResult')
+    ),
+    COMMETHOD(
+        [dispid(95)],
+        HRESULT,
+        'GetEMIEListData',
+        (['out', 'retval'], POINTER(BSTR), 'pbstrResult')
+    ),
+    COMMETHOD(
+        [dispid(96)],
+        HRESULT,
+        'GetEMIEListLocalData',
+        (['out', 'retval'], POINTER(BSTR), 'pbstrResult')
+    ),
+    COMMETHOD([dispid(97)], HRESULT, 'OpenFavoritesPane'),
+    COMMETHOD([dispid(98)], HRESULT, 'OpenFavoritesSettings'),
+    COMMETHOD(
+        [dispid(99)],
+        HRESULT,
+        'LaunchInHVSI',
+        (['in'], BSTR, 'bstrUrl')
+    ),
+]
+
+################################################################
+# code template for IShellUIHelper8 implementation
+# class IShellUIHelper8_Impl(object):
+#     def GetCVListData(self):
+#         '-no docstring-'
+#         #return pbstrResult
+#
+#     def GetCVListLocalData(self):
+#         '-no docstring-'
+#         #return pbstrResult
+#
+#     def GetEMIEListData(self):
+#         '-no docstring-'
+#         #return pbstrResult
+#
+#     def GetEMIEListLocalData(self):
+#         '-no docstring-'
+#         #return pbstrResult
+#
+#     def OpenFavoritesPane(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def OpenFavoritesSettings(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def LaunchInHVSI(self, bstrUrl):
+#         '-no docstring-'
+#         #return 
+#
+
+IShellUIHelper9._methods_ = [
+    COMMETHOD(
+        [dispid(103)],
+        HRESULT,
+        'GetOSSku',
+        (['out', 'retval'], POINTER(c_ulong), 'pdwResult')
+    ),
+]
+
+################################################################
+# code template for IShellUIHelper9 implementation
+# class IShellUIHelper9_Impl(object):
+#     def GetOSSku(self):
+#         '-no docstring-'
+#         #return pdwResult
+#
 
 
 class IWebBrowser(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
@@ -955,860 +2087,407 @@ IWebBrowser2._methods_ = [
 #
 
 
-class ShellUIHelper(CoClass):
-    _reg_clsid_ = GUID('{64AB4BB7-111E-11D1-8F79-00C04FC2FBE1}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
-
-
-class IShellUIHelper(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """Shell UI Helper Control Interface"""
+class IShellFavoritesNameSpace(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """IShellFavoritesNameSpace Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{729FE2F8-1EA8-11D1-8F85-00C04FC2FBE1}')
-    _idlflags_ = ['dual', 'oleautomation']
+    _iid_ = GUID('{55136804-B2DE-11D1-B9F2-00A0C98BC547}')
+    _idlflags_ = ['hidden', 'dual', 'oleautomation']
 
     if TYPE_CHECKING:  # commembers
-        def ResetFirstBootMode(self) -> hints.Hresult: ...
-        def ResetSafeMode(self) -> hints.Hresult: ...
-        def RefreshOfflineDesktop(self) -> hints.Hresult: ...
-        def AddFavorite(self, URL: hints.Incomplete, Title: hints.Incomplete = ...) -> hints.Hresult: ...
-        def AddChannel(self, URL: hints.Incomplete) -> hints.Hresult: ...
-        def AddDesktopComponent(self, URL: hints.Incomplete, Type: hints.Incomplete, Left: hints.Incomplete = ..., Top: hints.Incomplete = ..., Width: hints.Incomplete = ..., Height: hints.Incomplete = ...) -> hints.Hresult: ...
-        def IsSubscribed(self, URL: hints.Incomplete) -> hints.Incomplete: ...
-        def NavigateAndFind(self, URL: hints.Incomplete, strQuery: hints.Incomplete, varTargetFrame: hints.Incomplete) -> hints.Hresult: ...
-        def ImportExportFavorites(self, fImport: hints.Incomplete, strImpExpPath: hints.Incomplete) -> hints.Hresult: ...
-        def AutoCompleteSaveForm(self, Form: hints.Incomplete = ...) -> hints.Hresult: ...
-        def AutoScan(self, strSearch: hints.Incomplete, strFailureUrl: hints.Incomplete, pvarTargetFrame: hints.Incomplete = ...) -> hints.Hresult: ...
-        def AutoCompleteAttach(self, Reserved: hints.Incomplete = ...) -> hints.Hresult: ...
-        def ShowBrowserUI(self, bstrName: hints.Incomplete, pvarIn: hints.Incomplete) -> hints.Incomplete: ...
+        def MoveSelectionUp(self) -> hints.Hresult: ...
+        def MoveSelectionDown(self) -> hints.Hresult: ...
+        def ResetSort(self) -> hints.Hresult: ...
+        def NewFolder(self) -> hints.Hresult: ...
+        def Synchronize(self) -> hints.Hresult: ...
+        def Import(self) -> hints.Hresult: ...
+        def Export(self) -> hints.Hresult: ...
+        def InvokeContextMenuCommand(self, strCommand: hints.Incomplete) -> hints.Hresult: ...
+        def MoveSelectionTo(self) -> hints.Hresult: ...
+        def _get_SubscriptionsEnabled(self) -> hints.Incomplete: ...
+        SubscriptionsEnabled = hints.normal_property(_get_SubscriptionsEnabled)
+        def CreateSubscriptionForSelection(self) -> hints.Incomplete: ...
+        def DeleteSubscriptionForSelection(self) -> hints.Incomplete: ...
+        def SetRoot(self, bstrFullPath: hints.Incomplete) -> hints.Hresult: ...
 
 
-class IShellUIHelper2(IShellUIHelper):
-    """Shell UI Helper Control Interface 2"""
+class IShellNameSpace(IShellFavoritesNameSpace):
+    """IShellNameSpace Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{A7FE6EDA-1932-4281-B881-87B31B8BC52C}')
-    _idlflags_ = ['dual', 'oleautomation']
+    _iid_ = GUID('{E572D3C9-37BE-4AE2-825D-D521763E3108}')
+    _idlflags_ = ['hidden', 'dual', 'oleautomation']
 
     if TYPE_CHECKING:  # commembers
-        def AddSearchProvider(self, URL: hints.Incomplete) -> hints.Hresult: ...
-        def RunOnceShown(self) -> hints.Hresult: ...
-        def SkipRunOnce(self) -> hints.Hresult: ...
-        def CustomizeSettings(self, fSQM: hints.Incomplete, fPhishing: hints.Incomplete, bstrLocale: hints.Incomplete) -> hints.Hresult: ...
-        def SqmEnabled(self) -> hints.Incomplete: ...
-        def PhishingEnabled(self) -> hints.Incomplete: ...
-        def BrandImageUri(self) -> hints.Incomplete: ...
-        def SkipTabsWelcome(self) -> hints.Hresult: ...
-        def DiagnoseConnection(self) -> hints.Hresult: ...
-        def CustomizeClearType(self, fSet: hints.Incomplete) -> hints.Hresult: ...
-        def IsSearchProviderInstalled(self, URL: hints.Incomplete) -> hints.Incomplete: ...
-        def IsSearchMigrated(self) -> hints.Incomplete: ...
-        def DefaultSearchProvider(self) -> hints.Incomplete: ...
-        def RunOnceRequiredSettingsComplete(self, fComplete: hints.Incomplete) -> hints.Hresult: ...
-        def RunOnceHasShown(self) -> hints.Incomplete: ...
-        def SearchGuideUrl(self) -> hints.Incomplete: ...
+        def _get_EnumOptions(self) -> hints.Incomplete: ...
+        def _set_EnumOptions(self, pgrfEnumFlags: hints.Incomplete) -> hints.Hresult: ...
+        EnumOptions = hints.normal_property(_get_EnumOptions, _set_EnumOptions)
+        def _get_SelectedItem(self) -> hints.Incomplete: ...
+        def _set_SelectedItem(self, pItem: hints.Incomplete) -> hints.Hresult: ...
+        SelectedItem = hints.normal_property(_get_SelectedItem, _set_SelectedItem)
+        def _get_Root(self) -> hints.Incomplete: ...
+        def _set_Root(self, pvar: hints.Incomplete) -> hints.Hresult: ...
+        Root = hints.normal_property(_get_Root, _set_Root)
+        def _get_Depth(self) -> hints.Incomplete: ...
+        def _set_Depth(self, piDepth: hints.Incomplete) -> hints.Hresult: ...
+        Depth = hints.normal_property(_get_Depth, _set_Depth)
+        def _get_Mode(self) -> hints.Incomplete: ...
+        def _set_Mode(self, puMode: hints.Incomplete) -> hints.Hresult: ...
+        Mode = hints.normal_property(_get_Mode, _set_Mode)
+        def _get_Flags(self) -> hints.Incomplete: ...
+        def _set_Flags(self, pdwFlags: hints.Incomplete) -> hints.Hresult: ...
+        Flags = hints.normal_property(_get_Flags, _set_Flags)
+        def _get_TVFlags(self) -> hints.Incomplete: ...
+        def _set_TVFlags(self, dwFlags: hints.Incomplete) -> hints.Hresult: ...
+        TVFlags = hints.normal_property(_get_TVFlags, _set_TVFlags)
+        def _get_Columns(self) -> hints.Incomplete: ...
+        def _set_Columns(self, bstrColumns: hints.Incomplete) -> hints.Hresult: ...
+        Columns = hints.normal_property(_get_Columns, _set_Columns)
+        def _get_CountViewTypes(self) -> hints.Incomplete: ...
+        CountViewTypes = hints.normal_property(_get_CountViewTypes)
+        def SetViewType(self, iType: hints.Incomplete) -> hints.Hresult: ...
+        def SelectedItems(self) -> hints.Incomplete: ...
+        def Expand(self, var: hints.Incomplete, iDepth: hints.Incomplete) -> hints.Hresult: ...
+        def UnselectAll(self) -> hints.Hresult: ...
 
 
-class IShellUIHelper3(IShellUIHelper2):
-    """Shell UI Helper Control Interface 3"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{528DF2EC-D419-40BC-9B6D-DCDBF9C1B25D}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def AddService(self, URL: hints.Incomplete) -> hints.Hresult: ...
-        def IsServiceInstalled(self, URL: hints.Incomplete, Verb: hints.Incomplete) -> hints.Incomplete: ...
-        def InPrivateFilteringEnabled(self) -> hints.Incomplete: ...
-        def AddToFavoritesBar(self, URL: hints.Incomplete, Title: hints.Incomplete, Type: hints.Incomplete = ...) -> hints.Hresult: ...
-        def BuildNewTabPage(self) -> hints.Hresult: ...
-        def SetRecentlyClosedVisible(self, fVisible: hints.Incomplete) -> hints.Hresult: ...
-        def SetActivitiesVisible(self, fVisible: hints.Incomplete) -> hints.Hresult: ...
-        def ContentDiscoveryReset(self) -> hints.Hresult: ...
-        def IsSuggestedSitesEnabled(self) -> hints.Incomplete: ...
-        def EnableSuggestedSites(self, fEnable: hints.Incomplete) -> hints.Hresult: ...
-        def NavigateToSuggestedSites(self, bstrRelativeUrl: hints.Incomplete) -> hints.Hresult: ...
-        def ShowTabsHelp(self) -> hints.Hresult: ...
-        def ShowInPrivateHelp(self) -> hints.Hresult: ...
-
-
-class IShellUIHelper4(IShellUIHelper3):
-    """Shell UI Helper Control Interface 4"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{B36E6A53-8073-499E-824C-D776330A333E}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def msIsSiteMode(self) -> hints.Incomplete: ...
-        def msSiteModeShowThumbBar(self) -> hints.Hresult: ...
-        def msSiteModeAddThumbBarButton(self, bstrIconURL: hints.Incomplete, bstrTooltip: hints.Incomplete) -> hints.Incomplete: ...
-        def msSiteModeUpdateThumbBarButton(self, ButtonID: hints.Incomplete, fEnabled: hints.Incomplete, fVisible: hints.Incomplete) -> hints.Hresult: ...
-        def msSiteModeSetIconOverlay(self, IconUrl: hints.Incomplete, pvarDescription: hints.Incomplete = ...) -> hints.Hresult: ...
-        def msSiteModeClearIconOverlay(self) -> hints.Hresult: ...
-        def msAddSiteMode(self) -> hints.Hresult: ...
-        def msSiteModeCreateJumpList(self, bstrHeader: hints.Incomplete) -> hints.Hresult: ...
-        def msSiteModeAddJumpListItem(self, bstrName: hints.Incomplete, bstrActionUri: hints.Incomplete, bstrIconUri: hints.Incomplete, pvarWindowType: hints.Incomplete = ...) -> hints.Hresult: ...
-        def msSiteModeClearJumpList(self) -> hints.Hresult: ...
-        def msSiteModeShowJumpList(self) -> hints.Hresult: ...
-        def msSiteModeAddButtonStyle(self, uiButtonID: hints.Incomplete, bstrIconURL: hints.Incomplete, bstrTooltip: hints.Incomplete) -> hints.Incomplete: ...
-        def msSiteModeShowButtonStyle(self, uiButtonID: hints.Incomplete, uiStyleID: hints.Incomplete) -> hints.Hresult: ...
-        def msSiteModeActivate(self) -> hints.Hresult: ...
-        def msIsSiteModeFirstRun(self, fPreserveState: hints.Incomplete) -> hints.Incomplete: ...
-        def msAddTrackingProtectionList(self, URL: hints.Incomplete, bstrFilterName: hints.Incomplete) -> hints.Hresult: ...
-        def msTrackingProtectionEnabled(self) -> hints.Incomplete: ...
-        def msActiveXFilteringEnabled(self) -> hints.Incomplete: ...
-
-
-class IShellUIHelper5(IShellUIHelper4):
-    """Shell UI Helper Control Interface 5"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{A2A08B09-103D-4D3F-B91C-EA455CA82EFA}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def msProvisionNetworks(self, bstrProvisioningXml: hints.Incomplete) -> hints.Incomplete: ...
-        def msReportSafeUrl(self) -> hints.Hresult: ...
-        def msSiteModeRefreshBadge(self) -> hints.Hresult: ...
-        def msSiteModeClearBadge(self) -> hints.Hresult: ...
-        def msDiagnoseConnectionUILess(self) -> hints.Hresult: ...
-        def msLaunchNetworkClientHelp(self) -> hints.Hresult: ...
-        def msChangeDefaultBrowser(self, fChange: hints.Incomplete) -> hints.Hresult: ...
-
-
-class IShellUIHelper6(IShellUIHelper5):
-    """Shell UI Helper Control Interface 6"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{987A573E-46EE-4E89-96AB-DDF7F8FDC98C}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def msStopPeriodicTileUpdate(self) -> hints.Hresult: ...
-        def msStartPeriodicTileUpdate(self, pollingUris: hints.Incomplete, startTime: hints.Incomplete = ..., uiUpdateRecurrence: hints.Incomplete = ...) -> hints.Hresult: ...
-        def msStartPeriodicTileUpdateBatch(self, pollingUris: hints.Incomplete, startTime: hints.Incomplete = ..., uiUpdateRecurrence: hints.Incomplete = ...) -> hints.Hresult: ...
-        def msClearTile(self) -> hints.Hresult: ...
-        def msEnableTileNotificationQueue(self, fChange: hints.Incomplete) -> hints.Hresult: ...
-        def msPinnedSiteState(self) -> hints.Incomplete: ...
-        def msEnableTileNotificationQueueForSquare150x150(self, fChange: hints.Incomplete) -> hints.Hresult: ...
-        def msEnableTileNotificationQueueForWide310x150(self, fChange: hints.Incomplete) -> hints.Hresult: ...
-        def msEnableTileNotificationQueueForSquare310x310(self, fChange: hints.Incomplete) -> hints.Hresult: ...
-        def msScheduledTileNotification(self, bstrNotificationXml: hints.Incomplete, bstrNotificationId: hints.Incomplete, bstrNotificationTag: hints.Incomplete, startTime: hints.Incomplete = ..., expirationTime: hints.Incomplete = ...) -> hints.Hresult: ...
-        def msRemoveScheduledTileNotification(self, bstrNotificationId: hints.Incomplete) -> hints.Hresult: ...
-        def msStartPeriodicBadgeUpdate(self, pollingUri: hints.Incomplete, startTime: hints.Incomplete = ..., uiUpdateRecurrence: hints.Incomplete = ...) -> hints.Hresult: ...
-        def msStopPeriodicBadgeUpdate(self) -> hints.Hresult: ...
-        def msLaunchInternetOptions(self) -> hints.Hresult: ...
-
-
-class IShellUIHelper7(IShellUIHelper6):
-    """Shell UI Helper Control Interface 7"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{60E567C8-9573-4AB2-A264-637C6C161CB1}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def SetExperimentalFlag(self, bstrFlagString: hints.Incomplete, vfFlag: hints.Incomplete) -> hints.Hresult: ...
-        def GetExperimentalFlag(self, bstrFlagString: hints.Incomplete) -> hints.Incomplete: ...
-        def SetExperimentalValue(self, bstrValueString: hints.Incomplete, dwValue: hints.Incomplete) -> hints.Hresult: ...
-        def GetExperimentalValue(self, bstrValueString: hints.Incomplete) -> hints.Incomplete: ...
-        def ResetAllExperimentalFlagsAndValues(self) -> hints.Hresult: ...
-        def GetNeedIEAutoLaunchFlag(self, bstrUrl: hints.Incomplete) -> hints.Incomplete: ...
-        def SetNeedIEAutoLaunchFlag(self, bstrUrl: hints.Incomplete, flag: hints.Incomplete) -> hints.Hresult: ...
-        def HasNeedIEAutoLaunchFlag(self, bstrUrl: hints.Incomplete) -> hints.Incomplete: ...
-        def LaunchIE(self, bstrUrl: hints.Incomplete, automated: hints.Incomplete) -> hints.Hresult: ...
-
-
-class IShellUIHelper8(IShellUIHelper7):
-    """Shell UI Helper Control Interface 8"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{66DEBCF2-05B0-4F07-B49B-B96241A65DB2}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def GetCVListData(self) -> hints.Incomplete: ...
-        def GetCVListLocalData(self) -> hints.Incomplete: ...
-        def GetEMIEListData(self) -> hints.Incomplete: ...
-        def GetEMIEListLocalData(self) -> hints.Incomplete: ...
-        def OpenFavoritesPane(self) -> hints.Hresult: ...
-        def OpenFavoritesSettings(self) -> hints.Hresult: ...
-        def LaunchInHVSI(self, bstrUrl: hints.Incomplete) -> hints.Hresult: ...
-
-
-class IShellUIHelper9(IShellUIHelper8):
-    """Shell UI Helper Control Interface 9"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{6CDF73B0-7F2F-451F-BC0F-63E0F3284E54}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def GetOSSku(self) -> hints.Incomplete: ...
-
-
-ShellUIHelper._com_interfaces_ = [IShellUIHelper9]
-
-
-class ShellWindows(CoClass):
-    """ShellDispatch Load in Shell Context"""
-    _reg_clsid_ = GUID('{9BA05972-F6A8-11CF-A442-00A0C90A8F39}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
-
-
-class IShellWindows(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """Definition of interface IShellWindows"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{85CB6900-4D95-11CF-960C-0080C7F4EE85}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_Count(self) -> hints.Incomplete: ...
-        Count = hints.normal_property(_get_Count)
-        __len__ = hints.to_dunder_len(Count)
-        def Item(self, index: hints.Incomplete = ...) -> hints.Incomplete: ...
-        __call__ = hints.to_dunder_call(Item)
-        __getitem__ = hints.to_dunder_getitem(Item)
-        __setitem__ = hints.to_dunder_setitem(Item)
-        def _NewEnum(self) -> hints.Incomplete: ...
-        __iter__ = hints.to_dunder_iter(_NewEnum)
-        def Register(self, pid: hints.Incomplete, HWND: hints.Incomplete, swClass: hints.Incomplete) -> hints.Incomplete: ...
-        def RegisterPending(self, lThreadId: hints.Incomplete, pvarloc: hints.Incomplete, pvarlocRoot: hints.Incomplete, swClass: hints.Incomplete) -> hints.Incomplete: ...
-        def Revoke(self, lCookie: hints.Incomplete) -> hints.Hresult: ...
-        def OnNavigate(self, lCookie: hints.Incomplete, pvarloc: hints.Incomplete) -> hints.Hresult: ...
-        def OnActivated(self, lCookie: hints.Incomplete, fActive: hints.Incomplete) -> hints.Hresult: ...
-        def FindWindowSW(self, pvarloc: hints.Incomplete, pvarlocRoot: hints.Incomplete, swClass: hints.Incomplete, swfwOptions: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def OnCreated(self, lCookie: hints.Incomplete, punk: hints.Incomplete) -> hints.Hresult: ...
-        def ProcessAttachDetach(self, fAttach: hints.Incomplete) -> hints.Hresult: ...
-
-
-class DShellWindowsEvents(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """Event interface for IShellWindows"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{FE4106E0-399A-11D0-A48C-00A0C90A8F39}')
-    _idlflags_ = []
-    _methods_ = []
-
-    if TYPE_CHECKING:  # dispmembers
-        def WindowRegistered(self, lCookie: hints.Incomplete) -> hints.Incomplete: ...
-        def WindowRevoked(self, lCookie: hints.Incomplete) -> hints.Incomplete: ...
-
-
-ShellWindows._com_interfaces_ = [IShellWindows]
-ShellWindows._outgoing_interfaces_ = [DShellWindowsEvents]
-
-
-class DShellNameSpaceEvents(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    _case_insensitive_ = True
-    _iid_ = GUID('{55136806-B2DE-11D1-B9F2-00A0C98BC547}')
-    _idlflags_ = []
-    _methods_ = []
-
-    if TYPE_CHECKING:  # dispmembers
-        def FavoritesSelectionChange(self, cItems: hints.Incomplete, hItem: hints.Incomplete, strName: hints.Incomplete, strUrl: hints.Incomplete, cVisits: hints.Incomplete, strDate: hints.Incomplete, fAvailableOffline: hints.Incomplete) -> hints.Incomplete: ...
-        def SelectionChange(self) -> hints.Incomplete: ...
-        def DoubleClick(self) -> hints.Incomplete: ...
-        def Initialized(self) -> hints.Incomplete: ...
-
-
-DShellNameSpaceEvents._disp_methods_ = [
-    DISPMETHOD(
-        [dispid(1)],
-        None,
-        'FavoritesSelectionChange',
-        (['in'], c_int, 'cItems'),
-        (['in'], c_int, 'hItem'),
-        (['in'], BSTR, 'strName'),
-        (['in'], BSTR, 'strUrl'),
-        (['in'], c_int, 'cVisits'),
-        (['in'], BSTR, 'strDate'),
-        (['in'], c_int, 'fAvailableOffline')
-    ),
-    DISPMETHOD([dispid(2)], None, 'SelectionChange'),
-    DISPMETHOD([dispid(3)], None, 'DoubleClick'),
-    DISPMETHOD([dispid(4)], None, 'Initialized'),
-]
-
-
-class Library(object):
-    """Microsoft Internet Controls"""
-    name = 'SHDocVw'
-    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
-
-
-IShellUIHelper._methods_ = [
-    COMMETHOD([dispid(1), 'hidden'], HRESULT, 'ResetFirstBootMode'),
-    COMMETHOD([dispid(2), 'hidden'], HRESULT, 'ResetSafeMode'),
-    COMMETHOD([dispid(3), 'hidden'], HRESULT, 'RefreshOfflineDesktop'),
+IShellFavoritesNameSpace._methods_ = [
     COMMETHOD(
-        [dispid(4)],
+        [dispid(1), helpstring('method MoveSelectionUp')],
         HRESULT,
-        'AddFavorite',
-        (['in'], BSTR, 'URL'),
-        (['in', 'optional'], POINTER(VARIANT), 'Title')
+        'MoveSelectionUp',
     ),
     COMMETHOD(
-        [dispid(5)],
+        [dispid(2), helpstring('method MoveSelectionDown')],
         HRESULT,
-        'AddChannel',
-        (['in'], BSTR, 'URL')
+        'MoveSelectionDown',
     ),
     COMMETHOD(
-        [dispid(6)],
+        [dispid(3), helpstring('method ResetSort')],
         HRESULT,
-        'AddDesktopComponent',
-        (['in'], BSTR, 'URL'),
-        (['in'], BSTR, 'Type'),
-        (['in', 'optional'], POINTER(VARIANT), 'Left'),
-        (['in', 'optional'], POINTER(VARIANT), 'Top'),
-        (['in', 'optional'], POINTER(VARIANT), 'Width'),
-        (['in', 'optional'], POINTER(VARIANT), 'Height')
+        'ResetSort',
     ),
     COMMETHOD(
-        [dispid(7)],
+        [dispid(4), helpstring('method NewFolder')],
         HRESULT,
-        'IsSubscribed',
-        (['in'], BSTR, 'URL'),
+        'NewFolder',
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('method Synchronize')],
+        HRESULT,
+        'Synchronize',
+    ),
+    COMMETHOD([dispid(6), helpstring('method Import')], HRESULT, 'Import'),
+    COMMETHOD([dispid(7), helpstring('method Export')], HRESULT, 'Export'),
+    COMMETHOD(
+        [dispid(8), helpstring('method InvokeContextMenuCommand')],
+        HRESULT,
+        'InvokeContextMenuCommand',
+        (['in'], BSTR, 'strCommand')
+    ),
+    COMMETHOD(
+        [dispid(9), helpstring('method MoveSelectionTo')],
+        HRESULT,
+        'MoveSelectionTo',
+    ),
+    COMMETHOD(
+        [dispid(10), helpstring('Query to see if subscriptions are enabled'), 'propget'],
+        HRESULT,
+        'SubscriptionsEnabled',
         (['out', 'retval'], POINTER(VARIANT_BOOL), 'pBool')
     ),
     COMMETHOD(
-        [dispid(8)],
+        [dispid(11), helpstring('method CreateSubscriptionForSelection')],
         HRESULT,
-        'NavigateAndFind',
-        (['in'], BSTR, 'URL'),
-        (['in'], BSTR, 'strQuery'),
-        (['in'], POINTER(VARIANT), 'varTargetFrame')
+        'CreateSubscriptionForSelection',
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pBool')
     ),
     COMMETHOD(
-        [dispid(9)],
+        [dispid(12), helpstring('method DeleteSubscriptionForSelection')],
         HRESULT,
-        'ImportExportFavorites',
-        (['in'], VARIANT_BOOL, 'fImport'),
-        (['in'], BSTR, 'strImpExpPath')
+        'DeleteSubscriptionForSelection',
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pBool')
     ),
     COMMETHOD(
-        [dispid(10)],
+        [dispid(13), helpstring('old, use put_Root() instead')],
         HRESULT,
-        'AutoCompleteSaveForm',
-        (['in', 'optional'], POINTER(VARIANT), 'Form')
-    ),
-    COMMETHOD(
-        [dispid(11)],
-        HRESULT,
-        'AutoScan',
-        (['in'], BSTR, 'strSearch'),
-        (['in'], BSTR, 'strFailureUrl'),
-        (['in', 'optional'], POINTER(VARIANT), 'pvarTargetFrame')
-    ),
-    COMMETHOD(
-        [dispid(12), 'hidden'],
-        HRESULT,
-        'AutoCompleteAttach',
-        (['in', 'optional'], POINTER(VARIANT), 'Reserved')
-    ),
-    COMMETHOD(
-        [dispid(13)],
-        HRESULT,
-        'ShowBrowserUI',
-        (['in'], BSTR, 'bstrName'),
-        (['in'], POINTER(VARIANT), 'pvarIn'),
-        (['out', 'retval'], POINTER(VARIANT), 'pvarOut')
+        'SetRoot',
+        (['in'], BSTR, 'bstrFullPath')
     ),
 ]
 
 ################################################################
-# code template for IShellUIHelper implementation
-# class IShellUIHelper_Impl(object):
-#     def ResetFirstBootMode(self):
-#         '-no docstring-'
+# code template for IShellFavoritesNameSpace implementation
+# class IShellFavoritesNameSpace_Impl(object):
+#     def MoveSelectionUp(self):
+#         'method MoveSelectionUp'
 #         #return 
 #
-#     def ResetSafeMode(self):
-#         '-no docstring-'
+#     def MoveSelectionDown(self):
+#         'method MoveSelectionDown'
 #         #return 
 #
-#     def RefreshOfflineDesktop(self):
-#         '-no docstring-'
+#     def ResetSort(self):
+#         'method ResetSort'
 #         #return 
 #
-#     def AddFavorite(self, URL, Title):
-#         '-no docstring-'
+#     def NewFolder(self):
+#         'method NewFolder'
 #         #return 
 #
-#     def AddChannel(self, URL):
-#         '-no docstring-'
+#     def Synchronize(self):
+#         'method Synchronize'
 #         #return 
 #
-#     def AddDesktopComponent(self, URL, Type, Left, Top, Width, Height):
-#         '-no docstring-'
+#     def Import(self):
+#         'method Import'
 #         #return 
 #
-#     def IsSubscribed(self, URL):
-#         '-no docstring-'
+#     def Export(self):
+#         'method Export'
+#         #return 
+#
+#     def InvokeContextMenuCommand(self, strCommand):
+#         'method InvokeContextMenuCommand'
+#         #return 
+#
+#     def MoveSelectionTo(self):
+#         'method MoveSelectionTo'
+#         #return 
+#
+#     @property
+#     def SubscriptionsEnabled(self):
+#         'Query to see if subscriptions are enabled'
 #         #return pBool
 #
-#     def NavigateAndFind(self, URL, strQuery, varTargetFrame):
-#         '-no docstring-'
-#         #return 
+#     def CreateSubscriptionForSelection(self):
+#         'method CreateSubscriptionForSelection'
+#         #return pBool
 #
-#     def ImportExportFavorites(self, fImport, strImpExpPath):
-#         '-no docstring-'
-#         #return 
+#     def DeleteSubscriptionForSelection(self):
+#         'method DeleteSubscriptionForSelection'
+#         #return pBool
 #
-#     def AutoCompleteSaveForm(self, Form):
-#         '-no docstring-'
+#     def SetRoot(self, bstrFullPath):
+#         'old, use put_Root() instead'
 #         #return 
-#
-#     def AutoScan(self, strSearch, strFailureUrl, pvarTargetFrame):
-#         '-no docstring-'
-#         #return 
-#
-#     def AutoCompleteAttach(self, Reserved):
-#         '-no docstring-'
-#         #return 
-#
-#     def ShowBrowserUI(self, bstrName, pvarIn):
-#         '-no docstring-'
-#         #return pvarOut
 #
 
-IShellUIHelper2._methods_ = [
+IShellNameSpace._methods_ = [
     COMMETHOD(
-        [dispid(14)],
+        [dispid(14), helpstring('options '), 'propget'],
         HRESULT,
-        'AddSearchProvider',
-        (['in'], BSTR, 'URL')
-    ),
-    COMMETHOD([dispid(15)], HRESULT, 'RunOnceShown'),
-    COMMETHOD([dispid(16)], HRESULT, 'SkipRunOnce'),
-    COMMETHOD(
-        [dispid(17)],
-        HRESULT,
-        'CustomizeSettings',
-        (['in'], VARIANT_BOOL, 'fSQM'),
-        (['in'], VARIANT_BOOL, 'fPhishing'),
-        (['in'], BSTR, 'bstrLocale')
+        'EnumOptions',
+        (['out', 'retval'], POINTER(c_int), 'pgrfEnumFlags')
     ),
     COMMETHOD(
-        [dispid(18)],
+        [dispid(14), helpstring('options '), 'propput'],
         HRESULT,
-        'SqmEnabled',
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfEnabled')
+        'EnumOptions',
+        (['in'], c_int, 'pgrfEnumFlags')
     ),
     COMMETHOD(
-        [dispid(19)],
+        [dispid(15), helpstring('get the selected item'), 'propget'],
         HRESULT,
-        'PhishingEnabled',
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfEnabled')
+        'SelectedItem',
+        (['out', 'retval'], POINTER(POINTER(IDispatch)), 'pItem')
     ),
     COMMETHOD(
-        [dispid(20)],
+        [dispid(15), helpstring('get the selected item'), 'propput'],
         HRESULT,
-        'BrandImageUri',
-        (['out', 'retval'], POINTER(BSTR), 'pbstrUri')
-    ),
-    COMMETHOD([dispid(21)], HRESULT, 'SkipTabsWelcome'),
-    COMMETHOD([dispid(22)], HRESULT, 'DiagnoseConnection'),
-    COMMETHOD(
-        [dispid(23)],
-        HRESULT,
-        'CustomizeClearType',
-        (['in'], VARIANT_BOOL, 'fSet')
+        'SelectedItem',
+        (['in'], POINTER(IDispatch), 'pItem')
     ),
     COMMETHOD(
-        [dispid(24)],
+        [dispid(16), helpstring('get the root item'), 'propget'],
         HRESULT,
-        'IsSearchProviderInstalled',
-        (['in'], BSTR, 'URL'),
-        (['out', 'retval'], POINTER(c_ulong), 'pdwResult')
+        'Root',
+        (['out', 'retval'], POINTER(VARIANT), 'pvar')
     ),
     COMMETHOD(
-        [dispid(25)],
+        [dispid(16), helpstring('get the root item'), 'propput'],
         HRESULT,
-        'IsSearchMigrated',
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfMigrated')
+        'Root',
+        (['in'], VARIANT, 'pvar')
     ),
     COMMETHOD(
-        [dispid(26)],
+        [dispid(17), 'propget'],
         HRESULT,
-        'DefaultSearchProvider',
-        (['out', 'retval'], POINTER(BSTR), 'pbstrName')
+        'Depth',
+        (['out', 'retval'], POINTER(c_int), 'piDepth')
     ),
     COMMETHOD(
-        [dispid(27)],
+        [dispid(17), 'propput'],
         HRESULT,
-        'RunOnceRequiredSettingsComplete',
-        (['in'], VARIANT_BOOL, 'fComplete')
+        'Depth',
+        (['in'], c_int, 'piDepth')
     ),
     COMMETHOD(
-        [dispid(28)],
+        [dispid(18), 'propget'],
         HRESULT,
-        'RunOnceHasShown',
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfShown')
+        'Mode',
+        (['out', 'retval'], POINTER(c_uint), 'puMode')
     ),
     COMMETHOD(
-        [dispid(29)],
+        [dispid(18), 'propput'],
         HRESULT,
-        'SearchGuideUrl',
-        (['out', 'retval'], POINTER(BSTR), 'pbstrUrl')
+        'Mode',
+        (['in'], c_uint, 'puMode')
+    ),
+    COMMETHOD(
+        [dispid(19), 'propget'],
+        HRESULT,
+        'Flags',
+        (['out', 'retval'], POINTER(c_ulong), 'pdwFlags')
+    ),
+    COMMETHOD(
+        [dispid(19), 'propput'],
+        HRESULT,
+        'Flags',
+        (['in'], c_ulong, 'pdwFlags')
+    ),
+    COMMETHOD(
+        [dispid(20), 'propput'],
+        HRESULT,
+        'TVFlags',
+        (['in'], c_ulong, 'dwFlags')
+    ),
+    COMMETHOD(
+        [dispid(20), 'propget'],
+        HRESULT,
+        'TVFlags',
+        (['out', 'retval'], POINTER(c_ulong), 'dwFlags')
+    ),
+    COMMETHOD(
+        [dispid(21), 'propget'],
+        HRESULT,
+        'Columns',
+        (['out', 'retval'], POINTER(BSTR), 'bstrColumns')
+    ),
+    COMMETHOD(
+        [dispid(21), 'propput'],
+        HRESULT,
+        'Columns',
+        (['in'], BSTR, 'bstrColumns')
+    ),
+    COMMETHOD(
+        [dispid(22), helpstring('number of view types'), 'propget'],
+        HRESULT,
+        'CountViewTypes',
+        (['out', 'retval'], POINTER(c_int), 'piTypes')
+    ),
+    COMMETHOD(
+        [dispid(23), helpstring('set view type')],
+        HRESULT,
+        'SetViewType',
+        (['in'], c_int, 'iType')
+    ),
+    COMMETHOD(
+        [dispid(24), helpstring('collection of selected items')],
+        HRESULT,
+        'SelectedItems',
+        (['out', 'retval'], POINTER(POINTER(IDispatch)), 'ppid')
+    ),
+    COMMETHOD(
+        [dispid(25), helpstring('expands item specified depth')],
+        HRESULT,
+        'Expand',
+        (['in'], VARIANT, 'var'),
+        ([], c_int, 'iDepth')
+    ),
+    COMMETHOD(
+        [dispid(26), helpstring('unselects all items')],
+        HRESULT,
+        'UnselectAll',
     ),
 ]
 
 ################################################################
-# code template for IShellUIHelper2 implementation
-# class IShellUIHelper2_Impl(object):
-#     def AddSearchProvider(self, URL):
+# code template for IShellNameSpace implementation
+# class IShellNameSpace_Impl(object):
+#     def _get(self):
+#         'options '
+#         #return pgrfEnumFlags
+#     def _set(self, pgrfEnumFlags):
+#         'options '
+#     EnumOptions = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'get the selected item'
+#         #return pItem
+#     def _set(self, pItem):
+#         'get the selected item'
+#     SelectedItem = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'get the root item'
+#         #return pvar
+#     def _set(self, pvar):
+#         'get the root item'
+#     Root = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
 #         '-no docstring-'
+#         #return piDepth
+#     def _set(self, piDepth):
+#         '-no docstring-'
+#     Depth = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         '-no docstring-'
+#         #return puMode
+#     def _set(self, puMode):
+#         '-no docstring-'
+#     Mode = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         '-no docstring-'
+#         #return pdwFlags
+#     def _set(self, pdwFlags):
+#         '-no docstring-'
+#     Flags = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         '-no docstring-'
+#         #return dwFlags
+#     def _set(self, dwFlags):
+#         '-no docstring-'
+#     TVFlags = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         '-no docstring-'
+#         #return bstrColumns
+#     def _set(self, bstrColumns):
+#         '-no docstring-'
+#     Columns = property(_get, _set, doc = _set.__doc__)
+#
+#     @property
+#     def CountViewTypes(self):
+#         'number of view types'
+#         #return piTypes
+#
+#     def SetViewType(self, iType):
+#         'set view type'
 #         #return 
 #
-#     def RunOnceShown(self):
-#         '-no docstring-'
+#     def SelectedItems(self):
+#         'collection of selected items'
+#         #return ppid
+#
+#     def Expand(self, var, iDepth):
+#         'expands item specified depth'
 #         #return 
 #
-#     def SkipRunOnce(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def CustomizeSettings(self, fSQM, fPhishing, bstrLocale):
-#         '-no docstring-'
-#         #return 
-#
-#     def SqmEnabled(self):
-#         '-no docstring-'
-#         #return pfEnabled
-#
-#     def PhishingEnabled(self):
-#         '-no docstring-'
-#         #return pfEnabled
-#
-#     def BrandImageUri(self):
-#         '-no docstring-'
-#         #return pbstrUri
-#
-#     def SkipTabsWelcome(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def DiagnoseConnection(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def CustomizeClearType(self, fSet):
-#         '-no docstring-'
-#         #return 
-#
-#     def IsSearchProviderInstalled(self, URL):
-#         '-no docstring-'
-#         #return pdwResult
-#
-#     def IsSearchMigrated(self):
-#         '-no docstring-'
-#         #return pfMigrated
-#
-#     def DefaultSearchProvider(self):
-#         '-no docstring-'
-#         #return pbstrName
-#
-#     def RunOnceRequiredSettingsComplete(self, fComplete):
-#         '-no docstring-'
-#         #return 
-#
-#     def RunOnceHasShown(self):
-#         '-no docstring-'
-#         #return pfShown
-#
-#     def SearchGuideUrl(self):
-#         '-no docstring-'
-#         #return pbstrUrl
-#
-
-IShellUIHelper3._methods_ = [
-    COMMETHOD(
-        [dispid(30)],
-        HRESULT,
-        'AddService',
-        (['in'], BSTR, 'URL')
-    ),
-    COMMETHOD(
-        [dispid(31)],
-        HRESULT,
-        'IsServiceInstalled',
-        (['in'], BSTR, 'URL'),
-        (['in'], BSTR, 'Verb'),
-        (['out', 'retval'], POINTER(c_ulong), 'pdwResult')
-    ),
-    COMMETHOD(
-        [dispid(37)],
-        HRESULT,
-        'InPrivateFilteringEnabled',
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfEnabled')
-    ),
-    COMMETHOD(
-        [dispid(32)],
-        HRESULT,
-        'AddToFavoritesBar',
-        (['in'], BSTR, 'URL'),
-        (['in'], BSTR, 'Title'),
-        (['in', 'optional'], POINTER(VARIANT), 'Type')
-    ),
-    COMMETHOD([dispid(33)], HRESULT, 'BuildNewTabPage'),
-    COMMETHOD(
-        [dispid(34)],
-        HRESULT,
-        'SetRecentlyClosedVisible',
-        (['in'], VARIANT_BOOL, 'fVisible')
-    ),
-    COMMETHOD(
-        [dispid(35)],
-        HRESULT,
-        'SetActivitiesVisible',
-        (['in'], VARIANT_BOOL, 'fVisible')
-    ),
-    COMMETHOD([dispid(36)], HRESULT, 'ContentDiscoveryReset'),
-    COMMETHOD(
-        [dispid(38)],
-        HRESULT,
-        'IsSuggestedSitesEnabled',
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfEnabled')
-    ),
-    COMMETHOD(
-        [dispid(39)],
-        HRESULT,
-        'EnableSuggestedSites',
-        (['in'], VARIANT_BOOL, 'fEnable')
-    ),
-    COMMETHOD(
-        [dispid(40)],
-        HRESULT,
-        'NavigateToSuggestedSites',
-        (['in'], BSTR, 'bstrRelativeUrl')
-    ),
-    COMMETHOD([dispid(41)], HRESULT, 'ShowTabsHelp'),
-    COMMETHOD([dispid(42)], HRESULT, 'ShowInPrivateHelp'),
-]
-
-################################################################
-# code template for IShellUIHelper3 implementation
-# class IShellUIHelper3_Impl(object):
-#     def AddService(self, URL):
-#         '-no docstring-'
-#         #return 
-#
-#     def IsServiceInstalled(self, URL, Verb):
-#         '-no docstring-'
-#         #return pdwResult
-#
-#     def InPrivateFilteringEnabled(self):
-#         '-no docstring-'
-#         #return pfEnabled
-#
-#     def AddToFavoritesBar(self, URL, Title, Type):
-#         '-no docstring-'
-#         #return 
-#
-#     def BuildNewTabPage(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetRecentlyClosedVisible(self, fVisible):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetActivitiesVisible(self, fVisible):
-#         '-no docstring-'
-#         #return 
-#
-#     def ContentDiscoveryReset(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def IsSuggestedSitesEnabled(self):
-#         '-no docstring-'
-#         #return pfEnabled
-#
-#     def EnableSuggestedSites(self, fEnable):
-#         '-no docstring-'
-#         #return 
-#
-#     def NavigateToSuggestedSites(self, bstrRelativeUrl):
-#         '-no docstring-'
-#         #return 
-#
-#     def ShowTabsHelp(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def ShowInPrivateHelp(self):
-#         '-no docstring-'
+#     def UnselectAll(self):
+#         'unselects all items'
 #         #return 
 #
 
-IShellUIHelper4._methods_ = [
-    COMMETHOD(
-        [dispid(43)],
-        HRESULT,
-        'msIsSiteMode',
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfSiteMode')
-    ),
-    COMMETHOD([dispid(47)], HRESULT, 'msSiteModeShowThumbBar'),
-    COMMETHOD(
-        [dispid(48)],
-        HRESULT,
-        'msSiteModeAddThumbBarButton',
-        (['in'], BSTR, 'bstrIconURL'),
-        (['in'], BSTR, 'bstrTooltip'),
-        (['out', 'retval'], POINTER(VARIANT), 'pvarButtonID')
-    ),
-    COMMETHOD(
-        [dispid(46)],
-        HRESULT,
-        'msSiteModeUpdateThumbBarButton',
-        (['in'], VARIANT, 'ButtonID'),
-        (['in'], VARIANT_BOOL, 'fEnabled'),
-        (['in'], VARIANT_BOOL, 'fVisible')
-    ),
-    COMMETHOD(
-        [dispid(44)],
-        HRESULT,
-        'msSiteModeSetIconOverlay',
-        (['in'], BSTR, 'IconUrl'),
-        (['in', 'optional'], POINTER(VARIANT), 'pvarDescription')
-    ),
-    COMMETHOD([dispid(45)], HRESULT, 'msSiteModeClearIconOverlay'),
-    COMMETHOD([dispid(49)], HRESULT, 'msAddSiteMode'),
-    COMMETHOD(
-        [dispid(51)],
-        HRESULT,
-        'msSiteModeCreateJumpList',
-        (['in'], BSTR, 'bstrHeader')
-    ),
-    COMMETHOD(
-        [dispid(52)],
-        HRESULT,
-        'msSiteModeAddJumpListItem',
-        (['in'], BSTR, 'bstrName'),
-        (['in'], BSTR, 'bstrActionUri'),
-        (['in'], BSTR, 'bstrIconUri'),
-        (['in', 'optional'], POINTER(VARIANT), 'pvarWindowType')
-    ),
-    COMMETHOD([dispid(53)], HRESULT, 'msSiteModeClearJumpList'),
-    COMMETHOD([dispid(56)], HRESULT, 'msSiteModeShowJumpList'),
-    COMMETHOD(
-        [dispid(54)],
-        HRESULT,
-        'msSiteModeAddButtonStyle',
-        (['in'], VARIANT, 'uiButtonID'),
-        (['in'], BSTR, 'bstrIconURL'),
-        (['in'], BSTR, 'bstrTooltip'),
-        (['out', 'retval'], POINTER(VARIANT), 'pvarStyleID')
-    ),
-    COMMETHOD(
-        [dispid(55)],
-        HRESULT,
-        'msSiteModeShowButtonStyle',
-        (['in'], VARIANT, 'uiButtonID'),
-        (['in'], VARIANT, 'uiStyleID')
-    ),
-    COMMETHOD([dispid(58)], HRESULT, 'msSiteModeActivate'),
-    COMMETHOD(
-        [dispid(59)],
-        HRESULT,
-        'msIsSiteModeFirstRun',
-        (['in'], VARIANT_BOOL, 'fPreserveState'),
-        (['out', 'retval'], POINTER(VARIANT), 'puiFirstRun')
-    ),
-    COMMETHOD(
-        [dispid(57)],
-        HRESULT,
-        'msAddTrackingProtectionList',
-        (['in'], BSTR, 'URL'),
-        (['in'], BSTR, 'bstrFilterName')
-    ),
-    COMMETHOD(
-        [dispid(60)],
-        HRESULT,
-        'msTrackingProtectionEnabled',
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfEnabled')
-    ),
-    COMMETHOD(
-        [dispid(61)],
-        HRESULT,
-        'msActiveXFilteringEnabled',
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pfEnabled')
-    ),
-]
 
-################################################################
-# code template for IShellUIHelper4 implementation
-# class IShellUIHelper4_Impl(object):
-#     def msIsSiteMode(self):
-#         '-no docstring-'
-#         #return pfSiteMode
-#
-#     def msSiteModeShowThumbBar(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def msSiteModeAddThumbBarButton(self, bstrIconURL, bstrTooltip):
-#         '-no docstring-'
-#         #return pvarButtonID
-#
-#     def msSiteModeUpdateThumbBarButton(self, ButtonID, fEnabled, fVisible):
-#         '-no docstring-'
-#         #return 
-#
-#     def msSiteModeSetIconOverlay(self, IconUrl, pvarDescription):
-#         '-no docstring-'
-#         #return 
-#
-#     def msSiteModeClearIconOverlay(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def msAddSiteMode(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def msSiteModeCreateJumpList(self, bstrHeader):
-#         '-no docstring-'
-#         #return 
-#
-#     def msSiteModeAddJumpListItem(self, bstrName, bstrActionUri, bstrIconUri, pvarWindowType):
-#         '-no docstring-'
-#         #return 
-#
-#     def msSiteModeClearJumpList(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def msSiteModeShowJumpList(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def msSiteModeAddButtonStyle(self, uiButtonID, bstrIconURL, bstrTooltip):
-#         '-no docstring-'
-#         #return pvarStyleID
-#
-#     def msSiteModeShowButtonStyle(self, uiButtonID, uiStyleID):
-#         '-no docstring-'
-#         #return 
-#
-#     def msSiteModeActivate(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def msIsSiteModeFirstRun(self, fPreserveState):
-#         '-no docstring-'
-#         #return puiFirstRun
-#
-#     def msAddTrackingProtectionList(self, URL, bstrFilterName):
-#         '-no docstring-'
-#         #return 
-#
-#     def msTrackingProtectionEnabled(self):
-#         '-no docstring-'
-#         #return pfEnabled
-#
-#     def msActiveXFilteringEnabled(self):
-#         '-no docstring-'
-#         #return pfEnabled
-#
+class InternetExplorerMedium(CoClass):
+    """Internet Explorer Application with default integrity of Medium"""
+    _reg_clsid_ = GUID('{D5E8041D-920F-45E9-B8FB-B1DEB82C6E5E}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
 
 
 class DWebBrowserEvents2(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
@@ -1861,6 +2540,359 @@ class DWebBrowserEvents2(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_
         def WebWorkerStarted(self, dwUniqueID: hints.Incomplete, bstrWorkerLabel: hints.Incomplete) -> hints.Incomplete: ...
         def WebWorkerFinsihed(self, dwUniqueID: hints.Incomplete) -> hints.Incomplete: ...
 
+
+class DWebBrowserEvents(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """Web Browser Control Events (old)"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{EAB22AC2-30C1-11CF-A7EB-0000C05BAE0B}')
+    _idlflags_ = ['hidden']
+    _methods_ = []
+
+    if TYPE_CHECKING:  # dispmembers
+        def BeforeNavigate(self, URL: hints.Incomplete, Flags: hints.Incomplete, TargetFrameName: hints.Incomplete, PostData: hints.Incomplete, Headers: hints.Incomplete, Cancel: hints.Incomplete) -> hints.Incomplete: ...
+        def NavigateComplete(self, URL: hints.Incomplete) -> hints.Incomplete: ...
+        def StatusTextChange(self, Text: hints.Incomplete) -> hints.Incomplete: ...
+        def ProgressChange(self, Progress: hints.Incomplete, ProgressMax: hints.Incomplete) -> hints.Incomplete: ...
+        def DownloadComplete(self) -> hints.Incomplete: ...
+        def CommandStateChange(self, Command: hints.Incomplete, Enable: hints.Incomplete) -> hints.Incomplete: ...
+        def DownloadBegin(self) -> hints.Incomplete: ...
+        def NewWindow(self, URL: hints.Incomplete, Flags: hints.Incomplete, TargetFrameName: hints.Incomplete, PostData: hints.Incomplete, Headers: hints.Incomplete, Processed: hints.Incomplete) -> hints.Incomplete: ...
+        def TitleChange(self, Text: hints.Incomplete) -> hints.Incomplete: ...
+        def FrameBeforeNavigate(self, URL: hints.Incomplete, Flags: hints.Incomplete, TargetFrameName: hints.Incomplete, PostData: hints.Incomplete, Headers: hints.Incomplete, Cancel: hints.Incomplete) -> hints.Incomplete: ...
+        def FrameNavigateComplete(self, URL: hints.Incomplete) -> hints.Incomplete: ...
+        def FrameNewWindow(self, URL: hints.Incomplete, Flags: hints.Incomplete, TargetFrameName: hints.Incomplete, PostData: hints.Incomplete, Headers: hints.Incomplete, Processed: hints.Incomplete) -> hints.Incomplete: ...
+        def Quit(self, Cancel: hints.Incomplete) -> hints.Incomplete: ...
+        def WindowMove(self) -> hints.Incomplete: ...
+        def WindowResize(self) -> hints.Incomplete: ...
+        def WindowActivate(self) -> hints.Incomplete: ...
+        def PropertyChange(self, Property: hints.Incomplete) -> hints.Incomplete: ...
+
+
+InternetExplorerMedium._com_interfaces_ = [IWebBrowser2, IWebBrowserApp]
+InternetExplorerMedium._outgoing_interfaces_ = [DWebBrowserEvents2, DWebBrowserEvents]
+
+
+class ShellBrowserWindow(CoClass):
+    """Shell Browser Window."""
+    _reg_clsid_ = GUID('{C08AFD90-F2A1-11D1-8455-00A0C91F3880}')
+    _idlflags_ = ['hidden', 'noncreatable']
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
+
+
+ShellBrowserWindow._com_interfaces_ = [IWebBrowser2, IWebBrowserApp]
+ShellBrowserWindow._outgoing_interfaces_ = [DWebBrowserEvents2, DWebBrowserEvents]
+
+
+class IScriptErrorList(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """Script Error List Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{F3470F24-15FD-11D2-BB2E-00805FF7EFCA}')
+    _idlflags_ = ['hidden', 'dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def advanceError(self) -> hints.Hresult: ...
+        def retreatError(self) -> hints.Hresult: ...
+        def canAdvanceError(self) -> hints.Incomplete: ...
+        def canRetreatError(self) -> hints.Incomplete: ...
+        def getErrorLine(self) -> hints.Incomplete: ...
+        def getErrorChar(self) -> hints.Incomplete: ...
+        def getErrorCode(self) -> hints.Incomplete: ...
+        def getErrorMsg(self) -> hints.Incomplete: ...
+        def getErrorUrl(self) -> hints.Incomplete: ...
+        def getAlwaysShowLockState(self) -> hints.Incomplete: ...
+        def getDetailsPaneOpen(self) -> hints.Incomplete: ...
+        def setDetailsPaneOpen(self, fDetailsPaneOpen: hints.Incomplete) -> hints.Hresult: ...
+        def getPerErrorDisplay(self) -> hints.Incomplete: ...
+        def setPerErrorDisplay(self, fPerErrorDisplay: hints.Incomplete) -> hints.Hresult: ...
+
+
+IScriptErrorList._methods_ = [
+    COMMETHOD([dispid(10)], HRESULT, 'advanceError'),
+    COMMETHOD([dispid(11)], HRESULT, 'retreatError'),
+    COMMETHOD(
+        [dispid(12)],
+        HRESULT,
+        'canAdvanceError',
+        (['out', 'retval'], POINTER(c_int), 'pfCanAdvance')
+    ),
+    COMMETHOD(
+        [dispid(13)],
+        HRESULT,
+        'canRetreatError',
+        (['out', 'retval'], POINTER(c_int), 'pfCanRetreat')
+    ),
+    COMMETHOD(
+        [dispid(14)],
+        HRESULT,
+        'getErrorLine',
+        (['out', 'retval'], POINTER(c_int), 'plLine')
+    ),
+    COMMETHOD(
+        [dispid(15)],
+        HRESULT,
+        'getErrorChar',
+        (['out', 'retval'], POINTER(c_int), 'plChar')
+    ),
+    COMMETHOD(
+        [dispid(16)],
+        HRESULT,
+        'getErrorCode',
+        (['out', 'retval'], POINTER(c_int), 'plCode')
+    ),
+    COMMETHOD(
+        [dispid(17)],
+        HRESULT,
+        'getErrorMsg',
+        (['out', 'retval'], POINTER(BSTR), 'pstr')
+    ),
+    COMMETHOD(
+        [dispid(18)],
+        HRESULT,
+        'getErrorUrl',
+        (['out', 'retval'], POINTER(BSTR), 'pstr')
+    ),
+    COMMETHOD(
+        [dispid(23)],
+        HRESULT,
+        'getAlwaysShowLockState',
+        (['out', 'retval'], POINTER(c_int), 'pfAlwaysShowLocked')
+    ),
+    COMMETHOD(
+        [dispid(19)],
+        HRESULT,
+        'getDetailsPaneOpen',
+        (['out', 'retval'], POINTER(c_int), 'pfDetailsPaneOpen')
+    ),
+    COMMETHOD(
+        [dispid(20)],
+        HRESULT,
+        'setDetailsPaneOpen',
+        ([], c_int, 'fDetailsPaneOpen')
+    ),
+    COMMETHOD(
+        [dispid(21)],
+        HRESULT,
+        'getPerErrorDisplay',
+        (['out', 'retval'], POINTER(c_int), 'pfPerErrorDisplay')
+    ),
+    COMMETHOD(
+        [dispid(22)],
+        HRESULT,
+        'setPerErrorDisplay',
+        ([], c_int, 'fPerErrorDisplay')
+    ),
+]
+
+################################################################
+# code template for IScriptErrorList implementation
+# class IScriptErrorList_Impl(object):
+#     def advanceError(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def retreatError(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def canAdvanceError(self):
+#         '-no docstring-'
+#         #return pfCanAdvance
+#
+#     def canRetreatError(self):
+#         '-no docstring-'
+#         #return pfCanRetreat
+#
+#     def getErrorLine(self):
+#         '-no docstring-'
+#         #return plLine
+#
+#     def getErrorChar(self):
+#         '-no docstring-'
+#         #return plChar
+#
+#     def getErrorCode(self):
+#         '-no docstring-'
+#         #return plCode
+#
+#     def getErrorMsg(self):
+#         '-no docstring-'
+#         #return pstr
+#
+#     def getErrorUrl(self):
+#         '-no docstring-'
+#         #return pstr
+#
+#     def getAlwaysShowLockState(self):
+#         '-no docstring-'
+#         #return pfAlwaysShowLocked
+#
+#     def getDetailsPaneOpen(self):
+#         '-no docstring-'
+#         #return pfDetailsPaneOpen
+#
+#     def setDetailsPaneOpen(self, fDetailsPaneOpen):
+#         '-no docstring-'
+#         #return 
+#
+#     def getPerErrorDisplay(self):
+#         '-no docstring-'
+#         #return pfPerErrorDisplay
+#
+#     def setPerErrorDisplay(self, fPerErrorDisplay):
+#         '-no docstring-'
+#         #return 
+#
+
+
+class Library(object):
+    """Microsoft Internet Controls"""
+    name = 'SHDocVw'
+    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
+
+
+class WebBrowser_V1(CoClass):
+    """WebBrowser Control"""
+    _reg_clsid_ = GUID('{EAB22AC3-30C1-11CF-A7EB-0000C05BAE0B}')
+    _idlflags_ = ['control']
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
+
+
+WebBrowser_V1._com_interfaces_ = [IWebBrowser, IWebBrowser2]
+WebBrowser_V1._outgoing_interfaces_ = [DWebBrowserEvents, DWebBrowserEvents2]
+
+DWebBrowserEvents._disp_methods_ = [
+    DISPMETHOD(
+        [dispid(100), helpstring('Fired when a new hyperlink is being navigated to.')],
+        None,
+        'BeforeNavigate',
+        (['in'], BSTR, 'URL'),
+        ([], c_int, 'Flags'),
+        ([], BSTR, 'TargetFrameName'),
+        ([], POINTER(VARIANT), 'PostData'),
+        ([], BSTR, 'Headers'),
+        (['in', 'out'], POINTER(VARIANT_BOOL), 'Cancel')
+    ),
+    DISPMETHOD(
+        [dispid(101), helpstring('Fired when the document being navigated to becomes visible and enters the navigation stack.')],
+        None,
+        'NavigateComplete',
+        (['in'], BSTR, 'URL')
+    ),
+    DISPMETHOD(
+        [dispid(102), helpstring('Statusbar text changed.')],
+        None,
+        'StatusTextChange',
+        (['in'], BSTR, 'Text')
+    ),
+    DISPMETHOD(
+        [dispid(108), helpstring('Fired when download progress is updated.')],
+        None,
+        'ProgressChange',
+        (['in'], c_int, 'Progress'),
+        (['in'], c_int, 'ProgressMax')
+    ),
+    DISPMETHOD(
+        [dispid(104), helpstring('Download of page complete.')],
+        None,
+        'DownloadComplete',
+    ),
+    DISPMETHOD(
+        [dispid(105), helpstring('The enabled state of a command changed')],
+        None,
+        'CommandStateChange',
+        (['in'], c_int, 'Command'),
+        (['in'], VARIANT_BOOL, 'Enable')
+    ),
+    DISPMETHOD(
+        [dispid(106), helpstring('Download of a page started.')],
+        None,
+        'DownloadBegin',
+    ),
+    DISPMETHOD(
+        [dispid(107), helpstring('Fired when a new window should be created.')],
+        None,
+        'NewWindow',
+        (['in'], BSTR, 'URL'),
+        (['in'], c_int, 'Flags'),
+        (['in'], BSTR, 'TargetFrameName'),
+        (['in'], POINTER(VARIANT), 'PostData'),
+        (['in'], BSTR, 'Headers'),
+        (['in', 'out'], POINTER(VARIANT_BOOL), 'Processed')
+    ),
+    DISPMETHOD(
+        [dispid(113), helpstring('Document title changed.')],
+        None,
+        'TitleChange',
+        (['in'], BSTR, 'Text')
+    ),
+    DISPMETHOD(
+        [dispid(200), helpstring('Fired when a new hyperlink is being navigated to in a frame.')],
+        None,
+        'FrameBeforeNavigate',
+        (['in'], BSTR, 'URL'),
+        ([], c_int, 'Flags'),
+        ([], BSTR, 'TargetFrameName'),
+        ([], POINTER(VARIANT), 'PostData'),
+        ([], BSTR, 'Headers'),
+        (['in', 'out'], POINTER(VARIANT_BOOL), 'Cancel')
+    ),
+    DISPMETHOD(
+        [dispid(201), helpstring('Fired when a new hyperlink is being navigated to in a frame.')],
+        None,
+        'FrameNavigateComplete',
+        (['in'], BSTR, 'URL')
+    ),
+    DISPMETHOD(
+        [dispid(204), helpstring('Fired when a new window should be created.')],
+        None,
+        'FrameNewWindow',
+        (['in'], BSTR, 'URL'),
+        (['in'], c_int, 'Flags'),
+        (['in'], BSTR, 'TargetFrameName'),
+        (['in'], POINTER(VARIANT), 'PostData'),
+        (['in'], BSTR, 'Headers'),
+        (['in', 'out'], POINTER(VARIANT_BOOL), 'Processed')
+    ),
+    DISPMETHOD(
+        [dispid(103), helpstring('Fired when application is quiting.')],
+        None,
+        'Quit',
+        (['in', 'out'], POINTER(VARIANT_BOOL), 'Cancel')
+    ),
+    DISPMETHOD(
+        [dispid(109), helpstring('Fired when window has been moved.')],
+        None,
+        'WindowMove',
+    ),
+    DISPMETHOD(
+        [dispid(110), helpstring('Fired when window has been sized.')],
+        None,
+        'WindowResize',
+    ),
+    DISPMETHOD(
+        [dispid(111), helpstring('Fired when window has been activated.')],
+        None,
+        'WindowActivate',
+    ),
+    DISPMETHOD(
+        [dispid(112), helpstring('Fired when the PutProperty method has been called.')],
+        None,
+        'PropertyChange',
+        (['in'], BSTR, 'Property')
+    ),
+]
+
+
+class ShellUIHelper(CoClass):
+    _reg_clsid_ = GUID('{64AB4BB7-111E-11D1-8F79-00C04FC2FBE1}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
+
+
+ShellUIHelper._com_interfaces_ = [IShellUIHelper9]
 
 DWebBrowserEvents2._disp_methods_ = [
     DISPMETHOD(
@@ -2142,154 +3174,107 @@ DWebBrowserEvents2._disp_methods_ = [
 ]
 
 
-class DWebBrowserEvents(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """Web Browser Control Events (old)"""
+class DShellNameSpaceEvents(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
     _case_insensitive_ = True
-    _iid_ = GUID('{EAB22AC2-30C1-11CF-A7EB-0000C05BAE0B}')
-    _idlflags_ = ['hidden']
+    _iid_ = GUID('{55136806-B2DE-11D1-B9F2-00A0C98BC547}')
+    _idlflags_ = []
     _methods_ = []
 
     if TYPE_CHECKING:  # dispmembers
-        def BeforeNavigate(self, URL: hints.Incomplete, Flags: hints.Incomplete, TargetFrameName: hints.Incomplete, PostData: hints.Incomplete, Headers: hints.Incomplete, Cancel: hints.Incomplete) -> hints.Incomplete: ...
-        def NavigateComplete(self, URL: hints.Incomplete) -> hints.Incomplete: ...
-        def StatusTextChange(self, Text: hints.Incomplete) -> hints.Incomplete: ...
-        def ProgressChange(self, Progress: hints.Incomplete, ProgressMax: hints.Incomplete) -> hints.Incomplete: ...
-        def DownloadComplete(self) -> hints.Incomplete: ...
-        def CommandStateChange(self, Command: hints.Incomplete, Enable: hints.Incomplete) -> hints.Incomplete: ...
-        def DownloadBegin(self) -> hints.Incomplete: ...
-        def NewWindow(self, URL: hints.Incomplete, Flags: hints.Incomplete, TargetFrameName: hints.Incomplete, PostData: hints.Incomplete, Headers: hints.Incomplete, Processed: hints.Incomplete) -> hints.Incomplete: ...
-        def TitleChange(self, Text: hints.Incomplete) -> hints.Incomplete: ...
-        def FrameBeforeNavigate(self, URL: hints.Incomplete, Flags: hints.Incomplete, TargetFrameName: hints.Incomplete, PostData: hints.Incomplete, Headers: hints.Incomplete, Cancel: hints.Incomplete) -> hints.Incomplete: ...
-        def FrameNavigateComplete(self, URL: hints.Incomplete) -> hints.Incomplete: ...
-        def FrameNewWindow(self, URL: hints.Incomplete, Flags: hints.Incomplete, TargetFrameName: hints.Incomplete, PostData: hints.Incomplete, Headers: hints.Incomplete, Processed: hints.Incomplete) -> hints.Incomplete: ...
-        def Quit(self, Cancel: hints.Incomplete) -> hints.Incomplete: ...
-        def WindowMove(self) -> hints.Incomplete: ...
-        def WindowResize(self) -> hints.Incomplete: ...
-        def WindowActivate(self) -> hints.Incomplete: ...
-        def PropertyChange(self, Property: hints.Incomplete) -> hints.Incomplete: ...
+        def FavoritesSelectionChange(self, cItems: hints.Incomplete, hItem: hints.Incomplete, strName: hints.Incomplete, strUrl: hints.Incomplete, cVisits: hints.Incomplete, strDate: hints.Incomplete, fAvailableOffline: hints.Incomplete) -> hints.Incomplete: ...
+        def SelectionChange(self) -> hints.Incomplete: ...
+        def DoubleClick(self) -> hints.Incomplete: ...
+        def Initialized(self) -> hints.Incomplete: ...
 
 
-DWebBrowserEvents._disp_methods_ = [
+DShellNameSpaceEvents._disp_methods_ = [
     DISPMETHOD(
-        [dispid(100), helpstring('Fired when a new hyperlink is being navigated to.')],
+        [dispid(1)],
         None,
-        'BeforeNavigate',
-        (['in'], BSTR, 'URL'),
-        ([], c_int, 'Flags'),
-        ([], BSTR, 'TargetFrameName'),
-        ([], POINTER(VARIANT), 'PostData'),
-        ([], BSTR, 'Headers'),
-        (['in', 'out'], POINTER(VARIANT_BOOL), 'Cancel')
+        'FavoritesSelectionChange',
+        (['in'], c_int, 'cItems'),
+        (['in'], c_int, 'hItem'),
+        (['in'], BSTR, 'strName'),
+        (['in'], BSTR, 'strUrl'),
+        (['in'], c_int, 'cVisits'),
+        (['in'], BSTR, 'strDate'),
+        (['in'], c_int, 'fAvailableOffline')
     ),
-    DISPMETHOD(
-        [dispid(101), helpstring('Fired when the document being navigated to becomes visible and enters the navigation stack.')],
-        None,
-        'NavigateComplete',
-        (['in'], BSTR, 'URL')
-    ),
-    DISPMETHOD(
-        [dispid(102), helpstring('Statusbar text changed.')],
-        None,
-        'StatusTextChange',
-        (['in'], BSTR, 'Text')
-    ),
-    DISPMETHOD(
-        [dispid(108), helpstring('Fired when download progress is updated.')],
-        None,
-        'ProgressChange',
-        (['in'], c_int, 'Progress'),
-        (['in'], c_int, 'ProgressMax')
-    ),
-    DISPMETHOD(
-        [dispid(104), helpstring('Download of page complete.')],
-        None,
-        'DownloadComplete',
-    ),
-    DISPMETHOD(
-        [dispid(105), helpstring('The enabled state of a command changed')],
-        None,
-        'CommandStateChange',
-        (['in'], c_int, 'Command'),
-        (['in'], VARIANT_BOOL, 'Enable')
-    ),
-    DISPMETHOD(
-        [dispid(106), helpstring('Download of a page started.')],
-        None,
-        'DownloadBegin',
-    ),
-    DISPMETHOD(
-        [dispid(107), helpstring('Fired when a new window should be created.')],
-        None,
-        'NewWindow',
-        (['in'], BSTR, 'URL'),
-        (['in'], c_int, 'Flags'),
-        (['in'], BSTR, 'TargetFrameName'),
-        (['in'], POINTER(VARIANT), 'PostData'),
-        (['in'], BSTR, 'Headers'),
-        (['in', 'out'], POINTER(VARIANT_BOOL), 'Processed')
-    ),
-    DISPMETHOD(
-        [dispid(113), helpstring('Document title changed.')],
-        None,
-        'TitleChange',
-        (['in'], BSTR, 'Text')
-    ),
-    DISPMETHOD(
-        [dispid(200), helpstring('Fired when a new hyperlink is being navigated to in a frame.')],
-        None,
-        'FrameBeforeNavigate',
-        (['in'], BSTR, 'URL'),
-        ([], c_int, 'Flags'),
-        ([], BSTR, 'TargetFrameName'),
-        ([], POINTER(VARIANT), 'PostData'),
-        ([], BSTR, 'Headers'),
-        (['in', 'out'], POINTER(VARIANT_BOOL), 'Cancel')
-    ),
-    DISPMETHOD(
-        [dispid(201), helpstring('Fired when a new hyperlink is being navigated to in a frame.')],
-        None,
-        'FrameNavigateComplete',
-        (['in'], BSTR, 'URL')
-    ),
-    DISPMETHOD(
-        [dispid(204), helpstring('Fired when a new window should be created.')],
-        None,
-        'FrameNewWindow',
-        (['in'], BSTR, 'URL'),
-        (['in'], c_int, 'Flags'),
-        (['in'], BSTR, 'TargetFrameName'),
-        (['in'], POINTER(VARIANT), 'PostData'),
-        (['in'], BSTR, 'Headers'),
-        (['in', 'out'], POINTER(VARIANT_BOOL), 'Processed')
-    ),
-    DISPMETHOD(
-        [dispid(103), helpstring('Fired when application is quiting.')],
-        None,
-        'Quit',
-        (['in', 'out'], POINTER(VARIANT_BOOL), 'Cancel')
-    ),
-    DISPMETHOD(
-        [dispid(109), helpstring('Fired when window has been moved.')],
-        None,
-        'WindowMove',
-    ),
-    DISPMETHOD(
-        [dispid(110), helpstring('Fired when window has been sized.')],
-        None,
-        'WindowResize',
-    ),
-    DISPMETHOD(
-        [dispid(111), helpstring('Fired when window has been activated.')],
-        None,
-        'WindowActivate',
-    ),
-    DISPMETHOD(
-        [dispid(112), helpstring('Fired when the PutProperty method has been called.')],
-        None,
-        'PropertyChange',
-        (['in'], BSTR, 'Property')
-    ),
+    DISPMETHOD([dispid(2)], None, 'SelectionChange'),
+    DISPMETHOD([dispid(3)], None, 'DoubleClick'),
+    DISPMETHOD([dispid(4)], None, 'Initialized'),
 ]
+
+
+class CScriptErrorList(CoClass):
+    _reg_clsid_ = GUID('{EFD01300-160F-11D2-BB2E-00805FF7EFCA}')
+    _idlflags_ = ['hidden', 'noncreatable']
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
+
+
+CScriptErrorList._com_interfaces_ = [IScriptErrorList]
+
+
+class ShellWindows(CoClass):
+    """ShellDispatch Load in Shell Context"""
+    _reg_clsid_ = GUID('{9BA05972-F6A8-11CF-A442-00A0C90A8F39}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
+
+
+class IShellWindows(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """Definition of interface IShellWindows"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{85CB6900-4D95-11CF-960C-0080C7F4EE85}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Count(self) -> hints.Incomplete: ...
+        Count = hints.normal_property(_get_Count)
+        __len__ = hints.to_dunder_len(Count)
+        def Item(self, index: hints.Incomplete = ...) -> hints.Incomplete: ...
+        __call__ = hints.to_dunder_call(Item)
+        __getitem__ = hints.to_dunder_getitem(Item)
+        __setitem__ = hints.to_dunder_setitem(Item)
+        def _NewEnum(self) -> hints.Incomplete: ...
+        __iter__ = hints.to_dunder_iter(_NewEnum)
+        def Register(self, pid: hints.Incomplete, HWND: hints.Incomplete, swClass: hints.Incomplete) -> hints.Incomplete: ...
+        def RegisterPending(self, lThreadId: hints.Incomplete, pvarloc: hints.Incomplete, pvarlocRoot: hints.Incomplete, swClass: hints.Incomplete) -> hints.Incomplete: ...
+        def Revoke(self, lCookie: hints.Incomplete) -> hints.Hresult: ...
+        def OnNavigate(self, lCookie: hints.Incomplete, pvarloc: hints.Incomplete) -> hints.Hresult: ...
+        def OnActivated(self, lCookie: hints.Incomplete, fActive: hints.Incomplete) -> hints.Hresult: ...
+        def FindWindowSW(self, pvarloc: hints.Incomplete, pvarlocRoot: hints.Incomplete, swClass: hints.Incomplete, swfwOptions: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def OnCreated(self, lCookie: hints.Incomplete, punk: hints.Incomplete) -> hints.Hresult: ...
+        def ProcessAttachDetach(self, fAttach: hints.Incomplete) -> hints.Hresult: ...
+
+
+class DShellWindowsEvents(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """Event interface for IShellWindows"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{FE4106E0-399A-11D0-A48C-00A0C90A8F39}')
+    _idlflags_ = []
+    _methods_ = []
+
+    if TYPE_CHECKING:  # dispmembers
+        def WindowRegistered(self, lCookie: hints.Incomplete) -> hints.Incomplete: ...
+        def WindowRevoked(self, lCookie: hints.Incomplete) -> hints.Incomplete: ...
+
+
+ShellWindows._com_interfaces_ = [IShellWindows]
+ShellWindows._outgoing_interfaces_ = [DShellWindowsEvents]
+
+
+class ShellNameSpace(CoClass):
+    _reg_clsid_ = GUID('{55136805-B2DE-11D1-B9F2-00A0C98BC547}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
+
+
+ShellNameSpace._com_interfaces_ = [IShellNameSpace]
+ShellNameSpace._outgoing_interfaces_ = [DShellNameSpaceEvents]
 
 DShellWindowsEvents._disp_methods_ = [
     DISPMETHOD(
@@ -2441,757 +3426,6 @@ IShellWindows._methods_ = [
 #
 
 
-class CScriptErrorList(CoClass):
-    _reg_clsid_ = GUID('{EFD01300-160F-11D2-BB2E-00805FF7EFCA}')
-    _idlflags_ = ['hidden', 'noncreatable']
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
-
-
-class IScriptErrorList(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """Script Error List Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{F3470F24-15FD-11D2-BB2E-00805FF7EFCA}')
-    _idlflags_ = ['hidden', 'dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def advanceError(self) -> hints.Hresult: ...
-        def retreatError(self) -> hints.Hresult: ...
-        def canAdvanceError(self) -> hints.Incomplete: ...
-        def canRetreatError(self) -> hints.Incomplete: ...
-        def getErrorLine(self) -> hints.Incomplete: ...
-        def getErrorChar(self) -> hints.Incomplete: ...
-        def getErrorCode(self) -> hints.Incomplete: ...
-        def getErrorMsg(self) -> hints.Incomplete: ...
-        def getErrorUrl(self) -> hints.Incomplete: ...
-        def getAlwaysShowLockState(self) -> hints.Incomplete: ...
-        def getDetailsPaneOpen(self) -> hints.Incomplete: ...
-        def setDetailsPaneOpen(self, fDetailsPaneOpen: hints.Incomplete) -> hints.Hresult: ...
-        def getPerErrorDisplay(self) -> hints.Incomplete: ...
-        def setPerErrorDisplay(self, fPerErrorDisplay: hints.Incomplete) -> hints.Hresult: ...
-
-
-CScriptErrorList._com_interfaces_ = [IScriptErrorList]
-
-IScriptErrorList._methods_ = [
-    COMMETHOD([dispid(10)], HRESULT, 'advanceError'),
-    COMMETHOD([dispid(11)], HRESULT, 'retreatError'),
-    COMMETHOD(
-        [dispid(12)],
-        HRESULT,
-        'canAdvanceError',
-        (['out', 'retval'], POINTER(c_int), 'pfCanAdvance')
-    ),
-    COMMETHOD(
-        [dispid(13)],
-        HRESULT,
-        'canRetreatError',
-        (['out', 'retval'], POINTER(c_int), 'pfCanRetreat')
-    ),
-    COMMETHOD(
-        [dispid(14)],
-        HRESULT,
-        'getErrorLine',
-        (['out', 'retval'], POINTER(c_int), 'plLine')
-    ),
-    COMMETHOD(
-        [dispid(15)],
-        HRESULT,
-        'getErrorChar',
-        (['out', 'retval'], POINTER(c_int), 'plChar')
-    ),
-    COMMETHOD(
-        [dispid(16)],
-        HRESULT,
-        'getErrorCode',
-        (['out', 'retval'], POINTER(c_int), 'plCode')
-    ),
-    COMMETHOD(
-        [dispid(17)],
-        HRESULT,
-        'getErrorMsg',
-        (['out', 'retval'], POINTER(BSTR), 'pstr')
-    ),
-    COMMETHOD(
-        [dispid(18)],
-        HRESULT,
-        'getErrorUrl',
-        (['out', 'retval'], POINTER(BSTR), 'pstr')
-    ),
-    COMMETHOD(
-        [dispid(23)],
-        HRESULT,
-        'getAlwaysShowLockState',
-        (['out', 'retval'], POINTER(c_int), 'pfAlwaysShowLocked')
-    ),
-    COMMETHOD(
-        [dispid(19)],
-        HRESULT,
-        'getDetailsPaneOpen',
-        (['out', 'retval'], POINTER(c_int), 'pfDetailsPaneOpen')
-    ),
-    COMMETHOD(
-        [dispid(20)],
-        HRESULT,
-        'setDetailsPaneOpen',
-        ([], c_int, 'fDetailsPaneOpen')
-    ),
-    COMMETHOD(
-        [dispid(21)],
-        HRESULT,
-        'getPerErrorDisplay',
-        (['out', 'retval'], POINTER(c_int), 'pfPerErrorDisplay')
-    ),
-    COMMETHOD(
-        [dispid(22)],
-        HRESULT,
-        'setPerErrorDisplay',
-        ([], c_int, 'fPerErrorDisplay')
-    ),
-]
-
-################################################################
-# code template for IScriptErrorList implementation
-# class IScriptErrorList_Impl(object):
-#     def advanceError(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def retreatError(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def canAdvanceError(self):
-#         '-no docstring-'
-#         #return pfCanAdvance
-#
-#     def canRetreatError(self):
-#         '-no docstring-'
-#         #return pfCanRetreat
-#
-#     def getErrorLine(self):
-#         '-no docstring-'
-#         #return plLine
-#
-#     def getErrorChar(self):
-#         '-no docstring-'
-#         #return plChar
-#
-#     def getErrorCode(self):
-#         '-no docstring-'
-#         #return plCode
-#
-#     def getErrorMsg(self):
-#         '-no docstring-'
-#         #return pstr
-#
-#     def getErrorUrl(self):
-#         '-no docstring-'
-#         #return pstr
-#
-#     def getAlwaysShowLockState(self):
-#         '-no docstring-'
-#         #return pfAlwaysShowLocked
-#
-#     def getDetailsPaneOpen(self):
-#         '-no docstring-'
-#         #return pfDetailsPaneOpen
-#
-#     def setDetailsPaneOpen(self, fDetailsPaneOpen):
-#         '-no docstring-'
-#         #return 
-#
-#     def getPerErrorDisplay(self):
-#         '-no docstring-'
-#         #return pfPerErrorDisplay
-#
-#     def setPerErrorDisplay(self, fPerErrorDisplay):
-#         '-no docstring-'
-#         #return 
-#
-
-IShellUIHelper5._methods_ = [
-    COMMETHOD(
-        [dispid(62)],
-        HRESULT,
-        'msProvisionNetworks',
-        (['in'], BSTR, 'bstrProvisioningXml'),
-        (['out', 'retval'], POINTER(VARIANT), 'puiResult')
-    ),
-    COMMETHOD([dispid(63)], HRESULT, 'msReportSafeUrl'),
-    COMMETHOD([dispid(64)], HRESULT, 'msSiteModeRefreshBadge'),
-    COMMETHOD([dispid(65)], HRESULT, 'msSiteModeClearBadge'),
-    COMMETHOD([dispid(66)], HRESULT, 'msDiagnoseConnectionUILess'),
-    COMMETHOD([dispid(67)], HRESULT, 'msLaunchNetworkClientHelp'),
-    COMMETHOD(
-        [dispid(68)],
-        HRESULT,
-        'msChangeDefaultBrowser',
-        (['in'], VARIANT_BOOL, 'fChange')
-    ),
-]
-
-################################################################
-# code template for IShellUIHelper5 implementation
-# class IShellUIHelper5_Impl(object):
-#     def msProvisionNetworks(self, bstrProvisioningXml):
-#         '-no docstring-'
-#         #return puiResult
-#
-#     def msReportSafeUrl(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def msSiteModeRefreshBadge(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def msSiteModeClearBadge(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def msDiagnoseConnectionUILess(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def msLaunchNetworkClientHelp(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def msChangeDefaultBrowser(self, fChange):
-#         '-no docstring-'
-#         #return 
-#
-
-IShellUIHelper6._methods_ = [
-    COMMETHOD([dispid(69)], HRESULT, 'msStopPeriodicTileUpdate'),
-    COMMETHOD(
-        [dispid(70)],
-        HRESULT,
-        'msStartPeriodicTileUpdate',
-        (['in'], VARIANT, 'pollingUris'),
-        (['in', 'optional'], VARIANT, 'startTime'),
-        (['in', 'optional'], VARIANT, 'uiUpdateRecurrence')
-    ),
-    COMMETHOD(
-        [dispid(75)],
-        HRESULT,
-        'msStartPeriodicTileUpdateBatch',
-        (['in'], VARIANT, 'pollingUris'),
-        (['in', 'optional'], VARIANT, 'startTime'),
-        (['in', 'optional'], VARIANT, 'uiUpdateRecurrence')
-    ),
-    COMMETHOD([dispid(71)], HRESULT, 'msClearTile'),
-    COMMETHOD(
-        [dispid(72)],
-        HRESULT,
-        'msEnableTileNotificationQueue',
-        (['in'], VARIANT_BOOL, 'fChange')
-    ),
-    COMMETHOD(
-        [dispid(73)],
-        HRESULT,
-        'msPinnedSiteState',
-        (['out', 'retval'], POINTER(VARIANT), 'pvarSiteState')
-    ),
-    COMMETHOD(
-        [dispid(76)],
-        HRESULT,
-        'msEnableTileNotificationQueueForSquare150x150',
-        (['in'], VARIANT_BOOL, 'fChange')
-    ),
-    COMMETHOD(
-        [dispid(77)],
-        HRESULT,
-        'msEnableTileNotificationQueueForWide310x150',
-        (['in'], VARIANT_BOOL, 'fChange')
-    ),
-    COMMETHOD(
-        [dispid(78)],
-        HRESULT,
-        'msEnableTileNotificationQueueForSquare310x310',
-        (['in'], VARIANT_BOOL, 'fChange')
-    ),
-    COMMETHOD(
-        [dispid(79)],
-        HRESULT,
-        'msScheduledTileNotification',
-        (['in'], BSTR, 'bstrNotificationXml'),
-        (['in'], BSTR, 'bstrNotificationId'),
-        (['in'], BSTR, 'bstrNotificationTag'),
-        (['in', 'optional'], VARIANT, 'startTime'),
-        (['in', 'optional'], VARIANT, 'expirationTime')
-    ),
-    COMMETHOD(
-        [dispid(80)],
-        HRESULT,
-        'msRemoveScheduledTileNotification',
-        (['in'], BSTR, 'bstrNotificationId')
-    ),
-    COMMETHOD(
-        [dispid(81)],
-        HRESULT,
-        'msStartPeriodicBadgeUpdate',
-        (['in'], BSTR, 'pollingUri'),
-        (['in', 'optional'], VARIANT, 'startTime'),
-        (['in', 'optional'], VARIANT, 'uiUpdateRecurrence')
-    ),
-    COMMETHOD([dispid(82)], HRESULT, 'msStopPeriodicBadgeUpdate'),
-    COMMETHOD([dispid(74)], HRESULT, 'msLaunchInternetOptions'),
-]
-
-################################################################
-# code template for IShellUIHelper6 implementation
-# class IShellUIHelper6_Impl(object):
-#     def msStopPeriodicTileUpdate(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def msStartPeriodicTileUpdate(self, pollingUris, startTime, uiUpdateRecurrence):
-#         '-no docstring-'
-#         #return 
-#
-#     def msStartPeriodicTileUpdateBatch(self, pollingUris, startTime, uiUpdateRecurrence):
-#         '-no docstring-'
-#         #return 
-#
-#     def msClearTile(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def msEnableTileNotificationQueue(self, fChange):
-#         '-no docstring-'
-#         #return 
-#
-#     def msPinnedSiteState(self):
-#         '-no docstring-'
-#         #return pvarSiteState
-#
-#     def msEnableTileNotificationQueueForSquare150x150(self, fChange):
-#         '-no docstring-'
-#         #return 
-#
-#     def msEnableTileNotificationQueueForWide310x150(self, fChange):
-#         '-no docstring-'
-#         #return 
-#
-#     def msEnableTileNotificationQueueForSquare310x310(self, fChange):
-#         '-no docstring-'
-#         #return 
-#
-#     def msScheduledTileNotification(self, bstrNotificationXml, bstrNotificationId, bstrNotificationTag, startTime, expirationTime):
-#         '-no docstring-'
-#         #return 
-#
-#     def msRemoveScheduledTileNotification(self, bstrNotificationId):
-#         '-no docstring-'
-#         #return 
-#
-#     def msStartPeriodicBadgeUpdate(self, pollingUri, startTime, uiUpdateRecurrence):
-#         '-no docstring-'
-#         #return 
-#
-#     def msStopPeriodicBadgeUpdate(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def msLaunchInternetOptions(self):
-#         '-no docstring-'
-#         #return 
-#
-
-
-class ShellNameSpace(CoClass):
-    _reg_clsid_ = GUID('{55136805-B2DE-11D1-B9F2-00A0C98BC547}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
-
-
-class IShellFavoritesNameSpace(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """IShellFavoritesNameSpace Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{55136804-B2DE-11D1-B9F2-00A0C98BC547}')
-    _idlflags_ = ['hidden', 'dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def MoveSelectionUp(self) -> hints.Hresult: ...
-        def MoveSelectionDown(self) -> hints.Hresult: ...
-        def ResetSort(self) -> hints.Hresult: ...
-        def NewFolder(self) -> hints.Hresult: ...
-        def Synchronize(self) -> hints.Hresult: ...
-        def Import(self) -> hints.Hresult: ...
-        def Export(self) -> hints.Hresult: ...
-        def InvokeContextMenuCommand(self, strCommand: hints.Incomplete) -> hints.Hresult: ...
-        def MoveSelectionTo(self) -> hints.Hresult: ...
-        def _get_SubscriptionsEnabled(self) -> hints.Incomplete: ...
-        SubscriptionsEnabled = hints.normal_property(_get_SubscriptionsEnabled)
-        def CreateSubscriptionForSelection(self) -> hints.Incomplete: ...
-        def DeleteSubscriptionForSelection(self) -> hints.Incomplete: ...
-        def SetRoot(self, bstrFullPath: hints.Incomplete) -> hints.Hresult: ...
-
-
-class IShellNameSpace(IShellFavoritesNameSpace):
-    """IShellNameSpace Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{E572D3C9-37BE-4AE2-825D-D521763E3108}')
-    _idlflags_ = ['hidden', 'dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_EnumOptions(self) -> hints.Incomplete: ...
-        def _set_EnumOptions(self, pgrfEnumFlags: hints.Incomplete) -> hints.Hresult: ...
-        EnumOptions = hints.normal_property(_get_EnumOptions, _set_EnumOptions)
-        def _get_SelectedItem(self) -> hints.Incomplete: ...
-        def _set_SelectedItem(self, pItem: hints.Incomplete) -> hints.Hresult: ...
-        SelectedItem = hints.normal_property(_get_SelectedItem, _set_SelectedItem)
-        def _get_Root(self) -> hints.Incomplete: ...
-        def _set_Root(self, pvar: hints.Incomplete) -> hints.Hresult: ...
-        Root = hints.normal_property(_get_Root, _set_Root)
-        def _get_Depth(self) -> hints.Incomplete: ...
-        def _set_Depth(self, piDepth: hints.Incomplete) -> hints.Hresult: ...
-        Depth = hints.normal_property(_get_Depth, _set_Depth)
-        def _get_Mode(self) -> hints.Incomplete: ...
-        def _set_Mode(self, puMode: hints.Incomplete) -> hints.Hresult: ...
-        Mode = hints.normal_property(_get_Mode, _set_Mode)
-        def _get_Flags(self) -> hints.Incomplete: ...
-        def _set_Flags(self, pdwFlags: hints.Incomplete) -> hints.Hresult: ...
-        Flags = hints.normal_property(_get_Flags, _set_Flags)
-        def _get_TVFlags(self) -> hints.Incomplete: ...
-        def _set_TVFlags(self, dwFlags: hints.Incomplete) -> hints.Hresult: ...
-        TVFlags = hints.normal_property(_get_TVFlags, _set_TVFlags)
-        def _get_Columns(self) -> hints.Incomplete: ...
-        def _set_Columns(self, bstrColumns: hints.Incomplete) -> hints.Hresult: ...
-        Columns = hints.normal_property(_get_Columns, _set_Columns)
-        def _get_CountViewTypes(self) -> hints.Incomplete: ...
-        CountViewTypes = hints.normal_property(_get_CountViewTypes)
-        def SetViewType(self, iType: hints.Incomplete) -> hints.Hresult: ...
-        def SelectedItems(self) -> hints.Incomplete: ...
-        def Expand(self, var: hints.Incomplete, iDepth: hints.Incomplete) -> hints.Hresult: ...
-        def UnselectAll(self) -> hints.Hresult: ...
-
-
-ShellNameSpace._com_interfaces_ = [IShellNameSpace]
-ShellNameSpace._outgoing_interfaces_ = [DShellNameSpaceEvents]
-
-
-class WebBrowser_V1(CoClass):
-    """WebBrowser Control"""
-    _reg_clsid_ = GUID('{EAB22AC3-30C1-11CF-A7EB-0000C05BAE0B}')
-    _idlflags_ = ['control']
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
-
-
-WebBrowser_V1._com_interfaces_ = [IWebBrowser, IWebBrowser2]
-WebBrowser_V1._outgoing_interfaces_ = [DWebBrowserEvents, DWebBrowserEvents2]
-
-IShellUIHelper7._methods_ = [
-    COMMETHOD(
-        [dispid(85)],
-        HRESULT,
-        'SetExperimentalFlag',
-        (['in'], BSTR, 'bstrFlagString'),
-        (['in'], VARIANT_BOOL, 'vfFlag')
-    ),
-    COMMETHOD(
-        [dispid(84)],
-        HRESULT,
-        'GetExperimentalFlag',
-        (['in'], BSTR, 'bstrFlagString'),
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'vfFlag')
-    ),
-    COMMETHOD(
-        [dispid(86)],
-        HRESULT,
-        'SetExperimentalValue',
-        (['in'], BSTR, 'bstrValueString'),
-        (['in'], c_ulong, 'dwValue')
-    ),
-    COMMETHOD(
-        [dispid(87)],
-        HRESULT,
-        'GetExperimentalValue',
-        (['in'], BSTR, 'bstrValueString'),
-        (['out', 'retval'], POINTER(c_ulong), 'pdwValue')
-    ),
-    COMMETHOD([dispid(92)], HRESULT, 'ResetAllExperimentalFlagsAndValues'),
-    COMMETHOD(
-        [dispid(89)],
-        HRESULT,
-        'GetNeedIEAutoLaunchFlag',
-        (['in'], BSTR, 'bstrUrl'),
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'flag')
-    ),
-    COMMETHOD(
-        [dispid(90)],
-        HRESULT,
-        'SetNeedIEAutoLaunchFlag',
-        (['in'], BSTR, 'bstrUrl'),
-        (['in'], VARIANT_BOOL, 'flag')
-    ),
-    COMMETHOD(
-        [dispid(88)],
-        HRESULT,
-        'HasNeedIEAutoLaunchFlag',
-        (['in'], BSTR, 'bstrUrl'),
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'exists')
-    ),
-    COMMETHOD(
-        [dispid(91)],
-        HRESULT,
-        'LaunchIE',
-        (['in'], BSTR, 'bstrUrl'),
-        (['in'], VARIANT_BOOL, 'automated')
-    ),
-]
-
-################################################################
-# code template for IShellUIHelper7 implementation
-# class IShellUIHelper7_Impl(object):
-#     def SetExperimentalFlag(self, bstrFlagString, vfFlag):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetExperimentalFlag(self, bstrFlagString):
-#         '-no docstring-'
-#         #return vfFlag
-#
-#     def SetExperimentalValue(self, bstrValueString, dwValue):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetExperimentalValue(self, bstrValueString):
-#         '-no docstring-'
-#         #return pdwValue
-#
-#     def ResetAllExperimentalFlagsAndValues(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetNeedIEAutoLaunchFlag(self, bstrUrl):
-#         '-no docstring-'
-#         #return flag
-#
-#     def SetNeedIEAutoLaunchFlag(self, bstrUrl, flag):
-#         '-no docstring-'
-#         #return 
-#
-#     def HasNeedIEAutoLaunchFlag(self, bstrUrl):
-#         '-no docstring-'
-#         #return exists
-#
-#     def LaunchIE(self, bstrUrl, automated):
-#         '-no docstring-'
-#         #return 
-#
-
-IShellFavoritesNameSpace._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('method MoveSelectionUp')],
-        HRESULT,
-        'MoveSelectionUp',
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('method MoveSelectionDown')],
-        HRESULT,
-        'MoveSelectionDown',
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('method ResetSort')],
-        HRESULT,
-        'ResetSort',
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('method NewFolder')],
-        HRESULT,
-        'NewFolder',
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('method Synchronize')],
-        HRESULT,
-        'Synchronize',
-    ),
-    COMMETHOD([dispid(6), helpstring('method Import')], HRESULT, 'Import'),
-    COMMETHOD([dispid(7), helpstring('method Export')], HRESULT, 'Export'),
-    COMMETHOD(
-        [dispid(8), helpstring('method InvokeContextMenuCommand')],
-        HRESULT,
-        'InvokeContextMenuCommand',
-        (['in'], BSTR, 'strCommand')
-    ),
-    COMMETHOD(
-        [dispid(9), helpstring('method MoveSelectionTo')],
-        HRESULT,
-        'MoveSelectionTo',
-    ),
-    COMMETHOD(
-        [dispid(10), helpstring('Query to see if subscriptions are enabled'), 'propget'],
-        HRESULT,
-        'SubscriptionsEnabled',
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pBool')
-    ),
-    COMMETHOD(
-        [dispid(11), helpstring('method CreateSubscriptionForSelection')],
-        HRESULT,
-        'CreateSubscriptionForSelection',
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pBool')
-    ),
-    COMMETHOD(
-        [dispid(12), helpstring('method DeleteSubscriptionForSelection')],
-        HRESULT,
-        'DeleteSubscriptionForSelection',
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'pBool')
-    ),
-    COMMETHOD(
-        [dispid(13), helpstring('old, use put_Root() instead')],
-        HRESULT,
-        'SetRoot',
-        (['in'], BSTR, 'bstrFullPath')
-    ),
-]
-
-################################################################
-# code template for IShellFavoritesNameSpace implementation
-# class IShellFavoritesNameSpace_Impl(object):
-#     def MoveSelectionUp(self):
-#         'method MoveSelectionUp'
-#         #return 
-#
-#     def MoveSelectionDown(self):
-#         'method MoveSelectionDown'
-#         #return 
-#
-#     def ResetSort(self):
-#         'method ResetSort'
-#         #return 
-#
-#     def NewFolder(self):
-#         'method NewFolder'
-#         #return 
-#
-#     def Synchronize(self):
-#         'method Synchronize'
-#         #return 
-#
-#     def Import(self):
-#         'method Import'
-#         #return 
-#
-#     def Export(self):
-#         'method Export'
-#         #return 
-#
-#     def InvokeContextMenuCommand(self, strCommand):
-#         'method InvokeContextMenuCommand'
-#         #return 
-#
-#     def MoveSelectionTo(self):
-#         'method MoveSelectionTo'
-#         #return 
-#
-#     @property
-#     def SubscriptionsEnabled(self):
-#         'Query to see if subscriptions are enabled'
-#         #return pBool
-#
-#     def CreateSubscriptionForSelection(self):
-#         'method CreateSubscriptionForSelection'
-#         #return pBool
-#
-#     def DeleteSubscriptionForSelection(self):
-#         'method DeleteSubscriptionForSelection'
-#         #return pBool
-#
-#     def SetRoot(self, bstrFullPath):
-#         'old, use put_Root() instead'
-#         #return 
-#
-
-IShellUIHelper8._methods_ = [
-    COMMETHOD(
-        [dispid(93)],
-        HRESULT,
-        'GetCVListData',
-        (['out', 'retval'], POINTER(BSTR), 'pbstrResult')
-    ),
-    COMMETHOD(
-        [dispid(94)],
-        HRESULT,
-        'GetCVListLocalData',
-        (['out', 'retval'], POINTER(BSTR), 'pbstrResult')
-    ),
-    COMMETHOD(
-        [dispid(95)],
-        HRESULT,
-        'GetEMIEListData',
-        (['out', 'retval'], POINTER(BSTR), 'pbstrResult')
-    ),
-    COMMETHOD(
-        [dispid(96)],
-        HRESULT,
-        'GetEMIEListLocalData',
-        (['out', 'retval'], POINTER(BSTR), 'pbstrResult')
-    ),
-    COMMETHOD([dispid(97)], HRESULT, 'OpenFavoritesPane'),
-    COMMETHOD([dispid(98)], HRESULT, 'OpenFavoritesSettings'),
-    COMMETHOD(
-        [dispid(99)],
-        HRESULT,
-        'LaunchInHVSI',
-        (['in'], BSTR, 'bstrUrl')
-    ),
-]
-
-################################################################
-# code template for IShellUIHelper8 implementation
-# class IShellUIHelper8_Impl(object):
-#     def GetCVListData(self):
-#         '-no docstring-'
-#         #return pbstrResult
-#
-#     def GetCVListLocalData(self):
-#         '-no docstring-'
-#         #return pbstrResult
-#
-#     def GetEMIEListData(self):
-#         '-no docstring-'
-#         #return pbstrResult
-#
-#     def GetEMIEListLocalData(self):
-#         '-no docstring-'
-#         #return pbstrResult
-#
-#     def OpenFavoritesPane(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def OpenFavoritesSettings(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def LaunchInHVSI(self, bstrUrl):
-#         '-no docstring-'
-#         #return 
-#
-
-IShellUIHelper9._methods_ = [
-    COMMETHOD(
-        [dispid(103)],
-        HRESULT,
-        'GetOSSku',
-        (['out', 'retval'], POINTER(c_ulong), 'pdwResult')
-    ),
-]
-
-################################################################
-# code template for IShellUIHelper9 implementation
-# class IShellUIHelper9_Impl(object):
-#     def GetOSSku(self):
-#         '-no docstring-'
-#         #return pdwResult
-#
-
-
 class WebBrowser(CoClass):
     """WebBrowser Control"""
     _reg_clsid_ = GUID('{8856F961-340A-11D0-A96B-00C04FD705A2}')
@@ -3215,308 +3449,76 @@ class InternetExplorer(CoClass):
 InternetExplorer._com_interfaces_ = [IWebBrowser2, IWebBrowserApp]
 InternetExplorer._outgoing_interfaces_ = [DWebBrowserEvents2, DWebBrowserEvents]
 
-
-class InternetExplorerMedium(CoClass):
-    """Internet Explorer Application with default integrity of Medium"""
-    _reg_clsid_ = GUID('{D5E8041D-920F-45E9-B8FB-B1DEB82C6E5E}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
-
-
-InternetExplorerMedium._com_interfaces_ = [IWebBrowser2, IWebBrowserApp]
-InternetExplorerMedium._outgoing_interfaces_ = [DWebBrowserEvents2, DWebBrowserEvents]
-
-
-class ShellBrowserWindow(CoClass):
-    """Shell Browser Window."""
-    _reg_clsid_ = GUID('{C08AFD90-F2A1-11D1-8455-00A0C91F3880}')
-    _idlflags_ = ['hidden', 'noncreatable']
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}', 1, 1)
-
-
-ShellBrowserWindow._com_interfaces_ = [IWebBrowser2, IWebBrowserApp]
-ShellBrowserWindow._outgoing_interfaces_ = [DWebBrowserEvents2, DWebBrowserEvents]
-
-IShellNameSpace._methods_ = [
-    COMMETHOD(
-        [dispid(14), helpstring('options '), 'propget'],
-        HRESULT,
-        'EnumOptions',
-        (['out', 'retval'], POINTER(c_int), 'pgrfEnumFlags')
-    ),
-    COMMETHOD(
-        [dispid(14), helpstring('options '), 'propput'],
-        HRESULT,
-        'EnumOptions',
-        (['in'], c_int, 'pgrfEnumFlags')
-    ),
-    COMMETHOD(
-        [dispid(15), helpstring('get the selected item'), 'propget'],
-        HRESULT,
-        'SelectedItem',
-        (['out', 'retval'], POINTER(POINTER(IDispatch)), 'pItem')
-    ),
-    COMMETHOD(
-        [dispid(15), helpstring('get the selected item'), 'propput'],
-        HRESULT,
-        'SelectedItem',
-        (['in'], POINTER(IDispatch), 'pItem')
-    ),
-    COMMETHOD(
-        [dispid(16), helpstring('get the root item'), 'propget'],
-        HRESULT,
-        'Root',
-        (['out', 'retval'], POINTER(VARIANT), 'pvar')
-    ),
-    COMMETHOD(
-        [dispid(16), helpstring('get the root item'), 'propput'],
-        HRESULT,
-        'Root',
-        (['in'], VARIANT, 'pvar')
-    ),
-    COMMETHOD(
-        [dispid(17), 'propget'],
-        HRESULT,
-        'Depth',
-        (['out', 'retval'], POINTER(c_int), 'piDepth')
-    ),
-    COMMETHOD(
-        [dispid(17), 'propput'],
-        HRESULT,
-        'Depth',
-        (['in'], c_int, 'piDepth')
-    ),
-    COMMETHOD(
-        [dispid(18), 'propget'],
-        HRESULT,
-        'Mode',
-        (['out', 'retval'], POINTER(c_uint), 'puMode')
-    ),
-    COMMETHOD(
-        [dispid(18), 'propput'],
-        HRESULT,
-        'Mode',
-        (['in'], c_uint, 'puMode')
-    ),
-    COMMETHOD(
-        [dispid(19), 'propget'],
-        HRESULT,
-        'Flags',
-        (['out', 'retval'], POINTER(c_ulong), 'pdwFlags')
-    ),
-    COMMETHOD(
-        [dispid(19), 'propput'],
-        HRESULT,
-        'Flags',
-        (['in'], c_ulong, 'pdwFlags')
-    ),
-    COMMETHOD(
-        [dispid(20), 'propput'],
-        HRESULT,
-        'TVFlags',
-        (['in'], c_ulong, 'dwFlags')
-    ),
-    COMMETHOD(
-        [dispid(20), 'propget'],
-        HRESULT,
-        'TVFlags',
-        (['out', 'retval'], POINTER(c_ulong), 'dwFlags')
-    ),
-    COMMETHOD(
-        [dispid(21), 'propget'],
-        HRESULT,
-        'Columns',
-        (['out', 'retval'], POINTER(BSTR), 'bstrColumns')
-    ),
-    COMMETHOD(
-        [dispid(21), 'propput'],
-        HRESULT,
-        'Columns',
-        (['in'], BSTR, 'bstrColumns')
-    ),
-    COMMETHOD(
-        [dispid(22), helpstring('number of view types'), 'propget'],
-        HRESULT,
-        'CountViewTypes',
-        (['out', 'retval'], POINTER(c_int), 'piTypes')
-    ),
-    COMMETHOD(
-        [dispid(23), helpstring('set view type')],
-        HRESULT,
-        'SetViewType',
-        (['in'], c_int, 'iType')
-    ),
-    COMMETHOD(
-        [dispid(24), helpstring('collection of selected items')],
-        HRESULT,
-        'SelectedItems',
-        (['out', 'retval'], POINTER(POINTER(IDispatch)), 'ppid')
-    ),
-    COMMETHOD(
-        [dispid(25), helpstring('expands item specified depth')],
-        HRESULT,
-        'Expand',
-        (['in'], VARIANT, 'var'),
-        ([], c_int, 'iDepth')
-    ),
-    COMMETHOD(
-        [dispid(26), helpstring('unselects all items')],
-        HRESULT,
-        'UnselectAll',
-    ),
-]
-
-################################################################
-# code template for IShellNameSpace implementation
-# class IShellNameSpace_Impl(object):
-#     def _get(self):
-#         'options '
-#         #return pgrfEnumFlags
-#     def _set(self, pgrfEnumFlags):
-#         'options '
-#     EnumOptions = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         'get the selected item'
-#         #return pItem
-#     def _set(self, pItem):
-#         'get the selected item'
-#     SelectedItem = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         'get the root item'
-#         #return pvar
-#     def _set(self, pvar):
-#         'get the root item'
-#     Root = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         '-no docstring-'
-#         #return piDepth
-#     def _set(self, piDepth):
-#         '-no docstring-'
-#     Depth = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         '-no docstring-'
-#         #return puMode
-#     def _set(self, puMode):
-#         '-no docstring-'
-#     Mode = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         '-no docstring-'
-#         #return pdwFlags
-#     def _set(self, pdwFlags):
-#         '-no docstring-'
-#     Flags = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         '-no docstring-'
-#         #return dwFlags
-#     def _set(self, dwFlags):
-#         '-no docstring-'
-#     TVFlags = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         '-no docstring-'
-#         #return bstrColumns
-#     def _set(self, bstrColumns):
-#         '-no docstring-'
-#     Columns = property(_get, _set, doc = _set.__doc__)
-#
-#     @property
-#     def CountViewTypes(self):
-#         'number of view types'
-#         #return piTypes
-#
-#     def SetViewType(self, iType):
-#         'set view type'
-#         #return 
-#
-#     def SelectedItems(self):
-#         'collection of selected items'
-#         #return ppid
-#
-#     def Expand(self, var, iDepth):
-#         'expands item specified depth'
-#         #return 
-#
-#     def UnselectAll(self):
-#         'unselects all items'
-#         #return 
-#
-
 __all__ = [
-    'IWebBrowserApp', 'OLECMDID_PROPERTYBAG2', 'IShellUIHelper7',
-    'OLECMDID_ADDTRAVELENTRY', 'ShellWindows', 'OLECMDID_COPY',
-    'OLECMDID_LAYOUT_VIEWPORT_WIDTH', 'OLECMDID_UPDATEPAGESTATUS',
-    'OLECMDID_SPELL', 'OLECMDID_SHOWMESSAGE_BLOCKABLE',
-    'IShellUIHelper5', 'OLECMDID_SAVE', 'OLECMDID_CLEARSELECTION',
-    'OLECMDID_UPDATECOMMANDS', 'SWC_BROWSER', 'OLECMDID_HIDETOOLBARS',
-    'OLECMDID_SETDOWNLOADSTATE', 'READYSTATE_UNINITIALIZED',
-    'OLECMDID_SCROLLCOMPLETE', 'OLECMDID_PAGESETUP', 'ShellUIHelper',
-    'OLECMDID_ENABLE_INTERACTION', 'OLECMDID_STOPDOWNLOAD',
-    'IShellWindows', 'IScriptErrorList', 'OLECMDID_SETTITLE',
-    'OLECMDID_ENABLE_VISIBILITY', 'OLECMDID',
-    'ShellWindowFindWindowOptions', 'OLECMDID_SHOWPAGEACTIONMENU',
-    'SecureLockIconConstants', 'IShellNameSpace', 'OLECMDF_LATCHED',
-    'OLECMDF_INVISIBLE', 'OLECMDEXECOPT_DODEFAULT',
-    'OLECMDID_PRINTPREVIEW2', 'IWebBrowser2', 'IShellUIHelper9',
-    'OLECMDID_SHOWPAGESETUP', 'OLECMDID_GETPRINTTEMPLATE',
-    'OLECMDID_CLOSE', 'OLECMDEXECOPT_SHOWHELP',
-    'OLECMDID_WINDOWSTATECHANGED', 'SWC_CALLBACK',
-    'OLECMDID_GETZOOMRANGE', 'OLECMDID_UPDATETRAVELENTRY',
-    'OLECMDID_ONBEFOREUNLOAD', 'OLECMDID_ZOOM', 'OLECMDID_PRINT2',
-    'OLECMDEXECOPT_DONTPROMPTUSER', 'OLECMDID_DELETE',
-    'OLECMDID_UPDATEBACKFORWARDSTATE', 'CSC_UPDATECOMMANDS',
-    'OLECMDID_OPTICAL_GETZOOMRANGE', 'OLECMDID_SHOWTASKDLG_BLOCKABLE',
-    'OLECMDID_OPEN', 'OLECMDID_SHOWMESSAGE', 'DWebBrowserEvents2',
-    'OLECMDID_SHOWPRINT', 'OLECMDID_UPDATE_CARET', 'OLECMDID_SAVEAS',
-    'OLECMDID_SAVECOPYAS', 'OLECMDF_ENABLED', 'secureLockIconMixed',
-    'secureLockIconUnsecure', 'OLECMDID_UNDO', 'ShellBrowserWindow',
-    'WebBrowser', 'IShellUIHelper4', 'OLECMDID_PAGEACTIONBLOCKED',
-    'OLECMDID_SELECTALL', 'SWC_DESKTOP', 'OLECMDID_EXITFULLSCREEN',
-    'OLECMDID_REFRESH', 'OLECMDID_CUT', 'OLECMDID_STOP',
-    'READYSTATE_LOADING', 'OLECMDID_PAGEACTIONUIQUERY', 'Library',
-    'OLECMDID_SHOWSCRIPTERROR', 'InternetExplorer',
-    'SWFO_NEEDDISPATCH', 'OLECMDID_PROPERTIES', 'OLECMDID_PASTE',
-    'IShellUIHelper', 'OLECMDID_ONTOOLBARACTIVATED', 'WebBrowser_V1',
-    'OLECMDID_VIEWPORT_MODE', 'secureLockIconSecureFortezza',
-    'IShellUIHelper6', 'OLECMDID_PREREFRESH', 'OLECMDID_REDO',
-    'OLECMDF_NINCHED', 'OLECMDID_PASTESPECIAL', 'DWebBrowserEvents',
-    'ProtectedModeRedirect', 'OLECMDID_SETPROGRESSPOS',
-    'OLECMDID_ACTIVEXINSTALLSCOPE', 'SWC_3RDPARTY', 'OLECMDID_FIND',
-    'typelib_path', 'CommandStateChangeConstants',
-    'ShellWindowTypeConstants', 'OLECMDID_SETPROGRESSMAX',
-    'OLECMDEXECOPT_PROMPTUSER', 'OLECMDID_SETFAVICON',
-    'secureLockIconSecure56Bit', 'OLECMDID_PRINTPREVIEW',
-    'IShellFavoritesNameSpace', 'NewProcessCauseConstants',
-    'OLECMDID_USER_OPTICAL_ZOOM', 'OLECMDID_PRINT',
-    'OLECMDID_ONUNLOAD', 'ShellNameSpace',
-    'secureLockIconSecure128Bit', 'DShellWindowsEvents',
-    'OLECMDEXECOPT', 'secureLockIconSecure40Bit',
-    'SWFO_INCLUDEPENDING', 'READYSTATE_INTERACTIVE',
-    'OLECMDF_DEFHIDEONCTXTMENU', 'OLECMDID_FOCUSVIEWCONTROLSQUERY',
-    'OLECMDID_VISUAL_VIEWPORT_EXCLUDE_BOTTOM', 'tagREADYSTATE',
-    'OLECMDID_POPSTATEEVENT', 'OLECMDF', 'READYSTATE_COMPLETE',
-    'OLECMDID_UPDATETRAVELENTRY_DATARECOVERY', 'OLECMDID_NEW',
-    'OLECMDID_DONTDOWNLOADCSS', 'IWebBrowser', 'SWC_EXPLORER',
-    'OLECMDID_SET_HOST_FULLSCREENMODE', 'CSC_NAVIGATEFORWARD',
-    'OLECMDID_PAGEAVAILABLE', 'OLECMDID_SETPROGRESSTEXT',
-    'DShellNameSpaceEvents', 'secureLockIconSecureUnknownBits',
-    'IShellUIHelper8', 'READYSTATE_LOADED', 'IShellUIHelper3',
-    'OLECMDID_SETPRINTTEMPLATE', 'OLECMDID_FOCUSVIEWCONTROLS',
-    'IShellUIHelper2', 'CScriptErrorList', 'InternetExplorerMedium',
-    'OLECMDID_SHOWTASKDLG', 'CSC_NAVIGATEBACK',
-    'OLECMDID_ALLOWUILESSSAVEAS', 'OLECMDID_OPTICAL_ZOOM',
-    'OLECMDID_HTTPEQUIV_DONE', 'OLECMDF_SUPPORTED',
-    'OLECMDID_GETUSERSCALABLE', 'SWFO_COOKIEPASSED',
-    'OLECMDID_SHOWFIND', 'OLECMDID_HTTPEQUIV',
-    'OLECMDID_MEDIA_PLAYBACK'
+    'OLECMDID_SETPROGRESSPOS', 'OLECMDID_PRINTPREVIEW',
+    'ShellNameSpace', 'OLECMDID_UPDATETRAVELENTRY_DATARECOVERY',
+    'secureLockIconMixed', 'OLECMDID_SAVECOPYAS',
+    'OLECMDID_PAGEAVAILABLE', 'OLECMDID_PROPERTIES', 'WebBrowser_V1',
+    'ShellWindows', 'IShellWindows', 'IShellUIHelper4',
+    'OLECMDID_PAGESETUP', 'OLECMDF', 'SecureLockIconConstants',
+    'IShellNameSpace', 'OLECMDID_CLEARSELECTION', 'OLECMDID',
+    'OLECMDID_STOP', 'OLECMDID_PREREFRESH',
+    'OLECMDID_GETPRINTTEMPLATE', 'OLECMDF_NINCHED',
+    'OLECMDID_POPSTATEEVENT', 'OLECMDID_SETFAVICON',
+    'OLECMDID_SELECTALL', 'CScriptErrorList',
+    'secureLockIconSecure128Bit', 'OLECMDID_DONTDOWNLOADCSS',
+    'OLECMDID_PASTE', 'READYSTATE_INTERACTIVE', 'READYSTATE_COMPLETE',
+    'IWebBrowser', 'SWC_BROWSER', 'OLECMDID_DELETE',
+    'OLECMDID_SCROLLCOMPLETE', 'DShellWindowsEvents',
+    'OLECMDID_USER_OPTICAL_ZOOM', 'OLECMDID_PROPERTYBAG2',
+    'secureLockIconUnsecure', 'OLECMDID_ACTIVEXINSTALLSCOPE',
+    'SWC_CALLBACK', 'OLECMDID_FOCUSVIEWCONTROLS', 'SWC_3RDPARTY',
+    'OLECMDID_PAGEACTIONUIQUERY', 'OLECMDID_ONTOOLBARACTIVATED',
+    'OLECMDID_SAVE', 'OLECMDID_SETPROGRESSTEXT', 'OLECMDID_UNDO',
+    'IShellUIHelper8', 'secureLockIconSecureUnknownBits',
+    'OLECMDID_WINDOWSTATECHANGED', 'CSC_NAVIGATEBACK',
+    'SWFO_INCLUDEPENDING', 'SWC_EXPLORER',
+    'ShellWindowFindWindowOptions', 'OLECMDID_UPDATEBACKFORWARDSTATE',
+    'SWFO_COOKIEPASSED', 'OLECMDEXECOPT', 'SWFO_NEEDDISPATCH',
+    'OLECMDID_LAYOUT_VIEWPORT_WIDTH', 'OLECMDID_UPDATETRAVELENTRY',
+    'OLECMDID_UPDATEPAGESTATUS', 'OLECMDID_PRINT', 'IShellUIHelper5',
+    'OLECMDF_LATCHED', 'OLECMDID_HTTPEQUIV_DONE',
+    'OLECMDID_ENABLE_VISIBILITY', 'OLECMDF_SUPPORTED',
+    'OLECMDID_FIND', 'secureLockIconSecure56Bit',
+    'OLECMDID_GETZOOMRANGE', 'OLECMDID_ENABLE_INTERACTION',
+    'IShellUIHelper2', 'OLECMDEXECOPT_DODEFAULT', 'OLECMDID_SPELL',
+    'READYSTATE_LOADING', 'OLECMDID_SHOWPRINT',
+    'OLECMDID_PAGEACTIONBLOCKED', 'OLECMDID_EXITFULLSCREEN',
+    'DShellNameSpaceEvents', 'secureLockIconSecure40Bit',
+    'ShellUIHelper', 'OLECMDID_PRINTPREVIEW2', 'IWebBrowser2',
+    'OLECMDF_ENABLED', 'OLECMDID_CLOSE', 'OLECMDID_SHOWPAGESETUP',
+    'DWebBrowserEvents', 'OLECMDID_VIEWPORT_MODE', 'OLECMDID_REFRESH',
+    'OLECMDID_STOPDOWNLOAD', 'CSC_NAVIGATEFORWARD', 'tagREADYSTATE',
+    'OLECMDID_FOCUSVIEWCONTROLSQUERY', 'OLECMDID_ZOOM',
+    'InternetExplorer', 'OLECMDID_OPTICAL_ZOOM',
+    'secureLockIconSecureFortezza', 'ShellWindowTypeConstants',
+    'Library', 'OLECMDID_REDO', 'NewProcessCauseConstants',
+    'OLECMDID_VISUAL_VIEWPORT_EXCLUDE_BOTTOM',
+    'OLECMDID_PASTESPECIAL', 'ProtectedModeRedirect',
+    'OLECMDEXECOPT_PROMPTUSER', 'IScriptErrorList', 'IShellUIHelper7',
+    'READYSTATE_UNINITIALIZED', 'IShellUIHelper9',
+    'OLECMDID_SHOWSCRIPTERROR', 'READYSTATE_LOADED',
+    'IShellUIHelper3', 'IShellFavoritesNameSpace',
+    'OLECMDID_ONUNLOAD', 'typelib_path',
+    'OLECMDID_SHOWTASKDLG_BLOCKABLE', 'OLECMDID_HIDETOOLBARS',
+    'OLECMDID_NEW', 'OLECMDID_UPDATECOMMANDS', 'OLECMDF_INVISIBLE',
+    'OLECMDID_SHOWTASKDLG', 'OLECMDID_ADDTRAVELENTRY',
+    'OLECMDID_SETTITLE', 'OLECMDEXECOPT_SHOWHELP',
+    'OLECMDID_SHOWPAGEACTIONMENU', 'SWC_DESKTOP',
+    'OLECMDID_UPDATE_CARET', 'OLECMDID_SET_HOST_FULLSCREENMODE',
+    'OLECMDID_HTTPEQUIV', 'OLECMDID_ALLOWUILESSSAVEAS',
+    'OLECMDID_SETPROGRESSMAX', 'IShellUIHelper', 'IShellUIHelper6',
+    'WebBrowser', 'OLECMDID_SHOWMESSAGE', 'OLECMDID_SHOWFIND',
+    'OLECMDF_DEFHIDEONCTXTMENU', 'OLECMDID_COPY', 'IWebBrowserApp',
+    'OLECMDEXECOPT_DONTPROMPTUSER', 'CSC_UPDATECOMMANDS',
+    'OLECMDID_OPEN', 'OLECMDID_SAVEAS', 'OLECMDID_CUT',
+    'OLECMDID_PRINT2', 'OLECMDID_GETUSERSCALABLE',
+    'OLECMDID_MEDIA_PLAYBACK', 'OLECMDID_SETPRINTTEMPLATE',
+    'InternetExplorerMedium', 'OLECMDID_OPTICAL_GETZOOMRANGE',
+    'DWebBrowserEvents2', 'OLECMDID_ONBEFOREUNLOAD',
+    'OLECMDID_SETDOWNLOADSTATE', 'OLECMDID_SHOWMESSAGE_BLOCKABLE',
+    'CommandStateChangeConstants', 'ShellBrowserWindow'
 ]
 
-_check_version('1.4.11', 1755040492.639375)
+_check_version('1.4.11', 1757470665.724663)
 

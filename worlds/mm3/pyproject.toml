@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.mm3"
-dynamic = ["version"]
+version = "0.1.4"
 description = "MultiWorld: Mega Man 3"
-authors = [
-    {name = "Silvris"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Silvris"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.mm3"]
+where = [ "src",]
+include = [ "worlds.mm3",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.mm3.Register.VERSION"}

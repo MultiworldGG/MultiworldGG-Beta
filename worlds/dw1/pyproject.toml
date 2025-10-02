@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.dw1"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Digimon World"
-authors = [
-    {name = "ArsonAssassin"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "ArsonAssassin"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.dw1"]
+where = [ "src",]
+include = [ "worlds.dw1",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.dw1.Register.VERSION"}

@@ -1,27 +1,19 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.pokemon_rb"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Pokemon Red and Blue"
-authors = [
-    {name = "Alchav"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Alchav"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.pokemon_rb"]
+where = [ "src",]
+include = [ "worlds.pokemon_rb",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.pokemon_rb.Register.VERSION"}

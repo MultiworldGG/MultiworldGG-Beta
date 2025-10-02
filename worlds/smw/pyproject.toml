@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.smw"
-dynamic = ["version"]
+version = "2.1.1"
 description = "MultiWorld: Super Mario World"
-authors = [
-    {name = "PoryGone"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "PoryGone"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.smw"]
+where = [ "src",]
+include = [ "worlds.smw",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.smw.Register.VERSION"}

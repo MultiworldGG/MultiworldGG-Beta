@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Sea of Thieves",
     "authors": ["EthanTheEpic"],
     "igdb_id": 11137,

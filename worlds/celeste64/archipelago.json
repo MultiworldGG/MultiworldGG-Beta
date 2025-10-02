@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Celeste 64",
     "authors": ["PoryGone"],
     "igdb_id": 284430,

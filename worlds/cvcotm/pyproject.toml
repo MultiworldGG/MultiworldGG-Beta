@@ -1,24 +1,18 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.cvcotm"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Castlevania - Circle of the Moon"
-authors = [
-    {name = "LiquidCat64"}
-]
 license = "MIT AND (Apache-2.0)"
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "LiquidCat64"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.cvcotm"]
+where = [ "src",]
+include = [ "worlds.cvcotm",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.cvcotm.Register.VERSION"}

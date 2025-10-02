@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "OpenRCT2",
     "authors": ["Crazycolbster"],
     "igdb_id": 80720,

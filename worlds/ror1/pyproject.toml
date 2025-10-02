@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.ror1"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Risk of Rain"
-authors = [
-    {name = "studkid"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "studkid"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.ror1"]
+where = [ "src",]
+include = [ "worlds.ror1",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.ror1.Register.VERSION"}

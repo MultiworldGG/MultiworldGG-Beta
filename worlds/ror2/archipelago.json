@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Risk of Rain 2",
     "authors": ["Sneaki"],
     "igdb_id": 28512,

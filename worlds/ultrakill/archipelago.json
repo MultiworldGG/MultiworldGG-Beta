@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "ULTRAKILL",
     "authors": ["TRPG"],
     "igdb_id": 124333,

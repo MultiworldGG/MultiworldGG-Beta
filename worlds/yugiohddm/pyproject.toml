@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.yugiohddm"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Yu-Gi-Oh! Dungeon Dice Monsters"
-authors = [
-    {name = "Jumza"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Jumza"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.yugiohddm"]
+where = [ "src",]
+include = [ "worlds.yugiohddm",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.yugiohddm.Register.VERSION"}

@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.trackmania"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Trackmania"
-authors = [
-    {name = "SerialBoxes"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "SerialBoxes"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.trackmania"]
+where = [ "src",]
+include = [ "worlds.trackmania",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.trackmania.Register.VERSION"}

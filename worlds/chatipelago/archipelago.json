@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Chatipelago",
     "authors": ["Delilah", "Dranzior", "LMarioza"],
     "igdb_id": 0,

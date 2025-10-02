@@ -1,26 +1,18 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.soe"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Secret of Evermore"
-authors = [
-    {name = "black-silver"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [
-    "pyevermizer==0.50.1",
-]
+dependencies = [ "pyevermizer==0.50.1",]
+[[project.authors]]
+name = "black-silver"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.soe"]
+where = [ "src",]
+include = [ "worlds.soe",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.soe.Register.VERSION"}

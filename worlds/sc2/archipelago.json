@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Starcraft 2",
     "authors": ["Ziktofel"],
     "igdb_id": 239,

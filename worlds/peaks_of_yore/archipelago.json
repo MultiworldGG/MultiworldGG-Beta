@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Peaks of Yore",
     "authors": ["c0der23"],
     "igdb_id": 238690,

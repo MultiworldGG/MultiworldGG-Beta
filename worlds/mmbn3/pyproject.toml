@@ -1,26 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.mmbn3"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: MegaMan Battle Network 3"
-authors = [
-    {name = "digiholic"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "digiholic"
 
 [project.entry-points."mwgg.client"]
 "worlds.mmbn3.Client" = "worlds.mmbn3.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.mmbn3"]
+where = [ "src",]
+include = [ "worlds.mmbn3",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.mmbn3.Register.VERSION"}

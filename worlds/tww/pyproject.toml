@@ -1,29 +1,21 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.tww"
-dynamic = ["version"]
+version = "3.0.1"
 description = "MultiWorld: The Wind Waker"
-authors = [
-    {name = "tanjo3"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [
-    "dolphin-memory-engine>=1.3.0",
-]
+dependencies = [ "dolphin-memory-engine>=1.3.0",]
+[[project.authors]]
+name = "tanjo3"
 
 [project.entry-points."mwgg.client"]
 "worlds.tww.Client" = "worlds.tww.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.tww"]
+where = [ "src",]
+include = [ "worlds.tww",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.tww.Register.VERSION"}

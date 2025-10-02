@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.residentevil3remake"
-dynamic = ["version"]
+version = "0.2.4"
 description = "MultiWorld: Resident Evil 3 Remake"
-authors = [
-    {name = "TheRealSolidusSnake"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "TheRealSolidusSnake"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.residentevil3remake"]
+where = [ "src",]
+include = [ "worlds.residentevil3remake",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.residentevil3remake.Register.VERSION"}

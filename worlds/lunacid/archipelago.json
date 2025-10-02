@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Lunacid",
     "authors": ["Albrekka", "Tesseract (Advice/Direction)", "Scipio (UT Help)", "Miracee (Tracker)"],
     "igdb_id": 192291,

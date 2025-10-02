@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.chatipelago"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Chatipelago"
-authors = [
-    {name = "Delilah, Dranzior, LMarioza"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Delilah, Dranzior, LMarioza"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.chatipelago"]
+where = [ "src",]
+include = [ "worlds.chatipelago",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.chatipelago.Register.VERSION"}

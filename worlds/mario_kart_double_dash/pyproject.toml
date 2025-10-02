@@ -1,26 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.mario_kart_double_dash"
-dynamic = ["version"]
+version = "1.0.1"
 description = "MultiWorld: Mario Kart Double Dash"
-authors = [
-    {name = "aXu"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "aXu"
 
 [project.entry-points."mwgg.client"]
 "worlds.mario_kart_double_dash.Client" = "worlds.mario_kart_double_dash.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.mario_kart_double_dash"]
+where = [ "src",]
+include = [ "worlds.mario_kart_double_dash",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.mario_kart_double_dash.Register.VERSION"}

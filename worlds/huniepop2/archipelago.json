@@ -1,4 +1,6 @@
 {
+    "version": 6,
+    "compatible_version": 5,
     "game": "Hunie Pop 2",
     "authors": ["dotsofdarkness"],
     "igdb_id": 72472,

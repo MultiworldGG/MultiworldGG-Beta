@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.dkc3"
-dynamic = ["version"]
+version = "1.1.0"
 description = "MultiWorld: Donkey Kong Country 3"
-authors = [
-    {name = "PoryGone"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "PoryGone"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.dkc3"]
+where = [ "src",]
+include = [ "worlds.dkc3",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.dkc3.Register.VERSION"}
