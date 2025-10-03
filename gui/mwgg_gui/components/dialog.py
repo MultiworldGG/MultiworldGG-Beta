@@ -4,13 +4,20 @@ Dialog class - MessageBox override for dialogs
 from __future__ import annotations
 __all__ = ("MessageBox", "ConsoleBox")
 
-from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogSupportingText, MDDialogButtonContainer
+from kivymd.uix.dialog import (MDDialog, 
+                               MDDialogHeadlineText, 
+                               MDDialogSupportingText, 
+                               MDDialogButtonContainer, 
+                               MDDialogContentContainer)
 from kivymd.uix.button import MDButton, MDButtonText
 from kivymd.uix.textfield import MDTextField, MDTextFieldHelperText
+from kivymd.uix.scrollview import MDScrollView
 from kivymd.app import MDApp
 from kivy.uix.widget import Widget
 from kivy.metrics import dp
+from kivy.properties import ObjectProperty
 
+from typing import Callable
 from asyncio import Queue
 
 class MessageBox(MDDialog):
@@ -22,18 +29,40 @@ class MessageBox(MDDialog):
         message (str): The dialog message content
         is_error (bool): If True, shows error styling
     """
-    
-    def __init__(self, title="", message="", is_error=False):
+
+    cancel_button: ObjectProperty
+
+    def __init__(self, title="", message="", callback: Callable[[bool], None] = None, is_error=False):
         super().__init__()
         self.title = title
         self.message = message
+        self.callback = callback
         self.is_error = is_error
         self.app = MDApp.get_running_app()
         self.dialog = None
+        self.cancel_button = Widget()
+        if self.callback:
+            self.cancel_button = MDButton(
+                MDButtonText(
+                    text="Cancel",
+                    theme_text_color="Custom",
+                    text_color=self.app.theme_cls.onSurfaceColor,
+                ),
+                on_release=self._cancel,
+            ),
+
     
     def _ok(self, instance):
         self.dialog.dismiss()
         self.dialog = None
+        if self.callback:
+            self.callback(True)
+    
+    def _cancel(self, instance):
+        self.dialog.dismiss()
+        self.dialog = None
+        if self.callback:
+            self.callback(False)
         
     def open(self):
         """Opens the dialog and displays it to the user."""
@@ -42,13 +71,17 @@ class MessageBox(MDDialog):
             MDDialogHeadlineText(
                 text=self.title,
             ),
-            MDDialogSupportingText(
-                text=self.message,
-                theme_text_color="Custom" if self.is_error else "Primary",
-                text_color=self.app.theme_cls.errorColor if self.is_error else self.app.theme_cls.onSurfaceColor,
+            MDDialogContentContainer(
+                MDScrollView(
+                    MDDialogSupportingText(
+                        text=self.message,
+                        theme_text_color="Custom" if self.is_error else "Primary",
+                        text_color=self.app.theme_cls.errorColor if self.is_error else self.app.theme_cls.onSurfaceColor,
+                    ),
+                ),
             ),
             MDDialogButtonContainer(
-                Widget(),
+                self.cancel_button,
                 MDButton(
                     MDButtonText(
                         text="OK",

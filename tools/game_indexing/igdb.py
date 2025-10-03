@@ -60,22 +60,27 @@ def get_igdb_game_keywords(game_id: int) -> list:
     else:
         return []
 
-def get_igdb_game_cover(game_id: int) -> str:
+def get_igdb_api_call(game_id: int) -> str:
     """
-    Fetches game cover image URL from IGDB API using the provided game name.
+    DEBUG ONLY:
+    Makes a call to the IGDB API
+    Artwork type:
+    1 = artworks
+    2 = key art
+    6 = logo
+
     """
-    url = "https://api.igdb.com/v4/covers"
+    url = "https://api.igdb.com/v4/artworks"
     headers = {
         'Client-ID': igdb_client_id,
         'Authorization': f'Bearer {igdb_token}',
         'Content-Type': 'application/json'
     }
-    data = f'fields url; search "{game_id}"; limit 1;'
+    data = f'fields alpha_channel,artwork_type,animated,checksum,game,height,image_id,url,width; where game = {game_id};'
     
     response = requests.post(url, headers=headers, data=data)
-    
     if response.status_code == 200:
-        return response.json()[0]['url']
+        return response.json()
     else:
         return None
 
@@ -143,7 +148,7 @@ def get_igdb_game_details(game_id: int) -> dict:
         'Content-Type': 'application/json'
     }
     data = f'''
-    fields name, cover.url, age_ratings.organization.name, age_ratings.rating_category.rating, age_ratings.rating_content_descriptions.description, first_release_date, player_perspectives.name,genres.name, themes.name, keywords.name, platforms.name, storyline;
+    fields name, cover.url, artworks.artwork_type, artworks.url, age_ratings.organization.name, age_ratings.rating_category.rating, age_ratings.rating_content_descriptions.description, first_release_date, player_perspectives.name,genres.name, themes.name, keywords.name, platforms.name, storyline;
     where id = {game_id};
     '''
 
@@ -170,9 +175,23 @@ def get_igdb_game_details(game_id: int) -> dict:
                 if age_rating == "NR":
                     age_rating = rating['rating_category']['rating']
 
+    # Get the artwork we want
+    # artwork_type 1 = artworks
+    # artwork_type 2 = key art
+    # artwork_type 6 = logo
+    for artwork in game_data.get('artworks', []):
+        if artwork['artwork_type'] == 1 or artwork['artwork_type'] == 5:
+            artwork_url = artwork['url'].replace("t_thumb", "t_logo_med").replace("//", "https://").replace(".jpg", ".png")
+        elif artwork['artwork_type'] == 2:
+            key_art_url = artwork['url'].replace("t_thumb", "t_cover_big").replace("//", "https://").replace(".jpg", ".png")
+
+    cover_url = game_data.get('cover', {}).get('url', '').replace("//", "https://").replace(".jpg", ".png")
+
     return {
         'igdb_name': game_data.get('name', ''),
-        'cover_url': game_data.get('cover', {}).get('url', ''),
+        'cover_url': cover_url,
+        'artwork_url': artwork_url,
+        'key_art_url': key_art_url,
         'age_rating': age_rating,
         'rating': content_descriptions,
         'themes': [theme['name'] for theme in game_data.get('themes', [])],
@@ -203,6 +222,8 @@ def generate_game_details_json() -> dict:
             result[world] = {
                 'igdb_id': str(data["igdb_id"]),
                 'cover_url': igdb_details.get('cover_url', ''),
+                'artwork_url': igdb_details.get('artwork_url', ''),
+                'key_art_url': igdb_details.get('key_art_url', ''),
                 'game_name': data["game_name"],
                 'igdb_name': igdb_details.get('igdb_name', ''),
                 'age_rating': igdb_details.get('age_rating', ''),
@@ -220,6 +241,8 @@ def generate_game_details_json() -> dict:
             result[world] = {
                 'igdb_id': '',
                 'cover_url': '',
+                'artwork_url': '',
+                'key_art_url': '',
                 'game_name': data["game_name"],
                 'igdb_name': '',
                 'age_rating': 'E', # Defaulting to "everyone" for original worlds/hint worlds
@@ -248,6 +271,8 @@ def get_single_game_details(igdb_id: int) -> dict:
         return {
             'igdb_id': str(igdb_id),
             'cover_url': '',
+            'artwork_url': '',
+            'key_art_url': '',
             'game_name': '',  # We don't know the world name for a single ID lookup
             'igdb_name': '',
             'age_rating': '',
@@ -264,6 +289,8 @@ def get_single_game_details(igdb_id: int) -> dict:
     return {
         'igdb_id': str(igdb_id),
         'cover_url': igdb_details.get('cover_url', ''),
+        'artwork_url': igdb_details.get('artwork_url', ''),
+        'key_art_url': igdb_details.get('key_art_url', ''),
         'game_name': '',  # We don't know the world name for a single ID lookup
         'igdb_name': igdb_details.get('igdb_name', ''),
         'age_rating': igdb_details.get('age_rating', ''),
@@ -300,7 +327,13 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='Generate game details JSON from IGDB')
     parser.add_argument('--id', type=int, help='Get details for a single game by IGDB ID')
+    parser.add_argument('--api', action='store_true', default=False, help='Debug API calls')
     args = parser.parse_args()
+    
+    if args.id and args.api:
+        igdb_details = get_igdb_api_call(args.id)
+        print(json.dumps(igdb_details, indent=4))
+        exit()
     
     save_game_details_to_json(args.id)
     if not args.id:

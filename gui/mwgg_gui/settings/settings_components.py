@@ -30,6 +30,7 @@ from kivymd.uix.snackbar import MDSnackbar, MDSnackbarText
 
 from mwgg_gui.components.mw_theme import THEME_OPTIONS, DEFAULT_TEXT_COLORS
 from mwgg_gui.overrides.colorpicker import MWColorPicker
+from mwgg_gui.components.dialog import MessageBox
 
 from dataclasses import fields
 import logging
@@ -824,7 +825,6 @@ class ThemingSettings(SettingsScrollBox):
         self.set_font_size(1.0)
         self.app.app_config.set('client', 'font_scale', '1.0')
         self.app.app_config.write()
-        
 
     def adjust_font_size(self, delta):
         """Adjust font size by the given delta"""
@@ -868,10 +868,20 @@ class InterfaceSettings(SettingsScrollBox):
             theme_text_color="Secondary",
             on_switch=self.toggle_device_orientation
         ))
+
+        age_filter_section = SettingsSection(name="age_filter_settings", title="Age Filter")
+        age_filter_section.add_widget(LabeledDropdown(
+            text="Age Filter",
+            theme_text_color="Secondary",
+            items=["Not Rated", "16 (Teen)", "12 (Everyone)"],
+            current_item="Not Rated",
+            on_select=self.on_age_filter_select
+        ))
         
         # Add all sections to the layout
         self.layout.add_widget(display_section)
         self.layout.add_widget(layout_section)
+        self.layout.add_widget(age_filter_section)
     
     def toggle_fullscreen(self, instance, value):
         try:
@@ -886,3 +896,25 @@ class InterfaceSettings(SettingsScrollBox):
             self.app.app_config.write()
         except Exception as e:
             logger.error(f"Error in toggle_device_orientation: {e}", exc_info=True) 
+
+    def on_age_filter_select(self, instance, value):
+        # Show dialog to confirm age filter selection
+        self.age_filter_value = value
+        MessageBox(title="Age Filter", message= \
+            "This will change the age filter for the game list. \n" + \
+            "This will take a few seconds to complete. \n" + \
+            "You have selected '" + value + "' as your age filter. \n" + \
+            "Are you sure you want to continue? \n", \
+            callback=self._dialog_filter_select).open()
+
+    def _dialog_filter_select(self, result):
+        if result:
+            Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(speed=0.033), 0)
+            # Then make the changes
+            Clock.schedule_once(lambda dt: self._do_age_filter_update(self.age_filter_value), 0.5)
+
+    def _do_age_filter_update(self, value):
+        self.app.app_config.set('client', 'age_filter', value)
+        self.app.app_config.write()
+        self.app.set_age_filter(value)
+        self.app.loading_layout.hide_loading()

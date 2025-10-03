@@ -379,7 +379,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
 
     def on_game_tag_filter_text(self, instance):
         """Set the game search filter based on the game tag filter"""
-        self.game_filter = [(self.game_tag_filter.text, tag) for tag in GameIndex.search(self.game_tag_filter.text)]
+        self.game_filter = [(self.game_tag_filter.text, tag) for tag in self.game_index.search(self.game_tag_filter.text)]
 
     def update_connect_button_text(self):
         """Update the connect button text based on current context"""
@@ -434,11 +434,10 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 self.favorites_layout.add_widget(placeholder)
                 return
             
-            game_index = GameIndex()
             for name in self.favorite_games:
 
                 try:
-                    game_name = game_index.get_game_name_for_module(name)
+                    game_name = self.game_index.get_game_name_for_module(name)
                     if game_name:
                         favorite_tab = Favorite(game_name=game_name, game_module=name)
                         self.favorites_layout.add_widget(favorite_tab)
@@ -482,8 +481,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 return
                 
             # Find the game name for this module
-            game_index = GameIndex()
-            game_name = game_index.get_game_name_for_module(module_name)
+            game_name = self.game_index.get_game_name_for_module(module_name)
             if game_name:
                 self.favorites_layout.switch_tab(text=game_name)
                 logger.info(f"Switched to favorite {module_name}")
@@ -496,8 +494,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     def on_favorite_clicked(self, module_name: str):
         """Handle clicking on a favorite item in the tabs"""
         try:
-            game_index = GameIndex()
-            game_data = game_index.get_game(module_name)
+            game_data = self.game_index.get_game(module_name)
             if game_data:
                 game_name = game_data.get('game_name', module_name)
                 self.on_game_selected((module_name, game_name))
@@ -777,6 +774,8 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             slot_name = slot_name_field.text if slot_name_field.text else None
             password = slot_password_field.text if slot_password_field.text else None
             
+            self.app.logo_png = self.game_index.get_game(self.selected_game[0]).get("cover_url", None)
+
             logger.info(f"Attempting to launch module: {self.selected_game[1]}")
             logger.info(f"Server: {server_address}, Password: {'*' * len(password) if password else 'None'}")
             

@@ -546,7 +546,7 @@ def install_worlds(worlds: List[str]) -> None:
                 for item in pip_install_dir.iterdir():
                     if item.name != 'worlds':
                         # Add dependency packages to library.zip
-                        logger.debug(f"Adding dependency {item.name} to library")
+                        logger.debug(f"Adding {item.name} to library")
                         _add_to_library_zip(exe_dir, item)
                     else:
                         # Copy everything from pip_install_dir to worlds_install_dir, excluding .py files

@@ -136,6 +136,7 @@ class MultiMDApp(MDApp):
     text_buffer: Queue
 
     _show_all_hints: BooleanProperty(False)
+    _logo_png: str = None
 
     def __init__(self, ctx: context_type, **kwargs):
         super().__init__(**kwargs)
@@ -423,6 +424,23 @@ class MultiMDApp(MDApp):
         self.root.md_bg_color = self.theme_cls.surfaceColor
         self.theme_mw.recolor_atlas()
 
+    def set_age_filter(self, value: str):
+        '''
+        This function is called when the age filter is changed.
+        It downloads the new index package and updates the game list.
+        '''
+        if value == "Not Rated":
+            index = "mwgg_igdb"
+        elif value == "16 (Teen)":
+            index = "mwgg_igdb_sixteen"
+        elif value == "12 (Everyone)":
+            index = "mwgg_igdb_twelve"
+        else:
+            logging.error(f"Invalid age filter: {value}")
+            return
+        from ModuleUpdate import install_worlds
+        install_worlds([index])
+
     def change_screen(self, item):
         '''
         This function is called when the screen is changed.
@@ -615,14 +633,6 @@ class MultiMDApp(MDApp):
         # Always use the text buffer for consistency
         self.text_buffer.put_nowait(text)
 
-    def logo_bg(self):
-        if self.local_player_data.game:
-            from mwgg_igdb import get_module_for_game, get_game
-            game_module = get_module_for_game(self.local_player_data.game)
-            game_data = get_game(game_module)
-            return game_data.get("cover_url", os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "logo_bg.png"))
-        return os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "logo_bg.png")
-
     def set_pronouns(self):
         pronouns = self.local_player_data.pronouns
         tags = list(self.ctx.tags)
@@ -748,6 +758,16 @@ class MultiMDApp(MDApp):
         self._show_all_hints = value
         if hasattr(self, 'hint_screen') and self.hint_screen:
             self.hint_screen.update_hints_list()
+
+    @property
+    def logo_png(self):
+        if self._logo_png is None:
+            self._logo_png = os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "logo_bg.png")
+        return self._logo_png
+
+    @logo_png.setter
+    def logo_png(self, value: str):
+        self._logo_png = value.replace("t_thumb", "t_cover_big").replace(".jpg", ".png")
 
 def is_command_input(string: str) -> bool:
     return len(string) > 0 and string[0] in "/!"

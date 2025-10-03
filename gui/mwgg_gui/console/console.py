@@ -29,13 +29,17 @@ Builder.load_string('''
     pos: 0,82
 
 <ConsoleSliverAppbar>:
-    pos_hint: {"x": 0}
-    width: 260
+    pos_hint: {"x": 0, "top": 1}
+    width: dp(260)
     size_hint_x: None
     adaptive_height: True
     hide_appbar: True
     background_color: app.theme_cls.secondaryContainerColor
-
+    MDSliverAppbarHeader:
+        AsyncImage:
+            source: app.logo_png
+            pos_hint: {"center_y": 0.5}
+            fit_mode: "scale-down"
     MDTopAppBar:
         type: "small"
         pos_hint: {"center_x": 0.5, "top": 1}
@@ -56,14 +60,6 @@ Builder.load_string('''
             MDActionTopAppBarButton:
                 icon: "headphones"
                 on_release: root.set_deafen()
-
-    MDSliverAppbarHeader:
-        FitImage:
-            source: app.logo_bg()
-            fit_mode: "scale-down"
-            size_hint: 1,1
-            pos: root.x, root.y
-
 ''')
 
 class ConsoleLayout(MDRelativeLayout):
