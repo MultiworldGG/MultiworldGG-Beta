@@ -332,6 +332,9 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
     Returns:
         A tuple of the game name, authors, minimum AP version, and world version
     """
-    with open(local_path("lib", "worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
-        data = json.load(f)
+    try:
+        with open(local_path("lib", "worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        return world, ["Unknown"], "0.0.0", "0.0.0"
     return data["game"], data["authors"], data["minimum_ap_version"], data["world_version"]

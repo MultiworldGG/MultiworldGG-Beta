@@ -59,7 +59,6 @@ KV = '''
 SettingsNavLayout:
     size_hint_y: None
     height: Window.height-103
-    settings_hero_to: settings_hero_to
     settings_nav_menu: settings_nav_menu
 
     MDScreenManager:
@@ -77,17 +76,11 @@ SettingsNavLayout:
             spacing: dp(8)
             padding: [dp(4), dp(4), dp(4), dp(4)]
             
-            MDHeroTo:
-                id: settings_hero_to
-                tag: "logo"
+            FitImage:
+                source: os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "logo_bg.png")
                 size_hint: None,None
                 size: dp(256), dp(161)
                 pos_hint: {"center_x": 0.5, "top": 1}
-                FitImage:
-                    source: os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "logo_bg.png")
-                    size_hint: None,None
-                    size: dp(256), dp(161)
-                    pos_hint: {"center_x": 0.5, "top": 1}
             
             NavDrawerMenu:
                 id: settings_nav_menu
@@ -128,7 +121,6 @@ SettingsNavLayout:
 '''
 
 class SettingsNavLayout(MDNavigationLayout):
-    settings_hero_to: ObjectProperty
     settings_nav_menu: ObjectProperty
 
 class NavDrawerMenu(MDNavigationDrawerMenu):
@@ -222,8 +214,6 @@ class SettingsScreen(MDScreen):
     '''
     Main settings screen to call from the application
     '''
-    settings_hero_to: ObjectProperty
-    heroes_to = []
     settings_nav_drawer: ObjectProperty
     settings_screen_manager: MDScreenManager
     nav_layout: SettingsNavLayout
@@ -245,9 +235,7 @@ class SettingsScreen(MDScreen):
         self.setup_sections()
         logger.debug(f"Retrieved screen_manager: {self.settings_screen_manager}")
         
-        self.settings_hero_to = self.nav_layout.settings_hero_to
         self.add_widget(self.nav_layout)
-        self.heroes_to.append(self.settings_hero_to)
         
         logger.debug("Added nav_layout to screen")
         

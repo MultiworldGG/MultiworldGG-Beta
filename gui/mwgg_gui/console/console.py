@@ -58,9 +58,9 @@ Builder.load_string('''
                 on_release: root.set_deafen()
 
     MDSliverAppbarHeader:
-        MDHeroTo:   #### ok the herofrom size/loc is the transition size
-            id: console_hero_to
-            tag: "logo"
+        FitImage:
+            source: app.logo_bg()
+            fit_mode: "scale-down"
             size_hint: 1,1
             pos: root.x, root.y
 
@@ -95,7 +95,6 @@ class ConsoleScreen(MDScreen, ThemableBehavior):
     '''
     name = "console"
     app: MDApp
-    console_hero_to: ObjectProperty
     consolegrid: MDBoxLayout
     important_appbar: MDSliverAppbar
     ui_console: ConsoleView
@@ -112,9 +111,6 @@ class ConsoleScreen(MDScreen, ThemableBehavior):
         self.bottom_appbar = BottomAppBar(screen_name="console")
 
         self.important_appbar = ConsoleSliverAppbar()
-        
-        self.console_hero_to = self.important_appbar.ids.console_hero_to
-        self.heroes_to = [self.console_hero_to]
 
         Clock.schedule_once(lambda x: self.init_important())
 

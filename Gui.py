@@ -62,6 +62,7 @@ Window.set_title("MultiWorldGG")
 from kivy.clock import Clock
 from kivy.properties import ObjectProperty, BooleanProperty
 from kivymd.app import MDApp
+from kivy.uix.screenmanager import SwapTransition
 from kivymd.uix.screenmanager import MDScreenManager
 from kivymd.uix.anchorlayout import MDAnchorLayout
 from kivymd.uix.floatlayout import MDFloatLayout
@@ -319,7 +320,7 @@ class MultiMDApp(MDApp):
         
         # Screen manager
         # Screens are under the appbar and titlebar
-        self.screen_manager = MainScreenMgr()
+        self.screen_manager = MainScreenMgr(transition=SwapTransition())
 
         # Set up navigation layout
         self.navigation_layout.add_widget(self.screen_manager)
@@ -428,7 +429,7 @@ class MultiMDApp(MDApp):
         It updates the current screen and dismisses menu
         with the screen names.
         '''
-        self.screen_manager.current_heroes = ["logo"]
+        #self.screen_manager.current_heroes = ["logo"]
         if item in self.screen_manager.screen_names:
             self.screen_manager.current = item
             if self.top_appbar_menu:
@@ -614,12 +615,21 @@ class MultiMDApp(MDApp):
         # Always use the text buffer for consistency
         self.text_buffer.put_nowait(text)
 
+    def logo_bg(self):
+        if self.local_player_data.game:
+            from mwgg_igdb import get_module_for_game, get_game
+            game_module = get_module_for_game(self.local_player_data.game)
+            game_data = get_game(game_module)
+            return game_data.get("cover_url", os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "logo_bg.png"))
+        return os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "logo_bg.png")
+
     def set_pronouns(self):
         pronouns = self.local_player_data.pronouns
         tags = list(self.ctx.tags)
         if any(tag.startswith("pronouns") for tag in tags):
             tags.remove(next(tag for tag in tags if tag.startswith("pronouns")))
-        tags.append(f"pronouns:{pronouns}")
+        if pronouns:
+            tags.append(f"pronouns:{pronouns}")
         asynckivy.start(self.ctx.update_tags(tags))
 
     def set_deafen(self):

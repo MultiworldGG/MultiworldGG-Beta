@@ -208,6 +208,7 @@ Builder.load_string('''
                         size_hint_x: 0.8
                         pos_hint: {"center_x": 0.5}
                         text: app.app_config.get("client", "slot", fallback="")
+                        on_text_validate: app.launcher_screen.connect()
                         MDTextFieldLeadingIcon:
                             theme_icon_color: "Custom"
                             icon_color_focus: self.parent.icon_color_focus
@@ -215,13 +216,13 @@ Builder.load_string('''
                             icon: 'ticket-account'
                         MDTextFieldHintText:
                             text: "Username"
-                        on_text_validate: app.launcher_screen.connect()
                     LauncherAuthTextField:
                         id: slot_password
                         password: True
                         size_hint_x: 0.8
                         pos_hint: {"center_x": 0.5}
                         text: app.app_config.get("client", "slot_password", fallback="")
+                        on_text_validate: app.launcher_screen.connect()
                         MDTextFieldLeadingIcon:
                             theme_icon_color: "Custom"
                             icon_color_focus: self.parent.icon_color_focus
@@ -229,7 +230,6 @@ Builder.load_string('''
                             icon: 'lock'    
                         MDTextFieldHintText:
                             text: "Password"
-                        on_text_validate: app.launcher_screen.connect()
 
 <TagChip>:
     type: "filter"
@@ -274,9 +274,6 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     with options to connect to the MW server
     '''
     name = "launcher"
-    launcher_hero_from: ObjectProperty
-    launcher_hero_to: ObjectProperty
-    heroes_to = []
     launchergrid: LauncherLayout
     important_appbar: MDSliverAppbar
     launcher_view: LauncherView
@@ -319,11 +316,6 @@ class LauncherScreen(MDScreen, ThemableBehavior):
 
         self.add_widget(self.launchergrid)
         self.add_widget(self.bottom_appbar)
-
-        self.launcher_hero_from = self.important_appbar.launcher_hero_from
-        self.launcher_hero_to = self.important_appbar.launcher_hero_from
-        self.heroes_from = [self.launcher_hero_from]
-        self.heroes_to = [self.launcher_hero_to]
 
         self.important_appbar.size_hint_x = 260/Window.width
         self.important_appbar.size_hint_y=1
