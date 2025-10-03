@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.bomb_rush_cyberfunk"
-version = "1.0.1"
+version = "0.0.0"
 description = "MultiWorld: Bomb Rush Cyberfunk"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

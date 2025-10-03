@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.oot"
-version = "1.0.2"
+version = "0.0.0"
 description = "MultiWorld: Ocarina of Time"
 license = "MIT AND (GPL-2.0-or-later)"
 license-files = [ "LICENSE", "data/Compress/src/crc.c", "data/Decompress/src/crc.c",]

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.smz3"
-version = "1.0.1"
+version = "0.0.0"
 description = "MultiWorld: SMZ3"
 license = "MIT"
 license-files = [ "LICENSE",]

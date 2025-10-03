@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.marioland2"
-version = "1.0.1"
+version = "0.0.0"
 description = "MultiWorld: Super Mario Land 2"
 license = "MIT"
 license-files = [ "LICENSE",]

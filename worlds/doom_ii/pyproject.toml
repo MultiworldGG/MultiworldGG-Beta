@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.doom_ii"
-version = "1.0.1"
+version = "0.0.0"
 description = "MultiWorld: DOOM II"
 license = "Zlib"
 license-files = [ "LICENSE",]

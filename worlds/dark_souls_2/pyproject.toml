@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.dark_souls_2"
-version = "1.0.1"
+version = "0.0.0"
 description = "MultiWorld: Dark Souls II"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

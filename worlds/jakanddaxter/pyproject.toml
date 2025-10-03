@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.jakanddaxter"
-version = "1.0.1"
+version = "0.0.0"
 description = "MultiWorld: Jak and Daxter: The Precursor Legacy"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

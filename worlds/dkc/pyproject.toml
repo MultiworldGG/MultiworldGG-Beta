@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.dkc"
-version = "1.0.1"
+version = "0.0.0"
 description = "MultiWorld: Donkey Kong Country"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

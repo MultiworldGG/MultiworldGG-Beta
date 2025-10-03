@@ -33,7 +33,6 @@ if os.path.exists(Path(home_dir) / "access_token"):
     else:
         with open(Path(home_dir) / "access_token", "r") as file:
             igdb_token = file.readline().strip()
-            print(f"Using cached IGDB token: {igdb_token}")
 else:
     print("Access token file not found, generating new token")
     url = f"https://id.twitch.tv/oauth2/token?client_id={igdb_client_id}&client_secret={igdb_key}&grant_type=client_credentials"
@@ -144,29 +143,37 @@ def get_igdb_game_details(game_id: int) -> dict:
         'Content-Type': 'application/json'
     }
     data = f'''
-    fields name, cover.url, age_ratings.organization.name, age_ratings.rating_content_descriptions.description, first_release_date, player_perspectives.name,genres.name, themes.name, keywords.name, platforms.name, storyline;
+    fields name, cover.url, age_ratings.organization.name, age_ratings.rating_category.rating, age_ratings.rating_content_descriptions.description, first_release_date, player_perspectives.name,genres.name, themes.name, keywords.name, platforms.name, storyline;
     where id = {game_id};
     '''
-    
+
     response = requests.post(url, headers=headers, data=data)
-    
+
     if response.status_code != 200 or not response.json():
         return {}
         
     game_data = response.json()[0]
-    
+
     # Extract content descriptions from age ratings
     content_descriptions = []
+    age_rating = "NR"
     for rating in game_data.get('age_ratings', []):
-        if 'rating_content_descriptions' in rating and 'organization' in rating:
+        if 'organization' in rating:
+            if rating['organization']['name'] == 'PEGI':
+                if 'rating_category' in rating:
+                    age_rating = rating['rating_category']['rating']
             if rating['organization']['name'] == 'ESRB':
-                for desc in rating['rating_content_descriptions']:
-                    if 'description' in desc:
-                        content_descriptions.append(desc['description'])
+                if 'rating_content_descriptions' in rating:
+                    for desc in rating['rating_content_descriptions']:
+                        if 'description' in desc:
+                            content_descriptions.append(desc['description'])
+                if age_rating == "NR":
+                    age_rating = rating['rating_category']['rating']
 
     return {
         'igdb_name': game_data.get('name', ''),
         'cover_url': game_data.get('cover', {}).get('url', ''),
+        'age_rating': age_rating,
         'rating': content_descriptions,
         'themes': [theme['name'] for theme in game_data.get('themes', [])],
         'player_perspectives': [perspective['name'] for perspective in game_data.get('player_perspectives', [])],
@@ -198,6 +205,7 @@ def generate_game_details_json() -> dict:
                 'cover_url': igdb_details.get('cover_url', ''),
                 'game_name': data["game_name"],
                 'igdb_name': igdb_details.get('igdb_name', ''),
+                'age_rating': igdb_details.get('age_rating', ''),
                 'rating': igdb_details.get('rating', ''),
                 'player_perspectives': igdb_details.get('player_perspectives', []),
                 'genres': igdb_details.get('genres', []),
@@ -214,6 +222,7 @@ def generate_game_details_json() -> dict:
                 'cover_url': '',
                 'game_name': data["game_name"],
                 'igdb_name': '',
+                'age_rating': 'E', # Defaulting to "everyone" for original worlds/hint worlds
                 'rating': '',
                 'player_perspectives': [],
                 'genres': ["Multiplayer"],
@@ -238,9 +247,11 @@ def get_single_game_details(igdb_id: int) -> dict:
     if not igdb_details:
         return {
             'igdb_id': str(igdb_id),
+            'cover_url': '',
             'game_name': '',  # We don't know the world name for a single ID lookup
             'igdb_name': '',
-            'us_rating': '',
+            'age_rating': '',
+            'rating': '',
             'player_perspectives': [],
             'genres': [],
             'themes': [],
@@ -255,6 +266,7 @@ def get_single_game_details(igdb_id: int) -> dict:
         'cover_url': igdb_details.get('cover_url', ''),
         'game_name': '',  # We don't know the world name for a single ID lookup
         'igdb_name': igdb_details.get('igdb_name', ''),
+        'age_rating': igdb_details.get('age_rating', ''),
         'rating': igdb_details.get('rating', ''),
         'player_perspectives': igdb_details.get('player_perspectives', []),
         'genres': igdb_details.get('genres', []),

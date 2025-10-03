@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.tloz_ooa"
-version = "1.0.1"
+version = "0.0.0"
 description = "MultiWorld: The Legend of Zelda - Oracle of Ages"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

@@ -44,7 +44,7 @@ def main():
     args = parser.parse_args()
 
     # Get the script directory (src/tools)
-    script_dir = Path(__file__).resolve().parents[1]
+    script_dir = Path(__file__).resolve().parents[2]
     
     # Change to script directory
     import os

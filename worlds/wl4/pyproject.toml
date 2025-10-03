@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.wl4"
-version = "1.0.1"
+version = "0.0.0"
 description = "MultiWorld: Wario Land 4"
 license = "MIT"
 license-files = [ "LICENSE",]

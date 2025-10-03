@@ -66,6 +66,12 @@ def install_wheels(type="default") -> bool:
     if wheels_dir.exists():
         logger.debug(f"Installing wheels from {type}_wheels...")
         for wheel_file in wheels_dir.glob("*.whl"):
+            if "sixteen" in wheel_file.name:
+                # Skip filter igdb wheels
+                continue
+            if "twelve" in wheel_file.name:
+                # Skip filter igdb wheels
+                continue
             try:
                 # First try with dependencies to ensure all required packages are installed
                 subprocess.check_call([

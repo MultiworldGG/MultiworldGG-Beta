@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.sly1"
-version = "1.0.1"
+version = "0.0.0"
 description = "MultiWorld: Sly Cooper and the Thievius Raccoonus"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

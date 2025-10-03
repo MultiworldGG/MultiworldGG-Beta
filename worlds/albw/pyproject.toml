@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.albw"
-version = "1.0.1"
+version = "0.0.0"
 description = "MultiWorld: A Link Between Worlds"
 license = "GPL-2.0-only"
 license-files = [ "LICENSE",]

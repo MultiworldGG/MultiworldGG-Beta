@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.peaks_of_yore"
-version = "1.0.1"
+version = "0.0.0"
 description = "MultiWorld: Peaks of Yore"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

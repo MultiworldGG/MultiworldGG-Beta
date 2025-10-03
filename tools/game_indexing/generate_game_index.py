@@ -18,7 +18,7 @@ def clean_value(value: Any) -> str:
         return ""
     return str(value).lower()
 
-def clean_game_data(games_data: dict) -> dict:
+def clean_game_data(games_data: dict, rating_filter: str = "NR") -> dict:
     """
     Clean the game data, ensuring no null values and proper types.
     Preserves original world_name as it's used for identification.
@@ -29,10 +29,21 @@ def clean_game_data(games_data: dict) -> dict:
     Returns:
         Cleaned game data dictionary
     """
+    age_filter = []
+    filter_16 = ["3", "7", "12", "16", "18", "E", "T"]
+    filter_12 = ["3", "7", "12", "E"]
+
+    if rating_filter == "16":
+        age_filter = filter_16
+    elif rating_filter == "12":
+        age_filter = filter_12
+
     cleaned_data = {}
     for world_name, game_data in games_data.items():
         cleaned_game = {}
         for field, value in game_data.items():
+            if field == "age_rating" and age_filter and value not in age_filter:
+                continue
             # Preserve original world_name
             if field == "game_name":
                 cleaned_game[field] = value
@@ -44,7 +55,8 @@ def clean_game_data(games_data: dict) -> dict:
                 cleaned_game[field] = {k: clean_value(v) for k, v in value.items()}
             else:
                 cleaned_game[field] = clean_value(value)
-        cleaned_data[world_name] = cleaned_game
+        if cleaned_game:
+            cleaned_data[world_name] = cleaned_game
     return cleaned_data
 
 def build_search_index(games_data: dict) -> Dict[str, Set[str]]:
@@ -146,7 +158,7 @@ def validate_generated_index(games_data: dict, search_index: Dict[str, Set[str]]
     
     return True
 
-def generate_index_file():
+def generate_index_file(rating_filter: str = "NR"):
     """Generate the game_index.py file with pre-built index."""
     try:
         # Load game data
@@ -154,7 +166,7 @@ def generate_index_file():
             games_data = json.load(file)
         
         # Clean the game data
-        games_data = clean_game_data(games_data)
+        games_data = clean_game_data(games_data, rating_filter)
         
         # Build search index
         search_index = build_search_index(games_data)
@@ -179,8 +191,15 @@ def generate_index_file():
         code = template.replace("GAMES_DATA_PLACEHOLDER", games_data_str)
         code = code.replace("SEARCH_INDEX_PLACEHOLDER", search_index_str)
         
+        if rating_filter == "12":
+            folder = "twelve"
+        elif rating_filter == "16":
+            folder = "sixteen"
+        else:
+            folder = "nr"
+            
         # Write generated file
-        output_path = Path.cwd().parents[1] / 'game_index' / 'mwgg_igdb.py'
+        output_path = Path.cwd().parents[1] / 'game_index' / folder/ 'mwgg_igdb.py'
         with open(output_path, "w") as f:
             f.write(code)
         
@@ -202,6 +221,12 @@ def main():
     success = generate_index_file()
     if not success:
         exit(1) 
+    success = generate_index_file(rating_filter="12")
+    if not success:
+        exit(1)
+    success = generate_index_file(rating_filter="16")
+    if not success:
+        exit(1)
 
 if __name__ == "__main__":
     main()

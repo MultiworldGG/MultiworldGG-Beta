@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.huniepop"
-version = "1.0.2"
+version = "0.0.0"
 description = "MultiWorld: Hunie Pop"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
