@@ -438,7 +438,8 @@ class MultiMDApp(MDApp):
         else:
             logging.error(f"Invalid age filter: {value}")
             return
-        from ModuleUpdate import install_worlds
+        from ModuleUpdate import install_worlds, uninstall_worlds
+        uninstall_worlds(["mwgg_igdb", "mwgg_igdb_sixteen", "mwgg_igdb_twelve"])
         install_worlds([index])
 
     def change_screen(self, item):

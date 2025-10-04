@@ -212,6 +212,11 @@ class LabeledDropdown(MDBoxLayout):
     current_item = StringProperty("")
     on_select = ObjectProperty(None)
 
+    def __init__(self, on_select=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if on_select:
+            self.on_select = on_select
+
     def show_menu(self):
         menu_items = [
             {
@@ -872,7 +877,6 @@ class InterfaceSettings(SettingsScrollBox):
         age_filter_section = SettingsSection(name="age_filter_settings", title="Age Filter")
         age_filter_section.add_widget(LabeledDropdown(
             text="Age Filter",
-            theme_text_color="Secondary",
             items=["Not Rated", "16 (Teen)", "12 (Everyone)"],
             current_item="Not Rated",
             on_select=self.on_age_filter_select
@@ -897,15 +901,14 @@ class InterfaceSettings(SettingsScrollBox):
         except Exception as e:
             logger.error(f"Error in toggle_device_orientation: {e}", exc_info=True) 
 
-    def on_age_filter_select(self, instance, value):
+    def on_age_filter_select(self, value):
         # Show dialog to confirm age filter selection
         self.age_filter_value = value
-        MessageBox(title="Age Filter", message= \
-            "This will change the age filter for the game list. \n" + \
-            "This will take a few seconds to complete. \n" + \
-            "You have selected '" + value + "' as your age filter. \n" + \
-            "Are you sure you want to continue? \n", \
-            callback=self._dialog_filter_select).open()
+        MessageBox(title="Age Filter", message = f'''This will change the age filter for the game list.
+            This will take a few seconds to complete.
+            You have selected '{value}' as your age filter.
+            Are you sure you want to continue?'''.replace("            ", ""),
+            callback=lambda result: self._dialog_filter_select(result)).open()
 
     def _dialog_filter_select(self, result):
         if result:

@@ -12,6 +12,7 @@ from kivymd.uix.dialog import (MDDialog,
 from kivymd.uix.button import MDButton, MDButtonText
 from kivymd.uix.textfield import MDTextField, MDTextFieldHelperText
 from kivymd.uix.scrollview import MDScrollView
+from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.app import MDApp
 from kivy.uix.widget import Widget
 from kivy.metrics import dp
@@ -72,12 +73,10 @@ class MessageBox(MDDialog):
                 text=self.title,
             ),
             MDDialogContentContainer(
-                MDScrollView(
-                    MDDialogSupportingText(
-                        text=self.message,
-                        theme_text_color="Custom" if self.is_error else "Primary",
-                        text_color=self.app.theme_cls.errorColor if self.is_error else self.app.theme_cls.onSurfaceColor,
-                    ),
+                MDDialogSupportingText(
+                    text=self.message,
+                    theme_text_color="Custom" if self.is_error else "Primary",
+                    text_color=self.app.theme_cls.errorColor if self.is_error else self.app.theme_cls.onSurfaceColor,
                 ),
             ),
             MDDialogButtonContainer(

@@ -367,6 +367,36 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
         logger.warning(f"Could not check for updates: {e}")
         return []
 
+def uninstall_worlds(worlds: List[str]) -> None:
+    """Uninstall a list of mwgg packages from the multiworld repository."""
+    if is_frozen():
+        base_dir = worlds_install_dir
+    
+        for world in worlds:
+            if "." in world:
+                package_base, subdir = world.split(".", 1)
+            
+            package_dir = base_dir / package_base
+            world_path = package_dir / subdir
+            
+            if not package_dir.exists():
+                # try the next package
+                continue
+            
+            if world_path.exists() and world_path.is_dir():
+                logger.info(f"Removing directory: {world_path}")
+                try:
+                    shutil.rmtree(world_path)
+                    logger.info(f"Successfully uninstalled: {package_base}.{subdir}")
+                except Exception as e:
+                    logger.error(f"Failed to remove {world_path}: {e}")
+            else:
+                logger.warning(f"Directory not found: {world_path}")
+    else:
+        for world in worlds:
+            executable_args = [python_cmd, "-m", "pip", "uninstall", world, "--yes"]
+            subprocess.run(executable_args)
+
 
 def find_world_modules() -> List[str]:
     """Find all world modules in the multiworld repository."""
@@ -447,52 +477,7 @@ def _add_to_library_zip(exe_dir: Path, source_path: Path) -> None:
 def install_worlds(worlds: List[str]) -> None:
     """Install worlds from the multiworld repository."""
     check_pip()
-    
-    # Debug environment information
-    logger.info("=== ENVIRONMENT DEBUG INFO (install_worlds) ===")
-    logger.info(f"is_frozen(): {is_frozen()}")
-    logger.info(f"python_cmd: {python_cmd}")
-    logger.info(f"sys.executable: {sys.executable}")
-    logger.info(f"sys.exec_prefix: {sys.exec_prefix}")
-    logger.info(f"sys.prefix: {sys.prefix}")
-    logger.info(f"sys.path: {sys.path}")
-    logger.info(f"PYTHONHOME: {os.environ.get('PYTHONHOME', 'Not set')}")
-    logger.info(f"PYTHONPATH: {os.environ.get('PYTHONPATH', 'Not set')}")
-    logger.info(f"PYTHONSTARTUP: {os.environ.get('PYTHONSTARTUP', 'Not set')}")
-    logger.info(f"PYTHONPLATLIBDIR: {os.environ.get('PYTHONPLATLIBDIR', 'Not set')}")
-    logger.info(f"PYTHONCASEOK: {os.environ.get('PYTHONCASEOK', 'Not set')}")
-    logger.info(f"PYTHONIOENCODING: {os.environ.get('PYTHONIOENCODING', 'Not set')}")
-    logger.info(f"PYTHONHASHSEED: {os.environ.get('PYTHONHASHSEED', 'Not set')}")
-    logger.info(f"PYTHONMALLOC: {os.environ.get('PYTHONMALLOC', 'Not set')}")
-    logger.info(f"PYTHONCOERCECLOCALE: {os.environ.get('PYTHONCOERCECLOCALE', 'Not set')}")
-    logger.info(f"PYTHONBREAKPOINT: {os.environ.get('PYTHONBREAKPOINT', 'Not set')}")
-    logger.info(f"PYTHON_COLORS: {os.environ.get('PYTHON_COLORS', 'Not set')}")
-    logger.info(f"PYTHON_HISTORY: {os.environ.get('PYTHON_HISTORY', 'Not set')}")
-    logger.info(f"PYTHON_CPU_COUNT: {os.environ.get('PYTHON_CPU_COUNT', 'Not set')}")
-    logger.info(f"PYTHONDEBUG: {os.environ.get('PYTHONDEBUG', 'Not set')}")
-    logger.info(f"PYTHONDEVMODE: {os.environ.get('PYTHONDEVMODE', 'Not set')}")
-    logger.info(f"PYTHONDONTWRITEBYTECODE: {os.environ.get('PYTHONDONTWRITEBYTECODE', 'Not set')}")
-    logger.info(f"PYTHONFAULTHANDLER: {os.environ.get('PYTHONFAULTHANDLER', 'Not set')}")
-    logger.info(f"PYTHON_FROZEN_MODULES: {os.environ.get('PYTHON_FROZEN_MODULES', 'Not set')}")
-    logger.info(f"PYTHON_GIL: {os.environ.get('PYTHON_GIL', 'Not set')}")
-    logger.info(f"PYTHONINSPECT: {os.environ.get('PYTHONINSPECT', 'Not set')}")
-    logger.info(f"PYTHONINTMAXSTRDIGITS: {os.environ.get('PYTHONINTMAXSTRDIGITS', 'Not set')}")
-    logger.info(f"PYTHONNODEBUGRANGES: {os.environ.get('PYTHONNODEBUGRANGES', 'Not set')}")
-    logger.info(f"PYTHONNOUSERSITE: {os.environ.get('PYTHONNOUSERSITE', 'Not set')}")
-    logger.info(f"PYTHONOPTIMIZE: {os.environ.get('PYTHONOPTIMIZE', 'Not set')}")
-    logger.info(f"PYTHONPERFSUPPORT: {os.environ.get('PYTHONPERFSUPPORT', 'Not set')}")
-    logger.info(f"PYTHONPROFILEIMPORTTIME: {os.environ.get('PYTHONPROFILEIMPORTTIME', 'Not set')}")
-    logger.info(f"PYTHONPYCACHEPREFIX: {os.environ.get('PYTHONPYCACHEPREFIX', 'Not set')}")
-    logger.info(f"PYTHONSAFEPATH: {os.environ.get('PYTHONSAFEPATH', 'Not set')}")
-    logger.info(f"PYTHONTRACEMALLOC: {os.environ.get('PYTHONTRACEMALLOC', 'Not set')}")
-    logger.info(f"PYTHONUNBUFFERED: {os.environ.get('PYTHONUNBUFFERED', 'Not set')}")
-    logger.info(f"PYTHONUTF8: {os.environ.get('PYTHONUTF8', 'Not set')}")
-    logger.info(f"PYTHONVERBOSE: {os.environ.get('PYTHONVERBOSE', 'Not set')}")
-    logger.info(f"PYTHONWARNDEFAULTENCODING: {os.environ.get('PYTHONWARNDEFAULTENCODING', 'Not set')}")
-    logger.info(f"PYTHONWARNINGS: {os.environ.get('PYTHONWARNINGS', 'Not set')}")
-    logger.info(f"PATH: {os.environ.get('PATH', 'Not set')}")
-    logger.info("=== END DEBUG INFO ===")
-    
+
     for world in worlds:
         logger.info(f"Installing world: {world}")
         
@@ -544,10 +529,17 @@ def install_worlds(worlds: List[str]) -> None:
                 
                 # Process each item in the install directory
                 for item in pip_install_dir.iterdir():
-                    if item.name != 'worlds':
+                    if item.name != 'worlds' and item.name != 'mwgg_igdb':
                         # Add dependency packages to library.zip
                         logger.debug(f"Adding {item.name} to library")
                         _add_to_library_zip(exe_dir, item)
+                    if "mwgg_igdb" in item.name:
+                        # Copy everything from pip_install_dir to worlds_install_dir, excluding .py files
+                        logger.debug(f"Installing mwgg_igdb...")
+                        shutil.copytree(pip_install_dir / "mwgg_igdb", 
+                                    worlds_install_dir / "mwgg_igdb", 
+                                    dirs_exist_ok=True, 
+                                    ignore=lambda src, files: [f for f in files if f.endswith('.py')])
                     else:
                         # Copy everything from pip_install_dir to worlds_install_dir, excluding .py files
                         logger.debug(f"Installing worlds...")
