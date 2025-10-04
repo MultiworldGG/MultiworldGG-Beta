@@ -31,6 +31,7 @@ from kivymd.uix.list import MDList
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogButtonContainer
 from kivymd.uix.button import MDButton, MDButtonText
+from kivymd.uix.snackbar import MDSnackbar, MDSnackbarText
 import logging
 from typing import Any
 import tempfile
@@ -38,8 +39,8 @@ import shutil
 import zipfile
 import os
 import subprocess
+import threading
 
-from kivy.clock import Clock
 from kivymd.app import MDApp
 from mwgg_igdb import GameIndex
 
@@ -50,211 +51,17 @@ from mwgg_gui.launcher.launcher_favorite_bar import FavoritesScroll, Favorite
 from mwgg_gui.launcher.launcher_yaml import YamlDialog
 from mwgg_gui.components.dialog import MessageBox
 
-from Utils import discover_and_launch_module, get_available_worlds, persistent_load, open_file_input_dialog
+from Utils import (discover_and_launch_module, 
+                   get_available_worlds, 
+                   user_path)
+
+from FileUtils import FileUtils
 
 game_index = GameIndex()
 logger = logging.getLogger("Client")
-Builder.load_string('''
-<LauncherScreen>:
-    size_hint: 1,1
-    pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
-<LauncherLayout>:
-    id: launcher_layout
-    y: 82
-    size_hint_y: 1-(185/Window.height)
+Builder.load_file(os.path.join(os.path.dirname(__file__), "launcher.kv"))
 
-<LauncherView>: # Right side of launcher screen
-    id: launcher_view
-    server_layout: server_layout
-    title_layout: title_layout
-    module_name: ""
-    orientation: 'horizontal'
-    padding: dp(50)
-    MDBoxLayout:
-        orientation: 'vertical'
-        spacing: 30
-        padding: dp(30)
-        theme_bg_color: "Custom"
-        md_bg_color: app.theme_cls.surfaceVariantColor
-        MDBoxLayout: # Inner padded layout
-            orientation: 'vertical'
-            MDBoxLayout: # Title & Favorites
-                id: title_layout
-                orientation: 'vertical'
-                size_hint_y: None
-                height: dp(120)
-                MDLabel:
-                    size_hint_y: 0.37
-                    text: app.qotd()
-                    halign: 'center'
-                    theme_font_style: "Custom"
-                    font_style: "Title"
-                    role: "small"
-                    theme_text_color: "Custom"
-                    text_color: app.theme_cls.onSurfaceVariantColor
-                        
-            MDBoxLayout: # Connect & Play, Patch Game, Create YAML, Generate, Host
-                orientation: 'horizontal'
-                spacing: 10
-                MDBoxLayout:
-                    orientation: 'vertical'
-                    spacing: dp(15)
-                    MDButton:
-                        id: connect_button
-                        pos_hint: {"center_x": 0.5}
-                        on_release: app.launcher_screen.connect()
-                        width: dp(200)
-                        radius: dp(10)
-                        MDButtonText:
-                            theme_text_color: "Custom"
-                            text_color: app.theme_cls.onSurfaceVariantColor
-                            text: 'Connect & Play'
-                            halign: 'center'
-                        MDButtonIcon:
-                            icon: "play-network"
-                    MDButton:
-                        id: game_patch_button
-                        pos_hint: {"center_x": 0.5}
-                        width: dp(200)
-                        radius: dp(10)
-                        MDButtonText:
-                            theme_text_color: "Custom"
-                            text_color: app.theme_cls.onSurfaceVariantColor
-                            text: 'Patch Game'
-                            halign: 'center'
-                        MDButtonIcon:
-                            icon: "file-edit"
-                    MDButton:
-                        id: game_yaml_button
-                        on_release: app.launcher_screen.create_yaml()
-                        pos_hint: {"center_x": 0.5}
-                        width: dp(200)
-                        radius: dp(10)
-                        MDButtonText:
-                            theme_text_color: "Custom"
-                            text_color: app.theme_cls.onSurfaceVariantColor
-                            text: 'Create YAML'
-                            halign: 'center'
-                        MDButtonIcon:
-                            icon: "code-block-brackets"
-                    MDButton:
-                        id: generate_button
-                        on_release: app.launcher_screen.generate()
-                        pos_hint: {"center_x": 0.5}
-                        width: dp(200)
-                        radius: dp(10)
-                        MDButtonText:
-                            theme_text_color: "Custom"
-                            text_color: app.theme_cls.onSurfaceVariantColor
-                            text: 'Generate'
-                            halign: 'center'
-                        MDButtonIcon:
-                            icon: "gamepad-square-outline"
-                    MDButton:
-                        id: host_button
-                        on_release: app.root.current = 'host'
-                        pos_hint: {"center_x": 0.5}
-                        width: dp(200)
-                        radius: dp(10)
-                        MDButtonText:
-                            theme_text_color: "Custom"
-                            text_color: app.theme_cls.onSurfaceVariantColor
-                            text: 'Host'
-                            halign: 'center'
-                        MDButtonIcon:
-                            icon: "router-network"
-                MDBoxLayout:
-                    orientation: 'vertical'
-                    spacing: dp(5)
-                    width: dp(10)
-                    size_hint_x: None
-                    MDDivider:
-                        size_hint_y: .8
-                        pos_hint: {"center_y": 0.5}
-                        orientation: "vertical"
-                        color: app.theme_cls.outlineColor
-                MDBoxLayout:
-                    id: server_layout
-                    orientation: 'vertical'
-                    spacing: dp(15)
-                    LauncherAuthTextField:
-                        id: server
-                        size_hint_x: 0.8
-                        pos_hint: {"center_x": 0.5}
-                        text: app.ctx.suggested_address.split(":")[0] if app.ctx.suggested_address else app.app_config.get("client", "hostname", fallback="")
-                        MDTextFieldLeadingIcon:
-                            theme_icon_color: "Custom"
-                            icon: 'router-network'
-                            icon_color_focus: self.parent.icon_color_focus
-                            icon_color_normal: self.parent.icon_color_normal
-                        MDTextFieldHintText:
-                            text: "Server Address"
-                    LauncherAuthTextField:
-                        id: port
-                        input_filter: 'int'
-                        size_hint_x: 0.8
-                        pos_hint: {"center_x": 0.5}
-                        text: app.ctx.suggested_address.split(":")[1] if app.ctx.suggested_address else app.app_config.get("client", "port", fallback="")
-                        MDTextFieldLeadingIcon:
-                            theme_icon_color: "Custom"
-                            icon: 'numeric'
-                            icon_color_focus: self.parent.icon_color_focus
-                            icon_color_normal: self.parent.icon_color_normal
-                        MDTextFieldHintText:
-                            text: "Port"
-                    LauncherAuthTextField:
-                        id: slot_name
-                        size_hint_x: 0.8
-                        pos_hint: {"center_x": 0.5}
-                        text: app.app_config.get("client", "slot", fallback="")
-                        on_text_validate: app.launcher_screen.connect()
-                        MDTextFieldLeadingIcon:
-                            theme_icon_color: "Custom"
-                            icon_color_focus: self.parent.icon_color_focus
-                            icon_color_normal: self.parent.icon_color_normal
-                            icon: 'ticket-account'
-                        MDTextFieldHintText:
-                            text: "Username"
-                    LauncherAuthTextField:
-                        id: slot_password
-                        password: True
-                        size_hint_x: 0.8
-                        pos_hint: {"center_x": 0.5}
-                        text: app.app_config.get("client", "slot_password", fallback="")
-                        on_text_validate: app.launcher_screen.connect()
-                        MDTextFieldLeadingIcon:
-                            theme_icon_color: "Custom"
-                            icon_color_focus: self.parent.icon_color_focus
-                            icon_color_normal: self.parent.icon_color_normal
-                            icon: 'lock'    
-                        MDTextFieldHintText:
-                            text: "Password"
-
-<TagChip>:
-    type: "filter"
-    MDChipText:
-        text: root.text
-        icon: root.icon
-
-<LauncherAuthTextField>:
-    theme_font_name: "Custom"
-    theme_font_style: "Custom"
-    theme_icon_color: "Custom"
-    theme_text_color: "Custom"
-    theme_bg_color: "Custom"
-    text_color_focus: app.theme_cls.onSecondaryContainerColor
-    text_color_normal: app.theme_cls.onSurfaceVariantColor
-    icon_color_focus: app.theme_cls.primaryColor
-    icon_color_normal: app.theme_cls.onPrimaryColor
-    fill_color_focus: app.theme_cls.surfaceContainerHighestColor
-    fill_color_normal: app.theme_cls.surfaceVariantColor
-    font_name: app.theme_cls.font_styles[self.font_style][self.role]["font-name"]
-    font_size: app.theme_cls.font_styles[self.font_style][self.role]["font-size"]
-    mode: "filled"
-    write_tab: False
-
-''')
 class LauncherLayout(MDFloatLayout):
     pass
 
@@ -264,6 +71,9 @@ class LauncherView(MDBoxLayout):
     title_layout: ObjectProperty
 
 class LauncherAuthTextField(MDTextField):
+    pass
+
+class LauncherGenerateContent(MDBoxLayout):
     pass
 
 class LauncherScreen(MDScreen, ThemableBehavior):
@@ -309,6 +119,19 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         Clock.schedule_once(lambda x: self.init_important())
 
         asynckivy.start(self.set_game_list())
+
+    def show_snackbar(self, message: str, is_error: bool = False):
+        """Show a snackbar notification"""
+        snackbar = MDSnackbar(
+            MDSnackbarText(
+                text=message,
+            ),
+            y=dp(24),
+            pos_hint={"center_x": 0.5},
+            size_hint_x=0.8,
+            md_bg_color=self.app.theme_cls.errorColor if is_error else self.app.theme_cls.primaryColor,
+        )
+        snackbar.open()
 
     def init_important(self):
         """Initialize the bigger parts of the launcher screen"""
@@ -534,9 +357,11 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     def _select_generation_files(self):
         """Select multiple .zip/.yaml files for generation"""
         # Show file dialog for .zip and .yaml files
-        result = open_file_input_dialog(
-            "Select Generation Files (.zip/.yaml)",
-            [("YAML Files", ["*.yaml", "*.yml"]), ("ZIP Files", ["*.zip"]), ("All Supported", ["*.yaml", "*.yml", "*.zip"])]
+        result = FileUtils.open_file_input_dialog(
+            title="Select Generation Files (.zip/.yaml)",
+            filetypes=[("YAML Files", ["*.yaml", "*.yml"]), ("ZIP Files", ["*.zip"]), ("All Supported", ["*.yaml", "*.yml", "*.zip"])],
+            multiple=True,
+            suggest=user_path("Players")
         )
         
         if not result:
@@ -550,9 +375,9 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             
         # Show confirmation of selected files
         if len(selected_files) == 1:
-            MessageBox("File Selected", f"Selected: {os.path.basename(selected_files[0])}").open()
+            self.show_snackbar(f"Selected: {os.path.basename(selected_files[0])}")
         else:
-            MessageBox("Files Selected", f"Selected {len(selected_files)} files for generation").open()
+            self.show_snackbar(f"Selected {len(selected_files)} files for generation")
             
         return selected_files
 
@@ -573,32 +398,10 @@ class LauncherScreen(MDScreen, ThemableBehavior):
 
     def _show_generation_options(self):
         """Show dialog with generation options"""
-        from kivymd.uix.textfield import MDTextField
-        
         # Create dialog content
-        content = MDBoxLayout(
-            orientation="vertical",
-            spacing="12dp",
-            size_hint_y=None,
-            height="120dp"
-        )
-        
-        # Seed input
-        seed_field = MDTextField(
-            hint_text="Seed (leave empty for random)",
-            helper_text="Optional: specify a seed number",
-            helper_text_mode="on_focus"
-        )
-        
-        # Output path input
-        output_field = MDTextField(
-            hint_text="Output Directory",
-            text=os.path.join(os.getcwd(), 'output'),
-            helper_text="Directory where generated files will be saved"
-        )
-        
-        content.add_widget(seed_field)
-        content.add_widget(output_field)
+        content = LauncherGenerateContent()
+        seed_field = content.ids.seed
+        output_field = content.ids.output
         
         # Create dialog
         dialog = MDDialog(
@@ -637,7 +440,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             seed = seed_field.text.strip()
             seed_value = int(seed) if seed else None
         except ValueError:
-            MessageBox("Invalid Seed", "Seed must be a number or empty for random").open()
+            self.show_snackbar("Seed must be a number or empty for random", is_error=True)
             return
             
         output_path = output_field.text.strip()
@@ -660,23 +463,29 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             return
             
         # Step 4: Execute MultiworldGGGenerate.exe
+        # Note: cleanup happens in the background thread after completion
         self._execute_generation(self._generation_temp_dir, self._generation_result)
-        
-        # Step 5: Cleanup
-        self._cleanup_temp_dir(self._generation_temp_dir)
-        
-        # Clear stored data
-        delattr(self, '_generation_temp_dir')
-        delattr(self, '_generation_result')
 
     def _execute_generation(self, temp_dir, options):
-        """Execute MultiworldGGGenerate.exe with options"""
-        # Find the executable in the same directory as the running app
-        exe_name = "MultiworldGGGenerate.exe" if os.name == 'nt' else "MultiworldGGGenerate"
-        exe_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", exe_name)
+        """Execute MultiworldGGGenerate.exe with options in background thread"""
+        from BaseUtils import is_frozen, local_path, is_windows
         
-        # Build command arguments
-        cmd = [exe_path, "--player_files_path", temp_dir]
+        # Build command
+        if is_frozen():
+            exe_path = local_path("MultiworldGGGenerate.exe") if is_windows() else local_path("MultiworldGGGenerate")
+            cmd = [str(exe_path), "--player-files-path", temp_dir]
+            cwd = os.path.dirname(exe_path)
+            env = None
+        else:
+            import sys
+            from pathlib import Path
+            exe_path = Path(sys.executable)
+            file_path = Path(local_path("Generate.py"))
+            cmd = [str(exe_path), str(file_path), "--player-files-path", temp_dir]
+            cwd = os.path.dirname(file_path)
+            # Also set KIVY_NO_ARGS to disable Kivy's argument parser
+            env = os.environ.copy()
+            env['KIVY_NO_ARGS'] = '1'
         
         if options.get('seed'):
             cmd.extend(["--seed", str(options['seed'])])
@@ -684,15 +493,89 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         if options.get('output_path'):
             cmd.extend(["--outputpath", options['output_path']])
         
-        # Execute the command
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True, cwd=os.path.dirname(exe_path))
-            if result.returncode == 0:
-                MessageBox("Generation Complete", "Game generation completed successfully!").open()
-            else:
-                MessageBox("Generation Failed", f"Generation failed: {result.stderr}").open()
-        except Exception as e:
-            MessageBox("Generation Error", f"Failed to execute generation: {str(e)}").open()
+        logger.info(f"Starting generation with command: {' '.join(cmd)}")
+        
+        # Show loading screen
+        Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(), 0)
+        
+        def run_generation():
+            """Run generation in background thread and stream output to logger"""
+            try:
+                process = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    cwd=cwd,
+                    bufsize=1,  # Line buffered
+                    universal_newlines=True,
+                    env=env
+                )
+                
+                # Stream stdout
+                for line in process.stdout:
+                    line = line.rstrip()
+                    if line:
+                        logger.info(f"[Generation] {line}")
+                
+                # Wait for process to complete
+                process.wait()
+                
+                # Capture any remaining stderr
+                stderr = process.stderr.read()
+                if stderr:
+                    for line in stderr.splitlines():
+                        if line.strip():
+                            logger.error(f"[Generation Error] {line}")
+                
+                # Hide loading screen and schedule UI update on main thread
+                def show_success_dialog(dt):
+                    self.app.loading_layout.hide_loading()
+                    MessageBox("Generation Complete", 
+                               "Game generation completed successfully!").open()
+                    # Cleanup after success
+                    self._cleanup_temp_dir(temp_dir)
+                    if hasattr(self, '_generation_temp_dir'):
+                        delattr(self, '_generation_temp_dir')
+                    if hasattr(self, '_generation_result'):
+                        delattr(self, '_generation_result')
+                
+                def show_failure_dialog(dt):
+                    self.app.loading_layout.hide_loading()
+                    MessageBox("Generation Failed", 
+                               f"Generation failed with code {process.returncode}:\n{error_msg}").open()
+                    # Cleanup after failure
+                    self._cleanup_temp_dir(temp_dir)
+                    if hasattr(self, '_generation_temp_dir'):
+                        delattr(self, '_generation_temp_dir')
+                    if hasattr(self, '_generation_result'):
+                        delattr(self, '_generation_result')
+                
+                if process.returncode == 0:
+                    Clock.schedule_once(show_success_dialog, 0)
+                    logger.info("Generation completed successfully")
+                else:
+                    error_msg = stderr if stderr else "Unknown error"
+                    Clock.schedule_once(show_failure_dialog, 0)
+                    logger.error(f"Generation failed with return code {process.returncode}")
+                    
+            except Exception as e:
+                logger.exception(f"Failed to execute generation: {e}")
+                def show_error_dialog(dt):
+                    self.app.loading_layout.hide_loading()
+                    MessageBox("Generation Error", 
+                               f"Failed to execute generation: {str(e)}").open()
+                    # Cleanup after error
+                    self._cleanup_temp_dir(temp_dir)
+                    if hasattr(self, '_generation_temp_dir'):
+                        delattr(self, '_generation_temp_dir')
+                    if hasattr(self, '_generation_result'):
+                        delattr(self, '_generation_result')
+                Clock.schedule_once(show_error_dialog, 0)
+        
+        # Start generation in background thread
+        thread = threading.Thread(target=run_generation, daemon=True)
+        thread.start()
 
     def _cleanup_temp_dir(self, temp_dir):
         """Clean up temporary directory"""

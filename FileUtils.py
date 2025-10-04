@@ -9,6 +9,7 @@ import logging
 import os
 import subprocess
 import queue
+import threading
 from abc import ABC, abstractmethod
 
 
@@ -16,8 +17,8 @@ class FileUtils(ABC):
     """Abstract base class for OS-specific file utilities."""
     
     @abstractmethod
-    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
-        """Open a file selection dialog. Returns a single file path (str) or list of file paths for multiple selection."""
+    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
+        """Open a file selection dialog. Returns a single file path (str) or list of file paths when multiple=True."""
         pass
     
     @abstractmethod
@@ -29,12 +30,13 @@ class FileUtils(ABC):
 class WinFileUtils(FileUtils):
     """Windows-specific file utilities using native dialogs."""
     
-    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Optional[str]:
+    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Windows native file dialog."""
         try:
             import win32gui
             import win32con
             from BaseUtils import user_path
+            from Utils import is_kivy_running
             
             # Define file filters - Windows format uses null separators: "Description\0Pattern\0Description\0Pattern\0"
             filter_parts = []
@@ -49,46 +51,91 @@ class WinFileUtils(FileUtils):
                 filter_parts.append('*.*')
             filter_str = "\0".join(filter_parts) + "\0"
             
-            # Open the file dialog with minimal parameters
-            try:
-                fname, customfilter, flags = win32gui.GetOpenFileNameW(
-                    Title=title,
-                    Filter=filter_str,
-                    FilterIndex=0,
-                    MaxFile=8192  # Increased buffer for multiple files
-                )
+            # Set flags based on multiple selection
+            dialog_flags = win32con.OFN_FILEMUSTEXIST | win32con.OFN_EXPLORER
+            if multiple:
+                dialog_flags |= win32con.OFN_ALLOWMULTISELECT
+            
+            # Buffer size needs to be much larger for multiple selection
+            # Default MAX_PATH is 260, but for multiple files we need more
+            buffer_size = 32768 if multiple else 8192
+            
+            # If Kivy is running, execute dialog in separate thread to avoid blocking Kivy's event loop
+            if is_kivy_running():
+                result_queue = queue.Queue()
+                exception_queue = queue.Queue()
                 
-                if fname:
-                    # Parse multiple files - Windows returns them as a single string with null separators
-                    files = fname.split('\0')
-                    if len(files) == 1:
-                        # Single file selected
-                        print(f"Selected file: {files[0]}")
-                        return files[0]
+                def run_dialog():
+                    try:
+                        fname, customfilter, flags = win32gui.GetOpenFileNameW(
+                            Title=title,
+                            Filter=filter_str,
+                            FilterIndex=0,
+                            Flags=dialog_flags,
+                            MaxFile=buffer_size
+                        )
+                        result_queue.put(fname)
+                    except Exception as e:
+                        exception_queue.put(e)
+                
+                thread = threading.Thread(target=run_dialog, daemon=True)
+                thread.start()
+                thread.join()  # Wait for dialog to complete
+                
+                # Check for exceptions
+                if not exception_queue.empty():
+                    dialog_error = exception_queue.get()
+                    if "No error message is available" in str(dialog_error):
+                        print("File dialog cancelled by user.")
+                        return None
                     else:
-                        # Multiple files selected - first entry is directory, rest are filenames
-                        directory = files[0]
-                        filenames = files[1:]
-                        full_paths = [os.path.join(directory, filename) for filename in filenames]
-                        print(f"Selected {len(full_paths)} files: {full_paths}")
-                        return full_paths
+                        raise dialog_error
+                
+                # Get result
+                fname = result_queue.get() if not result_queue.empty() else None
+            else:
+                # Direct call when not running in Kivy
+                try:
+                    fname, customfilter, flags = win32gui.GetOpenFileNameW(
+                        Title=title,
+                        Filter=filter_str,
+                        FilterIndex=0,
+                        Flags=dialog_flags,
+                        MaxFile=buffer_size
+                    )
+                except Exception as dialog_error:
+                    if "No error message is available" in str(dialog_error):
+                        print("File dialog cancelled by user.")
+                        return None
+                    else:
+                        raise dialog_error
+            
+            if fname:
+                # Parse multiple files - Windows returns them as a single string with null separators
+                files = fname.split('\0')
+                files = [f for f in files if f]  # Filter empty strings
+                
+                if len(files) == 1:
+                    # Single file selected
+                    print(f"Selected file: {files[0]}")
+                    return files[0] if not multiple else [files[0]]
                 else:
-                    print("No file selected.")
-                    return None
-            except Exception as dialog_error:
-                # Check if it's a cancellation error
-                if "No error message is available" in str(dialog_error):
-                    print("File dialog cancelled by user.")
-                    return None
-                else:
-                    raise dialog_error
+                    # Multiple files selected - first entry is directory, rest are filenames
+                    directory = files[0]
+                    filenames = files[1:]
+                    full_paths = [os.path.join(directory, filename) for filename in filenames]
+                    print(f"Selected {len(full_paths)} files")
+                    return full_paths
+            else:
+                print("No file selected.")
+                return None
             
         except ImportError:
             logging.warning("win32gui not available, falling back to Kivy")
-            return self._kivy_fallback_file(title, filetypes, suggest)
+            return self._kivy_fallback_file(title, filetypes, multiple, suggest)
         except Exception as e:
             logging.error(f"Windows file dialog failed: {e}")
-            return self._kivy_fallback_file(title, filetypes, suggest)
+            return self._kivy_fallback_file(title, filetypes, multiple, suggest)
     
     def open_directory(self, title: str, suggest: str = "") -> typing.Optional[str]:
         """Windows native directory dialog."""
@@ -123,7 +170,7 @@ class WinFileUtils(FileUtils):
             logging.error(f"Windows directory dialog failed: {e}")
             return self._kivy_fallback_directory(title, suggest)
     
-    def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Optional[str]:
+    def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Kivy fallback for file selection."""
         from Utils import is_kivy_running
         if not is_kivy_running():
@@ -154,7 +201,8 @@ class WinFileUtils(FileUtils):
             
             # Wait for result with timeout
             try:
-                return result_queue.get(timeout=30)  # 30 second timeout
+                result = result_queue.get(timeout=30)  # 30 second timeout
+                return [result] if multiple and result else result
             except queue.Empty:
                 return None
         except Exception as e:
@@ -196,13 +244,14 @@ class WinFileUtils(FileUtils):
 class MacFileUtils(FileUtils):
     """macOS-specific file utilities using AppleScript."""
     
-    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
+    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """macOS native file dialog using AppleScript."""
         try:
-            # Build AppleScript for multiple file selection
+            # Build AppleScript with optional multiple selection
+            multi_select = "with multiple selections allowed" if multiple else ""
             applescript = f'''
             tell application "System Events"
-                set filePaths to choose file with prompt "{title}" with multiple selections allowed
+                set filePaths to choose file with prompt "{title}" {multi_select}
                 set pathList to {{}}
                 repeat with filePath in filePaths
                     set end of pathList to POSIX path of filePath
@@ -222,9 +271,9 @@ class MacFileUtils(FileUtils):
                     files = [f.strip() for f in output.split(',')]
                     if len(files) == 1:
                         print(f"Selected file: {files[0]}")
-                        return files[0]
+                        return files[0] if not multiple else [files[0]]
                     else:
-                        print(f"Selected {len(files)} files: {files}")
+                        print(f"Selected {len(files)} files")
                         return files
                 else:
                     return None
@@ -237,7 +286,7 @@ class MacFileUtils(FileUtils):
             return None
         except Exception as e:
             logging.error(f"AppleScript file dialog failed: {e}")
-            return self._kivy_fallback_file(title, filetypes, suggest)
+            return self._kivy_fallback_file(title, filetypes, multiple, suggest)
     
     def open_directory(self, title: str, suggest: str = "") -> typing.Optional[str]:
         """macOS native directory dialog using AppleScript."""
@@ -268,7 +317,7 @@ class MacFileUtils(FileUtils):
             logging.error(f"AppleScript directory dialog failed: {e}")
             return self._kivy_fallback_directory(title, suggest)
     
-    def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Optional[str]:
+    def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Kivy fallback for file selection."""
         from Utils import is_kivy_running
         if not is_kivy_running():
@@ -299,7 +348,8 @@ class MacFileUtils(FileUtils):
             
             # Wait for result with timeout
             try:
-                return result_queue.get(timeout=30)  # 30 second timeout
+                result = result_queue.get(timeout=30)  # 30 second timeout
+                return [result] if multiple and result else result
             except queue.Empty:
                 return None
         except Exception as e:
@@ -341,7 +391,7 @@ class MacFileUtils(FileUtils):
 class LinuxFileUtils(FileUtils):
     """Linux-specific file utilities using native dialogs."""
     
-    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
+    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Linux native file dialog using kdialog or zenity."""
         from shutil import which
         from Utils import _run_for_stdout
@@ -350,25 +400,34 @@ class LinuxFileUtils(FileUtils):
         kdialog = which("kdialog")
         if kdialog:
             k_filters = '|'.join((f'{text} (*{" *".join(ext)})' for (text, ext) in filetypes))
-            result = _run_for_stdout(kdialog, f"--title={title}", "--getopenfilename", suggest or ".", k_filters, "--multiple")
+            args = [kdialog, f"--title={title}", "--getopenfilename", suggest or ".", k_filters]
+            if multiple:
+                args.append("--multiple")
+            result = _run_for_stdout(*args)
             if result:
                 # kdialog returns multiple files separated by newlines
                 files = result.split('\n')
                 if len(files) == 1:
-                    return files[0]
+                    return files[0] if not multiple else [files[0]]
                 else:
                     return files
             return None
         
-        # Try zenity (doesn't support multiple files well, so use single file)
+        # Try zenity (doesn't support multiple files well)
         zenity = which("zenity")
         if zenity:
             z_filters = (f'--file-filter={text} ({", ".join(ext)}) | *{" *".join(ext)}' for (text, ext) in filetypes)
             selection = (f"--filename={suggest}",) if suggest else ()
-            return _run_for_stdout(zenity, f"--title={title}", "--file-selection", *z_filters, *selection)
+            args = [zenity, f"--title={title}", "--file-selection", *z_filters, *selection]
+            if multiple:
+                args.append("--multiple")
+            result = _run_for_stdout(*args)
+            if multiple and result:
+                return result.split('|')
+            return result
         
         # Fallback to Kivy
-        return self._kivy_fallback_file(title, filetypes, suggest)
+        return self._kivy_fallback_file(title, filetypes, multiple, suggest)
     
     def open_directory(self, title: str, suggest: str = "") -> typing.Optional[str]:
         """Linux native directory dialog using kdialog or zenity."""
@@ -392,7 +451,7 @@ class LinuxFileUtils(FileUtils):
         # Fallback to Kivy
         return self._kivy_fallback_directory(title, suggest)
     
-    def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Optional[str]:
+    def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Kivy fallback for file selection."""
         from Utils import is_kivy_running
         if not is_kivy_running():
@@ -423,7 +482,8 @@ class LinuxFileUtils(FileUtils):
             
             # Wait for result with timeout
             try:
-                return result_queue.get(timeout=30)  # 30 second timeout
+                result = result_queue.get(timeout=30)  # 30 second timeout
+                return [result] if multiple and result else result
             except queue.Empty:
                 return None
         except Exception as e:
@@ -465,7 +525,7 @@ class LinuxFileUtils(FileUtils):
 class OtherFileUtils(FileUtils):
     """Cross-platform file utilities using Kivy (for mobile apps)."""
     
-    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Optional[str]:
+    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Kivy-based file dialog for mobile platforms."""
         from Utils import is_kivy_running
         if not is_kivy_running():
@@ -497,7 +557,8 @@ class OtherFileUtils(FileUtils):
             
             # Wait for result with timeout
             try:
-                return result_queue.get(timeout=30)  # 30 second timeout
+                result = result_queue.get(timeout=30)  # 30 second timeout
+                return [result] if multiple and result else result
             except queue.Empty:
                 return None
         except Exception as e:
@@ -563,9 +624,9 @@ class FileUtilsSingleton:
             
             self._initialized = True
     
-    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Optional[str]:
+    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Open a file selection dialog."""
-        return self._instance.open_file_input_dialog(title, filetypes, suggest)
+        return self._instance.open_file_input_dialog(title, filetypes, multiple, suggest)
     
     def open_directory(self, title: str, suggest: str = "") -> typing.Optional[str]:
         """Open a directory selection dialog."""
