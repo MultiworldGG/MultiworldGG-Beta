@@ -58,6 +58,7 @@
                             icon: "play-network"
                     MDButton:
                         id: game_patch_button
+                        on_release: app.launcher_screen.patch_game()
                         pos_hint: {"center_x": 0.5}
                         width: dp(200)
                         radius: dp(10)
@@ -74,6 +75,7 @@
                         pos_hint: {"center_x": 0.5}
                         width: dp(200)
                         radius: dp(10)
+                        disabled: True
                         MDButtonText:
                             theme_text_color: "Custom"
                             text_color: app.theme_cls.onSurfaceVariantColor
@@ -96,7 +98,7 @@
                             icon: "gamepad-square-outline"
                     MDButton:
                         id: host_button
-                        on_release: app.root.current = 'host'
+                        on_release: app.launcher_screen.host()
                         pos_hint: {"center_x": 0.5}
                         width: dp(200)
                         radius: dp(10)
@@ -195,6 +197,51 @@
         pos_hint: {"center_x": 0.5}
         MDTextFieldHintText:
             text: "Output Directory"
+        MDTextFieldLeadingIcon:
+            theme_icon_color: "Custom"
+            icon_color_focus: self.parent.icon_color_focus
+            icon_color_normal: self.parent.icon_color_normal
+            icon: 'folder'
+
+<LauncherHostContent>:
+    orientation: 'vertical'
+    spacing: dp(15)
+    height: dp(140)
+    LauncherAuthTextField:
+        id: port
+        input_filter: 'int'
+        size_hint_x: 0.8
+        pos_hint: {"center_x": 0.5}
+        MDTextFieldHintText:
+            text: "Port (default: 38281)"
+        MDTextFieldLeadingIcon:
+            theme_icon_color: "Custom"
+            icon_color_focus: self.parent.icon_color_focus
+            icon_color_normal: self.parent.icon_color_normal
+            icon: 'numeric'
+    LauncherAuthTextField:
+        id: password
+        password: True
+        size_hint_x: 0.8
+        pos_hint: {"center_x": 0.5}
+        MDTextFieldHintText:
+            text: "Server Password (optional)"
+        MDTextFieldLeadingIcon:
+            theme_icon_color: "Custom"
+            icon_color_focus: self.parent.icon_color_focus
+            icon_color_normal: self.parent.icon_color_normal
+            icon: 'lock'
+
+<LauncherPatchContent>:
+    orientation: 'vertical'
+    spacing: dp(15)
+    height: dp(80)
+    LauncherAuthTextField:
+        id: output
+        size_hint_x: 0.8
+        pos_hint: {"center_x": 0.5}
+        MDTextFieldHintText:
+            text: "Output Directory (optional)"
         MDTextFieldLeadingIcon:
             theme_icon_color: "Custom"
             icon_color_focus: self.parent.icon_color_focus
