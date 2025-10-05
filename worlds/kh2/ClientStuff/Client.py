@@ -36,6 +36,8 @@ class KH2Context(CommonContext):
     def __init__(self, server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
         super(KH2Context, self).__init__(server_address = server_address, password = password)
         self.slot_name = slot_name
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
         self.goofy_ability_to_slot = dict()
         self.donald_ability_to_slot = dict()
         self.all_weapon_location_id = None
@@ -568,7 +570,7 @@ class KH2Context(CommonContext):
             self.AbilityQuantityDict.update(self.kh2slotdata["ShieldAbilities"])
 
         if self.kh2_loc_name_to_id:
-            self.all_weapon_location_id = {self.kh2_loc_name_to_id[loc] for loc in all_weapon_slot}
+            self.all_weapon_location_id = {self.kh2_loc_name_to_id[loc] for loc in all_weapon_slot if loc in self.kh2_loc_name_to_id}
 
         try:
             if not self.kh2:
