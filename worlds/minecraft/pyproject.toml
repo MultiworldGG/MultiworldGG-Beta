@@ -1,27 +1,21 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.minecraft"
-dynamic = ["version"]
+version = "10.1"
 description = "MultiWorld: Minecraft"
-authors = [
-    {name = "KonoTyran"},
-    {name = "espeon"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [
-    "requests >= 2.28.1",
-]
+dependencies = [ "requests >= 2.28.1",]
+[[project.authors]]
+name = "KonoTyran"
+
+[[project.authors]]
+name = "espeon"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.minecraft"]
+where = [ "src",]
+include = [ "worlds.minecraft",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.minecraft.Constants.VERSION"}

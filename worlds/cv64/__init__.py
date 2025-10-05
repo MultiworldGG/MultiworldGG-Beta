@@ -6,7 +6,7 @@ import logging
 
 from BaseClasses import Item, Region, Tutorial, ItemClassification
 from .items import CV64Item, filler_item_names, get_item_info, get_item_names_to_ids, get_item_counts
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .locations import CV64Location, get_location_info, verify_locations, get_location_names_to_ids, base_id
 from .entrances import verify_entrances, get_warp_entrances
 from .options import CV64Options, cv64_option_groups, CharacterStages, DraculasCondition, SubWeaponShuffle
@@ -22,6 +22,8 @@ from .aesthetics import randomize_lighting, shuffle_sub_weapons, rom_empty_break
 from .rom import RomData, write_patch, get_base_rom_path, CV64ProcedurePatch, CV64_US_10_HASH
 from .client import Castlevania64Client
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("cv64")
 
 class CV64Settings(settings.Group):
     class RomFile(settings.UserFilePath):
@@ -55,8 +57,10 @@ class CV64World(World):
     descendant Reinhardt Schneider or powerful sorceress Carrie Fernandez, brave many terrifying traps and foes as you
     make your way to Dracula's chamber and stop his rule of terror!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("cv64")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     item_name_groups = {
         "Bomb": {iname.magical_nitro, iname.mandragora},

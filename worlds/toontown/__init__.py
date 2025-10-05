@@ -5,7 +5,7 @@ from worlds.AutoWorld import World, WebWorld
 import random
 import logging
 from . import regions, consts
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .consts import ToontownItem, ToontownLocation, ToontownWinCondition
 from .items import ITEM_DESCRIPTIONS, ITEM_DEFINITIONS, ToontownItemDefinition, get_item_def_from_id, ToontownItemName, \
     ITEM_NAME_TO_ID, FISHING_LICENSES, TELEPORT_ACCESS_ITEMS, FACILITY_KEY_ITEMS, get_item_groups, DISGUISE_ITEMS
@@ -40,9 +40,12 @@ class ToontownWorld(World):
     the tooniverse with the use of "gags" since they mean business and cannot take a joke.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("toontown")
+
     game = GAME_NAME
     author = "DevvyDont"
-    igdb_id = IGDB_ID
+    
     web = ToontownWeb()
 
     required_client_version = (0, 6, 3)

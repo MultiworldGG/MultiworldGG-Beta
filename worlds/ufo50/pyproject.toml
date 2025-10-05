@@ -1,27 +1,23 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.ufo50"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: UFO 50"
-authors = [
-    {name = "LeonarthCG"},
-    {name = "ScipioWright"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "LeonarthCG"
+
+[[project.authors]]
+name = "ScipioWright"
 
 [project.entry-points."mwgg.client"]
 "worlds.ufo50.Client" = "worlds.ufo50.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.ufo50"]
+where = [ "src",]
+include = [ "worlds.ufo50",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.ufo50.Constants.VERSION"}

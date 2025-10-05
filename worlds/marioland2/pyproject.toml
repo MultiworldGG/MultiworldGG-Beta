@@ -1,27 +1,19 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.marioland2"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Super Mario Land 2"
-authors = [
-    {name = "Alchav"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Alchav"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.marioland2"]
+where = [ "src",]
+include = [ "worlds.marioland2",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.marioland2.Constants.VERSION"}

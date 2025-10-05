@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.tloz_ph"
-dynamic = ["version"]
+version = "0.3.1"
 description = "MultiWorld: The Legend of Zelda - Phantom Hourglass"
-authors = [
-    {name = "Carrotinator"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Carrotinator"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.tloz_ph"]
+where = [ "src",]
+include = [ "worlds.tloz_ph",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.tloz_ph.Constants.VERSION"}

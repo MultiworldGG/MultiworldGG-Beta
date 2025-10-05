@@ -1,30 +1,22 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.sims4"
-dynamic = ["version"]
+version = "1.6.1"
 description = "MultiWorld: The Sims 4"
-authors = [
-    {name = "bennydreamly"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "bennydreamly"
 
 [project.entry-points."mwgg.client"]
 "worlds.sims4.Client" = "worlds.sims4.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.sims4"]
+where = [ "src",]
+include = [ "worlds.sims4",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.sims4.Constants.VERSION"}

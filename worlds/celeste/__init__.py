@@ -16,7 +16,7 @@ from .data import (
 )
 from .options import CelesteGameOptions
 from .progression import GameLogic
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 
 
 class CelesteWebWorld(WebWorld):
@@ -39,9 +39,12 @@ class CelesteWorld(World):
     hand-crafted platformer from the creators of multiplayer classic TowerFall.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("celeste")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = CelesteGameOptions
     options: CelesteGameOptions
     topology_present = True

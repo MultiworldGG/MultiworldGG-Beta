@@ -1,26 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.banjo_tooie"
-dynamic = ["version"]
+version = "4.9.1"
 description = "MultiWorld: Banjo-Tooie"
-authors = [
-    {name = "jjjj12212"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "jjjj12212"
 
 [project.entry-points."mwgg.client"]
 "worlds.banjo_tooie.Client" = "worlds.banjo_tooie.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.banjo_tooie"]
+where = [ "src",]
+include = [ "worlds.banjo_tooie",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.banjo_tooie.Constants.VERSION"}

@@ -31,15 +31,20 @@ from kivymd.uix.list import MDList
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogButtonContainer
 from kivymd.uix.button import MDButton, MDButtonText
+from kivymd.uix.snackbar import MDSnackbar, MDSnackbarText
+
+
 import logging
 from typing import Any
 import tempfile
 import shutil
 import zipfile
 import os
+import sys
+from pathlib import Path
 import subprocess
+import threading
 
-from kivy.clock import Clock
 from kivymd.app import MDApp
 from mwgg_igdb import GameIndex
 
@@ -50,211 +55,21 @@ from mwgg_gui.launcher.launcher_favorite_bar import FavoritesScroll, Favorite
 from mwgg_gui.launcher.launcher_yaml import YamlDialog
 from mwgg_gui.components.dialog import MessageBox
 
-from Utils import discover_and_launch_module, get_available_worlds, persistent_load, open_file_input_dialog
+from Utils import (discover_and_launch_module, 
+                   get_available_worlds, 
+                   user_path,
+                   local_path,
+                   is_frozen,
+                   is_windows)
+
+from FileUtils import FileUtils
 
 game_index = GameIndex()
 logger = logging.getLogger("Client")
-Builder.load_string('''
-<LauncherScreen>:
-    size_hint: 1,1
-    pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
-<LauncherLayout>:
-    id: launcher_layout
-    y: 82
-    size_hint_y: 1-(185/Window.height)
+with open(os.path.join(os.path.dirname(__file__), "launcher.kv"), encoding="utf-8") as kv_file:
+    Builder.load_string(kv_file.read())
 
-<LauncherView>: # Right side of launcher screen
-    id: launcher_view
-    server_layout: server_layout
-    title_layout: title_layout
-    module_name: ""
-    orientation: 'horizontal'
-    padding: dp(50)
-    MDBoxLayout:
-        orientation: 'vertical'
-        spacing: 30
-        padding: dp(30)
-        theme_bg_color: "Custom"
-        md_bg_color: app.theme_cls.surfaceVariantColor
-        MDBoxLayout: # Inner padded layout
-            orientation: 'vertical'
-            MDBoxLayout: # Title & Favorites
-                id: title_layout
-                orientation: 'vertical'
-                size_hint_y: None
-                height: dp(120)
-                MDLabel:
-                    size_hint_y: 0.37
-                    text: app.qotd()
-                    halign: 'center'
-                    theme_font_style: "Custom"
-                    font_style: "Title"
-                    role: "small"
-                    theme_text_color: "Custom"
-                    text_color: app.theme_cls.onSurfaceVariantColor
-                        
-            MDBoxLayout: # Connect & Play, Patch Game, Create YAML, Generate, Host
-                orientation: 'horizontal'
-                spacing: 10
-                MDBoxLayout:
-                    orientation: 'vertical'
-                    spacing: dp(15)
-                    MDButton:
-                        id: connect_button
-                        pos_hint: {"center_x": 0.5}
-                        on_release: app.launcher_screen.connect()
-                        width: dp(200)
-                        radius: dp(10)
-                        MDButtonText:
-                            theme_text_color: "Custom"
-                            text_color: app.theme_cls.onSurfaceVariantColor
-                            text: 'Connect & Play'
-                            halign: 'center'
-                        MDButtonIcon:
-                            icon: "play-network"
-                    MDButton:
-                        id: game_patch_button
-                        pos_hint: {"center_x": 0.5}
-                        width: dp(200)
-                        radius: dp(10)
-                        MDButtonText:
-                            theme_text_color: "Custom"
-                            text_color: app.theme_cls.onSurfaceVariantColor
-                            text: 'Patch Game'
-                            halign: 'center'
-                        MDButtonIcon:
-                            icon: "file-edit"
-                    MDButton:
-                        id: game_yaml_button
-                        on_release: app.launcher_screen.create_yaml()
-                        pos_hint: {"center_x": 0.5}
-                        width: dp(200)
-                        radius: dp(10)
-                        MDButtonText:
-                            theme_text_color: "Custom"
-                            text_color: app.theme_cls.onSurfaceVariantColor
-                            text: 'Create YAML'
-                            halign: 'center'
-                        MDButtonIcon:
-                            icon: "code-block-brackets"
-                    MDButton:
-                        id: generate_button
-                        on_release: app.launcher_screen.generate()
-                        pos_hint: {"center_x": 0.5}
-                        width: dp(200)
-                        radius: dp(10)
-                        MDButtonText:
-                            theme_text_color: "Custom"
-                            text_color: app.theme_cls.onSurfaceVariantColor
-                            text: 'Generate'
-                            halign: 'center'
-                        MDButtonIcon:
-                            icon: "gamepad-square-outline"
-                    MDButton:
-                        id: host_button
-                        on_release: app.root.current = 'host'
-                        pos_hint: {"center_x": 0.5}
-                        width: dp(200)
-                        radius: dp(10)
-                        MDButtonText:
-                            theme_text_color: "Custom"
-                            text_color: app.theme_cls.onSurfaceVariantColor
-                            text: 'Host'
-                            halign: 'center'
-                        MDButtonIcon:
-                            icon: "router-network"
-                MDBoxLayout:
-                    orientation: 'vertical'
-                    spacing: dp(5)
-                    width: dp(10)
-                    size_hint_x: None
-                    MDDivider:
-                        size_hint_y: .8
-                        pos_hint: {"center_y": 0.5}
-                        orientation: "vertical"
-                        color: app.theme_cls.outlineColor
-                MDBoxLayout:
-                    id: server_layout
-                    orientation: 'vertical'
-                    spacing: dp(15)
-                    LauncherAuthTextField:
-                        id: server
-                        size_hint_x: 0.8
-                        pos_hint: {"center_x": 0.5}
-                        text: app.ctx.suggested_address.split(":")[0] if app.ctx.suggested_address else app.app_config.get("client", "hostname", fallback="")
-                        MDTextFieldLeadingIcon:
-                            theme_icon_color: "Custom"
-                            icon: 'router-network'
-                            icon_color_focus: self.parent.icon_color_focus
-                            icon_color_normal: self.parent.icon_color_normal
-                        MDTextFieldHintText:
-                            text: "Server Address"
-                    LauncherAuthTextField:
-                        id: port
-                        input_filter: 'int'
-                        size_hint_x: 0.8
-                        pos_hint: {"center_x": 0.5}
-                        text: app.ctx.suggested_address.split(":")[1] if app.ctx.suggested_address else app.app_config.get("client", "port", fallback="")
-                        MDTextFieldLeadingIcon:
-                            theme_icon_color: "Custom"
-                            icon: 'numeric'
-                            icon_color_focus: self.parent.icon_color_focus
-                            icon_color_normal: self.parent.icon_color_normal
-                        MDTextFieldHintText:
-                            text: "Port"
-                    LauncherAuthTextField:
-                        id: slot_name
-                        size_hint_x: 0.8
-                        pos_hint: {"center_x": 0.5}
-                        text: app.app_config.get("client", "slot", fallback="")
-                        MDTextFieldLeadingIcon:
-                            theme_icon_color: "Custom"
-                            icon_color_focus: self.parent.icon_color_focus
-                            icon_color_normal: self.parent.icon_color_normal
-                            icon: 'ticket-account'
-                        MDTextFieldHintText:
-                            text: "Username"
-                        on_text_validate: app.launcher_screen.connect()
-                    LauncherAuthTextField:
-                        id: slot_password
-                        password: True
-                        size_hint_x: 0.8
-                        pos_hint: {"center_x": 0.5}
-                        text: app.app_config.get("client", "slot_password", fallback="")
-                        MDTextFieldLeadingIcon:
-                            theme_icon_color: "Custom"
-                            icon_color_focus: self.parent.icon_color_focus
-                            icon_color_normal: self.parent.icon_color_normal
-                            icon: 'lock'    
-                        MDTextFieldHintText:
-                            text: "Password"
-                        on_text_validate: app.launcher_screen.connect()
-
-<TagChip>:
-    type: "filter"
-    MDChipText:
-        text: root.text
-        icon: root.icon
-
-<LauncherAuthTextField>:
-    theme_font_name: "Custom"
-    theme_font_style: "Custom"
-    theme_icon_color: "Custom"
-    theme_text_color: "Custom"
-    theme_bg_color: "Custom"
-    text_color_focus: app.theme_cls.onSecondaryContainerColor
-    text_color_normal: app.theme_cls.onSurfaceVariantColor
-    icon_color_focus: app.theme_cls.primaryColor
-    icon_color_normal: app.theme_cls.onPrimaryColor
-    fill_color_focus: app.theme_cls.surfaceContainerHighestColor
-    fill_color_normal: app.theme_cls.surfaceVariantColor
-    font_name: app.theme_cls.font_styles[self.font_style][self.role]["font-name"]
-    font_size: app.theme_cls.font_styles[self.font_style][self.role]["font-size"]
-    mode: "filled"
-    write_tab: False
-
-''')
 class LauncherLayout(MDFloatLayout):
     pass
 
@@ -266,6 +81,15 @@ class LauncherView(MDBoxLayout):
 class LauncherAuthTextField(MDTextField):
     pass
 
+class LauncherGenerateContent(MDBoxLayout):
+    pass
+
+class LauncherHostContent(MDBoxLayout):
+    pass
+
+class LauncherPatchContent(MDBoxLayout):
+    pass
+
 class LauncherScreen(MDScreen, ThemableBehavior):
     '''
     This is the main screen for the launcher.
@@ -274,9 +98,6 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     with options to connect to the MW server
     '''
     name = "launcher"
-    launcher_hero_from: ObjectProperty
-    launcher_hero_to: ObjectProperty
-    heroes_to = []
     launchergrid: LauncherLayout
     important_appbar: MDSliverAppbar
     launcher_view: LauncherView
@@ -313,17 +134,25 @@ class LauncherScreen(MDScreen, ThemableBehavior):
 
         asynckivy.start(self.set_game_list())
 
+    def show_snackbar(self, message: str, is_error: bool = False):
+        """Show a snackbar notification"""
+        snackbar = MDSnackbar(
+            MDSnackbarText(
+                text=message,
+            ),
+            y=dp(24),
+            pos_hint={"center_x": 0.5},
+            size_hint_x=0.8,
+            md_bg_color=self.app.theme_cls.errorColor if is_error else self.app.theme_cls.primaryColor,
+        )
+        snackbar.open()
+
     def init_important(self):
         """Initialize the bigger parts of the launcher screen"""
         self.launchergrid = LauncherLayout()
 
         self.add_widget(self.launchergrid)
         self.add_widget(self.bottom_appbar)
-
-        self.launcher_hero_from = self.important_appbar.launcher_hero_from
-        self.launcher_hero_to = self.important_appbar.launcher_hero_from
-        self.heroes_from = [self.launcher_hero_from]
-        self.heroes_to = [self.launcher_hero_to]
 
         self.important_appbar.size_hint_x = 260/Window.width
         self.important_appbar.size_hint_y=1
@@ -387,7 +216,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
 
     def on_game_tag_filter_text(self, instance):
         """Set the game search filter based on the game tag filter"""
-        self.game_filter = [(self.game_tag_filter.text, tag) for tag in GameIndex.search(self.game_tag_filter.text)]
+        self.game_filter = [(self.game_tag_filter.text, tag) for tag in self.game_index.search(self.game_tag_filter.text)]
 
     def update_connect_button_text(self):
         """Update the connect button text based on current context"""
@@ -442,11 +271,10 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 self.favorites_layout.add_widget(placeholder)
                 return
             
-            game_index = GameIndex()
             for name in self.favorite_games:
 
                 try:
-                    game_name = game_index.get_game_name_for_module(name)
+                    game_name = self.game_index.get_game_name_for_module(name)
                     if game_name:
                         favorite_tab = Favorite(game_name=game_name, game_module=name)
                         self.favorites_layout.add_widget(favorite_tab)
@@ -490,8 +318,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 return
                 
             # Find the game name for this module
-            game_index = GameIndex()
-            game_name = game_index.get_game_name_for_module(module_name)
+            game_name = self.game_index.get_game_name_for_module(module_name)
             if game_name:
                 self.favorites_layout.switch_tab(text=game_name)
                 logger.info(f"Switched to favorite {module_name}")
@@ -504,8 +331,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     def on_favorite_clicked(self, module_name: str):
         """Handle clicking on a favorite item in the tabs"""
         try:
-            game_index = GameIndex()
-            game_data = game_index.get_game(module_name)
+            game_data = self.game_index.get_game(module_name)
             if game_data:
                 game_name = game_data.get('game_name', module_name)
                 self.on_game_selected((module_name, game_name))
@@ -545,9 +371,11 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     def _select_generation_files(self):
         """Select multiple .zip/.yaml files for generation"""
         # Show file dialog for .zip and .yaml files
-        result = open_file_input_dialog(
-            "Select Generation Files (.zip/.yaml)",
-            [("YAML Files", ["*.yaml", "*.yml"]), ("ZIP Files", ["*.zip"]), ("All Supported", ["*.yaml", "*.yml", "*.zip"])]
+        result = FileUtils.open_file_input_dialog(
+            title="Select Generation Files (.zip/.yaml)",
+            filetypes=[("YAML Files", ["*.yaml", "*.yml"]), ("ZIP Files", ["*.zip"]), ("All Supported", ["*.yaml", "*.yml", "*.zip"])],
+            multiple=True,
+            suggest=user_path("Players")
         )
         
         if not result:
@@ -561,9 +389,9 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             
         # Show confirmation of selected files
         if len(selected_files) == 1:
-            MessageBox("File Selected", f"Selected: {os.path.basename(selected_files[0])}").open()
+            self.show_snackbar(f"Selected: {os.path.basename(selected_files[0])}")
         else:
-            MessageBox("Files Selected", f"Selected {len(selected_files)} files for generation").open()
+            self.show_snackbar(f"Selected {len(selected_files)} files for generation")
             
         return selected_files
 
@@ -584,32 +412,10 @@ class LauncherScreen(MDScreen, ThemableBehavior):
 
     def _show_generation_options(self):
         """Show dialog with generation options"""
-        from kivymd.uix.textfield import MDTextField
-        
         # Create dialog content
-        content = MDBoxLayout(
-            orientation="vertical",
-            spacing="12dp",
-            size_hint_y=None,
-            height="120dp"
-        )
-        
-        # Seed input
-        seed_field = MDTextField(
-            hint_text="Seed (leave empty for random)",
-            helper_text="Optional: specify a seed number",
-            helper_text_mode="on_focus"
-        )
-        
-        # Output path input
-        output_field = MDTextField(
-            hint_text="Output Directory",
-            text=os.path.join(os.getcwd(), 'output'),
-            helper_text="Directory where generated files will be saved"
-        )
-        
-        content.add_widget(seed_field)
-        content.add_widget(output_field)
+        content = LauncherGenerateContent()
+        seed_field = content.ids.seed
+        output_field = content.ids.output
         
         # Create dialog
         dialog = MDDialog(
@@ -648,7 +454,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             seed = seed_field.text.strip()
             seed_value = int(seed) if seed else None
         except ValueError:
-            MessageBox("Invalid Seed", "Seed must be a number or empty for random").open()
+            self.show_snackbar("Seed must be a number or empty for random", is_error=True)
             return
             
         output_path = output_field.text.strip()
@@ -671,23 +477,27 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             return
             
         # Step 4: Execute MultiworldGGGenerate.exe
+        # Note: cleanup happens in the background thread after completion
         self._execute_generation(self._generation_temp_dir, self._generation_result)
-        
-        # Step 5: Cleanup
-        self._cleanup_temp_dir(self._generation_temp_dir)
-        
-        # Clear stored data
-        delattr(self, '_generation_temp_dir')
-        delattr(self, '_generation_result')
 
     def _execute_generation(self, temp_dir, options):
-        """Execute MultiworldGGGenerate.exe with options"""
-        # Find the executable in the same directory as the running app
-        exe_name = "MultiworldGGGenerate.exe" if os.name == 'nt' else "MultiworldGGGenerate"
-        exe_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", exe_name)
+        """Execute MultiworldGGGenerate.exe with options in background thread"""
+        from BaseUtils import is_frozen, local_path, is_windows
         
-        # Build command arguments
-        cmd = [exe_path, "--player_files_path", temp_dir]
+        # Build command
+        if is_frozen():
+            exe_path = local_path("MultiworldGGGenerate.exe") if is_windows() else local_path("MultiworldGGGenerate")
+            cmd = [str(exe_path), "--player-files-path", temp_dir]
+            cwd = os.path.dirname(exe_path)
+            env = None
+        else:
+            exe_path = Path(sys.executable)
+            file_path = Path(local_path("Generate.py"))
+            cmd = [str(exe_path), str(file_path), "--player-files-path", temp_dir]
+            cwd = os.path.dirname(file_path)
+            # Also set KIVY_NO_ARGS to disable Kivy's argument parser
+            env = os.environ.copy()
+            env['KIVY_NO_ARGS'] = '1'
         
         if options.get('seed'):
             cmd.extend(["--seed", str(options['seed'])])
@@ -695,15 +505,89 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         if options.get('output_path'):
             cmd.extend(["--outputpath", options['output_path']])
         
-        # Execute the command
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True, cwd=os.path.dirname(exe_path))
-            if result.returncode == 0:
-                MessageBox("Generation Complete", "Game generation completed successfully!").open()
-            else:
-                MessageBox("Generation Failed", f"Generation failed: {result.stderr}").open()
-        except Exception as e:
-            MessageBox("Generation Error", f"Failed to execute generation: {str(e)}").open()
+        logger.info(f"Starting generation with command: {' '.join(cmd)}")
+        
+        # Show loading screen
+        Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(), 0)
+        
+        def run_generation():
+            """Run generation in background thread and stream output to logger"""
+            try:
+                process = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    cwd=cwd,
+                    bufsize=1,  # Line buffered
+                    universal_newlines=True,
+                    env=env
+                )
+                
+                # Stream stdout
+                for line in process.stdout:
+                    line = line.rstrip()
+                    if line:
+                        logger.info(f"[Generation] {line}")
+                
+                # Wait for process to complete
+                process.wait()
+                
+                # Capture any remaining stderr
+                stderr = process.stderr.read()
+                if stderr:
+                    for line in stderr.splitlines():
+                        if line.strip():
+                            logger.error(f"[Generation Error] {line}")
+                
+                # Hide loading screen and schedule UI update on main thread
+                def show_success_dialog(dt):
+                    self.app.loading_layout.hide_loading()
+                    MessageBox("Generation Complete", 
+                               "Game generation completed successfully!").open()
+                    # Cleanup after success
+                    self._cleanup_temp_dir(temp_dir)
+                    if hasattr(self, '_generation_temp_dir'):
+                        delattr(self, '_generation_temp_dir')
+                    if hasattr(self, '_generation_result'):
+                        delattr(self, '_generation_result')
+                
+                def show_failure_dialog(dt):
+                    self.app.loading_layout.hide_loading()
+                    MessageBox("Generation Failed", 
+                               f"Generation failed with code {process.returncode}:\n{error_msg}").open()
+                    # Cleanup after failure
+                    self._cleanup_temp_dir(temp_dir)
+                    if hasattr(self, '_generation_temp_dir'):
+                        delattr(self, '_generation_temp_dir')
+                    if hasattr(self, '_generation_result'):
+                        delattr(self, '_generation_result')
+                
+                if process.returncode == 0:
+                    Clock.schedule_once(show_success_dialog, 0)
+                    logger.info("Generation completed successfully")
+                else:
+                    error_msg = stderr if stderr else "Unknown error"
+                    Clock.schedule_once(show_failure_dialog, 0)
+                    logger.error(f"Generation failed with return code {process.returncode}")
+                    
+            except Exception as e:
+                logger.exception(f"Failed to execute generation: {e}")
+                def show_error_dialog(dt):
+                    self.app.loading_layout.hide_loading()
+                    MessageBox("Generation Error", 
+                               f"Failed to execute generation: {str(e)}").open()
+                    # Cleanup after error
+                    self._cleanup_temp_dir(temp_dir)
+                    if hasattr(self, '_generation_temp_dir'):
+                        delattr(self, '_generation_temp_dir')
+                    if hasattr(self, '_generation_result'):
+                        delattr(self, '_generation_result')
+                Clock.schedule_once(show_error_dialog, 0)
+        
+        # Start generation in background thread
+        thread = threading.Thread(target=run_generation, daemon=True)
+        thread.start()
 
     def _cleanup_temp_dir(self, temp_dir):
         """Clean up temporary directory"""
@@ -714,20 +598,284 @@ class LauncherScreen(MDScreen, ThemableBehavior):
 
     def host(self):
         """Host a new game"""
-        # Find the server executable in the same directory as the running app
-        exe_name = "MultiWorldGGServer.exe" if os.name == 'nt' else "MultiWorldGGServer"
-        exe_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", exe_name)
+        # Show host options dialog
+        self._show_host_options()
+
+    def _show_host_options(self):
+        """Show dialog with host options"""
+        # Create dialog content
+        content = LauncherHostContent()
+        port_field = content.ids.port
+        password_field = content.ids.password
         
-        # Launch the server
+        # Create dialog
+        dialog = MDDialog(
+            MDDialogHeadlineText(
+                text="Server Options",
+            ),
+            content,
+            MDDialogButtonContainer(
+                MDButton(
+                    MDButtonText(text="CANCEL"),
+                    on_release=lambda x: dialog.dismiss()
+                ),
+                MDButton(
+                    MDButtonText(text="START SERVER"),
+                    on_release=lambda x: self._on_host_options_confirm(dialog, port_field, password_field)
+                ),
+                spacing=dp(8)
+            )
+        )
+        
+        # Store dialog reference and open it
+        self._host_dialog = dialog
+        self._host_result = None
+        dialog.open()
+
+    def _on_host_options_confirm(self, dialog, port_field, password_field):
+        """Handle host options confirmation"""
+        port = port_field.text.strip()
+        password = password_field.text.strip()
+        
+        # Validate port
+        if port:
+            try:
+                port_value = int(port)
+                if not (1 <= port_value <= 65535):
+                    self.show_snackbar("Port must be between 1 and 65535", is_error=True)
+                    return
+            except ValueError:
+                self.show_snackbar("Port must be a number", is_error=True)
+                return
+        
+        self._host_result = {
+            'port': port if port else None,
+            'password': password if password else None
+        }
+        
+        dialog.dismiss()
+        # Continue with hosting
+        self._execute_host(self._host_result)
+
+    def _execute_host(self, options):
+        """Execute MultiworldGGServer with options - detached from client"""
+        # Build command
+        if is_frozen():
+            exe_path = local_path("MultiWorldGGServer.exe") if is_windows() else local_path("MultiWorldGGServer")
+            cmd = [str(exe_path)]
+            cwd = os.path.dirname(exe_path)
+            env = None
+        else:
+            exe_path = Path(sys.executable)
+            file_path = Path(local_path("MultiServer.py"))
+            cmd = [str(exe_path), str(file_path)]
+            cwd = os.path.dirname(file_path)
+            # Also set KIVY_NO_ARGS to disable Kivy's argument parser
+            env = os.environ.copy()
+            env['KIVY_NO_ARGS'] = '1'
+        
+        if options.get('port'):
+            cmd.extend(["--port", str(options['port'])])
+            
+        if options.get('password'):
+            cmd.extend(["--password", options['password']])
+        
+        logger.info(f"Starting detached server with command: {' '.join(cmd)}")
+        
+        # Launch server - console app will spawn its own terminal
         try:
-            subprocess.Popen([exe_path], cwd=os.path.dirname(exe_path))
-            MessageBox("Server Started", "MultiWorldGG Server has been started").open()
+            subprocess.Popen(
+                cmd,
+                cwd=cwd,
+                env=env
+            )
+            MessageBox("Server Started", "MultiWorldGG Server has been started in a new terminal window.").open()
+            logger.info("Server launched successfully (detached)")
+            if hasattr(self, '_host_result'):
+                delattr(self, '_host_result')
         except Exception as e:
+            logger.exception(f"Failed to start server: {e}")
             MessageBox("Server Error", f"Failed to start server: {str(e)}").open()
+            if hasattr(self, '_host_result'):
+                delattr(self, '_host_result')
     
     def patch_game(self):
         """Patch the selected game"""
-        MessageBox("Patch Game", "Patch the selected game").open()
+        # Step 1: Select patch file (.apbp)
+        selected_file = self._select_patch_file()
+        if not selected_file:
+            return
+        
+        # Store selected file
+        self._patch_file = selected_file
+        
+        # Step 2: Show patch options dialog
+        self._show_patch_options()
+
+    def _select_patch_file(self):
+        """Select .apbp file for patching"""
+        # Show file dialog for .apbp files
+        result = FileUtils.open_file_input_dialog(
+            title="Select Patch File (.apbp)",
+            filetypes=[("Archipelago Patch", ["*.apbp"]), ("All Files", ["*.*"])],
+            multiple=False,
+            suggest=user_path("output")
+        )
+        
+        if not result:
+            return None
+            
+        # Show confirmation
+        self.show_snackbar(f"Selected: {os.path.basename(result)}")
+        return result
+
+    def _show_patch_options(self):
+        """Show dialog with patch options"""
+        # Create dialog content
+        content = LauncherPatchContent()
+        output_field = content.ids.output
+        
+        # Create dialog
+        dialog = MDDialog(
+            MDDialogHeadlineText(
+                text="Patch Options",
+            ),
+            content,
+            MDDialogButtonContainer(
+                MDButton(
+                    MDButtonText(text="CANCEL"),
+                    on_release=lambda x: self._on_patch_options_cancel(dialog)
+                ),
+                MDButton(
+                    MDButtonText(text="PATCH"),
+                    on_release=lambda x: self._on_patch_options_confirm(dialog, output_field)
+                ),
+                spacing=dp(8)
+            )
+        )
+        
+        # Store dialog reference and open it
+        self._patch_dialog = dialog
+        self._patch_result = None
+        dialog.open()
+
+    def _on_patch_options_cancel(self, dialog):
+        """Handle patch options cancellation"""
+        dialog.dismiss()
+        if hasattr(self, '_patch_file'):
+            delattr(self, '_patch_file')
+
+    def _on_patch_options_confirm(self, dialog, output_field):
+        """Handle patch options confirmation"""
+        output_path = output_field.text.strip()
+        if not output_path:
+            output_path = os.path.join(os.getcwd(), 'output')
+        
+        self._patch_result = {
+            'output_path': output_path
+        }
+        
+        dialog.dismiss()
+        # Continue with patching
+        self._execute_patch(self._patch_file, self._patch_result)
+
+    def _execute_patch(self, patch_file, options):
+        """Execute MultiworldGGPatch with options in background thread"""
+        # Build command
+        if is_frozen():
+            exe_path = local_path("MultiworldGGPatch.exe") if is_windows() else local_path("MultiworldGGPatch")
+            cmd = [str(exe_path), patch_file]
+            cwd = os.path.dirname(exe_path)
+            env = None
+        else:
+            exe_path = Path(sys.executable)
+            file_path = Path(local_path("Patch.py"))
+            cmd = [str(exe_path), str(file_path), patch_file]
+            cwd = os.path.dirname(file_path)
+            # Also set KIVY_NO_ARGS to disable Kivy's argument parser
+            env = os.environ.copy()
+            env['KIVY_NO_ARGS'] = '1'
+        
+        if options.get('output_path'):
+            cmd.extend(["--outputpath", options['output_path']])
+        
+        logger.info(f"Starting patch with command: {' '.join(cmd)}")
+        
+        # Show loading screen
+        Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(), 0)
+        
+        def run_patch():
+            """Run patch in background thread and stream output to logger"""
+            try:
+                process = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    cwd=cwd,
+                    bufsize=1,  # Line buffered
+                    universal_newlines=True,
+                    env=env
+                )
+                
+                # Stream stdout
+                for line in process.stdout:
+                    line = line.rstrip()
+                    if line:
+                        logger.info(f"[Patch] {line}")
+                
+                # Wait for process to complete
+                process.wait()
+                
+                # Capture any remaining stderr
+                stderr = process.stderr.read()
+                if stderr:
+                    for line in stderr.splitlines():
+                        if line.strip():
+                            logger.error(f"[Patch Error] {line}")
+                
+                # Hide loading screen and schedule UI update on main thread
+                def show_success_dialog(dt):
+                    self.app.loading_layout.hide_loading()
+                    MessageBox("Patch Complete", 
+                               "Game patching completed successfully!").open()
+                    if hasattr(self, '_patch_file'):
+                        delattr(self, '_patch_file')
+                    if hasattr(self, '_patch_result'):
+                        delattr(self, '_patch_result')
+                
+                def show_failure_dialog(dt):
+                    self.app.loading_layout.hide_loading()
+                    error_msg = stderr if stderr else "Unknown error"
+                    MessageBox("Patch Failed", 
+                               f"Patch failed with code {process.returncode}:\n{error_msg}").open()
+                    if hasattr(self, '_patch_file'):
+                        delattr(self, '_patch_file')
+                    if hasattr(self, '_patch_result'):
+                        delattr(self, '_patch_result')
+                
+                if process.returncode == 0:
+                    Clock.schedule_once(show_success_dialog, 0)
+                    logger.info("Patch completed successfully")
+                else:
+                    Clock.schedule_once(show_failure_dialog, 0)
+                    logger.error(f"Patch failed with return code {process.returncode}")
+                    
+            except Exception as e:
+                logger.exception(f"Failed to execute patch: {e}")
+                def show_error_dialog(dt):
+                    self.app.loading_layout.hide_loading()
+                    MessageBox("Patch Error", 
+                               f"Failed to execute patch: {str(e)}").open()
+                    if hasattr(self, '_patch_file'):
+                        delattr(self, '_patch_file')
+                    if hasattr(self, '_patch_result'):
+                        delattr(self, '_patch_result')
+                Clock.schedule_once(show_error_dialog, 0)
+        
+        # Start patch in background thread
+        thread = threading.Thread(target=run_patch, daemon=True)
+        thread.start()
     
     def create_yaml(self):
         """Create YAML file for the selected game"""
@@ -785,6 +933,8 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             slot_name = slot_name_field.text if slot_name_field.text else None
             password = slot_password_field.text if slot_password_field.text else None
             
+            self.app.logo_png = self.game_index.get_game(self.selected_game[0]).get("cover_url", None)
+
             logger.info(f"Attempting to launch module: {self.selected_game[1]}")
             logger.info(f"Server: {server_address}, Password: {'*' * len(password) if password else 'None'}")
             

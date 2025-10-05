@@ -1,23 +1,20 @@
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "worlds.zillion"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Zillion"
-authors = [
-    {name = "beauxq"}
-]
 requires-python = ">=3.12"
-dependencies = [
-    "zilliandomizer @ git+https://github.com/beauxq/zilliandomizer@96d9a20f8278cee64bb4db859fbd874e0f332d36#0.9.1",
-    "typing-extensions>=4.7, <5",
-]
+dependencies = [ "zilliandomizer @ git+https://github.com/beauxq/zilliandomizer@96d9a20f8278cee64bb4db859fbd874e0f332d36#0.9.1", "typing-extensions>=4.7, <5",]
+[[project.authors]]
+name = "beauxq"
 
 [project.entry-points."mwgg.client"]
 "worlds.zillion.Client" = "worlds.zillion.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.zillion"]
+where = [ "src",]
+include = [ "worlds.zillion",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.zillion.Constants.VERSION"}

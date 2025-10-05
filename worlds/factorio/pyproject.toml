@@ -1,33 +1,23 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.factorio"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Factorio"
-authors = [
-    {name = "Berserker66"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [
-    "factorio-rcon-py>=2.1.2",
-]
+dependencies = [ "factorio-rcon-py>=2.1.2",]
+[[project.authors]]
+name = "Berserker66"
 
 [project.entry-points."mwgg.client"]
 "worlds.factorio.Client" = "worlds.factorio.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.factorio"]
+where = [ "src",]
+include = [ "worlds.factorio",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.factorio.Constants.VERSION"}

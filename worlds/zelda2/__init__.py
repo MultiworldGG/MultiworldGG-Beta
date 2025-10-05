@@ -12,7 +12,7 @@ from Options import OptionGroup
 from Fill import fill_restrictive
 import settings
 from .Items import get_item_names_per_category, item_table
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import get_locations, static_locations
 from .Regions import init_areas
 from .Options import Z2Options, z2_option_groups
@@ -60,9 +60,12 @@ class Z2World(World):
     who seek to use his blood to revive their master.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("zelda2")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     option_definitions = Z2Options
     data_version = 1
     required_client_version = (0, 5, 0)

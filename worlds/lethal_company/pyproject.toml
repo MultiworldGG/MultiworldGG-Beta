@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.lethal_company"
-dynamic = ["version"]
+version = "7.1"
 description = "MultiWorld: Lethal Company"
-authors = [
-    {name = "T0r1nn"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "T0r1nn"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.lethal_company"]
+where = [ "src",]
+include = [ "worlds.lethal_company",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.lethal_company.Constants.VERSION"}

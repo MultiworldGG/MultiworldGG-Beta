@@ -12,7 +12,7 @@ from .locations_and_regions import all_non_event_locations_table, location_name_
 from .options import EarlyKeyItem, OuterWildsGameOptions, RandomizeDarkBrambleLayout, Spawn, Goal, EnableEchoesOfTheEyeDLC
 from .orbits import generate_random_orbits, generate_random_rotations
 from .warp_platforms import generate_random_warp_platform_mapping
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 
 
 class OuterWildsWebWorld(WebWorld):
@@ -34,8 +34,10 @@ class OuterWildsWorld(World):
     Outer Wilds is a 2019 action-adventure game about exploring a planetary system stuck in a very short time loop that resets after the sun goes supernova and destroys the system. 
     Through repeated attempts, they investigate the alien ruins of the Nomai to discover their history and the cause of the time loop.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("outer_wilds")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     web = OuterWildsWebWorld()
 

@@ -5,7 +5,7 @@ from typing import Optional, List, Set
 
 from BaseClasses import Item, ItemClassification, Location, MultiWorld, Region, Tutorial
 from Options import OptionError
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Characters import character_list, CharacterConfig, character_option_map, character_offset_map, NUM_CUSTOM
 from .Items import event_item_pairs, item_table, ItemType, chars_to_items, base_event_item_pairs, item_groups
 from .Locations import location_table, loc_ids_to_data, LocationData, LocationType, CARD_DRAW_COUNT, location_groups
@@ -14,6 +14,8 @@ from .Regions import create_regions
 from .Rules import set_rules
 from ..AutoWorld import WebWorld, World
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("spire")
 
 class SpireWeb(WebWorld):
     tutorials = [Tutorial(
@@ -36,12 +38,11 @@ class SpireWorld(World):
     options_dataclass = SpireOptions
     options: SpireOptions
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     topology_present = False
     web = SpireWeb()
     required_client_version = (0, 6, 1)
-    mod_version = VERSION
+    mod_version = WORLD_VERSION
     location_name_groups = location_groups
     item_name_groups = item_groups
 

@@ -1,11 +1,8 @@
-GAME_NAME: str = "Saving Princess"
+GAME_NAME = "Saving Princess"
 BASE_ID: int = 0x53565052494E  # SVPRIN
-IGDB_ID: int = 0
-AUTHOR: str = "LeonarthCG"
-VERSION: str = "1.0.1"
 
 # client installation data
-CLIENT_NAME = f"{GAME_NAME.replace(' ', '')}Client"
+CLIENT_NAME = f"{GAME_NAME.replace(' '", "'')}Client"
 GAME_HASH = "35a111d0149fae1f04b7b3fea42c5319"
 PATCH_NAME = "saving_princess_basepatch.bsdiff4"
 DOWNLOAD_NAME = "saving_princess_archipelago.zip"
@@ -43,7 +40,7 @@ EVENT_ITEM_SNAKE_GONE: str = "Snake neutralized"
 EVENT_ITEM_POWER_ON: str = "Power restored"
 EVENT_ITEM_VICTORY: str = "PRINCESS"
 
-# location names, EP stands for Expanded Pool
+# location names", "EP stands for Expanded Pool
 LOCATION_CAVE_AMMO: str = "Cave: After Wallboss"
 LOCATION_CAVE_RELOAD: str = "Cave: Balcony"
 LOCATION_CAVE_HEALTH: str = "Cave: Spike pit"

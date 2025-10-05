@@ -1,5 +1,5 @@
 from .items import RoR1Item, item_table, map_offset
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .locations import RoR1Location, item_pickups, get_locations, map_orderedstages_table, map_table, shift_by_offset
 from .options import ROROptions
 from .rules import set_rules
@@ -24,8 +24,10 @@ class RoR1World(World):
     Risk of Rain is a 2013 roguelike platform game developed by Hopoo Games. Players control the survivor of a space freighter crash on a strange planet. 
     They attempt to survive by killing monsters and collecting items that can boost their offensive and defensive abilities. 
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ror1")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     options_dataclass = ROROptions
     options: ROROptions

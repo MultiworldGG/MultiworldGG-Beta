@@ -25,9 +25,11 @@ from .Rules import set_rules
 from .EntranceRandoRules import create_entrance_randomizer_set
 from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import add_rule
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from worlds.LauncherComponents import Component, components, launch as launch_component, Type, SuffixIdentifier
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tloz")
 
 def launch_client(*args: str):
     from .Client import main
@@ -85,7 +87,7 @@ class TLoZWorld(World):
     settings: typing.ClassVar[TLoZSettings]
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     patch_file_ending: str = ".aptloz"
     topology_present = True
     base_id = 7000

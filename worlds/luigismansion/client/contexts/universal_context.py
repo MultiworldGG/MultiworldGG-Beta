@@ -35,26 +35,26 @@ class UniversalContext(CommonContext):
         else:
             logger.warning("Could not find Universal Tracker.")
 
-    def make_gui(self):
-        if _tracker_loaded:
-            if not _check_universal_tracker_version():
-                Utils.messagebox("Universal Tracker needs updated", f"The minimum version of Universal Tracker required for LM is v0.2.11. The version currently installed is {UT_VERSION}.", error=True)
-                raise ImportError("Need to update universal tracker version to at least v0.2.11.")
+    # def make_gui(self):
+    #     if _tracker_loaded:
+    #         if not _check_universal_tracker_version():
+    #             Utils.messagebox("Universal Tracker needs updated", f"The minimum version of Universal Tracker required for LM is v0.2.11. The version currently installed is {UT_VERSION}.", error=True)
+    #             raise ImportError("Need to update universal tracker version to at least v0.2.11.")
 
-        # Performing local import to prevent additional UIs to appear during the patching process.
-        # This appears to be occurring if a spawned process does not have a UI element when importing kvui/kivymd.
-        from kvui import GameManager
-        ui: GameManager = super().make_gui()
-        class UniversalWrapper(ui):
-            base_title: str = " | Archipelago"
+    #     # Performing local import to prevent additional UIs to appear during the patching process.
+    #     # This appears to be occurring if a spawned process does not have a UI element when importing kvui/kivymd.
+    #     from Gui import GameManager
+    #     ui: GameManager = super().make_gui()
+    #     class UniversalWrapper(ui):
+    #         base_title: str = " | Archipelago"
 
-            def build(self):
-                container = super().build()
-                if _tracker_loaded:
-                    self.base_title += f" | Universal Tracker {UT_VERSION}"
-                return container
+    #         def build(self):
+    #             container = super().build()
+    #             if _tracker_loaded:
+    #                 self.base_title += f" | Universal Tracker {UT_VERSION}"
+    #             return container
 
-        return UniversalWrapper
+    #     return UniversalWrapper
 
 
 def _check_universal_tracker_version() -> bool:

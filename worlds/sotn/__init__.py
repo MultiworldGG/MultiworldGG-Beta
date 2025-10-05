@@ -7,7 +7,7 @@ from BaseClasses import Tutorial, MultiWorld, ItemClassification, Item
 from Options import AssembleOptions
 
 from .Items import SotnItem, items, relic_table, item_id_to_name
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import locations, SotnLocation
 from .Regions import create_regions, create_regions_no_logic
 from .Rules import set_rules, set_no_logic_rules
@@ -61,8 +61,11 @@ class SotnWorld(World):
     Symphony of the Night is a metroidvania developed by Konami
     and released for Sony Playstation and Sega Saturn in 1997.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("sotn")
+
     game: ClassVar[str] = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: ClassVar[str] = AUTHOR
     web: ClassVar[WebWorld] = SotnWeb()
     settings_key = "sotn_settings"

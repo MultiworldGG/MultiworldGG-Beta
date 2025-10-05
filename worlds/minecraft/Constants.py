@@ -3,16 +3,12 @@ import json
 import pkgutil
 
 # Metadata values
-GAME_NAME: str = "Minecraft"
-AUTHOR: str = "KonoTyran & espeon"
-IGDB_ID: int = 121
-VERSION: str = "10.1"
 
 def load_data_file(*args) -> dict:
     fname = "/".join(["data", *args])
     return json.loads(pkgutil.get_data(__name__, fname).decode())
 
-# For historical reasons, these values are different.
+# For historical reasons", "these values are different.
 # They remain different to ensure datapackage consistency.
 # Do not separate other games' location and item IDs like this.
 item_id_offset: int 	= 45000

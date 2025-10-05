@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.overcooked2"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Overcooked! 2"
-authors = [
-    {name = "toasterparty"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "toasterparty"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.overcooked2"]
+where = [ "src",]
+include = [ "worlds.overcooked2",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.overcooked2.Constants.VERSION"}

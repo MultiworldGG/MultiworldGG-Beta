@@ -1,0 +1,9 @@
+{
+    "version": 6,
+    "compatible_version": 5,
+    "game": "Frog Monster",
+    "authors": ["RoobyRoo"],
+    "igdb_id": 187372,
+    "minimum_ap_version": "0.6.4",
+    "world_version": "0.2.1"
+}

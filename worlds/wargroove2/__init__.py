@@ -7,7 +7,7 @@ import typing
 from BaseClasses import Item, Tutorial, ItemClassification
 from Options import NumericOption
 from .Items import item_table, faction_table, Wargroove2Item
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Levels import Wargroove2Level, low_victory_checks_levels, high_victory_checks_levels, first_level, \
     final_levels, region_names, FINAL_LEVEL_1, \
     FINAL_LEVEL_2, FINAL_LEVEL_3, FINAL_LEVEL_4, LEVEL_COUNT, FINAL_LEVEL_COUNT, main_filler_levels, final_filler_levels
@@ -73,12 +73,15 @@ class Wargroove2World(World):
     """
     Command an army, in the sequel to the hit turn based strategy game Wargroove!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("wargroove2")
+
     options: Wargroove2Options
     options_dataclass = Wargroove2Options
     settings: typing.ClassVar[Wargroove2Settings]
     game = GAME_NAME
     author = "Fly Sniper"
-    igdb_id = IGDB_ID
+    
     topology_present = True
     author: str = AUTHOR
     web = Wargroove2Web()

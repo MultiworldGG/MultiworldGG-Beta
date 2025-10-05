@@ -8,10 +8,12 @@ from .Items import BumpStikItem, item_table, item_groups
 from .Locations import location_table
 from .Options import *
 from .Regions import create_regions
-from .Constants import GAME_NAME, IGDB_ID, AUTHOR, VERSION
+
 from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import forbid_item
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("bumpstik")
 
 class BumpStikWeb(WebWorld):
     tutorials = [Tutorial(
@@ -34,7 +36,7 @@ class BumpStikWorld(World):
     """
     game = GAME_NAME
     author = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = BumpStikWeb()
 
     item_name_to_id = item_table

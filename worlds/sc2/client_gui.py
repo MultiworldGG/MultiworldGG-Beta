@@ -4,7 +4,7 @@ import logging
 
 from BaseClasses import ItemClassification
 from NetUtils import JSONMessagePart
-from kvui import GameManager, HoverBehavior, ServerToolTip, KivyJSONtoTextParser, LogtoUI
+from Gui import MultiMDApp, HoverBehavior, ServerToolTip, KivyJSONtoTextParser, LogtoUI
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.clipboard import Clipboard

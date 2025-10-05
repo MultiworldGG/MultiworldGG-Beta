@@ -9,6 +9,7 @@ import Gui
 
 if TYPE_CHECKING:
     from CommonClient import CommonContext, InitContext
+    from multiprocessing import Queue
 
 class ClientBuilder(ABC):
     _ctx: Optional[weakref.ReferenceType['InitContext']] = None

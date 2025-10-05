@@ -5,7 +5,7 @@ from BaseClasses import ItemClassification, CollectionState, Region, Entrance, L
 from worlds.AutoWorld import World, WebWorld
 
 from .Overcooked2Levels import Overcooked2Dlc, Overcooked2Level, Overcooked2GenericLevel
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import Overcooked2Location, oc2_location_name_to_id, oc2_location_id_to_name
 from .Options import OC2Options, OC2OnToggle, LocationBalancingMode, DeathLinkMode
 from .Items import item_table, Overcooked2Item, item_name_to_id, item_id_to_name, item_to_unlock_event, item_frequencies, dlc_exclusives
@@ -42,11 +42,11 @@ class Overcooked2World(World):
     earning stars to unlock levels, and defeating the unbread horde. Levels are
     randomized to increase gameplay variety. Play with up to 4 friends.
     """
-
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("overcooked2")
     # Autoworld API
 
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
 
     required_client_version = (0, 3, 8)

@@ -1,24 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.shorthike"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: A Short Hike"
-authors = [
-    {name = "chandler05"},
-    {name = "BrandenEK"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "chandler05"
+
+[[project.authors]]
+name = "BrandenEK"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.shorthike"]
+where = [ "src",]
+include = [ "worlds.shorthike",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.shorthike.Constants.VERSION"}

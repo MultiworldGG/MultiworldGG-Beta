@@ -7,7 +7,7 @@ from BaseClasses import Tutorial, ItemClassification
 from worlds.AutoWorld import WebWorld, World
 from typing import Set, Dict, Any
 from .Locations import all_locations, location_table, bowsers, bowsersMini, hidden, coins
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Options import MLSSOptions
 from .Items import MLSSItem, itemList, item_frequencies, item_table, mlss_item_name_groups
 from .Names.LocationName import LocationName
@@ -50,8 +50,11 @@ class MLSSWorld(World):
     to stop the evil Cackletta and retrieve the Beanstar.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("mlss")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options_dataclass = MLSSOptions
     options: MLSSOptions

@@ -62,6 +62,7 @@ Window.set_title("MultiWorldGG")
 from kivy.clock import Clock
 from kivy.properties import ObjectProperty, BooleanProperty
 from kivymd.app import MDApp
+from kivy.uix.screenmanager import SwapTransition
 from kivymd.uix.screenmanager import MDScreenManager
 from kivymd.uix.anchorlayout import MDAnchorLayout
 from kivymd.uix.floatlayout import MDFloatLayout
@@ -135,6 +136,7 @@ class MultiMDApp(MDApp):
     text_buffer: Queue
 
     _show_all_hints: BooleanProperty(False)
+    _logo_png: str = None
 
     def __init__(self, ctx: context_type, **kwargs):
         super().__init__(**kwargs)
@@ -319,7 +321,7 @@ class MultiMDApp(MDApp):
         
         # Screen manager
         # Screens are under the appbar and titlebar
-        self.screen_manager = MainScreenMgr()
+        self.screen_manager = MainScreenMgr(transition=SwapTransition())
 
         # Set up navigation layout
         self.navigation_layout.add_widget(self.screen_manager)
@@ -422,13 +424,31 @@ class MultiMDApp(MDApp):
         self.root.md_bg_color = self.theme_cls.surfaceColor
         self.theme_mw.recolor_atlas()
 
+    def set_age_filter(self, value: str):
+        '''
+        This function is called when the age filter is changed.
+        It downloads the new index package and updates the game list.
+        '''
+        if value == "Not Rated":
+            index = "mwgg_igdb"
+        elif value == "16 (Teen)":
+            index = "mwgg_igdb_sixteen"
+        elif value == "12 (Everyone)":
+            index = "mwgg_igdb_twelve"
+        else:
+            logging.error(f"Invalid age filter: {value}")
+            return
+        from ModuleUpdate import install_worlds, uninstall_worlds
+        uninstall_worlds(["mwgg_igdb", "mwgg_igdb_sixteen", "mwgg_igdb_twelve"])
+        install_worlds([index])
+
     def change_screen(self, item):
         '''
         This function is called when the screen is changed.
         It updates the current screen and dismisses menu
         with the screen names.
         '''
-        self.screen_manager.current_heroes = ["logo"]
+        #self.screen_manager.current_heroes = ["logo"]
         if item in self.screen_manager.screen_names:
             self.screen_manager.current = item
             if self.top_appbar_menu:
@@ -619,7 +639,8 @@ class MultiMDApp(MDApp):
         tags = list(self.ctx.tags)
         if any(tag.startswith("pronouns") for tag in tags):
             tags.remove(next(tag for tag in tags if tag.startswith("pronouns")))
-        tags.append(f"pronouns:{pronouns}")
+        if pronouns:
+            tags.append(f"pronouns:{pronouns}")
         asynckivy.start(self.ctx.update_tags(tags))
 
     def set_deafen(self):
@@ -738,6 +759,16 @@ class MultiMDApp(MDApp):
         self._show_all_hints = value
         if hasattr(self, 'hint_screen') and self.hint_screen:
             self.hint_screen.update_hints_list()
+
+    @property
+    def logo_png(self):
+        if self._logo_png is None:
+            self._logo_png = os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "logo_bg.png")
+        return self._logo_png
+
+    @logo_png.setter
+    def logo_png(self, value: str):
+        self._logo_png = value.replace("t_thumb", "t_cover_big").replace(".jpg", ".png")
 
 def is_command_input(string: str) -> bool:
     return len(string) > 0 and string[0] in "/!"

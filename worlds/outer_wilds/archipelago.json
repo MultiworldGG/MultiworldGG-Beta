@@ -1,1 +1,9 @@
-{"game": "Outer Wilds", "minimum_ap_version": "0.5.0", "world_version": "0.3.19", "compatible_version": 5, "version": 6}
+{
+    "version": 6,
+    "compatible_version": 5,
+    "game": "Outer Wilds",
+    "authors": ["Ixrec"],
+    "igdb_id": 11737,
+    "minimum_ap_version": "0.5.0",
+    "world_version": "0.3.19"
+}

@@ -9,7 +9,7 @@ from BaseClasses import Item, CollectionState, Tutorial, MultiWorld
 from worlds.AutoWorld import World, WebWorld, LogicMixin
 from worlds.LauncherComponents import launch as launch_component, components, Component, Type
 from .Client import ALTTPSNIClient
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Dungeons import create_dungeons, Dungeon
 from .EntranceShuffle import link_entrances, link_inverted_entrances, plando_connect
 from .InvertedRegions import create_inverted_regions, mark_dark_world_regions
@@ -140,9 +140,13 @@ class ALTTPWorld(World):
     dungeons on your quest to rescue the descendents of the seven wise men and defeat the evil
     Ganon!
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("alttp")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = ALTTPOptions
     options: ALTTPOptions
     settings_key = "lttp_options"

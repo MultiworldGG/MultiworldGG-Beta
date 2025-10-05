@@ -10,7 +10,7 @@ from worlds.generic.Rules import set_rule
 from .Options import BlasphemousOptions, blas_option_groups
 from .Vanilla import unrandomized_dict, junk_locations, thorn_set, skill_dict
 from .region_data import regions, locations
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 
 class BlasphemousWeb(WebWorld):
     theme = "stone"
@@ -32,9 +32,12 @@ class BlasphemousWorld(World):
     your eternal damnation!
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("blasphemous")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = BlasphemousWeb()
 
     item_name_to_id = {item["name"]: (base_id + index) for index, item in enumerate(item_table)}

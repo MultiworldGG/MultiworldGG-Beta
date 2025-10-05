@@ -136,11 +136,11 @@ class LMContext(BaseContext):
     game = "Luigi's Mansion"
     items_handling = 0b111
 
-    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
+    def __init__(self, server_address, password, slot_name: str = None, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
-
+        self.slot_name = slot_name
         # Handle various Dolphin connection related tasks
         self.instance_id = None
         self.dolphin_sync_task: Optional[asyncio.Task[None]] = None
@@ -291,18 +291,18 @@ class LMContext(BaseContext):
         self.set_luigi_dead()
         return
 
-    def make_gui(self):
-        ui = super().make_gui()
-        ui.base_title = f"Luigi's Mansion Client v{CLIENT_VERSION}"
-        if tracker_loaded:
-            if not self.check_universal_tracker_version():
-                Utils.messagebox("Universal Tracker needs updated", "The minimum version of Universal Tracker required for LM is v0.2.11", error=True)
-                raise ImportError("Need to update universal tracker version to at least v0.2.11.")
-            ui.base_title += f" | Universal Tracker {UT_VERSION}"
+    # def make_gui(self):
+    #     ui = super().make_gui()
+    #     ui.base_title = f"Luigi's Mansion Client v{CLIENT_VERSION}"
+    #     if tracker_loaded:
+    #         if not self.check_universal_tracker_version():
+    #             Utils.messagebox("Universal Tracker needs updated", "The minimum version of Universal Tracker required for LM is v0.2.11", error=True)
+    #             raise ImportError("Need to update universal tracker version to at least v0.2.11.")
+    #         ui.base_title += f" | Universal Tracker {UT_VERSION}"
 
-        # AP version is added behind this automatically
-        ui.base_title += f" | {apname}"
-        return ui
+    #     # AP version is added behind this automatically
+    #     ui.base_title += f" | {apname}"
+    #     return ui
 
     def check_universal_tracker_version(self) -> bool:
         import re
@@ -891,14 +891,14 @@ class LMContext(BaseContext):
                             "Incorrect Randomized Luigi's Mansion ISO file selected. The seed does not match." +
                             "Please verify that you are using the right ISO/seed/APLM file.")
 
-                    # At this point, we are verified as connected. Update UI elements in the LMCLient tab.
+                    # At this point, we are verified as connected. Update UI elements in the LMCLient screen.
                     if self.ui:
                         boo_count = len(
                             set(([item.item for item in self.items_received if item.item in BOO_AP_ID_LIST])))
-                        self.ui.update_boo_count_label(boo_count)
-                        self.ui.get_wallet_value()
+                        self.ui.screen.update_boo_count_label(boo_count)
+                        self.ui.screen.get_wallet_value()
                         self.ui.update_flower_label(self.get_item_count_by_id(8140))
-                        self.ui.update_vacuum_label(self.get_item_count_by_id(8064))
+                        self.ui.screen.update_vacuum_label(self.get_item_count_by_id(8064))
 
                     if not (self.check_ingame() and self.check_alive()):
                         await self.wait_for_next_loop(WAIT_TIMER_SHORT_TIMEOUT)
@@ -929,7 +929,7 @@ def main(*launch_args: str):
     server_address: str = ""
     rom_path: str = ""
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, output_data: str = None):
+def launch(server_address: str = None, password: str = None, slot_name: str = None, ready_callback=None, error_callback=None, output_data: str = None):
     """
     Launch the client
     """
@@ -952,7 +952,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
                     error_callback()
                 return
 
-        ctx = LMContext(actual_server_address, password, ready_callback, error_callback)
+        ctx = LMContext(actual_server_address, password, slot_name, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -998,9 +998,9 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, output_data: str = None):
+def main(server_address: str = None, password: str = None, slot_name: str = None, ready_callback=None, error_callback=None, output_data: str = None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback, output_data)
+    launch(server_address, password, slot_name, ready_callback, error_callback, output_data)
 
 if __name__ == "__main__":
     parser = get_base_parser()

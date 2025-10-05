@@ -7,7 +7,7 @@ from worlds.huniepop.Items import HPItem, girl_unlock_table, item_table, panties
 from worlds.huniepop.Locations import HPLocation, location_table, locationgen_to_name
 from worlds.huniepop.Options import HPOptions
 from worlds.huniepop.Rules import set_rules
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 
 class HuniePopWeb(WebWorld):
     rating: str = "nsfw"
@@ -26,9 +26,12 @@ class HuniePop(World):
     HuniePop is a unique sim experience around 8 girls.
     It's a gameplay first approach that's part dating sim, part puzzle game, with light RPG elements.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("huniepop")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     worldversion = {
         "major":1,
         "minor":1,

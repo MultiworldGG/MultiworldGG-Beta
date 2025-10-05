@@ -3,13 +3,15 @@ import string
 
 from BaseClasses import Region, Entrance, Item, MultiWorld, Tutorial, ItemClassification, CollectionState
 from worlds.AutoWorld import World, WebWorld
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Items import TheBindingOfIsaacRepentanceItem, item_table, default_weights, default_junk_items_weights, \
     default_trap_items_weights
 from .Locations import location_table, TheBindingOfIsaacRepentanceLocation, base_location_table
 from .Options import IsaacOptions, ItemWeights
 from .Rules import set_rules
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tboir")
 
 class TheBindingOfIsaacRepentanceWeb(WebWorld):
     tutorials = [Tutorial(
@@ -30,7 +32,6 @@ class TheBindingOfIsaacRepentanceWorld(World):
     to safety.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     options_dataclass = IsaacOptions
     options: IsaacOptions

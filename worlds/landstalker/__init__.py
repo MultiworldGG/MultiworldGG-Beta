@@ -3,7 +3,7 @@ from typing import ClassVar, Set
 from BaseClasses import LocationProgressType, Tutorial
 from worlds.AutoWorld import WebWorld, World
 from .Constants import *
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Hints import *
 from .Items import *
 from .Locations import *
@@ -31,9 +31,12 @@ class LandstalkerWorld(World):
     Roam freely on the island, get stronger to beat dungeons and gather the required key items in order to reach the
     hidden palace and claim the treasure.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("landstalker")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     options_dataclass = LandstalkerOptions
     options: LandstalkerOptions
     required_client_version = (0, 4, 4)

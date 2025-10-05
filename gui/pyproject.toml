@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "mwgg_gui"
-version = "0.1.7a1"
+version = "0.1.8a7"
 description = "GUI package for MultiWorldGG"
 authors = [
     {name = "DelilahIsDidi"}

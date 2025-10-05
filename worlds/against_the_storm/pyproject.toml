@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.against_the_storm"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Against the Storm"
-authors = [
-    {name = "Ryguy9999"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Ryguy9999"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.against_the_storm"]
+where = [ "src",]
+include = [ "worlds.against_the_storm",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.against_the_storm.Constants.VERSION"}

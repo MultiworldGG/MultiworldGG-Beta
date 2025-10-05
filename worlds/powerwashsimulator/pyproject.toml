@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.powerwashsimulator"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Powerwash Simulator"
-authors = [
-    {name = "SW_CreeperKing"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "SW_CreeperKing"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.powerwashsimulator"]
+where = [ "src",]
+include = [ "worlds.powerwashsimulator",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.powerwashsimulator.Constants.VERSION"}

@@ -10,7 +10,7 @@ from worlds.AutoWorld import WebWorld, World
 from worlds.generic.Rules import add_rule, exclusion_rules
 
 from .Client import SMWSNIClient
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Items import SMWItem, ItemData, item_table, junk_table
 from .Levels import full_level_list, generate_level_list, location_id_to_level_id
 from .Locations import SMWLocation, all_locations, setup_locations, special_zone_level_names, special_zone_dragon_coin_names, special_zone_hidden_1up_names, special_zone_blocksanity_names
@@ -20,6 +20,9 @@ from .Presets import smw_options_presets
 from .Regions import create_regions, connect_regions
 from .Rom import LocalRom, patch_rom, get_base_rom_path, SMWDeltaPatch
 from .Rules import set_rules
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("smw")
 
 
 class SMWSettings(settings.Group):
@@ -56,8 +59,7 @@ class SMWWorld(World):
     The Princess has been kidnapped by Bowser again, but Mario has somehow
     lost all of his abilities. Can he get them back in time to save the Princess?
     """
-    game: str = "Super Mario World"
-    igdb_id = IGDB_ID
+    game: str = GAME_NAME
     author: str = AUTHOR
     settings: typing.ClassVar[SMWSettings]
 

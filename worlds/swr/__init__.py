@@ -3,7 +3,7 @@ import random
 
 from BaseClasses import Item, Tutorial
 from ..AutoWorld import World, WebWorld
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Options import *
 from .Items import *
 from .Locations import *
@@ -28,8 +28,10 @@ class SWRWorld(World):
     This randomizer shuffles race rewards as well as shop items. It also randomizes track order and available racers.
     Now THIS is podracing!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("swr")
+
     game: str = GAME_NAME
-    igdb_id: int = IGDB_ID
     author: str = AUTHOR
     topology_present = False
     options_dataclass = SWROptions

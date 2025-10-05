@@ -1,27 +1,19 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.cuphead"
-dynamic = ["version"]
+version = "0.2.a4"
 description = "MultiWorld: Cuphead"
-authors = [
-    {name = "JKL"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE.md"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE.md",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "JKL"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.cuphead"]
+where = [ "src",]
+include = [ "worlds.cuphead",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.cuphead.Constants.VERSION"}

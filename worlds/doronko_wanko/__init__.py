@@ -1,7 +1,7 @@
 import settings
 import typing
 from .options import DoronkoWankoOptions  # the options we defined earlier
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .items import doronko_wanko_items  # data used below to add items to the World
 from .items import base_id as items_base_id
 from .items import group_table as items_groups
@@ -12,6 +12,8 @@ from .rules import create_rules, can_get_all_badges, can_get_all_paintings
 from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Region, Location, Item, Tutorial, ItemClassification
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("doronko_wanko")
 
 class DoronkoWankoWeb(WebWorld):
     theme = "dirt"
@@ -40,7 +42,7 @@ class DoronkoWankoWorld(World):
     """
     game = GAME_NAME  # name of the game/world
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = DoronkoWankoOptions  # options the player can set
     options: DoronkoWankoOptions  # typing hints for option results
     topology_present = True  # show path to required location checks in spoiler

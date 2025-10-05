@@ -2,7 +2,7 @@ import logging
 from BaseClasses import Region, Tutorial
 from worlds.AutoWorld import WebWorld, World
 from .Items import OsuItem, item_data_table, item_table, osu_song_data, osu_song_pool, find_beatmapset
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import OsuLocation, location_table, location_data_table
 from Options import PerGameCommonOptions  # Muse Dash uses this for a type (where I don't) but I'm having an error
 from typing import ClassVar               # where the "Type" Import below breaks if I remove this, so I'm leaving it
@@ -52,10 +52,11 @@ class OsuWorld(World):
     osu! is a free to play rhythm game featuring 4 modes, an online ranking system/statistics,
     with user submitted songs downloadable from its website.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("osu")
 
     # Lots of code is taken from Mushdash, Clique, and various other APworlds
     game: str = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     options_dataclass = OsuOptions
     options: OsuOptions

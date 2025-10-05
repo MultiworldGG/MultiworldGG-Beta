@@ -7,7 +7,7 @@ import settings
 
 #Local
 from .Options import MegaMixOptions
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Items import MegaMixSongItem, MegaMixFixedItem
 from .Locations import MegaMixLocation
 from .MegaMixCollection import MegaMixCollections
@@ -19,6 +19,8 @@ import json
 from typing import List
 from math import floor
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("megamix")
 
 def launch_client():
     from .Client import launch
@@ -75,7 +77,7 @@ class MegaMixWorld(World):
     # World Options
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
 
     web = MegaMixWeb()
 

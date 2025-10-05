@@ -1,10 +1,10 @@
 # -*- coding: mbcs -*-
 
 from ctypes import *
+import comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0
 from comtypes import (
     _check_version, BSTR, CoClass, COMMETHOD, dispid, GUID, wireHWND
 )
-import comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0
 from comtypes.automation import IDispatch, VARIANT
 from ctypes import HRESULT
 from typing import TYPE_CHECKING
@@ -24,37 +24,17 @@ AnnoScope = c_int  # enum
 
 
 
-class CAccPropServices(CoClass):
-    _reg_clsid_ = GUID('{B5F8350B-0548-48B1-A6EE-88BD00B4A5E7}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{1EA4DBF0-3C3B-11CF-810C-00AA00389B71}', 1, 1)
+class __MIDL_IWinTypes_0009(Union):
+    pass
 
 
-class IAccPropServices(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    _case_insensitive_ = True
-    _iid_ = GUID('{6E26E776-04F0-495D-80E4-3330352E3169}')
-    _idlflags_ = []
+__MIDL_IWinTypes_0009._fields_ = [
+    ('hInproc', c_int),
+    ('hRemote', c_int),
+]
 
-    if TYPE_CHECKING:  # commembers
-        def SetPropValue(self, pIDString: hints.Incomplete, dwIDStringLen: hints.Incomplete, idProp: hints.Incomplete, var: hints.Incomplete) -> hints.Hresult: ...
-        def SetPropServer(self, pIDString: hints.Incomplete, dwIDStringLen: hints.Incomplete, paProps: hints.Incomplete, cProps: hints.Incomplete, pServer: hints.Incomplete, AnnoScope: hints.Incomplete) -> hints.Hresult: ...
-        def ClearProps(self, pIDString: hints.Incomplete, dwIDStringLen: hints.Incomplete, paProps: hints.Incomplete, cProps: hints.Incomplete) -> hints.Hresult: ...
-        def SetHwndProp(self, hwnd: hints.Incomplete, idObject: hints.Incomplete, idChild: hints.Incomplete, idProp: hints.Incomplete, var: hints.Incomplete) -> hints.Hresult: ...
-        def SetHwndPropStr(self, hwnd: hints.Incomplete, idObject: hints.Incomplete, idChild: hints.Incomplete, idProp: hints.Incomplete, str: hints.Incomplete) -> hints.Hresult: ...
-        def SetHwndPropServer(self, hwnd: hints.Incomplete, idObject: hints.Incomplete, idChild: hints.Incomplete, paProps: hints.Incomplete, cProps: hints.Incomplete, pServer: hints.Incomplete, AnnoScope: hints.Incomplete) -> hints.Hresult: ...
-        def ClearHwndProps(self, hwnd: hints.Incomplete, idObject: hints.Incomplete, idChild: hints.Incomplete, paProps: hints.Incomplete, cProps: hints.Incomplete) -> hints.Hresult: ...
-        def ComposeHwndIdentityString(self, hwnd: hints.Incomplete, idObject: hints.Incomplete, idChild: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def DecomposeHwndIdentityString(self, pIDString: hints.Incomplete, dwIDStringLen: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
-        def SetHmenuProp(self, hmenu: hints.Incomplete, idChild: hints.Incomplete, idProp: hints.Incomplete, var: hints.Incomplete) -> hints.Hresult: ...
-        def SetHmenuPropStr(self, hmenu: hints.Incomplete, idChild: hints.Incomplete, idProp: hints.Incomplete, str: hints.Incomplete) -> hints.Hresult: ...
-        def SetHmenuPropServer(self, hmenu: hints.Incomplete, idChild: hints.Incomplete, paProps: hints.Incomplete, cProps: hints.Incomplete, pServer: hints.Incomplete, AnnoScope: hints.Incomplete) -> hints.Hresult: ...
-        def ClearHmenuProps(self, hmenu: hints.Incomplete, idChild: hints.Incomplete, paProps: hints.Incomplete, cProps: hints.Incomplete) -> hints.Hresult: ...
-        def ComposeHmenuIdentityString(self, hmenu: hints.Incomplete, idChild: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def DecomposeHmenuIdentityString(self, pIDString: hints.Incomplete, dwIDStringLen: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-
-
-CAccPropServices._com_interfaces_ = [IAccPropServices]
+assert sizeof(__MIDL_IWinTypes_0009) == 4, sizeof(__MIDL_IWinTypes_0009)
+assert alignment(__MIDL_IWinTypes_0009) == 4, alignment(__MIDL_IWinTypes_0009)
 
 
 class IAccessible(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
@@ -354,12 +334,42 @@ class _RemotableHandle(Structure):
     pass
 
 
-wireHMENU = POINTER(_RemotableHandle)
+_RemotableHandle._fields_ = [
+    ('fContext', c_int),
+    ('u', __MIDL_IWinTypes_0009),
+]
+
+assert sizeof(_RemotableHandle) == 8, sizeof(_RemotableHandle)
+assert alignment(_RemotableHandle) == 4, alignment(_RemotableHandle)
 
 
-class Library(object):
-    name = 'Accessibility'
-    _reg_typelib_ = ('{1EA4DBF0-3C3B-11CF-810C-00AA00389B71}', 1, 1)
+class IAccessibleHandler(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    _case_insensitive_ = True
+    _iid_ = GUID('{03022430-ABC4-11D0-BDE2-00AA001A1953}')
+    _idlflags_ = ['hidden', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def AccessibleObjectFromID(self, hwnd: hints.Incomplete, lObjectID: hints.Incomplete) -> 'IAccessible': ...
+
+
+IAccessibleHandler._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'AccessibleObjectFromID',
+        (['in'], c_int, 'hwnd'),
+        (['in'], c_int, 'lObjectID'),
+        (['out'], POINTER(POINTER(IAccessible)), 'pIAccessible')
+    ),
+]
+
+################################################################
+# code template for IAccessibleHandler implementation
+# class IAccessibleHandler_Impl(object):
+#     def AccessibleObjectFromID(self, hwnd, lObjectID):
+#         '-no docstring-'
+#         #return pIAccessible
+#
 
 
 class IAccPropServer(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
@@ -397,25 +407,35 @@ IAccPropServer._methods_ = [
 #
 
 
-class __MIDL_IWinTypes_0009(Union):
-    pass
+class Library(object):
+    name = 'Accessibility'
+    _reg_typelib_ = ('{1EA4DBF0-3C3B-11CF-810C-00AA00389B71}', 1, 1)
 
 
-__MIDL_IWinTypes_0009._fields_ = [
-    ('hInproc', c_int),
-    ('hRemote', c_int),
-]
+class IAccPropServices(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    _case_insensitive_ = True
+    _iid_ = GUID('{6E26E776-04F0-495D-80E4-3330352E3169}')
+    _idlflags_ = []
 
-assert sizeof(__MIDL_IWinTypes_0009) == 4, sizeof(__MIDL_IWinTypes_0009)
-assert alignment(__MIDL_IWinTypes_0009) == 4, alignment(__MIDL_IWinTypes_0009)
+    if TYPE_CHECKING:  # commembers
+        def SetPropValue(self, pIDString: hints.Incomplete, dwIDStringLen: hints.Incomplete, idProp: hints.Incomplete, var: hints.Incomplete) -> hints.Hresult: ...
+        def SetPropServer(self, pIDString: hints.Incomplete, dwIDStringLen: hints.Incomplete, paProps: hints.Incomplete, cProps: hints.Incomplete, pServer: hints.Incomplete, AnnoScope: hints.Incomplete) -> hints.Hresult: ...
+        def ClearProps(self, pIDString: hints.Incomplete, dwIDStringLen: hints.Incomplete, paProps: hints.Incomplete, cProps: hints.Incomplete) -> hints.Hresult: ...
+        def SetHwndProp(self, hwnd: hints.Incomplete, idObject: hints.Incomplete, idChild: hints.Incomplete, idProp: hints.Incomplete, var: hints.Incomplete) -> hints.Hresult: ...
+        def SetHwndPropStr(self, hwnd: hints.Incomplete, idObject: hints.Incomplete, idChild: hints.Incomplete, idProp: hints.Incomplete, str: hints.Incomplete) -> hints.Hresult: ...
+        def SetHwndPropServer(self, hwnd: hints.Incomplete, idObject: hints.Incomplete, idChild: hints.Incomplete, paProps: hints.Incomplete, cProps: hints.Incomplete, pServer: hints.Incomplete, AnnoScope: hints.Incomplete) -> hints.Hresult: ...
+        def ClearHwndProps(self, hwnd: hints.Incomplete, idObject: hints.Incomplete, idChild: hints.Incomplete, paProps: hints.Incomplete, cProps: hints.Incomplete) -> hints.Hresult: ...
+        def ComposeHwndIdentityString(self, hwnd: hints.Incomplete, idObject: hints.Incomplete, idChild: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def DecomposeHwndIdentityString(self, pIDString: hints.Incomplete, dwIDStringLen: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
+        def SetHmenuProp(self, hmenu: hints.Incomplete, idChild: hints.Incomplete, idProp: hints.Incomplete, var: hints.Incomplete) -> hints.Hresult: ...
+        def SetHmenuPropStr(self, hmenu: hints.Incomplete, idChild: hints.Incomplete, idProp: hints.Incomplete, str: hints.Incomplete) -> hints.Hresult: ...
+        def SetHmenuPropServer(self, hmenu: hints.Incomplete, idChild: hints.Incomplete, paProps: hints.Incomplete, cProps: hints.Incomplete, pServer: hints.Incomplete, AnnoScope: hints.Incomplete) -> hints.Hresult: ...
+        def ClearHmenuProps(self, hmenu: hints.Incomplete, idChild: hints.Incomplete, paProps: hints.Incomplete, cProps: hints.Incomplete) -> hints.Hresult: ...
+        def ComposeHmenuIdentityString(self, hmenu: hints.Incomplete, idChild: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def DecomposeHmenuIdentityString(self, pIDString: hints.Incomplete, dwIDStringLen: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
 
-_RemotableHandle._fields_ = [
-    ('fContext', c_int),
-    ('u', __MIDL_IWinTypes_0009),
-]
 
-assert sizeof(_RemotableHandle) == 8, sizeof(_RemotableHandle)
-assert alignment(_RemotableHandle) == 4, alignment(_RemotableHandle)
+wireHMENU = POINTER(_RemotableHandle)
 
 IAccPropServices._methods_ = [
     COMMETHOD(
@@ -676,33 +696,14 @@ IAccPropServices._methods_ = [
 #
 
 
-class IAccessibleHandler(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    _case_insensitive_ = True
-    _iid_ = GUID('{03022430-ABC4-11D0-BDE2-00AA001A1953}')
-    _idlflags_ = ['hidden', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def AccessibleObjectFromID(self, hwnd: hints.Incomplete, lObjectID: hints.Incomplete) -> 'IAccessible': ...
+class CAccPropServices(CoClass):
+    _reg_clsid_ = GUID('{B5F8350B-0548-48B1-A6EE-88BD00B4A5E7}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{1EA4DBF0-3C3B-11CF-810C-00AA00389B71}', 1, 1)
 
 
-IAccessibleHandler._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'AccessibleObjectFromID',
-        (['in'], c_int, 'hwnd'),
-        (['in'], c_int, 'lObjectID'),
-        (['out'], POINTER(POINTER(IAccessible)), 'pIAccessible')
-    ),
-]
-
-################################################################
-# code template for IAccessibleHandler implementation
-# class IAccessibleHandler_Impl(object):
-#     def AccessibleObjectFromID(self, hwnd, lObjectID):
-#         '-no docstring-'
-#         #return pIAccessible
-#
+CAccPropServices._com_interfaces_ = [IAccPropServices]
 
 
 class IAccIdentity(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
@@ -734,11 +735,12 @@ IAccIdentity._methods_ = [
 #
 
 __all__ = [
-    'wireHMENU', 'IAccessible', 'ANNO_THIS', '__MIDL_IWinTypes_0009',
-    'IAccessibleHandler', 'IAccIdentity', 'AnnoScope',
-    'ANNO_CONTAINER', 'Library', 'IAccPropServer', 'typelib_path',
-    'IAccPropServices', '_RemotableHandle', 'CAccPropServices'
+    'IAccessible', 'IAccessibleHandler', 'AnnoScope',
+    'IAccPropServer', 'typelib_path', 'ANNO_THIS',
+    '__MIDL_IWinTypes_0009', 'IAccPropServices', '_RemotableHandle',
+    'ANNO_CONTAINER', 'IAccIdentity', 'CAccPropServices', 'Library',
+    'wireHMENU'
 ]
 
-_check_version('1.4.11', 1755040494.219348)
+_check_version('1.4.11', 1757470674.954518)
 

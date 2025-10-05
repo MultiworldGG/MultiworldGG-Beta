@@ -9,7 +9,7 @@ from worlds.generic.Rules import set_rule, add_rule, add_item_rule, forbid_item
 from Options import Accessibility, Range, Toggle
 
 from .Items import Spyro3Item, Spyro3ItemCategory, item_dictionary, key_item_names, item_descriptions, BuildItemPool
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Locations import Spyro3Location, Spyro3LocationCategory, location_tables, location_dictionary, hint_locations
 from .Options import Spyro3Option, GoalOptions, LifeBottleOptions, MoneybagsOptions, SparxUpgradeOptions, \
     SparxForGemsOptions, GemsanityOptions, LevelLockOptions, spyro_options_groups
@@ -35,9 +35,11 @@ class Spyro3World(World):
     """
     Spyro 3 is a game about a purple dragon who likes eggs.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("spyro3")
 
     game: str = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options_dataclass = Spyro3Option
     options: Spyro3Option

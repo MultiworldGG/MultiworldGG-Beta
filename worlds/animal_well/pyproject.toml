@@ -1,33 +1,30 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.animal_well"
-dynamic = ["version"]
+version = "v0.5.4"
 description = "MultiWorld: ANIMAL WELL"
-authors = [
-    {name = "ScipioWright"},
-    {name = "RoobyRoo"},
-    {name = "Franklesby"},
-    {name = "Dicene"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [
-    "Pymem>=1.13.1",
-    "pywin32>=306; sys_platform == 'win32'",
-]
+dependencies = [ "Pymem>=1.13.1", "pywin32>=306; sys_platform == 'win32'",]
+[[project.authors]]
+name = "ScipioWright"
+
+[[project.authors]]
+name = "RoobyRoo"
+
+[[project.authors]]
+name = "Franklesby"
+
+[[project.authors]]
+name = "Dicene"
 
 [project.entry-points."mwgg.client"]
 "worlds.animal_well.Client" = "worlds.animal_well.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.animal_well"]
+where = [ "src",]
+include = [ "worlds.animal_well",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.animal_well.Constants.VERSION"}

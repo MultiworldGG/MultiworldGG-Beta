@@ -17,7 +17,7 @@ from .regions import MkddRegionData
 from .rules import MkddRules
 from . import game_data, version
 
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 
 class MkddWebWorld(WebWorld):
     theme = "ocean"
@@ -37,8 +37,10 @@ class MkddWorld(World):
     """
     The fourth entry in Mario Kart series, Double Dash shakes up the gameplay by introducing 2 drivers per vehicle.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("mario_kart_double_dash")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     web = MkddWebWorld()
 

@@ -1,7 +1,7 @@
 from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Tutorial
 from .Regions import create_regions
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import create_locations, location_table
 from .Items import create_items, item_table
 
@@ -24,9 +24,13 @@ class ChainedEchoesWorld(World):
     Regions and locations are created in `create_regions` (including a call to `create_locations`).
     Items are created in `create_items`.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("chainedechoes")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     location_name_to_id = location_table
     item_name_to_id = item_table
     topology_present = True

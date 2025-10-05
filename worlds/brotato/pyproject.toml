@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.brotato"
-dynamic = ["version"]
+version = "0.1.1"
 description = "MultiWorld: Brotato"
-authors = [
-    {name = "RampagingHippy"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "RampagingHippy"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.brotato"]
+where = [ "src",]
+include = [ "worlds.brotato",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.brotato.Constants.VERSION"}

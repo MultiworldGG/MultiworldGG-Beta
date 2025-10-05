@@ -1,5 +1,4 @@
 from . import LegoStarWarsTCSWorld, LegoStarWarsTCSWebWorld
-from .constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
 Lego Star Wars: The Complete Saga is a 2007 compilation of the all Lego Star Wars series games. World Registration
@@ -9,8 +8,11 @@ This file contains the metadata and class references for the lego_star_wars_tcs 
 
 # Required metadata
 WORLD_NAME = "lego_star_wars_tcs"
+
+from BaseUtils import get_archipelago_json
+game_name, author, minimum_ap_version, version = get_archipelago_json(WORLD_NAME)
+
 GAME_NAME = game_name
-IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version
 

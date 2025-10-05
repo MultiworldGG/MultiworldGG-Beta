@@ -1,0 +1,9 @@
+{
+    "version": 6,
+    "compatible_version": 5,
+    "game": "Ori and the Blind Forest",
+    "authors": ["Gray"],
+    "igdb_id": 7344,
+    "minimum_ap_version": "0.6.4",
+    "world_version": "0.0.0"
+}

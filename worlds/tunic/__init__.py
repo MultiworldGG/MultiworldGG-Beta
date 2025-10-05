@@ -4,7 +4,7 @@ from dataclasses import fields
 from logging import warning
 from BaseClasses import Region, Location, Item, Tutorial, ItemClassification, MultiWorld, CollectionState
 from .bells import bell_location_groups, bell_location_name_to_id
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .fuses import fuse_location_name_to_id, fuse_location_groups
 from .items import (item_name_to_id, item_table, item_name_groups, fool_tiers, filler_items, slot_data_item_names,
                     combat_items)
@@ -24,6 +24,9 @@ from . import ut_stuff
 from worlds.AutoWorld import WebWorld, World
 from Options import PlandoConnection, OptionError, PerGameCommonOptions, Removed, Range
 from settings import Group, Bool, FilePath
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tunic")
 
 
 class TunicSettings(Group):
@@ -92,7 +95,7 @@ class TunicWorld(World):
     game = GAME_NAME
     web = TunicWeb()
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
 
     options: TunicOptions
     options_dataclass = TunicOptions

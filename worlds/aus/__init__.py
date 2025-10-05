@@ -1,5 +1,5 @@
 from .Regions import link_aus_areas, aus_regions
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from BaseClasses import Region, Entrance, Tutorial, Item
 from .Options import AUSOptions
 from .Items import item_table, AUSItem, item_pool
@@ -25,9 +25,13 @@ class AUSWorld(World):
     """
     A freeware metroidvania game created by Maddy Thorson chronicling the travels of an adventurous egg.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("aus")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = AUSOptions
     options: AUSOptions
     topology_present = False

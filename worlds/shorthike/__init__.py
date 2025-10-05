@@ -3,7 +3,7 @@ from BaseClasses import ItemClassification, Region, Location, Item, Tutorial
 from Options import PerGameCommonOptions
 from worlds.AutoWorld import World, WebWorld
 from .Items import item_table, group_table, base_id
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Locations import location_table
 from .Rules import create_rules, get_min_feathers
 from .Options import ShortHikeOptions, shorthike_option_groups
@@ -27,9 +27,11 @@ class ShortHikeWorld(World):
     and take in the beautiful world around you.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("shorthike")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
 
     item_name_to_id = {item["name"]: item["id"] for item in item_table}
     location_name_to_id = {loc["name"]: loc["id"] for loc in location_table}

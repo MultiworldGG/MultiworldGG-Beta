@@ -1,27 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.xenobladex"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Xenoblade X"
-authors = [
-    {name = "Maragon"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
-
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Maragon"
 
 [project.entry-points."mwgg.client"]
 "worlds.xenobladex.Client" = "worlds.xenobladex.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.xenobladex"]
+where = [ "src",]
+include = [ "worlds.xenobladex",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.xenobladex.Constants.VERSION"}

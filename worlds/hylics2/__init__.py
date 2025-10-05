@@ -2,7 +2,7 @@ from typing import Dict, List, Any
 from BaseClasses import Region, Entrance, Location, Item, Tutorial, ItemClassification
 from worlds.generic.Rules import set_rule
 from . import Exits, Items, Locations, Rules
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Options import Hylics2Options
 from worlds.AutoWorld import WebWorld, World
 
@@ -24,8 +24,10 @@ class Hylics2World(World):
     Hylics 2 is a surreal and unusual RPG, with a bizarre yet unique visual style. Play as Wayne,
     travel the world, and gather your allies to defeat the nefarious Gibby in his Hylemxylem!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("hylics2")
+
     game: str = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     web = Hylics2Web()
 

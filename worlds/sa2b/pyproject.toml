@@ -1,24 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.sa2b"
-dynamic = ["version"]
+version = "2.4.2"
 description = "MultiWorld: Sonic Adventure 2 Battle"
-authors = [
-    {name = "PoryGone"},
-    {name = "RaspberrySpace"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "PoryGone"
+
+[[project.authors]]
+name = "RaspberrySpace"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.sa2b"]
+where = [ "src",]
+include = [ "worlds.sa2b",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.sa2b.Constants.VERSION"}

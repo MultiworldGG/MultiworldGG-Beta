@@ -4,7 +4,7 @@ import os
 from typing import Any, Dict, List, Set
 
 from .ProgressiveDistricts import get_flat_progressive_districts
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from worlds.generic.Rules import forbid_item
 
 
@@ -84,8 +84,11 @@ class CivVIWorld(World):
     Civilization VI is a turn-based strategy video game in which one or more players compete alongside computer-controlled opponents to grow their individual civilization from a small tribe to control the entire planet across several periods of development.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("civ_6")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     topology_present = False
     options_dataclass = CivVIOptions

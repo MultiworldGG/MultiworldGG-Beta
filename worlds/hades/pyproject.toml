@@ -1,26 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.hades"
-dynamic = ["version"]
+version = "0.5.1"
 description = "MultiWorld: Hades"
-authors = [
-    {name = "Naix"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Naix"
 
 [project.entry-points."mwgg.client"]
 "worlds.hades.Client" = "worlds.hades.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.hades"]
+where = [ "src",]
+include = [ "worlds.hades",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.hades.Constants.VERSION"}

@@ -3,7 +3,7 @@ import typing
 
 from .LADXR.checkMetadata import checkMetadataTable
 from .Common import *
-from .Constants import GAME_NAME
+from . import GAME_NAME
 from worlds.generic.Rules import add_item_rule
 from .Items import ladxr_item_to_la_item_name
 

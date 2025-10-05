@@ -26,7 +26,7 @@ from .Regions import *
 from .Rules import *
 from .Rules import set_element_rules
 from .iso_helper.lm_rom import LMPlayerContainer
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 if TYPE_CHECKING:
     from NetUtils import MultiData
 
@@ -147,9 +147,10 @@ class LMWorld(World):
     Armed with the mysterious Poltergust 3000, Luigi will need to overcome his fears to kick the ghosts out
     before he can move in and save Mario!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("luigismansion")
 
     game: ClassVar[str] = GAME_NAME
-    igdb_id = IGDB_ID
     author: ClassVar[str] = AUTHOR
     options_dataclass = LuigiOptions.LMOptions
     options: LuigiOptions.LMOptions

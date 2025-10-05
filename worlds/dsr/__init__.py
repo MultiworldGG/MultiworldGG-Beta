@@ -8,9 +8,12 @@ from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import set_rule, add_rule, add_item_rule
 
 from .Items import DSRItem, DSRItemCategory, item_dictionary, key_item_names, item_descriptions, BuildItemPool
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import DSRLocation, DSRLocationCategory, location_tables, location_dictionary, location_skip_categories
 from .Options import DSROption
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("dsr")
 
 class DSRWeb(WebWorld):
     bug_report_page = ""
@@ -34,7 +37,7 @@ class DSRWorld(World):
     """
 
     game: str = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     options_dataclass = DSROption
     options: DSROption

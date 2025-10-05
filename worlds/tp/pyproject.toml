@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.tp"
-dynamic = ["version"]
+version = "0.3.1"
 description = "MultiWorld: Twilight Princess"
-authors = [
-    {name = "WritingHusky"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "WritingHusky"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.tp"]
+where = [ "src",]
+include = [ "worlds.tp",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.tp.Constants.VERSION"}

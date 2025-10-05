@@ -11,7 +11,7 @@ from Fill import fill_restrictive
 
 from .Data import Data
 from .Options import RE3ROptions
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 
 Data.load_data('jill', 'a')
 
@@ -50,13 +50,15 @@ class ResidentEvil3Remake(World):
     """
     'Jill, I am your father.' - Nemesis, probably
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("residentevil3remake")
+
     game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
 
     data_version = 2
     required_client_version = (0, 5, 0)
-    apworld_release_version = VERSION # defined to show in spoiler log
+    apworld_release_version = WORLD_VERSION # defined to show in spoiler log
 
     web = ResidentEvil3RemakeWeb()
 

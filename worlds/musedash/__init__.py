@@ -5,7 +5,7 @@ from math import floor
 from Options import PerGameCommonOptions, OptionError
 
 from .Options import MuseDashOptions, md_option_groups
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Items import MuseDashSongItem, MuseDashFixedItem
 from .Locations import MuseDashLocation
 from .MuseDashCollection import MuseDashCollections
@@ -43,6 +43,8 @@ class MuseDashWorld(World):
     """Muse Dash is a rhythm game where you hit objects to the beat of one of 400+ songs.
     Play through a selection of randomly chosen songs, collecting music sheets
     until you have enough to play and complete the goal song!"""
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("musedash")
 
     # FUTURE OPTIONS
     # - Album Rando.
@@ -51,7 +53,6 @@ class MuseDashWorld(World):
 
     # World Options
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     options_dataclass: ClassVar[Type[PerGameCommonOptions]] = MuseDashOptions
     options: MuseDashOptions

@@ -1,0 +1,9 @@
+{
+    "version": 6,
+    "compatible_version": 5,
+    "game": "Super Mario Sunshine",
+    "authors": ["Joshark"],
+    "igdb_id": 1075,
+    "minimum_ap_version": "0.6.4",
+    "world_version": "0.2.1"
+}

@@ -1,7 +1,7 @@
-from kvui import GameManager, MDLabel, MDBoxLayout, MDScreen, MDLinearProgressIndicator, MDFloatLayout
+from Gui import MDScreen, MDLabel, MDBoxLayout, MDLinearProgressIndicator, MDFloatLayout, MDApp, MultiMDApp
 from kivymd.uix.fitimage import FitImage
 
-def build_gui(ui: GameManager):
+def build_gui(ui: MDScreen):
     ui.lm_layout = MDBoxLayout(orientation="vertical")
     ui.wallet_progress_bar = MDLinearProgressIndicator(type="indeterminate", size_hint_x=.9, pos_hint={'center_x':.5, 'center_y':.5 }, max=1)
     ui.boo_progress_bar = MDLinearProgressIndicator(type="indeterminate", size_hint_x=.9, pos_hint={'center_x':.5, 'center_y':.5 }, max=1)
@@ -12,9 +12,9 @@ def build_gui(ui: GameManager):
     _make_progress_bar_layout(ui, ui.boo_count, ui.boo_progress_bar, "Boo")
     _make_progress_bar_layout(ui, ui.wallet_ui, ui.wallet_progress_bar, "Wallet")
 
-    ui.add_client_tab("Luigi's Mansion", ui.lm_layout)
+    ui.add_widget(ui.lm_layout)
 
-def _make_progress_bar_layout(ui: GameManager, counter: MDLabel, progress_bar: MDLinearProgressIndicator, label: str):
+def _make_progress_bar_layout(ui: MDScreen, counter: MDLabel, progress_bar: MDLinearProgressIndicator, label: str):
     root_layout = MDBoxLayout(orientation="vertical", padding=[5, 5, 5, 10])
 
     root_layout.add_widget(MDLabel(text=label, halign="center", font_style="Display", role="small", width=5))
@@ -23,7 +23,7 @@ def _make_progress_bar_layout(ui: GameManager, counter: MDLabel, progress_bar: M
 
     ui.lm_layout.add_widget(root_layout)
 
-def _make_progressive_layout(ui: GameManager, debug: bool = False):
+def _make_progressive_layout(ui: MDScreen, debug: bool = False):
     debug_color = [0,0,0,0]
     if debug:
         debug_color = [0,0,1,1]

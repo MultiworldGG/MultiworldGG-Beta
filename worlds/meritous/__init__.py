@@ -6,7 +6,7 @@
 from BaseClasses import Item, MultiWorld, Tutorial
 from Fill import fill_restrictive
 from .Items import item_table, item_groups, MeritousItem
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import location_table, MeritousLocation
 from .Options import MeritousOptions, cost_scales
 from .Regions import create_regions
@@ -35,9 +35,10 @@ class MeritousWorld(World):
         Five generations after the Orcus Dome incident, strange experiments conducted in a new
         structure on the moon are tearing at the very fabric of reality...
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("meritous")
 
     game: str = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     topology_present: False
 

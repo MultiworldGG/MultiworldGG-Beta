@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.wordipelago"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Wordipelago"
-authors = [
-    {name = "ProfDeCube"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "ProfDeCube"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.wordipelago"]
+where = [ "src",]
+include = [ "worlds.wordipelago",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.wordipelago.Constants.VERSION"}

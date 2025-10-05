@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.bomb_rush_cyberfunk"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Bomb Rush Cyberfunk"
-authors = [
-    {name = "CookieCat45"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "CookieCat45"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.bomb_rush_cyberfunk"]
+where = [ "src",]
+include = [ "worlds.bomb_rush_cyberfunk",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.bomb_rush_cyberfunk.Constants.VERSION"}

@@ -5,7 +5,7 @@ from BaseClasses import Region, Tutorial, ItemClassification
 from Utils import visualize_regions
 from worlds.AutoWorld import World, WebWorld
 from .Items import item_data_table, HereComesNikoItem, item_table, item_name_groups
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Locations import location_data_table, HereComesNikoLocation, locked_locations, location_table, \
     location_name_groups
 from .Options import *
@@ -31,10 +31,11 @@ class HereComesNikoWebWorld(WebWorld):
 
 class HereComesNikoWorld(World):
     """A cozy little game, about frogs and being a good friend"""
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("hcniko")
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     web = HereComesNikoWebWorld()
     options: HereComesNikoOptions
     options_dataclass = HereComesNikoOptions

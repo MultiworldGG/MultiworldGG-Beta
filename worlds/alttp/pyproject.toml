@@ -1,31 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.alttp"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: A Link to the Past"
-authors = [
-    {name = "Berserker66"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [
-    "maseya-z3pr>=1.0.0rc1",
-    "xxtea>=3.0.0",
-]
+dependencies = [ "maseya-z3pr>=1.0.0rc1", "xxtea>=3.0.0",]
+[[project.authors]]
+name = "Berserker66"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.alttp"]
+where = [ "src",]
+include = [ "worlds.alttp",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.alttp.Constants.VERSION"}

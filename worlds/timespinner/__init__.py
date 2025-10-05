@@ -1,7 +1,7 @@
 from typing import Dict, List, Set, Tuple, TextIO, Any, Optional
 from BaseClasses import Item, Tutorial, ItemClassification
 from .Items import get_item_names_per_category
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Items import item_table, starter_melee_weapons, starter_spells, filler_items, starter_progression_items, pyramid_start_starter_progression_items
 from .Locations import get_location_datas, EventId
 from .Options import BackwardsCompatiableTimespinnerOptions, Toggle, BossRandoType
@@ -9,6 +9,9 @@ from .PreCalculatedWeights import PreCalculatedWeights
 from .Regions import create_regions_and_locations
 from worlds.AutoWorld import World, WebWorld
 import logging
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("timespinner")
 
 class TimespinnerWebWorld(WebWorld):
     theme = "ice"
@@ -41,7 +44,7 @@ class TimespinnerWorld(World):
     options: BackwardsCompatiableTimespinnerOptions
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     topology_present = True
     web = TimespinnerWebWorld()
     required_client_version = (0, 4, 2)

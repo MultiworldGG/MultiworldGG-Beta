@@ -73,9 +73,11 @@ class MinishCapWorld(World):
     The game retains many elements common to previous Zelda games, especially top-down predecessors such as ALttP, and includes new features and mechanics.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tmc")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     version = VERSION
     web = MinishCapWebWorld()
     options_dataclass = MinishCapOptions

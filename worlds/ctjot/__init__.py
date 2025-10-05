@@ -6,11 +6,14 @@ from typing import Callable
 from BaseClasses import Item, Location, MultiWorld, Tutorial, Region, CollectionState, ItemClassification
 from ..AutoWorld import World, WebWorld
 
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Client import CTJoTSNIClient
 from .Items import CTJoTItemManager
 from .Locations import CTJoTLocationManager
 from .Options import CTJoTOptions
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ctjot")
 
 ctjot_logger = logging.getLogger("Jets of Time")
 
@@ -48,8 +51,7 @@ class CTJoTWorld(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    version: str = VERSION
-    igdb_id: int = IGDB_ID
+    version: str = AP_VERSION
     options: CTJoTOptions
     options_dataclass = CTJoTOptions
     item_name_to_id = _item_manager.get_item_name_to_id_mapping()

@@ -1,26 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.adventure"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Adventure"
-authors = [
-    {name = "JusticePS"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "JusticePS"
 
 [project.entry-points."mwgg.client"]
 "worlds.adventure.Client" = "worlds.adventure.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.adventure"]
+where = [ "src",]
+include = [ "worlds.adventure",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.adventure.Constants.VERSION"}

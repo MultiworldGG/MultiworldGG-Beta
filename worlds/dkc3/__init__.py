@@ -9,7 +9,7 @@ from BaseClasses import Item, MultiWorld, Tutorial, ItemClassification
 from Options import PerGameCommonOptions
 from worlds.AutoWorld import WebWorld, World
 from .Client import DKC3SNIClient
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Items import DKC3Item, ItemData, item_table, inventory_table, junk_table
 from .Levels import level_list
 from .Locations import DKC3Location, all_locations, setup_locations
@@ -19,6 +19,8 @@ from .Regions import create_regions, connect_regions
 from .Rom import LocalRom, patch_rom, get_base_rom_path, DKC3DeltaPatch
 from .Rules import set_rules
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("dkc3")
 
 class DK3Settings(settings.Group):
     class RomFile(settings.UserFilePath):
@@ -54,7 +56,7 @@ class DKC3World(World):
     mystery of why Donkey Kong and Diddy disappeared while on vacation.
     """
     game: str = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     settings: typing.ClassVar[DK3Settings]
 

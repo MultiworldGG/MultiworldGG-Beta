@@ -7,7 +7,7 @@ import pkgutil
 from BaseClasses import MultiWorld, Tutorial, ItemClassification
 from worlds.AutoWorld import World, WebWorld
 from .Items import DKCItem, item_table, misc_table, item_groups, STARTING_ID
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import setup_locations, all_locations, location_groups
 from .Regions import create_regions, connect_regions
 from .Names import ItemName, LocationName
@@ -16,6 +16,9 @@ from .Client import DKCSNIClient
 from .Levels import generate_level_list, level_map, location_id_to_level_id
 from .Rules import DKCStrictRules, DKCLooseRules, DKCExpertRules
 from .Rom import patch_rom, DKCProcedurePatch, HASH_US
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("dkc")
 
 from typing import Dict, Set, List, ClassVar, Any
 
@@ -62,7 +65,6 @@ class DKCWorld(World):
     The player traverses 40 side-scrolling levels as they jump between platforms and avoid obstacles. 
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     web = DKCWeb()
 

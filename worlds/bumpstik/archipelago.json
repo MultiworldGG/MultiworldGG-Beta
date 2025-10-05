@@ -1,0 +1,9 @@
+{
+    "version": 6,
+    "compatible_version": 5,
+    "game": "Bumper Stickers",
+    "authors": ["FelicitusNeko"],
+    "igdb_id": 271950,
+    "minimum_ap_version": "0.6.4",
+    "world_version": "0.0.0"
+}

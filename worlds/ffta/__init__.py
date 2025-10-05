@@ -10,7 +10,7 @@ import logging
 from Utils import visualize_regions
 
 from .client import FFTAClient
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 
 from BaseClasses import ItemClassification, MultiWorld, Tutorial, Item
 from worlds.AutoWorld import WebWorld, World
@@ -34,6 +34,8 @@ from .items import (create_item_label_to_code_map, AllItems, item_table, FFTAIte
 from .locations import (create_location_label_to_id_map)
 from .rom import FFTAProcedurePatch, generate_output
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ffta")
 
 class FFTAWebWorld(WebWorld):
     """
@@ -68,7 +70,6 @@ class FFTAWorld(World):
     battlefields. Players are mostly free to decide the classes, abilities, and stats of their characters.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     web = FFTAWebWorld()
     topology_present = False

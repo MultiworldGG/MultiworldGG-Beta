@@ -11,7 +11,7 @@ from . import creatures
 from . import options
 from .items import item_table, group_items
 from .rules import set_rules
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 
 
 class SubnauticaWeb(WebWorld):
@@ -35,8 +35,10 @@ class SubnauticaWorld(World):
     an unknown bacteria. The planet's automatic quarantine will shoot you down if you try to leave.
     You must find a cure for yourself, build an escape rocket, and leave the planet.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("subnautica")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     web = SubnauticaWeb()
 

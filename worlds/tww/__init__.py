@@ -16,7 +16,7 @@ from worlds.generic.Rules import add_item_rule
 from worlds.LauncherComponents import Component, SuffixIdentifier, Type, components, icon_paths, launch_subprocess
 
 from .Items import ISLAND_NUMBER_TO_CHART_NAME, ITEM_TABLE, TWWItem, item_name_groups
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Locations import LOCATION_TABLE, TWWFlag, TWWLocation
 from .Options import TWWOptions, tww_option_groups
 from .Presets import tww_options_presets
@@ -26,6 +26,9 @@ from .randomizers.Entrances import ALL_EXITS, BOSS_EXIT_TO_DUNGEON, MINIBOSS_EXI
 from .randomizers.ItemPool import generate_itempool
 from .randomizers.RequiredBosses import RequiredBossesRandomizer
 from .Rules import set_rules
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, VERSION, WORLD_VERSION = get_archipelago_json("tww")
 
 
 def run_client() -> None:
@@ -121,7 +124,6 @@ class TWWWorld(World):
 
     game: ClassVar[str] = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     topology_present: bool = True
 
     item_name_to_id: ClassVar[dict[str, int]] = {

@@ -8,7 +8,7 @@ import operator
 from collections import defaultdict, Counter
 
 from .Items import item_table, item_name_groups
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Rules import set_rules, cost_terms, _hk_can_beat_thk, _hk_siblings_ending, _hk_can_beat_radiance
 from .Options import hollow_knight_options, hollow_knight_randomize_options, Goal, WhitePalace, CostSanity, \
     shop_to_option, HKOptions, GrubHuntGoal
@@ -21,6 +21,9 @@ from BaseClasses import Region, Location, MultiWorld, Item, LocationProgressType
 from worlds.AutoWorld import World, LogicMixin, WebWorld
 
 from settings import Group, Bool
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("hk")
 
 logger = logging.getLogger("Hollow Knight")
 
@@ -176,9 +179,8 @@ class HKWorld(World):
 
     As the enigmatic Knight, you’ll traverse the depths, unravel its mysteries and conquer its evils.
     """  # from https://www.hollowknight.com
-    game: str = "Hollow Knight"
+    game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = 14593
     options_dataclass = HKOptions
     options: HKOptions
     settings: typing.ClassVar[HollowKnightSettings]

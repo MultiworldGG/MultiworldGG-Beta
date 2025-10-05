@@ -5,7 +5,7 @@ import logging
 from typing import Dict, Any, TextIO
 from BaseClasses import (Tutorial, CollectionState, MultiWorld, ItemClassification as ic, LocationProgressType)
 from .modules.random_battles import get_boss_battles
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .SettingsString import load_settings_from_site_string
 from worlds.AutoWorld import World, WebWorld
 from . import Locations, options
@@ -82,8 +82,10 @@ class PaperMarioWorld(World):
     help you take back the Star Rod from Bowser and save Peach. You will have to defeat powerful foes
     and venture through dangerous lands with the help of partners you meet along the way.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("papermario")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     web = PaperMarioWeb()
     topology_present = True

@@ -1,0 +1,9 @@
+{
+    "version": 6,
+    "compatible_version": 5,
+    "game": "Powerwash Simulator",
+    "authors": ["SW_CreeperKing"],
+    "igdb_id": 138590,
+    "minimum_ap_version": "0.6.4",
+    "world_version": "0.0.0"
+}

@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.getting_over_it"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Getting Over It"
-authors = [
-    {name = "Slimey"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Slimey"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.getting_over_it"]
+where = [ "src",]
+include = [ "worlds.getting_over_it",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.getting_over_it.Constants.VERSION"}

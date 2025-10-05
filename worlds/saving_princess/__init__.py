@@ -8,8 +8,9 @@ from worlds.AutoWorld import World, WebWorld
 from worlds.LauncherComponents import components, Component, launch_subprocess, Type as ComponentType
 from . import Options, Items, Locations
 from .Constants import *
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("saving_princess")
 
 def launch_client(*args: str):
     from .Client import launch
@@ -73,7 +74,7 @@ class SavingPrincessWorld(World):
     """  # Excerpt from itch
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     required_client_version = (0, 5, 0)
 
     topology_present = False

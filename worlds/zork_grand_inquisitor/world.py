@@ -9,7 +9,7 @@ from entrance_rando import disconnect_entrance_for_randomization, randomize_entr
 from worlds.AutoWorld import WebWorld, World
 
 from .data.entrance_data import Entrance, EntranceRuleData, entrance_rule_data
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 
 from .data.entrance_randomizer_data import (
     entrances_to_game_location_teleports,
@@ -107,12 +107,14 @@ class ZorkGrandInquisitorWorld(World):
     Foundation, and The Skull of Yoruk.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("zork_grand_inquisitor")
+
     options_dataclass = ZorkGrandInquisitorOptions
     options: ZorkGrandInquisitorOptions
 
     game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
 
     item_name_to_id = item_names_to_id()
     location_name_to_id = location_names_to_id()

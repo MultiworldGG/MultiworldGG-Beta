@@ -1,5 +1,4 @@
 from . import HatInTimeWorld, AWebInTime
-from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 from .Client import launch
 
 """
@@ -10,12 +9,15 @@ This file contains the metadata and class references for the ahit world.
 
 # Required metadata
 WORLD_NAME = "ahit"
+
+from BaseUtils import get_archipelago_json
+game_name, author, minimum_ap_version, version = get_archipelago_json(WORLD_NAME)
+
 GAME_NAME = game_name
-IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version
 
 # Plugin entry points
 WORLD_CLASS = HatInTimeWorld
 WEB_WORLD_CLASS = AWebInTime
-CLIENT_FUNCTION = main
+CLIENT_FUNCTION = launch

@@ -1,26 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.undertale"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Undertale"
-authors = [
-    {name = "jonloveslegos"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "jonloveslegos"
 
 [project.entry-points."mwgg.client"]
 "worlds.undertale.Client" = "worlds.undertale.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.undertale"]
+where = [ "src",]
+include = [ "worlds.undertale",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.undertale.Constants.VERSION"}

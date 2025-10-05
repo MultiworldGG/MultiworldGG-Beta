@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.raft"
-dynamic = ["version"]
+version = "0.3.5"
 description = "MultiWorld: Raft"
-authors = [
-    {name = "SunnyBat"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "SunnyBat"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.raft"]
+where = [ "src",]
+include = [ "worlds.raft",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.raft.Constants.VERSION"}

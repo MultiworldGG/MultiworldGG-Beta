@@ -13,11 +13,11 @@ from .Items import ALBWItem, Items, ItemData, ItemType, all_items, item_table, v
 from .Locations import ALBWLocation, LocationData, LocationType, all_locations, dungeon_table, location_table, \
     dungeon_item_excludes, starting_weapon_locations
 from .Options import ALBWOptions, CrackShuffle, InitialCrackState, Keysy, LogicMode, NiceItems, WeatherVanes, \
-    create_randomizer_settings
+    create_randomizer_settings, Cracksanity
 from .Patch import PatchInfo, PatchItemInfo, ALBWProcedurePatch
 from pathlib import Path
 import sys
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 
 # Path to the lib directory
 lib_path = Path(__file__).parent / "lib"
@@ -73,9 +73,11 @@ class ALBWWorld(World):
     and a sequel to A Link to the Past. Explore dungeons, fight monsters,
     discover magical items, and save the worlds of Hyrule and Lorule!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("albw")
+
     game: ClassVar[str] = GAME_NAME
     author: ClassVar[str] = AUTHOR
-    igdb_id: ClassVar[int] = IGDB_ID
     options_dataclass = ALBWOptions
     options: ALBWOptions
     topology_present: ClassVar[bool] = False

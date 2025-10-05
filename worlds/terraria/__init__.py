@@ -27,7 +27,7 @@ from .Checks import (
     armor_minions,
     accessory_minions,
 )
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Options import TerrariaOptions, Goal
 
 
@@ -50,9 +50,12 @@ class TerrariaWorld(World):
     Features 18 bosses and 4 classes.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("terraria")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
 
     options_dataclass = TerrariaOptions
     options: TerrariaOptions

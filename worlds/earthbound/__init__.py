@@ -10,7 +10,7 @@ from worlds.AutoWorld import World, WebWorld
 import itertools
 import settings
 from .Items import get_item_names_per_category, item_table
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import get_locations
 from .Regions import init_areas, connect_area_exits
 from .Options import EBOptions, eb_option_groups
@@ -28,7 +28,8 @@ from .modules.equipamizer import EBArmor, EBWeapon
 from .modules.boss_shuffle import BossData, SlotInfo
 from worlds.generic.Rules import add_item_rule
 from Options import OptionError
-
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("earthbound")
 
 class EBSettings(settings.Group):
     class RomFile(settings.SNESRomPath):
@@ -64,7 +65,6 @@ class EarthBoundWorld(World):
        across the world in search of 8 Melodies to defeat Giygas, the cosmic evil."""
     
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     option_definitions = EBOptions
     data_version = 1

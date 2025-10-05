@@ -1,0 +1,9 @@
+{
+    "version": 6,
+    "compatible_version": 5,
+    "game": "Skyward Sword",
+    "authors": ["Battlecats59"],
+    "igdb_id": 534,
+    "minimum_ap_version": "0.6.4",
+    "world_version": "0.5.3"
+}

@@ -2,7 +2,7 @@ from typing import Dict, List, Any, Union
 from BaseClasses import Region, Location, Item, Tutorial, ItemClassification
 from Options import OptionError
 from worlds.AutoWorld import World, WebWorld
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Items import ItemType, base_id, item_list, fire2_weapons, item_groups
 from .Locations import LocationType, location_list, start_weapon_locations, location_groups
 from .Regions import Regions, SecretRegion
@@ -25,10 +25,12 @@ class UltrakillWeb(WebWorld):
 
 class UltrakillWorld(World):
     """MANKIND IS DEAD. BLOOD IS FUEL. HELL IS FULL."""
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ultrakill")
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = UltrakillWeb()
 
     item_name_to_id = {item.name: (base_id + index) for index, item in enumerate(item_list)}

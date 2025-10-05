@@ -2,7 +2,7 @@ from typing import Dict
 
 from BaseClasses import Tutorial
 from ..AutoWorld import WebWorld, World
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 
 class AP_SudokuWebWorld(WebWorld):
     options_page = False
@@ -23,6 +23,10 @@ class AP_SudokuWorld(World):
     """
     Play a little Sudoku while you're in BK mode to maybe get some useful hints
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("apsudoku")
+
     game = GAME_NAME
     author: str = AUTHOR
     web = AP_SudokuWebWorld()

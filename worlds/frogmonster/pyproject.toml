@@ -1,0 +1,17 @@
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds.frogmonster"
+version = "0.2.1"
+description = "MultiWorld: Frogmonster"
+classifiers = [ "Private :: Do Not Upload",]
+requires-python = ">=3.12"
+[[project.authors]]
+name = "RoobyRoo"
+
+[tool.setuptools.packages.find]
+where = [ "src",]
+include = [ "worlds.frogmonster",]
+namespaces = true

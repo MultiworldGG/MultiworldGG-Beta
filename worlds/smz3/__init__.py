@@ -9,7 +9,7 @@ from BaseClasses import Region, Entrance, Location, MultiWorld, Item, ItemClassi
     Tutorial
 from worlds.generic.Rules import set_rule
 from .TotalSMZ3.Item import ItemType
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .TotalSMZ3 import Item as TotalSMZ3Item
 from .TotalSMZ3.World import World as TotalSMZ3World
 from .TotalSMZ3.Regions.Zelda.GanonsTower import GanonsTower
@@ -24,6 +24,9 @@ from .Rom import SMZ3ProcedurePatch
 from .Options import SMZ3Options
 from Options import ItemsAccessibility
 from .Client import SMZ3SNIClient
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("smz3")
 
 world_folder = os.path.dirname(__file__)
 logger = logging.getLogger("SMZ3")
@@ -69,7 +72,6 @@ class SMZ3World(World):
     """
     game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     topology_present = False
     options_dataclass = SMZ3Options
     options: SMZ3Options

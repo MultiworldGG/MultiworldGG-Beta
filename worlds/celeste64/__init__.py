@@ -5,13 +5,15 @@ from BaseClasses import ItemClassification, Location, Region, Tutorial
 from worlds.AutoWorld import WebWorld, World
 from .Items import Celeste64Item, unlockable_item_data_table, move_item_data_table, item_data_table,\
                                   checkpoint_item_data_table, item_table
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Locations import Celeste64Location, strawberry_location_data_table, friend_location_data_table,\
                                           sign_location_data_table, car_location_data_table, checkpoint_location_data_table,\
                                           location_table
 from .Names import ItemName, LocationName
 from .Options import Celeste64Options, celeste_64_option_groups, resolve_options
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("celeste64")
 
 class Celeste64WebWorld(WebWorld):
     theme = "ice"
@@ -37,7 +39,7 @@ class Celeste64World(World):
     # Class Data
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = Celeste64Options
     options: Celeste64Options
     web = Celeste64WebWorld()

@@ -5,7 +5,7 @@ from typing import Dict, Any, TYPE_CHECKING, Optional, Sequence, Tuple, ClassVar
 
 from BaseClasses import Tutorial, ItemClassification, MultiWorld, Item, Location
 from worlds.AutoWorld import World, WebWorld
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .names import (dr_wily, heat_man_stage, air_man_stage, wood_man_stage, bubble_man_stage, quick_man_stage,
                     flash_man_stage, metal_man_stage, crash_man_stage)
 from .items import (item_table, item_names, MM2Item, filler_item_weights, robot_master_weapon_table,
@@ -87,8 +87,11 @@ class MM2World(World):
 
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("mm2")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     settings: ClassVar[MM2Settings]
     options_dataclass = MM2Options
     options: MM2Options

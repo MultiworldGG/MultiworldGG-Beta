@@ -35,7 +35,7 @@ from Options import Range, Toggle, VerifyKeys, Accessibility, PlandoConnections,
 from Fill import fill_restrictive, fast_fill, FillError
 from worlds.generic.Rules import exclusion_rules, add_item_rule
 from worlds.AutoWorld import World, AutoLogicRegister, WebWorld
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from worlds.LauncherComponents import launch as launch_componenent, components, Component, Type, SuffixIdentifier
 
 # OoT's generate_output doesn't benefit from more than 2 threads, instead it uses a lot of memory.
@@ -158,8 +158,10 @@ class OOTWorld(World):
     learn magical ocarina songs, and explore twelve dungeons on your quest. Use Link's many items and abilities
     to rescue the Seven Sages, and then confront Ganondorf to save Hyrule!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("oot")
+
     game: str = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     options_dataclass = OoTOptions
     options: OoTOptions

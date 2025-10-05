@@ -1,6 +1,5 @@
 from . import TWWWorld, TWWWeb
 from .TWWClient import launch
-from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
 Legend has it that whenever evil has appeared, a hero named Link has arisen to defeat it. The legend continues on World Registration
@@ -10,8 +9,11 @@ This file contains the metadata and class references for the tww world.
 
 # Required metadata
 WORLD_NAME = "tww"
+
+from BaseUtils import get_archipelago_json
+game_name, author, minimum_ap_version, version = get_archipelago_json(WORLD_NAME)
+
 GAME_NAME = game_name
-IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version
 

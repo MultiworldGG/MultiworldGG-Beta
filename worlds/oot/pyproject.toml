@@ -1,32 +1,22 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.oot"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Ocarina of Time"
-authors = [
-    {name = "espeon65536 (currenty unmaintained)"}
-]
 license = "MIT AND (GPL-2.0-or-later)"
-license-files = [
-    "LICENSE",
-    "data/Compress/src/crc.c",
-    "data/Decompress/src/crc.c"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE", "data/Compress/src/crc.c", "data/Decompress/src/crc.c",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "espeon65536 (currenty unmaintained)"
 
 [project.entry-points."mwgg.client"]
 "worlds.oot.Client" = "worlds.oot.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.oot"]
+where = [ "src",]
+include = [ "worlds.oot",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.oot.Constants.VERSION"}

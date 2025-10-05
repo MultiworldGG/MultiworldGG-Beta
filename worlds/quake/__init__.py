@@ -2,7 +2,7 @@ import json
 import math
 from random import Random
 from .levels import SL, HIPSL, ROGUESL, MG1SL
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from typing import Any, Dict, List, Optional, Set, Tuple
 from BaseClasses import CollectionState, Tutorial
 
@@ -50,9 +50,11 @@ class Q1World(World):
     That first Grunt you encounter in E1M1? Now it could be an Enforcer, a Knight... or maybe a Shambler!
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("quake")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     game_id = GAME_ID
     game_full_name = GAME_NAME
 

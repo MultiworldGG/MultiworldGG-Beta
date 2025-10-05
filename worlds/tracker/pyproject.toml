@@ -1,22 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.tracker"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Universal Tracker"
-authors = [
-    {name = "Unknown"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.tracker"]
-namespaces = true
+[[project.authors]]
+name = "Unknown"
 
-[tool.setuptools.dynamic]
-version = {attr = "worlds.tracker.Constants.VERSION"}
+[tool.setuptools.packages.find]
+where = [ "src",]
+include = [ "worlds.tracker",]
+namespaces = true

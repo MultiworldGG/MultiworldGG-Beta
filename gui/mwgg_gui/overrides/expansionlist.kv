@@ -20,7 +20,7 @@
     spacing: dp(4)
     padding: dp(8),dp(4),dp(8),dp(4)
     orientation: "horizontal"
-    height: dp(70)
+    height: dp(32) + slot_item_name.texture_size[1] + slot_item_game.texture_size[1]
     size_hint_y: None
     theme_bg_color: "Custom"
     md_bg_color: app.theme_cls.secondaryContainerColor
@@ -38,6 +38,9 @@
             orientation: "horizontal"
             size_hint_y: .5
             MDListItemHeadlineText:
+                id: slot_item_name
+                shorten: False
+                do_wrap: True
                 text: root.slot_name
                 theme_text_color: "Custom"
                 text_color: app.theme_cls.onSecondaryContainerColor
@@ -47,6 +50,9 @@
             orientation: "horizontal"
             size_hint_y: .5
             MDListItemTertiaryText:
+                id: slot_item_game
+                shorten: False
+                do_wrap: True
                 text: root.item_data['game']
                 theme_text_color: "Custom"
                 pos_hint: {"center_y": 0.5}
@@ -134,38 +140,44 @@
 
 <SlotListItem>:
     id: slot_item
-    height: dp(70)
+    entrance_texture: (0, 0)
+    height: dp(70) # Default height because AAAAAAA
     size_hint_y: None
     MDBoxLayout:
         id: slot_item_top_container
         orientation: "horizontal"
         spacing: dp(4)
-        size_hint_y: .5
+        adaptive_height: True
+        valign: "center"
+        pos_hint: {"center_y": 0.5}
         MDListItemLeadingIcon:
             id: slot_icon_location
             icon: "sign-direction"
-            pos_hint: {"center_y": 0.5}
+            pos_hint: {"center_y": 0.55}
         MDListItemSupportingText:
             id: slot_text_location
             text: root.location_name
             pos_hint: {"center_y": 0.5}
-            do_wrap: False
+            shorten: False
+            do_wrap: True
             theme_text_color: "Custom"
             text_color: app.theme_cls.onSurfaceColor
     MDBoxLayout:
         id: slot_item_bottom_container
         orientation: "horizontal"
         spacing: dp(4)
-        size_hint_y: .5
+        adaptive_height: True
+        valign: "center"
+        pos_hint: {"center_y": 0.5}
         MDListItemLeadingIcon:
             id: slot_icon_item
             icon: "treasure-chest"
-            pos_hint: {"center_y": 0.5}
+            pos_hint: {"center_y": 0.55}
         MDListItemSupportingText:
             id: slot_text_item
             text: root.item_name
             pos_hint: {"center_y": 0.5}
-            do_wrap: False
+            do_wrap: True
             theme_text_color: "Custom"
             text_color: app.theme_cls.onSurfaceColor
         MDListItemTrailingIcon:

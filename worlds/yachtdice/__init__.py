@@ -6,7 +6,7 @@ from BaseClasses import CollectionState, Entrance, Item, ItemClassification, Mul
 from worlds.AutoWorld import WebWorld, World
 
 from .Items import YachtDiceItem, item_groups, item_table, all_categories, find_category_index, get_normal_categories, get_alt_categories
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import YachtDiceLocation, all_locations, ini_locations, LocData, starting_index
 from .Options import (
     AddExtraPoints,
@@ -53,6 +53,9 @@ class YachtDiceWorld(World):
     and unlockable categories to navigate the depths of the game.
     Roll your way to victory by reaching the target score!
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("yachtdice")
 
     game: str = "Yacht Dice"
     author: str = AUTHOR

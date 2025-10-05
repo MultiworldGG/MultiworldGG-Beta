@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.chainedechoes"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Chained Echoes"
-authors = [
-    {name = "SergioAlonso"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "SergioAlonso"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.chainedechoes"]
+where = [ "src",]
+include = [ "worlds.chainedechoes",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.chainedechoes.Constants.VERSION"}

@@ -9,7 +9,10 @@ from .Options import MMROptions
 from .Regions import region_data_table, get_exit
 from .Rules import *
 from .NormalRules import *
-from .Constants import default_shop_prices, GAME_NAME, AUTHOR, IGDB_ID, VERSION
+from .Constants import default_shop_prices
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, VERSION = get_archipelago_json("mm_recomp")
 
 class MMRWebWorld(WebWorld):
     # ~ theme = "partyTime"
@@ -30,7 +33,7 @@ class MMRWorld(World):
     """A Zelda game we're not completely burnt out on."""
 
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     data_version = VERSION
     web = MMRWebWorld()

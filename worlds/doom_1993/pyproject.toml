@@ -1,28 +1,22 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.doom_1993"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: DOOM 1993"
-authors = [
-    {name = "Daivuk"},
-    {name = "Kaito Sinclaire"}
-]
 license = "Zlib"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Daivuk"
+
+[[project.authors]]
+name = "Kaito Sinclaire"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.doom_1993"]
+where = [ "src",]
+include = [ "worlds.doom_1993",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.doom_1993.Constants.VERSION"}

@@ -1,30 +1,24 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.tloz"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: The Legend of Zelda"
-authors = [
-    {name = "Rosalie-A"},
-    {name = "t3hf1gm3nt"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [
-    "bsdiff4>=1.2.2"
-]
+dependencies = [ "bsdiff4>=1.2.2",]
+[[project.authors]]
+name = "Rosalie-A"
+
+[[project.authors]]
+name = "t3hf1gm3nt"
 
 [project.entry-points."mwgg.client"]
 "worlds.tloz.Client" = "worlds.tloz.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.tloz"]
+where = [ "src",]
+include = [ "worlds.tloz",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.tloz.Constants.VERSION"}

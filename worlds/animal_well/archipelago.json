@@ -1,0 +1,9 @@
+{
+    "version": 6,
+    "compatible_version": 5,
+    "game": "ANIMAL WELL",
+    "authors": ["ScipioWright", "RoobyRoo", "Franklesby", "Dicene"],
+    "igdb_id": 191435,
+    "minimum_ap_version": "0.6.4",
+    "world_version": "v0.5.4"
+}

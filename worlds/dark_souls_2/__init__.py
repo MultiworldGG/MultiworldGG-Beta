@@ -4,10 +4,13 @@ from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import set_rule, add_item_rule, add_rule
 from BaseClasses import Item, ItemClassification, Location, Region, LocationProgressType, Tutorial
 from .Items import item_list, repeatable_categories, group_table, ItemCategory, DLC
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import location_table, location_name_groups
 from .Options import DS2Options
 from typing import Optional
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("dark_souls_2")
 
 class DS2Location(Location):
     game: str = "Dark Souls II"
@@ -50,7 +53,6 @@ class DS2World(World):
     It is set in the kingdom of Drangleic and follows an undead traveler searching for a cure to their affliction.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
 
     options_dataclass = DS2Options

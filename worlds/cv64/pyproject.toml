@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.cv64"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Castlevania 64"
-authors = [
-    {name = "LiquidCat64"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "LiquidCat64"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.cv64"]
+where = [ "src",]
+include = [ "worlds.cv64",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.cv64.Constants.VERSION"}

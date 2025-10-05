@@ -23,10 +23,13 @@ from worlds.generic.Rules import set_rule, add_rule, add_item_rule
 logger = logging.getLogger("Super Metroid Map Rando")
 
 from .Rom import get_base_rom_path, get_sm_symbols, openFile, SMMR_ROM_MAX_PLAYERID, SMMR_ROM_PLAYERDATA_COUNT, SMMapRandoDeltaPatch 
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .ips import IPS_Patch
 from .Client import SMMRSNIClient
 from importlib.metadata import version, PackageNotFoundError
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("sm_map_rando")
 
 required_pysmmaprando_version = "0.119.1"
 
@@ -120,9 +123,8 @@ class SMMapRandoWorld(World):
 
     game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     topology_present = True
-    data_version = VERSION
+    data_version = WORLD_VERSION
     options_dataclass = SMMROptions
     options: SMMROptions
 

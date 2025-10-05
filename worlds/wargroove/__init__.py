@@ -4,7 +4,7 @@ import typing
 
 from BaseClasses import Item, MultiWorld, Region, Location, Entrance, Tutorial, ItemClassification
 from .Items import item_table, faction_table
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import location_table
 from .Regions import create_regions
 from .Rules import set_rules
@@ -12,6 +12,8 @@ from worlds.AutoWorld import World, WebWorld
 from .Options import WargrooveOptions, wargroove_option_groups
 from worlds.LauncherComponents import Component, components, Type, launch as launch_component
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("wargroove")
 
 def launch_client(*args: str):
     from .Client import launch
@@ -70,7 +72,7 @@ class WargrooveWorld(World):
     settings: typing.ClassVar[WargrooveSettings]
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     topology_present = True
     web = WargrooveWeb()
 

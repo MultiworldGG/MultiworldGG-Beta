@@ -1,31 +1,23 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.factorio_saws"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Factorio Space Age Without Space"
-authors = [
-    {name = "Alchav"},
-    {name = "Berserker66"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [
-    "factorio-rcon-py>=2.1.2",
-]
+dependencies = [ "factorio-rcon-py>=2.1.2",]
+[[project.authors]]
+name = "Alchav"
+
+[[project.authors]]
+name = "Berserker66"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.factorio_saws"]
+where = [ "src",]
+include = [ "worlds.factorio_saws",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.factorio_saws.Constants.VERSION"}

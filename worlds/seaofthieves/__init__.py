@@ -6,7 +6,7 @@ import json
 import typing
 
 from .Items.Items import Items, SOTItem
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Items.ItemCollection import ItemCollection
 from .Items.ItemDetail import ItemDetail
 from .Options import SOTOptions
@@ -43,10 +43,11 @@ class SOTWorld(World):
     """ 
     A pirate game made by Rare
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("seaofthieves")
 
     MAX_ISLANDS = 20  # number of hints
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     topology_present = False
 

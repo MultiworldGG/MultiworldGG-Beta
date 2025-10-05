@@ -16,7 +16,6 @@ from Options import OptionGroup
 
 # Jak imports
 from . import options
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
 from .game_id import jak1_id, jak1_name, jak1_max
 from .items import (JakAndDaxterItem,
                     OrbAssoc,
@@ -133,10 +132,12 @@ class JakAndDaxterWorld(World):
     rogue sages Gol and Maia Acheron plan to flood the world with Dark Eco, they must stop their evil plan
     and save the world.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("jakanddaxter")
+
     # ID, name, version
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     required_client_version = (0, 5, 0)
 
     # Options

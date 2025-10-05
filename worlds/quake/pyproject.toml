@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.quake"
-dynamic = ["version"]
+version = "0.2.1"
 description = "MultiWorld: Quake 1"
-authors = [
-    {name = "rand(0)"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "rand(0)"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.quake"]
+where = [ "src",]
+include = [ "worlds.quake",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.quake.Constants.VERSION"}

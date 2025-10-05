@@ -1,0 +1,9 @@
+{
+    "version": 6,
+    "compatible_version": 5,
+    "game": "Banjo-Tooie",
+    "authors": ["jjjj12212"],
+    "igdb_id": 3418,
+    "minimum_ap_version": "0.6.4",
+    "world_version": "4.9.1"
+}

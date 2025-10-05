@@ -28,7 +28,9 @@ from .Locations import (LinksAwakeningLocation,
                         links_awakening_location_name_groups)
 from .Options import DungeonItemShuffle, ShuffleInstruments, LinksAwakeningOptions, ladx_option_groups
 from .Rom import LADXProcedurePatch, write_patch_data
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ladx")
 
 DEVELOPER_MODE = False
 
@@ -147,7 +149,7 @@ class LinksAwakeningWorld(World):
     """
     game = GAME_NAME
     author = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = LinksAwakeningWebWorld()
 
     options_dataclass = LinksAwakeningOptions
@@ -550,7 +552,7 @@ class LinksAwakeningWorld(World):
         slot_data = {
             "game_name": GAME_NAME,
             "pre_release": True,
-            "world_version": VERSION,
+            "world_version": WORLD_VERSION,
             "death_link": self.options.death_link.value,
         }
 

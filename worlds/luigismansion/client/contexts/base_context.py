@@ -91,22 +91,20 @@ class BaseContext(UniversalContext):
     def make_gui(self):
         # Performing local import to prevent additional UIs to appear during the patching process.
         # This appears to be occurring if a spawned process does not have a UI element when importing kvui/kivymd.
-        from .lm_tab import build_gui, GameManager, MDLabel, MDLinearProgressIndicator
+        from .lm_tab import build_gui, MDScreen, MDLabel, MDLinearProgressIndicator, MDApp
 
-        ui: GameManager = super().make_gui()
-        class LMGuiWrapper(ui):
+        class LMGuiWrapper(MDScreen):
             wallet_ui: MDLabel
             boo_count: MDLabel
             wallet_progress_bar: MDLinearProgressIndicator
-            base_title = f"Luigi's Mansion {CLIENT_VERSION}"
 
-            def build(self):
-                container = super().build()
-
-                self.base_title += " |  Archipelago"
+            def __init__(self, **kwargs):
+                name = "Luigi's Mansion"
+                super().__init__(**kwargs)
+                self.app = MDApp.get_running_app()
+                self.ctx = self.app.ctx
+                self.app.base_title += " | Luigi's Mansion"
                 build_gui(self)
-
-                return container
 
             def get_wallet_value(self):
                 current_worth = 0

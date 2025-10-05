@@ -4,12 +4,14 @@ import typing
 from typing import Dict
 from BaseClasses import Item, Location, MultiWorld, Tutorial, ItemClassification
 from .Items import ItemData, FF1Items, FF1_STARTER_ITEMS, FF1_PROGRESSION_LIST, FF1_BRIDGE
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import EventId, FF1Locations, generate_rule, CHAOS_TERMINATED_EVENT
 from .Options import FF1Options
 from ..AutoWorld import World, WebWorld
 from .Client import FF1Client
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ff1")
 
 class FF1Settings(settings.Group):
     display_msgs: bool = True
@@ -41,7 +43,6 @@ class FF1World(World):
     settings: typing.ClassVar[FF1Settings]
     settings_key = "ffr_options"
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     topology_present = False
 

@@ -7,7 +7,7 @@ from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Region, Location, Item, ItemClassification, Tutorial
 
 from . import client
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .rom import generate_output, SuperMarioLand2ProcedurePatch
 from .options import SML2Options
 from .locations import (locations, location_name_to_id, level_name_to_id, level_id_to_name, START_IDS, coins_coords,
@@ -18,6 +18,8 @@ from .sprite_randomizer import randomize_enemies, randomize_platforms
 from .logic import has_pipe_up, has_pipe_down, has_pipe_left, has_pipe_right, has_level_progression, is_auto_scroll
 from . import logic
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("marioland2")
 
 class MarioLand2Settings(settings.Group):
     class SML2RomFile(settings.UserFilePath):
@@ -50,7 +52,6 @@ class MarioLand2World(World):
     game = GAME_NAME
     author: str = AUTHOR
 
-    igdb_id: int = IGDB_ID
 
     settings_key = "sml2_options"
     settings: MarioLand2Settings

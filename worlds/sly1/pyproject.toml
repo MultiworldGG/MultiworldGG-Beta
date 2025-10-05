@@ -1,26 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.sly1"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Sly Cooper and the Thievius Raccoonus"
-authors = [
-    {name = "Philiard"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Philiard"
 
 [project.entry-points."mwgg.client"]
 "worlds.sly1.Client" = "worlds.sly1.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.sly1"]
+where = [ "src",]
+include = [ "worlds.sly1",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.sly1.Constants.VERSION"}

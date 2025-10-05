@@ -1,6 +1,6 @@
 from BaseClasses import Item, Region, Tutorial, ItemClassification
 from .Items import *
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Regions import *
 from Options import PerGameCommonOptions
 from .Rules import *
@@ -24,6 +24,10 @@ class ChatipelagoWorld(World):
     """
     Chat plays MultiworldGG!
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("chatipelago")
+
     game = GAME_NAME
     author: str = AUTHOR
     options_dataclass = PerGameCommonOptions

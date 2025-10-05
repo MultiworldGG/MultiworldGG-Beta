@@ -1,0 +1,9 @@
+{
+    "version": 6,
+    "compatible_version": 5,
+    "game": "Path of Exile",
+    "authors": ["StuBob"],
+    "igdb_id": 1911,
+    "minimum_ap_version": "0.6.4",
+    "world_version": "1.1.4"
+}

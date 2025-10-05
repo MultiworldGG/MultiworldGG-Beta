@@ -6,7 +6,7 @@ from math import ceil
 from BaseClasses import Tutorial
 from worlds.AutoWorld import WebWorld, World
 from .Items import KH1Item, KH1ItemData, event_item_table, get_items_by_category, item_table, item_name_groups
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import KH1Location, location_table, get_locations_by_type, location_name_groups
 from .Options import KH1Options, kh1_option_groups
 from .Regions import connect_entrances, create_regions
@@ -46,8 +46,10 @@ class KH1World(World):
     Kingdom Hearts is an action RPG following Sora on his journey 
     through many worlds to find Riku and Kairi.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("kh1")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     options_dataclass = KH1Options
     options: KH1Options

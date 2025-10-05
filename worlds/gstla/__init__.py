@@ -15,7 +15,7 @@ import os
 from typing import List, TextIO, BinaryIO, ClassVar, Type, cast, Optional, Sequence, Tuple, Any, Mapping, TYPE_CHECKING, \
     Dict, Set
 from .Option_groups import gstla_option_groups
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Option_presets import gstla_options_presets
 from .Options import GSTLAOptions
 from BaseClasses import Item, ItemClassification, Tutorial
@@ -34,6 +34,9 @@ from .Names.RegionName import RegionName
 from .LocationGroups import goldensuntla_location_groups
 from .Rom import GSTLAPatchExtension, GSTLADeltaPatch, CHECKSUM_GSTLA
 from .BizClient import GSTLAClient
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("gstla")
 
 if TYPE_CHECKING:
     from BaseClasses import MultiWorld
@@ -101,7 +104,6 @@ class GSTLAWorld(World):
     It is the second installment in the Golden Sun series. 
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     options_dataclass: ClassVar[Type[PerGameCommonOptions]] = GSTLAOptions
     options: GSTLAOptions

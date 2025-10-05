@@ -1,5 +1,4 @@
 from . import MLSSWorld, MLSSWebWorld
-from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
 Mario & Luigi Superstar Saga World Registration
@@ -9,8 +8,11 @@ This file contains the metadata and class references for the mlss world.
 
 # Required metadata
 WORLD_NAME = "mlss"
+
+from BaseUtils import get_archipelago_json
+game_name, author, minimum_ap_version, version = get_archipelago_json(WORLD_NAME)
+
 GAME_NAME = game_name
-IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version
 

@@ -7,12 +7,14 @@ from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Tutorial
 from .Regions import create_regions, location_table, set_rules, rooms, non_dead_end_crest_rooms,\
     non_dead_end_crest_warps
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Items import item_table, item_groups, create_items, FFMQItem, fillers
 from .Output import generate_output
 from .Options import FFMQOptions
 from .Client import FFMQClient
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ffmq")
 
 # removed until lists are supported
 # class FFMQSettings(settings.Group):
@@ -54,7 +56,6 @@ class FFMQWorld(World):
     # -Giga Otomia
 
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     item_name_to_id = {name: data.id for name, data in item_table.items() if data.id is not None}
     location_name_to_id = location_table

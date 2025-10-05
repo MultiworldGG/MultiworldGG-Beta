@@ -1,27 +1,19 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.pokemon_emerald"
-dynamic = ["version"]
+version = "2.4.1"
 description = "MultiWorld: Pokemon Emerald"
-authors = [
-    {name = "Zunawe"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Zunawe"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.pokemon_emerald"]
+where = [ "src",]
+include = [ "worlds.pokemon_emerald",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.pokemon_emerald.Constants.VERSION"}

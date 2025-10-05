@@ -14,7 +14,7 @@ from ..generic.Rules import set_rule, add_rule
 from worlds.AutoWorld import World, WebWorld
 from BaseClasses import LocationProgressType, Region, Location, Entrance, Item, ItemClassification, Tutorial
 from Options import OptionError
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 
 logger = logging.getLogger("Rimworld")
 
@@ -41,9 +41,13 @@ class RimworldWorld(World):
     Rather than a test of skill or a challenge, the game is intended to be an AI-powered "story generator", 
     where the game is used as the medium for players to experience narrative adventures.
     """
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("rimworld")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     world_version = "1.2.3"
 
     web = RimworldWebWorld()

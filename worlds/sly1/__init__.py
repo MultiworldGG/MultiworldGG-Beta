@@ -4,7 +4,7 @@ from typing import Dict
 from BaseClasses import MultiWorld, Item, ItemClassification, Tutorial
 from worlds.AutoWorld import World, CollectionState, WebWorld
 from .Items import item_table, create_itempool, create_item, event_item_pairs, sly_episodes
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Locations import get_location_names, get_total_locations, did_avoid_early_bk, generate_bottle_locations, generate_minigame_locations
 from .Options import Sly1Options
 from .Regions import create_regions
@@ -44,9 +44,11 @@ class Sly1World(World):
     Avenge your father and take back the pages of the Thievius Raccoonus from the Fiendish Five!
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("sly1")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     item_name_to_id = {name: data.ap_code for name, data in item_table.items()}
     location_name_to_id = get_location_names()
     options_dataclass = Sly1Options

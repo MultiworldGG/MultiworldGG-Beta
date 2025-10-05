@@ -14,7 +14,7 @@ from .rom import patch_rom, MM3ProcedurePatch, MM3LCHASH, MM3VCHASH, PROTEUSHASH
 from .options import MM3Options, Consumables
 from .client import MegaMan3Client
 from .rules import set_rules, weapon_damage, robot_masters, weapons_to_name, minimum_weakness_requirement
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 import os
 import threading
 import base64
@@ -84,9 +84,11 @@ class MM3World(World):
     behind the Robot Masters' betrayal.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("mm3")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     settings: ClassVar[MM3Settings]
     options_dataclass = MM3Options
     options: MM3Options
@@ -96,7 +98,7 @@ class MM3World(World):
     location_name_groups = location_groups
     web = MM3WebWorld()
     rom_name: bytearray
-    world_version: tuple[int, int, int] = VERSION
+    world_version: tuple[int, int, int] = WORLD_VERSION.split(".")
 
     def __init__(self, world: MultiWorld, player: int):
         self.rom_name = bytearray()

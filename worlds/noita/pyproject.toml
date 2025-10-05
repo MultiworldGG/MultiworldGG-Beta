@@ -1,24 +1,20 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.noita"
-dynamic = ["version"]
+version = "1.4.0"
 description = "MultiWorld: Noita"
-authors = [
-    {name = "ScipioWright"},
-    {name = "heinermann"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "ScipioWright"
+
+[[project.authors]]
+name = "heinermann"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.noita"]
+where = [ "src",]
+include = [ "worlds.noita",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.noita.Constants.VERSION"}

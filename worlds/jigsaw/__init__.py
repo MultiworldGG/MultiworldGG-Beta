@@ -6,7 +6,7 @@ from BaseClasses import CollectionState, Entrance, Item, ItemClassification, Reg
 from worlds.AutoWorld import WebWorld, World
 
 from .Items import JigsawItem, item_table, item_groups, encouragements
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Locations import JigsawLocation, location_table
 
 from .Options import JigsawOptions, OrientationOfImage, PieceOrder, PieceTypeOrder, jigsaw_option_groups, Rotations, GridType
@@ -41,6 +41,8 @@ class JigsawWorld(World):
     Make a Jigsaw puzzle! But first you'll have to find your pieces.
     Connect the pieces to unlock more. Goal: solve the puzzle of course!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("jigsaw")
 
     game: str = GAME_NAME
     author: str = AUTHOR
@@ -54,7 +56,7 @@ class JigsawWorld(World):
     
     item_name_groups = item_groups
     
-    ap_world_version = VERSION
+    ap_world_version = WORLD_VERSION
 
     def _get_jigsaw_data(self):
         return {

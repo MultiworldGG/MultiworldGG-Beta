@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.crystal_project"
-dynamic = ["version"]
+version = "0.9.3"
 description = "MultiWorld: Crystal Project"
-authors = [
-    {name = "Emerassi"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Emerassi"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.crystal_project"]
+where = [ "src",]
+include = [ "worlds.crystal_project",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.crystal_project.Constants.VERSION"}

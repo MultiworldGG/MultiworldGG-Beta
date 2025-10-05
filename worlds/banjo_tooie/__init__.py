@@ -6,7 +6,7 @@ import warnings, settings
 from dataclasses import asdict
 
 from .Hints import HintData, generate_hints
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Items import BanjoTooieItem, ItemData, all_item_table, all_group_table, progressive_ability_breakdown
 from .Locations import LocationData, all_location_table, MTLoc_Table, GMLoc_table, WWLoc_table, JRLoc_table, TLLoc_table,\
     GILoc_table, HPLoc_table, CCLoc_table, MumboTokenGames_table, MumboTokenBoss_table, MumboTokenJinjo_table, SMLoc_table,\
@@ -24,6 +24,8 @@ from BaseClasses import ItemClassification, Tutorial, Item, Region, MultiWorld
 from worlds.AutoWorld import World, WebWorld
 from worlds.LauncherComponents import Component, components, Type, launch_subprocess
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, VERSION = get_archipelago_json("banjo_tooie")
 
 def run_client():
     from .BTClient import main  # lazy import
@@ -87,7 +89,6 @@ class BanjoTooieWorld(World):
 
     game: str = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     version = VERSION
     options: BanjoTooieOptions
     settings: BanjoTooieSettings

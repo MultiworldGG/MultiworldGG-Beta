@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.jigsaw"
-dynamic = ["version"]
+version = "0.8.1"
 description = "MultiWorld: Jigsaw"
-authors = [
-    {name = "spinerak"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "spinerak"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.jigsaw"]
+where = [ "src",]
+include = [ "worlds.jigsaw",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.jigsaw.Constants.VERSION"}

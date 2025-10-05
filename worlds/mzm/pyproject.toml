@@ -1,27 +1,19 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.mzm"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Metroid Zero Mission"
-authors = [
-    {name = "Noise"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Noise"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.mzm"]
+where = [ "src",]
+include = [ "worlds.mzm",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.mzm.Constants.VERSION"}

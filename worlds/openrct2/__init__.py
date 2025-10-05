@@ -7,7 +7,7 @@ import worlds.LauncherComponents as LauncherComponents
 from BaseClasses import ItemClassification, Region, Location, Tutorial
 from worlds.generic.Rules import add_rule
 
-from .Constants import base_id, apworld_version, GAME_NAME, AUTHOR, IGDB_ID
+from .Constants import base_id
 from .data.scenario_info import scenario_info
 from .data.item_info import item_info
 from .data.location_info import location_info
@@ -15,6 +15,8 @@ from .Items import OpenRCT2Item, set_openRCT2_items
 from .Options import openRCT2Options, Scenario, openrct2_option_groups
 from worlds.AutoWorld import World, WebWorld
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, apworld_version = get_archipelago_json("openrct2")
 
 class OpenRCT2WebWorld(WebWorld):
     theme = "partyTime"
@@ -78,9 +80,12 @@ class OpenRCT2World(World):
     roller coasters, manage finances, and build the park of their dreams!
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("openrct2")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = OpenRCT2WebWorld()
 
     options_dataclass = openRCT2Options

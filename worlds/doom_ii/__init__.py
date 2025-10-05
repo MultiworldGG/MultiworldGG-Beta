@@ -5,8 +5,11 @@ from typing import Any, Dict, List
 from BaseClasses import Entrance, CollectionState, Item, Location, MultiWorld, Region, Tutorial
 from worlds.AutoWorld import WebWorld, World
 from . import Items, Locations, Maps, Regions, Rules
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .Options import DOOM2Options
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("doom_ii")
 
 logger = logging.getLogger("DOOM II")
 
@@ -43,7 +46,6 @@ class DOOM2World(World):
     options_dataclass = DOOM2Options
     options: DOOM2Options
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     web = DOOM2Web()
     required_client_version = (0, 5, 0)  # 1.2.0-prerelease or higher

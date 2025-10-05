@@ -1,26 +1,18 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.gstla"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Golden Sun The Lost Age"
-authors = [
-    {name = "Dragion"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [
-    "requests >= 2.28.2",
-]
+dependencies = [ "requests >= 2.28.2",]
+[[project.authors]]
+name = "Dragion"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.gstla"]
+where = [ "src",]
+include = [ "worlds.gstla",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.gstla.Constants.VERSION"}

@@ -17,7 +17,7 @@ from Fill import fill_restrictive, FillError
 from worlds.AutoWorld import WebWorld, World
 from entrance_rando import ERPlacementState
 from .client import PokemonFRLGClient
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .data import (data, ability_name_map, ALL_SPECIES, APWORLD_VERSION, LEGENDARY_POKEMON, NAME_TO_SPECIES_ID,
                    POPTRACKER_CHECKSUM, LocationCategory, EventData, EvolutionMethodEnum, FlyData, MapData,
                    MiscPokemonData, MoveData, move_name_map, SpeciesData, StarterData, TrainerData, TradePokemonData)
@@ -96,8 +96,10 @@ class PokemonFRLGWorld(World):
     Catch, train, and battle Pokémon, face off against the evil organization Team Rocket, challenge Gyms in order to
     earn Badges, help resolve the many crises on the Sevii Islands, and become the Pokémon Champion!
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("pokemon_frlg")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     web = PokemonFRLGWebWorld()
     topology_present = True

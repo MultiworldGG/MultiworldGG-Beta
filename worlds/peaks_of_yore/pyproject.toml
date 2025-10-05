@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.peaks_of_yore"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Peaks of Yore"
-authors = [
-    {name = "c0der23"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "c0der23"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.peaks_of_yore"]
+where = [ "src",]
+include = [ "worlds.peaks_of_yore",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.peaks_of_yore.Constants.VERSION"}

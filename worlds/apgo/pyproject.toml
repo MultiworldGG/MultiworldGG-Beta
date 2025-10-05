@@ -1,0 +1,20 @@
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds.apgo"
+version = "0.0.0"
+description = "MultiWorld: Archipeli-Go!"
+classifiers = [ "Private :: Do Not Upload",]
+requires-python = ">=3.12"
+[[project.authors]]
+name = "Kaito Kid"
+
+[[project.authors]]
+name = "aki665"
+
+[tool.setuptools.packages.find]
+where = [ "src",]
+include = [ "worlds.apgo",]
+namespaces = true

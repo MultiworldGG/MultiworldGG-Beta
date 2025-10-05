@@ -8,7 +8,6 @@ import settings
 import random
 from typing import List, Dict, Set, Any
 
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
 from .Items import (EOSItem, item_table, item_frequencies, item_table_by_id, item_table_by_groups,
                     filler_item_table, filler_item_weights, trap_item_table, trap_item_weights,
                     exclusive_filler_item_table, exclusive_filler_item_weights, legendary_pool_dict, filler_items,
@@ -22,6 +21,8 @@ from worlds.generic.Rules import set_rule, forbid_item
 from .Client import EoSClient, game_version
 from .Rom import EOSProcedurePatch, write_tokens
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("pmd_eos")
 
 class EOSWeb(WebWorld):
     theme = "ocean"
@@ -57,7 +58,7 @@ class EOSWorld(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options: EOSOptions
     options_dataclass = EOSOptions
     web = EOSWeb()

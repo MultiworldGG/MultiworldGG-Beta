@@ -1,6 +1,5 @@
 from . import LMWorld, LMWeb
 from .LMClient import launch
-from .Constants import GAME_NAME as game_name, AUTHOR as author, IGDB_ID as igdb_id, VERSION as version
 
 """
 Luigi's Mansion is an adventure game starring everyone's favorite plumber brother, Luigi. World Registration
@@ -10,8 +9,11 @@ This file contains the metadata and class references for the luigismansion world
 
 # Required metadata
 WORLD_NAME = "luigismansion"
+
+from BaseUtils import get_archipelago_json
+game_name, author, minimum_ap_version, version = get_archipelago_json(WORLD_NAME)
+
 GAME_NAME = game_name
-IGDB_ID = igdb_id
 AUTHOR = author
 VERSION = version
 

@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.earthbound"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: EarthBound"
-authors = [
-    {name = "Pink Switch"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Pink Switch"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.earthbound"]
+where = [ "src",]
+include = [ "worlds.earthbound",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.earthbound.Constants.VERSION"}

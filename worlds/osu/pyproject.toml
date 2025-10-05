@@ -1,30 +1,21 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.osu"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: osu!"
-authors = [
-    {name = "Kanave"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [
-    "orjson>=3.9.10",
-    "requests~=2.32.3",
-]
+dependencies = [ "orjson>=3.9.10", "requests~=2.32.3",]
+[[project.authors]]
+name = "Kanave"
 
 [project.entry-points."mwgg.client"]
 "worlds.osu.Client" = "worlds.osu.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.osu"]
+where = [ "src",]
+include = [ "worlds.osu",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.osu.Constants.VERSION"}

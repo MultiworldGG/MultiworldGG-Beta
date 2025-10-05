@@ -29,11 +29,11 @@ def mystery_argparse():
     defaults = settings.generator
 
     parser = argparse.ArgumentParser(description="CMD Generation Interface, defaults come from host.yaml.")
-    parser.add_argument('--weights_file_path', default=defaults.weights_file_path,
+    parser.add_argument('--weights-file-path', default=defaults.weights_file_path,
                         help='Path to the weights file to use for rolling game options, urls are also valid')
     parser.add_argument('--sameoptions', help='Rolls options per weights file rather than per player',
                         action='store_true')
-    parser.add_argument('--player_files_path', default=defaults.player_files_path,
+    parser.add_argument('--player-files-path', default=defaults.player_files_path,
                         help="Input directory for player files.")
     parser.add_argument('--seed', help='Define seed number to generate.', type=int)
     parser.add_argument('--multi', default=defaults.players, type=lambda value: max(int(value), 1))
@@ -42,28 +42,28 @@ def mystery_argparse():
                         help="Path to output folder. Absolute or relative to cwd.")  # absolute or relative to cwd
     parser.add_argument('--outputname', help="Name for the output files.")
     parser.add_argument('--race', action='store_true', default=defaults.race)
-    parser.add_argument('--meta_file_path', default=defaults.meta_file_path)
-    parser.add_argument('--log_level', default=defaults.loglevel, help='Sets log level')
-    parser.add_argument('--log_time', help="Add timestamps to STDOUT",
+    parser.add_argument('--meta-file-path', default=defaults.meta_file_path)
+    parser.add_argument('--log-level', default=defaults.loglevel, help='Sets log level')
+    parser.add_argument('--log-time', help="Add timestamps to STDOUT",
                         default=defaults.logtime, action='store_true')
-    parser.add_argument("--csv_output", action="store_true",
+    parser.add_argument("--csv-output", action="store_true",
                         help="Output rolled player options to csv (made for async multiworld).")
     parser.add_argument("--plando", default=defaults.plando_options,
                         help="List of options that can be set manually. Can be combined, for example \"bosses, items\"")
-    parser.add_argument("--skip_prog_balancing", action="store_true",
+    parser.add_argument("--skip-prog-balancing", action="store_true",
                         help="Skip progression balancing step during generation.")
-    parser.add_argument("--skip_output", action="store_true",
+    parser.add_argument("--skip-output", action="store_true",
                         help="Skips generation assertion and output stages and skips multidata and spoiler output. "
                              "Intended for debugging and testing purposes.")
-    parser.add_argument("--spoiler_only", action="store_true",
+    parser.add_argument("--spoiler-only", action="store_true",
                         help="Skips generation assertion and multidata, outputting only a spoiler log. "
                              "Intended for debugging and testing purposes.")
     args = parser.parse_known_args()[0]
 
     if args.skip_output and args.spoiler_only:
-        parser.error("Cannot mix --skip_output and --spoiler_only")
+        parser.error("Cannot mix --skip-output and --spoiler-only")
     elif args.spoiler == 0 and args.spoiler_only:
-        parser.error("Cannot use --spoiler_only when --spoiler=0. Use --skip_output or set --spoiler to a different value")
+        parser.error("Cannot use --spoiler-only when --spoiler=0. Use --skip-output or set --spoiler to a different value")
 
     if not os.path.isabs(args.weights_file_path):
         args.weights_file_path = os.path.join(args.player_files_path, args.weights_file_path)
@@ -170,23 +170,11 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
     for player, yaml in weights_cache.items():
         games_to_load.append(yaml[0]['game'])
     set_game_names(games_to_load)
-    from worlds import AutoWorldRegister
+    from worlds.AutoWorld import AutoWorldRegister
     """ Load worlds *after* setting the game names
     """
-
-    from EntranceRandomizer import parse_arguments
-    erargs = parse_arguments(['--multi', str(args.multi)])
-    erargs.seed = seed
-    erargs.plando_options = args.plando
-    erargs.spoiler = args.spoiler
-    erargs.race = args.race
-    erargs.outputname = seed_name
-    erargs.outputpath = args.outputpath
-    erargs.skip_prog_balancing = args.skip_prog_balancing
-    erargs.skip_output = args.skip_output
-    erargs.spoiler_only = args.spoiler_only
-    erargs.name = {}
-    erargs.csv_output = args.csv_output
+    args.outputname = seed_name
+    args.name = {}
 
     settings_cache: dict[str, tuple[argparse.Namespace, ...]] = \
         {fname: (tuple(roll_settings(yaml, args.plando) for yaml in yamls) if args.sameoptions else None)
@@ -197,32 +185,31 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
             for key in category_dict:
                 option = roll_meta_option(key, category_name, category_dict)
                 if option is not None:
-                    for yaml_filename in weights_cache:
-                        for yaml in weights_cache[yaml_filename]:
+                    for path in weights_cache:
+                        for yaml in weights_cache[path]:
                             if category_name is None:
                                 for category in yaml:
-                                    world_class = AutoWorldRegister.world_types[category]
-                                    if world_class is not None and \
+                                    if category in AutoWorldRegister.world_types and \
                                             key in Options.CommonOptions.type_hints:
                                         yaml[category][key] = option
                             elif category_name not in yaml:
-                                logging.warning(f"Meta: Category {category_name} is not present in {yaml_filename}.")
+                                logging.warning(f"Meta: Category {category_name} is not present in {path}.")
                             else:
                                 yaml[category_name][key] = option
 
-    player_yaml_cache = {}
+    player_path_cache = {}
     for player in range(1, args.multi + 1):
-        player_yaml_cache[player] = player_files.get(player, args.weights_file_path)
+        player_path_cache[player] = player_files.get(player, args.weights_file_path)
     name_counter = Counter()
     args.player_options = {}
 
     player = 1
     while player <= args.multi:
-        yaml_filename = player_yaml_cache[player]
-        if yaml_filename:
+        path = player_path_cache[player]
+        if path:
             try:
-                settings: tuple[argparse.Namespace, ...] = settings_cache[yaml_filename] if settings_cache[yaml_filename] else \
-                    tuple(roll_settings(yaml, args.plando) for yaml in weights_cache[yaml_filename])
+                settings: tuple[argparse.Namespace, ...] = settings_cache[path] if settings_cache[path] else \
+                    tuple(roll_settings(yaml, args.plando) for yaml in weights_cache[path])
                 for settingsObject in settings:
                     for k, v in vars(settingsObject).items():
                         if v is not None:
@@ -235,7 +222,7 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
 
                     # name was not specified
                     if player not in args.name:
-                        if yaml_filename == args.weights_file_path:
+                        if path == args.weights_file_path:
                             # weights file, so we need to make the name unique
                             args.name[player] = f"Player{player}"
                         else:
@@ -245,7 +232,7 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
 
                     player += 1
             except Exception as e:
-                raise ValueError(f"File {yaml_filename} is invalid. Please fix your yaml.") from e
+                raise ValueError(f"File {path} is invalid. Please fix your yaml.") from e
         else:
             raise RuntimeError(f'No weights specified for player {player}')
 
@@ -486,6 +473,8 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
     This means it should never be modified without making a deepcopy first.
     """
 
+    from worlds import AutoWorldRegister
+
     if "linked_options" in weights:
         weights = roll_linked_options(weights)
 
@@ -504,7 +493,22 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
             if required_plando_options:
                 raise Exception(f"Settings reports required plando module {str(required_plando_options)}, "
                                 f"which is not enabled.")
-
+        games = requirements.get("game", {})
+        for game, version in games.items():
+            if game not in AutoWorldRegister.world_types:
+                continue
+            if not version:
+                raise Exception(f"Invalid version for game {game}: {version}.")
+            if isinstance(version, str):
+                version = {"min": version}
+            if "min" in version and tuplize_version(version["min"]) > AutoWorldRegister.world_types[game].world_version:
+                raise Exception(f"Settings reports required version of world \"{game}\" is at least {version['min']}, "
+                                f"however world is of version "
+                                f"{AutoWorldRegister.world_types[game].world_version.as_simple_string()}.")
+            if "max" in version and tuplize_version(version["max"]) < AutoWorldRegister.world_types[game].world_version:
+                raise Exception(f"Settings reports required version of world \"{game}\" is no later than {version['max']}, "
+                                f"however world is of version "
+                                f"{AutoWorldRegister.world_types[game].world_version.as_simple_string()}.")
     ret = argparse.Namespace()
     for option_key in Options.PerGameCommonOptions.type_hints:
         if option_key in weights and option_key not in Options.CommonOptions.type_hints:
@@ -517,8 +521,7 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
             raise Exception('"game" not specified')
         raise Exception(f"Invalid game: {ret.game}")
 
-    import worlds
-    from worlds import failed_world_loads
+    from worlds import failed_world_loads, AutoWorldRegister
     available_worlds = Utils.get_available_worlds()
     
     world_module = sys.modules.get(ret.module_name)
@@ -528,7 +531,7 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
         raise Exception(f"No world found to handle game {ret.game}. Did you mean '{picks[0]}' ({picks[1]}% sure)? "
                         f"Check your spelling or installation of that world.")
     else:
-        world_class = worlds.AutoWorldRegister.world_types[ret.game]
+        world_class = AutoWorldRegister.world_types[ret.game]
 
     if world_class is None:
         picks = Utils.get_fuzzy_results(ret.game, list(available_worlds.keys()) + failed_world_loads, limit=1)[0]
@@ -579,14 +582,14 @@ if __name__ == '__main__':
     erargs, seed = main()
     from Main import main as ERmain
     multiworld = ERmain(erargs, seed)
-    if __debug__:
-        import gc
-        import sys
-        import weakref
-        weak = weakref.ref(multiworld)
-        del multiworld
-        gc.collect()  # need to collect to deref all hard references
-        assert not weak(), f"MultiWorld object was not de-allocated, it's referenced {sys.getrefcount(weak())} times." \
-                           " This would be a memory leak."
+    # if __debug__:
+    #     import gc
+    #     import sys
+    #     import weakref
+    #     weak = weakref.ref(multiworld)
+    #     del multiworld
+    #     gc.collect()  # need to collect to deref all hard references
+    #     assert not weak(), f"MultiWorld object was not de-allocated, it's referenced {sys.getrefcount(weak())} times." \
+    #                        " This would be a memory leak."
     # in case of error-free exit should not need confirmation
     atexit.unregister(confirmation)

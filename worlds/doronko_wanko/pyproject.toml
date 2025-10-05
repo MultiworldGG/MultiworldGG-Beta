@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.doronko_wanko"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: DORONKO WANKO"
-authors = [
-    {name = "Vendily"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Vendily"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.doronko_wanko"]
+where = [ "src",]
+include = [ "worlds.doronko_wanko",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.doronko_wanko.Constants.VERSION"}

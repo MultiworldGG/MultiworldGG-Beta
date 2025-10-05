@@ -8,7 +8,7 @@ from Fill import fill_restrictive
 from BaseClasses import CollectionState, Item, LocationProgressType
 from BaseClasses import ItemClassification as IC
 from BaseClasses import Tutorial
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .ClientUtils import VERSION
 from .Items import (
     ITEM_TABLE,
@@ -54,6 +54,8 @@ from .Logic.RegionCreation import (
 )
 from .Logic.RegionRules import set_region_access_rules
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tp")
 
 def run_client() -> None:
     """
@@ -110,7 +112,7 @@ class TPWorld(World):
 
     game: ClassVar[str] = GAME_NAME
     author: ClassVar[str] = AUTHOR
-    igdb_id: ClassVar[int] = IGDB_ID
+    
     topology_present: bool = True
 
     item_name_to_id: ClassVar[dict[str, int]] = {

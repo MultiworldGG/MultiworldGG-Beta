@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.meritous"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Meritous"
-authors = [
-    {name = "FelicitusNeko"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "FelicitusNeko"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.meritous"]
+where = [ "src",]
+include = [ "worlds.meritous",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.meritous.Constants.VERSION"}

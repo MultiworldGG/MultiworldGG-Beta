@@ -19,7 +19,7 @@ from Options import OptionError
 from worlds.AutoWorld import WebWorld, World
 
 from .items import Episode, LocalItem, LocalItemData
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .locations import LevelLocationData, LevelRegion
 from .logic import DamageTables, set_level_rules
 from .options import TyrianOptions, tyrian_option_groups
@@ -28,6 +28,8 @@ from .twiddles import Twiddle, generate_twiddles
 if TYPE_CHECKING:
     from BaseClasses import MultiWorld
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tyrian")
 
 class TyrianItem(Item):
     game = GAME_NAME
@@ -73,9 +75,10 @@ class TyrianWorld(World):
     Trent Hawkins in the year 20,031 as he flies through the galaxy to defend it from the evil corporation, Microsol.
     This randomizer supports both versions of the game.
     """
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = TyrianWebWorld()
     options_dataclass = TyrianOptions
     options: TyrianOptions  # type: ignore

@@ -14,7 +14,7 @@ from Options import Toggle, OptionError
 from worlds.AutoWorld import WebWorld, World
 from worlds.Files import APPlayerContainer, AutoPatchRegister
 from worlds.generic.Rules import add_item_rule
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 
 from worlds.LauncherComponents import (
     Component,
@@ -44,8 +44,9 @@ from .rando.MiscRando import shuffle_batreaux_counts
 from .logic.LogicParser import parse_expression
 from .logic.Logic import ALL_REQUIREMENTS
 
-AP_VERSION = [0, 6, 2]
-WORLD_VERSION = [0, 5, 3]
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("ss")
+
 RANDO_VERSION = [0, 5, 3]
 
 
@@ -129,7 +130,7 @@ class SSWorld(World):
     options: SSOptions
 
     game: ClassVar[str] = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     topology_present: bool = True
     web = SSWeb()

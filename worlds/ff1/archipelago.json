@@ -1,0 +1,9 @@
+{
+    "version": 6,
+    "compatible_version": 5,
+    "game": "Final Fantasy",
+    "authors": ["jtoyoda (currently unmaintained)"],
+    "igdb_id": 385,
+    "minimum_ap_version": "0.6.4",
+    "world_version": "0.0.0"
+}

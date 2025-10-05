@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.ffta"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Final Fantasy Tactics Advance"
-authors = [
-    {name = "spicynun"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "spicynun"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.ffta"]
+where = [ "src",]
+include = [ "worlds.ffta",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.ffta.Constants.VERSION"}

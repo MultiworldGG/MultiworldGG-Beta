@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.oribf"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Ori and the Blind Forest"
-authors = [
-    {name = "Gray"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Gray"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.oribf"]
+where = [ "src",]
+include = [ "worlds.oribf",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.oribf.Constants.VERSION"}

@@ -32,7 +32,7 @@ import os
 from kivy.clock import Clock
 from kivymd.app import MDApp
 from kivymd.icon_definitions import md_icons
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, Tuple
 
 if TYPE_CHECKING:
     from NetUtils import HintStatus, MWGGUIHintStatus
@@ -167,6 +167,7 @@ class MWBaseListItem(MDBoxLayout, CommonElevationBehavior):
         classification (StringProperty): Classification of the item
         assigned_level (StringProperty): Assigned level
     """
+    entrance_texture: Tuple[NumericProperty, NumericProperty]
     slot_icon_entrance: ObjectProperty
     slot_text_entrance: ObjectProperty
     slot_icon_location: ObjectProperty
@@ -282,6 +283,8 @@ class SlotListItem(MWBaseListItem):
         Clock.schedule_once(lambda x: self.populate_slot_item())
         Clock.schedule_once(lambda x: self.set_prio_behavior(shadow_colors), .5)
 
+        self.height = self.estimate_height()
+
     def populate_slot_item(self):
         """
         Populate the slot item with entrance, location, item, and goal information.
@@ -290,17 +293,47 @@ class SlotListItem(MWBaseListItem):
         entrance information, location text, item text, and goal icon.
         """
         if self.entrance_name == "Vanilla":
+            # I hate it, but somehow != didn't work.
             if not self.entrance_name:
                 pass
         else:
-            self.slot_text_entrance = (MDListItemSupportingText(text=self.entrance_name, do_wrap=False))
-            self.slot_icon_entrance = (MDListItemLeadingIcon(icon="door-open", pos_hint={"center_y": 0.5}))
-            self.ids.slot_item_top_container.add_widget(self.slot_icon_entrance)
-            self.ids.slot_item_top_container.add_widget(self.slot_text_entrance)
+            self.slot_text_entrance = (MDListItemSupportingText(text=self.entrance_name, do_wrap=True))
+            self.slot_icon_entrance = (MDListItemLeadingIcon(icon="door-open", pos_hint={"center_y": 0.55}))
+            self.slot_item_middle_container = (MDBoxLayout(orientation="horizontal", spacing=dp(4), size_hint_y=.5, pos_hint={"center_y": 0.5}))
+            self.slot_item_middle_container.add_widget(self.slot_icon_entrance)
+            self.slot_item_middle_container.add_widget(self.slot_text_entrance)
+            self.add_widget(self.slot_item_middle_container, 1)
         self.slot_text_location.text = self.location_name
         self.slot_text_item.text = self.item_name
         self.slot_icon_goal.icon = "flag_checkered" if self.game_status == "GOAL" else "blank"
 
+    def estimate_height(self):
+        """
+        Estimate the height of the slot item.
+
+        Funky workaround because the scrollview height of the list item is set before the
+        text is set, so any wrapping will cause the height to be wrong.
+        """
+        nheight = dp(36) + (dp(4) * len(self.children))
+        if self.entrance_name == "Vanilla":
+            pass
+        else:
+            eheight = self.slot_text_entrance.font_size * self.slot_text_entrance.line_height
+            if len(self.entrance_name) < 20:
+                nheight += eheight
+            else:
+                nheight = nheight + (eheight * 2)
+        lheight = self.slot_text_location.font_size * self.slot_text_location.line_height
+        if len(self.location_name) < 20:
+            nheight += lheight
+        else:
+            nheight = nheight + (lheight * 2)
+        iheight = self.slot_text_item.font_size * self.slot_text_item.line_height
+        if len(self.item_name) < 20:
+            nheight += iheight
+        else:
+            nheight = nheight + (iheight * 2)
+        return nheight
 
 class HintListItem(MWBaseListItem):
     hint_icon_status: StringProperty
@@ -522,8 +555,12 @@ class GameListPanel(MDExpansionPanel):
         self.pos_hint = {"center_y": 0.5}
         if isinstance(self.item_data, UIPlayerData):
             Clock.schedule_once(lambda x: self.populate_slot_item(ctx=self.app.ctx))
+            Clock.schedule_once(lambda x: self.set_self_height(), 1)
         else:
             Clock.schedule_once(lambda x: self.populate_game_item())
+
+    def set_self_height(self):
+        self.panel_content.height = self.panel_content.minimum_height
 
     def populate_slot_item(self, ctx: "CommonContext"):
         """
@@ -555,7 +592,8 @@ class GameListPanel(MDExpansionPanel):
             }
         for hint in self.item_data.hints.values():
             if not hint.hide or self.app.show_all_hints:
-                self.panel_content.add_widget(SlotListItem(hint_data=hint, game_status=self.item_data.game_status, shadow_colors=item_colors))
+                item_widget = SlotListItem(hint_data=hint, game_status=self.item_data.game_status, shadow_colors=item_colors)
+                self.panel_content.add_widget(item_widget)
 
     def populate_game_item(self):
         """

@@ -7,13 +7,16 @@ from entrance_rando import ERPlacementState
 from worlds.AutoWorld import World, WebWorld
 from .component import setup_candy_box_2_component
 from .expected_client_version import EXPECTED_CLIENT_VERSION
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .locations import location_descriptions, locations, CandyBox2LocationName
 from .items import items, CandyBox2Item, candy_box_2_base_id, filler_items, CandyBox2ItemName
 from .options import CandyBox2Options, candy_box_2_options_groups
 from .regions import create_regions, connect_entrances, can_reach_room
 from .rooms import entrance_friendly_names, CandyBox2Room
 from .rules import CandyBox2RulesPackage, generate_rules_package
+
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("candybox2")
 
 class CandyBox2WebWorld(WebWorld):
     tutorials = [Tutorial(
@@ -34,7 +37,6 @@ class CandyBox2World(World):
 
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     web = CandyBox2WebWorld()
     base_id = 1
     location_name_to_id = {name.value: location.id for name, location in locations.items()}

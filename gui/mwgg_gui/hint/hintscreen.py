@@ -31,18 +31,11 @@ import asynckivy
 KV = '''
 #:import os os
 <HintFeaturebar>:
-    hints_hero_to: hints_hero_to
-    MDHeroTo:
-        id: hints_hero_to
-        tag: "logo"
+    FitImage:
+        source: os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "logo_bg.png")
         size_hint: None,None
-        size: dp(256), dp(161)
-        pos_hint: {"center_x": 0.5, "top": 1}
-        FitImage:
-            source: os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "logo_bg.png")
-            size_hint: None,None
-            size: dp(128), dp(80)
-            pos_hint: {"x": 0, "top": 1}
+        size: dp(128), dp(80)
+        pos_hint: {"x": 0, "top": 1}
 '''
 
 if typing.TYPE_CHECKING:
@@ -52,7 +45,7 @@ class HintFeaturebar(MDBoxLayout):
     """
     Feature bar for the hint screen.
     """
-    hints_hero_to: ObjectProperty
+    pass
 
 class HintScreen(MDScreen):
     '''
@@ -61,8 +54,6 @@ class HintScreen(MDScreen):
     Takes full window width with no sidebar.
     '''
     name = "hint"
-    hints_hero_to: ObjectProperty
-    heroes_to = []
     bottom_appbar: BottomAppBar
     hint_layout: "HintLayout"
     app: MDApp
@@ -76,8 +67,6 @@ class HintScreen(MDScreen):
         self.bottom_appbar = BottomAppBar(screen_name="hint")
         self.hint_layout = HintLayout()
         self.hints_mdlist = MDList(size_hint_x=1, size_hint_y=1)
-        self.hints_hero_to = self.hint_layout.search_placeholder.hints_hero_to
-        self.heroes_to = [self.hints_hero_to]
         # Schedule initialization
         Clock.schedule_once(lambda x: self.init_components())
 

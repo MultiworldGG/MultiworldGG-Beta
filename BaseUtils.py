@@ -4,6 +4,7 @@ import typing
 import logging
 import io
 import warnings
+import json
 
 __all__ = ("Version", 
            "tuplize_version", 
@@ -86,7 +87,6 @@ is_windows = sys.platform in ("win32", "cygwin", "msys")
 
 def is_frozen() -> bool:
     return typing.cast(bool, getattr(sys, 'frozen', False))
-
 
 def local_path(*path: str) -> str:
     """
@@ -322,3 +322,23 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
         f" running Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
         f"{' (frozen)' if is_frozen() else ''}"
     )
+
+def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
+    """ Get the constants from the archipelago.json file for a given world
+    
+    Args:
+        world: The name of the world to get the constants for
+
+    Returns:
+        A tuple of the game name, authors, minimum AP version, and world version
+    """
+    try:
+        if is_frozen():
+            with open(local_path("lib", "worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
+                data = json.load(f)
+        else:
+            with open(local_path("worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
+                data = json.load(f)
+    except FileNotFoundError:
+        return world, ["Unknown"], "0.0.0", "0.0.0"
+    return data["game"], data["authors"], data["minimum_ap_version"], data["world_version"]

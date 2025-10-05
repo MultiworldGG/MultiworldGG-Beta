@@ -12,7 +12,7 @@ from .locations import ALL_LOCATION_TABLE, LOCATIONS_BY_GROUP
 from .options import LingoOptions, lingo_option_groups, SunwarpAccess, VictoryCondition
 from .player_logic import LingoPlayerLogic
 from .regions import create_regions
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 
 class LingoWebWorld(WebWorld):
     option_groups = lingo_option_groups
@@ -33,8 +33,10 @@ class LingoWorld(World):
     Lingo is a first person indie puzzle game in the vein of The Witness. You find yourself in a mazelike, non-Euclidean
     world filled with 800 word puzzles that use a variety of different mechanics.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("lingo")
+
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     web = LingoWebWorld()
 

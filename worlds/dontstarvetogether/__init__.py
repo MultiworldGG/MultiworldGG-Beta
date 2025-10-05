@@ -39,7 +39,7 @@ class DSTWorld(World):
     structures and farms to help you protect yourself, survive, and most importantly, not starve.
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     item_name_to_id = item_name_to_id
     location_name_to_id = location_name_to_id

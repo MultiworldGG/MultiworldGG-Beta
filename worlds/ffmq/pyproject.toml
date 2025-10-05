@@ -1,27 +1,19 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.ffmq"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Final Fantasy Mystic Quest"
-authors = [
-    {name = "Alchav"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Alchav"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.ffmq"]
+where = [ "src",]
+include = [ "worlds.ffmq",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.ffmq.Constants.VERSION"}

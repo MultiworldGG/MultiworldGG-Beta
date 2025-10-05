@@ -8,7 +8,7 @@ import typing
 import threading
 from BaseClasses import Region, Location, Entrance, Item, ItemClassification, MultiWorld, Tutorial
 from worlds.AutoWorld import World, WebWorld
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .Logic import stage_clear_round_gates_included, stage_clear_progressive_unlocks_included, \
     stage_clear_individual_unlocks_included, get_starting_puzzle_level
 from .Options import TetrisAttackOptions, StarterPack, PuzzleGoal, PuzzleInclusion, \
@@ -21,6 +21,8 @@ from .Rom import get_base_rom_path, patch_rom, TATKProcedurePatch, USAHASH
 from .Rules import set_stage_clear_rules, set_goal_rules, set_puzzle_rules, set_versus_rules
 from .Client import TetrisAttackSNIClient
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tetrisattack")
 
 class TetrisAttackItem(Item):
     game = GAME_NAME
@@ -57,7 +59,7 @@ class TetrisAttackWorld(World):
     In Vs, perform Chains and Combos to attack."""
     game = GAME_NAME  # name of the game/world
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     options_dataclass = TetrisAttackOptions  # options the player can set
     options: TetrisAttackOptions  # typing hints for option results
     settings: typing.ClassVar[TetrisAttackSettings]  # will be automatically assigned from type hint

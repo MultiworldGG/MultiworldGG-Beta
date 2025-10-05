@@ -14,7 +14,7 @@ from worlds.AutoWorld import WebWorld, World
 from worlds.generic.Rules import add_rule
 
 from .common import NAME
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .logic import condition_satisfied
 from .world_data import static_world_data
 
@@ -60,9 +60,12 @@ class CrossCodeWorld(World):
     gripping sci-fi story.
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("crosscode")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id = IGDB_ID
+    
     web = CrossCodeWebWorld()
 
     world_data: typing.ClassVar[WorldData] = static_world_data

@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.rimworld"
-dynamic = ["version"]
+version = "1.2.4"
 description = "MultiWorld: Rimworld"
-authors = [
-    {name = "Phantom Of Ares"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Phantom Of Ares"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.rimworld"]
+where = [ "src",]
+include = [ "worlds.rimworld",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.rimworld.Constants.VERSION"}

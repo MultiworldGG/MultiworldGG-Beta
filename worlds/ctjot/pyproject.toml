@@ -1,23 +1,17 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.ctjot"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Chrono Trigger Jets of Time"
-authors = [
-    {name = "Anguirel"}
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Anguirel"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.ctjot"]
+where = [ "src",]
+include = [ "worlds.ctjot",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.ctjot.Constants.VERSION"}

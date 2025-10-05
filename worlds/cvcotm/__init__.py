@@ -7,7 +7,7 @@ import logging
 from BaseClasses import Item, Region, Tutorial, ItemClassification
 from .items import CVCotMItem, FILLER_ITEM_NAMES, ACTION_CARDS, ATTRIBUTE_CARDS, cvcotm_item_info, \
     get_item_names_to_ids, get_item_counts
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .locations import CVCotMLocation, get_location_names_to_ids, BASE_ID, get_named_locations_data, \
     get_location_name_groups
 from .options import cvcotm_option_groups, CVCotMOptions, SubWeaponShuffle, IronMaidenBehavior, RequiredSkirmishes, \
@@ -24,6 +24,8 @@ from .rom import RomData, patch_rom, get_base_rom_path, CVCotMProcedurePatch, CV
     # CVCOTM_VC_US_HASH
 from .client import CastlevaniaCotMClient
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("cvcotm")
 
 class CVCotMSettings(settings.Group):
     class RomFile(settings.UserFilePath):
@@ -61,7 +63,6 @@ class CVCotMWorld(World):
     from a demonic ritual to restore the Count's power...
     """
     game = GAME_NAME
-    igdb_id = IGDB_ID
     author: str = AUTHOR
     item_name_groups = {
         "DSS": ACTION_CARDS.union(ATTRIBUTE_CARDS),

@@ -3,7 +3,7 @@ from typing import List
 from BaseClasses import Region, Tutorial, ItemClassification
 from worlds.AutoWorld import WebWorld, World
 from .items import WordipelagoItem, item_data_table, item_table
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID
+
 from .locations import WordipelagoLocation, location_data_table, get_location_table
 from .options import WordipelagoOptions
 from .regions import region_data_table
@@ -28,6 +28,9 @@ class WordipelagoWebWorld(WebWorld):
 
 class WordipelagoWorld(World):
     """A brand new take on the world famous word guessing game."""
+
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("wordipelago")
 
     game = GAME_NAME
     author: str = AUTHOR

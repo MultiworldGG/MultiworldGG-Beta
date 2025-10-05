@@ -6,7 +6,7 @@ from BaseClasses import Entrance, CollectionState, Item, Location, MultiWorld, R
 from worlds.AutoWorld import WebWorld, World
 from . import Items, Locations, Maps, Regions, Rules
 from .Options import HereticOptions
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 
 logger = logging.getLogger("Heretic")
 
@@ -38,10 +38,13 @@ class HereticWorld(World):
     """
     Heretic is a dark fantasy first-person shooter video game released in December 1994. It was developed by Raven Software.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("heretic")
+
     options_dataclass = HereticOptions
     options: HereticOptions
     game = GAME_NAME
-    igdb_id = IGDB_ID
+    
     author: str = AUTHOR
     web = HereticWeb()
     required_client_version = (0, 5, 0)  # 1.2.0-prerelease or higher

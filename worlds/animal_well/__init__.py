@@ -8,7 +8,7 @@ from worlds.AutoWorld import WebWorld, World
 from worlds.LauncherComponents import Component, components, icon_paths, launch_subprocess, Type
 
 from .items import item_name_to_id, item_table, item_name_groups, filler_items, AWItem
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 from .locations import location_name_groups, location_name_to_id
 from .region_data import AWData, traversal_requirements
 from .region_scripts import create_regions_and_set_rules
@@ -77,10 +77,13 @@ class AnimalWellWorld(World):
     action-exploration game rendered in intricate audio and visual detail. Encounter lively creatures small and large,
     helpful and ominous as you discover unconventional upgrades and unravel the well’s secrets.
     """
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("animal_well")
+
     game = GAME_NAME
     author = AUTHOR
-    igdb_id = IGDB_ID
-    version_string = VERSION
+    
+    version_string = WORLD_VERSION
 
     options: AnimalWellOptions
     options_dataclass = AnimalWellOptions

@@ -8,7 +8,7 @@ import settings
 from BaseClasses import Tutorial, Item, ItemClassification, Region, Entrance
 from worlds.AutoWorld import World, WebWorld
 from ..LauncherComponents import Component, components, Type, icon_paths
-from .Constants import GAME_NAME, AUTHOR, IGDB_ID, VERSION
+
 
 # TS4 specific imports
 from .Locations import location_table, Sims4Location, skill_locations_table
@@ -55,9 +55,11 @@ class Sims4World(World):
     The Sims 4 focuses on creating and controlling a neighborhood of virtual people, called "Sims".
     """
 
+    from BaseUtils import get_archipelago_json
+    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("sims4")
+
     game = GAME_NAME
     author: str = AUTHOR
-    igdb_id: int = IGDB_ID
     topology_present = False
     web = Sims4Web()
 
@@ -67,7 +69,7 @@ class Sims4World(World):
     location_name_groups = location_name_groups
     item_name_groups = item_name_groups
 
-    data_version = VERSION
+    data_version = WORLD_VERSION
     base_id = 0x73340001
     required_client_version = (0, 4, 0)
 

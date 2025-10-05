@@ -2,15 +2,7 @@ import os
 import json
 import pkgutil
 
-GAME_NAME: str = "OpenRCT2"
-AUTHOR: str = "Crazycolbster"
-IGDB_ID: int = 80720
-VERSION: str = "v0.1.20-beta"
-
-# Sent to the game to verify that the plugin version is compatible
-apworld_version = VERSION
-
-# ID of first item and location, could be hard-coded but code may be easier
+# ID of first item and location", "could be hard-coded but code may be easier
 # to read with this as a property.
 
 base_id = 2000000

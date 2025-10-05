@@ -23,6 +23,8 @@ from .logic import (get_all_cards_that_have_locations, filter_to_in_logic_cards,
                     LogicCard)
 from .version import __version__
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("fm")
 
 class FMWeb(WebWorld):
     theme = "dirt"
@@ -45,9 +47,8 @@ MINIMUM_FARM_VIABILITY: typing.Final[int] = 3
 class FMWorld(World):
     """Yu-Gi-Oh! Forbidden Memories is a PlayStation RPG with card-battling mechanics. Assume the role of the Prince of
     Egypt who transcends time in order to thwart a cataclysmic evil."""
-    game: str = Constants.GAME_NAME
-    author: str = Constants.AUTHOR
-    igdb_id: int = Constants.IGDB_ID
+    game: str = GAME_NAME
+    author: str = AUTHOR
 
     options_dataclass = FMOptions
     options: FMOptions

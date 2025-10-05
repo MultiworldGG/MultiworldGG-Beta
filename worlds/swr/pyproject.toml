@@ -1,27 +1,19 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.swr"
-dynamic = ["version"]
+version = "0.0.0"
 description = "MultiWorld: Star Wars Episode I Racer"
-authors = [
-    {name = "Johnny Hamcobbler"}
-]
 license = "MIT"
-license-files = [
-    "LICENSE"
-]
-classifiers = [
-    "Private :: Do Not Upload"
-]
+license-files = [ "LICENSE",]
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Johnny Hamcobbler"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.swr"]
+where = [ "src",]
+include = [ "worlds.swr",]
 namespaces = true
-
-[tool.setuptools.dynamic]
-version = {attr = "worlds.swr.Constants.VERSION"}
