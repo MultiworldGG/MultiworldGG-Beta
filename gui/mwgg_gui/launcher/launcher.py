@@ -67,7 +67,8 @@ from FileUtils import FileUtils
 game_index = GameIndex()
 logger = logging.getLogger("Client")
 
-Builder.load_file(os.path.join(os.path.dirname(__file__), "launcher.kv"))
+with open(os.path.join(os.path.dirname(__file__), "launcher.kv"), encoding="utf-8") as kv_file:
+    Builder.load_string(kv_file.read())
 
 class LauncherLayout(MDFloatLayout):
     pass
