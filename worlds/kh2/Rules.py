@@ -248,7 +248,8 @@ class KH2WorldRules(KH2Rules):
             RegionName.LevelsVS24:         lambda state: self.level_locking_unlock(state, 24),
             RegionName.LevelsVS26:         lambda state: self.level_locking_unlock(state, 26),
 
-            RegionName.Keyblade:            lambda state: True, #Start this at true and then change individual locs
+            #Start this at true and then change individual locs to match the keyblade's location.
+            RegionName.Keyblade:           lambda state: True, 
         }
         self.weapon_loc_rules = {
             LocationName.FAKESlot:              lambda state: state.has(ItemName.ValorForm, self.player),

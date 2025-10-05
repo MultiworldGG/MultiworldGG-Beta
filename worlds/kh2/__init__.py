@@ -106,26 +106,26 @@ class KH2World(World):
         for ability in self.slot_data_sora_weapon:
             if ability in self.sora_ability_dict and self.sora_ability_dict[ability] >= 1:
                 self.sora_ability_dict[ability] -= 1
-        self.donald_ability_dict = {k: v.quantity for k, v in DonaldAbility_Table.items()}
+        self.donald_ability_dict = {k: v.quantity for k, v in staff_set.items()}
         for ability in self.slot_data_donald_weapon:
             if ability in self.donald_ability_dict and self.donald_ability_dict[ability] >= 1:
                 self.donald_ability_dict[ability] -= 1
-        self.goofy_ability_dict = {k: v.quantity for k, v in GoofyAbility_Table.items()}
+        self.goofy_ability_dict = {k: v.quantity for k, v in shield_set.items()}
         for ability in self.slot_data_goofy_weapon:
             if ability in self.goofy_ability_dict and self.goofy_ability_dict[ability] >= 1:
                 self.goofy_ability_dict[ability] -= 1
 
         slot_data = self.options.as_dict(
-                "Goal",
-                "FinalXemnas",
-                "LuckyEmblemsRequired",
-                "BountyRequired",
-                "FightLogic",
-                "FinalFormLogic",
-                "AutoFormLogic",
-                "LevelDepth",
-                "DonaldGoofyStatsanity",
-                "CorSkipToggle"
+            "Goal", 
+            "FinalXemnas", 
+            "LuckyEmblemsRequired", 
+            "BountyRequired",
+            "FightLogic",
+            "FinalFormLogic",
+            "AutoFormLogic",
+            "LevelDepth",
+            "DonaldGoofyStatsanity",
+            "CorSkipToggle"
         )
         slot_data.update({
             "hitlist":                [],  # remove this after next update
@@ -143,6 +143,10 @@ class KH2World(World):
         # data = item_dictionary_table[name]
         if name in progression_set or name in self.misc_progression_items:
             item_classification = ItemClassification.progression
+        elif name in progression_skip_balancing_set: # Macguffins: lucky emblems & bounties
+            item_classification = ItemClassification.progression_skip_balancing
+        elif name in progression_deprioritized_set: # feelsbad on prio locations: armor
+            item_classification = ItemClassification.progression_deprioritized
         elif name in useful_set:
             item_classification = ItemClassification.useful
         elif name in Trap_Table:
@@ -226,18 +230,19 @@ class KH2World(World):
             self.growth_list.extend(Movement_Table.keys())
 
         self.item_quantity_dict = {item: data.quantity for item, data in item_dictionary_table.items()}
-        self.sora_ability_dict = {k: v.quantity for dic in [
-                GreatActionAbility_Table, UsefulActionAbility_Table, JunkActionAbility_Table, 
-                GreatSupportAbility_Table, UsefulSupportAbility_Table, JunkSupportAbility_Table
-                ] 
+        self.sora_ability_dict = {k: v.quantity for dic in [ action_set, support_set ] 
             for k, v in dic.items()}
 
+        # Make "Auto" Forms progression if AutoFormLogic is on
         for k in self.sora_ability_dict.keys():
             if k in [ItemName.AutoValor, ItemName.AutoWisdom, 
                      ItemName.AutoMaster, ItemName.AutoFinal] and self.options.AutoFormLogic.value:
                 self.misc_progression_items.append(k)
+        # TODO: Other items to change to progression based on settings, i.e. ComboPlus (Terra only), etc
+
         # Dictionary to mark locations with their plandoed item
         # Example. Final Xemnas: Victory
+        # Shouldn't need extra support abilites w/ default pool set
 
         self.plando_locations = dict()
         self.starting_invo_verify()
@@ -270,7 +275,7 @@ class KH2World(World):
             self.bounties_required = self.options.BountyRequired.value
             self.bounties_difficulty = self.options.BountyLevel.value
 
-            # make a range to pull bounties from - do not go beyond AS level unless requested
+            # make a range to pull bounties from - do not go to datas level unless explicitly requested (8+)
             # also don't give first visit bounties to people looking for higher ranked challenges
 
             difficulty_high = self.bounties_difficulty if self.bounties_difficulty >=7 else max(min(self.bounties_difficulty + 2, 7), 4)
@@ -332,7 +337,8 @@ class KH2World(World):
         """
         Plandoing Events and filling weapons for donald,goofy and sora
 
-        Abilities on weapons need to be placed first so that the location is tangible
+        Abilities on weapons need to be placed first so that the location
+        (weapon) priority can be changed
         """
 
         self.donald_pre_fill()
@@ -501,6 +507,10 @@ class KH2World(World):
                 self.set_weapon_prog(location)
 
     def set_weapon_prog(self, loc: Location) -> None:
+        """
+        Sets the weapon "location" to progression if the ability
+        slotted into it is a progression ability
+        """
         for kbslot, kbitem in exclusion_table["WeaponSlots"].items():
             if loc.name == kbslot:
                 keyblade = [i for i in self.multiworld.itempool if i.name == kbitem and i.player == self.player].pop()
@@ -511,11 +521,9 @@ class KH2World(World):
         Making sure the player doesn't put too many abilities in their starting inventory.
         """
         for item, value in self.options.start_inventory.value.items():
-            if item in GreatActionAbility_Table or item in UsefulActionAbility_Table \
-                    or item in JunkActionAbility_Table or item in GreatSupportAbility_Table \
-                    or item in UsefulSupportAbility_Table or item in JunkSupportAbility_Table \
+            if item in support_set or item in action_set \
                     or item in exclusion_item_table["StatUps"] \
-                    or item in DonaldAbility_Table or item in GoofyAbility_Table:
+                    or item in staff_set or item in shield_set:
                 # cannot have more than the quantity for abilties
                 if value > item_dictionary_table[item].quantity:
                     logging.info(

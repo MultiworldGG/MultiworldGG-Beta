@@ -122,7 +122,7 @@ Shields_Table = {
     ItemName.SaveTheKing2:      ItemData(1, 504, 0x3693),
     ItemName.UltimateMushroom:  ItemData(1, 558, 0x36A7),
 }
-GreatAccessory_Table = {
+ProgAccessory_Table = {
     ItemName.SoldierEarring:  ItemData(1, 40, 0x35A6),
     ItemName.FencerEarring:   ItemData(1, 46, 0x35A7),
     ItemName.MageEarring:     ItemData(1, 47, 0x35A8),
@@ -160,7 +160,7 @@ JunkAccessory_Table = {
     ItemName.OrichalcumRing:  ItemData(1, 28, 0x359A),
     }
 
-GreatArmor_Table = {
+ProgArmor_Table = {
     ItemName.GaiaBelt:         ItemData(1, 79, 0x35CA),
     ItemName.PowerBand:        ItemData(1, 69, 0x35BE),
     ItemName.BusterBand:       ItemData(1, 70, 0x35C6),
@@ -214,10 +214,11 @@ Useful_Table = {
 }
 
 Trap_Table = {
-    #ItemName.HPTrap:           ItemData(12, 91, 0x368C), # 459 is DUMMY 12, 91 is Basement Map
+    # Yeah, I started trying to figure this out and gave up -_-
+    #ItemName.TerraTrap:           ItemData(12, 91, 0x368C), # 459 is DUMMY 12, 91 is Basement Map
 }
 
-GreatActionAbility_Table = {
+ProgActionAbility_Table = {
     ItemName.Guard:            ItemData(1, 82, 0x052, ability=True), #Action
     ItemName.HorizontalSlash:  ItemData(1, 271, 0x10F, ability=True),
     ItemName.FinishingLeap:    ItemData(1, 267, 0x10B, ability=True),
@@ -228,15 +229,18 @@ GreatActionAbility_Table = {
     ItemName.GuardBreak:       ItemData(1, 265, 0x109, ability=True),
     ItemName.Explosion:        ItemData(1, 266, 0x10A, ability=True),
     ItemName.AerialDive:       ItemData(1, 560, 0x230, ability=True),
+    ItemName.AerialSweep:      ItemData(1, 269, 0x10D, ability=True),
     ItemName.AerialSpiral:     ItemData(1, 270, 0x10E, ability=True),
     ItemName.MagnetBurst:      ItemData(1, 561, 0x231, ability=True),
     ItemName.AutoLimit:        ItemData(1, 568, 0x238, ability=True),
     ItemName.TrinityLimit:     ItemData(1, 198, 0x0C6, ability=True),
 }
-GreatSupportAbility_Table = {
+ProgSupportAbility_Table = {
     ItemName.Scan:             ItemData(2, 138, 0x08A, ability=True), #Support
     ItemName.AerialRecovery:   ItemData(1, 158, 0x09E, ability=True),
     ItemName.ComboMaster:      ItemData(1, 539, 0x21B, ability=True),
+    ItemName.ComboPlus:        ItemData(3, 162, 0x0A2, ability=True),
+    ItemName.AirComboPlus:     ItemData(3, 163, 0x0A3, ability=True),
     ItemName.FinishingPlus:    ItemData(3, 393, 0x189, ability=True),
     ItemName.NegativeCombo:    ItemData(2, 394, 0x18A, ability=True),
     ItemName.BerserkCharge:    ItemData(2, 395, 0x18B, ability=True),
@@ -252,7 +256,6 @@ GreatSupportAbility_Table = {
 UsefulActionAbility_Table = {
     ItemName.UpperSlash:       ItemData(1, 137, 0x089, ability=True),
     ItemName.VicinityBreak:    ItemData(1, 562, 0x232, ability=True),
-    ItemName.AerialSweep:      ItemData(1, 269, 0x10D, ability=True),
     ItemName.Counterguard:     ItemData(1, 268, 0x10C, ability=True),
     ItemName.AutoValor:        ItemData(1, 385, 0x181, ability=True),
     ItemName.AutoWisdom:       ItemData(1, 386, 0x182, ability=True),
@@ -275,22 +278,20 @@ UsefulSupportAbility_Table = {
     ItemName.DriveBoost:       ItemData(2, 397, 0x18D, ability=True),
     ItemName.FormBoost:        ItemData(3, 398, 0x18E, ability=True),
     ItemName.SummonBoost:      ItemData(1, 399, 0x18F, ability=True),    
-    ItemName.ComboPlus:        ItemData(3, 162, 0x0A2, ability=True),
-    ItemName.AirComboPlus:     ItemData(3, 163, 0x0A3, ability=True),
     ItemName.ComboBoost:       ItemData(2, 390, 0x186, ability=True),
     ItemName.AirComboBoost:    ItemData(2, 391, 0x187, ability=True),
     ItemName.ReactionBoost:    ItemData(3, 392, 0x188, ability=True),
+    ItemName.Jackpot:          ItemData(2, 406, 0x196, ability=True),
     }
 
 JunkActionAbility_Table = {
     ItemName.AerialFinish:     ItemData(1, 272, 0x110, ability=True),  #action
-    ItemName.DodgeSlash:       ItemData(1, 263, 0x107, ability=True),
+    ItemName.DodgeSlash:       ItemData(1, 263, 0x107, ability=True),  #yes, I know, but it's terrible
     ItemName.AutoSummon:       ItemData(1, 389, 0x185, ability=True),
 }
 JunkSupportAbility_Table = {
     ItemName.MPHaste:          ItemData(2, 413, 0x19D, ability=True),  #support
     ItemName.NoExperience:     ItemData(0, 404, 0x194, ability=True),
-    ItemName.Jackpot:          ItemData(2, 406, 0x196, ability=True),
 }
 
 Boosts_Table = {
@@ -301,7 +302,7 @@ Boosts_Table = {
 }
 
 # These items cannot be in other games so these are done locally in kh2
-DonaldWothAbility_Table = {
+DonaldProgAbility_Table = {
     ItemName.Fantasia:            ItemData(1, 199, 0xC7, ability=True),
     ItemName.FlareForce:          ItemData(1, 200, 0xC8, ability=True),
     }
@@ -328,11 +329,12 @@ DonaldAbility_Table = {
     ItemName.DonaldDamageControl: ItemData(2, 542, 0x21E, ability=True),
     ItemName.DonaldDraw:          ItemData(1, 405, 0x195, ability=True),
 }
-
+GoofyProgAbility_Table = {
+    ItemName.TornadoFusion:      ItemData(1, 201, 0xC9, ability=True),
+    ItemName.Teamwork:          ItemData(1, 202, 0xCA, ability=True),
+}
 GoofyUsefulAbility_Table = {
     ItemName.GoofyHyperHealing:  ItemData(2, 419, 0x1A3, ability=True),
-    ItemName.TornadoFusion:      ItemData(1, 201, 0xC9, ability=True),
-    ItemName.Teamwork:           ItemData(1, 202, 0xCA, ability=True),
     ItemName.GoofyAutoLimit:     ItemData(1, 417, 0x1A1, ability=True),
 }
 GoofyAbility_Table = {
@@ -480,10 +482,10 @@ CheckDupingItems = {
     },
     "Equipment":      {
         "Accessories": {
-            accessory for keys in [GreatAccessory_Table.keys(), JunkAccessory_Table.keys()] for accessory in keys
+            accessory for keys in [ProgAccessory_Table.keys(), JunkAccessory_Table.keys()] for accessory in keys
         },
         "Armor":       {
-            armor for keys in [GreatArmor_Table.keys(), JunkArmor_Table.keys()] for armor in keys
+            armor for keys in [ProgArmor_Table.keys(), JunkArmor_Table.keys()] for armor in keys
         }
     },
     "Stat Increases": {
@@ -496,38 +498,50 @@ CheckDupingItems = {
     },
     "Abilities":      {
         "Sora":   {
-            item_name for keys in [GreatActionAbility_Table.keys(), UsefulActionAbility_Table.keys(), JunkActionAbility_Table.keys(),
-                                  GreatSupportAbility_Table.keys(), UsefulSupportAbility_Table.keys(), JunkSupportAbility_Table.keys(),
+            item_name for keys in [ProgActionAbility_Table.keys(), UsefulActionAbility_Table.keys(), JunkActionAbility_Table.keys(),
+                                  ProgSupportAbility_Table.keys(), UsefulSupportAbility_Table.keys(), JunkSupportAbility_Table.keys(),
                                   Movement_Table.keys()] for item_name in keys
         },
         "Donald": {
-            donald_ability for keys in [DonaldAbility_Table.keys(), DonaldWothAbility_Table.keys(), DonaldUsefulAbility_Table.keys()] for donald_ability in keys
+            donald_ability for keys in [DonaldAbility_Table.keys(), DonaldProgAbility_Table.keys(), DonaldUsefulAbility_Table.keys()] for donald_ability in keys
         },
         "Goofy":  {
-            goofy_ability for keys in [GoofyAbility_Table.keys(), GoofyUsefulAbility_Table.keys()] for goofy_ability in keys
+            goofy_ability for keys in [GoofyAbility_Table.keys(), GoofyProgAbility_Table.keys(), GoofyUsefulAbility_Table.keys()] for goofy_ability in keys
         }
     },
 }
 progression_set = {
-    # tag as woth
+    # tag as prog
     item_name for keys in [
-        Wincon_Table.keys(),
         Progression_Table.keys(),
         Forms_Table.keys(),
         Magic_Table.keys(),
         Summon_Table.keys(),
         Movement_Table.keys(),
-        GreatActionAbility_Table.keys(),
-        GreatSupportAbility_Table.keys(),
-        DonaldWothAbility_Table.keys()
+        ProgActionAbility_Table.keys(),
+        ProgSupportAbility_Table.keys(),
+        DonaldProgAbility_Table.keys(),
+        GoofyProgAbility_Table.keys()
     ]
     for item_name in keys
 }
 
-#progression_skip_balancing_set = {
-    #tag as woth but don't balance
-    
-#}
+progression_skip_balancing_set = {
+    # required but doesn't need balancing (macguffins) 
+    item_name for keys in [
+        Wincon_Table.keys()
+    ]
+    for item_name in keys if item_name not in progression_set
+    }
+
+progression_deprioritized_set = {
+    # required logically, feels bad on a prio location
+    item_name for keys in [
+        ProgAccessory_Table.keys(),
+        ProgArmor_Table.keys()
+    ]
+    for item_name in keys if item_name not in [*progression_set, *progression_skip_balancing_set]
+}
 
 useful_set = {
     item_name for keys in [
@@ -535,12 +549,11 @@ useful_set = {
         UsefulActionAbility_Table.keys(),
         DonaldUsefulAbility_Table.keys(),
         GoofyUsefulAbility_Table.keys(),
-        GreatArmor_Table.keys(),
         Useful_Table.keys(),
-        GreatAccessory_Table.keys(),
         Keyblade_Table.keys()
     ]
-    for item_name in keys if item_name not in progression_set
+    for item_name in keys if item_name not in [*progression_set, *progression_skip_balancing_set, \
+                                               *progression_deprioritized_set]
 }
 
 junk_set = {
@@ -552,14 +565,15 @@ junk_set = {
         GoofyAbility_Table.keys(),
         DonaldAbility_Table.keys()
     ]
-    for item_name in keys if item_name not in progression_set and item_name not in useful_set
+    for item_name in keys if item_name not in [*progression_set, *progression_skip_balancing_set, \
+                                               *progression_deprioritized_set, *useful_set]
 }
-staff_set = {**DonaldAbility_Table, **DonaldUsefulAbility_Table, **DonaldWothAbility_Table}
+staff_set = {**DonaldAbility_Table, **DonaldUsefulAbility_Table, **DonaldProgAbility_Table}
 
-shield_set = {**GoofyAbility_Table, **GoofyUsefulAbility_Table}
+shield_set = {**GoofyAbility_Table, **GoofyUsefulAbility_Table, **GoofyProgAbility_Table}
 
-support_set = {**GreatSupportAbility_Table, **UsefulSupportAbility_Table, **JunkSupportAbility_Table}
-action_set = {**GreatActionAbility_Table, **UsefulActionAbility_Table, **JunkActionAbility_Table}
+support_set = {**ProgSupportAbility_Table, **UsefulSupportAbility_Table, **JunkSupportAbility_Table}
+action_set = {**ProgActionAbility_Table, **UsefulActionAbility_Table, **JunkActionAbility_Table}
 
 visit_locking_dict = {
     "2VisitLocking":   [
@@ -605,10 +619,10 @@ exclusion_item_table = {
     },
     "Ability": {
         item_name for keys in [
-            GreatSupportAbility_Table.keys(), 
+            ProgSupportAbility_Table.keys(), 
             UsefulSupportAbility_Table.keys(), 
             JunkSupportAbility_Table.keys(),
-            GreatActionAbility_Table.keys(), 
+            ProgActionAbility_Table.keys(), 
             UsefulActionAbility_Table.keys(), 
             JunkActionAbility_Table.keys()
             ] 
@@ -632,26 +646,27 @@ item_dictionary_table = {
     **Forms_Table,
     **Magic_Table,
     **Summon_Table,
-    **GreatArmor_Table,
+    **ProgArmor_Table,
     **JunkArmor_Table,
     **Movement_Table,
     **Staffs_Table,
     **Shields_Table,
     **Keyblade_Table,
-    **GreatAccessory_Table,
+    **ProgAccessory_Table,
     **JunkAccessory_Table,
     **Useful_Table,
-    **GreatActionAbility_Table,
+    **ProgActionAbility_Table,
     **UsefulActionAbility_Table,
     **JunkActionAbility_Table,
-    **GreatSupportAbility_Table,
+    **ProgSupportAbility_Table,
     **UsefulSupportAbility_Table,
     **JunkSupportAbility_Table,
     **Boosts_Table,
     **Wincon_Table,
-    **DonaldWothAbility_Table,
+    **DonaldProgAbility_Table,
     **DonaldUsefulAbility_Table,
     **DonaldAbility_Table,
+    **GoofyProgAbility_Table,
     **GoofyUsefulAbility_Table,
     **GoofyAbility_Table,
     **Consumable_Table

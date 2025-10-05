@@ -4,6 +4,7 @@ from Options import Choice, Range, Toggle, ItemDict, OptionDict, PerGameCommonOp
 
 from . import default_itempool_option, default_keyblade_pool
 
+
 class SoraEXP(Range):
     """Sora Level Exp Multiplier"""
     display_name = "Sora Level EXP"
@@ -290,7 +291,10 @@ class BountyLevel(Range):
 
     Ranges from early game to late game. 
 
-    10 includes Terra, 9 includes Data fights"""
+    10 includes Terra, 9 includes all Data fights
+    8 is all Datas except Demyx, Xemnas, Xaldin, Xigbar
+    
+    7 and lower are other bosses and game events"""
     display_name = "Bounty Difficulty"
     range_start = 1
     range_end = 10
@@ -356,6 +360,7 @@ class SummonLevelLocationToggle(Toggle):
     """Toggle Summon levels to have locations."""
     display_name = "Summon Level Locations"
     default = False
+
 
 # shamelessly stolen from the messanger
 @dataclass

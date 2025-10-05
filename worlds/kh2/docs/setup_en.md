@@ -18,6 +18,7 @@ Kingdom Hearts II Final Mix from the [Epic Games Store](https://store.epicgames.
     2. Install the Archipelago Companion mod from `JaredWeakStrike/APCompanion` using OpenKH Mod Manager
     3. Install the mod from `TopazTK/KH2-ArchipelagoEnablers` using OpenKH Mod manager
        1. Do Note that if you have `KH2FM-Mods-equations19/auto-save` OR `KH2FM-Mods-equations19/soft-reset` you should download `TopazTK/KH2-ArchipelagoEnablersLITE` instead
+       2. This mod overwrites slot 99 with an autosave. Make sure to copy your save data to another slot before installing.
     4. AP Randomizer Seed
 - Optional Quality of Life Mods for MultiworldGG
     1. Optionally Install the Archipelago Quality Of Life mod from `JaredWeakStrike/AP_QOL` using OpenKH Mod Manager
@@ -52,12 +53,12 @@ After Installing the seed click "Mod Loader -> Build/Build and Run". Every slot 
 
 ## What the Mod Manager Should Look Like.
 
-![image](https://i.imgur.com/su6fOvH.png)
-
+![image](https://i.imgur.com/3IAgeee.png)
+- if you are using APEnablers Lite, install `KH2FM-Mods-equations19/soft-reset` and  `KH2FM-Mods-equations19/KH2-Lua-Library`. Put them below the APCompanion but ABOVE the goa
 
 ## Using the KH2 Client
 
-Start the game through OpenKH Mod Manager. If starting a new run, enter the Garden of Assemblage from a new save. If returning to a run, load the save and enter the Garden of Assemblage. Then run the MultiworldGG KH2 Client from the MWGG Launcher.
+Start the game through OpenKH Mod Manager. If starting a new run, enter the Garden of Assemblage from a new save. If returning to a run, load the save and enter the Garden of Assemblage. Then run the [MultiworldGGKH2Client.exe](https://github.com/MultiworldGG/MultiworldGG/releases).<br>
 When you successfully connect to the server the client will automatically hook into the game to send/receive checks. <br>
 If the client ever loses connection to the game, it will also disconnect from the server and you will need to reconnect.<br> 
 
@@ -86,6 +87,8 @@ Enter The room's port number into the top box <b> where the x's are</b> and pres
 -  Using a seed from the standalone KH2 Randomizer Seed Generator.
     - The MultiworldGG version of the KH2 Randomizer does not use this Seed Generator; refer to the [MultiworldGG Setup](https://multiworld.gg/tutorial/Archipelago/setup/en) to learn how to generate and play a seed through MultiworldGG. 
 
+- Using equations19/auto-save OR equations19/soft-reset while using TopazTK/KH2-ArchipelagoEnablers. 
+    - Since APEnablers has both of these features they conflict with each-other. If you want to keep on using Equation's mods you need to download TopazTK/KH2-ArchipelagoEnablersLITE instead
 ## Best Practices
 
 - Make a save at the start of the GoA before opening anything. This will be the file to select when loading an autosave if/when your game crashes.
@@ -93,6 +96,7 @@ Enter The room's port number into the top box <b> where the x's are</b> and pres
 - Set fps limit to 60fps.
 - Run the game in windows/borderless windowed mode. Fullscreen is stable but the game can crash if you alt-tab out.
 - Make sure to save in a different save slot when playing in an async or disconnecting from the server to play a different seed
+
 
 ## Logic Sheet & PopTracker Autotracking
 

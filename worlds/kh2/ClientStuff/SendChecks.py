@@ -98,9 +98,9 @@ async def checkWorldLocations(self):
                     locationId = self.kh2_loc_name_to_id[location]
                 else:
                     continue
-                if locationId not in self.locations_checked \
-                        and self.kh2_read_byte(self.Save + data.addrObtained) & 0x1 << data.bitIndex > 0:
-                    self.sending = self.sending + [(int(locationId))]
+                    if locationId not in self.locations_checked \
+                            and self.kh2_read_byte(self.Save + data.addrObtained) & 0x1 << data.bitIndex > 0:
+                        self.sending = self.sending + [(int(locationId))]
     except Exception as e:
         if self.kh2connected:
             self.kh2connected = False
