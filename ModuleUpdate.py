@@ -457,22 +457,36 @@ def _move_compiled_files(directory: Path) -> None:
 def _add_to_library_zip(exe_dir: Path, source_path: Path) -> None:
     """Adding a modules to the library.zip file for frozen builds"""
     library_zip = exe_dir / "lib" / "library.zip"
+    lib_dir = exe_dir / "lib"
+    
     with zipfile.ZipFile(library_zip, "a") as zipf:
         if source_path.is_file():
-            try:
-                zipf.write(source_path, source_path.name)
-            except FileExistsError:
-                pass
+            # Copy .pyd/.so directly to lib, others go to zip
+            if source_path.suffix in ['.pyd', '.so']:
+                target_path = lib_dir / source_path.name
+                shutil.copy2(source_path, target_path)
+                logger.debug(f"Copied {source_path.name} to lib directory")
+            else:
+                try:
+                    zipf.write(source_path, source_path.name)
+                except FileExistsError:
+                    pass
         elif source_path.is_dir():
-            # Add the entire directory tree to the zip
+            # Add the entire directory tree to the zip, but copy .pyd/.so to lib
             for file_path in source_path.rglob("*"):
                 if file_path.is_file() and not file_path.name.endswith(".py"):
-                    # Calculate the relative path within the directory
-                    arcname = source_path.name / file_path.relative_to(source_path)
-                    try:
-                        zipf.write(file_path, str(arcname))
-                    except FileExistsError:
-                        pass       
+                    if file_path.suffix in ['.pyd', '.so']:
+                        # Copy compiled extensions directly to lib directory
+                        target_path = lib_dir / file_path.name
+                        shutil.copy2(file_path, target_path)
+                        logger.debug(f"Copied {file_path.name} to lib directory")
+                    else:
+                        # Other files go to the zip with directory structure preserved
+                        arcname = source_path.name / file_path.relative_to(source_path)
+                        try:
+                            zipf.write(file_path, str(arcname))
+                        except FileExistsError:
+                            pass       
 
 def install_worlds(worlds: List[str]) -> None:
     """Install worlds from the multiworld repository."""
@@ -484,9 +498,9 @@ def install_worlds(worlds: List[str]) -> None:
         if is_frozen():
             # In frozen environments, we need to install to a location that's in the Python path
             # and ensure we use the correct target directory
-            executable_args = [python_cmd, "-m", "pip", "install", 
+            executable_args = [python_cmd, "-m", "pip", "install", "--index-url", "https://pypi.org/simple",
                     "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds", 
-                    world, "--compile", "--target", str(pip_install_dir), "--upgrade"]
+                    world, "--compile", "--target", str(pip_install_dir), "--upgrade", "--no-cache-dir"]
             
             logger.info(f"Executing subprocess command: {executable_args}")
             logger.info(f"Working directory: {os.getcwd()}")
@@ -553,7 +567,7 @@ def install_worlds(worlds: List[str]) -> None:
         else:
             executable_args = [python_cmd, "-m", "pip", "install", 
                     "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds", 
-                    world, "--compile", "--upgrade"]
+                    world, "--compile", "--upgrade", "--no-cache-dir"]
             result = subprocess.run(executable_args)
             if result.returncode != 0:
                 logger.warning(f"Failed to install {world}")

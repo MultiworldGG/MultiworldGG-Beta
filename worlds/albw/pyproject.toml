@@ -10,7 +10,7 @@ license = "GPL-2.0-only"
 license-files = [ "LICENSE",]
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [ "orjson>=3.10.15",]
+dependencies = [ "orjson>=3.10.15", "albwrandomizer>=0.1.0",]
 [[project.authors]]
 name = "randomsalience"
 

@@ -16,9 +16,6 @@ from .Regions import create_regions, connect_regions
 from .Rules import *
 from .Subclasses import KH2Item
 
-
-
-
 def launch_client():
     from .ClientStuff.Client import launch
     launch_component(launch, name="KH2Client")
@@ -213,7 +210,8 @@ class KH2World(World):
         itempool = [self.create_item(item) for item, data in self.item_quantity_dict.items() for _ in range(data)]
 
         # Creating filler for unfilled locations
-        itempool += [self.create_filler() for _ in range(self.total_locations - len(itempool))]
+        # +5 to fix the current fill error
+        itempool += [self.create_filler() for _ in range(self.total_locations - len(itempool) + 5)]
 
         self.multiworld.itempool += itempool
 

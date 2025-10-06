@@ -1,14 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict
 from Options import PerGameCommonOptions, Choice, Range, Toggle
-from pathlib import Path
-import sys
-
-# Path to the lib directory
-lib_path = Path(__file__).parent / "lib"
-
-# Add the lib directory to sys.path
-sys.path.append(str(lib_path))
 import albwrandomizer
 
 class LogicMode(Choice):

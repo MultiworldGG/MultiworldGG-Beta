@@ -15,14 +15,6 @@ from .Options import ALBWSpecificOptions, LogicMode, RandomizeDungeonPrizes, Lor
     SkipBigBombFlower, TrialsRequired, OpenTrialsDoor, BowOfLightInCastle, WeatherVanes, \
     DarkRoomsLampless, SwordlessMode, ChestSizeMatchesContents, TreacherousTowerFloors, \
     PurplePotionBottles, Keysy, create_randomizer_settings
-from pathlib import Path
-import sys
-
-# Path to the lib directory
-lib_path = Path(__file__).parent / "lib"
-
-# Add the lib directory to sys.path
-sys.path.append(str(lib_path))
 from albwrandomizer import ArchipelagoItem, ArchipelagoInfo, logging_on, randomize_pre_fill
 
 class PatchItemInfo:
