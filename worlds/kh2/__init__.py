@@ -210,8 +210,7 @@ class KH2World(World):
         itempool = [self.create_item(item) for item, data in self.item_quantity_dict.items() for _ in range(data)]
 
         # Creating filler for unfilled locations
-        # +5 to fix the current fill error
-        itempool += [self.create_filler() for _ in range(self.total_locations - len(itempool) + 5)]
+        itempool += [self.create_filler() for _ in range(self.total_locations - len(itempool))]
 
         self.multiworld.itempool += itempool
 
@@ -389,7 +388,9 @@ class KH2World(World):
             for item_name in donald_master_ability:
                 self.donald_get_bonus_abilities += [self.create_item(item_name)]
                 self.item_quantity_dict[item_name] -= 1
-                self.total_locations -= 1
+            # Subtract number of abilities (= locations that will be pre-filled)
+            # Note: there are more get bonus locations than abilities, unfilled ones will get regular items
+            self.total_locations -= len(self.donald_get_bonus_abilities)
 
     def goofy_gen_early(self):
         goofy_master_ability = [goofy_ability for goofy_ability in shield_set.keys() for _ in
@@ -411,7 +412,9 @@ class KH2World(World):
             for item_name in goofy_master_ability:
                 self.goofy_get_bonus_abilities += [self.create_item(item_name)]
                 self.item_quantity_dict[item_name] -= 1
-                self.total_locations -= 1
+            # Subtract number of abilities (= locations that will be pre-filled)
+            # Note: there are more get bonus locations than abilities, unfilled ones will get regular items
+            self.total_locations -= len(self.goofy_get_bonus_abilities)
 
     def keyblade_gen_early(self):
         # need to have enough abilities to slot into keyblade locations
@@ -462,10 +465,10 @@ class KH2World(World):
             # plando goofy get bonuses
             goofy_get_bonus_location_pool = [self.multiworld.get_location(location, self.player) for location in
                                              Goofy_Checks.keys() if Goofy_Checks[location].yml != "Keyblade"]
-            if len(goofy_get_bonus_location_pool) > len(self.goofy_get_bonus_abilities):
-                raise Exception(f"Too little abilities to fill goofy get bonus locations for player {self.player_name}.")
-            for location in goofy_get_bonus_location_pool:
-                self.random.choice(self.goofy_get_bonus_abilities)
+            # Only fill as many locations as we have abilities for; remaining locations will be filled normally
+            locations_to_fill = min(len(goofy_get_bonus_location_pool), len(self.goofy_get_bonus_abilities))
+            for i in range(locations_to_fill):
+                location = goofy_get_bonus_location_pool[i]
                 random_ability = self.random.choice(self.goofy_get_bonus_abilities)
                 location.place_locked_item(random_ability)
                 self.goofy_get_bonus_abilities.remove(random_ability)
@@ -485,9 +488,10 @@ class KH2World(World):
         if not self.options.DonaldGoofyStatsanity:
             donald_get_bonus_location_pool = [self.multiworld.get_location(location, self.player) for location in
                                               Donald_Checks.keys() if Donald_Checks[location].yml != "Keyblade"]
-            if len(donald_get_bonus_location_pool) > len(self.donald_get_bonus_abilities):
-                raise Exception(f"Too little abilities to fill donald get bonus locations for player {self.player_name}.")
-            for location in donald_get_bonus_location_pool:
+            # Only fill as many locations as we have abilities for; remaining locations will be filled normally
+            locations_to_fill = min(len(donald_get_bonus_location_pool), len(self.donald_get_bonus_abilities))
+            for i in range(locations_to_fill):
+                location = donald_get_bonus_location_pool[i]
                 random_ability = self.random.choice(self.donald_get_bonus_abilities)
                 location.place_locked_item(random_ability)
                 self.donald_get_bonus_abilities.remove(random_ability)
