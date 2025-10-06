@@ -13,7 +13,7 @@ Includes the following:
 __all__ = ('LauncherScreen', 
            'LauncherLayout', 
            'LauncherView', 
-           'LauncherAuthTextField', 
+           'LauncherAuthTextField'
            )
 import asynckivy
 from kivy.clock import Clock
@@ -486,7 +486,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         
         # Build command
         if is_frozen():
-            exe_path = local_path("MultiworldGGGenerate.exe") if is_windows() else local_path("MultiworldGGGenerate")
+            exe_path = local_path("MultiworldGGGenerate.exe") if is_windows else local_path("MultiworldGGGenerate")
             cmd = [str(exe_path), "--player-files-path", temp_dir]
             cwd = os.path.dirname(exe_path)
             env = None
@@ -661,7 +661,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         """Execute MultiworldGGServer with options - detached from client"""
         # Build command
         if is_frozen():
-            exe_path = local_path("MultiWorldGGServer.exe") if is_windows() else local_path("MultiWorldGGServer")
+            exe_path = local_path("MultiWorldGGServer.exe") if is_windows else local_path("MultiWorldGGServer")
             cmd = [str(exe_path)]
             cwd = os.path.dirname(exe_path)
             env = None
@@ -783,7 +783,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         """Execute MultiworldGGPatch with options in background thread"""
         # Build command
         if is_frozen():
-            exe_path = local_path("MultiworldGGPatch.exe") if is_windows() else local_path("MultiworldGGPatch")
+            exe_path = local_path("MultiworldGGPatch.exe") if is_windows else local_path("MultiworldGGPatch")
             cmd = [str(exe_path), patch_file]
             cwd = os.path.dirname(exe_path)
             env = None

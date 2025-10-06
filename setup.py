@@ -62,7 +62,8 @@ build_exe_options = {
         # System utilities (might be conditionally imported)
         "pyshortcuts",
         
-        # World-specific packages (used by plugin system)
+        # World-specific packages
+        "orjson",
         "aiohttp",          # sc2 world
         "requests",         # multiple worlds
         "google.protobuf",  # sc2 world
@@ -258,7 +259,7 @@ if __name__ == "__main__":
     # Setup configuration
     setup(
         name=instance_name,
-        version=f"{version_tuple.major}.{version_tuple.minor}.{version_tuple.build}",
+        version=version_tuple.as_pep440_string(),
         description=f"{instance_name} - MultiWorld.GG - More, and Faster",
         author="DelilahIsDidi, TreZc0",
         options={"build_exe": build_exe_options},

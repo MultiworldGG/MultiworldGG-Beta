@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mwgg_gui"
-version = "0.1.8a7"
+version = "0.1.8a8"
 description = "GUI package for MultiWorldGG"
 authors = [
     {name = "DelilahIsDidi"}
@@ -25,3 +25,6 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["mwgg_gui*"]
+
+[tool.setuptools.package-data]
+mwgg_gui = ["**/*.kv"]

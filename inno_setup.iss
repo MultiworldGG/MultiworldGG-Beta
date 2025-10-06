@@ -1,7 +1,7 @@
 #define source_path ReadIni(SourcePath + "\setup.ini", "Data", "source_path")
 #define min_windows ReadIni(SourcePath + "\setup.ini", "Data", "min_windows")
 
-#define MyAppName "MultiworldGG-AlphaGUI"
+#define MyAppName "MultiworldGG-Test"
 #define MyAppExeName "MultiworldGG.exe"
 #define MyAppIcon "data/icon.ico"
 #dim VersionTuple[4]
@@ -19,9 +19,9 @@ AppVerName={#MyAppName} {#MyAppVersionText}
 VersionInfoVersion={#MyAppVersion}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
-DefaultGroupName=MultiworldGG-AlphaGUI
+DefaultGroupName=MultiworldGG-Test
 OutputDir=setups
-OutputBaseFilename=Setup {#MyAppName} {#MyAppVersionText}
+OutputBaseFilename=Setup {#MyAppName} {#MyAppVersionText}a2
 Compression=lzma2
 SolidCompression=yes
 LZMANumBlockThreads=8
