@@ -12,13 +12,14 @@ if __name__ == "__main__":
     import ModuleUpdate
     ModuleUpdate.update()
 
-    games = List[str]
+    games: List[str] = [""]
 
     for file in sys.argv[1:]:
         try:
             with zipfile.ZipFile(file, "r") as zipf:
-                ap_json = zipf.open("archipelago.json").read()
-                games.append(json.loads(ap_json)["game"])
+                ap_data = zipf.read("archipelago.json")
+                ap_json = json.loads(ap_data.decode('utf-8'))
+                games.append(ap_json["game"])
         except FileNotFoundError:
             raise FileNotFoundError(f"archipelago.json not found in {file}")
         except Exception as e:

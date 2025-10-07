@@ -179,7 +179,7 @@
 <LauncherGenerateContent>:
     orientation: 'vertical'
     spacing: dp(15)
-    height: dp(140)
+    adaptive_height: True
     LauncherAuthTextField:
         id: seed
         size_hint_x: 0.8
@@ -206,7 +206,7 @@
 <LauncherHostContent>:
     orientation: 'vertical'
     spacing: dp(15)
-    height: dp(140)
+    adaptive_height: True
     LauncherAuthTextField:
         id: port
         input_filter: 'int'
@@ -220,12 +220,12 @@
             icon_color_normal: self.parent.icon_color_normal
             icon: 'numeric'
     LauncherAuthTextField:
-        id: password
+        id: admin_password
         password: True
         size_hint_x: 0.8
         pos_hint: {"center_x": 0.5}
         MDTextFieldHintText:
-            text: "Server Password (optional)"
+            text: "Remote Admin Password (optional)"
         MDTextFieldLeadingIcon:
             theme_icon_color: "Custom"
             icon_color_focus: self.parent.icon_color_focus
@@ -235,7 +235,7 @@
 <LauncherPatchContent>:
     orientation: 'vertical'
     spacing: dp(15)
-    height: dp(80)
+    adaptive_height: True
     LauncherAuthTextField:
         id: output
         size_hint_x: 0.8

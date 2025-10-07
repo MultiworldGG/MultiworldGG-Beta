@@ -606,7 +606,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         # Create dialog content
         content = LauncherHostContent()
         port_field = content.ids.port
-        password_field = content.ids.password
+        admin_password_field = content.ids.admin_password
         
         # Create dialog
         dialog = MDDialog(
@@ -621,7 +621,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 ),
                 MDButton(
                     MDButtonText(text="START SERVER"),
-                    on_release=lambda x: self._on_host_options_confirm(dialog, port_field, password_field)
+                    on_release=lambda x: self._on_host_options_confirm(dialog, port_field, admin_password_field)
                 ),
                 spacing=dp(8)
             )
@@ -632,10 +632,10 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self._host_result = None
         dialog.open()
 
-    def _on_host_options_confirm(self, dialog, port_field, password_field):
+    def _on_host_options_confirm(self, dialog, port_field, admin_password_field):
         """Handle host options confirmation"""
         port = port_field.text.strip()
-        password = password_field.text.strip()
+        admin_password = admin_password_field.text.strip()
         
         # Validate port
         if port:
@@ -650,7 +650,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         
         self._host_result = {
             'port': port if port else None,
-            'password': password if password else None
+            'server-password': admin_password if admin_password else None
         }
         
         dialog.dismiss()
@@ -677,8 +677,8 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         if options.get('port'):
             cmd.extend(["--port", str(options['port'])])
             
-        if options.get('password'):
-            cmd.extend(["--password", options['password']])
+        if options.get('server-password'):
+            cmd.extend(["--server-password", options['server-password']])
         
         logger.info(f"Starting detached server with command: {' '.join(cmd)}")
         
@@ -713,11 +713,11 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self._show_patch_options()
 
     def _select_patch_file(self):
-        """Select .apbp file for patching"""
-        # Show file dialog for .apbp files
+        """Select .ap file for patching"""
+        # Show file dialog for .ap files
         result = FileUtils.open_file_input_dialog(
-            title="Select Patch File (.apbp)",
-            filetypes=[("Archipelago Patch", ["*.apbp"]), ("All Files", ["*.*"])],
+            title="Select Patch File (.ap*)",
+            filetypes=[("All Files", ["*.*"])],
             multiple=False,
             suggest=user_path("output")
         )
