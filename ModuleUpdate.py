@@ -313,7 +313,7 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
             return []
         
         outdated_packages = json.loads(response.stdout)
-        logger.info(f"Newer versions of the following packages are available: {outdated_packages.keys()}")
+        logger.info(f"Newer versions of the following packages are available: {outdated_packages}")
         
         if worlds_only:
             return [world["name"] for world in outdated_packages]
@@ -468,26 +468,23 @@ def _should_copy_extension_to_lib(file_path: Path) -> bool:
             return True
     return False
 
-def _file_exists_in_zip(zipf: zipfile.ZipFile, arcname: str) -> bool:
-    """Check if a file already exists in the zip archive."""
-    try:
-        zipf.getinfo(arcname)
-        return True
-    except KeyError:
-        return False
+def _file_exists_in_zip(zipf: zipfile.ZipFile, arcname: str, written_files: set) -> bool:
+    """Check if a file already exists in the zip archive or has been written this session."""
+    return arcname in zipf.namelist() or arcname in written_files
 
 def _add_to_library_zip(exe_dir: Path, source_path: Path) -> None:
     """Adding a modules to the library.zip file for frozen builds"""
     library_zip = exe_dir / "lib" / "library.zip"
     lib_dir = exe_dir / "lib"
+    written_files = set()
     
     with zipfile.ZipFile(library_zip, "a") as zipf:
         if source_path.is_file():
-            _handle_single_file(zipf, source_path, lib_dir)
+            _handle_single_file(zipf, source_path, lib_dir, written_files)
         elif source_path.is_dir():
-            _handle_directory(zipf, source_path, lib_dir)
+            _handle_directory(zipf, source_path, lib_dir, written_files)
 
-def _handle_single_file(zipf: zipfile.ZipFile, source_path: Path, lib_dir: Path) -> None:
+def _handle_single_file(zipf: zipfile.ZipFile, source_path: Path, lib_dir: Path, written_files: set) -> None:
     """Handle adding a single file to the zip or lib directory."""
     if _should_copy_extension_to_lib(source_path):
         target_path = lib_dir / source_path.name
@@ -495,12 +492,13 @@ def _handle_single_file(zipf: zipfile.ZipFile, source_path: Path, lib_dir: Path)
         logger.debug(f"Copied {source_path.name} to lib directory")
     else:
         # Check if file already exists in zip before writing
-        if not _file_exists_in_zip(zipf, source_path.name):
+        if not _file_exists_in_zip(zipf, source_path.name, written_files):
             zipf.write(source_path, source_path.name)
+            written_files.add(source_path.name)
         else:
             logger.debug(f"File {source_path.name} already exists in zip, skipping")
 
-def _handle_directory(zipf: zipfile.ZipFile, source_path: Path, lib_dir: Path) -> None:
+def _handle_directory(zipf: zipfile.ZipFile, source_path: Path, lib_dir: Path, written_files: set) -> None:
     """Handle adding directory contents to the zip or lib directory."""
     for file_path in source_path.rglob("*"):
         if file_path.is_file() and not file_path.name.endswith(".py"):
@@ -511,8 +509,9 @@ def _handle_directory(zipf: zipfile.ZipFile, source_path: Path, lib_dir: Path) -
             else:
                 # Other files go to the zip with directory structure preserved
                 arcname = str(source_path.name / file_path.relative_to(source_path))
-                if not _file_exists_in_zip(zipf, arcname):
+                if not _file_exists_in_zip(zipf, arcname, written_files):
                     zipf.write(file_path, arcname)
+                    written_files.add(arcname)
                 else:
                     logger.debug(f"File {arcname} already exists in zip, skipping")       
 

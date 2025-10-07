@@ -2,14 +2,32 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Tuple, Optional, TypedDict
+import zipfile
+import json
+from typing import Tuple, Optional, TypedDict, List
+
+from Utils import set_game_names
 
 if __name__ == "__main__":
     import ModuleUpdate
     ModuleUpdate.update()
 
-from worlds.Files import AutoPatchRegister, APAutoPatchInterface
+    games = List[str]
 
+    for file in sys.argv[1:]:
+        try:
+            with zipfile.ZipFile(file, "r") as zipf:
+                ap_json = zipf.open("archipelago.json").read()
+                games.append(json.loads(ap_json)["game"])
+        except FileNotFoundError:
+            raise FileNotFoundError(f"archipelago.json not found in {file}")
+        except Exception as e:
+            raise Exception(f"Error reading archipelago.json in {file}: {e}")
+    
+    # Set games to load into worlds for autoregister.
+    set_game_names(games)
+
+from worlds.Files import AutoPatchRegister, APAutoPatchInterface
 
 class RomMeta(TypedDict):
     server: str
