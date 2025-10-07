@@ -17,7 +17,7 @@ class FileUtils(ABC):
     """Abstract base class for OS-specific file utilities."""
     
     @abstractmethod
-    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
+    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "", multiple: bool = False) -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Open a file selection dialog. Returns a single file path (str) or list of file paths when multiple=True."""
         pass
     
@@ -30,7 +30,7 @@ class FileUtils(ABC):
 class WinFileUtils(FileUtils):
     """Windows-specific file utilities using native dialogs."""
     
-    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
+    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "", multiple: bool = False) -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Windows native file dialog."""
         try:
             import win32gui
@@ -132,10 +132,10 @@ class WinFileUtils(FileUtils):
             
         except ImportError:
             logging.warning("win32gui not available, falling back to Kivy")
-            return self._kivy_fallback_file(title, filetypes, multiple, suggest)
+            return self._kivy_fallback_file(title, filetypes, suggest, multiple)
         except Exception as e:
             logging.error(f"Windows file dialog failed: {e}")
-            return self._kivy_fallback_file(title, filetypes, multiple, suggest)
+            return self._kivy_fallback_file(title, filetypes, suggest, multiple)
     
     def open_directory(self, title: str, suggest: str = "") -> typing.Optional[str]:
         """Windows native directory dialog."""
@@ -170,7 +170,7 @@ class WinFileUtils(FileUtils):
             logging.error(f"Windows directory dialog failed: {e}")
             return self._kivy_fallback_directory(title, suggest)
     
-    def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
+    def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "", multiple: bool = False) -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Kivy fallback for file selection."""
         from Utils import is_kivy_running
         if not is_kivy_running():
@@ -244,7 +244,7 @@ class WinFileUtils(FileUtils):
 class MacFileUtils(FileUtils):
     """macOS-specific file utilities using AppleScript."""
     
-    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
+    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "", multiple: bool = False) -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """macOS native file dialog using AppleScript."""
         try:
             # Build AppleScript with optional multiple selection
@@ -286,7 +286,7 @@ class MacFileUtils(FileUtils):
             return None
         except Exception as e:
             logging.error(f"AppleScript file dialog failed: {e}")
-            return self._kivy_fallback_file(title, filetypes, multiple, suggest)
+            return self._kivy_fallback_file(title, filetypes, suggest, multiple)
     
     def open_directory(self, title: str, suggest: str = "") -> typing.Optional[str]:
         """macOS native directory dialog using AppleScript."""
@@ -317,7 +317,7 @@ class MacFileUtils(FileUtils):
             logging.error(f"AppleScript directory dialog failed: {e}")
             return self._kivy_fallback_directory(title, suggest)
     
-    def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
+    def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "", multiple: bool = False) -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Kivy fallback for file selection."""
         from Utils import is_kivy_running
         if not is_kivy_running():
@@ -391,7 +391,7 @@ class MacFileUtils(FileUtils):
 class LinuxFileUtils(FileUtils):
     """Linux-specific file utilities using native dialogs."""
     
-    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
+    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "", multiple: bool = False) -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Linux native file dialog using kdialog or zenity."""
         from shutil import which
         from Utils import _run_for_stdout
@@ -427,7 +427,7 @@ class LinuxFileUtils(FileUtils):
             return result
         
         # Fallback to Kivy
-        return self._kivy_fallback_file(title, filetypes, multiple, suggest)
+        return self._kivy_fallback_file(title, filetypes, suggest, multiple)
     
     def open_directory(self, title: str, suggest: str = "") -> typing.Optional[str]:
         """Linux native directory dialog using kdialog or zenity."""
@@ -451,7 +451,7 @@ class LinuxFileUtils(FileUtils):
         # Fallback to Kivy
         return self._kivy_fallback_directory(title, suggest)
     
-    def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
+    def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "", multiple: bool = False) -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Kivy fallback for file selection."""
         from Utils import is_kivy_running
         if not is_kivy_running():
@@ -525,7 +525,7 @@ class LinuxFileUtils(FileUtils):
 class OtherFileUtils(FileUtils):
     """Cross-platform file utilities using Kivy (for mobile apps)."""
     
-    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
+    def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "", multiple: bool = False) -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Kivy-based file dialog for mobile platforms."""
         from Utils import is_kivy_running
         if not is_kivy_running():
@@ -626,7 +626,7 @@ class FileUtilsSingleton:
     
     def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], multiple: bool = False, suggest: str = "") -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Open a file selection dialog."""
-        return self._instance.open_file_input_dialog(title, filetypes, multiple, suggest)
+        return self._instance.open_file_input_dialog(title, filetypes, suggest, multiple)
     
     def open_directory(self, title: str, suggest: str = "") -> typing.Optional[str]:
         """Open a directory selection dialog."""
