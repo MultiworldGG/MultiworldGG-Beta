@@ -5,6 +5,10 @@ import sys
 import zipfile
 import json
 from typing import Tuple, Optional, TypedDict, List
+from pathlib import Path
+import logging
+
+logger = logging.getLogger("Patch")
 
 from Utils import set_game_names
 
@@ -14,17 +18,22 @@ if __name__ == "__main__":
 
     games: List[str] = [""]
 
-    for arg in sys.argv[:-1]:
+    for arg in sys.argv[1:]:
+        if arg.startswith("--") or Path(arg).suffix == "":
+            continue
         try:
             with zipfile.ZipFile(arg, "r") as zipf:
                 ap_data = zipf.read("archipelago.json")
                 ap_json = json.loads(ap_data.decode('utf-8'))
                 games.append(ap_json["game"])
-        except FileNotFoundError:
+        except zipfile.BadZipFile:
             continue
         except Exception as e:
-            raise Exception(f"Error reading archipelago.json in {arg}: {e}")
-    
+            logger.error(f"Error reading archipelago.json in {arg}: {e}")
+            continue
+
+    games = [game for game in games if game]
+
     # Set games to load into worlds for autoregister.
     set_game_names(games)
 

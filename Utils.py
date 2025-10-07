@@ -108,7 +108,7 @@ def set_game_names(game_names: typing.List[str]):
     # lazy import
     for game in game_names:
         module_name = GameIndex.get_module_for_game(game_name=game, worlds=True)
-        _worlds_to_load.append(module_name)
+        _worlds_to_load.append(module_name) if module_name else logging.warning(f"Game {game} not found in game index")
     _worlds_to_install: typing.List[str] = []
     for module_name in _worlds_to_load:
         try:
