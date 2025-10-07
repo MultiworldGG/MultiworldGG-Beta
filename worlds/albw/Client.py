@@ -297,7 +297,7 @@ async def game_watcher(ctx: ALBWClientContext) -> None:
             ctx.show_citra_connect_message = True
         await asyncio.sleep(0.25)
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
     """
     Launch the client
     """
@@ -347,6 +347,6 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback, patch_file)
+    launch(server_address, slot_name, password, ready_callback, error_callback, patch_file)

@@ -454,6 +454,27 @@ def _move_compiled_files(directory: Path) -> None:
             except OSError:
                 pass  # Directory not empty, leave it
 
+def _should_copy_extension_to_lib(file_path: Path) -> bool:
+    """Check if a compiled extension should be copied to lib directory based on platform."""
+    if file_path.suffix == '.pyd':
+        return is_windows()
+    elif file_path.suffix == '.so':
+        if is_windows():
+            return False
+        elif is_macos() and 'darwin' in file_path.name:
+            return True
+        elif is_linux() and 'darwin' not in file_path.name:
+            return True
+    return False
+
+def _file_exists_in_zip(zipf: zipfile.ZipFile, arcname: str) -> bool:
+    """Check if a file already exists in the zip archive."""
+    try:
+        zipf.getinfo(arcname)
+        return True
+    except KeyError:
+        return False
+
 def _add_to_library_zip(exe_dir: Path, source_path: Path) -> None:
     """Adding a modules to the library.zip file for frozen builds"""
     library_zip = exe_dir / "lib" / "library.zip"
@@ -461,32 +482,38 @@ def _add_to_library_zip(exe_dir: Path, source_path: Path) -> None:
     
     with zipfile.ZipFile(library_zip, "a") as zipf:
         if source_path.is_file():
-            # Copy .pyd/.so directly to lib, others go to zip
-            if source_path.suffix in ['.pyd', '.so']:
-                target_path = lib_dir / source_path.name
-                shutil.copy2(source_path, target_path)
-                logger.debug(f"Copied {source_path.name} to lib directory")
-            else:
-                try:
-                    zipf.write(source_path, source_path.name)
-                except FileExistsError:
-                    pass
+            _handle_single_file(zipf, source_path, lib_dir)
         elif source_path.is_dir():
-            # Add the entire directory tree to the zip, but copy .pyd/.so to lib
-            for file_path in source_path.rglob("*"):
-                if file_path.is_file() and not file_path.name.endswith(".py"):
-                    if file_path.suffix in ['.pyd', '.so']:
-                        # Copy compiled extensions directly to lib directory
-                        target_path = lib_dir / file_path.name
-                        shutil.copy2(file_path, target_path)
-                        logger.debug(f"Copied {file_path.name} to lib directory")
-                    else:
-                        # Other files go to the zip with directory structure preserved
-                        arcname = source_path.name / file_path.relative_to(source_path)
-                        try:
-                            zipf.write(file_path, str(arcname))
-                        except FileExistsError:
-                            pass       
+            _handle_directory(zipf, source_path, lib_dir)
+
+def _handle_single_file(zipf: zipfile.ZipFile, source_path: Path, lib_dir: Path) -> None:
+    """Handle adding a single file to the zip or lib directory."""
+    if _should_copy_extension_to_lib(source_path):
+        target_path = lib_dir / source_path.name
+        shutil.copy2(source_path, target_path)
+        logger.debug(f"Copied {source_path.name} to lib directory")
+    else:
+        # Check if file already exists in zip before writing
+        if not _file_exists_in_zip(zipf, source_path.name):
+            zipf.write(source_path, source_path.name)
+        else:
+            logger.debug(f"File {source_path.name} already exists in zip, skipping")
+
+def _handle_directory(zipf: zipfile.ZipFile, source_path: Path, lib_dir: Path) -> None:
+    """Handle adding directory contents to the zip or lib directory."""
+    for file_path in source_path.rglob("*"):
+        if file_path.is_file() and not file_path.name.endswith(".py"):
+            if _should_copy_extension_to_lib(file_path):
+                target_path = lib_dir / file_path.name
+                shutil.copy2(file_path, target_path)
+                logger.debug(f"Copied {file_path.name} to lib directory")
+            else:
+                # Other files go to the zip with directory structure preserved
+                arcname = str(source_path.name / file_path.relative_to(source_path))
+                if not _file_exists_in_zip(zipf, arcname):
+                    zipf.write(file_path, arcname)
+                else:
+                    logger.debug(f"File {arcname} already exists in zip, skipping")       
 
 def install_worlds(worlds: List[str]) -> None:
     """Install worlds from the multiworld repository."""
