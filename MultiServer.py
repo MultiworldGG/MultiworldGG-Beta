@@ -2529,20 +2529,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('multidata', nargs="?", default=defaults["multidata"])
     parser.add_argument('--host', default=defaults["host"])
     parser.add_argument('--port', default=defaults["port"], type=int)
-    parser.add_argument('--server_password', default=defaults["server_password"])
+    parser.add_argument('--server-password', default=defaults["server_password"])
     parser.add_argument('--password', default=defaults["password"])
     parser.add_argument('--savefile', default=defaults["savefile"])
-    parser.add_argument('--disable_save', default=defaults["disable_save"], action='store_true')
+    parser.add_argument('--disable-save', default=defaults["disable_save"], action='store_true')
     parser.add_argument('--cert', help="Path to a SSL Certificate for encryption.")
     parser.add_argument('--cert_key', help="Path to SSL Certificate Key file")
     parser.add_argument('--loglevel', default=defaults["loglevel"],
                         choices=['debug', 'info', 'warning', 'error', 'critical'])
     parser.add_argument('--logtime', help="Add timestamps to STDOUT",
                         default=defaults["logtime"], action='store_true')
-    parser.add_argument('--location_check_points', default=defaults["location_check_points"], type=int)
+    parser.add_argument('--location-check-points', default=defaults["location_check_points"], type=int)
     parser.add_argument('--hint_cost', default=defaults["hint_cost"], type=int)
-    parser.add_argument('--disable_item_cheat', default=defaults["disable_item_cheat"], action='store_true')
-    parser.add_argument('--release_mode', default=defaults["release_mode"], nargs='?',
+    parser.add_argument('--disable-item-cheat', default=defaults["disable_item_cheat"], action='store_true')
+    parser.add_argument('--release-mode', default=defaults["release_mode"], nargs='?',
                         choices=['auto', 'enabled', 'disabled', "goal", "auto-enabled"], help='''\
                              Select !release Accessibility. (default: %(default)s)
                              auto:     Automatic "release" on goal completion
@@ -2551,7 +2551,7 @@ def parse_args() -> argparse.Namespace:
                              goal:     !release can be used after goal completion
                              auto-enabled: !release is available and automatically triggered on goal completion
                              ''')
-    parser.add_argument('--collect_mode', default=defaults["collect_mode"], nargs='?',
+    parser.add_argument('--collect-mode', default=defaults["collect_mode"], nargs='?',
                         choices=['auto', 'enabled', 'disabled', "goal", "auto-enabled"], help='''\
                              Select !collect Accessibility. (default: %(default)s)
                              auto:     Automatic "collect" on goal completion
@@ -2560,24 +2560,24 @@ def parse_args() -> argparse.Namespace:
                              goal:     !collect can be used after goal completion
                              auto-enabled: !collect is available and automatically triggered on goal completion
                              ''')
-    parser.add_argument('--countdown_mode', default=defaults["countdown_mode"], nargs='?',
+    parser.add_argument('--countdown-mode', default=defaults["countdown_mode"], nargs='?',
                         choices=['enabled', 'disabled', "auto"], help='''\
                                 Select !countdown Accessibility. (default: %(default)s)
                                 enabled:  !countdown is always available
                                 disabled: !countdown is never available
                                 auto:     !countdown is available for rooms with less than 30 players
                                 ''')
-    parser.add_argument('--remaining_mode', default=defaults["remaining_mode"], nargs='?',
+    parser.add_argument('--remaining-mode', default=defaults["remaining_mode"], nargs='?',
                         choices=['enabled', 'disabled', "goal"], help='''\
                              Select !remaining Accessibility. (default: %(default)s)
                              enabled:  !remaining is always available
                              disabled: !remaining is never available
                              goal:     !remaining can be used after goal completion
                              ''')
-    parser.add_argument('--auto_shutdown', default=defaults["auto_shutdown"], type=int,
+    parser.add_argument('--auto-shutdown', default=defaults["auto_shutdown"], type=int,
                         help="automatically shut down the server after this many minutes without new location checks. "
                              "0 to keep running. Not yet implemented.")
-    parser.add_argument('--use_embedded_options', action="store_true",
+    parser.add_argument('--use-embedded-options', action="store_true",
                         help='retrieve release, remaining and hint options from the multidata file,'
                              ' instead of host.yaml')
     parser.add_argument('--compatibility', default=defaults["compatibility"], type=int,
