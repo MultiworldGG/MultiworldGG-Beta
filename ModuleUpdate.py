@@ -313,6 +313,7 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
             return []
         
         outdated_packages = json.loads(response.stdout)
+        logger.info(f"Newer versions of the following packages are available: {outdated_packages.keys()}")
         
         if worlds_only:
             return [world["name"] for world in outdated_packages]
@@ -515,12 +516,19 @@ def _handle_directory(zipf: zipfile.ZipFile, source_path: Path, lib_dir: Path) -
                 else:
                     logger.debug(f"File {arcname} already exists in zip, skipping")       
 
-def install_worlds(worlds: List[str]) -> None:
+def install_worlds(worlds: List[str], update: bool = False) -> None:
     """Install worlds from the multiworld repository."""
     check_pip()
 
+    if update:
+        logger.info(f"Uninstalling old versions of: {worlds}")
+        uninstall_worlds(worlds)
+
     for world in worlds:
-        logger.info(f"Installing world: {world}")
+        if update:
+            logger.info(f"Updating world: {world}")
+        else:
+            logger.info(f"Installing world: {world}")
         
         if is_frozen():
             # In frozen environments, we need to install to a location that's in the Python path
@@ -530,7 +538,6 @@ def install_worlds(worlds: List[str]) -> None:
                     world, "--compile", "--target", str(pip_install_dir), "--upgrade", "--no-cache-dir"]
             
             logger.info(f"Executing subprocess command: {executable_args}")
-            logger.info(f"Working directory: {os.getcwd()}")
             
             # Use threading instead of multiprocessing to avoid argument contamination
             import threading
@@ -779,9 +786,6 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
             update_world_wheels()
         updates = check_for_updates(worlds_only=True)
         if updates:
-            logger.info(f"Found updates for: {updates}")
-            if not yes:
-                confirm("Updates available. Press enter to continue with updates.")
             install_worlds(updates)
         else:
             logger.debug("No updates found.")

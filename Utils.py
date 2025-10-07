@@ -185,7 +185,17 @@ def discover_and_launch_module(module_name: str, **kwargs) -> None:
 def _perform_module_launch(module_id: str, **kwargs):
     """Perform the actual module launch logic"""
     try:
-        # 1. Check for explicit entry point first
+        while True:
+            # Wait until the module is installed before trying to import it
+            try:
+                importlib.import_module(module_id)
+                break
+            except ModuleNotFoundError:
+                sleep(1)
+            except Exception as e:
+                logging.error(f"Failed to import module {module_id}: {e}")
+                raise e
+
         entry_points = importlib.metadata.entry_points(group="mwgg.client")
         entry_point_name = "{}.Client".format(module_id)
         
