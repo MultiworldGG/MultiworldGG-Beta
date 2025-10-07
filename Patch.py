@@ -14,16 +14,16 @@ if __name__ == "__main__":
 
     games: List[str] = [""]
 
-    for file in sys.argv[1:]:
+    for arg in sys.argv[:-1]:
         try:
-            with zipfile.ZipFile(file, "r") as zipf:
+            with zipfile.ZipFile(arg, "r") as zipf:
                 ap_data = zipf.read("archipelago.json")
                 ap_json = json.loads(ap_data.decode('utf-8'))
                 games.append(ap_json["game"])
         except FileNotFoundError:
-            raise FileNotFoundError(f"archipelago.json not found in {file}")
+            continue
         except Exception as e:
-            raise Exception(f"Error reading archipelago.json in {file}: {e}")
+            raise Exception(f"Error reading archipelago.json in {arg}: {e}")
     
     # Set games to load into worlds for autoregister.
     set_game_names(games)
@@ -50,5 +50,7 @@ def create_rom_file(patch_file: str) -> Tuple[RomMeta, str]:
 
 if __name__ == "__main__":
     for file in sys.argv[1:]:
+        if file.startswith('-'):
+            continue
         meta_data, result_file = create_rom_file(file)
         print(f"Patch with meta-data {meta_data} was written to {result_file}")
