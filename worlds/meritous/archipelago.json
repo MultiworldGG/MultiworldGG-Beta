@@ -1,9 +1,9 @@
 {
-    "version": 6,
-    "compatible_version": 5,
-    "game": "Meritous",
-    "authors": ["FelicitusNeko"],
-    "igdb_id": 78479,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.0"
+  "version": 6,
+  "compatible_version": 5,
+  "game": "Meritous",
+  "authors": [ "KewlioMZX" ],
+  "igdb_id": 78479,
+  "world_version": "1.0.0",
+  "minimum_ap_version": "0.6.4"
 }

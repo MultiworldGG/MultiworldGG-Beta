@@ -1,11 +1,13 @@
-import logging
 from dataclasses import dataclass
-from typing import Dict, Any, TYPE_CHECKING
 from decimal import Decimal, ROUND_HALF_UP
+import logging
+from typing import Any, TYPE_CHECKING
 
 from Options import (DefaultOnToggle, Toggle, StartInventoryPool, Choice, Range, TextChoice, PlandoConnections,
                      PerGameCommonOptions, OptionGroup, Removed, Visibility, NamedRange)
+
 from .er_data import portal_mapping
+
 if TYPE_CHECKING:
     from . import TunicWorld
 
@@ -144,17 +146,6 @@ class EntranceRando(TextChoice):
     default = 0
 
 
-class FixedShop(Toggle):
-    """
-    This option has been superseded by the Entrance Layout option.
-    If enabled, it will override the Entrance Layout option.
-    This is kept to keep older yamls working, and will be removed at a later date.
-    """
-    visibility = Visibility.none
-    internal_name = "fixed_shop"
-    display_name = "Fewer Shops in Entrance Rando"
-
-
 class EntranceLayout(Choice):
     """
     Decide how the Entrance Randomizer chooses how to pair the entrances.
@@ -236,8 +227,9 @@ class GrassRandomizer(Toggle):
 class LocalFill(NamedRange):
     """
     Choose the percentage of your filler/trap items that will be kept local or distributed to other TUNIC players with this option enabled.
-    This option defaults to 95% if you have Grass Randomizer enabled, 40% if you have Breakable Shuffle enabled, 96% if you have both, and 0% otherwise.
-    If you have Grass Randomizer enabled, this option must be set to 95% or higher to avoid flooding the item pool. The host can remove this restriction by turning off the limit_grass_rando setting in host.yaml.
+    If you have Grass Randomizer enabled, this defaults to 95%. If you have Breakable Shuffle enabled, this defaults to 40%. If you have both enabled, this defaults to 96%.
+    If you have Grass Randomizer enabled, this option must be set to 95% or higher to avoid flooding the item pool.
+    The host can remove this restriction by turning off the limit_grass_rando setting in host.yaml. This setting can only be changed with local generation, it cannot be changed on the website.
     This option ignores items placed in your local_items or non_local_items.
     This option does nothing in single player games.
     """
@@ -249,7 +241,6 @@ class LocalFill(NamedRange):
         "default": -1
     }
     default = -1
-    visibility = Visibility.template | Visibility.complex_ui | Visibility.spoiler
 
 
 class TunicPlandoConnections(PlandoConnections):
@@ -290,13 +281,6 @@ class CombatLogic(Choice):
     option_on = 2
     default = 0
 
-class TrueEnd(Toggle):
-    """
-    If enabled, the pages are marked as deprioritized progression items rather than useful items. This 
-    will not effect the logic of the game, only the item classification.
-    """
-    internal_name = "true_end"
-    display_name = "True Ending"
 
 class LaurelsZips(Toggle):
     """
@@ -413,9 +397,8 @@ class TunicOptions(PerGameCommonOptions):
 
     all_random: HiddenAllRandom
 
-    fixed_shop: FixedShop  # will be removed at a later date
-    logic_rules: Removed  # fully removed in the direction pairs update
-    true_end: TrueEnd
+    fixed_shop: Removed
+    logic_rules: Removed
 
 
 tunic_option_groups = [
@@ -427,7 +410,6 @@ tunic_option_groups = [
     ]),
     OptionGroup("Logic Options", [
         CombatLogic,
-        TrueEnd,
         Lanternless,
         Maskless,
         LaurelsZips,
@@ -443,7 +425,7 @@ tunic_option_groups = [
     ]),
 ]
 
-tunic_option_presets: Dict[str, Dict[str, Any]] = {
+tunic_option_presets: dict[str, dict[str, Any]] = {
     "Sync": {
         "ability_shuffling": True,
     },
@@ -479,7 +461,7 @@ def check_options(world: "TunicWorld"):
             min_hexes = 15
         if total_hexes < min_hexes:
             logging.warning(f"TUNIC: Not enough Gold Hexagons in {world.player_name}'s item pool for Hexagon Ability "
-                            f"Shuffle with the selected options. Ability Shuffle mode will be switched to Pages.")
+                            "Shuffle with the selected options. Ability Shuffle mode will be switched to Pages.")
             options.hexagon_quest_ability_type.value = HexagonQuestAbilityUnlockType.option_pages
 
 

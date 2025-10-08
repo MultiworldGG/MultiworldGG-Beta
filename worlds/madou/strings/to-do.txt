@@ -1,0 +1,25 @@
+Flags to set at start:
+- Set Grandma flag so going into the house doesn't lock you into anything.
+- Set school trouble flag to true to avoid linearity, or add option for number of stones to set the flag.
+- Remove Suki meet flags so you can fight Mini Zombie immediately.
+- Its possible for a player to accuse the wrong person in the ancient village.  Make it so it never sets the flag so all checks are given.
+- Harpy shows up to steal your stones and you have to fight her to get them back.  Remove the ability for her to steal them.
+- Suke demands a fight at 7 stones, or perhaps just getting the 7th one.  Either way, this should be changed.
+
+Things to look into implementing:
+- Grandma hints where each area you pick on the map she tells you if the area is on the way of getting a certificate or not.
+- Adding a boat flag so the boat shows up when the item is sent, not when Zoh is defeated.
+- The School Maze is missable in that if you miss chests in there you can't go back.  Find a way to allow re-admittance.
+- Add a bomb flag so the devil door opens up when the item is sent, not when the Headmaster is defeated.
+- When does harpy show up?  Might be after Zoh, or after Headmaster.  Hard to tell.  Might be the former.
+- Does the boat man show up without the "boat" item?  If they do, if you take the boat, does he show up in ruins to take to wolf town?
+- Check if having the VIP pass early causes a crash or a problem if no other paths are found.
+- Find a way to make sure that all alchemy items can be made to make a new option.  The three herb items can be used without mixing, or mixed wrongly.
+
+Logic to check:
+- Check if the jump spots outside of the start area still require ribbit boots.
+- Check if the climb up Sage's Mountain requires ribbit boots.  It may be possible to get here without them.
+
+Reminders:
+- Place flag at 0x02826a to figure out what the write is coming from for a flag
+- Place flag at 0x2ccec2 to figure out what the read is coming from for a flag

@@ -51,7 +51,7 @@ def set_world_webworld(web: WebWorld) -> WebWorld:
                 # Converting json to Tutorials
                 tutorials.append(Tutorial(
                     tutorial.get("name", "Multiworld Setup Guide"),
-                    tutorial.get("description", "A guide to setting up manual game integration for Archipelago multiworld games."),
+                    tutorial.get("description", "A guide to setting up Simpsons Hit And Run game integration for MultiworldGG multiworld games."),
                     tutorial.get("language", "English"),
                     tutorial.get("file_name", "setup_en.md"),
                     tutorial.get("link", "setup/en"),

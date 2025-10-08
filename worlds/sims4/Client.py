@@ -6,10 +6,9 @@ import os
 import urllib.parse
 from pathlib import Path
 
+import Utils
 from CommonClient import ClientCommandProcessor, gui_enabled, get_base_parser, server_loop, logger, ClientStatus
 from MultiServer import mark_raw
-
-import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 
 tracker_loaded = False
@@ -117,6 +116,7 @@ class SimsContext(SuperContext):
         if self.ready_callback:
             from kivy.clock import Clock
             Clock.schedule_once(self.ready_callback, 0.1)
+        self.version: str | None = None
 
     def make_gui(self):
         ui = super().make_gui()
@@ -128,6 +128,52 @@ class SimsContext(SuperContext):
         if cmd == "Connected":
             self.goal = args["slot_data"]["goal"]
             self.career = args["slot_data"]["career"]
+            self.version = args["slot_data"].get("version")
+
+            if self.version is not None:
+                from .Version import VERSION, Sims4Version
+
+                slot_version_tuple = Sims4Version.str_to_tuple(self.version)
+
+                # compare major version mismatch
+                if Sims4Version.does_major_version_mismatch(slot_version_tuple, VERSION):
+                    self.gui_error(
+                        title="Version mismatch",
+                        text=f"This server is running Sims 4 AP {self.version}, "
+                             f"but your client is {Sims4Version.tuple_to_str(VERSION)}.\n"
+                             f"Please update your client."
+                    )
+                    Utils.async_start(self.disconnect(False))
+                    return
+
+                # disallow RCs when client is not RC
+                client_is_rc = Sims4Version.is_rc(VERSION)
+                slot_is_rc = Sims4Version.is_rc(slot_version_tuple)
+                if client_is_rc != slot_is_rc:
+                    self.gui_error(
+                        title="Incompatible version",
+                        text=f"This slot was generated using a release candidate ({self.version}).\n"
+                             f"Your client is {Sims4Version.tuple_to_str(VERSION)}.\n"
+                             f"Please install the same version of the APWorld to connect."
+                    )
+                    Utils.async_start(self.disconnect(False))
+                    return
+
+                # if both are RC, check exact suffix match
+                if all([client_is_rc, slot_is_rc]) and slot_version_tuple[3] != VERSION[3]:
+                    self.gui_error(
+                        title="Incompatible RC version",
+                        text=f"This slot was generated using {self.version}.\n"
+                             f"Your client is {Sims4Version.tuple_to_str(VERSION)}.\n"
+                             f"Please install the exact same RC build to connect."
+                    )
+                    Utils.async_start(self.disconnect(False))
+                    return
+            else:
+                # Older APWorlds don't have the version string
+                self.command_processor.output("Warning: slot data has no version information; compatibility not checked.")
+
+
             url = urllib.parse.urlparse(self.server_address)
             payload = {
                 'cmd': "Connected",
@@ -136,7 +182,8 @@ class SimsContext(SuperContext):
                 'name': self.slot_info[self.slot].name,
                 'seed_name': self.seed_name,
                 'goal': self.goal,
-                'career': self.career
+                'career': self.career,
+                'slot': self.slot_info[self.slot]
             }
             print_json(payload, 'connection_status.json', self)
 
@@ -245,7 +292,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
     launch(server_address, password, ready_callback, error_callback)
 

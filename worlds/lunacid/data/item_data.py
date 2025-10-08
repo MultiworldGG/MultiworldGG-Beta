@@ -376,7 +376,7 @@ drop_light_sources = [
 ]
 
 quench_light_sources = [
-    Weapon.fire_sword, Weapon.iron_torch,
+    Weapon.fire_sword, Weapon.iron_torch, Weapon.shining_blade
 ]
 
 drop_spell_names = [drop.name for drop in drop_spells]

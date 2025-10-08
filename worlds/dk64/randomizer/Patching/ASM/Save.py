@@ -32,6 +32,11 @@ FileInfoSizes = [
     16,  # Junk Items
     16,  # Race Coins
     8,  # Special Moves
+    8,  # DK BP Turn-In
+    8,  # Diddy BP Turn-In
+    8,  # Lanky BP Turn-In
+    8,  # Tiny BP Turn-In
+    8,  # Chunky BP Turn-In
     16,  # AP Item Count
     22,  # IGT Japes
     22,  # IGT Aztec
@@ -167,7 +172,7 @@ def saveUpdates(ROM_COPY: LocalROM, settings, offset_dict: dict):
     """All changes related to a save file."""
     # Files
     balloon_patch_count = 150
-    static_expansion = 0x100
+    static_expansion = 0x140
     if settings.enemy_drop_rando:
         static_expansion += 428  # Total Enemies
     expandSaveFile(ROM_COPY, static_expansion, balloon_patch_count, offset_dict)

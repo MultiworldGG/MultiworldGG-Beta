@@ -1,6 +1,7 @@
 import os
 import pkgutil
 import re
+from pathlib import Path
 
 from kivymd.app import MDApp
 from kivymd.uix.scrollview import MDScrollView
@@ -19,7 +20,7 @@ import Utils
 import settings
 from .json_megamix import process_mods, ConflictException
 from .. import MegaMixWorld
-from ..DataHandler import restore_originals
+from ..DataHandler import restore_originals, game_paths
 
 
 class AssociatedMDLabel(MDLabel):
@@ -42,20 +43,26 @@ class DivaJSONGenerator(MDApp):
     pack_list_scroll: MDScrollView = ObjectProperty(None)
     filter_input: MDTextField = ObjectProperty(None)
 
-    mods_folder = settings.get_settings()["megamix_options"]["mod_path"]
+    mods_folder = game_paths().get("mods")
     self_mod_name = "ArchipelagoMod" # Hardcoded. Fetch from Client or something.
     labels = []
 
     def create_pack_list(self):
         self.labels = []
         self.pack_list_scroll.layout.clear_widgets()
+        mods_folder = Path(self.mods_folder)
 
-        for folder_name in os.listdir(self.mods_folder):
+        for root, _, files in os.walk(self.mods_folder):
+            if not 'mod_pv_db.txt' in files:
+                continue
+
+            folder_name = str(Path(root).parent.relative_to(mods_folder))
+
             if folder_name == self.self_mod_name:
                 continue
 
-            if os.path.isfile(os.path.join(self.mods_folder, folder_name, "rom", "mod_pv_db.txt")):
-                self.pack_list_scroll.layout.add_widget(self.create_pack_line(folder_name))
+            self.pack_list_scroll.layout.add_widget(self.create_pack_line(folder_name))
+
 
     def create_pack_line(self, name: str):
         box = MDBoxLayoutHover()
@@ -85,7 +92,8 @@ class DivaJSONGenerator(MDApp):
                 ).open()
 
         for label in self.labels:
-            if import_dml and label.text not in dml_config:
+            # The split may need to be /-aware in the future.
+            if import_dml and label.text.split("\\")[0] not in dml_config:
                 continue
             elif search:
                 if "/" == search[0] == search[-1]:
@@ -121,7 +129,7 @@ class DivaJSONGenerator(MDApp):
             return
 
         try:
-            count, mod_pv_db_json = process_mods(mod_pv_db_paths_list)
+            count, mod_pv_db_json = process_mods(self.mods_folder, mod_pv_db_paths_list)
         except ConflictException as e:
             Clipboard.copy(str(e))
             MDDialog(
@@ -150,7 +158,7 @@ class DivaJSONGenerator(MDApp):
         MDSnackbar(MDSnackbarText(text=message)).open()
 
     def process_restore_originals(self):
-        mod_pv_dbs = [f"{self.mods_folder}/{pack}/rom/mod_pv_db.txt" for pack in self.labels + [self.self_mod_name]]
+        mod_pv_dbs = [f"{self.mods_folder}/{pack}/rom/mod_pv_db.txt" for pack in [label.text for label in self.labels] + [self.self_mod_name]]
         try:
             restore_originals(mod_pv_dbs)
             self.show_snackbar("Song packs restored")

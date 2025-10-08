@@ -13,7 +13,7 @@ class GoalOption(Choice):
         ppmtoken: Second Specter fight in Peak Point Matrix, after collecting enough Specter Token items.
 
         Supported values: mm, ppm, tokenhunt, mmtoken, ppmtoken
-        Default value: first
+        Default value: mm
     """
 
     display_name = "Goal"
@@ -389,17 +389,23 @@ class TrapWeights(OptionCounter):
         **This option is ignored when "TrapPercentage" option is set to an other value than "custom"
 
         Range: 0 - 100
-        Default values: 15, 13, 5, 10,7
+        Default values:
+          Banana Peel Trap: 15
+          Gadget Shuffle Trap: 13
+          Monkey Mash Trap: 5
+          Icy Hot Pants Trap: 10
+          Stun Trap: 7
+          Camera Rotate Trap: 10
     """
     internal_name = "customtrapweights"
     display_name = "Custom Trap Weights"
     min = 0
     max = 100
     valid_keys = frozenset({
-        AEItem.BananaPeelTrap.value, AEItem.GadgetShuffleTrap.value, AEItem.MonkeyMashTrap.value, AEItem.IcyHotPantsTrap.value, AEItem.StunTrap.value
+        AEItem.BananaPeelTrap.value, AEItem.GadgetShuffleTrap.value, AEItem.MonkeyMashTrap.value, AEItem.IcyHotPantsTrap.value, AEItem.StunTrap.value, AEItem.CameraRotateTrap.value
     })
     default = {
-        AEItem.BananaPeelTrap.value: 15,  AEItem.GadgetShuffleTrap.value : 13, AEItem.MonkeyMashTrap.value: 5, AEItem.IcyHotPantsTrap.value: 10, AEItem.StunTrap.value: 7
+        AEItem.BananaPeelTrap.value: 15,  AEItem.GadgetShuffleTrap.value : 13, AEItem.MonkeyMashTrap.value: 5, AEItem.IcyHotPantsTrap.value: 10, AEItem.StunTrap.value: 7, AEItem.CameraRotateTrap.value: 10
     }
 
 
@@ -407,22 +413,15 @@ class TrapsOnReconnect(OptionSet):
     """Determine which traps are sent when reconnecting.
 
         This option determines which traps will be sent when reconnecting to the client.
-        Removing a trap from this list means it will only activate if received while playing/connected.
+        Traps that are not in this list will only activate when connected
 
-        Supported values: "Banana Peel Trap", "Gadget Shuffle Trap", "Monkey Mash Trap", "Icy Hot Pants Trap", "Stun Trap"
+        Supported values: "Banana Peel Trap", "Gadget Shuffle Trap", "Monkey Mash Trap", "Icy Hot Pants Trap", "Stun Trap", "Camera Rotate Trap"
     """
     internal_name = "trapsonreconnect"
     display_name = "Traps On Reconnect"
     supports_weighting = False
     valid_keys = frozenset({
-        AEItem.BananaPeelTrap.value,AEItem.GadgetShuffleTrap.value, AEItem.MonkeyMashTrap.value, AEItem.IcyHotPantsTrap.value, AEItem.StunTrap.value
-    })
-
-    preset_none = frozenset()
-    preset_all = valid_keys
-
-    default = frozenset({
-        AEItem.BananaPeelTrap.value,AEItem.GadgetShuffleTrap.value, AEItem.MonkeyMashTrap.value, AEItem.IcyHotPantsTrap.value, AEItem.StunTrap.value
+        AEItem.BananaPeelTrap.value,AEItem.GadgetShuffleTrap.value, AEItem.MonkeyMashTrap.value, AEItem.IcyHotPantsTrap.value, AEItem.StunTrap.value, AEItem.CameraRotateTrap.value
     })
 
 class TrapLink(Toggle):
@@ -503,7 +502,7 @@ class SpikeColor(Choice):
 
 class CustomSpikeColor(FreeText):
     """Use a custom color for Spike by choosing "Custom" in the "Spike Color" option.
-        Enter an RGB hexadecimal value for the desired color. Note that a value of FFFFFF will result in the default Spike color.
+        Enter an RGB hexadecimal value for the desired color.
         **Note: If an invalid color is entered, it will be set to the "Vanilla" preset!
 
         Range: 000000 to FFFFFF

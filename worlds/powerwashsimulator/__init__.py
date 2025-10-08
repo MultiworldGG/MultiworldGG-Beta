@@ -7,7 +7,6 @@ from .Items import raw_items, PowerwashSimulatorItem, item_table, create_items, 
 from .Locations import location_dict, raw_location_dict, locations_percentages, land_vehicles, objectsanity_dict
 from .Options import PowerwashSimulatorOptions, PowerwashSimulatorSettings, check_options, Sanities, Percentsanity
 
-
 uuid_offset = 0x3AF4F1BC
 
 class PowerwashSimulatorWebWorld(WebWorld):
@@ -52,6 +51,7 @@ class PowerwashSimulator(World):
 		self.filler_locations: List[str] = []
 		self.goal_levels: List[str] = []
 		self.mcguffin_requirement = 0
+		self.all_locations: List[str] = []
 
 		# check calculation variables
 		self.check_total_count = 0
@@ -68,12 +68,17 @@ class PowerwashSimulator(World):
 		self.check_goal_level_count = -1
 
 	def generate_early(self) -> None:
-		option_locations = self.options.get_locations()
-		check_options(self)
+		self.all_locations = self.options.get_locations()
 
 		if hasattr(self.multiworld, "re_gen_passthrough"):
 			if "Powerwash Simulator" not in self.multiworld.re_gen_passthrough: return
 			passthrough = self.multiworld.re_gen_passthrough["Powerwash Simulator"]
+
+			if "all_levels" in passthrough:
+				self.all_locations = passthrough["all_levels"]
+
+			check_options(self, self.all_locations)
+
 			self.starting_location = passthrough["starting_location"]
 			self.goal_levels = passthrough["goal_levels"],
 			self.check_goal_level_count = passthrough["goal_level_amount"],
@@ -89,13 +94,15 @@ class PowerwashSimulator(World):
 					self.options.percentsanity = Percentsanity(passthrough["percentsanity_amount"])
 
 			self.options.sanities = Sanities(sanityList)
+		else:
+			check_options(self, self.all_locations)
 
-		option_location_count = len(option_locations)
+		option_location_count = len(self.all_locations)
 		percentsanity = self.options.percentsanity
 
 		self.check_total_count = 0
 		self.check_percentasnity = (len(range(percentsanity, 100, percentsanity)) + 1) * option_location_count
-		self.check_objectsanity = sum(len(objectsanity_dict[loc]) for loc in option_locations)
+		self.check_objectsanity = sum(len(objectsanity_dict[loc]) for loc in self.all_locations)
 
 		if self.options.has_percentsanity():
 			self.check_total_count += self.check_percentasnity
@@ -126,13 +133,12 @@ class PowerwashSimulator(World):
 			self.goal_levels = ["None"]
 
 	def create_regions(self) -> None:
-		option_locations = self.options.get_locations()
 		menu_region = Region("Menu", self.player, self.multiworld)
 		self.multiworld.regions.append(menu_region)
-		option_location_count = len(option_locations)
+		option_location_count = len(self.all_locations)
 		percentsanity = self.options.percentsanity
 
-		for location in option_locations:
+		for location in self.all_locations:
 			location_list: List[str] = []
 			next_region = Region(f"Clean the {location}", self.player, self.multiworld)
 			self.multiworld.regions.append(next_region)
@@ -168,7 +174,7 @@ class PowerwashSimulator(World):
 
 		self.mcguffin_requirement = max(
 			min(math.floor(self.check_total_count * .05), self.check_total_count - option_location_count * 2),
-			len(option_locations))
+			len(self.all_locations))
 		self.check_added_filler_count = self.check_total_filler_count - len(self.filler_locations)
 
 	def create_item(self, name: str) -> PowerwashSimulatorItem:
@@ -219,7 +225,8 @@ class PowerwashSimulator(World):
 			"percentsanity": bool("Percentsanity" in self.options.sanities),
 			"goal_levels": str(self.goal_levels),
 			"goal_level_amount": int(self.check_goal_level_count),
-			"percentsanity_amount": int(self.options.percentsanity)
+			"percentsanity_amount": int(self.options.percentsanity),
+			"all_levels": self.all_locations
 		}
 
 		return slot_data

@@ -13,7 +13,7 @@ from ..regions.Sector6 import *
 
 Sector6Hub.connections = [
     VariableConnection(SectorHubElevator6Top, []),
-    Connection(Sector6Crossroads, [CanDefeatMediumGeron]),
+    Connection(Sector6Crossroads, [CanDefeatMediumGeron, CanDoBeginnerShinespark]),
     Connection(Sector6TubeLeft, [HasScrewAttack])
 ]
 
@@ -32,7 +32,10 @@ Sector6Crossroads.connections = [
     ]),
     Connection(Sector6BeforeVariaCoreXZone, [
         PONRRequirement(["Speed Booster"], [CanBombOrPowerBomb]),
-        Requirement(["Speed Booster", "Power Bomb Data", "Space Jump"], [
+        CanDoAdvancedShinespark(["Morph Ball", "Power Bomb Data"], [
+            HasSpaceJump, CanDoAdvancedWallJump
+        ]),
+        Level2KeycardRequirement(["Speed Booster", "Charge Beam", "Missile Data", "Varia Suit"], [
             CanBombOrPowerBomb
         ])
     ]),
@@ -43,8 +46,9 @@ Sector6Crossroads.connections = [
 
 Sector6BeforeXBOXZone.connections = [
     Connection(Sector6XBOXZone, [
-        PONRRequirement([], []),
-        Requirement([], [CanScrewAttackAndSpaceJump])
+        PONRRequirement(["Nothing"], []),
+        Requirement([], [CanScrewAttackAndSpaceJump]),
+        Requirement(["Speed Booster", "Wave Beam"], [])
     ], one_way=True)
 ]
 
@@ -91,12 +95,19 @@ Sector6AfterVariaCoreXZone.connections = [
 Sector6Hub.locations = [
     FusionLocation("Sector 6 (NOC) -- Entrance Lobby", False, [
         Requirement(["Screw Attack"], [CanBallJump]),
-        Requirement([], [CanBallJumpAndBomb])
+        Requirement([], [CanBallJumpAndBomb]),
+        CanDoBeginnerShinespark([], [CanBallJump])
     ])
 ]
 
 Sector6Crossroads.locations = [
-    FusionLocation("Sector 6 (NOC) -- Catacombs", False, [HasSpeedBooster]),
+    FusionLocation("Sector 6 (NOC) -- Catacombs", False, [
+        PONRRequirement([], [HasSpeedBooster]),
+        CanDoAdvancedShinespark,
+        Level2KeycardRequirement(["Speed Booster", "Charge Beam", "Missile Data", "Varia Suit"], [
+            CanBombOrPowerBomb
+        ])
+    ]),
     FusionLocation("Sector 6 (NOC) -- Missile Mimic Lodge", False, [
         Requirement(["Varia Suit"], [CanBombOrPowerBomb])
     ]),

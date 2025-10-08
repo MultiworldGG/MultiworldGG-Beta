@@ -12,7 +12,13 @@ class DebugWorld(World):
     location_name_to_id = {}
     item_name_to_id = item_table
     origin_region_name = "TestRegion"
-
+    item_name_groups = {
+        "Progression": frozenset({"TestItem1","TestItem3","TestItem6","TestItem9"}),
+        "Useful": frozenset({"TestItem2","TestItem4","TestItem10"}),
+        "Filler": frozenset({"TestItem5","TestItem8"}),
+        "OddsAndEnds": frozenset({"TestItem7"}),
+    }
+    
     def create_item(self, name: str) -> "DebugItem":
         item = DebugItem(name, self.player)
         return item

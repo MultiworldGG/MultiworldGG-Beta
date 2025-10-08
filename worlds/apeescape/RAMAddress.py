@@ -631,7 +631,7 @@ class RAM:
             32, 33, 34, 37, 42, 35, 36, 38, 41, 43, 39, 40, 44
         },
         6: {
-            49, 51, 45, 47, 50, 46, 52
+            49, 51, 45, 47, 50, 46,48, 52
         },
         7: {
 
@@ -646,10 +646,10 @@ class RAM:
             69, 70, 71, 77, 78, 72, 73, 74, 75, 76, 79
         },
         11: {
-            80, 81, 84, 85, 82
+            80, 81, 84, 83, 85, 82
         },
         12: {
-            91, 92, 93, 94, 88, 90, 89
+            86, 87, 91, 92, 93, 94, 88, 90, 89
         },
         13: {
             95, 96, 99, 100, 101, 102, 103, 98, 97
@@ -944,6 +944,7 @@ class RAM:
 
     tempLastReceivedArchipelagoID = 0x0DFBD8  # 4 bytes
     tempKeyCountFromServer = 0x0DFBDC
+
     # Unused 0DFBDD to 0DFBDF
     tempGadgetStateFromServer = 0x0DFBE0  # 2 bytes - 0DFBE1
 
@@ -1035,6 +1036,7 @@ class RAM:
         "MonkeyMashTrap": 0x252,
         "IcyHotPantsTrap": 0x253,
         "StunTrap": 0x254,
+        "CameraRotateTrap": 0x255,
         "RainbowCookie": 0x270,
         "FAKE_OOL_ITEM": 0x999,
 
@@ -1087,6 +1089,33 @@ class RAM:
         "Peak": 0x1E,
         "Time": 0x1F,
         "Training": 0x20
+    }
+
+    MM_SubLevels_Rooms_Spawns = {
+        #Should spawn you in these rooms,depending on RSR
+        #Take the possible room and warps you to the base Sub-Level Room
+        # "Specter": 0x18,
+        69 : 69,
+        # "S_Jake": 0x19,
+        70 : 70,
+        # "S_Circus": 0x1A,
+        71 : 71,
+        # "S_Coaster": 0x1B,
+        72: 72,
+        73: 72,
+        74: 72,
+        75: 72,
+        76 : 72,
+        # "S_Western Land": 0x1C,
+        77 : 77,
+        # "S_Castle": 0x1D,
+        78 : 78,
+        79 : 78,
+        80 : 78,
+        81 : 78,
+        82 : 78,
+        84 : 78,
+        85 : 78,
     }
 
     levelAddresses = {
@@ -1275,7 +1304,7 @@ class RAM:
         61: AEDoor.SF_CONVEYOR_LAVA.value,
         62: AEDoor.SF_MECH_FACTORY.value,
         63: AEDoor.TVT_ENTRY.value,
-        64: AEDoor.TVT_WATER_LOBBY.value,  # This starting room may currently be a softlock.
+        64: AEDoor.TVT_WATER_LOBBY.value,
         65: AEDoor.TVT_LOBBY_OUTSIDE.value,
         66: AEDoor.TVT_TANK_LOBBY.value,
         67: AEDoor.TVT_FAN_TANK.value,
@@ -1548,6 +1577,9 @@ class RAM:
     MM_NatalieDoor_Visual2 = 0x0BFE0F  # Open 0x00
     MM_NatalieDoor_Hitbox = 0x167965  # Open 0x80
 
+    MM_AlertRoom_ButtonPressed = 0x172832 # Not pressed = 0x00, Pressed = 0x01
+    MM_AlertRoom_CutsceneTrigger1 = 0x1728C2 # 0x00 Cutscene pending, 0x02 Cutscene Triggered
+    MM_AlertRoom_BGCanPushButton = 0x1728DA # 0x03 BG cannot push the button, 0x00 BG can push it
 # ===================== Input Related =====================
     BUTTON_BYTE_ADDR_HIGH = 0x0B87A3  # Triggers and Face Buttons (contains bits 8-15 of the 16-bit word)
     BUTTON_BYTE_ADDR_LOW = 0x0B87A2  # D-Pad, Start/Select, L3/R3 (contains bits 0-7 of the 16-bit word)
@@ -1688,11 +1720,8 @@ class RAM:
         0x0F5138: 0x00000000,  # Hoop_AnimationReset
     }
 
-
-    #radarFixAddress = 0x0F5125
-    #hoopFixAddress = 0x0F5124  # 2 bytes
-
     gadgetUseStateAddress = 0x0B20CC
+    CatchingState = 0x0F44A0 # 0x00 Not catching , 0x08 Catching a Monkey
     # 1 = "Net down"
     # 8 = "Net down + can catch"
 
@@ -1805,7 +1834,7 @@ class RAM:
     startOfLevelNames = 0x1399E8
     startOfEraNames = 0x139B20
 
-    levelselectFonts = 0x139CF6 # 0x36 = Classic One  0x26 = Current One
+    levelselectFonts = 0x139CF6 # 0x36 = Classic One 0x26 = Current One
     time_attack_Times = 0x0DFD44
 
 # ==================== Kickout Prevention ====================
@@ -1841,7 +1870,9 @@ class RAM:
     spikeIdleTimer = 0x0EC328 # Put this to 0x0000 to wake up
     spikeGroundStateAddress = 0x0EC23D
     spikeHittableAddress = 0x0EC227
-    spikeUltraInstinctAddress = 0x0EC2E2
+    spikeSuperFlyerUseState = 0x0EC2E0 # 0x00 = SuperFlyer activated
+    # This value is also shared with the Spawn/Return to hub animations, but we don't have a use for that in the rando
+
     spikeSkinPalette = 0x0EC1E5
     spikeColor = 0x0EC2D4
     #spikeColor2 = 0x0EC1E6
@@ -1885,6 +1916,21 @@ class RAM:
         0x0734CC : [4,0xAE630008,0x00000000],  # SpikeZ_PosLock2
         0x0738C8 : [4,0xAE620008,0x00000000],  # SpikeZ_PosLock3
     }
+
+    SpecialRoom_CameraMode = 0x0C0798 #0x00 = Fixed, 0x01 = Overhead, 0x02 = StrictFollowCam
+    SpecialRoom_CameraRotateLeft = 0x0C07C4 #0x00 = Not tilted, 0xFF = Tilted
+    SpecialRoom_CameraRotateRight = 0x0C07C5 #0x00 = Not tilted, 0xFF = Tilted
+    Inside_CameraMode = 0x0C0F98 #0x00 = Fixed, 0x01 = Overhead, 0x02 = StrictFollowCam
+    Inside_CameraRotateLeft = 0x0C0FC4 #0x00 = Not tilted, 0xFF = Tilted
+    Inside_CameraRotateRight = 0x0C0FC5 #0x00 = Not tilted, 0xFF = Tilted
+    Boss_CameraMode = 0x0C1798 #0x00 = Fixed, 0x01 = Overhead, 0x02 = StrictFollowCam
+    Boss_CameraRotateLeft = 0x0C17C4 #0x00 = Not tilted, 0xFF = Tilted
+    Boss_CameraRotateRight = 0x0C17C5 #0x00 = Not tilted, 0xFF = Tilted
+    Outside_CameraMode = 0x0C1F98 #0x00 = Fixed, 0x01 = Overhead, 0x02 = StrictFollowCam
+    Outside_CameraRotateLeft = 0x0C1FC4 #0x00 = Not tilted, 0xFF = Tilted
+    Outside_CameraRotateRight = 0x0C1FC5 #0x00 = Not tilted, 0xFF = Tilted
+
+
 
     SPIKE_INVINCIBILITY_ADDR = 0x05E748 # Address for Spike's invincibility flag/state
     SPIKE_GOLDEN_FORM_ADDR = 0x0EC2E2    # Address for Spike's golden visual state flag/model ID
@@ -1947,4 +1993,5 @@ class RAM:
     S2_GlobalCutsceneState = 0x0DFDE4 # 0x05 means you beat Specter previously
     # S1_LArm_Life = 0x14474E
     # S1_RArm_Life = 0x1446B6
-    Specter2CompleteAddress = 0x0E00FD
+    tempSpecter2CompleteAddress = 0x0DFBEE
+    Specter2CompleteAddress = 0x0E00FE

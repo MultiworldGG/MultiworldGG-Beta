@@ -20,8 +20,6 @@ from randomizer.Settings import CharacterColors, KongModels, ColorOptions
 
 def changeBarrelColor(settings, ROM_COPY: ROM, barrel_color: tuple = None, metal_color: tuple = None, brighten_barrel: bool = False):
     """Change the colors of the various barrels."""
-    if settings.archipelago:  # Something weird going on with AP
-        return
     wood_img = getImageFile(ROM_COPY, 25, getBonusSkinOffset(ExtraTextures.ShellWood), True, 32, 64, TextureFormat.RGBA5551)
     metal_img = getImageFile(ROM_COPY, 25, getBonusSkinOffset(ExtraTextures.ShellMetal), True, 32, 64, TextureFormat.RGBA5551)
     qmark_img = getImageFile(ROM_COPY, 25, getBonusSkinOffset(ExtraTextures.ShellQMark), True, 32, 64, TextureFormat.RGBA5551)
@@ -236,7 +234,7 @@ def applyHolidayMode(settings, ROM_COPY: ROM):
         # Pad Rim
         applyCelebrationRims(ROM_COPY, -12)
         # Tag Barrel, Bonus Barrel & Transform Barrels
-        changeBarrelColor(settings, ROM_COPY, (0x00, 0xC0, 0x00))
+        changeBarrelColor(settings, ROM_COPY, (0x8D, 0xB3, 0x93))
         # Turn Ice Tomato Orange
         sizes = {
             0x1237: 700,
@@ -252,7 +250,7 @@ def applyHolidayMode(settings, ROM_COPY: ROM):
             0x1241: 1404,
         }
         for img in range(0x1237, 0x1241 + 1):
-            hueShiftImageContainer(25, img, 1, sizes[img], TextureFormat.RGBA5551, 240)
+            hueShiftImageContainer(25, img, 1, sizes[img], TextureFormat.RGBA5551, 171, ROM_COPY)
     elif HOLIDAY == Holidays.Anniv25:
         changeBarrelColor(settings, ROM_COPY, (0xFF, 0xFF, 0x00), None, True)
         sticker_im = getImageFile(ROM_COPY, 25, getBonusSkinOffset(ExtraTextures.Anniv25Sticker), True, 1, 1372, TextureFormat.RGBA5551)

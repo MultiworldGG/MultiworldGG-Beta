@@ -43,6 +43,7 @@ DKC2_DEATH_LINK_FORCE = DKC2_SRAM + 0x05A
 DKC2_DEATH_LINK_FLAG = DKC2_SRAM + 0x058
 
 DKC2_TRACKED_LEVELS = DKC2_SRAM + 0x80
+DKC2_TRACKED_CLEARS = DKC2_SRAM + 0x70
 
 DKC2_GAME_TIME = WRAM_START + 0x00D5
 DKC2_IN_LEVEL = WRAM_START + 0x01FF
@@ -103,6 +104,7 @@ class DKC2SNIClient(SNIClient):
         self.message_queue = []
         self.last_message = []
         self.current_session_locations = set()
+        self.processed_locations = set()
 
 
     async def validate_rom(self, ctx: "SNIContext"):
@@ -318,9 +320,10 @@ class DKC2SNIClient(SNIClient):
 
         # Send current map to poptracker
         reached_levels = await snes_read(ctx, DKC2_TRACKED_LEVELS, 0x20)
-        if reached_levels is None:
+        current_clears = await snes_read(ctx, DKC2_TRACKED_CLEARS, 0x0E)
+        if reached_levels is None or current_clears is None:
             return
-
+        
         if nmi_pointer == 0x8CE9 or nmi_pointer == 0x8CF1:
             poptracker_id = 0x100 | int.from_bytes(current_map, "little")
         else:
@@ -357,6 +360,21 @@ class DKC2SNIClient(SNIClient):
                 "operations":
                     [{"operation": "replace", "value": self.current_map}],
             }])
+
+            level_clear_list = []
+            for idx in range(0, len(current_clears), 2):
+                current_world_count = int.from_bytes(current_clears[idx:idx+2], "little")
+                level_clear_list.append(current_world_count)
+
+            await ctx.send_msgs([{
+                    "cmd": "Set", 
+                    "key": f"dkc2_clear_count_{ctx.team}_{ctx.slot}", 
+                    "default": 0,
+                    "want_reply": False,
+                    "operations":
+                        [{"operation": "replace", "value": level_clear_list}],
+                }])
+        
 
         # Receive items
         rom = await snes_read(ctx, DKC2_ROMHASH_START, ROMHASH_SIZE)
@@ -896,7 +914,9 @@ class DKC2SNIClient(SNIClient):
 
         elif cmd == "LocationInfo":
             for item in args["locations"]:
-                if item.player != ctx.slot and item.location in self.current_session_locations:
+                item: NetworkItem
+                if item.player != ctx.slot and item.location in self.current_session_locations and item.location not in self.processed_locations:
+                    self.processed_locations.add(item.location)
                     self.message_queue.append([False, ctx.player_names[item.player], ctx.item_names.lookup_in_slot(item.item, item.player), item.flags, False])
 
 

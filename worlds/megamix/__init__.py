@@ -1,13 +1,12 @@
 #AP
-from worlds.AutoWorld import WebWorld, World
+from worlds.AutoWorld import World, WebWorld
 from worlds.LauncherComponents import Component, components, Type, launch_subprocess
 from BaseClasses import Region, Item, ItemClassification, Entrance, Tutorial, MultiWorld
-from Options import PerGameCommonOptions
+from Options import PerGameCommonOptions, OptionError
 import settings
 
 #Local
-from .Options import MegaMixOptions
-
+from .Options import MegaMixOptions, megamix_option_groups
 from .Items import MegaMixSongItem, MegaMixFixedItem
 from .Locations import MegaMixLocation
 from .MegaMixCollection import MegaMixCollections
@@ -46,17 +45,20 @@ components.append(Component(
 ))
 
 class MegaMixSettings(settings.Group):
-    class ModPath(settings.LocalFolderPath):
+    class GameExe(settings.LocalFilePath):
         """
-        Mod folder location for Hatsune Miku Project DIVA Mega Mix+. Usually ends with "/mods".
+        Path to the HMPDMM+'s game exe. Usually ends with "DivaMegaMix.exe"
         Players (Mega Mix Clients) must have this set correctly in THEIR host.yaml.
         Generating and hosting do not rely on this.
         """
-        description = "Hatsune Miku Project DIVA Mega Mix+ mods folder"
+        description = "Hatsune Miku Project DIVA Mega Mix+ game executable"
+        is_exe = True
+        md5s = ["813e1befae1776d4fafdf907e509b28b"] # 1.03
 
-    mod_path: ModPath = ModPath("C:/Program Files (x86)/Steam/steamapps/common/Hatsune Miku Project DIVA Mega Mix Plus/mods")
+    game_exe: GameExe = GameExe("C:/Program Files (x86)/Steam/steamapps/common/Hatsune Miku Project DIVA Mega Mix Plus/DivaMegaMix.exe")
 
-class MegaMixWeb(WebWorld):
+
+class MegaMixWebWorld(WebWorld):
     tutorials = [
         Tutorial(
             tutorial_name="Multiworld Setup Guide",
@@ -67,6 +69,8 @@ class MegaMixWeb(WebWorld):
             authors=["Cynichill"]
         )
     ]
+    bug_report_page = "https://github.com/Cynichill/DivaAPworld/issues"
+    option_groups = megamix_option_groups
     game = GAME_NAME
 
 class MegaMixWorld(World):
@@ -79,13 +83,13 @@ class MegaMixWorld(World):
     author: str = AUTHOR
     
 
-    web = MegaMixWeb()
-
     settings: typing.ClassVar[MegaMixSettings]
     options_dataclass: typing.ClassVar[PerGameCommonOptions] = MegaMixOptions
     options: MegaMixOptions
 
     topology_present = False
+    web = MegaMixWebWorld()
+    ut_can_gen_without_yaml = True
 
     # Necessary Data
     mm_collection = MegaMixCollections()
@@ -94,27 +98,40 @@ class MegaMixWorld(World):
 
     item_name_to_id = {name: code for name, code in mm_collection.item_names_to_id.items()}
     location_name_to_id = {name: code for name, code in mm_collection.location_names_to_id.items()}
+    item_name_groups = mm_collection.get_item_name_groups()
 
     # Working Data
+    player_specific_mod_data = {}
+    player_specific_ids = {}
     victory_song_name: str = ""
     victory_song_id: int
-    starting_songs: List[str]
+    starting_songs: List[str] = []
     included_songs: List[str]
+    final_song_ids: set[int] = set()
     needed_token_count: int
     location_count: int
 
     def generate_early(self):
+        re_gen_passthrough = getattr(self.multiworld, "re_gen_passthrough", {})
+        if re_gen_passthrough and self.game in re_gen_passthrough:
+            slot_data: dict[str, any] = re_gen_passthrough[self.game]
+
+            if "finalSongIDs" in slot_data:
+                final = slot_data.get("finalSongIDs", [])
+                self.included_songs = [key for key, song in self.mm_collection.song_items.items() if song.songID in final]
+                self.location_count = len(self.included_songs) * 2
+            return
 
         # Initial search criteria
         lower_rating_threshold, higher_rating_threshold = self.get_difficulty_range()
         lower_diff_threshold, higher_diff_threshold = self.get_available_difficulties(self.options.song_difficulty_min.value, self.options.song_difficulty_max.value)
-        disallowed_singers = self.options.exclude_singers.value
+        self.player_specific_mod_data, self.player_specific_ids = get_player_specific_ids(self.options.megamix_mod_data.value)
 
         while True:
             # In most cases this should only need to run once
 
             allowed_difficulties = list(range(lower_diff_threshold, higher_diff_threshold + 1))
-            available_song_keys = self.mm_collection.get_songs_with_settings(self.options.allow_megamix_dlc_songs, get_player_specific_ids(self.options.megamix_mod_data.value), allowed_difficulties, disallowed_singers, lower_rating_threshold, higher_rating_threshold)
+            available_song_keys = self.mm_collection.get_songs_with_settings(self.options.allow_megamix_dlc_songs, self.player_specific_ids, allowed_difficulties, lower_rating_threshold, higher_rating_threshold)
 
             available_song_keys = self.handle_plando(available_song_keys)
             #print(f"{lower_rating_threshold}~{higher_rating_threshold}* {allowed_difficulties}", len(available_song_keys))
@@ -129,7 +146,7 @@ class MegaMixWorld(World):
             # If the above fails, we want to adjust the difficulty thresholds.
             # Easier first, then harder
             if lower_rating_threshold <= 1 and higher_rating_threshold >= 10 and len(allowed_difficulties) >= 5:
-                raise Exception("Failed to find enough songs, even with maximum difficulty thresholds.")
+                raise OptionError("Failed to find enough songs, even with maximum difficulty thresholds.")
             elif lower_rating_threshold <= 1:
                 if higher_rating_threshold > 10:
                     # Reset ratings, adjust diff. Maybe buff/nerf initial ratings when lowering/raising diff.
@@ -153,18 +170,30 @@ class MegaMixWorld(World):
         song_items = self.mm_collection.song_items
 
         start_items = self.options.start_inventory.value.keys()
-        include_songs = self.options.include_songs.value
+        include_songs = sorted(self.options.include_songs.value)
         exclude_songs = self.options.exclude_songs.value
 
-        self.starting_songs = [s for s in start_items if s in song_items]
-        self.included_songs = [s for s in include_songs if s in song_items and s not in self.starting_songs]
+        # The ModdedSongs group is shared across all players. Limit to own songs.
+        self.starting_songs = [s for s in start_items if s in song_items and
+                               not song_items.get(s).modded or song_items.get(s).songID in self.player_specific_ids]
+        included_songs = [s for s in include_songs if s in song_items and s not in self.starting_songs and
+                               not song_items.get(s).modded or song_items.get(s).songID in self.player_specific_ids]
 
-        return [s for s in available_song_keys if s not in start_items
-                and s not in include_songs and s not in exclude_songs]
+        # Open to suggestions to make includes% make sense without touching create_song_pool.
+        pool = [s for s in available_song_keys if s not in start_items
+                and s not in included_songs and s not in exclude_songs]
+        pool_size = 1 + min(len(pool + self.starting_songs + included_songs),
+                            self.options.starting_song_count.value + self.options.additional_song_count.value)
+        include_size = pool_size * self.options.include_songs_percentage.value // 100
+
+        self.included_songs = self.random.sample(included_songs, k=min(len(included_songs), include_size))
+        pool += [s for s in included_songs if s not in self.included_songs and s not in exclude_songs]
+
+        return pool
 
     def create_song_pool(self, available_song_keys: List[str]):
         starting_song_count = self.options.starting_song_count.value
-        additional_song_count = min(len(available_song_keys), self.options.additional_song_count.value)
+        additional_song_count = self.options.additional_song_count.value
         self.random.shuffle(available_song_keys)
 
         # First, we must double-check if the player has included too many guaranteed songs
@@ -214,6 +243,7 @@ class MegaMixWorld(World):
             return MegaMixFixedItem(name, ItemClassification.filler, self.mm_collection.filler_item_names.get(name), self.player)
 
         song = self.mm_collection.song_items.get(name)
+        self.final_song_ids.add(song.songID)
         return MegaMixSongItem(name, self.player, song)
 
     def create_items(self) -> None:
@@ -237,7 +267,7 @@ class MegaMixWorld(World):
             return
           
         # Fill given percentage of remaining slots as Useful/non-progression dupes.
-        dupe_count = floor(items_left * (self.options.duplicate_song_percentage / 100))
+        dupe_count = items_left * self.options.duplicate_song_percentage // 100
         items_left -= dupe_count
 
         # This is for the extraordinary case of needing to fill a lot of items.
@@ -265,35 +295,16 @@ class MegaMixWorld(World):
 
     def create_regions(self) -> None:
         menu_region = Region("Menu", self.player, self.multiworld)
-        song_select_region = Region("Song Select", self.player, self.multiworld)
-        self.multiworld.regions += [menu_region, song_select_region]
-        menu_region.connect(song_select_region)
+        self.multiworld.regions += [menu_region]
 
-        # Make a collection of all songs available for this rando.
-        # 1. All starting songs
-        # 2. All other songs shuffled
-        # Doing it in this order ensures that starting songs are first in line to getting 2 locations.
-        # Final song is excluded as for the purpose of this rando, it doesn't matter.
+        all_selected_locations = self.starting_songs + self.included_songs
 
-        all_selected_locations = self.starting_songs.copy()
-        included_song_copy = self.included_songs.copy()
-
-        self.random.shuffle(included_song_copy)
-        all_selected_locations.extend(included_song_copy)
-
-        # Make a region per song/album, then adds 1-2 item locations to them
-        for i in range(0, len(all_selected_locations)):
-            name = all_selected_locations[i]
-            region = Region(name, self.player, self.multiworld)
-            self.multiworld.regions.append(region)
-            song_select_region.connect(region, name, lambda state, place=name: state.has(place, self.player))
-
-            locations = {}
+        # Adds 2 item locations per song to the menu region.
+        for name in all_selected_locations:
             for j in range(2):
-                location_name = f"{name}-{j}"
-                locations[location_name] = self.mm_collection.song_locations[location_name]
-
-            region.add_locations(locations, MegaMixLocation)
+                loc = MegaMixLocation(self.player, f"{name}-{j}", self.mm_collection.song_locations[f"{name}-{j}"], menu_region)
+                loc.access_rule = lambda state, item=name: state.has(item, self.player)
+                menu_region.locations.append(loc)
 
     def set_rules(self) -> None:
         self.multiworld.completion_condition[self.player] = lambda state: \
@@ -327,19 +338,19 @@ class MegaMixWorld(World):
 
         return [min_diff, max_diff]
 
+    @staticmethod
+    def interpret_slot_data(slot_data: dict[str, any]) -> dict[str, any]:
+        return slot_data
+
     def fill_slot_data(self):
-
-        try:
-            data = json.loads(self.options.megamix_mod_data.value)
-            filtered = {pack: [entry[1] for entry in songs] for pack, songs in data.items()}
-        except json.JSONDecodeError:
-            filtered = None
-
         return {
             "victoryLocation": self.victory_song_name,
             "victoryID": self.victory_song_id,
+            "finalSongIDs": self.final_song_ids,
             "leekWinCount": self.get_leek_win_count(),
             "scoreGradeNeeded": self.options.grade_needed.value,
             "autoRemove": bool(self.options.auto_remove_songs),
-            "modData": filtered,
+            "deathLink": self.options.death_link.value,
+            "deathLink_Amnesty": self.options.death_link_amnesty.value,
+            "modData": {pack: [song[1] for song in songs] for pack, songs in self.player_specific_mod_data.items()},
         }

@@ -636,7 +636,7 @@ def set_transitions(self, logic):
         connect_regions(self, AEDoor.CCAVE_ENTRY.value, AEDoor.CCAVE_ENTRY_SECOND_ROOM.value, 
                         lambda state: CanSwim(state, self) or IJ(state, self) or (HasHoop(state, self) and SuperFlyer(state, self, AEDoor.CCAVE_ENTRY.value)))
     connect_regions(self, AEDoor.CCAVE_ENTRY_SECOND_ROOM.value, AEDoor.CCAVE_ENTRY.value, 
-                        lambda state: CanSwim(state, self))
+                        lambda state: CanDive(state, self))
 
     # Dexter's Island
     # Outside

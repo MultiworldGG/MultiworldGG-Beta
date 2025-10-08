@@ -49,7 +49,7 @@ class SimpsonsHitAndRunWorld(World):
     options_dataclass = SimpsonsHitAndRunOptions
     data_version = WORLD_VERSION
     required_client_version = (0, 5, 0)
-
+    apworld_version = "0.3.3"
     # These properties are set from the imports of the same name above.
     item_table = item_table
     location_table = location_table # this is likely imported from Data instead of Locations because the Game Complete location should not be in here, but is used for lookups
@@ -101,6 +101,7 @@ class SimpsonsHitAndRunWorld(World):
             SimpsonsHitAndRunItem("__Victory__", ItemClassification.progression, None, player=self.player))
 
         cards_data = json.loads(pkgutil.get_data(__name__, "data/cards.json").decode())
+
         after_create_regions(self, self.multiworld, self.player, cards_data)
 
     def create_items(self):
@@ -322,7 +323,7 @@ class SimpsonsHitAndRunWorld(World):
     def fill_slot_data(self):
         slot_data = before_fill_slot_data({}, self, self.multiworld, self.player)
 
-        slot_data["version"] = "Beta 0.3.1"
+        slot_data["version"] = self.apworld_version
         # slot_data["DeathLink"] = bool(self.multiworld.death_link[self.player].value)
         common_options = set(PerGameCommonOptions.type_hints.keys())
         for option_key, _ in self.options_dataclass.type_hints.items():

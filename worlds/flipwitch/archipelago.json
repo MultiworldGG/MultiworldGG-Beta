@@ -1,8 +1,8 @@
 {
-    "version": 6,
-    "compatible_version": 5,
+    "version": 7,
+    "compatible_version": 7,
     "game": "Flipwitch Forbidden Sex Hex",
-    "authors": ["Albrekka", "Prin", "SomeLazyGamer"],
+    "authors": ["Albrekka"],
     "igdb_id": 361419,
     "minimum_ap_version": "0.6.4",
     "world_version": "0.0.0"

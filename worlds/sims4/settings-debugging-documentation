@@ -1,0 +1,11 @@
+/Users/benmason/Documents/Electronic Arts/Les Sims 4
+
+# Notes: settings.FolderPath is not broken, and outputs the correct path when print statements are inserted. Normalization of the path to get rid of the NBSP chars is happening somewhere else.
+# settings._UserPath also appears to be fine. This means likely one thing:
+# the settings.Path class itself is messing up our path. *sigh*
+# It seems like settings.Path's resolve() function might be where the issue lies? that calls _resolve_exe... I think we're getting closer?
+# settings._UserPath could also be an issue. It depends on how Utils.user_path is implemented.
+# settings._UserPath seems fine... and _resolve_exe isn't our issue.
+# this leaves us with settings.Group actually being the issue! Which is good, but also not good, because uh... that class is fucking massive...
+# it's the yaml dumper. it has to be the fucking yaml dumper.
+# it's the yaml dumper in settings.Group that's fucking my paths 😭

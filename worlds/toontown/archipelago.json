@@ -1,6 +1,6 @@
 {
-    "version": 6,
-    "compatible_version": 5,
+    "version": 7,
+    "compatible_version": 7,
     "game": "Toontown",
     "authors": ["DevvyDont"],
     "igdb_id": 25326,

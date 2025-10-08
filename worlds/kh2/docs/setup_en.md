@@ -14,7 +14,7 @@ Kingdom Hearts II Final Mix from the [Epic Games Store](https://store.epicgames.
     2. Lua Backend from the OpenKH Mod Manager
     3. Install the mod `KH2FM-Mods-Num/GoA-ROM-Edition` using OpenKH Mod Manager
 - Needed for MultiworldGG 
-    1. [MultiworldGG KH2Client](https://github.com/ArchipelagoMW/Archipelago/releases)
+    1. [MultiworldGG KH2Client](https://github.com/MultiworldGG/MultiworldGG/releases)
     2. Install the Archipelago Companion mod from `JaredWeakStrike/APCompanion` using OpenKH Mod Manager
     3. Install the mod from `TopazTK/KH2-ArchipelagoEnablers` using OpenKH Mod manager
        1. Do Note that if you have `KH2FM-Mods-equations19/auto-save` OR `KH2FM-Mods-equations19/soft-reset` you should download `TopazTK/KH2-ArchipelagoEnablersLITE` instead
@@ -129,7 +129,7 @@ This pack will handle logic, received items, checked locations and autotabbing f
 - Why did I not load into the correct visit?
     - You need to trigger a cutscene or visit The World That Never Was for it to register that you have received the item.
 - What versions of Kingdom Hearts 2 are supported?
-    - Currently the only supported versions are Epic Games Version 1.0.0.10_WW and Steam Build Version 15194255.
+    - Currently, the only supported versions are Epic Games Version 1.0.0.10_WW and Steam Build Version 15194255.
 - Why am I getting wallpapered while going into a world for the first time?
     - Your Lua Backend was not configured correctly. Look over the step in the [KH2Rando.com](https://tommadness.github.io/KH2Randomizer/setup/Panacea-ModLoader/) guide.
 - Why am I not getting magic?
@@ -142,8 +142,6 @@ This pack will handle logic, received items, checked locations and autotabbing f
 - Why am I getting dummy items or letters?
     - You will need to get the `JaredWeakStrike/APCompanion` (you can find how to get this if you scroll up)
 - Why am I not sending or receiving items?
-    - Make sure you are connected to the KH2 client and the correct room (for more information scroll up)
-- Why should I install the auto save mod at `KH2FM-Mods-equations19/auto-save` and `KH2FM-Mods-equations19/KH2-Lua-Library`?
-    - Because Kingdom Hearts 2 is prone to crashes and will keep you from losing your progress. Both mods are needed for auto save to work.
+    - Make sure you are connected to the KH2 client and the correct room (for more information scroll up). You may need to run the client/launcher as admin
 - How do I load an auto save?
     - To load an auto-save, hold down the Select or your equivalent on your preferred controller while choosing a file. Make sure to hold the button down the whole time.

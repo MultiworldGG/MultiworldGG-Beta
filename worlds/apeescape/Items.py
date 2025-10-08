@@ -66,6 +66,7 @@ item_table = {
     AEItem.MonkeyMashTrap.value: RAM.items["MonkeyMashTrap"],
     AEItem.IcyHotPantsTrap.value: RAM.items["IcyHotPantsTrap"],
     AEItem.StunTrap.value: RAM.items["StunTrap"],
+    AEItem.CameraRotateTrap.value: RAM.items["CameraRotateTrap"],
 
     # SpecialItems
     AEItem.RainbowCookie.value: RAM.items["RainbowCookie"],
@@ -95,6 +96,7 @@ trap_to_local_traps: typing.Dict[str, str] = {
     AEItem.MonkeyMashTrap.value:    AEItem.MonkeyMashTrap.value,
     AEItem.IcyHotPantsTrap.value:   AEItem.IcyHotPantsTrap.value,
     AEItem.StunTrap.value:          AEItem.StunTrap.value,
+    AEItem.CameraRotateTrap.value:    AEItem.CameraRotateTrap.value,
 
     # Common other trap names
     "Banana Trap":          AEItem.BananaPeelTrap.value,
@@ -104,17 +106,22 @@ trap_to_local_traps: typing.Dict[str, str] = {
     "Freeze Trap":          AEItem.StunTrap.value,
     "Frozen Trap":          AEItem.StunTrap.value,
     "Hiccup Trap":          AEItem.IcyHotPantsTrap.value,
+    "Ice Floor Trap":       AEItem.BananaPeelTrap.value,
     "Jump Trap":            AEItem.IcyHotPantsTrap.value,
     "Jumping Jacks Trap":   AEItem.IcyHotPantsTrap.value,
     "Paralyze Trap":        AEItem.StunTrap.value,
     "Push Trap":            AEItem.BananaPeelTrap.value,
+    "Screen Flip Trap":     AEItem.CameraRotateTrap.value,
+    "Slip Trap":            AEItem.BananaPeelTrap.value,
     "Spring Trap":          AEItem.IcyHotPantsTrap.value,
+    "SvC Effect":           AEItem.CameraRotateTrap.value,
     "Swap Trap" :           AEItem.GadgetShuffleTrap.value,
 
     # Traps idea :
     # Fast Trap (Depending on direction always set to max velocity?)
     # Home Trap (Time Hub Trap? or maybe only warp to level entry?)
     # Ice Trap (Slipery Floor?)
+    # Zoom Trap
     # Mailbox Trap (Tells a message to the player in a mailbox
 }
 
@@ -124,6 +131,7 @@ trap_name_to_value: typing.Dict[str, int] = {
     AEItem.MonkeyMashTrap.value:    RAM.items["MonkeyMashTrap"],
     AEItem.IcyHotPantsTrap.value:   RAM.items["IcyHotPantsTrap"],
     AEItem.StunTrap.value:          RAM.items["StunTrap"],
+    AEItem.CameraRotateTrap.value:    RAM.items["CameraRotateTrap"],
 }
 
 

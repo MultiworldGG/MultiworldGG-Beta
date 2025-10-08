@@ -286,9 +286,8 @@ class PowerwashSimulatorOptions(PerGameCommonOptions):
 
         return locations
 
-    def get_goal_levels(self) -> List[str]:
-        locations = self.get_locations()
-        return [loc for loc in self.flatten_locations(locations, self.levels_to_goal) if loc in locations]
+    def get_goal_levels(self, locs: List[str]) -> List[str]:
+        return [loc for loc in self.flatten_locations(locs, self.levels_to_goal) if loc in locs]
 
     def has_percentsanity(self) -> bool:
         return "Percentsanity" in self.sanities
@@ -319,10 +318,9 @@ class PowerwashSimulatorSettings(Group):
     allow_potentially_excessive_releases: Union[AllowPotentiallyExcessiveReleases, bool] = False
 
 
-def check_options(world):
+def check_options(world, locations: List[str]):
     options: PowerwashSimulatorOptions = world.options
     settings: PowerwashSimulatorSettings = world.settings
-    locations: List[str] = options.get_locations()
     random: Random = world.random
 
     if options.accessibility == Accessibility.option_minimal:
@@ -333,7 +331,7 @@ def check_options(world):
         raise_yaml_error(world.player_name, "Does not have locations listed in their yaml")
 
     if options.goal_type == 1:
-        raw_goal_levels = options.get_goal_levels()
+        raw_goal_levels = options.get_goal_levels(locations)
 
         if len(raw_goal_levels) == 0 and "Random" not in options.levels_to_goal:
             raise_yaml_error(world.player_name,

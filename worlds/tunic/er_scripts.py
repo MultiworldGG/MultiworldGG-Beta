@@ -212,6 +212,8 @@ def pair_portals(world: "TunicWorld", regions: Dict[str, Region]) -> Dict[Portal
         ladder_storage = seed_group["ladder_storage"]
         entrance_layout = seed_group["entrance_layout"]
         laurels_location = "10_fairies" if seed_group["laurels_at_10_fairies"] is True else False
+        shuffle_bells = seed_group["bell_shuffle"]
+        shuffle_fuses = seed_group["fuse_shuffle"]
 
     logic_tricks: Tuple[bool, int, int] = (laurels_zips, ice_grappling, ladder_storage)
 
@@ -231,10 +233,6 @@ def pair_portals(world: "TunicWorld", regions: Dict[str, Region]) -> Dict[Portal
         if two_plus_direction_tracker[direction_pairs[direction]] <= dead_end_direction_tracker[direction] + offset:
             return False
         return True
-
-    # If using Universal Tracker, restore portal_map. Could be cleaner, but it does not matter for UT even a little bit
-    if world.using_ut:
-        portal_map = portal_mapping.copy()
 
     # create separate lists for dead ends and non-dead ends
     for portal in portal_map:

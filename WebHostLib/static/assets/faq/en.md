@@ -66,7 +66,7 @@ is to ensure items necessary to complete the game will be accessible to the play
 rules allowing certain items to be placed in normally unreachable locations, provided the player has indicated they are
 comfortable exploiting certain glitches in the game.
 
-## I want to add a game to the MultiworldGG randomizer. How do I do that?
+## I want to develop a game implementation for MultiworldGG. How do I do that?
 
 The best way to get started is to take a look at our code on GitHub:  
 [MultiworldGG GitHub Page](https://github.com/MultiworldGG/MultiworldGG).

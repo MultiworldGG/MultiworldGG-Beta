@@ -312,8 +312,10 @@ def create_filler(item_factory: LunacidItemFactory, options: LunacidOptions, ran
     if options.levelsanity:
         del filler_weights[CustomItem.experience]
     if month != 12:
-        del trap_weights[Trap.eggnog]
-        del trap_weights[Trap.coal]
+        if Trap.eggnog in trap_weights:
+            del trap_weights[Trap.eggnog]
+        if Trap.coal in trap_weights:
+            del trap_weights[Trap.coal]
     if len(trap_weights) == 0:
         trap_percent = 0
     if trap_percent > 0:

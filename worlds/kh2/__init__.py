@@ -4,6 +4,7 @@ from typing import List
 from BaseClasses import Tutorial, ItemClassification
 from Utils import local_path, user_path
 from Fill import fast_fill
+from worlds.LauncherComponents import Component, components, icon_paths, Type, launch as launch_component
 from worlds.LauncherComponents import Component, components, Type, icon_paths, launch as launch_component
 from worlds.AutoWorld import World, WebWorld
 from .Items import *
@@ -16,15 +17,17 @@ from .Regions import create_regions, connect_regions
 from .Rules import *
 from .Subclasses import KH2Item
 
+
 def launch_client():
     from .ClientStuff.Client import launch
     launch_component(launch, name="KH2Client")
 
 
+icon_paths['kh2apicon'] = f"ap:{__name__}/data/khapicon.png"
+components.append(Component("KH2 Client", func=launch_client, component_type=Type.CLIENT, icon='kh2apicon'))
+
 components.append(Component(display_name="KH2Client", func=launch_client, component_type=Type.CLIENT, icon='khapicon'))
 icon_paths['khapicon'] = local_path('data', 'khapicon.png')
-
-components.append(Component(display_name="KH2 Client", func=launch_client, component_type=Type.CLIENT))
 
 class KingdomHearts2Web(WebWorld):
     tutorials = [Tutorial(

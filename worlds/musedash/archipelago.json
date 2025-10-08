@@ -1,9 +1,9 @@
 {
-    "version": 6,
-    "compatible_version": 5,
-    "game": "Muse Dash",
-    "authors": ["DeamonHunter"],
-    "igdb_id": 86316,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.0"
+  "version": 7,
+  "compatible_version": 7,
+  "game": "Muse Dash",
+  "authors": [ "DeamonHunter" ],
+  "igdb_id": 86316,
+  "world_version": "1.5.25",
+  "minimum_ap_version": "0.6.4"
 }

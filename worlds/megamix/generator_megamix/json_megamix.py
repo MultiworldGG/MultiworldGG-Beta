@@ -1,6 +1,6 @@
 import json
 import os.path
-import pathlib
+from pathlib import Path
 import re
 
 from ..SymbolFixer import fix_song_name
@@ -22,7 +22,7 @@ base_game_ids = { # Excluded: 700, 701
 class ConflictException(Exception):
     pass
 
-def process_mods(mod_pv_dbs_path_list: list[str]) -> tuple[int, str]:
+def process_mods(mods_folder: str, mod_pv_dbs_path_list: list[str]) -> tuple[int, str]:
     """
     Accumulates song metadata across the provided mod_pv_dbs and returns JSON.
 
@@ -33,8 +33,10 @@ def process_mods(mod_pv_dbs_path_list: list[str]) -> tuple[int, str]:
     unique_seen_ids = {}
 
     for mod_path in mod_pv_dbs_path_list:
-        mod_dir = pathlib.Path(mod_path).parents[1]
-        mod_folder = os.path.basename(mod_dir).replace("'", "''")
+        mod_dir = Path(mod_path).parents[1]
+        mod_folder = str(Path(mod_dir).relative_to(mods_folder))
+        mod_folder = mod_folder.replace("'", "''")
+
         song_pack_ids, song_pack_list = process_single_mod(mod_path, str(mod_dir))
 
         # Beyond overkill, beyond useful.
@@ -56,9 +58,9 @@ def process_single_mod(mod_pv_db_path: str, mod_dir: str) -> tuple[set[int], lis
 
     with open(mod_pv_db_path, "r", encoding='utf-8') as input_file:
         mod_pv_db = input_file.read()
-    mod_pv_db = re.findall(rf'^pv_(\d+)\.(song_name_en|difficulty)(?:\.([^.]+)\.(\d|length)\.?(level|script_file_name)?)?=(.*)$', mod_pv_db, re.MULTILINE)
+    mod_pv_db = set(re.findall(rf'^(?:#ARCH#)?pv_(\d+)\.(song_name_en|difficulty)(?:\.([^.]+)\.(\d|length)\.?(level|script_file_name|attribute\.extra)?)?=(.*)$', mod_pv_db, re.MULTILINE))
 
-    for line in mod_pv_db:
+    for line in sorted(mod_pv_db):
         song_id, song_prop, diff_rating, diff_index_length, diff_prop, value = line
         songs.setdefault(song_id, ["", int(song_id), 0])
         diff_lockout.setdefault(song_id, [False] * 5)
@@ -68,7 +70,14 @@ def process_single_mod(mod_pv_db_path: str, mod_dir: str) -> tuple[set[int], lis
             case "song_name_en":
                 songs[song_id][0] = fix_song_name(value).replace("'", "''")
             case "difficulty" if not diff_rating == "encore":
+                extra_check = song_id, song_prop, diff_rating, '1', 'attribute.extra', '1'
                 diff_rating = "exextreme" if diff_index_length == "1" and diff_rating == "extreme" else diff_rating
+
+                # Sanity check for invalid extreme data (starts at 1 index/out of 0-2 range of length prop): check the extra attribute.
+                if diff_rating is "exextreme" and extra_check not in mod_pv_db:
+                    print(f"{song_id} appears ExEx but lacks attribute, downgrade to Ex")
+                    diff_rating = "extreme"
+
                 diff_index = difficulties.index(diff_rating)
 
                 if diff_index_length == "length" and value == "0":
@@ -78,8 +87,9 @@ def process_single_mod(mod_pv_db_path: str, mod_dir: str) -> tuple[set[int], lis
                 match diff_prop:
                     case "level" if not diff_lockout[song_id][diff_index]:
                         songs[song_id][2] = shift_difficulty(songs[song_id][2], diff_index, float(".".join(value.split("_")[2:4])))
-                    case "script_file_name" if song_id not in base_game_ids: # 99% covers. Good luck everyone.
+                    case "script_file_name" if int(song_id) not in base_game_ids: # 99% covers. Good luck everyone.
                         if not os.path.isfile(os.path.join(mod_dir, value)): # Verify DSC exists
+                            print(f"{song_id} No {difficulties[diff_index]} DSC at {value}")
                             diff_lockout[song_id][diff_index] = True
                             songs[song_id][2] = shift_difficulty(songs[song_id][2], diff_index, 31.0)
 
@@ -93,7 +103,7 @@ def shift_difficulty(current_diffs: int = 0, index: int = 0, level_float: float 
     Masks off missing DSCs with NOT 31. Locking handled in caller.
     """
 
-    level_int = (int(level_float) | 1 << 4 if not level_float.is_integer() else int(level_float)) << 5 * index
+    level_int = (int(level_float) | (not level_float.is_integer()) << 4) << 5 * index
     current_diffs = current_diffs & ~level_int if level_float == 31 else current_diffs | level_int
 
     return current_diffs

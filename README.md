@@ -97,6 +97,7 @@ Currently, the following games are supported:
 * Lufia II Ancient Cave
 * Luigi's Mansion
 * Lunacid
+* Madou Monogatari Hanamaru Daiyouchienji
 * Mario Kart Double Dash
 * Mario Kart 64
 * Mario & Luigi Superstar Saga

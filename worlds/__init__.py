@@ -11,7 +11,7 @@ import dataclasses
 from typing import Dict, List, TypedDict
 
 from NetUtils import DataPackage
-from Utils import local_path, user_path, Version, version_tuple
+from Utils import local_path, user_path, Version, version_tuple, tuplize_version
 
 # local_folder = os.path.dirname(__file__)
 # user_folder = user_path("worlds") if user_path() != local_path() else user_path("custom_worlds")
@@ -72,6 +72,7 @@ for game in game_names():
 world_sources.sort()
 for world_source in world_sources:
     world_source.load()
+
 
 from .AutoWorld import AutoWorldRegister
 # TODO: FIX FOR DYNAMIC LOADING

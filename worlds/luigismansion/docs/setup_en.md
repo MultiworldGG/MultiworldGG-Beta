@@ -17,7 +17,7 @@ Run the emulator at least once to make sure it is working.
 
 ![img.png](Dolphin_Disabled_MMU.png)
 
-4. Note for Mac users: Due to additional security hardening that Apple added to MacOS, the steps from [here](https://github.com/aldelaro5/dolphin-memory-engine?tab=readme-ov-file#macos-code-signing) relating to Code Signing must be performed. Not doing so will prevent your Archipelago Client from connecting to the game appropriately.
+4. Note for Mac users: Due to additional security hardening that Apple added to MacOS, the steps from [here](https://github.com/aldelaro5/dolphin-memory-engine?tab=readme-ov-file#macos-code-signing) relating to Code Signing must be performed. Not doing so will prevent your MultiworldGG Client from connecting to the game appropriately.
 
 ## Create a Config (.yaml) File
 

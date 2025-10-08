@@ -1,12 +1,14 @@
 import logging
 import random
+
 import Utils
 import time
 
 from BaseClasses import ItemClassification
 from NetUtils import ClientStatus, NetworkItem
-from .ItemHandlers import ApeEscapeMemoryInput,StunTrapHandler,MonkeyMashHandler,RainbowCookieHandler
-from .Strings import AEItem
+from .ItemHandlers import ApeEscapeMemoryInput, StunTrapHandler, MonkeyMashHandler, RainbowCookieHandler, \
+    CameraRotateHandler
+from .Strings import AEItem,AELocation
 from .Items import gadgetsValues, trap_name_to_value, trap_to_local_traps
 
 from typing import TYPE_CHECKING, Optional, Dict, Set, ClassVar, Any, Tuple, Union
@@ -383,13 +385,14 @@ class ApeEscapeClient(BizHawkClient):
     bizhawk_display_set = False
     PPM_Completed = False
     gotDatastorage = False
-
+    mailboxTextReplaced = False
 
     def __init__(self) -> None:
         super().__init__()
         self.ape_handler = MonkeyMashHandler(None)
         self.rainbow_cookie = RainbowCookieHandler(None)
         self.stun_trap = StunTrapHandler(None)
+        self.camera_rotate_trap = CameraRotateHandler(None)
         self.local_checked_locations = set()
         self.local_set_events = {}
         self.local_found_key_items = {}
@@ -431,10 +434,12 @@ class ApeEscapeClient(BizHawkClient):
         self.gotBanana = False
         self.lowOxygenCounter = 1
         self.specialitem_queue = []
+        self.priority_trap_queue = []
         self.bizhawk_itemdisplay = False
         self.bizhawk_display_set = False
         self.gotDatastorage = False
         self.initDatastorage = False
+        self.ForceTransition = False
 
     async def validate_rom(self, ctx: "BizHawkClientContext") -> bool:
         ape_identifier_ram_address: int = 0xA37F0
@@ -569,7 +574,7 @@ class ApeEscapeClient(BizHawkClient):
 
                     message = f"Received linked {trap_name} from {source_name}"
                     logger.info(message)
-                    self.specialitem_queue.insert(0,trap_value)
+                    self.priority_trap_queue.insert(0,[trap_value,time.time()])
                     Utils.async_start(self.send_bizhawk_message(ctx,message,"Passthrough", ""))
 
         if cmd in {"PrintJSON"} and "type" in args:
@@ -598,7 +603,7 @@ class ApeEscapeClient(BizHawkClient):
                     elif itemCategory == ItemClassification.trap:
                         itemClass = "Trap"
                         if itemName not in ctx.slot_data["trapsonreconnect"] and recieverID == ctx.slot:
-                            self.specialitem_queue.append((networkItem.item - self.offset))
+                            self.specialitem_queue.append([(networkItem.item - self.offset),0])
                     elif itemCategory == ItemClassification.filler:
                         itemClass = "Filler"
                     else:
@@ -617,7 +622,7 @@ class ApeEscapeClient(BizHawkClient):
 
                     self.messagequeue.append(message)
                 # If there is a PRINTJSON which is sent by the player
-                if "TrapLink" in ctx.tags and recieverID == ctx.slot:
+                if "TrapLink" in ctx.tags and recieverID == ctx.slot and itemName in trap_name_to_value:
                     Utils.async_start(self.send_trap_link(ctx, itemName))
         if cmd == "Retrieved":
             if "keys" not in args:
@@ -629,27 +634,36 @@ class ApeEscapeClient(BizHawkClient):
                 self.gotDatastorage = True
             if f"AE_deathlink_{ctx.team}_{ctx.slot}" in args["keys"]:
                 self.DeathLink_DS = keys.get(f"AE_deathlink_{ctx.team}_{ctx.slot}", None)
+                self.gotDatastorage = True
             if f"AE_autoequip_{ctx.team}_{ctx.slot}" in args["keys"]:
                 self.AutoEquip_DS = keys.get(f"AE_autoequip_{ctx.team}_{ctx.slot}", None)
+                self.gotDatastorage = True
             if f"AE_bhdisplay_{ctx.team}_{ctx.slot}" in args["keys"]:
                 self.BHDisplay_DS = keys.get(f"AE_bhdisplay_{ctx.team}_{ctx.slot}", None)
+                self.gotDatastorage = True
             if f"AE_DIButton_{ctx.team}_{ctx.slot}" in args["keys"]:
                 self.DIButton = keys.get(f"AE_DIButton_{ctx.team}_{ctx.slot}", None)
+                self.gotDatastorage = True
             if f"AE_CrCWaterButton_{ctx.team}_{ctx.slot}" in args["keys"]:
                 self.CrCWaterButton = keys.get(f"AE_CrCWaterButton_{ctx.team}_{ctx.slot}", None)
+                self.gotDatastorage = True
             # if f"AE_CrCBasementButton_{ctx.team}_{ctx.slot}" in args["keys"]:
                 # self.CrCBasementButton = keys.get(f"AE_CrCBasementButton_{ctx.team}_{ctx.slot}", None)
             if f"AE_MM_Painting_Button_{ctx.team}_{ctx.slot}" in args["keys"]:
                 self.MM_Painting_Button = keys.get(f"AE_MM_Painting_Button_{ctx.team}_{ctx.slot}", None)
+                self.gotDatastorage = True
             if f"AE_MM_MonkeyHead_Button_{ctx.team}_{ctx.slot}" in args["keys"]:
                 self.MM_MonkeyHead_Button = keys.get(f"AE_MM_MonkeyHead_Button_{ctx.team}_{ctx.slot}", None)
+                self.gotDatastorage = True
             if f"AE_TVT_Lobby_Button_{ctx.team}_{ctx.slot}" in args["keys"]:
                 self.TVT_Lobby_Button = keys.get(f"AE_TVT_Lobby_Button_{ctx.team}_{ctx.slot}", None)
+                self.gotDatastorage = True
             if f"AE_DR_Block_{ctx.team}_{ctx.slot}" in args["keys"]:
                 self.DR_Block_Pushed = keys.get(f"AE_DR_Block_{ctx.team}_{ctx.slot}", None)
+                self.gotDatastorage = True
             if f"AE_spikecolor_{ctx.team}_{ctx.slot}" in args["keys"]:
                 self.DS_spikecolor = keys.get(f"AE_spikecolor_{ctx.team}_{ctx.slot}", None)
-
+                self.gotDatastorage = True
 
     async def check_gadgets(self, ctx: "BizHawkClientContext",gadgetStateFromServer) -> list[str]:
         gadgets = []
@@ -675,12 +689,15 @@ class ApeEscapeClient(BizHawkClient):
     async def kickout_prevention_handling(self, ctx: "BizHawkClientContext", context):
         if context == "init":
             if ctx.team is None:
+                self.initDatastorage = False
                 return
 
             await ctx.send_msgs([{"cmd": "Get","keys": [f"AE_kickoutprevention_{ctx.team}_{ctx.slot}"]}])
 
             if not self.gotDatastorage:
                 return
+
+            self.initDatastorage = True
 
             if self.KickoutPrevention_DS is None:
                 #Used slotdata
@@ -851,9 +868,6 @@ class ApeEscapeClient(BizHawkClient):
         for x in range(len(keys_globalMonkeys)):
             monkeyID = self.offset + keys_globalMonkeys[x]
             monkeyAddress = values_globalMonkeys[x]
-            # Skip MM Monkey BG to ensure it does not softlock the MM Lamp Door when Lamps are not shuffled.
-            if keys_globalMonkeys[x] == 204:
-                continue
             Monkey_Reads += [(monkeyAddress, 1, "MainRAM")]
             Monkey_IDs += [monkeyID]
             Monkey_Addresses += [monkeyAddress]
@@ -950,7 +964,6 @@ class ApeEscapeClient(BizHawkClient):
                     await self.autoequip_option_handling(ctx, "init")
                     await self.bh_display_option_handling(ctx, "init")
                     await self.Spike_Color_handling(ctx, "", "init")
-                    self.initDatastorage = True
 
                 if self.changeKickout == True:
                     self.changeKickout = False
@@ -969,6 +982,12 @@ class ApeEscapeClient(BizHawkClient):
                     await self.syncprogress(ctx)
             else:
                 # Not send anything before having the options set
+                await self.kickout_prevention_handling(ctx, "init")
+                await self.deathlink_option_handling(ctx, "init")
+                await self.autoequip_option_handling(ctx, "init")
+                await self.bh_display_option_handling(ctx, "init")
+                await self.Spike_Color_handling(ctx, "", "init")
+
                 return
 
             # Set locations list to use within functions
@@ -982,6 +1001,9 @@ class ApeEscapeClient(BizHawkClient):
 
             if self.stun_trap.bizhawk_context is None:
                 self.stun_trap = StunTrapHandler(ctx)
+
+            if self.camera_rotate_trap.bizhawk_context is None:
+                self.camera_rotate_trap = CameraRotateHandler(ctx)
 
             # Game state, locations and items read
             readsDict = {
@@ -1045,6 +1067,7 @@ class ApeEscapeClient(BizHawkClient):
                 "crossGadget": (RAM.crossGadgetAddress, 1, "MainRAM"),
                 "gadgetUseState": (RAM.gadgetUseStateAddress, 1, "MainRAM"),  # Which gadget is used in what way. **Not used at the moment
                 "punchVisualAddress": (RAM.punchVisualAddress, 32, "MainRAM"),
+                "CatchingState": (RAM.CatchingState, 1, "MainRAM"),
                 # Level Select/Menu data
                 "LS_currentWorld": (RAM.selectedWorldAddress, 1, "MainRAM"),  # In level select, the current world
                 "LS_currentLevel": (RAM.selectedLevelAddress, 1, "MainRAM"),  # In level select, the current level
@@ -1092,6 +1115,7 @@ class ApeEscapeClient(BizHawkClient):
                 "MM_Lobby_DoorDetection": (RAM.MM_Lobby_DoorDetection, 4, "MainRAM"),
                 "WSW_RoomState": (RAM.WSW_RoomState, 1, "MainRAM"),
                 "lockCamera": (RAM.lockCamera, 1, "MainRAM"),
+                "MM_AlertRoom_ButtonPressed": (RAM.MM_AlertRoom_ButtonPressed, 1, "MainRAM"),
                 # Buttons
                 "DI_Button_Pressed": (RAM.DI_Button_Pressed, 1, "MainRAM"),
                 "CrC_Water_ButtonPressed": (RAM.CrC_Water_ButtonPressed, 1, "MainRAM"),
@@ -1192,6 +1216,7 @@ class ApeEscapeClient(BizHawkClient):
             crossGadget = readValues["crossGadget"]
             gadgetUseState = readValues["gadgetUseState"]
             punchVisualAddress = readValues["punchVisualAddress"]
+            CatchingState = readValues["CatchingState"]
 
             # Level Select/Menu data
             LS_currentWorld = readValues["LS_currentWorld"]
@@ -1242,6 +1267,7 @@ class ApeEscapeClient(BizHawkClient):
             MM_Lobby_DoorDetection = readValues["MM_Lobby_DoorDetection"]
             WSW_RoomState = readValues["WSW_RoomState"]
             lockCamera = readValues["lockCamera"]
+            MM_AlertRoom_ButtonPressed = readValues["MM_AlertRoom_ButtonPressed"]
 
             # Buttons
             DI_Button_Pressed = readValues["DI_Button_Pressed"]
@@ -1278,9 +1304,8 @@ class ApeEscapeClient(BizHawkClient):
 
             # Write tables
             itemsWrites = []
-            TrapWrites = []
             Menuwrites = []
-
+            S2_writes = []
             # When in Menu, change the behavior of "NewGame" to warp you to time station instead
             if gameState == RAM.gameState["Menu"] and newGameAddress == 0xAC:
                 Menuwrites += [(RAM.newGameAddress, 0x98.to_bytes(1, "little"), "MainRAM")]
@@ -1313,11 +1338,16 @@ class ApeEscapeClient(BizHawkClient):
             if MM_Natalie_Rescued > 0x01:
                 MM_Natalie_Rescued = 0
 
-            #print(Specter2CompleteAddress)
-            if Specter2CompleteAddress != 0x01.to_bytes(1, "little") and Specter2CompleteAddress != 255:
-                PPM_Completed = False
+            if Specter2CompleteAddress == 255:
+                Specter2CompleteAddress = 0
+                S2_writes += [(RAM.Specter2CompleteAddress, Specter2CompleteAddress.to_bytes(1, "little"), "MainRAM")]
+                S2_writes += [(RAM.tempSpecter2CompleteAddress, Specter2CompleteAddress.to_bytes(1, "little"), "MainRAM")]
+                await bizhawk.write(ctx.bizhawk_ctx, S2_writes)
+
+            if Specter2CompleteAddress == 0:
+                self.PPM_Completed = False
             else:
-                PPM_Completed = True
+                self.PPM_Completed = True
 
             # Get WaterNet state from memory
             waternetState = 0
@@ -1452,11 +1482,11 @@ class ApeEscapeClient(BizHawkClient):
                                 rocketAmmo += 3
                                 if rocketAmmo > 9:
                                     rocketAmmo = 9
-                        elif RAM.items["BananaPeelTrap"] <= (item.item - self.offset) <= RAM.items["StunTrap"]:
+                        elif RAM.items["BananaPeelTrap"] <= (item.item - self.offset) <= RAM.items["CameraRotateTrap"]:
                             if itemName in ctx.slot_data["trapsonreconnect"]:
-                                self.specialitem_queue.append((item.item - self.offset))
+                                self.specialitem_queue.append([(item.item - self.offset),0])
                         elif (item.item - self.offset) == RAM.items["RainbowCookie"]:
-                            self.specialitem_queue.append((item.item - self.offset))
+                            self.specialitem_queue.append([(item.item - self.offset),0])
 
                 itemValueslist = [
                     gadgetStateFromServer,
@@ -1597,8 +1627,13 @@ class ApeEscapeClient(BizHawkClient):
                         writes += [(RAM.temp_GA_CompletedAddress, 0x00.to_bytes(1, "little"), "MainRAM")]
                 if localLevelState != 0x00:
                     writes += [(RAM.localLevelState, 0x00.to_bytes(1, "little"), "MainRAM")]
-            if PPM_Completed == True and Specter2CompleteAddress == 0:
-                writes += [(RAM.Specter2CompleteAddress, 0x01.to_bytes(1, "little"), "MainRAM")]
+
+            # PPM_Completed flag for "100% Complete" label on PPM level
+            if self.PPM_Completed == True and Specter2CompleteAddress == 0:
+                Specter2CompleteAddress = 1
+                print(f"Wrote value to Specter2CompleteAddress : 1")
+                writes += [(RAM.Specter2CompleteAddress, Specter2CompleteAddress.to_bytes(1, "little"), "MainRAM")]
+                writes += [(RAM.tempSpecter2CompleteAddress, Specter2CompleteAddress.to_bytes(1, "little"), "MainRAM")]
 
             # If there is messages waiting in the queue, print them to Bizhawk
             if self.messagequeue is not None and self.messagequeue != []:
@@ -1620,7 +1655,7 @@ class ApeEscapeClient(BizHawkClient):
             # ======== Special Items Handling =========
             # For Traps and Special Items.
             currentGadgets = await self.check_gadgets(ctx, gadgetStateFromServer)
-            SpecialItems_Reads = [gameState, gotMail, spikeState, spikeState2, menuState, menuState2, currentGadgets, currentRoom, gameRunning, self.DS_spikecolor,heldGadget]
+            SpecialItems_Reads = [gameState, gotMail, spikeState, spikeState2, menuState, menuState2, currentGadgets, currentRoom, gameRunning, self.DS_spikecolor,heldGadget,CatchingState,cookies]
             await self.specialitems_handling(ctx, SpecialItems_Reads)
             # ================================
 
@@ -1646,12 +1681,22 @@ class ApeEscapeClient(BizHawkClient):
 
             # ======== Stun Trap =========
             if self.stun_trap.is_active:
-                await self.stun_trap.update_state_and_deactivate()
+                await self.stun_trap.update_state_and_deactivate(currentRoom)
             else:
                 if self.stun_trap.sentMessage == False:
                     message = "Stun Trap finished"
                     await self.send_bizhawk_message(ctx, message, "Passthrough", "")
                     self.stun_trap.sentMessage = True
+            # ================================
+
+            # ======== Camera Rotate Trap =========
+            if self.camera_rotate_trap.is_active:
+                await self.camera_rotate_trap.update_state_and_deactivate(currentRoom)
+            else:
+                if self.camera_rotate_trap.sentMessage == False:
+                    message = "Camera Rotate Trap finished"
+                    await self.send_bizhawk_message(ctx, message, "Passthrough", "")
+                    self.camera_rotate_trap.sentMessage = True
             # ================================
             # ======= Credits skipping =======
             # Credits skipping function for S1 and S2
@@ -1667,7 +1712,7 @@ class ApeEscapeClient(BizHawkClient):
 
             # ======= MM Optimizations =======
             # Execute the code segment for MM Double Door and related optimizations
-            MM_Reads = [currentRoom, currentLevel, gameState, NearbyRoom, transitionPhase, MM_Jake_Defeated, MM_Lobby_DoubleDoor, MM_Lobby_DoorDetection, MM_Lobby_DoubleDoor_Open, MM_Jake_DefeatedAddress, MM_Natalie_RescuedAddress, MM_Natalie_Rescued, MM_Natalie_Rescued_Local, MM_Professor_Rescued, S1_P1_FightTrigger, MM_Clown_State]
+            MM_Reads = [currentRoom, currentLevel, gameState, NearbyRoom, transitionPhase, MM_Jake_Defeated, MM_Lobby_DoubleDoor, MM_Lobby_DoorDetection, MM_Lobby_DoubleDoor_Open, MM_Jake_DefeatedAddress, MM_Natalie_RescuedAddress, MM_Natalie_Rescued, MM_Natalie_Rescued_Local, MM_Professor_Rescued, S1_P1_FightTrigger, MM_Clown_State,MM_AlertRoom_ButtonPressed]
             await self.MM_Optimizations(ctx, MM_Reads)
             # ================================
 
@@ -1724,271 +1769,276 @@ class ApeEscapeClient(BizHawkClient):
             # ===== Text Replacements ======
             # Replace text Time Station mailbox here.
             # ==============================
-            if currentRoom == 88 and gotMail == 0x02 and mailboxID == 0x71:
-                mailboxtext = ""
-                mailboxbytes = []
+            if self.mailboxTextReplaced == False:
+                if currentRoom == 88 and gotMail == 0x02 and mailboxID == 0x71:
+                    self.mailboxTextReplaced = True
+                    mailboxtext = ""
+                    mailboxbytes = []
 
-                mailboxbytes += text_to_bytes("World settings")
-                mailboxbytes += [13] # New line
+                    mailboxbytes += text_to_bytes("World settings")
+                    mailboxbytes += [13] # New line
 
-                # Add goal to mailbox text
-                if ctx.slot_data["goal"] == GoalOption.option_mm or ctx.slot_data["goal"] == GoalOption.option_mmtoken:
-                    mailboxtext = "Goal: Specter 1"
-                elif ctx.slot_data["goal"] == GoalOption.option_ppm or ctx.slot_data["goal"] == GoalOption.option_ppmtoken:
-                    mailboxtext = "Goal: Specter 2"
-                else:
-                    mailboxtext = "Goal: Token Hunt"
-                mailboxbytes += text_to_bytes(mailboxtext)
-                mailboxbytes += [13]
-
-                # Add token information to mailbox text
-                if ctx.slot_data["goal"] == GoalOption.option_mmtoken or ctx.slot_data["goal"] == GoalOption.option_ppmtoken or ctx.slot_data["goal"] == GoalOption.option_tokenhunt:
-                    mailboxbytes += text_to_bytes("You need")
-                    mailboxbytes += [13]
-                    reqtokens = min(ctx.slot_data["requiredtokens"], ctx.slot_data["totaltokens"])
-                    tottokens = max(ctx.slot_data["requiredtokens"], ctx.slot_data["totaltokens"])
-                    mailboxbytes += text_to_bytes(str(reqtokens) + "/" + str(tottokens) + " tokens.")
-                    mailboxbytes += [13]
-                    mailboxbytes += [13]
-                    mailboxbytes += text_to_bytes("You now have")
-                    mailboxbytes += [13]
-                    # Grammar handling
-                    if self.tokencount != 1:
-                        mailboxbytes += text_to_bytes(str(self.tokencount) + " tokens.")
+                    # Add goal to mailbox text
+                    if ctx.slot_data["goal"] == GoalOption.option_mm or ctx.slot_data["goal"] == GoalOption.option_mmtoken:
+                        mailboxtext = "Goal: Specter 1"
+                    elif ctx.slot_data["goal"] == GoalOption.option_ppm or ctx.slot_data["goal"] == GoalOption.option_ppmtoken:
+                        mailboxtext = "Goal: Specter 2"
                     else:
-                        mailboxbytes += text_to_bytes(str(self.tokencount) + " token.")
-                else:
-                    mailboxbytes += [13]
-                    mailboxbytes += text_to_bytes("There are no token")
-                    mailboxbytes += [13]
-                    mailboxbytes += text_to_bytes("requirements for")
-                    mailboxbytes += [13]
-                    mailboxbytes += text_to_bytes("this world.")
-
-                # Pad the text with zeroes to account for the fixed length first page
-                while len(mailboxbytes) < 79:
-                    mailboxbytes += [0]
-
-                # Next page
-                mailboxbytes += [13]
-                mailboxbytes += [13]
-                mailboxbytes += [15]
-
-                # Add difficulty and trick information to mailbox text
-                if ctx.slot_data["logic"] == LogicOption.option_normal:
-                    mailboxtext = "Difficulty: Normal"
-                elif ctx.slot_data["logic"] == LogicOption.option_hard:
-                    mailboxtext = "Difficulty: Hard"
-                else:
-                    mailboxtext = "Difficulty: Expert"
-                mailboxbytes += text_to_bytes(mailboxtext)
-                mailboxbytes += [13]
-
-                if ctx.slot_data["infinitejump"] == InfiniteJumpOption.option_false:
-                    mailboxtext = "Infinite Jump: Off"
-                else:
-                    mailboxtext = "Infinite Jump: On"
-                mailboxbytes += text_to_bytes(mailboxtext)
-                mailboxbytes += [13]
-
-                if ctx.slot_data["superflyer"] == SuperFlyerOption.option_false:
-                    mailboxtext = "Super Flyer: Off"
-                else:
-                    mailboxtext = "Super Flyer: On"
-                mailboxbytes += text_to_bytes(mailboxtext)
-                mailboxbytes += [13]
-
-                # Add lamp shuffle information to mailbox text
-                if ctx.slot_data["lamp"] == LampOption.option_false:
-                    mailboxtext = "Lamp Shuffle: Off"
-                else:
-                    mailboxtext = "Lamp Shuffle: On"
-                mailboxbytes += text_to_bytes(mailboxtext)
-                mailboxbytes += [13]
-
-                # Add Water Net information to mailbox text
-                mailboxbytes += text_to_bytes("Water Net Status:")
-                mailboxbytes += [13]
-                mailboxbytes += text_to_bytes("Swim ")
-                if waternetState == 0: # Can't swim
-                    mailboxbytes += [10] # X button icon
-                    mailboxbytes += [4]
-                else:
-                    mailboxbytes += [10] # O button icon
-                    mailboxbytes += [1]
-                mailboxbytes += text_to_bytes(" Dive ")
-                if waternetState == 2: # Can dive
-                    mailboxbytes += [10]
-                    mailboxbytes += [1]
-                else:
-                    mailboxbytes += [10]
-                    mailboxbytes += [4]
-                mailboxbytes += [13]
-                mailboxbytes += text_to_bytes("Catch ")
-                if watercatchState == 0: # Can't water catch
-                    mailboxbytes += [10]
-                    mailboxbytes += [4]
-                else:
-                    mailboxbytes += [10]
-                    mailboxbytes += [1]
-
-                # Next page
-                mailboxbytes += [13]
-                mailboxbytes += [13]
-                mailboxbytes += [15]
-
-                # Add coin and mailbox shuffle information to mailbox text
-                if ctx.slot_data["coin"] == CoinOption.option_false:
-                    mailboxtext = "Coins: Off"
-                else:
-                    mailboxtext = "Coins: On"
-                mailboxbytes += text_to_bytes(mailboxtext)
-                mailboxbytes += [13]
-
-                if ctx.slot_data["mailbox"] == MailboxOption.option_false:
-                    mailboxtext = "Mailboxes: Off"
-                else:
-                    mailboxtext = "Mailboxes: On"
-                mailboxbytes += text_to_bytes(mailboxtext)
-                mailboxbytes += [13]
-
-                # Add world key information to mailbox text
-                if ctx.slot_data["unlocksperkey"] == KeyOption.option_none:
-                    mailboxbytes += [13]
-                    mailboxbytes += text_to_bytes("There are no")
-                    mailboxbytes += [13]
-                    mailboxbytes += text_to_bytes("World Keys in")
-                    mailboxbytes += [13]
-                    mailboxbytes += text_to_bytes("this world.")
-                    mailboxbytes += [13]
-                else:
-                    mailboxbytes += text_to_bytes("Keys unlock")
-                    mailboxbytes += [13]
-                    if ctx.slot_data["unlocksperkey"] == KeyOption.option_world:
-                        mailboxtext = "one world each."
-                    elif ctx.slot_data["unlocksperkey"] == KeyOption.option_level:
-                        mailboxtext = "one level each."
-                    else:
-                        mailboxtext = "two levels each."
+                        mailboxtext = "Goal: Token Hunt"
                     mailboxbytes += text_to_bytes(mailboxtext)
                     mailboxbytes += [13]
-                    # Grammar handling
-                    if ctx.slot_data["extrakeys"] != 1:
-                        mailboxbytes += text_to_bytes("There are " + str(ctx.slot_data["extrakeys"]))
+
+                    # Add token information to mailbox text
+                    if ctx.slot_data["goal"] == GoalOption.option_mmtoken or ctx.slot_data["goal"] == GoalOption.option_ppmtoken or ctx.slot_data["goal"] == GoalOption.option_tokenhunt:
+                        mailboxbytes += text_to_bytes("You need")
                         mailboxbytes += [13]
-                        mailboxbytes += text_to_bytes("extra World Keys.")
-                    else:
-                        mailboxbytes += text_to_bytes("There is " + str(ctx.slot_data["extrakeys"]))
+                        reqtokens = min(ctx.slot_data["requiredtokens"], ctx.slot_data["totaltokens"])
+                        tottokens = max(ctx.slot_data["requiredtokens"], ctx.slot_data["totaltokens"])
+                        mailboxbytes += text_to_bytes(str(reqtokens) + "/" + str(tottokens) + " tokens.")
                         mailboxbytes += [13]
-                        mailboxbytes += text_to_bytes("extra World Key.")
+                        mailboxbytes += [13]
+                        mailboxbytes += text_to_bytes("You now have")
+                        mailboxbytes += [13]
+                        # Grammar handling
+                        if self.tokencount != 1:
+                            mailboxbytes += text_to_bytes(str(self.tokencount) + " tokens.")
+                        else:
+                            mailboxbytes += text_to_bytes(str(self.tokencount) + " token.")
+                    else:
+                        mailboxbytes += [13]
+                        mailboxbytes += text_to_bytes("There are no token")
+                        mailboxbytes += [13]
+                        mailboxbytes += text_to_bytes("requirements for")
+                        mailboxbytes += [13]
+                        mailboxbytes += text_to_bytes("this world.")
+
+                    # Pad the text with zeroes to account for the fixed length first page
+                    while len(mailboxbytes) < 79:
+                        mailboxbytes += [0]
+
+                    # Next page
                     mailboxbytes += [13]
-                    if self.worldkeycount != 1:
-                        mailboxbytes += text_to_bytes("You have " + str(self.worldkeycount) + " keys.")
-                    else:
-                        mailboxbytes += text_to_bytes("You have " + str(self.worldkeycount) + " key.")
-
-                # Next page
-                mailboxbytes += [13]
-                mailboxbytes += [13]
-                mailboxbytes += [15]
-
-                # Add entrance shuffle information to mailbox text
-                if ctx.slot_data["entrance"] == EntranceOption.option_off:
-                    mailboxtext = "Entrance: Off"
-                elif ctx.slot_data["entrance"] == EntranceOption.option_on:
-                    mailboxtext = "Entrance: On"
-                else:
-                    mailboxtext = "Entrance: Lock MM"
-                mailboxbytes += text_to_bytes(mailboxtext)
-                mailboxbytes += [13]
-                # Add random first room information to mailbox text
-                # Not sure how to format it better than this
-                if ctx.slot_data["randomizestartingroom"] == RandomizeStartingRoomOption.option_off:
-                    mailboxtext = "RandomStartRoom: Off"
-                else:
-                    mailboxtext = "RandStartRoom: On"
-                mailboxbytes += text_to_bytes(mailboxtext)
-                mailboxbytes += [13]
-
-                # Add door and lamp statuses to mailbox text
-                mailboxbytes += text_to_bytes("MM Double Door: ")
-                if MM_Lobby_DoubleDoor == 0: # Don't have item
-                    mailboxbytes += [10] # X button icon
-                    mailboxbytes += [4]
-                else:
-                    mailboxbytes += [10] # O button icon
-                    mailboxbytes += [1]
-                mailboxbytes += [13]
-                if ctx.slot_data["lamp"] == LampOption.option_true:
-                    mailboxbytes += text_to_bytes("          Lamps")
                     mailboxbytes += [13]
-                    mailboxbytes += text_to_bytes("CB: ")
-                    if CBLampState == 0: # Don't have item
+                    mailboxbytes += [15]
+
+                    # Add difficulty and trick information to mailbox text
+                    if ctx.slot_data["logic"] == LogicOption.option_normal:
+                        mailboxtext = "Difficulty: Normal"
+                    elif ctx.slot_data["logic"] == LogicOption.option_hard:
+                        mailboxtext = "Difficulty: Hard"
+                    else:
+                        mailboxtext = "Difficulty: Expert"
+                    mailboxbytes += text_to_bytes(mailboxtext)
+                    mailboxbytes += [13]
+
+                    if ctx.slot_data["infinitejump"] == InfiniteJumpOption.option_false:
+                        mailboxtext = "Infinite Jump: Off"
+                    else:
+                        mailboxtext = "Infinite Jump: On"
+                    mailboxbytes += text_to_bytes(mailboxtext)
+                    mailboxbytes += [13]
+
+                    if ctx.slot_data["superflyer"] == SuperFlyerOption.option_false:
+                        mailboxtext = "Super Flyer: Off"
+                    else:
+                        mailboxtext = "Super Flyer: On"
+                    mailboxbytes += text_to_bytes(mailboxtext)
+                    mailboxbytes += [13]
+
+                    # Add lamp shuffle information to mailbox text
+                    if ctx.slot_data["lamp"] == LampOption.option_false:
+                        mailboxtext = "Lamp Shuffle: Off"
+                    else:
+                        mailboxtext = "Lamp Shuffle: On"
+                    mailboxbytes += text_to_bytes(mailboxtext)
+                    mailboxbytes += [13]
+
+                    # Add Water Net information to mailbox text
+                    mailboxbytes += text_to_bytes("Water Net Status:")
+                    mailboxbytes += [13]
+                    mailboxbytes += text_to_bytes("Swim ")
+                    if waternetState == 0: # Can't swim
                         mailboxbytes += [10] # X button icon
                         mailboxbytes += [4]
                     else:
                         mailboxbytes += [10] # O button icon
                         mailboxbytes += [1]
-                    mailboxbytes += text_to_bytes(" DI: ")
-                    if DILampState == 0: # Don't have item
-                        mailboxbytes += [10] # X button icon
+                    mailboxbytes += text_to_bytes(" Dive ")
+                    if waternetState == 2: # Can dive
+                        mailboxbytes += [10]
+                        mailboxbytes += [1]
+                    else:
+                        mailboxbytes += [10]
+                        mailboxbytes += [4]
+                    mailboxbytes += [13]
+                    mailboxbytes += text_to_bytes("Catch ")
+                    if watercatchState == 0: # Can't water catch
+                        mailboxbytes += [10]
                         mailboxbytes += [4]
                     else:
-                        mailboxbytes += [10] # O button icon
+                        mailboxbytes += [10]
                         mailboxbytes += [1]
-                    mailboxbytes += text_to_bytes(" CC: ")
-                    if CrCLampState == 0: # Don't have item
+
+                    # Next page
+                    mailboxbytes += [13]
+                    mailboxbytes += [13]
+                    mailboxbytes += [15]
+
+                    # Add coin and mailbox shuffle information to mailbox text
+                    if ctx.slot_data["coin"] == CoinOption.option_false:
+                        mailboxtext = "Coins: Off"
+                    else:
+                        mailboxtext = "Coins: On"
+                    mailboxbytes += text_to_bytes(mailboxtext)
+                    mailboxbytes += [13]
+
+                    if ctx.slot_data["mailbox"] == MailboxOption.option_false:
+                        mailboxtext = "Mailboxes: Off"
+                    else:
+                        mailboxtext = "Mailboxes: On"
+                    mailboxbytes += text_to_bytes(mailboxtext)
+                    mailboxbytes += [13]
+
+                    # Add world key information to mailbox text
+                    if ctx.slot_data["unlocksperkey"] == KeyOption.option_none:
+                        mailboxbytes += [13]
+                        mailboxbytes += text_to_bytes("There are no")
+                        mailboxbytes += [13]
+                        mailboxbytes += text_to_bytes("World Keys in")
+                        mailboxbytes += [13]
+                        mailboxbytes += text_to_bytes("this world.")
+                        mailboxbytes += [13]
+                    else:
+                        mailboxbytes += text_to_bytes("Keys unlock")
+                        mailboxbytes += [13]
+                        if ctx.slot_data["unlocksperkey"] == KeyOption.option_world:
+                            mailboxtext = "one world each."
+                        elif ctx.slot_data["unlocksperkey"] == KeyOption.option_level:
+                            mailboxtext = "one level each."
+                        else:
+                            mailboxtext = "two levels each."
+                        mailboxbytes += text_to_bytes(mailboxtext)
+                        mailboxbytes += [13]
+                        # Grammar handling
+                        if ctx.slot_data["extrakeys"] != 1:
+                            mailboxbytes += text_to_bytes("There are " + str(ctx.slot_data["extrakeys"]))
+                            mailboxbytes += [13]
+                            mailboxbytes += text_to_bytes("extra World Keys.")
+                        else:
+                            mailboxbytes += text_to_bytes("There is " + str(ctx.slot_data["extrakeys"]))
+                            mailboxbytes += [13]
+                            mailboxbytes += text_to_bytes("extra World Key.")
+                        mailboxbytes += [13]
+                        if self.worldkeycount != 1:
+                            mailboxbytes += text_to_bytes("You have " + str(self.worldkeycount) + " keys.")
+                        else:
+                            mailboxbytes += text_to_bytes("You have " + str(self.worldkeycount) + " key.")
+
+                    # Next page
+                    mailboxbytes += [13]
+                    mailboxbytes += [13]
+                    mailboxbytes += [15]
+
+                    # Add entrance shuffle information to mailbox text
+                    if ctx.slot_data["entrance"] == EntranceOption.option_off:
+                        mailboxtext = "Entrance: Off"
+                    elif ctx.slot_data["entrance"] == EntranceOption.option_on:
+                        mailboxtext = "Entrance: On"
+                    else:
+                        mailboxtext = "Entrance: Lock MM"
+                    mailboxbytes += text_to_bytes(mailboxtext)
+                    mailboxbytes += [13]
+                    # Add random first room information to mailbox text
+                    # Not sure how to format it better than this
+                    if ctx.slot_data["randomizestartingroom"] == RandomizeStartingRoomOption.option_off:
+                        mailboxtext = "RandStartRoom: Off"
+                    else:
+                        mailboxtext = "RandStartRoom: On"
+                    mailboxbytes += text_to_bytes(mailboxtext)
+                    mailboxbytes += [13]
+
+                    # Add door and lamp statuses to mailbox text
+                    mailboxbytes += text_to_bytes("MM Double Door: ")
+                    if MM_Lobby_DoubleDoor == 0: # Don't have item
                         mailboxbytes += [10] # X button icon
                         mailboxbytes += [4]
                     else:
                         mailboxbytes += [10] # O button icon
                         mailboxbytes += [1]
                     mailboxbytes += [13]
-                    mailboxbytes += text_to_bytes("CP: ")
-                    if CPLampState == 0: # Don't have item
-                        mailboxbytes += [10] # X button icon
-                        mailboxbytes += [4]
-                    else:
-                        mailboxbytes += [10] # O button icon
-                        mailboxbytes += [1]
-                    mailboxbytes += text_to_bytes(" SF: ")
-                    if SFLampState == 0: # Don't have item
-                        mailboxbytes += [10] # X button icon
-                        mailboxbytes += [4]
-                    else:
-                        mailboxbytes += [10] # O button icon
-                        mailboxbytes += [1]
-                    mailboxbytes += text_to_bytes(" TV: ")
-                    if TVTLobbyLampState == 0: # Don't have item
-                        mailboxbytes += [10] # X button icon
-                        mailboxbytes += [4]
-                    else:
-                        mailboxbytes += [10] # O button icon
-                        mailboxbytes += [1]
+                    if ctx.slot_data["lamp"] == LampOption.option_true:
+                        mailboxbytes += text_to_bytes("          Lamps")
+                        mailboxbytes += [13]
+                        mailboxbytes += text_to_bytes("CB: ")
+                        if CBLampState == 0: # Don't have item
+                            mailboxbytes += [10] # X button icon
+                            mailboxbytes += [4]
+                        else:
+                            mailboxbytes += [10] # O button icon
+                            mailboxbytes += [1]
+                        mailboxbytes += text_to_bytes(" DI: ")
+                        if DILampState == 0: # Don't have item
+                            mailboxbytes += [10] # X button icon
+                            mailboxbytes += [4]
+                        else:
+                            mailboxbytes += [10] # O button icon
+                            mailboxbytes += [1]
+                        mailboxbytes += text_to_bytes(" CC: ")
+                        if CrCLampState == 0: # Don't have item
+                            mailboxbytes += [10] # X button icon
+                            mailboxbytes += [4]
+                        else:
+                            mailboxbytes += [10] # O button icon
+                            mailboxbytes += [1]
+                        mailboxbytes += [13]
+                        mailboxbytes += text_to_bytes("CP: ")
+                        if CPLampState == 0: # Don't have item
+                            mailboxbytes += [10] # X button icon
+                            mailboxbytes += [4]
+                        else:
+                            mailboxbytes += [10] # O button icon
+                            mailboxbytes += [1]
+                        mailboxbytes += text_to_bytes(" SF: ")
+                        if SFLampState == 0: # Don't have item
+                            mailboxbytes += [10] # X button icon
+                            mailboxbytes += [4]
+                        else:
+                            mailboxbytes += [10] # O button icon
+                            mailboxbytes += [1]
+                        mailboxbytes += text_to_bytes(" TV: ")
+                        if TVTLobbyLampState == 0: # Don't have item
+                            mailboxbytes += [10] # X button icon
+                            mailboxbytes += [4]
+                        else:
+                            mailboxbytes += [10] # O button icon
+                            mailboxbytes += [1]
+                        mailboxbytes += [13]
+                        mailboxbytes += text_to_bytes("TV: ")
+                        if TVTTankLampState == 0: # Don't have item
+                            mailboxbytes += [10] # X button icon
+                            mailboxbytes += [4]
+                        else:
+                            mailboxbytes += [10] # O button icon
+                            mailboxbytes += [1]
+                        mailboxbytes += text_to_bytes(" MM: ")
+                        if MMLampState == 0: # Don't have item
+                            mailboxbytes += [10] # X button icon
+                            mailboxbytes += [4]
+                        else:
+                            mailboxbytes += [10] # O button icon
+                            mailboxbytes += [1]
+
+                    # End mailbox text
                     mailboxbytes += [13]
-                    mailboxbytes += text_to_bytes("TV: ")
-                    if TVTTankLampState == 0: # Don't have item
-                        mailboxbytes += [10] # X button icon
-                        mailboxbytes += [4]
-                    else:
-                        mailboxbytes += [10] # O button icon
-                        mailboxbytes += [1]
-                    mailboxbytes += text_to_bytes(" MM: ")
-                    if MMLampState == 0: # Don't have item
-                        mailboxbytes += [10] # X button icon
-                        mailboxbytes += [4]
-                    else:
-                        mailboxbytes += [10] # O button icon
-                        mailboxbytes += [1]
+                    # Pad the text with zeroes to overwrite all pre-existing text
+                    while len(mailboxbytes) < 600:
+                        mailboxbytes += [0]
 
-                # End mailbox text
-                mailboxbytes += [13]
-                # Pad the text with zeroes to overwrite all pre-existing text
-                while len(mailboxbytes) < 600:
-                    mailboxbytes += [0]
-
-                for x in range(0, 600):
-                    writes += [(RAM.timeStationMailboxStart + x, mailboxbytes[x].to_bytes(1, "little"), "MainRAM")]
+                    for x in range(0, 600):
+                        writes += [(RAM.timeStationMailboxStart + x, mailboxbytes[x].to_bytes(1, "little"), "MainRAM")]
+            else:
+                if not (currentRoom == 88 and gotMail == 0x02 and mailboxID == 0x71):
+                    self.mailboxTextReplaced = False
 
             await bizhawk.write(ctx.bizhawk_ctx, writes)
             #await bizhawk.guarded_write(ctx.bizhawk_ctx, TR_writes, TR_guards)
@@ -2291,9 +2341,8 @@ class ApeEscapeClient(BizHawkClient):
             # Check each values if monkeys are caught and increment a local counter
             for x in range(len(level_MonkeyStates)):
                 MonkeyState = int.from_bytes(level_MonkeyStates[x], "little")
-                if MonkeyState == 0x02 or MonkeyState == 0x03:
+                if MonkeyState == 0x02:
                     localcount += 1
-
             # If there is a missmatch, correct the value in the RAM for the level
             if localcount != RAMMonkeycount:
                 MonkeyCountWrites += [(monkeycountsAddresses[levelindex.index(self.lastenteredLevel)], localcount.to_bytes(1, "little"), "MainRAM")]
@@ -2332,7 +2381,6 @@ class ApeEscapeClient(BizHawkClient):
                 MonkeyState = int.from_bytes(level_MonkeyStates[y], "little")
                 if MonkeyState == 0x02:
                     localcount += 1
-
             # Correct the value in the RAM for the level
             MonkeyCountWrites += [(monkeycountsAddresses[x],localcount.to_bytes(1, "little"), "MainRAM")]
 
@@ -2651,6 +2699,7 @@ class ApeEscapeClient(BizHawkClient):
         MM_Professor_Rescued = MM_Reads[13]
         S1_P1_FightTrigger = MM_Reads[14]
         MM_Clown_State = MM_Reads[15]
+        MM_AlertRoom_ButtonPressed = MM_Reads[16]
 
         MM_Writes = []
         SpecterLevels = (RAM.levels['Specter'], RAM.levels['S_Jake'], RAM.levels['S_Circus'], RAM.levels['S_Coaster'], RAM.levels['S_Western Land'], RAM.levels['S_Castle'])
@@ -2744,7 +2793,23 @@ class ApeEscapeClient(BizHawkClient):
                         Door_guards += [(door_address, door_closedvalue, "MainRAM")]
 
                     await bizhawk.guarded_write(ctx.bizhawk_ctx, Door_writes, Door_guards)
+        # Push the "Alert" button if BG is already caught and the button is not pressed (From /syncprogress or !collect)
+        if currentRoom == 85 and MM_AlertRoom_ButtonPressed == 0x00 and transitionPhase != 6:
+            BG_address = RAM.monkeyListGlobal.get(204)
+            localBG_address = RAM.monkeyListLocal.get(currentRoom).get(204)
+            Monkey_Reads = []
 
+            Monkey_Reads += [(BG_address, 1, "MainRAM")]
+            Monkey_Reads += [(localBG_address, 1, "MainRAM")]
+            Monkey_Values = await bizhawk.read(ctx.bizhawk_ctx, Monkey_Reads)
+
+            BG_caught = int.from_bytes(Monkey_Values[0], "little")
+            local_BG_caught = int.from_bytes(Monkey_Values[1], "little")
+            # This means BG is set as caught and the button is not pressed
+            if BG_caught in (0x02,0x03) or local_BG_caught in (0x02,0x03):
+                MM_Writes += [(RAM.MM_AlertRoom_ButtonPressed, 0x01.to_bytes(1, "little"), "MainRAM")]
+                MM_Writes += [(RAM.MM_AlertRoom_CutsceneTrigger1, 0x02.to_bytes(1, "little"), "MainRAM")]
+                MM_Writes += [(RAM.MM_AlertRoom_BGCanPushButton, 0x00.to_bytes(1, "little"), "MainRAM")]
         # Prevent Specter 1 fight for Specter 1 token goal when not having enough tokens.
         token = self.tokencount
         if (NearbyRoom == 83 and transitionPhase == RAM.transitionPhase["InTransition"]) or (currentRoom == 83 and transitionPhase != RAM.transitionPhase["InTransition"]):
@@ -3118,12 +3183,18 @@ class ApeEscapeClient(BizHawkClient):
         gameRunning = SpecialItems_Reads[8]
         DS_spikeColor = SpecialItems_Reads[9]
         heldGadget = SpecialItems_Reads[10]
+        CatchingState = SpecialItems_Reads[11]
+        cookies = SpecialItems_Reads[12]
+
         SpecialItems_Writes = []
         SpecialItems_Guards = []
 
         # Gamestate
         valid_gameStates = (RAM.gameState['InLevel'], RAM.gameState['InLevelTT'], RAM.gameState['TimeStation'], RAM.gameState['Jake'])
         grounded = [0x00, 0x01, 0x02, 0x05, 0x07]
+        is_grounded = (spikeState2 in grounded)
+        is_catching = (CatchingState == 0x08)
+        is_dead = (cookies == 0)
         in_menu = (menuState == 0 and menuState2 == 1)
         reading_mail = (gotMail == 0x01) or (gotMail == 0x02)
         is_sliding = (spikeState2 in (0x2F,0x30))
@@ -3131,36 +3202,71 @@ class ApeEscapeClient(BizHawkClient):
         in_race = (currentRoom == 19 or currentRoom == 36)
         cannot_control = (gameRunning == 0)
         stunned = (spikeState2 == 0x58)
+        StunTrap_incompatible_list = [RAM.items["IcyHotPantsTrap"],RAM.items["StunTrap"],RAM.items["BananaPeelTrap"],RAM.items["MonkeyMashTrap"]]
 
-        if (gameState not in valid_gameStates or in_menu or reading_mail or is_sliding or is_idle or cannot_control):
+        if (gameState not in valid_gameStates or in_menu or reading_mail or is_sliding or is_idle or cannot_control or is_catching):
             self.ape_handler.pause = True
             self.rainbow_cookie.pause = True
+            self.camera_rotate_trap.pause = True
         else:
             self.ape_handler.pause = False
             self.rainbow_cookie.pause = False
+            self.camera_rotate_trap.pause = False
 
-        if self.specialitem_queue == []:
+        if not self.specialitem_queue and not self.priority_trap_queue:
             #Exit if no traps
             return None
+
         else:
+            if self.priority_trap_queue:
+                item_id = self.priority_trap_queue[0][0]
+                item_info = self.priority_trap_queue[0][1]
+                IsPriority = True
+            else:
+                item_id = self.specialitem_queue[0][0]
+                item_info = self.specialitem_queue[0][1]
+                IsPriority = False
+
+            StunTrap_incompatible = self.stun_trap.is_active and (item_id in StunTrap_incompatible_list)
             # Does not send the traps in these states
-            if (gameState not in valid_gameStates or in_menu or reading_mail or is_sliding or in_race or is_idle or cannot_control or stunned):
+            if gameState not in valid_gameStates or in_menu or reading_mail or is_sliding or in_race or is_idle or cannot_control or stunned or StunTrap_incompatible:
                 if is_idle:
                     # Trigger a Wake Up for spike. Banana Peel is deadly while Idle
                     SpecialItems_Writes += [(RAM.spikeIdleTimer, 0x0000.to_bytes(2, "little"), "MainRAM")]
                     await bizhawk.write(ctx.bizhawk_ctx, SpecialItems_Writes)
+                if not IsPriority:
+                    #Not priority
+                    if item_info >= 10:
+                        # Trap Removed for incompatibility(10 passes)
+                        self.specialitem_queue.pop(0)
+                    elif StunTrap_incompatible:
+                        # Trap moved to the end
+                        self.specialitem_queue.insert(len(self.specialitem_queue)-1,[item_id,item_info +1])
+                        self.specialitem_queue.pop(0)
+                else:
+                    #Is priority
+                    #Give the trap 5 seconds to trigger, else discard
+                    if (time.time()) >= item_info + 5:
+                        self.priority_trap_queue.pop(0)
                 return None
                 # Exit without sending trap, keeping it active for the next pass
-
+            #print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+            #print(item_info)
+            #print(IsPriority)
             # Banana Peel Trap handling
-            if self.specialitem_queue[0] == RAM.items['BananaPeelTrap']:
-                self.specialitem_queue.pop(0)
+            if item_id == RAM.items['BananaPeelTrap']:
+                if IsPriority:
+                    self.priority_trap_queue.pop(0)
+                else:
+                    self.specialitem_queue.pop(0)
                 SpecialItems_Writes += [(RAM.spikeState2Address, 0x2F.to_bytes(1, "little"), "MainRAM")]
 
             # Gadget Shuffle Trap handling
-            elif self.specialitem_queue[0] == RAM.items['GadgetShuffleTrap']:
-                self.specialitem_queue.pop(0)
-
+            elif item_id == RAM.items['GadgetShuffleTrap']:
+                if IsPriority:
+                    self.priority_trap_queue.pop(0)
+                else:
+                    self.specialitem_queue.pop(0)
                 # print(self.specialitem_queue)
                 chosen_gadgets = []
                 chosen_values = [0, 0, 0, 0]
@@ -3226,11 +3332,14 @@ class ApeEscapeClient(BizHawkClient):
                         await bizhawk.guarded_write(ctx.bizhawk_ctx, Trap_writes2, Trap_guards)
 
             # Monkey Mash Trap handling
-            elif self.specialitem_queue[0] == RAM.items['MonkeyMashTrap']:
-                self.specialitem_queue.pop(0)
-                mash_duration = 15  # Example: 15 seconds per powerup item
+            elif item_id == RAM.items['MonkeyMashTrap']:
+                if IsPriority:
+                    self.priority_trap_queue.pop(0)
+                else:
+                    self.specialitem_queue.pop(0)
+                mash_duration = 10  # Example: 10 seconds per powerup item
                 if self.ape_handler.is_active:
-                    message = f"Monkey Mash trap extended by {mash_duration}seconds! (Current: {round(self.ape_handler.duration, 0)} seconds)"
+                    message = f"Monkey Mash trap extended by {mash_duration} seconds! (Current: {round(self.ape_handler.duration, 0)} seconds)"
                 else:
                     message = f"Monkey Mash trap activated for {mash_duration} seconds!"
                 await self.send_bizhawk_message(ctx, message, "Passthrough", "")
@@ -3238,10 +3347,13 @@ class ApeEscapeClient(BizHawkClient):
                 #print(message)
 
             # Icy Hot Trap handling
-            elif self.specialitem_queue[0] == RAM.items['IcyHotPantsTrap']:
+            elif item_id == RAM.items['IcyHotPantsTrap']:
                 # Does not fire the trap if not grounded in some way
-                if spikeState2 in grounded:
-                    self.specialitem_queue.pop(0)
+                if is_grounded:
+                    if IsPriority:
+                        self.priority_trap_queue.pop(0)
+                    else:
+                        self.specialitem_queue.pop(0)
                     SpecialItems_Writes += [(RAM.spikeState2Address, 0x4D.to_bytes(1, "little"), "MainRAM")]
                     SpecialItems_Writes += [(RAM.spike_LavaOrIceTimer, 0x0100.to_bytes(2, "little"), "MainRAM")]
                     # If the chosen spikecolor is "Vanilla", choose an effect at random between Burn/Frost
@@ -3253,9 +3365,13 @@ class ApeEscapeClient(BizHawkClient):
                         else:
                             # Frost Effect:
                             SpecialItems_Writes += [(RAM.spikeColor, 0x0000FF.to_bytes(3, "big"), "MainRAM")]
-
+                else:
+                    if IsPriority:
+                        if item_info >= (time.time() + 5):
+                            #print("TrapLinked Trap expired")
+                            self.priority_trap_queue.pop(0)
             # Rainbow Cookie handling
-            elif self.specialitem_queue[0] == RAM.items['RainbowCookie']:
+            elif item_id == RAM.items['RainbowCookie']:
                 self.specialitem_queue.pop(0)
                 item_duration = 20  # Example: 20 seconds per powerup item
                 if self.rainbow_cookie.is_active:
@@ -3266,8 +3382,11 @@ class ApeEscapeClient(BizHawkClient):
                 await self.rainbow_cookie.activate_rainbow_cookie(item_duration)
 
             #Stun Trap handling
-            elif self.specialitem_queue[0] == RAM.items['StunTrap']:
-                self.specialitem_queue.pop(0)
+            elif item_id == RAM.items['StunTrap']:
+                if IsPriority:
+                    self.priority_trap_queue.pop(0)
+                else:
+                    self.specialitem_queue.pop(0)
                 item_duration = 2  # Example: 2 seconds per powerup item
                 #if self.stun_trap.is_active:
                 #    message = f"Stun Trap extended by {item_duration} seconds! (Current: {round(self.stun_trap.duration, 0)} seconds)"
@@ -3275,7 +3394,21 @@ class ApeEscapeClient(BizHawkClient):
                 #    message = f"Stun Trap activated for {item_duration} seconds!"
                 message = f"Stun Trap activated for {item_duration} seconds!"
                 await self.send_bizhawk_message(ctx, message, "Passthrough", "")
-                await self.stun_trap.activate_StunTrap(item_duration,spikeState2)
+                await self.stun_trap.activate_StunTrap(item_duration,spikeState2,currentRoom)
+            #Camera Rotate Trap handling
+            elif item_id == RAM.items['CameraRotateTrap']:
+                if IsPriority:
+                    self.priority_trap_queue.pop(0)
+                else:
+                    self.specialitem_queue.pop(0)
+                item_duration = 20  # Example: 2 seconds per powerup item
+                #if self.stun_trap.is_active:
+                #    message = f"Stun Trap extended by {item_duration} seconds! (Current: {round(self.stun_trap.duration, 0)} seconds)"
+                #else:
+                #    message = f"Stun Trap activated for {item_duration} seconds!"
+                message = f"Camera Rotate Trap activated for {item_duration} seconds!"
+                await self.send_bizhawk_message(ctx, message, "Passthrough", "")
+                await self.camera_rotate_trap.activate_camera_rotate(item_duration, currentRoom)
 
             if SpecialItems_Writes:
                 await bizhawk.write(ctx.bizhawk_ctx, SpecialItems_Writes)
@@ -3342,12 +3475,22 @@ class ApeEscapeClient(BizHawkClient):
                 VanillaRoom = False
 
             if VanillaRoom == False:
+                # Monkey Madness special rule
+                # This spawns the player in the correct Sub-Level, then the warp will happen (If not already in the right room)
+                if targetLevel == 0x18:
+                    BaseRoom = targetRoom
+                    targetRoom = RAM.MM_SubLevels_Rooms_Spawns.get(targetRoom)
+                    if BaseRoom == targetRoom:
+                        self.ForceTransition = False
+                    else:
+                        self.ForceTransition = True
+                else:
+                    # Put the vanilla entrance for the level, we will redirect it later if RandomizeFirstRoom is on
+                    targetRoom = levelrooms[0]
+                    self.ForceTransition = False
                 if transitionPhase == RAM.transitionPhase["NotSpawned"] and gameState == RAM.gameState["LevelIntro"] and InputListener == 0x02:
                     # Deactivate the Start/Select input to prevent player from messing with ER teleportation
                     ER_writes += [(RAM.ControlsUpdate_DPAD_STARTSELECT_L3R3, 0x00000000.to_bytes(4, "little"), "MainRAM")]
-
-            # Put the vanilla entrance for the level, we will redirect it later if RandomizeFirstRoom is on
-            targetRoom = levelrooms[0]
 
             # Actually send Spike to the desired level!
             ER_writes += [(RAM.currentRoomIdAddress, targetRoom.to_bytes(1, "little"), "MainRAM")]
@@ -3371,15 +3514,15 @@ class ApeEscapeClient(BizHawkClient):
             LevelStartRoom = currentlevelidtofirstroom[level]
 
             TR_writes = []
+            TR_guards = []
             # If the level's first room is not vanilla, check for where Spike should be warped to after initial spawn.
             if VanillaRoom == False:
-                # TODO return here
-
-                if transitionPhase == RAM.transitionPhase["Spawning"] and currentRoom == baselevelidtofirstroom.get(level) and gameRunning == 0x00:
+                if (transitionPhase == RAM.transitionPhase["Spawning"] and currentRoom == baselevelidtofirstroom.get(level) and gameRunning == 0x00) or (self.ForceTransition and currentRoom != LevelStartRoom and transitionPhase <= RAM.transitionPhase["Playing"]):
+                    print("Phase1")
                     # if transitionPhase in (3,4) and spikeState2 == 48:
                     # if spikeState2 == 48:
                     # Change TR1_Position to overlap Spike, and change targetRoom/targetDoor
-                    targetRoom = currentlevelidtofirstroom.get(currentLevel)
+                    targetRoom = currentlevelidtofirstroom.get(level)
                     targetRoomName = RAM.roomstostring.get(targetRoom)
                     targetDoor = list(doorTransitions.get(targetRoomName))[1]
                     TR1_Adresses = list(RAM.transitionAddresses.get(1))
@@ -3387,21 +3530,31 @@ class ApeEscapeClient(BizHawkClient):
                     TR_writes += [(TR1_Adresses[1], targetDoor.to_bytes(1, "little"), "MainRAM")]
 
                     # Move the first transition into Spike's position (And apply transition)
-                    ER_writes += [(RAM.transitionPhaseAddress, RAM.transitionPhase["Playing"].to_bytes(1, "little"), "MainRAM")]
+
                     ER_writes += [(RAM.Transition1_X, Spike_X_Pos.to_bytes(4, "little"), "MainRAM")]
                     ER_writes += [(RAM.Transition1_Y, Spike_Y_Pos.to_bytes(4, "little"), "MainRAM")]
                     ER_writes += [(RAM.Transition1_Z, Spike_Z_Pos.to_bytes(4, "little"), "MainRAM")]
+                    #ER_writes += [(RAM.gameRunningAddress, 0x01.to_bytes(1, "little"), "MainRAM")]
+                    ER_writes += [(RAM.spikeSuperFlyerUseState, 0x00.to_bytes(1, "little"), "MainRAM")]
+                    ER_writes += [(RAM.spikeState2Address, 0x25.to_bytes(1, "little"), "MainRAM")]
                     await bizhawk.write(ctx.bizhawk_ctx, TR_writes)
+                if (spikeState2 in (0x24, 0x25) and transitionPhase == RAM.transitionPhase["Spawning"] and gameRunning == 0x00) or (self.ForceTransition):
+                    if (level != 0x18):
+                        print("Phase 2")
+                        ER_writes += [(RAM.transitionPhaseAddress, RAM.transitionPhase["Playing"].to_bytes(1, "little"), "MainRAM")]
+                    else:
+                        if self.ForceTransition == True:
+                            print("Phase 2")
+                            ER_writes += [(RAM.transitionPhaseAddress,RAM.transitionPhase["Playing"].to_bytes(1, "little"), "MainRAM")]
+                            self.ForceTransition = False
                 # if spikeState2 == 48 and transitionPhase not in (4,5,6):
-                if spikeState2 in (0x24, 0x25) and transitionPhase == RAM.transitionPhase["Nearby"] and gameRunning == 0x00:
-                    # Trigger the transition early,to warp Spike
-                    # TR_guards += [(RAM.transitionPhase, 0x04.to_bytes(1, "little"), "MainRAM")]
-                    ER_writes += [(RAM.transitionPhaseAddress, RAM.transitionPhase["InTransition"].to_bytes(1, "little"), "MainRAM")]
-                    # TR_writes += [(RAM.currentRoomIdAddress, LevelStartRoom.to_bytes(1, "little"), "MainRAM")]
-                    ER_writes += [(RAM.spikeStateAddress, 0x13.to_bytes(1, "little"), "MainRAM")]
-                    ER_writes += [(RAM.spikeState2Address, 0x00.to_bytes(1, "little"), "MainRAM")]
-                    ER_writes += [(RAM.ControlsUpdate_DPAD_STARTSELECT_L3R3, 0xA0720000.to_bytes(4, "little"), "MainRAM")]
-                    # await bizhawk.write(ctx.bizhawk_ctx, TR_writes)
+                elif gameRunning == 0x01:
+                    TR_writes.clear()
+                    TR_guards.clear()
+                    TR_guards += [(RAM.ControlsUpdate_DPAD_STARTSELECT_L3R3, 0x00000000.to_bytes(4, "little"), "MainRAM")]
+                    TR_writes += [(RAM.ControlsUpdate_DPAD_STARTSELECT_L3R3, 0xA0720000.to_bytes(4, "little"), "MainRAM")]
+                    await bizhawk.guarded_write(ctx.bizhawk_ctx,TR_writes,TR_guards)
+
                 # Special code handling for TVT Water Room Spawn
                 if currentLevel == 22 and LevelStartRoom == 64:
                     # Drain the water if you are starting in the TVT - Water Room as part of Randomize First Rooms
@@ -3505,6 +3658,7 @@ class ApeEscapeClient(BizHawkClient):
         inAir = [0x08, 0x09, 0x35, 0x36, 0x83, 0x84]
         swimming = [0x46, 0x47]
         grounded = [0x00, 0x01, 0x02, 0x05, 0x07]  # 0x80, 0x81 Removed them since you can fling you net and give you extra air
+
         limited_OxygenLevel = 0x64
 
         gameState = WN_Reads[0]
@@ -3518,6 +3672,7 @@ class ApeEscapeClient(BizHawkClient):
 
         WN_writes = []
 
+        is_grounded = spikeState2 in grounded
         # Base variables
         if waternetState == 0x00:
             WN_writes += [(RAM.swim_surfaceDetectionAddress, 0x00000000.to_bytes(4, "little"), "MainRAM")]
@@ -3551,15 +3706,16 @@ class ApeEscapeClient(BizHawkClient):
                     else:
                         # if self.waterHeight != 0:
                         # self.waterHeight = 0
-                        if spikeState2 in grounded:
+                        if is_grounded:
                             WN_writes += [(RAM.swim_oxygenLevelAddress, limited_OxygenLevel.to_bytes(2, "little"), "MainRAM")]
 
-                else:
-                    # Game Not running
-                    if swim_oxygenLevel == 0 and cookies == 0 and gameRunning == 0:
-                        # You died while swimming, reset Oxygen to "Limited" value prevent death loops
-                        WN_writes += [(RAM.swim_oxygenLevelAddress, limited_OxygenLevel.to_bytes(2, "little"), "MainRAM")]
-                        WN_writes += [(RAM.isUnderwater, 0x00.to_bytes(1, "little"), "MainRAM")]
+                #else:
+                # Game Not running
+                #if swim_oxygenLevel == 0 and cookies == 0 and gameRunning == 0:
+                if swim_oxygenLevel == 0 and cookies == 0:
+                    # You died while swimming, reset Oxygen to "Limited" value prevent death loops
+                    WN_writes += [(RAM.swim_oxygenLevelAddress, limited_OxygenLevel.to_bytes(2, "little"), "MainRAM")]
+                    WN_writes += [(RAM.isUnderwater, 0x00.to_bytes(1, "little"), "MainRAM")]
 
         if waternetState == 0x01:
 

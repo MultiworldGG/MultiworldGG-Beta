@@ -307,7 +307,7 @@ class Context:
             for location_name, location_id in game_package["location_name_to_id"].items():
                 self.location_names[game_name][location_id] = location_name
             self.all_item_and_group_names[game_name] = \
-                set(game_package["item_name_to_id"]) | set(self.item_name_groups[game_name])
+                set(game_package["item_name_to_id"]) | set(self.item_name_groups.get(game_name, {}))
             self.all_location_and_group_names[game_name] = \
                 set(game_package["location_name_to_id"]) | set(self.location_name_groups.get(game_name, []))
 
@@ -2473,6 +2473,11 @@ class ServerCommandProcessor(CommonCommandProcessor):
         elif value_type == str and option_name.endswith("password"):
             def value_type(input_text: str):
                 return None if input_text.lower() in {"null", "none", '""', "''"} else input_text
+        elif option_name == "countdown_mode":
+            valid_values = {"enabled", "disabled", "auto"}
+            if option_value.lower() not in valid_values:
+                self.output(f"Unrecognized {option_name} value '{option_value}', known: {', '.join(valid_values)}")
+                return False
         elif value_type == str and option_name.endswith("mode"):
             valid_values = {"goal", "enabled", "disabled"}
             valid_values.update(("auto", "auto_enabled") if option_name != "remaining_mode" else [])

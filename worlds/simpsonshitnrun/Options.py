@@ -42,6 +42,15 @@ class MoveRando(Toggle):
     default = True
     display_name = "Move Randomizer"
 
+class StartingJumpLevel(Range):
+    """Choose how many Progressive Jump items to start with for each character.
+       This option is always 2 if MoveRando is False. CARD LOGIC IS CURRENTLY INCORRECT
+       IF STARTING WITH 0 JUMPS"""
+    display_name = "Starting Jump Level"
+    range_start = 0
+    range_end = 2
+    default = 1
+
 class ShuffleGagfinder(Toggle):
     """If enabled, add a Gagfinder to the pool for each Character that will be
        required to unlock gags as that character. If disabled, gags will instead
@@ -61,7 +70,7 @@ class ShuffleCheckeredFlags(Toggle):
     display_name = "Shuffle Checkered Flags"
 
 class ShuffleEBrakes(Toggle):
-    """Choose whether or not to shuffle ability to use the E-Brake
+    """Choose whether to shuffle ability to use the E-Brake
        for each character into the item pool. *WARNING* This is not
        considered in logic and has not been heavily tested.
        It may create unreasonably hard seeds.
@@ -102,8 +111,7 @@ class CardPercent(Range):
 
 class ShuffleCards(Toggle):
     """Randomize card locations. This option adds several possible locations for
-       cards. There will still be 49 total cards with 7 in each level.
-       ***THIS OPTION IS UNIMPLEMENTED***"""
+       cards. There will still be 49 total cards with 7 in each level."""
 
     default = True
     display_name = "Shuffle Cards"
@@ -136,6 +144,15 @@ class MaxShopPrice(Range):
     range_start = 0
     range_end = 500
     default = 300
+
+class ShopHintPolicy(Choice):
+    """Choose the level of hints sent when speaking to Gil for the first time on a level
+       All: Hint all items in Gil's shop
+       OnlyProg: Only hint progression items in Gil's shop
+    """
+    display_name = "Shop Hint Policy"
+    option_all = 0
+    option_onlyprog = 1
 
 class ShopScaleMod(Range):
     """The multiplier for shop costs per levels
@@ -170,6 +187,7 @@ class SimpsonsHitAndRunOptions(PerGameCommonOptions):
     goal: Goal
     levelsanity: LevelSanity
     moverandomizer: MoveRando
+    startjumplevel: StartingJumpLevel
     shufflegagfinder: ShuffleGagfinder
     shufflecheckeredflags: ShuffleCheckeredFlags
     shuffleebrake: ShuffleEBrakes
@@ -182,12 +200,12 @@ class SimpsonsHitAndRunOptions(PerGameCommonOptions):
     minprice: MinShopPrice
     maxprice: MaxShopPrice
     shopscalemod: ShopScaleMod
+    shophintpolicy: ShopHintPolicy
     filler_traps: FillerTrapPercent
     eject: EjectTraps
     duff: DuffTraps
     launch: LaunchTraps
     hnr: HNRTraps
-    death_link: DeathLink
 
 
 SimpsonsHitAndRunOptions = SimpsonsHitAndRunOptions

@@ -24,8 +24,8 @@ class TrackmaniaCommandProcessor(ClientCommandProcessor):
         if isinstance(self.ctx, TrackmaniaContext):
             if self.ctx.is_proxy_connected():
                 logger.info("Rerolling Loaded Map...")
-                series_number = int(series_number) # these can still be strings somehow!
-                map_number = int(map_number) # GODILOVEWEAKLYTYPEDLANGUAGES
+                series_number = int(series_number)
+                map_number = int(map_number)
                 msg : dict = {"cmd" : "Reroll", "series_index" : series_number, "map_index" : map_number}
                 msg_str = encode([msg])
                 self.ctx.server_msgs.append(msg_str)
@@ -136,6 +136,11 @@ class TrackmaniaContext(CommonContext):
                 self.server_msgs.append(self.room_info)
                 self.update_items()
                 self.awaiting_info = False
+            else:# send all checks we have whenever we reconnect to the server
+                if self.is_proxy_connected():
+                    msg: dict = {"cmd":"Resync"}
+                    self.server_msgs.append(encode(msg))
+
 
         elif cmd == "RoomUpdate":
             # Same story as above

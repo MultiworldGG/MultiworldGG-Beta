@@ -50,12 +50,14 @@ class LunacidRules:
         }
 
         self.entrance_rules = {
-            LunacidEntrance.basin_to_temple_path: lambda state: self.has_keys_for_basin_or_canopy(state, self.world.options),
+            LunacidEntrance.basin_to_temple_path: lambda state: not self.world.options.shopsanity or
+                                                                self.has_keys_for_basin_or_canopy(state, self.world.options),
             LunacidEntrance.basin_to_archives_2f: lambda state: self.has_door_key(Door.basin_broken_steps, state, self.world.options) and
                                                                 self.can_jump_given_height(JumpHeight.low, state, self.world.options),
             LunacidEntrance.basin_to_surface: lambda state: self.can_jump_given_height(JumpHeight.high, state, self.world.options),
 
-            LunacidEntrance.temple_path_to_basin: lambda state: self.has_keys_for_basin_or_canopy(state, self.world.options),
+            LunacidEntrance.temple_path_to_basin: lambda state: not self.world.options.shopsanity or
+                                                                self.has_keys_for_basin_or_canopy(state, self.world.options),
             LunacidEntrance.temple_path_to_temple_front: lambda state: self.has_light_source(state, self.world.options),
 
             LunacidEntrance.temple_front_to_temple_back: lambda state: self.has_switch_key(Switch.temple_switch, state, self.world.options),

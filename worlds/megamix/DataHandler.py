@@ -1,49 +1,43 @@
 import json
 import yaml
-import pkgutil
 import re
 import os
 import shutil
 import sys
+import settings
 import Utils
 import logging
-from .SymbolFixer import fix_song_name
+import filecmp
 from typing import Any
 
 # Set up logger
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+
+def game_paths() -> dict[str, str]:
+    """Build relevant paths based on the game exe and, if available, the mod loader config."""
+
+    exe_path = settings.get_settings()["megamix_options"]["game_exe"]
+    game_path = os.path.dirname(exe_path)
+    mods_path = os.path.join(game_path, "mods")
+
+    # Seemingly no TOML parser in frozen AP
+    dml_config = os.path.join(game_path, "config.toml")
+    if os.path.isfile(dml_config):
+        with open(dml_config, "r") as f:
+            mod_line = re.search(r"""^mods\s*=\s*['"](.*?)['"]""", f.read())
+            if mod_line:
+                mods_path = os.path.join(game_path, mod_line.group(1))
+
+    return {
+        "exe": exe_path,
+        "game": game_path,
+        "mods": mods_path
+    }
+
+
 # File Handling
-def load_zipped_json_file(file_name: str) -> dict:
-    """Import a JSON file, either from a zipped package or directly from the filesystem."""
-
-    try:
-        # Attempt to load the file as a zipped resource
-        file_contents = pkgutil.get_data(__name__, file_name)
-        if file_contents is not None:
-            decoded_contents = file_contents.decode('utf-8')
-            if decoded_contents.strip():  # Check if the contents are not empty
-                return json.loads(decoded_contents)
-            else:
-                logger.debug(f"Error: Zipped JSON file '{file_name}' is empty.")
-                return {}
-    except Exception as e:
-        logger.debug(f"Error loading zipped JSON file '{file_name}': {e}")
-
-    try:
-        # Attempt to load the file directly from the filesystem
-        with open(file_name, 'r', encoding='utf-8') as file:
-            file_contents = file.read().strip()
-            if file_contents:  # Check if the file is not empty
-                return json.loads(file_contents)
-            else:
-                return {}
-    except Exception as e:
-        logger.debug(f"Error loading JSON file '{file_name}': {e}")
-        return {}
-
-
 def load_json_file(file_name: str) -> dict:
     """Import a JSON file, either from a zipped package or directly from the filesystem."""
 
@@ -85,37 +79,16 @@ def restore_originals(original_file_paths):
         copy_file_path = os.path.join(directory, copy_filename)
 
         if os.path.exists(copy_file_path):
-            shutil.copyfile(copy_file_path, original_file_path)
-            logger.debug(f"Restored {original_file_path} from {copy_file_path}")
+            if not filecmp.cmp(copy_file_path, original_file_path):
+                shutil.copyfile(copy_file_path, original_file_path)
+                logger.debug(f"Restored {original_file_path} from {copy_file_path}")
+            else:
+                logger.debug(f"Skipping restore on {original_file_path} (matches copy)")
         else:
             logger.debug(f"The copy file {copy_file_path} does not exist.")
 
 
 # Data processing
-def process_json_data(json_data):
-    """Process JSON data into a dictionary."""
-    processed_data = {}
-    # Iterate over each entry in the JSON data
-    for entry in json_data:
-        song_id = int(entry.get('songID'))
-        song_data = {
-            'songName': fix_song_name(entry.get('songName')),  # Fix song name if needed
-            'singers': entry.get('singers'),
-            'difficulty': entry.get('difficulty'),
-            'difficultyRating': entry.get('difficultyRating')
-        }
-
-        # Check if song ID already exists in the dictionary
-        if song_id in processed_data:
-            # If yes, append the new song data to the existing list
-            processed_data[song_id].append(song_data)
-        else:
-            # If no, create a new list with the song data
-            processed_data[song_id] = [song_data]
-
-    return processed_data
-
-
 def generate_modded_paths(processed_data, base_path):
     # Extract unique pack names from processed_data
     logger.debug(processed_data)
@@ -183,7 +156,7 @@ def extract_mod_data_to_json() -> list[Any]:
     Extracts mod data from YAML files and converts it to a list of dictionaries.
     """
 
-    user_path = Utils.user_path(Utils.get_settings()["generator"]["player_files_path"])
+    user_path = Utils.user_path(settings.get_settings().generator.player_files_path)
     folder_path = sys.argv[sys.argv.index("--player_files_path") + 1] if "--player_files_path" in sys.argv else user_path
 
     # Search text for the specific game
@@ -212,13 +185,16 @@ def extract_mod_data_to_json() -> list[Any]:
 
                         # Process each mod_data block
                         for _ in matches:
-                            for single_yaml in yaml.safe_load_all(file_content):
-                                mod_data_content = single_yaml.get("Hatsune Miku Project Diva Mega Mix+", {}).get("megamix_mod_data", None)
+                            try:
+                                for single_yaml in yaml.safe_load_all(file_content):
+                                    mod_data_content = single_yaml.get("Hatsune Miku Project Diva Mega Mix+", {}).get("megamix_mod_data", None)
 
-                                if isinstance(mod_data_content, dict) or not mod_data_content:
-                                    continue
+                                    if isinstance(mod_data_content, dict) or not mod_data_content:
+                                        continue
 
-                                all_mod_data.append(json.loads(mod_data_content))
+                                    all_mod_data.append(json.loads(mod_data_content))
+                            except Exception as e:
+                                logger.warning(f"Failed to extract mod data from {item}\n{e}")
 
     total = sum(len(pack) for packList in all_mod_data for pack in packList.values())
 
@@ -229,7 +205,7 @@ def get_player_specific_ids(mod_data):
     song_ids = []  # Initialize an empty list to store song IDs
 
     if mod_data == "":
-        return song_ids
+        return {}, song_ids
 
     data_dict = json.loads(mod_data)
 
@@ -238,4 +214,4 @@ def get_player_specific_ids(mod_data):
             song_id = song[1]
             song_ids.append(song_id)
 
-    return song_ids  # Return the list of song IDs
+    return data_dict, song_ids  # Return the list of song IDs

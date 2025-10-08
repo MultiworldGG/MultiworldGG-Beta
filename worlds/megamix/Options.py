@@ -1,5 +1,5 @@
-from typing import Dict
-from Options import Toggle, Option, Range, Choice, DeathLink, ItemSet, OptionSet, PerGameCommonOptions, FreeText, Visibility
+from Options import Toggle, Option, Range, Choice, DeathLink, ItemSet, OptionSet, PerGameCommonOptions, FreeText, \
+    Visibility, Removed, OptionGroup
 from dataclasses import dataclass
 
 
@@ -39,7 +39,9 @@ class AllowMegaMixDLCSongs(Toggle):
 
 
 class AutoRemoveCleared(Toggle):
-    """If true, automatically removes cleared songs from the song list on refresh"""
+    """If true, automatically removes cleared songs from the song list on refresh.
+
+    This can be done later manually with "/remove_cleared" or toggled with "/auto_remove" in the Client."""
     display_name = "Auto Remove Songs"
 
 
@@ -119,16 +121,17 @@ class DifficultyRatingMax(Choice):
 
 class ScoreGradeNeeded(Choice):
     """Completing a song will require a grade of this value or higher in order to unlock items.
-    Accuracy required is based on the song's difficulty (Easy, Normal, Hard, etc..)
+    Accuracy required is based on the song's difficulty (Easy, Normal, Hard, etc.)
     A Perfect requires a full combo, regardless of accuracy.
-
+    A Cheap is completing a song with less than a Standard clear.
     """
     display_name = "Grade Needed"
-    option_Standard = 0
-    option_Great = 1
-    option_Excellent = 2
-    option_Perfect = 3
-    default = 0
+    option_Cheap = 1
+    option_Standard = 2
+    option_Great = 3
+    option_Excellent = 4
+    option_Perfect = 5
+    default = 2
 
 
 class TotalLeeksAvailable(Range):
@@ -150,27 +153,35 @@ class LeeksRequiredPercentage(Range):
     display_name = "Leek Percentage Needed to Win"
 
 
+class IncludeSongsPercentage(Range):
+    """The percentage of the seed reserved for Include Songs.
+    - At 50% a 100 song seed will reserve up to 50 Include Songs.
+    - If all Include Songs can fit in the given percent they will all appear.
+    - Non-Exclude Songs that are not selected stay in the song pool and can still appear.
+    - Include and Exclude a song to remove it from the song pool completely if not selected."""
+    range_start = 0
+    range_end = 100
+    default = 100
+    display_name = "Include Songs Percentage"
+
+
 class IncludeSongs(ItemSet):
     """Any song listed here will be guaranteed to be included as part of the seed.
     - Difficulty options will be skipped for these songs.
     - If there being too many included songs, songs will be randomly chosen without regard for difficulty.
     - If you want these songs immediately, use start_inventory instead.
-    """
+
+    Use /item_groups in the Client for a list of available song groups."""
     verify_item_name = True
     display_name = "Include Songs"
 
 
 class ExcludeSongs(ItemSet):
-    """Any song listed here will be excluded from being a part of the seed."""
+    """Any song listed here will be excluded from being a part of the seed.
+
+    Use /item_groups in the Client for a list of available song groups."""
     verify_item_name = True
     display_name = "Exclude Songs"
-
-
-class ExcludeSinger(OptionSet):
-    """Songs including singers listed here will not be included. Does not affect any modded songs regardless.
-    Available Singers: Hatsune Miku, Kagamine Rin, Kagamine Len, Megurine Luka, KAITO, MEIKO"""
-    display_name = "Exclude Singer"
-    default = {}
 
 
 class ModData(FreeText):
@@ -178,6 +189,46 @@ class ModData(FreeText):
     display_name = "MegaMixModData"
     default = ''
     visibility = Visibility.template | Visibility.spoiler
+
+
+class DivaDeathLink(DeathLink):
+    """When you die on your own or fail to reach Grade Needed (not both), everyone who enabled Death Link dies.
+
+    Received Death Links subtract a percentage of total HP. Adjustable in the game mod's config file.
+    WARNING: Non-lethal Death Link makes it harder to get Life Bonuses and may affect score by up to 2%.
+
+    This can be toggled later in the Client with "/deathlink".
+    """
+    display_name = "Death Link"
+
+
+class DeathLinkAmnesty(Range):
+    """Amount of additional own deaths needed before sending one Death Link. 0 would be every death, 1 every other, etc.
+
+    This can be adjusted later in the Client with "/deathlink #" and no upper limit.
+    """
+    display_name = "Death Link Amnesty"
+    range_start = 0
+    range_end = 5
+    default = 0
+
+
+megamix_option_groups = [
+    OptionGroup("Song Choice", [
+        AllowMegaMixDLCSongs,
+        IncludeSongsPercentage,
+        IncludeSongs,
+        ExcludeSongs,
+        ModData, # hidden by visibility property
+    ]),
+    OptionGroup("Difficulty", [
+        ScoreGradeNeeded,
+        DifficultyModeMin,
+        DifficultyModeMax,
+        DifficultyRatingMin,
+        DifficultyRatingMax,
+    ]),
+]
 
 
 @dataclass
@@ -194,7 +245,10 @@ class MegaMixOptions(PerGameCommonOptions):
     grade_needed: ScoreGradeNeeded
     leek_count_percentage: TotalLeeksAvailable
     leek_win_count_percentage: LeeksRequiredPercentage
+    include_songs_percentage: IncludeSongsPercentage
     include_songs: IncludeSongs
     exclude_songs: ExcludeSongs
-    exclude_singers: ExcludeSinger
+    exclude_singers: Removed
     megamix_mod_data: ModData
+    death_link: DivaDeathLink
+    death_link_amnesty: DeathLinkAmnesty

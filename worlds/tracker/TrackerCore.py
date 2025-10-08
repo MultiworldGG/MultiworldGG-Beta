@@ -10,13 +10,15 @@ from worlds import AutoWorld
 from collections import Counter, defaultdict
 from . import TrackerWorld, UTMapTabData, CurrentTrackerState, UT_VERSION, DeferredEntranceMode
 import sys
-from Utils import __version__, output_path, open_filename
+from Utils import __version__, output_path, open_filename, instance_name
+
+apname = instance_name if instance_name else "Archipelago"
 
 from Generate import main as GMain, mystery_argparse
 from worlds.generic.Rules import exclusion_rules
 from argparse import Namespace
 from typing import Optional,Callable
-from NetUtils import NetworkItem
+from NetUtils import NetworkItem, HintStatus
 
 
     
@@ -50,7 +52,7 @@ class TrackerCore():
         self._get_ut_color = None
         self.stored_data:dict[str,Any] = {}
         self.location_alias_map: dict[int, str] = {}
-        self.hints = []
+        self.hints = {}
         self.tracker_items_received = []
         self.manual_items = []
         self.player_folder_override = None
@@ -94,7 +96,7 @@ class TrackerCore():
     def set_items_received(self, items_received:list[NetworkItem]):
         self.tracker_items_received = items_received
     
-    def set_hints(self,hints:list[int]):
+    def set_hints(self,hints:dict[int,int]):
         self.hints = hints
     
     def log_to_tab(self,line: str, sort: bool = False):
@@ -292,7 +294,7 @@ class TrackerCore():
     def updateTracker(self) -> CurrentTrackerState:
         if self.player_id is None or self.multiworld is None:
             self.logger.error("Player YAML not installed or Generator failed")
-            self.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}")
+            self.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for {apname} version {__version__}")
             return CurrentTrackerState.init_empty_state()
 
         state = CollectionState(self.multiworld,self.enforce_deferred_connections != DeferredEntranceMode.disabled)

@@ -1,84 +1,29 @@
-from typing import Dict, FrozenSet, Tuple, TYPE_CHECKING
+from typing import FrozenSet, TYPE_CHECKING
+
+from BaseClasses import Region
 from worlds.generic.Rules import set_rule, add_rule, forbid_item
-from BaseClasses import Region, CollectionState
+
 from .bells import set_bell_location_rules
-from .fuses import set_fuse_location_rules, has_fuses
-from .options import IceGrappling, LadderStorage, CombatLogic
-from .rules import (has_ability, has_sword, has_melee, has_ice_grapple_logic, has_lantern, has_mask, can_ladder_storage,
-                    laurels_zip, bomb_walls)
-from .er_data import Portal, get_portal_outlet_region
-from .ladder_storage_data import ow_ladder_groups, region_ladders, easy_ls, medium_ls, hard_ls
 from .combat_logic import has_combat_reqs
+from .constants import *
+from .er_data import Portal, get_portal_outlet_region
+from .fuses import set_fuse_location_rules
 from .grass import set_grass_location_rules
+from .ladder_storage_data import ow_ladder_groups, region_ladders, easy_ls, medium_ls, hard_ls
+from .logic_helpers import (has_ability, has_ladder, has_melee, has_sword, has_lantern, has_mask, has_fuses,
+                            can_shop, can_get_past_bushes, laurels_zip, has_ice_grapple_logic, can_ladder_storage)
+from .options import IceGrappling, LadderStorage, CombatLogic
 
 if TYPE_CHECKING:
     from . import TunicWorld
 
-laurels = "Hero's Laurels"
-grapple = "Magic Orb"
-ice_dagger = "Magic Dagger"
-fire_wand = "Magic Wand"
-gun = "Gun"
-lantern = "Lantern"
-fairies = "Fairy"
-coins = "Golden Coin"
-prayer = "Pages 24-25 (Prayer)"
-holy_cross = "Pages 42-43 (Holy Cross)"
-icebolt = "Pages 52-53 (Icebolt)"
-key = "Key"
-house_key = "Old House Key"
-vault_key = "Fortress Vault Key"
-mask = "Scavenger Mask"
-red_hexagon = "Red Questagon"
-green_hexagon = "Green Questagon"
-blue_hexagon = "Blue Questagon"
-gold_hexagon = "Gold Questagon"
 
-swamp_fuse_1 = "Swamp Fuse 1"
-swamp_fuse_2 = "Swamp Fuse 2"
-swamp_fuse_3 = "Swamp Fuse 3"
-cathedral_elevator_fuse = "Cathedral Elevator Fuse"
-quarry_fuse_1 = "Quarry Fuse 1"
-quarry_fuse_2 = "Quarry Fuse 2"
-ziggurat_miniboss_fuse = "Ziggurat Miniboss Fuse"
-ziggurat_teleporter_fuse = "Ziggurat Teleporter Fuse"
-fortress_exterior_fuse_1 = "Fortress Exterior Fuse 1"
-fortress_exterior_fuse_2 = "Fortress Exterior Fuse 2"
-fortress_courtyard_upper_fuse = "Fortress Courtyard Upper Fuse"
-fortress_courtyard_lower_fuse = "Fortress Courtyard Fuse"
-beneath_the_vault_fuse = "Beneath the Vault Fuse"  # event needs to be renamed probably
-fortress_candles_fuse = "Fortress Candles Fuse"
-fortress_door_left_fuse = "Fortress Door Left Fuse"
-fortress_door_right_fuse = "Fortress Door Right Fuse"
-west_furnace_fuse = "West Furnace Fuse"
-west_garden_fuse = "West Garden Fuse"
-atoll_northeast_fuse = "Atoll Northeast Fuse"
-atoll_northwest_fuse = "Atoll Northwest Fuse"
-atoll_southeast_fuse = "Atoll Southeast Fuse"
-atoll_southwest_fuse = "Atoll Southwest Fuse"
-library_lab_fuse = "Library Lab Fuse"
-
-
-def has_ladder(ladder: str, state: CollectionState, world: "TunicWorld") -> bool:
-    return not world.options.shuffle_ladders or state.has(ladder, world.player)
-
-
-def can_shop(state: CollectionState, world: "TunicWorld") -> bool:
-    return has_sword(state, world.player) and state.can_reach_region("Shop", world.player)
-
-
-# for the ones that are not early bushes where ER can screw you over a bit
-def can_get_past_bushes(state: CollectionState, world: "TunicWorld") -> bool:
-    # add in glass cannon + stick for grass rando
-    return has_sword(state, world.player) or state.has_any((fire_wand, laurels, gun), world.player)
-
-
-def set_er_region_rules(world: "TunicWorld", regions: Dict[str, Region], portal_pairs: Dict[Portal, Portal]) -> None:
+def set_er_region_rules(world: "TunicWorld", regions: dict[str, Region], portal_pairs: dict[Portal, Portal]) -> None:
     player = world.player
     options = world.options
 
     # input scene destination tag, returns portal's name and paired portal's outlet region or region
-    def get_portal_info(portal_sd: str) -> Tuple[str, str]:
+    def get_portal_info(portal_sd: str) -> tuple[str, str]:
         for portal1, portal2 in portal_pairs.items():
             if portal1.scene_destination() == portal_sd:
                 return portal1.name, get_portal_outlet_region(portal2, world)
@@ -87,7 +32,7 @@ def set_er_region_rules(world: "TunicWorld", regions: Dict[str, Region], portal_
         raise Exception(f"No matches found in get_portal_info for {portal_sd}")
 
     # input scene destination tag, returns paired portal's name and region
-    def get_paired_portal(portal_sd: str) -> Tuple[str, str]:
+    def get_paired_portal(portal_sd: str) -> tuple[str, str]:
         for portal1, portal2 in portal_pairs.items():
             if portal1.scene_destination() == portal_sd:
                 return portal2.name, portal2.region
@@ -107,7 +52,7 @@ def set_er_region_rules(world: "TunicWorld", regions: Dict[str, Region], portal_
     regions["Overworld"].connect(
         connecting_region=regions["Overworld Beach"],
         rule=lambda state: has_ladder("Ladders in Overworld Town", state, world)
-        or state.has_any({laurels, grapple}, player))
+        or state.has_any((laurels, grapple), player))
     # regions["Overworld Beach"].connect(
     #     connecting_region=regions["Overworld"],
     #     rule=lambda state: has_ladder("Ladders in Overworld Town", state, world)
@@ -140,7 +85,7 @@ def set_er_region_rules(world: "TunicWorld", regions: Dict[str, Region], portal_
         rule=lambda state: state.has(laurels, player))
     regions["Overworld to Atoll Upper"].connect(
         connecting_region=regions["Overworld"],
-        rule=lambda state: state.has_any({laurels, grapple}, player))
+        rule=lambda state: state.has_any((laurels, grapple), player))
 
     regions["Overworld"].connect(
         connecting_region=regions["Overworld Belltower"],
@@ -268,10 +213,10 @@ def set_er_region_rules(world: "TunicWorld", regions: Dict[str, Region], portal_
 
     regions["Upper Overworld"].connect(
         connecting_region=regions["Overworld above Quarry Entrance"],
-        rule=lambda state: state.has_any({grapple, laurels}, player))
+        rule=lambda state: state.has_any((grapple, laurels), player))
     regions["Overworld above Quarry Entrance"].connect(
         connecting_region=regions["Upper Overworld"],
-        rule=lambda state: state.has_any({grapple, laurels}, player))
+        rule=lambda state: state.has_any((grapple, laurels), player))
 
     # ice grapple push guard captain down the ledge
     regions["Upper Overworld"].connect(
@@ -292,11 +237,11 @@ def set_er_region_rules(world: "TunicWorld", regions: Dict[str, Region], portal_
 
     regions["Overworld"].connect(
         connecting_region=regions["Overworld after Envoy"],
-        rule=lambda state: state.has_any({laurels, grapple, gun}, player)
+        rule=lambda state: state.has_any((laurels, grapple, gun), player)
         or state.has("Sword Upgrade", player, 4))
     regions["Overworld after Envoy"].connect(
         connecting_region=regions["Overworld"],
-        rule=lambda state: state.has_any({laurels, grapple, gun}, player)
+        rule=lambda state: state.has_any((laurels, grapple, gun), player)
         or state.has("Sword Upgrade", player, 4))
 
     regions["Overworld after Envoy"].connect(
@@ -773,7 +718,7 @@ def set_er_region_rules(world: "TunicWorld", regions: Dict[str, Region], portal_
 
     regions["Library Exterior by Tree"].connect(
         connecting_region=regions["Library Exterior Ladder Region"],
-        rule=lambda state: state.has_any({grapple, laurels}, player)
+        rule=lambda state: state.has_any((grapple, laurels), player)
         and has_ladder("Ladders in Library", state, world))
     regions["Library Exterior Ladder Region"].connect(
         connecting_region=regions["Library Exterior by Tree"],
@@ -816,7 +761,7 @@ def set_er_region_rules(world: "TunicWorld", regions: Dict[str, Region], portal_
 
     regions["Library Lab Lower"].connect(
         connecting_region=regions["Library Lab"],
-        rule=lambda state: state.has_any({grapple, laurels}, player)
+        rule=lambda state: state.has_any((grapple, laurels), player)
         and has_ladder("Ladders in Library", state, world))
     regions["Library Lab"].connect(
         connecting_region=regions["Library Lab Lower"],
@@ -1131,9 +1076,9 @@ def set_er_region_rules(world: "TunicWorld", regions: Dict[str, Region], portal_
                                  or (can_ladder_storage(state, world) and state.has(fire_wand, player)
                                      and options.ladder_storage >= LadderStorage.option_hard
                                      and (not options.shuffle_ladders
-                                          or state.has_any({"Ladders in Overworld Town",
+                                          or state.has_any(("Ladders in Overworld Town",
                                                             "Ladder to Swamp",
-                                                            "Ladders near Weathervane"}, player)
+                                                            "Ladders near Weathervane"), player)
                                           or (state.has("Ladder to Ruined Atoll", player)
                                               and state.can_reach_region("Overworld Beach", player)))))
                             and (not options.combat_logic
@@ -1204,11 +1149,6 @@ def set_er_region_rules(world: "TunicWorld", regions: Dict[str, Region], portal_
         connecting_region=regions["Cathedral Main"])
     regions["Cathedral Main"].connect(
         connecting_region=regions["Cathedral Entry"])
-
-    cath_elev_to_main = regions["Cathedral to Gauntlet"].connect(
-        connecting_region=regions["Cathedral Main"])
-    regions["Cathedral Main"].connect(
-        connecting_region=regions["Cathedral to Gauntlet"])
 
     regions["Cathedral Gauntlet Checkpoint"].connect(
         connecting_region=regions["Cathedral Gauntlet"])
@@ -1285,7 +1225,7 @@ def set_er_region_rules(world: "TunicWorld", regions: Dict[str, Region], portal_
                 non_ow_ls_list.extend(hard_ls)
 
         # create the ls elevation regions
-        ladder_regions: Dict[str, Region] = {}
+        ladder_regions: dict[str, Region] = {}
         for name in ow_ladder_groups.keys():
             ladder_regions[name] = Region(name, player, world.multiworld)
 
@@ -1455,10 +1395,10 @@ def set_er_region_rules(world: "TunicWorld", regions: Dict[str, Region], portal_
                  lambda state: has_combat_reqs("Dark Tomb", state, player))
 
         set_rule(wg_before_to_after_terry,
-                 lambda state: state.has_any({laurels, ice_dagger}, player)
+                 lambda state: state.has_any((laurels, ice_dagger), player)
                  or has_combat_reqs("West Garden", state, player))
         set_rule(wg_after_to_before_terry,
-                 lambda state: state.has_any({laurels, ice_dagger}, player)
+                 lambda state: state.has_any((laurels, ice_dagger), player)
                  or has_combat_reqs("West Garden", state, player))
 
         set_rule(wg_after_terry_to_west_combat,
@@ -1515,8 +1455,6 @@ def set_er_region_rules(world: "TunicWorld", regions: Dict[str, Region], portal_
                      else (has_ability(prayer, state, world) and has_combat_reqs("Swamp", state, player))))
 
         set_rule(cath_entry_to_main,
-                 lambda state: has_combat_reqs("Swamp", state, player))
-        set_rule(cath_elev_to_main,
                  lambda state: has_combat_reqs("Swamp", state, player))
 
         # for spots where you can go into and come out of an entrance to reset enemy aggro
@@ -1636,9 +1574,9 @@ def set_er_location_rules(world: "TunicWorld") -> None:
 
     # Overworld
     set_rule(world.get_location("Overworld - [Southwest] Grapple Chest Over Walkway"),
-             lambda state: state.has_any({grapple, laurels}, player))
+             lambda state: state.has_any((grapple, laurels), player))
     set_rule(world.get_location("Overworld - [Southwest] West Beach Guarded By Turret 2"),
-             lambda state: state.has_any({grapple, laurels}, player))
+             lambda state: state.has_any((grapple, laurels), player))
     set_rule(world.get_location("Overworld - [Southwest] From West Garden"),
              lambda state: state.has(laurels, player))
     set_rule(world.get_location("Overworld - [Southeast] Page on Pillar by Swamp"),
@@ -1688,9 +1626,9 @@ def set_er_location_rules(world: "TunicWorld") -> None:
     set_rule(world.get_location("East Forest - Lower Grapple Chest"),
              lambda state: state.has(grapple, player))
     set_rule(world.get_location("East Forest - Lower Dash Chest"),
-             lambda state: state.has_all({grapple, laurels}, player))
+             lambda state: state.has_all((grapple, laurels), player))
     set_rule(world.get_location("East Forest - Ice Rod Grapple Chest"), lambda state: (
-            state.has_all({grapple, ice_dagger, fire_wand}, player) and has_ability(icebolt, state, world)))
+            state.has_all((grapple, ice_dagger, fire_wand), player) and has_ability(icebolt, state, world)))
 
     # Dark Tomb
     # added to make combat logic smoother
@@ -1722,11 +1660,11 @@ def set_er_location_rules(world: "TunicWorld") -> None:
 
     # Frog's Domain
     set_rule(world.get_location("Frog's Domain - Side Room Grapple Secret"),
-             lambda state: state.has_any({grapple, laurels}, player))
+             lambda state: state.has_any((grapple, laurels), player))
     set_rule(world.get_location("Frog's Domain - Grapple Above Hot Tub"),
-             lambda state: state.has_any({grapple, laurels}, player))
+             lambda state: state.has_any((grapple, laurels), player))
     set_rule(world.get_location("Frog's Domain - Escape Chest"),
-             lambda state: state.has_any({grapple, laurels}, player))
+             lambda state: state.has_any((grapple, laurels), player))
 
     # Library Lab
     set_rule(world.get_location("Library Lab - Page 1"),
@@ -1821,8 +1759,8 @@ def set_er_location_rules(world: "TunicWorld") -> None:
         set_rule(world.get_location("Eastern Vault West Fuses"),
                  lambda state: state.has("Activate Beneath the Vault Fuse", player))
         set_rule(world.get_location("Eastern Vault East Fuse"),
-                 lambda state: state.has_all({"Activate Upper and Central Fortress Exterior Fuses",
-                                              "Activate South and West Fortress Exterior Fuses"}, player))
+                 lambda state: state.has_all(("Activate Upper and Central Fortress Exterior Fuses",
+                                              "Activate South and West Fortress Exterior Fuses"), player))
         set_rule(world.get_location("Quarry Connector Fuse"),
                  lambda state: has_ability(prayer, state, world) and state.has(grapple, player))
         set_rule(world.get_location("Quarry Fuse"),
@@ -1924,7 +1862,7 @@ def set_er_location_rules(world: "TunicWorld") -> None:
 
         # laurels past the enemies, then use the wand or gun to take care of the fairies that chased you
         add_rule(world.get_location("West Garden - [West Lowlands] Tree Holy Cross Chest"),
-                 lambda state: state.has_any({fire_wand, "Gun"}, player))
+                 lambda state: state.has_any((fire_wand, gun), player))
         combat_logic_to_loc("West Garden - [Central Lowlands] Chest Beneath Faeries", "West Garden")
         combat_logic_to_loc("West Garden - [Central Lowlands] Chest Beneath Save Point", "West Garden")
         combat_logic_to_loc("West Garden - [West Highlands] Upper Left Walkway", "West Garden")
@@ -1943,7 +1881,7 @@ def set_er_location_rules(world: "TunicWorld") -> None:
 
         # if you come in from the left, you only need to fight small crabs
         add_rule(world.get_location("Ruined Atoll - [South] Near Birds"),
-                 lambda state: has_melee(state, player) or state.has_any({laurels, "Gun"}, player))
+                 lambda state: has_melee(state, player) or state.has_any((laurels, gun), player))
 
         # can get this one without fighting if you have laurels
         add_rule(world.get_location("Frog's Domain - Above Vault"),

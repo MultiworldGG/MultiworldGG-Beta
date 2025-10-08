@@ -20,6 +20,48 @@ def get_world_theme(game_name: str) -> str:
     return 'grass'
 
 
+def format_authors_string(authors: list[str]) -> str:
+    """Format a list of authors with proper grammar (commas and &)."""
+    if not authors:
+        return ""
+    if len(authors) == 1:
+        return authors[0]
+    if len(authors) == 2:
+        return f"{authors[0]} & {authors[1]}"
+    # For 3+ authors: "Author1, Author2, Author3 & Author4"
+    return f"{', '.join(authors[:-1])} & {authors[-1]}"
+
+
+def get_world_authors(world: type(World)) -> str:
+    """Get the formatted authors string for a world, preferring manifest authors over the author field."""
+    # Try to load manifest data first
+    try:
+        import json
+        import os
+        import pkgutil
+        
+        # Get the world's module path
+        world_module = world.__module__
+        if world_module.startswith('worlds.'):
+            world_folder = world_module[7:]  # Remove 'worlds.' prefix
+            world_path = os.path.join('worlds', world_folder)
+            
+            # Try to load archipelago.json from the world folder
+            try:
+                manifest_data = pkgutil.get_data(world_module, 'archipelago.json')
+                if manifest_data:
+                    manifest = json.loads(manifest_data.decode('utf-8-sig'))
+                    if 'authors' in manifest and manifest['authors']:
+                        return format_authors_string(manifest['authors'])
+            except (FileNotFoundError, json.JSONDecodeError, UnicodeDecodeError):
+                pass
+    except (ImportError, AttributeError, OSError):
+        pass
+    
+    # Fallback to the author field
+    return getattr(world, 'author', '')
+
+
 def get_visible_worlds() -> dict[str, type(World)]:
     worlds = {}
     for game, world in AutoWorldRegister.world_types.items():
@@ -110,7 +152,7 @@ def game_info(game, lang):
 @cache.cached()
 def games():
     """List of supported games"""
-    return render_template("supportedGames.html", worlds=get_visible_worlds())
+    return render_template("supportedGames.html", worlds=get_visible_worlds(), get_world_authors=get_world_authors)
 
 
 @app.route('/tutorial/<string:game>/<string:file>')
@@ -305,9 +347,9 @@ def host_room(room: UUID):
                  or "Discordbot" in request.user_agent.string
                  or not any(browser_token in request.user_agent.string for browser_token in browser_tokens))
 
-    def get_log(max_size: int = 0 if automated else 1024000) -> str:
+    def get_log(max_size: int = 0 if automated else 1024000) -> Tuple[str, int]:
         if max_size == 0:
-            return "…"
+            return "…", 0
         try:
             with open(os.path.join("logs", str(room.id) + ".txt"), "rb") as log:
                 raw_size = 0
@@ -318,9 +360,9 @@ def host_room(room: UUID):
                         break
                     raw_size += len(block)
                     fragments.append(block.decode("utf-8"))
-                return "".join(fragments)
+                return "".join(fragments), raw_size
         except FileNotFoundError:
-            return ""
+            return "", 0
 
     return render_template("hostRoom.html", room=room, should_refresh=should_refresh, get_log=get_log)
 
