@@ -384,7 +384,10 @@ class FilePath(Path):
                 ext = os.path.splitext(self)[1]
                 name = ext[1:] if ext else "File"
             filetypes = [(name, [ext])]
-        res = open_filename(f"Select {self.description or self.__class__.__name__}", filetypes, self)
+        res = open_filename(title=f"Select {self.description or self.__class__.__name__}", 
+                            filetypes=filetypes, 
+                            suggest=self, 
+                            multiple=False)
         if res:
             self.validate(res)
             if self.copy_to:
@@ -442,7 +445,8 @@ class FolderPath(Path):
 
     def browse(self: T, **kwargs: Any) -> T | None:
         from Utils import open_directory
-        res = open_directory(f"Select {self.description or self.__class__.__name__}", self)
+        res = open_directory(title=f"Select {self.description or self.__class__.__name__}", 
+                             suggest=self)
         if res:
             try:
                 rel = os.path.relpath(res, self.__class__("").resolve())

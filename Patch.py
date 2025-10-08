@@ -59,7 +59,7 @@ def create_rom_file(patch_file: str) -> Tuple[RomMeta, str]:
 
 if __name__ == "__main__":
     for file in sys.argv[1:]:
-        if file.startswith('-'):
+        if file.startswith('--') or Path(file).suffix == "":
             continue
         meta_data, result_file = create_rom_file(file)
         print(f"Patch with meta-data {meta_data} was written to {result_file}")

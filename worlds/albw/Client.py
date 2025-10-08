@@ -316,12 +316,14 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
 
         ctx.ui.base_title = apname + " | A Link Between Worlds"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        
+        # Start game_watcher BEFORE server_auth so it can set self.auth
+        watcher_task = asyncio.create_task(game_watcher(ctx), name="GameWatcher")
+        
         await ctx.server_auth()
 
         if patch_file:
             create_rom_file(patch_file)
-
-        watcher_task = asyncio.create_task(game_watcher(ctx), name="GameWatcher")
 
         try:
             await watcher_task
