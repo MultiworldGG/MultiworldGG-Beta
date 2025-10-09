@@ -4,11 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.kh2"
-version = "0.0.1"
+version = "0.0.2"
 description = "MultiWorld: Kingdom Hearts 2"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [ "Pymem>=1.10.0",]
 [[project.authors]]
 name = "JaredWeakStrike"
 

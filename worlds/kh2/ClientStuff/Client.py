@@ -134,10 +134,10 @@ class KH2Context(CommonContext):
         self.itemamount = {}
         # Default client settings
         default_settings = {
-            "send_truncate_first":    "PlayerName",  # there is no need to truncate item names for info popup
-            "receive_truncate_first": "PlayerName",  # truncation order. Can be PlayerName or ItemName
-            "send_popup_type":        "Puzzle",  # type of popup when you receive an item
-            "receive_popup_type":     "Puzzle",  # can be Puzzle, Info or None
+            "send_truncate_first":    "playername",  # there is no need to truncate item names for info popup
+            "receive_truncate_first": "playername",  # truncation order. Can be PlayerName or ItemName
+            "send_popup_type":        "puzzle",  # type of popup when you receive an item
+            "receive_popup_type":     "puzzle",  # can be Puzzle, Info or None
         }
         self.client_settings = default_settings.copy()
 
@@ -155,12 +155,12 @@ class KH2Context(CommonContext):
                 with open(self.kh2_client_settings_join) as f:
                     # if the file isnt empty load it
                     try:
-                        temp_json = json.load(f)
+                        loaded_settings_json = json.load(f)
                         # Merge with defaults to ensure all required keys exist
-                        self.client_settings = {**default_settings, **temp_json}
+                        self.kh2_seed_save = {**self.client_settings, **loaded_settings_json}
                     except json.JSONDecodeError as e:
                         logger.error(f"Error decoding JSON: {e}")
-                        self.client_settings = default_settings.copy()
+                        self.kh2_seed_save = self.client_settings.copy()
 
         self.hitlist_bounties = 0
         # hooked object
@@ -636,13 +636,13 @@ class KH2Context(CommonContext):
 
     # def run_gui(self):
     #     """Import kivy UI system and start running it as self.ui_task."""
-    #     from Gui import MultiMDApp
+    #     from kvui import GameManager
 
-    #     class KH2Manager(MultiMDApp):
+    #     class KH2Manager(GameManager):
     #         logging_pairs = [
     #             ("Client", "Archipelago")
     #         ]
-    #         base_title = apname + " KH2 Client"
+    #         base_title = "Archipelago KH2 Client"
 
     #     self.ui = KH2Manager(self)
     #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
@@ -773,7 +773,6 @@ async def kh2_watcher(ctx: KH2Context):
                             # Still waiting for memory to be readable, retry after short delay
                             await asyncio.sleep(0.5)
                     except Exception as e:
-                        ctx.kh2 = None  # Reset pymem on exception
                         logger.info("Game not found, retrying in 5 seconds...")
                         if not ctx.exit_event.is_set():
                             await asyncio.sleep(5)
