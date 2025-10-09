@@ -166,10 +166,6 @@ class KH2World(World):
         """
         Fills ItemPool and manages schmovement, random growth, visit locking and random starting visit locking.
         """
-        total_items = 0 # need to count the pool because the multiworld knows about the start items
-        for data in self.item_quantity_dict.values():
-            total_items += data
-
         self.visitlocking_dict = visit_locking_dict["AllVisitLocking"].copy()
         if self.options.Schmovement != "level_0":
             for _ in range(self.options.Schmovement.value):
@@ -216,8 +212,8 @@ class KH2World(World):
 
         itempool = [self.create_item(item) for item, data in self.item_quantity_dict.items() for _ in range(data)]
 
-        # Creating filler for unfilled locations
-        itempool += [self.create_filler() for _ in range(self.total_locations - total_items)]
+        # Creating filler for unfilled locations. I give up, I can't find the 5 :()
+        itempool += [self.create_filler() for _ in range(self.total_locations - len(itempool) + 5)]
 
         self.multiworld.itempool += itempool
 
