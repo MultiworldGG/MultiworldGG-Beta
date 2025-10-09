@@ -217,7 +217,7 @@ class KH2World(World):
         itempool = [self.create_item(item) for item, data in self.item_quantity_dict.items() for _ in range(data)]
 
         # Creating filler for unfilled locations
-        itempool += [self.create_filler() for _ in range(self.total_locations - len(total_items))]
+        itempool += [self.create_filler() for _ in range(self.total_locations - total_items)]
 
         self.multiworld.itempool += itempool
 
