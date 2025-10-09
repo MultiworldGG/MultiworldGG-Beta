@@ -66,10 +66,11 @@ class DiddyKongRacingContext(CommonContext):
     command_processor = DiddyKongRacingCommandProcessor
     items_handling = 0b111  # full
 
-    def __init__(self, server_address: str | None, password: str | None, ready_callback=None, error_callback=None) -> None:
+    def __init__(self, server_address: str | None, slot_name: str | None, password: str | None, ready_callback=None, error_callback=None) -> None:
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
+        self.username = slot_name
         self.game = "Diddy Kong Racing"
         self.n64_streams: (asyncio.StreamReader, asyncio.StreamWriter) = None  # type: ignore
         self.n64_sync_task = None
@@ -193,7 +194,7 @@ class DiddyKongRacingContext(CommonContext):
             )
 
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
     Launch the client
     """
@@ -203,7 +204,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     async def main():
         multiprocessing.freeze_support()
 
-        ctx = DiddyKongRacingContext(server_address, password, ready_callback, error_callback)
+        ctx = DiddyKongRacingContext(server_address, slot_name, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -240,9 +241,9 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback)
+    launch(server_address, slot_name, password, ready_callback, error_callback)
 
 
 async def n64_sync_task(ctx: DiddyKongRacingContext) -> None:

@@ -36,12 +36,13 @@ class DSTContext(CommonContext):
     locations_hinted = set()
     _eventqueue:List[Dict] = []
 
-    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
+    def __init__(self, server_address, slot_name, password, ready_callback=None, error_callback=None):
         self.dst_handler = DSTHandler(self)
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
-
+        self.username = slot_name
+        
         if self.ready_callback:
             from kivy.clock import Clock
             Clock.schedule_once(self.ready_callback, 0.1)

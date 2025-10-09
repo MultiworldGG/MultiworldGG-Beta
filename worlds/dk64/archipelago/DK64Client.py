@@ -1704,7 +1704,7 @@ class DK64Context(CommonContext):
                 await asyncio.sleep(1.0)
 
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
     Launch the client
     """
@@ -1749,9 +1749,9 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback)
+    launch(server_address, slot_name, password, ready_callback, error_callback)
 
 
 if __name__ == "__main__":

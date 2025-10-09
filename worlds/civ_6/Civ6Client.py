@@ -72,10 +72,11 @@ class CivVIContext(CommonContext):
         item.name: item.code for item in generate_item_table().values()}
     connection_state = ConnectionState.DISCONNECTED
 
-    def __init__(self, server_address: Optional[str], password: Optional[str], apcivvi_file: Optional[str] = None, ready_callback=None, error_callback=None):
+    def __init__(self, server_address: Optional[str], slot_name: Optional[str], password: Optional[str], apcivvi_file: Optional[str] = None, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
+        self.username = slot_name
         self.slot_data: Dict[str, Any] = {}
         self.game_interface = CivVIInterface(logger)
         location_by_era = generate_era_location_table()
@@ -291,7 +292,7 @@ async def _handle_game_ready(ctx: CivVIContext):
         await asyncio.sleep(3)
 
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, slot_name: str = None, apcivvi_file: str = None):
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, apcivvi_file: str = None):
     """
     Launch the client
     """
@@ -299,7 +300,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     logging.getLogger("Civ6Client")
 
     async def main():
-        ctx = CivVIContext(server_address, password, apcivvi_file or "", ready_callback, error_callback)
+        ctx = CivVIContext(server_address, slot_name, password, apcivvi_file or "", ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -353,9 +354,9 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, slot_name: str = None, apcivvi_file: str = None):
+def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, apcivvi_file: str = None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback, slot_name, apcivvi_file)
+    launch(server_address, slot_name, password, ready_callback, error_callback, apcivvi_file)
 
 
 def debug_main():

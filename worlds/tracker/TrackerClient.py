@@ -286,7 +286,7 @@ class TrackerGameContext(CommonContext):
                                                  "locations": unknown_locations,
                                                  "create_as_hint": 0}]))
 
-    def __init__(self, server_address, password, no_connection: bool = False, print_list: bool = False, print_count: bool = False, ready_callback=None, error_callback=None):
+    def __init__(self, server_address, slot_name, password, no_connection: bool = False, print_list: bool = False, print_count: bool = False, ready_callback=None, error_callback=None):
         if no_connection:
             from worlds import network_data_package
             self.item_names = self.NameLookupDict(self, "item")
@@ -296,6 +296,7 @@ class TrackerGameContext(CommonContext):
             super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
+        self.username = slot_name
         self.items_handling = ITEMS_HANDLING
         self.quit_after_update = print_list or print_count
         self.print_list = print_list
@@ -1321,8 +1322,8 @@ async def wait_for_items(ctx: TrackerGameContext)-> None:
         ctx.updateTracker() #if it timed out, we need to manually trigger this
         #if it didn't, then game_watcher will handle it
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, 
-          slot_name: str = None, print_count: bool = False, print_list: bool = False):
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, 
+          print_count: bool = False, print_list: bool = False):
     """
     Launch the client
     """
@@ -1330,7 +1331,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     logging.getLogger("TrackerClient")
 
     async def main():
-        ctx = TrackerGameContext(server_address, password, print_count=print_count, print_list=print_list, 
+        ctx = TrackerGameContext(server_address, slot_name, password, print_count=print_count, print_list=print_list, 
                                ready_callback=ready_callback, error_callback=error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
@@ -1364,7 +1365,7 @@ def launch(*args):
 def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, 
          slot_name: str = None, print_count: bool = False, print_list: bool = False):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback, slot_name, print_count, print_list)
+    launch(server_address, slot_name, password, ready_callback, error_callback, slot_name, print_count, print_list)
 
 
 if __name__ == "__main__":

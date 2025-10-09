@@ -79,10 +79,11 @@ class Rac2Context(CommonContext):
     queued_deaths: int = 0
     previous_decoy_glove_ammo: int = 0
 
-    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
+    def __init__(self, server_address, slot_name, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
+        self.username = slot_name
         self.game_interface = Rac2Interface(logger)
         self.notification_manager = NotificationManager(HUD_MESSAGE_DURATION)
         if self.ready_callback:
@@ -302,7 +303,7 @@ def get_pcsx2_crc(iso_path: str) -> Optional[int]:
     return crc
 
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, aprac2_file: str = None):
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, aprac2_file: str = None):
     """
     Launch the client
     """
@@ -312,7 +313,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     async def main():
         multiprocessing.freeze_support()
         
-        ctx = Rac2Context(server_address, password, ready_callback, error_callback)
+        ctx = Rac2Context(server_address, slot_name, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -358,9 +359,9 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, aprac2_file: str = None):
+def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, aprac2_file: str = None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback, aprac2_file)
+    launch(server_address, slot_name, password, ready_callback, error_callback, aprac2_file)
 
 
 if __name__ == '__main__':

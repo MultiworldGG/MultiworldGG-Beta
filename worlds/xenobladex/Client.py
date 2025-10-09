@@ -300,10 +300,11 @@ class XenobladeXContext(CommonContext):
     cemu_process: Optional[subprocess.Popen[bytes]] = None
     locations_checked: Set[int]
 
-    def __init__(self, server_address: Optional[str], password: Optional[str], debug: bool = False, ready_callback=None, error_callback=None) -> None:
+    def __init__(self, server_address: Optional[str], slot_name: Optional[str], password: Optional[str], debug: bool = False, ready_callback=None, error_callback=None) -> None:
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
+        self.username = slot_name
         self.http_server = XenobladeXHttpServer(('::', 45872), debug=debug)
         if self.ready_callback:
             from kivy.clock import Clock
@@ -527,7 +528,7 @@ async def xenoblade_x_sync_task(ctx: XenobladeXContext) -> None:
         await asyncio.sleep(0.5)
 
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, debug: bool = False):
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, debug: bool = False):
     """
     Launch the client
     """
@@ -535,7 +536,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     logging.getLogger("XenobladeXClient")
 
     async def main():
-        ctx = XenobladeXContext(server_address, password, debug, ready_callback, error_callback)
+        ctx = XenobladeXContext(server_address, slot_name, password, debug, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -575,9 +576,9 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, debug: bool = False):
+def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, debug: bool = False):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback, debug)
+    launch(server_address, slot_name, password, ready_callback, error_callback, debug)
 
 
 if __name__ == '__main__':

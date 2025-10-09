@@ -1,4 +1,5 @@
 from . import LegoStarWarsTCSWorld, LegoStarWarsTCSWebWorld
+from .client import launch
 
 """
 Lego Star Wars: The Complete Saga is a 2007 compilation of the all Lego Star Wars series games. World Registration
@@ -19,4 +20,4 @@ VERSION = version
 # Plugin entry points
 WORLD_CLASS = LegoStarWarsTCSWorld
 WEB_WORLD_CLASS = LegoStarWarsTCSWebWorld
-CLIENT_FUNCTION = None
+CLIENT_FUNCTION = launch

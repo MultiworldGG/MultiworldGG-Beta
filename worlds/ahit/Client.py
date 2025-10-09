@@ -29,7 +29,7 @@ class AHITContext(CommonContext):
 
     def __init__(self, server_address, slot_name, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
-        self.slot_name = slot_name
+        self.username = slot_name
         self.ready_callback = ready_callback
         self.error_callback = error_callback
         self.proxy = None
@@ -44,11 +44,6 @@ class AHITContext(CommonContext):
         self.awaiting_info = False
         self.full_inventory: List[Any] = []
         self.server_msgs: List[Any] = []
-
-        if self.slot_name is not None:
-            self.auth = self.slot_name
-        else:
-            self.auth = None
 
         if self.ready_callback:
             from kivy.clock import Clock

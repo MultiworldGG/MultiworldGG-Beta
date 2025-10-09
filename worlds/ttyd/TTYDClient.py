@@ -109,10 +109,11 @@ class TTYDContext(CommonContext):
     previous_room = None
     death_sent: bool = False
 
-    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
+    def __init__(self, server_address, slot_name, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
+        self.username = slot_name
         if self.ready_callback:
             from kivy.clock import Clock
             Clock.schedule_once(self.ready_callback, 0.1)
@@ -313,7 +314,7 @@ def trigger_death(ctx: TTYDContext):
         dolphin.write_byte(0x8000323F, 1)
 
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
     """
     Launch the client
     """
@@ -324,7 +325,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
         if patch_file:
             await asyncio.create_task(_patch_and_run_game(patch_file))
             
-        ctx = TTYDContext(server_address, password, ready_callback, error_callback)
+        ctx = TTYDContext(server_address, slot_name, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -360,6 +361,6 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback, patch_file)
+    launch(server_address, slot_name, password, ready_callback, error_callback, patch_file)

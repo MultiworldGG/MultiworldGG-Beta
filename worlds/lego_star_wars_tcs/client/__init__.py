@@ -342,8 +342,11 @@ class LegoStarWarsTheCompleteSagaContext(CommonContext):
     last_connected_seed_name: str | None = None
     last_loaded_save_file: int | None = None
 
-    def __init__(self, server_address: typing.Optional[str] = None, password: typing.Optional[str] = None) -> None:
+    def __init__(self, server_address: typing.Optional[str] = None, slot_name: typing.Optional[str] = None, password: typing.Optional[str] = None, ready_callback=None, error_callback=None) -> None:
         super().__init__(server_address, password)
+        self.username = slot_name
+        self.ready_callback = ready_callback
+        self.error_callback = error_callback
 
         # Copied from BizHawkClientContext
         self.auth_status = AuthStatus.NOT_AUTHENTICATED
@@ -374,6 +377,9 @@ class LegoStarWarsTheCompleteSagaContext(CommonContext):
         self.client_expected_idx = 0
 
         self.fully_connected = False
+        if self.ready_callback:
+            from kivy.clock import Clock
+            Clock.schedule_once(self.ready_callback, 0.1)
 
     def _get_datastorage_key(self, key_prefix: str):
         return key_prefix + DATA_STORAGE_KEY_SUFFIX.format(team=self.team, slot=self.slot)
@@ -1628,33 +1634,56 @@ async def game_watcher(ctx: LegoStarWarsTheCompleteSagaContext):
         else:
             ctx.auth_status = AuthStatus.NOT_AUTHENTICATED
 
-
-async def main():
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """
+    Launch the client
+    """
     Utils.init_logging("LegoStarWarsTheCompleteSagaClient", exception_logger="ClientException")
 
-    ctx = LegoStarWarsTheCompleteSagaContext()
-    ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+    async def main():
+        ctx = LegoStarWarsTheCompleteSagaContext(server_address, slot_name, password, ready_callback, error_callback)
+        if ctx._can_takeover_existing_gui():
+            await ctx._takeover_existing_gui() 
+        else:
+            logger.critical("Client did not launch properly, exiting.")
+            if error_callback:
+                error_callback()
+            return
 
-    if gui_enabled:
-        ()
-    ctx.run_cli()
+        ctx.ui.base_title = apname + " | Kingdom Hearts"
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+        await ctx.server_auth()
 
-    game_watcher_task = asyncio.create_task(game_watcher(ctx), name="LegoStarWarsTheCompleteSagaGameWatcher")
+        game_watcher_task = asyncio.create_task(
+            game_watcher(ctx), name="LegoStarWarsTheCompleteSagaGameWatcher")
 
-    await ctx.exit_event.wait()
-    # Wake the game watcher task, if it is currently sleeping, so it can start shutting down when it sees that the
-    # exit_event is set.
-    ctx.watcher_event.set()
-    ctx.server_address = None
-
-    try:
         await game_watcher_task
-    except Exception as e:
-        logger.exception(e)
-    await ctx.shutdown()
+        # Wake the game watcher task, if it is currently sleeping, so it can start shutting down when it sees that the
+        # exit_event is set.
+        ctx.watcher_event.set()
+        ctx.server_address = None
 
+        try:
+            await game_watcher_task
+        except Exception as e:
+            logger.exception(e)
+        await ctx.shutdown()
 
-def launch():
-    colorama.just_fix_windows_console()
-    asyncio.run(main())
-    colorama.deinit()
+    import colorama
+
+    # Check if we're already in an event loop (GUI mode) first
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an existing event loop, create a task
+        logger.info("Running in existing event loop (GUI mode)")
+        
+        task = asyncio.create_task(main(), name="LegoStarWarsTheCompleteSagaMain")
+        return task
+    except RuntimeError:
+        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Lego Star Wars: The Complete Saga client.")
+        if error_callback:
+            error_callback()
+
+def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+    """Main entry point for integration with MultiWorld system"""
+    launch(server_address, slot_name, password, ready_callback, error_callback)

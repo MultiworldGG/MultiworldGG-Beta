@@ -31,11 +31,12 @@ class GZDoomContext(SuperContext):
     slot_name = None
     tags = {"AP", "DeathLink"}
 
-    def __init__(self, server_address: str, password: str, gzd_dir: str, ready_callback=None, error_callback=None):
+    def __init__(self, server_address: str, slot_name: str, password: str, gzd_dir: str, ready_callback=None, error_callback=None):
         self.found_gzdoom = asyncio.Event()
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
+        self.username = slot_name
         self.ipc = IPC(self, gzd_dir, _IPC_SIZE)
 
         if self.ready_callback:
@@ -255,7 +256,7 @@ class GZDoomContext(SuperContext):
             self.last_hints = hints
 
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
     Launch the client
     """
@@ -283,7 +284,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
 
         print(f"GZDoom IPC files created. Host encoding: {locale.getencoding()}. IPC encoding: UTF-8.")
 
-        ctx = GZDoomContext(server_address, password, gzd_dir, ready_callback, error_callback)
+        ctx = GZDoomContext(server_address, slot_name, password, gzd_dir, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -333,9 +334,9 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
+def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback)
+    launch(server_address, slot_name, password, ready_callback, error_callback)
 
 
 if __name__ == '__main__':

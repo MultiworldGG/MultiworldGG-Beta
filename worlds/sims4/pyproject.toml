@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.sims4"
-version = "1.6.1"
+version = "1.7.1"
 description = "MultiWorld: The Sims 4"
 license = "MIT"
 license-files = [ "LICENSE",]
