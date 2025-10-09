@@ -10,8 +10,13 @@ from settings import Group, Bool, FilePath
 from worlds.AutoWorld import WebWorld, World
 
 from .bells import bell_location_groups, bell_location_name_to_id
-
+from .breakables import breakable_location_name_to_id, breakable_location_groups, breakable_location_table
+from .combat_logic import area_data, CombatState
+from .er_data import portal_mapping, RegionInfo, tunic_er_regions
+from .er_rules import set_er_location_rules
+from .er_scripts import create_er_regions, verify_plando_directions
 from .fuses import fuse_location_name_to_id, fuse_location_groups
+from .grass import grass_location_table, grass_location_name_to_id, grass_location_name_groups, excluded_grass_locations
 from .items import (item_name_to_id, item_table, item_name_groups, fool_tiers, filler_items, slot_data_item_names,
                     combat_items)
 from .locations import location_table, location_name_groups, standard_location_name_to_id, hexagon_locations
@@ -21,6 +26,8 @@ from .options import (TunicOptions, EntranceRando, tunic_option_groups, tunic_op
                       check_options, LocalFill, get_hexagons_in_pool, HexagonQuestAbilityUnlockType)
 from . import ut_stuff
 
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, VERSION, WORLD_VERSION = get_archipelago_json("tunic")
 
 class TunicSettings(Group):
     class DisableLocalSpoiler(Bool):

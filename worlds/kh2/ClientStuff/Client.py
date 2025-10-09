@@ -7,9 +7,9 @@ import json
 import requests
 
 from pymem import pymem
-import logging
+#import logging
 # Disable pymem logger to suppress ProcessError messages
-logging.getLogger('pymem').setLevel(logging.CRITICAL)
+#logging.getLogger('pymem').setLevel(logging.CRITICAL)
 
 from worlds.kh2 import item_dictionary_table, exclusion_item_table, CheckDupingItems, all_locations, \
                        exclusion_table,  all_weapon_slot, support_set, action_set 
@@ -139,6 +139,7 @@ class KH2Context(CommonContext):
             "send_popup_type":        "Puzzle",  # type of popup when you receive an item
             "receive_popup_type":     "Puzzle",  # can be Puzzle, Info or None
         }
+        self.client_settings = default_settings.copy()
 
         if "localappdata" in os.environ:
             self.game_communication_path = os.path.expandvars(r"%localappdata%\KH2AP")
@@ -648,22 +649,34 @@ class KH2Context(CommonContext):
 
     def get_addresses(self):
         if not self.kh2connected and self.kh2 is not None:
+            # Verify base_address is available before attempting reads
+            try:
+                if not hasattr(self.kh2, 'base_address') or self.kh2.base_address is None:
+                    return  # pymem not fully initialized yet
+            except Exception:
+                return  # pymem not ready
+            
             if self.kh2_game_version is None:
                 # current verions is .10 then runs the get from github stuff
-                if self.kh2_read_string(0x9A98B0, 4) == "KH2J":
-                    self.kh2_game_version = "STEAM"
-                    self.Now = 0x0717008
-                    self.Save = 0x09A98B0
-                    self.Slot1 = 0x2A23598
-                    self.Journal = 0x7434E0
-                    self.Shop = 0x7435D0
-                    self.InfoBarPointer = 0xABE828
-                    self.isDead = 0x0BEF4A8
-                    self.FadeStatus = 0xABB4B8
-                    self.PlayerGaugePointer = 0x0ABD248
-                elif self.kh2_read_string(0x9A9330, 4) == "KH2J":
-                    self.kh2_game_version = "EGS"
-                else:
+                try:
+                    if self.kh2_read_string(0x9A98B0, 4) == "KH2J":
+                        self.kh2_game_version = "STEAM"
+                        self.Now = 0x0717008
+                        self.Save = 0x09A98B0
+                        self.Slot1 = 0x2A23598
+                        self.Journal = 0x7434E0
+                        self.Shop = 0x7435D0
+                        self.InfoBarPointer = 0xABE828
+                        self.isDead = 0x0BEF4A8
+                        self.FadeStatus = 0xABB4B8
+                        self.PlayerGaugePointer = 0x0ABD248
+                    elif self.kh2_read_string(0x9A9330, 4) == "KH2J":
+                        self.kh2_game_version = "EGS"
+                except Exception:
+                    # Memory read failed, pymem not ready yet
+                    return
+                
+                if self.kh2_game_version is None:
                     if self.game_communication_path:
                         logger.info("Checking with most up to date addresses from the addresses json.")
                         # if mem addresses file is found then check version and if old get new one
@@ -749,10 +762,18 @@ async def kh2_watcher(ctx: KH2Context):
                         if ctx.pause_game:
                             await asyncio.sleep(5)
                             continue
-                        ctx.kh2 = pymem.Pymem(process_name="KINGDOM HEARTS II FINAL MIX")
+                        if ctx.kh2 is None:
+                            ctx.kh2 = pymem.Pymem(process_name="KINGDOM HEARTS II FINAL MIX")
+                            logger.info("Game process found. Identifying game version...")
                         ctx.get_addresses()
-                        logger.info("Game Connection Established.")
+                        # Only log success if we actually connected
+                        if ctx.kh2connected:
+                            logger.info("Game Connection Established.")
+                        else:
+                            # Still waiting for memory to be readable, retry after short delay
+                            await asyncio.sleep(0.5)
                     except Exception as e:
+                        ctx.kh2 = None  # Reset pymem on exception
                         logger.info("Game not found, retrying in 5 seconds...")
                         if not ctx.exit_event.is_set():
                             await asyncio.sleep(5)

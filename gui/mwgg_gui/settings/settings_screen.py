@@ -49,11 +49,6 @@ settings_dict = {
     ],
 }
 
-# Log the available sections
-logger.debug("Available settings sections:")
-for section in settings_dict:
-    logger.debug(f"  - {section}")
-
 # Define custom widgets in kv language
 KV = '''
 SettingsNavLayout:
