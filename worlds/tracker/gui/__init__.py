@@ -4,13 +4,12 @@ from kivymd.uix.recycleview import MDRecycleView
 from kivymd.uix.behaviors import HoverBehavior
 from kivymd.uix.label import MDLabel
 from kivymd.uix.divider import MDDivider
-from kivymd.uix.tooltip import MDTooltip
+from kivymd.uix.tooltip import MDTooltip, MDTooltipPlain
 from kivymd.app import MDApp
 from kivy.uix.widget import Widget
 from kivy.properties import StringProperty, NumericProperty, BooleanProperty, DictProperty, ColorProperty
 from kivy.metrics import dp
 from kivymd.uix.fitimage import FitImage
-from kivymd.uix.tooltip import ToolTip
 from kivymd.uix.screen import MDScreen
 from kivy.lang import Builder
 
@@ -49,7 +48,7 @@ class TrackerScreen(MDScreen):
 class TrackerLayout(BoxLayout):
     pass
 
-class TrackerTooltip(ToolTip):
+class TrackerTooltip(MDTooltipPlain):
     pass
 
 class TrackerView(MDRecycleView):
@@ -276,6 +275,54 @@ class VisualTracker(BoxLayout):
                 ldeferredDict[event_name].append(temp_loc)
         self.ids.location_canvas.add_widget(self.location_icon)
         return returnDict, deferredDict, ldeferredDict
+'''
+This is adding an additional hint label to the hints tab for 'in logic'
+
+Will add this via mwgg_gui.overrides.expansionlist.py
+'''
+# class TrackerHintLabel():
+#     logic_text = StringProperty("")
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.app = MDApp.get_running_app()
+#         logic = TrackerTooltip(
+#             sort_key="finding",  # is lying to computer and player but fixing it will need core changes
+#             text="", halign='center', valign='center', pos_hint={"center_y": 0.5},
+#             )
+#         self.add_widget(logic)
+
+#         def set_text(_, value):
+#             logic.text = value
+#         self.bind(logic_text=set_text)
+
+#     def refresh_view_attrs(self, rv, index, data):
+#         super().refresh_view_attrs(rv, index, data)
+#         if data["item"]["text"] == rv.header["item"]["text"]:
+#             self.logic_text = "[u]In Logic[/u]"
+#             return
+#         ctx = self.app.ctx
+#         if "status" in data:
+#             loc = data["status"]["hint"]["location"]
+#             from NetUtils import HintStatus
+#             found = data["status"]["hint"]["status"] == HintStatus.HINT_FOUND
+#         else:
+#             prefix = len("[color=00FF7F]")
+#             suffix = len("[/color]")
+#             loc_name = data["location"]["text"][prefix:-1*suffix]
+#             loc = ctx.location_names[ctx.game].get(loc_name)
+#             found = "Not Found" not in data["found"]["text"]
+
+#         in_logic = loc in ctx.tracker_core.locations_available
+#         self.logic_text = rv.parser.handle_node({
+#             "type": "color", "color": "green" if found else
+#             "orange" if in_logic else "red",
+#             "text": "Found" if found else "In Logic" if in_logic
+#             else "Not Found"})
+
+#     def kv_post(self, base_widget):
+#         self.viewclass = TrackerHintLabel
+#     .on_kv_post = kv_post
 
 class TrackerScreen(MDScreen):
     tracker: TrackerLayout
@@ -337,72 +384,5 @@ class TrackerScreen(MDScreen):
         self.app.apply_property(show_map=BooleanProperty(True))
         self.app.fbind("show_map",set_map_tab)
         self.app.show_map = False
-
-
-def make_gui(self) -> MDScreen:
-
-    app = MDApp.get_running_app()
-
-
-
-    base_title = f"Tracker {UT_VERSION} for {apname} version"  # core appends ap version so this works
-
-    def __init__(self, **kwargs):
-        class TrackerHintLabel(MDLabel):
-            logic_text = StringProperty("")
-
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
-                self.app = MDApp.get_running_app()
-                logic = MDTooltip(
-                    sort_key="finding",  # is lying to computer and player but fixing it will need core changes
-                    text="", halign='center', valign='center', pos_hint={"center_y": 0.5},
-                    )
-                self.add_widget(logic)
-
-                def set_text(_, value):
-                    logic.text = value
-                self.bind(logic_text=set_text)
-
-            def refresh_view_attrs(self, rv, index, data):
-                super().refresh_view_attrs(rv, index, data)
-                if data["item"]["text"] == rv.header["item"]["text"]:
-                    self.logic_text = "[u]In Logic[/u]"
-                    return
-                ctx = self.app.ctx
-                if "status" in data:
-                    loc = data["status"]["hint"]["location"]
-                    from NetUtils import HintStatus
-                    found = data["status"]["hint"]["status"] == HintStatus.HINT_FOUND
-                else:
-                    prefix = len("[color=00FF7F]")
-                    suffix = len("[/color]")
-                    loc_name = data["location"]["text"][prefix:-1*suffix]
-                    loc = ctx.location_names[ctx.game].get(loc_name)
-                    found = "Not Found" not in data["found"]["text"]
-
-                in_logic = loc in ctx.tracker_core.locations_available
-                self.logic_text = rv.parser.handle_node({
-                    "type": "color", "color": "green" if found else
-                    "orange" if in_logic else "red",
-                    "text": "Found" if found else "In Logic" if in_logic
-                    else "Not Found"})
-
-            def kv_post(self, base_widget):
-                self.viewclass = TrackerHintLabel
-            HintLog.on_kv_post = kv_post
-
-
-    def update_hints(self):
-        try:
-            if self.ctx.tracker_core.player_id and self.ctx.tracker_core.multiworld:
-                self.ctx.updateTracker()
-        except Exception as e:
-            self.ctx.disconnected_intentionally = True
-            raise e
-        return super().update_hints()
-
-    
-    return TrackerScreen
 
 Builder.load_file("Tracker.kv")

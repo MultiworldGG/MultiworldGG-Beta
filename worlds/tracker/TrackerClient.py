@@ -20,6 +20,7 @@ from .TrackerCore import TrackerCore
 from collections import Counter, defaultdict
 from MultiServer import mark_raw
 from NetUtils import NetworkItem
+from kivymd.app import MDApp
 
 from . import TrackerCore
 
@@ -137,14 +138,14 @@ class TrackerCommandProcessor(ClientCommandProcessor):
 
     def _cmd_next_progression(self):
         """Finds all items that will unlock a check immediately when collected, and a best guess of how many new checks they will unlock."""
-        updateTracker(self.ctx)
+        self.ctx.updateTracker()
         baseLocs = len(self.ctx.tracker_core.locations_available)
         counter = Counter()
         goal_items = []
         items_to_check = {item.name for item in self.ctx.tracker_core.multiworld.get_items() if item.player == self.ctx.tracker_core.player_id and item.advancement}
         for item in items_to_check:
             self.ctx.tracker_core.manual_items.append(item)
-            update_ret = updateTracker(self.ctx)
+            update_ret = self.ctx.updateTracker()
             newlocs = len(self.ctx.tracker_core.locations_available) - baseLocs
             if newlocs:
                 counter[item] = newlocs
@@ -155,7 +156,7 @@ class TrackerCommandProcessor(ClientCommandProcessor):
             logger.info("No item will unlock any checks right now.")
         for (item, count) in counter.most_common():
             logger.info(f"{item} unlocks {count} check{'s' if count > 1 else ''}{' (and goal)' if item in goal_items else ''}.")
-        updateTracker(self.ctx)
+        self.ctx.updateTracker()
 
     def _cmd_toggle_auto_tab(self):
         """Toggle the auto map tabbing function"""
@@ -750,10 +751,6 @@ class TrackerGameContext(CommonContext):
 
         await super().disconnect(allow_autoreconnect)
 
-
-
-
-
 def load_json(pack, path):
     import pkgutil
     import json
@@ -912,6 +909,8 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
     """
     import logging
     logging.getLogger("TrackerClient")
+    from gui import TrackerScreen
+    tracker_screen = TrackerScreen()
 
     async def main():
         ctx = TrackerGameContext(server_address, slot_name, password, print_count=print_count, print_list=print_list, 
@@ -929,20 +928,22 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
         await ctx.server_auth()
         
+        ctx.ui.create_custom_screen("Tracker", tracker_screen)
+
         ctx.run_generator()
 
         await ctx.exit_event.wait()
         await ctx.shutdown()
 
 
-def launch(*args):
-    parser = get_base_parser(description=f"Gameless {apname} Client, for text interfacing.")
-    parser.add_argument('--name', default=None, help="Slot Name to connect as.")
-    if sys.stdout:  # If terminal output exists, offer gui-less mode
-        parser.add_argument('--count', default=False, action='store_true', help="just return a count of in logic checks")
-        parser.add_argument('--list', default=False, action='store_true', help="just return a list of in logic checks")
-    parser.add_argument("url", nargs="?", help=f"{apname} connection url")
-    args = handle_url_arg(parser.parse_args(args))
+# def launch(*args):
+#     parser = get_base_parser(description=f"Gameless {apname} Client, for text interfacing.")
+#     parser.add_argument('--name', default=None, help="Slot Name to connect as.")
+#     if sys.stdout:  # If terminal output exists, offer gui-less mode
+#         parser.add_argument('--count', default=False, action='store_true', help="just return a count of in logic checks")
+#         parser.add_argument('--list', default=False, action='store_true', help="just return a list of in logic checks")
+#     parser.add_argument("url", nargs="?", help=f"{apname} connection url")
+#     args = handle_url_arg(parser.parse_args(args))
 
 
 def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, 
