@@ -71,6 +71,7 @@ from kivymd.uix.navigationdrawer import MDNavigationLayout
 from kivymd.uix.appbar import MDBottomAppBar
 from kivy.uix.effectwidget import EffectWidget
 from kivymd.uix.textfield import MDTextField
+from kivymd.uix.screen import MDScreen
 
 from NetUtils import KivyMarkupJSONtoTextParser, JSONMessagePart, SlotType, HintStatus, MWGGUIHintStatus
 from Utils import persistent_load
@@ -122,6 +123,8 @@ class MultiMDApp(MDApp):
     hint_screen: HintScreen
     settings_screen: SettingsScreen
     launcher_screen: LauncherScreen
+
+    custom_screens: dict[str, MDScreen]
 
     bottom_appbar: BottomAppBar
     launcher_text_input: BottomBarTextInput
@@ -448,13 +451,12 @@ class MultiMDApp(MDApp):
         uninstall_worlds(["mwgg_igdb", "mwgg_igdb_sixteen", "mwgg_igdb_twelve"])
         install_worlds([index])
 
-    def change_screen(self, item):
+    def change_screen(self, item: str):
         '''
         This function is called when the screen is changed.
         It updates the current screen and dismisses menu
         with the screen names.
         '''
-        #self.screen_manager.current_heroes = ["logo"]
         if item in self.screen_manager.screen_names:
             self.screen_manager.current = item
             if self.top_appbar_menu:
@@ -465,7 +467,7 @@ class MultiMDApp(MDApp):
             if self.top_appbar_menu:
                 self.top_appbar_menu.dismiss()
 
-    def _create_screen(self, item):
+    def _create_screen(self, item: str):
         '''
         This function is called when the screen is changed.
         It updates or creates the current screen and dismisses 
@@ -482,6 +484,10 @@ class MultiMDApp(MDApp):
             self.launcher_screen = LauncherScreen()
             self.screen_manager.add_widget(self.launcher_screen)
             self.launcher_text_input = self.launcher_screen.bottom_appbar.text_input  
+
+    def create_custom_screen(self, screen: MDScreen):
+        self.custom_screens[screen.name] = screen
+        self.screen_manager.add_widget(screen)
 
     def console_init(self):
         '''

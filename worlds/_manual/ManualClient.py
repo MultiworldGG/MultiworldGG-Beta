@@ -4,11 +4,30 @@ import os
 import re
 import sys
 import time
+
+from kivy.metrics import dp
+from kivy.uix.button import Button
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.dropdown import DropDown
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.label import Label
+from kivy.uix.layout import Layout
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.spinner import Spinner, SpinnerOption
+from kivy.uix.textinput import TextInput
+from kivy.uix.treeview import TreeView, TreeViewNode, TreeViewLabel
+from kivy.core.window import Window
+from kivy.lang import Builder
+from kivy.properties import ColorProperty
+from kivy.clock import Clock
+from kivymd.uix.screen import MDScreen
+
 import typing
 from typing import Any, Optional
 
 import requests
 from worlds.LauncherComponents import icon_paths
+from worlds import AutoWorldRegister
 import json
 import traceback
 
@@ -26,9 +45,6 @@ try:
     tracker_loaded = True
 except ModuleNotFoundError:
     from CommonClient import CommonContext as SuperContext
-
-if typing.TYPE_CHECKING:
-    import Gui
 
 class ManualClientCommandProcessor(ClientCommandProcessor):
     def _cmd_resync(self) -> bool:
@@ -52,9 +68,6 @@ class ManualClientCommandProcessor(ClientCommandProcessor):
         else:
             self.output(response)
             return False
-
-
-
 
 
 class ManualContext(SuperContext):
@@ -90,10 +103,11 @@ class ManualContext(SuperContext):
         'header_background': [15/255, 80/255, 112/255, 1]
     }
 
-    def __init__(self, server_address, password, game, player_name, ready_callback=None, error_callback=None) -> None:
+    def __init__(self, server_address, slot_name, password, game, ready_callback=None, error_callback=None) -> None:
         super(ManualContext, self).__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
+        self.username = slot_name
 
         if tracker_loaded:
             super().set_callback(self.on_tracker_updated) # Universal Tracker takes this func and calls it when updateTracker is called
@@ -103,9 +117,8 @@ class ManualContext(SuperContext):
         self.send_index: int = 0
         self.syncing = False
         self.game = game
-        self.username = player_name
+
         if self.ready_callback:
-            from kivy.clock import Clock
             Clock.schedule_once(self.ready_callback, 0.1)
 
     async def server_auth(self, password_requested: bool = False):
@@ -255,27 +268,11 @@ class ManualContext(SuperContext):
     #     self.ui = ui_class(self)
     #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
-    def make_gui(self) -> typing.Type["Gui.MultiMDApp"]:
+    def make_gui(self) -> MDScreen:
         if hasattr(SuperContext, "make_gui"):
-            ui = super().make_gui()  # before the kivy imports so Gui gets loaded first
+            manual_screen = super().make_gui()
         else:
-            from Gui import MultiMDApp
-            ui = MultiMDApp
-
-        from kivy.metrics import dp
-        from kivy.uix.button import Button
-        from kivy.uix.boxlayout import BoxLayout
-        from kivy.uix.dropdown import DropDown
-        from kivy.uix.gridlayout import GridLayout
-        from kivy.uix.label import Label
-        from kivy.uix.layout import Layout
-        from kivy.uix.scrollview import ScrollView
-        from kivy.uix.spinner import Spinner, SpinnerOption
-        from kivy.uix.textinput import TextInput
-        from kivy.uix.treeview import TreeView, TreeViewNode, TreeViewLabel
-        from kivy.core.window import Window
-        from kivy.lang import Builder
-        from kivy.properties import ColorProperty
+            manual_screen = MDScreen(name="Manual")
 
         class ManualTabLayout(BoxLayout):
             pass
@@ -322,12 +319,11 @@ class ManualContext(SuperContext):
         class ManualControlsStyledLayout(BoxLayout):
             background_color = ColorProperty()
 
-        class ManualManager(ui):
-            base_title = f"{apname} Manual Client"
-            listed_items = {"(No Category)": []}
+        class ManualScreen(manual_screen):
+            listed_items = {"(No Category)": [], "(Hinted)": []}
             item_categories = ["(No Category)"]
-            listed_locations = {"(No Category)": []}
-            location_categories = ["(No Category)"]
+            listed_locations = {"(No Category)": [], "(Hinted)": []}
+            location_categories = ["(No Category)", "(Hinted)"]
 
             active_item_accordion = 0
             active_location_accordion = 0
@@ -338,11 +334,6 @@ class ManualContext(SuperContext):
             ctx: ManualContext
 
             def __init__(self, ctx):
-                super().__init__(ctx)
-
-            def build(self) -> Layout:
-                super().build()
-
                 self.manual_game_layout = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(30))
 
                 game_bar_label = Label(text="Manual Game ID", size=(dp(150), dp(30)), size_hint_y=None, size_hint_x=None)
@@ -352,7 +343,7 @@ class ManualContext(SuperContext):
 
                 self.grid.add_widget(self.manual_game_layout, 3)
 
-                panel = self.add_client_tab("Manual", ManualTabLayout(orientation="vertical"))
+                panel = self.add_widget(ManualTabLayout(orientation="vertical"))
 
                 self.controls_panel = ManualControlsLayout(orientation="horizontal", size_hint_y=None, height=dp(40))
                 self.tracker_and_locations_panel = TrackerAndLocationsLayout(cols = 2)
@@ -361,8 +352,6 @@ class ManualContext(SuperContext):
                 panel.content.add_widget(self.tracker_and_locations_panel)
 
                 self.build_tracker_and_locations_table()
-
-                return self.container
 
             def clear_lists(self):
                 self.listed_items = {"(No Category)": []}
@@ -848,12 +837,12 @@ class ManualContext(SuperContext):
                 self.ctx.items_received.append("__Victory__")
                 self.ctx.syncing = True
 
-        return ManualManager
+        return manual_screen
 
 async def game_watcher_manual(ctx: ManualContext):
     while not ctx.exit_event.is_set():
-        if ctx.ui:
-            ctx.ui.check_for_requested_update()
+        if ctx.ui.custom_screens["Manual"]:
+            ctx.ui.custom_screens["Manual"].request_update_tracker_and_locations_table()
 
         if ctx.syncing == True:
             sync_msg = [{'cmd': 'Sync'}]
@@ -888,34 +877,7 @@ def read_apmanual_file(apmanual_file):
         return json.loads(b64decode(f.read()))
 
 
-async def main(args):
-    config_file = {}
-    if args.apmanual_file:
-        config_file = read_apmanual_file(args.apmanual_file)
-    ctx = ManualContext(args.connect, args.password, config_file.get("game"), config_file.get("player_name"))
-    ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
-
-    ctx.item_table = config_file.get("items", {})
-    ctx.location_table = config_file.get("locations", {})
-    ctx.region_table = config_file.get("regions", {})
-    ctx.category_table = config_file.get("categories", {})
-
-    if tracker_loaded:
-        ctx.run_generator()
-    if gui_enabled:
-        ctx.run_gui()
-    ctx.run_cli()
-    progression_watcher = asyncio.create_task(
-        game_watcher_manual(ctx), name="ManualProgressionWatcher")
-
-    await ctx.exit_event.wait()
-    ctx.server_address = None
-
-    await progression_watcher
-
-    await ctx.shutdown()
-
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, apmanual_file: str = None):
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, apmanual_file: str = None):
     """
     Launch the client
     """
@@ -927,7 +889,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
         if apmanual_file:
             config_file = read_apmanual_file(apmanual_file)
         
-        ctx = ManualContext(server_address, password, config_file.get("game"), config_file.get("player_name"), ready_callback, error_callback)
+        ctx = ManualContext(server_address, config_file.get("player_name"), password, config_file.get("game"), ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -947,14 +909,25 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
         if ctx.game:
             await ctx.server_auth()
 
+        if tracker_loaded:
+            ctx.run_generator()
+
         if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
+            manual_screen = ctx.make_gui()
+            Clock.schedule_once(lambda dt: ctx.ui.create_custom_screen(manual_screen), .1)
+        #ctx.run_cli()
 
         if "tags" in config_file:
             ctx.tags = ctx.tags | config_file["tags"]
 
+        progression_watcher = asyncio.create_task(
+            game_watcher_manual(ctx), name="ManualProgressionWatcher")
+
+        await progression_watcher
+
         await ctx.exit_event.wait()
+        ctx.server_address = None
+
         await ctx.shutdown()
 
     import colorama
@@ -965,7 +938,15 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
         # We're in an existing event loop, create a task
         logger.info("Running in existing event loop (GUI mode)")
         
-        task = asyncio.create_task(main(), name="ManualMain")
+        class Args:
+            def __init__(self, server_address, slot_name, password, apmanual_file):
+                self.server_address = server_address
+                self.slot_name = slot_name
+                self.password = password
+                self.apmanual_file = apmanual_file
+        
+        args = Args(server_address, slot_name, password, apmanual_file)
+        task = asyncio.create_task(main(args), name="ManualMain")
         return task
     except RuntimeError:
         logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the Manual client.")
@@ -973,9 +954,6 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, apmanual_file: str = None):
+def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, apmanual_file: str = None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback, apmanual_file)
-
-if __name__ == '__main__':
-    launch()
+    launch(server_address, slot_name, password, ready_callback, error_callback, apmanual_file)
