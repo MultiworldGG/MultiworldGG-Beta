@@ -38,6 +38,8 @@ KV = '''
         pos_hint: {"x": 0, "top": 1}
 '''
 
+Builder.load_string(KV)
+
 if typing.TYPE_CHECKING:
     from CommonClient import CommonContext
 
@@ -51,7 +53,7 @@ class HintScreen(MDScreen):
     '''
     This is the main screen for displaying hints.
     It includes a top app bar, hint list panel, and bottom app bar.
-    Takes full window width with no sidebar.
+    Takes full window width
     '''
     name = "hint"
     bottom_appbar: BottomAppBar
@@ -62,11 +64,13 @@ class HintScreen(MDScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
+        self.size = (Window.width, Window.height-185)
         
         # Initialize components
         self.bottom_appbar = BottomAppBar(screen_name="hint")
         self.hint_layout = HintLayout()
-        self.hints_mdlist = MDList(size_hint_x=1, size_hint_y=1)
+        self.hint_scroll = self.hint_layout.hint_scroll
+        self.hints_mdlist = MDList()
         # Schedule initialization
         Clock.schedule_once(lambda x: self.init_components())
 
@@ -77,12 +81,11 @@ class HintScreen(MDScreen):
         self.add_widget(self.bottom_appbar)
         
         # Set up hint layout positioning and sizing to take full window width
-        self.hint_layout.y = dp(82)  # Account for bottom app bar
-        self.hint_layout.size_hint_y = 1 - (dp(185) / Window.height)  # Account for top and bottom bars
-        self.hint_layout.size_hint_x = 1  # Full window width
+        self.hint_layout.y = dp(82)  # Account for bottom app bar # Account for top and bottom bars
+        self.hint_layout.size_hint = (1, 1)
         
         # Add hints list to the hint layout (after the search placeholder)
-        self.hint_layout.add_widget(self.hints_mdlist)
+        self.hint_scroll.add_widget(self.hints_mdlist)
 
     def update_hints_list(self):
         """Update the hints list when hint data becomes available"""
@@ -120,26 +123,23 @@ class HintLayout(MDBoxLayout):
     """
     orientation = "vertical"
     app: MDApp
+    hint_scroll: MDScrollView
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.app = MDApp.get_running_app()
-        
+        self.hint_scroll = MDScrollView(size_hint_y=.9, size_hint_x=1)
         # Create placeholder for future search and filter functionality
         self.search_placeholder = HintFeaturebar(
+            size_hint_y=.1,
             orientation="horizontal",
-            size_hint_y=None,
-            height=dp(150),
             spacing=dp(16),
             padding=[dp(16), dp(8), dp(16), dp(8)]
         )
         
         # Add placeholder label for future search functionality
         placeholder_label = MDLabel(
-            text="Search & Filter Options (Future Feature)",
-            theme_text_color="Hint",
-            size_hint_y=None,
-            height=dp(40)
+            text="Search & Filter Options (Future Feature)"
         )
 
         self.show_all_hints_switch = MDSwitch(
@@ -150,8 +150,6 @@ class HintLayout(MDBoxLayout):
         
         self.refresh_button = MDIconButton(
             icon="refresh",
-            size_hint_y=None,
-            height=dp(40),
             on_release=self.on_refresh_hints
         )
         
@@ -160,6 +158,7 @@ class HintLayout(MDBoxLayout):
         self.search_placeholder.add_widget(self.refresh_button)
         # Add the placeholder to the layout
         self.add_widget(self.search_placeholder)
+        self.add_widget(self.hint_scroll)
 
     def on_show_all_hints(self, instance, value):
         self.app.show_all_hints = value
@@ -239,6 +238,8 @@ class HintListPanel(GameListPanel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.padding = (dp(16), dp(16), dp(16), dp(16))
+        self.spacing = dp(8)
         self._populated = False
         Clock.schedule_once(self.populate_slot_item, 0)
 
@@ -264,7 +265,7 @@ class HintListPanel(GameListPanel):
         self.panel_header_layout = SlotListItemHeader(item_data=self.item_data, panel=self)
         self.leading_avatar = self.panel_header_layout.ids.leading_avatar
         self.panel_header.add_widget(self.panel_header_layout)
-        self.leading_avatar.source = "" #self.item_data['avatar']
+        self.leading_avatar.source = "" if not self.item_data['avatar'] else self.item_data['avatar']
         if self.item_data.bk_mode:
             self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="food", theme_font_size="Custom", 
                                                                                         font_size=dp(14), pos_hint={"center_y": 0.5}),1)
@@ -284,8 +285,7 @@ class HintListPanel(GameListPanel):
             "progression": self.app.theme_mw.markup_tags_theme.progression_item_color[i],
             "progression_goal": self.app.theme_mw.markup_tags_theme.progression_goal_item_color[i],
         }
-        # Create a scrollable container for the hint items
-        hints_container = MDList()
+
         
         for hint in self.item_data.hints.values():
             if hint.hint_status == HintStatus.HINT_FOUND or hint.found:
@@ -309,16 +309,7 @@ class HintListPanel(GameListPanel):
                     dropdown_callback=lambda status: on_select_status(hint, status)
                 )
             
-            hints_container.add_widget(hint_item)
-        
-        # Create a scroll view for the hints and add it to the panel content
-        # Calculate dynamic height based on hint count, but cap it for usability
-        visible_hints = len([h for h in self.item_data.hints.values() 
-                           if not (h.hide and not self.app.show_all_hints)])
-        max_height = min(dp(400), max(dp(120), visible_hints * dp(80) + dp(20)))
-        hints_scroll = MDScrollView(size_hint_y=None, height=max_height)
-        hints_scroll.add_widget(hints_container)
-        self.panel_content.add_widget(hints_scroll)
+            self.panel_content.add_widget(hint_item)
 
     def on_bkmode(self, hint: UIHint):
         hint.set_status(mwgg_status=MWGGUIHintStatus.HINT_BK_MODE)
@@ -328,5 +319,3 @@ class HintListPanel(GameListPanel):
     
     def on_shop(self, hint: UIHint):
         hint.set_status(mwgg_status=MWGGUIHintStatus.HINT_SHOP)
-
-Builder.load_string(KV)

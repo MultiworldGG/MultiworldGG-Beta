@@ -127,7 +127,7 @@
                         id: server
                         size_hint_x: 0.8
                         pos_hint: {"center_x": 0.5}
-                        text: app.ctx.suggested_address.split(":")[0] if app.ctx.suggested_address else app.app_config.get("client", "hostname", fallback="")
+                        text: app.ctx.suggested_host
                         MDTextFieldLeadingIcon:
                             theme_icon_color: "Custom"
                             icon: 'router-network'
@@ -140,7 +140,7 @@
                         input_filter: 'int'
                         size_hint_x: 0.8
                         pos_hint: {"center_x": 0.5}
-                        text: app.ctx.suggested_address.split(":")[1] if app.ctx.suggested_address else app.app_config.get("client", "port", fallback="")
+                        text: app.ctx.suggested_port
                         MDTextFieldLeadingIcon:
                             theme_icon_color: "Custom"
                             icon: 'numeric'
@@ -152,7 +152,7 @@
                         id: slot_name
                         size_hint_x: 0.8
                         pos_hint: {"center_x": 0.5}
-                        text: app.app_config.get("client", "slot", fallback="")
+                        text: app.ctx.suggested_username
                         on_text_validate: app.launcher_screen.connect()
                         MDTextFieldLeadingIcon:
                             theme_icon_color: "Custom"

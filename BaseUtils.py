@@ -20,9 +20,9 @@ __all__ = ("Version",
            "user_path",
            "output_path",
            "cache_path",
-           "init_logging", 
-           "ByValue", 
-           "loglevel_mapping")
+           "init_logging",
+           "loglevel_mapping",
+           "ByValue")
 
 class Version(typing.NamedTuple):
     major: int
@@ -342,3 +342,4 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
     except FileNotFoundError:
         return world, ["Unknown"], "0.0.0", "0.0.0"
     return data["game"], data["authors"], data["minimum_ap_version"], data["world_version"]
+

@@ -20,8 +20,6 @@ from kivy.clock import Clock
 from kivy.metrics import dp
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.menu import MDDropdownMenu
-from collections import deque
-from typing import Deque
 from mwgg_gui.constants import CONSOLE_ACTIONS, LAUNCHER_ACTIONS
 
 Builder.load_string('''
@@ -55,7 +53,7 @@ class BottomBarTextInput(MDTextField):
     icon: StringProperty
     hint_text: StringProperty
     silent_prefix: StringProperty
-    MAXIMUM_HISTORY_MESSAGES = 50
+    app: MDApp
 
     #hint autocomplete
     min_chars = NumericProperty(3)
@@ -67,6 +65,7 @@ class BottomBarTextInput(MDTextField):
         self.hint_text = "Enter text"
         self.silent_prefix = ""
         self.action_type = "console"
+        self.app = MDApp.get_running_app()
         super().__init__(*args, **kwargs)
         self.leading_icon = self.ids.leading_icon
         self.icon = "blank"
@@ -74,21 +73,17 @@ class BottomBarTextInput(MDTextField):
         self.bind(on_text_validate=self.on_fork)
         self.bind(width=lambda instance, x: setattr(self.dropdown, "width", x))
         self.write_tab = False
-        self._command_history_index = -1
-        self._command_history: Deque[str] = deque(maxlen=BottomBarTextInput.MAXIMUM_HISTORY_MESSAGES)
-            
-    def update_history(self, new_entry: str) -> None:
-        self._command_history_index = -1
-        if is_command_input(new_entry):
-            self._command_history.appendleft(new_entry)
 
     def on_fork(self, instance):
+        self.hint_text = "Enter text"
+        self.dropdown.items.clear()
         if self.action_type == "hint":
-            self.on_message(instance)
+            self.on_hint_search(instance.text)
         elif self.action_type == "admin":
-            self.on_admin_message(instance)
+            self.on_admin_message(instance.text)
         else:
-            MDApp.get_running_app().commandprocessor(instance.text)
+            self.on_message(instance.text)
+        self.text = ""
 
     @property
     def icon(self):
@@ -98,23 +93,64 @@ class BottomBarTextInput(MDTextField):
     def icon(self, value):
         self.leading_icon.icon = value
 
-    def on_admin_message(self, instance):
-        MDApp.get_running_app().commandprocessor("!admin "+instance.text)
+    def on_admin_message(self, text):
+        self.app.on_message("!admin /"+text, self)
 
-    def on_message(self, instance):
-        if instance.text in self.item_names:
-            MDApp.get_running_app().commandprocessor("!hint "+instance.text)
-        elif instance.text in self.location_names:
-            MDApp.get_running_app().commandprocessor("!hint_location "+instance.text)
-        self.item_names = []
-        self.location_names = []
+    def on_hint_search(self, text):
+        if text in self.item_names:
+            self.app.on_message("!hint "+text, self)
+            self.item_names = []
+            self.location_names = []
+        elif text in self.location_names:
+            self.app.on_message("!hint_location "+text, self)
+            self.item_names = []
+            self.location_names = []
+
+    def on_message(self, text):
+        self.app.on_message(text, self)
 
     def on_text(self, instance, value):
-        if self.action_type != "hint":
+        if self.action_type == "admin":
+            self.on_admin_text(instance, value)
+        if self.action_type == "hint":
+            self.on_hint_text(instance, value)
+        else:
             return
+
+    def on_admin_text(self, instance, value):
+        self.dropdown.items.clear()
+        ctx = self.app.ctx
+        if not ctx.connected:
+            return
+
+        self.admin_commands = {"login": "Login to the server"}
+        if ctx.admin:
+            self.admin_commands.extend({
+                'collect': 'Usage: collect <username>', 
+                'release': 'Usage: release <username>', 
+                'send_location': 'Usage: send_location <user_with_location> <location_name>', 
+                'hint': 'Usage: hint <username> <item_name>', 
+                'hint_location': 'Usage: hint_location <username> <location_name>', 
+                'option': 'Usage: option <server_option_name> <server_option_value>'})
+        
+        # Add commands to dropdown
+        for command in sorted(self.admin_commands.items()):
+            self.dropdown.items.append({
+                "text": command[0],
+                "viewclass": "OneLineListItem",
+                "on_release": lambda x, cmd=command: self._select_admin_command(cmd),
+            })
+
+    def _select_admin_command(self, command):
+        """Handle selection of an admin command from the dropdown"""
+        self.text = command[0]
+        self.hint_text = command[1]
+        self.dropdown.dismiss()
+    
+    def on_hint_text(self, instance, value):
         if len(value) >= self.min_chars:
             self.dropdown.items.clear()
-            ctx = MDApp.get_running_app().ctx
+            ctx = self.app.ctx
             if not ctx.game:
                 return
             self.item_names = [item for item in ctx.item_names._game_store[ctx.game].values()]
@@ -144,6 +180,31 @@ class BottomBarTextInput(MDTextField):
             #     Clock.schedule_once(self.dropdown.check_ver_growth, 0.1)
         else:
             self.dropdown.dismiss()
+
+    def keyboard_on_key_down(self, window, keycode, text, modifiers):
+        """
+        Override the keyboard_on_key_down method to handle up and down arrow keys for history navigation
+        """
+        key, _ = keycode
+
+        if key == self.interesting_keys.cursor_up:
+            self._change_to_history_text_if_available(self.app._command_history_index + 1)
+            return True
+        if key == self.interesting_keys.cursor_down:
+            self._change_to_history_text_if_available(self.app._command_history_index - 1)
+            return True
+        return super().keyboard_on_key_down(window, keycode, text, modifiers)
+
+    def _change_to_history_text_if_available(self, new_index: int) -> None:
+        if new_index < -1:
+            return
+        if new_index >= len(self.app._command_history):
+            return
+        self.app._command_history_index = new_index
+        if new_index == -1:
+            self.text = ""
+            return
+        self.text = self.app._command_history[self.app._command_history_index]
 
 class BottomAppBar(MDBottomAppBar):
     text_input: BottomBarTextInput

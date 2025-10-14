@@ -9,6 +9,7 @@ import urllib.request
 import shutil
 import zipfile
 import re
+import tempfile
 import logging
 logger = logging.getLogger("MultiWorld")
 
@@ -243,51 +244,6 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
     """
     if is_frozen() and not worlds_only:
         return []
-    
-    # Debug environment information
-    logger.info("=== ENVIRONMENT DEBUG INFO ===")
-    logger.info(f"is_frozen(): {is_frozen()}")
-    logger.info(f"python_cmd: {python_cmd}")
-    logger.info(f"sys.executable: {sys.executable}")
-    logger.info(f"sys.exec_prefix: {sys.exec_prefix}")
-    logger.info(f"sys.prefix: {sys.prefix}")
-    logger.info(f"sys.path: {sys.path}")
-    logger.info(f"PYTHONHOME: {os.environ.get('PYTHONHOME', 'Not set')}")
-    logger.info(f"PYTHONPATH: {os.environ.get('PYTHONPATH', 'Not set')}")
-    logger.info(f"PYTHONSTARTUP: {os.environ.get('PYTHONSTARTUP', 'Not set')}")
-    logger.info(f"PYTHONPLATLIBDIR: {os.environ.get('PYTHONPLATLIBDIR', 'Not set')}")
-    logger.info(f"PYTHONCASEOK: {os.environ.get('PYTHONCASEOK', 'Not set')}")
-    logger.info(f"PYTHONIOENCODING: {os.environ.get('PYTHONIOENCODING', 'Not set')}")
-    logger.info(f"PYTHONHASHSEED: {os.environ.get('PYTHONHASHSEED', 'Not set')}")
-    logger.info(f"PYTHONMALLOC: {os.environ.get('PYTHONMALLOC', 'Not set')}")
-    logger.info(f"PYTHONCOERCECLOCALE: {os.environ.get('PYTHONCOERCECLOCALE', 'Not set')}")
-    logger.info(f"PYTHONBREAKPOINT: {os.environ.get('PYTHONBREAKPOINT', 'Not set')}")
-    logger.info(f"PYTHON_COLORS: {os.environ.get('PYTHON_COLORS', 'Not set')}")
-    logger.info(f"PYTHON_HISTORY: {os.environ.get('PYTHON_HISTORY', 'Not set')}")
-    logger.info(f"PYTHON_CPU_COUNT: {os.environ.get('PYTHON_CPU_COUNT', 'Not set')}")
-    logger.info(f"PYTHONDEBUG: {os.environ.get('PYTHONDEBUG', 'Not set')}")
-    logger.info(f"PYTHONDEVMODE: {os.environ.get('PYTHONDEVMODE', 'Not set')}")
-    logger.info(f"PYTHONDONTWRITEBYTECODE: {os.environ.get('PYTHONDONTWRITEBYTECODE', 'Not set')}")
-    logger.info(f"PYTHONFAULTHANDLER: {os.environ.get('PYTHONFAULTHANDLER', 'Not set')}")
-    logger.info(f"PYTHON_FROZEN_MODULES: {os.environ.get('PYTHON_FROZEN_MODULES', 'Not set')}")
-    logger.info(f"PYTHON_GIL: {os.environ.get('PYTHON_GIL', 'Not set')}")
-    logger.info(f"PYTHONINSPECT: {os.environ.get('PYTHONINSPECT', 'Not set')}")
-    logger.info(f"PYTHONINTMAXSTRDIGITS: {os.environ.get('PYTHONINTMAXSTRDIGITS', 'Not set')}")
-    logger.info(f"PYTHONNODEBUGRANGES: {os.environ.get('PYTHONNODEBUGRANGES', 'Not set')}")
-    logger.info(f"PYTHONNOUSERSITE: {os.environ.get('PYTHONNOUSERSITE', 'Not set')}")
-    logger.info(f"PYTHONOPTIMIZE: {os.environ.get('PYTHONOPTIMIZE', 'Not set')}")
-    logger.info(f"PYTHONPERFSUPPORT: {os.environ.get('PYTHONPERFSUPPORT', 'Not set')}")
-    logger.info(f"PYTHONPROFILEIMPORTTIME: {os.environ.get('PYTHONPROFILEIMPORTTIME', 'Not set')}")
-    logger.info(f"PYTHONPYCACHEPREFIX: {os.environ.get('PYTHONPYCACHEPREFIX', 'Not set')}")
-    logger.info(f"PYTHONSAFEPATH: {os.environ.get('PYTHONSAFEPATH', 'Not set')}")
-    logger.info(f"PYTHONTRACEMALLOC: {os.environ.get('PYTHONTRACEMALLOC', 'Not set')}")
-    logger.info(f"PYTHONUNBUFFERED: {os.environ.get('PYTHONUNBUFFERED', 'Not set')}")
-    logger.info(f"PYTHONUTF8: {os.environ.get('PYTHONUTF8', 'Not set')}")
-    logger.info(f"PYTHONVERBOSE: {os.environ.get('PYTHONVERBOSE', 'Not set')}")
-    logger.info(f"PYTHONWARNDEFAULTENCODING: {os.environ.get('PYTHONWARNDEFAULTENCODING', 'Not set')}")
-    logger.info(f"PYTHONWARNINGS: {os.environ.get('PYTHONWARNINGS', 'Not set')}")
-    logger.info(f"PATH: {os.environ.get('PATH', 'Not set')}")
-    logger.info("=== END DEBUG INFO ===")
     # Ensure packaging is available
     try:
         import packaging.requirements
@@ -447,6 +403,8 @@ def _move_compiled_files(directory: Path) -> None:
                 else:
                     file_name = pyc_file.name
                 target_path = parent_dir / file_name
+                if target_path.exists():
+                    continue
                 shutil.move(str(pyc_file), str(target_path))
                 logger.debug(f"Moved {pyc_file.name} to {target_path}")
             # Remove empty __pycache__ directory
@@ -468,62 +426,178 @@ def _should_copy_extension_to_lib(file_path: Path) -> bool:
             return True
     return False
 
-def _file_exists_in_zip(zipf: zipfile.ZipFile, arcname: str, written_files: set) -> bool:
-    """Check if a file already exists in the zip archive or has been written this session."""
-    return arcname in zipf.namelist() or arcname in written_files
+def _parse_package_name_version(filename: str) -> tuple[str, str]:
+    """
+    TODO: Change to pip show command
+    """
+    # Remove common suffixes
+    name = filename.replace('.dist-info', '').replace('.egg-info', '')
+    
+    # Split on last hyphen followed by a digit (version separator)
+    match = re.match(r'^(.+?)-(\d+.*)$', name)
+    if match:
+        return match.group(1), match.group(2)
+    return name, ''
 
-def _add_to_library_zip(exe_dir: Path, source_path: Path) -> None:
-    """Adding a modules to the library.zip file for frozen builds"""
+def _add_to_library_zip(exe_dir: Path, source_path: Path, restart_callback=None) -> None:
+    """
+    Add modules to library.zip using a temp directory for version conflict resolution.
+    
+    Args:
+        exe_dir: Executable directory
+        source_path: Path to add to the zip
+        restart_callback: Optional callback to trigger client restart after zip replacement
+                         Example: restart_callback=lambda: os.execv(sys.executable, [sys.executable] + sys.argv)
+    """
     library_zip = exe_dir / "lib" / "library.zip"
     lib_dir = exe_dir / "lib"
-    written_files = set()
     
-    with zipfile.ZipFile(library_zip, "a") as zipf:
+    # Create a temporary directory
+    temp_dir = lib_dir / f"_temp_lib_{os.getpid()}"
+    temp_zip_path = lib_dir / f"_temp_library_{os.getpid()}.zip"
+    
+    try:
+        temp_dir.mkdir(exist_ok=True)
+        
+        # Step 1: Extract existing library.zip to temp directory
+        if library_zip.exists():
+            logger.debug(f"Extracting existing {library_zip.name} to temp directory")
+            with zipfile.ZipFile(library_zip, 'r') as zipf:
+                zipf.extractall(temp_dir)
+        
+        # Step 2: Process new content - handle version conflicts
         if source_path.is_file():
-            _handle_single_file(zipf, source_path, lib_dir, written_files)
+            _add_file_to_temp_dir(source_path, temp_dir, lib_dir)
         elif source_path.is_dir():
-            _handle_directory(zipf, source_path, lib_dir, written_files)
+            _add_directory_to_temp_dir(source_path, temp_dir, lib_dir)
+        
+        # Step 3: Create new zip from temp directory
+        logger.debug(f"Creating new library.zip from temp directory")
+        with zipfile.ZipFile(temp_zip_path, 'w', zipfile.ZIP_DEFLATED) as new_zipf:
+            for file_path in temp_dir.rglob("*"):
+                if file_path.is_file():
+                    arcname = str(file_path.relative_to(temp_dir))
+                    new_zipf.write(file_path, arcname)
+                    logger.debug(f"Added to zip: {arcname}")
+        
+        # Step 4: Atomic replacement
+        if library_zip.exists():
+            library_zip.unlink()
+        temp_zip_path.rename(library_zip)
+        logger.debug(f"Successfully replaced library.zip")
+        
+        # Trigger restart if callback provided
+        if restart_callback:
+            logger.info("Library updated - triggering client restart")
+            restart_callback()
+            
+    except Exception as e:
+        logger.error(f"Failed to update library.zip: {e}")
+        raise
+    finally:
+        # Clean up temp files
+        if temp_dir.exists():
+            shutil.rmtree(temp_dir, ignore_errors=True)
+        if temp_zip_path.exists():
+            temp_zip_path.unlink()
 
-def _handle_single_file(zipf: zipfile.ZipFile, source_path: Path, lib_dir: Path, written_files: set) -> None:
-    """Handle adding a single file to the zip or lib directory."""
+def _remove_old_package_version(temp_dir: Path, package_name: str, new_version: str) -> None:
+    """Remove old versions of a package from temp directory."""
+    for item in temp_dir.iterdir():
+        if not item.is_dir():
+            continue
+            
+        # Check if this is a package metadata directory
+        if item.name.endswith('.dist-info') or item.name.endswith('.egg-info'):
+            existing_pkg, existing_ver = _parse_package_name_version(item.name)
+            
+            # If package name matches but version differs, remove old version
+            if existing_pkg == package_name and existing_ver != new_version:
+                logger.info(f"Removing old version: {item.name} (replacing with {package_name}-{new_version})")
+                shutil.rmtree(item)
+        
+        # Also check for the package directory itself
+        elif item.name == package_name or item.name.replace('_', '-') == package_name.replace('_', '-'):
+            # Check if there's a corresponding versioned dist-info to determine if we should remove
+            for dist_info in temp_dir.glob(f"{package_name}*.dist-info"):
+                existing_pkg, existing_ver = _parse_package_name_version(dist_info.name)
+                if existing_pkg == package_name and existing_ver != new_version:
+                    logger.info(f"Removing old package directory: {item.name}")
+                    shutil.rmtree(item, ignore_errors=True)
+                    break
+
+def _add_file_to_temp_dir(source_path: Path, temp_dir: Path, lib_dir: Path) -> None:
+    """Add a single file to temp directory, handling version conflicts."""
     if _should_copy_extension_to_lib(source_path):
+        # Extensions go to lib dir, not the zip
         target_path = lib_dir / source_path.name
-        shutil.copy2(source_path, target_path)
-        logger.debug(f"Copied {source_path.name} to lib directory")
+        if not target_path.exists():
+            shutil.copy2(source_path, target_path)
+            logger.debug(f"Copied {source_path.name} to lib directory")
     else:
-        # Check if file already exists in zip before writing
-        if not _file_exists_in_zip(zipf, source_path.name, written_files):
-            zipf.write(source_path, source_path.name)
-            written_files.add(source_path.name)
-        else:
-            logger.debug(f"File {source_path.name} already exists in zip, skipping")
+        target_path = temp_dir / source_path.name
+        
+        # Check if exact file already exists
+        if target_path.exists():
+            logger.debug(f"File {source_path.name} already exists, skipping")
+            return
+        
+        # Copy the file
+        shutil.copy2(source_path, target_path)
+        logger.debug(f"Added {source_path.name} to temp directory")
 
-def _handle_directory(zipf: zipfile.ZipFile, source_path: Path, lib_dir: Path, written_files: set) -> None:
-    """Handle adding directory contents to the zip or lib directory."""
+def _add_directory_to_temp_dir(source_path: Path, temp_dir: Path, lib_dir: Path) -> None:
+    """Add directory contents to temp directory, handling version conflicts."""
+    # Determine if this is a versioned package
+    dir_name = source_path.name
+    package_name, version = _parse_package_name_version(dir_name)
+    
+    # If this is a versioned package, remove old versions first
+    if version:
+        _remove_old_package_version(temp_dir, package_name, version)
+    
+    # Process all files in the source directory
     for file_path in source_path.rglob("*"):
-        if file_path.is_file() and not file_path.name.endswith(".py"):
-            if _should_copy_extension_to_lib(file_path):
-                target_path = lib_dir / file_path.name
+        if not file_path.is_file() or file_path.name.endswith(".py"):
+            continue
+            
+        if _should_copy_extension_to_lib(file_path):
+            # Extensions go to lib dir
+            target_path = lib_dir / file_path.name
+            if not target_path.exists():
                 shutil.copy2(file_path, target_path)
                 logger.debug(f"Copied {file_path.name} to lib directory")
-            else:
-                # Other files go to the zip with directory structure preserved
-                arcname = str(source_path.name / file_path.relative_to(source_path))
-                if not _file_exists_in_zip(zipf, arcname, written_files):
-                    zipf.write(file_path, arcname)
-                    written_files.add(arcname)
-                else:
-                    logger.debug(f"File {arcname} already exists in zip, skipping")       
+        else:
+            # Everything else goes to temp dir with directory structure
+            rel_path = file_path.relative_to(source_path)
+            target_path = temp_dir / source_path.name / rel_path
+            
+            # Create parent directories if needed
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Copy file
+            shutil.copy2(file_path, target_path)
+            logger.debug(f"Added {source_path.name / rel_path} to temp directory")       
 
-def install_worlds(worlds: List[str], update: bool = False) -> None:
-    """Install worlds from the multiworld repository."""
+def install_worlds(worlds: List[str], update: bool = False, restart_callback=None) -> None:
+    """
+    Install worlds from the multiworld repository.
+    
+    Args:
+        worlds: List of world packages to install
+        update: If True, uninstall old versions first
+        restart_callback: Optional callback to trigger client restart after installation.
+                         Only called after the last world is installed to avoid multiple restarts.
+    """
     check_pip()
 
     if update:
         logger.info(f"Uninstalling old versions of: {worlds}")
         uninstall_worlds(worlds)
 
-    for world in worlds:
+    for idx, world in enumerate(worlds):
+        is_last_world = (idx == len(worlds) - 1)
+        
         if update:
             logger.info(f"Updating world: {world}")
         else:
@@ -574,12 +648,15 @@ def install_worlds(worlds: List[str], update: bool = False) -> None:
                 # First, move all .pyc files from __pycache__ to parent directories
                 _move_compiled_files(pip_install_dir)
                 
+                # Determine if we should pass restart callback (only on last world)
+                callback_to_pass = restart_callback if is_last_world else None
+                
                 # Process each item in the install directory
                 for item in pip_install_dir.iterdir():
                     if item.name != 'worlds' and item.name != 'mwgg_igdb':
                         # Add dependency packages to library.zip
                         logger.debug(f"Adding {item.name} to library")
-                        _add_to_library_zip(exe_dir, item)
+                        _add_to_library_zip(exe_dir, item, restart_callback=callback_to_pass)
                     if "mwgg_igdb" in item.name:
                         # Copy everything from pip_install_dir to worlds_install_dir, excluding .py files
                         logger.debug(f"Installing mwgg_igdb...")
@@ -662,8 +739,14 @@ def update_world_wheels() -> None:
                 logger.info(f"Successfully installed wheel {wheel}")
 
 
-def update_requirements(needed_packages: List[str]) -> None:
-    """Update packages from requirements.txt files and install worlds."""
+def update_requirements(needed_packages: List[str], restart_callback=None) -> None:
+    """
+    Update packages from requirements.txt files and install worlds.
+    
+    Args:
+        needed_packages: List of packages that need updating
+        restart_callback: Optional callback to trigger client restart after updates
+    """
     if is_frozen():
         return
     check_pip()
@@ -712,7 +795,7 @@ def update_requirements(needed_packages: List[str]) -> None:
     worlds_to_install = [pkg for pkg in needed_packages if pkg.startswith("worlds") or pkg.startswith("mwgg")]
     if worlds_to_install:
         logger.info(f"Installing/updating worlds: {worlds_to_install}")
-        install_worlds(worlds_to_install)
+        install_worlds(worlds_to_install, restart_callback=restart_callback)
 
 
 def install_packaging(yes: bool = False) -> None:
@@ -770,7 +853,7 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
     return all_satisfied
 
 
-def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = None) -> None:
+def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = None, restart_callback=None) -> None:
     """
     Main update function.
     
@@ -778,6 +861,9 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
         yes: Answer yes to all prompts
         force: Force update without checking
         worlds: List of specific worlds to update
+        restart_callback: Optional callback to trigger client restart after updates.
+                         Called when library.zip is updated in frozen builds.
+                         Example: restart_callback=lambda: subprocess.Popen([sys.executable] + sys.argv)
     """
     if is_frozen():
         if (exe_dir / "custom_wheels").exists():
@@ -785,7 +871,7 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
             update_world_wheels()
         updates = check_for_updates(worlds_only=True)
         if updates:
-            install_worlds(updates)
+            install_worlds(updates, restart_callback=restart_callback)
         else:
             logger.debug("No updates found.")
         return
@@ -799,7 +885,7 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
     if force:
         logger.debug("Force update requested - skipping update checks")
         # Force mode updates all requirements and worlds
-        update_requirements([])  # Empty list means update all
+        update_requirements([], restart_callback=restart_callback)  # Empty list means update all
         return
     
     # Check for available updates
@@ -817,13 +903,13 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
     logger.debug("Checking if all requirements are satisfied...")
     if not check_requirements_satisfied(yes=yes):
         logger.debug("Installing missing requirements...")
-        update_requirements([])  # Empty list means update all missing requirements
+        update_requirements([], restart_callback=restart_callback)  # Empty list means update all missing requirements
         return
     
     # Update packages that need updates (including worlds)
     if available_updates:
         logger.debug("Updating packages that need updates...")
-        update_requirements(available_updates)
+        update_requirements(available_updates, restart_callback=restart_callback)
     
     logger.debug("Update process completed.")
 

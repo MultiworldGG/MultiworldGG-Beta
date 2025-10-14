@@ -2643,7 +2643,7 @@ async def main(args: argparse.Namespace):
 
     if not data_filename:
         try:
-            filetypes = (("Multiworld data", (".archipelago", ".zip")),)
+            filetypes = [("Multiworld data", [".archipelago", ".zip"])]
             data_filename = Utils.open_filename("Select multiworld data", filetypes)
 
         except Exception as e:

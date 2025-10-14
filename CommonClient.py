@@ -274,11 +274,21 @@ class InitContext:
             await self.ui_task
 
     @property
-    def suggested_address(self) -> str:
-        if hasattr(self, 'server_address'):
-            return self.server_address
-        return Utils.persistent_load().get("client", {}).get("last_server_address", "")
+    def suggested_username(self) -> str:
+        return Utils.persistent_load().get('client', {}).get('last_username', '')
 
+    @property
+    def suggested_host(self) -> str:
+        if hasattr(self, 'server_address'):
+            return self.server_address.split(':')[0]
+        return Utils.persistent_load().get('client', {}).get('last_server_address', 'multiworld.gg')
+
+    @property
+    def suggested_port(self) -> str:
+        if hasattr(self, 'server_address'):
+            return self.server_address.split(':')[1]
+        persistent_port = Utils.persistent_load().get('client', {}).get('last_server_port', '38281')
+        return str(persistent_port)
 
 class CommonContext(InitContext):
     # The following attributes are used to Connect and should be adjusted as needed in subclasses
@@ -558,10 +568,23 @@ class CommonContext(InitContext):
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     @property
-    def suggested_address(self) -> str:
+    def suggested_username(self) -> str:
+        if self.username:
+            return self.username
+        return Utils.persistent_load().get('client', {}).get('last_username', '')
+
+    @property
+    def suggested_host(self) -> str:
         if self.server_address:
-            return self.server_address
-        return Utils.persistent_load().get("client", {}).get("last_server_address", "")
+            return self.server_address.split(':')[0]
+        return Utils.persistent_load().get('client', {}).get('last_server_address', 'multiworld.gg')
+
+    @property
+    def suggested_port(self) -> str:
+        if self.server_address:
+            return self.server_address.split(':')[1]
+        persistent_port = Utils.persistent_load().get('client', {}).get('last_server_port', '38281')
+        return str(persistent_port)
 
     @functools.cached_property
     def raw_text_parser(self) -> RawJSONtoTextParser:
@@ -1235,7 +1258,10 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.server_locations = ctx.missing_locations | ctx. checked_locations
 
         server_url = urllib.parse.urlparse(ctx.server_address)
-        Utils.persistent_store("client", "last_server_address", server_url.netloc)
+        Utils.persistent_store("client", "last_server_address", server_url.hostname)
+        Utils.persistent_store("client", "last_server_port", server_url.port)
+        if ctx.username:
+            Utils.persistent_store("client", "last_username", ctx.auth)
         if ctx.ui:
             ctx.ui.on_connect()
 

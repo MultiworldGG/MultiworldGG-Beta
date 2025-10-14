@@ -40,7 +40,7 @@ def main():
     parser = argparse.ArgumentParser(description="Build wheels for worlds")
     parser.add_argument("--clean", action="store_true", help="Clean build")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
-    parser.add_argument("--world", type=str, default="", help="Build specific world only")
+    parser.add_argument("--world", type=str, help="Build list of worlds only")
     args = parser.parse_args()
 
     # Get the script directory (src/tools)
@@ -61,26 +61,32 @@ def main():
     # Find all pyproject.toml files in subdirectories or specific world
     worlds_dir = script_dir / "src" / "worlds"
 
+    worlds_with_pyproject = []
+
     if args.world:
         # Build only the specified world
-        world_path = worlds_dir / args.world
-        pyproject_path = world_path / "pyproject.toml"
-        archipelago_json_path = world_path / "archipelago.json"
+        worlds_to_build = args.world.split(",")
+        print(worlds_to_build)
 
-        if not world_path.exists():
-            print_colored(f"Error: World directory '{args.world}' not found in {worlds_dir}", "red")
-            sys.exit(1)
+        for world in worlds_to_build:
+            world_path = worlds_dir / world
+            pyproject_path = world_path / "pyproject.toml"
+            archipelago_json_path = world_path / "archipelago.json"
 
-        if not pyproject_path.exists():
-            print_colored(f"Error: pyproject.toml not found in {args.world} directory", "red")
-            sys.exit(1)
+            if not world_path.exists():
+                print_colored(f"Error: World directory '{args.world}' not found in {worlds_dir}", "red")
+                sys.exit(1)
 
-        if not archipelago_json_path.exists():
-            print_colored(f"Error: archipelago.json not found in {args.world} directory", "red")
-            sys.exit(1)
+            if not pyproject_path.exists():
+                print_colored(f"Error: pyproject.toml not found in {args.world} directory", "red")
+                sys.exit(1)
 
-        worlds_with_pyproject = [args.world]
-        print_colored(f"Building specific world: {args.world}", "green")
+            if not archipelago_json_path.exists():
+                print_colored(f"Error: archipelago.json not found in {args.world} directory", "red")
+                sys.exit(1)
+
+            worlds_with_pyproject.append(world)
+            print_colored(f"Building specific world: {world}", "green")
     else:
         # Build all worlds with pyproject.toml files
         pyproject_files = list(worlds_dir.glob("*/pyproject.toml"))

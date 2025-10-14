@@ -6,7 +6,7 @@ import asynckivy
 from datetime import datetime, UTC
 from multiprocessing import Queue
 from logging.handlers import QueueHandler
-
+from collections import deque
 
 # Check if we're in a test environment
 
@@ -73,6 +73,7 @@ from kivy.uix.effectwidget import EffectWidget
 from kivymd.uix.textfield import MDTextField
 
 from NetUtils import KivyMarkupJSONtoTextParser, JSONMessagePart, SlotType, HintStatus, MWGGUIHintStatus
+from Utils import persistent_load
 # from Utils import async_start, get_input_text_from_response
 from mwgg_gui.components.mw_theme import RegisterFonts, DefaultTheme
 
@@ -92,6 +93,8 @@ if typing.TYPE_CHECKING:
     context_type = CommonClient.CommonContext
 else:
     context_type = object
+
+MAXIMUM_HISTORY_MESSAGES = 50
 
 class MainLayout(MDAnchorLayout):
     pass
@@ -134,6 +137,9 @@ class MultiMDApp(MDApp):
     ui_hint_data: dict[int, dict[int, list[UIHint]]]
     local_player_data: UIPlayerData
     text_buffer: Queue
+    
+    _command_history: typing.Deque[str] = deque(maxlen=MAXIMUM_HISTORY_MESSAGES)
+    _command_history_index: int = -1
 
     _show_all_hints: BooleanProperty(False)
     _logo_png: str = None
@@ -174,9 +180,9 @@ class MultiMDApp(MDApp):
         # Initialize local player data from config
         self.local_player_data = UIPlayerData(
             slot_id=-1,  # Use -1 to indicate local/unconnected player
-            slot_name=self.app_config.get('client', 'alias', fallback=''),
-            avatar=self.app_config.get('client', 'avatar', fallback=''),
-            pronouns=self.app_config.get('client', 'pronouns', fallback=''),
+            slot_name=persistent_load().get('client', {}).get('last_username', ''),
+            avatar=persistent_load().get('client', {}).get('avatar', ''),
+            pronouns=persistent_load().get('client', {}).get('pronouns', ''),
             bk_mode=False,
             in_call=False,
             end_user=True,
@@ -472,12 +478,10 @@ class MultiMDApp(MDApp):
             self.hint_screen = HintScreen()
             self.screen_manager.add_widget(self.hint_screen)
             self.hint_text_input = self.hint_screen.bottom_appbar.text_input
-            self.hint_text_input.bind(on_enter=self.on_message)
         elif item == "launcher":
             self.launcher_screen = LauncherScreen()
             self.screen_manager.add_widget(self.launcher_screen)
             self.launcher_text_input = self.launcher_screen.bottom_appbar.text_input  
-            self.launcher_text_input.bind(on_enter=self.on_message)
 
     def console_init(self):
         '''
@@ -515,7 +519,6 @@ class MultiMDApp(MDApp):
             self.console_screen = ConsoleScreen()
             self.screen_manager.add_widget(self.console_screen)
             self.console_text_input = self.console_screen.bottom_appbar.text_input
-            self.console_text_input.bind(on_enter=self.on_message)
 
     def _create_menu_item(self, item):
         """Create a menu item with proper binding
@@ -551,24 +554,26 @@ class MultiMDApp(MDApp):
     def update_address_bar(self, text: str):
         if hasattr(self, "top_appbar"):
             self.top_appbar.update_address_bar(text)
+      
+    def update_history(self, new_entry: str) -> None:
+        self._command_history_index = -1
+        if is_command_input(new_entry):
+            self._command_history.appendleft(new_entry)
 
-    def on_message(self, textinput: MDTextField):
+    def on_message(self, message: str, text_input: BottomBarTextInput):
         try:
-            input_text = textinput.text.strip()
-            textinput.text = ""
-            textinput.update_history(input_text)
+            input_text = message.strip()
+            self.update_history(input_text)
             # TODO: Fix
 
-            if self.screen_manager.current != "console" and \
-               hasattr(self.ctx, 'input_requests') and \
+            if hasattr(self.ctx, 'input_requests') and \
                self.ctx.input_requests > 0:
-               
                 self.ctx.input_requests -= 1
                 self.ctx.input_queue.put_nowait(input_text)
             elif is_command_input(input_text):
                 if hasattr(self.ctx, 'on_ui_command'):
                     self.ctx.on_ui_command(input_text)
-                self.commandprocessor(input_text)
+                    self.commandprocessor(input_text)
             elif input_text:
                 self.commandprocessor(input_text)
 

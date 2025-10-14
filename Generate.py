@@ -15,7 +15,7 @@ from typing import Any
 
 import ModuleUpdate
 
-ModuleUpdate.update()
+#ModuleUpdate.update()
 
 import Utils
 import Options

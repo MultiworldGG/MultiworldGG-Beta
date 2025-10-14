@@ -25,8 +25,10 @@ __all__ = ("ProfileAvatar",
            "show_profile")
 import logging
 import os
+from Utils import persistent_load
+from Utils import persistent_store
 from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.textfield import MDTextField
+from kivymd.uix.textfield import MDTextField, MDTextFieldHelperText, MDTextFieldHintText
 from kivymd.uix.label import MDLabel
 from kivymd.uix.button import MDButton, MDButtonText
 from kivymd.app import MDApp
@@ -37,24 +39,16 @@ from kivy.metrics import dp
 
 from kivymd.uix.selectioncontrol import MDSwitch
 from kivymd.uix.fitimage import FitImage
-from kivymd.uix.dialog import (MDDialog, 
-                               MDDialogIcon, 
+from kivymd.uix.dialog import (MDDialog,
                                MDDialogContentContainer, 
                                MDDialogHeadlineText, 
                                MDDialogSupportingText, 
                                MDDialogButtonContainer)
-from kivymd.uix.list import (MDListItem, 
-                             MDListItemLeadingAvatar,
-                             MDListItemLeadingIcon, 
-                             MDListItemSupportingText)
 from kivymd.uix.divider import MDDivider
 from kivymd.uix.widget import Widget
 
-from mwgg_gui.components.guidataclasses import UIPlayerData
-from Utils import user_path
-from FileUtils import FileUtils
 from kivy.lang import Builder
-from typing import TYPE_CHECKING, Any, Optional
+import urllib.request
         
 logger = logging.getLogger("MultiWorld")
 
@@ -116,7 +110,16 @@ class ProfileField(MDBoxLayout):
         self.profile_input = self.ids.profile_input
         self.profile_input_icon = self.ids.profile_input_icon
         self.icon = self.ids.profile_input_icon.icon
-        self.profile_input.text = self.app.app_config.get('client', self.settings_name, fallback='')
+        self.profile_input.text = persistent_load().get('client', {}).get(self.settings_name, '')
+
+    def save_profile_field(self, instance):
+        """Save profile field to config"""
+        if isinstance(instance, MDTextField):
+            text = instance.text
+        elif isinstance(instance, MDSwitch):
+            text = instance.active
+        persistent_store('client', self.settings_name, text)
+        setattr(self.local_player_data, self.settings_name, text)
 
     @property
     def icon(self):
@@ -126,25 +129,17 @@ class ProfileField(MDBoxLayout):
     def icon(self, value):
         self.ids.profile_input_icon.icon = value
 
-    def save_profile_field(self, instance):
-        """Save profile field to config"""
-        self.app.app_config.set('client', self.settings_name, instance.text)
-        self.app.app_config.write()
-        setattr(self.local_player_data, self.settings_name, instance.text)
-
 class ProfileSwitch(MDBoxLayout):
     """Profile switch section"""
     label = StringProperty("")
     settings_name = StringProperty("")
     profile_switch: ObjectProperty = None
-    #icon: StringProperty = ""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
         self.local_player_data = self.app.local_player_data
         self.profile_switch = self.ids.profile_switch
-        #self.icon = self.ids.profile_switch.icon
 
     def save_profile_switch(self, value: bool):
         """Save profile switch value"""
@@ -166,40 +161,62 @@ class ProfileAvatar(MDBoxLayout):
         self.app = MDApp.get_running_app()
         self.local_player_data = self.app.local_player_data
         self.adaptive_height = True
-        self.size_hint_x = 0.4
+        self.size_hint_x = 0.6
         self.pos_hint = {"center_x": 0.5}
+        self.orientation = "vertical"
+        self.spacing = dp(8)
         
         # Avatar display (100x100 circular)
         self.avatar_display = AvatarImage(
             size_hint=(None, None),
             size=(dp(100), dp(100)),
             radius=[dp(50), dp(50), dp(50), dp(50)],  # Circular
-            source=self.get_avatar_path(),
+            source=persistent_load().get('client', {}).get('avatar', ''),
             pos_hint={"center_x": 0.5}
         )
-        self.avatar_display.bind(on_release=self.on_select_avatar)
-        self.add_widget(self.avatar_display)
-    
-    def get_avatar_path(self):
-        """Get the current avatar file path"""
-        avatar_file = self.app.app_config.get('client', 'avatar', fallback='')
-        if avatar_file and os.path.exists(avatar_file):
-            return avatar_file
-        return ""
-    
-    def on_select_avatar(self, instance):
-        """Select an avatar"""
-        self.avatar_display.source = FileUtils.open_file_input_dialog(
-            title="Select Avatar",
-            filetypes=[("Image Files", ["*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp", "*.webp"])],
-            suggest=user_path()
+        self.avatar_url_input = MDTextField(
+            MDTextFieldHintText(text="https://example.com/avatar.png"),
+            id="avatar_url_input",
+            mode="outlined",
+            size_hint_x=1,
+            text=persistent_load().get('client', {}).get('avatar', ''),
         )
-        self.save_avatar(self.avatar_display.source)
+        self.avatar_url_input.bind(on_text_validate=lambda instance: self.on_select_avatar_from_url(instance))
+        self.avatar_display.bind(on_release=lambda x: setattr(self.avatar_url_input, 'focus', True))
+        self.add_widget(self.avatar_display)
+        self.add_widget(self.avatar_url_input)
+      
+    def on_select_avatar_from_url(self, instance):
+        """Set avatar from URL input"""
+        url = instance.text.strip()
+        
+        if url:
+            # run a request to the url, check if response is an image
+            # additionally check image size is less than 1MB
+            try:
+                response = urllib.request.urlopen(url)
+                if response.status == 200:
+                    if response.headers['Content-Type'].startswith('image/'):
+                        if response.length < 1024 * 1024:
+                            self.avatar_display.source = url
+                            self.save_avatar(url)
+                            return
+
+                self.avatar_url_input.error = True
+                self.avatar_url_input.add_widget(MDTextFieldHelperText(
+                    text="""Invalid image URL. Please ensure
+that the image is no larger than 1MB.
+and the image must be a valid image format."""))
+                self.avatar_display.source = ""
+                self.save_avatar("")
+            except Exception as e:
+                self.avatar_display.source = ""
+                self.save_avatar("")
+        return
     
     def save_avatar(self, avatar_path: str):
         """Save avatar path to config"""
-        self.app.app_config.set('client', 'avatar', avatar_path)
-        self.app.app_config.write()
+        persistent_store('client', 'avatar', avatar_path)
         self.local_player_data.avatar = avatar_path
 
 class ProfileAlias(ProfileField):
@@ -210,6 +227,7 @@ class ProfileAlias(ProfileField):
         self.settings_name = self.label.lower()
         self.hint_text = "Enter your alias"
         self.icon = "rename"
+        self.bind(on_text_validate=self.save_profile_field)
 
 class ProfilePronouns(ProfileField):
     """Profile pronouns section"""
@@ -219,7 +237,8 @@ class ProfilePronouns(ProfileField):
         self.settings_name = self.label.lower()
         self.hint_text = "Enter your pronouns"
         self.icon = "human-greeting-variant"
-
+        self.bind(on_text_validate=self.save_profile_field)
+        
 class ProfileBK(ProfileSwitch):
     """Profile status section"""
     def __init__(self, **kwargs):
@@ -227,6 +246,7 @@ class ProfileBK(ProfileSwitch):
         self.label = "BK Mode"
         self.settings_name = "in_bk"
         self.icon = "fast-food"
+        self.bind(on_text_validate=self.save_profile_switch)
 
 class ProfileInCall(ProfileSwitch):
     """Profile status section"""
@@ -235,6 +255,7 @@ class ProfileInCall(ProfileSwitch):
         self.label = "In Call"
         self.settings_name = "in_call"
         self.icon = "phone"
+        self.bind(on_text_validate=self.save_profile_switch)
 
 class ProfileDialog(MDDialog):
     """Profile dialog, overriding some stupid stuff"""
@@ -245,16 +266,20 @@ class ProfileDialog(MDDialog):
         else:
             super().add_widget(widget)
             return True
+    def save_button_release(self):
+        """Save button release
+        This is so jank."""
+        for widget in self.ids.content_container.children[0].children:
+            if isinstance(widget, ProfileField):
+                widget.save_profile_field(widget.profile_input)
+            elif isinstance(widget, ProfileSwitch):
+                widget.save_profile_switch(widget.profile_switch.active)
+        self.dismiss()
 
 def show_profile():
     """Show the profile dialog"""
     app = MDApp.get_running_app()
     app.profile_dialog = ProfileDialog(
-        # ----------------------------Icon-----------------------------
-        # MDDialogIcon(
-        #     icon="refresh",
-        # ),
-        # -----------------------Headline text-------------------------
         ProfileAvatar(), MDDialogHeadlineText(
             text=f"{app.local_player_data.slot_name}", size_hint_x=0.6
         ),
@@ -279,14 +304,14 @@ def show_profile():
         MDDialogButtonContainer(
             Widget(),
             MDButton(
-                MDButtonText(text="Edit"),
+                MDButtonText(text="Cancel"),
                 style="text",
                 on_release=lambda x: app.profile_dialog.dismiss(),
             ),
             MDButton(
                 MDButtonText(text="Save"),
                 style="text",
-                on_release=lambda x: app.profile_dialog.dismiss(),
+                on_release=lambda x: app.profile_dialog.save_button_release(),
             ),
             spacing="8dp",
         ),

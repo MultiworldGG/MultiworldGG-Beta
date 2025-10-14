@@ -574,7 +574,7 @@ class GameListPanel(MDExpansionPanel):
         self.panel_header_layout = SlotListItemHeader(item_data=self.item_data, panel=self)
         self.leading_avatar = self.panel_header_layout.ids.leading_avatar
         self.panel_header.add_widget(self.panel_header_layout)
-        self.leading_avatar.source = "" #self.item_data['avatar']
+        self.leading_avatar.source = "" if not self.item_data['avatar'] else self.item_data['avatar']
         if self.item_data.bk_mode:
             self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="food", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
         if self.item_data.in_call:

@@ -31,6 +31,8 @@ from kivy.metrics import dp
 import logging
 import re
 import asyncio
+from Utils import persistent_store, persistent_load
+
 
 logger = logging.getLogger("MultiWorld")
 
@@ -62,10 +64,10 @@ Builder.load_string('''
         text: "Not Connected"
     ClockLabel:
         id: clock_label
-        size_hint_x: .3
+        size_hint_x: .15
     Timer:
         id: timer
-        size_hint_x: .3
+        size_hint_x: .15
         text: "00:00:00"
 
     MDTopAppBarTrailingButtonContainer:
@@ -108,9 +110,12 @@ class Timer(MDTopAppBarTitle):
         self.theme_font_style = "Custom"
         self.font_style = "Monospace"
         self.role = "large"
+        self.theme_text_color = "Custom"
+        self.text_color = self.theme_cls.onSurfaceVariantColor
         self.text = "00:00:00"
         # Bind the elapsed_time property to update the display
         self.bind(elapsed_time=self.on_elapsed_time)
+        self.bind(is_running=self.on_is_running)
         
     def on_ui_built(self):
         self.ctx = MDApp.get_running_app().ctx
@@ -118,10 +123,18 @@ class Timer(MDTopAppBarTitle):
         # Only schedule if not already scheduled
         if self._update_event is None:
             self._update_event = Clock.schedule_interval(self._update_timer_wrapper, 0.1)
+
+    def on_is_running(self, instance, value):
+        """Called when is_running property changes"""
+        if value:
+            self.text_color = self.theme_cls.onSurfaceVariantColor
+        else:
+            self.text_color = self.theme_cls.primaryColor
     
     def start(self):
         """Start the timer (initial start or resume from pause)"""
         if not self.is_running:
+            self.elapsed_time = persistent_load('client', 'timer')
             if not self.has_been_started:
                 # Initial start - set the start time
                 self.start_time = time()
@@ -141,6 +154,7 @@ class Timer(MDTopAppBarTitle):
         """Reset the timer to 00:00:00 and set new start time"""
         self.stop()
         self.elapsed_time = 0
+        persistent_store('client', 'timer', 0)
         self.text = "00:00:00"
         self.has_been_started = False
         self.start_time = 0
@@ -167,8 +181,10 @@ class Timer(MDTopAppBarTitle):
         # Normal timer operation
         if self.is_running:
             self.elapsed_time = time() - self.start_time
+            persistent_store('client', 'timer', self.elapsed_time)
             # Check for goal completion
             if self.slot_info and self.slot_info.get('game_status') == "GOAL":
+                persistent_store('client', 'timer', 0)
                 self.stop()
                 return
 
@@ -202,7 +218,7 @@ class ServerRichTooltip(MDTooltipRich, HoverBehavior):
         """Override to prevent early dismissal while allowing normal KivyMD behavior"""
         # Add a small delay before dismissing to prevent accidental early dismissal
         # This gives users time to move mouse back if they accidentally moved off
-        Clock.schedule_once(self._delayed_leave, 1)
+        Clock.schedule_once(self._delayed_leave, .5)
     
     def _delayed_leave(self, dt):
         """Delayed leave that calls the parent's on_leave for proper dismissal"""
@@ -225,6 +241,7 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
     _game_info: StringProperty
     game_pages: ListProperty
     current_page: NumericProperty
+    initial_height: NumericProperty
     _connected: BooleanProperty(False)
 
     def __init__(self, **kwargs):
@@ -240,12 +257,18 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
         self.font_style = "Monospace"
         self.role = "large"
         self.tooltip = None  # Single tooltip instance
-
-        self.tooltip_display_delay = 4
-
-        
+        self.tooltip_display_delay = 2
         # Initialize tooltip content
         self._update_tooltip_content()
+        Clock.schedule_once(lambda x: setattr(self, 'initial_height', self.texture_size[1]), 1)
+
+    def on_text(self, instance, value):
+        """Called when the text is changed"""
+        if hasattr(self, 'initial_height'):
+            if self.texture_size[1] > self.initial_height and self.role == "large":
+                self.role = "medium"
+            elif self.texture_size[1] > self.initial_height and self.role == "medium":
+                self.role = "small"
 
     def _update_tooltip_content(self):
         """Update the tooltip widgets based on current state"""
@@ -382,10 +405,6 @@ You have checked [color={TEXT_COLORS['location_color']}]{len(ctx.checked_locatio
     out of [color={TEXT_COLORS['location_color']}]{ctx.total_locations}[/color] locations.
 You can get more info on missing checks with [b][color={TEXT_COLORS['command_echo_color']}]/missing[/color][/b].
 """)
-            if ctx.permissions:
-                txt = "Permissions:\n"
-                txt += "".join([f'{permission_name}: {permission_data}\n' for permission_name, permission_data in ctx.permissions.items()])
-                self.game_pages.append(txt)
             if ctx.hint_cost is not None and ctx.total_locations:
                 min_cost = int(ctx.server_version >= (0, 3, 9))
                 self.game_pages.append(f"""New hints cost [color={TEXT_COLORS['command_echo_color']}]{ctx.hint_cost}%[/color] of checks made.
@@ -394,7 +413,11 @@ Commands are:
 [b][color={TEXT_COLORS['command_echo_color']}]!hint_location[/color] [color={TEXT_COLORS['location_color']}]<locationname>[/color][/b]
 For you this means every [color={TEXT_COLORS['command_echo_color']}]{max(min_cost, int(ctx.hint_cost * 0.01 * ctx.total_locations))}[/color] location checks.
 You currently have [color={TEXT_COLORS['command_echo_color']}]{ctx.hint_points}[/color] points.""")
-        
+            if ctx.permissions:
+                txt = "Permissions:\n"
+                txt += "".join([f'{permission_name}: {permission_data}\n' for permission_name, permission_data in ctx.permissions.items()])
+                self.game_pages.append(txt)
+
         self.game_info = self.game_pages[0] if self.game_pages else "No information available"
         # Tooltip will be updated automatically via the game_info setter
     
