@@ -35,6 +35,13 @@ import os
 
 logger = logging.getLogger("Client")
 
+def unescape_markup(text):
+    '''
+    Inverse of escape_markup. Converts Kivy markup entities back to normal characters.
+    Used when copying text to clipboard to restore original brackets.
+    '''
+    return text.replace('&bl;', '[').replace('&br;', ']').replace('&amp;', '&')
+
 HINT_PATTERN = compile(r'(\[Hint\])|(\[[\'"][^\'"]*[\'"](?:,[\s]*[\'"][^\'"]*[\'"])*\])')
 
 with open(
@@ -476,11 +483,18 @@ class MarkupTextField(TextInput, ThemableBehavior):
         
         if not self.collide_point(*touch.pos):
             return
-        touch.grab(self)
-        touch_pos = touch.pos
-
-        self._touch_count += 1
+        
+        # For right-click, handle specially to prevent selection cancellation
         if touch.button == 'right' and self.collide_point(*touch.pos):
+            touch.grab(self)
+            self._touch_count += 1
+            # Store selection state to preserve it
+            self._right_click_selection_state = {
+                'from': self._selection_from,
+                'to': self._selection_to,
+                'touch': self._selection_touch,
+                'text': self.selection_text
+            }
             return True
         # For all other touches, let the parent handle it
         return super().on_touch_down(touch)
@@ -492,6 +506,15 @@ class MarkupTextField(TextInput, ThemableBehavior):
             self._touch_count -= 1
             win = EventLoop.window
             self._show_cut_copy_paste(position=touch.pos, touch=touch, win=win)
+            # Restore selection state that was saved during on_touch_down
+            if hasattr(self, '_right_click_selection_state'):
+                state = self._right_click_selection_state
+                self._selection_from = state['from']
+                self._selection_to = state['to']
+                self._selection_touch = state['touch']
+                self._selection = (self._selection_from != self._selection_to)
+                self._trigger_update_graphics()
+                delattr(self, '_right_click_selection_state')
             return True
         # For right-click touches, don't call parent to prevent deselection
         if touch.button == 'right':
@@ -504,16 +527,16 @@ class MarkupTextField(TextInput, ThemableBehavior):
         if not self.allow_copy:
             return
         if data:
-            Clipboard.copy(data)
+            Clipboard.copy(unescape_markup(data))
         elif self.selection_text:
-            Clipboard.copy(self.selection_text)
+            Clipboard.copy(unescape_markup(self.selection_text))
         elif self.selection_previous:
-            Clipboard.copy(self.selection_previous)
+            Clipboard.copy(unescape_markup(self.selection_previous))
         else:
             # If no selection, copy the current line in plain text
             row = int(self.cursor_row)
             if row < len(self._lines_plaintext):
-                Clipboard.copy(self._lines_plaintext[row])
+                Clipboard.copy(unescape_markup(self._lines_plaintext[row]))
 
     def _update_selection(self, finished=False):
         '''Update selection text and order of from/to if finished is True.
@@ -521,10 +544,9 @@ class MarkupTextField(TextInput, ThemableBehavior):
         '''
         # Get the selection range in markup text
         a, b = int(self._selection_from), int(self._selection_to)
-        # Store the original direction for later use
+        # Store the original direction
         selection_reversed = a > b
-        
-        # For internal processing, we need a consistent order
+        # reorder the selection if it's reversed
         if selection_reversed:
             a, b = b, a
             
@@ -734,7 +756,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
             distance = abs(current_pos[0] - last_pos[0]) + abs(current_pos[1] - last_pos[1])
             
             # Only dismiss if the cursor has moved more than a few pixels
-            if distance > 20:  # Adjust this threshold as needed
+            if distance > 100:  # Adjust this threshold as needed
                 self._hide_cut_copy_paste()
         
         # Store the current cursor position

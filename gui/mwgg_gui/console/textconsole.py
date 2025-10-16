@@ -20,6 +20,8 @@ from multiprocessing.queues import Empty
 from kivy.utils import get_hex_from_color
 from mwgg_gui.overrides.markuptextfield import MarkupTextField
 
+from NetUtils import TEXT_COLORS
+
 __all__ = ('TextConsole', 'ConsoleView',)
 
 ## helper class to return both Client and Archipelago logs
