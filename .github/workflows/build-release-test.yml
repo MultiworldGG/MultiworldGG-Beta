@@ -84,6 +84,28 @@ jobs:
           echo "SNI ${LATEST_RELEASE} downloaded successfully"
           ls -la data/SNI/
       
+      - name: Download Python installers (Windows only)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cd src
+          mkdir -p python_installers
+          
+          PYTHON_VERSION="3.12.12"
+          echo "Downloading Python ${PYTHON_VERSION} installers for Windows..."
+          
+          # Download x64 installer
+          curl -L -o "python_installers/python-${PYTHON_VERSION}-amd64.exe" \
+            "https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-amd64.exe"
+          echo "Downloaded x64 installer"
+          
+          # Download ARM64 installer
+          curl -L -o "python_installers/python-${PYTHON_VERSION}-arm64.exe" \
+            "https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-arm64.exe"
+          echo "Downloaded ARM64 installer"
+          
+          ls -la python_installers/
+      
       - name: Set up Python
         uses: actions/setup-python@v5
         with:

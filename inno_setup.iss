@@ -54,8 +54,8 @@ Source: "{#source_path}\*"; Excludes: "*.sfc, *.log, SNI, EnemizerCLI"; DestDir:
 Source: "{#source_path}\SNI\*"; Excludes: "*.sfc, *.log"; DestDir: "{app}\SNI"; Flags: ignoreversion recursesubdirs createallsubdirs;
 ;Source: "{#source_path}\EnemizerCLI\*"; Excludes: "*.sfc, *.log"; DestDir: "{app}\EnemizerCLI"; Flags: ignoreversion recursesubdirs createallsubdirs;
 Source: "vc_redist.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
-Source: "python-3.12.10-amd64.exe"; DestDir: {tmp}; Flags: deleteafterinstall; Check: IsPythonNeeded and IsX64
-Source: "python-3.12.10-arm64.exe"; DestDir: {tmp}; Flags: deleteafterinstall; Check: IsPythonNeeded and IsARM64
+Source: "python_installers\python-3.12.12-amd64.exe"; DestDir: {tmp}; Flags: deleteafterinstall; Check: IsPythonNeeded and IsX64
+Source: "python_installers\python-3.12.12-arm64.exe"; DestDir: {tmp}; Flags: deleteafterinstall; Check: IsPythonNeeded and IsARM64
 
 [Icons]
 Name: "{group}\{#MyAppName} Folder"; Filename: "{app}";
@@ -66,8 +66,8 @@ Name: "{commondesktop}\{#MyAppName} Launcher"; Filename: "{app}\MultiworldGG.exe
 
 [Run]
 
-Filename: "{tmp}\python-3.12.10-amd64.exe"; Parameters: "/passive InstallAllUsers=1 PrependPath=1 Include_test=0"; Check: IsPythonNeeded and IsX64; StatusMsg: "Installing Python 3.12.10..."
-Filename: "{tmp}\python-3.12.10-arm64.exe"; Parameters: "/passive InstallAllUsers=1 PrependPath=1 Include_test=0"; Check: IsPythonNeeded and IsARM64; StatusMsg: "Installing Python 3.12.10..."
+Filename: "{tmp}\python-3.12.12-amd64.exe"; Parameters: "/passive InstallAllUsers=1 PrependPath=1 Include_test=0"; Check: IsPythonNeeded and IsX64; StatusMsg: "Installing Python 3.12.12..."
+Filename: "{tmp}\python-3.12.12-arm64.exe"; Parameters: "/passive InstallAllUsers=1 PrependPath=1 Include_test=0"; Check: IsPythonNeeded and IsARM64; StatusMsg: "Installing Python 3.12.12..."
 Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/passive /norestart"; Check: IsVCRedist64BitNeeded; StatusMsg: "Installing VC++ redistributable..."
 ; Filename: "{app}\MultiworldGG"; Parameters: "--update_settings"; StatusMsg: "Updating host.yaml..."; Flags: runasoriginaluser runhidden
 ; Filename: "{app}\MultiworldGG"; Description: "{cm:LaunchProgram,{#StringChange('Launcher', '&', '&&')}}"; Flags: nowait postinstall skipifsilent
