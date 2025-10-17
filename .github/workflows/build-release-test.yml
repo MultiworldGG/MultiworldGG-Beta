@@ -135,17 +135,37 @@ jobs:
           pip install -r requirements.txt
           pip install -r build_requirements.txt
           
-          # Install default wheels
+          # Install mwgg_igdb_sixteen (default age-filtered variant)
+          # Users can optionally install nr (unfiltered) later
+          for wheel in default_wheels/mwgg_igdb_sixteen-*.whl; do
+            if [ -f "$wheel" ]; then
+              echo "Installing $wheel..."
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
+              break
+            fi
+          done
+          
+          # Install other default wheels (skip platform-specific and igdb variants)
           for wheel in default_wheels/*.whl; do
-            if [ -f "$wheel" ] && [[ ! "$wheel" =~ (sixteen|twelve) ]]; then
-              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || true
+            if [ -f "$wheel" ]; then
+              # Skip igdb variants (already handled)
+              if [[ "$wheel" =~ (mwgg_igdb-|mwgg_igdb_sixteen-|mwgg_igdb_twelve-) ]]; then
+                continue
+              fi
+              # Skip Windows-specific wheels on Linux
+              if [[ "$wheel" =~ (win_amd64|win32) ]]; then
+                continue
+              fi
+              echo "Installing $wheel..."
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
             fi
           done
           
           # Install worlds wheels
           for wheel in worlds_wheels/*.whl; do
             if [ -f "$wheel" ]; then
-              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || true
+              echo "Installing $wheel..."
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
             fi
           done
       
@@ -192,17 +212,41 @@ jobs:
           pip install -r requirements.txt
           pip install -r build_requirements.txt
           
-          # Install default wheels
+          # Install mwgg_igdb_sixteen (default age-filtered variant)
+          # Users can optionally install nr (unfiltered) later
+          for wheel in default_wheels/mwgg_igdb_sixteen-*.whl; do
+            if [ -f "$wheel" ]; then
+              echo "Installing $wheel..."
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
+              break
+            fi
+          done
+          
+          # Install other default wheels (skip platform-specific and igdb variants)
           for wheel in default_wheels/*.whl; do
-            if [ -f "$wheel" ] && [[ ! "$wheel" =~ (sixteen|twelve) ]]; then
-              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || true
+            if [ -f "$wheel" ]; then
+              # Skip igdb variants (already handled)
+              if [[ "$wheel" =~ (mwgg_igdb-|mwgg_igdb_sixteen-|mwgg_igdb_twelve-) ]]; then
+                continue
+              fi
+              # Skip Windows-specific wheels on macOS
+              if [[ "$wheel" =~ (win_amd64|win32) ]]; then
+                continue
+              fi
+              # Skip Linux-specific wheels on macOS
+              if [[ "$wheel" =~ linux ]]; then
+                continue
+              fi
+              echo "Installing $wheel..."
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
             fi
           done
           
           # Install worlds wheels
           for wheel in worlds_wheels/*.whl; do
             if [ -f "$wheel" ]; then
-              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || true
+              echo "Installing $wheel..."
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
             fi
           done
       

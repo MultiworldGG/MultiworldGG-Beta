@@ -64,21 +64,61 @@ def install_wheels(type="default") -> bool:
     """Install wheels from default_wheels directory"""
     wheels_dir = Path(f"{type}_wheels")
     if wheels_dir.exists():
-        logger.debug(f"Installing wheels from {type}_wheels...")
+        logger.info(f"Installing wheels from {type}_wheels...")
+        
+        # Handle mwgg_igdb variants: only install sixteen (default, age-filtered)
+        # Users can optionally install nr (unfiltered) variant later
+        igdb_installed = False
+        for wheel_file in wheels_dir.glob("mwgg_igdb_sixteen-*.whl"):
+            try:
+                subprocess.check_call([
+                    sys.executable, "-m", "pip", "install", 
+                    str(wheel_file), "--force-reinstall"
+                ])
+                logger.info(f"✓ Installed {wheel_file.name}")
+                igdb_installed = True
+                break
+            except subprocess.CalledProcessError as e:
+                logger.debug(f"Failed to install {wheel_file.name} with dependencies: {e}")
+                try:
+                    subprocess.check_call([
+                        sys.executable, "-m", "pip", "install", 
+                        str(wheel_file), "--no-deps", "--force-reinstall"
+                    ])
+                    logger.info(f"✓ Installed {wheel_file.name} (no-deps)")
+                    igdb_installed = True
+                    break
+                except subprocess.CalledProcessError as e2:
+                    logger.warning(f"✗ Failed to install {wheel_file.name}: {e2}")
+        
+        # Install all other wheels
         for wheel_file in wheels_dir.glob("*.whl"):
-            if "sixteen" in wheel_file.name:
-                # Skip filter igdb wheels
+            # Skip igdb variants (already handled above)
+            if any(variant in wheel_file.name for variant in ["mwgg_igdb-", "mwgg_igdb_sixteen-", "mwgg_igdb_twelve-"]):
                 continue
-            if "twelve" in wheel_file.name:
-                # Skip filter igdb wheels
-                continue
+            
+            # Skip platform-specific wheels that don't match current platform
+            wheel_name = wheel_file.name.lower()
+            if "win_amd64" in wheel_name or "win32" in wheel_name:
+                if not is_windows():
+                    logger.debug(f"Skipping {wheel_file.name} (Windows-only)")
+                    continue
+            if "macosx" in wheel_name:
+                if not is_macos():
+                    logger.debug(f"Skipping {wheel_file.name} (macOS-only)")
+                    continue
+            if "linux" in wheel_name:
+                if not is_linux():
+                    logger.debug(f"Skipping {wheel_file.name} (Linux-only)")
+                    continue
+            
             try:
                 # First try with dependencies to ensure all required packages are installed
                 subprocess.check_call([
                     sys.executable, "-m", "pip", "install", 
                     str(wheel_file), "--force-reinstall"
                 ])
-                logger.debug(f"Installed {wheel_file.name} with dependencies")
+                logger.info(f"✓ Installed {wheel_file.name}")
             except subprocess.CalledProcessError as e:
                 logger.debug(f"Failed to install {wheel_file.name} with dependencies: {e}")
                 # Fallback to no-deps if dependency installation fails
@@ -87,9 +127,9 @@ def install_wheels(type="default") -> bool:
                         sys.executable, "-m", "pip", "install", 
                         str(wheel_file), "--no-deps", "--force-reinstall"
                     ])
-                    logger.debug(f"Installed {wheel_file.name} without dependencies")
+                    logger.info(f"✓ Installed {wheel_file.name} (no-deps)")
                 except subprocess.CalledProcessError as e2:
-                    logger.warning(f"Failed to install {wheel_file.name}: {e2}")
+                    logger.warning(f"✗ Failed to install {wheel_file.name}: {e2}")
         return True
     else:
         logger.info(f"{type}_wheels directory not found, skipping wheel installation")
