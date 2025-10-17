@@ -1,8 +1,7 @@
-from . import Sims4World, Sims4Web
-from .Client import launch
+from . import GenericWorld, GenericWeb
 
 """
-The Sims 4 World Registration
+Generic World Registration
 
 This file contains the metadata and class references for the sims4 world.
 """
@@ -18,6 +17,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = Sims4World
-WEB_WORLD_CLASS = Sims4Web
-CLIENT_FUNCTION = launch
+WORLD_CLASS = GenericWorld
+WEB_WORLD_CLASS = GenericWeb
+CLIENT_FUNCTION = None

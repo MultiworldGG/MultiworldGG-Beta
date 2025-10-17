@@ -1,7 +1,7 @@
-from . import PokemonCrystalWorld, PokemonCrystalWebWorld
+from . import GenericWorld, GenericWeb
 
 """
-Pokemon Crystal World Registration
+Generic World Registration
 
 This file contains the metadata and class references for the pokemon_crystal world.
 """
@@ -17,6 +17,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = PokemonCrystalWorld
-WEB_WORLD_CLASS = PokemonCrystalWebWorld
+WORLD_CLASS = GenericWorld
+WEB_WORLD_CLASS = GenericWeb
 CLIENT_FUNCTION = None

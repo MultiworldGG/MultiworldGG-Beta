@@ -1,8 +1,7 @@
-from . import DK64World, DK64Web
-from .archipelago.DK64Client import launch
+from . import GenericWorld, GenericWeb
 
 """
-Donkey Kong 64 is a 3D collectathon platforming game. World Registration
+Generic World Registration
 
 This file contains the metadata and class references for the dk64 world.
 """
@@ -18,6 +17,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = DK64World
-WEB_WORLD_CLASS = DK64Web
-CLIENT_FUNCTION = launch
+WORLD_CLASS = GenericWorld
+WEB_WORLD_CLASS = GenericWeb
+CLIENT_FUNCTION = None

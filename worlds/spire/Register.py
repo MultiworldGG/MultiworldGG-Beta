@@ -1,8 +1,7 @@
-from . import SpireWorld
-from . import SpireWeb
+from . import GenericWorld, GenericWeb
 
 """
-Slay the Spire World Registration
+Generic World Registration
 
 This file contains the metadata and class references for the spire world.
 """
@@ -18,6 +17,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = SpireWorld
-WEB_WORLD_CLASS = SpireWeb
+WORLD_CLASS = GenericWorld
+WEB_WORLD_CLASS = GenericWeb
 CLIENT_FUNCTION = None

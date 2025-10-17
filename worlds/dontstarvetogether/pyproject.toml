@@ -4,15 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.dontstarvetogether"
-version = "1.3.2"
-description = "MultiWorld: Dont Starve Together"
+version = "0.0.0"
+description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "Dragon Wolf Leo"
-
-[project.entry-points."mwgg.client"]
-"worlds.dontstarvetogether.Client" = "worlds.dontstarvetogether.Register:CLIENT_FUNCTION"
+name = "Unknown"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

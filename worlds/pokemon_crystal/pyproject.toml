@@ -4,14 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.pokemon_crystal"
-version = "5.2.3"
-description = "MultiWorld: Pokemon Crystal"
-license = "MIT"
-license-files = [ "LICENSE",]
+version = "0.0.0"
+description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "James"
+name = "Unknown"
 
 [tool.setuptools.packages.find]
 where = [ "src",]
