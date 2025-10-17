@@ -48,10 +48,11 @@ def create_world_files(module_name: str, overwrite: bool = False, igdb_id: int =
             if filename == "archipelago.json":
                 with open(target_path, "r") as f:
                     content = json.load(f)
-                content["igdb_id"] = igdb_id
-                with open(target_path, "w") as f:
-                    json.dump(content, f)
-            continue
+                if igdb_id > 0:
+                    content["igdb_id"] = igdb_id
+                    with open(target_path, "w") as f:
+                        json.dumps(content, f, indent=4)
+                continue
         
         # Read template
         try:
