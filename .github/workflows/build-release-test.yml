@@ -256,12 +256,17 @@ jobs:
           cd src
           python setup.py bdist_mac
       
+      - name: Build macOS DMG
+        run: |
+          source venv/bin/activate
+          cd src
+          python setup.py bdist_dmg
+      
       - name: Upload macOS bundle artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-bundle
           path: |
-            src/build/*.app
             src/dist/*.dmg
           retention-days: 90
 
