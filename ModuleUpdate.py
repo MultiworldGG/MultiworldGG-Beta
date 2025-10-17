@@ -930,7 +930,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     if args.additional_requirements:
-        requirements_files.update(args.additional_requirements)
+        requirements_files.update([Path(req) for req in args.additional_requirements])
     
     if args.worlds:
         update(args.yes, args.force, args.worlds)

@@ -261,7 +261,7 @@ jobs:
         with:
           name: macos-bundle
           path: |
-            src/dist/*.app
+            src/build/*.app
             src/dist/*.dmg
           retention-days: 90
 

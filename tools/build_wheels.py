@@ -168,10 +168,10 @@ include pyproject.toml
             )
 
             if result.returncode == 0:
-                print_colored(f"  ✓ Build successful for {world}", "green")
+                print_colored(f"  [OK] Build successful for {world}", "green")
                 successful_builds.append(world)
             else:
-                print_colored(f"  ✗ Build failed for {world}", "red")
+                print_colored(f"  [FAILED] Build failed for {world}", "red")
                 print_colored("  Build output:", "gray")
                 for line in result.stderr.split("\n"):
                     if line.strip():
@@ -187,7 +187,7 @@ include pyproject.toml
                 print_colored("  Warning: pyproject.toml not found in root directory after build", "yellow")
 
         except Exception as e:
-            print_colored(f"  ✗ Error processing {world}: {e}", "red")
+            print_colored(f"  [FAILED] Error processing {world}: {e}", "red")
             failed_builds.append(f"{world} (error: {e})")
             if pyproject_in_root.exists() and pyproject_path.exists():
                 shutil.move(str(pyproject_in_root), str(pyproject_path))
@@ -211,17 +211,17 @@ include pyproject.toml
     if skipped_builds:
         print_colored("\nSkipped builds:", "yellow")
         for build in skipped_builds:
-            print_colored(f"  ✗ {build}", "yellow")
+            print_colored(f"  [SKIP] {build}", "yellow")
 
     if successful_builds:
         print_colored("\nSuccessful builds:", "green")
         for build in successful_builds:
-            print_colored(f"  ✓ {build}", "green")
+            print_colored(f"  [OK] {build}", "green")
 
     if failed_builds:
         print_colored("\nFailed builds:", "red")
         for build in failed_builds:
-            print_colored(f"  ✗ {build}", "red")
+            print_colored(f"  [FAILED] {build}", "red")
 
     print_colored("\nBuild process completed!", "green")
 

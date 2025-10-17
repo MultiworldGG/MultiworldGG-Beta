@@ -75,7 +75,7 @@ def install_wheels(type="default") -> bool:
                     sys.executable, "-m", "pip", "install", 
                     str(wheel_file), "--force-reinstall"
                 ])
-                logger.info(f"✓ Installed {wheel_file.name}")
+                logger.info(f"[OK] Installed {wheel_file.name}")
                 igdb_installed = True
                 break
             except subprocess.CalledProcessError as e:
@@ -85,11 +85,11 @@ def install_wheels(type="default") -> bool:
                         sys.executable, "-m", "pip", "install", 
                         str(wheel_file), "--no-deps", "--force-reinstall"
                     ])
-                    logger.info(f"✓ Installed {wheel_file.name} (no-deps)")
+                    logger.info(f"[OK] Installed {wheel_file.name} (no-deps)")
                     igdb_installed = True
                     break
                 except subprocess.CalledProcessError as e2:
-                    logger.warning(f"✗ Failed to install {wheel_file.name}: {e2}")
+                    logger.warning(f"[FAILED] Failed to install {wheel_file.name}: {e2}")
         
         # Install all other wheels
         for wheel_file in wheels_dir.glob("*.whl"):
@@ -118,7 +118,7 @@ def install_wheels(type="default") -> bool:
                     sys.executable, "-m", "pip", "install", 
                     str(wheel_file), "--force-reinstall"
                 ])
-                logger.info(f"✓ Installed {wheel_file.name}")
+                logger.info(f"[OK] Installed {wheel_file.name}")
             except subprocess.CalledProcessError as e:
                 logger.debug(f"Failed to install {wheel_file.name} with dependencies: {e}")
                 # Fallback to no-deps if dependency installation fails
@@ -127,9 +127,9 @@ def install_wheels(type="default") -> bool:
                         sys.executable, "-m", "pip", "install", 
                         str(wheel_file), "--no-deps", "--force-reinstall"
                     ])
-                    logger.info(f"✓ Installed {wheel_file.name} (no-deps)")
+                    logger.info(f"[OK] Installed {wheel_file.name} (no-deps)")
                 except subprocess.CalledProcessError as e2:
-                    logger.warning(f"✗ Failed to install {wheel_file.name}: {e2}")
+                    logger.warning(f"[FAILED] Failed to install {wheel_file.name}: {e2}")
         return True
     else:
         logger.info(f"{type}_wheels directory not found, skipping wheel installation")
@@ -209,9 +209,9 @@ def verify_build_output() -> bool:
     for exe in expected_exes:
         exe_path = exe_dir / exe
         if exe_path.exists():
-            logger.info(f"✓ Found {exe}")
+            logger.info(f"[OK] Found {exe}")
         else:
-            logger.info(f"✗ Missing {exe}")
+            logger.info(f"[FAILED] Missing {exe}")
             missing_exes.append(exe)
     
     if missing_exes:
@@ -224,9 +224,9 @@ def verify_build_output() -> bool:
     for dir_name in required_dirs:
         dir_path = exe_dir / dir_name
         if dir_path.exists():
-            logger.info(f"✓ Found {dir_name}/")
+            logger.info(f"[OK] Found {dir_name}/")
         else:
-            logger.info(f"✗ Missing {dir_name}/")
+            logger.info(f"[FAILED] Missing {dir_name}/")
             missing_dirs.append(dir_name)
     
     if missing_dirs:
