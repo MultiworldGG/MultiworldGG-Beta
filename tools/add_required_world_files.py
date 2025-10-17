@@ -6,16 +6,18 @@ that don't have them yet, using the generic world as a template.
 
 import argparse
 import sys
+import json
 from pathlib import Path
 
 
-def create_world_files(module_name: str, overwrite: bool = False):
+def create_world_files(module_name: str, overwrite: bool = False, igdb_id: int = 0):
     """
     Create the three template files for an existing world directory.
     
     Args:
         module_name: Name of the world directory
         overwrite: Whether to overwrite existing files
+        igdb_id: IGDB ID of the game
     """
 
     module_name = module_name.lower()
@@ -43,6 +45,12 @@ def create_world_files(module_name: str, overwrite: bool = False):
         # Check if file already exists
         if target_path.exists() and not overwrite:
             print(f"Skipping {filename} - already exists (use --overwrite to replace)")
+            if filename == "archipelago.json":
+                with open(target_path, "r") as f:
+                    content = json.load(f)
+                content["igdb_id"] = igdb_id
+                with open(target_path, "w") as f:
+                    json.dump(content, f)
             continue
         
         # Read template
@@ -54,7 +62,6 @@ def create_world_files(module_name: str, overwrite: bool = False):
         
         # Replace generic with world name
         content = content.replace("generic", module_name)
-        
         # Write to target
         try:
             target_path.write_text(content, encoding="utf-8")
