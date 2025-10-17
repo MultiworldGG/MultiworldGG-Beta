@@ -18,7 +18,7 @@ apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from MultiServer import CommandProcessor, mark_raw
 from NetUtils import (Endpoint, ClientStatus, encode, decode, NetworkItem, NetworkPlayer, NetworkSlot, 
                       Permission, SlotType, LocationStore, Hint, HintStatus, JSONtoTextParser,
-                      RawJSONtoTextParser, add_json_text, add_json_location, add_json_item, JSONTypes)
+                      RawJSONtoTextParser, add_json_text, add_json_location, add_json_item, JSONTypes, TEXT_COLORS)
 from ClientState import ClientState
 from ClientBuilder import GameClient
 from multiprocessing import Queue
@@ -37,12 +37,12 @@ if typing.TYPE_CHECKING:
     import argparse
     import Gui
     from typing import Optional
+# without terminal, we have to use gui mode
+gui_enabled = not sys.stdout or "--nogui" not in sys.argv
 
 init_logging("Client")
 logger = logging.getLogger("Client")
 
-# without terminal, we have to use gui mode
-gui_enabled = not sys.stdout or "--nogui" not in sys.argv
 
 @Utils.cache_argsless
 def get_ssl_context():

@@ -232,12 +232,6 @@ class ByValue:
     def __reduce_ex__(self, prot):
         return self.__class__, (self._value_, )
 
-def unescape_markup(text):
-    '''
-    Inverse of escape_markup. Converts Kivy markup entities back to normal characters.
-    Used when logging to console to restore original brackets.
-    '''
-    return text.replace('&bl;', '[').replace('&br;', ']').replace('&amp;', '&')
 
 loglevel_mapping = {'error': logging.ERROR, 'info': logging.INFO, 'warning': logging.WARNING, 'debug': logging.DEBUG}
 
@@ -271,8 +265,25 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
         def filter(self, record: logging.LogRecord) -> bool:
             return self.condition(record)
 
+    class BytesCleanupFilter(logging.Filter):
+        """Remove b'...' notation from bytes objects in log messages."""
+        def filter(self, record: logging.LogRecord) -> bool:
+            import re
+            # Match b'...' or b"..." patterns and extract the inner content
+            record.msg = re.sub(r"b(['\"])(.+?)\1", r"\2", str(record.msg))
+            return True
+    
+    class UnescapeMarkupFilter(logging.Filter):
+        """Convert Kivy markup entities back to normal characters."""
+        def filter(self, record: logging.LogRecord) -> bool:
+            msg = str(record.msg)
+            record.msg = msg.replace('&bl;', '[').replace('&br;', ']').replace('&amp;', '&')
+            return True
+
     file_handler.addFilter(Filter("NoStream", lambda record: not getattr(record, "NoFile", False)))
     file_handler.addFilter(Filter("NoCarriageReturn", lambda record: '\r' not in record.getMessage()))
+    file_handler.addFilter(BytesCleanupFilter())
+    file_handler.addFilter(UnescapeMarkupFilter())
     root_logger.addHandler(file_handler)
     # TODO: Make console better, use rich/blessed/something else
     # Force UTF-8 stream wrapper for stdout/stderr (fixes UnicodeEncodeError in macOS .app bundles)
@@ -284,6 +295,8 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
         stream_handler = logging.StreamHandler(sys.stdout)
         # TODO: this is the output to cli!
         stream_handler.addFilter(Filter("NoFile", lambda record: not getattr(record, "NoStream", False)))
+        stream_handler.addFilter(BytesCleanupFilter())
+        stream_handler.addFilter(UnescapeMarkupFilter())
         if add_timestamp:
             formatter = logging.Formatter(fmt='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
             stream_handler.setFormatter(formatter)

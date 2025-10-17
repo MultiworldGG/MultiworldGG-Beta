@@ -206,11 +206,13 @@ class MarkupTextField(TextInput, ThemableBehavior):
             parts = ignore_patterns.split(text)
             stripped_parts = [re.sub(r'\[/?[a-zA-Z0-9_=,#.\-]+\]', '', part) for part in parts]
             stripped_parts = [re.sub(r'\[.*$', '', part) for part in parts]
+            stripped_parts = [re.sub(r'\^.*]', '', part) for part in parts]
             return ignore_patterns.sub(lambda m: m.group(0), ''.join(stripped_parts))
         # Remove Kivy markup tags for plain text operations, but preserve specified patterns
         text = re.sub(r'\[/?[a-zA-Z0-9_=,#.\-]+\]', '', text)
         # Then remove any partial markup tags (text starting with [)
         text = re.sub(r'\[.*$', '', text)
+        text = re.sub(r'\^.*]', '', text)
         return text
 
     def _update_plaintext_lines(self):
@@ -427,7 +429,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
     def cursor_offset(self):
         '''Get the cursor x offset on the current line'''
         row = int(self.cursor_row)
-        col = int(self.cursor_col) # Subtract 1 because the cursor is 1 character after the text index
+        col = int(self.cursor_col)
         lines = self._lines
         offset = 0
 

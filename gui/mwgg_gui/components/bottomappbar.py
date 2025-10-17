@@ -185,12 +185,12 @@ class BottomBarTextInput(MDTextField):
         """
         Override the keyboard_on_key_down method to handle up and down arrow keys for history navigation
         """
-        key, _ = keycode
+        key, key_string = keycode
 
-        if key == self.interesting_keys.cursor_up:
+        if key == 273 and key_string == 'up':
             self._change_to_history_text_if_available(self.app._command_history_index + 1)
             return True
-        if key == self.interesting_keys.cursor_down:
+        if key == 274 and key_string == 'down':
             self._change_to_history_text_if_available(self.app._command_history_index - 1)
             return True
         return super().keyboard_on_key_down(window, keycode, text, modifiers)

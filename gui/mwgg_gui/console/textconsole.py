@@ -54,7 +54,7 @@ class TextConsole(MarkupTextField, ThemableBehavior):
         self.cursor_color = self.theme_cls.primaryColor
         self.text_buffer = self.app.text_buffer
 
-        Clock.schedule_interval(self.add_text_from_buffer, 0.01)
+        Clock.schedule_interval(self.add_text_from_buffer, 0.001)
 
     def add_text_from_buffer(self, dt):
         try:
