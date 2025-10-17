@@ -306,6 +306,7 @@ jobs:
         with:
           path: src
           fetch-depth: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -324,8 +325,8 @@ jobs:
         id: detect_changed
         run: |
           cd src
-          # Get changed files in worlds directories
-          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep '^worlds/' || true)
+          # Get changed files in worlds directories (excluding pyproject.toml to avoid rebuild loops)
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep '^worlds/' | grep -v 'pyproject.toml' || true)
           
           CHANGED_WORLDS=""
           
@@ -355,6 +356,25 @@ jobs:
           cd src
           python tools/build_wheels.py --world "${{ steps.detect_changed.outputs.changed_worlds }}"
       
+      - name: Configure git
+        if: steps.detect_changed.outputs.changed_worlds != ''
+        run: |
+          cd src
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Commit updated pyproject.toml files
+        if: steps.detect_changed.outputs.changed_worlds != ''
+        run: |
+          cd src
+          git add worlds/*/pyproject.toml
+          if git diff --staged --quiet; then
+            echo "No pyproject.toml changes to commit"
+          else
+            git commit -m "chore: update world pyproject.toml versions [skip ci]"
+            git push
+          fi
+      
       - name: Upload to private PyPI
         if: steps.detect_changed.outputs.changed_worlds != ''
         env:
@@ -364,7 +384,11 @@ jobs:
         run: |
           source venv/bin/activate
           pip install twine
-          python -m twine upload dist/worlds_*.whl dist/worlds_*.tar.gz || true
+          for file in dist/worlds_*.whl dist/worlds_*.tar.gz; do
+            if [ -f "$file" ]; then
+              python -m twine upload "$file" || echo "Failed to upload $file, continuing..."
+            fi
+          done
       
       - name: Upload world wheels as artifacts
         if: steps.detect_changed.outputs.changed_worlds != ''

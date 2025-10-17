@@ -4,10 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.spire"
-version = "2.0.1"
+version = "2.2.1"
 description = "MultiWorld: Slay the Spire"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Platano Bailando"
+
 [[project.authors]]
 name = "KonoTyran"
 

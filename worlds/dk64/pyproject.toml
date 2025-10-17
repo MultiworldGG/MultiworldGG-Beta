@@ -12,7 +12,7 @@ requires-python = ">=3.12"
 name = "2dos"
 
 [[project.authors]]
-name = "Killklli"
+name = "Killklli,"
 
 [[project.authors]]
 name = "Ballaam"

@@ -2,7 +2,7 @@
     "version": 6,
     "compatible_version": 5,
     "game": "Universal Tracker",
-    "author": "Faris",
+    "authors": ["Faris"],
     "igdb_id": 0,
     "world_version": "0.0.2",
     "minimum_ap_version": "0.6.2"

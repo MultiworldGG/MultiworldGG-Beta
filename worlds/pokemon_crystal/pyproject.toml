@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.pokemon_crystal"
-version = "5.0.4"
+version = "5.2.3"
 description = "MultiWorld: Pokemon Crystal"
 license = "MIT"
 license-files = [ "LICENSE",]
