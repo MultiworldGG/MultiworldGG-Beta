@@ -61,13 +61,13 @@ jobs:
           
           echo "Latest SNI release: ${LATEST_RELEASE}"
           
-          # Determine platform-specific asset name
+          # Determine platform-specific asset name and extraction method
           if [ "$RUNNER_OS" == "Windows" ]; then
             ASSET_NAME="sni-${LATEST_RELEASE}-windows-amd64.zip"
           elif [ "$RUNNER_OS" == "Linux" ]; then
             ASSET_NAME="sni-${LATEST_RELEASE}-linux-amd64.tar.xz"
           elif [ "$RUNNER_OS" == "macOS" ]; then
-            ASSET_NAME="sni-${LATEST_RELEASE}-darwin-universal.tar.xz"
+            ASSET_NAME="sni-${LATEST_RELEASE}-darwin-universal.tar.gz"
           else
             echo "Unknown OS: $RUNNER_OS"
             exit 1
@@ -81,9 +81,12 @@ jobs:
             curl -L -o sni.zip "${DOWNLOAD_URL}"
             unzip -q sni.zip -d data/SNI
             rm sni.zip
-          else
-            # Extract .tar.xz files
+          elif [ "$RUNNER_OS" == "Linux" ]; then
+            # Extract .tar.xz (use J flag)
             curl -L "${DOWNLOAD_URL}" | tar xJ -C data/SNI
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            # Extract .tar.gz (use z flag)
+            curl -L "${DOWNLOAD_URL}" | tar xz -C data/SNI
           fi
           
           # Make executables executable on Unix
@@ -361,6 +364,13 @@ jobs:
       - name: Install Inno Setup
         run: |
           choco install innosetup -y
+      
+      - name: Debug - List build directory contents
+        shell: pwsh
+        run: |
+          cd src
+          Write-Host "Contents of build directory:"
+          Get-ChildItem -Path build -Recurse | Select-Object FullName
       
       - name: Build Windows installer
         shell: pwsh
