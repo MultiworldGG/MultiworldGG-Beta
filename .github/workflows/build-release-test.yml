@@ -44,6 +44,46 @@ jobs:
         with:
           path: src
       
+      - name: Download SNI executables
+        shell: bash
+        run: |
+          cd src
+          mkdir -p data/SNI
+          
+          # Get latest release tag from GitHub API
+          echo "Fetching latest SNI release..."
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/alttpo/sni/releases/latest | grep '"tag_name"' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
+          echo "Latest SNI release: ${LATEST_RELEASE}"
+          
+          # Determine platform-specific asset name
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            ASSET_NAME="sni-${LATEST_RELEASE}-windows-amd64.zip"
+          elif [ "$RUNNER_OS" == "Linux" ]; then
+            ASSET_NAME="sni-${LATEST_RELEASE}-linux-amd64.tar.gz"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            ASSET_NAME="sni-${LATEST_RELEASE}-darwin-amd64.tar.gz"
+          fi
+          
+          # Download from latest release
+          DOWNLOAD_URL="https://github.com/alttpo/sni/releases/download/${LATEST_RELEASE}/${ASSET_NAME}"
+          echo "Downloading SNI from ${DOWNLOAD_URL}"
+          
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            curl -L -o sni.zip "${DOWNLOAD_URL}"
+            unzip -q sni.zip -d data/SNI
+            rm sni.zip
+          else
+            curl -L "${DOWNLOAD_URL}" | tar xz -C data/SNI
+          fi
+          
+          # Make executables executable on Unix
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            chmod +x data/SNI/*
+          fi
+          
+          echo "SNI ${LATEST_RELEASE} downloaded successfully"
+          ls -la data/SNI/
+      
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -267,7 +307,7 @@ jobs:
         with:
           name: macos-bundle
           path: |
-            src/dist/*.dmg
+            src/build/*.dmg
           retention-days: 90
 
   build-windows-installer:
