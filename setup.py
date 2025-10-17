@@ -114,7 +114,7 @@ build_exe_options = {
         ("kivy/data", "lib/kivy/data"),
         ("kivy/include", "lib/kivy/include"),
     ],
-    "include_msvcr_version": 17,
+    "include_msvcr": True,
     "replace_paths": ["*."],
     "optimize": 1,
     "bin_includes": ["libffi.so", "libcrypt.so"] if platform.system() == "Linux" else []

@@ -53,6 +53,12 @@ jobs:
           # Get latest release tag from GitHub API
           echo "Fetching latest SNI release..."
           LATEST_RELEASE=$(curl -s https://api.github.com/repos/alttpo/sni/releases/latest | grep '"tag_name"' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
+          
+          if [ -z "$LATEST_RELEASE" ]; then
+            echo "Failed to fetch latest release tag from GitHub API"
+            exit 1
+          fi
+          
           echo "Latest SNI release: ${LATEST_RELEASE}"
           
           # Determine platform-specific asset name
@@ -62,6 +68,9 @@ jobs:
             ASSET_NAME="sni-${LATEST_RELEASE}-linux-amd64.tar.xz"
           elif [ "$RUNNER_OS" == "macOS" ]; then
             ASSET_NAME="sni-${LATEST_RELEASE}-darwin-universal.tar.xz"
+          else
+            echo "Unknown OS: $RUNNER_OS"
+            exit 1
           fi
           
           # Download from latest release
