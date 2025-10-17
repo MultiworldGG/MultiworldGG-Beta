@@ -72,7 +72,7 @@ build_exe_options = {
         
         # Custom packages
         "mwgg_gui",
-        "mwgg_igdb",
+        "mwgg_igdb_sixteen",
         "worlds",
         
     ],
