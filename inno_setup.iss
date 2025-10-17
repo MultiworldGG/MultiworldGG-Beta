@@ -51,8 +51,8 @@ NAME: "{app}"; Flags: setntfscompression; Permissions: everyone-modify users-mod
 
 [Files]
 Source: "{#source_path}\*"; Excludes: "*.sfc, *.log, SNI, EnemizerCLI"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#source_path}\SNI\*"; Excludes: "*.sfc, *.log"; DestDir: "{app}\SNI"; Flags: ignoreversion recursesubdirs createallsubdirs;
-;Source: "{#source_path}\EnemizerCLI\*"; Excludes: "*.sfc, *.log"; DestDir: "{app}\EnemizerCLI"; Flags: ignoreversion recursesubdirs createallsubdirs;
+Source: "{#source_path}\SNI\*"; Excludes: "*.sfc, *.log"; DestDir: "{app}\SNI"; Flags: ignoreversion recursesubdirs createallsubdirs
+;Source: "{#source_path}\EnemizerCLI\*"; Excludes: "*.sfc, *.log"; DestDir: "{app}\EnemizerCLI"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "vc_redist.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 Source: "python_installers\python-3.12.12-amd64.exe"; DestDir: {tmp}; Flags: deleteafterinstall; Check: IsPythonNeeded and IsX64
 Source: "python_installers\python-3.12.12-arm64.exe"; DestDir: {tmp}; Flags: deleteafterinstall; Check: IsPythonNeeded and IsARM64

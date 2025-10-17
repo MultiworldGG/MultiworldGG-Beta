@@ -50,16 +50,35 @@ jobs:
           cd src
           mkdir -p data/SNI
           
-          # Get latest release tag from GitHub API
+          # Get latest release tag from GitHub API with retry logic
           echo "Fetching latest SNI release..."
-          LATEST_RELEASE=$(curl -s https://api.github.com/repos/alttpo/sni/releases/latest | grep '"tag_name"' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
+          LATEST_RELEASE=""
           
+          # Try up to 3 times to fetch the release tag
+          for attempt in 1 2 3; do
+            echo "Attempt $attempt to fetch release tag..."
+            LATEST_RELEASE=$(curl -s --connect-timeout 10 --max-time 30 https://api.github.com/repos/alttpo/sni/releases/latest | grep '"tag_name"' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
+            
+            if [ -n "$LATEST_RELEASE" ]; then
+              echo "Successfully fetched release tag: ${LATEST_RELEASE}"
+              break
+            else
+              echo "Attempt $attempt failed"
+              if [ $attempt -lt 3 ]; then
+                echo "Retrying in 5 seconds..."
+                sleep 5
+              fi
+            fi
+          done
+          
+          # If still no release tag, use a fallback
           if [ -z "$LATEST_RELEASE" ]; then
-            echo "Failed to fetch latest release tag from GitHub API"
-            exit 1
+            echo "Warning: Failed to fetch latest release tag from GitHub API"
+            echo "Using fallback version v0.0.101"
+            LATEST_RELEASE="v0.0.101"
           fi
           
-          echo "Latest SNI release: ${LATEST_RELEASE}"
+          echo "Using SNI release: ${LATEST_RELEASE}"
           
           # Determine platform-specific asset name and extraction method
           if [ "$RUNNER_OS" == "Windows" ]; then
@@ -73,20 +92,53 @@ jobs:
             exit 1
           fi
           
-          # Download from latest release
+          # Download from latest release with retry logic
           DOWNLOAD_URL="https://github.com/alttpo/sni/releases/download/${LATEST_RELEASE}/${ASSET_NAME}"
           echo "Downloading SNI from ${DOWNLOAD_URL}"
           
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            curl -L -o sni.zip "${DOWNLOAD_URL}"
-            unzip -q sni.zip -d data/SNI
-            rm sni.zip
-          elif [ "$RUNNER_OS" == "Linux" ]; then
-            # Extract .tar.xz (use J flag)
-            curl -L "${DOWNLOAD_URL}" | tar xJ -C data/SNI
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-            # Extract .tar.gz (use z flag)
-            curl -L "${DOWNLOAD_URL}" | tar xz -C data/SNI
+          DOWNLOAD_SUCCESS=false
+          for attempt in 1 2 3; do
+            echo "Download attempt $attempt..."
+            
+            if [ "$RUNNER_OS" == "Windows" ]; then
+              if curl -L --connect-timeout 10 --max-time 60 -o sni.zip "${DOWNLOAD_URL}"; then
+                if unzip -q sni.zip -d data/SNI && rm sni.zip; then
+                  DOWNLOAD_SUCCESS=true
+                  break
+                else
+                  echo "Failed to extract ZIP file on attempt $attempt"
+                fi
+              else
+                echo "Failed to download ZIP file on attempt $attempt"
+              fi
+            elif [ "$RUNNER_OS" == "Linux" ]; then
+              # Extract .tar.xz (use J flag)
+              if curl -L --connect-timeout 10 --max-time 60 "${DOWNLOAD_URL}" | tar xJ -C data/SNI; then
+                DOWNLOAD_SUCCESS=true
+                break
+              else
+                echo "Failed to download/extract .tar.xz on attempt $attempt"
+              fi
+            elif [ "$RUNNER_OS" == "macOS" ]; then
+              # Extract .tar.gz (use z flag)
+              if curl -L --connect-timeout 10 --max-time 60 "${DOWNLOAD_URL}" | tar xz -C data/SNI; then
+                DOWNLOAD_SUCCESS=true
+                break
+              else
+                echo "Failed to download/extract .tar.gz on attempt $attempt"
+              fi
+            fi
+            
+            if [ $attempt -lt 3 ]; then
+              echo "Retrying download in 5 seconds..."
+              sleep 5
+            fi
+          done
+          
+          if [ "$DOWNLOAD_SUCCESS" = false ]; then
+            echo "Error: Failed to download SNI after 3 attempts"
+            echo "Continuing without SNI - build may fail if SNI is required"
+            exit 1
           fi
           
           # Make executables executable on Unix
