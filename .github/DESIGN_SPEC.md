@@ -44,7 +44,7 @@ This document describes the automated CI/CD pipeline for MultiworldGG, an alpha-
 - Copies `worlds/*.py` into `world_build_setuptools/src/worlds/*.py`
 - Builds `worlds` package using Python Build  
 - This is the namespace package that all world packages depend on
-- Commits wheel to `default_worlds/` directory
+- Commits wheel to `worlds_wheels/` directory
 - Uses `github-actions[bot]` for commits
 - Runs on: Ubuntu latest
 
@@ -229,7 +229,7 @@ This is required for the auto-commit feature in new world detection.
 
 | Artifact Type | Storage Location | Retention | Rationale |
 |--------------|------------------|-----------|-----------|
-| Component wheels (GUI, splash, base worlds) | Committed to repo | Indefinite | Version controlled in default_wheels/ or default_worlds/ |
+| Component wheels (GUI, splash, base worlds) | Committed to repo | Indefinite | Version controlled in default_wheels/ or worlds_wheels/ |
 | World wheels | Private PyPI + artifact | 30 days | Published to PyPI (permanent), artifacts for debugging |
 | Game index wheels | Private PyPI + artifact | 30 days | Published to PyPI, artifacts for rollback |
 | Game index data (JSON) | Artifact only | 90 days | Historical data for analysis |

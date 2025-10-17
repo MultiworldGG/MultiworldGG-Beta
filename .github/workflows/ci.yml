@@ -192,12 +192,12 @@ jobs:
           cd src/world_build_setuptools
           python -m build
       
-      - name: Copy wheel to default_worlds
+      - name: Copy wheel to worlds_wheels
         if: steps.check_changes.outputs.changed == 'true'
         run: |
           cd src
-          mkdir -p default_worlds
-          cp world_build_setuptools/dist/*.whl default_worlds/
+          mkdir -p worlds_wheels
+          cp world_build_setuptools/dist/*.whl worlds_wheels/
       
       - name: Configure git
         if: steps.check_changes.outputs.changed == 'true'
@@ -210,7 +210,7 @@ jobs:
         if: steps.check_changes.outputs.changed == 'true'
         run: |
           cd src
-          git add default_worlds/
+          git add worlds_wheels/
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else

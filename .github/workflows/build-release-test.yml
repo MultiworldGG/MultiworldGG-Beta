@@ -69,6 +69,7 @@ jobs:
         run: |
           source venv/Scripts/activate
           cd src
+          pip install -r requirements.txt
           pip install -r build_requirements.txt
       
       - name: Install build dependencies (Unix)
@@ -77,6 +78,7 @@ jobs:
         run: |
           source venv/bin/activate
           cd src
+          pip install -r requirements.txt
           pip install -r build_requirements.txt
       
       - name: Build executable (Windows)
@@ -132,6 +134,20 @@ jobs:
           cd src
           pip install -r requirements.txt
           pip install -r build_requirements.txt
+          
+          # Install default wheels
+          for wheel in default_wheels/*.whl; do
+            if [ -f "$wheel" ] && [[ ! "$wheel" =~ (sixteen|twelve) ]]; then
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || true
+            fi
+          done
+          
+          # Install worlds wheels
+          for wheel in worlds_wheels/*.whl; do
+            if [ -f "$wheel" ]; then
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || true
+            fi
+          done
       
       - name: Build AppImage
         run: |
@@ -175,6 +191,20 @@ jobs:
           cd src
           pip install -r requirements.txt
           pip install -r build_requirements.txt
+          
+          # Install default wheels
+          for wheel in default_wheels/*.whl; do
+            if [ -f "$wheel" ] && [[ ! "$wheel" =~ (sixteen|twelve) ]]; then
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || true
+            fi
+          done
+          
+          # Install worlds wheels
+          for wheel in worlds_wheels/*.whl; do
+            if [ -f "$wheel" ]; then
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || true
+            fi
+          done
       
       - name: Build macOS bundle
         run: |
@@ -305,7 +335,10 @@ jobs:
           draft: false
           prerelease: true
           files: |
-            release-artifacts/**/*
+            release-artifacts/windows-installer/*.exe
+            release-artifacts/linux-appimage/*.AppImage
+            release-artifacts/macos-bundle/*.app
+            release-artifacts/macos-bundle/*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

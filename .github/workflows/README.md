@@ -14,7 +14,7 @@ This directory contains automated workflows for building, testing, and releasing
 1. **Builds core components** (only when changed):
    - Splashscreen package (`src/splashscreen`) → commits to `default_wheels/`
    - GUI package (`src/gui`) → commits to `default_wheels/`
-   - Base worlds package (namespace files from `src/worlds/*.py`) → copies to `src/world_build_setuptools/src/worlds/` → builds → commits to `default_worlds/`
+   - Base worlds package (namespace files from `src/worlds/*.py`) → copies to `src/world_build_setuptools/src/worlds/` → builds → commits to `worlds_wheels/`
 
 2. **Detects new worlds:**
    - Scans for new directories in `src/worlds/`
