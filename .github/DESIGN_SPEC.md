@@ -131,13 +131,13 @@ for each module in game_index/*/pyproject.toml:
 
 ---
 
-### 3. Release Workflow (`release.yml`)
+### 3. Release Workflow (`build-release-test.yml`)
 
 **Purpose**: Build platform-specific distributables and create releases
 
 **Triggers**:
-- **Manual dispatch**: Requires version input (e.g., "v0.1.0")
-- **Git tag push**: Any tag matching `v*` pattern
+- **Manual dispatch**: Requires version input (e.g., "0.1.0")
+- **Git tag push**: Any tag matching `[0-9]*` pattern
 
 **Jobs**:
 
