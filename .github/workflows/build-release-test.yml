@@ -1,0 +1,309 @@
+name: Release - Build Distributables
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v0.1.0)'
+        required: true
+        type: string
+      create_release:
+        description: 'Create GitHub release'
+        required: false
+        type: boolean
+        default: true
+  
+  push:
+    tags:
+      - '[0-9]*'
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  build-exe:
+    name: Build Executable - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            artifact_name: windows-exe
+            exe_pattern: '*.exe'
+          - os: ubuntu-latest
+            artifact_name: linux-exe
+            exe_pattern: 'MultiworldGG'
+          - os: macos-latest
+            artifact_name: macos-exe
+            exe_pattern: 'MultiworldGG'
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Create fresh virtual environment
+        shell: bash
+        run: |
+          python -m venv venv
+          
+          # Activate based on OS
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            source venv/Scripts/activate
+          else
+            source venv/bin/activate
+          fi
+          
+          pip install --upgrade pip
+      
+      - name: Install build dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          source venv/Scripts/activate
+          cd src
+          pip install -r build_requirements.txt
+      
+      - name: Install build dependencies (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          source venv/bin/activate
+          cd src
+          pip install -r build_requirements.txt
+      
+      - name: Build executable (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          source venv/Scripts/activate
+          cd src
+          python build_exe.py
+      
+      - name: Build executable (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          source venv/bin/activate
+          cd src
+          python build_exe.py
+      
+      - name: Upload executable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            src/build/**/*
+          retention-days: 90
+
+  build-linux-appimage:
+    name: Build Linux AppImage
+    needs: build-exe
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Download Linux exe artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-exe
+          path: src/build/
+      
+      - name: Create virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          cd src
+          pip install -r build_requirements.txt
+      
+      - name: Build AppImage
+        run: |
+          source venv/bin/activate
+          cd src
+          python setup.py bdist_appimage
+      
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-appimage
+          path: src/dist/*.AppImage
+          retention-days: 90
+
+  build-mac-bundle:
+    name: Build macOS Bundle
+    needs: build-exe
+    runs-on: macos-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Download macOS exe artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-exe
+          path: src/build/
+      
+      - name: Create virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          cd src
+          pip install -r build_requirements.txt
+      
+      - name: Build macOS bundle
+        run: |
+          source venv/bin/activate
+          cd src
+          python setup.py bdist_mac
+      
+      - name: Upload macOS bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-bundle
+          path: |
+            src/dist/*.app
+            src/dist/*.dmg
+          retention-days: 90
+
+  build-windows-installer:
+    name: Build Windows Installer
+    needs: build-exe
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+      
+      - name: Download Windows exe artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-exe
+          path: src/build/
+      
+      - name: Install Inno Setup
+        run: |
+          choco install innosetup -y
+      
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          cd src
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" inno_setup.iss
+      
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: src/setups/*.exe
+          retention-days: 90
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-exe, build-linux-appimage, build-mac-bundle, build-windows-installer]
+    runs-on: ubuntu-latest
+    if: |
+      always() && 
+      (github.event_name == 'push' || inputs.create_release) &&
+      (needs.build-exe.result == 'success' || needs.build-exe.result == 'failure')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+      
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Release version: $VERSION"
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts/
+      
+      - name: Display structure of downloaded files
+        run: ls -R release-artifacts/
+      
+      - name: Create release notes
+        run: |
+          cat > release-notes.md << 'EOF'
+          # MultiworldGG-Test ${{ steps.version.outputs.version }}
+          
+          ## Downloads
+          
+          ### Windows
+          - **Installer**: `Setup MultiworldGG-Test *.exe` (recommended)
+          - **Portable**: Extract from `windows-exe.zip`
+          
+          ### Linux
+          - **AppImage**: `*.AppImage` (recommended)
+          - **Portable**: Extract from `linux-exe.zip`
+          
+          ### macOS
+          - **Bundle**: `*.app` or `*.dmg`
+          - **Portable**: Extract from `macos-exe.zip`
+          
+          ## Installation
+          
+          ### Windows
+          Run the installer or extract the portable version.
+          
+          ### Linux
+          ```bash
+          chmod +x MultiworldGG-*.AppImage
+          ./MultiworldGG-*.AppImage
+          ```
+          
+          ### macOS
+          Mount the DMG and drag to Applications, or run the .app directly.
+          
+          ---
+          
+          **Note**: This is an alpha release. Expect bugs and breaking changes.
+          
+          **Manual action required**: If you've added new worlds, you may need to replace placeholder strings in template files.
+          EOF
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: MultiworldGG-Test ${{ steps.version.outputs.version }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: true
+          files: |
+            release-artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
