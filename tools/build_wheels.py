@@ -81,7 +81,7 @@ def main():
                 print_colored(f"Error: pyproject.toml not found in {args.world} directory", "red")
                 sys.exit(1)
 
-            if not archipelago_json_path.exists():
+            if not archipelago_json_path.exists() and args.world != "_sni" and args.world != "_bizhawk":
                 print_colored(f"Error: archipelago.json not found in {args.world} directory", "red")
                 sys.exit(1)
 
@@ -94,12 +94,6 @@ def main():
 
         print_colored(f"Found {len(worlds_with_pyproject)} worlds with pyproject.toml files", "green")
 
-    # Create backup directory for pyproject.toml files
-    backup_dir = worlds_dir / "pyproject_backups"
-    if backup_dir.exists():
-        shutil.rmtree(backup_dir)
-    backup_dir.mkdir()
-
     # Track successful and failed builds
     successful_builds = []
     failed_builds = []
@@ -109,7 +103,6 @@ def main():
         world_path = worlds_dir / world
         pyproject_path = world_path / "pyproject.toml"
         archipelago_json_path = world_path / "archipelago.json"
-        backup_path = backup_dir / f"{world}.pyproject.toml"
 
         print_colored(f"Processing world: {world}", "yellow")
 
@@ -119,7 +112,7 @@ def main():
             failed_builds.append(f"{world} (no pyproject.toml)")
             continue
 
-        if not archipelago_json_path.exists():
+        if not archipelago_json_path.exists() and args.world != "_sni" and args.world != "_bizhawk":
             print_colored(f"  Skipping {world} - no archipelago.json found", "red")
             failed_builds.append(f"{world} (no archipelago.json)")
             continue
@@ -144,9 +137,6 @@ include pyproject.toml
         manifest_path.write_text(manifest_content)
 
         try:
-            # Backup original pyproject.toml
-            shutil.copy2(pyproject_path, backup_path)
-
             # Move pyproject.toml to script directory
             shutil.move(str(pyproject_path), str(script_dir / "pyproject.toml"))
             pyproject_in_root = script_dir / "pyproject.toml"
@@ -154,16 +144,20 @@ include pyproject.toml
             if args.verbose:
                 print_colored("  Moved pyproject.toml to project root directory", "gray")
 
-            with open(archipelago_json_path, "r") as f:
-                archipelago_json = json.load(f)
-            world_version = archipelago_json["world_version"].strip("\"")
-            print(f"World version: {world_version}")
+            if world != "_sni" and world != "_bizhawk":
+                with open(archipelago_json_path, "r") as f:
+                    archipelago_json = json.load(f)
+                world_version: str = archipelago_json["world_version"].strip("\"")
+                authors: list[dict[str, str]] = [{"name": author} for author in archipelago_json["authors"]]
 
-            with open(pyproject_in_root, "r") as f:
-                pyproject = toml.load(f)
-            pyproject["project"]["version"] = world_version
-            with open(pyproject_in_root, "w") as f:
-                toml.dump(pyproject, f)
+                with open(pyproject_in_root, "r") as f:
+                    pyproject = toml.load(f)
+                if world_version:
+                    pyproject["project"]["version"] = world_version
+                if authors:
+                    pyproject["project"]["authors"] = authors
+                with open(pyproject_in_root, "w") as f:
+                    toml.dump(pyproject, f)
 
             # Run build command
             print_colored("  Building wheel...", "cyan")
@@ -195,19 +189,13 @@ include pyproject.toml
         except Exception as e:
             print_colored(f"  ✗ Error processing {world}: {e}", "red")
             failed_builds.append(f"{world} (error: {e})")
+            if pyproject_in_root.exists() and pyproject_path.exists():
+                shutil.move(str(pyproject_in_root), str(pyproject_path))
+                if args.verbose:
+                    print_colored(f"  Restored pyproject.toml to {world}/", "gray")
+                else:
+                    print_colored(f"  Warning: pyproject.toml not found in {world}/ directory after build", "yellow")
 
-            # Try to restore pyproject.toml from backup
-            if backup_path.exists():
-                pyproject_in_root = script_dir / "pyproject.toml"
-                if pyproject_in_root.exists():
-                    pyproject_in_root.unlink()
-                shutil.move(str(backup_path), str(pyproject_path))
-                print_colored("  Restored pyproject.toml from backup", "yellow")
-
-    # Cleanup backup directory
-    if backup_dir.exists():
-        shutil.rmtree(backup_dir)
-    
     # Remove MANIFEST.in if it exists
     manifest_path = script_dir / "MANIFEST.in"
     if manifest_path.exists():

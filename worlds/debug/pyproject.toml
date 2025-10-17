@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.debug"
-version = "0.0.0"
+version = "0.0.1"
 description = "MultiWorld: debug"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "TreZ"
+name = "TreZc0"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

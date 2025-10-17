@@ -1,19 +1,20 @@
 [build-system]
-requires = ["setuptools"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds._manual"
-version = "1.0.2"
-description = "MultiWorld: Manual Client"
-classifiers = [
-    "Private :: Do Not Upload"
-]
+version = "1.0.3"
+description = "MultiWorld: Manual"
+classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "Unknown"
 
+[project.entry-points."mwgg.client"]
+"worlds._manual.Client" = "worlds._manual.Register:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds._manual"]
+where = [ "src",]
+include = [ "worlds._manual",]
 namespaces = true
-
