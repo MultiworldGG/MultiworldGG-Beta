@@ -45,7 +45,7 @@ This directory contains automated workflows for building, testing, and releasing
 **Artifacts:**
 - Game index wheels committed to repo (indefinite)
 
-### 3. Release Workflow (`release.yml`)
+### 3. Release Workflow (`build-release-test.yml`)
 
 **Triggers:**
 - Manual dispatch with version input
@@ -113,14 +113,14 @@ The CI workflow will automatically:
 
 #### Via Git Tag:
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag 0.1.0
+git push origin 0.1.0
 ```
 
 #### Via Manual Dispatch:
 1. Go to Actions → Release - Build Distributables
 2. Click "Run workflow"
-3. Enter version (e.g., `v0.1.0`)
+3. Enter version (e.g., `0.1.0`)
 4. Choose whether to create GitHub release
 5. Click "Run workflow"
 
