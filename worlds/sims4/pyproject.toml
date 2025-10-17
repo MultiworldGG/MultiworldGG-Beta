@@ -4,23 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.sims4"
-version = "1.7.4"
-description = "MultiWorld: The Sims 4"
-license = "MIT"
-license-files = [ "LICENSE",]
+version = "0.0.0"
+description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "bennydreamly"
-
-[[project.authors]]
-name = "itsmisscactus"
-
-[[project.authors]]
-name = "mrsummer360"
-
-[project.entry-points."mwgg.client"]
-"worlds.sims4.Client" = "worlds.sims4.Register:CLIENT_FUNCTION"
+name = "Unknown"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

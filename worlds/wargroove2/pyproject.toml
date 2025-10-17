@@ -4,15 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.wargroove2"
-version = "1.0.2"
-description = "MultiWorld: Wargroove 2"
+version = "0.0.0"
+description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "Fly Sniper"
-
-[project.entry-points."mwgg.client"]
-"worlds.wargroove2.Client" = "worlds.wargroove2.Register:CLIENT_FUNCTION"
+name = "Unknown"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

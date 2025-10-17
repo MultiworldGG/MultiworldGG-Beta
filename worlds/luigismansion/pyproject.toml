@@ -4,25 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.luigismansion"
-version = "0.5.8"
-description = "MultiWorld: Luigi's Mansion"
+version = "0.0.0"
+description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
-dependencies = [ "gclib[speedups] @ git+https://github.com/LagoLunatic/gclib.git@4ddebd0a9717dca67684fe1cc55a86da9265e6b7",]
 [[project.authors]]
-name = "BootsinSoots"
-
-[[project.authors]]
-name = "SomeJakeGuy"
-
-[[project.authors]]
-name = "TheChiefMoose"
-
-[[project.authors]]
-name = "LMFinish"
-
-[project.entry-points."mwgg.client"]
-"worlds.luigismansion.Client" = "worlds.luigismansion.Register:CLIENT_FUNCTION"
+name = "Unknown"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

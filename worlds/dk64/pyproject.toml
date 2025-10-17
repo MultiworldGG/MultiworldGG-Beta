@@ -4,21 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.dk64"
-version = "1.0.38"
-description = "MultiWorld: Donkey Kong 64"
+version = "0.0.0"
+description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "2dos"
-
-[[project.authors]]
-name = "Killklli,"
-
-[[project.authors]]
-name = "Ballaam"
-
-[project.entry-points."mwgg.client"]
-"worlds.dk64.Client" = "worlds.dk64.Register:CLIENT_FUNCTION"
+name = "Unknown"
 
 [tool.setuptools.packages.find]
 where = [ "src",]
