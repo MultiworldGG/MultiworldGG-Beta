@@ -1,0 +1,382 @@
+name: CI - Build and Test
+
+on:
+  push:
+    branches: [gui-changes]
+    paths:
+      - 'src/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [gui-changes]
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  build-splashscreen:
+    name: Build Splashscreen
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/gui-changes'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+          fetch-depth: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Check for splashscreen changes
+        id: check_changes
+        run: |
+          cd src
+          if git diff --name-only HEAD~1 HEAD | grep -q '^splashscreen/'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Set up Python
+        if: steps.check_changes.outputs.changed == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install build dependencies
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+      
+      - name: Build splashscreen wheel
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src/splashscreen
+          python -m build
+      
+      - name: Copy wheel to default_wheels
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src
+          mkdir -p default_wheels
+          cp splashscreen/dist/*.whl default_wheels/
+      
+      - name: Configure git
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Commit wheel
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src
+          git add default_wheels/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update splashscreen wheel"
+            git push
+          fi
+
+  build-gui:
+    name: Build GUI
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/gui-changes'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+          fetch-depth: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Check for GUI changes
+        id: check_changes
+        run: |
+          cd src
+          if git diff --name-only HEAD~1 HEAD | grep -q '^gui/'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Set up Python
+        if: steps.check_changes.outputs.changed == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install build dependencies
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+      
+      - name: Build GUI wheel
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src/gui
+          python -m build
+      
+      - name: Copy wheel to default_wheels
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src
+          mkdir -p default_wheels
+          cp gui/dist/*.whl default_wheels/
+      
+      - name: Configure git
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Commit wheel
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src
+          git add default_wheels/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update GUI wheel"
+            git push
+          fi
+
+  build-base-worlds:
+    name: Build Base Worlds Package
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/gui-changes'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+          fetch-depth: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Check for namespace files changes
+        id: check_changes
+        run: |
+          cd src
+          if git diff --name-only HEAD~1 HEAD | grep -q '^worlds/.*\.py$'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Set up Python
+        if: steps.check_changes.outputs.changed == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install build dependencies
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+      
+      - name: Copy namespace files to build directory
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src
+          mkdir -p world_build_setuptools/src/worlds
+          cp worlds/*.py world_build_setuptools/src/worlds/
+      
+      - name: Build base worlds wheel
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src/world_build_setuptools
+          python -m build
+      
+      - name: Copy wheel to default_worlds
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src
+          mkdir -p default_worlds
+          cp world_build_setuptools/dist/*.whl default_worlds/
+      
+      - name: Configure git
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Commit wheel
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src
+          git add default_worlds/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update base worlds wheel"
+            git push
+          fi
+
+  check-new-worlds:
+    name: Check for New Worlds
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/gui-changes'
+    outputs:
+      new_worlds: ${{ steps.detect.outputs.new_worlds }}
+      has_new_worlds: ${{ steps.detect.outputs.has_new_worlds }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+          fetch-depth: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Detect new world directories
+        id: detect
+        run: |
+          cd src
+          # Get list of new directories in worlds/
+          NEW_DIRS=$(git diff --name-only HEAD~1 HEAD | grep '^worlds/' | cut -d'/' -f2 | sort -u || true)
+          
+          NEW_WORLDS=""
+          HAS_NEW=false
+          
+          for dir in $NEW_DIRS; do
+            # Skip special directories and files
+            if [[ "$dir" == "_"* ]] || [[ "$dir" == "generic" ]] || [[ -z "$dir" ]]; then
+              continue
+            fi
+            
+            WORLD_PATH="worlds/$dir"
+            
+            # Check if this is actually a directory
+            if [ -d "$WORLD_PATH" ]; then
+              NEW_WORLDS="$NEW_WORLDS $dir"
+              HAS_NEW=true
+              echo "Found new world directory: $dir"
+            fi
+          done
+          
+          echo "new_worlds=$NEW_WORLDS" >> $GITHUB_OUTPUT
+          echo "has_new_worlds=$HAS_NEW" >> $GITHUB_OUTPUT
+          echo "New worlds detected: $NEW_WORLDS"
+      
+      - name: Create world files for new worlds
+        if: steps.detect.outputs.has_new_worlds == 'true'
+        run: |
+          cd src
+          for world in ${{ steps.detect.outputs.new_worlds }}; do
+            echo "Creating world files for: $world"
+            python tools/add_required_world_files.py "$world"
+          done
+      
+      - name: Configure git
+        if: steps.detect.outputs.has_new_worlds == 'true'
+        run: |
+          cd src
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Commit new world files
+        if: steps.detect.outputs.has_new_worlds == 'true'
+        run: |
+          cd src
+          git add worlds/*/pyproject.toml worlds/*/archipelago.json worlds/*/Register.py
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: add template files for new worlds
+
+Auto-generated by CI workflow for worlds: ${{ steps.detect.outputs.new_worlds }}
+
+⚠️ MANUAL ACTION REQUIRED: Replace placeholder strings in the generated files."
+            git push
+          fi
+
+  build-changed-worlds:
+    name: Build Changed Worlds
+    runs-on: ubuntu-latest
+    needs: check-new-worlds
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/gui-changes'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+          fetch-depth: 2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install build toml
+      
+      - name: Detect changed worlds
+        id: detect_changed
+        run: |
+          cd src
+          # Get changed files in worlds directories
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep '^worlds/' || true)
+          
+          CHANGED_WORLDS=""
+          
+          if [ -n "$CHANGED_FILES" ]; then
+            # Extract unique world names from changed files
+            WORLDS=$(echo "$CHANGED_FILES" | grep -E '^worlds/[^/]+/' | cut -d'/' -f2 | sort -u || true)
+            
+            for world in $WORLDS; do
+              # Skip special worlds and check if pyproject.toml exists
+              if [[ "$world" != "_"* ]] && [ -f "worlds/$world/pyproject.toml" ]; then
+                if [ -z "$CHANGED_WORLDS" ]; then
+                  CHANGED_WORLDS="$world"
+                else
+                  CHANGED_WORLDS="$CHANGED_WORLDS,$world"
+                fi
+              fi
+            done
+          fi
+          
+          echo "changed_worlds=$CHANGED_WORLDS" >> $GITHUB_OUTPUT
+          echo "Changed worlds: $CHANGED_WORLDS"
+      
+      - name: Build changed worlds
+        if: steps.detect_changed.outputs.changed_worlds != ''
+        run: |
+          source venv/bin/activate
+          cd src
+          python tools/build_wheels.py --world "${{ steps.detect_changed.outputs.changed_worlds }}"
+      
+      - name: Upload to private PyPI
+        if: steps.detect_changed.outputs.changed_worlds != ''
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+          TWINE_REPOSITORY_URL: ${{ vars.PYPI_URL }}
+        run: |
+          source venv/bin/activate
+          pip install twine
+          python -m twine upload --skip-existing dist/worlds_*.whl dist/worlds_*.tar.gz
+      
+      - name: Upload world wheels as artifacts
+        if: steps.detect_changed.outputs.changed_worlds != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-wheels
+          path: |
+            dist/worlds_*.whl
+            dist/worlds_*.tar.gz
+          retention-days: 30
+
