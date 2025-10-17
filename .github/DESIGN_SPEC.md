@@ -73,7 +73,7 @@ This document describes the automated CI/CD pipeline for MultiworldGG, an alpha-
 - Creates virtual environment (isolated from system)
 - Runs `python tools/build_wheels.py --world <comma,separated,list>`
 - Uploads wheels to private PyPI using twine
-- Uses `--skip-existing` to avoid conflicts
+- Uses `|| true` to ignore duplicate upload errors (devpi doesn't support --skip-existing)
 - Uploads artifacts (30-day retention)
 - **Continues on error**: Won't fail the entire workflow
 
@@ -85,7 +85,7 @@ Environment:
   TWINE_REPOSITORY_URL: ${{ vars.PYPI_URL }}
 
 Command:
-  python -m twine upload --skip-existing dist/worlds_*.whl dist/worlds_*.tar.gz
+  python -m twine upload dist/worlds_*.whl dist/worlds_*.tar.gz || true
 ```
 
 ---

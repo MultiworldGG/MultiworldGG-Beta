@@ -364,7 +364,7 @@ jobs:
         run: |
           source venv/bin/activate
           pip install twine
-          python -m twine upload --skip-existing dist/worlds_*.whl dist/worlds_*.tar.gz
+          python -m twine upload dist/worlds_*.whl dist/worlds_*.tar.gz || true
       
       - name: Upload world wheels as artifacts
         if: steps.detect_changed.outputs.changed_worlds != ''
