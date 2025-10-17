@@ -171,8 +171,9 @@ class SimsContext(SuperContext):
                     Utils.async_start(self.disconnect(False))
                     return
             else:
+                from CommonClient import logger
                 # Older APWorlds don't have the version string
-                self.command_processor.output("Warning: slot data has no version information; compatibility not checked.")
+                logger.info("Warning: slot data has no version information; compatibility not checked.")
 
 
             url = urllib.parse.urlparse(self.server_address)
@@ -184,7 +185,7 @@ class SimsContext(SuperContext):
                 'seed_name': self.seed_name,
                 'goal': self.goal,
                 'career': self.career,
-                'slot': self.slot_info[self.slot]
+                'slot': self.slot
             }
             print_json(payload, 'connection_status.json', self)
 

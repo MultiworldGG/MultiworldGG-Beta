@@ -1673,6 +1673,11 @@ def patchAssembly(ROM_COPY, spoiler):
     writeValue(ROM_COPY, 0x80600DA2, Overlay.Static, 0x38, offset_dict)
     writeValue(ROM_COPY, 0x80600DA6, Overlay.Static, 0x70, offset_dict)
 
+    # Soundplayer Fix
+    writeValue(ROM_COPY, 0x80735C9E, Overlay.Static, 0xFFFF, offset_dict)  # initSoundPlayer creates the event
+    writeValue(ROM_COPY, 0x80735D0E, Overlay.Static, 0xFFFF, offset_dict)  # __sndpVoiceHandler checks for the event
+    writeValue(ROM_COPY, 0x80735D26, Overlay.Static, 0xFFFF, offset_dict)  # __sndpVoiceHandler creates the event
+
     if HARDER_CRUSHERS:
         writeValue(ROM_COPY, 0x8064C520, Overlay.Static, 0xA218006E, offset_dict, 4)  # Make the crushers in Factory Crusher Room always damage you
     # Diddy Slam Crash Fix
@@ -1783,6 +1788,22 @@ def patchAssembly(ROM_COPY, spoiler):
             writeValue(ROM_COPY, 0x807480BC + (2 * index), Overlay.Static, 0, offset_dict)
     for index, map_id in enumerate(settings.level_void_maps):
         writeValue(ROM_COPY, 0x80744748 + (2 * index), Overlay.Static, map_id, offset_dict)
+
+    # Pause Carousel
+    check_term = getEnum("CHECK_TERMINATOR")
+    writeValue(ROM_COPY, 0x806AB3F6, Overlay.Static, check_term, offset_dict)
+    file_item_end = getSym("file_items") + (2 * check_term)
+    writeValue(ROM_COPY, 0x806AB2CE, Overlay.Static, getHi(file_item_end), offset_dict)
+    writeValue(ROM_COPY, 0x806AB2D6, Overlay.Static, getLo(file_item_end), offset_dict)
+
+    # HUD
+    writeValue(ROM_COPY, 0x806FB246, Overlay.Static, getEnum("ITEMID_TERMINATOR"), offset_dict)
+    writeValue(ROM_COPY, 0x806FABAA, Overlay.Static, getEnum("ITEMID_TERMINATOR"), offset_dict)
+    writeValue(ROM_COPY, 0x806F9992, Overlay.Static, getEnum("ITEMID_RESERVED_FUNKY"), offset_dict)
+    writeValue(ROM_COPY, 0x806F99AA, Overlay.Static, getEnum("ITEMID_RESERVED_CRANKY"), offset_dict)
+    writeValue(ROM_COPY, 0x806F9986, Overlay.Static, getEnum("ITEMID_RESERVED_SCOFF"), offset_dict)
+    writeValue(ROM_COPY, 0x806F99C6, Overlay.Static, getEnum("ITEMID_RESERVED_CANDY"), offset_dict)
+    writeValue(ROM_COPY, 0x806F99DA, Overlay.Static, getEnum("ITEMID_RESERVED_DK"), offset_dict)
 
     # Write Mech Fish entry
     writeValue(ROM_COPY, 0x806C6DC6, Overlay.Static, settings.mech_fish_entrance["map"], offset_dict)

@@ -1,5 +1,5 @@
 ﻿from worlds.tetrisattack import VersusGoal
-from worlds.tetrisattack.Options import StarterPack, StageClearMode, PuzzleGoal, VersusMode
+from worlds.tetrisattack.Options import StarterPack, PuzzleGoal, VersusMode
 from worlds.tetrisattack.test import TetrisAttackTestBase
 
 
@@ -8,7 +8,7 @@ class TestVersusMinimumDifficulty(TetrisAttackTestBase):
         "stage_clear_goal": False,
         "puzzle_goal": PuzzleGoal.option_no_puzzle,
         "versus_goal": VersusGoal.option_very_hard,
-        "starter_pack": StarterPack.option_stage_clear_round_1,
+        "starter_pack": StarterPack.option_vs_two_stages,
         "versus_mode": VersusMode.option_minimum_difficulty
     }
 

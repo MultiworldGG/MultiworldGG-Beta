@@ -3,7 +3,7 @@
   "authors": ["James"],
   "igdb_id": 1514,
   "minimum_ap_version": "0.6.3",
-  "world_version": "5.2.0",
+  "world_version": "5.2.3",
   "compatible_version": 7,
   "version": 7
 }

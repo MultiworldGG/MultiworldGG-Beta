@@ -18,14 +18,11 @@ from typing import Any
 from BaseUtils import get_archipelago_json
 GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("dk64")
 
-from BaseClasses import Location, LocationProgressType
-from worlds.dk64.ap_version import version as ap_version
-
 baseclasses_loaded = False
 try:
-    from BaseClasses import Item, MultiWorld, Tutorial, ItemClassification, CollectionState
+    # DO NOT DO IMPORTS FOR AP BEFORE THIS OR IN THIS BLOCK
+    # THIS BLOCK JUST DETERMINES IF AP IS INSTALLED
     import BaseClasses
-    import settings
 
     baseclasses_loaded = True
 except ImportError:
@@ -116,6 +113,10 @@ if baseclasses_loaded:
 
     sys.path.append("worlds/dk64/")
     sys.path.append("worlds/dk64/archipelago/")
+    from BaseClasses import Item, MultiWorld, Tutorial, ItemClassification, CollectionState
+    from BaseClasses import Location, LocationProgressType
+    from worlds.dk64.ap_version import version as ap_version
+    import settings
 
     import randomizer.ItemPool as DK64RItemPool
 

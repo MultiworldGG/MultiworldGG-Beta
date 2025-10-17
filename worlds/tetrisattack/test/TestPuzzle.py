@@ -2,12 +2,13 @@
 from worlds.tetrisattack.test import TetrisAttackTestBase
 
 
-class TestPuzzleFalseStageClearStart(TetrisAttackTestBase):
+class TestPuzzleIncremental(TetrisAttackTestBase):
     options = {
         "stage_clear_goal": False,
         "puzzle_goal": PuzzleGoal.option_puzzle,
         "versus_goal": VersusGoal.option_no_vs,
-        "starter_pack": StarterPack.option_stage_clear_round_1,
+        "puzzle_mode": PuzzleMode.option_incremental,
+        "starter_pack": StarterPack.option_puzzle_level_1,
         "puzzle_filler": 0
     }
 
@@ -75,7 +76,7 @@ class TestExtraPuzzle(TetrisAttackTestBase):
         "stage_clear_goal": False,
         "puzzle_goal": PuzzleGoal.option_extra_puzzle,
         "versus_goal": VersusGoal.option_no_vs,
-        "starter_pack": StarterPack.option_stage_clear_round_1,
+        "starter_pack": StarterPack.option_puzzle_level_1,
         "puzzle_filler": 0
     }
 

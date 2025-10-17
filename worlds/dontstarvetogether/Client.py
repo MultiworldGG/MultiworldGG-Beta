@@ -149,7 +149,7 @@ class DSTContext(CommonContext):
     #         self.send_hints_to_dst()
     #         async_start(self.send_msgs([{"cmd": "Sync"}]))
     #     else:
-    #         self.logger.info("Waiting to connect to MultiworldGG.")
+    #         self.logger.info("Waiting to connect to Archipelago.")
     
     def on_dst_reader_connected(self):
         "Counterpart of on_dst_handler_connected. When the reader checks that DST data folder exists."
@@ -159,7 +159,7 @@ class DSTContext(CommonContext):
             self.send_hints_to_dst()
             async_start(self.send_msgs([{"cmd": "Sync"}]))
         else:
-            self.logger.info("Waiting to connect to MultiworldGG.")
+            self.logger.info(f"Waiting to connect to {apname}.")
 
     def on_package(self, cmd: str, args: Dict):
         # print("on_package", cmd)
@@ -760,8 +760,7 @@ class DSTHandler():
 
         # Identify all data folders. There could potentially be multiple if there's multiple user profiles(?)
         profile_dirs:List[Path] = []
-        if os.path.isdir(base_dir / "client_save"):
-            profile_dirs.append(base_dir)
+        profile_dirs.append(base_dir) # Always check base dir because dedicated servers are usually set up here
         
         dirs = [str(filename) for filename in os.listdir(base_dir) if os.path.isdir(base_dir / filename)]
         for dirname in dirs:
@@ -860,19 +859,7 @@ class DSTHandler():
             await asyncio.sleep(5.0)
 
 
-async def main(args):
-    ctx = DSTContext(args.connect, args.password)
-    ctx.auth = args.name
-    ctx.run_gui()
-
-    dst_handler_task = asyncio.create_task(ctx.dst_handler.run_reader(), name="DST Handler")
-
-    await ctx.exit_event.wait()
-    dst_handler_task.cancel()
-    await ctx.shutdown()
-
-
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, slot_name: str = None):
+def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, slot_name: str = None):
     """
     Launch the client
     """
@@ -880,7 +867,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     logger = logging.getLogger("DontStarveTogetherClient")
 
     async def main():
-        ctx = DSTContext(server_address, password, ready_callback, error_callback)
+        ctx = DSTContext(server_address, slot_name, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -901,7 +888,6 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
         await ctx.shutdown()
 
     import colorama
-
     # Check if we're already in an event loop (GUI mode) first
     try:
         loop = asyncio.get_running_loop()
@@ -916,6 +902,6 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, slot_name: str = None):
+def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback, slot_name)
+    launch(server_address, slot_name, password, ready_callback, error_callback)

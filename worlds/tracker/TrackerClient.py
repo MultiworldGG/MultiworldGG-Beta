@@ -82,7 +82,8 @@ class TrackerCommandProcessor(ClientCommandProcessor):
     @mark_raw
     def _cmd_ignore(self, location_name: str = ""):
         """Ignore a location so it doesn't appear in the tracker list"""
-        if not self.ctx.game:
+        currentWorld = self.ctx.tracker_core.get_current_world()
+        if not currentWorld:
             logger.info("Game not yet loaded")
             return
 
@@ -96,9 +97,24 @@ class TrackerCommandProcessor(ClientCommandProcessor):
         logger.info(f"Added {location_name} to ignore list.")
 
     @mark_raw
+    def _cmd_ignore_all(self):
+        """Ignore all currently in logic locations... if that's something you want to do"""
+        currentWorld = self.ctx.tracker_core.get_current_world()
+        if not currentWorld:
+            logger.error("Game not yet loaded")
+            return
+        updatetracker_ret = self.ctx.updateTracker()
+        location_name_to_id = currentWorld.location_name_to_id
+        for loc in updatetracker_ret.in_logic_locations:
+            if loc in location_name_to_id:
+                self.ctx.tracker_core.ignored_locations.add(location_name_to_id[loc])
+        self.ctx.updateTracker()
+
+    @mark_raw
     def _cmd_unignore(self, location_name: str = ""):
         """Stop ignoring a location so it appears in the tracker list again"""
-        if not self.ctx.game:
+        currentWorld = self.ctx.tracker_core.get_current_world()
+        if not currentWorld:
             logger.info("Game not yet loaded")
             return
 
@@ -195,6 +211,11 @@ class TrackerCommandProcessor(ClientCommandProcessor):
         from worlds import failed_world_loads
         if failed_world_loads:
             logger.error(f"Worlds that failed to load [{', '.join(failed_world_loads)}]")
+        # TODO: See if we need this - might be interesting if the server is running different from pypi
+        # if self.ctx.game:
+        #     connected_cls = AutoWorld.AutoWorldRegister.world_types.get(self.ctx.game)
+        #     if self.ctx.checksums[self.ctx.game] != connected_cls.get_data_package_data()["checksum"]:
+        #         logger.error(f"Local checksum = {self.ctx.checksums[self.ctx.game]} | remote checksum = {connected_cls.get_data_package_data()["checksum"]}")
 
 def cmd_load_map(self: TrackerCommandProcessor, map_id: str = "0"):
     """Force a poptracker map id to be loaded"""
@@ -226,7 +247,6 @@ class TrackerGameContext(CommonContext):
     ldeferred_dict: dict[str,list] = {}
     map_page_coords_func = lambda *args: {}
     watcher_task = None
-    auto_tab = True
     update_callback: Callable[[list[str]], bool] | None = None
     region_callback: Callable[[list[str]], bool] | None = None
     events_callback: Callable[[list[str]], bool] | None = None
@@ -237,6 +257,20 @@ class TrackerGameContext(CommonContext):
     use_split = True
     re_gen_passthrough = None
     local_items: list[NetworkItem] = []
+
+    _auto_tab = True
+
+    @property
+    def auto_tab(self):
+        return self._auto_tab
+
+    @auto_tab.setter
+    def auto_tab(self, value):
+        self._auto_tab = value
+        self.ui.auto_tab = value
+        if value:
+            self.load_map(None)
+            self.updateTracker()
 
     @property
     def tracker_items_received(self):
@@ -386,6 +420,79 @@ class TrackerGameContext(CommonContext):
 
         return updateTracker_ret
 
+    def parse_layout_node(self, node, curr_path, is_tab=False):
+        if is_tab:
+            name = node["title"]
+            curr_path = name if curr_path is None else f"{curr_path}/{name}"
+        else:
+            name = None
+        maps = []
+
+        if "type" in node and node["type"] == "map":
+            maps = node["maps"]
+            if curr_path is not None:
+                if len(maps) == 1:
+                    self.map_to_name[maps[0]] = curr_path
+                else:
+                    for m in maps:
+                        self.map_to_name[m] = f"{curr_path}/{m}"
+        elif "content" in node:
+            if isinstance(node["content"], list):
+                for item in node["content"]:
+                    result = self.parse_layout_node(item, curr_path)
+                    if isinstance(result, list):
+                        maps.extend(result)
+                    elif result:
+                        maps.append(result)
+            else:
+                result = self.parse_layout_node(node["content"], curr_path)
+                if result:
+                    maps = result
+        elif "tabs" in node:
+            if isinstance(node["tabs"], list):
+                for item in node["tabs"]:
+                    result = self.parse_layout_node(item, curr_path, True)
+                    if isinstance(result, list):
+                        maps.extend(result)
+                    elif result:
+                        maps.append(result)
+            else:
+                result = self.parse_layout_node(node["tabs"], curr_path, True)
+                if result:
+                    maps = result
+
+        return (name, maps) if name is not None else maps
+
+    def parse_map_group_node_names(self, node, curr_path):
+        if isinstance(node, str):
+            self.map_to_name[node] = curr_path
+        else:
+            name = node[0]
+            curr_path = name if curr_path is None else f"{curr_path}/{name}"
+            if isinstance(node[1], list):
+                for x in node[1]:
+                    self.parse_map_group_node_names(x, curr_path)
+            else:
+                self.parse_map_group_node_names(node[1], curr_path)
+
+    def parse_map_groups(self):
+        self.map_to_name = {}
+        if self.tracker_world.map_page_groups is not None:
+            self.map_groups = self.tracker_world.map_page_groups
+            for x in self.map_groups:
+                self.parse_map_group_node_names(x, None)
+            return
+        all_layouts = []
+        for layout in self.layouts:
+            maps = []
+            for key, node in layout.items():
+                result = self.parse_layout_node(node, None)
+                if result:
+                    maps.extend(result)
+            if maps:
+                all_layouts.extend(maps)
+        self.map_groups = all_layouts
+
     def load_pack(self):
         assert self.tracker_core.player_id is not None
         assert self.tracker_world is not None
@@ -393,13 +500,15 @@ class TrackerGameContext(CommonContext):
         assert current_world
         self.maps = []
         self.locs = []
+        self.layouts = []
         if self.tracker_world.external_pack_key:
             assert current_world.settings
             try:
                 from zipfile import is_zipfile
                 packRef = current_world.settings[self.tracker_world.external_pack_key]
                 if packRef == "":
-                    packRef = open_filename("Select Poptracker pack", filetypes=[("Poptracker Pack", [".zip"])])
+                    prompt_desc = getattr(current_world.settings[self.tracker_world.external_pack_key],"ut_dialog_name","Select Poptracker pack")
+                    packRef = open_filename(prompt_desc, filetypes=[("Poptracker Pack", [".zip"])])
                     current_world.settings[self.tracker_world.external_pack_key] = packRef
                     current_world.settings._changed = True
                 if packRef:
@@ -410,6 +519,8 @@ class TrackerGameContext(CommonContext):
                             self.maps += load_json_zip(packRef, f"{map_page}")
                         for loc_page in self.tracker_world.map_page_locations:
                             self.locs += load_json_zip(packRef, f"{loc_page}")
+                        for layout_page in self.tracker_world.map_page_layouts:
+                            self.layouts.append(load_json_zip(packRef, f"{layout_page}"))
                     else:
                         current_world.settings.update({self.tracker_world.external_pack_key: ""}) #failed to find a pack, prompt next launch
                         current_world.settings._changed = True
@@ -431,6 +542,9 @@ class TrackerGameContext(CommonContext):
                 self.maps += load_json(PACK_NAME, f"/{self.tracker_world.map_page_folder}/{map_page}")
             for loc_page in self.tracker_world.map_page_locations:
                 self.locs += load_json(PACK_NAME, f"/{self.tracker_world.map_page_folder}/{loc_page}")
+            for layout_page in self.tracker_world.map_page_layouts:
+                self.layouts.append(load_json(PACK_NAME, f"/{self.tracker_world.map_page_folder}/{layout_page}"))
+        self.parse_map_groups()
         self.load_map(None)
 
     def load_map(self, map_id: Union[int, str, None]):
@@ -462,8 +576,11 @@ class TrackerGameContext(CommonContext):
                 return
             m = self.maps[map_id]
         self.map_id = map_id
-        from worlds import AutoWorld
-        location_name_to_id = AutoWorld.AutoWorldRegister.world_types[self.game].location_name_to_id
+        if self.map_to_name is not None:
+            self.ui.current_map = self.map_to_name.get(m["name"], m["name"])
+        else:
+            self.ui.current_map = m["name"]
+        location_name_to_id = self.ctx.location_names[self.ctx.game]
         # m = [m for m in self.maps if m["name"] == map_name]
         if self.tracker_world.external_pack_key:
             from zipfile import is_zipfile
@@ -626,7 +743,12 @@ class TrackerGameContext(CommonContext):
                 self.tracker_core.initalize_tracker_core(connected_cls,args["slot_data"])
 
                 if self.ui is not None and hasattr(connected_cls, "tracker_world"):
-                    self.tracker_world = UTMapTabData(self.slot, self.team, **connected_cls.tracker_world)
+                    self.tracker_world = UTMapTabData(self.slot, self.team, **getattr(connected_cls,"tracker_world",{}))
+                elif self.ui is not None and hasattr(self.tracker_core.get_current_world(),"tracker_world"):
+                    self.tracker_world = UTMapTabData(self.slot, self.team, **getattr(self.tracker_core.get_current_world(),"tracker_world",{}))
+                else:
+                    self.tracker_world = None
+                if self.tracker_world:
                     self.load_pack()
                     if self.tracker_world:  # don't show the map if loading failed
                         self.ui.show_map = True
@@ -636,9 +758,6 @@ class TrackerGameContext(CommonContext):
                         icon_key = self.tracker_world.location_setting_key
                         if icon_key:
                             self.set_notify(icon_key)
-                else:
-                    self.tracker_world = None
-                if self.tracker_world:
                     if "load_map" not in self.command_processor.commands or not self.command_processor.commands["load_map"]:
                         self.command_processor.commands["load_map"] = cmd_load_map
                     if "list_maps" not in self.command_processor.commands or not self.command_processor.commands["list_maps"]:
@@ -768,7 +887,7 @@ def explain(ctx: TrackerGameContext, dest_name: str):
     from NetUtils import JSONMessagePart
     if ctx.tracker_core.player_id is None or ctx.tracker_core.multiworld is None:
         logger.error("Player YAML not installed or Generator failed")
-        ctx.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for {apname} version {__version__}")
+        ctx.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}")
         return
     current_world = ctx.tracker_core.get_current_world()
     assert current_world
@@ -818,7 +937,7 @@ def explain(ctx: TrackerGameContext, dest_name: str):
 def get_logical_path(ctx: TrackerGameContext, dest_name: str):
     if ctx.tracker_core.player_id is None or ctx.tracker_core.multiworld is None:
         logger.error("Player YAML not installed or Generator failed")
-        ctx.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for {apname} version {__version__}")
+        ctx.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}")
         return
     relevent_region = None
     state = None

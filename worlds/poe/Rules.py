@@ -11,12 +11,7 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger("poe.Rules")
 logger.setLevel(logging.DEBUG)
 
-MAX_GUCCI_GEAR_UPGRADES = 20
-MAX_GEAR_UPGRADES       = 50
-MAX_FLASK_SLOTS         = 10
-MAX_LINK_UPGRADES       = 22
-MAX_SKILL_GEMS          = 50 # you will get more, but this is the max required for "logic"
-MAX_SUPPORT_GEMS        = 50 # you will get more, but this is the max required for "logic"
+
 
 _debug = False
 _very_debug = False
@@ -44,35 +39,41 @@ passives_required_for_act = {
     12: 136,  # max amount of passives in the game (including ascendancy points)
 }
 
-def get_ascendancy_amount_for_act(act, opt):
+def get_ascendancy_amount_for_act(act, world: "PathOfExileWorld"):
     return (
         min(
-            opt.ascendancies_available_per_class.value,
-            3 if opt.starting_character.value != opt.starting_character.option_scion else 1
+            world.options.ascendancies_available_per_class.value,
+            3 if world.options.starting_character.value != world.options.starting_character.option_scion else 1
         )
     ) if act >= 3 else 0
 
-def get_gear_amount_for_act(act, opt): return min(opt.gear_upgrades_per_act.value * (act - 1), MAX_GEAR_UPGRADES if opt.gucci_hobo_mode.value == opt.gucci_hobo_mode.option_disabled else MAX_GUCCI_GEAR_UPGRADES)
-def get_flask_amount_for_act(act, opt): return 0 if not opt.add_flasks_to_item_pool else min(opt.flasks_per_act.value * (act - 1), MAX_FLASK_SLOTS)
-def get_gem_amount_for_act(act, opt): return 0 if not opt.add_max_links_to_item_pool else min(opt.max_links_per_act.value * (act - 1), MAX_LINK_UPGRADES)
-def get_skill_gem_amount_for_act(act, opt): return min(opt.skill_gems_per_act.value * (act - 1), MAX_SKILL_GEMS)
-def get_support_gem_amount_for_act(act, opt): return min(opt.support_gems_per_act.value * (act - 1), MAX_SUPPORT_GEMS)
-def get_passives_amount_for_act(act, opt): return passives_required_for_act.get(act, 0) if opt.add_passive_skill_points_to_item_pool.value else 0
+def get_gear_amount_for_act(act, world: "PathOfExileWorld"):
+    return min(world.options.gear_upgrades_per_act.value * (act - 1), world.placed_total_gear_upgrades)
+
+def get_flask_amount_for_act(act, world: "PathOfExileWorld"):
+    return 0 if not world.options.add_flasks_to_item_pool else min(world.options.flasks_per_act.value * (act), world.placed_total_flask_slots if world.options.add_flasks_to_item_pool.value else 0)
+
+def get_gem_link_amount_for_act(act, world: "PathOfExileWorld"):
+    return 0 if not world.options.add_max_links_to_item_pool else min(world.options.max_links_per_act.value * (act), world.placed_total_link_upgrades if world.options.add_max_links_to_item_pool.value else 0)
+
+def get_skill_gem_amount_for_act(act, world: "PathOfExileWorld"):
+    return min(world.options.skill_gems_per_act.value * (act - 1), world.placed_total_skill_gems if world.options.add_skill_gems_to_item_pool.value else 0)
+
+def get_support_gem_amount_for_act(act, world: "PathOfExileWorld"):
+    return min(world.options.support_gems_per_act.value * (act - 1), world.placed_total_support_gems if world.options.add_support_gems_to_item_pool.value else 0)
+
+def get_passives_amount_for_act(act, world: "PathOfExileWorld"):
+    return passives_required_for_act.get(act, 0) if world.options.add_passive_skill_points_to_item_pool.value else 0
 
 def completion_condition(world: "PathOfExileWorld",  state: CollectionState) -> bool:
     if len(world.bosses_for_goal) > 0:
-        # if we can reach act 11, we can assume we have completed the goal
+        # if we can reach act 11, we can assume the world is completable.
         return can_reach(11, world, state)
-    #    # if there are bosses for the goal, we need to check if they are all completed
-    #    for boss in world.bosses_for_goal:
-    #        if not state.has(f"complete {boss}", world.player):
-    #            return False
-    #    return True
 
     else: # reach act for goal
         return can_reach(world.goal_act, world, state)
 
-def can_reach(act: int, world , state: CollectionState) -> bool:
+def can_reach(act: int, world: "PathOfExileWorld", state: CollectionState) -> bool:
     opt : PathOfExileOptions = world.options
 
     if opt.disable_generation_logic.value:
@@ -82,13 +83,13 @@ def can_reach(act: int, world , state: CollectionState) -> bool:
     if act < 1:
         return True
 
-    ascedancy_amount = get_ascendancy_amount_for_act(act, opt)
-    gear_amount = get_gear_amount_for_act(act, opt)
-    flask_amount = get_flask_amount_for_act(act, opt)
-    gem_slot_amount = get_gem_amount_for_act(act, opt)
-    skill_gem_amount = get_skill_gem_amount_for_act(act, opt)
-    support_gem_amount = get_support_gem_amount_for_act(act, opt)
-    passive_amount = get_passives_amount_for_act(act,opt)
+    ascendancy_amount   = get_ascendancy_amount_for_act(act, world)
+    gear_amount         = get_gear_amount_for_act(act, world)
+    flask_amount        = get_flask_amount_for_act(act, world)
+    gem_link_amount     = get_gem_link_amount_for_act(act, world)
+    skill_gem_amount    = get_skill_gem_amount_for_act(act, world)
+    support_gem_amount  = get_support_gem_amount_for_act(act, world)
+    passive_amount      = get_passives_amount_for_act(act,world)
 
     # make a list of valid weapon types, based on the state
 
@@ -148,10 +149,10 @@ def can_reach(act: int, world , state: CollectionState) -> bool:
                 pass
 
 
-    reachable &= ascedancy_count >= ascedancy_amount and \
+    reachable &= ascedancy_count >= ascendancy_amount and \
             gear_count >= gear_amount and \
             flask_count >= flask_amount and \
-            gem_slot_count >= gem_slot_amount and \
+            gem_slot_count >= gem_link_amount and \
             support_gem_count >= support_gem_amount and \
             usable_skill_gem_count >= skill_gem_amount and \
             passive_count >= passive_amount
@@ -160,20 +161,20 @@ def can_reach(act: int, world , state: CollectionState) -> bool:
         if _debug:
             log = f"Act {act} not reachable with:"
             if gear_count < gear_amount:
-                log += f"gear: {gear_count}/{gear_amount},"
+                log += f" gear: {gear_count}/{gear_amount}({world.placed_total_gear_upgrades})"
             if flask_count < flask_amount:
-                log += f" flask: {flask_count}/{flask_amount},"
-            if gem_slot_count < gem_slot_amount:
-                log += f" gem slots: {gem_slot_count}/{gem_slot_amount},"
+                log += f" flask: {flask_count}/{flask_amount}({world.placed_total_flask_slots})"
+            if gem_slot_count < gem_link_amount:
+                log += f" gem links: {gem_slot_count}/{gem_link_amount}({world.placed_total_link_upgrades})"
             if support_gem_count < support_gem_amount:
-                log += f" support gems: {support_gem_count}/{support_gem_amount},"
+                log += f" support gems: {support_gem_count}/{support_gem_amount}({world.placed_total_support_gems})"
             if usable_skill_gem_count < skill_gem_amount:
-                log += f" skill gems: {usable_skill_gem_count}/{skill_gem_amount},"
-            if ascedancy_count < ascedancy_amount:
-                log += f" ascendancies: {ascedancy_count}/{ascedancy_amount},"
+                log += f" skill gems: {usable_skill_gem_count}/{skill_gem_amount}({world.placed_total_skill_gems})"
+            if ascedancy_count < ascendancy_amount:
+                log += f" ascendancies: {ascedancy_count}/{ascendancy_amount}"
             if passive_count < passive_amount:
                 log += f" levels:{passive_count}/{passive_amount}"
-            log += f" for {opt.starting_character.current_option_name}"
+            #log += f" for {opt.starting_character.current_option_name}"
 
             #print (log)
 
@@ -199,11 +200,11 @@ def can_reach(act: int, world , state: CollectionState) -> bool:
 
 
 
-def SelectLocationsToAdd (world: "PathOfExileWorld", target_amount):
+def SelectLocationsToAdd (world: "PathOfExileWorld", target_amount) -> list[LocationDict]:
     opt:PathOfExileOptions = world.options
 
     total_available_locations: list[LocationDict] = list()
-    selected_locations_result: list[LocationDict] = list()
+    priority_selected_locations: list[LocationDict] = list()
     goal_act = world.goal_act
 
     max_level = acts[goal_act]["maxMonsterLevel"]
@@ -217,38 +218,76 @@ def SelectLocationsToAdd (world: "PathOfExileWorld", target_amount):
         lvl_locs = [loc for loc in level_locations.values() if loc["level"] is not None and loc["level"] <= max_level]
         total_available_locations.extend(lvl_locs)
 
-    def total_needed_by_act(act: int, opt: PathOfExileOptions) -> int:
-        if act < 1:
-            return 0
-        needed_locations = 0
-        needed_locations += Items.ACT_0_USABLE_GEMS + Items.ACT_0_WEAPON_TYPES + Items.ACT_0_ARMOUR_TYPES + Items.ACT_0_FLASK_SLOTS + Items.ACT_0_ADDITIONAL_LOCATIONS
-        needed_locations += get_ascendancy_amount_for_act(act, opt)
-        needed_locations += get_gear_amount_for_act(act, opt)
-        needed_locations += get_flask_amount_for_act(act, opt)
-        needed_locations += get_gem_amount_for_act(act, opt)
-        needed_locations += get_skill_gem_amount_for_act(act, opt)
-        needed_locations += get_passives_amount_for_act(act, opt)
-        return needed_locations
+    if len(total_available_locations) <= target_amount:
+        logger.debug(f"There are more items than locations, enabling all {len(total_available_locations)} available locations")
+        return total_available_locations
 
+    def total_needed_by_end_of_act(act_target: int, _first_call: bool= True) -> int:
+        needed_locations = 0
+        start_required = Items.ACT_0_USABLE_GEMS + Items.ACT_0_WEAPON_TYPES + Items.ACT_0_ARMOUR_TYPES + Items.ACT_0_FLASK_SLOTS + Items.ACT_0_ADDITIONAL_LOCATIONS
+
+        if act_target < 1:
+            return 0
+        needed_locations += start_required
+        needed_locations += get_ascendancy_amount_for_act(act_target, world)
+        needed_locations += get_gear_amount_for_act(act_target, world)
+        needed_locations += get_flask_amount_for_act(act_target, world)
+        needed_locations += get_gem_link_amount_for_act(act_target, world)
+        needed_locations += get_skill_gem_amount_for_act(act_target, world)
+        needed_locations += get_passives_amount_for_act(act_target, world)
+        needed_for_previous_acts = total_needed_by_end_of_act(act_target - 1)
+        if _first_call and _very_debug:
+            logger.debug(f"act {act_target} needs:"
+                         f"\n start_required {act_target}: {start_required}"
+                         f"\n get_ascendancy_amount_for_act {act_target}: {get_ascendancy_amount_for_act(act_target, world)}"
+                         f"\n get_gear_amount_for_act {act_target}: {get_gear_amount_for_act(act_target, world)}"
+                         f"\n get_flask_amount_for_act {act_target}: {get_flask_amount_for_act(act_target, world)}"
+                         f"\n get_gem_link_amount_for_act {act_target}: {get_gem_link_amount_for_act(act_target, world)}"
+                         f"\n get_skill_gem_amount_for_act {act_target}: {get_skill_gem_amount_for_act(act_target, world)}"
+                         f"\n get_passives_amount_for_act {act_target}: {get_passives_amount_for_act(act_target, world)}"
+                         f"\n total needed by act {act_target}: {needed_locations} "
+                         f"\n previous acts locations needed: {needed_for_previous_acts} "
+                         f"\n total: {needed_locations + needed_for_previous_acts}"
+                         )
+        return needed_locations + needed_for_previous_acts
+
+    guaranteed_early_locations = [loc for loc in total_available_locations if loc["act"] == 1 and loc.get("placeInAct", None) == "early"] # early act 1 locations are guaranteed to be available
+    for loc in guaranteed_early_locations:
+        total_available_locations.remove(loc)
+    priority_selected_locations.extend(guaranteed_early_locations)
 
     for act in range(1, goal_act + 1):
-        needed_locations_for_act = total_needed_by_act(act, opt) - total_needed_by_act(act - 1, opt)
+        needed_locations_for_act = total_needed_by_end_of_act(act) - total_needed_by_end_of_act(act - 1)
         locations_in_act = [loc for loc in total_available_locations if loc["act"] == act]
     
         if not locations_in_act:
             break
 
-        if needed_locations_for_act > len(locations_in_act):
-            logger.error(f"\n@@@@@@@@@@\n[ERROR] Not enough locations for Act {act}. Needed: {needed_locations_for_act}, Available: {len(locations_in_act)}, going to try to generate anyway...")
-
         selected_locations = world.random.sample(locations_in_act, k=min(needed_locations_for_act, len(locations_in_act)))
+
+        if needed_locations_for_act > len(locations_in_act):
+            needed_earlier_locations = needed_locations_for_act - len(locations_in_act)
+            locations_in_earlier_act = [loc for loc in total_available_locations if loc["act"] < act]
+            logger.debug(f"\n@@@@@@@@@@\nNot enough locations for Act {act}. Needed: {needed_locations_for_act}, Available: {len(locations_in_act)}, going to try and add earlier locations...")
+            if len(locations_in_earlier_act) < needed_earlier_locations:
+                logger.error(f"\n@@@@@@@@@@\n@@@@@@@@@@\nNot enough earlier locations to cover the deficit of {needed_earlier_locations}, only {len(locations_in_earlier_act)} available")
+            chosen_earlier_locations = world.random.sample(locations_in_earlier_act, k=min(needed_earlier_locations, len(locations_in_earlier_act)))
+            selected_locations.extend(chosen_earlier_locations)
+        if _very_debug:
+            #deep copy and sort by id selected_locations for logging
+            selected_locations = [loc.copy() for loc in selected_locations]
+            selected_locations.sort(key=lambda x: x["id"])
+            logger.debug(f"Selecting {len(selected_locations)}/{needed_locations_for_act} locations for Act {act}, from {len(locations_in_act)} available locations")
+            for loc in selected_locations:
+                logger.debug(f"  - {loc['name']}")
+
         for loc in selected_locations:
             total_available_locations.remove(loc)
-        selected_locations_result.extend(selected_locations)
+        priority_selected_locations.extend(selected_locations)
 
     world.random.shuffle(total_available_locations)
-    selected_locations_result.extend(total_available_locations)
-    return selected_locations_result[:target_amount]
+    priority_selected_locations.extend(total_available_locations)
+    return priority_selected_locations[:target_amount]
 
 
 

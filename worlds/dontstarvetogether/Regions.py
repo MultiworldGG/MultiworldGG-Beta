@@ -126,6 +126,9 @@ def create_regions(multiworld: MultiWorld, player: int, options:DSTOptions, item
         "seafaring_locations": [],
         "other_locations": []
     }
+    # Put in a sorted list for determinism
+    RESEARCH_GROUP_ORDER = [key for key in RESEARCH_GROUPS.keys()]
+    RESEARCH_GROUP_ORDER.sort()
 
     # Fill categories with locations
     for name, data in filtered_location_data_table.items():
@@ -160,7 +163,8 @@ def create_regions(multiworld: MultiWorld, player: int, options:DSTOptions, item
 
     assert len(RESEARCH_GROUPS["other_locations"]) == 0
 
-    for _, group in RESEARCH_GROUPS.items():
+    for key in RESEARCH_GROUP_ORDER:
+        group = RESEARCH_GROUPS[key]
         # Shuffle groups!
         world.random.shuffle(group)
 
@@ -175,8 +179,8 @@ def create_regions(multiworld: MultiWorld, player: int, options:DSTOptions, item
 
     # Now smush the groups together!
     remaining_research = []
-    for _, group in RESEARCH_GROUPS.items():
-        remaining_research += group
+    for key in RESEARCH_GROUP_ORDER:
+        remaining_research += RESEARCH_GROUPS[key]
 
     # And shuffle again!
     world.random.shuffle(remaining_research)

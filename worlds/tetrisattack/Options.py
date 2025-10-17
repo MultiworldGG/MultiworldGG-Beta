@@ -1,14 +1,14 @@
 ﻿from Options import PerGameCommonOptions, DeathLink, Choice, Toggle, DefaultOnToggle, Range
 from dataclasses import dataclass
 
-
 class StageClearGoal(DefaultOnToggle):
-    """This makes Stage Clear Last Stage Clear one of the goals.
-    If multiple modes need to be cleared, each will provide a final item and auto-hint the other win conditions."""
+    """This makes Stage Clear Last Stage Clear one of the goals (you will need to complete all goals for the seed).
+    If multiple modes need to be cleared, each will provide a final item and auto-hint the other win conditions.
+    Note that if you don't start in round 6, the Last Stage unlock will be in Stage Clear Round 6 Clear."""
 
 
 class PuzzleGoal(Choice):
-    """This makes Puzzle and/or Extra Puzzle Round 6 Clear one of the goals.
+    """This makes Puzzle and/or Extra Puzzle Round 6 Clear one of the goals (you will need to complete all goals for the seed).
     If multiple modes need to be cleared, each will provide a final item and auto-hint the other win conditions."""
     option_no_puzzle = 0
     option_puzzle = 1
@@ -24,7 +24,7 @@ class PuzzleAllClear(Toggle):
 
 
 class VersusGoal(Choice):
-    """This makes Versus one of the goals.
+    """This makes Versus one of the goals (you will need to complete all goals for the seed).
     If multiple modes need to be cleared, each will provide a final item and auto-hint the other win conditions.
     Note that harder difficulties will be forced to end at the goal difficulty's final stage.
     If Easy Bowser is enabled for Easy or Normal, the goal becomes Stage 12 at that difficulty.
@@ -150,6 +150,36 @@ class LastStageHPMultiplier(Range):
     default = 6
 
 
+class ShockPanelChecks(Range):
+    """Number of items to add to the item pool locked behind clearing shock panels (gray ! panels) in Stage Clear.
+    Multiply by the panels per check for the total panel count in your slot.
+    For reference, one panel will spawn per row but will step up to two panels per row if you fall behind."""
+    range_start = 0
+    range_end = 100
+    default = 0
+
+
+class ShockPanelsPerCheck(Range):
+    """Number of shock panels required to unlock each check.
+    This also determines the number of panels you get each time you receive the item."""
+    range_start = 1
+    range_end = 20
+    default = 4
+
+
+class ShockPanelBias(Choice):
+    """Determines the pattern of items that shock panels unlock.
+    The randomizer will try to fill these locations first with what the item pool has.
+    Selecting traps will cause shock panels themselves to be labeled as traps."""
+    option_no_bias = 0
+    option_progression_and_useful = 1
+    option_useful_and_filler = 2
+    option_traps = 3
+    option_progression_and_traps = 4
+    option_traps_and_filler = 5
+    default = 0
+
+
 class PuzzleMode(Choice):
     """Determines how progression works in Puzzle.
     Whole Levels puts each level as one item.
@@ -229,6 +259,14 @@ class CombosCheckLimit(Range):
     default = 10
 
 
+class MusicFilter(Choice):
+    """Pick the categories of music you want to disable. Menu music also includes the title screen."""
+    option_disable_no_music = 0
+    option_disable_menu_music = 1
+    option_disable_all_music = 3
+    default = 0
+
+
 @dataclass
 class TetrisAttackOptions(PerGameCommonOptions):
     starter_pack: StarterPack
@@ -246,8 +284,12 @@ class TetrisAttackOptions(PerGameCommonOptions):
     special_stage_trap_count: SpecialStageTraps
     special_stage_hp_multiplier: SpecialStageHPMultiplier
     last_stage_hp_multiplier: LastStageHPMultiplier
+    shock_panel_checks: ShockPanelChecks
+    shock_panels_per_check: ShockPanelsPerCheck
+    # shock_panel_bias: ShockPanelBias
     puzzle_mode: PuzzleMode
     puzzle_filler: PuzzleFiller
     # extra_puzzle_behind_regular: ExtraPuzzleBehindRegular
     # versus_easy_bowser: EasyBowser
     versus_mode: VersusMode
+    music_filter: MusicFilter

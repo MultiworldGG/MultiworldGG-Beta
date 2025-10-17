@@ -1,16 +1,16 @@
 # world/mygame/__init__.py
 
 import os
-from typing import Tuple, List, Set
+from typing import List
 
 import settings
 import typing
 import threading
-from BaseClasses import Region, Location, Entrance, Item, ItemClassification, MultiWorld, Tutorial
+from BaseClasses import Location, Item, MultiWorld, Tutorial
+from Options import OptionError
 from worlds.AutoWorld import World, WebWorld
-
-from .Logic import stage_clear_round_gates_included, stage_clear_progressive_unlocks_included, \
-    stage_clear_individual_unlocks_included, get_starting_puzzle_level
+from .Logic import stage_clear_included, stage_clear_round_gates_included, stage_clear_progressive_unlocks_included, \
+    stage_clear_individual_unlocks_included, get_starting_puzzle_level, puzzle_mode_included, versus_mode_included
 from .Options import TetrisAttackOptions, StarterPack, PuzzleGoal, PuzzleInclusion, \
     PuzzleMode, VersusGoal  # the options we defined earlier
 from .Items import item_table, get_items, filler_item_names, \
@@ -83,6 +83,32 @@ class TetrisAttackWorld(World):
         super().__init__(multiworld, player)
 
     def generate_early(self) -> None:
+        if (not self.options.stage_clear_goal
+                and self.options.puzzle_goal == PuzzleGoal.option_no_puzzle
+                and self.options.versus_goal == VersusGoal.option_no_vs):
+            raise OptionError("No modes to goal!")
+        match self.options.starter_pack:
+            case StarterPack.option_stage_clear_round_1 \
+                 | StarterPack.option_stage_clear_round_2 \
+                 | StarterPack.option_stage_clear_round_3 \
+                 | StarterPack.option_stage_clear_round_4 \
+                 | StarterPack.option_stage_clear_round_5 \
+                 | StarterPack.option_stage_clear_round_6:
+                if not stage_clear_included(self.options):
+                    raise OptionError(
+                        f"Starter pack cannot be {self.options.starter_pack} because Stage Clear is not included")
+            case StarterPack.option_puzzle_level_1 \
+                 | StarterPack.option_puzzle_level_2 \
+                 | StarterPack.option_puzzle_level_3 \
+                 | StarterPack.option_puzzle_level_4 \
+                 | StarterPack.option_puzzle_level_5:
+                if not puzzle_mode_included(self.options):
+                    raise OptionError(
+                        f"Starter pack cannot be {self.options.starter_pack} because Puzzle is not included")
+            case StarterPack.option_vs_two_stages:
+                if not versus_mode_included(self.options):
+                    raise OptionError(
+                        f"Starter pack cannot be {self.options.starter_pack} because Versus is not included")
         starter_item_names = get_starter_item_names(self)
         for n in starter_item_names:
             self.multiworld.push_precollected(self.create_item(n))
@@ -156,7 +182,7 @@ class TetrisAttackWorld(World):
         match self.options.puzzle_mode:
             case PuzzleMode.option_individual_stages:
                 # Force another level onto the starting level
-                starting_level = get_starting_puzzle_level(self)
+                starting_level = get_starting_puzzle_level(self.options)
                 base_name = "Puzzle"
                 if starting_level > 6:
                     starting_level -= 6

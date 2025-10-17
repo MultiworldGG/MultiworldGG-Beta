@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from .Locations import TetrisAttackLocation
 from .Logic import stage_clear_round_clears_included, stage_clear_round_completable, stage_clear_stage_completable, \
     able_to_win, puzzle_level_completable, puzzle_stage_completable, versus_stage_completable, \
-    stage_clear_able_to_win, puzzle_able_to_win, versus_able_to_win
+    stage_clear_able_to_win, puzzle_able_to_win, versus_able_to_win, stage_clear_can_clear_shock_panels
 from .Options import StarterPack, PuzzleGoal, VersusGoal
 from .data.Constants import versus_stage_names, versus_free_names
 
@@ -27,6 +27,10 @@ def set_stage_clear_rules(world: "TetrisAttackWorld") -> None:
                                                                                                      s))
     try_set_rule(world, "Stage Clear Last Stage Clear",
                  lambda state: stage_clear_able_to_win(world, state))
+
+    for i in range(1, 101):
+        try_set_rule(world, f"Stage Clear ! Panels #{i}",
+                     lambda state, c=i: stage_clear_can_clear_shock_panels(world, state, c))
 
 
 def set_puzzle_rules(world: "TetrisAttackWorld") -> None:
@@ -74,7 +78,7 @@ def set_goal_rules(world: "TetrisAttackWorld") -> None:
         set_rule(sc_completion_loc, lambda state: stage_clear_able_to_win(world, state))
     if world.options.starter_pack == StarterPack.option_stage_clear_round_6:
         final_round_index = world.multiworld.random.randint(1, 5)
-        if stage_clear_round_clears_included(world):
+        if stage_clear_round_clears_included(world.options):
             final_loc = world.multiworld.get_location(f"Stage Clear Round {final_round_index} Clear", world.player)
         else:
             final_loc = world.multiworld.get_location(f"Stage Clear {final_round_index}-5 Clear", world.player)

@@ -1,4 +1,18 @@
-﻿versus_stage_names = ["BREEZE STAGE - Lakitu and Goonie",
+﻿
+SC_UNLOCKS_START = 0x020
+PZ_UNLOCKS_START = 0x060
+EXTRA_UNLOCKS_START = 0x0A2
+VS_UNLOCKS_START = 0x046
+VS_CHARACTERS_START = 0x052
+
+SC_CLEARS_START = 0x200
+PZ_CLEARS_START = 0x259
+EXTRA_CLEARS_START = 0x29B
+VS_CLEARS_START = 0x225
+VS_CLEARS_END = 0x231
+CLEARED_SHOCK_PANELS = 0x2DD
+
+versus_stage_names = ["BREEZE STAGE - Lakitu and Goonie",
                       "GLACIAL STAGE - Bumpty and Dr Freezegood",
                       "FOREST STAGE - Poochy and Grinder",
                       "FLOWER STAGE - Flying Wiggler and Eggo-Dil",
@@ -42,3 +56,11 @@ versus_unlock_names = ["Vs. Breeze Stage Unlock",
                        "Vs. Cave of Wickedness 2 Unlock",
                        "Vs. Cave of Wickedness 3 Unlock",
                        "Vs. Last Stage Unlock"]
+versus_characters = ["Lakitu",
+                     "Bumpty",
+                     "Poochy",
+                     "Flying Wiggler",
+                     "Froggy",
+                     "Gargantua Blargg",
+                     "Lunge Fish",
+                     "Raphael the Raven"]

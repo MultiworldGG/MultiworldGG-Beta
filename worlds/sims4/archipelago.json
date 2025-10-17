@@ -1,7 +1,9 @@
 {
+  "version": 6,
+  "compatible_version": 5,
   "game": "The Sims 4",
   "authors": [ "bennydreamly","itsmisscactus", "mrsummer360" ],
   "igdb_id": 3212,
   "minimum_ap_version": "0.6.4",
-  "world_version": "1.7.1"
+  "world_version": "1.7.4"
 }

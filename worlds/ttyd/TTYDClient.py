@@ -18,7 +18,7 @@ except ImportError:
 
 from NetUtils import NetworkItem, ClientStatus
 from worlds.ttyd.Data import location_gsw_info, location_to_unit
-from worlds.ttyd.Items import items_by_id, item_type_dict
+from worlds.ttyd.Items import items_by_id
 
 RECEIVED_INDEX = 0x803DB860
 RECEIVED_ITEM_ARRAY = 0x80001000
@@ -41,8 +41,7 @@ def read_string(address: int, length: int):
         return ""
 
 def get_rom_item_id(item: NetworkItem):
-    item = item_type_dict[items_by_id[item.item].itemName]
-    return item
+    return items_by_id[item.item].rom_id
 
 def _get_bit_address(bit_number: int) -> tuple:
     word_index = bit_number >> 5

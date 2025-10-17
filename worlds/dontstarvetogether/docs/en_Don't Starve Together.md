@@ -80,9 +80,9 @@ As of Version 1.2, worlds without caves are supported. Make sure in your yaml th
 
 ## What happens if I choose Survival or Wilderness as my server playstyle or otherwise regenerate my world?
 
-If the world regenerates, or starting on a new world, your checks and items will sync from the MultiworldGG server, giving back your AP
+If the world regenerates, or starting on a new world, your checks and items will sync from the Archipelago server, giving back your AP
 items when you first spawn in. Trap items will not be given again, except your last season trap received, if any. If you haven't connected
-to MultiworldGG when restarting your world, progress since you've last connected will be lost.
+to Archipelago when restarting your world, progress since you've last connected will be lost.
 
 Your day count will reset, setting back your progress if your completion goal is to survive a number of days. The same applies if
 you reset your character through commands or dying in Wilderness mode, but not when switching your character using a Celestial Portal
@@ -98,7 +98,7 @@ Known incompatibilities:
 
 ## Can this be played in multiplayer?
 
-Yes, other players can join your world. Everyone will work together in the same MultiworldGG slot. Each player can get
+Yes, other players can join your world. Everyone will work together in the same Archipelago slot. Each player can get
 location checks, and each player will receive Archipelago items. If you chose the survival goal type, only the longest-living
 survivor will count for the victory condition.
 

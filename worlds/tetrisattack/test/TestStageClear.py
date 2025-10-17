@@ -3,14 +3,26 @@ from worlds.tetrisattack.Options import StarterPack, StageClearMode, PuzzleGoal
 from worlds.tetrisattack.test import TetrisAttackTestBase
 
 
-class TestStageClearFalsePuzzleStart(TetrisAttackTestBase):
+class TestStageClearShockPanelsRun(TetrisAttackTestBase):
     options = {
         "stage_clear_goal": True,
         "puzzle_goal": PuzzleGoal.option_no_puzzle,
         "versus_goal": VersusGoal.option_no_vs,
-        "starter_pack": StarterPack.option_puzzle_level_1,
-        "stage_clear_filler": 0
+        "starter_pack": StarterPack.option_stage_clear_round_2,
+        "stage_clear_filler": 0,
+        "shock_panel_checks": 7,
     }
+
+    def test_shock_panels(self) -> None:
+        locations = ["Stage Clear ! Panels #7"]
+        items = [["Stage Clear ! Panels",
+                  "Stage Clear ! Panels",
+                  "Stage Clear ! Panels",
+                  "Stage Clear ! Panels",
+                  "Stage Clear ! Panels",
+                  "Stage Clear ! Panels",
+                  "Stage Clear ! Panels"]]
+        self.assertAccessDependency(locations, items, only_check_listed=True)
 
 
 class TestStageClearRound6Start(TetrisAttackTestBase):
@@ -81,5 +93,6 @@ class TestStageClearMaxFiller(TetrisAttackTestBase):
         "starter_pack": StarterPack.option_stage_clear_round_6,
         "stage_clear_mode": StageClearMode.option_whole_rounds,
         "stage_clear_filler": 1,
-        "special_stage_traps": 30
+        "special_stage_traps": 30,
+        "shock_panel_checks": 100,
     }

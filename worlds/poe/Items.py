@@ -11,6 +11,7 @@ from typing import TypedDict, Dict, Set
 
 from worlds.poe.data import ItemTable
 from worlds.poe import Locations
+from worlds.poe import Items
 
 import logging
 logger = logging.getLogger("poe.Items")
@@ -95,7 +96,7 @@ def deprioritize_non_logic_gear(world: "PathOfExileWorld", table: Dict[int, Item
     opt: PathOfExileOptions = world.options
 
     # If gear upgrades are disabled, don't try to deprioritize any gear, flask are already progressive.
-    if opt.gear_upgrades.value == opt.gear_upgrades.option_no_gear_unlocked:
+    if opt.gear_upgrades.value == opt.gear_upgrades.option_all_gear_unlocked_at_start:
         return table
 
     required_categories = list()
@@ -189,9 +190,29 @@ def cull_items_to_place(world: "PathOfExileWorld", items: Dict[int, ItemDict], l
 
     # Final verification
     final_count = sum(item.get("count", 1) for item in items.values())
-    if final_count != total_locations_count:
-        logger.warning(f"Final item count ({final_count}) doesn't match location count ({total_locations_count})")
-
+    if final_count > total_locations_count:
+        logger.error(f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+                     f"\n"
+                     f"\nGENERATION ERROR! with player ({world.player_name})"
+                     f"\nFinal item count ({final_count}) is greater than location count ({total_locations_count})"
+                     f"\nWill precollect random items to make up the difference."
+                     f"\n"
+                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n")
+        while final_count > total_locations_count:
+            # Precollect random items to fill the gap
+            random_item: ItemDict = world.random.choice(list(items.values()))
+            logger.debug(f"Precollecting item: {random_item['name']}")
+            random_item["count"] = random_item.get("count", 1) - 1
+            if random_item["count"] <= 0:
+                items.pop(random_item["id"])
+            item_obj = Items.PathOfExileItem(random_item["name"], random_item["classification"], random_item["id"], world.player)
+            world.precollect(item_obj)
+            final_count -= 1
+        
     return items
 
 

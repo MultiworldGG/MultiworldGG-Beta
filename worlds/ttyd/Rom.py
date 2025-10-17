@@ -8,7 +8,7 @@ import random
 from typing import TYPE_CHECKING, Dict, Tuple, Iterable
 from BaseClasses import Location, ItemClassification
 from worlds.Files import APProcedurePatch, APTokenMixin, APPatchExtension, AutoPatchExtensionRegister
-from .Items import items_by_id, ItemData, item_type_dict
+from .Items import items_by_id, ItemData
 from .Locations import locationName_to_data, location_table, location_id_to_name
 from .Data import Rels, shop_items, item_prices, rel_filepaths, location_to_unit, shop_names, classification_to_color
 from .TTYDPatcher import TTYDPatcher
@@ -50,7 +50,7 @@ class TTYDPatchExtension(APPatchExtension):
         caller.patcher.dol.data.seek(0x210)
         caller.patcher.dol.data.write(seed_options["seed_name"].encode("utf-8")[0:16])
         caller.patcher.dol.data.seek(0x220)
-        caller.patcher.dol.data.write(seed_options["chapter_clears"].to_bytes(1, "big"))
+        caller.patcher.dol.data.write(seed_options["palace_stars"].to_bytes(1, "big"))
         caller.patcher.dol.data.seek(0x221)
         caller.patcher.dol.data.write(seed_options["starting_partner"].to_bytes(1, "big"))
         caller.patcher.dol.data.seek(0x222)
@@ -112,6 +112,8 @@ class TTYDPatchExtension(APPatchExtension):
             caller.patcher.dol.data.write(first_attack.to_bytes(1, "big"))
         caller.patcher.dol.data.seek(0x244)
         caller.patcher.dol.data.write(random.randbytes(4))
+        caller.patcher.dol.data.seek(0x248)
+        caller.patcher.dol.data.write(seed_options["goal_stars"].to_bytes(1, "big"))
         caller.patcher.dol.data.seek(0x260)
         caller.patcher.dol.data.write(seed_options["yoshi_name"].encode("utf-8")[0:8] + b"\x00")
         caller.patcher.dol.data.seek(0xEB6B6)
@@ -166,17 +168,15 @@ class TTYDPatchExtension(APPatchExtension):
                 continue
             if data.offset or "Tattle" in location_name:
                 if player != caller.player:
-                    item_data = ItemData(code=0, itemName="", progression=ItemClassification.filler, rom_id=0x71)
+                    item_data = ItemData(id=0, item_name="", progression="filler", rom_id=0x71)
                 else:
-                    item_data = items_by_id.get(item_id, ItemData(code=0, itemName="", progression=ItemClassification.filler, rom_id=0x0))
-                if item_data.rom_id != 0x71:
-                    item_data.rom_id = item_type_dict.get(item_data.itemName, 0x0)
-                    if item_data.rom_id == 0:
-                        logger.error(f"Item {item_data.itemName} not found in item_type_dict")
+                    item_data = items_by_id.get(item_id, ItemData(id=0, item_name="", progression="filler", rom_id=0x0))
+                if item_data.rom_id == 0:
+                    logger.error(f"Item {item_data.item_name} not found in item_type_dict")
                 if data.rel == Rels.dol:
                     if "Tattle" in location_name:
                         for unit_id in location_to_unit[location_table[location_name]]:
-                            logger.info(f"Writing Tattle item {item_data.itemName} to unit {unit_id}")
+                            logger.info(f"Writing Tattle item {item_data.item_name} to unit {unit_id}")
                             caller.patcher.dol.data.seek(0xB00 + ((unit_id - 1) * 2))
                             caller.patcher.dol.data.write(item_data.rom_id.to_bytes(2, "big"))
                     continue
@@ -196,7 +196,7 @@ class TTYDPatchExtension(APPatchExtension):
                             if item_data.rom_id == 0x71:
                                 caller.patcher.rels[data.rel].write(int.to_bytes(20, 4, "big"))
                             else:
-                                caller.patcher.rels[data.rel].write(int.to_bytes(item_prices.get(item_data.code, 10), 4, "big"))
+                                caller.patcher.rels[data.rel].write(int.to_bytes(item_prices.get(item_data.id, 10), 4, "big"))
 
 def get_rel_path(rel: Rels):
     return f'files/rel/{rel.value}.rel'
@@ -241,7 +241,8 @@ def write_files(world: "TTYDWorld", patch: TTYDProcedurePatch) -> None:
         "yoshi_name": world.options.yoshi_name.value,
         "yoshi_color": world.options.yoshi_color.value,
         "starting_partner": world.options.starting_partner.value,
-        "chapter_clears": world.options.palace_stars.value, # TODO: rename this option
+        "palace_stars": world.options.palace_stars.value,
+        "goal_stars": world.options.goal_stars.value,
         "starting_coins": world.options.starting_coins.value,
         "palace_skip": world.options.palace_skip.value,
         "westside": world.options.open_westside.value,
@@ -272,15 +273,10 @@ def write_files(world: "TTYDWorld", patch: TTYDProcedurePatch) -> None:
         buffer.write(f"{player_name}'s\n<col {classification_to_color[get_base_classification(location.item.classification)]}ff>{location.item.name}</col>".encode('utf-8'))
         buffer.write(b'\x00')
     buffer.write(b'\x00')  # null terminator for the end of the table
-    patch.write_file("desc.txt", buffer.getvalue())
 
+    patch.write_file("desc.txt", buffer.getvalue())
     patch.write_file("options.json", json.dumps(options_dict).encode("UTF-8"))
     patch.write_file(f"locations.json", json.dumps(locations_to_dict(world.multiworld.get_locations(world.player))).encode("UTF-8"))
-
-
-def locations_to_dict(locations: Iterable[Location]) -> Dict[str, Tuple]:
-    return {location.name: (location.item.code, location.item.player) if location.item is not None else (0, 0)
-                    for location in locations}
 
 def get_base_classification(classification: ItemClassification = ItemClassification.filler) -> ItemClassification:
     """Extract the primary classification for color mapping"""
@@ -292,3 +288,8 @@ def get_base_classification(classification: ItemClassification = ItemClassificat
         return ItemClassification.useful
     else:
         return ItemClassification.filler
+
+
+def locations_to_dict(locations: Iterable[Location]) -> Dict[str, Tuple]:
+    return {location.name: (location.item.code, location.item.player) if location.item is not None else (0, 0)
+                    for location in locations}

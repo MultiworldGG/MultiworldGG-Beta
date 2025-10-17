@@ -1,12 +1,8 @@
 import typing
 
 from BaseClasses import Region
-from .Locations import (TTYDLocation, rogueport, sewers, sewers_westside, sewers_westside_ground, petal_left,
-                        petal_right, hooktails_castle, boggly_woods, great_tree, glitzville, twilight_trail,
-                        twilight_town_region, creepy_steeple, keelhaul_key, pirates_grotto, excess_express, riverside,
-                        poshley_heights, fahr_outpost, xnaut_fortress, palace, pit, rogueport_westside, riddle_tower,
-                        shadow_queen, LocationData, tattlesanity_region)
-from . import StateLogic
+from .Locations import (TTYDLocation, shadow_queen, LocationData)
+from . import StateLogic, get_locations_by_tags
 
 if typing.TYPE_CHECKING:
     from . import TTYDWorld
@@ -17,32 +13,32 @@ def get_regions_dict() -> dict[str, list[LocationData]]:
     Returns a dictionary mapping region names to their corresponding location data lists.
     """
     return {
-        "Rogueport": rogueport,
-        "Rogueport (Westside)": rogueport_westside,
-        "Rogueport Sewers": sewers,
-        "Rogueport Sewers Westside": sewers_westside,
-        "Rogueport Sewers Westside Ground": sewers_westside_ground,
-        "Petal Meadows (Left)": petal_left,
-        "Petal Meadows (Right)": petal_right,
-        "Hooktail's Castle": hooktails_castle,
-        "Boggly Woods": boggly_woods,
-        "Great Tree": great_tree,
-        "Glitzville": glitzville,
-        "Twilight Town": twilight_town_region,
-        "Twilight Trail": twilight_trail,
-        "Creepy Steeple": creepy_steeple,
-        "Keelhaul Key": keelhaul_key,
-        "Pirate's Grotto": pirates_grotto,
-        "Excess Express": excess_express,
-        "Riverside Station": riverside,
-        "Poshley Heights": poshley_heights,
-        "Fahr Outpost": fahr_outpost,
-        "X-Naut Fortress": xnaut_fortress,
-        "Palace of Shadow": palace,
-        "Palace of Shadow (Post-Riddle Tower)": riddle_tower,
-        "Pit of 100 Trials": pit,
+        "Rogueport": get_locations_by_tags("rogueport"),
+        "Rogueport (Westside)": get_locations_by_tags("rogueport_westside"),
+        "Rogueport Sewers": get_locations_by_tags("sewers"),
+        "Rogueport Sewers Westside": get_locations_by_tags("sewers_westside"),
+        "Rogueport Sewers Westside Ground": get_locations_by_tags("sewers_westside_ground"),
+        "Petal Meadows (Left)": get_locations_by_tags("petal_left"),
+        "Petal Meadows (Right)": get_locations_by_tags("petal_right"),
+        "Hooktail's Castle": get_locations_by_tags("hooktails_castle"),
+        "Boggly Woods": get_locations_by_tags("boggly_woods"),
+        "Great Tree": get_locations_by_tags("great_tree"),
+        "Glitzville": get_locations_by_tags("glitzville"),
+        "Twilight Town": get_locations_by_tags("twilight_town"),
+        "Twilight Trail": get_locations_by_tags("twilight_trail"),
+        "Creepy Steeple": get_locations_by_tags("creepy_steeple"),
+        "Keelhaul Key": get_locations_by_tags("keelhaul_key"),
+        "Pirate's Grotto": get_locations_by_tags("pirates_grotto"),
+        "Excess Express": get_locations_by_tags("excess_express"),
+        "Riverside Station": get_locations_by_tags("riverside"),
+        "Poshley Heights": get_locations_by_tags("poshley_heights"),
+        "Fahr Outpost": get_locations_by_tags("fahr_outpost"),
+        "X-Naut Fortress": get_locations_by_tags("xnaut_fortress"),
+        "Palace of Shadow": get_locations_by_tags("palace"),
+        "Palace of Shadow (Post-Riddle Tower)": get_locations_by_tags("riddle_tower"),
+        "Pit of 100 Trials": get_locations_by_tags("pit"),
         "Shadow Queen": shadow_queen,
-        "Tattlesanity": tattlesanity_region
+        "Tattlesanity": get_locations_by_tags("tattle")
     }
 
 
@@ -70,13 +66,13 @@ def get_region_connections_dict(world: "TTYDWorld") -> dict[tuple[str, str], typ
         ("Rogueport Sewers", "Pit of 100 Trials"):
             lambda state: StateLogic.pit(state, world.player),
         ("Rogueport", "Shadow Queen"):
-            lambda state: StateLogic.palace(state, world.player, world.options.palace_stars.value),
+            lambda state: StateLogic.palace(state, world.player, world.options.goal_stars.value),
         ("Rogueport", "Palace of Shadow"):
             lambda state: StateLogic.palace(state, world.player, world.options.palace_stars.value),
         ("Palace of Shadow", "Palace of Shadow (Post-Riddle Tower)"):
             lambda state: StateLogic.riddle_tower(state, world.player),
         ("Palace of Shadow (Post-Riddle Tower)", "Shadow Queen"):
-            lambda state: state.can_reach("Palace of Shadow Final Staircase: Ultra Shroom", "Location", world.player),
+            lambda state: state.can_reach("Palace of Shadow Final Staircase: Ultra Shroom", "Location", world.player) and state.has("stars", world.player, world.options.goal_stars.value),
         ("Rogueport", "Poshley Heights"):
             lambda state: StateLogic.ultra_hammer(state, world.player) and StateLogic.super_boots(state, world.player),
         ("Rogueport", "Fahr Outpost"):

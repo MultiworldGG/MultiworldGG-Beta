@@ -185,7 +185,9 @@ decode = JSONDecoder(object_hook=_object_hook).decode
 
 
 class Endpoint:
-    socket: ServerConnection
+    __slots__ = ("socket",)
+
+    socket: "ServerConnection"
 
     def __init__(self, socket):
         self.socket = socket

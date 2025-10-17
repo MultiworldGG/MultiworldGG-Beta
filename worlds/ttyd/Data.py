@@ -1,5 +1,8 @@
+import typing
 from enum import Enum
+
 from BaseClasses import ItemClassification
+
 
 class Rels(Enum):
     aaa = "aaa"
@@ -737,7 +740,7 @@ item_prices = {
     77772021: 30,  # Card Key 1
     77772022: 30,  # Card Key 2
     77772023: 30,  # Card Key 3
-    77772024: 130,  # Card Key 4
+    77772024: 30,  # Card Key 4
     77772025: 30,  # Castle Key
     77772026: 30,  # Champ's Belt
     77772027: 30,  # Charge - 30 buy price
@@ -830,7 +833,7 @@ item_prices = {
     77772112: 10,  # Maple Syrup
     77772113: 30,  # Mega Rush - 30 buy price
     77772114: 30,  # Mega Rush P - 30 buy price
-    77772227: 40, # Meteor Meal
+    77772227: 40,  # Meteor Meal
     77772115: 10,  # Mini Mr. Mini
     77772116: 90,  # Money Money - 90 buy price
     77772117: 30,  # Moon Stone
@@ -874,7 +877,7 @@ item_prices = {
     77772154: 30,  # Red Key
     77772155: 30,  # Refund - 30 buy price
     77772156: 15,  # Repel Cape
-    77772157: 170,  # Return Postage - 170 buy price
+    77772157: 170, # Return Postage - 170 buy price
     77772158: 30,  # Ruby Star
     77772159: 15,  # Ruin Powder
     77772160: 30,  # Sapphire Star
@@ -885,7 +888,7 @@ item_prices = {
     77772166: 40,  # Shrink Stomp - 40 buy price
     77772167: 30,  # Simplifier - 30 buy price
     77772168: 30,  # Skull Gem
-    77772169: 8,  # Sleepy Sheep
+    77772169: 8,   # Sleepy Sheep
     77772219: 50,  # Sleepy Stomp
     77772170: 10,  # Slow Go - 10 buy price
     77772171: 15,  # Slow Shroom
@@ -1204,6 +1207,16 @@ stars = [
     "Crystal Star"
 ]
 
+star_locations = [
+    "Hooktail's Castle Hooktail's Room: Diamond Star",
+    "Great Tree Entrance: Emerald Star",
+    "Glitzville Arena: Gold Star",
+    "Creepy Steeple Upper Room: Ruby Star",
+    "Pirate's Grotto Cortez' Hoard: Sapphire Star",
+    "Poshley Heights Sanctum Altar: Garnet Star",
+    "X-Naut Fortress Boss Room: Crystal Star"
+]
+
 chapter_items = {
     1: ["Castle Key", "Sun Stone", "Moon Stone", "Black Key (Paper)"],
     2: ["Puni Orb", "Necklace", "Red Key", "Blue Key"],
@@ -1250,5 +1263,12 @@ classification_to_color = {
     ItemClassification.filler: "00d6d6",
     ItemClassification.useful: "6d8be8",
     ItemClassification.progression: "af99ef",
-    ItemClassification.trap: "fa8072",
+    ItemClassification.trap: "fa8072"
+}
+
+item_classifications: typing.Dict[str, ItemClassification] = {
+    "filler": ItemClassification.filler,
+    "useful": ItemClassification.useful,
+    "progression": ItemClassification.progression,
+    "trap": ItemClassification.trap
 }

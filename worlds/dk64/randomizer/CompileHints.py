@@ -610,8 +610,8 @@ def compileHints(spoiler: Spoiler) -> bool:
             if HintType.KRoolOrder in valid_types:
                 valid_types.remove(HintType.KRoolOrder)
         # If somehow you threaded the needle with no valid hint types, you'll get joke hints whether you like it or not
-        if len(valid_types) == 0:
-            valid_types = [HintType.Joke]
+        if len([typ for typ in valid_types if typ not in locked_hint_types and typ not in maxed_hint_types]) == 0:
+            valid_types.append(HintType.Joke)
 
         # Make sure we have exactly 35 hints placed
         hint_count = 0
@@ -1694,7 +1694,11 @@ def compileHints(spoiler: Spoiler) -> bool:
             regions_in_region = [region for region in spoiler.RegionList.values() if region.hint_name == foolish_name]
             for region in regions_in_region:
                 foolish_location_score += len(
-                    [loc for loc in region.locations if not spoiler.LocationList[loc.id].inaccessible and spoiler.LocationList[loc.id].type in spoiler.settings.shuffled_location_types]
+                    [
+                        loc
+                        for loc in region.locations
+                        if not spoiler.LocationList[loc.id].inaccessible and spoiler.LocationList[loc.id].type in spoiler.settings.shuffled_location_types and not spoiler.LocationList[loc.id].constant
+                    ]
                 )
                 if region.level == Levels.Shops and region.hint_name != HintRegion.Jetpac:  # Jetpac isn't a "real" shop, it's in the Shops level for convenience
                     shops_in_region += 1
@@ -2276,7 +2280,7 @@ def compileSpoilerHints(spoiler):
     for location_id in spoiler.LocationList.keys():
         location = spoiler.LocationList[location_id]
         level_of_location = location.level
-        if level_of_location == Levels.Shops:  # Jetpac and BlueprintBananas - we want Jetpac in Isles now, but we probably won't want BlueprintBananas there too when those start shuffling
+        if level_of_location in (Levels.Shops, Levels.Snide):  # Jetpac and Blueprint Rewards - we put them in Isles for now, this may change later
             level_of_location = Levels.DKIsles
         if location.item in important_items:
             item_obj = ItemList[location.item]

@@ -2,9 +2,14 @@ from typing import TYPE_CHECKING, Dict
 from BaseClasses import Item, ItemClassification
 from .data import data
 from .groups import item_groups
+from .options import ShufflePokedex, ShuffleRunningShoes
 
 if TYPE_CHECKING:
     from . import PokemonFRLGWorld
+
+
+RENEWABLE_PROGRESSION_ITEMS = ("Lemonade", "King's Rock", "Metal Coat", "Dragon Scale", "Up-Grade", "Deep Sea Scale",
+                               "Deep Sea Tooth", "Heart Scale")
 
 
 class PokemonFRLGItem(Item):
@@ -32,9 +37,33 @@ def get_item_classification(item_id: int) -> ItemClassification:
     return data.items[item_id].classification
 
 
+def add_starting_items(world: "PokemonFRLGWorld") -> None:
+    if world.options.shuffle_pokedex == ShufflePokedex.option_start_with:
+        world.options.start_inventory.value["Pokedex"] = 1
+        world.multiworld.push_precollected(world.create_item("Pokedex"))
+    if world.options.shuffle_running_shoes == ShuffleRunningShoes.option_start_with:
+        world.options.start_inventory.value["Running Shoes"] = 1
+        world.multiworld.push_precollected(world.create_item("Running Shoes"))
+    if not world.options.shuffle_berry_pouch:
+        world.options.start_inventory.value["Berry Pouch"] = 1
+        world.multiworld.push_precollected(world.create_item("Berry Pouch"))
+    if not world.options.shuffle_tm_case:
+        world.options.start_inventory.value["TM Case"] = 1
+        world.multiworld.push_precollected(world.create_item("TM Case"))
+    if not world.options.shuffle_ledge_jump:
+        world.options.start_inventory.value["Ledge Jump"] = 1
+        world.multiworld.push_precollected(world.create_item("Ledge Jump"))
+
 def get_random_item(world: "PokemonFRLGWorld", item_classification: ItemClassification = None) -> str:
     if item_classification is None:
         item_classification = ItemClassification.useful if world.random.random() < 0.20 else ItemClassification.filler
     items = [item for item in data.items.values()
              if item.classification == item_classification and item.name not in item_groups["Unique Items"]]
     return world.random.choice(items).name
+
+def update_renewable_to_progression(item: PokemonFRLGItem) -> None:
+    if item.name in RENEWABLE_PROGRESSION_ITEMS:
+        item.classification = ItemClassification.progression
+
+def is_renewable_progression(world: "PokemonFRLGWorld", item: Item) -> bool:
+    return item.name in RENEWABLE_PROGRESSION_ITEMS and item.player == world.player
