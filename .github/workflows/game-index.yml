@@ -12,8 +12,8 @@ on:
   push:
     branches: [gui-changes]
     paths:
-      - 'src/game_index/**'
-      - 'src/tools/game_indexing/**'
+      - 'game_index/**'
+      - 'tools/game_indexing/**'
   
   # Trigger when new worlds are added (after CI workflow completes)
   workflow_run:

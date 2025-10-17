@@ -7,10 +7,11 @@ This document describes the automated CI/CD pipeline for MultiworldGG, an alpha-
 ## Project Context
 
 - **Stage**: Alpha development
-- **Branch Strategy**: Main branch only (upstream integration planned for later)
+- **Branch Strategy**: gui-changes branch for development (will migrate to main later)
 - **Python Version**: 3.12
 - **Build System**: Python build (setuptools), cx_Freeze for executables
-- **Distribution**: Private PyPI server for wheels, Github for executables.
+- **Distribution**: Private PyPI server for wheels, Github for executables
+- **Repository Structure**: Repository root is the project source (no src/ prefix in paths)
 
 ## Workflow Architecture
 
@@ -19,28 +20,28 @@ This document describes the automated CI/CD pipeline for MultiworldGG, an alpha-
 **Purpose**: Continuous integration for core components and world packages
 
 **Triggers**:
-- Push to `main` branch (when `src/**` changes)
-- Pull requests to `main` branch
+- Push to `gui-changes` branch
+- Pull requests to `gui-changes` branch
 
 **Jobs**:
 
 #### Job 1: `build-splashscreen`
-- **Runs only when**: `src/splashscreen/**` changes
-- Builds `src/splashscreen` package using Python build
+- **Runs only when**: `splashscreen/**` changes
+- Builds `splashscreen` package using Python build
 - Commits wheel to `default_wheels/` directory
 - Uses `github-actions[bot]` for commits
 - Runs on: Ubuntu latest
 
 #### Job 2: `build-gui`
-- **Runs only when**: `src/gui/**` changes
-- Builds `src/gui` package using Python build
+- **Runs only when**: `gui/**` changes
+- Builds `gui` package using Python build
 - Commits wheel to `default_wheels/` directory
 - Uses `github-actions[bot]` for commits
 - Runs on: Ubuntu latest
 
 #### Job 3: `build-base-worlds`
-- **Runs only when**: `src/worlds/*.py` changes
-- Copies `src/worlds/*.py` into `src/world_build_setuptools/src/worlds/*.py`
+- **Runs only when**: `worlds/*.py` changes
+- Copies `worlds/*.py` into `world_build_setuptools/src/worlds/*.py`
 - Builds `worlds` package using Python Build  
 - This is the namespace package that all world packages depend on
 - Commits wheel to `default_worlds/` directory
@@ -48,9 +49,9 @@ This document describes the automated CI/CD pipeline for MultiworldGG, an alpha-
 - Runs on: Ubuntu latest
 
 #### Job 4: `check-new-worlds`
-- Detects new world directories in `src/worlds/` using git diff
+- Detects new world directories in `worlds/` using git diff
 - For each new world directory (the script will ignore if it has the files):
-  - Runs `python src/tools/add_required_world_files.py <world_name>`
+  - Runs `python tools/add_required_world_files.py <world_name>`
   - Creates `pyproject.toml`, `archipelago.json`, `Register.py` from templates
 - **Creates and pushes a commit** with the generated files
 - Commit message includes warning about manual string replacement needed
@@ -60,17 +61,17 @@ This document describes the automated CI/CD pipeline for MultiworldGG, an alpha-
 **Detection Logic**:
 ```
 - Compare HEAD vs HEAD~1
-- Find new directories in src/worlds/
+- Find new directories in worlds/
 - Skip directories starting with _ (e.g., _bizhawk, _sni)
 - Skip 'generic' directory (template source)
 ```
 
 #### Job 5: `build-changed-worlds`
-- **Runs only on**: Push to main (not PRs)
+- **Runs only on**: Push to gui-changes (not PRs)
 - Always runs regardless of previous job status
-- Detects changed worlds using git diff on `src/worlds/*/`
+- Detects changed worlds using git diff on `worlds/*/`
 - Creates virtual environment (isolated from system)
-- Runs `python src/tools/build_wheels.py --world <comma,separated,list>`
+- Runs `python tools/build_wheels.py --world <comma,separated,list>`
 - Uploads wheels to private PyPI using twine
 - Uses `--skip-existing` to avoid conflicts
 - Uploads artifacts (30-day retention)
@@ -95,7 +96,7 @@ Command:
 
 **Triggers**:
 - **Manual dispatch**: Can optionally rebuild all indexes
-- **Push to main**: When `src/game_index/**` or `src/tools/game_indexing/**` changes
+- **Push to gui-changes**: When `game_index/**` or `tools/game_indexing/**` changes
 - **Workflow run**: After CI workflow completes (catches new worlds)
 
 **Jobs**:
@@ -104,8 +105,8 @@ Command:
 - Single job, continues on error
 - Detects if rebuild needed based on trigger type
 - Creates virtual environment
-- Installs dependencies from `src/tools/game_indexing/requirements.txt`
-- Runs `python src/tools/game_indexing/igdb.py`
+- Installs dependencies from `tools/game_indexing/requirements.txt`
+- Runs `python tools/game_indexing/igdb.py`
 - Finds all game index modules with `pyproject.toml`
 - Builds wheels for each module
 - Uploads to private PyPI
@@ -117,13 +118,13 @@ Command:
 ```
 If workflow_dispatch with rebuild_all=true: rebuild all
 If workflow_run (triggered by CI): rebuild all
-If push event: check git diff for game_index/ or game_indexing/ changes
+If push event: check git diff for game_index/ or tools/game_indexing/ changes
 ```
 
 **Build Process**:
 ```bash
-for each module in src/game_index/*/pyproject.toml:
-  cd src/game_index/$module
+for each module in game_index/*/pyproject.toml:
+  cd game_index/$module
   python -m build
   upload to PyPI
 ```
@@ -143,9 +144,9 @@ for each module in src/game_index/*/pyproject.toml:
 #### Job 1: `build-exe` (Matrix Build)
 - Runs on: Windows, Linux, macOS (parallel)
 - Creates **fresh virtual environment** (critical for clean builds)
-- Installs from `src/build_requirements.txt`
-- Runs `python src/build_exe.py`
-- Outputs to `src/build/` directory
+- Installs from `build_requirements.txt`
+- Runs `python build_exe.py`
+- Outputs to `build/` directory
 - Uploads platform-specific artifacts (90-day retention)
 - Continues on error (won't block other platforms)
 
@@ -174,8 +175,8 @@ macos-latest   → macos-exe artifact
 - **Depends on**: `build-exe` completion
 - Downloads windows-exe artifact
 - Installs InnoSetup via Chocolatey
-- Runs `iscc src/inno_setup.iss`
-- Uploads installer to `src/setups/` (90-day retention)
+- Runs `iscc inno_setup.iss`
+- Uploads installer to `setups/` (90-day retention)
 - Continues on error
 
 #### Job 5: `create-release`
@@ -304,11 +305,11 @@ source venv/bin/activate  # or venv/Scripts/activate on Windows
 
 1. **Developer creates new world**:
    ```bash
-   mkdir src/worlds/my_new_world
+   mkdir worlds/my_new_world
    # Add world code
-   git add src/worlds/my_new_world
+   git add worlds/my_new_world
    git commit -m "feat: add my new world"
-   git push origin main
+   git push origin gui-changes
    ```
 
 2. **CI detects new world**:
@@ -321,12 +322,12 @@ source venv/bin/activate  # or venv/Scripts/activate on Windows
 
 4. **Developer edits templates**:
    ```bash
-   git pull origin main
-   # Edit src/worlds/my_new_world/pyproject.toml
-   # Edit src/worlds/my_new_world/archipelago.json
-   # Edit src/worlds/my_new_world/Register.py
+   git pull origin gui-changes
+   # Edit worlds/my_new_world/pyproject.toml
+   # Edit worlds/my_new_world/archipelago.json
+   # Edit worlds/my_new_world/Register.py
    git commit -m "fix: configure my_new_world templates"
-   git push origin main
+   git push origin gui-changes
    ```
 
 5. **CI builds the world**:
@@ -358,7 +359,7 @@ source venv/bin/activate  # or venv/Scripts/activate on Windows
    - Rebuilds affected indexes
 
 3. **Indexing code changed**:
-   - Developer updates `src/tools/game_indexing/`
+   - Developer updates `tools/game_indexing/`
    - Game index workflow rebuilds all
 
 ### Manual Trigger
@@ -432,7 +433,7 @@ git push origin v0.1.0
 
 2. **Permissions**:
    - Workflows have write access for commits
-   - Limited to main branch operations
+   - Limited to gui-changes branch operations
    - No force pushes or tag deletions
 
 3. **Dependency Security**:
