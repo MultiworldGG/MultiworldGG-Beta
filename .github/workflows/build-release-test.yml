@@ -57,11 +57,11 @@ jobs:
           # Activate based on OS
           if [ "$RUNNER_OS" == "Windows" ]; then
             source venv/Scripts/activate
+            python -m pip install --upgrade pip
           else
             source venv/bin/activate
+            python -m pip install --upgrade pip
           fi
-          
-          pip install --upgrade pip
       
       - name: Install build dependencies (Windows)
         if: runner.os == 'Windows'
@@ -128,8 +128,9 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           cd src
+          pip install -r requirements.txt
           pip install -r build_requirements.txt
       
       - name: Build AppImage
@@ -170,8 +171,9 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           cd src
+          pip install -r requirements.txt
           pip install -r build_requirements.txt
       
       - name: Build macOS bundle
