@@ -17,7 +17,7 @@ if not logging.getLogger().hasHandlers():
     logging.basicConfig(level=logging.DEBUG, format='%(message)s', stream=sys.stdout)
 
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Callable
 
 import pip
 from importlib import metadata
@@ -739,7 +739,7 @@ def update_world_wheels() -> None:
                 logger.info(f"Successfully installed wheel {wheel}")
 
 
-def update_requirements(needed_packages: List[str], restart_callback=None) -> None:
+def update_requirements(needed_packages: List[str], restart_callback: Optional[Callable[[], None]] = None) -> None:
     """
     Update packages from requirements.txt files and install worlds.
     
@@ -853,7 +853,7 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
     return all_satisfied
 
 
-def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = None, restart_callback=None) -> None:
+def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = None, restart_callback: Optional[Callable[[], None]] = None) -> None:
     """
     Main update function.
     

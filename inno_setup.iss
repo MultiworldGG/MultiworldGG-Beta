@@ -34,7 +34,6 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 LicenseFile=docs\combined_license_inno.txt
 WizardStyle= modern
 SetupLogging=yes
-MinVersion={#min_windows}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
