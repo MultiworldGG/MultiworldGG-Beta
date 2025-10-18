@@ -149,28 +149,6 @@ jobs:
           echo "SNI ${LATEST_RELEASE} downloaded successfully"
           ls -la data/SNI/
       
-      - name: Download Python installers (Windows only)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          cd src
-          mkdir -p python_installers
-          
-          PYTHON_VERSION="3.12.12"
-          echo "Downloading Python ${PYTHON_VERSION} installers for Windows..."
-          
-          # Download x64 installer
-          curl -L -o "python_installers/python-${PYTHON_VERSION}-amd64.exe" \
-            "https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-amd64.exe"
-          echo "Downloaded x64 installer"
-          
-          # Download ARM64 installer
-          curl -L -o "python_installers/python-${PYTHON_VERSION}-arm64.exe" \
-            "https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-arm64.exe"
-          echo "Downloaded ARM64 installer"
-          
-          ls -la python_installers/
-      
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -308,11 +286,10 @@ jobs:
           # Find the AppImage file and rename it to include the full version from application.yaml
           for file in *.AppImage; do
             if [ -f "$file" ]; then
-              # Extract base name without extension
-              basename="${file%.AppImage}"
-              # Check if it already has the version suffix
-              if [[ ! "$basename" =~ a5$ ]]; then
-                newname="${basename}a5.AppImage"
+              # Check if it already has a5 in the version part
+              if [[ ! "$file" =~ 0\.7\.177a5 ]]; then
+                # Replace 0.7.177-x86_64 with 0.7.177a5-x86_64
+                newname=$(echo "$file" | sed -E 's/0\.7\.177-/0.7.177a5-/')
                 echo "Renaming $file to $newname"
                 mv "$file" "$newname"
               fi
@@ -446,6 +423,29 @@ jobs:
         with:
           name: windows-exe
           path: src/build/
+      
+      - name: Download Python installers
+        shell: pwsh
+        run: |
+          cd src
+          New-Item -ItemType Directory -Force -Path python_installers
+          
+          $PYTHON_VERSION = "3.12.12"
+          Write-Host "Downloading Python $PYTHON_VERSION installers for Windows..."
+          
+          # Download x64 installer
+          $url_amd64 = "https://www.python.org/ftp/python/$PYTHON_VERSION/python-$PYTHON_VERSION-amd64.exe"
+          Write-Host "Downloading from $url_amd64"
+          Invoke-WebRequest -Uri $url_amd64 -OutFile "python_installers\python-$PYTHON_VERSION-amd64.exe"
+          Write-Host "Downloaded x64 installer"
+          
+          # Download ARM64 installer
+          $url_arm64 = "https://www.python.org/ftp/python/$PYTHON_VERSION/python-$PYTHON_VERSION-arm64.exe"
+          Write-Host "Downloading from $url_arm64"
+          Invoke-WebRequest -Uri $url_arm64 -OutFile "python_installers\python-$PYTHON_VERSION-arm64.exe"
+          Write-Host "Downloaded ARM64 installer"
+          
+          Get-ChildItem python_installers
       
       - name: Install Inno Setup
         run: |

@@ -76,11 +76,6 @@ Type: dirifempty; Name: "{app}"
 
 [InstallDelete]
 Type: files; Name: "{app}\*.exe"
-Type: files; Name: "{app}\data\lua\connector_pkmn_rb.lua"
-Type: files; Name: "{app}\data\lua\connector_ff1.lua"
-Type: filesandordirs; Name: "{app}\SNI\lua*"
-Type: filesandordirs; Name: "{app}\EnemizerCLI*"
-Type: filesandordirs; Name: "{app}\lib*"
 
 [Registry]
 
@@ -407,26 +402,6 @@ Root: HKCR; Subkey: "multiworldgg\shell\open\command"; ValueType: "string"; Valu
 
 
 [Code]
-// See: https://stackoverflow.com/a/51614652/2287576
-function IsVCRedist64BitNeeded(): boolean;
-var
-  strVersion: string;
-begin
-  if (RegQueryStringValue(HKEY_LOCAL_MACHINE,
-    'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Version', strVersion)) then
-  begin
-    // Is the installed version at least the packaged one ?
-    Log('VC Redist x64 Version : found ' + strVersion);
-    Result := (CompareStr(strVersion, 'v14.38.33130') < 0);
-  end
-  else
-  begin
-    // Not even an old version installed
-    Log('VC Redist x64 is not already installed');
-    Result := True;
-  end;
-end;
-
 function ShouldShowDeleteLibTask: Boolean;
 begin
   Result := DirExists(ExpandConstant('{app}\lib'));
