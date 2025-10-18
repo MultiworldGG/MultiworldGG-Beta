@@ -2,6 +2,10 @@
 #define source_path AddBackslash(SourcePath) + source_path_relative
 #define min_windows ReadIni(SourcePath + "\setup.ini", "Data", "min_windows")
 
+#pragma message "SourcePath: " + SourcePath
+#pragma message "source_path_relative: " + source_path_relative
+#pragma message "source_path: " + source_path
+
 #define MyAppName "MultiworldGG-Test"
 #define MyAppExeName "MultiworldGG.exe"
 #define MyAppIcon "data/icon.ico"
