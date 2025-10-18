@@ -147,6 +147,32 @@ def update_modules() -> bool:
         logger.debug(f"Module update failed: {e}")
         return False
 
+def generate_setup_ini() -> bool:
+    """Generate setup.ini file with build configuration"""
+    try:
+        # Import to get version info
+        sys.path.insert(0, os.path.dirname(__file__))
+        from Utils import version_tuple
+        import platform
+        
+        # Determine build directory name
+        build_dir = f"build\\exe.win-amd64-{sys.version_info.major}.{sys.version_info.minor}"
+
+        # Get full version string
+        version_str = version_tuple.as_pep440_string()
+        
+        # Write setup.ini
+        with open("setup.ini", "w") as f:
+            f.write("[Data]\n")
+            f.write(f"source_path={build_dir}\n")
+            f.write(f"app_version={version_str}\n")
+        
+        logger.info(f"Generated setup.ini with source_path={build_dir}, app_version={version_str}")
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to generate setup.ini: {e}")
+        return False
+
 def run_cx_freeze_build() -> bool:
     """Run the cx_Freeze build process"""
     logger.debug("Starting cx_Freeze build...")
@@ -280,6 +306,11 @@ def main():
     #     if not update_modules():
     #         sys.exit(1)
     
+    # Generate setup.ini for Inno Setup (Windows installer)
+    if is_windows():
+        if not generate_setup_ini():
+            logger.warning("Failed to generate setup.ini, continuing anyway...")
+
     # Run build
     if not run_cx_freeze_build():
         sys.exit(1)

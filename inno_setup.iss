@@ -1,7 +1,9 @@
-#define source_path_relative ReadIni(SourcePath + "\setup.ini", "Data", "source_path")
+#define IniFile SourcePath + "\setup.ini"
+#define source_path_relative ReadIni(IniFile, "Data", "source_path", "build\exe.win-amd64-3.12")
 #define source_path AddBackslash(SourcePath) + source_path_relative
-#define min_windows ReadIni(SourcePath + "\setup.ini", "Data", "min_windows")
+#define min_windows ReadIni(IniFile, "Data", "min_windows", "")
 
+#pragma message "IniFile: " + IniFile
 #pragma message "SourcePath: " + SourcePath
 #pragma message "source_path_relative: " + source_path_relative
 #pragma message "source_path: " + source_path
@@ -56,9 +58,7 @@ NAME: "{app}"; Flags: setntfscompression; Permissions: everyone-modify users-mod
 
 [Files]
 Source: "{#source_path}\*"; Excludes: "*.sfc, *.log, SNI,EnemizerCLI"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "python_installers\python-3.12.10-amd64.exe"; DestDir: {tmp}; Flags: deleteafterinstall; Check: IsPythonNeeded and IsX64
-Source: "python_installers\python-3.12.10-arm64.exe"; DestDir: {tmp}; Flags: deleteafterinstall; Check: IsPythonNeeded and IsARM64
-
+Source: "python_installers\python-3.12.10-amd64.exe"; DestDir: {tmp}; Flags: deleteafterinstall; Check: IsPythonNeeded
 [Icons]
 Name: "{group}\{#MyAppName} Folder"; Filename: "{app}";
 Name: "{group}\{#MyAppName} Launcher"; Filename: "{app}\MultiworldGG.exe"
@@ -68,8 +68,7 @@ Name: "{commondesktop}\{#MyAppName} Launcher"; Filename: "{app}\MultiworldGG.exe
 
 [Run]
 
-Filename: "{tmp}\python-3.12.10-amd64.exe"; Parameters: "/passive InstallAllUsers=1 PrependPath=1 Include_test=0"; Check: IsPythonNeeded and IsX64; StatusMsg: "Installing Python 3.12.10..."
-Filename: "{tmp}\python-3.12.10-arm64.exe"; Parameters: "/passive InstallAllUsers=1 PrependPath=1 Include_test=0"; Check: IsPythonNeeded and IsARM64; StatusMsg: "Installing Python 3.12.10..."
+Filename: "{tmp}\python-3.12.10-amd64.exe"; Parameters: "/passive InstallAllUsers=1 PrependPath=1 Include_test=0"; Check: IsPythonNeeded; StatusMsg: "Installing Python 3.12.10..."
 ; Filename: "{app}\MultiworldGG"; Parameters: "--update_settings"; StatusMsg: "Updating host.yaml..."; Flags: runasoriginaluser runhidden
 ; Filename: "{app}\MultiworldGG"; Description: "{cm:LaunchProgram,{#StringChange('Launcher', '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 ; Silent install from updater auto starts the launcher again
@@ -500,16 +499,6 @@ end;
 function IsPythonNeeded: Boolean;
 begin
   Result := not IsPythonInstalled;
-end;
-
-function IsX64: Boolean;
-begin
-  Result := Is64BitInstallMode and (ProcessorArchitecture = paX64);
-end;
-
-function IsARM64: Boolean;
-begin
-  Result := Is64BitInstallMode and (ProcessorArchitecture = paARM64);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
