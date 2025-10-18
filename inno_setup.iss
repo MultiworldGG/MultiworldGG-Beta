@@ -1,5 +1,5 @@
 #define source_path_relative ReadIni(SourcePath + "\setup.ini", "Data", "source_path")
-#define source_path SourcePath + "\" + source_path_relative
+#define source_path AddBackslash(SourcePath) + source_path_relative
 #define min_windows ReadIni(SourcePath + "\setup.ini", "Data", "min_windows")
 
 #define MyAppName "MultiworldGG-Test"
@@ -7,7 +7,7 @@
 #define MyAppIcon "data/icon.ico"
 #dim VersionTuple[4]
 #define MyAppVersion GetVersionComponents(source_path + '\MultiworldGG.exe', VersionTuple[0], VersionTuple[1], VersionTuple[2], VersionTuple[3])
-#define MyAppVersionText Str(VersionTuple[0])+"."+Str(VersionTuple[1])+"."+Str(VersionTuple[2])
+#define MyAppVersionText ReadIni(SourcePath + "\setup.ini", "Data", "app_version", "0.7.177a5")
 
 
 [Setup]
@@ -22,7 +22,7 @@ DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
 DefaultGroupName=MultiworldGG-Test
 OutputDir=setups
-OutputBaseFilename=Setup {#MyAppName} {#MyAppVersionText}a5
+OutputBaseFilename=Setup {#MyAppName} {#MyAppVersionText}
 Compression=lzma2
 SolidCompression=yes
 LZMANumBlockThreads=8
@@ -51,7 +51,7 @@ Name: "custom"; Description: "Custom installation"; Flags: iscustom
 NAME: "{app}"; Flags: setntfscompression; Permissions: everyone-modify users-modify authusers-modify;
 
 [Files]
-Source: "{#source_path}\*"; Excludes: "*.sfc, *.log, EnemizerCLI"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#source_path}\*"; Excludes: "*.sfc, *.log, SNI,EnemizerCLI"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "python_installers\python-3.12.10-amd64.exe"; DestDir: {tmp}; Flags: deleteafterinstall; Check: IsPythonNeeded and IsX64
 Source: "python_installers\python-3.12.10-arm64.exe"; DestDir: {tmp}; Flags: deleteafterinstall; Check: IsPythonNeeded and IsARM64
 
