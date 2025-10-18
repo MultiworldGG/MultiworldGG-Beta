@@ -118,10 +118,10 @@ def set_game_names(game_names: typing.List[str]):
             logging.warning(f"Module {module_name} not found, looking in worlds pypi index.")
             _worlds_to_install.append(module_name)
     if _worlds_to_install:
-        callback = ModuleUpdate.install_worlds(_worlds_to_install)
-        if callback:
-            # Restart callback returned - call it to restart process
-            callback()
+        restart_needed = ModuleUpdate.install_worlds(_worlds_to_install)
+        if restart_needed:
+            # Library updates were staged, need to restart
+            exit_for_library_update()
 
 def game_names() -> typing.List[str]:
     """Get a list of only the game names that we're using"""

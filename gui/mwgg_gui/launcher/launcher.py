@@ -505,7 +505,14 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         if options.get('output_path'):
             cmd.extend(["--outputpath", options['output_path']])
         
+        # Ensure temp directory exists before starting generation
+        if not os.path.exists(temp_dir):
+            logger.error(f"Temp directory {temp_dir} does not exist!")
+            MessageBox("Generation Error", f"Temp directory does not exist: {temp_dir}").open()
+            return
+            
         logger.info(f"Starting generation with command: {' '.join(cmd)}")
+        logger.info(f"Using temp directory: {temp_dir}")
         
         # Show loading screen
         Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(), 0)
@@ -589,6 +596,8 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 elif process.returncode == 10:
                     # Exit code 10 means "wrong environment" - library updates needed
                     logger.info("Generation requested launcher restart for environment refresh")
+                    # Don't cleanup temp dir on restart - it may still be needed
+                    # Cleanup will happen when the launcher restarts
                     Clock.schedule_once(lambda dt: restart_launcher(), 0)
                 else:
                     error_msg = stderr if stderr else "Unknown error"
