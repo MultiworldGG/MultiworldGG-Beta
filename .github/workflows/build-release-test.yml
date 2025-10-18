@@ -451,13 +451,6 @@ jobs:
         run: |
           choco install innosetup -y
       
-      - name: Debug - List build directory contents
-        shell: pwsh
-        run: |
-          cd src
-          Write-Host "Contents of build directory:"
-          Get-ChildItem -Path build -Recurse | Select-Object FullName
-      
       - name: Build Windows installer
         shell: pwsh
         run: |
