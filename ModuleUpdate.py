@@ -50,28 +50,6 @@ _skip_update = bool(
     multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiWorldGG"
 )
 
-def exit_for_library_update():
-    """
-    Spawn a new process with the same arguments, then exit.
-    The new process will have its splashscreen apply the staged library.zip update.
-    """
-    logger.info("Spawning new process to apply updates...")
-    
-    # Spawn new process with same executable and arguments
-    subprocess.Popen([sys.executable] + sys.argv, 
-                     cwd=os.getcwd(),
-                     creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows() else 0)
-    
-    logger.info("Exiting current process...")
-    
-    # Flush all logging handlers to ensure messages are displayed
-    for handler in logging.root.handlers:
-        handler.flush()
-    
-    # Use os._exit to bypass cleanup and immediately release library.zip
-    # This is intentional - we need the file released so the new process can replace it
-    os._exit(0)
-
 local_dir = Path(__file__).parent
 
 update_ran = _skip_update
@@ -502,7 +480,7 @@ def _add_to_library_zip(exe_dir: Path, source_path: Path) -> None:
                 if file_path.is_file():
                     arcname = str(file_path.relative_to(temp_dir))
                     new_zipf.write(file_path, arcname)
-                    logger.debug(f"Added to zip: {arcname}")
+                    #logger.debug(f"Added to zip: {arcname}")
         
         logger.info(f"Successfully staged library.zip update at {staged_zip_path}")
         logger.info("Update staged. Process must exit for update to be applied.")
@@ -596,7 +574,7 @@ def _add_directory_to_temp_dir(source_path: Path, temp_dir: Path, lib_dir: Path)
             shutil.copy2(file_path, target_path)
             logger.debug(f"Added {source_path.name / rel_path} to temp directory")       
 
-def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = False) -> None:
+def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = False) -> bool:
     """
     Install worlds from the multiworld repository.
     
@@ -608,6 +586,9 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
         worlds: List of world packages to install
         update: If True, uninstall old versions first
         no_recurse: If True, do not check for additional updates after installation completes.
+    
+    Returns:
+        True if library.zip was updated, False otherwise.
     """
     check_pip()
 
@@ -715,9 +696,11 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
                 logger.warning(f"Additional updates found: {additional_updates}")
                 return install_worlds(additional_updates, no_recurse=True)
             
-            # Spawn new process and exit to apply updates
-            logger.info("All installations complete. Triggering restart to apply library updates...")
-            exit_for_library_update()
+            # Return callback for caller to handle restart
+            logger.info("All installations complete. Library updates staged.")
+            return True
+    
+    return False
 
 def update_world_wheels() -> None:
     """Install/update wheel files from custom_wheels directory."""
@@ -895,6 +878,9 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
         yes: Answer yes to all prompts
         force: Force update without checking
         worlds: List of specific worlds to update
+    
+    Returns:
+        None
     """
     if is_frozen():
         if (exe_dir / "custom_wheels").exists():
@@ -902,10 +888,13 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
             update_world_wheels()
         updates = check_for_updates(worlds_only=True)
         if updates:
-            install_worlds(updates)
+            restart_needed = install_worlds(updates)
+            if restart_needed:
+                # Library updates were staged, need to restart
+                from Utils import exit_for_library_update
+                exit_for_library_update()
         else:
             logger.debug("No updates found.")
-        return
     global update_ran
     
     if update_ran:
@@ -917,7 +906,6 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
         logger.debug("Force update requested - skipping update checks")
         # Force mode updates all requirements and worlds
         update_requirements([])  # Empty list means update all
-        return
     
     # Check for available updates
     logger.debug("Checking for available updates...")
@@ -935,7 +923,6 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
     if not check_requirements_satisfied(yes=yes):
         logger.debug("Installing missing requirements...")
         update_requirements([])  # Empty list means update all missing requirements
-        return
     
     # Update packages that need updates (including worlds)
     if available_updates:

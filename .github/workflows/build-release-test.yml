@@ -302,14 +302,20 @@ jobs:
       
       - name: Rename AppImage to include version suffix
         run: |
+          # Extract the full version from application.yaml
+          FULL_VERSION=$(grep 'app_version:' src/application.yaml | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "Full version from application.yaml: $FULL_VERSION"
+          
           cd src/dist
-          # Find the AppImage file and rename it to include the full version from application.yaml
+          # Find the AppImage file and rename it to include the full version
           for file in *.AppImage; do
             if [ -f "$file" ]; then
-              # Check if it already has a5 in the version part
-              if [[ ! "$file" =~ 0\.7\.177a5 ]]; then
-                # Replace 0.7.177-x86_64 with 0.7.177a5-x86_64
-                newname=$(echo "$file" | sed -E 's/0\.7\.177-/0.7.177a5-/')
+              # Check if it already has the full version
+              if [[ ! "$file" =~ $FULL_VERSION ]]; then
+                # Extract base version without tag suffix (e.g., 0.7.177)
+                BASE_VERSION=$(echo "$FULL_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+                # Replace BASE_VERSION-x86_64 with FULL_VERSION-x86_64
+                newname=$(echo "$file" | sed -E "s/${BASE_VERSION}-/${FULL_VERSION}-/")
                 echo "Renaming $file to $newname"
                 mv "$file" "$newname"
               fi
@@ -405,15 +411,23 @@ jobs:
       
       - name: Rename DMG to include version suffix
         run: |
+          # Extract the full version from application.yaml
+          FULL_VERSION=$(grep 'app_version:' src/application.yaml | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "Full version from application.yaml: $FULL_VERSION"
+          
+          # Extract just the tag suffix (e.g., a6)
+          TAG_SUFFIX=$(echo "$FULL_VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+//')
+          echo "Tag suffix: $TAG_SUFFIX"
+          
           cd src/build
-          # Find the DMG file and rename it to include the full version from application.yaml
+          # Find the DMG file and rename it to include the version tag suffix
           for file in *.dmg; do
             if [ -f "$file" ]; then
               # Extract base name without extension
               basename="${file%.dmg}"
               # Check if it already has the version suffix
-              if [[ ! "$basename" =~ a5$ ]]; then
-                newname="${basename}a5.dmg"
+              if [[ ! "$basename" =~ $TAG_SUFFIX$ ]]; then
+                newname="${basename}${TAG_SUFFIX}.dmg"
                 echo "Renaming $file to $newname"
                 mv "$file" "$newname"
               fi

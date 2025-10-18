@@ -25,6 +25,9 @@ from settings import Settings, get_settings
 from time import sleep
 from typing import BinaryIO, Coroutine, Optional, Set, Dict, Any, Union, TypeGuard
 from yaml import load, load_all, dump
+
+logger = logging.getLogger("MultiWorld")
+
 import ModuleUpdate
 
 try:
@@ -115,7 +118,10 @@ def set_game_names(game_names: typing.List[str]):
             logging.warning(f"Module {module_name} not found, looking in worlds pypi index.")
             _worlds_to_install.append(module_name)
     if _worlds_to_install:
-        ModuleUpdate.install_worlds(_worlds_to_install)
+        callback = ModuleUpdate.install_worlds(_worlds_to_install)
+        if callback:
+            # Restart callback returned - call it to restart process
+            callback()
 
 def game_names() -> typing.List[str]:
     """Get a list of only the game names that we're using"""
@@ -128,7 +134,7 @@ def get_available_worlds() -> typing.List[str]:
     available_worlds = find_world_modules()
     return available_worlds
 
-def discover_and_launch_module(module_name: str, **kwargs) -> None:
+def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]:
     """Discover and launch module via entrypoints"""
     import threading
     import asyncio
@@ -141,11 +147,17 @@ def discover_and_launch_module(module_name: str, **kwargs) -> None:
     def _install_module_threaded():
         """Install module in a separate thread"""
         try:
-            ModuleUpdate.install_worlds([module_name])
-            # Schedule the actual launch on the main thread after installation
-            Clock.schedule_once(lambda dt: _launch_module_after_install(), 0)
+            restart = ModuleUpdate.install_worlds([module_name])
+            if restart:
+                # Restart needed - schedule callback on main thread
+                raise Exception("Library update needed, restarting process...")
+            else:
+                # No restart needed - proceed with launch
+                Clock.schedule_once(lambda dt: _launch_module_after_install(), 0)
         except Exception as e:
-            logging.error(f"Failed to update module {module_name}: {e}")
+            if e.message != "Library update needed, restarting process...":
+                logging.error(f"Failed to update module {module_name}: {e}")
+
             # Schedule error handling on main thread
             Clock.schedule_once(lambda dt: _handle_install_error(e), 0)
     
@@ -162,10 +174,15 @@ def discover_and_launch_module(module_name: str, **kwargs) -> None:
         # Get error callback from kwargs if provided
         error_callback = kwargs.get('error_callback')
         if error_callback:
-            error_callback()
+            restart_callback = lambda: exit_for_library_update()
+            error_callback(restart_callback)
         # Log the error but don't raise it since we're in a Clock callback
         logging.error(f"Module installation failed: {error}")
     
+    if not is_windows:
+        _perform_module_launch("", **kwargs)
+        return
+
     try:
         importlib.import_module(module_name)
         # Module exists, launch directly
@@ -183,66 +200,66 @@ def discover_and_launch_module(module_name: str, **kwargs) -> None:
 def _perform_module_launch(module_id: str, **kwargs):
     """Perform the actual module launch logic"""
     try:
-        while True:
-            # Wait until the module is installed before trying to import it
+        if module_id:
+            while True:
+                # Wait until the module is installed before trying to import it
+                try:
+                    importlib.import_module(module_id)
+                    break
+                except ModuleNotFoundError:
+                    sleep(1)
+                except Exception as e:
+                    logging.error(f"Failed to import module {module_id}: {e}")
+                    raise e
+
+            entry_points = importlib.metadata.entry_points(group="mwgg.client")
+            entry_point_name = "{}.Client".format(module_id)
+            
+            # Check if the entry point exists by looking through the entry points
+            module_entry_point = None
+            for entry_point in entry_points:
+                if entry_point.name == entry_point_name:
+                    module_entry_point = entry_point
+                    break
+            
+            if module_entry_point:
+                # Load and execute the client entrypoint
+                launch_function = module_entry_point.load()
+                result = launch_function(**kwargs)
+                
+                # Check if the launch function returned a task (GUI mode)
+                if hasattr(result, '_coro'):
+                    logging.info(f"Launch function returned a task for {module_id}, running in GUI mode")
+                    # The task is already scheduled in the event loop
+                    return result
+                else:
+                    logging.info(f"Launch function completed synchronously for {module_id}")
+                    return result
+                            
+            # 2. Check SNI registry
+            from mwgg_igdb import GameIndex
+            game_name = GameIndex.get_game_name_for_module(module_name=module_id.strip("worlds."))
             try:
-                importlib.import_module(module_id)
-                break
-            except ModuleNotFoundError:
-                sleep(1)
-            except Exception as e:
-                logging.error(f"Failed to import module {module_id}: {e}")
-                raise e
+                from worlds._sni.client import AutoSNIClientRegister
+                if AutoSNIClientRegister.is_sni_world(module_name=game_name):
+                    logging.info(f"Detected SNI client for {game_name}")
+                    from worlds._sni.context import launch
+                    return launch(**kwargs)
+            except ImportError:
+                logging.debug("SNI client not available")
+                
+            # 3. Check BizHawk registry
+            try:
+                from worlds._bizhawk.client import AutoBizHawkClientRegister
+                if AutoBizHawkClientRegister.is_bizhawk_world(module_name=game_name):
+                    logging.info(f"Detected BizHawk client for {game_name}")
+                    from worlds._bizhawk.context import launch
+                    return launch(**kwargs)
+            except ImportError:
+                logging.debug("BizHawk client not available")
 
-        entry_points = importlib.metadata.entry_points(group="mwgg.client")
-        entry_point_name = "{}.Client".format(module_id)
-        
-        # Check if the entry point exists by looking through the entry points
-        module_entry_point = None
-        for entry_point in entry_points:
-            if entry_point.name == entry_point_name:
-                module_entry_point = entry_point
-                break
-        
-        if module_entry_point:
-            # Load and execute the client entrypoint
-            launch_function = module_entry_point.load()
-            result = launch_function(**kwargs)
-            
-            # Check if the launch function returned a task (GUI mode)
-            if hasattr(result, '_coro'):
-                logging.info(f"Launch function returned a task for {module_id}, running in GUI mode")
-                # The task is already scheduled in the event loop
-                return result
-            else:
-                logging.info(f"Launch function completed synchronously for {module_id}")
-                return result
-                        
-        # 2. Check SNI registry
-        from mwgg_igdb import GameIndex
-        game_name = GameIndex.get_game_name_for_module(module_name=module_id.strip("worlds."))
-        try:
-            from worlds._sni.client import AutoSNIClientRegister
-            if AutoSNIClientRegister.is_sni_world(module_name=game_name):
-                logging.info(f"Detected SNI client for {game_name}")
-                from worlds._sni.context import launch
-                return launch(**kwargs)
-        except ImportError:
-            logging.debug("SNI client not available")
-            
-        # 3. Check BizHawk registry
-        try:
-            from worlds._bizhawk.client import AutoBizHawkClientRegister
-            if AutoBizHawkClientRegister.is_bizhawk_world(module_name=game_name):
-                logging.info(f"Detected BizHawk client for {game_name}")
-                from worlds._bizhawk.context import launch
-                return launch(**kwargs)
-        except ImportError:
-            logging.debug("BizHawk client not available")
-
-        
         # 4. Fallback to text client
-        logging.info(f"No specialized client found for {module_id}, using text client")
+        logging.info(f"No specialized client, using text client")
         from CommonClient import main_textclient
         result = main_textclient(**kwargs)
 
@@ -265,6 +282,25 @@ def _perform_module_launch(module_id: str, **kwargs):
                 logging.error(f"Error in error callback: {callback_error}")
         raise
 
+def exit_for_library_update():
+    """
+    Spawn a new process with the same arguments, then exit.
+    The new process will have its splashscreen apply the staged library.zip update.
+    """
+    # Spawn new process with same executable and arguments
+    subprocess.Popen([sys.executable] + sys.argv, 
+                     cwd=os.getcwd(),
+                     creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows() else 0)
+    
+    logger.info("Exiting current process...")
+    
+    # Flush all logging handlers to ensure messages are displayed
+    for handler in logging.root.handlers:
+        handler.flush()
+    
+    # Use sys.exit with code 10 to signal "bad environment" - needs restart
+    # This allows the calling process to handle the restart properly
+    sys.exit(10)
 
 def int16_as_bytes(value: int) -> typing.List[int]:
     value = value & 0xFFFF

@@ -14,7 +14,9 @@ from Utils import set_game_names
 
 if __name__ == "__main__":
     import ModuleUpdate
-    ModuleUpdate.update()
+    callback = ModuleUpdate.update()
+    if callback:
+        callback()
 
     games: List[str] = [""]
 

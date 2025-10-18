@@ -36,8 +36,6 @@ os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
 
 # mwgg_splash is imported dynamically when needed to avoid bundling it into frozen executable
 
-logger = logging.getLogger("MultiWorld")
-
 def terminate_splash_screen(queue: "Queue" ):
     """Terminate the splash screen process by name"""
     try:
@@ -68,6 +66,7 @@ def run_client(*args, queue=None):
     async def main(args):
         from CommonClient import InitContext
 
+        logger = logging.getLogger("MultiWorld")
         ctx = InitContext()
         
         # Check if a specific module was requested
@@ -127,6 +126,7 @@ if __name__ == "__main__":
     freeze_support()
     from BaseUtils import init_logging
     init_logging("MultiWorld", logging.DEBUG)
+    logger = logging.getLogger("MultiWorld")
     from mwgg_splash import main as splash_main
 
     set_start_method("spawn")

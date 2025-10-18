@@ -512,6 +512,26 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         
         def run_generation():
             """Run generation in background thread and stream output to logger"""
+            # Capture launcher's executable and args for potential restart
+            from Utils import is_windows
+            launcher_exe = sys.executable
+            launcher_args = sys.argv
+            launcher_cwd = os.getcwd()
+            
+            def restart_launcher():
+                """Restart the launcher with the same arguments"""
+                logger.info("Restarting launcher due to environment refresh...")
+                subprocess.Popen([launcher_exe] + launcher_args,
+                               cwd=launcher_cwd,
+                               creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows() else 0)
+                
+                # Flush all logging handlers to ensure messages are displayed
+                for handler in logging.root.handlers:
+                    handler.flush()
+                
+                # Use os._exit to bypass cleanup and immediately terminate
+                os._exit(0)
+            
             try:
                 process = subprocess.Popen(
                     cmd,
@@ -566,6 +586,10 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 if process.returncode == 0:
                     Clock.schedule_once(show_success_dialog, 0)
                     logger.info("Generation completed successfully")
+                elif process.returncode == 10:
+                    # Exit code 10 means "wrong environment" - library updates needed
+                    logger.info("Generation requested launcher restart for environment refresh")
+                    Clock.schedule_once(lambda dt: restart_launcher(), 0)
                 else:
                     error_msg = stderr if stderr else "Unknown error"
                     Clock.schedule_once(show_failure_dialog, 0)
