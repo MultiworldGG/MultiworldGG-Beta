@@ -26,8 +26,9 @@ import ctypes
 
 if is_frozen():
     os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"lib", "kivy", "data")
-    sys.path.append(os.path.join(os.path.dirname(__file__), "world_plugins", "lib", "python", \
-        sys.winver, "site-packages", "worlds"))
+    lib_path = os.path.join(sys.exec_prefix, "lib")
+    if lib_path not in sys.path:
+        sys.path.append(lib_path)
 else:
     os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"kivy", "data")
 os.environ["KIVY_HOME"] = os.path.join(local_path(),"data")
@@ -41,7 +42,7 @@ def terminate_splash_screen(queue: "Queue" ):
     """Terminate the splash screen process by name"""
     try:
         # Try queue-based termination first if queue is provided
-        queue.put_nowait(True)
+        queue.put_nowait({"type": "terminate"})
         
         # Search for processes by name using multiprocessing
         import multiprocessing
@@ -131,6 +132,19 @@ if __name__ == "__main__":
     set_start_method("spawn")
     splash_queue = Queue()
     Process(target=splash_main, name="SplashScreen", args=(splash_queue,)).start()
+    
+    # Wait for splash process to signal ready (after checking/applying updates)
+    logger.info("Checking for updates...")
+    try:
+        message = splash_queue.get(timeout=60)  # Wait up to 60 seconds
+        if isinstance(message, dict):
+            msg_type = message.get("type")
+            if msg_type == "update_complete":
+                logger.info("Updates applied successfully")
+            elif msg_type == "ready":
+                pass
+    except Exception as e:
+        logger.warning(f"Timeout or error waiting for splash screen: {e}")
     
     # Run the main client in the current process
     run_client(*sys.argv[1:], queue=splash_queue)

@@ -17,7 +17,7 @@ if not logging.getLogger().hasHandlers():
     logging.basicConfig(level=logging.DEBUG, format='%(message)s', stream=sys.stdout)
 
 from pathlib import Path
-from typing import List, Optional, Callable
+from typing import List, Optional
 
 import pip
 from importlib import metadata
@@ -49,6 +49,28 @@ elif sys.version_info < (3, 12, 0):
 _skip_update = bool(
     multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiWorldGG"
 )
+
+def exit_for_library_update():
+    """
+    Spawn a new process with the same arguments, then exit.
+    The new process will have its splashscreen apply the staged library.zip update.
+    """
+    logger.info("Spawning new process to apply updates...")
+    
+    # Spawn new process with same executable and arguments
+    subprocess.Popen([sys.executable] + sys.argv, 
+                     cwd=os.getcwd(),
+                     creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows() else 0)
+    
+    logger.info("Exiting current process...")
+    
+    # Flush all logging handlers to ensure messages are displayed
+    for handler in logging.root.handlers:
+        handler.flush()
+    
+    # Use os._exit to bypass cleanup and immediately release library.zip
+    # This is intentional - we need the file released so the new process can replace it
+    os._exit(0)
 
 local_dir = Path(__file__).parent
 
@@ -439,22 +461,24 @@ def _parse_package_name_version(filename: str) -> tuple[str, str]:
         return match.group(1), match.group(2)
     return name, ''
 
-def _add_to_library_zip(exe_dir: Path, source_path: Path, restart_callback=None) -> None:
+def _add_to_library_zip(exe_dir: Path, source_path: Path) -> None:
     """
     Add modules to library.zip using a temp directory for version conflict resolution.
+    
+    Since we can't replace library.zip while it's in use, this function stages the update
+    by creating _staged_library.zip and a marker file. The caller is responsible for
+    triggering the restart after all updates are staged.
     
     Args:
         exe_dir: Executable directory
         source_path: Path to add to the zip
-        restart_callback: Optional callback to trigger client restart after zip replacement
-                         Example: restart_callback=lambda: os.execv(sys.executable, [sys.executable] + sys.argv)
     """
     library_zip = exe_dir / "lib" / "library.zip"
     lib_dir = exe_dir / "lib"
     
     # Create a temporary directory
     temp_dir = lib_dir / f"_temp_lib_{os.getpid()}"
-    temp_zip_path = lib_dir / f"_temp_library_{os.getpid()}.zip"
+    staged_zip_path = lib_dir / "_staged_library.zip"
     
     try:
         temp_dir.mkdir(exist_ok=True)
@@ -471,35 +495,28 @@ def _add_to_library_zip(exe_dir: Path, source_path: Path, restart_callback=None)
         elif source_path.is_dir():
             _add_directory_to_temp_dir(source_path, temp_dir, lib_dir)
         
-        # Step 3: Create new zip from temp directory
-        logger.debug(f"Creating new library.zip from temp directory")
-        with zipfile.ZipFile(temp_zip_path, 'w', zipfile.ZIP_DEFLATED) as new_zipf:
+        # Step 3: Create new staged zip from temp directory
+        logger.debug(f"Creating staged library.zip from temp directory")
+        with zipfile.ZipFile(staged_zip_path, 'w', zipfile.ZIP_DEFLATED) as new_zipf:
             for file_path in temp_dir.rglob("*"):
                 if file_path.is_file():
                     arcname = str(file_path.relative_to(temp_dir))
                     new_zipf.write(file_path, arcname)
                     logger.debug(f"Added to zip: {arcname}")
         
-        # Step 4: Atomic replacement
-        if library_zip.exists():
-            library_zip.unlink()
-        temp_zip_path.rename(library_zip)
-        logger.debug(f"Successfully replaced library.zip")
+        logger.info(f"Successfully staged library.zip update at {staged_zip_path}")
+        logger.info("Update staged. Process must exit for update to be applied.")
         
-        # Trigger restart if callback provided
-        if restart_callback:
-            logger.info("Library updated - triggering client restart")
-            restart_callback()
+        # Don't exit immediately - let the caller decide when to exit
+        # This allows batching multiple updates before restarting
             
     except Exception as e:
-        logger.error(f"Failed to update library.zip: {e}")
+        logger.error(f"Failed to stage library.zip update: {e}")
         raise
     finally:
-        # Clean up temp files
+        # Clean up temp directory (keep staged zip and marker)
         if temp_dir.exists():
             shutil.rmtree(temp_dir, ignore_errors=True)
-        if temp_zip_path.exists():
-            temp_zip_path.unlink()
 
 def _remove_old_package_version(temp_dir: Path, package_name: str, new_version: str) -> None:
     """Remove old versions of a package from temp directory."""
@@ -579,15 +596,18 @@ def _add_directory_to_temp_dir(source_path: Path, temp_dir: Path, lib_dir: Path)
             shutil.copy2(file_path, target_path)
             logger.debug(f"Added {source_path.name / rel_path} to temp directory")       
 
-def install_worlds(worlds: List[str], update: bool = False, restart_callback=None) -> None:
+def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = False) -> None:
     """
     Install worlds from the multiworld repository.
+    
+    In frozen builds, this will stage all library.zip updates and only trigger restart
+    after all worlds are successfully installed. It will also check for additional
+    updates after installation completes.
     
     Args:
         worlds: List of world packages to install
         update: If True, uninstall old versions first
-        restart_callback: Optional callback to trigger client restart after installation.
-                         Only called after the last world is installed to avoid multiple restarts.
+        no_recurse: If True, do not check for additional updates after installation completes.
     """
     check_pip()
 
@@ -648,15 +668,13 @@ def install_worlds(worlds: List[str], update: bool = False, restart_callback=Non
                 # First, move all .pyc files from __pycache__ to parent directories
                 _move_compiled_files(pip_install_dir)
                 
-                # Determine if we should pass restart callback (only on last world)
-                callback_to_pass = restart_callback if is_last_world else None
-                
                 # Process each item in the install directory
+                # Don't trigger restart yet - wait until all worlds are processed
                 for item in pip_install_dir.iterdir():
                     if item.name != 'worlds' and item.name != 'mwgg_igdb':
                         # Add dependency packages to library.zip
                         logger.debug(f"Adding {item.name} to library")
-                        _add_to_library_zip(exe_dir, item, restart_callback=callback_to_pass)
+                        _add_to_library_zip(exe_dir, item)
                     if "mwgg_igdb" in item.name:
                         # Copy everything from pip_install_dir to worlds_install_dir, excluding .py files
                         logger.debug(f"Installing mwgg_igdb...")
@@ -683,6 +701,23 @@ def install_worlds(worlds: List[str], update: bool = False, restart_callback=Non
                 logger.warning(f"Failed to install {world}")
             else:
                 logger.info(f"Successfully installed {world}")
+    
+    # After all worlds are installed, check if we staged any library.zip updates
+    if is_frozen():
+        lib_dir = exe_dir / "lib"
+        staged_zip = lib_dir / "_staged_library.zip"
+        
+        if staged_zip.exists():
+            # Check for any additional updates that might be needed
+            logger.info("Checking for additional updates...")
+            additional_updates = check_for_updates(worlds_only=True)
+            if additional_updates and not no_recurse:
+                logger.warning(f"Additional updates found: {additional_updates}")
+                return install_worlds(additional_updates, no_recurse=True)
+            
+            # Spawn new process and exit to apply updates
+            logger.info("All installations complete. Triggering restart to apply library updates...")
+            exit_for_library_update()
 
 def update_world_wheels() -> None:
     """Install/update wheel files from custom_wheels directory."""
@@ -739,13 +774,12 @@ def update_world_wheels() -> None:
                 logger.info(f"Successfully installed wheel {wheel}")
 
 
-def update_requirements(needed_packages: List[str], restart_callback: Optional[Callable[[], None]] = None) -> None:
+def update_requirements(needed_packages: List[str]) -> None:
     """
     Update packages from requirements.txt files and install worlds.
     
     Args:
         needed_packages: List of packages that need updating
-        restart_callback: Optional callback to trigger client restart after updates
     """
     if is_frozen():
         return
@@ -795,7 +829,7 @@ def update_requirements(needed_packages: List[str], restart_callback: Optional[C
     worlds_to_install = [pkg for pkg in needed_packages if pkg.startswith("worlds") or pkg.startswith("mwgg")]
     if worlds_to_install:
         logger.info(f"Installing/updating worlds: {worlds_to_install}")
-        install_worlds(worlds_to_install, restart_callback=restart_callback)
+        install_worlds(worlds_to_install)
 
 
 def install_packaging(yes: bool = False) -> None:
@@ -853,7 +887,7 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
     return all_satisfied
 
 
-def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = None, restart_callback: Optional[Callable[[], None]] = None) -> None:
+def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = None) -> None:
     """
     Main update function.
     
@@ -861,9 +895,6 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
         yes: Answer yes to all prompts
         force: Force update without checking
         worlds: List of specific worlds to update
-        restart_callback: Optional callback to trigger client restart after updates.
-                         Called when library.zip is updated in frozen builds.
-                         Example: restart_callback=lambda: subprocess.Popen([sys.executable] + sys.argv)
     """
     if is_frozen():
         if (exe_dir / "custom_wheels").exists():
@@ -871,7 +902,7 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
             update_world_wheels()
         updates = check_for_updates(worlds_only=True)
         if updates:
-            install_worlds(updates, restart_callback=restart_callback)
+            install_worlds(updates)
         else:
             logger.debug("No updates found.")
         return
@@ -885,7 +916,7 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
     if force:
         logger.debug("Force update requested - skipping update checks")
         # Force mode updates all requirements and worlds
-        update_requirements([], restart_callback=restart_callback)  # Empty list means update all
+        update_requirements([])  # Empty list means update all
         return
     
     # Check for available updates
@@ -903,13 +934,13 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
     logger.debug("Checking if all requirements are satisfied...")
     if not check_requirements_satisfied(yes=yes):
         logger.debug("Installing missing requirements...")
-        update_requirements([], restart_callback=restart_callback)  # Empty list means update all missing requirements
+        update_requirements([])  # Empty list means update all missing requirements
         return
     
     # Update packages that need updates (including worlds)
     if available_updates:
         logger.debug("Updating packages that need updates...")
-        update_requirements(available_updates, restart_callback=restart_callback)
+        update_requirements(available_updates)
     
     logger.debug("Update process completed.")
 

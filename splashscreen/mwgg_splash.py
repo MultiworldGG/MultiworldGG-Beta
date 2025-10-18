@@ -18,9 +18,10 @@ import sys
 from datetime import datetime, UTC, timedelta
 import logging
 import threading
-import signal
 import tkinter as tk
 from PIL import Image, ImageTk, ImageSequence
+import time
+from pathlib import Path
 
 logger = logging.getLogger("MultiWorld")
 
@@ -33,6 +34,10 @@ class SplashScreen:
             self.root.overrideredirect(True)  # Remove window decorations
             self.root.attributes("-transparent", "black")  # Enable transparency
             self.root.attributes("-topmost", True)  # Keep window on top
+            
+            # Track update status
+            self.update_in_progress = False
+            self.update_thread = None
             
             # Load the animated PNG
             try:
@@ -93,13 +98,35 @@ class SplashScreen:
             self.current_frame = 0
             self.animate()
             
-            self.monitor_thread = None
+            # Start update check in background thread
+            self.update_thread = threading.Thread(target=self._check_and_apply_updates, daemon=True)
+            self.update_thread.start()
             
         except Exception as e:
             logging.error(f"Failed to initialize splash screen: {e}")
             if hasattr(self, 'root') and self.root:
                 self.root.destroy()
             raise
+    
+    def _check_and_apply_updates(self):
+        """Background thread to check and apply pending updates"""
+        try:
+            self.update_in_progress = True
+            update_applied = check_and_apply_pending_update()
+            
+            if update_applied:
+                logger.info("Library.zip update complete!")
+                # Signal main process that update is complete
+                self.queue.put({"type": "update_complete"})
+            else:
+                # No update or update failed, signal ready
+                self.queue.put({"type": "ready"})
+                
+        except Exception as e:
+            logger.error(f"Error in update thread: {e}")
+            self.queue.put({"type": "ready"})
+        finally:
+            self.update_in_progress = False
     
     def animate(self):
         # Check for timeout before continuing animation
@@ -110,13 +137,21 @@ class SplashScreen:
             self.cleanup_and_exit()
             return
             
-        # Check for queue kill message (non-blocking):
+        # Check for queue messages (non-blocking):
         try:
             message = self.queue.get(block=False)
             if message:
-                logging.info("Received queue kill message, terminating splash screen")
-                self.cleanup_and_exit()
-                return
+                # Handle different message types
+                if isinstance(message, dict):
+                    msg_type = message.get("type")
+                    if msg_type == "terminate":
+                        logging.info("Received terminate message, exiting splash screen")
+                        self.cleanup_and_exit()
+                        return
+                elif message is True:  # Legacy termination signal
+                    logging.info("Received queue kill message, terminating splash screen")
+                    self.cleanup_and_exit()
+                    return
         except Empty:
             # No message in queue, continue animation
             pass
@@ -157,9 +192,73 @@ class SplashScreen:
             self.cleanup_and_exit()
     
 
+def check_and_apply_pending_update() -> bool:
+    """
+    Check for pending library.zip updates and apply them.
+    This runs in the splash screen process, which is separate from the main process.
+    Runs in a background thread so the splash animation continues.
+    
+    Returns:
+        True if update was applied, False otherwise
+    """
+    try:
+        # Only run in frozen builds
+        if not getattr(sys, 'frozen', False):
+            return False
+        
+        exe_dir = Path(sys.executable).parent
+        lib_dir = exe_dir / "lib"
+        staged_zip = lib_dir / "_staged_library.zip"
+        target_zip = lib_dir / "library.zip"
+        
+        if not staged_zip.exists():
+            return False
+        
+        logger.info("Pending updates detected, processing...")
+        
+        # Give the main process time to fully exit
+        time.sleep(2)
+        
+        # Backup existing library.zip
+        backup_zip = None
+        if target_zip.exists():
+            backup_zip = target_zip.parent / f"{target_zip.stem}_backup.zip"
+            logger.debug(f"Backing up existing library.zip...")
+            try:
+                target_zip.rename(backup_zip)
+            except Exception as e:
+                logger.error(f"Failed to backup library.zip: {e}")
+                return False
+        
+        # Replace with staged version
+        try:
+            logger.debug(f"Applying library.zip update...")
+            staged_zip.rename(target_zip)
+            logger.debug("Library.zip successfully updated!")
+            
+            # Clean up backup
+            if backup_zip and backup_zip.exists():
+                backup_zip.unlink()
+            
+            return True
+            
+        except Exception as e:
+            # Restore backup on failure
+            logger.error(f"Failed to replace library.zip: {e}")
+            if backup_zip and backup_zip.exists():
+                logger.debug("Restoring backup...")
+                try:
+                    backup_zip.rename(target_zip)
+                except:
+                    pass
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error checking/applying pending update: {e}")
+        return False
+
 def main(queue: Queue, argv=None):
     try:
-
         # Check if required environment variables are set
         kivy_data_dir = os.getenv("KIVY_DATA_DIR")
         if not kivy_data_dir:
