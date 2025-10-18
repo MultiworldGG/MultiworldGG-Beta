@@ -430,7 +430,7 @@ jobs:
           cd src
           New-Item -ItemType Directory -Force -Path python_installers
           
-          $PYTHON_VERSION = "3.12.12"
+          $PYTHON_VERSION = "3.12.10"
           Write-Host "Downloading Python $PYTHON_VERSION installers for Windows..."
           
           # Download x64 installer
