@@ -302,6 +302,23 @@ jobs:
           cd src
           python setup.py bdist_appimage
       
+      - name: Rename AppImage to include version suffix
+        run: |
+          cd src/dist
+          # Find the AppImage file and rename it to include the full version from application.yaml
+          for file in *.AppImage; do
+            if [ -f "$file" ]; then
+              # Extract base name without extension
+              basename="${file%.AppImage}"
+              # Check if it already has the version suffix
+              if [[ ! "$basename" =~ a5$ ]]; then
+                newname="${basename}a5.AppImage"
+                echo "Renaming $file to $newname"
+                mv "$file" "$newname"
+              fi
+            fi
+          done
+      
       - name: Upload AppImage artifact
         uses: actions/upload-artifact@v4
         with:
@@ -389,6 +406,23 @@ jobs:
           cd src
           python setup.py bdist_dmg
       
+      - name: Rename DMG to include version suffix
+        run: |
+          cd src/build
+          # Find the DMG file and rename it to include the full version from application.yaml
+          for file in *.dmg; do
+            if [ -f "$file" ]; then
+              # Extract base name without extension
+              basename="${file%.dmg}"
+              # Check if it already has the version suffix
+              if [[ ! "$basename" =~ a5$ ]]; then
+                newname="${basename}a5.dmg"
+                echo "Renaming $file to $newname"
+                mv "$file" "$newname"
+              fi
+            fi
+          done
+      
       - name: Upload macOS bundle artifact
         uses: actions/upload-artifact@v4
         with:
@@ -471,9 +505,7 @@ jobs:
       
       - name: Create release notes
         run: |
-          cat > release-notes.md << 'EOF'
-          # MultiworldGG-Test ${{ steps.version.outputs.version }}
-          
+          cat > release-notes.md << 'EOF'          
           ## Downloads
           
           ### Windows
@@ -520,7 +552,6 @@ jobs:
           files: |
             release-artifacts/windows-installer/*.exe
             release-artifacts/linux-appimage/*.AppImage
-            release-artifacts/macos-bundle/*.app
             release-artifacts/macos-bundle/*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
