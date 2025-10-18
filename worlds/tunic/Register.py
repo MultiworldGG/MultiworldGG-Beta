@@ -1,8 +1,7 @@
-from . import TunicWorld
-from . import TunicWeb
+from . import GenericWorld, GenericWeb
 
 """
-TUNIC World Registration
+Generic World Registration
 
 This file contains the metadata and class references for the tunic world.
 """
@@ -18,6 +17,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = TunicWorld
-WEB_WORLD_CLASS = TunicWeb
+WORLD_CLASS = GenericWorld
+WEB_WORLD_CLASS = GenericWeb
 CLIENT_FUNCTION = None
