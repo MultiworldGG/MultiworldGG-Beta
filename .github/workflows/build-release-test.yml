@@ -44,110 +44,130 @@ jobs:
         with:
           path: src
       
-      - name: Download SNI executables
+      - name: Download Runtime executables
         shell: bash
         run: |
           cd src
           mkdir -p data/SNI
+          mkdir -p data/EnemizerCLI
           
           # Get latest release tag from GitHub API with retry logic
           echo "Fetching latest SNI release..."
-          LATEST_RELEASE=""
+          SNI_LATEST_RELEASE=""
+          ENEMIZER_RELEASE="7.1"
           
-          # Try up to 3 times to fetch the release tag
-          for attempt in 1 2 3; do
-            echo "Attempt $attempt to fetch release tag..."
-            LATEST_RELEASE=$(curl -s --connect-timeout 10 --max-time 30 https://api.github.com/repos/alttpo/sni/releases/latest | grep '"tag_name"' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
+          SNI_LATEST_RELEASE=$(curl -s --connect-timeout 30 --max-time 60 https://api.github.com/repos/alttpo/sni/releases/latest | grep '"tag_name"' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
             
-            if [ -n "$LATEST_RELEASE" ]; then
-              echo "Successfully fetched release tag: ${LATEST_RELEASE}"
-              break
-            else
-              echo "Attempt $attempt failed"
-              if [ $attempt -lt 3 ]; then
-                echo "Retrying in 5 seconds..."
-                sleep 5
-              fi
-            fi
-          done
+          echo "Successfully fetched release tag: ${SNI_LATEST_RELEASE}"
           
           # If still no release tag, use a fallback
-          if [ -z "$LATEST_RELEASE" ]; then
+          if [ -z "$SNI_LATEST_RELEASE" ]; then
             echo "Warning: Failed to fetch latest release tag from GitHub API"
             echo "Using fallback version v0.0.101"
-            LATEST_RELEASE="v0.0.101"
+            SNI_LATEST_RELEASE="v0.0.101"
           fi
           
-          echo "Using SNI release: ${LATEST_RELEASE}"
+          echo "Using SNI release: ${SNI_LATEST_RELEASE}"
           
           # Determine platform-specific asset name and extraction method
           if [ "$RUNNER_OS" == "Windows" ]; then
-            ASSET_NAME="sni-${LATEST_RELEASE}-windows-amd64.zip"
+            SNI_ASSET_NAME="sni-${SNI_LATEST_RELEASE}-windows-amd64.zip"
+            ENEMIZER_ASSET_NAME="win-x64.zip"
           elif [ "$RUNNER_OS" == "Linux" ]; then
-            ASSET_NAME="sni-${LATEST_RELEASE}-linux-amd64.tar.xz"
+            SNI_ASSET_NAME="sni-${SNI_LATEST_RELEASE}-linux-amd64.tar.xz"
+            ENEMIZER_ASSET_NAME="ubuntu.16.04-x64.7z"
           elif [ "$RUNNER_OS" == "macOS" ]; then
-            ASSET_NAME="sni-${LATEST_RELEASE}-darwin-universal.tar.gz"
+            SNI_ASSET_NAME="sni-${SNI_LATEST_RELEASE}-darwin-universal.tar.gz"
+            ENEMIZER_ASSET_NAME="osx.10.12-x64.zip"
           else
             echo "Unknown OS: $RUNNER_OS"
             exit 1
           fi
           
           # Download from latest release with retry logic
-          DOWNLOAD_URL="https://github.com/alttpo/sni/releases/download/${LATEST_RELEASE}/${ASSET_NAME}"
-          echo "Downloading SNI from ${DOWNLOAD_URL}"
+          SNI_DOWNLOAD_URL="https://github.com/alttpo/sni/releases/download/${SNI_LATEST_RELEASE}/${SNI_ASSET_NAME}"
+          echo "Downloading SNI from ${SNI_DOWNLOAD_URL}"
+          ENEMIZER_DOWNLOAD_URL="https://github.com/Ijwu/Enemizer/releases/download/${ENEMIZER_RELEASE}/${ENEMIZER_ASSET_NAME}"
+          echo "Downloading Enemizer from ${ENEMIZER_DOWNLOAD_URL}"
           
-          DOWNLOAD_SUCCESS=false
-          for attempt in 1 2 3; do
-            echo "Download attempt $attempt..."
-            
-            if [ "$RUNNER_OS" == "Windows" ]; then
-              if curl -L --connect-timeout 10 --max-time 60 -o sni.zip "${DOWNLOAD_URL}"; then
-                if unzip -q sni.zip -d data/SNI && rm sni.zip; then
-                  DOWNLOAD_SUCCESS=true
-                  break
-                else
-                  echo "Failed to extract ZIP file on attempt $attempt"
-                fi
+          SNI_DOWNLOAD_SUCCESS=false
+          ENEMIZER_DOWNLOAD_SUCCESS=false
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            if curl -L --connect-timeout 15 --max-time 60 -o sni.zip "${SNI_DOWNLOAD_URL}"; then
+              if unzip -q sni.zip -d data/SNI && rm sni.zip; then
+                SNI_DOWNLOAD_SUCCESS=true
               else
-                echo "Failed to download ZIP file on attempt $attempt"
+                echo "Failed to extract SNI ZIP file"
               fi
-            elif [ "$RUNNER_OS" == "Linux" ]; then
-              # Extract .tar.xz (use J flag)
-              if curl -L --connect-timeout 10 --max-time 60 "${DOWNLOAD_URL}" | tar xJ -C data/SNI; then
-                DOWNLOAD_SUCCESS=true
-                break
-              else
-                echo "Failed to download/extract .tar.xz on attempt $attempt"
-              fi
-            elif [ "$RUNNER_OS" == "macOS" ]; then
-              # Extract .tar.gz (use z flag)
-              if curl -L --connect-timeout 10 --max-time 60 "${DOWNLOAD_URL}" | tar xz -C data/SNI; then
-                DOWNLOAD_SUCCESS=true
-                break
-              else
-                echo "Failed to download/extract .tar.gz on attempt $attempt"
-              fi
+            else
+              echo "Failed to download SNI ZIP file"
             fi
-            
-            if [ $attempt -lt 3 ]; then
-              echo "Retrying download in 5 seconds..."
-              sleep 5
+            if curl -L --connect-timeout 15 --max-time 60 -o enemizer.zip "${ENEMIZER_DOWNLOAD_URL}"; then
+              if unzip -q enemizer.zip -d data/EnemizerCLI && rm enemizer.zip; then
+                ENEMIZER_DOWNLOAD_SUCCESS=true
+              else
+                echo "Failed to extract Enemizer ZIP file"
+              fi
+            else
+              echo "Failed to download Enemizer ZIP file"
             fi
-          done
+          elif [ "$RUNNER_OS" == "Linux" ]; then
+            # Extract SNI .tar.xz (use J flag)
+            if curl -L --connect-timeout 15 --max-time 60 "${SNI_DOWNLOAD_URL}" | tar xJ -C data/SNI; then
+              SNI_DOWNLOAD_SUCCESS=true
+            else
+              echo "Failed to download/extract SNI .tar.xz"
+            fi
+            # Download and extract Enemizer .7z (7z is pre-installed on GitHub runners)
+            if curl -L --connect-timeout 15 --max-time 60 -o enemizer.7z "${ENEMIZER_DOWNLOAD_URL}"; then
+              if 7z x enemizer.7z -o"data/EnemizerCLI/" && rm enemizer.7z; then
+                ENEMIZER_DOWNLOAD_SUCCESS=true
+              else
+                echo "Failed to extract Enemizer 7z file"
+              fi
+            else
+              echo "Failed to download Enemizer 7z file"
+            fi
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            # Extract SNI .tar.gz (use z flag)
+            if curl -L --connect-timeout 15 --max-time 60 "${SNI_DOWNLOAD_URL}" | tar xz -C data/SNI; then
+              SNI_DOWNLOAD_SUCCESS=true
+            else
+              echo "Failed to download/extract SNI .tar.gz"
+            fi
+            # Download and extract Enemizer .zip
+            if curl -L --connect-timeout 15 --max-time 60 -o enemizer.zip "${ENEMIZER_DOWNLOAD_URL}"; then
+              if unzip -q enemizer.zip -d data/EnemizerCLI && rm enemizer.zip; then
+                ENEMIZER_DOWNLOAD_SUCCESS=true
+              else
+                echo "Failed to extract Enemizer ZIP file"
+              fi
+            else
+              echo "Failed to download Enemizer ZIP file"
+            fi
+          fi
           
-          if [ "$DOWNLOAD_SUCCESS" = false ]; then
-            echo "Error: Failed to download SNI after 3 attempts"
-            echo "Continuing without SNI - build may fail if SNI is required"
+          if [ "$SNI_DOWNLOAD_SUCCESS" = false ] || [ "$ENEMIZER_DOWNLOAD_SUCCESS" = false ]; then
+            echo "Error: Failed to download external dependencies"
+            if [ "$SNI_DOWNLOAD_SUCCESS" = false ]; then
+              echo "  - SNI download failed"
+            fi
+            if [ "$ENEMIZER_DOWNLOAD_SUCCESS" = false ]; then
+              echo "  - Enemizer download failed"
+            fi
             exit 1
           fi
           
           # Make executables executable on Unix
           if [ "$RUNNER_OS" != "Windows" ]; then
             chmod +x data/SNI/*
+            chmod +x data/EnemizerCLI/*
           fi
           
-          echo "SNI ${LATEST_RELEASE} downloaded successfully"
+          echo "SNI ${SNI_LATEST_RELEASE} downloaded successfully"
+          echo "Enemizer ${ENEMIZER_RELEASE} downloaded successfully"
           ls -la data/SNI/
+          ls -la data/EnemizerCLI/
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -438,12 +458,6 @@ jobs:
           Write-Host "Downloading from $url_amd64"
           Invoke-WebRequest -Uri $url_amd64 -OutFile "python_installers\python-$PYTHON_VERSION-amd64.exe"
           Write-Host "Downloaded x64 installer"
-          
-          # Download ARM64 installer
-          $url_arm64 = "https://www.python.org/ftp/python/$PYTHON_VERSION/python-$PYTHON_VERSION-arm64.exe"
-          Write-Host "Downloading from $url_arm64"
-          Invoke-WebRequest -Uri $url_arm64 -OutFile "python_installers\python-$PYTHON_VERSION-arm64.exe"
-          Write-Host "Downloaded ARM64 installer"
           
           Get-ChildItem python_installers
       
