@@ -45,7 +45,13 @@ jobs:
         if: steps.check_changes.outputs.changed == 'true'
         run: |
           python -m pip install --upgrade pip
-          pip install build
+          pip install build toml
+      
+      - name: Update splashscreen version
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src
+          python tools/update_version.py --package splash
       
       - name: Build splashscreen wheel
         if: steps.check_changes.outputs.changed == 'true'
@@ -67,15 +73,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
       
-      - name: Commit wheel
+      - name: Commit wheel and version updates
         if: steps.check_changes.outputs.changed == 'true'
         run: |
           cd src
           git add default_wheels/
+          git add splashscreen/pyproject.toml
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "chore: update splashscreen wheel"
+            git commit -m "chore: update splashscreen wheel and version"
             # Fetch latest changes and rebase before pushing
             git fetch origin gui-changes
             git rebase origin/gui-changes || {
@@ -117,7 +124,13 @@ jobs:
         if: steps.check_changes.outputs.changed == 'true'
         run: |
           python -m pip install --upgrade pip
-          pip install build
+          pip install build toml
+      
+      - name: Update GUI version
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src
+          python tools/update_version.py --package gui
       
       - name: Build GUI wheel
         if: steps.check_changes.outputs.changed == 'true'
@@ -139,15 +152,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
       
-      - name: Commit wheel
+      - name: Commit wheel and version updates
         if: steps.check_changes.outputs.changed == 'true'
         run: |
           cd src
           git add default_wheels/
+          git add gui/pyproject.toml
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "chore: update GUI wheel"
+            git commit -m "chore: update GUI wheel and version"
             # Fetch latest changes and rebase before pushing
             git fetch origin gui-changes
             git rebase origin/gui-changes || {
