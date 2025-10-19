@@ -13,6 +13,7 @@ on:
       - '**.pyx'
       - 'setup.py'
       - 'requirements.txt'
+      - 'build_requirements.txt'
       - '.github/workflows/scan-build.yml'
   pull_request:
     paths:
@@ -26,6 +27,7 @@ on:
       - '**.pyx'
       - 'setup.py'
       - 'requirements.txt'
+      - 'build_requirements.txt'
       - '.github/workflows/scan-build.yml'
 
 jobs:
@@ -52,7 +54,7 @@ jobs:
       run: |
         python -m venv venv
         source venv/bin/activate
-        python -m pip install --upgrade pip -r requirements.txt
+        python -m pip install --upgrade pip -r requirements.txt -r build_requirements.txt
     - name: scan-build
       run: |
         source venv/bin/activate
