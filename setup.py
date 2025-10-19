@@ -9,6 +9,7 @@ import platform
 import subprocess
 import shutil
 import logging
+import glob
 
 from pathlib import Path
 
@@ -190,8 +191,15 @@ def post_build_setup(build_exe_dir):
     logger.debug("Running post-build setup...")
     os.mkdir(os.path.join(build_exe_dir, "Players"))
     if is_windows:
-        shutil.copy2(os.path.join(build_exe_dir, "vc*.dll"), os.path.join(build_exe_dir, "lib"))
-        shutil.copy2(os.path.join(build_exe_dir, "msvcp*.dll"), os.path.join(build_exe_dir, "lib"))
+        # Copy VC runtime DLLs to lib directory
+        vc_dlls = glob.glob(os.path.join(build_exe_dir, "vc*.dll"))
+        for dll in vc_dlls:
+            shutil.copy2(dll, os.path.join(build_exe_dir, "lib"))
+        
+        # Copy MSVCP runtime DLLs to lib directory  
+        msvcp_dlls = glob.glob(os.path.join(build_exe_dir, "msvcp*.dll"))
+        for dll in msvcp_dlls:
+            shutil.copy2(dll, os.path.join(build_exe_dir, "lib"))
 
 class CustomBuildExe(build_exe):
     """Custom build command that includes post-build setup and custom hooks"""
