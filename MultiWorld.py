@@ -72,24 +72,27 @@ def run_client(*args, queue=None):
         ctx = InitContext()
         
         # Check if a specific module was requested
-        if args and args.game and args.server_address:
-            logger.info(f"Attempting to launch game: {args.game}")
-            from Utils import get_available_worlds, discover_and_launch_module
+        try:
+            if args and args.game and args.server_address:
+                logger.info(f"Attempting to launch game: {args.game}")
+                from Utils import get_available_worlds, discover_and_launch_module
 
-            if args.game not in get_available_worlds():
-                raise Exception(f"Game {args.game} not found in available worlds")
+                if args.game not in get_available_worlds():
+                    raise Exception(f"Game {args.game} not found in available worlds")
 
-            # Try to launch the module via entrypoints
-            try:
-                discover_and_launch_module(module_name=args.game, 
-                                           server_address=args.server_address, 
-                                           slot_name=args.slot_name, 
-                                           password=args.password)
-                return  # Module takeover successful, exit initial client
-            except Exception as e:
-                logger.error(f"Module launch failed: {e}")
-                # Fall back to initial client
-                logger.info("Falling back to launcher")
+                # Try to launch the module via entrypoints
+                try:
+                    discover_and_launch_module(module_name=args.game, 
+                                            server_address=args.server_address, 
+                                            slot_name=args.slot_name, 
+                                            password=args.password)
+                    return  # Module takeover successful, exit initial client
+                except Exception as e:
+                    logger.error(f"Module launch failed: {e}")
+                    # Fall back to initial client
+                    logger.info("Falling back to launcher")
+        except Exception as e:
+            pass
         
         # Default initial client behavior
         logger.info("Launching default GUI")

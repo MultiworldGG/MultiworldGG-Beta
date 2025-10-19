@@ -15,7 +15,7 @@ classifiers = [
 ]
 dependencies = [
     "kivy>=2.3.1",
-    "kivymd @ git+https://github.com/kivymd/KivyMD@d2f7740",
+    "kivymd @ git+https://github.com/kivymd/KivyMD@9c5f496",
     "kivymd>=2.0.1.dev0",
     "pillow>=11.3.0",
     "asynckivy>=0.6.4",
