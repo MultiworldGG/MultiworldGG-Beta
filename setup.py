@@ -115,8 +115,6 @@ build_exe_options = {
         ("kivy/include", "lib/kivy/include"),
     ],
     "include_msvcr": True,
-    "bin_path_includes": ["msvcp*.dll", "vcruntime*.dll", "vcomp*.dll", "vcamp*.dll", "vccorlib*.dll", "concrt*.dll"],
-    "bin_path_excludes": [],
     "replace_paths": ["*."],
     "optimize": 1,
     "bin_includes": ["libffi.so", "libcrypt.so"] if platform.system() == "Linux" else []
@@ -191,6 +189,9 @@ def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
     logger.debug("Running post-build setup...")
     os.mkdir(os.path.join(build_exe_dir, "Players"))
+    if is_windows:
+        shutil.copy2(os.path.join(build_exe_dir, "vc*.dll"), os.path.join(build_exe_dir, "lib"))
+        shutil.copy2(os.path.join(build_exe_dir, "msvcp*.dll"), os.path.join(build_exe_dir, "lib"))
 
 class CustomBuildExe(build_exe):
     """Custom build command that includes post-build setup and custom hooks"""

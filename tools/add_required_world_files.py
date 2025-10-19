@@ -49,10 +49,11 @@ def create_world_files(module_name: str, overwrite: bool = False, igdb_id: int =
                 with open(target_path, "r") as f:
                     content = json.load(f)
                 if igdb_id > 0:
+                    print(f"Updating igdb_id for {module_name} to {igdb_id}")
                     content["igdb_id"] = igdb_id
                     with open(target_path, "w") as f:
-                        json.dumps(content, f, indent=4)
-                continue
+                        json.dump(content, f, indent=4)
+            continue
         
         # Read template
         try:
@@ -87,6 +88,11 @@ def main():
         "--overwrite",
         action="store_true",
         help="Overwrite existing files if they exist"
+    )
+    parser.add_argument(
+        "--igdb_id",
+        type=int,
+        help="IGDB ID of the game"
     )
     
     args = parser.parse_args()

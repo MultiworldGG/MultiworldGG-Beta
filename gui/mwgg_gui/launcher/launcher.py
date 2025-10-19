@@ -519,25 +519,6 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         
         def run_generation():
             """Run generation in background thread and stream output to logger"""
-            # Capture launcher's executable and args for potential restart
-            from Utils import is_windows
-            launcher_exe = sys.executable
-            launcher_args = sys.argv
-            launcher_cwd = os.getcwd()
-            
-            def restart_launcher():
-                """Restart the launcher with the same arguments"""
-                logger.info("Restarting launcher due to environment refresh...")
-                subprocess.Popen([launcher_exe] + launcher_args,
-                               cwd=launcher_cwd,
-                               creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows() else 0)
-                
-                # Flush all logging handlers to ensure messages are displayed
-                for handler in logging.root.handlers:
-                    handler.flush()
-                
-                # Use os._exit to bypass cleanup and immediately terminate
-                os._exit(0)
             
             try:
                 process = subprocess.Popen(
@@ -555,7 +536,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 for line in process.stdout:
                     line = line.rstrip()
                     if line:
-                        logger.info(f"[Generation] {line}")
+                        logger.info(f"[Generate] {line}")
                 
                 # Wait for process to complete
                 process.wait()
@@ -565,7 +546,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 if stderr:
                     for line in stderr.splitlines():
                         if line.strip():
-                            logger.error(f"[Generation Error] {line}")
+                            logger.error(f"[Generate Error] {line}")
                 
                 # Hide loading screen and schedule UI update on main thread
                 def show_success_dialog(dt):
@@ -589,6 +570,14 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                         delattr(self, '_generation_temp_dir')
                     if hasattr(self, '_generation_result'):
                         delattr(self, '_generation_result')
+
+                def show_restart_dialog(dt):
+                    self.app.loading_layout.hide_loading()
+                    MessageBox("Restart Required", 
+                               "You will need to restart the launcher to apply updates.",
+                               error=True, 
+                               callback=lambda x: self.restart_launcher()).open()
+
                 
                 if process.returncode == 0:
                     Clock.schedule_once(show_success_dialog, 0)
@@ -596,9 +585,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 elif process.returncode == 10:
                     # Exit code 10 means "wrong environment" - library updates needed
                     logger.info("Generation requested launcher restart for environment refresh")
-                    # Don't cleanup temp dir on restart - it may still be needed
-                    # Cleanup will happen when the launcher restarts
-                    Clock.schedule_once(lambda dt: restart_launcher(), 0)
+                    Clock.schedule_once(show_restart_dialog, 0)
                 else:
                     error_msg = stderr if stderr else "Unknown error"
                     Clock.schedule_once(show_failure_dialog, 0)
@@ -621,6 +608,45 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         # Start generation in background thread
         thread = threading.Thread(target=run_generation, daemon=True)
         thread.start()
+
+    def _prepare_connect_args(self, game_module, server_address=None, slot_name=None, password=None):
+        """Prepare command line arguments for reconnecting after restart"""
+        args = sys.argv.copy()
+        
+        # Add game module argument in the format expected by MultiWorld.py
+        game_arg = f"--game=worlds.{game_module}"
+        if game_arg not in args:
+            args.append(game_arg)
+        
+        # Add connection parameters using standard argument formats
+        if server_address:
+            args.append(server_address)
+        if slot_name:
+            args.append(slot_name)
+        if password:
+            args.append(password)
+            
+        return args
+
+    def restart_launcher(self, connect_args=None):
+        """Restart the launcher with the same arguments, optionally with connection args"""
+        logger.info("Restarting launcher due to environment refresh...")
+        
+        # Use connect_args if provided, otherwise use sys.argv
+        restart_args = connect_args if connect_args else sys.argv
+        
+        # Ensure the new process is fully detached from the parent
+        if is_windows():
+            subprocess.Popen([sys.executable] + restart_args,
+                           cwd=os.getcwd(),
+                           creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_CONSOLE)
+        
+        # Flush all logging handlers to ensure messages are displayed
+        for handler in logging.root.handlers:
+            handler.flush()
+        
+        # Use os._exit to bypass cleanup and immediately terminate
+        os._exit(0)
 
     def _cleanup_temp_dir(self, temp_dir):
         """Clean up temporary directory"""
@@ -886,10 +912,21 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                         delattr(self, '_patch_file')
                     if hasattr(self, '_patch_result'):
                         delattr(self, '_patch_result')
+
+                def show_restart_dialog(dt):
+                    self.app.loading_layout.hide_loading()
+                    MessageBox("Restart Required", 
+                               "You will need to restart the launcher to apply updates.",
+                               error=True, 
+                               callback=lambda x: self.restart_launcher()).open()
                 
                 if process.returncode == 0:
                     Clock.schedule_once(show_success_dialog, 0)
                     logger.info("Patch completed successfully")
+                elif process.returncode == 10:
+                    # Exit code 10 means "wrong environment" - library updates needed
+                    logger.info("Patch requested launcher restart for environment refresh")
+                    Clock.schedule_once(show_restart_dialog, 0)
                 else:
                     Clock.schedule_once(show_failure_dialog, 0)
                     logger.error(f"Patch failed with return code {process.returncode}")
@@ -983,10 +1020,25 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                     Clock.schedule_once(lambda x: self.app.change_screen("console"))
                 
                 # Define error callback to handle connection failures
-                def error_callback():
+                def error_callback(restart_callback=None):
                     self.app.loading_layout.hide_loading()
-                    # Stay on launcher screen, don't switch to console
-                    # Error dialog will be shown by the context's handle_connection_loss
+                    # If restart_callback is provided, it means we need to restart due to module updates
+                    if restart_callback:
+                        # Prepare connection arguments for restart
+                        connect_args = self._prepare_connect_args(
+                            game_module=self.selected_game[0],
+                            server_address=server_address,
+                            slot_name=slot_name,
+                            password=password
+                        )
+                        MessageBox("Restart Required", 
+                                   "You will need to restart the launcher to apply updates.",
+                                   error=True, 
+                                   callback=lambda x: self.restart_launcher(connect_args)).open()
+                    else:
+                        # Stay on launcher screen, don't switch to console
+                        # Error dialog will be shown by the context's handle_connection_loss
+                        pass
                 
                 self.app.client_console_init()
 

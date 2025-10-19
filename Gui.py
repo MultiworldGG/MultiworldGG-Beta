@@ -473,6 +473,10 @@ class MultiMDApp(MDApp):
         It updates or creates the current screen and dismisses 
         the menu with the screen names.
         '''
+        # Check if screen already exists before creating
+        if item in self.screen_manager.screen_names:
+            return
+            
         if item == "settings":
             self.settings_screen = SettingsScreen()
             self.screen_manager.add_widget(self.settings_screen)
@@ -486,8 +490,10 @@ class MultiMDApp(MDApp):
             self.launcher_text_input = self.launcher_screen.bottom_appbar.text_input  
 
     def create_custom_screen(self, screen: MDScreen):
-        self.custom_screens[screen.name] = screen
-        self.screen_manager.add_widget(screen)
+        # Check if screen already exists before creating
+        if screen.name not in self.screen_manager.screen_names:
+            self.custom_screens[screen.name] = screen
+            self.screen_manager.add_widget(screen)
 
     def console_init(self):
         '''
@@ -521,7 +527,7 @@ class MultiMDApp(MDApp):
         It cannot be called before the connection is established,
         because we need the specific command processor and context.
         '''
-        if "console" not in self.screen_manager.screens:
+        if "console" not in self.screen_manager.screen_names:
             self.console_screen = ConsoleScreen()
             self.screen_manager.add_widget(self.console_screen)
             self.console_text_input = self.console_screen.bottom_appbar.text_input
@@ -632,7 +638,7 @@ class MultiMDApp(MDApp):
         self.update_hints()
         self.set_pronouns()
         self.top_appbar_layout.top_appbar.ui_built()
-        if not "hint" in self.screen_manager.screens:
+        if not "hint" in self.screen_manager.screen_names:
             self._create_screen("hint")
 
 

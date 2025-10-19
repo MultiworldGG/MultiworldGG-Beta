@@ -7,6 +7,7 @@ import re
 import subprocess
 import time
 from importlib import metadata
+from argparse import ArgumentParser
 
 os.environ["KIVY_NO_CONSOLELOG"] = "0"
 os.environ["KIVY_NO_FILELOG"] = "0"
@@ -16,7 +17,8 @@ os.environ["KIVY_LOG_ENABLE"] = "1"
 # from MultiServer import console
 # apname = "Archipelago" if not Utils.archipelago_name else Utils.archipelago_name
 
-from BaseUtils import local_path, is_frozen
+from BaseUtils import local_path, is_frozen, init_logging
+from mwgg_splash import main as splash_main
 
 if is_frozen():
     os.environ["KIVY_NO_ARGS"] = "1"
@@ -63,26 +65,31 @@ def terminate_splash_screen(queue: "Queue" ):
 def run_client(*args, queue=None):
     """Start the MWGG client"""
     
-    async def main(args):
+    async def main(args: list[str]):
         from CommonClient import InitContext
 
         logger = logging.getLogger("MultiWorld")
         ctx = InitContext()
         
         # Check if a specific module was requested
-        if len(args) > 1 and args[1].startswith("--game="):
-            game_name = args[1].split("=")[1]
-            logger.info(f"Attempting to launch game: {game_name}")
-            
+        if args and args.game and args.server_address:
+            logger.info(f"Attempting to launch game: {args.game}")
+            from Utils import get_available_worlds, discover_and_launch_module
+
+            if args.game not in get_available_worlds():
+                raise Exception(f"Game {args.game} not found in available worlds")
+
             # Try to launch the module via entrypoints
             try:
-                from Utils import discover_and_launch_module
-                discover_and_launch_module(game_name, args)
+                discover_and_launch_module(module_name=args.game, 
+                                           server_address=args.server_address, 
+                                           slot_name=args.slot_name, 
+                                           password=args.password)
                 return  # Module takeover successful, exit initial client
             except Exception as e:
                 logger.error(f"Module launch failed: {e}")
                 # Fall back to initial client
-                logger.info("Falling back to initial client")
+                logger.info("Falling back to launcher")
         
         # Default initial client behavior
         logger.info("Launching default GUI")
@@ -124,11 +131,11 @@ if __name__ == "__main__":
     # Multiprocessing protection for frozen executables
     # This prevents fork bombs when creating subprocesses in cx_Freeze builds
     freeze_support()
-    from BaseUtils import init_logging
+
     init_logging("MultiWorld", logging.DEBUG)
     logger = logging.getLogger("MultiWorld")
-    from mwgg_splash import main as splash_main
 
+    # Start the splash screen process
     set_start_method("spawn")
     splash_queue = Queue()
     Process(target=splash_main, name="SplashScreen", args=(splash_queue,)).start()
@@ -146,5 +153,15 @@ if __name__ == "__main__":
     except Exception as e:
         logger.warning(f"Timeout or error waiting for splash screen: {e}")
     
+    # Parse the command line arguments
+    if sys.argv[1:]:
+        parser = ArgumentParser()
+        parser.add_argument("--game", type=str, default=None, help="The game module to launch\nGame Name will not work, use the apworld abbreviation")
+        parser.add_argument("--server-address", type=str, default=None, help="The server address to connect to")
+        parser.add_argument("--slot-name", type=str, default=None, help="The slot name to connect to")
+        parser.add_argument("--password", type=str, default=None, help="The password to connect to")
+        args = parser.parse_args(sys.argv[1:])
+    else:
+        args = None
     # Run the main client in the current process
-    run_client(*sys.argv[1:], queue=splash_queue)
+    run_client(args, queue=splash_queue)

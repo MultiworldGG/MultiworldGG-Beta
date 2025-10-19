@@ -539,7 +539,7 @@ def _add_file_to_temp_dir(source_path: Path, temp_dir: Path, lib_dir: Path) -> N
         
         # Copy the file
         shutil.copy2(source_path, target_path)
-        logger.debug(f"Added {source_path.name} to temp directory")
+        #logger.debug(f"Added {source_path.name} to temp directory")
 
 def _add_directory_to_temp_dir(source_path: Path, temp_dir: Path, lib_dir: Path) -> None:
     """Add directory contents to temp directory, handling version conflicts."""
@@ -572,7 +572,7 @@ def _add_directory_to_temp_dir(source_path: Path, temp_dir: Path, lib_dir: Path)
             
             # Copy file
             shutil.copy2(file_path, target_path)
-            logger.debug(f"Added {source_path.name / rel_path} to temp directory")       
+            #logger.debug(f"Added {source_path.name / rel_path} to temp directory")       
 
 def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = False) -> bool:
     """

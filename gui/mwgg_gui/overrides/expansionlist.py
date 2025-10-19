@@ -71,8 +71,11 @@ class SlotListItemHeader(MDBoxLayout, CommonElevationBehavior):
             game_data (dict): Dictionary containing slot and game information
             panel: Reference to the parent panel
         """
+        self._empty = True
         self.panel = panel
         self.item_data = item_data
+        self.theme_shadow_color = "Custom"
+        self.elevation_level = 0
         if self.item_data.pronouns:
             self.slot_name = self.item_data.slot_name + " (" + self.item_data.pronouns + ")"
         else:
@@ -81,6 +84,23 @@ class SlotListItemHeader(MDBoxLayout, CommonElevationBehavior):
 
         super().__init__(**kwargs)
 
+    @property
+    def empty(self) -> bool:
+        return self._empty
+
+    @empty.setter
+    def empty(self, value: bool):
+        self._empty = value
+        self.set_elevation_and_shadow()
+
+    def set_elevation_and_shadow(self):
+        self.elevation_level = 0
+        self.shadow_color = self.theme_cls.shadowColor
+        for child in self.panel.panel_content.children:
+            if isinstance(child, SlotListItem):
+                if child.elevation_level > self.elevation_level:
+                    self.elevation_level = child.elevation_level
+                    self.shadow_color = child.shadow_color if child.shadow_color != self.theme_cls.shadowColor else self.theme_cls.shadowColor
 
 class GameListItemHeader(MDBoxLayout, ButtonBehavior, ThemableBehavior):
     """
@@ -433,7 +453,6 @@ class GameListItemLongText(ListItemTooltip, MDListItemSupportingText):
         self.tooltip_text = tooltip_text
         super().__init__(**kwargs)
 
-
 class GameListItemShortText(MDListItemSupportingText):
     """
     List item with no tooltip behavior for short text.
@@ -594,6 +613,8 @@ class GameListPanel(MDExpansionPanel):
             if not hint.hide or self.app.show_all_hints:
                 item_widget = SlotListItem(hint_data=hint, game_status=self.item_data.game_status, shadow_colors=item_colors)
                 self.panel_content.add_widget(item_widget)
+
+        self.panel_header_layout.empty = len(self.panel_content.children) == 0
 
     def populate_game_item(self):
         """
