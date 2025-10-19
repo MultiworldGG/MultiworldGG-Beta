@@ -6,14 +6,11 @@ cx_Freeze setup script for MultiWorldGG
 import os
 import sys
 import platform
-import subprocess
-import shutil
 import logging
-import glob
-
-from pathlib import Path
 
 from cx_Freeze import setup, Executable, build_exe
+
+from Utils import version_tuple, instance_name, is_windows
 
 logger = logging.getLogger("MultiWorld")
 
@@ -35,10 +32,8 @@ if os.path.exists("worlds"):
     os.rename("worlds", "build_is_running_worlds")
     os.environ["MWGG_BUILD_IS_RUNNING"] = "1"
 
-
 # Import project utilities
 sys.path.insert(0, os.path.dirname(__file__))
-from Utils import version_tuple, instance_name, archipelago_guid, is_windows, local_path
 
 # Build configuration
 build_exe_options = {
@@ -48,21 +43,21 @@ build_exe_options = {
         "kivy_deps" if is_windows else None,
         "kivymd",
         "asynckivy",
-        
+
         # Core utilities (might be dynamically loaded or conditional)
         "websockets",
         "cymem",
         "cffi",
         "numpy",
         "PIL",
-        
+
         # Platform-specific memory access (conditional imports)
         "pymem" if is_windows else None,
         "dolphin_memory_engine" if is_windows else None,
-        
+
         # System utilities (might be conditionally imported)
         "pyshortcuts",
-        
+
         # World-specific packages
         "orjson",
         "aiohttp",          # sc2 world
@@ -70,12 +65,11 @@ build_exe_options = {
         "google.protobuf",  # sc2 world
         "pymongo",          # ff4fe world
         "loguru",           # sc2 world
-        
+
         # Custom packages
         "mwgg_gui",
         "mwgg_igdb",
         "worlds",
-        
     ],
     "includes": [
         "ModuleUpdate",
@@ -87,8 +81,8 @@ build_exe_options = {
         "Options"
     ],
     "excludes": [
-        "Cython", 
-        "PySide2", 
+        "Cython",
+        "PySide2",
         "pygments",
         "pandas",
         "matplotlib",
@@ -177,12 +171,10 @@ if is_windows:
 def pre_build_setup():
     """Run pre-build setup tasks"""
     logger.debug("Running pre-build setup...")
-
     # Build requirements are in the wrapper build script
-
     # Import our custom kivy hook to ensure it's loaded
     try:
-        import cx_custom_hooks._kivy_ as kivy
+        import cx_custom_hooks._kivy_ as kivy # type: ignore
     except ImportError as e:
         logger.warning(f"Warning: Could not load custom kivy hook: {e}")
 
@@ -190,20 +182,10 @@ def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
     logger.debug("Running post-build setup...")
     os.mkdir(os.path.join(build_exe_dir, "Players"))
-    if is_windows:
-        # Copy VC runtime DLLs to lib directory
-        vc_dlls = glob.glob(os.path.join(build_exe_dir, "vc*.dll"))
-        for dll in vc_dlls:
-            shutil.copy2(dll, os.path.join(build_exe_dir, "lib"))
-        
-        # Copy MSVCP runtime DLLs to lib directory  
-        msvcp_dlls = glob.glob(os.path.join(build_exe_dir, "msvcp*.dll"))
-        for dll in msvcp_dlls:
-            shutil.copy2(dll, os.path.join(build_exe_dir, "lib"))
 
 class CustomBuildExe(build_exe):
     """Custom build command that includes post-build setup and custom hooks"""
-    
+
     def run(self):
         # Register our custom hooks before building
         self._register_custom_hooks()
@@ -221,13 +203,13 @@ class CustomBuildExe(build_exe):
             logger.info(f"Build completed in: {build_dir}")
             # Run post-build setup
             post_build_setup(build_dir)
-    
+
     def _register_custom_hooks(self):
         """Register our custom hooks with cx_Freeze
-        
+
         This is not quite set up correctly but my brain is
         done fighting Claude.
-        
+
         Info is here:
         https://github.com/marcelotduarte/cx_Freeze/blob/8.4.0/cx_Freeze/module.py#L412
         """
@@ -237,7 +219,7 @@ class CustomBuildExe(build_exe):
 
             # Monkey-patch cx_Freeze.hooks to include our hook
             import cx_Freeze.hooks
-            
+
             # Add our hook functions to cx_Freeze.hooks
             if hasattr(kivy.Hook, 'kivy'):
                 # Create function-based hooks from our class-based hook
@@ -245,11 +227,11 @@ class CustomBuildExe(build_exe):
                     hook = kivy.Hook(module)
                     hook.kivy(finder, module)
                     hook.kivy_binaries(finder, module)
-                
+
                 def load_kivy_binaries(finder, module):
                     hook = kivy.Hook(module)
                     hook.kivy_binaries(finder, module)
-                
+
                 # Add the functions to cx_Freeze.hooks
                 cx_Freeze.hooks.load_kivy = load_kivy
                 cx_Freeze.hooks.load_kivy_binaries = load_kivy_binaries
@@ -266,7 +248,7 @@ class CustomBuildExe(build_exe):
 if __name__ == "__main__": 
     # Run pre-build setup
     pre_build_setup()
-    
+
     # Setup configuration
     setup(
         name=instance_name,
@@ -277,4 +259,3 @@ if __name__ == "__main__":
         executables=executables,
         cmdclass={"build_exe": CustomBuildExe}
     )
-

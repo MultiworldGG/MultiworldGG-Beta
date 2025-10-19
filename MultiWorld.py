@@ -156,10 +156,10 @@ if __name__ == "__main__":
     # Parse the command line arguments
     if sys.argv[1:]:
         parser = ArgumentParser()
-        parser.add_argument("--game", type=str, default=None, help="The game module to launch\nGame Name will not work, use the apworld abbreviation")
-        parser.add_argument("--server-address", type=str, default=None, help="The server address to connect to")
-        parser.add_argument("--slot-name", type=str, default=None, help="The slot name to connect to")
-        parser.add_argument("--password", type=str, default=None, help="The password to connect to")
+        parser.add_argument("--game", type=str, default=None, optional=True, help="The game module to launch\nGame Name will not work, use the apworld abbreviation")
+        parser.add_argument("--server-address", type=str, default=None, optional=True, help="The server address to connect to")
+        parser.add_argument("--slot-name", type=str, default=None, optional=True, help="The slot name to connect to")
+        parser.add_argument("--password", type=str, default=None, optional=True, help="The password to connect to")
         args = parser.parse_args(sys.argv[1:])
     else:
         args = None
