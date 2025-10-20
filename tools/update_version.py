@@ -32,7 +32,7 @@ def increment_patch_version(version: str) -> str:
        
     # Increment patch version
     if suffix:
-        new_suffix = re.split(r'\d+$', suffix)
+        new_suffix = re.split(r'^[a-zA-Z]+', suffix)
         new_patch = new_suffix[0] + str(int(new_suffix[1]) + 1)
     else:
         new_patch = str(int(patch) + 1)
