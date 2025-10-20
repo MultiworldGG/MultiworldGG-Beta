@@ -18,7 +18,7 @@ def increment_patch_version(version: str) -> str:
     
     Examples:
         "0.0.5a" -> "0.0.6a"
-        "0.1.9a2" -> "0.1.10a2"  
+        "0.1.9a2" -> "0.1.9a3"  
         "1.2.3" -> "1.2.4"
     """
     # Parse version with optional alpha/beta suffix
@@ -29,15 +29,15 @@ def increment_patch_version(version: str) -> str:
     
     major, minor, patch, suffix = match.groups()
     suffix = suffix or ""  # Handle None case
-    
+       
     # Increment patch version
-    new_patch = str(int(patch) + 1)
-    
-    # Reconstruct version with suffix if it exists
     if suffix:
-        return f"{major}.{minor}.{new_patch}{suffix}"
+        new_suffix = re.split(r'\d+$', suffix)
+        new_patch = new_suffix[0] + str(int(new_suffix[1]) + 1)
     else:
-        return f"{major}.{minor}.{new_patch}"
+        new_patch = str(int(patch) + 1)
+    
+    return f"{major}.{minor}.{new_patch}{suffix}"
 
 
 def update_pyproject_version(pyproject_path: Path, new_version: str) -> bool:
