@@ -28,6 +28,8 @@
     shadow_color: app.theme_cls.shadowColor
     theme_elevation_level: "Custom"
     elevation_level: 0
+    search: False
+    waiting: False
     MDListItemLeadingAvatar:
         width: dp(40)
         id: leading_avatar
@@ -146,6 +148,7 @@
     id: slot_item
     entrance_texture: (0, 0)
     height: dp(70) # Default height because AAAAAAA
+    my_item: False
     size_hint_y: None
     MDBoxLayout:
         id: slot_item_top_container

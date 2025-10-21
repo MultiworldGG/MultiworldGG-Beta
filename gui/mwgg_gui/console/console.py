@@ -5,7 +5,7 @@ ConsoleSliverAppbar - Left side has the players, with expansion for hints
 ConsoleLayout - Right contains the console
 """
 __all__ = ("ConsoleScreen", "ConsoleSliverAppbar", "ConsoleLayout")
-from kivy.properties import ObjectProperty
+from kivy.properties import ObjectProperty, StringProperty
 from kivy.core.window import Window
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
@@ -34,6 +34,7 @@ Builder.load_string('''
     size_hint_x: None
     adaptive_height: True
     hide_appbar: True
+    deafened_icon: "headphones"
     background_color: app.theme_cls.secondaryContainerColor
     MDSliverAppbarHeader:
         AsyncImage:
@@ -58,7 +59,7 @@ Builder.load_string('''
                 icon: "food"
                 on_release: root.set_bk()
             MDActionTopAppBarButton:
-                icon: "headphones"
+                icon: root.deafened_icon
                 on_release: root.set_deafen()
 ''')
 
@@ -68,6 +69,7 @@ class ConsoleLayout(MDRelativeLayout):
 class ConsoleSliverAppbar(MDSliverAppbar):
     content: MDSliverAppbarContent
     app: MDApp
+    deafened_icon: StringProperty
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -80,7 +82,16 @@ class ConsoleSliverAppbar(MDSliverAppbar):
         self.app.ctx.ui.set_bk()
     
     def set_deafen(self):
+        '''
+        Trigger deafened toggle, and set the icon to the opposite of what it is currently
+        Function call takes too long to set the icon "correctly", so we go backwards.
+        '''
+        preemptive_deafened = not self.app.ctx.ui.local_player_data.deafened
+        self.deafened_icon = "headphones-off" if preemptive_deafened else "headphones"
+
         self.app.ctx.ui.set_deafen()
+
+
 
 
 class ConsoleScreen(MDScreen, ThemableBehavior):

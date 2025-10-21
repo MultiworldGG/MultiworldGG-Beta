@@ -72,6 +72,7 @@ Builder.load_string('''
 
     MDTopAppBarTrailingButtonContainer:
         MDActionTopAppBarButton:
+            id: timer_button
             icon: "timer-outline"
             on_release: root.toggle_timer()
         MDActionTopAppBarButton:
@@ -120,6 +121,7 @@ class Timer(MDTopAppBarTitle):
     def on_ui_built(self):
         self.ctx = MDApp.get_running_app().ctx
         self.slot_info = self.ctx.slot_info
+        self.elapsed_time = float(persistent_load().get('client', {}).get('timer', '0'))
         # Only schedule if not already scheduled
         if self._update_event is None:
             self._update_event = Clock.schedule_interval(self._update_timer_wrapper, 0.1)
@@ -127,28 +129,23 @@ class Timer(MDTopAppBarTitle):
     def on_is_running(self, instance, value):
         """Called when is_running property changes"""
         if value:
-            self.text_color = self.theme_cls.onSurfaceVariantColor
+            instance.text_color = self.theme_cls.primaryColor
         else:
-            self.text_color = self.theme_cls.primaryColor
+            instance.text_color = self.theme_cls.onSurfaceVariantColor
     
     def start(self):
         """Start the timer (initial start or resume from pause)"""
         if not self.is_running:
-            self.elapsed_time = persistent_load('client', 'timer')
-            if not self.has_been_started:
-                # Initial start - set the start time
-                self.start_time = time()
-                self.has_been_started = True
-            else:
-                # Resume from pause - adjust start time to account for elapsed time
-                self.start_time = time() - self.elapsed_time
+            self.start_time = time() - self.elapsed_time
+            self.has_been_started = True
             self.is_running = True
+            Clock.schedule_interval(self._update_timer_wrapper, 0.1)
 
     def stop(self):
         """Pause the timer (doesn't reset)"""
         if self.is_running:
             self.is_running = False
-            Clock.unschedule(self.update_timer)
+            Clock.unschedule(self._update_timer_wrapper)
 
     def reset(self):
         """Reset the timer to 00:00:00 and set new start time"""
@@ -260,7 +257,7 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
         self.tooltip_display_delay = 2
         # Initialize tooltip content
         self._update_tooltip_content()
-        Clock.schedule_once(lambda x: setattr(self, 'initial_height', self.texture_size[1]), 1)
+        
 
     def on_text(self, instance, value):
         """Called when the text is changed"""
@@ -338,6 +335,7 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
     @server_name.setter
     def server_name(self, value):
         if self._server_name != value:
+            setattr(self, 'initial_height', self.texture_size[1])
             self._server_name = value
             self._update_tooltip_content()  # Update tooltip when server name changes
 
@@ -471,6 +469,8 @@ class TopAppBar(MDTopAppBar):
         self.md_bg_color = self.theme_cls.transparentColor
         self.theme_shadow_color = "Custom"
         self.shadow_color = self.theme_cls.transparentColor
+        self.timer_button = self.ids.timer_button
+        self.timer_button.bind(on_long_press=self.reset)
         asyncio.create_task(self.update_progress_info(), name="ProgressBar")
 
     async def update_progress_info(self):
@@ -501,7 +501,7 @@ class TopAppBar(MDTopAppBar):
         else:
             self.timer.start()  # Start or resume
     
-    def reset(self):
+    def reset(self, instance):
         """Reset the timer (called on long press)"""
         self.timer.reset()
 

@@ -26,6 +26,7 @@ class UIHint:
     found: str
     classification: str
     assigned_classification: str
+    my_item: bool
     _for_bk_mode: bool
     _for_goal: bool
     _from_shop: bool
@@ -33,7 +34,7 @@ class UIHint:
     hint_status: HintStatus
     mwgg_hint_status: MWGGUIHintStatus
 
-    def __init__(self, hint: Hint, location_names: dict[int, str], item_names: dict[int, str], hint_status: Optional[HintStatus], mwgg_hint_status: Optional[MWGGUIHintStatus]):
+    def __init__(self, hint: Hint, my_item: bool, location_names: dict[int, str], item_names: dict[int, str], hint_status: Optional[HintStatus], mwgg_hint_status: Optional[MWGGUIHintStatus]):
         """
         Initialize a UIHint from a base Hint and status information.
         
@@ -50,6 +51,7 @@ class UIHint:
         self.item_flags = hint['item_flags']  # Store the flags for status derivation
         self.assigned_classification = ""
         self.classification = self.get_classification(hint['item_flags'])
+        self.my_item = my_item
         self._for_bk_mode = False    
         self._for_goal = False
         self._from_shop = False
@@ -167,7 +169,7 @@ class UIPlayerData:
     slot_name: str
     avatar: str
     bk_mode: bool
-    in_call: bool
+    deafened: bool
     pronouns: str
     end_user: bool
     game_status: str
@@ -185,11 +187,11 @@ class UIPlayerData:
         return getattr(self, key, default)
 
     # Backwards compatibility: some UI code refers to "in_bk"
-    @property
-    def in_bk(self) -> bool:
-        return self.bk_mode
+    # @property
+    # def in_bk(self) -> bool:
+    #     return self.bk_mode
 
-    @in_bk.setter
-    def in_bk(self, value: bool):
-        self.bk_mode = value
+    # @in_bk.setter
+    # def in_bk(self, value: bool):
+    #     self.bk_mode = value
 

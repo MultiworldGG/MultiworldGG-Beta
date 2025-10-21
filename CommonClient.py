@@ -748,7 +748,7 @@ class CommonContext(InitContext):
             tags_set = set(tags_iterable)
             player_data = self.ui.ui_player_data[args["slot"]]
             player_data.bk_mode = ("in_bk" in tags_set)
-            player_data.in_call = ("in_call" in tags_set)
+            player_data.deafened = ("deafened" in tags_set)
             # Extract pronouns from any tag that starts with "pronouns", e.g., "pronouns:she/her"
             pronouns_value = ""
             for tag_value in tags_iterable:

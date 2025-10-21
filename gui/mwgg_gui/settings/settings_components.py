@@ -459,7 +459,7 @@ class ConnectionSettings(SettingsScrollBox):
             on_switch=self.toggle_in_call
         )
         # Set initial state from config
-        self.in_call_switch.ids.switch.active = self.app.app_config.getboolean('client', 'in_call', fallback=False)
+        self.in_call_switch.ids.switch.active = self.app.app_config.getboolean('client', 'deafened', fallback=False)
         status_section.add_widget(self.in_call_switch)
         
         self.in_bk_switch = LabeledSwitch(
@@ -546,11 +546,11 @@ class ConnectionSettings(SettingsScrollBox):
     
     def toggle_in_call(self, instance, value):
         try:
-            self.app.app_config.set('client', 'in_call', str(value))
+            self.app.app_config.set('client', 'deafened', str(value))
             self.app.app_config.write()
             # Update local player data if it exists
             if hasattr(self.app, 'local_player_data') and self.app.local_player_data:
-                self.app.local_player_data.in_call = value
+                self.app.local_player_data.deafened = value
         except Exception as e:
             logger.error(f"Error in toggle_in_call: {e}", exc_info=True)
     

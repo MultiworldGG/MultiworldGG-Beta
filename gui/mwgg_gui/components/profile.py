@@ -253,7 +253,7 @@ class ProfileInCall(ProfileSwitch):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.label = "In Call"
-        self.settings_name = "in_call"
+        self.settings_name = "deafened"
         self.icon = "phone"
         self.bind(on_text_validate=self.save_profile_switch)
 

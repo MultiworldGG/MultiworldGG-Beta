@@ -269,8 +269,8 @@ class HintListPanel(GameListPanel):
         if self.item_data.bk_mode:
             self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="food", theme_font_size="Custom", 
                                                                                         font_size=dp(14), pos_hint={"center_y": 0.5}),1)
-        if self.item_data.in_call:
-            self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="headphones", theme_font_size="Custom", 
+        if self.item_data.deafened:
+            self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="headphones-off", theme_font_size="Custom", 
                                                                                         font_size=dp(14), pos_hint={"center_y": 0.5}),1)
         if self.item_data.game_status == "GOAL":
             self.panel_header_layout.ids.game_item_container.add_widget(BaseListItemIcon(icon="flag_checkered", theme_font_size="Custom", 

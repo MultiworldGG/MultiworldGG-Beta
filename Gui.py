@@ -187,7 +187,7 @@ class MultiMDApp(MDApp):
             avatar=persistent_load().get('client', {}).get('avatar', ''),
             pronouns=persistent_load().get('client', {}).get('pronouns', ''),
             bk_mode=False,
-            in_call=False,
+            deafened=False,
             end_user=True,
             game_status="OFFLINE",
             game="",
@@ -203,12 +203,6 @@ class MultiMDApp(MDApp):
     def build_config(self, config):
         """Build the configuration file with default values"""
         config.setdefaults('client', {
-            'slot': '',
-            'alias': '',
-            'pronouns': '',
-            'avatar': '',
-            'hostname': 'multiworld.gg',
-            'port': '38281',
             'password': '',
             'admin_password': '',
             'theme_style': 'Dark',
@@ -236,13 +230,6 @@ class MultiMDApp(MDApp):
                         } for size, style_data in sizes.items()
                     } for style, sizes in self.theme_cls.font_styles.items()
                 }
-            # Update local player data for profile-related changes
-            elif key == 'alias':
-                self.local_player_data.slot_name = value
-            elif key == 'pronouns':
-                self.local_player_data.pronouns = value
-            elif key == 'avatar':
-                self.local_player_data.avatar = value
         elif section == 'graphics':
             if key == 'fullscreen':
                 Window.fullscreen = value == '1'
@@ -612,7 +599,7 @@ class MultiMDApp(MDApp):
             if self.ctx.slot_concerns_self(slot):
                 # For the user's own slot, update local player data with server info
                 self.local_player_data.slot_id = slot
-                self.local_player_data.slot_name = name if not self.local_player_data.slot_name else self.local_player_data.slot_name
+                self.local_player_data.slot_name = name
                 self.local_player_data.game_status = "PLAYING"
                 self.local_player_data.game = self.ctx.slot_info[slot].game
                 self.local_player_data.hints = self.ui_hint_data[slot]
@@ -627,7 +614,7 @@ class MultiMDApp(MDApp):
                     avatar="",
                     pronouns="",
                     bk_mode=False,
-                    in_call=False,
+                    deafened=False,
                     end_user=False,
                     game_status="PLAYING",
                     game=self.ctx.slot_info[slot].game,
@@ -662,10 +649,10 @@ class MultiMDApp(MDApp):
 
     def set_deafen(self):
         tags = list(self.ctx.tags)
-        if "in_call" in tags:
-            tags.remove("in_call")
+        if "deafened" in tags:
+            tags.remove("deafened")
         else:
-            tags.append("in_call")
+            tags.append("deafened")
         asynckivy.start(self.ctx.update_tags(tags))
     
     def set_bk(self):
@@ -708,7 +695,7 @@ class MultiMDApp(MDApp):
                     self.ui_hint_data[hint["finding_player"]] = {}
                 if hint["location"] not in self.ui_hint_data[hint["finding_player"]]:
                     self.ui_hint_data[hint["finding_player"]][hint["location"]] = \
-                        UIHint(hint, self.ctx.location_names, self.ctx.item_names, hint.get("status"), mwgg_status)
+                        UIHint(hint, True, self.ctx.location_names, self.ctx.item_names, hint.get("status"), mwgg_status)
                 else:
                     self.ui_hint_data[hint["finding_player"]][hint["location"]].set_status(hint.get("status"), mwgg_status)
             elif self.ctx.slot_concerns_self(hint["finding_player"]):
@@ -716,7 +703,7 @@ class MultiMDApp(MDApp):
                     self.ui_hint_data[hint["receiving_player"]] = {}
                 if hint["location"] not in self.ui_hint_data[hint["receiving_player"]]:
                     self.ui_hint_data[hint["receiving_player"]][hint["location"]] = \
-                        UIHint(hint, self.ctx.location_names, self.ctx.item_names, hint.get("status"), mwgg_status)
+                        UIHint(hint, False, self.ctx.location_names, self.ctx.item_names, hint.get("status"), mwgg_status)
                 else:
                     self.ui_hint_data[hint["receiving_player"]][hint["location"]].set_status(hint.get("status"), mwgg_status)
 
@@ -726,10 +713,19 @@ class MultiMDApp(MDApp):
                 self.ui_player_data[slot].hints = self.ui_hint_data[slot]
 
         # Update hints lists if it exists
-        if hasattr(self, 'console_screen') and self.console_screen:
+        if "console" in self.screen_manager.screen_names:
             self.console_screen.update_slots_list()
-        if hasattr(self, 'hint_screen') and self.hint_screen:
+        else:
+            self.client_console_init()
+            self.console_screen.update_slots_list()
+        if "hint" in self.screen_manager.screen_names:
             self.hint_screen.update_hints_list()
+        else:
+            self._create_screen("hint")
+            self.hint_screen.update_hints_list()
+        # if hasattr(self, 'custom_screens'):
+        #     for screen in self.custom_screens:
+        #         self.custom_screens[screen].update_hints_list()
 
     def update_mwgg_hints(self, mwgg_hints: typing.Optional[dict] = None):
         if mwgg_hints is None:

@@ -14,7 +14,7 @@ from textwrap import wrap
 
 from kivy.animation import Animation
 from kivy.metrics import dp
-from kivy.properties import StringProperty, DictProperty, ObjectProperty, NumericProperty
+from kivy.properties import StringProperty, DictProperty, ObjectProperty, NumericProperty, BooleanProperty
 from kivy.uix.behaviors import ButtonBehavior
 from kivymd.uix.behaviors import RotateBehavior, CommonElevationBehavior
 from kivymd.theming import ThemableBehavior
@@ -62,6 +62,8 @@ class SlotListItemHeader(MDBoxLayout, CommonElevationBehavior):
     slot_name: StringProperty
     game: StringProperty
     panel: ObjectProperty
+    search: BooleanProperty
+    waiting: BooleanProperty
 
     def __init__(self, item_data, panel, **kwargs):
         """
@@ -71,7 +73,6 @@ class SlotListItemHeader(MDBoxLayout, CommonElevationBehavior):
             game_data (dict): Dictionary containing slot and game information
             panel: Reference to the parent panel
         """
-        self._empty = True
         self.panel = panel
         self.item_data = item_data
         self.theme_shadow_color = "Custom"
@@ -81,26 +82,24 @@ class SlotListItemHeader(MDBoxLayout, CommonElevationBehavior):
         else:
             self.slot_name = self.item_data.slot_name
         self.game = self.item_data.game
-
+        self.search = False
+        self.waiting = False
         super().__init__(**kwargs)
-
-    @property
-    def empty(self) -> bool:
-        return self._empty
-
-    @empty.setter
-    def empty(self, value: bool):
-        self._empty = value
-        self.set_elevation_and_shadow()
 
     def set_elevation_and_shadow(self):
         self.elevation_level = 0
         self.shadow_color = self.theme_cls.shadowColor
+        self.search = False
+        self.waiting = False
         for child in self.panel.panel_content.children:
             if isinstance(child, SlotListItem):
                 if child.elevation_level > self.elevation_level:
                     self.elevation_level = child.elevation_level
                     self.shadow_color = child.shadow_color if child.shadow_color != self.theme_cls.shadowColor else self.theme_cls.shadowColor
+                if child.my_item:
+                    self.waiting = True
+                else:
+                    self.search = True
 
 class GameListItemHeader(MDBoxLayout, ButtonBehavior, ThemableBehavior):
     """
@@ -199,6 +198,7 @@ class MWBaseListItem(MDBoxLayout, CommonElevationBehavior):
     location_name: StringProperty
     entrance_name: StringProperty
     game_status: StringProperty
+    my_item: BooleanProperty
     for_bk_mode: StringProperty
     for_goal: StringProperty
     from_shop: StringProperty
@@ -225,6 +225,7 @@ class MWBaseListItem(MDBoxLayout, CommonElevationBehavior):
         self.found = self.hint_data.found
         self.status = self.hint_data.hint_status
         self.mwgg_status = self.hint_data.mwgg_hint_status
+        self.my_item = self.hint_data.my_item
 
         super().__init__(**kwargs)
 
@@ -594,12 +595,6 @@ class GameListPanel(MDExpansionPanel):
         self.leading_avatar = self.panel_header_layout.ids.leading_avatar
         self.panel_header.add_widget(self.panel_header_layout)
         self.leading_avatar.source = "" if not self.item_data['avatar'] else self.item_data['avatar']
-        if self.item_data.bk_mode:
-            self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="food", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
-        if self.item_data.in_call:
-            self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="headphones", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
-        if self.item_data.game_status == "GOAL":
-            self.panel_header_layout.ids.game_item_container.add_widget(BaseListItemIcon(icon="flag_checkered", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
         i = 1 if self.app.theme_cls.theme_style == "Dark" else 0
         item_colors = {
             "trap": self.app.theme_mw.markup_tags_theme.trap_item_color[i],
@@ -614,7 +609,17 @@ class GameListPanel(MDExpansionPanel):
                 item_widget = SlotListItem(hint_data=hint, game_status=self.item_data.game_status, shadow_colors=item_colors)
                 self.panel_content.add_widget(item_widget)
 
-        self.panel_header_layout.empty = len(self.panel_content.children) == 0
+        Clock.schedule_once(lambda x: self.panel_header_layout.set_elevation_and_shadow(), .5)
+        if self.panel_header_layout.search:
+            self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="toy-brick-search", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
+        if self.panel_header_layout.waiting:
+            self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="timer-sand", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
+        if self.item_data.bk_mode:
+            self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="food", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
+        if self.item_data.deafened:
+            self.panel_header_layout.ids.slot_item_container.add_widget(BaseListItemIcon(icon="headphones-off", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
+        if self.item_data.game_status == "GOAL":
+            self.panel_header_layout.ids.game_item_container.add_widget(BaseListItemIcon(icon="flag_checkered", theme_font_size="Custom", font_size=dp(14), pos_hint={"center_y": 0.5}),1)
 
     def populate_game_item(self):
         """
