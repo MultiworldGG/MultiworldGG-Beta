@@ -665,14 +665,14 @@ class MultiMDApp(MDApp):
 
     def update_hints(self):
         hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}", [])
-        mwgg_hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}_mwgg", {})
+        mwgg_hints = self.ctx.stored_data.get(f"mwgg_hints_{self.ctx.team}_{self.ctx.slot}", {})
         if hints:
             self.refresh_hints(hints, mwgg_hints)
 
 
     def refresh_hints(self, hints, mwgg_hints):
         hints_key = f"_read_hints_{self.ctx.team}_{self.ctx.slot}"
-        mwgg_hints_key = f"_read_hints_{self.ctx.team}_{self.ctx.slot}_mwgg"
+        mwgg_hints_key = f"mwgg_hints_{self.ctx.team}_{self.ctx.slot}"
         
         # Ensure mwgg_hints is a dict, not None
         if mwgg_hints is None:
@@ -686,9 +686,7 @@ class MultiMDApp(MDApp):
         for hint in hints:
             # Only look up MWGG status if we have stored data for this hint
             key = f"{hint['finding_player']}_{hint['location']}"
-            mwgg_status = MWGGUIHintStatus.HINT_UNSPECIFIED  # Default
-            if key in mwgg_hints:
-                mwgg_status = MWGGUIHintStatus(mwgg_hints[key])
+            mwgg_status = MWGGUIHintStatus(mwgg_hints.get(key, 0b000))
             
             if self.ctx.slot_concerns_self(hint["receiving_player"]):
                 if not self.ui_hint_data[hint["finding_player"]]:
@@ -697,7 +695,8 @@ class MultiMDApp(MDApp):
                     self.ui_hint_data[hint["finding_player"]][hint["location"]] = \
                         UIHint(hint, True, self.ctx.location_names, self.ctx.item_names, hint.get("status"), mwgg_status)
                 else:
-                    self.ui_hint_data[hint["finding_player"]][hint["location"]].set_status(hint.get("status"), mwgg_status)
+                    self.ui_hint_data[hint["finding_player"]][hint["location"]].set_status(hint.get("status"))
+                    self.ui_hint_data[hint["finding_player"]][hint["location"]].set_status_from_mwgg(mwgg_status)
             elif self.ctx.slot_concerns_self(hint["finding_player"]):
                 if not self.ui_hint_data[hint["receiving_player"]]:
                     self.ui_hint_data[hint["receiving_player"]] = {}
@@ -705,12 +704,17 @@ class MultiMDApp(MDApp):
                     self.ui_hint_data[hint["receiving_player"]][hint["location"]] = \
                         UIHint(hint, False, self.ctx.location_names, self.ctx.item_names, hint.get("status"), mwgg_status)
                 else:
-                    self.ui_hint_data[hint["receiving_player"]][hint["location"]].set_status(hint.get("status"), mwgg_status)
+                    self.ui_hint_data[hint["receiving_player"]][hint["location"]].set_status(hint.get("status"))
+                    self.ui_hint_data[hint["receiving_player"]][hint["location"]].set_status_from_mwgg(mwgg_status)
 
+        self.update_mwgg_hints(mwgg_hints)
+        
         # Update ui_player_data hints to match ui_hint_data
         for slot in self.ui_player_data:
             if slot in self.ui_hint_data:
                 self.ui_player_data[slot].hints = self.ui_hint_data[slot]
+
+        #self.update_player_data()
 
         # Update hints lists if it exists
         if "console" in self.screen_manager.screen_names:
@@ -732,7 +736,7 @@ class MultiMDApp(MDApp):
             mwgg_hints = self.ui_hint_data
         
         # Get current stored data to compare
-        current_stored = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}_mwgg", {})
+        current_stored = self.ctx.stored_data.get(f"mwgg_hints_{self.ctx.team}_{self.ctx.slot}", {})
         
         # Only store hints that have non-default MWGG status
         mwgg_data_to_store = {}
@@ -742,22 +746,17 @@ class MultiMDApp(MDApp):
             for location_id, hint_data in locations.items():
                 key = f"{finding_player}_{location_id}"
                 current_status = hint_data.mwgg_hint_status
-                
-                # Only store if it's not the default unspecified status
-                if current_status != MWGGUIHintStatus.HINT_UNSPECIFIED:
-                    mwgg_data_to_store[key] = current_status.value
-                    # Check if this is a change
-                    if key not in current_stored or current_stored[key] != current_status.value:
-                        has_changes = True
-                elif key in current_stored:
-                    # Remove from storage if it was previously stored but is now default
+
+                mwgg_data_to_store[key] = current_status.value
+                # Check if this is a change
+                if key not in current_stored or current_stored[key] != current_status.value:
                     has_changes = True
         
         # Only send update if there are actual changes
         if has_changes:
             asynckivy.start(self.ctx.send_msgs([{
                 "cmd": "Set",
-                "key": f"_read_hints_{self.ctx.team}_{self.ctx.slot}_mwgg",
+                "key": f"mwgg_hints_{self.ctx.team}_{self.ctx.slot}",
                 "want_reply": False,
                 "default": {},
                 "operations": [{"operation": "replace", "value": mwgg_data_to_store}]
@@ -772,6 +771,35 @@ class MultiMDApp(MDApp):
         self._show_all_hints = value
         if hasattr(self, 'hint_screen') and self.hint_screen:
             self.hint_screen.update_hints_list()
+
+    def update_player_data(self):
+        player_data: dict[int, dict[str, any]] = {}
+        for slot in self.ui_player_data:
+            player_data[slot] = self.ui_player_data[slot].to_dict()
+            # TODO: change to_dict to a better function that only includes the profile data we care about
+        
+        # Get current stored data to compare
+        current_player_data: dict[int, dict[str, any]] = {}
+        for slot in self.ui_player_data.keys():   
+            if f"profile_data_{self.ctx.team}_{slot}" in self.ctx.stored_data:
+                current_player_data[slot] = self.ctx.stored_data.get(f"profile_data_{self.ctx.team}_{slot}", {})
+        
+        for slot, local_data in player_data.items():
+            remote_data = current_player_data[slot]
+            if local_data == remote_data:
+                continue
+            if local_data["slot_id"] == remote_data["slot_id"]:
+                if local_data["slot_id"] == self.ctx.slot:
+                    asynckivy.start(self.ctx.send_msgs([{
+                        "cmd": "Set",
+                        "key": f"profile_data_{self.ctx.team}_{self.ctx.slot}",
+                        "want_reply": False,
+                        "default": {},
+                        "operations": [{"operation": "replace", "value": local_data}]
+                    }]))
+                else:
+                    for item, data in remote_data.items():
+                        setattr(self.ui_player_data[slot], item, data)
 
     @property
     def logo_png(self):

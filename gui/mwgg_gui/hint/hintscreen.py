@@ -25,6 +25,8 @@ from NetUtils import HintStatus, MWGGUIHintStatus, TEXT_COLORS
 from mwgg_gui.overrides.expansionlist import HintListItem, IconBadge, SlotListItemHeader, GameListPanel, HintListDropdown
 from mwgg_gui.components.guidataclasses import UIHint
 from mwgg_gui.components.bottomappbar import BottomAppBar
+from mwgg_gui.components.mw_theme import adjust_height
+
 import typing
 import asynckivy
 
@@ -70,7 +72,7 @@ class HintScreen(MDScreen):
         self.bottom_appbar = BottomAppBar(screen_name="hint")
         self.hint_layout = HintLayout()
         self.hint_scroll = self.hint_layout.hint_scroll
-        self.hints_mdlist = MDList()
+        self.hints_mdlist = MDList(size_hint_y=None, size_hint_x=1)
         # Schedule initialization
         Clock.schedule_once(lambda x: self.init_components())
 
@@ -79,10 +81,6 @@ class HintScreen(MDScreen):
         # Add components to the screen
         self.add_widget(self.hint_layout)
         self.add_widget(self.bottom_appbar)
-        
-        # Set up hint layout positioning and sizing to take full window width
-        self.hint_layout.y = dp(82)  # Account for bottom app bar # Account for top and bottom bars
-        self.hint_layout.size_hint = (1, 1)
         
         # Add hints list to the hint layout (after the search placeholder)
         self.hint_scroll.add_widget(self.hints_mdlist)
@@ -128,15 +126,19 @@ class HintLayout(MDBoxLayout):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.app = MDApp.get_running_app()
-        self.hint_scroll = MDScrollView(size_hint_y=.9, size_hint_x=1)
+        self.size_hint_y = adjust_height(title_bar=True, app_bar=True, bottom_appbar=True)
+        self.y = 82
         # Create placeholder for future search and filter functionality
         self.search_placeholder = HintFeaturebar(
-            size_hint_y=.1,
+            height=dp(80),
+            size_hint_y=None,
+            size_hint_x=1,
             orientation="horizontal",
             spacing=dp(16),
             padding=[dp(16), dp(8), dp(16), dp(8)]
         )
-        
+        scroll_height = 1/self.search_placeholder.height
+        self.hint_scroll = MDScrollView(size_hint_y=self.size_hint_y-scroll_height, size_hint_x=1)
         # Add placeholder label for future search functionality
         placeholder_label = MDLabel(
             text="Search & Filter Options (Future Feature)"
@@ -156,7 +158,7 @@ class HintLayout(MDBoxLayout):
         self.search_placeholder.add_widget(placeholder_label)
         self.search_placeholder.add_widget(self.show_all_hints_switch)
         self.search_placeholder.add_widget(self.refresh_button)
-        # Add the placeholder to the layout
+
         self.add_widget(self.search_placeholder)
         self.add_widget(self.hint_scroll)
 
@@ -166,8 +168,7 @@ class HintLayout(MDBoxLayout):
     def on_refresh_hints(self, instance):
         """Refresh the hints list when refresh button is clicked"""
         # Get the hint screen from the app
-        hint_screen = self.app.screen_manager.get_screen("hint")
-        hint_screen.update_hints_list()
+        self.app.update_hints()
 
 mwggstatus_icons: typing.Dict[MWGGUIHintStatus, str] = {
     MWGGUIHintStatus.HINT_UNSPECIFIED: "",
@@ -296,9 +297,6 @@ class HintListPanel(GameListPanel):
             hint_item = HintListItem(hint_data=hint, game_status=self.item_data.game_status, shadow_colors=item_colors,
                                      hint_icon_status=status_icons[hint.hint_status], hint_status_text=status_names[hint.hint_status]
                                      )
-            hint_item.bind(on_bkmode=lambda instance, value: self.on_bkmode(hint))
-            hint_item.bind(on_goal=lambda instance, value: self.on_goal(hint))
-            hint_item.bind(on_shop=lambda instance, value: self.on_shop(hint))
             
             # Only add dropdown for non-found items
             if not (hint.hint_status == HintStatus.HINT_FOUND or hint.found):
@@ -311,11 +309,3 @@ class HintListPanel(GameListPanel):
             
             self.panel_content.add_widget(hint_item)
 
-    def on_bkmode(self, hint: UIHint):
-        hint.set_status(mwgg_status=MWGGUIHintStatus.HINT_BK_MODE)
-    
-    def on_goal(self, hint: UIHint):
-        hint.set_status(mwgg_status=MWGGUIHintStatus.HINT_GOAL)
-    
-    def on_shop(self, hint: UIHint):
-        hint.set_status(mwgg_status=MWGGUIHintStatus.HINT_SHOP)

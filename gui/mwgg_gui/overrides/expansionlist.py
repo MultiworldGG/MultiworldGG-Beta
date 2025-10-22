@@ -230,12 +230,12 @@ class MWBaseListItem(MDBoxLayout, CommonElevationBehavior):
         super().__init__(**kwargs)
 
         self.badge_text = ""
-        if self.mwgg_status == MWGGUIHintStatus.HINT_BK_MODE:
-            badge_text += md_icons["food"] + " "
-        if self.mwgg_status == MWGGUIHintStatus.HINT_GOAL:
-            badge_text += md_icons["flag_checkered"] + " "
-        if self.mwgg_status == MWGGUIHintStatus.HINT_SHOP:
-            badge_text += md_icons["shop"] + " "
+        if self.mwgg_status & MWGGUIHintStatus.HINT_BK_MODE:
+            self.badge_text += md_icons["food"] + " "
+        if self.mwgg_status & MWGGUIHintStatus.HINT_GOAL:
+            self.badge_text += md_icons["flag_checkered"] + " "
+        if self.mwgg_status & MWGGUIHintStatus.HINT_SHOP:
+            self.badge_text += md_icons["shop"] + " "
 
     def populate_slot_item(self):
         pass
@@ -384,20 +384,23 @@ class HintListItem(MWBaseListItem):
             self.dropdown.open()
 
     @staticmethod
-    def on_hide(hint_instance, value):
+    def hide_hint(hint_instance, value):
         hint_instance.hint_data.hide = value
-    
-    def on_bkmode(self, instance):
+
+    @staticmethod
+    def set_bkmode(hint_instance, value):
         """Handle BK mode button activation"""
-        self.dispatch('on_bkmode', instance)
+        hint_instance.hint_data.set_status_from_mwgg(mwgg_status=0b100)
     
-    def on_goal(self, instance):
+    @staticmethod
+    def set_goal(hint_instance, value):
         """Handle goal button activation"""
-        self.dispatch('on_goal', instance)
+        hint_instance.hint_data.set_status_from_mwgg(mwgg_status=0b010)
     
-    def on_shop(self, instance):
+    @staticmethod
+    def set_shop(hint_instance, value):
         """Handle shop button activation"""
-        self.dispatch('on_shop', instance)
+        hint_instance.hint_data.set_status_from_mwgg(mwgg_status=0b001)
 
 class HintListDropdown(MDDropdownMenu):
     def __init__(self, *args, status_names: dict[HintStatus, str], status_icons: dict[HintStatus, str], 

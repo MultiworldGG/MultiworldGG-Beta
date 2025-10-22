@@ -17,7 +17,7 @@ apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 
 from MultiServer import CommandProcessor, mark_raw
 from NetUtils import (Endpoint, ClientStatus, encode, decode, NetworkItem, NetworkPlayer, NetworkSlot, 
-                      Permission, SlotType, LocationStore, Hint, HintStatus, JSONtoTextParser,
+                      Permission, SlotType, LocationStore, Hint, HintStatus, MWGGUIHintStatus,JSONtoTextParser,
                       RawJSONtoTextParser, add_json_text, add_json_location, add_json_item, JSONTypes, TEXT_COLORS)
 from ClientState import ClientState
 from ClientBuilder import GameClient
@@ -819,6 +819,14 @@ class CommonContext(InitContext):
         if status is not None:
             msg["status"] = status
         async_start(self.send_msgs([msg]), name="update_hint")
+
+    def update_mwgg_hint(self, location: int, finding_player: int, mwgg_status: MWGGUIHintStatus) -> None:
+        msg = {"cmd": "Set", 
+               "key": f"mwgg_hints_{self.team}_{self.slot}", 
+               "want_reply": False, 
+               "default": {}, 
+               "operations": [{"operation": "replace", "value": {f"{finding_player}_{location}": mwgg_status.value}}]}
+        async_start(self.send_msgs([msg]), name="update_mwgg_hint")
     
     # DataPackage
     async def prepare_data_package(self, relevant_games: typing.Set[str],

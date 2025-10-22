@@ -56,9 +56,10 @@ class UIHint:
         self._for_goal = False
         self._from_shop = False
         self._hide = False
-        self.set_status(hint_status, mwgg_hint_status)
+        self.set_status(hint_status)
+        self.set_status_from_mwgg(mwgg_hint_status)
 
-    def set_status(self, hint_status: Optional[HintStatus] = None, mwgg_status: Optional[MWGGUIHintStatus] = None):
+    def set_status(self, hint_status: HintStatus):
         """
         Update the hint's status and classification based on status flags.
         
@@ -78,15 +79,16 @@ class UIHint:
         elif hint_status == HintStatus.HINT_PRIORITY:
             self.assigned_classification = self.get_classification(ItemClassification.progression)
 
-        if mwgg_status == MWGGUIHintStatus.HINT_SHOP:
-            self.from_shop = True
-        elif mwgg_status == MWGGUIHintStatus.HINT_GOAL:
-            self.for_goal = True
-        elif mwgg_status == MWGGUIHintStatus.HINT_BK_MODE:
-            self.for_bk_mode = True
-        elif mwgg_status == MWGGUIHintStatus.HINT_UNSPECIFIED:
-            pass
         self.hint_status = hint_status
+
+    def set_status_from_mwgg(self, mwgg_status: MWGGUIHintStatus):
+        """
+        Update the hint's status and classification based on MWGG GUI specific status information.
+        """
+        self.from_shop = mwgg_status & MWGGUIHintStatus.HINT_SHOP
+        self.for_goal = mwgg_status & MWGGUIHintStatus.HINT_GOAL
+        self.for_bk_mode = mwgg_status & MWGGUIHintStatus.HINT_BK_MODE
+
         self.mwgg_hint_status = mwgg_status
 
     @property

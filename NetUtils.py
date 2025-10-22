@@ -18,15 +18,15 @@ class HintStatus(ByValue, enum.IntEnum):
     HINT_PRIORITY = 30
     HINT_FOUND = 40
 
-class MWGGUIHintStatus(ByValue, enum.IntEnum):
+class MWGGUIHintStatus(ByValue, enum.IntFlag):
     """
     Shop Item, Goal-required item, and 'this item is what is keeping me in BK_MODE'
     BK_MODE items will be shown as the highest priority.
     """
-    HINT_UNSPECIFIED = 0
-    HINT_SHOP = 10
-    HINT_GOAL = 20
-    HINT_BK_MODE = 30
+    HINT_UNSPECIFIED = 0b000
+    HINT_SHOP = 0b001
+    HINT_GOAL = 0b010
+    HINT_BK_MODE = 0b100
 
 
 class JSONMessagePart(typing.TypedDict, total=False):

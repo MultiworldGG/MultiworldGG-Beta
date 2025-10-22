@@ -213,7 +213,7 @@
         MDCheckbox:
             id: hint_item_checkbox
             pos_hint: {"right": 0.1, "center_y": 0.5}
-            on_active: root.on_hide(root, self.active)
+            on_active: root.hide_hint(root, self.active)
             checkbox_icon_normal: "eye"
             checkbox_icon_active: "eye-off"
     MDBoxLayout:
@@ -261,21 +261,21 @@
         multiselect: True
         size_hint_x: .4
         MDSegmentedButtonItem:
-            on_active: root.on_bkmode(self)
+            on_active: root.set_bkmode(root, self.active)
             MDSegmentButtonIcon:
                 icon: "food"
             MDSegmentButtonLabel:
                 text: "BK Mode"
                 tooltip_text: "This hint is blocking me or another player from playing."
         MDSegmentedButtonItem:
-            on_active: root.on_goal(self)
+            on_active: root.set_goal(root, self.active)
             MDSegmentButtonIcon:
                 icon: "flag_checkered"
             MDSegmentButtonLabel:
                 text: "Goal Item"
                 tooltip_text: "This is a goal related item, I need it only to finish the game."
         MDSegmentedButtonItem:
-            on_active: root.on_shop(self)
+            on_active: root.set_shop(root, self.active)
             MDSegmentButtonIcon:
                 icon: "shop"
             MDSegmentButtonLabel:

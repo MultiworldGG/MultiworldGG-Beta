@@ -4,17 +4,22 @@ text colors, font options and sizes, and other theme-related
 settings and overrides.
 """
 from __future__ import annotations
-__all__ = ('DefaultTheme', 'RegisterFonts', 'DEFAULT_TEXT_COLORS')
+__all__ = ('DefaultTheme', 
+           'RegisterFonts', 
+           'DEFAULT_TEXT_COLORS',
+           'adjust_height')
+
 
 import os
 from dataclasses import dataclass
 from kivy.core.text import LabelBase
 from kivymd.app import MDApp
 from kivymd.theming import ThemableBehavior
-from kivy.metrics import sp, Metrics
+from kivy.metrics import sp, dp, Metrics
 from kivy.properties import StringProperty, BooleanProperty, BoundedNumericProperty
 from kivy.lang import Builder
 from kivy.utils import hex_colormap
+from kivy.core.window import Window
 
 try:
     from mwgg_gui.overrides import md_icons
@@ -486,3 +491,19 @@ def RegisterFonts(app: MDApp, monospace_font: str = 'Argon'):
             },
         },
     }
+
+def adjust_height(title_bar: bool=True, 
+                  app_bar: bool=True, 
+                  bottom_appbar: bool = False, 
+                  custom: int = 0) -> float:
+    removed_height = 0
+    if title_bar:
+        removed_height += dp(43)
+    if app_bar:
+        removed_height += dp(60)
+    if bottom_appbar:
+        removed_height += dp(82)
+    if custom:
+        removed_height += custom
+    new_height = Window.height - removed_height
+    return new_height/Window.height
