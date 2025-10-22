@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mwgg_gui"
-version = "0.1.12a3"
+version = "0.1.4a3"
 description = "GUI package for MultiWorldGG"
 requires-python = ">=3.12"
 classifiers = [ "Private :: Do Not Upload",]
