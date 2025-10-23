@@ -2,6 +2,8 @@ from Options import Toggle, Option, Range, Choice, DeathLink, ItemSet, OptionSet
     Visibility, Removed, OptionGroup
 from dataclasses import dataclass
 
+from .MegaMixCollection import MegaMixCollections
+
 
 class StartingSongs(Range):
     """The number of songs that will be automatically unlocked at the start of a run."""
@@ -24,8 +26,8 @@ class AdditionalSongs(Range):
 
 class DuplicateSongPercentage(Range):
     """
-    Percentage of duplicate songs to place in remaining filler slots.
-    Duplicate songs are considered Useful and thus out of logic.
+    After placing required items, the percentage of remaining filler slots to become duplicate song items.
+    Duplicate songs are considered Useful thus out of logic and may speed up completion time.
     """
     range_start = 0
     range_end = 100
@@ -153,6 +155,14 @@ class LeeksRequiredPercentage(Range):
     display_name = "Leek Percentage Needed to Win"
 
 
+class GoalSongs(ItemSet):
+    """Guarantee one song listed here as the final Goal Song.
+    - Difficulty options are ignored.
+
+    Use /item_groups in the Client for a list of available song groups."""
+    display_name = "Goal Song"
+
+
 class IncludeSongsPercentage(Range):
     """The percentage of the seed reserved for Include Songs.
     - At 50% a 100 song seed will reserve up to 50 Include Songs.
@@ -166,21 +176,18 @@ class IncludeSongsPercentage(Range):
 
 
 class IncludeSongs(ItemSet):
-    """Any song listed here will be guaranteed to be included as part of the seed.
-    - Difficulty options will be skipped for these songs.
-    - If there being too many included songs, songs will be randomly chosen without regard for difficulty.
+    """Songs listed here will be guaranteed to be included as part of the seed.
+    - Difficulty options are ignored for these songs.
     - If you want these songs immediately, use start_inventory instead.
 
     Use /item_groups in the Client for a list of available song groups."""
-    verify_item_name = True
     display_name = "Include Songs"
 
 
 class ExcludeSongs(ItemSet):
-    """Any song listed here will be excluded from being a part of the seed.
+    """Songs listed here and not previously chosen as a Goal or Include will be excluded from being a part of the seed.
 
     Use /item_groups in the Client for a list of available song groups."""
-    verify_item_name = True
     display_name = "Exclude Songs"
 
 
@@ -213,9 +220,28 @@ class DeathLinkAmnesty(Range):
     default = 0
 
 
+class TrapsEnabled(OptionSet):
+    """Control which Traps can be placed in the item pool."""
+    display_name = "Traps Enabled"
+    valid_keys = {trap for trap in MegaMixCollections.trap_items.keys()}
+    default = valid_keys
+
+
+class TrapPercentage(Range):
+    """
+    After placing required items and duplicate songs, the percentage of remaining filler slots to become traps.
+    If duplicate songs percentage is at 100, this option has no effect.
+    """
+    display_name = "Trap Percentage"
+    range_start = 0
+    range_end = 100
+    default = 0
+
+
 megamix_option_groups = [
     OptionGroup("Song Choice", [
         AllowMegaMixDLCSongs,
+        GoalSongs,
         IncludeSongsPercentage,
         IncludeSongs,
         ExcludeSongs,
@@ -227,6 +253,12 @@ megamix_option_groups = [
         DifficultyModeMax,
         DifficultyRatingMin,
         DifficultyRatingMax,
+    ]),
+    OptionGroup("", [
+        DivaDeathLink,
+        DeathLinkAmnesty,
+        TrapsEnabled,
+        TrapPercentage,
     ]),
 ]
 
@@ -245,10 +277,15 @@ class MegaMixOptions(PerGameCommonOptions):
     grade_needed: ScoreGradeNeeded
     leek_count_percentage: TotalLeeksAvailable
     leek_win_count_percentage: LeeksRequiredPercentage
+    goal_song: GoalSongs
     include_songs_percentage: IncludeSongsPercentage
     include_songs: IncludeSongs
     exclude_songs: ExcludeSongs
-    exclude_singers: Removed
     megamix_mod_data: ModData
     death_link: DivaDeathLink
     death_link_amnesty: DeathLinkAmnesty
+    traps_enabled: TrapsEnabled
+    trap_percentage: TrapPercentage
+
+    # Deprecated
+    exclude_singers: Removed

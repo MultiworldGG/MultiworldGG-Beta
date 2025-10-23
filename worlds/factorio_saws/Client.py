@@ -22,7 +22,6 @@ from CommonClient import ClientCommandProcessor, CommonContext, logger, server_l
 from MultiServer import mark_raw
 from NetUtils import ClientStatus, NetworkItem, JSONtoTextParser, JSONMessagePart
 from Utils import async_start, get_file_safe_name
-apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 
 
 def check_stdin() -> None:
@@ -195,9 +194,9 @@ class FactorioContext(CommonContext):
     def toggle_bridge_chat_out(self) -> None:
         self.bridge_chat_out = not self.bridge_chat_out
         if self.bridge_chat_out:
-            announcement = f"Chat is now bridged to {apname}."
+            announcement = "Chat is now bridged to Archipelago."
         else:
-            announcement = f"Chat is no longer bridged to {apname}."
+            announcement = "Chat is no longer bridged to Archipelago."
         logger.info(announcement)
         self.print_to_game(announcement)
 
@@ -210,7 +209,7 @@ class FactorioContext(CommonContext):
                 ("FactorioServer", "Factorio Server Log"),
                 ("FactorioWatcher", "Bridge Data Log"),
             ]
-            base_title = f"{apname} Factorio Client"
+            base_title = "Archipelago Factorio Client"
 
         self.ui = FactorioManager(self)
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
@@ -336,7 +335,7 @@ async def factorio_server_watcher(ctx: FactorioContext):
                                                                timeout=5)
                     if not ctx.server:
                         logger.info("Established bridge to Factorio Server. "
-                                    f"Ready to connect to {apname} via /connect")
+                                    "Ready to connect to Archipelago via /connect")
                         check_stdin()
 
                 if not ctx.awaiting_bridge and "Archipelago Bridge Data available for game tick " in msg:
@@ -523,9 +522,9 @@ rcon_password = args.rcon_password if args.rcon_password else ''.join(
     random.choice(string.ascii_letters) for x in range(32))
 factorio_server_logger = logging.getLogger("FactorioServer")
 options = Utils.get_settings()
-executable = options["factorio_options"]["executable"]
+executable = options["factorio_saws_options"]["executable"]
 server_settings = args.server_settings if args.server_settings \
-    else options["factorio_options"].get("server_settings", None)
+    else options["factorio_saws_options"].get("server_settings", None)
 server_args = ("--rcon-port", rcon_port, "--rcon-password", rcon_password)
 
 

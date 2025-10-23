@@ -24,7 +24,7 @@ class CandyBox2WebWorld(WebWorld):
         ["Victor Tran"]
     )]
 
-    location_descriptions = location_descriptions
+    location_descriptions = {location.value: description for location, description in location_descriptions.items()}
     option_groups = candy_box_2_options_groups
     bug_report_page = "https://github.com/vicr123/candy-box-2/issues"
 
@@ -32,7 +32,6 @@ class CandyBox2World(World):
     """Candy Box 2 is a text-based browser RPG that features beautiful ASCII art"""
 
     game = "Candy Box 2"
-    author: str = "Victor Tran"
     web = CandyBox2WebWorld()
     base_id = 1
     location_name_to_id = {name.value: location.id for name, location in locations.items()}

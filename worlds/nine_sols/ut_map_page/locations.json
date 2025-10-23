@@ -1,0 +1,2123 @@
+[
+    {
+        "name": "World Map",
+        "children": [
+            {
+                "name": "Apeman Facility (Monitoring)",
+                "sections": [
+                    { "name": "AF (Monitoring): Break Corpse" },
+                    { "name": "AF (Monitoring): Upper Right" },
+                    { "name": "AF (Monitoring): Lower Vent" },
+                    { "name": "AF (Monitoring): Examine Apeman Surveillance" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 710,
+                    "y": 375
+                }]
+            },
+            {
+                "name": "Apeman Facility (Elevator)",
+                "sections": [
+                    { "name": "AF (Elevator): Hidden Atop Upper Level Pagoda (Left Chest)" },
+                    { "name": "AF (Elevator): Hidden Atop Upper Level Pagoda (Right Chest)" },
+                    { "name": "AF (Elevator): Moving Boxes" },
+                    { "name": "AF (Elevator): Elevator Shaft" },
+                    { "name": "AF (Elevator): Defeat Red Tiger Elite: Baichang" },
+                    { "name": "AF (Elevator): Hack Statue" },
+                    { "name": "AF (Elevator): Over Electrified Floor" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 780,
+                    "y": 400
+                }]
+            },
+            {
+                "name": "Apeman Facility (Depths)",
+                "sections": [
+                    { "name": "AF (Depths): Crystal Caves" },
+                    { "name": "AF (Depths): Defeat Celestial Spectre: Shangui (1st Reward)" },
+                    { "name": "AF (Depths): Defeat Celestial Spectre: Shangui (2nd Reward)" },
+                    { "name": "AF (Depths): Below Root Node" },
+                    { "name": "AF (Depths): Hack 3 Statues" },
+                    { "name": "AF (Depths): Lower Level" },
+                    { "name": "AF (Depths): Under Lower Left Exit" },
+                    { "name": "AF (Depths): Tianhuo Flower Under Elevator" },
+                    { "name": "AF (Depths): Upper Right Chest (1st Reward)" },
+                    { "name": "AF (Depths): Upper Right Chest (2nd Reward)" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 660,
+                    "y": 405
+                }]
+            },
+            {
+                "name": "Central Hall",
+                "sections": [
+                    { "name": "Central Hall: Examine Council Sign" },
+                    { "name": "Central Hall: Examine Launch Memorial" },
+                    { "name": "Central Hall: Examine Council Tenets" },
+                    { "name": "Central Hall: Turrets and Double Axe Robot Room" },
+                    { "name": "Central Hall: Vents" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 805,
+                    "y": 295
+                }]
+            },
+            {
+                "name": "Four Seasons Pavilion",
+                "sections": [
+                    { "name": "FSP: Kuafu's 1st Gift" },
+                    { "name": "FSP: Kuafu's 2nd Gift" },
+                    { "name": "FSP: Decode the Ancient Sheet Music" },
+                    { "name": "FSP: Have Yi's Portrait Painted" },
+                    { "name": "FSP: Give Yi's Portrait to Chiyou" },
+                    { "name": "FSP: Receive Peach Blossom Village Quest" },
+                    { "name": "FSP: Take Shuanshuan's Book" },
+                    { "name": "FSP: Give Shuanshuan's Book to Chiyou" },
+                    { "name": "FSP: Reveal the Kunlun Immortal Portrait's Secret" },
+                    { "name": "FSP: Half-Grown Tree Chest" },
+                    { "name": "FSP: Fully Grown Tree 1st Chest" },
+                    { "name": "FSP: Fully Grown Tree 2nd Chest" },
+                    { "name": "FSP: Isolate the Mutant Gene Sequence" },
+                    { "name": "FSP: Give Kuafu the Homing Darts" },
+                    { "name": "FSP: Give Kuafu the Thunderburst Bomb" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 875,
+                    "y": 245
+                }]
+            },
+            {
+                "name": "Cortex Center",
+                "sections": [
+                    { "name": "Cortex Center: Defeat Lady Ethereal" },
+                    { "name": "Cortex Center: Tianhuo Flower After Soulscape" },
+                    { "name": "Cortex Center: Retrieve Chip From Shanhai 9000" },
+                    { "name": "Cortex Center: Crystal Caves Upper Right" },
+                    { "name": "Cortex Center: Crystal Caves Central Chamber" },
+                    { "name": "Cortex Center: Near Left Exit" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 660,
+                    "y": 295
+                }]
+            },
+            {
+                "name": "Central Transport Hub",
+                "sections": [
+                    { "name": "CTH: Large Elevator Shaft" },
+                    { "name": "CTH: Defeat Red Tiger Elite: Yanren" },
+                    { "name": "CTH: Side Room Near Right Exit" },
+                    { "name": "CTH: Lower Left Vents" },
+                    { "name": "CTH: Examine Panel by Root Node" },
+                    { "name": "CTH: Hack 2 Statues" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 860,
+                    "y": 370
+                }]
+            },
+            {
+                "name": "Power Reservoir (East)",
+                "sections": [
+                    { "name": "PR (East): After Lasers" },
+                    { "name": "PR (East): Under Moving Box" },
+                    { "name": "PR (East): Top Platform in Upper Right Shaft" },
+                    { "name": "PR (East): Hack Statue" },
+                    { "name": "PR (East): Upper Left Room" },
+                    { "name": "PR (East): Defeat Celestial Guardian: Jiaoduan" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 910,
+                    "y": 470
+                }]
+            },
+            {
+                "name": "Power Reservoir (Central)",
+                "sections": [
+                    { "name": "PR (Central): Breakable Wall Near Right Transporter" },
+                    { "name": "PR (Central): Near Moving Box" },
+                    { "name": "PR (Central): Hack Statue" },
+                    { "name": "PR (Central): Guarded By Beetle" },
+                    { "name": "PR (Central): Near One-Way Door Right of Pagoda" },
+                    { "name": "PR (Central): Retrieve Chip From Shanhai 9000" },
+                    { "name": "PR (Central): Examine Energy Meter" },
+                    { "name": "PR (Central): Near Left Transporter" },
+                    { "name": "PR (Central): Left of Light Bridge" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 765,
+                    "y": 470
+                }]
+            },
+            {
+                "name": "Power Reservoir (West)",
+                "sections": [
+                    { "name": "PR (West): Below Root Node" },
+                    { "name": "PR (West): Guarded By Turret" },
+                    { "name": "PR (West): Vents" },
+                    { "name": "PR (West): Hack Statue" },
+                    { "name": "PR (West): Dusk Guardian Recording Device" },
+                    { "name": "PR (West): Tianhuo Flower" },
+                    { "name": "PR (West): Near Right Transporter" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 625,
+                    "y": 470
+                }]
+            },
+            {
+                "name": "Radiant Pagoda",
+                "sections": [
+                    { "name": "Examine Radiant Pagoda Control Panel" },
+                    { "name": "Defeat General Yingzhao" },
+                    { "name": "Kuafu's Vital Sanctum" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 765,
+                    "y": 515
+                }]
+            },
+
+            {
+                "name": "Lake Yaochi Ruins",
+                "sections": [
+                    { "name": "LYR: First Chest in Leftmost Pool" },
+                    { "name": "LYR: Second Chest in Leftmost Pool" },
+                    { "name": "LYR: Above Leftmost Pool" },
+                    { "name": "LYR: Right of Leftmost Pool" },
+                    { "name": "LYR: Hear Ji Reminisce About Daybreak Tower" },
+                    { "name": "LYR: Daybreak Tower Chest" },
+                    { "name": "LYR: Daybreak Tower Bell Puzzle" },
+                    { "name": "LYR: Above Root Node" },
+                    { "name": "LYR: Statue Hack Room Near Root Node" },
+                    { "name": "LYR: Examine Stele" },
+                    { "name": "LYR: Nymph Puzzle Room Near Stele" },
+                    { "name": "LYR: Ropes Near Right Exit" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 1040,
+                    "y": 280
+                }]
+            },
+            {
+                "name": "Greenhouse",
+                "sections": [
+                    { "name": "Greenhouse: Hackable Rope Near Wreckage" },
+                    { "name": "Greenhouse: Examine Water Report" },
+                    { "name": "Greenhouse: Retrieve Chip From Shanhai 9000" },
+                    { "name": "Greenhouse: Near Rightmost Hanging Pool" },
+                    { "name": "Greenhouse: Hidden in Upper Level Foliage" },
+                    { "name": "Greenhouse: Vase In Water Above Root Node" },
+                    { "name": "Greenhouse: In Leftmost Hanging Pool" },
+                    { "name": "Greenhouse: Examine Mutated Crops" },
+                    { "name": "Greenhouse: Defeat Celestial Spectre: Shuigui" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 1205,
+                    "y": 330
+                }]
+            },
+            {
+                "name": "Water & Oxygen Synthesis",
+                "sections": [
+                    { "name": "W&OS: High Platforms Right of Center" },
+                    { "name": "W&OS: High Platforms Left of Center" },
+                    { "name": "W&OS: Tianhuo Flower" },
+                    { "name": "W&OS: Dusk Guardian Recording Device" },
+                    { "name": "W&OS: Examine Pipeline Panel" },
+                    { "name": "W&OS: Climb Elevator Shaft By Root Node" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 1240,
+                    "y": 370
+                }]
+            },
+            {
+                "name": "Agrarian Hall",
+                "sections": [
+                    { "name": "Chest After Goumang (1st Reward)" },
+                    { "name": "Chest After Goumang (2nd Reward)" },
+                    { "name": "Goumang's Vital Sanctum" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 1350,
+                    "y": 300
+                }]
+            },
+            {
+                "name": "Yinglong Canal",
+                "sections": [
+                    { "name": "Yinglong Canal: Top Left of Upper Caves" },
+                    { "name": "Yinglong Canal: Bottom Left of Upper Caves" },
+                    { "name": "Yinglong Canal: Examine Farmland Markings" },
+                    { "name": "Yinglong Canal: Climbing Puzzle Above Farmland Markings" },
+                    { "name": "Yinglong Canal: Between Egg Cave and Farmland Markings" },
+                    { "name": "Yinglong Canal: Break Center Yinglong Egg" },
+                    { "name": "Yinglong Canal: Near Root Node" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 1060,
+                    "y": 350
+                }]
+            },
+
+            {
+                "name": "Factory (Great Hall)",
+                "sections": [
+                    { "name": "Factory (GH): Near Rightmost Shield Orb" },
+                    { "name": "Factory (GH): Near Root Node" },
+                    { "name": "Factory (GH): Near Middle Shield Orb" },
+                    { "name": "Factory (GH): Tianhuo Flower Below Hammers" },
+                    { "name": "Factory (GH): Break the Hammers" },
+                    { "name": "Factory (GH): Examine Furnace Monitor" },
+                    { "name": "Factory (GH): Raise the Bridge for Chiyou" },
+                    { "name": "Factory (GH): Roof Above Root Node" },
+                    { "name": "Factory (GH): Near Right Elevator" },
+                    { "name": "Factory (GH): Ball Drop in Platform Puzzle Room" },
+                    { "name": "Factory (GH): Recording Device in Platform Puzzle Room" },
+                    { "name": "Factory (GH): Tianhuo Flower in Platform Puzzle Room" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 415,
+                    "y": 280
+                }]
+            },
+            {
+                "name": "Factory (Underground)",
+                "sections": [
+                    { "name": "Factory (U): Near Upper Right Exit" },
+                    { "name": "Factory (U): Defeat Red Tiger Elite: Kuiyan" },
+                    { "name": "Factory (U): Near Lower Elevator" },
+                    { "name": "Factory (U): Hack 2 Statues" },
+                    { "name": "Factory (U): Find Broken Shanhai 9000" },
+                    { "name": "Factory (U): Examine Evacuation Notice" },
+                    { "name": "Factory (U): Above Root Node" },
+                    { "name": "Factory (U): Below Walkway to Left Exit" },
+                    { "name": "Factory (U): Behind Moving Boxes" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 365,
+                    "y": 365
+                }]
+            },
+            {
+                "name": "Outer Warehouse",
+                "sections": [
+                    { "name": "OW: Retrieve Chip From Shanhai 9000" },
+                    { "name": "OW: Above Sol Statue" },
+                    { "name": "OW: Crusher Gauntlet" },
+                    { "name": "OW: Enemy Gauntlet Room" },
+                    { "name": "OW: Vents Above Robot" },
+                    { "name": "OW: Inside Crate Dropped From Vent Hack" },
+                    { "name": "OW: Examine Warehouse Database" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 230,
+                    "y": 285
+                }]
+            },
+            {
+                "name": "Inner Warehouse",
+                "sections": [
+                    { "name": "IW: Hack 3 Statues" },
+                    { "name": "IW: Shielded Walking Chest" },
+                    { "name": "IW: Defeat Celestial Enforcer: Tieyan" },
+                    { "name": "IW: Nymph Puzzle Room" },
+                    { "name": "IW: Dusk Guardian Recording Device" },
+                    { "name": "IW: Tianhuo Flower" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 100,
+                    "y": 260
+                }]
+            },
+            {
+                "name": "Boundless Repository",
+                "sections": [
+                    { "name": "BR: Examine Console" },
+                    { "name": "BR: Near Xingtian Console" },
+                    { "name": "BR: Gauntlet Part 1 Chest" },
+                    { "name": "BR: Gauntlet Part 2 First Chest" },
+                    { "name": "BR: Gauntlet Part 2 Chest Past Lasers" },
+                    { "name": "BR: Gauntlet Part 2 Chest Past Beetle" },
+                    { "name": "BR: Vault 1st Chest" },
+                    { "name": "BR: Vault 2nd Chest" },
+                    { "name": "BR: Examine Vault Scroll" },
+                    { "name": "BR: Vault 3rd Chest" },
+                    { "name": "BR: Vault 4th Chest" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 75,
+                    "y": 320
+                }]
+            },
+            {
+                "name": "Yangu Hall",
+                "sections": [
+                    { "name": "Yanlao's Tianhuo Flower" },
+                    { "name": "Yanlao's Vital Sanctum" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 165,
+                    "y": 310
+                }]
+            },
+            {
+                "name": "Abandoned Mines",
+                "sections": [
+                    { "name": "AM: Above Left Exit" },
+                    { "name": "AM: Defeat Celestial Warden: Yinyue" },
+                    { "name": "AM: Near Root Node" },
+                    { "name": "AM: Walking Chest" },
+                    { "name": "AM: Tianhuo Flower" },
+                    { "name": "AM: 1st Chest After Flower" },
+                    { "name": "AM: 2nd Chest After Flower" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 475,
+                    "y": 345
+                }]
+            },
+            {
+                "name": "Prison",
+                "sections": [
+                    { "name": "Prison: Examine Scroll in Lower Right Cell" },
+                    { "name": "Prison: Lower Left Cell" },
+                    { "name": "Prison: Above Stairs on Second Level" },
+                    { "name": "Prison: Near Root Node" },
+                    { "name": "Prison: Examine Scroll in Upper Left Cell" },
+                    { "name": "Prison: 1st Chest in Room Before Kanghui" },
+                    { "name": "Prison: 2nd Chest in Room Before Kanghui" },
+                    { "name": "Prison: 3rd Chest in Room Before Kanghui" },
+                    { "name": "Prison: Defeat Kanghui" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 270,
+                    "y": 475
+                }]
+            },
+            {
+                "name": "Factory (Machine Room)",
+                "sections": [
+                    { "name": "Factory (MR): Below Right Elevator" },
+                    { "name": "Factory (MR): Break Turret Below Elevator" },
+                    { "name": "Factory (MR): Above Left Elevator" },
+                    { "name": "Factory (MR): Walking Chest Above Green Pillar" },
+                    { "name": "Factory (MR): Behind Turret Near Green Pillar" },
+                    { "name": "Factory (MR): Near Moving Platforms" },
+                    { "name": "Factory (MR): Tianhuo Flower Above Right Elevator" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 335,
+                    "y": 420
+                }]
+            },
+            {
+                "name": "Factory (Production Area)",
+                "sections": [
+                    { "name": "Factory (PA): Behind Fire in Lower Left Vents" },
+                    { "name": "Factory (PA): Hallway Near Jiequan Statue" },
+                    { "name": "Factory (PA): Three Guard Spawners" },
+                    { "name": "Factory (PA): Behind Hack in Upper Left Vents" },
+                    { "name": "Factory (PA): Examine Production Station" },
+                    { "name": "Factory (PA): Vents Below Production Station" },
+                    { "name": "Factory (PA): Below Double Sniper Zone" },
+                    { "name": "Factory (PA): Examine Pharmacy Panel" },
+                    { "name": "Factory (PA): Ball Drop in Pharmacy" },
+                    { "name": "Factory (PA): Bottom of Right Fire Zone" },
+                    { "name": "Factory (PA): Defeat Shanhai 9000" },
+                    { "name": "Factory (PA): Top of Right Fire Zone" },
+                    { "name": "Factory (PA): Far Side of Wuqiang Arena" },
+                    { "name": "Factory (PA): Defeat Celestial Sentinel: Wuqiang" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 415,
+                    "y": 215
+                }]
+            },
+            {
+                "name": "Shengwu Hall",
+                "sections": [
+                    { "name": "Examine Sphere Before Jiequan" },
+                    { "name": "Chest Before Jiequan" },
+                    { "name": "Jiequan's Tianhuo Flower" },
+                    { "name": "Chest After Jiequan" },
+                    { "name": "Jiequan's Vital Sanctum" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 415,
+                    "y": 165
+                }]
+            },
+            {
+                "name": "Underground Cave",
+                "sections": [
+                    { "name": "UC: Examine Stone Inscription" },
+                    { "name": "UC: Examine Note" },
+                    { "name": "UC: Examine Scroll" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 545,
+                    "y": 335
+                }]
+            },
+            {
+                "name": "Peach Blossom Village",
+                "sections": [
+                    { "name": "Village: Defeat Red Tiger Elite: Lieguan" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 660,
+                    "y": 335
+                }]
+            },
+            {
+                "name": "Galactic Dock",
+                "sections": [
+                    { "name": "Galactic Dock: Examine Sign" },
+                    { "name": "Galactic Dock: Tianhuo Flower" },
+                    { "name": "Galactic Dock: Shaman's Gift" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 725,
+                    "y": 335
+                }]
+            },
+            {
+                "name": "Grotto of Scriptures (Entry)",
+                "sections": [
+                    { "name": "GoS (Entry): Examine Painting" },
+                    { "name": "GoS (Entry): Examine Coffin" },
+                    { "name": "GoS (Entry): Poem Treasure 1st Chest" },
+                    { "name": "GoS (Entry): Poem Treasure 2nd Chest" },
+                    { "name": "GoS (Entry): Poem Treasure 3rd Chest" },
+                    { "name": "GoS (Entry): Poem Treasure 4th Chest" },
+                    { "name": "GoS (Entry): Poem Treasure 5th Chest" },
+                    { "name": "GoS (Entry): Poem Treasure 6th Chest" },
+                    { "name": "GoS (Entry): Lower Caves Portal" },
+                    { "name": "GoS (Entry): Lower Left Caves" },
+                    { "name": "GoS (Entry): Alcove Above Middle Caves Portal" },
+                    { "name": "GoS (Entry): Yellow Pool Above Middle Caves Portal" },
+                    { "name": "GoS (Entry): Upper Right Caves Portal 1st Chest" },
+                    { "name": "GoS (Entry): Upper Right Caves Portal 2nd Chest" },
+                    { "name": "GoS (Entry): Upper Right Caves Portal 3rd Chest" },
+                    { "name": "GoS (Entry): Near Greenhouse Roof" },
+                    { "name": "GoS (Entry): Greenhouse Between Elevators" },
+                    { "name": "GoS (Entry): Near Upper Right Exit" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 1270,
+                    "y": 285
+                }]
+            },
+            {
+                "name": "Grotto of Scriptures (East)",
+                "sections": [
+                    { "name": "GoS (East): Lurker Near Lower Exit" },
+                    { "name": "GoS (East): Guarded By Phantom Ninja" },
+                    { "name": "GoS (East): Spike Ball Hall Upper Right" },
+                    { "name": "GoS (East): Spike Ball Hall Upper Left" },
+                    { "name": "GoS (East): Lurkers Under Tunnel Walkway" },
+                    { "name": "GoS (East): Portal Below Root Node" },
+                    { "name": "GoS (East): Alcove Between Tombs 1st Chest" },
+                    { "name": "GoS (East): Alcove Between Tombs 2nd Chest" },
+                    { "name": "GoS (East): Alcove Between Tombs 3rd Chest" },
+                    { "name": "GoS (East): Upper Right of Room Above Yin Jifu's Tomb" },
+                    { "name": "GoS (East): Examine Mural in Yin Jifu's Tomb" },
+                    { "name": "GoS (East): Examine Stone Carvings" },
+                    { "name": "GoS (East): Outside Guiguzi's Tomb" },
+                    { "name": "GoS (East): Examine Mural in Guiguzi's Tomb" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 1355,
+                    "y": 230
+                }]
+            },
+            {
+                "name": "Grotto of Scriptures (West)",
+                "sections": [
+                    { "name": "GoS (West): Above Elevator" },
+                    { "name": "GoS (West): Platforms In Top Middle Room" },
+                    { "name": "GoS (West): Below Western Cliffs" },
+                    { "name": "GoS (West): Below Luyan's Tomb" },
+                    { "name": "GoS (West): Examine Mural in Luyan's Tomb" },
+                    { "name": "GoS (West): Yin Jifu's Tianhuo Flower" },
+                    { "name": "GoS (West): Guiguzi's Tianhuo Flower" },
+                    { "name": "GoS (West): Luyan's Tianhuo Flower" },
+                    { "name": "GoS (West): Chest in Lear's Grave" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 1270,
+                    "y": 225
+                }]
+            },
+            {
+                "name": "Ancient Stone Pillar",
+                "sections": [
+                    { "name": "Examine Ji" },
+                    { "name": "Ji's Vital Sanctum" },
+                    { "name": "Retrieve Chip From Shanhai 1000" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 1305,
+                    "y": 160
+                }]
+            },
+            {
+                "name": "Sky Tower",
+                "sections": [
+                    { "name": "Sky Tower: Above Lower Elevator" },
+                    { "name": "Sky Tower: Middle Right Chest" },
+                    { "name": "Sky Tower: Surrounded By Hazards" },
+                    { "name": "Sky Tower: Ropes Below Root Node" },
+                    { "name": "Sky Tower: Stowaway's Tianhuo Flower" },
+                    { "name": "Sky Tower: Examine Stowaway's Belongings" },
+                    { "name": "Sky Tower: By Root Node" },
+                    { "name": "Sky Tower: Pink Water Near Root Node" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 1022,
+                    "y": 225
+                }]
+            },
+            {
+                "name": "Empyrean Dist. (Passages)",
+                "sections": [
+                    { "name": "ED (Passages): Above Transporter" },
+                    { "name": "ED (Passages): Hack 2 Statues" },
+                    { "name": "ED (Passages): Alcove Right of Root Node 1st Chest" },
+                    { "name": "ED (Passages): Alcove Right of Root Node 2nd Chest" },
+                    { "name": "ED (Passages): Slider Right Of Root Node" },
+                    { "name": "ED (Passages): Above Pink Pool Left Of Root Node" },
+                    { "name": "ED (Passages): Far Left Rooms" },
+                    { "name": "ED (Passages): Defeat The Great Miner: Tianshou" },
+                    { "name": "ED (Passages): Examine Water Tower" },
+                    { "name": "ED (Passages): Alcove Between Lasers" },
+                    { "name": "ED (Passages): Covered By Lasers" },
+                    { "name": "ED (Passages): Above Upper Hallway Turret" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 1115,
+                    "y": 230
+                }]
+            },
+            {
+                "name": "Empyrean Dist. (Living Area)",
+                "sections": [
+                    { "name": "ED (Living Area): Above Right Elevator" },
+                    { "name": "ED (Living Area): Retrieve Chip From Shanhai 9000" },
+                    { "name": "ED (Living Area): Examine Bulletin Board" },
+                    { "name": "ED (Living Area): Walking Chest In East Building" },
+                    { "name": "ED (Living Area): Above Root Node" },
+                    { "name": "ED (Living Area): Middle Elevator Chest Room" },
+                    { "name": "ED (Living Area): Defeat Mutated Zouyan in Middle Elevator Room" },
+                    { "name": "ED (Living Area): Fuxi's Vital Sanctum" },
+                    { "name": "ED (Living Area): Upper Right of Five Bells Room" },
+                    { "name": "ED (Living Area): Defeat Mutated A-Shou in Five Bells Room" },
+                    { "name": "ED (Living Area): Roof Right of Opera Theater" },
+                    { "name": "ED (Living Area): Roof Left of Opera Theater" },
+                    { "name": "ED (Living Area): East Building Rooftops" },
+                    { "name": "ED (Living Area): Dusk Guardian Recording Device" },
+                    { "name": "ED (Living Area): Tianhuo Flower" },
+                    { "name": "ED (Living Area): Backer Room 1st Chest" },
+                    { "name": "ED (Living Area): Backer Room 2nd Chest" },
+                    { "name": "ED (Living Area): Backer Room 3rd Chest" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 1140,
+                    "y": 170
+                }]
+            },
+            {
+                "name": "Empyrean Dist. (Sanctum)",
+                "sections": [
+                    { "name": "ED (Sanctum): Examine Monitoring Panel" },
+                    { "name": "ED (Sanctum): East Rooftop Walking Chest" },
+                    { "name": "ED (Sanctum): Right Of East Rooftop" },
+                    { "name": "ED (Sanctum): Above East Rooftop" },
+                    { "name": "ED (Sanctum): Defeat Mutated Xipu Below Nobility Hall" },
+                    { "name": "ED (Sanctum): Defeat Mutated Yangfan Below Root Node" },
+                    { "name": "ED (Sanctum): Lower Left Garden" },
+                    { "name": "ED (Sanctum): Above Lower Left Garden" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 1050,
+                    "y": 170
+                }]
+            },
+            {
+                "name": "Nobility Hall",
+                "sections": [
+                    { "name": "Nuwa's Vital Sanctum" },
+                    { "name": "Chest After Fengs" },
+                    { "name": "Nuwa's Tianhuo Flower" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 990,
+                    "y": 115
+                }]
+            },
+            {
+                "name": "Tiandao Research Center",
+                "sections": [
+                    { "name": "TRC: Find Broken Shanhai 9000" },
+                    { "name": "TRC: Covered In Spikes" },
+                    { "name": "TRC: Ground Floor Bookshelf" },
+                    { "name": "TRC: Before Chien Arena" },
+                    { "name": "TRC: Above Sol Statue" },
+                    { "name": "TRC: Past Spikes In Sickbay Vents" },
+                    { "name": "TRC: Dusk Guardian Recording Device" },
+                    { "name": "TRC: Destroy Tendril In The Highest Room" },
+                    { "name": "TRC: Defeat Mutated Shiyangyue Near Xingtian Sickbay" },
+                    { "name": "TRC: Behind Mutant Barrier" },
+                    { "name": "TRC: Destroy Tendril Near Sol Statue" },
+                    { "name": "TRC: Chest Near Dusk Guardian HQ Screen" },
+                    { "name": "TRC: Destroy Tendril Near Guardian HQ Screen" },
+                    { "name": "TRC: Examine Dusk Guardian HQ Screen" }
+                ],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 980,
+                    "y": 355
+                }]
+            },
+            {
+                "name": "Defeat Eigong",
+                "sections": [{ "name": "???" }],
+                "map_locations": [{
+                    "map": "world_map",
+                    "x": 760,
+                    "y": 40
+                }]
+            }
+        ]
+    },
+    {
+        "name": "Abandoned Mines",
+        "children": [
+            {
+                "name": "Above Left Exit", "sections": [{ "name": "AM: Above Left Exit" }],
+                "map_locations": [{ "map": "abandoned_mines", "x": 95, "y": 110 }]
+            },
+            {
+                "name": "Defeat Celestial Warden: Yinyue", "sections": [{ "name": "AM: Defeat Celestial Warden: Yinyue" }],
+                "map_locations": [{ "map": "abandoned_mines", "x": 165, "y": 30 }]
+            },
+            {
+                "name": "Near Root Node", "sections": [{ "name": "AM: Near Root Node" }],
+                "map_locations": [{ "map": "abandoned_mines", "x": 630, "y": 125 }]
+            },
+            {
+                "name": "Walking Chest", "sections": [{ "name": "AM: Walking Chest" }],
+                "map_locations": [{ "map": "abandoned_mines", "x": 580, "y": 165 }]
+            },
+            {
+                "name": "Tianhuo Flower", "sections": [{ "name": "AM: Tianhuo Flower" }],
+                "map_locations": [{ "map": "abandoned_mines", "x": 915, "y": 155 }]
+            },
+            {
+                "name": "Chests After Flower", "sections": [
+                    { "name": "AM: 1st Chest After Flower" },
+                    { "name": "AM: 2nd Chest After Flower" }
+                ],
+                "map_locations": [{ "map": "abandoned_mines", "x": 760, "y": 110 }]
+            }
+        ]
+    },
+    {
+        "name": "Agrarian Hall",
+        "children": [
+            {
+                "name": "Chest After Goumang", "sections": [
+                    { "name": "Chest After Goumang (1st Reward)" },
+                    { "name": "Chest After Goumang (2nd Reward)" }
+                ],
+                "map_locations": [{ "map": "agrarian_hall", "x": 430, "y": 180 }]
+            },
+            {
+                "name": "Goumang's Vital Sanctum", "sections": [{ "name": "Goumang's Vital Sanctum" }],
+                "map_locations": [{ "map": "agrarian_hall", "x": 270, "y": 180 }]
+            }
+        ]
+    },
+    {
+        "name": "Ancient Stone Pillar",
+        "children": [
+            {
+                "name": "Examine Ji", "sections": [{ "name": "Examine Ji" }],
+                "map_locations": [{ "map": "ancient_stone_pillar", "x": 370, "y": 140 }]
+            },
+            {
+                "name": "Ji's Vital Sanctum", "sections": [{ "name": "Ji's Vital Sanctum" }],
+                "map_locations": [{ "map": "ancient_stone_pillar", "x": 650, "y": 140 }]
+            },
+            {
+                "name": "Retrieve Chip From Shanhai 1000", "sections": [{ "name": "Retrieve Chip From Shanhai 1000" }],
+                "map_locations": [{ "map": "ancient_stone_pillar", "x": 830, "y": 140 }]
+            }
+        ]
+    },
+    {
+        "name": "Apeman Facility (Depths)",
+        "children": [
+            {
+                "name": "Crystal Caves", "sections": [{ "name": "AF (Depths): Crystal Caves" }],
+                "map_locations": [{ "map": "apeman_facility_depths", "x": 365, "y": 155 }]
+            },
+            {
+                "name": "Defeat Celestial Spectre: Shangui", "sections": [
+                    { "name": "AF (Depths): Defeat Celestial Spectre: Shangui (1st Reward)" },
+                    { "name": "AF (Depths): Defeat Celestial Spectre: Shangui (2nd Reward)" }
+                ],
+                "map_locations": [{ "map": "apeman_facility_depths", "x": 290, "y": 205 }]
+            },
+            {
+                "name": "Below Root Node", "sections": [{ "name": "AF (Depths): Below Root Node" }],
+                "map_locations": [{ "map": "apeman_facility_depths", "x": 410, "y": 245 }]
+            },
+            {
+                "name": "Hack 3 Statues", "sections": [{ "name": "AF (Depths): Hack 3 Statues" }],
+                "map_locations": [{ "map": "apeman_facility_depths", "x": 375, "y": 280 }]
+            },
+            {
+                "name": "Lower Level", "sections": [{ "name": "AF (Depths): Lower Level" }],
+                "map_locations": [{ "map": "apeman_facility_depths", "x": 550, "y": 330 }]
+            },
+            {
+                "name": "Under Lower Left Exit", "sections": [{ "name": "AF (Depths): Under Lower Left Exit" }],
+                "map_locations": [{ "map": "apeman_facility_depths", "x": 395, "y": 305 }]
+            },
+            {
+                "name": "Tianhuo Flower Under Elevator", "sections": [{ "name": "AF (Depths): Tianhuo Flower Under Elevator" }],
+                "map_locations": [{ "map": "apeman_facility_depths", "x": 715, "y": 245 }]
+            },
+            {
+                "name": "Upper Right Chest", "sections": [
+                    { "name": "AF (Depths): Upper Right Chest (1st Reward)" },
+                    { "name": "AF (Depths): Upper Right Chest (2nd Reward)" }
+                ],
+                "map_locations": [{ "map": "apeman_facility_depths", "x": 550, "y": 95 }]
+            }
+        ]
+    },
+    {
+        "name": "Apeman Facility (Elevator)",
+        "children": [
+            {
+                "name": "Hidden Atop Upper Level Pagoda", "sections": [
+                    { "name": "AF (Elevator): Hidden Atop Upper Level Pagoda (Left Chest)" },
+                    { "name": "AF (Elevator): Hidden Atop Upper Level Pagoda (Right Chest)" }
+                ],
+                "map_locations": [{ "map": "apeman_facility_elevator", "x": 537, "y": 110 }]
+            },
+            {
+                "name": "Moving Boxes", "sections": [{ "name": "AF (Elevator): Moving Boxes" }],
+                "map_locations": [{ "map": "apeman_facility_elevator", "x": 360, "y": 210 }]
+            },
+            {
+                "name": "Defeat Red Tiger Elite: Baichang", "sections": [{ "name": "AF (Elevator): Defeat Red Tiger Elite: Baichang" }],
+                "map_locations": [{ "map": "apeman_facility_elevator", "x": 680, "y": 285 }]
+            },
+            {
+                "name": "Elevator Shaft", "sections": [{ "name": "AF (Elevator): Elevator Shaft" }],
+                "map_locations": [{ "map": "apeman_facility_elevator", "x": 105, "y": 225 }]
+            },
+            {
+                "name": "Hack Statue", "sections": [{ "name": "AF (Elevator): Hack Statue" }],
+                "map_locations": [{ "map": "apeman_facility_elevator", "x": 180, "y": 285 }]
+            },
+            {
+                "name": "Over Electrified Floor", "sections": [{ "name": "AF (Elevator): Over Electrified Floor" }],
+                "map_locations": [{ "map": "apeman_facility_elevator", "x": 420, "y": 300 }]
+            }
+        ]
+    },
+    {
+        "name": "Apeman Facility (Monitoring)",
+        "children": [
+            {
+                "name": "Break Corpse", "sections": [{ "name": "AF (Monitoring): Break Corpse" }],
+                "map_locations": [{ "map": "apeman_facility_monitoring", "x": 343, "y": 40 }]
+            },
+            {
+                "name": "Upper Right", "sections": [{ "name": "AF (Monitoring): Upper Right" }],
+                "map_locations": [{ "map": "apeman_facility_monitoring", "x": 820, "y": 80 }]
+            },
+            {
+                "name": "Lower Vent", "sections": [{ "name": "AF (Monitoring): Lower Vent" }],
+                "map_locations": [{ "map": "apeman_facility_monitoring", "x": 400, "y": 110 }]
+            },
+            {
+                "name": "Examine Apeman Surveillance", "sections": [{ "name": "AF (Monitoring): Examine Apeman Surveillance" }],
+                "map_locations": [{ "map": "apeman_facility_monitoring", "x": 473, "y": 210 }]
+            }
+        ]
+    },
+    {
+        "name": "Boundless Repository",
+        "children": [
+            {
+                "name": "Examine Console", "sections": [{ "name": "BR: Examine Console" }],
+                "map_locations": [{ "map": "boundless_repository", "x": 535, "y": 230 }]
+            },
+            {
+                "name": "Near Xingtian Console", "sections": [{ "name": "BR: Near Xingtian Console" }],
+                "map_locations": [{ "map": "boundless_repository", "x": 465, "y": 230 }]
+            },
+            {
+                "name": "Gauntlet", "sections": [
+                    { "name": "BR: Gauntlet Part 1 Chest" },
+                    { "name": "BR: Gauntlet Part 2 First Chest" },
+                    { "name": "BR: Gauntlet Part 2 Chest Past Lasers" },
+                    { "name": "BR: Gauntlet Part 2 Chest Past Beetle" }
+                ],
+                "map_locations": [{ "map": "boundless_repository", "x": 180, "y": 325 }]
+            },
+            {
+                "name": "Vault", "sections": [
+                    { "name": "BR: Vault 1st Chest" },
+                    { "name": "BR: Vault 2nd Chest" },
+                    { "name": "BR: Examine Vault Scroll" },
+                    { "name": "BR: Vault 3rd Chest" },
+                    { "name": "BR: Vault 4th Chest" }
+                ],
+                "map_locations": [{ "map": "boundless_repository", "x": 569, "y": 312 }]
+            }
+        ]
+    },
+    {
+        "name": "Cortex Center",
+        "children": [
+            {
+                "name": "Defeat Lady Ethereal", "sections": [{ "name": "Cortex Center: Defeat Lady Ethereal" }],
+                "map_locations": [{ "map": "cortex_center", "x": 585, "y": 300 }]
+            },
+            {
+                "name": "Tianhuo Flower After Soulscape", "sections": [{ "name": "Cortex Center: Tianhuo Flower After Soulscape" }],
+                "map_locations": [{ "map": "cortex_center", "x": 550, "y": 300 }]
+            },
+            {
+                "name": "Retrieve Chip From Shanhai 9000", "sections": [{ "name": "Cortex Center: Retrieve Chip From Shanhai 9000" }],
+                "map_locations": [{ "map": "cortex_center", "x": 680, "y": 300 }]
+            },
+            {
+                "name": "Crystal Caves Upper Right", "sections": [{ "name": "Cortex Center: Crystal Caves Upper Right" }],
+                "map_locations": [{ "map": "cortex_center", "x": 310, "y": 30 }]
+            },
+            {
+                "name": "Crystal Caves Central Chamber", "sections": [{ "name": "Cortex Center: Crystal Caves Central Chamber" }],
+                "map_locations": [{ "map": "cortex_center", "x": 245, "y": 100 }]
+            },
+            {
+                "name": "Near Left Exit", "sections": [{ "name": "Cortex Center: Near Left Exit" }],
+                "map_locations": [{ "map": "cortex_center", "x": 190, "y": 295 }]
+            }
+        ]
+    },
+    {
+        "name": "Central Hall",
+        "children": [
+            {
+                "name": "Examine Council Sign", "sections": [{ "name": "Central Hall: Examine Council Sign" }],
+                "map_locations": [{ "map": "central_hall", "x": 240, "y": 150 }]
+            },
+            {
+                "name": "Examine Launch Memorial", "sections": [{ "name": "Central Hall: Examine Launch Memorial" }],
+                "map_locations": [{ "map": "central_hall", "x": 600, "y": 155 }]
+            },
+            {
+                "name": "Examine Council Tenets", "sections": [{ "name": "Central Hall: Examine Council Tenets" }],
+                "map_locations": [{ "map": "central_hall", "x": 95, "y": 165 }]
+            },
+            {
+                "name": "Turrets and Double Axe Robot Room", "sections": [{ "name": "Central Hall: Turrets and Double Axe Robot Room" }],
+                "map_locations": [{ "map": "central_hall", "x": 62, "y": 200 }]
+            },
+            {
+                "name": "Vents", "sections": [{ "name": "Central Hall: Vents" }],
+                "map_locations": [{ "map": "central_hall", "x": 252, "y": 185 }]
+            }
+        ]
+    },
+    {
+        "name": "Central Transport Hub",
+        "children": [
+            {
+                "name": "Large Elevator Shaft", "sections": [{ "name": "CTH: Large Elevator Shaft" }],
+                "map_locations": [{ "map": "central_transport_hub", "x": 365, "y": 255 }]
+            },
+            {
+                "name": "Defeat Red Tiger Elite: Yanren", "sections": [{ "name": "CTH: Defeat Red Tiger Elite: Yanren" }],
+                "map_locations": [{ "map": "central_transport_hub", "x": 160, "y": 260 }]
+            },
+            {
+                "name": "Side Room Near Right Exit", "sections": [{ "name": "CTH: Side Room Near Right Exit" }],
+                "map_locations": [{ "map": "central_transport_hub", "x": 370, "y": 320 }]
+            },
+            {
+                "name": "Lower Left Vents", "sections": [{ "name": "CTH: Lower Left Vents" }],
+                "map_locations": [{ "map": "central_transport_hub", "x": 185, "y": 370 }]
+            },
+            {
+                "name": "Examine Panel by Root Node", "sections": [{ "name": "CTH: Examine Panel by Root Node" }],
+                "map_locations": [{ "map": "central_transport_hub", "x": 335, "y": 350 }]
+            },
+            {
+                "name": "Hack 2 Statues", "sections": [{ "name": "CTH: Hack 2 Statues" }],
+                "map_locations": [{ "map": "central_transport_hub", "x": 350, "y": 410 }]
+            }
+        ]
+    },
+    {
+        "name": "Empyrean Dist. (Living Area)",
+        "children": [
+            {
+                "name": "Above Right Elevator", "sections": [{ "name": "ED (Living Area): Above Right Elevator" }],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 375, "y": 90 }]
+            },
+            {
+                "name": "Retrieve Chip From Shanhai 9000", "sections": [{ "name": "ED (Living Area): Retrieve Chip From Shanhai 9000" }],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 340, "y": 125 }]
+            },
+            {
+                "name": "Examine Bulletin Board", "sections": [{ "name": "ED (Living Area): Examine Bulletin Board" }],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 360, "y": 140 }]
+            },
+            {
+                "name": "Walking Chest In East Building", "sections": [{ "name": "ED (Living Area): Walking Chest In East Building" }],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 300, "y": 100 }]
+            },
+            {
+                "name": "Above Root Node", "sections": [{ "name": "ED (Living Area): Above Root Node" }],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 160, "y": 145 }]
+            },
+            {
+                "name": "Middle Elevator Chest Room", "sections": [{ "name": "ED (Living Area): Middle Elevator Chest Room" }],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 245, "y": 125 }]
+            },
+            {
+                "name": "Defeat Mutated Zouyan in Middle Elevator Room", "sections": [{ "name": "ED (Living Area): Defeat Mutated Zouyan in Middle Elevator Room" }],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 240, "y": 100 }]
+            },
+            {
+                "name": "Fuxi's Vital Sanctum", "sections": [{ "name": "ED (Living Area): Fuxi's Vital Sanctum" }],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 100, "y": 90 }]
+            },
+            {
+                "name": "Upper Right of Five Bells Room", "sections": [{ "name": "ED (Living Area): Upper Right of Five Bells Room" }],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 150, "y": 110 }]
+            },
+            {
+                "name": "Defeat Mutated A-Shou in Five Bells Room", "sections": [{ "name": "ED (Living Area): Defeat Mutated A-Shou in Five Bells Room" }],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 135, "y": 110 }]
+            },
+            {
+                "name": "Roof Right of Opera Theater", "sections": [{ "name": "ED (Living Area): Roof Right of Opera Theater" }],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 152, "y": 22 }]
+            },
+            {
+                "name": "Roof Right of Opera Theater", "sections": [{ "name": "ED (Living Area): Roof Left of Opera Theater" }],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 30, "y": 27 }]
+            },
+            {
+                "name": "East Building Rooftops", "sections": [{ "name": "ED (Living Area): East Building Rooftops" }],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 300, "y": 45 }]
+            },
+            {
+                "name": "Tianhuo Flower", "sections": [
+                    { "name": "ED (Living Area): Dusk Guardian Recording Device" },
+                    { "name": "ED (Living Area): Tianhuo Flower" }
+                ],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 345, "y": 45 }]
+            },
+            {
+                "name": "Backer Room", "sections": [
+                    { "name": "ED (Living Area): Backer Room 1st Chest" },
+                    { "name": "ED (Living Area): Backer Room 2nd Chest" },
+                    { "name": "ED (Living Area): Backer Room 3rd Chest" }
+                ],
+                "map_locations": [{ "map": "empyrean_district_living_area", "x": 100, "y": 130 }]
+            }
+        ]
+    },
+    {
+        "name": "Empyrean Dist. (Passages)",
+        "children": [
+            {
+                "name": "Above Transporter", "sections": [{ "name": "ED (Passages): Above Transporter" }],
+                "map_locations": [{ "map": "empyrean_district_passages", "x": 1180, "y": 180 }]
+            },
+            {
+                "name": "Hack 2 Statues", "sections": [{ "name": "ED (Passages): Hack 2 Statues" }],
+                "map_locations": [{ "map": "empyrean_district_passages", "x": 542, "y": 250 }]
+            },
+            {
+                "name": "Alcove Right of Root Node", "sections": [
+                    { "name": "ED (Passages): Alcove Right of Root Node 1st Chest" },
+                    { "name": "ED (Passages): Alcove Right of Root Node 2nd Chest" }
+                ],
+                "map_locations": [{ "map": "empyrean_district_passages", "x": 745, "y": 277 }]
+            },
+            {
+                "name": "Slider Right Of Root Node", "sections": [{ "name": "ED (Passages): Slider Right Of Root Node" }],
+                "map_locations": [{ "map": "empyrean_district_passages", "x": 885, "y": 175 }]
+            },
+            {
+                "name": "Above Pink Pool Left Of Root Node", "sections": [{ "name": "ED (Passages): Above Pink Pool Left Of Root Node" }],
+                "map_locations": [{ "map": "empyrean_district_passages", "x": 340, "y": 155 }]
+            },
+            {
+                "name": "Far Left Rooms", "sections": [{ "name": "ED (Passages): Far Left Rooms" }],
+                "map_locations": [{ "map": "empyrean_district_passages", "x": 220, "y": 255 }]
+            },
+            {
+                "name": "Defeat The Great Miner: Tianshou", "sections": [{ "name": "ED (Passages): Defeat The Great Miner: Tianshou" }],
+                "map_locations": [{ "map": "empyrean_district_passages", "x": 640, "y": 145 }]
+            },
+            {
+                "name": "Examine Water Tower", "sections": [{ "name": "ED (Passages): Examine Water Tower" }],
+                "map_locations": [{ "map": "empyrean_district_passages", "x": 1075, "y": 70 }]
+            },
+            {
+                "name": "Alcove Between Lasers", "sections": [{ "name": "ED (Passages): Alcove Between Lasers" }],
+                "map_locations": [{ "map": "empyrean_district_passages", "x": 1043, "y": 140 }]
+            },
+            {
+                "name": "Covered By Lasers", "sections": [{ "name": "ED (Passages): Covered By Lasers" }],
+                "map_locations": [{ "map": "empyrean_district_passages", "x": 1025, "y": 215 }]
+            },
+            {
+                "name": "Above Upper Hallway Turret", "sections": [{ "name": "ED (Passages): Above Upper Hallway Turret" }],
+                "map_locations": [{ "map": "empyrean_district_passages", "x": 889, "y": 53 }]
+            }
+        ]
+    },
+    {
+        "name": "Empyrean Dist. (Sanctum)",
+        "children": [
+            {
+                "name": "Examine Monitoring Panel", "sections": [{ "name": "ED (Sanctum): Examine Monitoring Panel" }],
+                "map_locations": [{ "map": "empyrean_district_sanctum", "x": 680, "y": 125 }]
+            },
+            {
+                "name": "East Rooftop Walking Chest", "sections": [{ "name": "ED (Sanctum): East Rooftop Walking Chest" }],
+                "map_locations": [{ "map": "empyrean_district_sanctum", "x": 505, "y": 85 }]
+            },
+            {
+                "name": "Right Of East Rooftop", "sections": [{ "name": "ED (Sanctum): Right Of East Rooftop" }],
+                "map_locations": [{ "map": "empyrean_district_sanctum", "x": 737, "y": 90 }]
+            },
+            {
+                "name": "Above East Rooftop", "sections": [{ "name": "ED (Sanctum): Above East Rooftop" }],
+                "map_locations": [{ "map": "empyrean_district_sanctum", "x": 725, "y": 55 }]
+            },
+            {
+                "name": "Defeat Mutated Xipu Below Nobility Hall", "sections": [{ "name": "ED (Sanctum): Defeat Mutated Xipu Below Nobility Hall" }],
+                "map_locations": [{ "map": "empyrean_district_sanctum", "x": 285, "y": 210 }]
+            },
+            {
+                "name": "Defeat Mutated Yangfan Below Root Node", "sections": [{ "name": "ED (Sanctum): Defeat Mutated Yangfan Below Root Node" }],
+                "map_locations": [{ "map": "empyrean_district_sanctum", "x": 415, "y": 245 }]
+            },
+            {
+                "name": "Lower Left Garden", "sections": [{ "name": "ED (Sanctum): Lower Left Garden" }],
+                "map_locations": [{ "map": "empyrean_district_sanctum", "x": 20, "y": 250 }]
+            },
+            {
+                "name": "Above Lower Left Garden", "sections": [{ "name": "ED (Sanctum): Above Lower Left Garden" }],
+                "map_locations": [{ "map": "empyrean_district_sanctum", "x": 70, "y": 200 }]
+            }
+        ]
+    },
+    {
+        "name": "Factory (Great Hall)",
+        "children": [
+            {
+                "name": "Near Rightmost Shield Orb", "sections": [{ "name": "Factory (GH): Near Rightmost Shield Orb" }],
+                "map_locations": [{ "map": "factory_great_hall", "x": 505, "y": 105 }]
+            },
+            {
+                "name": "Near Root Node", "sections": [{ "name": "Factory (GH): Near Root Node" }],
+                "map_locations": [{ "map": "factory_great_hall", "x": 430, "y": 75 }]
+            },
+            {
+                "name": "Near Middle Shield Orb", "sections": [{ "name": "Factory (GH): Near Middle Shield Orb" }],
+                "map_locations": [{ "map": "factory_great_hall", "x": 375, "y": 100 }]
+            },
+            {
+                "name": "Tianhuo Flower Below Hammers", "sections": [{ "name": "Factory (GH): Tianhuo Flower Below Hammers" }],
+                "map_locations": [{ "map": "factory_great_hall", "x": 270, "y": 105 }]
+            },
+            {
+                "name": "Break the Hammers", "sections": [{ "name": "Factory (GH): Break the Hammers" }],
+                "map_locations": [{ "map": "factory_great_hall", "x": 294, "y": 75 }]
+            },
+            {
+                "name": "Examine Furnace Monitor", "sections": [{ "name": "Factory (GH): Examine Furnace Monitor" }],
+                "map_locations": [{ "map": "factory_great_hall", "x": 162, "y": 82 }]
+            },
+            {
+                "name": "Raise the Bridge for Chiyou", "sections": [{ "name": "Factory (GH): Raise the Bridge for Chiyou" }],
+                "map_locations": [{ "map": "factory_great_hall", "x": 95, "y": 82 }]
+            },
+            {
+                "name": "Roof Above Root Node", "sections": [{ "name": "Factory (GH): Roof Above Root Node" }],
+                "map_locations": [{ "map": "factory_great_hall", "x": 435, "y": 55 }]
+            },
+            {
+                "name": "Near Right Elevator", "sections": [{ "name": "Factory (GH): Near Right Elevator" }],
+                "map_locations": [{ "map": "factory_great_hall", "x": 600, "y": 40 }]
+            },
+            {
+                "name": "Platform Puzzle Room", "sections": [
+                    { "name": "Factory (GH): Ball Drop in Platform Puzzle Room" },
+                    { "name": "Factory (GH): Recording Device in Platform Puzzle Room" },
+                    { "name": "Factory (GH): Tianhuo Flower in Platform Puzzle Room" }
+                ],
+                "map_locations": [{ "map": "factory_great_hall", "x": 620, "y": 40 }]
+            }
+        ]
+    },
+    {
+        "name": "Factory (Machine Room)",
+        "children": [
+            {
+                "name": "Below Right Elevator", "sections": [{ "name": "Factory (MR): Below Right Elevator" }],
+                "map_locations": [{ "map": "factory_machine_room", "x": 730, "y": 142 }]
+            },
+            {
+                "name": "Break Turret Below Elevator", "sections": [{ "name": "Factory (MR): Break Turret Below Elevator" }],
+                "map_locations": [{ "map": "factory_machine_room", "x": 625, "y": 142 }]
+            },
+            {
+                "name": "Above Left Elevator", "sections": [{ "name": "Factory (MR): Above Left Elevator" }],
+                "map_locations": [{ "map": "factory_machine_room", "x": 40, "y": 185 }]
+            },
+            {
+                "name": "Walking Chest Above Green Pillar", "sections": [{ "name": "Factory (MR): Walking Chest Above Green Pillar" }],
+                "map_locations": [{ "map": "factory_machine_room", "x": 182, "y": 35 }]
+            },
+            {
+                "name": "Behind Turret Near Green Pillar", "sections": [{ "name": "Factory (MR): Behind Turret Near Green Pillar" }],
+                "map_locations": [{ "map": "factory_machine_room", "x": 250, "y": 180 }]
+            },
+            {
+                "name": "Near Moving Platforms", "sections": [{ "name": "Factory (MR): Near Moving Platforms" }],
+                "map_locations": [{ "map": "factory_machine_room", "x": 325, "y": 45 }]
+            },
+            {
+                "name": "Tianhuo Flower Above Right Elevator", "sections": [{ "name": "Factory (MR): Tianhuo Flower Above Right Elevator" }],
+                "map_locations": [{ "map": "factory_machine_room", "x": 610, "y": 80 }]
+            }
+        ]
+    },
+    {
+        "name": "Factory (Production Area)",
+        "children": [
+            {
+                "name": "Behind Fire in Lower Left Vents", "sections": [{ "name": "Factory (PA): Behind Fire in Lower Left Vents" }],
+                "map_locations": [{ "map": "factory_production_area", "x": 93, "y": 200 }]
+            },
+            {
+                "name": "Hallway Near Jiequan Statue", "sections": [{ "name": "Factory (PA): Hallway Near Jiequan Statue" }],
+                "map_locations": [{ "map": "factory_production_area", "x": 145, "y": 145 }]
+            },
+            {
+                "name": "Three Guard Spawners", "sections": [{ "name": "Factory (PA): Three Guard Spawners" }],
+                "map_locations": [{ "map": "factory_production_area", "x": 375, "y": 130 }]
+            },
+            {
+                "name": "Behind Hack in Upper Left Vents", "sections": [{ "name": "Factory (PA): Behind Hack in Upper Left Vents" }],
+                "map_locations": [{ "map": "factory_production_area", "x": 60, "y": 125 }]
+            },
+            {
+                "name": "Examine Production Station", "sections": [{ "name": "Factory (PA): Examine Production Station" }],
+                "map_locations": [{ "map": "factory_production_area", "x": 295, "y": 185 }]
+            },
+            {
+                "name": "Vents Below Production Station", "sections": [{ "name": "Factory (PA): Vents Below Production Station" }],
+                "map_locations": [{ "map": "factory_production_area", "x": 300, "y": 200 }]
+            },
+            {
+                "name": "Below Double Sniper Zone", "sections": [{ "name": "Factory (PA): Below Double Sniper Zone" }],
+                "map_locations": [{ "map": "factory_production_area", "x": 285, "y": 110 }]
+            },
+            {
+                "name": "Pharmacy", "sections": [
+                    { "name": "Factory (PA): Examine Pharmacy Panel" },
+                    { "name": "Factory (PA): Ball Drop in Pharmacy" }
+                ],
+                "map_locations": [{ "map": "factory_production_area", "x": 160, "y": 90 }]
+            },
+            {
+                "name": "Bottom of Right Fire Zone", "sections": [{ "name": "Factory (PA): Bottom of Right Fire Zone" }],
+                "map_locations": [{ "map": "factory_production_area", "x": 413, "y": 185 }]
+            },
+            {
+                "name": "Defeat Shanhai 9000", "sections": [{ "name": "Factory (PA): Defeat Shanhai 9000" }],
+                "map_locations": [{ "map": "factory_production_area", "x": 500, "y": 185 }]
+            },
+            {
+                "name": "Top of Right Fire Zone", "sections": [{ "name": "Factory (PA): Top of Right Fire Zone" }],
+                "map_locations": [{ "map": "factory_production_area", "x": 490, "y": 110 }]
+            },
+            {
+                "name": "Far Side of Wuqiang Arena", "sections": [{ "name": "Factory (PA): Far Side of Wuqiang Arena" }],
+                "map_locations": [{ "map": "factory_production_area", "x": 565, "y": 163 }]
+            },
+            {
+                "name": "Defeat Celestial Sentinel: Wuqiang", "sections": [{ "name": "Factory (PA): Defeat Celestial Sentinel: Wuqiang" }],
+                "map_locations": [{ "map": "factory_production_area", "x": 510, "y": 160 }]
+            }
+        ]
+    },
+    {
+        "name": "Factory (Underground)",
+        "children": [
+            {
+                "name": "Near Upper Right Exit", "sections": [{ "name": "Factory (U): Near Upper Right Exit" }],
+                "map_locations": [{ "map": "factory_underground", "x": 800, "y": 60 }]
+            },
+            {
+                "name": "Defeat Red Tiger Elite: Kuiyan", "sections": [{ "name": "Factory (U): Defeat Red Tiger Elite: Kuiyan" }],
+                "map_locations": [{ "map": "factory_underground", "x": 760, "y": 120 }]
+            },
+            {
+                "name": "Near Lower Elevator", "sections": [{ "name": "Factory (U): Near Lower Elevator" }],
+                "map_locations": [{ "map": "factory_underground", "x": 675, "y": 155 }]
+            },
+            {
+                "name": "Hack 2 Statues", "sections": [{ "name": "Factory (U): Hack 2 Statues" }],
+                "map_locations": [{ "map": "factory_underground", "x": 800, "y": 185 }]
+            },
+            {
+                "name": "Find Broken Shanhai 9000", "sections": [{ "name": "Factory (U): Find Broken Shanhai 9000" }],
+                "map_locations": [{ "map": "factory_underground", "x": 930, "y": 115 }]
+            },
+            {
+                "name": "Examine Evacuation Notice", "sections": [{ "name": "Factory (U): Examine Evacuation Notice" }],
+                "map_locations": [{ "map": "factory_underground", "x": 1105, "y": 110 }]
+            },
+            {
+                "name": "Above Root Node", "sections": [{ "name": "Factory (U): Above Root Node" }],
+                "map_locations": [{ "map": "factory_underground", "x": 535, "y": 135 }]
+            },
+            {
+                "name": "Below Walkway to Left Exit", "sections": [{ "name": "Factory (U): Below Walkway to Left Exit" }],
+                "map_locations": [{ "map": "factory_underground", "x": 240, "y": 200 }]
+            },
+            {
+                "name": "Behind Moving Boxes", "sections": [{ "name": "Factory (U): Behind Moving Boxes" }],
+                "map_locations": [{ "map": "factory_underground", "x": 350, "y": 80 }]
+            }
+        ]
+    },
+    {
+        "name": "Four Seasons Pavilion",
+        "children": [
+            {
+                "name": "Kuafu", "sections": [
+                    { "name": "FSP: Kuafu's 1st Gift" },
+                    { "name": "FSP: Kuafu's 2nd Gift" },
+                    { "name": "FSP: Give Kuafu the Homing Darts" },
+                    { "name": "FSP: Give Kuafu the Thunderburst Bomb" }
+                ],
+                "map_locations": [{ "map": "four_seasons_pavilion", "x": 160, "y": 185 }]
+            },
+            {
+                "name": "Chiyou", "sections": [
+                    { "name": "FSP: Give Yi's Portrait to Chiyou" },
+                    { "name": "FSP: Give Shuanshuan's Book to Chiyou" }
+                ],
+                "map_locations": [{ "map": "four_seasons_pavilion", "x": 385, "y": 185 }]
+            },
+            {
+                "name": "Reveal the Kunlun Immortal Portrait's Secret", "sections": [{ "name": "FSP: Reveal the Kunlun Immortal Portrait's Secret" }],
+                "map_locations": [{ "map": "four_seasons_pavilion", "x": 227, "y": 220 }]
+            },
+            {
+                "name": "Decode the Ancient Sheet Music", "sections": [{ "name": "FSP: Decode the Ancient Sheet Music" }],
+                "map_locations": [{ "map": "four_seasons_pavilion", "x": 358, "y": 220 }]
+            },
+            {
+                "name": "Shuanshuan's Desk and Bookshelf", "sections": [
+                    { "name": "FSP: Have Yi's Portrait Painted" },
+                    { "name": "FSP: Take Shuanshuan's Book" }
+                ],
+                "map_locations": [{ "map": "four_seasons_pavilion", "x": 304, "y": 220 }]
+            },
+            {
+                "name": "Receive Peach Blossom Village Quest", "sections": [{ "name": "FSP: Receive Peach Blossom Village Quest" }],
+                "map_locations": [{ "map": "four_seasons_pavilion", "x": 430, "y": 220 }]
+            },
+            {
+                "name": "Half-Grown Tree Chest", "sections": [{ "name": "FSP: Half-Grown Tree Chest" }],
+                "map_locations": [{ "map": "four_seasons_pavilion", "x": 430, "y": 185 }]
+            },
+            {
+                "name": "Fully Grown Tree Chests", "sections": [
+                    { "name": "FSP: Fully Grown Tree 1st Chest" },
+                    { "name": "FSP: Fully Grown Tree 2nd Chest" }
+                ],
+                "map_locations": [{ "map": "four_seasons_pavilion", "x": 300, "y": 130 }]
+            },
+            {
+                "name": "Isolate the Mutant Gene Sequence", "sections": [{ "name": "FSP: Isolate the Mutant Gene Sequence" }],
+                "map_locations": [{ "map": "four_seasons_pavilion", "x": 652, "y": 215 }]
+            }
+        ]
+    },
+    {
+        "name": "Galactic Dock & Village",
+        "children": [
+            {
+                "name": "Lieguan", "sections": [{ "name": "Village: Defeat Red Tiger Elite: Lieguan" }],
+                "map_locations": [{ "map": "galactic_dock_and_village", "x": 220, "y": 60 }]
+            },
+            {
+                "name": "Examine Sign", "sections": [{ "name": "Galactic Dock: Examine Sign" }],
+                "map_locations": [{ "map": "galactic_dock_and_village", "x": 850, "y": 63 }]
+            },
+            {
+                "name": "Tianhuo Flower", "sections": [{ "name": "Galactic Dock: Tianhuo Flower" }],
+                "map_locations": [{ "map": "galactic_dock_and_village", "x": 525, "y": 50 }]
+            },
+            {
+                "name": "Shaman's Gift", "sections": [{ "name": "Galactic Dock: Shaman's Gift" }],
+                "map_locations": [{ "map": "galactic_dock_and_village", "x": 397, "y": 60 }]
+            }
+        ]
+    },
+    {
+        "name": "Greenhouse",
+        "children": [
+            {
+                "name": "Hackable Rope Near Wreckage", "sections": [{ "name": "Greenhouse: Hackable Rope Near Wreckage" }],
+                "map_locations": [{ "map": "greenhouse", "x": 667, "y": 120 }]
+            },
+            {
+                "name": "Examine Water Report", "sections": [{ "name": "Greenhouse: Examine Water Report" }],
+                "map_locations": [{ "map": "greenhouse", "x": 590, "y": 55 }]
+            },
+            {
+                "name": "Retrieve Chip From Shanhai 9000", "sections": [{ "name": "Greenhouse: Retrieve Chip From Shanhai 9000" }],
+                "map_locations": [{ "map": "greenhouse", "x": 565, "y": 55 }]
+            },
+            {
+                "name": "Near Rightmost Hanging Pool", "sections": [{ "name": "Greenhouse: Near Rightmost Hanging Pool" }],
+                "map_locations": [{ "map": "greenhouse", "x": 540, "y": 85 }]
+            },
+            {
+                "name": "Hidden in Upper Level Foliage", "sections": [{ "name": "Greenhouse: Hidden in Upper Level Foliage" }],
+                "map_locations": [{ "map": "greenhouse", "x": 410, "y": 55 }]
+            },
+            {
+                "name": "Vase In Water Above Root Node", "sections": [{ "name": "Greenhouse: Vase In Water Above Root Node" }],
+                "map_locations": [{ "map": "greenhouse", "x": 470, "y": 135 }]
+            },
+            {
+                "name": "In Leftmost Hanging Pool", "sections": [{ "name": "Greenhouse: In Leftmost Hanging Pool" }],
+                "map_locations": [{ "map": "greenhouse", "x": 230, "y": 95 }]
+            },
+            {
+                "name": "Examine Mutated Crops", "sections": [{ "name": "Greenhouse: Examine Mutated Crops" }],
+                "map_locations": [{ "map": "greenhouse", "x": 70, "y": 135 }]
+            },
+            {
+                "name": "Defeat Celestial Spectre: Shuigui", "sections": [{ "name": "Greenhouse: Defeat Celestial Spectre: Shuigui" }],
+                "map_locations": [{ "map": "greenhouse", "x": 138, "y": 220 }]
+            }
+        ]
+    },
+    {
+        "name": "Grotto of Scriptures (East)",
+        "children": [
+            {
+                "name": "Lurker Near Lower Exit", "sections": [{ "name": "GoS (East): Lurker Near Lower Exit" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_east", "x": 120, "y": 380 }]
+            },
+            {
+                "name": "Guarded By Phantom Ninja", "sections": [{ "name": "GoS (East): Guarded By Phantom Ninja" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_east", "x": 30, "y": 330 }]
+            },
+            {
+                "name": "Spike Ball Hall Upper Right", "sections": [{ "name": "GoS (East): Spike Ball Hall Upper Right" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_east", "x": 492, "y": 295 }]
+            },
+            {
+                "name": "Spike Ball Hall Upper Left", "sections": [{ "name": "GoS (East): Spike Ball Hall Upper Left" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_east", "x": 190, "y": 290 }]
+            },
+            {
+                "name": "Lurkers Under Tunnel Walkway", "sections": [{ "name": "GoS (East): Lurkers Under Tunnel Walkway" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_east", "x": 365, "y": 210 }]
+            },
+            {
+                "name": "Portal Below Root Node", "sections": [{ "name": "GoS (East): Portal Below Root Node" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_east", "x": 240, "y": 215 }]
+            },
+            {
+                "name": "Alcove Between Tombs", "sections": [
+                    { "name": "GoS (East): Alcove Between Tombs 1st Chest" },
+                    { "name": "GoS (East): Alcove Between Tombs 2nd Chest" },
+                    { "name": "GoS (East): Alcove Between Tombs 3rd Chest" }
+                ],
+                "map_locations": [{ "map": "grotto_of_scriptures_east", "x": 305, "y": 85 }]
+            },
+            {
+                "name": "Upper Right of Room Above Yin Jifu's Tomb", "sections": [{ "name": "GoS (East): Upper Right of Room Above Yin Jifu's Tomb" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_east", "x": 545, "y": 35 }]
+            },
+            {
+                "name": "Examine Mural in Yin Jifu's Tomb", "sections": [{ "name": "GoS (East): Examine Mural in Yin Jifu's Tomb" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_east", "x": 392, "y": 140 }]
+            },
+            {
+                "name": "Examine Stone Carvings", "sections": [{ "name": "GoS (East): Examine Stone Carvings" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_east", "x": 270, "y": 45 }]
+            },
+            {
+                "name": "Outside Guiguzi's Tomb", "sections": [{ "name": "GoS (East): Outside Guiguzi's Tomb" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_east", "x": 30, "y": 100 }]
+            },
+            {
+                "name": "Examine Mural in Guiguzi's Tomb", "sections": [{ "name": "GoS (East): Examine Mural in Guiguzi's Tomb" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_east", "x": 87, "y": 115 }]
+            }
+        ]
+    },
+    {
+        "name": "Grotto of Scriptures (Entry)",
+        "children": [
+            {
+                "name": "Examine Painting", "sections": [{ "name": "GoS (Entry): Examine Painting" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_entry", "x": 272, "y": 95 }]
+            },
+            {
+                "name": "Examine Coffin", "sections": [{ "name": "GoS (Entry): Examine Coffin" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_entry", "x": 305, "y": 200 }]
+            },
+            {
+                "name": "Poem Treasure", "sections": [
+                    { "name": "GoS (Entry): Poem Treasure 1st Chest" },
+                    { "name": "GoS (Entry): Poem Treasure 2nd Chest" },
+                    { "name": "GoS (Entry): Poem Treasure 3rd Chest" },
+                    { "name": "GoS (Entry): Poem Treasure 4th Chest" },
+                    { "name": "GoS (Entry): Poem Treasure 5th Chest" },
+                    { "name": "GoS (Entry): Poem Treasure 6th Chest" }
+                ],
+                "map_locations": [{ "map": "grotto_of_scriptures_entry", "x": 272, "y": 60 }]
+            },
+            {
+                "name": "Lower Caves Portal", "sections": [{ "name": "GoS (Entry): Lower Caves Portal" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_entry", "x": 420, "y": 345 }]
+            },
+            {
+                "name": "Lower Left Caves", "sections": [{ "name": "GoS (Entry): Lower Left Caves" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_entry", "x": 340, "y": 290 }]
+            },
+            {
+                "name": "Alcove Above Middle Caves Portal", "sections": [{ "name": "GoS (Entry): Alcove Above Middle Caves Portal" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_entry", "x": 510, "y": 245 }]
+            },
+            {
+                "name": "Yellow Pool Above Middle Caves Portal", "sections": [{ "name": "GoS (Entry): Yellow Pool Above Middle Caves Portal" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_entry", "x": 640, "y": 240 }]
+            },
+            {
+                "name": "Upper Right Caves Portal", "sections": [
+                    { "name": "GoS (Entry): Upper Right Caves Portal 1st Chest" },
+                    { "name": "GoS (Entry): Upper Right Caves Portal 2nd Chest" },
+                    { "name": "GoS (Entry): Upper Right Caves Portal 3rd Chest" }
+                ],
+                "map_locations": [{ "map": "grotto_of_scriptures_entry", "x": 620, "y": 125 }]
+            },
+            {
+                "name": "Near Greenhouse Roof", "sections": [{ "name": "GoS (Entry): Near Greenhouse Roof" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_entry", "x": 420, "y": 115 }]
+            },
+            {
+                "name": "Greenhouse Between Elevators", "sections": [{ "name": "GoS (Entry): Greenhouse Between Elevators" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_entry", "x": 375, "y": 150 }]
+            },
+            {
+                "name": "Near Upper Right Exit", "sections": [{ "name": "GoS (Entry): Near Upper Right Exit" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_entry", "x": 602, "y": 30 }]
+            }
+        ]
+    },
+    {
+        "name": "Grotto of Scriptures (West)",
+        "children": [
+            {
+                "name": "Above Elevator", "sections": [{ "name": "GoS (West): Above Elevator" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_west", "x": 825, "y": 205 }]
+            },
+            {
+                "name": "Platforms In Top Middle Room", "sections": [{ "name": "GoS (West): Platforms In Top Middle Room" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_west", "x": 495, "y": 40 }]
+            },
+            {
+                "name": "Below Western Cliffs", "sections": [{ "name": "GoS (West): Below Western Cliffs" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_west", "x": 265, "y": 330 }]
+            },
+            {
+                "name": "Below Luyan's Tomb", "sections": [{ "name": "GoS (West): Below Luyan's Tomb" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_west", "x": 495, "y": 190 }]
+            },
+            {
+                "name": "Examine Mural in Luyan's Tomb", "sections": [{ "name": "GoS (West): Examine Mural in Luyan's Tomb" }],
+                "map_locations": [{ "map": "grotto_of_scriptures_west", "x": 550, "y": 150 }]
+            },
+            {
+                "name": "Lear's Grave", "sections": [
+                    { "name": "GoS (West): Yin Jifu's Tianhuo Flower" },
+                    { "name": "GoS (West): Guiguzi's Tianhuo Flower" },
+                    { "name": "GoS (West): Luyan's Tianhuo Flower" },
+                    { "name": "GoS (West): Chest in Lear's Grave" }
+                ],
+                "map_locations": [{ "map": "grotto_of_scriptures_west", "x": 639, "y": 390 }]
+            }
+        ]
+    },
+    {
+        "name": "Inner Warehouse",
+        "children": [
+            {
+                "name": "Hack 3 Statues", "sections": [{ "name": "IW: Hack 3 Statues" }],
+                "map_locations": [{ "map": "inner_warehouse", "x": 315, "y": 165 }]
+            },
+            {
+                "name": "Shielded Walking Chest", "sections": [{ "name": "IW: Shielded Walking Chest" }],
+                "map_locations": [{ "map": "inner_warehouse", "x": 353, "y": 90 }]
+            },
+            {
+                "name": "Defeat Celestial Enforcer: Tieyan", "sections": [{ "name": "IW: Defeat Celestial Enforcer: Tieyan" }],
+                "map_locations": [{ "map": "inner_warehouse", "x": 370, "y": 40 }]
+            },
+            {
+                "name": "Nymph Puzzle Room", "sections": [{ "name": "IW: Nymph Puzzle Room" }],
+                "map_locations": [{ "map": "inner_warehouse", "x": 70, "y": 220 }]
+            },
+            {
+                "name": "Tianhuo Flower", "sections": [
+                    { "name": "IW: Dusk Guardian Recording Device" },
+                    { "name": "IW: Tianhuo Flower" }
+                ],
+                "map_locations": [{ "map": "inner_warehouse", "x": 265, "y": 23 }]
+            }
+        ]
+    },
+    {
+        "name": "Lake Yaochi Ruins",
+        "children": [
+            {
+                "name": "In Leftmost Pool", "sections": [
+                    { "name": "LYR: First Chest in Leftmost Pool" },
+                    { "name": "LYR: Second Chest in Leftmost Pool" }
+                ],
+                "map_locations": [{ "map": "lake_yaochi_ruins", "x": 55, "y": 50 }]
+            },
+            {
+                "name": "Above Leftmost Pool", "sections": [{ "name": "LYR: Above Leftmost Pool" }],
+                "map_locations": [{ "map": "lake_yaochi_ruins", "x": 25, "y": 30 }]
+            },
+            {
+                "name": "Right of Leftmost Pool", "sections": [{ "name": "LYR: Right of Leftmost Pool" }],
+                "map_locations": [{ "map": "lake_yaochi_ruins", "x": 83, "y": 50 }]
+            },
+            {
+                "name": "Hear Ji Reminisce About Daybreak Tower", "sections": [{ "name": "LYR: Hear Ji Reminisce About Daybreak Tower" }],
+                "map_locations": [{ "map": "lake_yaochi_ruins", "x": 200, "y": 50 }]
+            },
+            {
+                "name": "Daybreak Tower Chest", "sections": [{ "name": "LYR: Daybreak Tower Chest" }],
+                "map_locations": [{ "map": "lake_yaochi_ruins", "x": 200, "y": 35 }]
+            },
+            {
+                "name": "Daybreak Tower Bell Puzzle", "sections": [{ "name": "LYR: Daybreak Tower Bell Puzzle" }],
+                "map_locations": [{ "map": "lake_yaochi_ruins", "x": 174, "y": 35 }]
+            },
+            {
+                "name": "Above Root Node", "sections": [{ "name": "LYR: Above Root Node" }],
+                "map_locations": [{ "map": "lake_yaochi_ruins", "x": 223, "y": 40 }]
+            },
+            {
+                "name": "Statue Hack Room Near Root Node", "sections": [{ "name": "LYR: Statue Hack Room Near Root Node" }],
+                "map_locations": [{ "map": "lake_yaochi_ruins", "x": 248, "y": 50 }]
+            },
+            {
+                "name": "Examine Stele", "sections": [{ "name": "LYR: Examine Stele" }],
+                "map_locations": [{ "map": "lake_yaochi_ruins", "x": 570, "y": 50 }]
+            },
+            {
+                "name": "Nymph Puzzle Room Near Stele", "sections": [{ "name": "LYR: Nymph Puzzle Room Near Stele" }],
+                "map_locations": [{ "map": "lake_yaochi_ruins", "x": 638, "y": 45 }]
+            },
+            {
+                "name": "Ropes Near Right Exit", "sections": [{ "name": "LYR: Ropes Near Right Exit" }],
+                "map_locations": [{ "map": "lake_yaochi_ruins", "x": 670, "y": 50 }]
+            }
+        ]
+    },
+    {
+        "name": "Nobility Hall",
+        "children": [
+            {
+                "name": "Nuwa's Vital Sanctum", "sections": [{ "name": "Nuwa's Vital Sanctum" }],
+                "map_locations": [{ "map": "nobility_hall", "x": 215, "y": 110 }]
+            },
+            {
+                "name": "Chest After Fengs", "sections": [{ "name": "Chest After Fengs" }],
+                "map_locations": [{ "map": "nobility_hall", "x": 25, "y": 110 }]
+            },
+            {
+                "name": "Nuwa's Tianhuo Flower", "sections": [{ "name": "Nuwa's Tianhuo Flower" }],
+                "map_locations": [{ "map": "nobility_hall", "x": 515, "y": 110 }]
+            }
+        ]
+    },
+    {
+        "name": "Outer Warehouse",
+        "children": [
+            {
+                "name": "Retrieve Chip From Shanhai 9000", "sections": [{ "name": "OW: Retrieve Chip From Shanhai 9000" }],
+                "map_locations": [{ "map": "outer_warehouse", "x": 650, "y": 355 }]
+            },
+            {
+                "name": "Above Sol Statue", "sections": [{ "name": "OW: Above Sol Statue" }],
+                "map_locations": [{ "map": "outer_warehouse", "x": 650, "y": 315 }]
+            },
+            {
+                "name": "Crusher Gauntlet", "sections": [{ "name": "OW: Crusher Gauntlet" }],
+                "map_locations": [{ "map": "outer_warehouse", "x": 210, "y": 200 }]
+            },
+            {
+                "name": "Enemy Gauntlet Room", "sections": [{ "name": "OW: Enemy Gauntlet Room" }],
+                "map_locations": [{ "map": "outer_warehouse", "x": 323, "y": 200 }]
+            },
+            {
+                "name": "Vents Above Robot", "sections": [{ "name": "OW: Vents Above Robot" }],
+                "map_locations": [{ "map": "outer_warehouse", "x": 500, "y": 15 }]
+            },
+            {
+                "name": "Inside Crate Dropped From Vent Hack", "sections": [{ "name": "OW: Inside Crate Dropped From Vent Hack" }],
+                "map_locations": [{ "map": "outer_warehouse", "x": 625, "y": 70 }]
+            },
+            {
+                "name": "Examine Warehouse Database", "sections": [{ "name": "OW: Examine Warehouse Database" }],
+                "map_locations": [{ "map": "outer_warehouse", "x": 215, "y": 125 }]
+            }
+        ]
+    },
+    {
+        "name": "Power Reservoir (Central)",
+        "children": [
+            {
+                "name": "Breakable Wall Near Right Transporter", "sections": [{ "name": "PR (Central): Breakable Wall Near Right Transporter" }],
+                "map_locations": [{ "map": "power_reservoir_central", "x": 574, "y": 82 }]
+            },
+            {
+                "name": "Near Moving Box", "sections": [{ "name": "PR (Central): Near Moving Box" }],
+                "map_locations": [{ "map": "power_reservoir_central", "x": 510, "y": 60 }]
+            },
+            {
+                "name": "Hack Statue", "sections": [{ "name": "PR (Central): Hack Statue" }],
+                "map_locations": [{ "map": "power_reservoir_central", "x": 490, "y": 47 }]
+            },
+            {
+                "name": "Guarded By Beetle", "sections": [{ "name": "PR (Central): Guarded By Beetle" }],
+                "map_locations": [{ "map": "power_reservoir_central", "x": 390, "y": 35 }]
+            },
+            {
+                "name": "Near One-Way Door Right of Pagoda", "sections": [{ "name": "PR (Central): Near One-Way Door Right of Pagoda" }],
+                "map_locations": [{ "map": "power_reservoir_central", "x": 400, "y": 48 }]
+            },
+            {
+                "name": "Retrieve Chip From Shanhai 9000", "sections": [{ "name": "PR (Central): Retrieve Chip From Shanhai 9000" }],
+                "map_locations": [{ "map": "power_reservoir_central", "x": 320, "y": 60 }]
+            },
+            {
+                "name": "Examine Energy Meter", "sections": [{ "name": "PR (Central): Examine Energy Meter" }],
+                "map_locations": [{ "map": "power_reservoir_central", "x": 198, "y": 60 }]
+            },
+            {
+                "name": "Near Left Transporter", "sections": [{ "name": "PR (Central): Near Left Transporter" }],
+                "map_locations": [{ "map": "power_reservoir_central", "x": 117, "y": 45 }]
+            },
+            {
+                "name": "Left of Light Bridge", "sections": [{ "name": "PR (Central): Left of Light Bridge" }],
+                "map_locations": [{ "map": "power_reservoir_central", "x": 260, "y": 47 }]
+            }
+        ]
+    },
+    {
+        "name": "Power Reservoir (East)",
+        "children": [
+            {
+                "name": "After Lasers", "sections": [{ "name": "PR (East): After Lasers" }],
+                "map_locations": [{ "map": "power_reservoir_east", "x": 668, "y": 170 }]
+            },
+            {
+                "name": "Under Moving Box", "sections": [{ "name": "PR (East): Under Moving Box" }],
+                "map_locations": [{ "map": "power_reservoir_east", "x": 720, "y": 215 }]
+            },
+            {
+                "name": "Top Platform in Upper Right Shaft", "sections": [{ "name": "PR (East): Top Platform in Upper Right Shaft" }],
+                "map_locations": [{ "map": "power_reservoir_east", "x": 725, "y": 45 }]
+            },
+            {
+                "name": "Hack Statue", "sections": [{ "name": "PR (East): Hack Statue" }],
+                "map_locations": [{ "map": "power_reservoir_east", "x": 510, "y": 70 }]
+            },
+            {
+                "name": "Upper Left Room", "sections": [{ "name": "PR (East): Upper Left Room" }],
+                "map_locations": [{ "map": "power_reservoir_east", "x": 305, "y": 70 }]
+            },
+            {
+                "name": "Defeat Celestial Guardian: Jiaoduan", "sections": [{ "name": "PR (East): Defeat Celestial Guardian: Jiaoduan" }],
+                "map_locations": [{ "map": "power_reservoir_east", "x": 470, "y": 170 }]
+            }
+        ]
+    },
+    {
+        "name": "Power Reservoir (West)",
+        "children": [
+            {
+                "name": "Below Root Node", "sections": [{ "name": "PR (West): Below Root Node" }],
+                "map_locations": [{ "map": "power_reservoir_west", "x": 305, "y": 220 }]
+            },
+            {
+                "name": "Guarded By Turret", "sections": [{ "name": "PR (West): Guarded By Turret" }],
+                "map_locations": [{ "map": "power_reservoir_west", "x": 377, "y": 72 }]
+            },
+            {
+                "name": "Vents", "sections": [{ "name": "PR (West): Vents" }],
+                "map_locations": [{ "map": "power_reservoir_west", "x": 430, "y": 92 }]
+            },
+            {
+                "name": "Hack Statue", "sections": [{ "name": "PR (West): Hack Statue" }],
+                "map_locations": [{ "map": "power_reservoir_west", "x": 720, "y": 217 }]
+            },
+            {
+                "name": "Tianhuo Flower", "sections": [
+                    { "name": "PR (West): Dusk Guardian Recording Device" },
+                    { "name": "PR (West): Tianhuo Flower" }
+                ],
+                "map_locations": [{ "map": "power_reservoir_west", "x": 390, "y": 217 }]
+            },
+            {
+                "name": "Near Right Transporter", "sections": [{ "name": "PR (West): Near Right Transporter" }],
+                "map_locations": [{ "map": "power_reservoir_west", "x": 695, "y": 75 }]
+            }
+        ]
+    },
+    {
+        "name": "Prison",
+        "children": [
+            {
+                "name": "Examine Scroll in Lower Right Cell", "sections": [{ "name": "Prison: Examine Scroll in Lower Right Cell" }],
+                "map_locations": [{ "map": "prison", "x": 810, "y": 250 }]
+            },
+            {
+                "name": "Lower Left Cell", "sections": [{ "name": "Prison: Lower Left Cell" }],
+                "map_locations": [{ "map": "prison", "x": 20, "y": 220 }]
+            },
+            {
+                "name": "Above Stairs on Second Level", "sections": [{ "name": "Prison: Above Stairs on Second Level" }],
+                "map_locations": [{ "map": "prison", "x": 255, "y": 145 }]
+            },
+            {
+                "name": "Near Root Node", "sections": [{ "name": "Prison: Near Root Node" }],
+                "map_locations": [{ "map": "prison", "x": 820, "y": 90 }]
+            },
+            {
+                "name": "Examine Scroll in Upper Left Cell", "sections": [{ "name": "Prison: Examine Scroll in Upper Left Cell" }],
+                "map_locations": [{ "map": "prison", "x": 30, "y": 50 }]
+            },
+            {
+                "name": "Chests Before Kanghui", "sections": [
+                    { "name": "Prison: 1st Chest in Room Before Kanghui" },
+                    { "name": "Prison: 2nd Chest in Room Before Kanghui" },
+                    { "name": "Prison: 3rd Chest in Room Before Kanghui" }
+                ],
+                "map_locations": [{ "map": "prison", "x": 160, "y": 50 }]
+            },
+            {
+                "name": "Defeat Kanghui", "sections": [{ "name": "Prison: Defeat Kanghui" }],
+                "map_locations": [{ "map": "prison", "x": 450, "y": 50 }]
+            }
+        ]
+    },
+    {
+        "name": "Radiant Pagoda",
+        "children": [
+            {
+                "name": "Examine Radiant Pagoda Control Panel", "sections": [{ "name": "Examine Radiant Pagoda Control Panel" }],
+                "map_locations": [{ "map": "radiant_pagoda", "x": 170, "y": 85 }]
+            },
+            {
+                "name": "Defeat General Yingzhao", "sections": [{ "name": "Defeat General Yingzhao" }],
+                "map_locations": [{ "map": "radiant_pagoda", "x": 465, "y": 85 }]
+            },
+            {
+                "name": "Kuafu's Vital Sanctum", "sections": [{ "name": "Kuafu's Vital Sanctum" }],
+                "map_locations": [{ "map": "radiant_pagoda", "x": 715, "y": 85 }]
+            }
+        ]
+    },
+    {
+        "name": "Shengwu Hall",
+        "children": [
+            {
+                "name": "Stuff Before Jiequan", "sections": [
+                    { "name": "Chest Before Jiequan" },
+                    { "name": "Examine Sphere Before Jiequan" }
+                ],
+                "map_locations": [{ "map": "shengwu_hall", "x": 925, "y": 120 }]
+            },
+            {
+                "name": "Jiequan's Tianhuo Flower", "sections": [{ "name": "Jiequan's Tianhuo Flower" }],
+                "map_locations": [{ "map": "shengwu_hall", "x": 460, "y": 120 }]
+            },
+            {
+                "name": "Chest After Jiequan", "sections": [{ "name": "Chest After Jiequan" }],
+                "map_locations": [{ "map": "shengwu_hall", "x": 230, "y": 120 }]
+            },
+            {
+                "name": "Jiequan's Vital Sanctum", "sections": [{ "name": "Jiequan's Vital Sanctum" }],
+                "map_locations": [{ "map": "shengwu_hall", "x": 105, "y": 120 }]
+            }
+        ]
+    },
+    {
+        "name": "Sky Tower",
+        "children": [
+            {
+                "name": "Above Lower Elevator", "sections": [{ "name": "Sky Tower: Above Lower Elevator" }],
+                "map_locations": [{ "map": "sky_tower", "x": 210, "y": 660 }]
+            },
+            {
+                "name": "Middle Right Chest", "sections": [{ "name": "Sky Tower: Middle Right Chest" }],
+                "map_locations": [{ "map": "sky_tower", "x": 360, "y": 520 }]
+            },
+            {
+                "name": "Surrounded By Hazards", "sections": [{ "name": "Sky Tower: Surrounded By Hazards" }],
+                "map_locations": [{ "map": "sky_tower", "x": 300, "y": 350 }]
+            },
+            {
+                "name": "Ropes Below Root Node", "sections": [{ "name": "Sky Tower: Ropes Below Root Node" }],
+                "map_locations": [{ "map": "sky_tower", "x": 410, "y": 200 }]
+            },
+            {
+                "name": "Stowaway's Tianhuo Flower", "sections": [{ "name": "Sky Tower: Stowaway's Tianhuo Flower" }],
+                "map_locations": [{ "map": "sky_tower", "x": 270, "y": 180 }]
+            },
+            {
+                "name": "Examine Stowaway's Belongings", "sections": [{ "name": "Sky Tower: Examine Stowaway's Belongings" }],
+                "map_locations": [{ "map": "sky_tower", "x": 245, "y": 180 }]
+            },
+            {
+                "name": "By Root Node", "sections": [{ "name": "Sky Tower: By Root Node" }],
+                "map_locations": [{ "map": "sky_tower", "x": 345, "y": 140 }]
+            },
+            {
+                "name": "Pink Water Near Root Node", "sections": [{ "name": "Sky Tower: Pink Water Near Root Node" }],
+                "map_locations": [{ "map": "sky_tower", "x": 620, "y": 140 }]
+            }
+        ]
+    },
+    {
+        "name": "Tiandao Research Center",
+        "children": [
+            {
+                "name": "Find Broken Shanhai 9000", "sections": [{ "name": "TRC: Find Broken Shanhai 9000" }],
+                "map_locations": [{ "map": "tiandao_research_center", "x": 825, "y": 75 }]
+            },
+            {
+                "name": "Covered In Spikes", "sections": [{ "name": "TRC: Covered In Spikes" }],
+                "map_locations": [{ "map": "tiandao_research_center", "x": 740, "y": 190 }]
+            },
+            {
+                "name": "Ground Floor Bookshelf", "sections": [{ "name": "TRC: Ground Floor Bookshelf" }],
+                "map_locations": [{ "map": "tiandao_research_center", "x": 390, "y": 225 }]
+            },
+            {
+                "name": "Before Chien Arena", "sections": [{ "name": "TRC: Before Chien Arena" }],
+                "map_locations": [{ "map": "tiandao_research_center", "x": 285, "y": 360 }]
+            },
+            {
+                "name": "Above Sol Statue", "sections": [{ "name": "TRC: Above Sol Statue" }],
+                "map_locations": [{ "map": "tiandao_research_center", "x": 385, "y": 145 }]
+            },
+            {
+                "name": "Past Spikes In Sickbay Vents", "sections": [{ "name": "TRC: Past Spikes In Sickbay Vents" }],
+                "map_locations": [{ "map": "tiandao_research_center", "x": 22, "y": 144 }]
+            },
+            {
+                "name": "Dusk Guardian Recording Device", "sections": [{ "name": "TRC: Dusk Guardian Recording Device" }],
+                "map_locations": [{ "map": "tiandao_research_center", "x": 95, "y": 100 }]
+            },
+            {
+                "name": "Destroy Tendril In The Highest Room", "sections": [{ "name": "TRC: Destroy Tendril In The Highest Room" }],
+                "map_locations": [{ "map": "tiandao_research_center", "x": 420, "y": 55 }]
+            },
+            {
+                "name": "Defeat Mutated Shiyangyue Near Xingtian Sickbay", "sections": [{ "name": "TRC: Defeat Mutated Shiyangyue Near Xingtian Sickbay" }],
+                "map_locations": [{ "map": "tiandao_research_center", "x": 275, "y": 45 }]
+            },
+            {
+                "name": "Behind Mutant Barrier", "sections": [{ "name": "TRC: Behind Mutant Barrier" }],
+                "map_locations": [{ "map": "tiandao_research_center", "x": 660, "y": 145 }]
+            },
+            {
+                "name": "Destroy Tendril Near Sol Statue", "sections": [{ "name": "TRC: Destroy Tendril Near Sol Statue" }],
+                "map_locations": [{ "map": "tiandao_research_center", "x": 475, "y": 200 }]
+            },
+            {
+                "name": "Chest Near Dusk Guardian HQ Screen", "sections": [{ "name": "TRC: Chest Near Dusk Guardian HQ Screen" }],
+                "map_locations": [{ "map": "tiandao_research_center", "x": 488, "y": 311 }]
+            },
+            {
+                "name": "Destroy Tendril Near Guardian HQ Screen", "sections": [{ "name": "TRC: Destroy Tendril Near Guardian HQ Screen" }],
+                "map_locations": [{ "map": "tiandao_research_center", "x": 388, "y": 300 }]
+            },
+            {
+                "name": "Examine Dusk Guardian HQ Screen", "sections": [{ "name": "TRC: Examine Dusk Guardian HQ Screen" }],
+                "map_locations": [{ "map": "tiandao_research_center", "x": 420, "y": 305 }]
+            }
+        ]
+    },
+    {
+        "name": "Underground Cave",
+        "children": [
+            {
+                "name": "Examine Stone Inscription", "sections": [{ "name": "UC: Examine Stone Inscription" }],
+                "map_locations": [{ "map": "underground_cave", "x": 70, "y": 355 }]
+            },
+            {
+                "name": "Examine Note", "sections": [{ "name": "UC: Examine Note" }],
+                "map_locations": [{ "map": "underground_cave", "x": 535, "y": 475 }]
+            },
+            {
+                "name": "Examine Scroll", "sections": [{ "name": "UC: Examine Scroll" }],
+                "map_locations": [{ "map": "underground_cave", "x": 785, "y": 465 }]
+            }
+        ]
+    },
+    {
+        "name": "Water & Oxygen Synthesis",
+        "children": [
+            {
+                "name": "High Platforms Right of Center", "sections": [{ "name": "W&OS: High Platforms Right of Center" }],
+                "map_locations": [{ "map": "water_and_oxygen_synthesis", "x": 295, "y": 30 }]
+            },
+            {
+                "name": "High Platforms Left of Center", "sections": [{ "name": "W&OS: High Platforms Left of Center" }],
+                "map_locations": [{ "map": "water_and_oxygen_synthesis", "x": 210, "y": 35 }]
+            },
+            {
+                "name": "Tianhuo Flower", "sections": [
+                    { "name": "W&OS: Tianhuo Flower" },
+                    { "name": "W&OS: Dusk Guardian Recording Device" }
+                ],
+                "map_locations": [{ "map": "water_and_oxygen_synthesis", "x": 82, "y": 50 }]
+            },
+            {
+                "name": "Examine Pipeline Panel", "sections": [{ "name": "W&OS: Examine Pipeline Panel" }],
+                "map_locations": [{ "map": "water_and_oxygen_synthesis", "x": 120, "y": 50 }]
+            },
+            {
+                "name": "Climb Elevator Shaft By Root Node", "sections": [{ "name": "W&OS: Climb Elevator Shaft By Root Node" }],
+                "map_locations": [{ "map": "water_and_oxygen_synthesis", "x": 395, "y": 50 }]
+            }
+        ]
+    },
+    {
+        "name": "Yangu Hall",
+        "children": [
+            {
+                "name": "Yanlao's Tianhuo Flower", "sections": [{ "name": "Yanlao's Tianhuo Flower" }],
+                "map_locations": [{ "map": "yangu_hall", "x": 365, "y": 125 }]
+            },
+            {
+                "name": "Yanlao's Vital Sanctum", "sections": [{ "name": "Yanlao's Vital Sanctum" }],
+                "map_locations": [{ "map": "yangu_hall", "x": 585, "y": 125 }]
+            }
+        ]
+    },
+    {
+        "name": "Yinglong Canal",
+        "children": [
+            {
+                "name": "Top Left of Upper Caves", "sections": [{ "name": "Yinglong Canal: Top Left of Upper Caves" }],
+                "map_locations": [{ "map": "yinglong_canal", "x": 55, "y": 100 }]
+            },
+            {
+                "name": "Bottom Left of Upper Caves", "sections": [{ "name": "Yinglong Canal: Bottom Left of Upper Caves" }],
+                "map_locations": [{ "map": "yinglong_canal", "x": 265, "y": 215 }]
+            },
+            {
+                "name": "Examine Farmland Markings", "sections": [{ "name": "Yinglong Canal: Examine Farmland Markings" }],
+                "map_locations": [{ "map": "yinglong_canal", "x": 625, "y": 270 }]
+            },
+            {
+                "name": "Climbing Puzzle Above Farmland Markings", "sections": [{ "name": "Yinglong Canal: Climbing Puzzle Above Farmland Markings" }],
+                "map_locations": [{ "map": "yinglong_canal", "x": 400, "y": 125 }]
+            },
+            {
+                "name": "Between Egg Cave and Farmland Markings", "sections": [{ "name": "Yinglong Canal: Between Egg Cave and Farmland Markings" }],
+                "map_locations": [{ "map": "yinglong_canal", "x": 345, "y": 270 }]
+            },
+            {
+                "name": "Break Center Yinglong Egg", "sections": [{ "name": "Yinglong Canal: Break Center Yinglong Egg" }],
+                "map_locations": [{ "map": "yinglong_canal", "x": 165, "y": 345 }]
+            },
+            {
+                "name": "Near Root Node", "sections": [{ "name": "Yinglong Canal: Near Root Node" }],
+                "map_locations": [{ "map": "yinglong_canal", "x": 285, "y": 397 }]
+            }
+        ]
+    }
+]

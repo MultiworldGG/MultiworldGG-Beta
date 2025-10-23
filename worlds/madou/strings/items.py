@@ -6,6 +6,7 @@ class EventItem:
     bazaar_buy = "Can Buy Bazaar Items"
     hammer_switch = "Wood Man Is Free!!"
     unpetrify = "Unpetrified Students"
+    glitch = "Glitched Item"
 
     shops = [ruins_buy, wolf_buy, bazaar_buy]
 

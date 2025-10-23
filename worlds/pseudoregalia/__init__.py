@@ -2,7 +2,7 @@ from worlds.AutoWorld import World, WebWorld
 from BaseClasses import Region, CollectionState, Tutorial
 from .items import PseudoregaliaItem, item_table, item_groups
 from .locations import PseudoregaliaLocation, location_table, zones
-from .regions import region_table
+from .regions import region_table, origin_region_names
 from .options import PseudoregaliaOptions
 from .rules_normal import PseudoregaliaNormalRules
 from .rules_hard import PseudoregaliaHardRules
@@ -11,6 +11,7 @@ from .rules_lunatic import PseudoregaliaLunaticRules
 from typing import Dict, Any
 from .constants.difficulties import NORMAL, HARD, EXPERT, LUNATIC
 from .constants.versions import FULL_GOLD
+
 
 class PseudoregaliaWebWorld(WebWorld):
     tutorials = [
@@ -31,6 +32,8 @@ class PseudoregaliaWorld(World):
     game = "Pseudoregalia"
     author: str = "LittleMeowMeow & qwint"
     required_client_version = (0, 7, 0)
+    apworld_version = (0, 10, 0)
+
     item_name_to_id = {name: data.code for name, data in item_table.items() if data.code is not None}
     location_name_to_id = {name: data.code for name, data in location_table.items() if data.code is not None}
     item_name_groups = item_groups
@@ -103,8 +106,18 @@ class PseudoregaliaWorld(World):
             # zero out options that don't do anything on full gold
             self.options.start_with_map.value = 0
             self.options.randomize_time_trials.value = 0
+        spawn_point = self.options.spawn_point
+        if spawn_point == spawn_point.option_dungeon_mirror:
+            # start_with_breaker is forced on for dungeon start to help with sphere 1 size
+            self.options.start_with_breaker.value = 1
+        elif spawn_point == spawn_point.option_library:
+            if not self.options.start_with_breaker and not self.options.randomize_books:
+                # start_with_breaker is forced on if otherwise player wouldn't have enough checks
+                self.options.start_with_breaker.value = 1
 
     def create_regions(self):
+        self.origin_region_name = origin_region_names[self.options.spawn_point.value]
+
         for region_name in region_table.keys():
             self.multiworld.regions.append(Region(region_name, self.player, self.multiworld))
 
@@ -143,8 +156,10 @@ class PseudoregaliaWorld(World):
 
     def fill_slot_data(self) -> Dict[str, Any]:
         slot_data = {
+            "apworld_version": self.apworld_version,
             "game_version": self.options.game_version.value,
             "logic_level": self.options.logic_level.value,
+            "spawn_point": self.options.spawn_point.value,
             "obscure_logic": bool(self.options.obscure_logic),
             "progressive_breaker": bool(self.options.progressive_breaker),
             "progressive_slide": bool(self.options.progressive_slide),

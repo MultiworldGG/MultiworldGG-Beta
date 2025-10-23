@@ -32,6 +32,33 @@ def format_authors_string(authors: list[str]) -> str:
     return f"{', '.join(authors[:-1])} & {authors[-1]}"
 
 
+def get_world_version(world: type(World)) -> str:
+    """Get the world version from archipelago.json manifest, if it exists and is not 0.0.0."""
+    try:
+        import json
+        import pkgutil
+        
+        # Get the world's module path
+        world_module = world.__module__
+        if world_module.startswith('worlds.'):
+            # Try to load archipelago.json from the world folder
+            try:
+                manifest_data = pkgutil.get_data(world_module, 'archipelago.json')
+                if manifest_data:
+                    manifest = json.loads(manifest_data.decode('utf-8-sig'))
+                    if 'world_version' in manifest and manifest['world_version']:
+                        world_version = manifest['world_version']
+                        # Don't show version if it's 0.0.0
+                        if world_version != "0.0.0":
+                            return f"Version {world_version}"
+            except (FileNotFoundError, json.JSONDecodeError, UnicodeDecodeError):
+                pass
+    except (ImportError, AttributeError, OSError):
+        pass
+    
+    return ""
+
+
 def get_world_authors(world: type(World)) -> str:
     """Get the formatted authors string for a world, preferring manifest authors over the author field."""
     # Try to load manifest data first
@@ -152,7 +179,7 @@ def game_info(game, lang):
 @cache.cached()
 def games():
     """List of supported games"""
-    return render_template("supportedGames.html", worlds=get_visible_worlds(), get_world_authors=get_world_authors)
+    return render_template("supportedGames.html", worlds=get_visible_worlds(), get_world_authors=get_world_authors, get_world_version=get_world_version)
 
 
 @app.route('/tutorial/<string:game>/<string:file>')

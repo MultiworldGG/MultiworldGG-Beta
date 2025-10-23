@@ -14,7 +14,6 @@ from .DataHandler import get_player_specific_ids
 
 #Python
 import typing
-import json
 from typing import List
 from math import floor
 
@@ -67,6 +66,7 @@ class MegaMixWebWorld(WebWorld):
             authors=["Cynichill"]
         )
     ]
+    theme = "ocean"
     bug_report_page = "https://github.com/Cynichill/DivaAPworld/issues"
     option_groups = megamix_option_groups
 
@@ -77,7 +77,6 @@ class MegaMixWorld(World):
 
     # World Options
     game = "Hatsune Miku Project Diva Mega Mix+"
-    author: str = "Cynichill"
 
     settings: typing.ClassVar[MegaMixSettings]
     options_dataclass: typing.ClassVar[PerGameCommonOptions] = MegaMixOptions
@@ -85,7 +84,6 @@ class MegaMixWorld(World):
 
     topology_present = False
     web = MegaMixWebWorld()
-    ut_can_gen_without_yaml = True
 
     # Necessary Data
     mm_collection = MegaMixCollections()
@@ -168,12 +166,21 @@ class MegaMixWorld(World):
         start_items = self.options.start_inventory.value.keys()
         include_songs = sorted(self.options.include_songs.value)
         exclude_songs = self.options.exclude_songs.value
+        goal_songs = sorted(self.options.goal_song.value.intersection(set(available_song_keys)))
 
         # The ModdedSongs group is shared across all players. Limit to own songs.
         self.starting_songs = [s for s in start_items if s in song_items and
                                not song_items.get(s).modded or song_items.get(s).songID in self.player_specific_ids]
         included_songs = [s for s in include_songs if s in song_items and s not in self.starting_songs and
                                not song_items.get(s).modded or song_items.get(s).songID in self.player_specific_ids]
+
+        # Handle goal before inc%
+        if goal_songs:
+            self.victory_song_name = self.random.choice(goal_songs)
+            if self.victory_song_name in self.starting_songs:
+                self.starting_songs.remove(self.victory_song_name)
+            if self.victory_song_name in included_songs:
+                included_songs.remove(self.victory_song_name)
 
         # Open to suggestions to make includes% make sense without touching create_song_pool.
         pool = [s for s in available_song_keys if s not in start_items
@@ -197,12 +204,13 @@ class MegaMixWorld(World):
         if included_song_count > additional_song_count:
             # If so, we want to thin the list, thus let's get starter songs while we are at it.
             self.random.shuffle(self.included_songs)
-            self.victory_song_name = self.included_songs.pop()
+            if not self.victory_song_name:
+                self.victory_song_name = self.included_songs.pop()
             while len(self.included_songs) > additional_song_count:
                 next_song = self.included_songs.pop()
                 if len(self.starting_songs) < starting_song_count:
                     self.starting_songs.append(next_song)
-        else:
+        elif not self.victory_song_name:
             # If not, choose a random victory song from the available songs
             chosen_song = self.random.randrange(0, len(available_song_keys) + included_song_count)
             if chosen_song < included_song_count:
@@ -211,6 +219,8 @@ class MegaMixWorld(World):
             else:
                 self.victory_song_name = available_song_keys[chosen_song - included_song_count]
                 del available_song_keys[chosen_song - included_song_count]
+        elif self.victory_song_name in available_song_keys:
+            available_song_keys.remove(self.victory_song_name)
 
         # Next, make sure the starting songs are fulfilled
         if len(self.starting_songs) < starting_song_count:
@@ -227,7 +237,9 @@ class MegaMixWorld(World):
                     break
                 self.included_songs.append(available_song_keys.pop())
 
-        self.victory_song_id = self.mm_collection.song_items.get(self.victory_song_name).code
+        victory_song = self.mm_collection.song_items.get(self.victory_song_name)
+        self.victory_song_id = victory_song.code
+        self.final_song_ids.add(victory_song.songID)
         self.location_count = 2 * (len(self.starting_songs) + len(self.included_songs))
 
     def create_item(self, name: str) -> Item:
@@ -237,6 +249,9 @@ class MegaMixWorld(World):
 
         if name in self.mm_collection.filler_item_names:
             return MegaMixFixedItem(name, ItemClassification.filler, self.mm_collection.filler_item_names.get(name), self.player)
+
+        if name in self.mm_collection.trap_items:
+            return MegaMixFixedItem(name, ItemClassification.trap, self.mm_collection.trap_items.get(name), self.player)
 
         song = self.mm_collection.song_items.get(name)
         self.final_song_ids.add(song.songID)
@@ -282,6 +297,18 @@ class MegaMixWorld(World):
             item.classification = ItemClassification.useful
             self.multiworld.itempool.append(item)
 
+        # Traps after dupes, contrary to MD
+        trap_count = items_left * self.options.trap_percentage // 100
+        enabled_traps = list(self.options.traps_enabled.value)
+
+        if enabled_traps and trap_count:
+            for _ in range(0, trap_count):
+                trap = self.create_item(self.random.choice(enabled_traps))
+                self.multiworld.itempool.append(trap)
+
+            items_left -= trap_count  # subtract only if there are enabled traps
+
+        # Generic filler. Anything dupes and traps didn't cover.
         filler_count = items_left
         items_left -= filler_count
 
@@ -327,6 +354,9 @@ class MegaMixWorld(World):
 
         return difficulty_bounds
 
+    def write_spoiler_header(self, spoiler_handle: typing.TextIO):
+        spoiler_handle.write(f"Selected Goal Song:              {self.victory_song_name}")
+
     @staticmethod
     def get_available_difficulties(song_difficulty_min: int, song_difficulty_max: int) -> List[int]:
         min_diff = min(song_difficulty_min, song_difficulty_max)
@@ -348,5 +378,6 @@ class MegaMixWorld(World):
             "autoRemove": bool(self.options.auto_remove_songs),
             "deathLink": self.options.death_link.value,
             "deathLink_Amnesty": self.options.death_link_amnesty.value,
-            "modData": {pack: [song[1] for song in songs] for pack, songs in self.player_specific_mod_data.items()},
+            "modData": {pack: [song[1] for song in songs if song[1] in self.final_song_ids]
+                        for pack, songs in self.player_specific_mod_data.items()},
         }

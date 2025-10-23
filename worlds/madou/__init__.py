@@ -85,6 +85,7 @@ class MadouWorld(World):
     passthrough: Dict[str, Any]
     using_ut: bool
     ut_can_gen_without_yaml = True  # class var that tells it to ignore the player yaml
+    glitches_item_name = "Glitched Item"
 
     def __init__(self, multiworld, player):
         self.rom_name: bytes = bytes()
@@ -101,6 +102,8 @@ class MadouWorld(World):
         tracker.setup_options_from_slot_data(self)
 
     def create_item(self, name: str, override_classification: ItemClassification = None) -> "MadouItem":
+        if name == self.glitches_item_name:
+            return MadouItem(name, ItemClassification.progression_skip_balancing, None, self.player)
         item_id: int = self.item_name_to_id[name]
 
         if override_classification is None:
@@ -204,6 +207,8 @@ class MadouWorld(World):
         slot_data = {
             "ut_seed": self.seed,
             "seed": self.random.randrange(1000000000),  # Seed should be max 9 digits
+            **self.options.as_dict("goal", "required_secret_stones", "school_lunch", "starting_magic",
+                                   "souvenir_hunt", "squirrel_stations", "bestiary", "skip_fairy_search")
         }
 
         return slot_data

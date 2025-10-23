@@ -11,6 +11,7 @@ from kivy.uix.checkbox import CheckBox
 from kivymd.uix.behaviors import HoverBehavior
 from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogContentContainer, MDDialogIcon, MDDialogSupportingText
 from kivymd.uix.snackbar import MDSnackbar, MDSnackbarText
+from kivymd.uix.scrollview import MDScrollView
 
 import Utils
 import settings
@@ -54,7 +55,7 @@ class DivaJSONGenerator(ThemedApp):
 
             folder_name = str(Path(root).parent.relative_to(mods_folder))
 
-            if folder_name == self.self_mod_name:
+            if folder_name.startswith(self.self_mod_name):
                 continue
 
             self.pack_list_scroll.layout.add_widget(self.create_pack_line(folder_name))
@@ -127,23 +128,38 @@ class DivaJSONGenerator(ThemedApp):
         try:
             count, mod_pv_db_json = process_mods(self.mods_folder, mod_pv_db_paths_list)
         except ConflictException as e:
-            Clipboard.copy(str(e))
+            if Utils.is_windows:
+                Clipboard.copy(str(e))
+            print(str(e))
+
             MDDialog(
                 MDDialogIcon(icon="alert"),
                 MDDialogHeadlineText(text=f"Conflicting IDs prevent generating"),
-                MDDialogSupportingText(text=
-                                       "This is common for packs that target the base game or add covers.\n"
-                                       "The following has been copied to the clipboard.\n\n"
-                                       f"{str(e)}")
+                MDDialogContentContainer(
+                    MDDialogSupportingText(text=
+                                           "This is common for packs that target the base game or add covers.\n"
+                                           "If not automatically copied to your clipboard you may copy the error from the box below.\n\n"
+                                           f"{str(e)}"),
+                    MDScrollView(MDTextField(text=str(e), multiline=True, readonly=True), size_hint_y=None)
+                )
             ).open()
             return
 
         json_length = round(len(mod_pv_db_json) / 1024, 2)
-        Clipboard.copy(mod_pv_db_json)
+
+        if Utils.is_windows:
+            Clipboard.copy(mod_pv_db_json)
+        print(mod_pv_db_json)
 
         MDDialog(
-            MDDialogHeadlineText(text="Copied mod string to clipboard"),
-            MDDialogSupportingText(text=f"{len(checked_packs)} pack(s) ({json_length} KiB)\n{count} unique song IDs"),
+            MDDialogHeadlineText(text="Generated mod string"),
+            MDDialogContentContainer(
+                MDDialogSupportingText(text=
+                                       f"If not automatically copied to your clipboard you may copy it from the box below.\n\n"
+                                       f"{len(checked_packs)} pack(s) ({json_length} KiB)\n"
+                                       f"{count} unique song IDs\n"),
+                MDScrollView(MDTextField(text=mod_pv_db_json, multiline=True, readonly=True), size_hint_y=None)
+            )
         ).open()
 
     def open_mods_folder(self):

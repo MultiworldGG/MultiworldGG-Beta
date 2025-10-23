@@ -110,7 +110,6 @@ class ZorkGrandInquisitorWorld(World):
     options: ZorkGrandInquisitorOptions
 
     game = "Zork Grand Inquisitor"
-    author: str = "nbrochu"
 
     item_name_to_id = item_names_to_id()
     location_name_to_id = location_names_to_id()

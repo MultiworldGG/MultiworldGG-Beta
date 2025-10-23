@@ -19,7 +19,7 @@ from typing import List, Dict, Any
 class RiskOfWeb(WebWorld):
     tutorials = [Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up the Risk of Rain 2 integration for MultiworldGG Multiworld games.",
+        "A guide to setting up the Risk of Rain 2 integration for MultiworldGG multiworld games.",
         "English",
         "setup_en.md",
         "setup/en",

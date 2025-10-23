@@ -40,7 +40,7 @@ You can use the [game options page](/games/Risk%20of%20Rain%202/player-options) 
 website to generate a YAML using a graphical interface.
 
 
-## Joining an Archipelago Session
+## Joining a MultiworldGG Session
 ### Connecting to server
 Once in game, join whatever lobby you wish, and you should see the AP connection fields which consist of:
  - Slot Name: your name in the multiworld. This is the name you entered in the YAML.
@@ -60,12 +60,13 @@ the player's YAML.
 
 ### Chat/Commands
 You can talk to other in the multiworld chat using the RoR2 chat. All other multiworld
-remote commands list in the [commands guide](/tutorial/MultiworldGG/commands/en) work as well in the RoR2 chat. You can 
+remote commands list in the [commands guide](/tutorial/Archipelago/commands/en) work as well in the RoR2 chat. You can 
 also optionally connect to the multiworld using the text client, which can be found in the 
 [MultiworldGG installation](https://github.com/MultiworldGG/MultiworldGG/releases).
 
 ### In-Game Commands
 These commands are to be used in-game by using ``Ctrl + Alt + ` `` and then typing the following:
+ - `archipelago_reconnect` Reconnect to MWGG.
  - `archipelago_connect <url> <port> <slot> [password]` example: "archipelago_connect multiworld.gg 38281 SlotName".
  - `archipelago_deathlink true/false` Toggle deathlink.
  - `archipelago_disconnect` Disconnect from AP.

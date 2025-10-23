@@ -17,6 +17,9 @@ apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 
 logger = logging.getLogger("Client")
 
+if __name__ == "__main__":
+    Utils.init_logging("KH1Client", exception_logger="Client")
+
 from NetUtils import NetworkItem, ClientStatus
 from CommonClient import gui_enabled, logger, get_base_parser, ClientCommandProcessor, \
     CommonContext, server_loop

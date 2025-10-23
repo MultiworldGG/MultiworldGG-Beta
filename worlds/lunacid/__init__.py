@@ -116,6 +116,7 @@ class LunacidWorld(World):
     web = LunacidWeb()
     logger = logging.getLogger()
     explicit_indirect_conditions = True
+    glitches_item_name = "Glitched Item"
 
     passthrough: Dict[str, Any]
     using_ut: bool
@@ -147,6 +148,8 @@ class LunacidWorld(World):
         Tracker.setup_options_from_slot_data(self)
 
     def create_item(self, name: str, override_classification: ItemClassification = None) -> "LunacidItem":
+        if name == self.glitches_item_name:
+            return LunacidItem(name, ItemClassification.progression_skip_balancing, None, self.player)
         item_id: int = self.item_name_to_id[name]
 
         if override_classification is None:
@@ -526,7 +529,7 @@ class LunacidWorld(World):
         slot_data = {
             "ut_seed": self.seed,
             "seed": self.random.randrange(1000000000),  # Seed should be max 9 digits
-            "client_version": "0.9.7",
+            "client_version": "0.9.9",
             "rolled_month": self.rolled_month,
             "starting_weapon": self.starting_weapon.name,
             "elements": self.weapon_elements,

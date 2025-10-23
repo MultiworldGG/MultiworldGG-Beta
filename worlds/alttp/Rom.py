@@ -1698,7 +1698,7 @@ def patch_rom(multiworld: MultiWorld, rom: LocalRom, player: int, enemized: bool
         rom.write_byte(0xFEE41, 0x2A)  # bombable exit
 
     if local_world.options.tile_shuffle:
-        tile_set = TileSet.get_random_tile_set(multiworld.random)
+        tile_set = TileSet.get_random_tile_set(local_world.random)
         rom.write_byte(0x4BA21, tile_set.get_speed())
         rom.write_byte(0x4BA1D, tile_set.get_len())
         rom.write_bytes(0x4BA2A, tile_set.get_bytes())

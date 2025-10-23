@@ -152,6 +152,9 @@
 # Doronko Wanko
 /worlds/doronko_wanko/ @Vendily
 
+# Dredge
+/worlds/dredge/ @alextric234
+
 # Earthbound
 /worlds/earthbound/ @PinkSwitch
 
@@ -160,7 +163,7 @@
 
 # Factorio
 /worlds/factorio/ @Berserker66
-/worlds/factorio_saws/ @Alchav
+/worlds/factorio_saws/ @silasary
 
 # Faxanadu
 /worlds/faxanadu/ @Daivuk
@@ -317,6 +320,9 @@
 
 # Muse Dash
 /worlds/musedash/ @DeamonHunter
+
+# Nine Sols
+/worlds/nine_sols/ @Ixrec
 
 # Noita
 /worlds/noita/ @ScipioWright @heinermann

@@ -12,7 +12,7 @@ from .data.item_data import base_light_sources, shop_light_sources, blood_spells
 from .data.enemy_data import all_enemy_data_by_name
 from .data.plant_data import all_alchemy_plant_data
 from .Options import LunacidOptions
-from .strings.custom_features import JumpHeight
+from .strings.custom_features import JumpHeight, Glitch
 from .strings.regions_entrances import LunacidEntrance, LunacidRegion, region_to_level_value, indirect_entrances
 from .strings.spells import Spell, MobSpell
 from .strings.items import UniqueItem, Progressives, Switch, Alchemy, Door, Coins, Voucher, SpookyItem, CustomItem
@@ -504,6 +504,8 @@ class LunacidRules:
             AlchemyLocation.limbo: lambda state: state.has_all([Alchemy.broken_sword, Alchemy.fractured_life, Alchemy.fractured_death], self.player),
 
             SpookyLocation.spooky_spell: lambda state: state.has(SpookyItem.soul_candy, self.player, 35),
+            SpookyLocation.headless_horseman: lambda state: self.has_element_access(Elements.fire, state) and
+                                                            self.can_level_reasonably(state, self.world.options),
 
             LevelLocation.level_2: lambda state: self.can_reach_level_in_levelsanity(2, state),
             LevelLocation.level_3: lambda state: self.can_reach_level_in_levelsanity(3, state),
@@ -662,12 +664,12 @@ class LunacidRules:
     def can_jump_given_height(self, height: str, state: CollectionState, options: LunacidOptions) -> bool:
         if height == JumpHeight.low:
             level_rule = not options.levelsanity or state.has(CustomItem.experience, self.player, 10)
-            return level_rule
+            return level_rule or state.has(Glitch.item, self.player)
         elif height == JumpHeight.medium:
             medium_spells = {Spell.barrier, Spell.icarian_flight, Spell.coffin, Spell.rock_bridge}
             if options.dropsanity:
                 medium_spells.add(MobSpell.summon_snail)
-            return state.has_any(medium_spells, self.player)
+            return state.has_any(medium_spells, self.player) or state.has(Glitch.item, self.player)
         else:
             high_spells = {Spell.barrier, Spell.rock_bridge}
             return state.has_any(high_spells, self.player) or state.has(Spell.icarian_flight, self.player)
@@ -688,12 +690,12 @@ class LunacidRules:
             limbo_rule = state.has(Weapon.limbo, self.player)
         else:
             limbo_rule = state.has_all([Alchemy.broken_sword, Alchemy.fractured_life, Alchemy.fractured_death], self.player)
-        return state.has_any(sources, self.player) or limbo_rule
+        return state.has_any(sources, self.player) or limbo_rule or state.has(Glitch.item, self.player)
 
     def can_reach_level_in_levelsanity(self, level: int, state: CollectionState):
 
         if level <= 10:
-            return state.has(CustomItem.experience, self.player, max(level - self.level, 0))
+            return state.has(CustomItem.experience, self.player, max(level - self.level, 0)) or state.has(Glitch.item, self.player)
         has_bangle = True
         level_cap = 0
         for region in region_to_level_value:
@@ -702,11 +704,11 @@ class LunacidRules:
         level_cap *= 10
         if level >= 50:
             has_bangle = state.has(CustomItem.lucky_bangle, self.player)
-        return state.has(CustomItem.experience, self.player, max(level - self.level, 0)) and has_bangle and level_cap >= level
+        return (state.has(CustomItem.experience, self.player, max(level - self.level, 0)) and has_bangle and level_cap >= level) or state.has(Glitch.item, self.player)
 
     def can_level_reasonably(self, state: CollectionState, options: LunacidOptions) -> bool:
         if options.levelsanity:
-            return state.has(CustomItem.experience, self.player, 40)
+            return state.has(CustomItem.experience, self.player, 40) or state.has(Glitch.item, self.player)
         can_you = options.starting_area != options.starting_area.option_basin
         if not can_you:
             # The player should be able to find SOME place to run off to in order to level.
@@ -716,7 +718,7 @@ class LunacidRules:
                                                         self.has_switch_key(Switch.temple_switch, state, options) and
                                                         self.can_jump_given_height(JumpHeight.high, state, options))
             can_you = can_escape_basin_start_in_all_directions
-        return can_you
+        return can_you or state.has(Glitch.item, self.player)
 
     def has_spell(self, spell: str, state: CollectionState) -> bool:
         return state.has(spell, self.player)
@@ -794,6 +796,7 @@ class LunacidRules:
                 return split_case or state.has(UniqueItem.black_book, self.player, 2)
             if amount == 3:
                 return can_reach_battle and state.has(UniqueItem.black_book, self.player, 2)
+            return False
         else:
             return state.has(UniqueItem.black_book, self.player, amount)
 
@@ -801,10 +804,10 @@ class LunacidRules:
         if options.shopsanity:
             return state.has(Weapon.jotunn_slayer, self.player)
         return (self.can_reach_location(state, BaseLocation.fate_lucid_blade)
-                and state.has(Voucher.sheryl_dreamer_voucher, self.player))
+                and (state.has(Voucher.sheryl_dreamer_voucher, self.player) or state.has(Glitch.item, self.player)))
 
     def can_defeat_the_prince(self, state: CollectionState, options: LunacidOptions) -> bool:
-        return self.has_element_access(Elements.light_options, state) and self.can_level_reasonably(state, options)
+        return (self.has_element_access(Elements.light_options, state) and self.can_level_reasonably(state, options)) or state.has(Glitch.item, self.player)
 
     def can_reach_monster(self, enemy: str, state: CollectionState) -> bool:
         locations = self.enemy_regions[enemy]

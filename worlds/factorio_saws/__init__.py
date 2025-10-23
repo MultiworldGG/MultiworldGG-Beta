@@ -4,12 +4,13 @@ import collections
 import logging
 import typing
 
+from Options import OptionError
 import Utils
-import settings
 from BaseClasses import Region, Location, Item, Tutorial, ItemClassification
 from worlds.AutoWorld import World, WebWorld
 from worlds.LauncherComponents import Component, components, Type, launch_subprocess
 from worlds.generic import Rules
+from .settings import FactorioSettings
 from .Locations import location_pools, location_table, craftsanity_locations
 from .Mod import generate_mod
 from .Options import FactorioOptions, MaxSciencePack, Silo, Satellite, TechTreeInformation, Goal, TechCostDistribution
@@ -27,30 +28,6 @@ def launch_client():
 
 
 components.append(Component("Factorio - Space Age Without Space Client", func=launch_client, component_type=Type.CLIENT))
-
-
-class FactorioSettings(settings.Group):
-    class Executable(settings.UserFilePath):
-        is_exe = True
-
-    class ServerSettings(settings.OptionalUserFilePath):
-        """
-        by default, no settings are loaded if this file does not exist. \
-If this file does exist, then it will be used.
-        server_settings: "factorio\\\\data\\\\server-settings.json"
-        """
-
-    class FilterItemSends(settings.Bool):
-        """Whether to filter item send messages displayed in-game to only those that involve you."""
-
-    class BridgeChatOut(settings.Bool):
-        """Whether to send chat messages from players on the Factorio server to MultiworldGG."""
-
-    executable: Executable = Executable("factorio/bin/x64/factorio")
-    server_settings: typing.Optional[FactorioSettings.ServerSettings] = None
-    filter_item_sends: typing.Union[FilterItemSends, bool] = False
-    bridge_chat_out: typing.Union[BridgeChatOut, bool] = True
-
 
 class FactorioWeb(WebWorld):
     tutorials = [Tutorial(
@@ -75,7 +52,8 @@ all_items["Grenade Trap"] = factorio_base_id - 4
 all_items["Cluster Grenade Trap"] = factorio_base_id - 5
 all_items["Artillery Trap"] = factorio_base_id - 6
 all_items["Atomic Rocket Trap"] = factorio_base_id - 7
-
+all_items["Atomic Cliff Remover Trap"] = factorio_base_id - 8
+all_items["Inventory Spill Trap"] = factorio_base_id - 9
 
 class Factorio(World):
     """
@@ -84,7 +62,6 @@ class Factorio(World):
     research new technologies, and become more efficient in your quest to build a rocket and return home.
     """
     game = "Factorio - Space Age Without Space"
-    author: str = "Alchav & Berserker66"
     special_nodes = {"automation", "logistics", "rocket-silo"}
     custom_recipes: typing.Dict[str, Recipe]
     location_pool: typing.List[FactorioScienceLocation]
@@ -110,6 +87,9 @@ class Factorio(World):
     science_locations: typing.List[FactorioScienceLocation]
     removed_technologies: typing.Set[str]
     settings: typing.ClassVar[FactorioSettings]
+    trap_names: tuple[str] = ("Evolution", "Attack", "Teleport", "Grenade", "Cluster Grenade", "Artillery",
+                              "Atomic Rocket", "Atomic Cliff Remover", "Inventory Spill")
+    want_progressives: dict[str, bool] = collections.defaultdict(lambda: False)
 
     def __init__(self, world, player: int):
         super(Factorio, self).__init__(world, player)
@@ -135,14 +115,11 @@ class Factorio(World):
         random = self.random
         nauvis = Region("Nauvis", player, self.multiworld)
 
-        location_count = len(base_tech_table) - len(useless_technologies) - self.skip_silo + \
-                         self.options.evolution_traps + \
-                         self.options.attack_traps + \
-                         self.options.teleport_traps + \
-                         self.options.grenade_traps + \
-                         self.options.cluster_grenade_traps + \
-                         self.options.atomic_rocket_traps + \
-                         self.options.artillery_traps
+        location_count = len(base_tech_table) - len(useless_technologies) - self.skip_silo
+
+        for name in self.trap_names:
+            name = name.replace(" ", "_").lower()+"_traps"
+            location_count += getattr(self.options, name)
 
         location_pool = []
 
@@ -157,7 +134,7 @@ class Factorio(World):
 
         except ValueError as e:
             # should be "ValueError: Sample larger than population or is negative"
-            raise Exception("Too many traps for too few locations. Either decrease the trap count, "
+            raise OptionError("Too many traps for too few locations. Either decrease the trap count, "
                             f"or increase the location count (higher max science pack). (Player {self.player})") from e
 
         self.science_locations = [FactorioScienceLocation(player, loc_name, self.location_name_to_id[loc_name], nauvis)
@@ -205,8 +182,7 @@ class Factorio(World):
     def create_items(self) -> None:
         self.custom_technologies = self.set_custom_technologies()
         self.set_custom_recipes()
-        traps = ("Evolution", "Attack", "Teleport", "Grenade", "Cluster Grenade", "Artillery", "Atomic Rocket")
-        for trap_name in traps:
+        for trap_name in self.trap_names:
             self.multiworld.itempool.extend(self.create_item(f"{trap_name} Trap") for _ in
                                             range(getattr(self.options,
                                                           f"{trap_name.lower().replace(' ', '_')}_traps")))
@@ -244,6 +220,12 @@ class Factorio(World):
                         loc.count = min(loc.count, 10)
                     loc.place_locked_item(tech_item)
                     loc.revealed = True
+
+    def get_filler_item_name(self) -> str:
+        tech_name: str = self.random.choice(tuple(tech_table))
+        progressive_item_name: str = tech_to_progressive_lookup.get(tech_name, tech_name)
+        want_progressive: bool = self.want_progressives[progressive_item_name]
+        return progressive_item_name if want_progressive else tech_name
 
     def set_rules(self):
         player = self.player
@@ -323,9 +305,6 @@ class Factorio(World):
         self.get_location("Rocket Launch").access_rule = lambda state: all(state.has(technology, player)
                                                                            for technology in
                                                                            victory_tech_names)
-        for tech_name in victory_tech_names:
-            if not self.multiworld.get_all_state(use_cache=True, allow_partial_entrances=True).has(tech_name, player):
-                print(tech_name)
         self.multiworld.completion_condition[player] = lambda state: state.has('Victory', player)
 
         if "Craft rocket-silo" in self.multiworld.regions.location_cache[self.player]:

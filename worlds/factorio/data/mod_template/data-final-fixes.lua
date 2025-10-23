@@ -1,5 +1,5 @@
 {% from "macros.lua" import dict_to_recipe, variable_to_lua %}
--- this file gets written automatically by the MultiworldGG Randomizer and is in its raw form a Jinja2 Template
+-- this file gets written automatically by the Archipelago Randomizer and is in its raw form a Jinja2 Template
 require('lib')
 data.raw["item"]["rocket-part"].hidden = false
 data.raw["rocket-silo"]["rocket-silo"].fluid_boxes = {

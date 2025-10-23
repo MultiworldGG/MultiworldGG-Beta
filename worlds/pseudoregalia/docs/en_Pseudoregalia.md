@@ -1,4 +1,4 @@
-# Pseudoregaliay
+# Pseudoregalia
 
 ## Where is the options page?
 The player options page for this game is located [here](../player-options). It contains all the options

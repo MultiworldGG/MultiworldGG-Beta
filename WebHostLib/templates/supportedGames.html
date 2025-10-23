@@ -32,7 +32,7 @@
     <div id="games" class="markdown">
         <h1>Currently Supported Games</h1>
         <p class="author_credit">Please note that many worlds listed are still in active development and may contain bugs or are unfinished.</p>
-        <p>Below are the games that are currently included with the Archipelago software. To play a game that is not on
+        <p>Below are the games that are currently included with MultiworldGG. To play a game that is not on
         this page, please refer to the <a href="/tutorial/Archipelago/setup/en#playing-with-custom-worlds">playing with
         custom worlds</a> section of the setup guide.</p>
         <div class="js-only">
@@ -59,9 +59,18 @@
                 {{ world.web.display_name | default(game_name) }}
                 <span class="star-icon" data-game="{{ game_name }}" title="Add to favorites">★</span>
             </summary>
+            {% set version = get_world_version(world) %}
             {% set authors = get_world_authors(world) %}
-            {% if authors %}
-            <div class="author_credit">created by {{ authors }}</div>
+            {% if version or authors %}
+            <div class="author_credit">
+                {% if version and authors %}
+                    {{ version }}, created by {{ authors }}
+                {% elif version %}
+                    {{ version }}
+                {% elif authors %}
+                    created by {{ authors }}
+                {% endif %}
+            </div>
             {% endif %}
             {{ world.__doc__ | default("No description provided.", true) }}<br />
             <a href="{{ url_for("game_info", game=game_name, lang="en") }}">Game Page</a>

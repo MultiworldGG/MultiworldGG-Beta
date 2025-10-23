@@ -25,6 +25,7 @@ components.append(Component("KH1 Client", func=launch_client, component_type=Typ
 
 icon_paths["kh1_heart"] = f"ap:{__name__}/icons/kh1_heart.png"
 
+
 class KH1Web(WebWorld):
     theme = "ocean"
     tutorials = [Tutorial(

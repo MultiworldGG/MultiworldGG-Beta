@@ -2978,6 +2978,34 @@
         ],
         "release_date": 2004
     },
+    "Nine Sols": {
+        "igdb_id": "194821",
+        "world_name": "Nine Sols",
+        "igdb_name": "Nine Sols",
+        "us_rating": [
+            "T"
+        ],
+        "player_perspectives": [
+            "Side view"
+        ],
+        "genres": [
+            "Platform",
+            "Hack and slash/Beat 'em up",
+            "Adventure",
+            "Indie"
+        ],
+        "themes": [
+            "Action",
+            "Fantasy",
+            "Science fiction"
+        ],
+        "keywords": [
+            "2d",
+            "metroidvania",
+            "hand-drawn"
+        ],
+        "release_date": 2024
+    },
     "Noita": {
         "igdb_id": "52006",
         "world_name": "Noita",

@@ -14,7 +14,7 @@
 }
 
 #games h2, #games details summary.h2{
-    color: #b44ad9;
+    color: white;
     margin-bottom: 2px;
     text-transform: none;
 }
@@ -49,7 +49,7 @@
 }
 
 #favorites-section h2 {
-    color: #b44ad9;
+    color: white;
     margin-bottom: 1rem;
 }
 

@@ -45,7 +45,7 @@ html{
 }
 
 #base-header a, #base-header-mobile-menu a, #base-header-popover-text, #base-header-popover-text-2{
-    color: #ea166c;
+    color: white;
     text-decoration: none;
     cursor: pointer;
     margin-right: 1.2rem;
@@ -112,7 +112,7 @@ html{
 }
 
 #base-header-popover-menu a, #base-header-popover-menu-2 a{
-    color: #ea166c;
+    color: white;
     border-top: 1px solid #d3d3d3;
     text-align: center;
     font-size: 1rem;
@@ -122,9 +122,14 @@ html{
 }
 
 #base-header-popover-icon {
+    filter:  brightness(0) invert(1);
     width: 14px;
     margin-bottom: 3px;
     margin-left: 2px;
+}
+
+#base-header-right a, #base-header-mobile-menu a {
+    color: white !important;
 }
 
 @media all and (max-width: 960px), only screen and (max-device-width: 768px) {
