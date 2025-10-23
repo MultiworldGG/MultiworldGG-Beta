@@ -1,21 +1,18 @@
 [build-system]
-requires = ["setuptools"]
+requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "mwgg_splash"
-version = "0.0.7"
+version = "0.0.78"
 description = "MultiWorldGG Splash Screen"
-authors = [
-    {name = "DelilahIsDidi"}
-]
 requires-python = ">=3.12"
-dependencies = [
-    "pillow>=11.3.0",
-]
+dependencies = [ "pillow>=11.3.0",]
+[[project.authors]]
+name = "DelilahIsDidi"
 
 [project.scripts]
 mwgg_splash = "mwgg_splash:main"
 
 [tool.setuptools]
-py-modules = ["mwgg_splash"]
+py-modules = [ "mwgg_splash",]
