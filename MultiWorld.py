@@ -20,13 +20,11 @@ os.environ["KIVY_LOG_ENABLE"] = "1"
 from BaseUtils import local_path, is_frozen, init_logging
 from mwgg_splash import main as splash_main
 
-if is_frozen():
-    os.environ["KIVY_NO_ARGS"] = "1"
-
 # Ensure ctypes is imported early (fixes WinDLL issues in frozen builds)
 import ctypes
 
 if is_frozen():
+    os.environ["KIVY_NO_ARGS"] = "1"
     os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"lib", "kivy", "data")
     lib_path = os.path.join(sys.exec_prefix, "lib")
     if lib_path not in sys.path:
@@ -153,6 +151,8 @@ if __name__ == "__main__":
                 logger.info("Updates applied successfully")
             elif msg_type == "ready":
                 pass
+            elif msg_type == "error":
+                logger.error(f"Splash screen error: {message.get('error')}")
     except Exception as e:
         logger.warning(f"Timeout or error waiting for splash screen: {e}")
     

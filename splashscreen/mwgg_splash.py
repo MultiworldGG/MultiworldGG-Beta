@@ -43,7 +43,7 @@ class SplashScreen:
             try:
                 self.img = Image.open(png_path)
             except Exception as e:
-                logging.error(f"Failed to load image '{png_path}': {e}")
+                logger.error(f"Failed to load image '{png_path}': {e}")
                 raise
             
             # Get image dimensions
@@ -81,7 +81,7 @@ class SplashScreen:
                     self.frame_durations.append(duration)
                     frame_count += 1
                 except Exception as e:
-                    logging.error(f"Failed to process frame {frame_count}: {e}")
+                    logger.error(f"Failed to process frame {frame_count}: {e}")
                     raise
             
             if frame_count == 0:
@@ -120,11 +120,14 @@ class SplashScreen:
                 self.queue.put({"type": "update_complete"})
             else:
                 # No update or update failed, signal ready
-                self.queue.put({"type": "ready"})
+                self.queue.put({"type": "ready"}, block=False)
                 
         except Exception as e:
             logger.error(f"Error in update thread: {e}")
-            self.queue.put({"type": "ready"})
+            try:
+                self.queue.put({"type": "ready"}, block=False)
+            except Exception as e2:
+                logger.error(f"Failed to send ready message to queue: {e2}")
         finally:
             self.update_in_progress = False
     
@@ -133,7 +136,7 @@ class SplashScreen:
         current_time = datetime.now(UTC)
         
         if self.start_time + self.timeout <= current_time:
-            logging.warning("Splash screen timeout reached, terminating")
+            logger.warning("Splash screen timeout reached, terminating")
             self.cleanup_and_exit()
             return
             
@@ -145,11 +148,11 @@ class SplashScreen:
                 if isinstance(message, dict):
                     msg_type = message.get("type")
                     if msg_type == "terminate":
-                        logging.info("Received terminate message, exiting splash screen")
+                        logger.info("Received terminate message, exiting splash screen")
                         self.cleanup_and_exit()
                         return
                 elif message is True:  # Legacy termination signal
-                    logging.info("Received queue kill message, terminating splash screen")
+                    logger.info("Received queue kill message, terminating splash screen")
                     self.cleanup_and_exit()
                     return
         except Empty:
@@ -175,7 +178,7 @@ class SplashScreen:
     
     def cleanup_and_exit(self):
         """Clean up resources and exit gracefully"""
-        logging.info("Cleaning up and exiting splash screen")
+        logger.info("Cleaning up and exiting splash screen")
         
         if self.root:
             self.root.quit()
@@ -187,7 +190,7 @@ class SplashScreen:
         try:
             self.root.mainloop()
         except Exception as e:
-            logging.error(f"Error in splash screen main loop: {e}")
+            logger.error(f"Error in splash screen main loop: {e}")
         finally:
             self.cleanup_and_exit()
     
@@ -262,7 +265,9 @@ def main(queue: Queue, argv=None):
         # Check if required environment variables are set
         kivy_data_dir = os.getenv("KIVY_DATA_DIR")
         if not kivy_data_dir:
-            logging.error("Error: KIVY_DATA_DIR environment variable is not set.")
+            error_msg = "Error: KIVY_DATA_DIR environment variable is not set."
+            logger.error(error_msg)
+            queue.put({"type": "error", "error": error_msg}, block=False)
             sys.exit(1)
         
         # Get the PNG file path
@@ -270,12 +275,16 @@ def main(queue: Queue, argv=None):
         
         # Check if the file exists
         if not os.path.isfile(png_path):
-            logging.error(f"Error: Loading animation file '{png_path}' not found.")
+            error_msg = f"Error: Loading animation file '{png_path}' not found."
+            logger.error(error_msg)
+            queue.put({"type": "error", "error": error_msg}, block=False)
             sys.exit(1)
         
         # Check if the file is a PNG
         if not png_path.lower().endswith('.png'):
-            logging.error(f"Error: File '{png_path}' does not have a .png extension.")
+            error_msg = f"Error: File '{png_path}' does not have a .png extension."
+            logger.error(error_msg)
+            queue.put({"type": "error", "error": error_msg}, block=False)
             sys.exit(1)
         
         # Create and run the viewer
@@ -283,5 +292,10 @@ def main(queue: Queue, argv=None):
         viewer.run()
         
     except Exception as e:
-        logging.error(f"Error starting splash screen: {e}")
+        error_msg = f"Error starting splash screen: {e}"
+        logger.error(error_msg)
+        try:
+            queue.put({"type": "error", "error": str(e)}, block=False)
+        except:
+            pass
         sys.exit(1)
