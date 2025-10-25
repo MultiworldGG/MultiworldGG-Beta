@@ -256,8 +256,13 @@ input[type=range]::-webkit-slider-thumb {
   input[type=range]:focus::-ms-fill-upper {
     background: #b44ad9;
   }
-  .author_credit {
+  .author_credit, .world_version {
     font-size: smaller;
     font-style: italic;
+  }
+  .author_credit {
     margin-bottom: 8px;
+  }
+  .world_version {
+    margin-bottom: 4px;
   }

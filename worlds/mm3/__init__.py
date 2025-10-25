@@ -3,6 +3,7 @@ import logging
 from typing import Any, Sequence, ClassVar
 
 from BaseClasses import Tutorial, ItemClassification, MultiWorld, Item, Location
+from Utils import version_tuple
 from worlds.AutoWorld import World, WebWorld
 from .names import (gamma, gemini_man_stage, needle_man_stage, hard_man_stage, magnet_man_stage, top_man_stage,
                     snake_man_stage, spark_man_stage, shadow_man_stage, rush_marine, rush_jet, rush_coil)
@@ -93,6 +94,8 @@ class MM3World(World):
     location_name_groups = location_groups
     web = MM3WebWorld()
     rom_name: bytearray
+    if version_tuple < (0, 6, 4):
+        world_version: tuple[int, int, int] = (0, 1, 6)
 
     def __init__(self, world: MultiWorld, player: int):
         self.rom_name = bytearray()
@@ -100,8 +103,6 @@ class MM3World(World):
         super().__init__(world, player)
         self.weapon_damage = weapon_damage.copy()
         self.wily_4_weapons: dict[int, list[int]] = {}
-        if not hasattr(self, "world_version"):
-            self.world_version: tuple[int, int, int] = (0, 1, 3)
 
     def create_regions(self) -> None:
         menu = MM3Region("Menu", self.player, self.multiworld)
@@ -149,7 +150,7 @@ class MM3World(World):
 
     def get_filler_item_name(self) -> str:
         return self.random.choices(list(filler_item_weights.keys()),
-                                              weights=list(filler_item_weights.values()))[0]
+                                   weights=list(filler_item_weights.values()))[0]
 
     def create_items(self) -> None:
         itempool = []
@@ -170,8 +171,8 @@ class MM3World(World):
         remaining = total_checks - len(itempool)
         itempool.extend([self.create_item(name)
                          for name in self.random.choices(list(filler_item_weights.keys()),
-                                                                    weights=list(filler_item_weights.values()),
-                                                                    k=remaining)])
+                                                         weights=list(filler_item_weights.values()),
+                                                         k=remaining)])
         self.multiworld.itempool += itempool
 
     set_rules = set_rules
@@ -265,13 +266,15 @@ class MM3World(World):
     def fill_slot_data(self) -> dict[str, Any]:
         return {
             "death_link": self.options.death_link.value,
-            "weapon_damage": self.weapon_damage
+            "weapon_damage": self.weapon_damage,
+            "wily_4_weapons": self.wily_4_weapons
         }
 
     @staticmethod
     def interpret_slot_data(slot_data: dict[str, Any]) -> dict[str, Any]:
         local_weapon = {int(key): value for key, value in slot_data["weapon_damage"].items()}
-        return {"weapon_damage": local_weapon}
+        local_wily = {int(key): value for key, value in slot_data["wily_4_weapons"].items()}
+        return {"weapon_damage": local_weapon, "wily_4_weapons": local_wily}
 
     def modify_multidata(self, multidata: dict[str, Any]) -> None:
         # wait for self.rom_name to be available.

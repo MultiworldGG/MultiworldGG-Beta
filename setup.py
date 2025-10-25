@@ -146,18 +146,6 @@ def download_SNI() -> None:
         print(f"No SNI found for system spec {platform_name} {machine_name}")
 
 
-signtool: str | None = None
-try:
-    with urllib.request.urlopen('http://192.168.206.4:12345/connector/status') as response:
-        html = response.read()
-    if b"status=OK\n" in html:
-        signtool = (r'signtool sign /sha1 6df76fe776b82869a5693ddcb1b04589cffa6faf /fd sha256 /td sha256 '
-                    r'/tr http://timestamp.digicert.com/ ')
-        print("Using signtool")
-except (ConnectionError, TimeoutError, urllib.error.URLError) as e:
-    pass
-
-
 build_platform = sysconfig.get_platform()
 arch_folder = "exe.{platform}-{version}".format(platform=build_platform,
                                                 version=sysconfig.get_python_version())
@@ -425,15 +413,6 @@ class BuildExeCommand(cx_Freeze.command.build_exe.build_exe):
             file = z3pr.__file__
             self.installfile(Path(os.path.dirname(file)) / "data", keep_content=True)
 
-        if signtool:
-            for exe in self.distribution.executables:
-                print(f"Signing {exe.target_name}")
-                os.system(signtool + os.path.join(self.buildfolder, exe.target_name))
-            print("Signing SNI")
-            os.system(signtool + os.path.join(self.buildfolder, "SNI", "SNI.exe"))
-            print("Signing OoT Utils")
-            for exe_path in (("Compress", "Compress.exe"), ("Decompress", "Decompress.exe")):
-                os.system(signtool + os.path.join(self.buildfolder, "lib", "worlds", "oot", "data", *exe_path))
 
         remove_sprites_from_folder(self.buildfolder / "data" / "sprites" / "alttpr")
         remove_sprites_from_folder(self.buildfolder / "data" / "sprites" / "alttp" / "remote")

@@ -61,15 +61,14 @@
             </summary>
             {% set version = get_world_version(world) %}
             {% set authors = get_world_authors(world) %}
-            {% if version or authors %}
+            {% if version %}
+            <div class="world_version">
+                Version: {{ version }}
+            </div>
+            {% endif %}
+            {% if authors %}
             <div class="author_credit">
-                {% if version and authors %}
-                    {{ version }}, created by {{ authors }}
-                {% elif version %}
-                    {{ version }}
-                {% elif authors %}
-                    created by {{ authors }}
-                {% endif %}
+                Created by: {{ authors }}
             </div>
             {% endif %}
             {{ world.__doc__ | default("No description provided.", true) }}<br />
