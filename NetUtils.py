@@ -503,7 +503,7 @@ class Hint(typing.NamedTuple):
 
     def as_network_message(self) -> dict:
         parts = []
-        add_json_text(parts, escape_markup("[Hint]: "))
+        add_json_text(parts, "[Hint]: ")
         add_json_text(parts, self.receiving_player, type="player_id")
         add_json_text(parts, "'s ")
         add_json_item(parts, self.item, self.receiving_player, self.item_flags)

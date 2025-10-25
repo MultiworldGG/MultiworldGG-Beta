@@ -62,7 +62,7 @@ class BottomBarTextInput(MDTextField):
     
     #BottomAppBar is a MDFloatLayout already, so we can place the TextField in it without shenanigans
     def __init__(self, *args, **kwargs):
-        self.hint_text = "Enter text"
+        self.hint_text = ""
         self.silent_prefix = ""
         self.action_type = "console"
         self.app = MDApp.get_running_app()
@@ -75,7 +75,7 @@ class BottomBarTextInput(MDTextField):
         self.write_tab = False
 
     def on_fork(self, instance):
-        self.hint_text = "Enter text"
+        self.hint_text = ""
         self.dropdown.items.clear()
         if self.action_type == "hint":
             self.on_hint_search(instance.text)
@@ -111,13 +111,13 @@ class BottomBarTextInput(MDTextField):
 
     def on_text(self, instance, value):
         if self.action_type == "admin":
-            self.on_admin_text(instance, value)
+            self.on_admin_input(instance, value)
         if self.action_type == "hint":
-            self.on_hint_text(instance, value)
+            self.on_hint_input(instance, value)
         else:
             return
 
-    def on_admin_text(self, instance, value):
+    def on_admin_input(self, instance, value):
         self.dropdown.items.clear()
         ctx = self.app.ctx
         if not ctx.connected:
@@ -147,7 +147,7 @@ class BottomBarTextInput(MDTextField):
         self.hint_text = command[1]
         self.dropdown.dismiss()
     
-    def on_hint_text(self, instance, value):
+    def on_hint_input(self, instance, value):
         if len(value) >= self.min_chars:
             self.dropdown.items.clear()
             ctx = self.app.ctx
@@ -239,7 +239,11 @@ class BottomAppBar(MDBottomAppBar):
             super().add_widget(widget, index, canvas)
 
     def on_bar_action(self, instance):
-        self.animate_text_input(instance.id)
+        # Toggle: if text input is already visible, hide it. Otherwise, show it.
+        if self.text_input.parent and self.text_input.y > -50 and "fab" in instance.id:
+            self.hide_text_input()
+        else:
+            self.animate_text_input(instance.id)
 
     def on_gui_focus(self):
         self.animate_text_input(self.text_input.id)

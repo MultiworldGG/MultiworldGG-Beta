@@ -18,14 +18,16 @@ from kivymd.uix.screen import MDScreen
 from kivymd.uix.sliverappbar import MDSliverAppbar, MDSliverAppbarContent
 from kivymd.uix.list import MDList
 from kivymd.theming import ThemableBehavior
+
 from mwgg_gui.overrides.expansionlist import *
 from mwgg_gui.components.bottomappbar import BottomAppBar
+from mwgg_gui.components.mw_theme import AutoAdjustHeightBehavior
+
 import asynckivy
 
 Builder.load_string('''
 <ConsoleLayout>:
     id: console_layout
-    size_hint: None,None
     pos: 0,82
 
 <ConsoleSliverAppbar>:
@@ -39,8 +41,8 @@ Builder.load_string('''
     MDSliverAppbarHeader:
         AsyncImage:
             source: app.logo_png
-            pos_hint: {"center_y": 0.5}
-            fit_mode: "scale-down"
+            pos_hint: {"top": 1}
+            fit_mode: "cover"
     MDTopAppBar:
         type: "small"
         pos_hint: {"center_x": 0.5, "top": 1}
@@ -63,8 +65,15 @@ Builder.load_string('''
                 on_release: root.set_deafen()
 ''')
 
-class ConsoleLayout(MDRelativeLayout):
-    pass
+class ConsoleLayout(AutoAdjustHeightBehavior, MDRelativeLayout):
+    adjust_title_bar = True
+    adjust_app_bar = True
+    adjust_bottom_appbar = True
+    adjust_custom = 0
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.size_hint_x = 1
 
 class ConsoleSliverAppbar(MDSliverAppbar):
     content: MDSliverAppbarContent

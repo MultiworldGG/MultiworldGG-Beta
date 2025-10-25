@@ -9,11 +9,12 @@ __all__ = ['GameListPanel',
            'HintListItem',
            'HintListDropdown',
            'IconBadge',
+           'calculate_text_height',
            ]
 from textwrap import wrap
 
 from kivy.animation import Animation
-from kivy.metrics import dp
+from kivy.metrics import dp, sp
 from kivy.properties import StringProperty, DictProperty, ObjectProperty, NumericProperty, BooleanProperty
 from kivy.uix.behaviors import ButtonBehavior
 from kivymd.uix.behaviors import RotateBehavior, CommonElevationBehavior
@@ -21,6 +22,7 @@ from kivymd.theming import ThemableBehavior
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.badge import MDBadge
+from kivy.core.text import Label as LabelBase
 
 from kivymd.uix.list import *
 from kivymd.uix.expansionpanel import *
@@ -42,6 +44,22 @@ from mwgg_gui.components.guidataclasses import UIPlayerData, UIHint, HintStatus
 
 with open(os.path.join(os.path.dirname(__file__), "expansionlist.kv"), encoding="utf-8") as kv_file:
     Builder.load_string(kv_file.read())
+
+def calculate_text_height(text: str, font_size: float, text_width: float) -> float:
+    """
+    Calculate the rendered height of text using LabelBase.
+    
+    Args:
+        text: The text to measure
+        font_size: Font size in pixels
+        text_width: Available width for text wrapping
+        
+    Returns:
+        Height of the rendered text in pixels
+    """
+    label = LabelBase(text=text, font_size=font_size, text_size=(text_width, None))
+    label.refresh()
+    return label.texture.size[1] if label.texture else font_size
 
 class IconBadge(MDBadge):
     """
@@ -85,6 +103,22 @@ class SlotListItemHeader(MDBoxLayout, CommonElevationBehavior):
         self.search = False
         self.waiting = False
         super().__init__(**kwargs)
+        Clock.schedule_once(lambda x: self.calculate_height())
+
+    def calculate_height(self):
+        """
+        Calculate the header height based on actual text rendering.
+        Uses LabelBase to get real texture dimensions without creating reactive bindings.
+        """
+        # Available width for text (total width - avatar - trailing icon - padding - spacing)
+        if self.panel.width == 100:
+            text_width = 256 - dp(40) - dp(24) - dp(36) - dp(8)
+        else:
+            text_width = self.width - dp(40) - dp(24) - dp(20) - dp(8)
+
+        name_height = calculate_text_height(self.slot_name, self.ids.slot_item_name.font_size, text_width)
+        game_height = calculate_text_height(self.game, self.ids.slot_item_game.font_size, text_width)
+        self.height = dp(36) + name_height + game_height
 
     def set_elevation_and_shadow(self):
         self.elevation_level = 0
@@ -330,30 +364,23 @@ class SlotListItem(MWBaseListItem):
 
     def estimate_height(self):
         """
-        Estimate the height of the slot item.
-
-        Funky workaround because the scrollview height of the list item is set before the
-        text is set, so any wrapping will cause the height to be wrong.
+        Calculate the height of the slot item based on actual text rendering.
+        Uses LabelBase to get real texture dimensions without creating reactive bindings.
         """
+        # Available width for text (total width - icon - padding - spacing)
+        text_width = 256 - dp(40) - dp(24) - dp(16)
+        
+        # Base height: padding + spacing
         nheight = dp(36) + (dp(4) * len(self.children))
-        if self.entrance_name == "Vanilla":
-            pass
-        else:
-            eheight = self.slot_text_entrance.font_size * self.slot_text_entrance.line_height
-            if len(self.entrance_name) < 20:
-                nheight += eheight
-            else:
-                nheight = nheight + (eheight * 2)
-        lheight = self.slot_text_location.font_size * self.slot_text_location.line_height
-        if len(self.location_name) < 20:
-            nheight += lheight
-        else:
-            nheight = nheight + (lheight * 2)
-        iheight = self.slot_text_item.font_size * self.slot_text_item.line_height
-        if len(self.item_name) < 20:
-            nheight += iheight
-        else:
-            nheight = nheight + (iheight * 2)
+        
+        # Calculate entrance height if present
+        if self.entrance_name != "Vanilla" and self.entrance_name:
+            nheight += calculate_text_height(self.entrance_name, self.slot_text_entrance.font_size, text_width)
+        
+        # Calculate location and item heights
+        nheight += calculate_text_height(self.location_name, self.slot_text_location.font_size, text_width)
+        nheight += calculate_text_height(self.item_name, self.slot_text_item.font_size, text_width)
+        
         return nheight
 
 class HintListItem(MWBaseListItem):

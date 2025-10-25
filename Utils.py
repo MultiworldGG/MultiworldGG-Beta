@@ -28,6 +28,9 @@ from yaml import load, load_all, dump
 
 logger = logging.getLogger("MultiWorld")
 
+init_logging("Update")
+update_logger = logging.getLogger("Update")
+
 import ModuleUpdate
 
 try:
@@ -35,11 +38,6 @@ try:
 except ImportError:
     from yaml import Loader as UnsafeLoader, SafeLoader, Dumper
 
-'''
-Change to use a FileUtils singleton that can process the correct
-dialog for the platform. For convenience the functions are aliased
-to the original names.
-'''
 from FileUtils import FileUtils
 open_directory = FileUtils.open_directory
 open_filename = FileUtils.open_file_input_dialog
@@ -51,13 +49,8 @@ if typing.TYPE_CHECKING:
     from BaseClasses import Region
     import multiprocessing
 
-
 def normalize_tag(tag: str) -> str:
     return tag[1:] if tag and tag[0].lower() == "v" else tag
-
-
-
-
 
 # __version__ = "0.6.4"
 # version_tuple = tuplize_version(__version__)
@@ -95,7 +88,7 @@ if os.path.exists(config_file):
                     version_tuple = tuplize_version(__version__)
                     version = Version(*version_tuple)
     except Exception as e:
-        logging.warning("Failed to load configuration from %s: %s", config_file, e)
+        logger.warning("Failed to load configuration from %s: %s", config_file, e)
 
 is_linux = sys.platform.startswith("linux")
 is_macos = sys.platform == "darwin"
@@ -109,13 +102,13 @@ def set_game_names(game_names: typing.List[str]):
     # lazy import
     for game in game_names:
         module_name = GameIndex.get_module_for_game(game_name=game, worlds=True)
-        _worlds_to_load.append(module_name) if module_name else logging.warning(f"Game {game} not found in game index")
+        _worlds_to_load.append(module_name) if module_name else update_logger.warning(f"Game {game} not found in game index")
     _worlds_to_install: typing.List[str] = []
     for module_name in _worlds_to_load:
         try:
             importlib.metadata.distribution(module_name)
         except importlib.metadata.PackageNotFoundError:
-            logging.warning(f"Module {module_name} not found, looking in worlds pypi index.")
+            update_logger.warning(f"Module {module_name} not found, looking in worlds pypi index.")
             _worlds_to_install.append(module_name)
     if _worlds_to_install:
         restart_needed = ModuleUpdate.install_worlds(_worlds_to_install)
@@ -150,14 +143,16 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
             restart = ModuleUpdate.install_worlds([module_name])
             if restart:
                 # Restart needed - schedule callback on main thread
-                raise Exception("Library update needed, restarting process...")
+                raise ModuleUpdate.RestartException
             else:
                 # No restart needed - proceed with launch
                 Clock.schedule_once(lambda dt: _launch_module_after_install(), 0)
-        except Exception as e:
-            if e.message != "Library update needed, restarting process...":
-                logging.error(f"Failed to update module {module_name}: {e}")
+        except ModuleUpdate.RestartException:
+            # Restart needed - schedule callback on main thread
+            Clock.schedule_once(lambda dt: _handle_install_error(e), 0)
 
+        except Exception as e:
+            update_logger.error(f"Failed to update module {module_name}: {e}")
             # Schedule error handling on main thread
             Clock.schedule_once(lambda dt: _handle_install_error(e), 0)
     
@@ -174,10 +169,9 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
         # Get error callback from kwargs if provided
         error_callback = kwargs.get('error_callback')
         if error_callback:
-            restart_callback = lambda: exit_for_library_update()
-            error_callback(restart_callback)
+            error_callback()
         # Log the error but don't raise it since we're in a Clock callback
-        logging.error(f"Module installation failed: {error}")
+        update_logger.error(f"Module installation failed: {error}")
     
     if not is_windows:
         _perform_module_launch("", **kwargs)
@@ -189,12 +183,12 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
         _perform_module_launch(module_name, **kwargs)
     except ModuleNotFoundError:
         # Module doesn't exist, install it in a separate thread
-        logging.info(f"Module {module_name} not found, installing in background...")
+        update_logger.info(f"Module {module_name} not found, installing in background...")
         install_thread = threading.Thread(target=_install_module_threaded, daemon=True)
         install_thread.start()
         return  # Return early, launch will be scheduled after installation
     except Exception as e:
-        logging.error(f"Failed to import module {module_name}: {e}")
+        update_logger.error(f"Failed to import module {module_name}: {e}")
         raise e
 
 def _perform_module_launch(module_id: str, **kwargs):
@@ -209,7 +203,7 @@ def _perform_module_launch(module_id: str, **kwargs):
                 except ModuleNotFoundError:
                     sleep(1)
                 except Exception as e:
-                    logging.error(f"Failed to import module {module_id}: {e}")
+                    update_logger.error(f"Failed to import module {module_id}: {e}")
                     raise e
 
             entry_points = importlib.metadata.entry_points(group="mwgg.client")
@@ -477,7 +471,13 @@ def persistent_store(category: str, key: str, value: typing.Any):
     path = user_path("_persistent_storage.yaml")
     storage = persistent_load()
     category_dict = storage.setdefault(category, {})
-    category_dict[key] = value
+    
+    # Remove key if value is None or empty string to prevent malformed YAML
+    if value is None or value == "":
+        category_dict.pop(key, None)
+    else:
+        category_dict[key] = value
+        
     with open(path, "wt") as f:
         f.write(dump(storage, Dumper=Dumper))
 
@@ -493,7 +493,15 @@ def persistent_load() -> Dict[str, Dict[str, Any]]:
             with open(path, "r") as f:
                 storage = unsafe_parse_yaml(f.read())
         except Exception as e:
-            logging.debug(f"Could not read store: {e}")
+            logger.warning(f"Could not read persistent storage (file may be corrupted): {e}")
+            # Attempt to backup the corrupted file
+            try:
+                import shutil
+                backup_path = path + ".corrupted"
+                shutil.copy2(path, backup_path)
+                logger.info(f"Corrupted storage backed up to: {backup_path}")
+            except Exception as backup_error:
+                logger.debug(f"Could not backup corrupted storage: {backup_error}")
     if storage is None:
         storage = {}
     setattr(persistent_load, "storage", storage)
@@ -514,7 +522,7 @@ def load_data_package_for_checksum(game: str, checksum: typing.Optional[str]) ->
                 with open(path, "r", encoding="utf-8-sig") as f:
                     return json.load(f)
             except Exception as e:
-                logging.debug(f"Could not load data package: {e}")
+                logger.debug(f"Could not load data package: {e}")
 
     # fall back to old cache
     cache = persistent_load().get("datapackage", {}).get("games", {}).get(game, {})
@@ -536,7 +544,7 @@ def store_data_package_for_checksum(game: str, data: typing.Dict[str, Any]) -> N
             with open(os.path.join(game_folder, f"{checksum}.json"), "w", encoding="utf-8-sig") as f:
                 json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
         except Exception as e:
-            logging.debug(f"Could not store data package: {e}")
+            logger.debug(f"Could not store data package: {e}")
 
 
 

@@ -25,7 +25,7 @@ from NetUtils import HintStatus, MWGGUIHintStatus, TEXT_COLORS
 from mwgg_gui.overrides.expansionlist import HintListItem, IconBadge, SlotListItemHeader, GameListPanel, HintListDropdown
 from mwgg_gui.components.guidataclasses import UIHint
 from mwgg_gui.components.bottomappbar import BottomAppBar
-from mwgg_gui.components.mw_theme import adjust_height
+from mwgg_gui.components.mw_theme import AutoAdjustHeightBehavior
 
 import typing
 import asynckivy
@@ -108,7 +108,7 @@ class HintScreen(MDScreen):
         finally:
             self._updating_hints = False
 
-class HintLayout(MDBoxLayout):
+class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
     """Layout container for hint display components.
     
     This class provides a vertical layout that contains the placeholder
@@ -119,6 +119,11 @@ class HintLayout(MDBoxLayout):
         orientation (str): Layout orientation, set to "vertical"
         search_placeholder (MDBoxLayout): Placeholder for future search features
     """
+    adjust_title_bar = False
+    adjust_app_bar = False
+    adjust_bottom_appbar = True
+    adjust_custom = 0
+    
     orientation = "vertical"
     app: MDApp
     hint_scroll: MDScrollView
@@ -126,7 +131,6 @@ class HintLayout(MDBoxLayout):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.app = MDApp.get_running_app()
-        self.size_hint_y = adjust_height(title_bar=True, app_bar=True, bottom_appbar=True)
         self.y = 82
         # Create placeholder for future search and filter functionality
         self.search_placeholder = HintFeaturebar(

@@ -17,7 +17,7 @@ os.environ["KIVY_LOG_ENABLE"] = "1"
 # from MultiServer import console
 # apname = "Archipelago" if not Utils.archipelago_name else Utils.archipelago_name
 
-from BaseUtils import local_path, is_frozen, init_logging
+from BaseUtils import local_path, is_frozen, init_logging, is_windows
 from mwgg_splash import main as splash_main
 
 # Ensure ctypes is imported early (fixes WinDLL issues in frozen builds)
@@ -137,25 +137,26 @@ if __name__ == "__main__":
     logger = logging.getLogger("MultiWorld")
 
     # Start the splash screen process
-    set_start_method("spawn")
-    splash_queue = Queue()
-    Process(target=splash_main, name="SplashScreen", args=(splash_queue,)).start()
-    
-    # Wait for splash process to signal ready (after checking/applying updates)
-    logger.info("Checking for updates...")
-    try:
-        message = splash_queue.get(timeout=60)  # Wait up to 60 seconds
-        if isinstance(message, dict):
-            msg_type = message.get("type")
-            if msg_type == "update_complete":
-                logger.info("Updates applied successfully")
-            elif msg_type == "ready":
-                pass
-            elif msg_type == "error":
-                logger.error(f"Splash screen error: {message.get('error')}")
-    except Exception as e:
-        logger.warning(f"Timeout or error waiting for splash screen: {e}")
-    
+    if is_windows:
+        set_start_method("spawn")
+        splash_queue = Queue()
+        Process(target=splash_main, name="SplashScreen", args=(splash_queue,)).start()
+        
+        # Wait for splash process to signal ready (after checking/applying updates)
+        logger.info("Checking for updates...")
+        try:
+            message = splash_queue.get(timeout=60)  # Wait up to 60 seconds
+            if isinstance(message, dict):
+                msg_type = message.get("type")
+                if msg_type == "update_complete":
+                    logger.info("Updates applied successfully")
+                elif msg_type == "ready":
+                    pass
+                elif msg_type == "error":
+                    logger.error(f"Splash screen error: {message.get('error')}")
+        except Exception as e:
+            logger.warning(f"Timeout or error waiting for splash screen: {e}")
+        
     # Parse the command line arguments
     if sys.argv[1:]:
         parser = ArgumentParser()

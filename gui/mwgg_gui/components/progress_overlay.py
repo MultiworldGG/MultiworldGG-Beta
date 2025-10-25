@@ -28,7 +28,7 @@ Builder.load_string('''
             size: self.size
         # Progress rectangle (partial width)
         Color:
-            rgba: app.theme_cls.surfaceContainerColor
+            rgba: app.theme_cls.surfaceBrightColor
         Rectangle:
             pos: self.pos
             size: self.prog_size

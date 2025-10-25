@@ -13,7 +13,7 @@
 #define MyAppIcon "data/icon.ico"
 #dim VersionTuple[4]
 #define MyAppVersion GetVersionComponents(source_path + '\MultiworldGG.exe', VersionTuple[0], VersionTuple[1], VersionTuple[2], VersionTuple[3])
-#define MyAppVersionText ReadIni(SourcePath + "\setup.ini", "Data", "app_version", "0.7.177a8")
+#define MyAppVersionText ReadIni(SourcePath + "\setup.ini", "Data", "app_version", "0.7.177a9")
 #pragma message "MyAppVersionText: " + MyAppVersionText
 
 [Setup]

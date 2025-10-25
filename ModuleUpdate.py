@@ -11,7 +11,7 @@ import zipfile
 import re
 import tempfile
 import logging
-logger = logging.getLogger("MultiWorld")
+logger = logging.getLogger("Update")
 
 if not logging.getLogger().hasHandlers():
     logging.basicConfig(level=logging.DEBUG, format='%(message)s', stream=sys.stdout)
@@ -931,6 +931,10 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
     
     logger.debug("Update process completed.")
 
+
+class RestartException(Exception):
+    """Exception raised when a restart is needed."""
+    pass
 
 if __name__ == "__main__":
     import argparse

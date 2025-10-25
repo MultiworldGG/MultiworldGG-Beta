@@ -12,18 +12,30 @@ from kivy.properties import ListProperty, BooleanProperty, ObjectProperty, Numer
 from kivy.clock import Clock
 from kivy.core.image import Image as CoreImage
 from kivy.uix.image import Image
+from kivy.lang import Builder
 from PIL import Image as PILImage
 from PIL import ImageSequence
 import io
 import os
+import logging
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.relativelayout import MDRelativeLayout
 from kivy.app import App
 from kivy.uix.effectwidget import PixelateEffect
+from kivymd.uix.label import MDLabel
 
 MIN_SPEED = 0.016  # Fastest speed (60fps)
 MAX_SPEED = 0.050   # Slowest speed (10fps)
 DEFAULT_SPEED = 0.040  # Default speed (40ms)
+
+class UpdateInfoLabel(MDLabel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        logger = logging.getLogger("Update")
+        logger.addHandler(logging.StreamHandler(self.on_log_update))
+
+    def on_log_update(self, record):
+        self.text = record.getMessage()
 
 img_path = os.path.join(os.getenv("KIVY_DATA_DIR"),"images", "loading_animation.png")
 
@@ -35,6 +47,8 @@ class MWGGLoadingLayout(MDRelativeLayout):
     current_frame = NumericProperty(0)
     app = ObjectProperty(None)
     _clock_event = None
+    display_logs = BooleanProperty(False)
+    log_box: ObjectProperty(None)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -51,6 +65,7 @@ class MWGGLoadingLayout(MDRelativeLayout):
             self.frames.append(Image(texture=core_image.texture))
         self.current_image = None
         self.current_frame = 0
+        self.log_box = UpdateInfoLabel(theme_bg_color="Custom", md_bg_color=self.app.theme_cls.surfaceColor, pos_hint={'center_x': 0.5, 'center_y': 0.4}, size=(400,100))
 
     def on_start(self):
         self.size = (self.app.root.width, self.app.root.height)
@@ -60,6 +75,8 @@ class MWGGLoadingLayout(MDRelativeLayout):
         if not self.loading and not self.img_box.parent:
             self.loading = True
             self.add_widget(self.img_box)
+            if self.display_logs:
+                self.add_widget(self.log_box)
             # Use the new enable_effects method instead of directly setting effects
             if hasattr(self.app, 'enable_effects'):
                 self.app.enable_effects()
@@ -112,4 +129,3 @@ class MWGGLoadingLayout(MDRelativeLayout):
             else:
                 # Fallback to old method
                 self.app.pixelate_effect.effects = []  # Hide blur
-

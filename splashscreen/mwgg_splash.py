@@ -115,7 +115,8 @@ class SplashScreen:
             update_applied = check_and_apply_pending_update()
             
             if update_applied:
-                logger.info("Library.zip update complete!")
+                time.sleep(2)
+                logger.info("Library.zip update complete! Restarting...")
                 # Signal main process that update is complete
                 self.queue.put({"type": "update_complete"})
             else:

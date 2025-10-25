@@ -7,7 +7,8 @@ from __future__ import annotations
 __all__ = ('DefaultTheme', 
            'RegisterFonts', 
            'DEFAULT_TEXT_COLORS',
-           'adjust_height')
+           'adjust_height',
+           'AutoAdjustHeightBehavior')
 
 
 import os
@@ -456,7 +457,7 @@ def RegisterFonts(app: MDApp, monospace_font: str = 'Argon'):
                 "font-size": sp(18),
             },
         },
-        "Monospace": {
+        "Monospace": { # Console font
             "large": {
                 "line-height": 2.4,
                 "font-name": f"{monospace_font}",
@@ -470,10 +471,10 @@ def RegisterFonts(app: MDApp, monospace_font: str = 'Argon'):
             "small": {
                 "line-height": 1.8,
                 "font-name": f"{monospace_font}",
-                "font-size": sp(12),
+                "font-size": sp(14),
             },
         },
-        "Monospace-SM": {
+        "Monospace-SM": { # Favorites bar font
             "large": {
                 "line-height": 1.0,
                 "font-name": f"{monospace_font}",
@@ -492,10 +493,46 @@ def RegisterFonts(app: MDApp, monospace_font: str = 'Argon'):
         },
     }
 
+class AutoAdjustHeightBehavior:
+    """Mixin that automatically adjusts size_hint_y when Window height changes.
+
+    Use for layouts that need to be resizable, while not resizing the menu bars.
+    
+    Set the height adjustment parameters via class attributes:
+        - adjust_title_bar: bool (default True)
+        - adjust_app_bar: bool (default True)
+        - adjust_bottom_appbar: bool (default False)
+        - adjust_custom: int (default 0)
+    """
+    adjust_title_bar = True
+    adjust_app_bar = True
+    adjust_bottom_appbar = False
+    adjust_custom = 0
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._update_adjusted_height()
+        Window.bind(height=self._on_window_height)
+    
+    def _update_adjusted_height(self, *args):
+        self.size_hint_y = adjust_height(
+            title_bar=self.adjust_title_bar,
+            app_bar=self.adjust_app_bar,
+            bottom_appbar=self.adjust_bottom_appbar,
+            custom=self.adjust_custom
+        )
+    
+    def _on_window_height(self, instance, value):
+        self._update_adjusted_height()
+
+
 def adjust_height(title_bar: bool=True, 
                   app_bar: bool=True, 
                   bottom_appbar: bool = False, 
                   custom: int = 0) -> float:
+    """Returns a float for a size_hint_y value based on the components
+    in the layout.
+    """
     removed_height = 0
     if title_bar:
         removed_height += dp(43)
