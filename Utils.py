@@ -147,14 +147,14 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
             else:
                 # No restart needed - proceed with launch
                 Clock.schedule_once(lambda dt: _launch_module_after_install(), 0)
-        except ModuleUpdate.RestartException:
+        except ModuleUpdate.RestartException as re:
             # Restart needed - schedule callback on main thread
-            Clock.schedule_once(lambda dt: _handle_install_error(e), 0)
+            Clock.schedule_once(lambda dt: _handle_install_error("Restart required for world updates."), 0)
 
         except Exception as e:
-            update_logger.error(f"Failed to update module {module_name}: {e}")
+            update_logger.error(f"Failed to update module {module_name}: {str(e)}")
             # Schedule error handling on main thread
-            Clock.schedule_once(lambda dt: _handle_install_error(e), 0)
+            Clock.schedule_once(lambda dt: _handle_install_error(str(e)), 0)
     
     def _launch_module_after_install():
         """Launch the module after successful installation"""

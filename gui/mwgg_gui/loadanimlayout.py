@@ -28,14 +28,29 @@ MIN_SPEED = 0.016  # Fastest speed (60fps)
 MAX_SPEED = 0.050   # Slowest speed (10fps)
 DEFAULT_SPEED = 0.040  # Default speed (40ms)
 
+class CallbackHandler(logging.Handler):
+    """Custom logging handler that calls a callback function for each log record."""
+    def __init__(self, callback):
+        super().__init__()
+        self.callback = callback
+    
+    def emit(self, record):
+        try:
+            self.callback(record)
+        except Exception:
+            self.handleError(record)
+
 class UpdateInfoLabel(MDLabel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.pos_hint = {'center_x': 0.5, 'center_y': 0.4}
+        self.size_hint_x = None
+        self.size_hint_y = None
         logger = logging.getLogger("Update")
-        logger.addHandler(logging.StreamHandler(self.on_log_update))
+        logger.addHandler(CallbackHandler(self.on_log_update))
 
     def on_log_update(self, record):
-        self.text = record.getMessage()
+        Clock.schedule_once(lambda dt: setattr(self, 'text', record.getMessage()), 0)
 
 img_path = os.path.join(os.getenv("KIVY_DATA_DIR"),"images", "loading_animation.png")
 
@@ -47,7 +62,6 @@ class MWGGLoadingLayout(MDRelativeLayout):
     current_frame = NumericProperty(0)
     app = ObjectProperty(None)
     _clock_event = None
-    display_logs = BooleanProperty(False)
     log_box: ObjectProperty(None)
 
     def __init__(self, *args, **kwargs):
@@ -65,17 +79,21 @@ class MWGGLoadingLayout(MDRelativeLayout):
             self.frames.append(Image(texture=core_image.texture))
         self.current_image = None
         self.current_frame = 0
-        self.log_box = UpdateInfoLabel(theme_bg_color="Custom", md_bg_color=self.app.theme_cls.surfaceColor, pos_hint={'center_x': 0.5, 'center_y': 0.4}, size=(400,100))
+        self.log_box = UpdateInfoLabel(theme_bg_color="Custom", md_bg_color=(0,0,0,0))
 
     def on_start(self):
         self.size = (self.app.root.width, self.app.root.height)
         self.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
 
-    def show_loading(self, speed=DEFAULT_SPEED):
+    def show_loading(self, display_logs=False, speed=DEFAULT_SPEED):
+        # Guard against shutdown state where widgets might be None
+        if self.img_box is None or self.app is None:
+            return
+            
         if not self.loading and not self.img_box.parent:
             self.loading = True
             self.add_widget(self.img_box)
-            if self.display_logs:
+            if display_logs and self.log_box is not None:
                 self.add_widget(self.log_box)
             # Use the new enable_effects method instead of directly setting effects
             if hasattr(self.app, 'enable_effects'):
@@ -101,7 +119,7 @@ class MWGGLoadingLayout(MDRelativeLayout):
         self._clock_event = Clock.schedule_interval(self.update_frame, speed)
     
     def update_frame(self, dt):
-        if not self.loading:
+        if not self.loading or self.img_box is None:
             return False
         
         if self.current_image:
@@ -118,10 +136,13 @@ class MWGGLoadingLayout(MDRelativeLayout):
             if self._clock_event:
                 self._clock_event.cancel()
                 self._clock_event = None
-            if self.current_image:
+            if self.current_image and self.img_box is not None:
                 self.img_box.remove_widget(self.current_image)
                 self.current_image = None
-            if self.img_box.parent:
+            if self.log_box and self.log_box.parent:
+                self.remove_widget(self.log_box)
+                self.log_box = None
+            if self.img_box is not None and self.img_box.parent:
                 self.remove_widget(self.img_box)
             # Use the new disable_effects method instead of directly clearing effects
             if hasattr(self.app, 'disable_effects'):

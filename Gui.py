@@ -211,6 +211,9 @@ class MultiMDApp(MDApp):
             'monospace_font': 'Argon',
             'device_orientation': '0'
         })
+        config.setdefaults('game_settings', {
+            'favorite_games': '',
+        })
 
     def on_config_change(self, config, section, key, value):
         """Handle configuration changes"""

@@ -5,6 +5,7 @@ import logging
 import io
 import warnings
 import json
+from pathlib import Path
 
 __all__ = ("Version", 
            "tuplize_version", 
@@ -20,6 +21,7 @@ __all__ = ("Version",
            "user_path",
            "output_path",
            "cache_path",
+           "write_path",
            "init_logging",
            "loglevel_mapping",
            "ByValue")
@@ -224,6 +226,16 @@ def output_path(*path: str) -> str:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     return path
 
+def write_path(*path: str) -> str:
+    if is_windows:
+        return os.path.join((Path.home() / "AppData" / "Local" / "MultiworldGG"), *path)
+    elif is_macos:
+        return os.path.join((Path.home() / "Library" / "Application Support" / "MultiworldGG"), *path)
+    elif is_linux:
+        return os.path.join((Path.home() / ".local" / "share" / "MultiworldGG"), *path)
+    else:
+        raise RuntimeError("Unsupported platform")
+
 class ByValue:
     """
     Mixin for enums to pickle value instead of name (restores pre-3.11 behavior). Use as left-most parent.
@@ -231,7 +243,6 @@ class ByValue:
     """
     def __reduce_ex__(self, prot):
         return self.__class__, (self._value_, )
-
 
 loglevel_mapping = {'error': logging.ERROR, 'info': logging.INFO, 'warning': logging.WARNING, 'debug': logging.DEBUG}
 

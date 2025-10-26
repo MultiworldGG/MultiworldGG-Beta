@@ -13,11 +13,7 @@ os.environ["KIVY_NO_CONSOLELOG"] = "0"
 os.environ["KIVY_NO_FILELOG"] = "0"
 os.environ["KIVY_LOG_ENABLE"] = "1"
 
-# from CommonClient import console_loop
-# from MultiServer import console
-# apname = "Archipelago" if not Utils.archipelago_name else Utils.archipelago_name
-
-from BaseUtils import local_path, is_frozen, init_logging, is_windows
+from BaseUtils import local_path, write_path, is_frozen, init_logging, is_windows
 from mwgg_splash import main as splash_main
 
 # Ensure ctypes is imported early (fixes WinDLL issues in frozen builds)
@@ -25,16 +21,18 @@ import ctypes
 
 if is_frozen():
     os.environ["KIVY_NO_ARGS"] = "1"
-    os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"lib", "kivy", "data")
-    lib_path = os.path.join(sys.exec_prefix, "lib")
-    if lib_path not in sys.path:
-        sys.path.append(lib_path)
+    os.environ["KIVY_DATA_DIR"] = local_path("lib", "kivy", "data")
+    default_libs_dir = os.path.join(sys.exec_prefix, "lib")
+    if str(default_libs_dir) not in sys.path:
+        sys.path.append(default_libs_dir)
+    venv_site_packages_path = write_path("mwgg_venv", "Lib", "site-packages")
+    if venv_site_packages_path not in sys.path:
+        sys.path.append(venv_site_packages_path)
 else:
-    os.environ["KIVY_DATA_DIR"] = os.path.join(local_path(),"kivy", "data")
-os.environ["KIVY_HOME"] = os.path.join(local_path(),"data")
+    os.environ["KIVY_DATA_DIR"] = local_path("kivy", "data")
+os.environ["KIVY_HOME"] = write_path("data")
 os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
 
-# mwgg_splash is imported dynamically when needed to avoid bundling it into frozen executable
 
 def terminate_splash_screen(queue: "Queue" ):
     """Terminate the splash screen process by name"""
@@ -63,6 +61,9 @@ def terminate_splash_screen(queue: "Queue" ):
 def run_client(*args, queue=None):
     """Start the MWGG client"""
     
+    print(f"sys.path: {sys.path}")
+    print(f"sys.modules: {sys.modules.keys()}")
+
     async def main(args: list[str]):
         from CommonClient import InitContext
 

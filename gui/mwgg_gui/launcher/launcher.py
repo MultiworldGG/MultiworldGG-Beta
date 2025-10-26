@@ -515,7 +515,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         logger.info(f"Using temp directory: {temp_dir}")
         
         # Show loading screen
-        Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(), 0)
+        Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(display_logs=True), 0)
         
         def run_generation():
             """Run generation in background thread and stream output to logger"""
@@ -645,8 +645,8 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         for handler in logging.root.handlers:
             handler.flush()
         
-        # Use os._exit to bypass cleanup and immediately terminate
-        os._exit(0)
+        # Use sys.exit to bypass cleanup and immediately terminate
+        sys.exit(10)
 
     def _cleanup_temp_dir(self, temp_dir):
         """Clean up temporary directory"""
@@ -1010,7 +1010,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             
             try:
                 # Show loading screen
-                Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(speed=0.033), 0)
+                Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(display_logs=True), 0)
 
                 # Define ready callback to hide loading layout and switch to console
                 def ready_callback(dt: float = 0):
@@ -1084,7 +1084,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 logger.info(f"Attempting to connect to: {server_address}")
                 
                 # Show loading screen
-                Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(speed=0.033), 0)
+                Clock.schedule_once(lambda dt: self.app.loading_layout.show_loading(), 0)
                 
                 # Use the context's connect method
                 import asyncio
