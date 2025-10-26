@@ -50,9 +50,9 @@ def install_path() -> Path:
 import pip
 
 # Version compatibility checks
-if (is_windows or is_macos) and sys.version_info < (3, 12, 0):
+if (is_windows() or is_macos()) and sys.version_info < (3, 12, 0):
     raise RuntimeError(f"Incompatible Python Version found: {sys.version_info}. Official 3.12.+ is supported.")
-elif (is_windows or is_macos) and sys.version_info < (3, 12, 7):
+elif (is_windows() or is_macos()) and sys.version_info < (3, 12, 7):
     warnings.warn(f"Python Version {sys.version_info} has security issues. Don't use in production.")
 elif sys.version_info < (3, 12, 0):
     raise RuntimeError(f"Incompatible Python Version found: {sys.version_info}. 3.12.+ is supported.")
