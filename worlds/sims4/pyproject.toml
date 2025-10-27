@@ -4,12 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.sims4"
-version = "0.0.0"
+version = "1.7.4"
 description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "Unknown"
+name = "bennydreamly"
+
+[[project.authors]]
+name = "itsmisscactus"
+
+[[project.authors]]
+name = "mrsummer360"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

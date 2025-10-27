@@ -10,7 +10,7 @@ classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 dependencies = [ "Pymem>=1.10.0",]
 [[project.authors]]
-name = "Unknown"
+name = "Mysteryem"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

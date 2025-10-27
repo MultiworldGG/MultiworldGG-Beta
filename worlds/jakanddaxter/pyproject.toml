@@ -10,7 +10,7 @@ classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 dependencies = [ "Pymem>=1.13.0",]
 [[project.authors]]
-name = "massimilianodelliubaldini"
+name = "markustulliuscicero"
 
 [project.entry-points."mwgg.client"]
 "worlds.jakanddaxter.Client" = "worlds.jakanddaxter.Register:CLIENT_FUNCTION"

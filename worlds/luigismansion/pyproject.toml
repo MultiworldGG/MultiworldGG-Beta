@@ -4,12 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.luigismansion"
-version = "0.0.0"
+version = "0.5.8"
 description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "Unknown"
+name = "BootsinSoots"
+
+[[project.authors]]
+name = "SomeJakeGuy"
+
+[[project.authors]]
+name = "TheChiefMoose"
+
+[[project.authors]]
+name = "LMFinish"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

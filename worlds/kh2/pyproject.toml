@@ -11,9 +11,6 @@ requires-python = ">=3.12"
 [[project.authors]]
 name = "JaredWeakStrike"
 
-[[project.authors]]
-name = "Shananas"
-
 [project.entry-points."mwgg.client"]
 "worlds.kh2.Client" = "worlds.kh2.Register:CLIENT_FUNCTION"
 

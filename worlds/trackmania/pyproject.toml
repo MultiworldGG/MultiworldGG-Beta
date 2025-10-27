@@ -11,6 +11,9 @@ requires-python = ">=3.12"
 [[project.authors]]
 name = "SerialBoxes"
 
+[[project.authors]]
+name = "Kaito Sinclaire"
+
 [tool.setuptools.packages.find]
 where = [ "src",]
 include = [ "worlds.trackmania",]

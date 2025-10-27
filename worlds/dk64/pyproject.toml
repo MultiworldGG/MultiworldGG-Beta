@@ -4,12 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.dk64"
-version = "0.0.0"
+version = "1.0.38"
 description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "Unknown"
+name = "2dos"
+
+[[project.authors]]
+name = "Killklli,"
+
+[[project.authors]]
+name = "Ballaam"
 
 [tool.setuptools.packages.find]
 where = [ "src",]
