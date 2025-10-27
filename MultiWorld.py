@@ -82,9 +82,7 @@ def run_client(*args, queue=None):
                 # Try to launch the module via entrypoints
                 try:
                     discover_and_launch_module(module_name=args.game, 
-                                            server_address=args.server_address, 
-                                            slot_name=args.slot_name, 
-                                            password=args.password)
+                                            server_address=args.server_address)
                     return  # Module takeover successful, exit initial client
                 except Exception as e:
                     logger.error(f"Module launch failed: {e}")
@@ -138,6 +136,8 @@ if __name__ == "__main__":
     logger = logging.getLogger("MultiWorld")
 
     # Start the splash screen process
+    splash_queue = None
+
     if is_windows:
         set_start_method("spawn")
         splash_queue = Queue()

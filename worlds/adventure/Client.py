@@ -480,11 +480,11 @@ async def patch_and_run_game(patch_file, ctx):
     async_start(run_game(comp_path))
 
 
-def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None, lua_port: int = 17242):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None, lua_port: int = 17242):
     logging.getLogger("AdventureClient")
 
     async def main():
-        ctx = AdventureContext(server_address, slot_name, password, ready_callback, error_callback)
+        ctx = AdventureContext(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -521,14 +521,14 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
         
         # Create a simple namespace object to mimic argparse.Namespace
         class Args:
-            def __init__(self, server_address, slot_name, password, patch_file, lua_port):
+            def __init__(self, server_address, password, patch_file, lua_port):
                 self.server_address = server_address
-                self.slot_name = slot_name
+                
                 self.password = password
                 self.patch_file = patch_file
                 self.lua_port = lua_port
         
-        args = Args(server_address, slot_name, password, patch_file, lua_port)
+        args = Args(server_address, password, patch_file, lua_port)
         task = asyncio.create_task(main(args), name="AdventureMain")
         return task
     except RuntimeError:
@@ -536,6 +536,6 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
         if error_callback:
             error_callback()
 
-def main(server_address: str, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None, lua_port: int = 17242):
+def main(server_address: str, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None, lua_port: int = 17242):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, slot_name, password, ready_callback, error_callback, patch_file, lua_port)
+    launch(server_address, password, ready_callback, error_callback, patch_file, lua_port)

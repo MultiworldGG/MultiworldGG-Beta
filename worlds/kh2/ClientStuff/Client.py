@@ -5,6 +5,7 @@ import os
 import asyncio
 import json
 import requests
+import urllib.parse
 
 from pymem import pymem
 #import logging
@@ -32,9 +33,8 @@ class KH2Context(CommonContext):
     game = "Kingdom Hearts 2"
     items_handling = 0b111  # Indicates you get items sent from other worlds.
 
-    def __init__(self, server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+    def __init__(self, server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
         super(KH2Context, self).__init__(server_address = server_address, password = password)
-        self.slot_name = slot_name
         self.ready_callback = ready_callback
         self.error_callback = error_callback
         self.goofy_ability_to_slot = dict()
@@ -60,10 +60,7 @@ class KH2Context(CommonContext):
             for k, v in dic.items()}
         self.location_name_to_worlddata = {name: data for name, data, in all_world_locations.items()}
 
-        if self.slot_name is not None:
-            self.auth = self.slot_name
-        else:
-            self.auth = None
+        self.username = urllib.parse.urlparse(server_address).username
 
         self.disconnect_from_server = False
         self.pause_game = False
@@ -301,13 +298,13 @@ class KH2Context(CommonContext):
         if password_requested and not self.password:
             await super(KH2Context, self).server_auth(password_requested)
         
-        if not self.auth:
+        if not self.username:
             await self.get_username()
         # if slot name != first time login or previous name
         # and seed name is none or saved seed name
         if not self.kh2seedname:
             await self.send_connect()
-        elif self.slot_name == self.auth and self.kh2seedname:
+        elif self.username == self.auth and self.kh2seedname:
             await self.send_connect()
         else:
             logger.info(f"You are trying to connect with data still cached in the client. Close client or connect to the correct slot: {self.slot_name}")
@@ -790,11 +787,11 @@ async def kh2_watcher(ctx: KH2Context):
         await asyncio.sleep(0.5)
 
 
-def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     Utils.init_logging("KH2Client")
 
     async def main(args):
-        ctx = KH2Context(server_address, slot_name, password, ready_callback, error_callback)
+        ctx = KH2Context(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -823,12 +820,11 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
         
         # Create a simple namespace object to mimic argparse.Namespace
         class Args:
-            def __init__(self, server_address, slot_name, password):
+            def __init__(self, server_address, password):
                 self.server_address = server_address
-                self.slot_name = slot_name
                 self.password = password
         
-        args = Args(server_address, slot_name, password)
+        args = Args(server_address, password)
         task = asyncio.create_task(main(args), name="KH2Main")
         return task
     except RuntimeError:
@@ -836,6 +832,6 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
         if error_callback:
             error_callback()
 
-def main(server_address: str, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def main(server_address: str, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, slot_name, password, ready_callback, error_callback)
+    launch(server_address, password, ready_callback, error_callback)

@@ -4,6 +4,7 @@ import os
 import traceback
 from typing import Any, Dict, List, Optional
 import zipfile
+import urllib.parse
 
 from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser, logger, server_loop, gui_enabled
 from .Data import get_progressive_districts_data
@@ -76,7 +77,7 @@ class CivVIContext(CommonContext):
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
-        self.username = slot_name
+        self.username = urllib.parse.urlparse(server_address).username
         self.slot_data: Dict[str, Any] = {}
         self.game_interface = CivVIInterface(logger)
         location_by_era = generate_era_location_table()
@@ -292,7 +293,7 @@ async def _handle_game_ready(ctx: CivVIContext):
         await asyncio.sleep(3)
 
 
-def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, apcivvi_file: str = None):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, apcivvi_file: str = None):
     """
     Launch the client
     """
@@ -300,7 +301,7 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
     logging.getLogger("Civ6Client")
 
     async def main():
-        ctx = CivVIContext(server_address, slot_name, password, apcivvi_file or "", ready_callback, error_callback)
+        ctx = CivVIContext(server_address, password, apcivvi_file or "", ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -322,7 +323,7 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
                     for member in zip_ref.namelist():
                         zip_ref.extract(member, target_path)
 
-        ctx.auth = slot_name
+        ctx.auth = urllib.parse.urlparse(server_address).username
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
         await ctx.server_auth()
         await asyncio.sleep(1)
@@ -354,9 +355,9 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
             error_callback()
 
 
-def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, apcivvi_file: str = None):
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, apcivvi_file: str = None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, slot_name, password, ready_callback, error_callback, apcivvi_file)
+    launch(server_address, password, ready_callback, error_callback, apcivvi_file)
 
 
 def debug_main():

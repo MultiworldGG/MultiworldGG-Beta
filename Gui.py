@@ -41,17 +41,18 @@ from kivy.config import ConfigParser
 MWKVConfig.set("input", "mouse", "mouse,disable_multitouch")
 MWKVConfig.set("kivy", "exit_on_escape", "0")
 MWKVConfig.set("kivy", "default_font", ['Inter', 
-                                    os.path.join(local_path(),"data","fonts","Inter-Regular.ttf"), 
-                                    os.path.join(local_path(),"data","fonts","Inter-Italic.ttf"),
-                                    os.path.join(local_path(),"data","fonts","Inter-Bold.ttf"),
-                                    os.path.join(local_path(),"data","fonts","Inter-BoldItalic.ttf")])
+                                    os.path.join("data","fonts","Inter-Regular.ttf"), 
+                                    os.path.join("data","fonts","Inter-Italic.ttf"),
+                                    os.path.join("data","fonts","Inter-Bold.ttf"),
+                                    os.path.join("data","fonts","Inter-BoldItalic.ttf")])
 MWKVConfig.set("graphics", "width", "1099")
 MWKVConfig.set("graphics", "height", "699")
 MWKVConfig.set("graphics", "custom_titlebar", "1")
-MWKVConfig.set("graphics", "window_icon", os.path.join(local_path(),"data", "icon.png"))
+MWKVConfig.set("graphics", "window_icon", os.path.join("data", "icon.png"))
 MWKVConfig.set("graphics", "minimum_height", "700")
 MWKVConfig.set("graphics", "minimum_width", "600")
 MWKVConfig.set("graphics", "focus", "False")
+MWKVConfig.write()
 
 from kivy.core.window import Window
 Window.opacity = 0
@@ -210,9 +211,6 @@ class MultiMDApp(MDApp):
             'font_scale': '1.0',
             'monospace_font': 'Argon',
             'device_orientation': '0'
-        })
-        config.setdefaults('game_settings', {
-            'favorite_games': '',
         })
 
     def on_config_change(self, config, section, key, value):
@@ -552,10 +550,6 @@ class MultiMDApp(MDApp):
                 width_mult=3,
             )
         self.top_appbar_menu.open()
-
-    def update_address_bar(self, text: str):
-        if hasattr(self, "top_appbar"):
-            self.top_appbar.update_address_bar(text)
       
     def update_history(self, new_entry: str) -> None:
         self._command_history_index = -1

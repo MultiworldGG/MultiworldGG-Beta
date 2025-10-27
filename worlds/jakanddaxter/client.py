@@ -14,6 +14,7 @@ from typing import Awaitable
 # Misc imports
 import colorama
 import pymem
+import urllib.parse
 
 from pymem.exception import ProcessNotFound
 
@@ -105,7 +106,7 @@ class JakAndDaxterContext(CommonContext):
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
-        self.username = slot_name
+        self.username = urllib.parse.urlparse(server_address).username
         self.repl = JakAndDaxterReplClient(self.on_log_error,
                                            self.on_log_warn,
                                            self.on_log_success,
@@ -624,14 +625,14 @@ async def run_game(ctx: JakAndDaxterContext):
     ctx.memr.initiated_connect = True
 
 
-def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
     Launch the client
     """
     logging.getLogger("JakAndDaxterClient")
 
     async def main():
-        ctx = JakAndDaxterContext(server_address, slot_name, password, ready_callback, error_callback)
+        ctx = JakAndDaxterContext(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -668,6 +669,6 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
             error_callback()
 
 
-def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, slot_name, password, ready_callback, error_callback)
+    launch(server_address, password, ready_callback, error_callback)

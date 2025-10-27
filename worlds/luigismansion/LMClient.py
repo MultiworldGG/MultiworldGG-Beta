@@ -130,11 +130,11 @@ class LMContext(BaseContext):
     game = "Luigi's Mansion"
     items_handling = 0b111
 
-    def __init__(self, server_address, password, slot_name: str = None, ready_callback=None, error_callback=None):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
-        self.slot_name = slot_name
+        
         # Handle various Dolphin connection related tasks
         self.instance_id = None
         self.dolphin_sync_task: Optional[asyncio.Task[None]] = None
@@ -919,7 +919,7 @@ def main(*launch_args: str):
     server_address: str = ""
     rom_path: str = ""
 
-def launch(server_address: str = None, password: str = None, slot_name: str = None, ready_callback=None, error_callback=None, output_data: str = None):
+def launch(server_address: str = None, ready_callback=None, error_callback=None, output_data: str = None):
     """
     Launch the client
     """
@@ -942,7 +942,7 @@ def launch(server_address: str = None, password: str = None, slot_name: str = No
                     error_callback()
                 return
 
-        ctx = LMContext(actual_server_address, password, slot_name, ready_callback, error_callback)
+        ctx = LMContext(actual_server_address, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -951,6 +951,7 @@ def launch(server_address: str = None, password: str = None, slot_name: str = No
                 error_callback()
             return
 
+        apname = Utils.instance_name if Utils.instance_name else "Archipelago"
         ctx.ui.base_title = apname + " | Luigi's Mansion"
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
         await ctx.server_auth()
@@ -988,9 +989,9 @@ def launch(server_address: str = None, password: str = None, slot_name: str = No
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, slot_name: str = None, ready_callback=None, error_callback=None, output_data: str = None):
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, output_data: str = None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, slot_name, ready_callback, error_callback, output_data)
+    launch(server_address, password, ready_callback, error_callback, output_data)
 
 if __name__ == "__main__":
     parser = get_base_parser()

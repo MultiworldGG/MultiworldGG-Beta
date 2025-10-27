@@ -84,14 +84,11 @@ class ClientCommandProcessor(CommandProcessor):
         return True
 
     def _cmd_connect(self, address: str = "") -> bool:
-        """Connect to a MultiWorld Server"""
+        """Connect to a Multiworld Server.  Example format: PlayerName:password@multiworld.gg:38281"""
         if address:
             self.ctx.server_address = None
-            # TODO: add checks to see if it was a failed username/password rather than wiping them out.
-            self.ctx.username = None
-            self.ctx.password = None
         elif not self.ctx.server_address:
-            self.output("Please specify an address.")
+            self.output("Please specify an address.  Example format: PlayerName:password@multiworld.gg:38281")
             return False
         async_start(self.ctx.connect(address if address else None), name="connecting")
         return True
@@ -102,7 +99,7 @@ class ClientCommandProcessor(CommandProcessor):
         return True
 
     def _cmd_received(self) -> bool:
-        """List all received items"""
+        """List all of your received items"""
         item: NetworkItem
         self.output(f'{len(self.ctx.items_received)} received items, sorted by time:')
         for index, item in enumerate(self.ctx.items_received, 1):
@@ -117,7 +114,7 @@ class ClientCommandProcessor(CommandProcessor):
 
     def _cmd_missing(self, filter_text = "") -> bool:
         """List all missing location checks, from your local game state.
-        Can be given text, which will be used as filter."""
+        Can be given text, which will be used as a filter."""
         if not self.ctx.game:
             self.output("No game set, cannot determine missing checks.")
             return False
@@ -247,6 +244,13 @@ class ClientCommandProcessor(CommandProcessor):
 
 class InitContext:
     """Base context for initial GUI state with minimal properties"""
+    # properties
+    _username: str | None = None
+    _password: str | None = None
+    server_address: str | None
+    """Autoconnect address provided by the ctx constructor
+    expected format: url://username:password@hostname:port"""
+
     command_processor: typing.Type[CommandProcessor] = ClientCommandProcessor
     # internals
     _messagebox: typing.Optional["Gui.MessageBox"] = None
@@ -260,6 +264,7 @@ class InitContext:
         self.exit_event = asyncio.Event()
         self._state = ClientState.INITIAL
         self._is_transitioning = False
+        self.server_address = None
         self._splash_queue: Optional[Queue] = None
 
     def run_gui(self, splash_queue: Optional[Queue] = None):
@@ -274,21 +279,42 @@ class InitContext:
             await self.ui_task
 
     @property
-    def suggested_username(self) -> str:
+    def username(self) -> str:
+        if self._username:
+            return self._username
+        if hasattr(self, 'server_address'):
+            return urllib.parse.urlparse(self.server_address).username or ""
         return Utils.persistent_load().get('client', {}).get('last_username', '')
+    
+    @username.setter
+    def username(self, value: str):
+        self._username = value
+        Utils.persistent_store({'client': {'last_username': value}})
 
     @property
-    def suggested_host(self) -> str:
+    def password(self) -> str:
+        if self._password:
+            return self._password
         if hasattr(self, 'server_address'):
-            return self.server_address.split(':')[0]
-        return Utils.persistent_load().get('client', {}).get('last_server_address', 'multiworld.gg')
+            return urllib.parse.urlparse(self.server_address).password or ""
+        return ""
+    
+    @password.setter
+    def password(self, value: str):
+        self._password = value
 
     @property
-    def suggested_port(self) -> str:
+    def hostname(self) -> str:
         if hasattr(self, 'server_address'):
-            return self.server_address.split(':')[1]
+            return urllib.parse.urlparse(self.server_address).hostname or ""
+        return Utils.persistent_load().get('client', {}).get('last_server_hostname', 'multiworld.gg')
+
+    @property
+    def port(self) -> str:
+        if hasattr(self, 'server_address'):
+            return urllib.parse.urlparse(self.server_address).port or ""
         persistent_port = Utils.persistent_load().get('client', {}).get('last_server_port', '38281')
-        return str(persistent_port)
+        return persistent_port
 
 class CommonContext(InitContext):
     # The following attributes are used to Connect and should be adjusted as needed in subclasses
@@ -452,8 +478,8 @@ class CommonContext(InitContext):
         self._main_task: Optional[asyncio.Task] = None
         # server state
         self.server_address = server_address
-        self.username = None
-        self.password = password
+        self._username = None
+        self._password = None
         self.hint_cost = None
         self.slot_info = {}
         self.permissions = {
@@ -567,25 +593,6 @@ class CommonContext(InitContext):
         self.ui = MultiMDApp(self)
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
-    @property
-    def suggested_username(self) -> str:
-        if self.username:
-            return self.username
-        return Utils.persistent_load().get('client', {}).get('last_username', '')
-
-    @property
-    def suggested_host(self) -> str:
-        if self.server_address:
-            return self.server_address.split(':')[0]
-        return Utils.persistent_load().get('client', {}).get('last_server_address', 'multiworld.gg')
-
-    @property
-    def suggested_port(self) -> str:
-        if self.server_address:
-            return self.server_address.split(':')[1]
-        persistent_port = Utils.persistent_load().get('client', {}).get('last_server_port', '38281')
-        return str(persistent_port)
-
     @functools.cached_property
     def raw_text_parser(self) -> RawJSONtoTextParser:
         return RawJSONtoTextParser(self)
@@ -642,26 +649,26 @@ class CommonContext(InitContext):
         if self.ui:
             self.ui.ui_player_data = {slot: {} for team, slot, alias, name in package if self.team == team}
 
-    def event_invalid_slot(self):
-        self.gui_error('Invalid Slot', 'Please verify that you have connected to the correct world.')
-        logger.error('Invalid Slot; please verify that you have connected to the correct world.')
-
     def event_invalid_game(self):
         self.gui_error('Invalid Game', 'Please verify that you connected with the right game to the correct world.')
         logger.error('Invalid Game; please verify that you connected with the right game to the correct world.')
 
-    async def server_auth(self, password_requested: bool = False):
+    async def client_get_password(self, password_requested: bool = False) -> str:
         if password_requested and not self.password:
             logger.info('Enter the password required to join this game:')
             self.password = await self.console_input()
             return self.password
 
-    async def get_username(self):
+    async def client_get_username(self) -> None:
         if not self.auth:
             self.auth = self.username
             if not self.auth:
-                logger.info('Enter slot name:')
+                logger.info('Enter player name:')
                 self.auth = await self.console_input()
+
+    server_auth = client_get_password
+    get_username = client_get_username
+    # These names are crap, so I renamed them.
 
     async def send_connect(self, **kwargs: typing.Any) -> None:
         """
@@ -692,7 +699,7 @@ class CommonContext(InitContext):
         elif self.ui:
             if self._consolebox:
                 self._consolebox = None
-            self._consolebox = ConsoleBox(title="Response from " + self.server_address, prompt=prompt, queue=self.input_queue)
+            self._consolebox = ConsoleBox(title="Response from " + self.hostname + ":" + self.port, prompt=prompt)
         self.input_requests += 1
         return await self.input_queue.get()
 
@@ -1077,24 +1084,17 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
 
     address = f"ws://{address}" if "://" not in address \
         else address.replace("archipelago://", "ws://").replace("mwgg://", "ws://")
-
-    server_url = urllib.parse.urlparse(address)
-    if server_url.username:
-        ctx.username = urllib.parse.unquote(server_url.username)
-    if server_url.password:
-        ctx.password = urllib.parse.unquote(server_url.password)
-
+    
     def reconnect_hint() -> str:
         return ", type /connect to reconnect" if ctx.server_address else ""
 
-    logger.info(f'Connecting to {apname} server at {address}')
+    username = f" with username {urllib.parse.urlparse(address).username}" if urllib.parse.urlparse(address).username else ""
+    password = f" with password ********" if urllib.parse.urlparse(address).password else ""
+    logger.info(f'Connecting to {apname} server at {urllib.parse.urlparse(address).netloc}{username}{password}.')
     try:
-        port = server_url.port or 38281  # raises ValueError if invalid
-        socket = await websockets.connect(address, port=port, ping_timeout=None, ping_interval=None,
+        socket = await websockets.connect(address, ping_timeout=None, ping_interval=None,
                                           ssl=get_ssl_context() if address.startswith("wss://") else None,
                                           max_size=ctx.max_size)
-        if ctx.ui is not None:
-            ctx.ui.update_address_bar(server_url.netloc)
         ctx.server = Endpoint(socket)
         logger.info('Connected')
         ctx.server_address = address
@@ -1206,10 +1206,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
 
     elif cmd == 'ConnectionRefused':
         errors = args["errors"]
-        if 'InvalidSlot' in errors:
-            ctx.disconnected_intentionally = True
-            ctx.event_invalid_slot()
-        elif 'InvalidGame' in errors:
+        if 'InvalidGame' in errors:
             ctx.disconnected_intentionally = True
             ctx.event_invalid_game()
         elif 'IncompatibleVersion' in errors:
@@ -1219,10 +1216,15 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         elif 'InvalidItemsHandling' in errors:
             raise Exception('The item handling flags requested by the client are not supported')
         # last to check, recoverable problem
+        elif 'InvalidSlot' in errors:
+            logger.error('Player name is incorrect, please verify that you have entered your player name exactly as it appears in your YAML file.')
+            ctx.auth = None
+            ctx.username = None
+            await ctx.client_get_username()
         elif 'InvalidPassword' in errors:
             logger.error('Invalid password')
             ctx.password = None
-            await ctx.server_auth(True)
+            await ctx.client_get_password(True)
         elif errors:
             raise Exception("Unknown connection errors: " + str(errors))
         else:
@@ -1266,10 +1268,9 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.server_locations = ctx.missing_locations | ctx. checked_locations
 
         server_url = urllib.parse.urlparse(ctx.server_address)
-        Utils.persistent_store("client", "last_server_address", server_url.hostname)
+        Utils.persistent_store("client", "last_server_hostname", server_url.hostname)
         Utils.persistent_store("client", "last_server_port", server_url.port)
-        if ctx.username:
-            Utils.persistent_store("client", "last_username", ctx.auth)
+
         if ctx.ui:
             ctx.ui.on_connect()
 
@@ -1402,7 +1403,7 @@ def handle_url_arg(args: "argparse.Namespace",
     return args
 
 
-def launch_textclient(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def launch_textclient(server_address: str = None, ready_callback=None, error_callback=None):
     """Launch text client in GUI integration mode like KH2"""
     
     class TextContext(CommonContext):
@@ -1412,14 +1413,14 @@ def launch_textclient(server_address: str = None, slot_name: str = None, passwor
         items_handling = 0b111  # receive all items for /received
         want_slot_data = False  # Can't use game specific slot_data
 
-        def __init__(self, server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
-            super(TextContext, self).__init__(server_address=server_address, password=password)
-            self.slot_name = slot_name
+        def __init__(self, server_address: str = None, ready_callback=None, error_callback=None):
+            super(TextContext, self).__init__(server_address=server_address)
+
             self.ready_callback = ready_callback
             self.error_callback = error_callback
             
-            if self.slot_name is not None:
-                self.auth = self.slot_name
+            if self.username is not None:
+                self.auth = self.username
             else:
                 self.auth = None
 
@@ -1455,7 +1456,7 @@ def launch_textclient(server_address: str = None, slot_name: str = None, passwor
                     logger.error(f"Error in error callback: {e}")
 
     async def main(args):
-        ctx = TextContext(server_address, slot_name, password, ready_callback, error_callback)
+        ctx = TextContext(server_address, ready_callback, error_callback)
         
         # Try to takeover existing GUI like KH2
         if ctx._can_takeover_existing_gui():
@@ -1483,12 +1484,10 @@ def launch_textclient(server_address: str = None, slot_name: str = None, passwor
         
         # Create a simple namespace object to mimic argparse.Namespace
         class Args:
-            def __init__(self, server_address, slot_name, password):
+            def __init__(self, server_address):
                 self.server_address = server_address
-                self.slot_name = slot_name
-                self.password = password
         
-        args = Args(server_address, slot_name, password)
+        args = Args(server_address)
         task = asyncio.create_task(main(args), name="TextClientMain")
         return task
     except RuntimeError:
@@ -1496,6 +1495,6 @@ def launch_textclient(server_address: str = None, slot_name: str = None, passwor
         if error_callback:
             error_callback()
 
-def main_textclient(server_address: str, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def main_textclient(server_address: str, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    return launch_textclient(server_address, slot_name, password, ready_callback, error_callback)
+    return launch_textclient(server_address, ready_callback, error_callback)

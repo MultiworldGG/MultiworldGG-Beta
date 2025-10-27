@@ -79,9 +79,9 @@ class OoTContext(CommonContext):
     command_processor = OoTCommandProcessor
     items_handling = 0b001  # full local
 
-    def __init__(self, server_address, slot_name, password, ready_callback=None, error_callback=None):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
-        self.slot_name = slot_name
+        
         self.ready_callback = ready_callback
         self.error_callback = error_callback
         self.game = 'Ocarina of Time'
@@ -331,7 +331,7 @@ async def patch_and_run_game(apz5_file):
     async_start(run_game(comp_path))
 
 
-def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
     """
     Launch the client
     """
@@ -344,7 +344,7 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
             logger.info("APZ5 file supplied, beginning patching process...")
             async_start(patch_and_run_game(patch_file))
 
-        ctx = OoTContext(server_address, slot_name, password, ready_callback, error_callback)
+        ctx = OoTContext(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -383,6 +383,6 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
             error_callback()
 
 
-def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, slot_name, password, ready_callback, error_callback, patch_file)
+    launch(server_address, password, ready_callback, error_callback, patch_file)

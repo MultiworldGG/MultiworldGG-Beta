@@ -368,7 +368,7 @@ async def nes_sync_task(ctx: ZeldaContext):
                 continue
 
 
-def launch(server_address, password, slot_name, ready_callback, error_callback, patch_file):
+def launch(server_address, password, ready_callback, error_callback, patch_file):
     # Text Mode to use !hint and such with games that have no text entry
     Utils.init_logging("ZeldaClient")
 

@@ -2,6 +2,7 @@ import asyncio
 import random
 import time
 import traceback
+import urllib.parse
 from typing import TYPE_CHECKING, Any, Optional
 
 import dolphin_memory_engine as dolphin
@@ -91,7 +92,7 @@ class MkddContext(CommonContext):
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
-        self.username = slot_name
+        self.username = urllib.parse.urlparse(server_address).username
         # Client data.
         self.items_received_2: list[tuple[NetworkItem, int]] = []
         self.last_item_handled: int = -1
@@ -1025,7 +1026,7 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
             continue
 
 
-def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
     Launch the client
     """
@@ -1033,7 +1034,7 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
     logging.getLogger("MarioKartDoubleDashClient")
 
     async def main():
-        ctx = MkddContext(server_address, slot_name, password, ready_callback, error_callback)
+        ctx = MkddContext(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -1080,9 +1081,9 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
             error_callback()
 
 
-def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, slot_name, password, ready_callback, error_callback)
+    launch(server_address, password, ready_callback, error_callback)
 
 
 if __name__ == "__main__":

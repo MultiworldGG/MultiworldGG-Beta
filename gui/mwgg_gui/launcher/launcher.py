@@ -44,6 +44,7 @@ import sys
 from pathlib import Path
 import subprocess
 import threading
+import urllib.parse
 
 from kivymd.app import MDApp
 from mwgg_igdb import GameIndex
@@ -113,6 +114,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     favorite_games: ListProperty = ListProperty([])
     saved_games: ListProperty = ListProperty([])
     yaml_dialog_layout: ObjectProperty = ObjectProperty(None)
+    _password_as_text: bool = False # True to show password as text, False to show password as asterisks
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
@@ -254,6 +256,8 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         try:
             if module_name:
                 self.saved_games.append(module_name)
+            if not self.app.app_config.has_section('game_settings'):
+                self.app.app_config.add_section('game_settings')
             self.app.app_config.set('game_settings', 'favorite_games', ','.join(self.saved_games).lstrip(","))
             self.app.app_config.write()
             logger.debug(f"Saved {len(self.favorite_games)} favorite games")
@@ -609,22 +613,18 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         thread = threading.Thread(target=run_generation, daemon=True)
         thread.start()
 
-    def _prepare_connect_args(self, game_module, server_address=None, slot_name=None, password=None):
+    def _prepare_connect_args(self, game_module, server_address=None):
         """Prepare command line arguments for reconnecting after restart"""
         args = sys.argv.copy()
         
-        # Add game module argument in the format expected by MultiWorld.py
-        game_arg = f"--game=worlds.{game_module}"
+        # Add game module argument
+        game_arg = f"--game={game_module}"
         if game_arg not in args:
             args.append(game_arg)
         
         # Add connection parameters using standard argument formats
-        if server_address:
-            args.append(server_address)
-        if slot_name:
-            args.append(slot_name)
-        if password:
-            args.append(password)
+        if server_address not in args and server_address:
+            args.append(f"--server-address={server_address}")
             
         return args
 
@@ -973,40 +973,39 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             self.app.root.remove_widget(self.yaml_dialog_layout)
             self.yaml_dialog_layout = None
 
+    @property
+    def server_address(self) -> str:
+        # Return the server address as a url parse string for connection.
+        server_text = self.launcher_view.ids.server.text or self.launcher_view.ids.server.hint_text
+        port_text = self.launcher_view.ids.port.text or self.launcher_view.ids.port.hint_text
+        slot_name_text = self.launcher_view.ids.slot_name.text or self.launcher_view.ids.slot_name.hint_text
+        if self._password_as_text:
+            slot_password_text = f":{self.launcher_view.ids.slot_password.text}" if self.launcher_view.ids.slot_password.text else ""
+        else:
+            slot_password_text = ":********" if self.launcher_view.ids.slot_password.text else ""
+        return f"{slot_name_text}{slot_password_text}@{server_text}:{port_text}" if server_text and port_text else None
+
     def connect(self):
         """Connect to server and launch the selected game module"""
         logger.info("Connect method called!")
         
         # Get the current app context
         current_ctx = self.app.ctx
-        
+
+        self._password_as_text = False
+        server_address = self.server_address.copy() if self.server_address else None
+        self._password_as_text = True
+
         # Check if we're in initial state by checking if ctx has a 'game' attribute
         if not hasattr(current_ctx, 'game'):
             if not self.selected_game:
                 MessageBox("No Game Selected", "Please select a game before connecting.").open()
                 return
             
-            # Get connection details from the UI
-            server_field = self.launcher_view.ids.server
-            port_field = self.launcher_view.ids.port
-            slot_name_field = self.launcher_view.ids.slot_name
-            slot_password_field = self.launcher_view.ids.slot_password
-
-            if not server_field.text:
-                server_field.text = server_field.hint_text
-            if not port_field.text:
-                port_field.text = port_field.hint_text
-            if not slot_name_field.text:
-                slot_name_field.text = slot_name_field.hint_text
-            
-            server_address = f"{server_field.text}:{port_field.text}" if server_field.text and port_field.text else None
-            slot_name = slot_name_field.text if slot_name_field.text else None
-            password = slot_password_field.text if slot_password_field.text else None
-            
             self.app.logo_png = self.game_index.get_game(self.selected_game[0]).get("cover_url", None)
 
             logger.info(f"Attempting to launch module: {self.selected_game[1]}")
-            logger.info(f"Server: {server_address}, Password: {'*' * len(password) if password else 'None'}")
+            logger.info(f"Server: {server_address}")
             
             try:
                 # Show loading screen
@@ -1014,22 +1013,20 @@ class LauncherScreen(MDScreen, ThemableBehavior):
 
                 # Define ready callback to hide loading layout and switch to console
                 def ready_callback(dt: float = 0):
-                    self.app.loading_layout.hide_loading()
+                    Clock.schedule_once(lambda x: self.app.loading_layout.hide_loading(), 0)
                     # Switch to console after successful connection
                     Clock.schedule_once(lambda x: self.app.console_init())
                     Clock.schedule_once(lambda x: self.app.change_screen("console"))
                 
                 # Define error callback to handle connection failures
                 def error_callback(restart_callback=None):
-                    self.app.loading_layout.hide_loading()
+                    Clock.schedule_once(lambda x: self.app.loading_layout.hide_loading(), 0)
                     # If restart_callback is provided, it means we need to restart due to module updates
                     if restart_callback:
                         # Prepare connection arguments for restart
                         connect_args = self._prepare_connect_args(
                             game_module=self.selected_game[0],
-                            server_address=server_address,
-                            slot_name=slot_name,
-                            password=password
+                            server_address=self.server_address,
                         )
                         MessageBox("Restart Required", 
                                    "You will need to restart the launcher to apply updates.",
@@ -1043,20 +1040,20 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 self.app.client_console_init()
 
                 discover_and_launch_module(
-                        f"worlds.{self.selected_game[0]}", server_address = server_address, slot_name = slot_name, \
-                        password = password, ready_callback=ready_callback, error_callback=error_callback
+                        f"worlds.{self.selected_game[0]}", server_address=self.server_address, ready_callback=ready_callback, error_callback=error_callback
                 )
                     
             except Exception as e:
                 logger.error(f"Failed to launch {self.selected_game[1]} module: {e}")
                 # Hide loading layout on error
-                self.app.loading_layout.hide_loading()
+                Clock.schedule_once(lambda x: self.app.loading_layout.hide_loading(), 0)
                 # Show error dialog and stay on launcher screen
                 MessageBox("Launch Error", f"Failed to launch {self.selected_game[1]}: {str(e)}", is_error=True).open()
         
         else:
             # We're in a game context, check if the selected game matches the current context
-            if hasattr(current_ctx, 'game') and current_ctx.game != self.selected_game[1]:
+            # TODO: Use a list for tracker/_sni/_bizhawk/"" and allow for those "game"s (empty is text client)
+            if hasattr(current_ctx, 'game') and current_ctx.game and current_ctx.game != self.selected_game[1]:
                 # Game mismatch - need to rebuild to InitContext first
                 logger.info(f"Game mismatch: current={current_ctx.game}, selected={self.selected_game[1]}")
                 MessageBox("Game Mismatch", 
@@ -1066,18 +1063,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             
             # Game matches, try to connect using the current context
             try:
-                # Get connection details from the UI
-                server_field = self.launcher_view.ids.server
-                port_field = self.launcher_view.ids.port
-                
-                if not server_field.text:
-                    server_field.text = server_field.hint_text
-                if not port_field.text:
-                    port_field.text = port_field.hint_text
-                
-                server_address = f"{server_field.text}:{port_field.text}" if server_field.text and port_field.text else None
-                
-                if not server_address:
+                if not self.server_address:
                     MessageBox("Connection Error", "Please enter a valid server address and port.", is_error=True).open()
                     return
                 
@@ -1088,12 +1074,12 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 
                 # Use the context's connect method
                 import asyncio
-                asyncio.create_task(current_ctx.connect(server_address))
+                asyncio.create_task(current_ctx.connect(self.server_address))
                 
                 # Hide loading screen after a short delay (connection will handle its own UI updates)
                 Clock.schedule_once(lambda dt: self.app.loading_layout.hide_loading(), 2)
                 
             except Exception as e:
                 logger.error(f"Failed to connect: {e}")
-                self.app.loading_layout.hide_loading()
+                Clock.schedule_once(lambda x: self.app.loading_layout.hide_loading(), 0)
                 MessageBox("Connection Error", f"Failed to connect: {str(e)}", is_error=True).open()

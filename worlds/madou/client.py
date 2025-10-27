@@ -5,13 +5,10 @@ import random
 from typing import TYPE_CHECKING
 
 from NetUtils import ClientStatus, color
-from worlds.AutoSNIClient import SNIClient
+from worlds._sni.client import SNIClient
 
 from .data.item_data import hex_data_by_item
 from .data.location_data import hex_by_location
-
-if TYPE_CHECKING:
-    from SNIClient import SNIContext
 
 snes_logger = logging.getLogger("SNES")
 

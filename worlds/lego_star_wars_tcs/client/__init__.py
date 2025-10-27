@@ -3,6 +3,7 @@ import traceback
 import colorama
 import hashlib
 import random
+import urllib.parse
 
 import Utils
 from NetUtils import ClientStatus
@@ -344,7 +345,7 @@ class LegoStarWarsTheCompleteSagaContext(CommonContext):
 
     def __init__(self, server_address: typing.Optional[str] = None, slot_name: typing.Optional[str] = None, password: typing.Optional[str] = None, ready_callback=None, error_callback=None) -> None:
         super().__init__(server_address, password)
-        self.username = slot_name
+        self.username = urllib.parse.urlparse(server_address).username
         self.ready_callback = ready_callback
         self.error_callback = error_callback
 
@@ -1634,14 +1635,14 @@ async def game_watcher(ctx: LegoStarWarsTheCompleteSagaContext):
         else:
             ctx.auth_status = AuthStatus.NOT_AUTHENTICATED
 
-def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
     Launch the client
     """
     Utils.init_logging("LegoStarWarsTheCompleteSagaClient", exception_logger="ClientException")
 
     async def main():
-        ctx = LegoStarWarsTheCompleteSagaContext(server_address, slot_name, password, ready_callback, error_callback)
+        ctx = LegoStarWarsTheCompleteSagaContext(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -1684,6 +1685,6 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
         if error_callback:
             error_callback()
 
-def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, slot_name, password, ready_callback, error_callback)
+    launch(server_address, password, ready_callback, error_callback)

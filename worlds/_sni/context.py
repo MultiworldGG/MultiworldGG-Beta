@@ -364,7 +364,7 @@ async def run_game(romfile: str) -> None:
                          stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None, snes_address: str = "localhost:23074", diff_file: str = None) -> None:
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, snes_address: str = "localhost:23074", diff_file: str = None) -> None:
     logging.getLogger("SNIClient")
 
     async def main():
@@ -451,5 +451,4 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
 
 
 def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, snes_address: str = "localhost:23074", diff_file: str = None):
-    slot_name = None
-    launch(server_address, slot_name, password, ready_callback, error_callback, snes_address, diff_file)
+    launch(server_address, password, ready_callback, error_callback, snes_address, diff_file)

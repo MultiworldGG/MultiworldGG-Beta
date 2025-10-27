@@ -6,6 +6,7 @@ import typing
 import bsdiff4
 import shutil
 import logging
+import urllib.parse
 
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
@@ -98,11 +99,11 @@ class UndertaleContext(CommonContext):
     completed_count = 0
     save_game_folder = os.path.expandvars(r"%localappdata%/UNDERTALE")
 
-    def __init__(self, server_address, slot_name, password, ready_callback=None, error_callback=None):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
-        self.username = slot_name
+        self.username = urllib.parse.urlparse(server_address).username
         self.pieces_needed = 0
         self.finished_game = False
         self.game = "Undertale"
@@ -487,14 +488,14 @@ async def game_watcher(ctx: UndertaleContext):
         await asyncio.sleep(0.1)
 
 
-def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
     Launch the client
     """
     logging.getLogger("UndertaleClient")
 
     async def main():
-        ctx = UndertaleContext(server_address, slot_name, password, ready_callback, error_callback)
+        ctx = UndertaleContext(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -532,6 +533,6 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
             error_callback()
 
 
-def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, slot_name, password, ready_callback, error_callback)
+    launch(server_address, password, ready_callback, error_callback)

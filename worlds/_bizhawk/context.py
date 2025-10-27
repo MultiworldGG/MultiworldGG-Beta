@@ -352,7 +352,7 @@ def _patch_and_run_game(patch_file: str):
         return {}
 
 
-def launch(server_address: str = None, password: str = None, slot_name: str = None, ready_callback=None, error_callback=None, patch_file: str = None) -> None:
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None) -> None:
     logger.info("BizHawkClient")
 
     async def main():
@@ -409,5 +409,5 @@ def launch(server_address: str = None, password: str = None, slot_name: str = No
             error_callback()
 
 
-def main(server_address: str = None, password: str = None, slot_name: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
-    launch(server_address, password, slot_name, ready_callback, error_callback, patch_file)
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
+    launch(server_address, password, ready_callback, error_callback, patch_file)

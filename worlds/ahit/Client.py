@@ -2,6 +2,7 @@ import asyncio
 import Utils
 import websockets
 import functools
+import urllib.parse
 from copy import deepcopy
 from typing import List, Any, Iterable
 from NetUtils import decode, encode, JSONtoTextParser, JSONMessagePart, NetworkItem, NetworkPlayer
@@ -27,9 +28,9 @@ class AHITContext(CommonContext):
     command_processor = AHITCommandProcessor
     game = "A Hat in Time"
 
-    def __init__(self, server_address, slot_name, password, ready_callback=None, error_callback=None):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super().__init__(server_address, password)
-        self.username = slot_name
+        self.username = urllib.parse.urlparse(server_address).username
         self.ready_callback = ready_callback
         self.error_callback = error_callback
         self.proxy = None
@@ -245,7 +246,7 @@ async def proxy_loop(ctx: AHITContext):
         logger.info("Aborting AHIT Proxy Client due to errors")
 
 
-def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
     Launch the client
     """
@@ -253,7 +254,7 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
     logging.getLogger("AHITClient")
 
     async def main():
-        ctx = AHITContext(server_address, slot_name, password, ready_callback, error_callback)
+        ctx = AHITContext(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -291,6 +292,6 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
             error_callback()
 
 
-def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, slot_name, password, ready_callback, error_callback)
+    launch(server_address, password, ready_callback, error_callback)

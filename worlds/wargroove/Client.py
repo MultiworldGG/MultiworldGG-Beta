@@ -7,6 +7,7 @@ import sys
 import asyncio
 import random
 import typing
+import urllib.parse
 from typing import Tuple, List, Iterable, Dict
 
 from . import WargrooveWorld
@@ -129,11 +130,11 @@ class WargrooveContext(CommonContext):
         "witch",
     }
 
-    def __init__(self, server_address, slot_name, password, ready_callback=None, error_callback=None):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super(WargrooveContext, self).__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
-        self.username = slot_name
+        self.username = urllib.parse.urlparse(server_address).username
         self.send_index: int = 0
         self.syncing = False
         self.awaiting_bridge = False
@@ -374,70 +375,70 @@ class WargrooveContext(CommonContext):
     #                 **item_table
     #         }
 
-    #     #     def build(self):
-    #     #         container = super().build()
-    #     #         self.add_client_tab("Wargroove", self.build_tracker())
-    #     #         return container
+    #         def build(self):
+    #             container = super().build()
+    #             self.add_client_tab("Wargroove", self.build_tracker())
+    #             return container
 
-    #     #     def build_tracker(self) -> TrackerLayout:
-    #     #         try:
-    #     #             tracker = TrackerLayout(orientation="horizontal")
-    #     #             commander_select = CommanderSelect(orientation="vertical")
-    #     #             self.commander_buttons = {}
+    #         def build_tracker(self) -> TrackerLayout:
+    #             try:
+    #                 tracker = TrackerLayout(orientation="horizontal")
+    #                 commander_select = CommanderSelect(orientation="vertical")
+    #                 self.commander_buttons = {}
 
-    #     #             for faction, commanders in faction_table.items():
-    #     #                 faction_box = FactionBox(size_hint=(None, None), width=100 * len(commanders), height=70)
-    #     #                 commander_group = CommanderGroup()
-    #     #                 commander_buttons = []
-    #     #                 for commander in commanders:
-    #     #                         commander_button = CommanderButton(text=commander.name, group="commanders")
-    #     #                         if faction == "Starter":
-    #     #                         commander_button.disabled = False
-    #     #                         commander_button.bind(on_press=lambda instance: self.ctx.set_commander(instance.text))
-    #     #                         commander_buttons.append(commander_button)
-    #     #                         commander_group.add_widget(commander_button)
-    #     #                 self.commander_buttons[faction] = commander_buttons
-    #     #                 faction_box.add_widget(Label(text=faction, size_hint_x=None, pos_hint={'left': 1}, size_hint_y=None, height=10))
-    #     #                 faction_box.add_widget(commander_group)
-    #     #                 commander_select.add_widget(faction_box)
-    #     #             item_tracker = ItemTracker(padding=[0,20])
-    #     #             self.unit_tracker = BoxLayout(orientation="vertical")
-    #     #             other_tracker = BoxLayout(orientation="vertical")
-    #     #             self.trigger_tracker = BoxLayout(orientation="vertical")
-    #     #             self.boost_tracker = BoxLayout(orientation="vertical")
-    #     #             other_tracker.add_widget(self.trigger_tracker)
-    #     #             other_tracker.add_widget(self.boost_tracker)
-    #     #             item_tracker.add_widget(self.unit_tracker)
-    #     #             item_tracker.add_widget(other_tracker)
-    #     #             tracker.add_widget(commander_select)
-    #     #             tracker_tracker.add_widget(item_tracker)
-    #     #             self.update_tracker()
-    #     #             return tracker
-    #     #         except Exception as e:
-    #     #             print(e)
+    #                 for faction, commanders in faction_table.items():
+    #                     faction_box = FactionBox(size_hint=(None, None), width=100 * len(commanders), height=70)
+    #                     commander_group = CommanderGroup()
+    #                     commander_buttons = []
+    #                     for commander in commanders:
+    #                             commander_button = CommanderButton(text=commander.name, group="commanders")
+    #                             if faction == "Starter":
+    #                                 commander_button.disabled = False
+    #                             commander_button.bind(on_press=lambda instance: self.ctx.set_commander(instance.text))
+    #                             commander_buttons.append(commander_button)
+    #                             commander_group.add_widget(commander_button)
+    #                     self.commander_buttons[faction] = commander_buttons
+    #                     faction_box.add_widget(Label(text=faction, size_hint_x=None, pos_hint={'left': 1}, size_hint_y=None, height=10))
+    #                     faction_box.add_widget(commander_group)
+    #                     commander_select.add_widget(faction_box)
+    #                 item_tracker = ItemTracker(padding=[0,20])
+    #                 self.unit_tracker = BoxLayout(orientation="vertical")
+    #                 other_tracker = BoxLayout(orientation="vertical")
+    #                 self.trigger_tracker = BoxLayout(orientation="vertical")
+    #                 self.boost_tracker = BoxLayout(orientation="vertical")
+    #                 other_tracker.add_widget(self.trigger_tracker)
+    #                 other_tracker.add_widget(self.boost_tracker)
+    #                 item_tracker.add_widget(self.unit_tracker)
+    #                 item_tracker.add_widget(other_tracker)
+    #                 tracker.add_widget(commander_select)
+    #                 tracker.add_widget(item_tracker)
+    #                 self.update_tracker()
+    #                 return tracker
+    #             except Exception as e:
+    #                 print(e)
 
-    #     #     def update_tracker(self):
-    #     #         received_ids = [item.item for item in self.ctx.items_received]
-    #     #         for faction, item_id in self.ctx.faction_item_ids.items():
-                    for commander_button in self.commander_buttons[faction]:
-                        commander_button.disabled = not (faction == "Starter" or item_id in received_ids)
-                self.unit_tracker.clear_widgets()
-                self.trigger_tracker.clear_widgets()
-                for name, item in self.tracker_items.items():
-                    if item.type in ("Unit", "Trigger"):
-                        status_color = (1, 1, 1, 1) if item.code is None or item.code in received_ids else (0.6, 0.2, 0.2, 1)
-                        label = ItemLabel(text=name, color=status_color)
-                        if item.type == "Unit":
-                            self.unit_tracker.add_widget(label)
-                        else:
-                            self.trigger_tracker.add_widget(label)
-                self.boost_tracker.clear_widgets()
-                extra_income = received_ids.count(52023) * self.ctx.income_boost_multiplier
-                extra_defense = received_ids.count(52024) * self.ctx.commander_defense_boost_multiplier
-                income_boost = ItemLabel(text="Extra Income: " + str(extra_income))
-                defense_boost = ItemLabel(text="Comm Defense: " + str(100 + extra_defense))
-                self.boost_tracker.add_widget(income_boost)
-                self.boost_tracker.add_widget(defense_boost)
+    #         def update_tracker(self):
+    #             received_ids = [item.item for item in self.ctx.items_received]
+    #             for faction, item_id in self.ctx.faction_item_ids.items():
+    #                 for commander_button in self.commander_buttons[faction]:
+    #                     commander_button.disabled = not (faction == "Starter" or item_id in received_ids)
+    #             self.unit_tracker.clear_widgets()
+    #             self.trigger_tracker.clear_widgets()
+    #             for name, item in self.tracker_items.items():
+    #                 if item.type in ("Unit", "Trigger"):
+    #                     status_color = (1, 1, 1, 1) if item.code is None or item.code in received_ids else (0.6, 0.2, 0.2, 1)
+    #                     label = ItemLabel(text=name, color=status_color)
+    #                     if item.type == "Unit":
+    #                         self.unit_tracker.add_widget(label)
+    #                     else:
+    #                         self.trigger_tracker.add_widget(label)
+    #             self.boost_tracker.clear_widgets()
+    #             extra_income = received_ids.count(52023) * self.ctx.income_boost_multiplier
+    #             extra_defense = received_ids.count(52024) * self.ctx.commander_defense_boost_multiplier
+    #             income_boost = ItemLabel(text="Extra Income: " + str(extra_income))
+    #             defense_boost = ItemLabel(text="Comm Defense: " + str(100 + extra_defense))
+    #             self.boost_tracker.add_widget(income_boost)
+    #             self.boost_tracker.add_widget(defense_boost)
 
     #     self.ui = WargrooveManager(self)
     #     data = pkgutil.get_data(WargrooveWorld.__module__, "Wargroove.kv").decode()
@@ -576,7 +577,7 @@ def print_error_and_close(msg):
     Utils.messagebox("Error", msg, error=True)
     sys.exit(1)
 
-def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
     Launch the client
     """
@@ -584,7 +585,7 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
     logging.getLogger("WargrooveClient")
 
     async def main():
-        ctx = WargrooveContext(server_address, slot_name, password, ready_callback, error_callback)
+        ctx = WargrooveContext(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -622,6 +623,6 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
             error_callback()
 
 
-def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, slot_name, password, ready_callback, error_callback)
+    launch(server_address, password, ready_callback, error_callback)

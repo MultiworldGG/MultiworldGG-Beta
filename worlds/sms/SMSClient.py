@@ -6,6 +6,7 @@ import time
 import traceback
 from typing import Any, Dict, List, Optional, Set, Tuple
 from dataclasses import dataclass
+import urllib.parse
 
 from .options import SmsOptions
 from .bit_helper import change_endian, bit_flagger, extract_bits
@@ -101,7 +102,7 @@ class SmsContext(CommonContext):
 
     ap_nozzles_received = []
 
-    def __init__(self, server_address, slot_name, password, ready_callback=None, error_callback=None):
+    def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super(SmsContext, self).__init__(server_address, password)
         self.ready_callback = ready_callback
         self.error_callback = error_callback
@@ -111,7 +112,7 @@ class SmsContext(CommonContext):
         self.dolphin_sync_task: Optional[asyncio.Task[None]] = None
         self.dolphin_status: str = CONNECTION_INITIAL_STATUS
         self.awaiting_rom: bool = False
-        self.username = slot_name
+        self.username = urllib.parse.urlparse(server_address).username
         if self.ready_callback:
             from kivy.clock import Clock
             Clock.schedule_once(self.ready_callback, 0.1)
@@ -591,7 +592,7 @@ async def handle_stages(ctx):
         await asyncio.sleep(0.1)
 
 
-def launch(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """
     Launch the client
     """
@@ -599,7 +600,7 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
     logging.getLogger("SMSClient")
 
     async def main():
-        ctx = SmsContext(server_address, slot_name, password, ready_callback, error_callback)
+        ctx = SmsContext(server_address, password, ready_callback, error_callback)
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui() 
         else:
@@ -653,9 +654,9 @@ def launch(server_address: str = None, slot_name: str = None, password: str = No
             error_callback()
 
 
-def main(server_address: str = None, slot_name: str = None, password: str = None, ready_callback=None, error_callback=None):
+def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None):
     """Main entry point for integration with MultiWorld system"""
-    launch(server_address, slot_name, password, ready_callback, error_callback)
+    launch(server_address, password, ready_callback, error_callback)
 
 
 if __name__ == "__main__":

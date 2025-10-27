@@ -151,9 +151,9 @@ def home_path(*path: str) -> str:
         except (AttributeError, OSError, ImportError) as e:
             import warnings
             warnings.warn(f"platformdirs failed on Windows ({type(e).__name__}: {e}), using fallback")
-            # Use AppData\Roaming fallback for Windows user data
-            appdata_roaming = os.environ.get('APPDATA', os.path.expanduser('~\\AppData\\Roaming'))
-            home_path.cached_path = os.path.join(appdata_roaming, instance_name)
+            # Use AppData\Local fallback for Windows user data
+            appdata_local = os.environ.get('APPDATA', os.path.expanduser('~\\AppData\\Local'))
+            home_path.cached_path = os.path.join(appdata_local, instance_name)
         os.makedirs(home_path.cached_path, 0o700, exist_ok=True)
     else:
         # not implemented
@@ -227,6 +227,7 @@ def output_path(*path: str) -> str:
     return path
 
 def write_path(*path: str) -> str:
+    """I think that this is the same as home_path, but I don't want to mess with the paths rn"""
     if is_windows:
         return os.path.join((Path.home() / "AppData" / "Local" / "MultiworldGG"), *path)
     elif is_macos:
