@@ -9,7 +9,13 @@ description = "MultiWorld: Chatipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "Delilah, Dranzior, LMarioza"
+name = "Delilah"
+
+[[project.authors]]
+name = "Dranzior"
+
+[[project.authors]]
+name = "LMarioza"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

@@ -9,10 +9,10 @@ description = "MultiWorld: Noita"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "ScipioWright"
+name = "Heinermann"
 
 [[project.authors]]
-name = "heinermann"
+name = "ScipioWright"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

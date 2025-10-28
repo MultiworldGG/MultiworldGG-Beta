@@ -4,12 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.spire"
-version = "0.0.0"
+version = "2.2.1"
 description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "Unknown"
+name = "Platano Bailando"
+
+[[project.authors]]
+name = "KonoTyran"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

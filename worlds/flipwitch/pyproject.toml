@@ -11,12 +11,6 @@ requires-python = ">=3.12"
 [[project.authors]]
 name = "Albrekka"
 
-[[project.authors]]
-name = "Prin"
-
-[[project.authors]]
-name = "SomeLazyGamer"
-
 [tool.setuptools.packages.find]
 where = [ "src",]
 include = [ "worlds.flipwitch",]

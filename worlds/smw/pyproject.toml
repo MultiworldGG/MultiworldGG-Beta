@@ -11,6 +11,9 @@ requires-python = ">=3.12"
 [[project.authors]]
 name = "PoryGone"
 
+[[project.authors]]
+name = "lx5"
+
 [tool.setuptools.packages.find]
 where = [ "src",]
 include = [ "worlds.smw",]

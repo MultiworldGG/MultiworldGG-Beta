@@ -9,7 +9,10 @@ description = "MultiWorld: The Legend of Zelda - Oracle of Seasons"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "Dinopony, Ishigh"
+name = "Dinopony"
+
+[[project.authors]]
+name = "Ishigh"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

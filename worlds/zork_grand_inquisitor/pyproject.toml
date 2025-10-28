@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.zork_grand_inquisitor"
-version = "0.0.0"
+version = "2.0.6"
 description = "MultiWorld: Zork Grand Inquisitor"
 license = "MIT"
 license-files = [ "LICENSE",]
@@ -12,7 +12,7 @@ classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 dependencies = [ "Pymem>=1.13.0",]
 [[project.authors]]
-name = "nbrochu"
+name = "SerpentAI"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

@@ -11,15 +11,6 @@ requires-python = ">=3.12"
 [[project.authors]]
 name = "Albrekka"
 
-[[project.authors]]
-name = "Tesseract (Advice/Direction)"
-
-[[project.authors]]
-name = "Scipio (UT Help)"
-
-[[project.authors]]
-name = "Miracee (Tracker)"
-
 [tool.setuptools.packages.find]
 where = [ "src",]
 include = [ "worlds.lunacid",]
