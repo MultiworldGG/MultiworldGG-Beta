@@ -433,7 +433,7 @@ jobs:
           pip install twine
           for file in dist/worlds_*.whl dist/worlds_*.tar.gz; do
             if [ -f "$file" ]; then
-              python -m twine upload "$file" || echo "Failed to upload $file, continuing..."
+              python -m twine upload "$file" --verbose || echo "Failed to upload $file, continuing..."
             fi
           done
       
