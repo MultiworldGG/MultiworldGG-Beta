@@ -201,7 +201,7 @@ def initial_patch(world: "MadouWorld", patch: MadouProcedurePatch):
     patch.write_token(APTokenTypes.WRITE, 0x17d3bf, bytes([0x9a, 0x13, 0x00]))
     patch.write_token(APTokenTypes.WRITE, 0x16f2e8, bytes([0x9a, 0x13, 0x00]))
     patch.write_token(APTokenTypes.WRITE, 0x162a91, bytes([0x9a, 0x13, 0x00]))
-    patch.write_token(APTokenTypes.WRITE, 0x17d3a1, bytes([0x9a, 0x13, 0x00]))
+    patch.write_token(APTokenTypes.WRITE, 0x17d39f, bytes([0x9a, 0x13, 0x00]))
     # Patch out toggles for in-game item icons that are in the status bar.
     patch.write_token(APTokenTypes.WRITE, 0x181f07, bytes([0x9a, 0x13, 0x00]))  # Ribbit Boots
     patch.write_token(APTokenTypes.WRITE, 0x17eeec, bytes([0x9a, 0x13, 0x00]))  # Magic Bracelet

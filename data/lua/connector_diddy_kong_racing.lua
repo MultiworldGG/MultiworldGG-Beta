@@ -13,9 +13,11 @@ end
 socket = require("socket")
 json = require("json")
 
-REQUIRED_BIZHAWK_VERSION = "2.10"
-PATCHED_ROM_HASH = "6B5FA79C66432D00DBFD285B5A4578102F51E384"
-APWORLD_VERSION = "DKRv1.0.0"
+REQUIRED_BIZHAWK_MAJOR_VERSION = 2
+MINIMUM_BIZHAWK_MINOR_VERSION = 10
+VANILLA_ROM_HASH = "0CB115D8716DBBC2922FDA38E533B9FE63BB9670"
+PATCHED_ROM_HASH = "65087D7A36C747A04ACE0BBE90FC21542044BF86"
+APWORLD_VERSION = "DKRv1.1.0"
 
 STATE_OK = "Ok"
 STATE_TENTATIVELY_CONNECTED = "Tentatively Connected"
@@ -174,9 +176,13 @@ RomHack = {
     MAX_MESSAGE_BYTES = 50,
     RECEIVED_ITEM_COUNTS = 0x0,
     DOOR_COSTS = 0xF,
-    MESSAGE_TEXT = 0x44,
-    N64_RECEIVED_MESSAGE_COUNT = 0x7F,
-    SETTINGS = 0x80,
+    TRACKS  = 0x3C,
+      ACTUAL_TRACK = 0x0,
+      MIRROR = 0x1,
+      MUSIC = 0x2,
+    MESSAGE_TEXT = 0x83,
+    N64_RECEIVED_MESSAGE_COUNT = 0xBE,
+    SETTINGS = 0xBF,
       VICTORY_CONDITION = 0x0,
       OPEN_WORLDS = 0x1,
       SHUFFLE_WIZPIG_AMULET = 0x2,
@@ -193,22 +199,25 @@ RomHack = {
       RANDOMIZE_CHARACTER_ON_MAP_CHANGE = 0xD,
       CHANGE_BALLOONS = 0xE,
       POWER_UP_BALLOON_TYPE = 0xF,
-      SHUFFLE_VEHICLES = 0x10,
-      SHUFFLE_VEHICLES_INCLUDING_OVERWORLD = 0x11,
-    N64_PROCESSED_MESSAGE_COUNT = 0x92,
-    N64_KEYS_LOCATION = 0x93,
-    N64_BALLOON_LOCATIONS = 0x98,
-    N64_BALLOON_ID = 0xA0,
-    N64_BALLOON_COLLECTED = 0xA2,
-    N64_BALLOON_INDEX = 0,
-    TOTAL_BALLOONS = 0x499,
-    N64_SILVERCOINS_LOCATIONS = 0x4A0,
-    N64_SILVERCOINS_ID = 0x4A8,
-    N64_SILVERCOINS_COLLECTED = 0x4AA,
-    N64_SILVERCOINS_INDEX = 0,
-    ROM_MAJOR_VERSION = 0x528,
-    ROM_MINOR_VERSION = 0x52A,
-    ROM_PATCH_VERSION = 0x52B
+      SHUFFLE_VEHICLES = 0x11,
+      SHUFFLE_VEHICLES_INCLUDING_OVERWORLD = 0x12,
+      BOULDER_CANYON_BELL_BALLOON = 0x10,
+      SHUFFLE_TRACKS = 0x13,
+      SHUFFLE_OPPONENT_KARTS = 0x14,
+    N64_PROCESSED_MESSAGE_COUNT = 0xD4,
+    N64_KEYS_LOCATION = 0xD5,
+    N64_BALLOON_LOCATIONS = 0xD8,
+    N64_BALLOON_ID = 0xE0,
+    N64_BALLOON_COLLECTED = 0xE2,
+      N64_BALLOON_INDEX = 0,
+    TOTAL_BALLOONS = 0x4D9,
+    N64_SILVERCOINS_LOCATIONS = 0x4E8,
+    N64_SILVERCOINS_ID = 0x4F0,
+    N64_SILVERCOINS_COLLECTED = 0x4F2,
+      N64_SILVERCOINS_INDEX = 0,
+    ROM_MAJOR_VERSION = 0x570,
+    ROM_MINOR_VERSION = 0x572,
+    ROM_PATCH_VERSION = 0x573
 }
 
 function RomHack:set_base_address()
@@ -525,25 +534,87 @@ VICTORY_CONDITION_TO_ADDRESS = {
     }
 }
 
+VANILLA_TRACK_ADDRESS_ORDER = {
+    Ram.ADDRESS.ANCIENT_LAKE,
+    Ram.ADDRESS.FOSSIL_CANYON,
+    Ram.ADDRESS.JUNGLE_FALLS,
+    Ram.ADDRESS.HOT_TOP_VOLCANO,
+    Ram.ADDRESS.EVERFROST_PEAK,
+    Ram.ADDRESS.WALRUS_COVE,
+    Ram.ADDRESS.SNOWBALL_VALLEY,
+    Ram.ADDRESS.FROSTY_VILLAGE,
+    Ram.ADDRESS.WHALE_BAY,
+    Ram.ADDRESS.CRESCENT_ISLAND,
+    Ram.ADDRESS.PIRATE_LAGOON,
+    Ram.ADDRESS.TREASURE_CAVES,
+    Ram.ADDRESS.WINDMILL_PLAINS,
+    Ram.ADDRESS.GREENWOOD_VILLAGE,
+    Ram.ADDRESS.BOULDER_CANYON,
+    Ram.ADDRESS.HAUNTED_WOODS,
+    Ram.ADDRESS.SPACEDUST_ALLEY,
+    Ram.ADDRESS.DARKMOON_CAVERNS,
+    Ram.ADDRESS.SPACEPORT_ALPHA,
+    Ram.ADDRESS.STAR_CITY
+}
+
+VANILLA_TRACK_ADDRESS_TO_INDEX = {
+    [Ram.ADDRESS.ANCIENT_LAKE] = 1,
+    [Ram.ADDRESS.FOSSIL_CANYON] = 2,
+    [Ram.ADDRESS.JUNGLE_FALLS] = 3,
+    [Ram.ADDRESS.HOT_TOP_VOLCANO] = 4,
+    [Ram.ADDRESS.EVERFROST_PEAK] = 5,
+    [Ram.ADDRESS.WALRUS_COVE] = 6,
+    [Ram.ADDRESS.SNOWBALL_VALLEY] = 7,
+    [Ram.ADDRESS.FROSTY_VILLAGE] = 8,
+    [Ram.ADDRESS.WHALE_BAY] = 9,
+    [Ram.ADDRESS.CRESCENT_ISLAND] = 10,
+    [Ram.ADDRESS.PIRATE_LAGOON] = 11,
+    [Ram.ADDRESS.TREASURE_CAVES] = 12,
+    [Ram.ADDRESS.WINDMILL_PLAINS] = 13,
+    [Ram.ADDRESS.GREENWOOD_VILLAGE] = 14,
+    [Ram.ADDRESS.BOULDER_CANYON] = 15,
+    [Ram.ADDRESS.HAUNTED_WOODS] = 16,
+    [Ram.ADDRESS.SPACEDUST_ALLEY] = 17,
+    [Ram.ADDRESS.DARKMOON_CAVERNS] = 18,
+    [Ram.ADDRESS.SPACEPORT_ALPHA] = 19,
+    [Ram.ADDRESS.STAR_CITY] = 20
+}
+
 function main()
-    local bizhawk_version = client.getversion()
-    if bizhawk_version ~= REQUIRED_BIZHAWK_VERSION then
-        print("Incorrect BizHawk version: " .. bizhawk_version)
-        print("Please use version " .. REQUIRED_BIZHAWK_VERSION .. " instead")
-        return
-    end
-
-    if gameinfo.getromhash() ~= PATCHED_ROM_HASH then
-        print("Incorrect ROM hash, make sure you're running the correct patched Diddy Kong Racing ROM")
-        return
-    end
-
     print("Diddy Kong Racing Archipelago Version: " .. APWORLD_VERSION)
     print("----------------")
+
+    validate_bizhawk_version()
+    validate_rom_hash()
 
     server, error = socket.bind("localhost", 21221)
 
     event.onframeend(handle_frame)
+end
+
+function validate_bizhawk_version()
+    local bizhawk_version = client.getversion()
+    local first_dot_index, _ = string.find(bizhawk_version, ".", 1, true)
+    local second_dot_index, _ = string.find(bizhawk_version, ".", first_dot_index + 1, true)
+    local bizhawk_major_version = tonumber(string.sub(bizhawk_version, 0, first_dot_index))
+    local bizhawk_minor_version
+    if second_dot_index then
+        bizhawk_minor_version = tonumber(string.sub(bizhawk_version, first_dot_index + 1, second_dot_index))
+    else
+        bizhawk_minor_version = tonumber(string.sub(bizhawk_version, first_dot_index + 1))
+    end
+    if bizhawk_major_version ~= REQUIRED_BIZHAWK_MAJOR_VERSION or bizhawk_minor_version < MINIMUM_BIZHAWK_MINOR_VERSION then
+        error("ERROR: Your Bizhawk version (" .. bizhawk_version .. ") is not supported, the minimum supported version is " .. REQUIRED_BIZHAWK_MAJOR_VERSION .. "." .. MINIMUM_BIZHAWK_MINOR_VERSION)
+    end
+end
+
+function validate_rom_hash()
+    local rom_hash = gameinfo.getromhash()
+    if rom_hash == VANILLA_ROM_HASH then
+        error("ERROR: Incorrect ROM hash, you're using the vanilla Diddy Kong Racing ROM, use the patched ROM instead (see client for location)")
+    elseif rom_hash ~= PATCHED_ROM_HASH then
+        error("ERROR: Incorrect ROM hash, make sure you're running the correct patched Diddy Kong Racing ROM")
+    end
 end
 
 function handle_frame()
@@ -619,16 +690,14 @@ function check_if_in_save_file()
             init_complete = false
             in_save_file_counter = 0
         end
-    else
-        if in_save_file_1 and in_save_file_2 and in_save_file_3 then
-            if in_save_file_counter == 6 then
-                print("Entered save file")
-                print("Press D-PAD UP to see collected items")
-                print("----------------")
-                in_save_file = true
-            else
-                in_save_file_counter = in_save_file_counter + 1
-            end
+    elseif in_save_file_1 and in_save_file_2 and in_save_file_3 then
+        if in_save_file_counter == 6 then
+            print("Entered save file")
+            print("Press D-PAD UP to see collected items")
+            print("----------------")
+            in_save_file = true
+        else
+            in_save_file_counter = in_save_file_counter + 1
         end
     end
 end
@@ -766,6 +835,21 @@ function process_slot(slot)
         shuffle_door_requirements = false
     end
 
+    if slot["slot_shuffle_race_entrances"] and slot["slot_shuffle_race_entrances"] == "true" then
+        shuffle_race_entrances = true
+    else
+        shuffle_race_entrances = false
+    end
+
+    if slot["slot_entrance_order"] and next(slot["slot_entrance_order"]) then
+        entrance_order = slot["slot_entrance_order"]
+        track_address_order = {}
+        for i, entrance_num in pairs(entrance_order) do
+            -- Convert from 0-indexed to 1-indexed
+            track_address_order[entrance_num + 1] = VANILLA_TRACK_ADDRESS_ORDER[i]
+        end
+    end
+
     if slot["slot_boss_1_regional_balloons"] and slot["slot_boss_1_regional_balloons"] ~= "" then
         boss_1_regional_balloons = slot["slot_boss_1_regional_balloons"]
     end
@@ -796,6 +880,14 @@ function process_slot(slot)
         randomize_character_on_map_change = true
     else
         randomize_character_on_map_change = false
+    end
+
+    if slot["slot_mirrored_tracks"] and next(slot["slot_mirrored_tracks"]) then
+        mirrored_tracks = slot["slot_mirrored_tracks"]
+    end
+
+    if slot["slot_music"] and next(slot["slot_music"]) then
+        music = slot["slot_music"]
     end
 
     if slot["slot_power_up_balloon_type"] and slot["slot_power_up_balloon_type"] ~= "" then
@@ -829,6 +921,13 @@ function pass_settings_to_romhack()
     RomHack:set_value(RomHack.SETTINGS + RomHack.WIZPIG_2_BALLOONS, wizpig_2_balloons)
     RomHack:set_value(RomHack.SETTINGS + RomHack.SKIP_TROPHY_RACES, skip_trophy_races and 1 or 0)
     RomHack:set_value(RomHack.SETTINGS + RomHack.RANDOMIZE_CHARACTER_ON_MAP_CHANGE, randomize_character_on_map_change and 1 or 0)
+    RomHack:set_value(RomHack.SETTINGS + RomHack.SHUFFLE_TRACKS, shuffle_race_entrances and 1 or 0)
+
+    -- Enable shuffle vehicles and send all vehicles to make the player vehicle correct when shuffling tracks
+    RomHack:set_value(RomHack.SETTINGS + RomHack.SHUFFLE_VEHICLES, 1)
+    RomHack:set_value(RomHack.RECEIVED_ITEM_COUNTS + 12, 1) -- Kart
+    RomHack:set_value(RomHack.RECEIVED_ITEM_COUNTS + 13, 1) -- Hovercraft
+    RomHack:set_value(RomHack.RECEIVED_ITEM_COUNTS + 14, 1) -- Plane
 
     if door_unlock_requirements then
         for i, requirement in pairs(door_unlock_requirements) do
@@ -842,6 +941,15 @@ function pass_settings_to_romhack()
             end
             RomHack:set_value(RomHack.DOOR_COSTS + romhack_door_offset, requirement)
         end
+    end
+
+    for i, entrance_num in pairs(entrance_order) do
+        local track_base_address = RomHack.TRACKS + (i * 3)
+        -- Add 1 to entrance_num because 0 means vanilla
+        RomHack:set_value(track_base_address, entrance_num + 1)
+        RomHack:set_value(track_base_address + 1, mirrored_tracks[i] and 1 or 0)
+        -- Add 1 to track_num because 0 means vanilla
+        RomHack:set_value(track_base_address + 2, music[i] + 1)
     end
 
     if (power_up_balloon_type ~= 0) then
@@ -902,6 +1010,14 @@ function get_local_checks()
             or item == DARKWATER_BEACH_KEY
             or item == SMOKEY_CASTLE_KEY then
                 is_collected = RomHack:check_flag(address[BYTE], address[BIT])
+            elseif item == DINO_DOMAIN_BALLOON
+                or item == SNOWFLAKE_MOUNTAIN_BALLOON
+                or item == SHERBET_ISLAND_BALLOON
+                or item == DRAGON_FOREST_BALLOON
+                or item == FUTURE_FUN_LAND_BALLOON then
+                local vanilla_track_index = VANILLA_TRACK_ADDRESS_TO_INDEX[address[BYTE]]
+                local track_address = track_address_order[vanilla_track_index]
+                is_collected = Ram:check_flag(track_address, address[BIT])
             else
                 is_collected = Ram:check_flag(address[BYTE], address[BIT])
             end

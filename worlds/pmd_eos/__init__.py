@@ -164,6 +164,9 @@ class EOSWorld(World):
             elif location.classification == "Free":
                 menu_region.locations.append(EOSLocation(self.player, location.name,
                                                          location.id, menu_region))
+            elif location.name == "Team Name Location":
+                menu_region.locations.append(EOSLocation(self.player, location.name,
+                                                         location.id, menu_region))
             elif location.classification == "Rank":
                 rank_toid_dict = {"Bronze Rank": 1, "Silver Rank": 2, "Gold Rank": 3, "Diamond Rank": 4,
                                   "Super Rank": 5,
@@ -325,7 +328,7 @@ class EOSWorld(World):
                     location = EOSLocation(self.player, location.name, location.id, rule_dungeons_region)
                     rule_dungeons_region.locations.append(location)
 
-            elif location.classification == "OptionalSubX":
+            elif location.classification in "OptionalSubX":
                 if self.options.long_location.value == 0:
                     location = EOSLocation(self.player, location.name, location.id, rule_dungeons_region)
                     location.progress_type = LocationProgressType.EXCLUDED
@@ -469,14 +472,14 @@ class EOSWorld(World):
                 required_items.append(self.create_item(item, ItemClassification.useful))
 
         for item_name in item_table:
-            if (item_name == "Dark Crater") and (self.options.goal.value == 1):
-                continue
+            #if (item_name == "Dark Crater") and (self.options.goal.value == 1):
+                #continue
             if item_name in item_frequencies:
                 freq = 0
 
                 freq = item_frequencies.get(item_name, 1)
 
-                freq = max(freq - precollected.count(item_name)+ precollected_added.count(item_name)
+                freq = max(freq - precollected.count(item_name) + precollected_added.count(item_name)
                            + precollected_from_pool.count(item_name), 0)
                 required_items += [self.create_item(item_name) for _ in range(freq)]
             elif "Special Dungeons" in item_table[item_name].group:

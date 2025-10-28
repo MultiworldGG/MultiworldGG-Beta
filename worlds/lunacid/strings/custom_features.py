@@ -1,3 +1,6 @@
+class Glitch:
+    item = "Glitched Item"
+
 class DefaultColors:
     proguseful = '#FF8000'
     progression = "#A335EE"

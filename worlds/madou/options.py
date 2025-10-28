@@ -36,6 +36,8 @@ class SchoolLunch(Choice):
     Vanilla: Don't touch the items.
     Consumables: They are four random consumables or equipment items instead.
     Anything: They can be any item."""
+    internal_name = "school_lunch"
+    display_name = "School Lunch"
     option_vanilla = 0
     option_consumables = 1
     option_anything = 2
@@ -122,7 +124,7 @@ class Bestiary(Toggle):
 
 
 class SkipFairySearch(Toggle):
-    """Skips the event where the fairy at the top of Sage Mountain goes missing, so when you have 8 secrest stones you
+    """Skips the event where the fairy at the top of Sage Mountain goes missing, so when you have the necessary secrest stones you
     can immediately get the certificate.  If Bestiary is on, this removes the Owlbear location as it is not encountered."""
     internal_name = "skip_fairy_search"
     display_name = "Skip Fairy Search"
@@ -139,7 +141,7 @@ class MadouOptions(PerGameCommonOptions):
     # experience_multiplier: ExperienceMultiplier
     # cookie_multiplier: CookieMultiplier
     reduced_encounters: ReducedEncounters
-    shop_prices: ShopPrices
+    # shop_prices: ShopPrices
     squirrel_stations: SquirrelStations
     bestiary: Bestiary
     skip_fairy_search: SkipFairySearch

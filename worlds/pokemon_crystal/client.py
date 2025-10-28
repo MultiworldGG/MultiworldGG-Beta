@@ -179,7 +179,8 @@ class PokemonCrystalClient(BizHawkClient):
     local_set_static_events: dict[str, bool]
     local_set_rocket_trap_events: dict[str, bool]
     local_found_key_items: dict[str, bool]
-    local_pokemon: dict[str, list[int]]
+    local_seen_pokemon: set[int]
+    local_caught_pokemon: set[int]
     local_hints: list[str]
     phone_trap_locations: list[int]
     current_map: list[int]
@@ -194,7 +195,8 @@ class PokemonCrystalClient(BizHawkClient):
         self.local_set_static_events = dict()
         self.local_set_rocket_trap_events = dict()
         self.local_found_key_items = dict()
-        self.local_pokemon = {"seen": list(), "caught": list()}
+        self.local_seen_pokemon = set()
+        self.local_caught_pokemon = set()
         self.local_hints = []
         self.phone_trap_locations = list()
         self.current_map = [0, 0]
@@ -341,8 +343,16 @@ class PokemonCrystalClient(BizHawkClient):
             local_set_static_events = {flag_name: False for flag_name in TRACKER_STATIC_EVENT_FLAGS}
             local_set_rocket_trap_events = {flag_name: False for flag_name in TRACKER_ROCKET_TRAP_EVENTS}
             local_found_key_items = {flag_name: False for flag_name in TRACKER_KEY_ITEM_FLAGS}
-            local_pokemon: dict[str, list[int]] = {"caught": list(), "seen": list()}
+            local_seen_pokemon = set()
+            local_caught_pokemon = set()
             local_hints = {flag_name: False for flag_name in HINT_FLAGS.keys()}
+
+            if ctx.items_handling == 0b011:
+                if f"pokemon_crystal_seen_pokemon_{ctx.team}_{ctx.slot}" in ctx.stored_data:
+                    local_seen_pokemon = set(ctx.stored_data[f"pokemon_crystal_seen_pokemon_{ctx.team}_{ctx.slot}"])
+
+                if f"pokemon_crystal_caught_pokemon_{ctx.team}_{ctx.slot}" in ctx.stored_data:
+                    local_caught_pokemon = set(ctx.stored_data[f"pokemon_crystal_caught_pokemon_{ctx.team}_{ctx.slot}"])
 
             flag_bytes = read_result[0]
             for byte_i, byte in enumerate(flag_bytes):
@@ -382,13 +392,13 @@ class PokemonCrystalClient(BizHawkClient):
                         location_id = dex_number + POKEDEX_OFFSET
                         if location_id in ctx.server_locations:
                             local_checked_locations.add(location_id)
-                        local_pokemon["caught"].append(dex_number)
+                        local_caught_pokemon.add(dex_number)
 
             for byte_i, byte in enumerate(pokedex_seen_bytes):
                 for i in range(8):
                     if byte & (1 << i):
                         dex_number = (byte_i * 8 + i) + 1
-                        local_pokemon["seen"].append(dex_number)
+                        local_seen_pokemon.add(dex_number)
 
             for byte_i, byte in enumerate(grass_cut_bytes):
                 for i in range(8):
@@ -398,19 +408,46 @@ class PokemonCrystalClient(BizHawkClient):
                             location_id = self.grass_location_mapping[str(location_id)]
                         if location_id in ctx.server_locations:
                             local_checked_locations.add(location_id)
+            packages = []
 
-            if local_pokemon != self.local_pokemon and ctx.slot is not None:
-                await ctx.send_msgs([{
+            if local_seen_pokemon != self.local_seen_pokemon:
+                packages.append({
+                    "cmd": "Set",
+                    "key": f"pokemon_crystal_seen_pokemon_{ctx.team}_{ctx.slot}",
+                    "default": [],
+                    "want_reply": ctx.items_handling == 0b011,
+                    "operations": [{"operation": "update" if ctx.items_handling == 0b011 else "replace",
+                                    "value": list(local_seen_pokemon)}, ]
+                })
+
+            if local_caught_pokemon != self.local_caught_pokemon:
+                packages.append({
+                    "cmd": "Set",
+                    "key": f"pokemon_crystal_caught_pokemon_{ctx.team}_{ctx.slot}",
+                    "default": [],
+                    "want_reply": ctx.items_handling == 0b011,
+                    "operations": [{"operation": "update" if ctx.items_handling == 0b011 else "replace",
+                                    "value": list(local_caught_pokemon)}, ]
+                })
+
+            if packages:
+                packages.append({
                     "cmd": "Set",
                     "key": f"pokemon_crystal_pokemon_{ctx.team}_{ctx.slot}",
                     "default": {},
                     "want_reply": False,
-                    "operations": [{"operation": "or", "value": local_pokemon}, ]
-                }])
-                self.local_pokemon = local_pokemon
+                    "operations": [
+                        {"operation": "replace",
+                         "value": {"caught": list(local_caught_pokemon), "seen": list(local_seen_pokemon)}, }
+                    ]
+                })
+                await ctx.send_msgs(packages)
+
+                self.local_seen_pokemon = local_seen_pokemon
+                self.local_caught_pokemon = local_caught_pokemon
 
             if ctx.slot_data["dexcountsanity_counts"]:
-                dex_count = len(local_pokemon["caught"])
+                dex_count = len(local_caught_pokemon)
                 check_counts = ctx.slot_data["dexcountsanity_counts"]
 
                 for count in check_counts[:-1]:

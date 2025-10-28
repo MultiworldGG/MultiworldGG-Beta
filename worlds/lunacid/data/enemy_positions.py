@@ -556,8 +556,8 @@ base_enemy_placement = [
     EnemyPlacement("ARENA", "MainArena", 63, Enemy.venus, LunacidRegion.temple_of_earth_secret),
 
     # Labyrinth of Ash
-    EnemyPlacement("VOID", "RayNestVoid", 0, Enemy.cetea, LunacidRegion.labyrinth_of_ash),
-    EnemyPlacement("VOID", "RayNestVoid", 1, Enemy.cetea, LunacidRegion.labyrinth_of_ash),
+    EnemyPlacement("VOID", "RayNestVoid", 0, Enemy.cetea, LunacidRegion.labyrinth_interior),
+    EnemyPlacement("VOID", "RayNestVoid", 1, Enemy.cetea, LunacidRegion.labyrinth_interior),
 
     EnemyPlacement("VOID", "MainVoid", 0, Enemy.centaur, LunacidRegion.labyrinth_of_ash),
     EnemyPlacement("VOID", "MainVoid", 1, Enemy.centaur, LunacidRegion.labyrinth_of_ash),

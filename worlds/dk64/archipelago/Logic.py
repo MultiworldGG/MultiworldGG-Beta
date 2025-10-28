@@ -1685,6 +1685,8 @@ class LogicVarHolder:
         elif self.settings.win_condition_item == WinConditionComplex.krools_challenge:
             # Krool's Challenge: Beat K. Rool + collect all Keys, Blueprints, Bosses, and Bonus Barrels
             return Events.KRoolDefeated in self.Events and self.ItemCheck(BarrierItems.Key, 8) and self.ItemCheck(BarrierItems.Blueprint, 40) and self.bosses_beaten >= 7 and self.bonuses_beaten >= 43
+        elif self.settings.win_condition_item == WinConditionComplex.kill_the_rabbit:
+            return Events.KilledRabbit in self.Events
         elif self.settings.win_condition_item == WinConditionComplex.req_bosses:
             return self.bosses_beaten >= self.settings.win_condition_count
         elif self.settings.win_condition_item == WinConditionComplex.req_bonuses:
@@ -1720,6 +1722,11 @@ class LogicVarHolder:
         is_correct_kong = self.istiny or self.settings.free_trade_items
         required_level_order = max(2, min(ceil(self.settings.rareware_gb_fairies / 2), 5))  # At least level 2 to give space for fairy placements, at most level 5 to allow shenanigans
         return have_enough_fairies and is_correct_kong and self.HasFillRequirementsForLevel(self.settings.level_order[required_level_order])
+
+    def CanGetBlueprintReward(self, value):
+        """Check if you have sufficient access to a Blueprint reward location."""
+        # Archipelago keeps it simple - no need for a buffer
+        return self.BlueprintsWithKong >= value
 
     def CanSurviveFallDamage(self):
         """Check if you can survive a single instance of fall damage."""

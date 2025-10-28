@@ -1344,6 +1344,8 @@ class LogicVarHolder:
         elif condition == WinConditionComplex.krools_challenge:
             # Krool's Challenge: Beat K. Rool + collect all Keys, Blueprints, Bosses, and Bonus Barrels
             return Events.KRoolDefeated in self.Events and self.ItemCheck(BarrierItems.Key, 8) and self.ItemCheck(BarrierItems.Blueprint, 40) and self.bosses_beaten >= 7 and self.bonuses_beaten >= 43
+        elif condition == WinConditionComplex.kill_the_rabbit:
+            return Events.KilledRabbit in self.Events
         elif condition == WinConditionComplex.req_bonuses:
             return self.bonuses_beaten >= self.settings.win_condition_count
         elif condition == WinConditionComplex.req_bosses:
@@ -1378,6 +1380,14 @@ class LogicVarHolder:
         is_correct_kong = self.istiny or self.settings.free_trade_items
         required_level_order = max(2, min(ceil(self.settings.rareware_gb_fairies / 2), 5))  # At least level 2 to give space for fairy placements, at most level 5 to allow shenanigans
         return have_enough_fairies and is_correct_kong and self.HasFillRequirementsForLevel(self.settings.level_order[required_level_order])
+
+    def CanGetBlueprintReward(self, value):
+        """Check if you have sufficient access to a Blueprint reward location."""
+        # A Blueprint buffer is not required after the fill is complete or if there can only be GBs here
+        if self.assumeFillSuccess or Types.BlueprintBanana not in self.settings.shuffled_location_types or value > self.settings.most_snide_rewards:
+            return self.BlueprintsWithKong >= value
+        bufferValue = ceil(value * 0.2)
+        return self.BlueprintsWithKong >= min(40, bufferValue + value)
 
     def HasAllItems(self):
         """Return if you have all progression items."""

@@ -39,6 +39,7 @@ class Goal(Choice):
     - bonuses: Complete a certain number of Bonus Barrels to win. Automatically disables auto_complete_bonus_barrels if set. See goal_quantity option for more info.
     - treasure_hurry: Run down the timer by collecting treasure! You win when the timer reaches 0.
     - krools_challenge: K. Rool's ship does not spawn until you collect All keys, Defeat All bosses, Play all Bonus Barrels, and collect All Blueprints.
+    - kill_the_rabbit: Kill the rabbit in Chunky's igloo in Caves. Turn it to Ash. Simple as that.
     """
 
     display_name = "Goal"
@@ -60,6 +61,7 @@ class Goal(Choice):
     option_bonuses = 15
     option_treasure_hurry = 16
     option_krools_challenge = 17
+    option_kill_the_rabbit = 18
     default = 0
 
 
@@ -962,6 +964,8 @@ class EnableCutscenes(Toggle):
 class SnideMaximum(Range):
     """Determines the maximum reward for Snide Turnins to have progression."""
 
+    display_name = "Snide Maximum"
+
     range_start = 0
     range_end = 40
     default = 20
@@ -971,6 +975,172 @@ class SharedShops(Toggle):
     """If enabled, makes 10 random shops shared removing 20 locations from the pool."""
 
     display_name = "Shared Shops"
+
+
+class AnimalTrapWeight(BaseTrapWeight):
+    """Likelihood of receiving a trap which transforms you into an Animal Buddy for a short time."""
+
+    display_name = "Animal Trap Weight"
+
+
+class RockfallTrapWeight(BaseTrapWeight):
+    """Likelihood of receiving a trap which spawns falling stalactites for a short time."""
+
+    display_name = "Rockfall Trap Weight"
+
+
+class DisableTagTrapWeight(BaseTrapWeight):
+    """Likelihood of receiving a trap which slips a kong on a banana peel."""
+
+    display_name = "Disable Tag Trap Weight"
+
+
+class BaseFillerWeight(Choice):
+    """Base Class for Filler Weights."""
+
+    option_none = 0
+    option_low = 1
+    option_medium = 2
+    option_high = 4
+    default = 0
+
+
+class JunkFillerWeight(BaseFillerWeight):
+    """Likelihood of receiving junk items as filler."""
+
+    display_name = "Junk Filler Weight"
+
+
+class BananaFillerWeight(BaseFillerWeight):
+    """Likelihood of receiving golden bananas as filler."""
+
+    display_name = "Banana Filler Weight"
+
+
+class CrownFillerWeight(BaseFillerWeight):
+    """Likelihood of receiving battle crowns as filler."""
+
+    display_name = "Crown Filler Weight"
+
+
+class FairyFillerWeight(BaseFillerWeight):
+    """Likelihood of receiving banana fairies as filler."""
+
+    display_name = "Fairy Filler Weight"
+
+
+class MedalFillerWeight(BaseFillerWeight):
+    """Likelihood of receiving banana medals as filler."""
+
+    display_name = "Medal Filler Weight"
+
+
+class PearlFillerWeight(BaseFillerWeight):
+    """Likelihood of receiving pearls as filler."""
+
+    display_name = "Pearl Filler Weight"
+
+
+class RainbowCoinFillerWeight(BaseFillerWeight):
+    """Likelihood of receiving rainbow coins as filler."""
+
+    display_name = "Rainbow Coin Filler Weight"
+
+
+class AlternateMinecartMayhem(Toggle):
+    """If enabled, Minecart Mayhem will be a coin based bonus barrel and the timer will be removed."""
+
+    display_name = "Alternate Minecart Mayhem"
+
+
+class EnemiesSelected(OptionList):
+    """Determines what Enemies are in the pool.
+
+    Valid Keys:
+    "Bat"
+    "BeaverBlue"
+    "BeaverGold"
+    "Bug"
+    "FireballGlasses"
+    "GetOut"
+    "Ghost"
+    "Gimpfish"
+    "Kaboom"
+    "KasplatChunky"
+    "KasplatDK"
+    "KasplatDiddy"
+    "KasplatLanky"
+    "KasplatTiny"
+    "KlaptrapGreen"
+    "KlaptrapPurple"
+    "KlaptrapRed"
+    "Klobber"
+    "Klump"
+    "Guard"
+    "Kosha"
+    "Kremling"
+    "Krossbones"
+    "MrDice0"
+    "MrDice1"
+    "MushroomMan"
+    "Pufftup"
+    "RoboKremling"
+    "ZingerRobo"
+    "Ruler"
+    "Shuri"
+    "SirDomino"
+    "SpiderSmall"
+    "ZingerCharger"
+    "ZingerLime"
+    "GuardDisableA"
+    "GuardDisableZ"
+    "GuardTag"
+    "GuardGetOut"
+    """
+
+    display_name = "Enemies Selected"
+
+    default = {
+        "Bat",
+        "BeaverBlue",
+        "BeaverGold",
+        "Bug",
+        "FireballGlass",
+        "GetOut",
+        "Ghost",
+        "Gimpfish",
+        "Kaboom",
+        "KasplatChunky",
+        "KasplatDK",
+        "KasplatDiddy",
+        "KasplatLanky",
+        "KasplatTiny",
+        "KlaptrapGreen",
+        "KlaptrapPurple",
+        "KlaptrapRed",
+        "Klobber",
+        "Klump",
+        "Guard",
+        "Kosha",
+        "Kremling",
+        "Krossbones",
+        "MrDice0",
+        "MrDice1",
+        "MushroomMan",
+        "Pufftup",
+        "RoboKremling",
+        "ZingerRobo",
+        "Ruler",
+        "Shuri",
+        "SirDomino",
+        "SpiderSmall",
+        "ZingerCharger",
+        "ZingerLime",
+        "GuardDisableA",
+        "GuardDisableZ",
+        "GuardTag",
+        "GuardGetOut",
+    }
 
 
 @dataclass
@@ -1053,6 +1223,18 @@ class DK64Options(PerGameCommonOptions):
     enable_cutscenes: EnableCutscenes
     maximum_snide: SnideMaximum
     enable_shared_shops: SharedShops
+    animal_trap_weight: AnimalTrapWeight
+    rockfall_trap_weight: RockfallTrapWeight
+    disabletag_trap_weight: DisableTagTrapWeight
+    junk_filler_weight: JunkFillerWeight
+    banana_filler_weight: BananaFillerWeight
+    crown_filler_weight: CrownFillerWeight
+    fairy_filler_weight: FairyFillerWeight
+    medal_filler_weight: MedalFillerWeight
+    pearl_filler_weight: PearlFillerWeight
+    rainbowcoin_filler_weight: RainbowCoinFillerWeight
+    alternate_minecart_mayhem: AlternateMinecartMayhem
+    enemies_selected: EnemiesSelected
 
 
 dk64_option_groups: List[OptionGroup] = [
@@ -1133,6 +1315,7 @@ dk64_option_groups: List[OptionGroup] = [
             HardMinigames,
             AutoCompleteBonusBarrels,
             HelmRoomBonusCount,
+            AlternateMinecartMayhem,
         ],
     ),
     OptionGroup(
@@ -1145,11 +1328,29 @@ dk64_option_groups: List[OptionGroup] = [
         ],
     ),
     OptionGroup(
+        "Enemies",
+        [
+            EnemiesSelected,
+        ],
+    ),
+    OptionGroup(
         "Hints",
         [
             HintStyle,
             ShopkeeperHints,
             MicroHints,
+        ],
+    ),
+    OptionGroup(
+        "Filler Weights",
+        [
+            JunkFillerWeight,
+            BananaFillerWeight,
+            CrownFillerWeight,
+            FairyFillerWeight,
+            MedalFillerWeight,
+            PearlFillerWeight,
+            RainbowCoinFillerWeight,
         ],
     ),
     OptionGroup(
@@ -1169,6 +1370,9 @@ dk64_option_groups: List[OptionGroup] = [
             IceFloorWeight,
             PaperTrapWeight,
             SlipTrapWeight,
+            AnimalTrapWeight,
+            RockfallTrapWeight,
+            DisableTagTrapWeight,
         ],
     ),
     OptionGroup(

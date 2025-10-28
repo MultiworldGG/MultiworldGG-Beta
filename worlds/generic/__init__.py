@@ -1,4 +1,5 @@
 from typing import NamedTuple, Union
+from typing_extensions import deprecated
 import logging
 from Utils import instance_name
 from BaseUtils import get_archipelago_json
@@ -58,7 +59,8 @@ class GenericWorld(World):
             return Item(name, ItemClassification.filler, -1, self.player)
         raise InvalidItemError(name)
 
-
+@deprecated("worlds.generic.PlandoItem is deprecated and will be removed in the next version. "
+            "Use Options.PlandoItem(s) instead.")
 class PlandoItem(NamedTuple):
     item: str
     location: str

@@ -102,7 +102,8 @@ EOS_item_table = [
              0x3F),
     ItemData("Spacial Rift", 64, ItemClassification.progression, 64, ["Unique", "LateDungeons", "MissionDungeons"],
              0x40),
-    ItemData("Dark Crater", 67, ItemClassification.progression, 67, ["Unique", "BossDungeons"], 0x43),
+    # Dark Crater auto opens if you get the amount of instruments needed
+    # ItemData("Dark Crater", 67, ItemClassification.progression, 67, ["Unique", "BossDungeons"], 0x43),
     ItemData("Concealed Ruins", 70, ItemClassification.progression, 70, ["Unique", "LateDungeons", "MissionDungeons"],
              0x46),
     ItemData("Marine Resort", 72, ItemClassification.progression, 72, ["Unique", "LateDungeons", "MissionDungeons"],
@@ -207,10 +208,10 @@ EOS_item_table = [
     # ItemData("Spring Cave", 158, ItemClassification.useful, 158, ["Unique", "Special Dungeons"], 0x9E),
 
     # PMD EOS Why do you have three things to open after the SEs >:(
-    ItemData("Star Cave", 174, ItemClassification.progression, 174, ["Unique", "LateDungeons", "MissionDungeons"],
+    ItemData("Star Cave", 174, ItemClassification.progression, 174, ["Unique", "EarlyDungeons", "MissionDungeons"],
              0xAE),
     ItemData("Shaymin Village", 175, ItemClassification.useful, 175, ["Unique", "ExtraDungeons"], 0xAF),
-    #ItemData("Luminous Spring", 177, ItemClassification.useful, 177, ["Unique", "ExtraDungeons"], 0xB1),
+    ItemData("Luminous Spring", 177, ItemClassification.useful, 177, ["Unique", "ExtraDungeons"], 0xB1),
     ItemData("Hot Spring", 178, ItemClassification.useful, 178, ["Unique", "ExtraDungeons"], 0xB2),
 
     # DOJO DUNGEONS
@@ -542,7 +543,7 @@ trap_items = [
     # Makes the player take a short break
     ItemData("Touch Grass", 404, ItemClassification.trap, 20, ["Trap"], 0x0),
     # Bye Bye inventory cash
-    ItemData("Poke x-1000", 570, ItemClassification.trap, 20, ["Trap", "Money"], 1000),
+    ItemData("Poké x-1000", 570, ItemClassification.trap, 20, ["Trap", "Money"], 1000),
     # lookalike dungeons
     ItemData("Denched Bluff", 2, ItemClassification.trap, 20, ["Trap", "Early", "Unique", "Dungeon"], 0x2),
     ItemData("Mt. Brinstar", 5, ItemClassification.trap, 20, ["Trap", "Early", "Unique", "Dungeon"], 0x5),
@@ -578,7 +579,26 @@ trap_item_table: Dict[str, ItemData] = {item.name: item for item in trap_items}
 
 # for items that appear multiple times, defined here
 item_frequencies: Dict[str, int] = {
-    "Bag Upgrade": 5
+    "Bag Upgrade": 5,
+    "Hero Evolution": 1,
+    "Recruit Evolution": 1,
+    "Recruitment": 1,
+    "Formation Control": 1,
+    "Bidoof\'s Wish": 1,
+    "Igglybuff the Prodigy": 1,
+    "In the Future of Darkness": 1,
+    "Here Comes Team Charm!": 1,
+    "Dojo Normal/Fly Maze": 1,
+    "Dojo Dark/Fire Maze": 1,
+    "Dojo Rock/Water Maze": 1,
+    "Dojo Grass Maze": 1,
+    "Dojo Elec/Steel Maze": 1,
+    "Dojo Ice/Ground Maze": 1,
+    "Dojo Fight/Psych Maze": 1,
+    "Dojo Poison/Bug Maze": 1,
+    "Dojo Dragon Maze": 1,
+    "Dojo Ghost Maze": 1,
+
 }
 
 # Create a table of all the possible items in the game for AP

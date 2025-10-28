@@ -207,15 +207,15 @@ class PowerwashSimulator(World):
 		filler_size = min(filler, len(location_map))
 		self.random.shuffle(location_map)
 
-		for i in range(filler_size):
-			location = location_map[i]
+		while filler_size > 0:
+			if len(location_map) == 0:
+				raise OptionError(
+					"ㄟ( ▔, ▔ )ㄏ blame other games for touching my speget (aka. other worlds are stealing powerwash's prefill locations)\nbug the developers of the other worlds because they shouldn't be interfering with other worlds like this")
+
+			location = location_map.pop()
 			if not location.locked:
 				location.place_locked_item(self.create_item(self.random.choice(filler_items)))
 				filler_size -= 1
-
-		if filler_size > 0:
-			raise OptionError(
-				"ㄟ( ▔, ▔ )ㄏ blame other games for touching my speget (aka. other worlds are stealing powerwash's prefill locations)\nbug the developers of the other worlds because they shouldn't be interfering with other worlds like this")
 
 	def fill_slot_data(self) -> Dict[str, Any]:
 		slot_data: Dict[str, Any] = {

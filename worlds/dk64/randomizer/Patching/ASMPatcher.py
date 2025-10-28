@@ -26,6 +26,7 @@ from randomizer.Enums.Settings import (
     ProgressiveHintItem,
     WrinklyHints,
 )
+from randomizer.Enums.Enemies import Enemies
 from randomizer.Enums.Kongs import Kongs
 from randomizer.Enums.Maps import Maps
 from randomizer.Enums.Levels import Levels
@@ -1014,12 +1015,31 @@ def patchAssembly(ROM_COPY, spoiler):
     CHAR_SPAWNER_DATA_SIZE = 0x18
     for x in range(6):
         source_addr = getROMAddress(0x8075EB80 + (0x13 * CHAR_SPAWNER_DATA_SIZE) + (x * 4), Overlay.Static, offset_dict)
-        target_addr = getROMAddress(0x8075EB80 + (0x5B * CHAR_SPAWNER_DATA_SIZE) + (x * 4), Overlay.Static, offset_dict)
+        target_addr = getROMAddress(0x8075EB80 + (Enemies.CharSpawnerItem * CHAR_SPAWNER_DATA_SIZE) + (x * 4), Overlay.Static, offset_dict)
         ROM_COPY.seek(source_addr)
         val = int.from_bytes(ROM_COPY.readBytes(4), "big")
         ROM_COPY.seek(target_addr)
         ROM_COPY.writeMultipleBytes(val, 4)
-    writeValue(ROM_COPY, 0x8075EB80 + (0x5B * CHAR_SPAWNER_DATA_SIZE), Overlay.Static, 141, offset_dict)
+    writeValue(ROM_COPY, 0x8075EB80 + (Enemies.CharSpawnerItem * CHAR_SPAWNER_DATA_SIZE), Overlay.Static, 141, offset_dict)
+    guard_extra_data = {
+        CustomActors.GuardDisableA: (Enemies.GuardDisableA, 0x13B),
+        CustomActors.GuardDisableZ: (Enemies.GuardDisableZ, 0x13B),
+        CustomActors.GuardTag: (Enemies.GuardTag, 0x13C),
+        CustomActors.GuardGetOut: (Enemies.GuardGetOut, 0x13A),
+    }
+    for new_actor, data in guard_extra_data.items():
+        new_enemy = data[0]
+        new_model = data[1]
+        for x in range(6):
+            source_addr = getROMAddress(0x8075EB80 + (Enemies.Guard * CHAR_SPAWNER_DATA_SIZE) + (x * 4), Overlay.Static, offset_dict)
+            target_addr = getROMAddress(0x8075EB80 + (new_enemy * CHAR_SPAWNER_DATA_SIZE) + (x * 4), Overlay.Static, offset_dict)
+            ROM_COPY.seek(source_addr)
+            val = int.from_bytes(ROM_COPY.readBytes(4), "big")
+            ROM_COPY.seek(target_addr)
+            ROM_COPY.writeMultipleBytes(val, 4)
+        writeValue(ROM_COPY, 0x8075EB80 + (new_enemy * CHAR_SPAWNER_DATA_SIZE), Overlay.Static, new_actor, offset_dict)
+        writeValue(ROM_COPY, 0x8075EB80 + (new_enemy * CHAR_SPAWNER_DATA_SIZE) + 2, Overlay.Static, new_model, offset_dict)
+    writeFunction(ROM_COPY, 0x806AE4C4, Overlay.Static, "renderKopLightHandler", offset_dict)
 
     # Statistics
     writeFunction(ROM_COPY, 0x806C8ED0, Overlay.Static, "updateTagStat", offset_dict)
@@ -1199,7 +1219,7 @@ def patchAssembly(ROM_COPY, spoiler):
 
     # Bonus barrel kong check
     writeValue(ROM_COPY, 0x8073199E, Overlay.Static, getVar("BONUS_DATA_COUNT"), offset_dict)  # Set bonus count
-    writeValue(ROM_COPY, 0x807319CA, Overlay.Static, 6, offset_dict)  # Set size of item
+    writeValue(ROM_COPY, 0x807319CA, Overlay.Static, 8, offset_dict)  # Set size of item
     writeValue(ROM_COPY, 0x80731996, Overlay.Static, getHiSym("bonus_data"), offset_dict)
     writeValue(ROM_COPY, 0x807319A2, Overlay.Static, getLoSym("bonus_data"), offset_dict)
 
@@ -1772,6 +1792,16 @@ def patchAssembly(ROM_COPY, spoiler):
                 ROM_COPY.seek(0x1FFF800 + (index * 6))
                 ROM_COPY.writeMultipleBytes(int(duration * scale_down), 2)
                 ROM_COPY.writeMultipleBytes(int(cooldown * scale_down), 2)
+    elif settings.win_condition_item == WinConditionComplex.kill_the_rabbit:
+        writeFunction(ROM_COPY, 0x806B2320, Overlay.Static, "winRabbitSeed", offset_dict)
+        writeValue(ROM_COPY, 0x806B231A, Overlay.Static, 40, offset_dict)  # Change song that plays to success (for the laughs)
+        # Make sure the rabbit always is there, even if the check is done
+        writeValue(ROM_COPY, 0x80755E2C, Overlay.Static, 0, offset_dict)  # Set flag to 0 (always set)
+        writeValue(ROM_COPY, 0x80755E2E, Overlay.Static, 1, offset_dict, 1)  # Set rabbit to spawn with this flag
+        # Make sure the cutscene doesn't play if the rabbit reward has already been given
+        writeFunction(ROM_COPY, 0x806B23B4, Overlay.Static, "safeguardRabbitReward", offset_dict)
+        # Change the tied trigger map for the cutscene so that it always plays (allows you to kill the rabbit after getting it's check)
+        writeValue(ROM_COPY, 0x80755F10, Overlay.Static, 0xFF, offset_dict, 1)
     writeValue(ROM_COPY, 0x8069215E, Overlay.Static, 0x3F, offset_dict)  # Reduce fireball collision volume
 
     # Helm Warp Handler
@@ -1930,6 +1960,21 @@ def patchAssembly(ROM_COPY, spoiler):
         writeFunction(ROM_COPY, 0x800306AC, Overlay.Menu, "password_screen_gfx", offset_dict)
         writeFunction(ROM_COPY, 0x800306D4, Overlay.Menu, "password_screen_init", offset_dict)
         writeFunction(ROM_COPY, 0x800306C4, Overlay.Menu, "password_screen_code", offset_dict)
+
+    # Alt Minecart Mayhem:
+    if settings.alt_minecart_mayhem:
+        SIZE_DEFS = getSym("actor_extra_data_sizes")
+        NEW_SIZE = getSym("mayhem_minecart_size")
+        writeValue(ROM_COPY, SIZE_DEFS + (87 * 4), Overlay.Custom, NEW_SIZE, offset_dict, 4)  # Increase size
+        writeValue(ROM_COPY, 0x80025340, Overlay.Minecart, 0, offset_dict, 4)  # Remove timer spawn
+        writeValue(ROM_COPY, 0x80025350, Overlay.Minecart, 0, offset_dict, 4)  # Prevent action on parent
+        writeFunction(ROM_COPY, 0x80025070, Overlay.Minecart, "initMMayhem", offset_dict)  # Init requirements
+        writeFunction(ROM_COPY, 0x80025160, Overlay.Minecart, "renderGetWrapper", offset_dict)  # Render the get counter
+        writeHook(ROM_COPY, 0x80025214, Overlay.Minecart, "checkNewMayhemWin", offset_dict)
+        writeValue(ROM_COPY, 0x8002407C, Overlay.Minecart, 0, offset_dict, 4)  # Prevent action on parent
+        writeValue(ROM_COPY, 0x80024084, Overlay.Minecart, 0, offset_dict, 4)  # Prevent action on parent
+        writeValue(ROM_COPY, 0x80024140, Overlay.Minecart, 0, offset_dict, 4)  # Prevent action on parent
+        writeValue(ROM_COPY, 0x80024148, Overlay.Minecart, 0, offset_dict, 4)  # Prevent action on parent
 
     # Menu/Shop Stuff
     # Menu/Shop: Force enable cheats

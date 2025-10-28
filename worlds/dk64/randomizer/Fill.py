@@ -431,6 +431,8 @@ def GetAccessibleLocations(
                     if is_shuffled:
                         shuffled_exit = ShuffleExits.ShufflableExits[shuffle_id]
                         if shuffled_exit.shuffled:
+                            if not shuffled_exit.shuffledId:
+                                print(shuffled_exit.__dict__)
                             destination = ShuffleExits.ShufflableExits[shuffled_exit.shuffledId].back.regionId
                         elif shuffled_exit.toBeShuffled:
                             continue
@@ -1155,6 +1157,9 @@ def CalculateWothPaths(spoiler: Spoiler, WothLocations: List[Union[Locations, in
     if spoiler.settings.win_condition_item in (WinConditionComplex.beat_krool, WinConditionComplex.krools_challenge):
         for phase in spoiler.settings.krool_order:
             spoiler.krool_paths[phase] = []
+    # If the Rabbit is the win condition, prepare a path for him.
+    if spoiler.settings.win_condition_item == WinConditionComplex.kill_the_rabbit:
+        spoiler.rabbit_path = []
     for locationId in ordered_interesting_locations:
         # Remove the item from the location
         location = spoiler.LocationList[locationId]
@@ -1194,6 +1199,9 @@ def CalculateWothPaths(spoiler: Spoiler, WothLocations: List[Union[Locations, in
             for map_id in final_boss_associated_event:
                 if map_id in spoiler.settings.krool_order and final_boss_associated_event[map_id] not in spoiler.LogicVariables.Events:
                     spoiler.krool_paths[map_id].append(locationId)
+        if spoiler.settings.win_condition_item == WinConditionComplex.kill_the_rabbit:
+            if Events.KilledRabbit not in spoiler.LogicVariables.Events:
+                spoiler.rabbit_path.append(locationId)
         elif spoiler.settings.win_condition_item == WinConditionComplex.dk_rap_items:
             rap_assoc_name = {
                 "Donkey Verse": Events.DonkeyVerse,
@@ -2093,7 +2101,7 @@ def Fill(spoiler: Spoiler) -> None:
             placed_types.append(Types.Snide)
             bigListOfItemsToPlace.extend(ItemPool.SnideItems())
         # If we have Snide rewards, Blueprints become much more logically important and need to be placed in the big fill so as to not bias towards those locations, especially if there's a large cap
-        if Types.BlueprintBanana in spoiler.settings.shuffled_location_types:
+        if Types.BlueprintBanana in spoiler.settings.shuffled_location_types and Types.Blueprint in spoiler.settings.shuffled_location_types:
             placed_types.append(Types.Blueprint)
             bigListOfItemsToPlace.extend(ItemPool.Blueprints().copy())
         for item in preplaced_items:
@@ -4039,6 +4047,9 @@ def CheckForIncompatibleSettings(settings: Settings) -> None:
         settings.trap_weight_icefloor,
         settings.trap_weight_paper,
         settings.trap_weight_slip,
+        settings.trap_weight_animal,
+        settings.trap_weight_rockfall,
+        settings.trap_weight_disabletag,
     ]
     if IsDDMSSelected(settings.filler_items_selected, ItemRandoFiller.icetraps) and not settings.archipelago:
         if settings.ice_trap_count == 0:

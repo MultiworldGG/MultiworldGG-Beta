@@ -61,6 +61,7 @@ Currently, the following games are supported:
 * Doom (1993)
 * Doom II
 * Doronko Wanko
+* Dredge
 * EarthBound
 * Ender Lilies
 * Factorio (+SAWS)
@@ -113,6 +114,7 @@ Currently, the following games are supported:
 * Momodora: Moonlit Farewell
 * Monster Sanctuary
 * Muse Dash
+* Nine Sols
 * Noita
 * Old School RuneScape
 * Open Rollercoaster Tycoon 2

@@ -9,8 +9,6 @@ from typing import Dict, Set, FrozenSet, Tuple, Union, List, Any, Optional
 
 import orjson
 
-import orjson
-
 import Utils
 from . import Options
 

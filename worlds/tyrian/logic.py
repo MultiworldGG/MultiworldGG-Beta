@@ -4,8 +4,11 @@
 # and is released under the terms of the zlib license.
 # See "LICENSE" for more details.
 
+from collections.abc import Callable
+from dataclasses import dataclass
+from functools import cached_property, lru_cache
 from itertools import product
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 from BaseClasses import LocationProgressType as LPType
 
@@ -20,39 +23,38 @@ if TYPE_CHECKING:
     from . import TyrianWorld
 
 
+@dataclass(frozen=True)
 class DPS:
-    _type_active: bool
-    _type_passive: bool
-    _type_sideways: bool
-    _type_piercing: bool
-    active: float
-    passive: float
-    sideways: float
-    piercing: float
+    active: float = 0.0
+    passive: float = 0.0
+    sideways: float = 0.0
+    piercing: float = 0.0
 
-    def __init__(self, active: float = 0.0, passive: float = 0.0, sideways: float = 0.0, piercing: float = 0.0):
-        self.active = active
-        self.passive = passive
-        self.sideways = sideways
-        self.piercing = piercing
-        self._type_active = (active > 0.0)
-        self._type_passive = (passive > 0.0)
-        self._type_sideways = (sideways > 0.0)
-        self._type_piercing = (piercing > 0.0)
+    @cached_property
+    def _type_active(self):
+        return self.active > 0.0
+
+    @cached_property
+    def _type_passive(self):
+        return self.passive > 0.0
+
+    @cached_property
+    def _type_sideways(self):
+        return self.sideways > 0.0
+
+    @cached_property
+    def _type_piercing(self):
+        return self.piercing > 0.0
 
     def __sub__(self, other: "DPS") -> "DPS":
-        new_dps = DPS.__new__(DPS)
-        new_dps.active = max(self.active - other.active, 0.0)
-        new_dps.passive = max(self.passive - other.passive, 0.0)
-        new_dps.sideways = max(self.sideways - other.sideways, 0.0)
-        new_dps.piercing = max(self.piercing - other.piercing, 0.0)
-        new_dps._type_active = (new_dps.active > 0.0)
-        new_dps._type_passive = (new_dps.passive > 0.0)
-        new_dps._type_sideways = (new_dps.sideways > 0.0)
-        new_dps._type_piercing = (new_dps.piercing > 0.0)
-        return new_dps
+        return DPS(
+            self.active - other.active,
+            self.passive - other.passive,
+            self.sideways - other.sideways,
+            self.piercing - other.piercing
+        )
 
-    def meets_requirements(self, requirements: "DPS") -> Tuple[bool, float]:
+    def meets_requirements(self, requirements: "DPS") -> tuple[bool, float]:
         distance = 0.0
 
         # Apply some weighting to distance
@@ -81,15 +83,15 @@ class DPS:
 
 class DamageTables:
     # Local versions, used when instantiated, holds all rules for a given logic difficulty merged together
-    local_power_provided: List[int]
-    local_weapon_dps: Dict[str, List[DPS]]
+    local_power_provided: list[int]
+    local_weapon_dps: dict[str, list[DPS]]
 
     # Multiplier for all target values, based on options.logic_difficulty
     logic_difficulty_multiplier: float
 
     # ================================================================================================================
     # Maximum amount of generator power use we expect for each logic difficulty
-    generator_power_provided: Dict[int, List[int]] = {
+    generator_power_provided: dict[int, list[int]] = {
         # Difficulty --------------Power  Non MR9 M12 C12 SMF AMF GPW
         LogicDifficulty.option_beginner: [  0,  9, 12, 16, 21, 25, 41],  # -1, -2, -3, -4, -5, -9 (for shield recharge)
         LogicDifficulty.option_standard: [  0, 10, 14, 19, 25, 30, 50],  # Base power levels of each generator
@@ -101,7 +103,7 @@ class DamageTables:
     # ================================================================================================================
     # Generator break-even points (demand == production)
     # For reference: Basic shield break-even point is 9 power
-    generator_power_required: Dict[str, List[int]] = {
+    generator_power_required: dict[str, list[int]] = {
         # Front Weapons ----------- Power  --1- --2- --3- --4- --5- --6- --7- --8- --9- -10- -11-
         "Pulse-Cannon":                   [  8,   6,   6,   6,   5,   5,   5,   5,   5,   5,   5],
         "Multi-Cannon (Front)":           [ 10,  10,   8,   8,   7,   7,   7,   7,   7,   7,   7],
@@ -154,7 +156,7 @@ class DamageTables:
 
     # ================================================================================================================
     # Damage focused on single direct target
-    base_active: Dict[int, Dict[str, List[float]]] = {
+    base_active: dict[int, dict[str, list[float]]] = {
         # Base level: Assumes a reasonable distance kept from enemy, and directly below (or only a slight adjustment)
         LogicDifficulty.option_beginner: {
             # Front Weapons ----------- Power  --1-- --2-- --3-- --4-- --5-- --6-- --7-- --8-- ---9-- --10-- --11--
@@ -231,7 +233,7 @@ class DamageTables:
 
     # ================================================================================================================
     # Damage aimed away from the above single target, used to get a general idea of how defensive a build can be
-    base_passive: Dict[int, Dict[str, List[float]]] = {
+    base_passive: dict[int, dict[str, list[float]]] = {
         # Base level: Damage to any other area except the above single targeted area
         LogicDifficulty.option_beginner: {
             # Front Weapons ----------- Power  --1-- --2-- --3-- --4-- --5-- --6-- --7-- --8-- ---9-- --10-- --11--
@@ -285,7 +287,7 @@ class DamageTables:
 
     # ================================================================================================================
     # Damage focused at a 90 degree, or close to 90 degree angle
-    base_sideways: Dict[int, Dict[str, List[float]]] = {
+    base_sideways: dict[int, dict[str, list[float]]] = {
         # Base level: Assumes enough distance to react to enemy movement
         LogicDifficulty.option_beginner: {
             # Front Weapons ----------- Power  --1-- --2-- --3-- --4-- --5-- --6-- --7-- --8-- ---9-- --10-- --11--
@@ -324,7 +326,7 @@ class DamageTables:
 
     # ================================================================================================================
     # Similar to active, but assumes that the projectile has already passed through a solid object
-    base_piercing: Dict[int, Dict[str, List[float]]] = {
+    base_piercing: dict[int, dict[str, list[float]]] = {
         LogicDifficulty.option_beginner: {
             # Front Weapons ----------- Power  --1-- --2-- --3-- --4-- --5-- --6-- --7-- --8-- ---9-- --10-- --11--
             "Mega Cannon":                    [ 5.3,  5.3, 10.0,  5.3, 10.0, 10.0, 10.0, 10.2,  21.1,  21.1,  21.2],
@@ -376,7 +378,14 @@ class DamageTables:
         elif logic_difficulty == LogicDifficulty.option_expert:   self.logic_difficulty_multiplier = 1.07
         else:                                                     self.logic_difficulty_multiplier = 1.00
 
-    def can_meet_dps(self, target_dps: DPS, weapons: List[str],
+        # The two methods below are hot, but they also take a considerable amount of time.
+        # Where possible we want to cache their results, but just wrapping them in @lru_cache would make the cache
+        # global, and we don't want that (not least because it results in memory leaks).
+        # The max sizes have been chosen to keep cache misses low without making the cache too big.
+        self.can_meet_dps = lru_cache(maxsize=1024)(self.can_meet_dps)  # type: ignore[method-assign]
+        self.get_dps_shot_types = lru_cache(maxsize=512)(self.get_dps_shot_types)  # type: ignore[method-assign]
+
+    def can_meet_dps(self, target_dps: DPS, weapons: tuple[str, ...],
           max_power_level: int = 11, rest_energy: int = 99) -> bool:
         for (weapon, power) in product(weapons, range(max_power_level)):
             if self.generator_power_required[weapon][power] > rest_energy:
@@ -386,10 +395,10 @@ class DamageTables:
                 return True
         return False
 
-    def get_dps_shot_types(self, target_dps: DPS, weapons: List[str],
-          max_power_level: int = 11, rest_energy: int = 99) -> Union[bool, Dict[int, DPS]]:
-        best_distances: Dict[int, float] = {}  # energy required: distance
-        best_dps: Dict[int, DPS] = {}  # energy required: best DPS object
+    def get_dps_shot_types(self, target_dps: DPS, weapons: tuple[str, ...],
+          max_power_level: int = 11, rest_energy: int = 99) -> bool | dict[int, DPS]:
+        best_distances: dict[int, float] = {}  # energy required: distance
+        best_dps: dict[int, DPS] = {}  # energy required: best DPS object
 
         for (weapon, power) in product(weapons, range(max_power_level)):
             cur_energy_req = self.generator_power_required[weapon][power]
@@ -424,7 +433,7 @@ class DamageTables:
 
 
 def scale_health(difficulty: int, health: int) -> int:
-    health_scale: Dict[int, Callable[[int], int]] = {
+    health_scale: dict[int, Callable[[int], int]] = {
         1: lambda x: int(x * 0.75) + 1,
         2: lambda x: x,
         3: lambda x: min(254, int(x * 1.2)),
@@ -440,7 +449,7 @@ def scale_health(difficulty: int, health: int) -> int:
 
 
 def get_logic_difficulty_choice(world: "TyrianWorld",
-      base: Tuple[int, int, int, int], hard_contact: Optional[Tuple[int, int, int, int]] = None):
+      base: tuple[int, int, int, int], hard_contact: tuple[int, int, int, int] | None = None):
     if world.options.logic_difficulty == "no_logic":
         return 5
     if hard_contact is not None and world.options.contact_bypasses_shields:
@@ -478,7 +487,7 @@ ordered_front_table_other = [
 ]
 
 
-def get_front_weapon_state(state: "CollectionState", player: int, target_dps: DPS) -> List[str]:
+def get_front_weapon_state(state: "CollectionState", player: int, target_dps: DPS) -> list[str]:
     keys = state.prog_items[player].keys()
     if target_dps._type_piercing:
         return [name for name in ordered_front_table_piercing if name in keys]
@@ -516,7 +525,7 @@ ordered_rear_table_other = [
 ]
 
 
-def get_rear_weapon_state(state: "CollectionState", player: int, target_dps: DPS) -> List[str]:
+def get_rear_weapon_state(state: "CollectionState", player: int, target_dps: DPS) -> list[str]:
     keys = state.prog_items[player].keys()
     if target_dps._type_sideways:
         return [name for name in ordered_rear_table_sideways if name in keys]
@@ -544,7 +553,7 @@ def get_generator_level(state: "CollectionState", player: int) -> int:
 
 
 def can_deal_damage(state: "CollectionState", player: int, target_dps: DPS, energy_adjust: int = 0,
-      exclude: List[str] = []) -> bool:
+      exclude: list[str] = []) -> bool:
     damage_tables = state.multiworld.worlds[player].damage_tables
     owned_front = get_front_weapon_state(state, player, target_dps)
     owned_rear = get_rear_weapon_state(state, player, target_dps)
@@ -559,14 +568,14 @@ def can_deal_damage(state: "CollectionState", player: int, target_dps: DPS, ener
     power_level_max = min(11, 1 + state.count("Maximum Power Up", player))
     start_energy = damage_tables.local_power_provided[get_generator_level(state, player)] + energy_adjust
 
-    result = damage_tables.get_dps_shot_types(target_dps, owned_front, power_level_max, start_energy)
+    result = damage_tables.get_dps_shot_types(target_dps, tuple(owned_front), power_level_max, start_energy)
 
     if type(result) is bool:  # Immediate pass/fail
         return result
 
     for (used_energy, rest_dps) in result.items():
         rest_energy = start_energy - used_energy
-        if damage_tables.can_meet_dps(rest_dps, owned_rear, power_level_max, rest_energy):
+        if damage_tables.can_meet_dps(rest_dps, tuple(owned_rear), power_level_max, rest_energy):
             return True
     return False
 
@@ -602,7 +611,7 @@ def has_repulsor(state: "CollectionState", player: int) -> bool:
 # Basically used to give the generator outs in extreme difficulties, where we know something works
 # even if it doesn't fit the exact DPS numbers we're looking for.
 def has_specific_loadout(state: "CollectionState", player: int,
-      front_weapon: Tuple[str, int], rear_weapon: Optional[Tuple[str, int]] = None):
+      front_weapon: tuple[str, int], rear_weapon: tuple[str, int] | None = None):
     damage_tables = state.multiworld.worlds[player].damage_tables
     usable_energy = damage_tables.local_power_provided[get_generator_level(state, player)]
 
@@ -2623,7 +2632,7 @@ def rules_e5_fruit(world: "TyrianWorld", difficulty: int) -> None:
 # -------------------------------------------------------------------------------------------------
 
 
-level_rules: Dict[str, Callable[["TyrianWorld", int], None]] = {
+level_rules: dict[str, Callable[["TyrianWorld", int], None]] = {
     "TYRIAN (Episode 1)":    rules_e1_tyrian,
     "BUBBLES (Episode 1)":   rules_e1_bubbles,
     "HOLES (Episode 1)":     rules_e1_holes,

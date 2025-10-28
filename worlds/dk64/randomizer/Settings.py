@@ -51,6 +51,7 @@ from randomizer.Lists.ShufflableExit import ShufflableExits
 from randomizer.Lists.Songs import song_data
 from randomizer.Lists.Switches import SwitchData
 from randomizer.Patching.Library.Generic import IsItemSelected, HelmDoorInfo, HelmDoorRandomInfo, DoorItemToBarrierItem, getCompletableBonuses, IsDDMSSelected, MEDAL_PROGRESSIVE_RATIOS
+from randomizer.Patching.CoinPlacer import gen_mayhem_coins
 from randomizer.Prices import CompleteVanillaPrices, RandomizePrices, VanillaPrices
 from randomizer.SettingStrings import encrypt_settings_string_enum
 from randomizer.ShuffleBosses import (
@@ -564,6 +565,9 @@ class Settings:
         self.training_barrels_minigames = MinigameBarrels.normal
         self.bonus_barrel_auto_complete = False
 
+        # Alternate Minecart Mayhem where you get coins to win
+        self.alt_minecart_mayhem = False
+
         # Not making these a series of settings that can be toggled by the user yet.
         # If people want to be able to toggle this, we can make a simple UI switch and the back-end has already been handled appropriately
         self.sprint_barrel_requires_sprint = True
@@ -962,6 +966,9 @@ class Settings:
         self.trap_weight_icefloor = 2
         self.trap_weight_paper = 2
         self.trap_weight_slip = 3
+        self.trap_weight_animal = 1
+        self.trap_weight_rockfall = 1
+        self.trap_weight_disabletag = 2
         self.switch_allocation = [
             self.prog_slam_level_1,
             self.prog_slam_level_2,
@@ -1392,6 +1399,9 @@ class Settings:
             "icefloor": self.trap_weight_icefloor,
             "paper": self.trap_weight_paper,
             "slip": self.trap_weight_slip,
+            "animal": self.trap_weight_animal,
+            "rockfall": self.trap_weight_rockfall,
+            "disabletag": self.trap_weight_disabletag,
         }
         models_chance = {"gb": 10, "key": 2, "bean": 1, "fairy": 4}
         trap_data = {
@@ -1409,6 +1419,9 @@ class Settings:
                 "icefloor": Items.IceTrapIceFloorGB,
                 "paper": Items.IceTrapPaperGB,
                 "slip": Items.IceTrapSlipGB,
+                "animal": Items.IceTrapAnimalGB,
+                "rockfall": Items.IceTrapRockfallGB,
+                "disabletag": Items.IceTrapDisableTagGB,
             },
             "bean": {
                 "bubble": Items.IceTrapBubbleBean,
@@ -1424,6 +1437,9 @@ class Settings:
                 "icefloor": Items.IceTrapIceFloorBean,
                 "paper": Items.IceTrapPaperBean,
                 "slip": Items.IceTrapSlipBean,
+                "animal": Items.IceTrapAnimalBean,
+                "rockfall": Items.IceTrapRockfallBean,
+                "disabletag": Items.IceTrapDisableTagBean,
             },
             "key": {
                 "bubble": Items.IceTrapBubbleKey,
@@ -1439,6 +1455,9 @@ class Settings:
                 "icefloor": Items.IceTrapIceFloorKey,
                 "paper": Items.IceTrapPaperKey,
                 "slip": Items.IceTrapSlipKey,
+                "animal": Items.IceTrapAnimalKey,
+                "rockfall": Items.IceTrapRockfallKey,
+                "disabletag": Items.IceTrapDisableTagKey,
             },
             "fairy": {
                 "bubble": Items.IceTrapBubbleFairy,
@@ -1454,6 +1473,9 @@ class Settings:
                 "icefloor": Items.IceTrapIceFloorFairy,
                 "paper": Items.IceTrapPaperFairy,
                 "slip": Items.IceTrapSlipFairy,
+                "animal": Items.IceTrapAnimalFairy,
+                "rockfall": Items.IceTrapRockfallFairy,
+                "disabletag": Items.IceTrapDisableTagFairy,
             },
         }
         self.trap_assortment = []
@@ -1542,7 +1564,7 @@ class Settings:
                 ItemRandoFiller.fairy: Types.FillerFairy,
                 ItemRandoFiller.medal: Types.FillerMedal,
                 ItemRandoFiller.pearl: Types.FillerPearl,
-                ItemRandoFiller.rainbowcoin: Types.RainbowCoin,
+                ItemRandoFiller.rainbowcoin: Types.FillerRainbowCoin,
             }
             item_search_removal = [
                 # Anything which doesn't have accompanying checks. Usually starts with dummy_item
@@ -2027,6 +2049,9 @@ class Settings:
             jetpac_levels = list(range(8))
             self.random.shuffle(jetpac_levels)
             self.jetpac_enemy_order = jetpac_levels
+
+        # Mayhem Coins
+        gen_mayhem_coins(self, self.random)
 
         if self.puzzle_rando_difficulty != PuzzleRando.off:
             # Crypt Levers

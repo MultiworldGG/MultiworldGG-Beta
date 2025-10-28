@@ -41,7 +41,7 @@
                             {% elif patch.game == "gzDoom" %}
                             <a href="{{ url_for("download_slot_file", room_id=room.id, player_id=patch.player_id) }}" download>
                                 Download PK3 File...</a>
-                            {% elif patch.game == "Factorio" %}
+                            {% elif patch.game == "Factorio" or patch.game == "Factorio - Space Age Without Space" %}
                             <a href="{{ url_for("download_slot_file", room_id=room.id, player_id=patch.player_id) }}" download>
                                 Download Factorio Mod...</a>
                             {% elif patch.game | is_applayercontainer(patch.data, patch.player_id) %}

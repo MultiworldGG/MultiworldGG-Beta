@@ -3,6 +3,7 @@ import logging
 from typing import Any, Sequence, ClassVar
 
 from BaseClasses import Tutorial, ItemClassification, MultiWorld, Item, Location
+from Utils import version_tuple
 from worlds.AutoWorld import World, WebWorld
 from .names import (gamma, gemini_man_stage, needle_man_stage, hard_man_stage, magnet_man_stage, top_man_stage,
                     snake_man_stage, spark_man_stage, shadow_man_stage, rush_marine, rush_jet, rush_coil)
@@ -97,6 +98,8 @@ class MM3World(World):
     location_name_groups = location_groups
     web = MM3WebWorld()
     rom_name: bytearray
+    if version_tuple < (0, 6, 4):
+        world_version: tuple[int, int, int] = (0, 1, 6)
 
     def __init__(self, world: MultiWorld, player: int):
         self.rom_name = bytearray()
@@ -108,6 +111,7 @@ class MM3World(World):
     def create_regions(self) -> None:
         menu = MM3Region("Menu", self.player, self.multiworld)
         self.multiworld.regions.append(menu)
+        location: MM3Location
         for region in mm3_regions:
             stage = MM3Region(region, self.player, self.multiworld)
             required_items = mm3_regions[region][0]
@@ -117,7 +121,7 @@ class MM3World(World):
                 menu.connect(stage, f"To {region}",
                              lambda state, req=required_items: state.has_all(req, self.player))
             else:
-                old_stage = self.multiworld.get_region(prev_stage, self.player)
+                old_stage = self.get_region(prev_stage)
                 old_stage.connect(stage, f"To {region}",
                                   lambda state, req=required_items: state.has_all(req, self.player))
             stage.add_locations(stage_locations)
@@ -134,6 +138,9 @@ class MM3World(World):
                 if region in energy_pickups:
                     stage.add_locations(energy_pickups[region], MM3Location)
             self.multiworld.regions.append(stage)
+        goal_location = self.get_location(gamma)
+        goal_location.place_locked_item(MM3Item("Victory", ItemClassification.progression, None, self.player))
+        self.multiworld.completion_condition[self.player] = lambda state: state.has("Victory", self.player)
 
     def create_item(self, name: str, force_non_progression: bool = False) -> MM3Item:
         item = item_table[name]
@@ -146,8 +153,8 @@ class MM3World(World):
         return MM3Item(name, classification, item.code, self.player)
 
     def get_filler_item_name(self) -> str:
-        return self.multiworld.random.choices(list(filler_item_weights.keys()),
-                                              weights=list(filler_item_weights.values()))[0]
+        return self.random.choices(list(filler_item_weights.keys()),
+                                   weights=list(filler_item_weights.values()))[0]
 
     def create_items(self) -> None:
         itempool = []
@@ -167,9 +174,9 @@ class MM3World(World):
             total_checks += 106
         remaining = total_checks - len(itempool)
         itempool.extend([self.create_item(name)
-                         for name in self.multiworld.random.choices(list(filler_item_weights.keys()),
-                                                                    weights=list(filler_item_weights.values()),
-                                                                    k=remaining)])
+                         for name in self.random.choices(list(filler_item_weights.keys()),
+                                                         weights=list(filler_item_weights.values()),
+                                                         k=remaining)])
         self.multiworld.itempool += itempool
 
     set_rules = set_rules
@@ -186,11 +193,6 @@ class MM3World(World):
             logger.warning(
                 f"Incompatible starting Robot Master, changing to "
                 f"{self.options.starting_robot_master.current_key.replace('_', ' ').title()}")
-
-    def generate_basic(self) -> None:
-        goal_location = self.multiworld.get_location(gamma, self.player)
-        goal_location.place_locked_item(MM3Item("Victory", ItemClassification.progression, None, self.player))
-        self.multiworld.completion_condition[self.player] = lambda state: state.has("Victory", self.player)
 
     def fill_hook(self,
                   prog_item_pool: list["Item"],
@@ -253,7 +255,7 @@ class MM3World(World):
 
     def generate_output(self, output_directory: str) -> None:
         try:
-            patch = MM3ProcedurePatch(player=self.player, player_name=self.multiworld.player_name[self.player])
+            patch = MM3ProcedurePatch(player=self.player, player_name=self.player_name)
             patch_rom(self, patch)
 
             self.rom_name = patch.name
@@ -268,13 +270,15 @@ class MM3World(World):
     def fill_slot_data(self) -> dict[str, Any]:
         return {
             "death_link": self.options.death_link.value,
-            "weapon_damage": self.weapon_damage
+            "weapon_damage": self.weapon_damage,
+            "wily_4_weapons": self.wily_4_weapons
         }
 
     @staticmethod
     def interpret_slot_data(slot_data: dict[str, Any]) -> dict[str, Any]:
         local_weapon = {int(key): value for key, value in slot_data["weapon_damage"].items()}
-        return {"weapon_damage": local_weapon}
+        local_wily = {int(key): value for key, value in slot_data["wily_4_weapons"].items()}
+        return {"weapon_damage": local_weapon, "wily_4_weapons": local_wily}
 
     def modify_multidata(self, multidata: dict[str, Any]) -> None:
         # wait for self.rom_name to be available.
@@ -283,4 +287,4 @@ class MM3World(World):
         # we skip in case of error, so that the original error in the output thread is the one that gets raised
         if rom_name:
             new_name = base64.b64encode(bytes(self.rom_name)).decode()
-            multidata["connect_names"][new_name] = multidata["connect_names"][self.multiworld.player_name[self.player]]
+            multidata["connect_names"][new_name] = multidata["connect_names"][self.player_name]

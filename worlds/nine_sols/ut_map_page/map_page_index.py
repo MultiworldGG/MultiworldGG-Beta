@@ -1,0 +1,48 @@
+from typing import Any
+
+tracker_pages = {
+    "world_map": 0,
+    "abandoned_mines": 1,
+    "agrarian_hall": 2,
+    "ancient_stone_pillar": 3,
+    "apeman_facility_depths": 4,
+    "apeman_facility_elevator": 5,
+    "apeman_facility_monitoring": 6,
+    "boundless_repository": 7,
+    "cortex_center": 8,
+    "central_transport_hub": 9,
+    "empyrean_district_living_area": 10,
+    "empyrean_district_passages": 11,
+    "empyrean_district_sanctum": 12,
+    "factory_great_hall": 13,
+    "factory_machine_room": 14,
+    "factory_production_area": 15,
+    "factory_underground": 16,
+    "four_seasons_pavilion": 17,
+    "galactic_dock_and_village": 18,
+    "greenhouse": 19,
+    "grotto_of_scriptures_east": 20,
+    "grotto_of_scriptures_entry": 21,
+    "grotto_of_scriptures_west": 22,
+    "inner_warehouse": 23,
+    "lake_yaochi_ruins": 24,
+    "central_hall": 25,
+    "nobility_hall": 26,
+    "outer_warehouse": 27,
+    "power_reservoir_central": 28,
+    "power_reservoir_east": 29,
+    "power_reservoir_west": 30,
+    "prison": 31,
+    "radiant_pagoda": 32,
+    "shengwu_hall": 33,
+    "sky_tower": 34,
+    "tiandao_research_center": 35,
+    "underground_cave": 36,
+    "water_and_oxygen_synthesis": 37,
+    "yangu_hall": 38,
+    "yinglong_canal": 39,
+}
+
+
+def map_page_index(data: Any):
+    return tracker_pages[data] if (data in tracker_pages) else 0

@@ -280,14 +280,29 @@ def setup_items(world: World) -> typing.List[DK64Item]:
     trap_weights += [DK64RItems.IceTrapIceFloorGB] * world.options.ice_floor_weight.value
     trap_weights += [DK64RItems.IceTrapPaperGB] * world.options.paper_weight.value
     trap_weights += [DK64RItems.IceTrapSlipGB] * world.options.slip_weight.value
+    trap_weights += [DK64RItems.IceTrapAnimalGB] * world.options.animal_trap_weight.value
+    trap_weights += [DK64RItems.IceTrapRockfallGB] * world.options.rockfall_trap_weight.value
+    trap_weights += [DK64RItems.IceTrapDisableTagGB] * world.options.disabletag_trap_weight.value
 
     trap_count = 0 if (len(trap_weights) == 0) else math.ceil(filler_item_count * (world.options.trap_fill_percentage.value / 100.0))
     filler_item_count -= trap_count
 
-    possible_junk = [DK64RItems.JunkMelon]
+    # Build filler weights based on options
+    filler_weights = []
+    filler_weights += [DK64RItems.JunkMelon] * world.options.junk_filler_weight.value
+    filler_weights += [DK64RItems.FillerBanana] * world.options.banana_filler_weight.value
+    filler_weights += [DK64RItems.FillerCrown] * world.options.crown_filler_weight.value
+    filler_weights += [DK64RItems.FillerFairy] * world.options.fairy_filler_weight.value
+    filler_weights += [DK64RItems.FillerMedal] * world.options.medal_filler_weight.value
+    filler_weights += [DK64RItems.FillerPearl] * world.options.pearl_filler_weight.value
+    filler_weights += [DK64RItems.FillerRainbowCoin] * world.options.rainbowcoin_filler_weight.value
+
+    # If no filler weights are set, default to junk
+    if not filler_weights:
+        filler_weights = [DK64RItems.JunkMelon]
 
     for _ in range(filler_item_count):
-        junk_enum = world.random.choice(possible_junk)
+        junk_enum = world.random.choice(filler_weights)
         junk_item = DK64RItem.ItemList[junk_enum]
         item_table.append(DK64Item(junk_item.name, ItemClassification.filler, full_item_table[junk_item.name].code, world.player))
 
