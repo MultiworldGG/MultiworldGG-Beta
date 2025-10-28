@@ -53,13 +53,6 @@ if typing.TYPE_CHECKING:
 def normalize_tag(tag: str) -> str:
     return tag[1:] if tag and tag[0].lower() == "v" else tag
 
-# __version__ = "0.6.4"
-# version_tuple = tuplize_version(__version__)
-# version = Version(*version_tuple)
-
-# instance_name = "MultiworldGG"
-# archipelago_guid = "{{918BA46A-FAB8-460C-9DFF-AE691E1C865D}}"
-
 def get_config_file_path() -> str:
     if getattr(sys, 'frozen', False):
         # When frozen, the executable's directory is the base path.
@@ -69,6 +62,14 @@ def get_config_file_path() -> str:
     return os.path.join(base_path, "application.yaml")
 
 config_file = get_config_file_path()
+
+# Check for APP_VERSION environment variable first (set by GitHub Actions build)
+env_version = os.environ.get("APP_VERSION")
+if env_version:
+    __version__ = env_version
+    version_tuple = tuplize_version(__version__)
+    version = Version(*version_tuple)
+    logger.info("Using version from APP_VERSION environment variable: %s", __version__)
 
 if os.path.exists(config_file):
     try:
@@ -83,11 +84,13 @@ if os.path.exists(config_file):
                 new_guid = app_options.get("app_guid")
                 if new_guid is not None:
                     archipelago_guid = new_guid
-                new_version = app_options.get("app_version")
-                if new_version is not None:
-                    __version__ = new_version
-                    version_tuple = tuplize_version(__version__)
-                    version = Version(*version_tuple)
+                # Only override version from config if not set by environment variable
+                if not env_version:
+                    new_version = app_options.get("app_version")
+                    if new_version is not None:
+                        __version__ = new_version
+                        version_tuple = tuplize_version(__version__)
+                        version = Version(*version_tuple)
     except Exception as e:
         logger.warning("Failed to load configuration from %s: %s", config_file, e)
 

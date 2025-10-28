@@ -2,6 +2,6 @@
   "game": "Mega Man 2",
   "authors": [ "Silvris" ],
   "igdb_id": 1734,
-  "world_version": "0.3.3",
+  "world_version": "0.3.4",
   "minimum_ap_version": "0.6.4"
 }

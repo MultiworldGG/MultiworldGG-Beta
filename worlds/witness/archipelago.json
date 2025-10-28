@@ -2,6 +2,6 @@
     "game": "The Witness",
     "igdb_id": 5601,
     "minimum_ap_version": "0.6.4",
-    "world_version": "8.0.0",
+    "world_version": "8.0.1",
     "authors": [ "NewSoupVi", "blastron" ]
 }

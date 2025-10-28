@@ -21,10 +21,37 @@ env:
   PYTHON_VERSION: '3.12'
 
 jobs:
+  determine-version:
+    name: Determine Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+      
+      - name: Determine version
+        id: get-version
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            # Extract from application.yaml as fallback
+            VERSION=$(grep 'app_version:' src/application.yaml | sed -E 's/.*"([^"]+)".*/\1/')
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Determined version: $VERSION"
+
   build-exe:
     name: Build Executable - ${{ matrix.os }}
+    needs: determine-version
     runs-on: ${{ matrix.os }}
     continue-on-error: true
+    env:
+      APP_VERSION: ${{ needs.determine-version.outputs.version }}
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
@@ -232,9 +259,11 @@ jobs:
 
   build-linux-appimage:
     name: Build Linux AppImage
-    needs: build-exe
+    needs: [determine-version, build-exe]
     runs-on: ubuntu-latest
     continue-on-error: true
+    env:
+      APP_VERSION: ${{ needs.determine-version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -331,9 +360,11 @@ jobs:
 
   build-mac-bundle:
     name: Build macOS Bundle
-    needs: build-exe
+    needs: [determine-version, build-exe]
     runs-on: macos-latest
     continue-on-error: true
+    env:
+      APP_VERSION: ${{ needs.determine-version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -444,13 +475,31 @@ jobs:
 
   build-windows-installer:
     name: Build Windows Installer
-    needs: build-exe
+    needs: [determine-version, build-exe]
     runs-on: windows-latest
     continue-on-error: true
+    env:
+      APP_VERSION: ${{ needs.determine-version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
           path: src
+      
+      - name: Write version to setup.ini
+        shell: pwsh
+        run: |
+          cd src
+          $version = "$env:APP_VERSION"
+          Write-Host "Writing version $version to setup.ini"
+          
+          # Create setup.ini content
+          "[Data]" | Out-File -FilePath setup.ini -Encoding utf8
+          "source_path=build\exe.win-amd64-3.12" | Out-File -FilePath setup.ini -Append -Encoding utf8
+          "app_version=$version" | Out-File -FilePath setup.ini -Append -Encoding utf8
+          "min_windows=" | Out-File -FilePath setup.ini -Append -Encoding utf8
+          
+          Write-Host "setup.ini contents:"
+          Get-Content setup.ini
       
       - name: Download Windows exe artifact
         uses: actions/download-artifact@v4
@@ -494,7 +543,7 @@ jobs:
 
   create-release:
     name: Create GitHub Release
-    needs: [build-exe, build-linux-appimage, build-mac-bundle, build-windows-installer]
+    needs: [determine-version, build-exe, build-linux-appimage, build-mac-bundle, build-windows-installer]
     runs-on: ubuntu-latest
     if: |
       always() && 
@@ -504,17 +553,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: src
-      
-      - name: Determine version
-        id: version
-        run: |
-          if [ "${{ github.event_name }}" == "push" ]; then
-            VERSION=${GITHUB_REF#refs/tags/}
-          else
-            VERSION="${{ inputs.version }}"
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Release version: $VERSION"
       
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -565,8 +603,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.version }}
-          name: MultiworldGG-Test ${{ steps.version.outputs.version }}
+          tag_name: ${{ needs.determine-version.outputs.version }}
+          name: MultiworldGG-Test ${{ needs.determine-version.outputs.version }}
           body_path: release-notes.md
           draft: false
           prerelease: true
