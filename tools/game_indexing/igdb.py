@@ -179,6 +179,8 @@ def get_igdb_game_details(game_id: int) -> dict:
     # artwork_type 1 = artworks
     # artwork_type 2 = key art
     # artwork_type 6 = logo
+    artwork_url = ""
+    key_art_url = ""
     for artwork in game_data.get('artworks', []):
         if artwork['artwork_type'] == 1 or artwork['artwork_type'] == 5:
             artwork_url = artwork['url'].replace("t_thumb", "t_logo_med").replace("//", "https://").replace(".jpg", ".png")
@@ -335,11 +337,13 @@ if __name__ == '__main__':
         print(json.dumps(igdb_details, indent=4))
         exit()
     
-    save_game_details_to_json(args.id)
-    if not args.id:
+    if args.id:
+        save_game_details_to_json(args.id)
+    else:
+        save_game_details_to_json()
         from convert_to_readable_outputs import process_game_details
         process_game_details()
         from remove_specific_keywords import process_game_keywords
         process_game_keywords()
-        from generate_game_index import main
-        main()
+        from generate_game_index import main as generate_game_index
+        generate_game_index()

@@ -1,0 +1,17 @@
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds.madou"
+version = "0.0.0"
+description = "MultiWorld: Madou Monogatari Hanamaru Daiyouchienji"
+classifiers = [ "Private :: Do Not Upload",]
+requires-python = ">=3.12"
+[[project.authors]]
+name = "Albrekkae"
+
+[tool.setuptools.packages.find]
+where = [ "src",]
+include = [ "worlds.madou",]
+namespaces = true

@@ -128,94 +128,100 @@ class GameIndex:
 GAMES_DATA = {
     "adventure": {
         "igdb_id": "12239",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/qzcqrjruhpuge5egkzgj.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/qzcqrjruhpuge5egkzgj.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Adventure",
-        "igdb_name": "adventure",
-        "age_rating": "nr",
+        "igdb_name": "Adventure",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "adventure"
+            "Adventure"
         ],
         "themes": [
-            "fantasy"
+            "Fantasy"
         ],
         "platforms": [
-            "bbc microcomputer system",
-            "acorn electron"
+            "BBC Microcomputer System",
+            "Acorn Electron"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "1983"
+        "release_date": 1983
     },
     "against_the_storm": {
         "igdb_id": "147519",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coaazl.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coaazl.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/aru5g.png",
+        "key_art_url": "",
         "game_name": "Against the Storm",
-        "igdb_name": "against the storm",
+        "igdb_name": "Against the Storm",
         "age_rating": "12",
         "rating": [
-            "mild blood",
-            "alcohol reference",
-            "use of tobacco",
-            "language",
-            "fantasy violence"
+            "Mild Blood",
+            "Alcohol Reference",
+            "Use of Tobacco",
+            "Language",
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "real time strategy (rts)",
-            "simulator",
-            "strategy",
-            "indie"
+            "Real Time Strategy (RTS)",
+            "Simulator",
+            "Strategy",
+            "Indie"
         ],
         "themes": [
-            "fantasy"
+            "Fantasy"
         ],
         "platforms": [
-            "xbox series x|s",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Nintendo Switch"
         ],
-        "storyline": "the rain is your ally and the greatest enemy. it cycles in three seasons requiring you to stay flexible and adapt to changing conditions. in drizzle, the season of regrowth, natural resources replenish themselves, and it\u2019s time for construction and planting crops. the clearance is the season of harvest, expansion, and preparations for the last, most unforgiving season of them all. a true test of your city\u2019s strength comes with the storm when bolts of lightning tear the sky, nothing grows and resources are scarce.",
+        "storyline": "The rain is your ally and the greatest enemy. It cycles in three seasons requiring you to stay flexible and adapt to changing conditions. In Drizzle, the season of regrowth, natural resources replenish themselves, and it\u2019s time for construction and planting crops. The Clearance is the season of harvest, expansion, and preparations for the last, most unforgiving season of them all. A true test of your city\u2019s strength comes with the Storm when bolts of lightning tear the sky, nothing grows and resources are scarce.",
         "keywords": [
             "roguelite"
         ],
-        "release_date": "2023"
+        "release_date": 2023
     },
     "ahit": {
         "igdb_id": "6705",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5pl5.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5pl5.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar75x.png",
+        "key_art_url": "",
         "game_name": "A Hat in Time",
-        "igdb_name": "a hat in time",
+        "igdb_name": "A Hat in Time",
         "age_rating": "7",
         "rating": [
-            "blood",
-            "fantasy violence"
+            "Blood",
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "first person",
-            "third person"
+            "First person",
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "adventure",
-            "indie"
+            "Platform",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "playstation 4",
-            "pc (microsoft windows)",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
@@ -229,36 +235,38 @@ GAMES_DATA = {
             "3d platformer",
             "swimming"
         ],
-        "release_date": "2017"
+        "release_date": 2017
     },
     "albw": {
         "igdb_id": "2909",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3p0j.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3p0j.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/wh4w8shdd0oiikmdelth.png",
+        "key_art_url": "",
         "game_name": "A Link Between Worlds",
-        "igdb_name": "the legend of zelda: a link between worlds",
+        "igdb_name": "The Legend of Zelda: A Link Between Worlds",
         "age_rating": "7",
         "rating": [
-            "fantasy violence"
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "third person",
-            "bird view / isometric"
+            "Third person",
+            "Bird view / Isometric"
         ],
         "genres": [
-            "puzzle",
-            "adventure"
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "historical",
-            "sandbox",
-            "open world"
+            "Action",
+            "Fantasy",
+            "Historical",
+            "Sandbox",
+            "Open world"
         ],
         "platforms": [
-            "nintendo 3ds"
+            "Nintendo 3DS"
         ],
-        "storyline": "after capturing princess zelda and escaping through a rift into the parallel world of lorule, the evil sorcerer yuga plan to use the power of the seven mages to resurrect the demon king ganon. the young adventurer link is called out to restore peace to the kingdom of hyrule and is granted the ability to merge into walls after obtaining a magic bracelet from the eccentric merchant ravio, which allows him to reach previously inaccessible areas and travel between the worlds of hyrule and lorule.",
+        "storyline": "After capturing Princess Zelda and escaping through a rift into the parallel world of Lorule, the evil sorcerer Yuga plan to use the power of the Seven Mages to resurrect the demon king Ganon. The young adventurer Link is called out to restore peace to the kingdom of Hyrule and is granted the ability to merge into walls after obtaining a magic bracelet from the eccentric merchant Ravio, which allows him to reach previously inaccessible areas and travel between the worlds of Hyrule and Lorule.",
         "keywords": [
             "medieval",
             "magic",
@@ -296,38 +304,40 @@ GAMES_DATA = {
             "living inventory",
             "bees"
         ],
-        "release_date": "2013"
+        "release_date": 2013
     },
     "alttp": {
         "igdb_id": "1026",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3vzn.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3vzn.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14lb.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3p2x.png",
         "game_name": "A Link to the Past",
-        "igdb_name": "the legend of zelda: a link to the past",
+        "igdb_name": "The Legend of Zelda: A Link to the Past",
         "age_rating": "7",
         "rating": [
-            "mild violence",
-            "mild animated violence"
+            "Mild Violence",
+            "Mild Animated Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "puzzle",
-            "adventure"
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "satellaview",
-            "super nintendo entertainment system",
-            "wii",
-            "wii u",
-            "new nintendo 3ds",
-            "super famicom"
+            "Satellaview",
+            "Super Nintendo Entertainment System",
+            "Wii",
+            "Wii U",
+            "New Nintendo 3DS",
+            "Super Famicom"
         ],
-        "storyline": "the wizard agahnim has been abducting descendants of the seven sages, intent on using their power to obliterate the barrier leading to the dark world. one of the descendants happens to be princess zelda, who informs link of her plight. armed with a trusty sword and shield, link begins a journey that will take him through treacherous territory.",
+        "storyline": "The wizard Agahnim has been abducting descendants of the seven sages, intent on using their power to obliterate the barrier leading to the Dark World. One of the descendants happens to be Princess Zelda, who informs Link of her plight. Armed with a trusty sword and shield, Link begins a journey that will take him through treacherous territory.",
         "keywords": [
             "ghosts",
             "magic",
@@ -385,39 +395,41 @@ GAMES_DATA = {
             "retroachievements",
             "bees"
         ],
-        "release_date": "1991"
+        "release_date": 1991
     },
     "animal_well": {
         "igdb_id": "191435",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co4hdh.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co4hdh.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1gce.png",
+        "key_art_url": "",
         "game_name": "ANIMAL WELL",
-        "igdb_name": "animal well",
+        "igdb_name": "Animal Well",
         "age_rating": "7",
         "rating": [
-            "mild fantasy violence"
+            "Mild Fantasy Violence"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "puzzle",
-            "adventure",
-            "indie"
+            "Platform",
+            "Puzzle",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "horror",
-            "survival",
-            "mystery"
+            "Action",
+            "Horror",
+            "Survival",
+            "Mystery"
         ],
         "platforms": [
-            "xbox series x|s",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Nintendo Switch"
         ],
-        "storyline": "it is dark. it is lonely. you don't belong in this world. it's not that it\u2019s a hostile world... it's just... not yours. as you uncover its secrets, the world grows on you. it takes on a feel of familiarity, yet you know that you've only probed the surface. the more you discover, the more you realize how much more there is to discover. secrets leading to more secrets. you recall the feeling of zooming closer and closer in on a very high-resolution photo. as you hone your focus, the world betrays its secrets.",
+        "storyline": "It is dark. It is lonely. You don't belong in this world. It's not that it\u2019s a hostile world... it's just... not yours. As you uncover its secrets, the world grows on you. It takes on a feel of familiarity, yet you know that you've only probed the surface. The more you discover, the more you realize how much more there is to discover. Secrets leading to more secrets. You recall the feeling of zooming closer and closer in on a very high-resolution photo. As you hone your focus, the world betrays its secrets.",
         "keywords": [
             "exploration",
             "retro",
@@ -429,32 +441,34 @@ GAMES_DATA = {
             "relaxing",
             "controller support"
         ],
-        "release_date": "2024"
+        "release_date": 2024
     },
     "apeescape": {
         "igdb_id": "3762",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2gzc.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2gzc.png",
+        "artwork_url": "",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3scq.png",
         "game_name": "Ape Escape",
-        "igdb_name": "ape escape",
-        "age_rating": "e",
+        "igdb_name": "Ape Escape",
+        "age_rating": "E",
         "rating": [
-            "mild animated violence"
+            "Mild Animated Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform"
+            "Platform"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "playstation 3",
-            "playstation",
-            "playstation portable"
+            "PlayStation 3",
+            "PlayStation",
+            "PlayStation Portable"
         ],
-        "storyline": "the doctors trustfull test apes have escaped and it's up to you to get out there and retrieve all of them.",
+        "storyline": "The doctors trustfull test apes have escaped and it's up to you to get out there and retrieve all of them.",
         "keywords": [
             "anime",
             "dinosaurs",
@@ -473,35 +487,37 @@ GAMES_DATA = {
             "moving platforms",
             "time trials"
         ],
-        "release_date": "1999"
+        "release_date": 1999
     },
     "aquaria": {
         "igdb_id": "7406",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1r7r.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1r7r.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Aquaria",
-        "igdb_name": "aquaria",
-        "age_rating": "nr",
+        "igdb_name": "Aquaria",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure",
-            "indie"
+            "Platform",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "fantasy",
-            "drama"
+            "Fantasy",
+            "Drama"
         ],
         "platforms": [
-            "linux",
-            "android",
-            "pc (microsoft windows)",
-            "ios",
-            "mac"
+            "Linux",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "Mac"
         ],
-        "storyline": "the world of aquaria hides the secrets of creation within its depths. the currents that buffet the many diverse plants and animals that live there also carry with them stories of long lost civilizations; of love and war, change and loss.\n\nfrom lush, green kelp forests to dark caves, exploring will be no easy task. but the splendor of the undersea world awaits naija... and you.\n\nopen waters\ncrystalline blue\n\nthe glassy waters of the open sea let you peer far into the distance, and fish and other creatures play beneath the wide canopies of giant, undersea mushrooms.\n\nhere, ruins serve as a clue to aquaria's long past. will they lead naija to the truth?\n\nthe kelp forest\nthe natural world\n\nthe kelp forest teems with life. as light from above pours across the multitudes of strange plants and animals that live here, one cannot help but marvel at the dynamic landscape.\n\nbut beware, its beauty belies the inherent danger inside. careful not to lose your way.\n\nthe abyss\ndarkness\n\nas you swim deeper, to where sight cannot reach, the abyss begins to swallow you whole. the deeper waters of aquaria have spawned legends of frightening monstrosities that lurk where few things can survive. are they true?\n\nbeyond\n???\n\nwhat lies beyond? are there areas deeper than the abyss? or as we swim ever upward, can we find the source of the light?\n\nonly those with great fortitude will come to know and understand the mysteries of aquaria.",
+        "storyline": "The world of Aquaria hides the secrets of creation within its depths. The currents that buffet the many diverse plants and animals that live there also carry with them stories of long lost civilizations; of love and war, change and loss.\n\nFrom lush, green kelp forests to dark caves, exploring will be no easy task. But the splendor of the undersea world awaits Naija... and you.\n\nOpen Waters\nCRYSTALLINE BLUE\n\nThe glassy waters of the open sea let you peer far into the distance, and fish and other creatures play beneath the wide canopies of giant, undersea mushrooms.\n\nHere, ruins serve as a clue to Aquaria's long past. Will they lead Naija to the truth?\n\nThe Kelp Forest\nTHE NATURAL WORLD\n\nThe kelp forest teems with life. As light from above pours across the multitudes of strange plants and animals that live here, one cannot help but marvel at the dynamic landscape.\n\nBut beware, its beauty belies the inherent danger inside. Careful not to lose your way.\n\nThe Abyss\nDARKNESS\n\nAs you swim deeper, to where sight cannot reach, the Abyss begins to swallow you whole. The deeper waters of Aquaria have spawned legends of frightening monstrosities that lurk where few things can survive. Are they true?\n\nBeyond\n???\n\nWhat lies beyond? Are there areas deeper than the Abyss? Or as we swim ever upward, can we find the source of the light?\n\nOnly those with great fortitude will come to know and understand the mysteries of Aquaria.",
         "keywords": [
             "exploration",
             "magic",
@@ -517,30 +533,32 @@ GAMES_DATA = {
             "shape-shifting",
             "plot twist"
         ],
-        "release_date": "2007"
+        "release_date": 2007
     },
     "aus": {
         "igdb_id": "72926",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2nok.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2nok.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "An Untitled Story",
-        "igdb_name": "an untitled story",
-        "age_rating": "nr",
+        "igdb_name": "An Untitled Story",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure",
-            "indie"
+            "Platform",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "pc (microsoft windows)"
+            "PC (Microsoft Windows)"
         ],
-        "storyline": "you are an egg. leap out of your nest and begin exploring the world, collecting hearts to increase your life and upgrades that can help you jump higher or give you other abilities.",
+        "storyline": "You are an egg. Leap out of your nest and begin exploring the world, collecting hearts to increase your life and upgrades that can help you jump higher or give you other abilities.",
         "keywords": [
             "ghosts",
             "minigames",
@@ -548,71 +566,75 @@ GAMES_DATA = {
             "action-adventure",
             "bird"
         ],
-        "release_date": "2007"
+        "release_date": 2007
     },
     "balatro": {
         "igdb_id": "251833",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co9f4g.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co9f4g.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar2c5g.png",
+        "key_art_url": "",
         "game_name": "Balatro",
-        "igdb_name": "balatro",
+        "igdb_name": "Balatro",
         "age_rating": "12",
         "rating": [
-            "simulated gambling"
+            "Simulated Gambling"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "strategy",
-            "turn-based strategy (tbs)",
-            "indie",
-            "card & board game"
+            "Strategy",
+            "Turn-based strategy (TBS)",
+            "Indie",
+            "Card & Board Game"
         ],
         "themes": [],
         "platforms": [
-            "xbox series x|s",
-            "playstation 4",
-            "android",
-            "pc (microsoft windows)",
-            "ios",
-            "playstation 5",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "PlayStation 5",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
             "roguelike"
         ],
-        "release_date": "2024"
+        "release_date": 2024
     },
     "banjo_tooie": {
         "igdb_id": "3418",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co6c1w.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co6c1w.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar7us.png",
+        "key_art_url": "",
         "game_name": "Banjo-Tooie",
-        "igdb_name": "banjo-tooie",
+        "igdb_name": "Banjo-Tooie",
         "age_rating": "3",
         "rating": [
-            "crude humor",
-            "animated violence",
-            "comic mischief",
-            "cartoon violence"
+            "Crude Humor",
+            "Animated Violence",
+            "Comic Mischief",
+            "Cartoon Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "quiz/trivia",
-            "adventure"
+            "Platform",
+            "Quiz/Trivia",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "comedy"
+            "Action",
+            "Fantasy",
+            "Comedy"
         ],
         "platforms": [
-            "nintendo 64"
+            "Nintendo 64"
         ],
         "storyline": "",
         "keywords": [
@@ -643,45 +665,47 @@ GAMES_DATA = {
             "lgbtq+",
             "retroachievements"
         ],
-        "release_date": "2000"
+        "release_date": 2000
     },
     "blasphemous": {
         "igdb_id": "26820",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co9yoj.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co9yoj.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar6zd.png",
+        "key_art_url": "",
         "game_name": "Blasphemous",
-        "igdb_name": "blasphemous",
+        "igdb_name": "Blasphemous",
         "age_rating": "16",
         "rating": [
-            "blood and gore",
-            "violence",
-            "nudity"
+            "Blood and Gore",
+            "Violence",
+            "Nudity"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "role-playing (rpg)",
-            "hack and slash/beat 'em up",
-            "adventure",
-            "indie"
+            "Platform",
+            "Role-playing (RPG)",
+            "Hack and slash/Beat 'em up",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "horror"
+            "Action",
+            "Fantasy",
+            "Horror"
         ],
         "platforms": [
-            "playstation 4",
-            "linux",
-            "android",
-            "pc (microsoft windows)",
-            "ios",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "Linux",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "a foul curse has fallen upon the land of cvstodia and all its inhabitants - it is simply known as the miracle.\n\nplay as the penitent one - a sole survivor of the massacre of the \u2018silent sorrow\u2019. trapped in an endless cycle of death and rebirth, it\u2019s down to you to free the world from this terrible fate and reach the origin of your anguish.",
+        "storyline": "A foul curse has fallen upon the land of Cvstodia and all its inhabitants - it is simply known as The Miracle.\n\nPlay as The Penitent One - a sole survivor of the massacre of the \u2018Silent Sorrow\u2019. Trapped in an endless cycle of death and rebirth, it\u2019s down to you to free the world from this terrible fate and reach the origin of your anguish.",
         "keywords": [
             "retro",
             "bloody",
@@ -698,130 +722,138 @@ GAMES_DATA = {
             "you can pet the dog",
             "interconnected-world"
         ],
-        "release_date": "2019"
+        "release_date": 2019
     },
     "bomb_rush_cyberfunk": {
         "igdb_id": "135940",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co6ya8.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co6ya8.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arzj0.png",
+        "key_art_url": "",
         "game_name": "Bomb Rush Cyberfunk",
-        "igdb_name": "bomb rush cyberfunk",
+        "igdb_name": "Bomb Rush Cyberfunk",
         "age_rating": "12",
         "rating": [
-            "language",
-            "violence",
-            "suggestive themes",
-            "blood"
+            "Language",
+            "Violence",
+            "Suggestive Themes",
+            "Blood"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "role-playing (rpg)",
-            "sport",
-            "adventure",
-            "indie"
+            "Platform",
+            "Role-playing (RPG)",
+            "Sport",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "science fiction"
+            "Action",
+            "Science fiction"
         ],
         "platforms": [
-            "xbox series x|s",
-            "playstation 4",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "xbox one",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "start your own cypher and dance, paint, trick, face off with the cops and stake your claim to the extrusions and cavities of a sprawling metropolis in an alternate future set to the musical brainwaves of hideki naganuma.",
+        "storyline": "Start your own cypher and dance, paint, trick, face off with the cops and stake your claim to the extrusions and cavities of a sprawling metropolis in an alternate future set to the musical brainwaves of Hideki Naganuma.",
         "keywords": [
             "3d platformer",
             "great soundtrack"
         ],
-        "release_date": "2023"
+        "release_date": 2023
     },
     "brotato": {
         "igdb_id": "199116",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coaauv.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coaauv.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1m88.png",
+        "key_art_url": "",
         "game_name": "Brotato",
-        "igdb_name": "brotato",
+        "igdb_name": "Brotato",
         "age_rating": "7",
         "rating": [
-            "fantasy violence",
-            "mild blood"
+            "Fantasy Violence",
+            "Mild Blood"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "fighting",
-            "shooter",
-            "role-playing (rpg)",
-            "indie",
-            "arcade"
+            "Fighting",
+            "Shooter",
+            "Role-playing (RPG)",
+            "Indie",
+            "Arcade"
         ],
         "themes": [
-            "action",
-            "science fiction"
+            "Action",
+            "Science fiction"
         ],
         "platforms": [
-            "xbox series x|s",
-            "playstation 4",
-            "android",
-            "pc (microsoft windows)",
-            "ios",
-            "playstation 5",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "PlayStation 5",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "a spaceship from potato world crashes onto an alien planet. the sole survivor: brotato, the only potato capable of handling 6 weapons at the same time. waiting to be rescued by his mates, brotato must survive in this hostile environment.",
+        "storyline": "A spaceship from Potato World crashes onto an alien planet. The sole survivor: Brotato, the only potato capable of handling 6 weapons at the same time. Waiting to be rescued by his mates, Brotato must survive in this hostile environment.",
         "keywords": [
             "roguelite"
         ],
-        "release_date": "2023"
+        "release_date": 2023
     },
     "bumpstik": {
         "igdb_id": "271950",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co78k5.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co78k5.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Bumper Stickers",
-        "igdb_name": "bumper stickers archipelago edition",
-        "age_rating": "nr",
+        "igdb_name": "Bumper Stickers Archipelago Edition",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [],
         "genres": [
-            "puzzle"
+            "Puzzle"
         ],
         "themes": [],
         "platforms": [
-            "linux",
-            "pc (microsoft windows)"
+            "Linux",
+            "PC (Microsoft Windows)"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2023"
+        "release_date": 2023
     },
     "candybox2": {
         "igdb_id": "62779",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3tqk.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3tqk.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Candy Box 2",
-        "igdb_name": "candy box 2",
-        "age_rating": "nr",
+        "igdb_name": "Candy Box 2",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "text"
+            "Text"
         ],
         "genres": [
-            "puzzle",
-            "role-playing (rpg)"
+            "Puzzle",
+            "Role-playing (RPG)"
         ],
         "themes": [
-            "historical",
-            "comedy"
+            "Historical",
+            "Comedy"
         ],
         "platforms": [
-            "web browser"
+            "Web browser"
         ],
         "storyline": "",
         "keywords": [
@@ -829,75 +861,79 @@ GAMES_DATA = {
             "magic",
             "merchants"
         ],
-        "release_date": "2013"
+        "release_date": 2013
     },
     "cat_quest": {
         "igdb_id": "36597",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1qlq.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1qlq.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arab6.png",
+        "key_art_url": "",
         "game_name": "Cat Quest",
-        "igdb_name": "cat quest",
+        "igdb_name": "Cat Quest",
         "age_rating": "3",
         "rating": [
-            "fantasy violence"
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure",
-            "indie"
+            "Role-playing (RPG)",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "playstation 4",
-            "linux",
-            "android",
-            "pc (microsoft windows)",
-            "ios",
-            "mac",
-            "nintendo switch"
+            "PlayStation 4",
+            "Linux",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "Mac",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2017"
+        "release_date": 2017
     },
     "celeste": {
         "igdb_id": "26226",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3byy.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3byy.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar7u5.png",
+        "key_art_url": "",
         "game_name": "Celeste",
-        "igdb_name": "celeste",
+        "igdb_name": "Celeste",
         "age_rating": "7",
         "rating": [
-            "alcohol reference",
-            "fantasy violence",
-            "mild language"
+            "Alcohol Reference",
+            "Fantasy Violence",
+            "Mild Language"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure",
-            "indie"
+            "Platform",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "google stadia",
-            "playstation 4",
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "Google Stadia",
+            "PlayStation 4",
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "set on a fictional version of mount celeste, it follows a young woman named madeline who attempts to climb the mountain, and must face her inner demons in her quest to reach the summit.",
+        "storyline": "Set on a fictional version of Mount Celeste, it follows a young woman named Madeline who attempts to climb the mountain, and must face her inner demons in her quest to reach the summit.",
         "keywords": [
             "exploration",
             "retro",
@@ -913,70 +949,74 @@ GAMES_DATA = {
             "digital distribution",
             "lgbtq+"
         ],
-        "release_date": "2018"
+        "release_date": 2018
     },
     "celeste64": {
         "igdb_id": "284430",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7oz4.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7oz4.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar2pw4.png",
+        "key_art_url": "",
         "game_name": "Celeste 64",
-        "igdb_name": "celeste 64: fragments of the mountain",
-        "age_rating": "nr",
+        "igdb_name": "Celeste 64: Fragments of the Mountain",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "adventure",
-            "indie"
+            "Platform",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "linux",
-            "pc (microsoft windows)"
+            "Linux",
+            "PC (Microsoft Windows)"
         ],
         "storyline": "",
         "keywords": [
             "female protagonist",
             "lgbtq+"
         ],
-        "release_date": "2024"
+        "release_date": 2024
     },
     "celeste_open_world": {
         "igdb_id": "26226",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3byy.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3byy.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar7u5.png",
+        "key_art_url": "",
         "game_name": "Celeste (Open World)",
-        "igdb_name": "celeste",
+        "igdb_name": "Celeste",
         "age_rating": "7",
         "rating": [
-            "alcohol reference",
-            "fantasy violence",
-            "mild language"
+            "Alcohol Reference",
+            "Fantasy Violence",
+            "Mild Language"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure",
-            "indie"
+            "Platform",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "google stadia",
-            "playstation 4",
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "Google Stadia",
+            "PlayStation 4",
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "set on a fictional version of mount celeste, it follows a young woman named madeline who attempts to climb the mountain, and must face her inner demons in her quest to reach the summit.",
+        "storyline": "Set on a fictional version of Mount Celeste, it follows a young woman named Madeline who attempts to climb the mountain, and must face her inner demons in her quest to reach the summit.",
         "keywords": [
             "exploration",
             "retro",
@@ -992,73 +1032,77 @@ GAMES_DATA = {
             "digital distribution",
             "lgbtq+"
         ],
-        "release_date": "2018"
+        "release_date": 2018
     },
     "chainedechoes": {
         "igdb_id": "117271",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co544u.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co544u.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar6jp.png",
+        "key_art_url": "",
         "game_name": "Chained Echoes",
-        "igdb_name": "chained echoes",
+        "igdb_name": "Chained Echoes",
         "age_rating": "16",
         "rating": [
-            "strong language",
-            "suggestive themes",
-            "sexual themes"
+            "Strong Language",
+            "Suggestive Themes",
+            "Sexual Themes"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "strategy",
-            "turn-based strategy (tbs)",
-            "adventure",
-            "indie"
+            "Role-playing (RPG)",
+            "Strategy",
+            "Turn-based strategy (TBS)",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "playstation 4",
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "follow a group of heroes as they explore a land filled to the brim with charming characters, fantastic landscapes and vicious foes. can you bring peace to a continent where war has been waged for generations and betrayal lurks around every corner?",
+        "storyline": "Follow a group of heroes as they explore a land filled to the brim with charming characters, fantastic landscapes and vicious foes. Can you bring peace to a continent where war has been waged for generations and betrayal lurks around every corner?",
         "keywords": [
             "jrpg"
         ],
-        "release_date": "2022"
+        "release_date": 2022
     },
     "civ_6": {
         "igdb_id": "293",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1rjp.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1rjp.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar6uy.png",
+        "key_art_url": "",
         "game_name": "Civilization VI",
-        "igdb_name": "sid meier's civilization iv",
+        "igdb_name": "Sid Meier's Civilization IV",
         "age_rating": "12",
         "rating": [
-            "violence"
+            "Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "simulator",
-            "strategy",
-            "turn-based strategy (tbs)"
+            "Simulator",
+            "Strategy",
+            "Turn-based strategy (TBS)"
         ],
         "themes": [
-            "fantasy",
-            "historical",
-            "educational",
-            "4x (explore, expand, exploit, and exterminate)"
+            "Fantasy",
+            "Historical",
+            "Educational",
+            "4X (explore, expand, exploit, and exterminate)"
         ],
         "platforms": [
-            "pc (microsoft windows)",
-            "mac"
+            "PC (Microsoft Windows)",
+            "Mac"
         ],
         "storyline": "",
         "keywords": [
@@ -1071,40 +1115,42 @@ GAMES_DATA = {
             "loot gathering",
             "ambient music"
         ],
-        "release_date": "2005"
+        "release_date": 2005
     },
     "crosscode": {
         "igdb_id": "35282",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co28wy.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co28wy.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar7wo.png",
+        "key_art_url": "",
         "game_name": "CrossCode",
-        "igdb_name": "crosscode",
+        "igdb_name": "CrossCode",
         "age_rating": "12",
         "rating": [
-            "fantasy violence",
-            "language"
+            "Fantasy Violence",
+            "Language"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "shooter",
-            "puzzle",
-            "role-playing (rpg)",
-            "adventure",
-            "indie"
+            "Shooter",
+            "Puzzle",
+            "Role-playing (RPG)",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "science fiction"
+            "Action",
+            "Science fiction"
         ],
         "platforms": [
-            "playstation 4",
-            "linux",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "Linux",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
@@ -1112,117 +1158,123 @@ GAMES_DATA = {
             "pixel art",
             "digital distribution"
         ],
-        "release_date": "2018"
+        "release_date": 2018
     },
     "crystal_project": {
         "igdb_id": "181444",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co48fv.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co48fv.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar19k4.png",
+        "key_art_url": "",
         "game_name": "Crystal Project",
-        "igdb_name": "crystal project",
+        "igdb_name": "Crystal Project",
         "age_rating": "7",
         "rating": [
-            "mild language",
-            "fantasy violence",
-            "mild blood"
+            "Mild Language",
+            "Fantasy Violence",
+            "Mild Blood"
         ],
         "player_perspectives": [
-            "third person",
-            "bird view / isometric"
+            "Third person",
+            "Bird view / Isometric"
         ],
         "genres": [
-            "platform",
-            "role-playing (rpg)",
-            "strategy",
-            "turn-based strategy (tbs)",
-            "tactical",
-            "adventure",
-            "indie"
+            "Platform",
+            "Role-playing (RPG)",
+            "Strategy",
+            "Turn-based strategy (TBS)",
+            "Tactical",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "fantasy",
-            "mystery"
+            "Fantasy",
+            "Mystery"
         ],
         "platforms": [
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "nintendo switch"
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Nintendo Switch"
         ],
-        "storyline": "explore the world, find crystals, and fulfill the prophecy to bring balance to the land of sequoia.\n\n...or maybe you'd rather spend your time collecting neat equipment and artifacts? or tame strange creatures and fill out all the entries in your archive? or perhaps you'd rather hunt down every monster and conquer the world's toughest bosses. or maybe you'd rather travel to the farthest reaches of the land and uncover the world's greatest mysteries.\n\nthe choice is yours, as it should be! or is it? they say that those who stray out of line will be punished, killed, or worse. maybe it's for your own good that you stick to collecting crystals, just like everyone else. but where would the adventure be in that?",
+        "storyline": "Explore the world, find Crystals, and fulfill the prophecy to bring balance to the land of Sequoia.\n\n...Or maybe you'd rather spend your time collecting neat equipment and artifacts? Or tame strange creatures and fill out all the entries in your archive? Or perhaps you'd rather hunt down every monster and conquer the world's toughest bosses. Or maybe you'd rather travel to the farthest reaches of the land and uncover the world's greatest mysteries.\n\nThe choice is yours, as it should be! Or is it? They say that those who stray out of line will be punished, killed, or worse. Maybe it's for your own good that you stick to collecting Crystals, just like everyone else. But where would the adventure be in that?",
         "keywords": [
             "3d",
             "metroidvania",
             "jrpg",
             "atmospheric"
         ],
-        "release_date": "2022"
+        "release_date": 2022
     },
     "ctjot": {
         "igdb_id": "20398",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co54iw.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co54iw.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Chrono Trigger Jets of Time",
-        "igdb_name": "chrono trigger",
+        "igdb_name": "Chrono Trigger",
         "age_rating": "12",
         "rating": [
-            "animated blood",
-            "mild fantasy violence",
-            "suggestive themes",
-            "use of alcohol"
+            "Animated Blood",
+            "Mild Fantasy Violence",
+            "Suggestive Themes",
+            "Use of Alcohol"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "role-playing (rpg)"
+            "Role-playing (RPG)"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "science fiction"
+            "Action",
+            "Fantasy",
+            "Science fiction"
         ],
         "platforms": [
-            "nintendo ds"
+            "Nintendo DS"
         ],
         "storyline": "",
         "keywords": [
             "time travel",
             "magic"
         ],
-        "release_date": "2008"
+        "release_date": 2008
     },
     "cuphead": {
         "igdb_id": "9061",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co62ao.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co62ao.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar6yl.png",
+        "key_art_url": "",
         "game_name": "Cuphead",
-        "igdb_name": "cuphead",
+        "igdb_name": "Cuphead",
         "age_rating": "7",
         "rating": [
-            "use of alcohol and tobacco",
-            "mild language",
-            "fantasy violence"
+            "Use of Alcohol and Tobacco",
+            "Mild Language",
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric",
-            "side view"
+            "Bird view / Isometric",
+            "Side view"
         ],
         "genres": [
-            "shooter",
-            "platform",
-            "adventure",
-            "indie",
-            "arcade"
+            "Shooter",
+            "Platform",
+            "Adventure",
+            "Indie",
+            "Arcade"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "comedy"
+            "Action",
+            "Fantasy",
+            "Comedy"
         ],
         "platforms": [
-            "playstation 4",
-            "pc (microsoft windows)",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
@@ -1248,36 +1300,38 @@ GAMES_DATA = {
             "temporary invincibility",
             "boss assistance"
         ],
-        "release_date": "2017"
+        "release_date": 2017
     },
     "cv64": {
         "igdb_id": "1130",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5geb.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5geb.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Castlevania 64",
-        "igdb_name": "castlevania",
+        "igdb_name": "Castlevania",
         "age_rating": "12",
         "rating": [
-            "animated blood",
-            "animated violence"
+            "Animated Blood",
+            "Animated Violence"
         ],
         "player_perspectives": [
-            "first person",
-            "third person"
+            "First person",
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "puzzle",
-            "hack and slash/beat 'em up",
-            "adventure"
+            "Platform",
+            "Puzzle",
+            "Hack and slash/Beat 'em up",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "horror"
+            "Action",
+            "Horror"
         ],
         "platforms": [
-            "nintendo 64"
+            "Nintendo 64"
         ],
-        "storyline": "castlevania games debut on the n64 this is the first castlevania game in 3d. however, the goal of the game remains the same: defeat dracula and his monsters. the player can choose to be reinhardt schneider with traditional whip or carrie fernandez who uses magic. a new feature is the presence of an in-game clock that switches time from day to night.",
+        "storyline": "Castlevania games debut on the N64 this is the first Castlevania game in 3D. However, the goal of the game remains the same: defeat Dracula and his monsters. The player can choose to be Reinhardt Schneider with traditional whip or Carrie Fernandez who uses magic. A new feature is the presence of an in-game clock that switches time from day to night.",
         "keywords": [
             "ghosts",
             "exploration",
@@ -1322,35 +1376,37 @@ GAMES_DATA = {
             "poisoning",
             "retroachievements"
         ],
-        "release_date": "1999"
+        "release_date": 1999
     },
     "cvcotm": {
         "igdb_id": "1132",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2zq1.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2zq1.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1vgm.png",
+        "key_art_url": "",
         "game_name": "Castlevania - Circle of the Moon",
-        "igdb_name": "castlevania: circle of the moon",
+        "igdb_name": "Castlevania: Circle of the Moon",
         "age_rating": "12",
         "rating": [
-            "mild violence",
-            "animated blood"
+            "Mild Violence",
+            "Animated Blood"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "role-playing (rpg)",
-            "adventure"
+            "Platform",
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "horror"
+            "Action",
+            "Horror"
         ],
         "platforms": [
-            "wii u",
-            "game boy advance"
+            "Wii U",
+            "Game Boy Advance"
         ],
-        "storyline": "taking place in 1830, circle of the moon is set in one of the fictional universes of the castlevania series. the premise of the original series is the eternal conflict between the vampire hunters of the belmont clan and the immortal vampire dracula. circle of the moon's protagonist, however, is nathan graves, whose parents died a decade ago to banish dracula. morris baldwin, who helped in dracula's banishment, trained him to defeat dracula and the monsters; morris ultimately chose him as his successor and gave him the \"hunter whip\", to the displeasure of hugh, morris' son who trained alongside him.\n\nat an old castle, camilla, a minion of dracula, revives him, only to be interrupted by the arrival of morris, nathan, and hugh. before they are able to banish him again, dracula destroys the floor under nathan and hugh, causing them to plummet down a long tunnel. surviving the fall and wishing to find his father, hugh leaves nathan behind. nathan proceeds to search the castle for his mentor. along the way, he learns that at the next full moon, morris' soul will be used to return dracula to full power. he also periodically encounters hugh, who becomes more hostile as the game progresses. eventually, nathan encounters camilla, who hints that she and dracula are responsible for the changes in his personality. nathan vanquishes camilla in her true form and meets up with hugh once more. upon seeing him, hugh immediately attacks him with the goal of proving himself to his father through nathan's defeat; nathan, however, realizes that dracula is controlling hugh. nathan defeats him, and dracula's control over hugh breaks. confessing that he doubted his self-worth when nathan was chosen as successor, hugh tasks him with morris' rescue.\n\narriving at the ceremonial room, nathan confronts dracula, who confirms that he had tampered with hugh's soul to cause the changes in his personality. they begin to fight and halfway through, dracula teleports away to gain his full power. hugh then frees his father and tasks nathan with dracula's banishment. nathan continues the battle and defeats dracula; escaping the collapsing castle, he reunites with morris and hugh. nathan is declared a master vampire hunter by morris. hugh vows to retrain under morris due to his failure.",
+        "storyline": "Taking place in 1830, Circle of the Moon is set in one of the fictional universes of the Castlevania series. The premise of the original series is the eternal conflict between the vampire hunters of the Belmont clan and the immortal vampire Dracula. Circle of the Moon's protagonist, however, is Nathan Graves, whose parents died a decade ago to banish Dracula. Morris Baldwin, who helped in Dracula's banishment, trained him to defeat Dracula and the monsters; Morris ultimately chose him as his successor and gave him the \"Hunter Whip\", to the displeasure of Hugh, Morris' son who trained alongside him.\n\nAt an old castle, Camilla, a minion of Dracula, revives him, only to be interrupted by the arrival of Morris, Nathan, and Hugh. Before they are able to banish him again, Dracula destroys the floor under Nathan and Hugh, causing them to plummet down a long tunnel. Surviving the fall and wishing to find his father, Hugh leaves Nathan behind. Nathan proceeds to search the castle for his mentor. Along the way, he learns that at the next full moon, Morris' soul will be used to return Dracula to full power. He also periodically encounters Hugh, who becomes more hostile as the game progresses. Eventually, Nathan encounters Camilla, who hints that she and Dracula are responsible for the changes in his personality. Nathan vanquishes Camilla in her true form and meets up with Hugh once more. Upon seeing him, Hugh immediately attacks him with the goal of proving himself to his father through Nathan's defeat; Nathan, however, realizes that Dracula is controlling Hugh. Nathan defeats him, and Dracula's control over Hugh breaks. Confessing that he doubted his self-worth when Nathan was chosen as successor, Hugh tasks him with Morris' rescue.\n\nArriving at the ceremonial room, Nathan confronts Dracula, who confirms that he had tampered with Hugh's soul to cause the changes in his personality. They begin to fight and halfway through, Dracula teleports away to gain his full power. Hugh then frees his father and tasks Nathan with Dracula's banishment. Nathan continues the battle and defeats Dracula; escaping the collapsing castle, he reunites with Morris and Hugh. Nathan is declared a master vampire hunter by Morris. Hugh vows to retrain under Morris due to his failure.",
         "keywords": [
             "gravity",
             "magic",
@@ -1369,35 +1425,37 @@ GAMES_DATA = {
             "moving platforms",
             "villain"
         ],
-        "release_date": "2001"
+        "release_date": 2001
     },
     "dark_souls_2": {
         "igdb_id": "2368",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2eoo.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2eoo.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/bbekzevyyjzwxxp98wp2.png",
+        "key_art_url": "",
         "game_name": "Dark Souls II",
-        "igdb_name": "dark souls ii",
+        "igdb_name": "Dark Souls II",
         "age_rating": "16",
         "rating": [
-            "blood and gore",
-            "partial nudity",
-            "violence",
-            "mild language"
+            "Blood and Gore",
+            "Partial Nudity",
+            "Violence",
+            "Mild Language"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "playstation 3",
-            "pc (microsoft windows)",
-            "xbox 360"
+            "PlayStation 3",
+            "PC (Microsoft Windows)",
+            "Xbox 360"
         ],
         "storyline": "",
         "keywords": [
@@ -1431,35 +1489,37 @@ GAMES_DATA = {
             "soulslike",
             "interconnected-world"
         ],
-        "release_date": "2014"
+        "release_date": 2014
     },
     "dark_souls_3": {
         "igdb_id": "11133",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1vcf.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1vcf.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/jg2i8o0u3t0d2qvqkmu6.png",
+        "key_art_url": "",
         "game_name": "Dark Souls III",
-        "igdb_name": "dark souls iii",
+        "igdb_name": "Dark Souls III",
         "age_rating": "16",
         "rating": [
-            "blood",
-            "violence"
+            "Blood",
+            "Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "playstation 4",
-            "pc (microsoft windows)",
-            "xbox one"
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "Xbox One"
         ],
-        "storyline": "set in the kingdom of lothric, a bell has rung to signal that the first flame, responsible for maintaining the age of fire, is dying out. as has happened many times before, the coming of the age of dark produces the undead: cursed beings that rise after death. the age of fire can be prolonged by linking the fire, a ritual in which great lords and heroes sacrifice their souls to rekindle the first flame. however, prince lothric, the chosen linker for this age, abandoned his duty and decided to watch the flame die from afar. the bell is the last hope for the age of fire, resurrecting previous lords of cinder (heroes who linked the flame in past ages) to attempt to link the fire again; however, all but one lord shirk their duty. meanwhile, sulyvahn, a sorcerer from the painted world of ariandel, wrongfully proclaims himself pontiff and seizes power over irithyll of the boreal valley and the returning anor londo cathedral from dark souls as a tyrant.\n\nthe ashen one, an undead who failed to become a lord of cinder and thus called an unkindled, rises and must link the fire by returning prince lothric and the defiant lords of cinder to their thrones in firelink shrine. the lords include the abyss watchers, a legion of warriors sworn by the old wolf's blood which linked their souls into one to protect the land from the abyss and ultimately locked in an endless battle between each other; yhorm the giant, who sacrificed his life for a nation conquered by his ancestor; and aldrich, who became a lord of cinder despite his ravenous appetite for both men and gods. lothric was raised to link the first flame but neglected his duties and chose to watch the fire fade instead.\n\nonce the ashen one succeeds in returning lothric and the lords of cinder to their thrones, they travel to the ruins of the kiln of the first flame. there, they encounter the soul of cinder, an amalgamation of all the former lords of cinder. upon defeat, the player can attempt to link the fire or access three other optional endings unlocked by the player's in-game decisions. these include summoning the fire keeper to extinguish the flame and begin an age of dark or killing her in a sudden change of heart. a fourth ending consists of the ashen one taking the flame for their own, becoming the lord of hollows.",
+        "storyline": "Set in the Kingdom of Lothric, a bell has rung to signal that the First Flame, responsible for maintaining the Age of Fire, is dying out. As has happened many times before, the coming of the Age of Dark produces the undead: cursed beings that rise after death. The Age of Fire can be prolonged by linking the fire, a ritual in which great lords and heroes sacrifice their souls to rekindle the First Flame. However, Prince Lothric, the chosen linker for this age, abandoned his duty and decided to watch the flame die from afar. The bell is the last hope for the Age of Fire, resurrecting previous Lords of Cinder (heroes who linked the flame in past ages) to attempt to link the fire again; however, all but one Lord shirk their duty. Meanwhile, Sulyvahn, a sorcerer from the Painted World of Ariandel, wrongfully proclaims himself Pontiff and seizes power over Irithyll of the Boreal Valley and the returning Anor Londo cathedral from Dark Souls as a tyrant.\n\nThe Ashen One, an Undead who failed to become a Lord of Cinder and thus called an Unkindled, rises and must link the fire by returning Prince Lothric and the defiant Lords of Cinder to their thrones in Firelink Shrine. The Lords include the Abyss Watchers, a legion of warriors sworn by the Old Wolf's Blood which linked their souls into one to protect the land from the Abyss and ultimately locked in an endless battle between each other; Yhorm the Giant, who sacrificed his life for a nation conquered by his ancestor; and Aldrich, who became a Lord of Cinder despite his ravenous appetite for both men and gods. Lothric was raised to link the First Flame but neglected his duties and chose to watch the fire fade instead.\n\nOnce the Ashen One succeeds in returning Lothric and the Lords of Cinder to their thrones, they travel to the ruins of the Kiln of the First Flame. There, they encounter the Soul of Cinder, an amalgamation of all the former Lords of Cinder. Upon defeat, the player can attempt to link the fire or access three other optional endings unlocked by the player's in-game decisions. These include summoning the Fire Keeper to extinguish the flame and begin an age of Dark or killing her in a sudden change of heart. A fourth ending consists of the Ashen One taking the flame for their own, becoming the Lord of Hollows.",
         "keywords": [
             "medieval",
             "3d",
@@ -1472,30 +1532,32 @@ GAMES_DATA = {
             "soulslike",
             "interconnected-world"
         ],
-        "release_date": "2016"
+        "release_date": 2016
     },
     "diddy_kong_racing": {
         "igdb_id": "2723",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1wgj.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1wgj.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar21yi.png",
+        "key_art_url": "",
         "game_name": "Diddy Kong Racing",
-        "igdb_name": "diddy kong racing",
+        "igdb_name": "Diddy Kong Racing",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "third person",
-            "bird view / isometric"
+            "Third person",
+            "Bird view / Isometric"
         ],
         "genres": [
-            "racing"
+            "Racing"
         ],
         "themes": [
-            "action",
-            "comedy"
+            "Action",
+            "Comedy"
         ],
         "platforms": [
-            "nintendo 64"
+            "Nintendo 64"
         ],
-        "storyline": "timber the tiger's parents picked a fine time to go on vacation. when they come back they're going to be faced with an island trashed by the spiteful space bully wizpig - unless the local animals can do something about it! so join diddy kong as he teams up with timber the tiger pipsy the mouse and taj the genie in an epic racing adventure unlike anything you've ever experienced before! this unique game blends adventure and racing like no other game! roam anywhere you want on the island by car plane or hovercraft! an enormous amount of single-player and multi-player modes! feel the action when you use the n64 rumble pak and save your times on the n64 controller pak!",
+        "storyline": "Timber the Tiger's parents picked a fine time to go on vacation. When they come back they're going to be faced with an island trashed by the spiteful space bully Wizpig - unless the local animals can do something about it! So join Diddy Kong as he teams up with Timber the Tiger Pipsy the Mouse and Taj the Genie in an epic racing adventure unlike anything you've ever experienced before! This unique game blends adventure and racing like no other game! Roam anywhere you want on the island by car plane or hovercraft! An enormous amount of single-player and multi-player modes! Feel the action when you use the N64 Rumble Pak and save your times on the N64 Controller Pak!",
         "keywords": [
             "flight",
             "snow",
@@ -1507,31 +1569,33 @@ GAMES_DATA = {
             "behind the waterfall",
             "retroachievements"
         ],
-        "release_date": "1997"
+        "release_date": 1997
     },
     "dk64": {
         "igdb_id": "1096",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co289i.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co289i.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kpl.png",
+        "key_art_url": "",
         "game_name": "Donkey Kong 64",
-        "igdb_name": "donkey kong 64",
+        "igdb_name": "Donkey Kong 64",
         "age_rating": "7",
         "rating": [
-            "mild animated violence"
+            "Mild Animated Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "comedy"
+            "Action",
+            "Comedy"
         ],
         "platforms": [
-            "nintendo 64",
-            "wii u"
+            "Nintendo 64",
+            "Wii U"
         ],
         "storyline": "",
         "keywords": [
@@ -1559,32 +1623,34 @@ GAMES_DATA = {
             "foreshadowing",
             "retroachievements"
         ],
-        "release_date": "1999"
+        "release_date": 1999
     },
     "dkc": {
         "igdb_id": "1090",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co70qn.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co70qn.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar407r.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar407t.png",
         "game_name": "Donkey Kong Country",
-        "igdb_name": "donkey kong country",
+        "igdb_name": "Donkey Kong Country",
         "age_rating": "7",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform"
+            "Platform"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "super nintendo entertainment system",
-            "wii",
-            "wii u",
-            "new nintendo 3ds",
-            "super famicom"
+            "Super Nintendo Entertainment System",
+            "Wii",
+            "Wii U",
+            "New Nintendo 3DS",
+            "Super Famicom"
         ],
-        "storyline": "on a dark and stormy night in donkey kong island, diddy kong, donkey kong's nephew has taken the weighty responsibility of guarding dk's precious banana hoard for one night, as a part of his \"hero training\". dk entrusts diddy with protecting the hoard until midnight, when he would be relieved, while dk himself goes to sleep as he is tired.\n\neverything seems to go smoothly in the hoard until diddy hears some noises. diddy hears some voices outside and gets scared, asking who's there. king k. rool, who had commanded his kremling minions to steal the bananas. two ropes drop from above and suddenly two kritters appear. diddy cartwheels them both easily, but then a krusha (klump in the instruction booklet) comes in as backup. as diddy is not strong enough to defeat krusha by himself, he is overpowered and defeated by the kremling. the lizars seal diddy inside a barrel and then throw it in the bushes.\ndonkey's grandfather, cranky kong, rushes inside the treehouse to tell donkey kong to wake up so he may tell him what happened. he then tells donkey to check his banana cave. donkey kong is infuriated, exclaiming that the kremlings will pay for stealing his banana hoard and kidnapping his little buddy. donkey goes on to say that he will hunt every corner of the island for his bananas back.",
+        "storyline": "On a dark and stormy night in Donkey Kong Island, Diddy Kong, Donkey Kong's nephew has taken the weighty responsibility of guarding DK's precious banana hoard for one night, as a part of his \"hero training\". DK entrusts Diddy with protecting the hoard until midnight, when he would be relieved, while DK himself goes to sleep as he is tired.\n\nEverything seems to go smoothly in the hoard until Diddy hears some noises. Diddy hears some voices outside and gets scared, asking who's there. King K. Rool, who had commanded his Kremling minions to steal the bananas. Two ropes drop from above and suddenly two Kritters appear. Diddy cartwheels them both easily, but then a Krusha (Klump in the instruction booklet) comes in as backup. As Diddy is not strong enough to defeat Krusha by himself, he is overpowered and defeated by the Kremling. The lizars seal Diddy inside a barrel and then throw it in the bushes.\nDonkey's grandfather, Cranky Kong, rushes inside the treehouse to tell Donkey Kong to wake up so he may tell him what happened. He then tells Donkey to check his Banana Cave. Donkey Kong is infuriated, exclaiming that the Kremlings will pay for stealing his banana hoard and kidnapping his little buddy. Donkey goes on to say that he will hunt every corner of the island for his bananas back.",
         "keywords": [
             "gravity",
             "death",
@@ -1624,36 +1690,38 @@ GAMES_DATA = {
             "ambient music",
             "retroachievements"
         ],
-        "release_date": "1994"
+        "release_date": 1994
     },
     "dkc2": {
         "igdb_id": "1092",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co217m.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co217m.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar4088.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3okv.png",
         "game_name": "Donkey Kong Country 2",
-        "igdb_name": "donkey kong country 2: diddy's kong quest",
+        "igdb_name": "Donkey Kong Country 2: Diddy's Kong Quest",
         "age_rating": "3",
         "rating": [
-            "mild fantasy violence"
+            "Mild Fantasy Violence"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform"
+            "Platform"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "comedy"
+            "Action",
+            "Fantasy",
+            "Comedy"
         ],
         "platforms": [
-            "super nintendo entertainment system",
-            "wii",
-            "wii u",
-            "new nintendo 3ds",
-            "super famicom"
+            "Super Nintendo Entertainment System",
+            "Wii",
+            "Wii U",
+            "New Nintendo 3DS",
+            "Super Famicom"
         ],
-        "storyline": "it was a relaxing, sunny day on donkey kong island. funky kong is seen surfing and then falling off his board. he asked for donkey kong to join him, but the hero simply continues lounging. cranky kong goes up to him and complains how he never took breaks, \"whisking off maidens and throwing barrels seven days a week\", but donkey ignores him, confident that he is a hero and that king k. rool is gone for good. cranky soon leaves.\n\nmeanwhile, above, kaptain k. rool, aboard his vessel, the flying krock, commands his minions to invade the island and take donkey captive so that his next attempt at stealing the banana hoard will not be a failure and the hero will never mess with his plans again. donkey, still lounging, did not notice the attack until kutlasses ambushed him and took him prisoner. kaptain k. rool assures donkey kong that he will never see his precious island or his friends again.\n\nlater and back on the island, diddy, dixie and cranky kong find donkey missing, along with a note. it reads:\nhah-arrrrh! we have got the big monkey! if you want him back, you scurvy dogs, you'll have to hand over the banana hoard!\nkaptain k. rool\nat this point, wrinkly, funky and swanky kong come to the scene. cranky suggests to give up the hoard, but diddy insists that donkey kong would be furious if he lost his bananas after all trouble recovering them at the last time. diddy and dixie kong ride to crocodile isle via enguarde the swordfish, and then start their quest.",
+        "storyline": "It was a relaxing, sunny day on Donkey Kong Island. Funky Kong is seen surfing and then falling off his board. He asked for Donkey Kong to join him, but the hero simply continues lounging. Cranky Kong goes up to him and complains how he never took breaks, \"whisking off maidens and throwing barrels seven days a week\", but Donkey ignores him, confident that he is a hero and that King K. Rool is gone for good. Cranky soon leaves.\n\nMeanwhile, above, Kaptain K. Rool, aboard his vessel, The Flying Krock, commands his minions to invade the island and take Donkey captive so that his next attempt at stealing the banana hoard will not be a failure and the hero will never mess with his plans again. Donkey, still lounging, did not notice the attack until Kutlasses ambushed him and took him prisoner. Kaptain K. Rool assures Donkey Kong that he will never see his precious island or his friends again.\n\nLater and back on the island, Diddy, Dixie and Cranky Kong find Donkey missing, along with a note. It reads:\nHah-arrrrh! We have got the big monkey! If you want him back, you scurvy dogs, you'll have to hand over the banana hoard!\nKaptain K. Rool\nAt this point, Wrinkly, Funky and Swanky Kong come to the scene. Cranky suggests to give up the hoard, but Diddy insists that Donkey Kong would be furious if he lost his bananas after all trouble recovering them at the last time. Diddy and Dixie Kong ride to Crocodile Isle via Enguarde the Swordfish, and then start their quest.",
         "keywords": [
             "pirates",
             "ghosts",
@@ -1699,33 +1767,35 @@ GAMES_DATA = {
             "ambient music",
             "retroachievements"
         ],
-        "release_date": "1995"
+        "release_date": 1995
     },
     "dkc3": {
         "igdb_id": "1094",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co217n.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co217n.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar3ozm.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3ozn.png",
         "game_name": "Donkey Kong Country 3",
-        "igdb_name": "donkey kong country 3: dixie kong's double trouble!",
+        "igdb_name": "Donkey Kong Country 3: Dixie Kong's Double Trouble!",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "super nintendo entertainment system",
-            "wii",
-            "wii u",
-            "new nintendo 3ds",
-            "super famicom"
+            "Super Nintendo Entertainment System",
+            "Wii",
+            "Wii U",
+            "New Nintendo 3DS",
+            "Super Famicom"
         ],
-        "storyline": "months after the kongs' second triumph over the kremling krew, they continue to celebrate. one day, dk and diddy suddenly disappear, and a letter from diddy says they were out exploring the island again.\n\nhowever, several days pass without their return, and dixie knows something is up. she takes matters into her own hands, and made her way to the southern shores of donkey kong island, to the northern kremisphere, a canadian and northern european-inspired landmass. there she meets wrinkly kong, and wrinkly confirmed that the kongs had passed by. dixie then makes her way to funky's rentals. funky suggests her to take her baby cousin kiddy kong along with her in the search. funky lends them a boat and the two venture off to find donkey and diddy kong.",
+        "storyline": "Months after the Kongs' second triumph over the Kremling Krew, they continue to celebrate. One day, DK and Diddy suddenly disappear, and a letter from Diddy says they were out exploring the island again.\n\nHowever, several days pass without their return, and Dixie knows something is up. She takes matters into her own hands, and made her way to the southern shores of Donkey Kong Island, to the Northern Kremisphere, a Canadian and northern European-inspired landmass. There she meets Wrinkly Kong, and Wrinkly confirmed that the Kongs had passed by. Dixie then makes her way to Funky's Rentals. Funky suggests her to take her baby cousin Kiddy Kong along with her in the search. Funky lends them a boat and the two venture off to find Donkey and Diddy Kong.",
         "keywords": [
             "gravity",
             "minigames",
@@ -1759,31 +1829,33 @@ GAMES_DATA = {
             "behind the waterfall",
             "retroachievements"
         ],
-        "release_date": "1996"
+        "release_date": 1996
     },
     "dlcquest": {
         "igdb_id": "3004",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2105.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2105.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar249v.png",
+        "key_art_url": "",
         "game_name": "DLCQuest",
-        "igdb_name": "dlc quest",
-        "age_rating": "nr",
+        "igdb_name": "DLC Quest",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure",
-            "indie"
+            "Platform",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "comedy"
+            "Action",
+            "Comedy"
         ],
         "platforms": [
-            "pc (microsoft windows)",
-            "mac",
-            "xbox 360"
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Xbox 360"
         ],
         "storyline": "",
         "keywords": [
@@ -1792,41 +1864,43 @@ GAMES_DATA = {
             "deliberately retro",
             "punctuation mark above head"
         ],
-        "release_date": "2011"
+        "release_date": 2011
     },
     "dontstarvetogether": {
         "igdb_id": "17832",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coaaqp.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coaaqp.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar5m2.png",
+        "key_art_url": "",
         "game_name": "Don't Starve Together",
-        "igdb_name": "don't starve together",
+        "igdb_name": "Don't Starve Together",
         "age_rating": "12",
         "rating": [
-            "crude humor",
-            "fantasy violence"
+            "Crude Humor",
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "simulator",
-            "strategy",
-            "adventure",
-            "indie"
+            "Simulator",
+            "Strategy",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "horror",
-            "survival",
-            "sandbox",
-            "open world"
+            "Action",
+            "Horror",
+            "Survival",
+            "Sandbox",
+            "Open world"
         ],
         "platforms": [
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "nintendo switch"
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Nintendo Switch"
         ],
-        "storyline": "discover and explore a massive procedurally generated and biome-rich world with countless resources and threats. whether you stick to the surface world, go spelunking in the caves, dive deeper into the ancient archive, or set sail for the lunar islands, it will be a long time before you run out of things to do.\n\nseasonal bosses, wandering menaces, lurking shadow creatures, and plenty of flora and fauna ready to turn you into a spooky ghost.\n\nplow fields and sow seeds to grow the farm of your dreams. tend to your crops to help your fellow survivors stay fed and ready for the challenges to come.\n\nprotect yourself, your friends, and everything you have managed to gather, because you can be sure, somebody or something is going to want it back.\n\nenter a strange and unexplored world full of odd creatures, hidden dangers, and ancient secrets. gather resources to craft items and build structures that match your survival style. play your way as you unravel the mysteries of \"the constant\".\n\ncooperate with your friends in a private game, or find new friends online. work with other players to survive the harsh environment, or strike out on your own.\n\ndo whatever it takes, but most importantly, don't starve.",
+        "storyline": "Discover and explore a massive procedurally generated and biome-rich world with countless resources and threats. Whether you stick to the surface world, go spelunking in the caves, dive deeper into the Ancient Archive, or set sail for the Lunar islands, it will be a long time before you run out of things to do.\n\nSeasonal bosses, wandering menaces, lurking shadow creatures, and plenty of flora and fauna ready to turn you into a spooky ghost.\n\nPlow fields and sow seeds to grow the farm of your dreams. Tend to your crops to help your fellow survivors stay fed and ready for the challenges to come.\n\nProtect yourself, your friends, and everything you have managed to gather, because you can be sure, somebody or something is going to want it back.\n\nEnter a strange and unexplored world full of odd creatures, hidden dangers, and ancient secrets. Gather resources to craft items and build structures that match your survival style. Play your way as you unravel the mysteries of \"The Constant\".\n\nCooperate with your friends in a private game, or find new friends online. Work with other players to survive the harsh environment, or strike out on your own.\n\nDo whatever it takes, but most importantly, Don't Starve.",
         "keywords": [
             "2d",
             "crafting",
@@ -1838,39 +1912,41 @@ GAMES_DATA = {
             "digital distribution",
             "bees"
         ],
-        "release_date": "2016"
+        "release_date": 2016
     },
     "doom_1993": {
         "igdb_id": "673",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5rav.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5rav.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar68f.png",
+        "key_art_url": "",
         "game_name": "DOOM 1993",
-        "igdb_name": "doom",
+        "igdb_name": "Doom",
         "age_rating": "16",
         "rating": [
-            "intense violence",
-            "blood and gore",
-            "violence",
-            "animated violence",
-            "animated blood and gore"
+            "Intense Violence",
+            "Blood and Gore",
+            "Violence",
+            "Animated Violence",
+            "Animated Blood and Gore"
         ],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "shooter"
+            "Shooter"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "horror"
+            "Action",
+            "Science fiction",
+            "Horror"
         ],
         "platforms": [
-            "windows mobile",
-            "pc-9800 series",
-            "linux",
-            "dos"
+            "Windows Mobile",
+            "PC-9800 Series",
+            "Linux",
+            "DOS"
         ],
-        "storyline": "the player takes the role of a marine (unnamed to further represent the person playing), \"one of earth's toughest, hardened in combat and trained for action\", who has been incarcerated on mars after assaulting a senior officer when ordered to fire upon civilians. there, he works alongside the union aerospace corporation (uac), a multi-planetary conglomerate and military contractor performing secret experiments on interdimensional travel. recently, the teleportation has shown signs of anomalies and instability, but the research continues nonetheless.\n\nsuddenly, something goes wrong and creatures from hell swarm out of the teleportation gates on deimos and phobos. a defensive response from base security fails to halt the invasion, and the bases are quickly overrun by monsters; all personnel are killed or turned into zombies\n\na military detachment from mars travels to phobos to investigate the incident. the player is tasked with securing the perimeter, as the assault team and their heavy weapons are brought inside. radio contact soon ceases and the player realizes that he is the only survivor. being unable to pilot the shuttle off of phobos by himself, the only way to escape is to go inside and fight through the complexes of the moon base.",
+        "storyline": "The player takes the role of a marine (unnamed to further represent the person playing), \"one of Earth's toughest, hardened in combat and trained for action\", who has been incarcerated on Mars after assaulting a senior officer when ordered to fire upon civilians. There, he works alongside the Union Aerospace Corporation (UAC), a multi-planetary conglomerate and military contractor performing secret experiments on interdimensional travel. Recently, the teleportation has shown signs of anomalies and instability, but the research continues nonetheless.\n\nSuddenly, something goes wrong and creatures from hell swarm out of the teleportation gates on Deimos and Phobos. A defensive response from base security fails to halt the invasion, and the bases are quickly overrun by monsters; all personnel are killed or turned into zombies\n\nA military detachment from Mars travels to Phobos to investigate the incident. The player is tasked with securing the perimeter, as the assault team and their heavy weapons are brought inside. Radio contact soon ceases and the player realizes that he is the only survivor. Being unable to pilot the shuttle off of Phobos by himself, the only way to escape is to go inside and fight through the complexes of the moon base.",
         "keywords": [
             "2.5d",
             "maze",
@@ -1879,38 +1955,40 @@ GAMES_DATA = {
             "real-time combat",
             "invisibility"
         ],
-        "release_date": "1993"
+        "release_date": 1993
     },
     "doom_ii": {
         "igdb_id": "312",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co6iip.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co6iip.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar68g.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3nqk.png",
         "game_name": "DOOM II",
-        "igdb_name": "doom ii: hell on earth",
+        "igdb_name": "Doom II: Hell on Earth",
         "age_rating": "16",
         "rating": [
-            "violence",
-            "blood and gore"
+            "Violence",
+            "Blood and Gore"
         ],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "shooter",
-            "puzzle"
+            "Shooter",
+            "Puzzle"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "horror"
+            "Action",
+            "Science fiction",
+            "Horror"
         ],
         "platforms": [
-            "pc-9800 series",
-            "tapwave zodiac",
-            "pc (microsoft windows)",
-            "mac",
-            "dos"
+            "PC-9800 Series",
+            "Tapwave Zodiac",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "DOS"
         ],
-        "storyline": "immediately following the events in doom, the player once again assumes the role of the unnamed space marine. after defeating the demon invasion of the mars moon bases and returning from hell, doomguy finds that earth has also been invaded by the demons, who have killed billions of people.\n\nthe humans who survived the attack have developed a plan to build massive spaceships which will carry the remaining survivors into space. once the ships are ready, the survivors prepare to evacuate earth. unfortunately, earth's only ground spaceport gets taken over by the demons, who place a flame barrier over it, preventing any ships from leaving.",
+        "storyline": "Immediately following the events in Doom, the player once again assumes the role of the unnamed space marine. After defeating the demon invasion of the Mars moon bases and returning from Hell, Doomguy finds that Earth has also been invaded by the demons, who have killed billions of people.\n\nThe humans who survived the attack have developed a plan to build massive spaceships which will carry the remaining survivors into space. Once the ships are ready, the survivors prepare to evacuate Earth. Unfortunately, Earth's only ground spaceport gets taken over by the demons, who place a flame barrier over it, preventing any ships from leaving.",
         "keywords": [
             "bloody",
             "death",
@@ -1943,60 +2021,112 @@ GAMES_DATA = {
             "boss assistance",
             "invisibility"
         ],
-        "release_date": "1994"
+        "release_date": 1994
     },
     "doronko_wanko": {
         "igdb_id": "290647",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7zj5.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7zj5.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar2t55.png",
+        "key_art_url": "",
         "game_name": "DORONKO WANKO",
-        "igdb_name": "doronko wanko",
+        "igdb_name": "Doronko Wanko",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [],
         "genres": [
-            "simulator"
+            "Simulator"
         ],
         "themes": [
-            "action",
-            "comedy"
+            "Action",
+            "Comedy"
         ],
         "platforms": [
-            "pc (microsoft windows)",
-            "nintendo switch"
+            "PC (Microsoft Windows)",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
             "dog"
         ],
-        "release_date": "2024"
+        "release_date": 2024
+    },
+    "dredge": {
+        "igdb_id": "164867",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co9kyk.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar10y5.png",
+        "key_art_url": "",
+        "game_name": "Dredge",
+        "igdb_name": "Dredge",
+        "age_rating": "12",
+        "rating": [
+            "Mild Violence",
+            "Use of Tobacco"
+        ],
+        "player_perspectives": [
+            "Bird view / Isometric"
+        ],
+        "genres": [
+            "Role-playing (RPG)",
+            "Simulator",
+            "Adventure"
+        ],
+        "themes": [
+            "Action",
+            "Horror",
+            "Open world",
+            "Mystery"
+        ],
+        "platforms": [
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "PlayStation 5",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
+        ],
+        "storyline": "",
+        "keywords": [
+            "exploration",
+            "3d",
+            "fishing",
+            "stylized",
+            "story rich",
+            "digital distribution"
+        ],
+        "release_date": 2023
     },
     "dsr": {
         "igdb_id": "81085",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2uro.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2uro.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar9u6.png",
+        "key_art_url": "",
         "game_name": "Dark Souls Remastered",
-        "igdb_name": "dark souls: remastered",
+        "igdb_name": "Dark Souls: Remastered",
         "age_rating": "16",
         "rating": [
-            "blood and gore",
-            "partial nudity",
-            "violence"
+            "Blood and Gore",
+            "Partial Nudity",
+            "Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "playstation 4",
-            "pc (microsoft windows)",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "Xbox One",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
@@ -2006,35 +2136,37 @@ GAMES_DATA = {
             "soulslike",
             "interconnected-world"
         ],
-        "release_date": "2018"
+        "release_date": 2018
     },
     "dw1": {
         "igdb_id": "3878",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2dyy.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2dyy.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Digimon World",
-        "igdb_name": "digimon world 4",
-        "age_rating": "e",
+        "igdb_name": "Digimon World 4",
+        "age_rating": "E",
         "rating": [
-            "fantasy violence"
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "third person",
-            "bird view / isometric"
+            "Third person",
+            "Bird view / Isometric"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "comedy"
+            "Action",
+            "Comedy"
         ],
         "platforms": [
-            "xbox",
-            "nintendo gamecube",
-            "playstation 2"
+            "Xbox",
+            "Nintendo GameCube",
+            "PlayStation 2"
         ],
-        "storyline": "the yamato server disappears after the x-virus attacks, and the doom server has taken it's place. it's up to the you and up to 3 of your friends, the digital security guard (d.s.g.) to venture into the doom server, discover the source of the virus and deal with the infection before it can infect the home server.\n\nyou will venture into the dry lands stop the virus from spreading, into the venom jungle to stop the dread note from launching and then the machine pit to destroy the final boss.\n\nafter finishing the game for the first time, you unlock hard mode, where the enemies are stronger, but you keep all of your levels, equipment and digivolutions. do it again, and you unlock the hardest difficulty, very hard.",
+        "storyline": "The Yamato Server disappears after the X-Virus attacks, and the Doom Server has taken it's place. It's up to the you and up to 3 of your friends, the Digital Security Guard (D.S.G.) to venture into the Doom Server, discover the source of the virus and deal with the infection before it can infect the Home server.\n\nYou will venture into the Dry Lands stop the virus from spreading, into the Venom Jungle to stop the Dread Note from launching and then the Machine Pit to destroy the final boss.\n\nAfter finishing the game for the first time, you unlock Hard mode, where the enemies are stronger, but you keep all of your levels, equipment and digivolutions. Do it again, and you unlock the hardest difficulty, Very Hard.",
         "keywords": [
             "anime",
             "sequel",
@@ -2043,38 +2175,40 @@ GAMES_DATA = {
             "polygonal 3d",
             "shopping"
         ],
-        "release_date": "2005"
+        "release_date": 2005
     },
     "earthbound": {
         "igdb_id": "2899",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co6v07.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co6v07.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1gd3.png",
+        "key_art_url": "",
         "game_name": "EarthBound",
-        "igdb_name": "earthbound",
+        "igdb_name": "EarthBound",
         "age_rating": "12",
         "rating": [],
         "player_perspectives": [
-            "first person",
-            "bird view / isometric"
+            "First person",
+            "Bird view / Isometric"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "turn-based strategy (tbs)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Turn-based strategy (TBS)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "science fiction",
-            "drama"
+            "Action",
+            "Fantasy",
+            "Science fiction",
+            "Drama"
         ],
         "platforms": [
-            "super nintendo entertainment system",
-            "wii u",
-            "new nintendo 3ds",
-            "game boy advance",
-            "super famicom"
+            "Super Nintendo Entertainment System",
+            "Wii U",
+            "New Nintendo 3DS",
+            "Game Boy Advance",
+            "Super Famicom"
         ],
-        "storyline": "the story begins when ness is awakened by a meteor that has plummeted to the earth near his home, whereupon he proceeds to investigate the crash site. when ness gets to the crash site he discovers a police roadblock and pokey minch, his friend and neighbor, who tells him to go home. later, ness is woken up again by pokey knocking at his door, demanding help to find his brother picky.\n\nthey find him near the meteor sleeping behind a tree and wake him up. then the three encounter an insect from the meteor named buzz buzz who informs ness that he is from the future where the \"universal cosmic destroyer\", giygas, dominates the planet. buzz buzz senses great potential in ness and instructs him to embark on a journey to seek out and record the melodies of eight \"sanctuaries,\" unite his own powers with the earth's and gain the strength required to confront giygas.",
+        "storyline": "The story begins when Ness is awakened by a meteor that has plummeted to the earth near his home, whereupon he proceeds to investigate the crash site. When Ness gets to the crash site he discovers a police roadblock and Pokey Minch, his friend and neighbor, who tells him to go home. Later, Ness is woken up again by Pokey knocking at his door, demanding help to find his brother Picky.\n\nThey find him near the meteor sleeping behind a tree and wake him up. Then the three encounter an insect from the meteor named Buzz Buzz who informs Ness that he is from the future where the \"universal cosmic destroyer\", Giygas, dominates the planet. Buzz Buzz senses great potential in Ness and instructs him to embark on a journey to seek out and record the melodies of eight \"sanctuaries,\" unite his own powers with the Earth's and gain the strength required to confront Giygas.",
         "keywords": [
             "aliens",
             "ghosts",
@@ -2099,145 +2233,153 @@ GAMES_DATA = {
             "status effects",
             "retroachievements"
         ],
-        "release_date": "1994"
+        "release_date": 1994
     },
     "enderlilies": {
         "igdb_id": "138858",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co9s9e.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co9s9e.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar96z.png",
+        "key_art_url": "",
         "game_name": "Ender Lilies",
-        "igdb_name": "ender lilies: quietus of the knights",
+        "igdb_name": "Ender Lilies: Quietus of the Knights",
         "age_rating": "12",
         "rating": [
-            "violence",
-            "blood"
+            "Violence",
+            "Blood"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "role-playing (rpg)",
-            "adventure",
-            "indie"
+            "Platform",
+            "Role-playing (RPG)",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "xbox series x|s",
-            "playstation 4",
-            "pc (microsoft windows)",
-            "xbox one",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "once upon a time, in the end's kingdom, the dying rain suddenly started to fall, transforming all living things it touched into bloodthirsty corpses. following this tragedy, the kingdom quickly fell into chaos and soon, no one remained. the rain, as if cursed, would never stop falling on the land. in the depths of a forsaken church, lily opens her eyes...",
+        "storyline": "Once upon a time, in the End's Kingdom, the Dying Rain suddenly started to fall, transforming all living things it touched into bloodthirsty corpses. Following this tragedy, the kingdom quickly fell into chaos and soon, no one remained. The rain, as if cursed, would never stop falling on the land. In the depths of a forsaken church, Lily opens her eyes...",
         "keywords": [
             "metroidvania",
             "female protagonist",
             "witches",
             "soulslike"
         ],
-        "release_date": "2021"
+        "release_date": 2021
     },
     "factorio": {
         "igdb_id": "7046",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1tfy.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1tfy.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1vdh.png",
+        "key_art_url": "",
         "game_name": "Factorio",
-        "igdb_name": "factorio",
+        "igdb_name": "Factorio",
         "age_rating": "7",
         "rating": [
-            "blood",
-            "violence"
+            "Blood",
+            "Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "simulator",
-            "strategy",
-            "indie"
+            "Simulator",
+            "Strategy",
+            "Indie"
         ],
         "themes": [
-            "science fiction",
-            "survival",
-            "sandbox"
+            "Science fiction",
+            "Survival",
+            "Sandbox"
         ],
         "platforms": [
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "nintendo switch"
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Nintendo Switch"
         ],
-        "storyline": "you crash land on an alien planet and must research a way to get yourself a rocket out of the planet. defend yourself from the natives who dislike the pollution your production generates.",
+        "storyline": "You crash land on an alien planet and must research a way to get yourself a rocket out of the planet. Defend yourself from the natives who dislike the pollution your production generates.",
         "keywords": [
             "aliens",
             "crafting",
             "digital distribution"
         ],
-        "release_date": "2020"
+        "release_date": 2020
     },
     "factorio_saws": {
         "igdb_id": "263344",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co91k3.jpg",
-        "game_name": "Factorio Space Age Without Space",
-        "igdb_name": "factorio: space age",
-        "age_rating": "nr",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co91k3.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar3845.png",
+        "key_art_url": "",
+        "game_name": "Factorio - Space Age Without Space",
+        "igdb_name": "Factorio: Space Age",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "simulator",
-            "strategy",
-            "indie"
+            "Simulator",
+            "Strategy",
+            "Indie"
         ],
         "themes": [
-            "science fiction",
-            "survival",
-            "sandbox"
+            "Science fiction",
+            "Survival",
+            "Sandbox"
         ],
         "platforms": [
-            "linux",
-            "pc (microsoft windows)",
-            "mac"
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac"
         ],
         "storyline": "",
         "keywords": [
             "aliens",
             "crafting"
         ],
-        "release_date": "2024"
+        "release_date": 2024
     },
     "faxanadu": {
         "igdb_id": "1974",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5jif.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5jif.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1vkf.png",
+        "key_art_url": "",
         "game_name": "Faxanadu",
-        "igdb_name": "faxanadu",
+        "igdb_name": "Faxanadu",
         "age_rating": "7",
         "rating": [
-            "mild fantasy violence",
-            "use of tobacco"
+            "Mild Fantasy Violence",
+            "Use of Tobacco"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "role-playing (rpg)",
-            "adventure"
+            "Platform",
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "sandbox"
+            "Action",
+            "Fantasy",
+            "Sandbox"
         ],
         "platforms": [
-            "wii",
-            "family computer",
-            "nintendo entertainment system"
+            "Wii",
+            "Family Computer",
+            "Nintendo Entertainment System"
         ],
-        "storyline": "the player-controlled protagonist of is an unidentified wanderer. he has no name, though the japanese version allows the player to choose one. the game begins when he approaches eolis, his hometown, after an absence to find it in disrepair and virtually abandoned. worse still, the town is under attack by dwarves.the elven king explains that the elf fountain water, their life source, has stopped and provides the protagonist with 1500 golds, the games currency, to prepare for his journey to uncover the cause.as the story unfolds, it is revealed that elves and dwarfs lived in harmony among the world tree until the evil one emerged from a fallen meteorite. the evil one then transformed the dwarves into monsters against their will and set them against the elves. the dwarf king, grieve, swallowed his magical sword before he was transformed, hiding it in his own body to prevent the evil one from acquiring it. it is only with this sword that the evil one can be destroyed.his journey takes him to four overworld areas: the tree's buttress, the inside of the trunk, the tree's branches and finally the dwarves' mountain stronghold.",
+        "storyline": "The player-controlled protagonist of is an unidentified wanderer. He has no name, though the Japanese version allows the player to choose one. The game begins when he approaches Eolis, his hometown, after an absence to find it in disrepair and virtually abandoned. Worse still, the town is under attack by Dwarves.The Elven king explains that the Elf fountain water, their life source, has stopped and provides the protagonist with 1500 golds, the games currency, to prepare for his journey to uncover the cause.As the story unfolds, it is revealed that Elves and Dwarfs lived in harmony among the World Tree until The Evil One emerged from a fallen meteorite. The Evil One then transformed the Dwarves into monsters against their will and set them against the Elves. The Dwarf King, Grieve, swallowed his magical sword before he was transformed, hiding it in his own body to prevent The Evil One from acquiring it. It is only with this sword that The Evil One can be destroyed.His journey takes him to four overworld areas: The tree's buttress, the inside of the trunk, the tree's branches and finally the Dwarves' mountain stronghold.",
         "keywords": [
             "magic",
             "metroidvania",
@@ -2246,102 +2388,108 @@ GAMES_DATA = {
             "temporary invincibility",
             "merchants"
         ],
-        "release_date": "1987"
+        "release_date": 1987
     },
     "ff1": {
         "igdb_id": "385",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2xv8.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2xv8.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1vi4.png",
+        "key_art_url": "",
         "game_name": "Final Fantasy",
-        "igdb_name": "final fantasy",
+        "igdb_name": "Final Fantasy",
         "age_rating": "3",
         "rating": [
-            "mild fantasy violence"
+            "Mild Fantasy Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric",
-            "side view"
+            "Bird view / Isometric",
+            "Side view"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "kids"
+            "Action",
+            "Fantasy",
+            "Kids"
         ],
         "platforms": [
-            "nintendo 3ds",
-            "wii",
-            "family computer",
-            "wii u",
-            "nintendo entertainment system"
+            "Nintendo 3DS",
+            "Wii",
+            "Family Computer",
+            "Wii U",
+            "Nintendo Entertainment System"
         ],
-        "storyline": "the story follows four youths called the light warriors, who each carry one of their world's four elemental orbs which have been darkened by the four elemental fiends. together, they quest to defeat these evil forces, restore light to the orbs, and save their world.",
+        "storyline": "The story follows four youths called the Light Warriors, who each carry one of their world's four elemental orbs which have been darkened by the four Elemental Fiends. Together, they quest to defeat these evil forces, restore light to the orbs, and save their world.",
         "keywords": [
             "jrpg"
         ],
-        "release_date": "1987"
+        "release_date": 1987
     },
     "ff4fe": {
         "igdb_id": "387",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2y6s.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2y6s.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1vks.png",
+        "key_art_url": "",
         "game_name": "Final Fantasy IV Free Enterprise",
-        "igdb_name": "final fantasy ii",
+        "igdb_name": "Final Fantasy II",
         "age_rating": "7",
         "rating": [
-            "mild fantasy violence",
-            "mild suggestive themes"
+            "Mild Fantasy Violence",
+            "Mild Suggestive Themes"
         ],
         "player_perspectives": [
-            "bird view / isometric",
-            "side view"
+            "Bird view / Isometric",
+            "Side view"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "super nintendo entertainment system",
-            "wii"
+            "Super Nintendo Entertainment System",
+            "Wii"
         ],
         "storyline": "",
         "keywords": [
             "jrpg",
             "retroachievements"
         ],
-        "release_date": "1991"
+        "release_date": 1991
     },
     "ffmq": {
         "igdb_id": "415",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2y0b.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2y0b.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar21za.png",
+        "key_art_url": "",
         "game_name": "Final Fantasy Mystic Quest",
-        "igdb_name": "final fantasy: mystic quest",
+        "igdb_name": "Final Fantasy: Mystic Quest",
         "age_rating": "7",
         "rating": [
-            "mild fantasy violence"
+            "Mild Fantasy Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric",
-            "side view"
+            "Bird view / Isometric",
+            "Side view"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "super nintendo entertainment system",
-            "wii",
-            "wii u",
-            "super famicom"
+            "Super Nintendo Entertainment System",
+            "Wii",
+            "Wii U",
+            "Super Famicom"
         ],
         "storyline": "",
         "keywords": [
@@ -2357,33 +2505,35 @@ GAMES_DATA = {
             "rock music",
             "retroachievements"
         ],
-        "release_date": "1992"
+        "release_date": 1992
     },
     "ffta": {
         "igdb_id": "414",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1wyp.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1wyp.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kju.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3on9.png",
         "game_name": "Final Fantasy Tactics Advance",
-        "igdb_name": "final fantasy tactics advance",
+        "igdb_name": "Final Fantasy Tactics Advance",
         "age_rating": "7",
         "rating": [
-            "mild violence",
-            "alcohol reference"
+            "Mild Violence",
+            "Alcohol Reference"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "strategy",
-            "turn-based strategy (tbs)",
-            "tactical"
+            "Role-playing (RPG)",
+            "Strategy",
+            "Turn-based strategy (TBS)",
+            "Tactical"
         ],
         "themes": [
-            "fantasy"
+            "Fantasy"
         ],
         "platforms": [
-            "wii u",
-            "game boy advance"
+            "Wii U",
+            "Game Boy Advance"
         ],
         "storyline": "",
         "keywords": [
@@ -2407,11 +2557,13 @@ GAMES_DATA = {
             "androgyny",
             "damage over time"
         ],
-        "release_date": "2003"
+        "release_date": 2003
     },
     "flipwitch": {
         "igdb_id": "361419",
-        "cover_url": "",
+        "cover_url": null,
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Flipwitch Forbidden Sex Hex",
         "igdb_name": "",
         "age_rating": "",
@@ -2422,100 +2574,106 @@ GAMES_DATA = {
         "platforms": [],
         "storyline": "",
         "keywords": [],
-        "release_date": ""
+        "release_date": null
     },
     "fm": {
         "igdb_id": "4108",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1ui5.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1ui5.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Yu-Gi-Oh! Forbidden Memories",
-        "igdb_name": "yu-gi-oh! forbidden memories",
-        "age_rating": "e",
+        "igdb_name": "Yu-Gi-Oh! Forbidden Memories",
+        "age_rating": "E",
         "rating": [
-            "violence"
+            "Violence"
         ],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "strategy",
-            "turn-based strategy (tbs)",
-            "card & board game"
+            "Strategy",
+            "Turn-based strategy (TBS)",
+            "Card & Board Game"
         ],
         "themes": [
-            "fantasy",
-            "historical"
+            "Fantasy",
+            "Historical"
         ],
         "platforms": [
-            "playstation"
+            "PlayStation"
         ],
-        "storyline": "the game begins in ancient egypt, with prince atem sneaking out of the palace to see his friends, jono and teana, at the dueling grounds. while there, they witness a ceremony performed by the mages, which is darker than the ceremonies that they normally perform. after the ceremony, atem duels one of the priests, named seto, and defeats him.\n\nwhen atem returns to the palace, he is quickly sent to bed by simon muran, his tutor and advisor. as simon walks away, he is informed by a guard that the high priest heishin has invaded the palace, using a strange magic. muran searches for heishin. when muran finds him, heishin tells muran that he has found the dark power, then uses the millennium rod to blast muran. when heishin finds atem, he threatens to kill the egyptian king and queen if he does not hand over the millennium puzzle. muran appears behind heishin and tells atem to smash the puzzle. atem obeys, and muran seals himself and atem inside the puzzle, to wait for someone to reassemble it.\n\nfive thousand years later, yugi mutou reassembles the puzzle. he speaks to atem in the puzzle, and atem gives yugi six blank cards. not sure what they are for, he carries them into a dueling tournament. after he defeats one of the duelists, one of the cards is filled with a millennium item. realizing what the cards are for, yugi completes the tournament and fills all six cards with millennium items. this allows atem to return to his time.\n\nonce in his own time, muran tells atem of what has happened since he was sealed away. heishin and the mages have taken control of the kingdom with the millennium items, and that the only way to free the kingdom is to recover the items from the mages guarding them. after passing this on, muran dies.\n\nafter he catches up with jono and teana, he goes to the destroyed palace and searches it. he finds seto, who gives him a map with the locations of the mages and the millennium items, and asks him to defeat the mages.\n\nafter atem recovers all of the millennium items but one, seto leads him to heishin, who holds the millennium rod. atem defeats heishin, but discovers that seto has the millennium rod, and merely wanted to use atem to gather the items in one place. atem duels seto for the items and defeats him, but after the duel, heishin grabs the items and uses them to summon the darknite. hoping to use the darknite to destroy his enemies, he doesn't have the item to prove his authority and as a result, the darknite instead turns heishin into a card. heishin now turned into a playing card, darknite now mocks heishin before incinerating the card. after atem shows that he had the millennium items, darknite challenges him to a duel. atem defeats him, and he transforms into nitemare, who challenges atem again. atem defeats him again, and nitemare begrudgingly returns from where he came. atem then is able to take the throne and lead his people in peace.",
+        "storyline": "The game begins in ancient Egypt, with Prince Atem sneaking out of the palace to see his friends, Jono and Teana, at the dueling grounds. While there, they witness a ceremony performed by the mages, which is darker than the ceremonies that they normally perform. After the ceremony, Atem duels one of the priests, named Seto, and defeats him.\n\nWhen Atem returns to the palace, he is quickly sent to bed by Simon Muran, his tutor and advisor. As Simon walks away, he is informed by a guard that the high priest Heishin has invaded the palace, using a strange magic. Muran searches for Heishin. When Muran finds him, Heishin tells Muran that he has found the Dark Power, then uses the Millennium Rod to blast Muran. When Heishin finds Atem, he threatens to kill the Egyptian king and queen if he does not hand over the Millennium Puzzle. Muran appears behind Heishin and tells Atem to smash the puzzle. Atem obeys, and Muran seals himself and Atem inside the puzzle, to wait for someone to reassemble it.\n\nFive thousand years later, Yugi Mutou reassembles the puzzle. He speaks to Atem in the puzzle, and Atem gives Yugi six blank cards. Not sure what they are for, he carries them into a Dueling Tournament. After he defeats one of the duelists, one of the cards is filled with a Millennium item. Realizing what the cards are for, Yugi completes the tournament and fills all six cards with Millennium items. This allows Atem to return to his time.\n\nOnce in his own time, Muran tells Atem of what has happened since he was sealed away. Heishin and the mages have taken control of the kingdom with the Millennium items, and that the only way to free the kingdom is to recover the items from the mages guarding them. After passing this on, Muran dies.\n\nAfter he catches up with Jono and Teana, he goes to the destroyed palace and searches it. He finds Seto, who gives him a map with the locations of the mages and the Millennium items, and asks him to defeat the mages.\n\nAfter Atem recovers all of the Millennium items but one, Seto leads him to Heishin, who holds the Millennium Rod. Atem defeats Heishin, but discovers that Seto has the Millennium Rod, and merely wanted to use Atem to gather the items in one place. Atem duels Seto for the items and defeats him, but after the duel, Heishin grabs the items and uses them to summon the DarkNite. Hoping to use the DarkNite to destroy his enemies, he doesn't have the item to prove his authority and as a result, the DarkNite instead turns Heishin into a card. Heishin now turned into a playing card, DarkNite now mocks Heishin before incinerating the card. After Atem shows that he had the Millennium Items, DarkNite challenges him to a duel. Atem defeats him, and he transforms into Nitemare, who challenges Atem again. Atem defeats him again, and Nitemare begrudgingly returns from where he came. Atem then is able to take the throne and lead his people in peace.",
         "keywords": [
             "anime",
             "turn-based"
         ],
-        "release_date": "1999"
+        "release_date": 1999
     },
     "frogmonster": {
         "igdb_id": "187372",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7l4c.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7l4c.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1cq0.png",
+        "key_art_url": "",
         "game_name": "Frog Monster",
-        "igdb_name": "frogmonster",
-        "age_rating": "nr",
+        "igdb_name": "Frogmonster",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "shooter",
-            "adventure",
-            "indie"
+            "Shooter",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "open world"
+            "Action",
+            "Fantasy",
+            "Open world"
         ],
         "platforms": [
-            "pc (microsoft windows)"
+            "PC (Microsoft Windows)"
         ],
-        "storyline": "in a world, existing before and still, built through the powerful and cunning minds of the creators, a new being emerges. the world, once flourishing with enriching creatures and plants, is changing rapidly and dangerously. beasts, designed by a wicked and corrupt creator, tear apart and threaten the creatures that still survive. you, the final hope from melora, a na\u00efve and endangered creator, will journey though the unraveling, unique lands, battle the mindless beasts, and revive the world that once was.",
+        "storyline": "In a world, existing before and still, built through the powerful and cunning minds of the Creators, a new being emerges. The world, once flourishing with enriching creatures and plants, is changing rapidly and dangerously. Beasts, designed by a wicked and corrupt Creator, tear apart and threaten the creatures that still survive. You, the final hope from Melora, a na\u00efve and endangered creator, will journey though the unraveling, unique lands, battle the mindless beasts, and revive the world that once was.",
         "keywords": [
             "3d",
             "metroidvania",
             "atmospheric"
         ],
-        "release_date": "2024"
+        "release_date": 2024
     },
     "getting_over_it": {
         "igdb_id": "72373",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3wl5.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3wl5.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar6y0.png",
+        "key_art_url": "",
         "game_name": "Getting Over It",
-        "igdb_name": "getting over it with bennett foddy",
-        "age_rating": "e",
+        "igdb_name": "Getting Over It with Bennett Foddy",
+        "age_rating": "E",
         "rating": [],
         "player_perspectives": [
-            "third person",
-            "side view"
+            "Third person",
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "simulator",
-            "adventure",
-            "indie"
+            "Platform",
+            "Simulator",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "horror",
-            "comedy"
+            "Action",
+            "Horror",
+            "Comedy"
         ],
         "platforms": [
-            "linux",
-            "android",
-            "pc (microsoft windows)",
-            "ios",
-            "mac"
+            "Linux",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "Mac"
         ],
-        "storyline": "climb up an enormous mountain with nothing but a hammer and a pot.",
+        "storyline": "Climb up an enormous mountain with nothing but a hammer and a pot.",
         "keywords": [
             "casual",
             "difficult",
@@ -2524,35 +2682,37 @@ GAMES_DATA = {
             "great soundtrack",
             "digital distribution"
         ],
-        "release_date": "2017"
+        "release_date": 2017
     },
     "gstla": {
         "igdb_id": "1173",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co25rt.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co25rt.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kpa.png",
+        "key_art_url": "",
         "game_name": "Golden Sun The Lost Age",
-        "igdb_name": "golden sun: the lost age",
+        "igdb_name": "Golden Sun: The Lost Age",
         "age_rating": "7",
         "rating": [
-            "violence"
+            "Violence"
         ],
         "player_perspectives": [
-            "third person",
-            "bird view / isometric"
+            "Third person",
+            "Bird view / Isometric"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "open world"
+            "Action",
+            "Fantasy",
+            "Open world"
         ],
         "platforms": [
-            "wii u",
-            "game boy advance"
+            "Wii U",
+            "Game Boy Advance"
         ],
-        "storyline": "\"it is the dawn of a new age...and the heroes of golden sun have been abandoned. now, the world is falling into darkness. a new band of adventurers is the world's final hope...but they may also be its doom. pursued by the heroes of the original golden sun, they must race to complete their quest before the world becomes lost to the ages.\"",
+        "storyline": "\"It is the dawn of a new age...And the heroes of Golden Sun have been abandoned. Now, the world is falling into darkness. A new band of adventurers is the world's final hope...but they may also be its doom. Pursued by the heroes of the original Golden Sun, they must race to complete their quest before the world becomes lost to the ages.\"",
         "keywords": [
             "anime",
             "magic",
@@ -2576,69 +2736,73 @@ GAMES_DATA = {
             "fire manipulation",
             "behind the waterfall"
         ],
-        "release_date": "2002"
+        "release_date": 2002
     },
     "gzdoom": {
         "igdb_id": "307741",
-        "cover_url": "",
+        "cover_url": null,
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "gzDoom",
-        "igdb_name": "gzdoom sm64",
-        "age_rating": "nr",
+        "igdb_name": "GZDoom SM64",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform"
+            "Platform"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "pc (microsoft windows)"
+            "PC (Microsoft Windows)"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": ""
+        "release_date": null
     },
     "hades": {
         "igdb_id": "113112",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co39vc.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co39vc.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar17uy.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3m4s.png",
         "game_name": "Hades",
-        "igdb_name": "hades",
+        "igdb_name": "Hades",
         "age_rating": "12",
         "rating": [
-            "mild language",
-            "alcohol reference",
-            "violence",
-            "suggestive themes",
-            "blood"
+            "Mild Language",
+            "Alcohol Reference",
+            "Violence",
+            "Suggestive Themes",
+            "Blood"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "hack and slash/beat 'em up",
-            "adventure",
-            "indie"
+            "Role-playing (RPG)",
+            "Hack and slash/Beat 'em up",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "drama"
+            "Action",
+            "Fantasy",
+            "Drama"
         ],
         "platforms": [
-            "xbox series x|s",
-            "playstation 4",
-            "pc (microsoft windows)",
-            "ios",
-            "playstation 5",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "PlayStation 5",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "zagreus, the son of hades, has discovered that his mother, which he was led to believe was nyx, night incarnate, is actually someone else, and is outside hell. he is now attempting to escape his father's domain, with the help of the other gods of olympus, in an attempt to find his real mother.",
+        "storyline": "Zagreus, the son of Hades, has discovered that his mother, which he was led to believe was Nyx, Night Incarnate, is actually someone else, and is outside Hell. He is now attempting to escape his father's domain, with the help of the other gods of Olympus, in an attempt to find his real mother.",
         "keywords": [
             "roguelike",
             "difficult",
@@ -2647,31 +2811,33 @@ GAMES_DATA = {
             "roguelite",
             "you can pet the dog"
         ],
-        "release_date": "2020"
+        "release_date": 2020
     },
     "hcniko": {
         "igdb_id": "142405",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2o6i.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2o6i.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arz25.png",
+        "key_art_url": "",
         "game_name": "Here Comes Niko!",
-        "igdb_name": "here comes niko!",
+        "igdb_name": "Here Comes Niko!",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "puzzle",
-            "adventure",
-            "indie"
+            "Platform",
+            "Puzzle",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "comedy"
+            "Action",
+            "Comedy"
         ],
         "platforms": [
-            "pc (microsoft windows)",
-            "nintendo switch"
+            "PC (Microsoft Windows)",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
@@ -2697,29 +2863,31 @@ GAMES_DATA = {
             "behind the waterfall",
             "controller support"
         ],
-        "release_date": "2021"
+        "release_date": 2021
     },
     "heretic": {
         "igdb_id": "6362",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1mwz.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1mwz.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Heretic",
-        "igdb_name": "heretic",
-        "age_rating": "m",
+        "igdb_name": "Heretic",
+        "age_rating": "M",
         "rating": [],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "shooter"
+            "Shooter"
         ],
         "themes": [
-            "fantasy",
-            "historical"
+            "Fantasy",
+            "Historical"
         ],
         "platforms": [
-            "pc (microsoft windows)",
-            "mac",
-            "dos"
+            "PC (Microsoft Windows)",
+            "Mac",
+            "DOS"
         ],
         "storyline": "",
         "keywords": [
@@ -2735,38 +2903,40 @@ GAMES_DATA = {
             "melee",
             "secret area"
         ],
-        "release_date": "1994"
+        "release_date": 1994
     },
     "hk": {
         "igdb_id": "14593",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co93cr.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co93cr.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ylrp6zuf9e7tcu1nvuir.png",
+        "key_art_url": "",
         "game_name": "Hollow Knight",
-        "igdb_name": "hollow knight",
+        "igdb_name": "Hollow Knight",
         "age_rating": "7",
         "rating": [
-            "fantasy violence",
-            "mild blood"
+            "Fantasy Violence",
+            "Mild Blood"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure",
-            "indie"
+            "Platform",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "playstation 4",
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "wii u",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Wii U",
+            "Xbox One",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
@@ -2783,71 +2953,75 @@ GAMES_DATA = {
             "controller support",
             "interconnected-world"
         ],
-        "release_date": "2017"
+        "release_date": 2017
     },
     "huniepop": {
         "igdb_id": "9655",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2sor.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2sor.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Hunie Pop",
-        "igdb_name": "huniepop",
-        "age_rating": "nr",
+        "igdb_name": "HuniePop",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "first person",
-            "text"
+            "First person",
+            "Text"
         ],
         "genres": [
-            "puzzle",
-            "role-playing (rpg)",
-            "simulator",
-            "strategy",
-            "indie",
-            "visual novel"
+            "Puzzle",
+            "Role-playing (RPG)",
+            "Simulator",
+            "Strategy",
+            "Indie",
+            "Visual Novel"
         ],
         "themes": [
-            "fantasy",
-            "comedy",
-            "erotic",
-            "romance"
+            "Fantasy",
+            "Comedy",
+            "Erotic",
+            "Romance"
         ],
         "platforms": [
-            "linux",
-            "pc (microsoft windows)",
-            "mac"
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac"
         ],
         "storyline": "",
         "keywords": [
             "anime"
         ],
-        "release_date": "2015"
+        "release_date": 2015
     },
     "huniepop2": {
         "igdb_id": "72472",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5x87.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5x87.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/are9g.png",
+        "key_art_url": "",
         "game_name": "Hunie Pop 2",
-        "igdb_name": "huniepop 2: double date",
-        "age_rating": "nr",
+        "igdb_name": "HuniePop 2: Double Date",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "first person",
-            "text"
+            "First person",
+            "Text"
         ],
         "genres": [
-            "puzzle",
-            "simulator",
-            "strategy",
-            "indie",
-            "visual novel"
+            "Puzzle",
+            "Simulator",
+            "Strategy",
+            "Indie",
+            "Visual Novel"
         ],
         "themes": [
-            "erotic",
-            "romance"
+            "Erotic",
+            "Romance"
         ],
         "platforms": [
-            "pc (microsoft windows)",
-            "mac"
+            "PC (Microsoft Windows)",
+            "Mac"
         ],
-        "storyline": "an era of darkness and destruction draws near as an ancient evil of limitless lechery, the nymphojinn, will soon be awoken by a cosmic super-period of unspeakable pms. reunite with kyu, your old love fairy sidekick, and travel to the island of inna de poona to develop your double dating prowess and overcome the insatiable lust of the demonic pair.",
+        "storyline": "An era of darkness and destruction draws near as an ancient evil of limitless lechery, the Nymphojinn, will soon be awoken by a cosmic super-period of unspeakable PMS. Reunite with Kyu, your old love fairy sidekick, and travel to the island of Inna De Poona to develop your double dating prowess and overcome the insatiable lust of the demonic pair.",
         "keywords": [
             "anime",
             "fairy",
@@ -2856,36 +3030,38 @@ GAMES_DATA = {
             "digital distribution",
             "voice acting"
         ],
-        "release_date": "2021"
+        "release_date": 2021
     },
     "hylics2": {
         "igdb_id": "98469",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co290q.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co290q.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arjmn.png",
+        "key_art_url": "",
         "game_name": "Hylics 2",
-        "igdb_name": "hylics 2",
-        "age_rating": "nr",
+        "igdb_name": "Hylics 2",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "first person",
-            "third person",
-            "bird view / isometric",
-            "side view"
+            "First person",
+            "Third person",
+            "Bird view / Isometric",
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "role-playing (rpg)",
-            "turn-based strategy (tbs)",
-            "adventure",
-            "indie"
+            "Platform",
+            "Role-playing (RPG)",
+            "Turn-based strategy (TBS)",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "fantasy"
+            "Fantasy"
         ],
         "platforms": [
-            "pc (microsoft windows)",
-            "mac"
+            "PC (Microsoft Windows)",
+            "Mac"
         ],
-        "storyline": "the tyrant gibby\u2019s minions seek to reconstitute their long-presumed-annihilated master. it\u2019s up to our crescent headed protagonist wayne to assemble a crew and put a stop to that sort of thing.",
+        "storyline": "The tyrant Gibby\u2019s minions seek to reconstitute their long-presumed-annihilated master. It\u2019s up to our crescent headed protagonist Wayne to assemble a crew and put a stop to that sort of thing.",
         "keywords": [
             "exploration",
             "retro",
@@ -2899,77 +3075,81 @@ GAMES_DATA = {
             "story rich",
             "great soundtrack"
         ],
-        "release_date": "2020"
+        "release_date": 2020
     },
     "inscryption": {
         "igdb_id": "139090",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co401c.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co401c.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar123g.png",
+        "key_art_url": "",
         "game_name": "Inscryption",
-        "igdb_name": "inscryption",
+        "igdb_name": "Inscryption",
         "age_rating": "16",
         "rating": [
-            "blood",
-            "strong language",
-            "violence"
+            "Blood",
+            "Strong Language",
+            "Violence"
         ],
         "player_perspectives": [
-            "first person",
-            "bird view / isometric"
+            "First person",
+            "Bird view / Isometric"
         ],
         "genres": [
-            "puzzle",
-            "strategy",
-            "adventure",
-            "indie",
-            "card & board game"
+            "Puzzle",
+            "Strategy",
+            "Adventure",
+            "Indie",
+            "Card & Board Game"
         ],
         "themes": [
-            "horror",
-            "mystery"
+            "Horror",
+            "Mystery"
         ],
         "platforms": [
-            "xbox series x|s",
-            "playstation 4",
-            "linux",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "Linux",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "from the creator of pony island and the hex comes the latest mind melting, self-destructing love letter to video games. inscryption is an inky black card-based odyssey that blends the deckbuilding roguelike, escape-room style puzzles, and psychological horror into a blood-laced smoothie. darker still are the secrets inscrybed upon the cards...\nin inscryption you will...\n\nacquire a deck of woodland creature cards by draft, surgery, and self mutilation\nunlock the secrets lurking behind the walls of leshy's cabin\nembark on an unexpected and deeply disturbing odyssey",
+        "storyline": "From the creator of Pony Island and The Hex comes the latest mind melting, self-destructing love letter to video games. Inscryption is an inky black card-based odyssey that blends the deckbuilding roguelike, escape-room style puzzles, and psychological horror into a blood-laced smoothie. Darker still are the secrets inscrybed upon the cards...\nIn Inscryption you will...\n\nAcquire a deck of woodland creature cards by draft, surgery, and self mutilation\nUnlock the secrets lurking behind the walls of Leshy's cabin\nEmbark on an unexpected and deeply disturbing odyssey",
         "keywords": [],
-        "release_date": "2021"
+        "release_date": 2021
     },
     "jakanddaxter": {
         "igdb_id": "1528",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1w7q.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1w7q.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/yvqffc6igxmvpzokkkf2.png",
+        "key_art_url": "",
         "game_name": "Jak and Daxter: The Precursor Legacy",
-        "igdb_name": "jak and daxter: the precursor legacy",
+        "igdb_name": "Jak and Daxter: The Precursor Legacy",
         "age_rating": "12",
         "rating": [
-            "fantasy violence",
-            "mild suggestive themes"
+            "Fantasy Violence",
+            "Mild Suggestive Themes"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "racing",
-            "adventure"
+            "Platform",
+            "Racing",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "comedy",
-            "open world"
+            "Action",
+            "Science fiction",
+            "Comedy",
+            "Open world"
         ],
         "platforms": [
-            "playstation 4",
-            "playstation 2"
+            "PlayStation 4",
+            "PlayStation 2"
         ],
-        "storyline": "the opening sequence of the game features jak and daxter in a speedboat headed for misty island, an area prohibited by their watch over samos. upon arriving to the island, daxter had second thoughts about straying from the village. the two perch on a large skeleton to observe a legion of lurkers crowded around two dark figures, gol and maia, who were commanding the lurkers to \"deal harshly with anyone who strays from the village,\" and to search for any precursor artifacts and eco near sandover village.[4] after the secret observation, jak and daxter continue searching the island. daxter trips on a dark eco canister which he tosses to jak after expressing his dislike for the item, and as jak caught the object it lit up. shortly afterwards a bone armor lurker suddenly confronted the two, where jak threw the dark eco canister at the lurker, killing it, but inadvertently knocked daxter into a dark eco silo behind him. when daxter reemerged, he was in the form of an ottsel, and upon realizing the transformation he began to panic.",
+        "storyline": "The opening sequence of the game features Jak and Daxter in a speedboat headed for Misty Island, an area prohibited by their watch over Samos. Upon arriving to the island, Daxter had second thoughts about straying from the village. The two perch on a large skeleton to observe a legion of lurkers crowded around two dark figures, Gol and Maia, who were commanding the lurkers to \"deal harshly with anyone who strays from the village,\" and to search for any precursor artifacts and eco near Sandover Village.[4] After the secret observation, Jak and Daxter continue searching the island. Daxter trips on a dark eco canister which he tosses to Jak after expressing his dislike for the item, and as Jak caught the object it lit up. Shortly afterwards a bone armor lurker suddenly confronted the two, where Jak threw the dark eco canister at the lurker, killing it, but inadvertently knocked Daxter into a dark eco silo behind him. When Daxter reemerged, he was in the form of an ottsel, and upon realizing the transformation he began to panic.",
         "keywords": [
             "exploration",
             "mascot",
@@ -2995,31 +3175,33 @@ GAMES_DATA = {
             "temporary invincibility",
             "damage over time"
         ],
-        "release_date": "2001"
+        "release_date": 2001
     },
     "k64": {
         "igdb_id": "2713",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1wcz.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1wcz.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1krk.png",
+        "key_art_url": "",
         "game_name": "Kirby 64 - The Crystal Shards",
-        "igdb_name": "kirby 64: the crystal shards",
+        "igdb_name": "Kirby 64: The Crystal Shards",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "wii",
-            "nintendo 64",
-            "wii u"
+            "Wii",
+            "Nintendo 64",
+            "Wii U"
         ],
-        "storyline": "on the planet of ripple star, lives a group of kind and peaceful fairies. the planet itself is protected from danger by the power of the great crystal, which watches over ripple star. this power, however, draws the attention of dark matter, who wishes to use the great crystal for its own evil agenda. its gigantic mass attacks and searches for the crystal, blackening the sky and sending the fairies into panic. in response to the threat dark matter presents, the queen of ripple star orders a fairy named ribbon to take the crystal to a safe place. ribbon tries to fly away with the crystal in tow, but is stopped by three orbs sent by dark matter. the crystal shatters into 74 shards, scattered throughout several planets, and ribbon crashes onto planet popstar. kirby finds one shard and gives it to ribbon, whereupon the two set out to find the others. once kirby and his friends collect every crystal shard and defeat miracle matter, dark matter flees ripple star and explodes. the victory is cut short, however, as the crystal detects a powerful presence of dark matter energy within the fairy queen and expels it from her, manifesting over the planet to create dark star. kirby and his friends infiltrate dark star, and king dedede launches them up to challenge 02. kirby and ribbon, armed with their shard gun, destroyed 02 and the dark star.",
+        "storyline": "On the planet of Ripple Star, lives a group of kind and peaceful fairies. The planet itself is protected from danger by the power of the great Crystal, which watches over Ripple Star. This power, however, draws the attention of Dark Matter, who wishes to use the great Crystal for its own evil agenda. Its gigantic mass attacks and searches for the Crystal, blackening the sky and sending the fairies into panic. In response to the threat Dark Matter presents, the queen of Ripple Star orders a fairy named Ribbon to take the Crystal to a safe place. Ribbon tries to fly away with the Crystal in tow, but is stopped by three orbs sent by Dark Matter. The Crystal shatters into 74 shards, scattered throughout several planets, and Ribbon crashes onto Planet Popstar. Kirby finds one shard and gives it to Ribbon, whereupon the two set out to find the others. Once Kirby and his friends collect every Crystal Shard and defeat Miracle Matter, Dark Matter flees Ripple Star and explodes. The victory is cut short, however, as the Crystal detects a powerful presence of Dark Matter energy within the Fairy Queen and expels it from her, manifesting over the planet to create Dark Star. Kirby and his friends infiltrate Dark Star, and King Dedede launches them up to challenge 02. Kirby and Ribbon, armed with their Shard Gun, destroyed 02 and the Dark Star.",
         "keywords": [
             "minigames",
             "mascot",
@@ -3036,30 +3218,32 @@ GAMES_DATA = {
             "auto-scrolling levels",
             "retroachievements"
         ],
-        "release_date": "2000"
+        "release_date": 2000
     },
     "kdl3": {
         "igdb_id": "3720",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co25su.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co25su.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kr4.png",
+        "key_art_url": "",
         "game_name": "Kirby's Dream Land 3",
-        "igdb_name": "kirby's dream land 3",
+        "igdb_name": "Kirby's Dream Land 3",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "super nintendo entertainment system",
-            "wii",
-            "wii u",
-            "super famicom"
+            "Super Nintendo Entertainment System",
+            "Wii",
+            "Wii U",
+            "Super Famicom"
         ],
         "storyline": "",
         "keywords": [
@@ -3069,34 +3253,36 @@ GAMES_DATA = {
             "shape-shifting",
             "retroachievements"
         ],
-        "release_date": "1997"
+        "release_date": 1997
     },
     "kh1": {
         "igdb_id": "1219",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co30zf.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co30zf.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/xsqeggrjy7tzab4gtab9.png",
+        "key_art_url": "",
         "game_name": "Kingdom Hearts",
-        "igdb_name": "kingdom hearts",
+        "igdb_name": "Kingdom Hearts",
         "age_rating": "7",
         "rating": [
-            "violence",
-            "cartoon violence"
+            "Violence",
+            "Cartoon Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "comedy"
+            "Action",
+            "Fantasy",
+            "Comedy"
         ],
         "platforms": [
-            "playstation 2"
+            "PlayStation 2"
         ],
-        "storyline": "when his world is destroyed and his friends mysteriously disappear, a young boy named sora is thrust into a quest to find his missing friends and prevent the armies of darkness from destroying many other worlds. during his quest, he meets many characters from classic disney films and a handful from the final fantasy video game series.",
+        "storyline": "When his world is destroyed and his friends mysteriously disappear, a young boy named Sora is thrust into a quest to find his missing friends and prevent the armies of darkness from destroying many other worlds. During his quest, he meets many characters from classic Disney films and a handful from the Final Fantasy video game series.",
         "keywords": [
             "pirates",
             "minigames",
@@ -3127,83 +3313,89 @@ GAMES_DATA = {
             "plot twist",
             "gliding"
         ],
-        "release_date": "2002"
+        "release_date": 2002
     },
     "kh2": {
         "igdb_id": "1221",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co30t1.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co30t1.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/quibnp6vdu6lmwsulsdi.png",
+        "key_art_url": "",
         "game_name": "Kingdom Hearts 2",
-        "igdb_name": "kingdom hearts ii",
+        "igdb_name": "Kingdom Hearts II",
         "age_rating": "12",
         "rating": [
-            "mild blood",
-            "violence",
-            "use of alcohol"
+            "Mild Blood",
+            "Violence",
+            "Use of Alcohol"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "playstation 3",
-            "playstation 4",
-            "playstation 2"
+            "PlayStation 3",
+            "PlayStation 4",
+            "PlayStation 2"
         ],
-        "storyline": "one year after the events of kingdom hearts: chain of memories, sora, donald and goofy awaken in twilight town. bent on the quest to find riku and king mickey mouse, the three begin their journey. however, they soon discover that while they have been asleep, the heartless are back. not only that, but new enemies also showed up during their absence. sora, donald and goofy set off on a quest to rid the world of the heartless once more, uncovering the many secrets that linger about ansem and the mysterious organization xiii.",
+        "storyline": "One year after the events of Kingdom Hearts: Chain of Memories, Sora, Donald and Goofy awaken in Twilight Town. Bent on the quest to find Riku and King Mickey Mouse, the three begin their journey. However, they soon discover that while they have been asleep, the Heartless are back. Not only that, but new enemies also showed up during their absence. Sora, Donald and Goofy set off on a quest to rid the world of the Heartless once more, uncovering the many secrets that linger about Ansem and the mysterious Organization XIII.",
         "keywords": [],
-        "release_date": "2005"
+        "release_date": 2005
     },
     "kindergarten_2": {
         "igdb_id": "118637",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2vk4.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2vk4.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arpoz.png",
+        "key_art_url": "",
         "game_name": "Kindergarten 2",
-        "igdb_name": "kindergarten 2",
-        "age_rating": "nr",
+        "igdb_name": "Kindergarten 2",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [],
         "genres": [
-            "adventure",
-            "indie"
+            "Adventure",
+            "Indie"
         ],
         "themes": [],
         "platforms": [
-            "pc (microsoft windows)"
+            "PC (Microsoft Windows)"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2019"
+        "release_date": 2019
     },
     "ladx": {
         "igdb_id": "1027",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co4o47.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co4o47.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kl1.png",
+        "key_art_url": "",
         "game_name": "Link's Awakening DX Beta",
-        "igdb_name": "the legend of zelda: link's awakening dx",
+        "igdb_name": "The Legend of Zelda: Link's Awakening DX",
         "age_rating": "7",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric",
-            "side view"
+            "Bird view / Isometric",
+            "Side view"
         ],
         "genres": [
-            "puzzle",
-            "adventure"
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "game boy color",
-            "nintendo 3ds"
+            "Game Boy Color",
+            "Nintendo 3DS"
         ],
-        "storyline": "after the events of a link to the past, the hero link travels by ship to other countries to train for further threats. after being attacked at sea, link's ship sinks and he finds himself stranded on koholint island. he awakens to see a beautiful woman looking down at him and soon learns the island has a giant egg on top of a mountain that the wind fish inhabits deep inside. link is told to awaken the wind fish and all will be answered, so he sets out on another quest.",
+        "storyline": "After the events of A Link to the Past, the hero Link travels by ship to other countries to train for further threats. After being attacked at sea, Link's ship sinks and he finds himself stranded on Koholint Island. He awakens to see a beautiful woman looking down at him and soon learns the island has a giant egg on top of a mountain that the Wind Fish inhabits deep inside. Link is told to awaken the wind fish and all will be answered, so he sets out on another quest.",
         "keywords": [
             "magic",
             "mascot",
@@ -3237,34 +3429,36 @@ GAMES_DATA = {
             "fetch quests",
             "status effects"
         ],
-        "release_date": "1998"
+        "release_date": 1998
     },
     "landstalker": {
         "igdb_id": "15072",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2kb9.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2kb9.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar30jm.png",
+        "key_art_url": "",
         "game_name": "Landstalker - The Treasures of King Nole",
-        "igdb_name": "landstalker",
+        "igdb_name": "Landstalker",
         "age_rating": "7",
         "rating": [
-            "mild fantasy violence"
+            "Mild Fantasy Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "role-playing (rpg)"
+            "Role-playing (RPG)"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "sandbox"
+            "Action",
+            "Fantasy",
+            "Sandbox"
         ],
         "platforms": [
-            "linux",
-            "wii",
-            "sega mega drive/genesis",
-            "pc (microsoft windows)",
-            "mac"
+            "Linux",
+            "Wii",
+            "Sega Mega Drive/Genesis",
+            "PC (Microsoft Windows)",
+            "Mac"
         ],
         "storyline": "",
         "keywords": [
@@ -3273,41 +3467,43 @@ GAMES_DATA = {
             "leveling up",
             "real-time combat"
         ],
-        "release_date": "1992"
+        "release_date": 1992
     },
     "lego_star_wars_tcs": {
         "igdb_id": "2682",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1qrr.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1qrr.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arp30.png",
+        "key_art_url": "",
         "game_name": "Lego Star Wars: The Complete Saga",
-        "igdb_name": "lego star wars: the complete saga",
+        "igdb_name": "LEGO Star Wars: The Complete Saga",
         "age_rating": "3",
         "rating": [
-            "fantasy violence",
-            "crude humor",
-            "cartoon violence",
-            "animated violence"
+            "Fantasy Violence",
+            "Crude Humor",
+            "Cartoon Violence",
+            "Animated Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "comedy",
-            "kids"
+            "Action",
+            "Science fiction",
+            "Comedy",
+            "Kids"
         ],
         "platforms": [
-            "playstation 3",
-            "wii",
-            "android",
-            "pc (microsoft windows)",
-            "ios",
-            "mac",
-            "xbox 360"
+            "PlayStation 3",
+            "Wii",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "Mac",
+            "Xbox 360"
         ],
         "storyline": "",
         "keywords": [
@@ -3330,116 +3526,124 @@ GAMES_DATA = {
             "rpg elements",
             "villain"
         ],
-        "release_date": "2007"
+        "release_date": 2007
     },
     "lethal_company": {
         "igdb_id": "212089",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5ive.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5ive.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1rug.png",
+        "key_art_url": "",
         "game_name": "Lethal Company",
-        "igdb_name": "lethal company",
-        "age_rating": "nr",
+        "igdb_name": "Lethal Company",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "indie"
+            "Indie"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "horror",
-            "comedy"
+            "Action",
+            "Science fiction",
+            "Horror",
+            "Comedy"
         ],
         "platforms": [
-            "pc (microsoft windows)"
+            "PC (Microsoft Windows)"
         ],
-        "storyline": "you are a contracted worker for the company. your job is to collect scrap from abandoned, industrialized moons to meet the company's profit quota. you can use the cash you earn to travel to new moons with higher risks and rewards--or you can buy fancy suits and decorations for your ship. experience nature, scanning any creature you find to add them to your bestiary. explore the wondrous outdoors and rummage through their derelict, steel and concrete underbellies. just never miss the quota.",
+        "storyline": "You are a contracted worker for the Company. Your job is to collect scrap from abandoned, industrialized moons to meet the Company's profit quota. You can use the cash you earn to travel to new moons with higher risks and rewards--or you can buy fancy suits and decorations for your ship. Experience nature, scanning any creature you find to add them to your bestiary. Explore the wondrous outdoors and rummage through their derelict, steel and concrete underbellies. Just never miss the quota.",
         "keywords": [
             "aliens",
             "exploration"
         ],
-        "release_date": "2023"
+        "release_date": 2023
     },
     "lingo": {
         "igdb_id": "189169",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5iy5.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5iy5.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1f1q.png",
+        "key_art_url": "",
         "game_name": "Lingo",
-        "igdb_name": "lingo",
-        "age_rating": "nr",
+        "igdb_name": "Lingo",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "puzzle",
-            "adventure",
-            "indie"
+            "Puzzle",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "open world"
+            "Open world"
         ],
         "platforms": [
-            "pc (microsoft windows)"
+            "PC (Microsoft Windows)"
         ],
         "storyline": "",
         "keywords": [
             "exploration",
             "3d"
         ],
-        "release_date": "2021"
+        "release_date": 2021
     },
     "lufia2ac": {
         "igdb_id": "1178",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co9mg3.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co9mg3.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Lufia II: Ancient Cave",
-        "igdb_name": "lufia ii: rise of the sinistrals",
-        "age_rating": "e",
+        "igdb_name": "Lufia II: Rise of the Sinistrals",
+        "age_rating": "E",
         "rating": [
-            "mild animated violence"
+            "Mild Animated Violence"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "puzzle",
-            "role-playing (rpg)"
+            "Puzzle",
+            "Role-playing (RPG)"
         ],
         "themes": [
-            "fantasy"
+            "Fantasy"
         ],
         "platforms": [
-            "super nintendo entertainment system",
-            "super famicom"
+            "Super Nintendo Entertainment System",
+            "Super Famicom"
         ],
         "storyline": "",
         "keywords": [
             "retroachievements"
         ],
-        "release_date": "1995"
+        "release_date": 1995
     },
     "luigismansion": {
         "igdb_id": "2485",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1wr1.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1wr1.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar3fnc.png",
+        "key_art_url": "",
         "game_name": "Luigi's Mansion",
-        "igdb_name": "luigi's mansion",
-        "age_rating": "e",
+        "igdb_name": "Luigi's Mansion",
+        "age_rating": "E",
         "rating": [],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "adventure"
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "horror",
-            "comedy"
+            "Action",
+            "Horror",
+            "Comedy"
         ],
         "platforms": [
-            "nintendo gamecube"
+            "Nintendo GameCube"
         ],
-        "storyline": "one day, luigi received an unexpected message: you've won a huge mansion! naturally, he[sic] got very excited and called his brother, mario. \"mario? it's me, luigi. i won myself a big mansion! meet me there and we'll celebrate, what do you say?\"\n\nluigi tried to follow the map to his new mansion, but the night was dark, and he became hopelessly lost in an eerie forest along the way. finally, he came upon a gloomy mansion on the edge of the woods. according to the map, this mansion seemed to be the one luigi was looking for. as soon as luigi set foot in the mansion, he started to feel nervous. mario, who should have arrived first, was nowhere to be seen. not only that, but there were ghosts in the mansion!\n\nsuddenly, a ghost lunged at luigi! \"mario! help meee!\" that's when a strange old man with a vacuum cleaner on his back appeared out of nowhere! this strange fellow managed to rescue luigi from the ghosts, then the two of them escaped...\n\nit just so happened that the old man, professor elvin gadd, who lived near the house, was researching his favorite subject, ghosts. luigi told professor e. gadd that his brother mario was missing, so the professor decided to give luigi two inventions that would help him search for his brother.\n\nluigi's not exactly known for his bravery. can he get rid of all the prank-loving ghosts and find mario?",
+        "storyline": "One day, Luigi received an unexpected message: You've won a huge mansion! Naturally, He[sic] got very excited and called his brother, Mario. \"Mario? It's me, Luigi. I won myself a big mansion! Meet me there and we'll celebrate, what do you say?\"\n\nLuigi tried to follow the map to his new mansion, but the night was dark, and he became hopelessly lost in an eerie forest along the way. Finally, he came upon a gloomy mansion on the edge of the woods. According to the map, this mansion seemed to be the one Luigi was looking for. As soon as Luigi set foot in the mansion, he started to feel nervous. Mario, who should have arrived first, was nowhere to be seen. Not only that, but there were ghosts in the mansion!\n\nSuddenly, a ghost lunged at Luigi! \"Mario! Help meee!\" That's when a strange old man with a vacuum cleaner on his back appeared out of nowhere! This strange fellow managed to rescue Luigi from the ghosts, then the two of them escaped...\n\nIt just so happened that the old man, Professor Elvin Gadd, who lived near the house, was researching his favorite subject, ghosts. Luigi told Professor E. Gadd that his brother Mario was missing, so the Professor decided to give Luigi two inventions that would help him search for his brother.\n\nLuigi's not exactly known for his bravery. Can he get rid of all the prank-loving ghosts and find Mario?",
         "keywords": [
             "ghosts",
             "3d",
@@ -3451,164 +3655,203 @@ GAMES_DATA = {
             "save point",
             "interconnected-world"
         ],
-        "release_date": "2001"
+        "release_date": 2001
     },
     "lunacid": {
         "igdb_id": "192291",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7cdv.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7cdv.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1i8t.png",
+        "key_art_url": "",
         "game_name": "Lunacid",
-        "igdb_name": "lunacid",
-        "age_rating": "nr",
+        "igdb_name": "Lunacid",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "indie"
+            "Role-playing (RPG)",
+            "Indie"
         ],
         "themes": [
-            "fantasy",
-            "horror"
+            "Fantasy",
+            "Horror"
         ],
         "platforms": [
-            "pc (microsoft windows)"
+            "PC (Microsoft Windows)"
         ],
-        "storyline": "long ago a great beast arose from the sea and covered the earth in a poison fog. now those deemed undesirable are thrown into a great well, which has become a pit of chaos and disease. you awaken in a moonlit subterranean world, having been thrown into the great well for crimes unknown. the only way out is to go further down and confront the sleeping old one below. on the way there will be many creatures and secrets to discover.",
+        "storyline": "Long ago a great beast arose from the sea and covered the earth in a poison fog. Now those deemed undesirable are thrown into a great well, which has become a pit of chaos and disease. You awaken in a moonlit subterranean world, having been thrown into the Great Well for crimes unknown. The only way out is to go further down and confront the sleeping old one below. On the way there will be many creatures and secrets to discover.",
         "keywords": [],
-        "release_date": "2023"
+        "release_date": 2023
+    },
+    "madou": {
+        "igdb_id": "110397",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co40d9.png",
+        "artwork_url": "",
+        "key_art_url": "",
+        "game_name": "Madou Monogatari Hanamaru Daiyouchienji",
+        "igdb_name": "Madou Monogatari: Hanamaru Daiyouchienji",
+        "age_rating": "NR",
+        "rating": [],
+        "player_perspectives": [
+            "Third person",
+            "Side view"
+        ],
+        "genres": [
+            "Role-playing (RPG)"
+        ],
+        "themes": [
+            "Fantasy"
+        ],
+        "platforms": [
+            "Super Famicom",
+            "Satellaview"
+        ],
+        "storyline": "Arle Nadja is 5 years old and is attending kindergarten, and it's final exam time. But in order to take her final exam, she needs to locate a Final Exam Certificate... In the meantime, a letter arrives which speaks of eight magical gems. Find all eight and take them to the Wizard's Mountain, and you will be granted one wish. Arle decides to search for the gems and wish for her final exam certificate, and along the way she'll have to fight off a gang of local bullies and other various characters you may recognize from the Puyo Puyo series of games!",
+        "keywords": [],
+        "release_date": 1995
     },
     "marioland2": {
         "igdb_id": "1071",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7gxg.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7gxg.png",
+        "artwork_url": "",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar4079.png",
         "game_name": "Super Mario Land 2",
-        "igdb_name": "super mario land 2: 6 golden coins",
+        "igdb_name": "Super Mario Land 2: 6 Golden Coins",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform"
+            "Platform"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "nintendo 3ds",
-            "game boy"
+            "Nintendo 3DS",
+            "Game Boy"
         ],
-        "storyline": "danger! danger!\n\nwhile i was away crusading against the mystery alien tatanga in sarasa land, an evil creep took over my castle and put the people of mario land under his control with a magic spell. this intruder goes by the name of wario. he mimics my appearance, and has tried to steal my castle many times. it seems he has succeeded this time.\n\nwario has scattered the 6 golden coins from my castle all over mario land. these golden coins are guarded by those under wario's spell. without these coins, we can't get into the castle to deal with wario. we must collect the 6 coins, attack wario in the castle, and save everybody!\n\nit\u2019s time to set out on our mission!!",
+        "storyline": "Danger! Danger!\n\nWhile I was away crusading against the mystery alien Tatanga in Sarasa Land, an evil creep took over my castle and put the people of Mario Land under his control with a magic spell. This intruder goes by the name of Wario. He mimics my appearance, and has tried to steal my castle many times. It seems he has succeeded this time.\n\nWario has scattered the 6 Golden Coins from my castle all over Mario Land. These Golden Coins are guarded by those under Wario's spell. Without these coins, we can't get into the castle to deal with Wario. We must collect the 6 coins, attack Wario in the castle, and save everybody!\n\nIt\u2019s time to set out on our mission!!",
         "keywords": [
             "turtle"
         ],
-        "release_date": "1992"
+        "release_date": 1992
     },
     "mario_kart_double_dash": {
         "igdb_id": "2344",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7ndu.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7ndu.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar3k93.png",
+        "key_art_url": "",
         "game_name": "Mario Kart Double Dash",
-        "igdb_name": "mario kart: double dash!!",
+        "igdb_name": "Mario Kart: Double Dash!!",
         "age_rating": "3",
         "rating": [
-            "mild cartoon violence"
+            "Mild Cartoon Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "racing",
-            "arcade"
+            "Racing",
+            "Arcade"
         ],
         "themes": [
-            "action",
-            "kids"
+            "Action",
+            "Kids"
         ],
         "platforms": [
-            "nintendo gamecube"
+            "Nintendo GameCube"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2003"
+        "release_date": 2003
     },
     "megamix": {
         "igdb_id": "120278",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coa4vr.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coa4vr.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/araan.png",
+        "key_art_url": "",
         "game_name": "Hatsune Miku Project Diva Mega Mix+",
-        "igdb_name": "hatsune miku: project diva mega mix",
+        "igdb_name": "Hatsune Miku: Project Diva Mega Mix",
         "age_rating": "12",
         "rating": [
-            "blood",
-            "sexual themes",
-            "violence"
+            "Blood",
+            "Sexual Themes",
+            "Violence"
         ],
         "player_perspectives": [
-            "third person",
-            "side view"
+            "Third person",
+            "Side view"
         ],
         "genres": [
-            "music",
-            "arcade"
+            "Music",
+            "Arcade"
         ],
         "themes": [],
         "platforms": [
-            "nintendo switch"
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2020"
+        "release_date": 2020
     },
     "meritous": {
         "igdb_id": "78479",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/zkameytcg0na8alfswsp.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/zkameytcg0na8alfswsp.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Meritous",
-        "igdb_name": "meritous",
-        "age_rating": "nr",
+        "igdb_name": "Meritous",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "role-playing (rpg)"
+            "Role-playing (RPG)"
         ],
         "themes": [],
         "platforms": [
-            "pc (microsoft windows)"
+            "PC (Microsoft Windows)"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2008"
+        "release_date": 2008
     },
     "messenger": {
         "igdb_id": "71628",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2hr9.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2hr9.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar6u0.png",
+        "key_art_url": "",
         "game_name": "The Messenger",
-        "igdb_name": "the messenger",
+        "igdb_name": "The Messenger",
         "age_rating": "7",
         "rating": [
-            "fantasy violence",
-            "language",
-            "crude humor"
+            "Fantasy Violence",
+            "Language",
+            "Crude Humor"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure",
-            "indie",
-            "arcade"
+            "Platform",
+            "Adventure",
+            "Indie",
+            "Arcade"
         ],
         "themes": [
-            "action",
-            "comedy"
+            "Action",
+            "Comedy"
         ],
         "platforms": [
-            "playstation 4",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Xbox One",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
@@ -3617,37 +3860,39 @@ GAMES_DATA = {
             "metroidvania",
             "difficult"
         ],
-        "release_date": "2018"
+        "release_date": 2018
     },
     "metroidfusion": {
         "igdb_id": "1104",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3w49.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3w49.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14ar.png",
+        "key_art_url": "",
         "game_name": "Metroid Fusion",
-        "igdb_name": "metroid fusion",
+        "igdb_name": "Metroid Fusion",
         "age_rating": "7",
         "rating": [
-            "mild fantasy violence",
-            "violence"
+            "Mild Fantasy Violence",
+            "Violence"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "shooter",
-            "platform",
-            "puzzle",
-            "adventure"
+            "Shooter",
+            "Platform",
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "science fiction"
+            "Action",
+            "Science fiction"
         ],
         "platforms": [
-            "nintendo 3ds",
-            "wii u",
-            "game boy advance"
+            "Nintendo 3DS",
+            "Wii U",
+            "Game Boy Advance"
         ],
-        "storyline": "the game begins with samus aran acting as a bodyguard for the biologic's research team on planet sr388. eventually, a hornoad confronts them and is killed by samus. however, a globular yellow organism (an x) emerges from the hornoad as it is destroyed and enters samus's body.\nfeeling no initial effects, samus continues escorting the researchers and completes the assignment. on the way back to the laboratory, however, samus loses consciousness, and her gunship crashes into an asteroid belt. the ship's emergency systems automatically ejected samus' escape pod, saving her from the crash, but her gunship is completely destroyed. samus is quickly attended to by a medical crew, who discover that the creature that entered her body on sr388 was actually a parasitic organism that they soon named x.\n\nsamus infected 2\nsamus, infected by the x parasites.\nthe organic components of samus's power suit had become so integrated with her system that it could not be removed while she was unconscious. large portions of her infected suit had to be surgically removed, dramatically altering its appearance. however, the x in samus's central nervous system were too embedded to be removed safely; samus's chances of survival were lower than one percent.\nmetroids are the only known predator of the x; however, since samus destroyed all the metroids on sr388 in a previous mission, the x were able to multiply unchecked. seeing this as the key to curing her, doctors proposed using a metroid cell from samus' dead baby metroid to make an anti-x vaccine. apparently, the federation had managed to preserve a cell culture from the baby that saved samus while she was on zebes a second time. the serum was prepared and injected without delay, completely eradicating the x. there were, however, two side effects: samus could no longer be hurt by normal x and could even absorb them to replenish health and ammunition, but she also inherited the metroids' vulnerability to cold.\n\nupon recovering, samus is sent to investigate an explosion on the biologic space laboratories research station, where the specimens from sr388 and the infected pieces of her power suit are being held. once she arrives at the station, samus immediately heads to the quarantine bay, where she encounters and kills a hornoad that has been infected by an x parasite. samus speaks with her new gunship's computer (whom she has named \"adam\", as it reminds her of a former co) and learns that the specimens brought back by the field team have become infected by the x. the computer also reveals that the x can use the dna of its prey to create a perfect copy, meaning any organic life on the station may also be infected.\n\nsa-x 1\nthe sa-x.\nas she continues to explore the station, samus discovers that the x have used the infected portions of her power suit to create a copy of samus herself, dubbed the sa-x (or samus aran-x). since the sa-x arose from samus's fully-upgraded power suit, it has all of her powered-up abilities, as evidenced by it using a power bomb to escape the quarantine bay. by exploding the bomb, the sa-x also destroyed the capsules holding the x specimens, releasing them all into the station. well into her investigation of the station, samus stumbles upon the facility's restricted lab. here, she finds dozens of infant metroids and several more metroids in various stages of maturity, all in stasis; these were the results of a cloning project of which samus was not previously aware. shortly after samus discovers them, the sa-x attempts to destroy its predators, but its plan backfires: the metroids break free and the emergency fail-safes are activated as a result. samus barely escapes before the lab locks down completely and is jettisoned from the station, exploding over sr388.\nafter the incident at the restricted lab, samus speaks with her ship's computer, who is angry about the discovery and subsequent destruction of the metroids. the computer explains that the federation had been secretly working on a metroid breeding program, for \"peaceful applications\". the computer reveals that the station's srx environment, a replica of the sr388 ecosystem, was ideal for raising alpha, gamma, zeta, and even omega metroids. the research uncovered techniques for rapid growth, allowing an infant grow into an omega metroid in mere days. unfortunately, the sa-x had been tracking samus down and followed her to the lab's location. much to samus's surprise, the computer also mentions that the sa-x has been reproducing asexually and there are no fewer than 10 aboard the station.\n\nlater, the computer tells samus that she has caused enough damage and instructs her to leave the rest of the investigation to the federation. apparently, the federation has taken an interest in the x and sa-x and believe that this life-form has endless applications. samus, having seen the sa-x's destructive capabilities firsthand, is strongly against this. she is convinced that the x will overwhelm the federation troops as soon as they land, absorbing their powers and knowledge in the process. if this happens, they could easily spread throughout the galaxy and \"galactic civilization will end.\"\n\nas an alternative, samus decides to activate the station's self-destruct mechanism in order to destroy the x, risking her own life in the process. however, her ship's computer has locked samus in a navigation room, as the federation has ordered it to keep her confined until their arrival. desperate, samus yells at the computer: \"don't let them do this. can't you see what will happen, adam?\" puzzled at the use of the name, the computer inquires as to who this adam was. samus reveals that he had been her previous commanding officer and had died saving her life. apparently moved by samus's revelation, the computer agrees with the plan, and suggests that if samus were to alter the station's orbit, then she might be able to include the planet in the explosion, thus ensuring the destruction of the x on planet sr388 as well as those on the station. at this point, samus realizes that her ship's computer truly is adam malkovich, whose personality had been uploaded to a computer prior to his death.\n\nsamus hurries to the operations room, where she is confronted by an sa-x. she manages to defeat it, but its core-x escapes before she can absorb it. ignoring its escape, samus initiates the self-destruct sequence and hurries back to her ship. however, she finds the docking bay in ruins and her ship gone. before she can react to the situation, an omega metroid appears, apparently having escaped from the restricted lab before its destruction and grown to full size in record time. samus possesses no weapon capable of damaging the metroid, and a single swipe of its claw reduces her energy reserves to one unit. as the omega metroid prepares to finish her off, the sa-x returns, and attacks the metroid with its ice beam, injuring it. however, it was greatly weakened from its fight with samus and is quickly defeated by the metroid. this time, the core-x hovers over samus, allowing her to absorb it and obtain the \"unnamed suit\" as well as the ice beam and restoring her genetic condition to its pre-vaccine state. using her regained abilities, samus fights and kills the omega metroid after a fierce struggle. after the battle, samus's ship reenters the bay, having been piloted by the computer, adam, and the same etecoons and dachoras she saved on the previous mission to zebes and later on the habitation deck.\n\nas samus leaves the station, it is shown crashing into sr388, destroying both the station and the planet, ridding the universe of the x forever.\n\nreflecting on her actions, samus doubts people will understand why she destroyed the x, nor will they realize the danger that was barely averted. samus believes she will be held responsible for defying the federation, but adam comforts her, telling her: \"do not worry. one of them will understand. one of them must.\" a final reflection, samus goes on to say: \"we are all bound by our experiences. they are the limits of our consciousness. but in the end, the human soul will ever reach for the truth... this is what adam taught me.\"",
+        "storyline": "The game begins with Samus Aran acting as a bodyguard for the Biologic's research team on planet SR388. Eventually, a Hornoad confronts them and is killed by Samus. However, a globular yellow organism (an X) emerges from the Hornoad as it is destroyed and enters Samus's body.\nFeeling no initial effects, Samus continues escorting the researchers and completes the assignment. On the way back to the laboratory, however, Samus loses consciousness, and her gunship crashes into an asteroid belt. The ship's emergency systems automatically ejected Samus' escape pod, saving her from the crash, but her gunship is completely destroyed. Samus is quickly attended to by a medical crew, who discover that the creature that entered her body on SR388 was actually a parasitic organism that they soon named X.\n\nSamus Infected 2\nSamus, infected by the X Parasites.\nThe organic components of Samus's Power Suit had become so integrated with her system that it could not be removed while she was unconscious. Large portions of her infected suit had to be surgically removed, dramatically altering its appearance. However, the X in Samus's central nervous system were too embedded to be removed safely; Samus's chances of survival were lower than one percent.\nMetroids are the only known predator of the X; however, since Samus destroyed all the Metroids on SR388 in a previous mission, the X were able to multiply unchecked. Seeing this as the key to curing her, doctors proposed using a Metroid cell from Samus' dead Baby Metroid to make an anti-X vaccine. Apparently, the Federation had managed to preserve a cell culture from the Baby that saved Samus while she was on Zebes a second time. The serum was prepared and injected without delay, completely eradicating the X. There were, however, two side effects: Samus could no longer be hurt by normal X and could even absorb them to replenish health and ammunition, but she also inherited the Metroids' vulnerability to cold.\n\nUpon recovering, Samus is sent to investigate an explosion on the Biologic Space Laboratories research station, where the specimens from SR388 and the infected pieces of her Power Suit are being held. Once she arrives at the station, Samus immediately heads to the Quarantine Bay, where she encounters and kills a Hornoad that has been infected by an X parasite. Samus speaks with her new gunship's computer (whom she has named \"Adam\", as it reminds her of a former CO) and learns that the specimens brought back by the field team have become infected by the X. The computer also reveals that the X can use the DNA of its prey to create a perfect copy, meaning any organic life on the station may also be infected.\n\nSA-X 1\nThe SA-X.\nAs she continues to explore the station, Samus discovers that the X have used the infected portions of her Power Suit to create a copy of Samus herself, dubbed the SA-X (or Samus Aran-X). Since the SA-X arose from Samus's fully-upgraded Power Suit, it has all of her powered-up abilities, as evidenced by it using a Power Bomb to escape the Quarantine Bay. By exploding the bomb, the SA-X also destroyed the capsules holding the X specimens, releasing them all into the station. Well into her investigation of the station, Samus stumbles upon the facility's Restricted Lab. Here, she finds dozens of infant Metroids and several more Metroids in various stages of maturity, all in stasis; these were the results of a cloning project of which Samus was not previously aware. Shortly after Samus discovers them, the SA-X attempts to destroy its predators, but its plan backfires: the Metroids break free and the emergency fail-safes are activated as a result. Samus barely escapes before the lab locks down completely and is jettisoned from the station, exploding over SR388.\nAfter the incident at the Restricted Lab, Samus speaks with her ship's computer, who is angry about the discovery and subsequent destruction of the Metroids. The computer explains that the Federation had been secretly working on a Metroid breeding program, for \"peaceful applications\". The computer reveals that the station's SRX environment, a replica of the SR388 ecosystem, was ideal for raising Alpha, Gamma, Zeta, and even Omega Metroids. The research uncovered techniques for rapid growth, allowing an infant grow into an Omega Metroid in mere days. Unfortunately, the SA-X had been tracking Samus down and followed her to the lab's location. Much to Samus's surprise, the computer also mentions that the SA-X has been reproducing asexually and there are no fewer than 10 aboard the station.\n\nLater, the computer tells Samus that she has caused enough damage and instructs her to leave the rest of the investigation to the Federation. Apparently, the Federation has taken an interest in the X and SA-X and believe that this life-form has endless applications. Samus, having seen the SA-X's destructive capabilities firsthand, is strongly against this. She is convinced that the X will overwhelm the Federation troops as soon as they land, absorbing their powers and knowledge in the process. If this happens, they could easily spread throughout the galaxy and \"galactic civilization will end.\"\n\nAs an alternative, Samus decides to activate the station's self-destruct mechanism in order to destroy the X, risking her own life in the process. However, her ship's computer has locked Samus in a Navigation Room, as the Federation has ordered it to keep her confined until their arrival. Desperate, Samus yells at the computer: \"Don't let them do this. Can't you see what will happen, Adam?\" Puzzled at the use of the name, the computer inquires as to who this Adam was. Samus reveals that he had been her previous commanding officer and had died saving her life. Apparently moved by Samus's revelation, the computer agrees with the plan, and suggests that if Samus were to alter the station's orbit, then she might be able to include the planet in the explosion, thus ensuring the destruction of the X on planet SR388 as well as those on the station. At this point, Samus realizes that her ship's computer truly is Adam Malkovich, whose personality had been uploaded to a computer prior to his death.\n\nSamus hurries to the Operations Room, where she is confronted by an SA-X. She manages to defeat it, but its Core-X escapes before she can absorb it. Ignoring its escape, Samus initiates the self-destruct sequence and hurries back to her ship. However, she finds the docking bay in ruins and her ship gone. Before she can react to the situation, an Omega Metroid appears, apparently having escaped from the Restricted Lab before its destruction and grown to full size in record time. Samus possesses no weapon capable of damaging the Metroid, and a single swipe of its claw reduces her energy reserves to one unit. As the Omega Metroid prepares to finish her off, the SA-X returns, and attacks the Metroid with its Ice Beam, injuring it. However, it was greatly weakened from its fight with Samus and is quickly defeated by the Metroid. This time, the Core-X hovers over Samus, allowing her to absorb it and obtain the \"Unnamed Suit\" as well as the Ice Beam and restoring her genetic condition to its pre-vaccine state. Using her regained abilities, Samus fights and kills the Omega Metroid after a fierce struggle. After the battle, Samus's ship reenters the bay, having been piloted by the computer, Adam, and the same Etecoons and Dachoras she saved on the previous mission to Zebes and later on the Habitation Deck.\n\nAs Samus leaves the station, it is shown crashing into SR388, destroying both the station and the planet, ridding the universe of the X forever.\n\nReflecting on her actions, Samus doubts people will understand why she destroyed the X, nor will they realize the danger that was barely averted. Samus believes she will be held responsible for defying the Federation, but Adam comforts her, telling her: \"Do not worry. One of them will understand. One of them must.\" A final reflection, Samus goes on to say: \"we are all bound by our experiences. They are the limits of our consciousness. But in the end, the human soul will ever reach for the truth... This is what Adam taught me.\"",
         "keywords": [
             "aliens",
             "pirates",
@@ -3691,32 +3936,34 @@ GAMES_DATA = {
             "foreshadowing",
             "isolation"
         ],
-        "release_date": "2002"
+        "release_date": 2002
     },
     "metroidprime": {
         "igdb_id": "1105",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3w4w.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3w4w.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/a0lmffyqmm3wqgzdistt.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3qxy.png",
         "game_name": "Metroid Prime",
-        "igdb_name": "metroid prime",
+        "igdb_name": "Metroid Prime",
         "age_rating": "12",
         "rating": [
-            "violence"
+            "Violence"
         ],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "shooter",
-            "platform",
-            "adventure"
+            "Shooter",
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "open world"
+            "Action",
+            "Science fiction",
+            "Open world"
         ],
         "platforms": [
-            "nintendo gamecube"
+            "Nintendo GameCube"
         ],
         "storyline": "",
         "keywords": [
@@ -3766,39 +4013,41 @@ GAMES_DATA = {
             "isolation",
             "retroachievements"
         ],
-        "release_date": "2002"
+        "release_date": 2002
     },
     "minecraft": {
         "igdb_id": "121",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coa77e.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coa77e.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar30cw.png",
+        "key_art_url": "",
         "game_name": "Minecraft",
-        "igdb_name": "minecraft: java edition",
+        "igdb_name": "Minecraft: Java Edition",
         "age_rating": "7",
         "rating": [
-            "fantasy violence"
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "first person",
-            "third person",
-            "virtual reality"
+            "First person",
+            "Third person",
+            "Virtual Reality"
         ],
         "genres": [
-            "simulator",
-            "adventure"
+            "Simulator",
+            "Adventure"
         ],
         "themes": [
-            "fantasy",
-            "survival",
-            "sandbox",
-            "kids",
-            "open world"
+            "Fantasy",
+            "Survival",
+            "Sandbox",
+            "Kids",
+            "Open world"
         ],
         "platforms": [
-            "linux",
-            "pc (microsoft windows)",
-            "mac"
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac"
         ],
-        "storyline": "minecraft: java edition (previously known as minecraft) is the original version of minecraft, developed by mojang studios for windows, macos, and linux. notch began development on may 10, 2009, publicly releasing minecraft on may 17, 2009. the full release of the game was on november 18, 2011, at minecon 2011.",
+        "storyline": "Minecraft: Java Edition (previously known as Minecraft) is the original version of Minecraft, developed by Mojang Studios for Windows, macOS, and Linux. Notch began development on May 10, 2009, publicly releasing Minecraft on May 17, 2009. The full release of the game was on November 18, 2011, at MINECON 2011.",
         "keywords": [
             "3d",
             "fishing",
@@ -3836,31 +4085,33 @@ GAMES_DATA = {
             "status effects",
             "bees"
         ],
-        "release_date": "2011"
+        "release_date": 2011
     },
     "mk64": {
         "igdb_id": "2342",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co67hm.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co67hm.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar406h.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar406i.png",
         "game_name": "Mario Kart 64",
-        "igdb_name": "mario kart 64",
+        "igdb_name": "Mario Kart 64",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "racing",
-            "arcade"
+            "Racing",
+            "Arcade"
         ],
         "themes": [
-            "action",
-            "kids",
-            "party"
+            "Action",
+            "Kids",
+            "Party"
         ],
         "platforms": [
-            "wii",
-            "nintendo 64",
-            "wii u"
+            "Wii",
+            "Nintendo 64",
+            "Wii U"
         ],
         "storyline": "",
         "keywords": [
@@ -3880,30 +4131,32 @@ GAMES_DATA = {
             "time trials",
             "retroachievements"
         ],
-        "release_date": "1996"
+        "release_date": 1996
     },
     "mlss": {
         "igdb_id": "3351",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co21rg.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co21rg.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/knx4ne4pefgjivuylmii.png",
+        "key_art_url": "",
         "game_name": "Mario & Luigi Superstar Saga",
-        "igdb_name": "mario & luigi: superstar saga",
+        "igdb_name": "Mario & Luigi: Superstar Saga",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "comedy"
+            "Action",
+            "Fantasy",
+            "Comedy"
         ],
         "platforms": [
-            "wii u",
-            "game boy advance"
+            "Wii U",
+            "Game Boy Advance"
         ],
         "storyline": "",
         "keywords": [
@@ -3925,31 +4178,33 @@ GAMES_DATA = {
             "rpg elements",
             "tentacles"
         ],
-        "release_date": "2003"
+        "release_date": 2003
     },
     "mm2": {
         "igdb_id": "1734",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5572.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5572.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar8mv.png",
+        "key_art_url": "",
         "game_name": "Mega Man 2",
-        "igdb_name": "mega man ii",
+        "igdb_name": "Mega Man II",
         "age_rating": "7",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "science fiction"
+            "Action",
+            "Science fiction"
         ],
         "platforms": [
-            "nintendo 3ds",
-            "game boy"
+            "Nintendo 3DS",
+            "Game Boy"
         ],
-        "storyline": "even after his crushing defeat at the hands of mega man during the events of mega man: dr. wily's revenge, dr. wily was already planning his next scheme. if he could get his hands on the time machine (named time skimmer in the american manual) that was being developed at the time-space research laboratory (named chronos institute in the american manual), he thought he just might be able to change the past.\n\nafter stealing the time machine, wily had wanted to set out immediately on a trip across time, but had to put an emergency brake down on his plans when he discovered that the time machine had a serious flaw.\n\nmeanwhile, dr. light had been dispatched to the time-space laboratory to investigate. with the help of rush\u2019s super-sense of smell, he was able to deduce that it was none other than dr. wily behind the theft. having a bad feeling about the incident, dr. light quickly called upon mega man and rush to search out dr. wily\u2019s whereabouts.",
+        "storyline": "Even after his crushing defeat at the hands of Mega Man during the events of Mega Man: Dr. Wily's Revenge, Dr. Wily was already planning his next scheme. If he could get his hands on the time machine (named Time Skimmer in the American manual) that was being developed at the Time-Space Research Laboratory (named Chronos Institute in the American manual), he thought he just might be able to change the past.\n\nAfter stealing the time machine, Wily had wanted to set out immediately on a trip across time, but had to put an emergency brake down on his plans when he discovered that the time machine had a serious flaw.\n\nMeanwhile, Dr. Light had been dispatched to the time-space laboratory to investigate. With the help of Rush\u2019s super-sense of smell, he was able to deduce that it was none other than Dr. Wily behind the theft. Having a bad feeling about the incident, Dr. Light quickly called upon Mega Man and Rush to search out Dr. Wily\u2019s whereabouts.",
         "keywords": [
             "mascot",
             "death",
@@ -3969,35 +4224,37 @@ GAMES_DATA = {
             "water level",
             "monomyth"
         ],
-        "release_date": "1991"
+        "release_date": 1991
     },
     "mm3": {
         "igdb_id": "1716",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co55ce.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co55ce.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar3p52.png",
+        "key_art_url": "",
         "game_name": "Mega Man 3",
-        "igdb_name": "mega man 3",
+        "igdb_name": "Mega Man 3",
         "age_rating": "7",
         "rating": [
-            "mild cartoon violence"
+            "Mild Cartoon Violence"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "science fiction"
+            "Action",
+            "Science fiction"
         ],
         "platforms": [
-            "arcade",
-            "nintendo 3ds",
-            "wii",
-            "family computer",
-            "wii u",
-            "nintendo entertainment system"
+            "Arcade",
+            "Nintendo 3DS",
+            "Wii",
+            "Family Computer",
+            "Wii U",
+            "Nintendo Entertainment System"
         ],
         "storyline": "",
         "keywords": [
@@ -4017,65 +4274,69 @@ GAMES_DATA = {
             "recurring boss",
             "monomyth"
         ],
-        "release_date": "1990"
+        "release_date": 1990
     },
     "mmbn3": {
         "igdb_id": "1758",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co203k.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co203k.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kmf.png",
+        "key_art_url": "",
         "game_name": "MegaMan Battle Network 3",
-        "igdb_name": "mega man battle network 3 blue",
+        "igdb_name": "Mega Man Battle Network 3 Blue",
         "age_rating": "7",
         "rating": [
-            "mild violence"
+            "Mild Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "real time strategy (rts)",
-            "role-playing (rpg)",
-            "tactical"
+            "Real Time Strategy (RTS)",
+            "Role-playing (RPG)",
+            "Tactical"
         ],
         "themes": [
-            "action",
-            "science fiction"
+            "Action",
+            "Science fiction"
         ],
         "platforms": [
-            "game boy advance"
+            "Game Boy Advance"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2002"
+        "release_date": 2002
     },
     "mmx3": {
         "igdb_id": "1743",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co55pa.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co55pa.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar2oxu.png",
+        "key_art_url": "",
         "game_name": "Mega Man X3",
-        "igdb_name": "mega man x3",
+        "igdb_name": "Mega Man X3",
         "age_rating": "7",
         "rating": [
-            "animated violence"
+            "Animated Violence"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "shooter",
-            "platform",
-            "adventure"
+            "Shooter",
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "science fiction"
+            "Action",
+            "Science fiction"
         ],
         "platforms": [
-            "super nintendo entertainment system",
-            "wii u",
-            "new nintendo 3ds",
-            "legacy mobile device",
-            "super famicom"
+            "Super Nintendo Entertainment System",
+            "Wii U",
+            "New Nintendo 3DS",
+            "Legacy Mobile Device",
+            "Super Famicom"
         ],
-        "storyline": "zero, who had returned as an irregular hunter, became the commander of the zero special forces unit and continued to sweep up irregulars together with x, who was active as the commander of the 17th elite unit, and other hunters in the unit.\nat the same time, dr. doppler, a scientist-type repliloid, conducted research that revealed the fact that the computer virus \"sigma virus\" was the cause of irregularities, developed a special antibody virus, and proposed that it be injected into repliloids. as a result, the number of irregularities decreased. furthermore, dr. doppler declared that he would build \"doppeltown,\" a peaceful city where humans and replicants could coexist, and he gained the support of both humans and replicants.\na few months later, however, doppler and his repliroids, who had been exposed to the antibody virus mentioned above, rebelled. the irregular hunters recognized doppler and the participants in the rebellion as irregulars, and x and zero were ordered to go into action.",
+        "storyline": "Zero, who had returned as an irregular hunter, became the commander of the Zero Special Forces Unit and continued to sweep up irregulars together with X, who was active as the commander of the 17th Elite Unit, and other hunters in the unit.\nAt the same time, Dr. Doppler, a scientist-type repliloid, conducted research that revealed the fact that the computer virus \"Sigma Virus\" was the cause of irregularities, developed a special antibody virus, and proposed that it be injected into repliloids. As a result, the number of irregularities decreased. Furthermore, Dr. Doppler declared that he would build \"Doppeltown,\" a peaceful city where humans and replicants could coexist, and he gained the support of both humans and replicants.\nA few months later, however, Doppler and his Repliroids, who had been exposed to the antibody virus mentioned above, rebelled. The Irregular Hunters recognized Doppler and the participants in the rebellion as irregulars, and X and Zero were ordered to go into action.",
         "keywords": [
             "death",
             "robots",
@@ -4091,38 +4352,40 @@ GAMES_DATA = {
             "moving platforms",
             "retroachievements"
         ],
-        "release_date": "1995"
+        "release_date": 1995
     },
     "mm_recomp": {
         "igdb_id": "1030",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3pah.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3pah.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/jkiwacooqfrtotvqlxba.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3p8l.png",
         "game_name": "Majora's Mask Recompiled",
-        "igdb_name": "the legend of zelda: majora's mask",
+        "igdb_name": "The Legend of Zelda: Majora's Mask",
         "age_rating": "12",
         "rating": [
-            "animated violence",
-            "cartoon violence"
+            "Animated Violence",
+            "Cartoon Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "puzzle",
-            "adventure"
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "horror",
-            "open world"
+            "Action",
+            "Fantasy",
+            "Horror",
+            "Open world"
         ],
         "platforms": [
-            "wii",
-            "nintendo 64",
-            "64dd",
-            "wii u"
+            "Wii",
+            "Nintendo 64",
+            "64DD",
+            "Wii U"
         ],
-        "storyline": "after the events of the legend of zelda: ocarina of time, link departs on his horse epona in the lost woods and is assaulted by an imp named skull kid who dons a mysterious mask, accompanied by the fairies tael and tatl. skull kid turns link into a small plant-like creature known as deku scrub and takes away his horse and his magical ocarina. shortly afterward, tatl joins link and agrees to help him revert to his native form. a meeting with a wandering mask salesman reveals that the skull kid is wearing majora's mask, an ancient item used in hexing rituals, which calls forth a menacing moon hovering over the land of termina. link has exactly three days to find a way to prevent this from happening.",
+        "storyline": "After the events of The Legend of Zelda: Ocarina of Time, Link departs on his horse Epona in the Lost Woods and is assaulted by an imp named Skull Kid who dons a mysterious mask, accompanied by the fairies Tael and Tatl. Skull Kid turns Link into a small plant-like creature known as Deku Scrub and takes away his horse and his magical ocarina. Shortly afterward, Tatl joins Link and agrees to help him revert to his native form. A meeting with a wandering mask salesman reveals that the Skull Kid is wearing Majora's Mask, an ancient item used in hexing rituals, which calls forth a menacing moon hovering over the land of Termina. Link has exactly three days to find a way to prevent this from happening.",
         "keywords": [
             "time travel",
             "archery",
@@ -4140,112 +4403,118 @@ GAMES_DATA = {
             "living inventory",
             "retroachievements"
         ],
-        "release_date": "2000"
+        "release_date": 2000
     },
     "momodoramoonlitfarewell": {
         "igdb_id": "188088",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7mxs.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7mxs.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1rhx.png",
+        "key_art_url": "",
         "game_name": "Momodora Moonlit Farewell",
-        "igdb_name": "momodora: moonlit farewell",
+        "igdb_name": "Momodora: Moonlit Farewell",
         "age_rating": "7",
         "rating": [
-            "fantasy violence",
-            "blood",
-            "suggestive themes"
+            "Fantasy Violence",
+            "Blood",
+            "Suggestive Themes"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure",
-            "indie"
+            "Platform",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "xbox series x|s",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Nintendo Switch"
         ],
-        "storyline": "momodora: moonlit farewell presents the account of the greatest calamity to befall the village of koho, five years after the events of momodora iii. once the toll of an ominous bell is heard, the village is soon threatened by a demon invasion.\n\nthe village's matriarch sends momo reinol, their most capable priestess, to investigate the bell and find the bellringer responsible for summoning demons. it is their hope that by finding the culprit, they will also be able to secure the village's safety, and most importantly, the sacred lun tree's, a source of life and healing for koho...",
+        "storyline": "Momodora: Moonlit Farewell presents the account of the greatest calamity to befall the village of Koho, five years after the events of Momodora III. Once the toll of an ominous bell is heard, the village is soon threatened by a demon invasion.\n\nThe village's matriarch sends Momo Reinol, their most capable priestess, to investigate the bell and find the bellringer responsible for summoning demons. It is their hope that by finding the culprit, they will also be able to secure the village's safety, and most importantly, the sacred Lun Tree's, a source of life and healing for Koho...",
         "keywords": [
             "metroidvania"
         ],
-        "release_date": "2024"
+        "release_date": 2024
     },
     "monster_sanctuary": {
         "igdb_id": "89594",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1q3q.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1q3q.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar88x.png",
+        "key_art_url": "",
         "game_name": "Monster Sanctuary",
-        "igdb_name": "monster sanctuary",
+        "igdb_name": "Monster Sanctuary",
         "age_rating": "7",
         "rating": [
-            "fantasy violence",
-            "mild blood",
-            "tobacco reference"
+            "Fantasy Violence",
+            "Mild Blood",
+            "Tobacco Reference"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "role-playing (rpg)",
-            "strategy",
-            "turn-based strategy (tbs)",
-            "adventure",
-            "indie"
+            "Platform",
+            "Role-playing (RPG)",
+            "Strategy",
+            "Turn-based strategy (TBS)",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "playstation 4",
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
             "metroidvania"
         ],
-        "release_date": "2020"
+        "release_date": 2020
     },
     "musedash": {
         "igdb_id": "86316",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co6h43.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co6h43.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar5ul.png",
+        "key_art_url": "",
         "game_name": "Muse Dash",
-        "igdb_name": "muse dash",
+        "igdb_name": "Muse Dash",
         "age_rating": "12",
         "rating": [
-            "sexual themes",
-            "mild blood",
-            "mild lyrics",
-            "fantasy violence",
-            "suggestive themes"
+            "Sexual Themes",
+            "Mild Blood",
+            "Mild Lyrics",
+            "Fantasy Violence",
+            "Suggestive Themes"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "music",
-            "indie"
+            "Music",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "comedy"
+            "Action",
+            "Comedy"
         ],
         "platforms": [
-            "android",
-            "pc (microsoft windows)",
-            "ios",
-            "mac",
-            "nintendo switch"
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "Mac",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
@@ -4258,33 +4527,35 @@ GAMES_DATA = {
             "digital distribution",
             "difficulty level"
         ],
-        "release_date": "2018"
+        "release_date": 2018
     },
     "mzm": {
         "igdb_id": "1107",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1vci.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1vci.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1vh5.png",
+        "key_art_url": "",
         "game_name": "Metroid Zero Mission",
-        "igdb_name": "metroid: zero mission",
+        "igdb_name": "Metroid: Zero Mission",
         "age_rating": "7",
         "rating": [
-            "fantasy violence"
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "shooter",
-            "platform",
-            "adventure"
+            "Shooter",
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "open world"
+            "Action",
+            "Science fiction",
+            "Open world"
         ],
         "platforms": [
-            "wii u",
-            "game boy advance"
+            "Wii U",
+            "Game Boy Advance"
         ],
         "storyline": "",
         "keywords": [
@@ -4315,70 +4586,119 @@ GAMES_DATA = {
             "isolation",
             "interconnected-world"
         ],
-        "release_date": "2004"
+        "release_date": 2004
+    },
+    "nine_sols": {
+        "igdb_id": "194821",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co4l2s.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1jha.png",
+        "key_art_url": "",
+        "game_name": "Nine Sols",
+        "igdb_name": "Nine Sols",
+        "age_rating": "16",
+        "rating": [
+            "Blood and Gore",
+            "Use of Alcohol",
+            "Language",
+            "Violence",
+            "Blood"
+        ],
+        "player_perspectives": [
+            "Side view"
+        ],
+        "genres": [
+            "Platform",
+            "Hack and slash/Beat 'em up",
+            "Adventure",
+            "Indie"
+        ],
+        "themes": [
+            "Action",
+            "Fantasy",
+            "Science fiction"
+        ],
+        "platforms": [
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
+        ],
+        "storyline": "In New Kunlun, hero Yi has awakened the 9 rulers of this forsaken realm. To defeat the 9 Sols in the deserted city.\n\n\u201cBecomes one with the way of Tao\u2026\u201d\n\nNew Kunlun, the Solarian\u2019s last sanctuary, has remained quiet for centuries. Inside this vast realm, the ancient gods left mortals with a promised land that is forever protected by the sacred rituals, yet the truth of this world remains unknown to most. Everything changes when Yi, a long forgotten hero from the past, is awoken by a human child.\n\nFollow Yi on his vengeful quest against the 9 Sols, formidable rulers of this forsaken realm, and obliterate any obstacles blocking your way in Sekiro-lite style combat. Explore in unique \u201cTaopunk\u201d setting that blends cyberpunk elements with Taoism and far eastern mythology. Unravel the mysteries of an ancient alien race and learn about the fate of mankind.",
+        "keywords": [
+            "2d",
+            "metroidvania"
+        ],
+        "release_date": 2024
     },
     "noita": {
         "igdb_id": "52006",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1qp1.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1qp1.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar7dm.png",
+        "key_art_url": "",
         "game_name": "Noita",
-        "igdb_name": "noita",
-        "age_rating": "nr",
+        "igdb_name": "Noita",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "shooter",
-            "role-playing (rpg)",
-            "simulator",
-            "adventure",
-            "indie",
-            "arcade"
+            "Shooter",
+            "Role-playing (RPG)",
+            "Simulator",
+            "Adventure",
+            "Indie",
+            "Arcade"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "sandbox"
+            "Action",
+            "Fantasy",
+            "Sandbox"
         ],
         "platforms": [
-            "pc (microsoft windows)"
+            "PC (Microsoft Windows)"
         ],
         "storyline": "",
         "keywords": [
             "magic",
             "roguelite"
         ],
-        "release_date": "2020"
+        "release_date": 2020
     },
     "oot": {
         "igdb_id": "1029",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3nnx.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3nnx.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar3p2v.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3p2s.png",
         "game_name": "Ocarina of Time",
-        "igdb_name": "the legend of zelda: ocarina of time",
+        "igdb_name": "The Legend of Zelda: Ocarina of Time",
         "age_rating": "12",
         "rating": [
-            "violence"
+            "Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "puzzle",
-            "adventure"
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "sandbox",
-            "open world"
+            "Action",
+            "Fantasy",
+            "Sandbox",
+            "Open world"
         ],
         "platforms": [
-            "wii",
-            "nintendo 64",
-            "64dd",
-            "wii u"
+            "Wii",
+            "Nintendo 64",
+            "64DD",
+            "Wii U"
         ],
-        "storyline": "a young boy named link was raised in the village of the elf-like kokiri people. one day a fairy named navi introduces him to the village's guardian, the great deku tree. it appears that a mysterious man has cursed the tree, and link is sent to the hyrule castle to find out more. princess zelda tells link that ganondorf, the leader of the gerudo tribe, seeks to obtain the triforce, a holy relic that grants immense power to the one who possesses it. link must do everything in his power to obtain the triforce before ganondorf does, and save hyrule.",
+        "storyline": "A young boy named Link was raised in the village of the elf-like Kokiri people. One day a fairy named Navi introduces him to the village's guardian, the Great Deku Tree. It appears that a mysterious man has cursed the tree, and Link is sent to the Hyrule Castle to find out more. Princess Zelda tells Link that Ganondorf, the leader of the Gerudo tribe, seeks to obtain the Triforce, a holy relic that grants immense power to the one who possesses it. Link must do everything in his power to obtain the Triforce before Ganondorf does, and save Hyrule.",
         "keywords": [
             "gravity",
             "time travel",
@@ -4430,32 +4750,34 @@ GAMES_DATA = {
             "damage over time",
             "retroachievements"
         ],
-        "release_date": "1998"
+        "release_date": 1998
     },
     "openrct2": {
         "igdb_id": "80720",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1ngq.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1ngq.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "OpenRCT2",
-        "igdb_name": "openrct2",
-        "age_rating": "nr",
+        "igdb_name": "OpenRCT2",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "real time strategy (rts)",
-            "simulator",
-            "strategy",
-            "indie"
+            "Real Time Strategy (RTS)",
+            "Simulator",
+            "Strategy",
+            "Indie"
         ],
         "themes": [
-            "business",
-            "4x (explore, expand, exploit, and exterminate)"
+            "Business",
+            "4X (explore, expand, exploit, and exterminate)"
         ],
         "platforms": [
-            "linux",
-            "pc (microsoft windows)",
-            "mac"
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac"
         ],
         "storyline": "",
         "keywords": [
@@ -4464,36 +4786,38 @@ GAMES_DATA = {
             "easter egg",
             "explosion"
         ],
-        "release_date": "2014"
+        "release_date": 2014
     },
     "oribf": {
         "igdb_id": "7344",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1y41.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1y41.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/argmx.png",
+        "key_art_url": "",
         "game_name": "Ori and the Blind Forest",
-        "igdb_name": "ori and the blind forest",
+        "igdb_name": "Ori and the Blind Forest",
         "age_rating": "7",
         "rating": [
-            "mild fantasy violence"
+            "Mild Fantasy Violence"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "puzzle",
-            "adventure"
+            "Platform",
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "thriller"
+            "Action",
+            "Fantasy",
+            "Thriller"
         ],
         "platforms": [
-            "pc (microsoft windows)",
-            "xbox one",
-            "nintendo switch"
+            "PC (Microsoft Windows)",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "ori, the protagonist of the game, falls from the spirit tree and is adopted by naru, who raises ori as her own. when a disastrous event occurs causing the forest to wither and naru to die, ori is left to explore the forest. ori eventually encounters sein, who begins to guide ori on an adventure to restore the forest through the recovery of the light of three main elements supporting the balance of the forest: waters, winds and warmth.",
+        "storyline": "Ori, the protagonist of the game, falls from the Spirit Tree and is adopted by Naru, who raises Ori as her own. When a disastrous event occurs causing the forest to wither and Naru to die, Ori is left to explore the forest. Ori eventually encounters Sein, who begins to guide Ori on an adventure to restore the forest through the recovery of the light of three main elements supporting the balance of the forest: waters, winds and warmth.",
         "keywords": [
             "metroidvania",
             "achievements",
@@ -4504,62 +4828,66 @@ GAMES_DATA = {
             "rpg elements",
             "coming of age"
         ],
-        "release_date": "2015"
+        "release_date": 2015
     },
     "osrs": {
         "igdb_id": "79824",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1mo1.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1mo1.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar6ki.png",
+        "key_art_url": "",
         "game_name": "Old School Runescape",
-        "igdb_name": "old school runescape",
+        "igdb_name": "Old School RuneScape",
         "age_rating": "16",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric",
-            "text"
+            "Bird view / Isometric",
+            "Text"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "fantasy",
-            "sandbox",
-            "open world"
+            "Fantasy",
+            "Sandbox",
+            "Open world"
         ],
         "platforms": [
-            "android",
-            "pc (microsoft windows)",
-            "ios",
-            "mac"
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "Mac"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2013"
+        "release_date": 2013
     },
     "osu": {
         "igdb_id": "3012",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co8a4m.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co8a4m.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar15xc.png",
+        "key_art_url": "",
         "game_name": "osu!",
-        "igdb_name": "osu!",
-        "age_rating": "nr",
+        "igdb_name": "Osu!",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "auditory"
+            "Auditory"
         ],
         "genres": [
-            "music",
-            "indie",
-            "arcade"
+            "Music",
+            "Indie",
+            "Arcade"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "android",
-            "ios"
+            "Linux",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "Mac"
         ],
         "storyline": "",
         "keywords": [
@@ -4567,112 +4895,118 @@ GAMES_DATA = {
             "stat tracking",
             "difficulty level"
         ],
-        "release_date": "2007"
+        "release_date": 2007
     },
     "outer_wilds": {
         "igdb_id": "11737",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co65ac.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co65ac.png",
+        "artwork_url": "",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3nua.png",
         "game_name": "Outer Wilds",
-        "igdb_name": "outer wilds",
+        "igdb_name": "Outer Wilds",
         "age_rating": "7",
         "rating": [
-            "fantasy violence",
-            "alcohol reference"
+            "Fantasy Violence",
+            "Alcohol Reference"
         ],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "puzzle",
-            "simulator",
-            "adventure",
-            "indie"
+            "Puzzle",
+            "Simulator",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "open world",
-            "mystery"
+            "Action",
+            "Science fiction",
+            "Open world",
+            "Mystery"
         ],
         "platforms": [
-            "xbox series x|s",
-            "playstation 4",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "xbox one",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "welcome to the space program! you're the newest recruit of outer wilds ventures, a fledgling space program searching for answers in a strange, constantly evolving solar system. what lurks in the heart of the ominous dark bramble? who built the alien ruins on the moon? can the endless time loop be stopped? answers await you in the most dangerous reaches of space.\n\nthe planets of outer wilds are packed with hidden locations that change with the passage of time. visit an underground city of before it's swallowed by sand, or explore the surface of a planet as it crumbles beneath your feet. every secret is guarded by hazardous environments and natural catastrophes.\n\nstrap on your hiking boots, check your oxygen levels, and get ready to venture into space. use a variety of unique gadgets to probe your surroundings, track down mysterious signals, decipher ancient alien writing, and roast the perfect marshmallow.",
+        "storyline": "Welcome to the Space Program! You're the newest recruit of Outer Wilds Ventures, a fledgling space program searching for answers in a strange, constantly evolving solar system. What lurks in the heart of the ominous Dark Bramble? Who built the alien ruins on the Moon? Can the endless time loop be stopped? Answers await you in the most dangerous reaches of space.\n\nThe planets of Outer Wilds are packed with hidden locations that change with the passage of time. Visit an underground city of before it's swallowed by sand, or explore the surface of a planet as it crumbles beneath your feet. Every secret is guarded by hazardous environments and natural catastrophes.\n\nStrap on your hiking boots, check your oxygen levels, and get ready to venture into space. Use a variety of unique gadgets to probe your surroundings, track down mysterious signals, decipher ancient alien writing, and roast the perfect marshmallow.",
         "keywords": [
             "exploration",
             "time travel"
         ],
-        "release_date": "2019"
+        "release_date": 2019
     },
     "overcooked2": {
         "igdb_id": "103341",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1usu.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1usu.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar89w.png",
+        "key_art_url": "",
         "game_name": "Overcooked! 2",
-        "igdb_name": "overcooked! 2",
+        "igdb_name": "Overcooked! 2",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "simulator",
-            "strategy",
-            "tactical",
-            "indie",
-            "arcade"
+            "Simulator",
+            "Strategy",
+            "Tactical",
+            "Indie",
+            "Arcade"
         ],
         "themes": [
-            "action",
-            "comedy",
-            "kids",
-            "party"
+            "Action",
+            "Comedy",
+            "Kids",
+            "Party"
         ],
         "platforms": [
-            "playstation 4",
-            "linux",
-            "nintendo switch 2",
-            "pc (microsoft windows)",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "Linux",
+            "Nintendo Switch 2",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
             "you can pet the dog"
         ],
-        "release_date": "2018"
+        "release_date": 2018
     },
     "papermario": {
         "igdb_id": "3340",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1qda.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1qda.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Paper Mario",
-        "igdb_name": "paper mario",
+        "igdb_name": "Paper Mario",
         "age_rating": "3",
         "rating": [
-            "comic mischief"
+            "Comic Mischief"
         ],
         "player_perspectives": [
-            "third person",
-            "side view"
+            "Third person",
+            "Side view"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "comedy"
+            "Action",
+            "Fantasy",
+            "Comedy"
         ],
         "platforms": [
-            "wii",
-            "nintendo 64",
-            "wii u"
+            "Wii",
+            "Nintendo 64",
+            "Wii U"
         ],
         "storyline": "",
         "keywords": [
@@ -4708,134 +5042,143 @@ GAMES_DATA = {
             "fire manipulation",
             "retroachievements"
         ],
-        "release_date": "2000"
+        "release_date": 2000
     },
     "peaks_of_yore": {
         "igdb_id": "238690",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co8zzc.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co8zzc.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar2712.png",
+        "key_art_url": "",
         "game_name": "Peaks of Yore",
-        "igdb_name": "peaks of yore",
-        "age_rating": "nr",
+        "igdb_name": "Peaks of Yore",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [],
         "genres": [
-            "platform",
-            "adventure",
-            "indie"
+            "Platform",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "pc (microsoft windows)"
+            "PC (Microsoft Windows)"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2023"
+        "release_date": 2023
     },
     "placidplasticducksim": {
         "igdb_id": "204122",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co4yq5.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co4yq5.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1oc8.png",
+        "key_art_url": "",
         "game_name": "Placid Plastic Duck Simulator",
-        "igdb_name": "placid plastic duck simulator",
+        "igdb_name": "Placid Plastic Duck Simulator",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "third person",
-            "bird view / isometric"
+            "Third person",
+            "Bird view / Isometric"
         ],
         "genres": [
-            "music",
-            "puzzle",
-            "simulator"
+            "Music",
+            "Puzzle",
+            "Simulator"
         ],
         "themes": [
-            "comedy",
-            "sandbox",
-            "kids",
-            "party"
+            "Comedy",
+            "Sandbox",
+            "Kids",
+            "Party"
         ],
         "platforms": [
-            "xbox series x|s",
-            "playstation 4",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "xbox one",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Xbox One",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
             "casual",
             "pop culture reference"
         ],
-        "release_date": "2022"
+        "release_date": 2022
     },
     "pmd_eos": {
         "igdb_id": "2323",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7ovf.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7ovf.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kc2.png",
+        "key_art_url": "",
         "game_name": "Pokemon Mystery Dungeon Explorers of Sky",
-        "igdb_name": "pok\u00e9mon mystery dungeon: explorers of sky",
+        "igdb_name": "Pok\u00e9mon Mystery Dungeon: Explorers of Sky",
         "age_rating": "3",
         "rating": [
-            "mild cartoon violence"
+            "Mild Cartoon Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "turn-based strategy (tbs)"
+            "Role-playing (RPG)",
+            "Turn-based strategy (TBS)"
         ],
         "themes": [
-            "fantasy",
-            "kids"
+            "Fantasy",
+            "Kids"
         ],
         "platforms": [
-            "wii u",
-            "nintendo ds"
+            "Wii U",
+            "Nintendo DS"
         ],
         "storyline": "",
         "keywords": [
             "time travel",
             "roguelike",
-            "jrpg"
+            "jrpg",
+            "retroachievements"
         ],
-        "release_date": "2009"
+        "release_date": 2009
     },
     "poe": {
         "igdb_id": "1911",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1n6w.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1n6w.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arjpc.png",
+        "key_art_url": "",
         "game_name": "Path of Exile",
-        "igdb_name": "path of exile",
+        "igdb_name": "Path of Exile",
         "age_rating": "18",
         "rating": [
-            "intense violence",
-            "blood and gore",
-            "sexual themes",
-            "language",
-            "nudity"
+            "Intense Violence",
+            "Blood and Gore",
+            "Sexual Themes",
+            "Language",
+            "Nudity"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "hack and slash/beat 'em up",
-            "adventure"
+            "Role-playing (RPG)",
+            "Hack and slash/Beat 'em up",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "horror"
+            "Action",
+            "Fantasy",
+            "Horror"
         ],
         "platforms": [
-            "playstation 4",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "mac",
-            "xbox one"
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Mac",
+            "Xbox One"
         ],
-        "storyline": "all exiles are given the same choice: to sink or swim. those that don't drown will reach the forsaken shores of wraeclast, where the only welcome is the clinging embrace of undeath. however, a small band of survivors has managed to hold fast in a ruined lighthouse, desperately repelling both the grasping undead and the manic scavengers that stubbornly cling to their last shreds of humanity. under the commanding gaze of axiom prison, snarling goatmen roam the craggy bluffs, always keeping their cloven feet well clear of the rhoa-infested swamps in the lowlands. all along the coast, rotting shipwrecks litter the shoreline, the spirits of the stranded sailors still haunting the wreckages of their ill-fated ships, waiting to take out their sorrow and rage on those who yet live. all the while, the siren herself continues her sweet, sad song, luring ever more ships to their watery graves.\n\nfarther inland, through the twisting caves and darkened forests, the ruins of civilisation become more apparent. the ravages of time have worn many buildings to rubble, and stripped away decaying flesh, leaving only grotesquely grinning bones. the dark, fetid caves and underground passages are a clattering refuge for these skeletal ranks, while the open forests and riverways brim with monstrous beasts with a taste for blood. recently, ragtag groups of bloodthirsty bandits have built fortified camps in the forest, openly challenging one another while extorting food and supplies from the small, struggling village that sits between them atop a stone dam. ignored by the squabbling bandits, strange newcomers clad in black armor have been seen skulking around various large ruins, their purpose both mysterious yet unsettling.\n\natop a sheer cliff of ruptured mantle, straddling the river feeding a mighty waterfall, lies the fallen capital of the eternal empire. its former glory rots amid the ruins of a blasted cityscape, the buildings decrepit and mouldering. but sarn is far from uninhabited. many of the original citizens still lurk the dark recesses, their humanity washed clean by the cataclysm of centuries past. these undying monsters roam the city at night and skulk the shadows during the day, for the naked sunlight is anathema to their shrivelled, leathery skin. the sun-scarred days are far from peaceful, however. a legion of soldiers from oriath has occupied the area to the west of the river, and is fighting an all-out war against the multifarious denizens of the city. every day their black-clad soldiers battle twisted insects that scuttle and breed, feasting on anything that moves. every day they throw battalions against the army of floating, red ribbons that eviscerate all who trespass on their domain. every day they skirmish against a small group of exiles who have barricaded themselves on a small island in the middle of the river, caught between certain death on both sides.",
+        "storyline": "All exiles are given the same choice: to sink or swim. Those that don't drown will reach the forsaken shores of Wraeclast, where the only welcome is the clinging embrace of undeath. However, a small band of survivors has managed to hold fast in a ruined lighthouse, desperately repelling both the grasping undead and the manic scavengers that stubbornly cling to their last shreds of humanity. Under the commanding gaze of Axiom Prison, snarling goatmen roam the craggy bluffs, always keeping their cloven feet well clear of the rhoa-infested swamps in the lowlands. All along the coast, rotting shipwrecks litter the shoreline, the spirits of the stranded sailors still haunting the wreckages of their ill-fated ships, waiting to take out their sorrow and rage on those who yet live. All the while, the Siren herself continues her sweet, sad song, luring ever more ships to their watery graves.\n\nFarther inland, through the twisting caves and darkened forests, the ruins of civilisation become more apparent. The ravages of time have worn many buildings to rubble, and stripped away decaying flesh, leaving only grotesquely grinning bones. The dark, fetid caves and underground passages are a clattering refuge for these skeletal ranks, while the open forests and riverways brim with monstrous beasts with a taste for blood. Recently, ragtag groups of bloodthirsty bandits have built fortified camps in the forest, openly challenging one another while extorting food and supplies from the small, struggling village that sits between them atop a stone dam. Ignored by the squabbling bandits, strange newcomers clad in black armor have been seen skulking around various large ruins, their purpose both mysterious yet unsettling.\n\nAtop a sheer cliff of ruptured mantle, straddling the river feeding a mighty waterfall, lies the fallen capital of the Eternal Empire. Its former glory rots amid the ruins of a blasted cityscape, the buildings decrepit and mouldering. But Sarn is far from uninhabited. Many of the original citizens still lurk the dark recesses, their humanity washed clean by the cataclysm of centuries past. These Undying monsters roam the city at night and skulk the shadows during the day, for the naked sunlight is anathema to their shrivelled, leathery skin. The sun-scarred days are far from peaceful, however. A legion of soldiers from Oriath has occupied the area to the west of the river, and is fighting an all-out war against the multifarious denizens of the city. Every day their black-clad soldiers battle twisted insects that scuttle and breed, feasting on anything that moves. Every day they throw battalions against the army of floating, red Ribbons that eviscerate all who trespass on their domain. Every day they skirmish against a small group of exiles who have barricaded themselves on a small island in the middle of the river, caught between certain death on both sides.",
         "keywords": [
             "bloody",
             "magic",
@@ -4845,31 +5188,33 @@ GAMES_DATA = {
             "potion",
             "fast traveling"
         ],
-        "release_date": "2013"
+        "release_date": 2013
     },
     "pokemon_crystal": {
         "igdb_id": "1514",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5pil.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5pil.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1ox6.png",
+        "key_art_url": "",
         "game_name": "Pokemon Crystal",
-        "igdb_name": "pok\u00e9mon crystal version",
+        "igdb_name": "Pok\u00e9mon Crystal Version",
         "age_rating": "12",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric",
-            "side view"
+            "Bird view / Isometric",
+            "Side view"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "kids"
+            "Action",
+            "Fantasy",
+            "Kids"
         ],
         "platforms": [
-            "game boy color",
-            "nintendo 3ds"
+            "Game Boy Color",
+            "Nintendo 3DS"
         ],
         "storyline": "",
         "keywords": [
@@ -4899,33 +5244,35 @@ GAMES_DATA = {
             "status effects",
             "damage over time"
         ],
-        "release_date": "2000"
+        "release_date": 2000
     },
     "pokemon_emerald": {
         "igdb_id": "1517",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1zhr.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1zhr.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar21y7.png",
+        "key_art_url": "",
         "game_name": "Pokemon Emerald",
-        "igdb_name": "pok\u00e9mon emerald version",
+        "igdb_name": "Pok\u00e9mon Emerald Version",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric",
-            "side view"
+            "Bird view / Isometric",
+            "Side view"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "turn-based strategy (tbs)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Turn-based strategy (TBS)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "kids"
+            "Action",
+            "Fantasy",
+            "Kids"
         ],
         "platforms": [
-            "game boy advance"
+            "Game Boy Advance"
         ],
-        "storyline": "both team magma and team aqua are featured as the villainous teams, each stirring trouble at different stages in the game. the objective of each team, to awaken groudon and kyogre, respectively, is eventually fulfilled.\nrayquaza is prominent plot-wise, awakened in order to stop the destructive battle between groudon and kyogre. it is now the one out of the three ancient pok\u00e9mon that can be caught prior to the elite four challenge, while still at the same place and at the same high level as in ruby and sapphire.",
+        "storyline": "Both Team Magma and Team Aqua are featured as the villainous teams, each stirring trouble at different stages in the game. The objective of each team, to awaken Groudon and Kyogre, respectively, is eventually fulfilled.\nRayquaza is prominent plot-wise, awakened in order to stop the destructive battle between Groudon and Kyogre. It is now the one out of the three ancient Pok\u00e9mon that can be caught prior to the Elite Four challenge, while still at the same place and at the same high level as in Ruby and Sapphire.",
         "keywords": [
             "exploration",
             "anime",
@@ -4953,98 +5300,104 @@ GAMES_DATA = {
             "status effects",
             "damage over time"
         ],
-        "release_date": "2004"
+        "release_date": 2004
     },
     "pokemon_frlg": {
         "igdb_id": "1516",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1zip.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1zip.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Pokemon FireRed and LeafGreen",
-        "igdb_name": "pok\u00e9mon leafgreen version",
+        "igdb_name": "Pok\u00e9mon LeafGreen Version",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric",
-            "side view"
+            "Bird view / Isometric",
+            "Side view"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "turn-based strategy (tbs)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Turn-based strategy (TBS)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "science fiction",
-            "kids"
+            "Action",
+            "Fantasy",
+            "Science fiction",
+            "Kids"
         ],
         "platforms": [
-            "game boy advance"
+            "Game Boy Advance"
         ],
         "storyline": "",
         "keywords": [
             "collecting"
         ],
-        "release_date": "2004"
+        "release_date": 2004
     },
     "pokemon_rb": {
         "igdb_id": "1561",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5pi4.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5pi4.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1krw.png",
+        "key_art_url": "",
         "game_name": "Pokemon Red and Blue",
-        "igdb_name": "pok\u00e9mon red version",
+        "igdb_name": "Pok\u00e9mon Red Version",
         "age_rating": "12",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric",
-            "side view"
+            "Bird view / Isometric",
+            "Side view"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "turn-based strategy (tbs)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Turn-based strategy (TBS)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "kids",
-            "open world"
+            "Action",
+            "Fantasy",
+            "Kids",
+            "Open world"
         ],
         "platforms": [
-            "nintendo 3ds",
-            "game boy"
+            "Nintendo 3DS",
+            "Game Boy"
         ],
-        "storyline": "the player character starts out in pallet town. when the player character tries to leave the town without a pok\u00e9mon of their own, they are stopped in the nick of time by professor oak, who invites them to his lab. there, he gives them a pok\u00e9mon of their own and a pok\u00e9dex, telling them about his dream to make a complete guide on every pok\u00e9mon in the world. after the player character battles their rival and leaves the lab, they are entitled to win every gym badge, compete in the pok\u00e9mon league, and fulfill oak's dream by catching every pok\u00e9mon.",
+        "storyline": "The player character starts out in Pallet Town. When the player character tries to leave the town without a Pok\u00e9mon of their own, they are stopped in the nick of time by Professor Oak, who invites them to his lab. There, he gives them a Pok\u00e9mon of their own and a Pok\u00e9dex, telling them about his dream to make a complete guide on every Pok\u00e9mon in the world. After the player character battles their rival and leaves the lab, they are entitled to win every Gym Badge, compete in the Pok\u00e9mon League, and fulfill Oak's dream by catching every Pok\u00e9mon.",
         "keywords": [
             "collecting"
         ],
-        "release_date": "1996"
+        "release_date": 1996
     },
     "powerwashsimulator": {
         "igdb_id": "138590",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7gek.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7gek.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ardhg.png",
+        "key_art_url": "",
         "game_name": "Powerwash Simulator",
-        "igdb_name": "powerwash simulator",
+        "igdb_name": "PowerWash Simulator",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "simulator",
-            "indie"
+            "Simulator",
+            "Indie"
         ],
         "themes": [
-            "business",
-            "sandbox"
+            "Business",
+            "Sandbox"
         ],
         "platforms": [
-            "xbox series x|s",
-            "playstation 4",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "xbox one",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "you're looking to start a business \u2013 but what? you decide power washing is super satisfying and you'd like to turn it into a full time gig. you put your good friend harper shaw, a bargain hunter and auction lot buyer up to the task of finding you the perfect vehicle for your new enterprise.\n\nthrough completing various jobs, you get to know the citizens of muckingham, the small town in which the game is set, helping wash away their various problems. figuratively... and literally!\n\nthe first client you are introduced to is cal, harper shaw's new disgruntled neighbour. they are a volcanologist, who\u2019s moved back into town to study mount rushless, the local volcano, and to help look after his ageing parents. he's so worked up as he bought a house without even looking at a picture of the back garden. he thinks the previous owners might have even owned rhinos it's that dirty...",
+        "storyline": "You're looking to start a business \u2013 but what? You decide power washing is super satisfying and you'd like to turn it into a full time gig. You put your good friend Harper Shaw, a bargain hunter and auction lot buyer up to the task of finding you the perfect vehicle for your new enterprise.\n\nThrough completing various jobs, you get to know the citizens of Muckingham, the small town in which the game is set, helping wash away their various problems. Figuratively... and literally!\n\nThe first client you are introduced to is Cal, Harper Shaw's new disgruntled neighbour. They are a volcanologist, who\u2019s moved back into town to study Mount Rushless, the local volcano, and to help look after his ageing parents. He's so worked up as he bought a house without even looking at a picture of the back garden. He thinks the previous owners might have even owned rhinos it's that dirty...",
         "keywords": [
             "3d",
             "funny",
@@ -5052,70 +5405,74 @@ GAMES_DATA = {
             "relaxing",
             "story rich"
         ],
-        "release_date": "2022"
+        "release_date": 2022
     },
     "pseudoregalia": {
         "igdb_id": "259465",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co6vcy.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co6vcy.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar2fmq.png",
+        "key_art_url": "",
         "game_name": "Pseudoregalia",
-        "igdb_name": "pseudoregalia: jam ver.",
-        "age_rating": "nr",
+        "igdb_name": "Pseudoregalia: Jam Ver.",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "adventure",
-            "indie"
+            "Platform",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "pc (microsoft windows)"
+            "PC (Microsoft Windows)"
         ],
         "storyline": "",
         "keywords": [
             "metroidvania"
         ],
-        "release_date": "2023"
+        "release_date": 2023
     },
     "quake": {
         "igdb_id": "333",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co9bg9.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co9bg9.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arhee.png",
+        "key_art_url": "",
         "game_name": "Quake 1",
-        "igdb_name": "quake",
-        "age_rating": "t",
+        "igdb_name": "Quake",
+        "age_rating": "T",
         "rating": [
-            "animated blood and gore",
-            "animated violence"
+            "Animated Blood and Gore",
+            "Animated Violence"
         ],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "shooter"
+            "Shooter"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "horror",
-            "historical",
-            "comedy"
+            "Action",
+            "Science fiction",
+            "Horror",
+            "Historical",
+            "Comedy"
         ],
         "platforms": [
-            "zeebo",
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "dos",
-            "amiga",
-            "sega saturn",
-            "legacy mobile device"
+            "Zeebo",
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "DOS",
+            "Amiga",
+            "Sega Saturn",
+            "Legacy Mobile Device"
         ],
-        "storyline": "the player takes the role of a protagonist known as ranger who was sent into a portal in order to stop an enemy code-named \"quake\". the government had been experimenting with teleportation technology and developed a working prototype called a \"slipgate\"; the mysterious quake compromised the slipgate by connecting it with its own teleportation system, using it to send death squads to the \"human\" dimension in order to test the martial capabilities of humanity.",
+        "storyline": "The player takes the role of a protagonist known as Ranger who was sent into a portal in order to stop an enemy code-named \"Quake\". The government had been experimenting with teleportation technology and developed a working prototype called a \"Slipgate\"; the mysterious Quake compromised the Slipgate by connecting it with its own teleportation system, using it to send death squads to the \"Human\" dimension in order to test the martial capabilities of Humanity.",
         "keywords": [
             "aliens",
             "bloody",
@@ -5139,216 +5496,228 @@ GAMES_DATA = {
             "invisibility",
             "retroachievements"
         ],
-        "release_date": "1996"
+        "release_date": 1996
     },
     "rac2": {
         "igdb_id": "1770",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co230n.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co230n.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Ratchet & Clank 2",
-        "igdb_name": "ratchet & clank: going commando",
+        "igdb_name": "Ratchet & Clank: Going Commando",
         "age_rating": "7",
         "rating": [
-            "animated blood",
-            "comic mischief",
-            "fantasy violence",
-            "mild language"
+            "Animated Blood",
+            "Comic Mischief",
+            "Fantasy Violence",
+            "Mild Language"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "shooter",
-            "platform",
-            "adventure"
+            "Shooter",
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "comedy"
+            "Action",
+            "Science fiction",
+            "Comedy"
         ],
         "platforms": [
-            "playstation 2"
+            "PlayStation 2"
         ],
-        "storyline": "having defeated chairman drek in their last intergalactic adventure, ratchet and clank find themselves returning to a more sedate lifestyle. that is, until they are approached by abercrombie fizzwidget, the cro of megacorp, who needs the duo to track down the company\u2019s most promising experimental project, which has been stolen by a mysterious masked figure. initially, the mission seemed like a sunday stroll in the park, but we soon find our heroes entangled in a colossal struggle for control of the galaxy. along the way, the duo unleashes some of the coolest weapons and gadgets ever invented upon the most dangerous foes they have ever faced. ratchet and clanks set out to destroy anything and anyone who stands in their way of discovering the secrets that lie behind \u201cthe experiment.\u201d",
+        "storyline": "Having defeated Chairman Drek in their last intergalactic adventure, Ratchet and Clank find themselves returning to a more sedate lifestyle. That is, until they are approached by Abercrombie Fizzwidget, the CRO of Megacorp, who needs the duo to track down the company\u2019s most promising experimental project, which has been stolen by a mysterious masked figure. Initially, the mission seemed like a Sunday stroll in the park, but we soon find our heroes entangled in a colossal struggle for control of the galaxy. Along the way, the duo unleashes some of the coolest weapons and gadgets ever invented upon the most dangerous foes they have ever faced. Ratchet and Clanks set out to destroy anything and anyone who stands in their way of discovering the secrets that lie behind \u201cThe Experiment.\u201d",
         "keywords": [],
-        "release_date": "2003"
+        "release_date": 2003
     },
     "raft": {
         "igdb_id": "27082",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1xdc.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1xdc.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ardgp.png",
+        "key_art_url": "",
         "game_name": "Raft",
-        "igdb_name": "raft",
+        "igdb_name": "Raft",
         "age_rating": "12",
         "rating": [
-            "violence",
-            "blood"
+            "Violence",
+            "Blood"
         ],
         "player_perspectives": [
-            "first person",
-            "third person"
+            "First person",
+            "Third person"
         ],
         "genres": [
-            "simulator",
-            "adventure",
-            "indie"
+            "Simulator",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "survival"
+            "Survival"
         ],
         "platforms": [
-            "xbox series x|s",
-            "pc (microsoft windows)",
-            "playstation 5"
+            "Xbox Series X|S",
+            "PC (Microsoft Windows)",
+            "PlayStation 5"
         ],
-        "storyline": "trapped on a small raft with nothing but a hook made of old plastic, players awake on a vast, blue ocean totally alone and with no land in sight! with a dry throat and an empty stomach, survival will not be easy!\n\nresources are tough to come by at sea: players will have to make sure to catch whatever debris floats by using their trusty hook and when possible, scavenge the reefs beneath the waves and the islands above. however, thirst and hunger is not the only danger in the ocean\u2026 watch out for the man-eating shark determined to end your voyage!",
+        "storyline": "Trapped on a small raft with nothing but a hook made of old plastic, players awake on a vast, blue ocean totally alone and with no land in sight! With a dry throat and an empty stomach, survival will not be easy!\n\nResources are tough to come by at sea: Players will have to make sure to catch whatever debris floats by using their trusty hook and when possible, scavenge the reefs beneath the waves and the islands above. However, thirst and hunger is not the only danger in the ocean\u2026 watch out for the man-eating shark determined to end your voyage!",
         "keywords": [
             "crafting",
             "bees"
         ],
-        "release_date": "2022"
+        "release_date": 2022
     },
     "residentevil2remake": {
         "igdb_id": "19686",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1ir3.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1ir3.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/qqrtgvipdy3t5xgc5u6q.png",
+        "key_art_url": "",
         "game_name": "Resident Evil 2 Remake",
-        "igdb_name": "resident evil 2",
+        "igdb_name": "Resident Evil 2",
         "age_rating": "18",
         "rating": [
-            "strong language",
-            "intense violence",
-            "blood and gore"
+            "Strong Language",
+            "Intense Violence",
+            "Blood and Gore"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "shooter",
-            "adventure"
+            "Shooter",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "horror",
-            "survival"
+            "Action",
+            "Horror",
+            "Survival"
         ],
         "platforms": [
-            "xbox series x|s",
-            "playstation 4",
-            "pc (microsoft windows)",
-            "ios",
-            "playstation 5",
-            "mac",
-            "xbox one"
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "PlayStation 5",
+            "Mac",
+            "Xbox One"
         ],
-        "storyline": "players join rookie police officer leon kennedy and college student claire redfield, who are thrust together by a disastrous outbreak in raccoon city that transformed its population into deadly zombies. both leon and claire have their own separate playable campaigns, allowing players to see the story from both characters\u2019 perspectives. the fate of these two fan favorite characters is in the player's hands as they work together to survive and get to the bottom of what is behind the terrifying attack on the city.",
+        "storyline": "Players join rookie police officer Leon Kennedy and college student Claire Redfield, who are thrust together by a disastrous outbreak in Raccoon City that transformed its population into deadly zombies. Both Leon and Claire have their own separate playable campaigns, allowing players to see the story from both characters\u2019 perspectives. The fate of these two fan favorite characters is in the player's hands as they work together to survive and get to the bottom of what is behind the terrifying attack on the city.",
         "keywords": [
             "bloody"
         ],
-        "release_date": "2019"
+        "release_date": 2019
     },
     "residentevil3remake": {
         "igdb_id": "115115",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co22l7.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co22l7.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar6e9.png",
+        "key_art_url": "",
         "game_name": "Resident Evil 3 Remake",
-        "igdb_name": "resident evil 3",
+        "igdb_name": "Resident Evil 3",
         "age_rating": "18",
         "rating": [
-            "intense violence",
-            "strong language",
-            "blood and gore"
+            "Intense Violence",
+            "Strong Language",
+            "Blood and Gore"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "shooter",
-            "adventure"
+            "Shooter",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "horror",
-            "survival"
+            "Action",
+            "Horror",
+            "Survival"
         ],
         "platforms": [
-            "xbox series x|s",
-            "playstation 4",
-            "pc (microsoft windows)",
-            "ios",
-            "playstation 5",
-            "mac",
-            "xbox one"
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "PlayStation 5",
+            "Mac",
+            "Xbox One"
         ],
-        "storyline": "a series of strange disappearances have been occurring in the american midwest within a place called racoon city. a specialist squad of the police force known as s.t.a.r.s. has been investigating the case, and have determined that the pharmaceutical company umbrella and their biological weapon, the t-virus, are behind the incidents. jill valentine and the other surviving s.t.a.r.s. members try to make this truth known, but find that the police department itself is under umbrella's sway and their reports are rejected out of hand. with the viral plague spreading through the town and to her very doorstep, jill is determined to survive. however, an extremely powerful pursuer has already been dispatched to eliminate her.",
+        "storyline": "A series of strange disappearances have been occurring in the American Midwest within a place called Racoon City. A specialist squad of the police force known as S.T.A.R.S. has been investigating the case, and have determined that the pharmaceutical company Umbrella and their biological weapon, the T-Virus, are behind the incidents. Jill Valentine and the other surviving S.T.A.R.S. members try to make this truth known, but find that the police department itself is under Umbrella's sway and their reports are rejected out of hand. With the viral plague spreading through the town and to her very doorstep, Jill is determined to survive. However, an extremely powerful pursuer has already been dispatched to eliminate her.",
         "keywords": [],
-        "release_date": "2020"
+        "release_date": 2020
     },
     "rimworld": {
         "igdb_id": "9789",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coaaqj.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coaaqj.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ardhk.png",
+        "key_art_url": "",
         "game_name": "Rimworld",
-        "igdb_name": "rimworld",
+        "igdb_name": "RimWorld",
         "age_rating": "16",
         "rating": [
-            "blood",
-            "suggestive themes",
-            "violence",
-            "use of drugs and alcohol"
+            "Blood",
+            "Suggestive Themes",
+            "Violence",
+            "Use of Drugs and Alcohol"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "real time strategy (rts)",
-            "simulator",
-            "strategy",
-            "indie"
+            "Real Time Strategy (RTS)",
+            "Simulator",
+            "Strategy",
+            "Indie"
         ],
         "themes": [
-            "science fiction",
-            "survival"
+            "Science fiction",
+            "Survival"
         ],
         "platforms": [
-            "linux",
-            "pc (microsoft windows)",
-            "mac"
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac"
         ],
-        "storyline": "rimworld follows three survivors from a crashed space liner as they build a colony on a frontier world at the rim of known space. inspired by the space western vibe of firefly, the deep simulation of dwarf fortress, and the epic scale of dune and warhammer 40,000.\n\nmanage colonists' moods, needs, thoughts, individual wounds, and illnesses. engage in deeply-simulated small-team gunplay. fashion structures, weapons, and apparel from metal, wood, stone, cloth, or exotic, futuristic materials. fight pirate raiders, hostile tribes, rampaging animals and ancient killing machines. discover a new generated world each time you play. build colonies in biomes ranging from desert to jungle to tundra, each with unique flora and fauna. manage and develop colonists with unique backstories, traits, and skills. learn to play easily with the help of an intelligent and unobtrusive ai tutor.",
+        "storyline": "RimWorld follows three survivors from a crashed space liner as they build a colony on a frontier world at the rim of known space. Inspired by the space western vibe of Firefly, the deep simulation of Dwarf Fortress, and the epic scale of Dune and Warhammer 40,000.\n\nManage colonists' moods, needs, thoughts, individual wounds, and illnesses. Engage in deeply-simulated small-team gunplay. Fashion structures, weapons, and apparel from metal, wood, stone, cloth, or exotic, futuristic materials. Fight pirate raiders, hostile tribes, rampaging animals and ancient killing machines. Discover a new generated world each time you play. Build colonies in biomes ranging from desert to jungle to tundra, each with unique flora and fauna. Manage and develop colonists with unique backstories, traits, and skills. Learn to play easily with the help of an intelligent and unobtrusive AI tutor.",
         "keywords": [],
-        "release_date": "2018"
+        "release_date": 2018
     },
     "rogue_legacy": {
         "igdb_id": "3221",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co27fi.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co27fi.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ard4c.png",
+        "key_art_url": "",
         "game_name": "Rogue Legacy",
-        "igdb_name": "rogue legacy",
+        "igdb_name": "Rogue Legacy",
         "age_rating": "12",
         "rating": [
-            "fantasy violence",
-            "crude humor"
+            "Fantasy Violence",
+            "Crude Humor"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "puzzle",
-            "role-playing (rpg)",
-            "adventure",
-            "indie"
+            "Platform",
+            "Puzzle",
+            "Role-playing (RPG)",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "comedy"
+            "Action",
+            "Fantasy",
+            "Comedy"
         ],
         "platforms": [
-            "playstation 3",
-            "playstation 4",
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "playstation vita",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 3",
+            "PlayStation 4",
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "PlayStation Vita",
+            "Xbox One",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
@@ -5392,45 +5761,47 @@ GAMES_DATA = {
             "fire manipulation",
             "lgbtq+"
         ],
-        "release_date": "2013"
+        "release_date": 2013
     },
     "ror1": {
         "igdb_id": "3173",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2k2z.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2k2z.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ard5n.png",
+        "key_art_url": "",
         "game_name": "Risk of Rain",
-        "igdb_name": "risk of rain",
+        "igdb_name": "Risk of Rain",
         "age_rating": "7",
         "rating": [
-            "alcohol reference",
-            "fantasy violence",
-            "mild blood",
-            "mild language"
+            "Alcohol Reference",
+            "Fantasy Violence",
+            "Mild Blood",
+            "Mild Language"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "shooter",
-            "platform",
-            "role-playing (rpg)",
-            "hack and slash/beat 'em up",
-            "adventure",
-            "indie"
+            "Shooter",
+            "Platform",
+            "Role-playing (RPG)",
+            "Hack and slash/Beat 'em up",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "science fiction",
-            "survival"
+            "Action",
+            "Fantasy",
+            "Science fiction",
+            "Survival"
         ],
         "platforms": [
-            "playstation 4",
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "playstation vita",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "PlayStation Vita",
+            "Xbox One",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
@@ -5441,165 +5812,175 @@ GAMES_DATA = {
             "bow and arrow",
             "roguelite"
         ],
-        "release_date": "2013"
+        "release_date": 2013
     },
     "ror2": {
         "igdb_id": "28512",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coaavb.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coaavb.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar758.png",
+        "key_art_url": "",
         "game_name": "Risk of Rain 2",
-        "igdb_name": "risk of rain 2",
+        "igdb_name": "Risk of Rain 2",
         "age_rating": "12",
         "rating": [
-            "blood",
-            "drug reference",
-            "fantasy violence"
+            "Blood",
+            "Drug Reference",
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "shooter",
-            "adventure",
-            "indie"
+            "Shooter",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "survival"
+            "Action",
+            "Science fiction",
+            "Survival"
         ],
         "platforms": [
-            "google stadia",
-            "xbox series x|s",
-            "playstation 4",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "xbox one",
-            "nintendo switch"
+            "Google Stadia",
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "risk of rain 2 follows the crew of ues: safe travels as they try to find ues: contact light and any survivors along their path. they have to try and survive the hostile wildlife and environment as difficulty increases over time, navigating petrichor v via the teleporters strewn across the entire planet. the crew loop endlessly through many distinct environments, but end upon the moon to defeat the final boss.\n\nwith each run, you\u2019ll learn the patterns of your foes, and even the longest odds can be overcome with enough skill. a unique scaling system means both you and your foes limitlessly increase in power over the course of a game\u2013what once was a bossfight will in time become a common enemy.\n\nmyriad survivors, items, enemies, and bosses return to risk 2, and many new ones are joining the fight. brand new survivors like the artificer and mul-t debut alongside classic survivors such as the engineer, huntress, and\u2013of course\u2013the commando. with over 75 items to unlock and exploit, each run will keep you cleverly strategizing your way out of sticky situations.",
+        "storyline": "Risk of Rain 2 follows the crew of UES: Safe Travels as they try to find UES: Contact Light and any survivors along their path. They have to try and survive the hostile wildlife and environment as difficulty increases over time, navigating Petrichor V via the teleporters strewn across the entire planet. The crew loop endlessly through many distinct environments, but end upon the moon to defeat the final boss.\n\nWith each run, you\u2019ll learn the patterns of your foes, and even the longest odds can be overcome with enough skill. A unique scaling system means both you and your foes limitlessly increase in power over the course of a game\u2013what once was a bossfight will in time become a common enemy.\n\nMyriad survivors, items, enemies, and bosses return to Risk 2, and many new ones are joining the fight. Brand new survivors like the Artificer and MUL-T debut alongside classic survivors such as the Engineer, Huntress, and\u2013of course\u2013the Commando. With over 75 items to unlock and exploit, each run will keep you cleverly strategizing your way out of sticky situations.",
         "keywords": [
             "roguelite"
         ],
-        "release_date": "2020"
+        "release_date": 2020
     },
     "sa2b": {
         "igdb_id": "192194",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5p3o.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5p3o.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1h09.png",
+        "key_art_url": "",
         "game_name": "Sonic Adventure 2 Battle",
-        "igdb_name": "sonic adventure 2: battle",
-        "age_rating": "e",
+        "igdb_name": "Sonic Adventure 2: Battle",
+        "age_rating": "E",
         "rating": [
-            "mild lyrics",
-            "violence"
+            "Mild Lyrics",
+            "Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "playstation 3",
-            "pc (microsoft windows)",
-            "xbox 360"
+            "PlayStation 3",
+            "PC (Microsoft Windows)",
+            "Xbox 360"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2012"
+        "release_date": 2012
     },
     "sadx": {
         "igdb_id": "192114",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co4iln.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co4iln.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1nly.png",
+        "key_art_url": "",
         "game_name": "Sonic Adventure DX",
-        "igdb_name": "sonic adventure: sonic adventure dx upgrade",
-        "age_rating": "e",
+        "igdb_name": "Sonic Adventure: Sonic Adventure DX Upgrade",
+        "age_rating": "E",
         "rating": [
-            "animated violence"
+            "Animated Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform"
+            "Platform"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "playstation 3",
-            "pc (microsoft windows)",
-            "xbox 360"
+            "PlayStation 3",
+            "PC (Microsoft Windows)",
+            "Xbox 360"
         ],
-        "storyline": "doctor robotnik seeks a new way to defeat his longtime nemesis sonic and conquer the world. during his research, he learns about an entity called chaos\u2014a creature that, thousands of years ago, helped to protect the chao and the all-powerful master emerald, which balances the power of the seven chaos emeralds. when a tribe of echidnas sought to steal the power of the emeralds, breaking the harmony they had with the chao, chaos retaliated by using the emeralds' power to transform into a monstrous beast, perfect chaos, and wipe them out. before it could destroy the world, tikal, a young echidna who befriended chaos, imprisoned it in the master emerald along with herself. eggman releases chaos and sonic and his friends must act against eggman's plans and prevent the monster from becoming more powerful.",
+        "storyline": "Doctor Robotnik seeks a new way to defeat his longtime nemesis Sonic and conquer the world. During his research, he learns about an entity called Chaos\u2014a creature that, thousands of years ago, helped to protect the Chao and the all-powerful Master Emerald, which balances the power of the seven Chaos Emeralds. When a tribe of echidnas sought to steal the power of the Emeralds, breaking the harmony they had with the Chao, Chaos retaliated by using the Emeralds' power to transform into a monstrous beast, Perfect Chaos, and wipe them out. Before it could destroy the world, Tikal, a young echidna who befriended Chaos, imprisoned it in the Master Emerald along with herself. Eggman releases Chaos and Sonic and his friends must act against Eggman's plans and prevent the monster from becoming more powerful.",
         "keywords": [],
-        "release_date": "2010"
+        "release_date": 2010
     },
     "satisfactory": {
         "igdb_id": "90558",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co8tfy.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co8tfy.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar57j.png",
+        "key_art_url": "",
         "game_name": "Satisfactory",
-        "igdb_name": "satisfactory",
+        "igdb_name": "Satisfactory",
         "age_rating": "3",
         "rating": [
-            "fantasy violence"
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "simulator",
-            "strategy",
-            "adventure",
-            "indie"
+            "Simulator",
+            "Strategy",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "science fiction",
-            "sandbox",
-            "open world"
+            "Science fiction",
+            "Sandbox",
+            "Open world"
         ],
         "platforms": [
-            "xbox series x|s",
-            "pc (microsoft windows)",
-            "playstation 5"
+            "Xbox Series X|S",
+            "PC (Microsoft Windows)",
+            "PlayStation 5"
         ],
         "storyline": "",
         "keywords": [
             "crafting"
         ],
-        "release_date": "2024"
+        "release_date": 2024
     },
     "sc2": {
         "igdb_id": "239",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1tnn.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1tnn.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/hrlspaxbr5en04afvnox.png",
+        "key_art_url": "",
         "game_name": "Starcraft 2",
-        "igdb_name": "starcraft ii: wings of liberty",
+        "igdb_name": "StarCraft II: Wings of Liberty",
         "age_rating": "16",
         "rating": [
-            "blood and gore",
-            "language",
-            "suggestive themes",
-            "use of alcohol and tobacco",
-            "violence"
+            "Blood and Gore",
+            "Language",
+            "Suggestive Themes",
+            "Use of Alcohol and Tobacco",
+            "Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "real time strategy (rts)",
-            "strategy"
+            "Real Time Strategy (RTS)",
+            "Strategy"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "warfare"
+            "Action",
+            "Science fiction",
+            "Warfare"
         ],
         "platforms": [
-            "pc (microsoft windows)",
-            "mac"
+            "PC (Microsoft Windows)",
+            "Mac"
         ],
         "storyline": "",
         "keywords": [
@@ -5608,36 +5989,38 @@ GAMES_DATA = {
             "side quests",
             "mercenary"
         ],
-        "release_date": "2010"
+        "release_date": 2010
     },
     "seaofthieves": {
         "igdb_id": "11137",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2558.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2558.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar6pg.png",
+        "key_art_url": "",
         "game_name": "Sea of Thieves",
-        "igdb_name": "sea of thieves",
+        "igdb_name": "Sea of Thieves",
         "age_rating": "12",
         "rating": [
-            "crude humor",
-            "use of alcohol",
-            "violence"
+            "Crude Humor",
+            "Use of Alcohol",
+            "Violence"
         ],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "simulator",
-            "adventure"
+            "Simulator",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "open world"
+            "Action",
+            "Fantasy",
+            "Open world"
         ],
         "platforms": [
-            "xbox series x|s",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "xbox one"
+            "Xbox Series X|S",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Xbox One"
         ],
         "storyline": "",
         "keywords": [
@@ -5649,94 +6032,100 @@ GAMES_DATA = {
             "skeletons",
             "you can pet the dog"
         ],
-        "release_date": "2018"
+        "release_date": 2018
     },
     "shapez": {
         "igdb_id": "134826",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co4tfx.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co4tfx.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arxzw.png",
+        "key_art_url": "",
         "game_name": "shapez",
-        "igdb_name": "shapez",
-        "age_rating": "nr",
+        "igdb_name": "Shapez",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "puzzle",
-            "simulator",
-            "strategy",
-            "indie"
+            "Puzzle",
+            "Simulator",
+            "Strategy",
+            "Indie"
         ],
         "themes": [
-            "sandbox"
+            "Sandbox"
         ],
         "platforms": [
-            "linux",
-            "android",
-            "pc (microsoft windows)",
-            "ios",
-            "mac"
+            "Linux",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "Mac"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2020"
+        "release_date": 2020
     },
     "shivers": {
         "igdb_id": "12477",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7a5z.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7a5z.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/aruss.png",
+        "key_art_url": "",
         "game_name": "Shivers",
-        "igdb_name": "shivers",
+        "igdb_name": "Shivers",
         "age_rating": "7",
         "rating": [
-            "realistic blood and gore",
-            "realistic blood"
+            "Realistic Blood and Gore",
+            "Realistic Blood"
         ],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "point-and-click",
-            "puzzle",
-            "adventure",
-            "indie"
+            "Point-and-click",
+            "Puzzle",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "horror"
+            "Horror"
         ],
         "platforms": [
-            "pc (microsoft windows)"
+            "PC (Microsoft Windows)"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "1995"
+        "release_date": 1995
     },
     "shorthike": {
         "igdb_id": "116753",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co6e83.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co6e83.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arcrm.png",
+        "key_art_url": "",
         "game_name": "A Short Hike",
-        "igdb_name": "a short hike",
+        "igdb_name": "A Short Hike",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "adventure",
-            "indie"
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "fantasy",
-            "open world"
+            "Fantasy",
+            "Open world"
         ],
         "platforms": [
-            "playstation 4",
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "the main character is claire, a young anthropomorphic bird who travels to hawk peak provincial park, where her aunt may works as a ranger, to spend days off. however, claire cannot get cellphone reception unless she reaches the top of the peak, and is expecting an important call. for this reason, she decides to reach the highest point in the park.",
+        "storyline": "The main character is Claire, a young anthropomorphic bird who travels to Hawk Peak Provincial Park, where her Aunt May works as a ranger, to spend days off. However, Claire cannot get cellphone reception unless she reaches the top of the peak, and is expecting an important call. For this reason, she decides to reach the highest point in the park.",
         "keywords": [
             "exploration",
             "casual",
@@ -5760,40 +6149,42 @@ GAMES_DATA = {
             "gliding",
             "controller support"
         ],
-        "release_date": "2019"
+        "release_date": 2019
     },
     "simpsonshitnrun": {
         "igdb_id": "2844",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2uk7.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2uk7.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "The Simpsons Hit And Run",
-        "igdb_name": "the simpsons: hit & run",
-        "age_rating": "t",
+        "igdb_name": "The Simpsons: Hit & Run",
+        "age_rating": "T",
         "rating": [
-            "comic mischief",
-            "mild language",
-            "violence",
-            "crude humor",
-            "alcohol reference",
-            "cartoon violence"
+            "Comic Mischief",
+            "Mild Language",
+            "Violence",
+            "Crude Humor",
+            "Alcohol Reference",
+            "Cartoon Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "racing",
-            "adventure"
+            "Platform",
+            "Racing",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "comedy",
-            "open world"
+            "Action",
+            "Comedy",
+            "Open world"
         ],
         "platforms": [
-            "xbox",
-            "nintendo gamecube",
-            "pc (microsoft windows)",
-            "playstation 2"
+            "Xbox",
+            "Nintendo GameCube",
+            "PC (Microsoft Windows)",
+            "PlayStation 2"
         ],
         "storyline": "",
         "keywords": [
@@ -5814,42 +6205,44 @@ GAMES_DATA = {
             "been here before",
             "lgbtq+"
         ],
-        "release_date": "2003"
+        "release_date": 2003
     },
     "sims4": {
         "igdb_id": "3212",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3h3l.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3h3l.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ary47.png",
+        "key_art_url": "",
         "game_name": "The Sims 4",
-        "igdb_name": "the sims 4",
+        "igdb_name": "The Sims 4",
         "age_rating": "12",
         "rating": [
-            "sexual themes",
-            "crude humor",
-            "violence"
+            "Sexual Themes",
+            "Crude Humor",
+            "Violence"
         ],
         "player_perspectives": [
-            "first person",
-            "third person",
-            "bird view / isometric"
+            "First person",
+            "Third person",
+            "Bird view / Isometric"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "simulator"
+            "Role-playing (RPG)",
+            "Simulator"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "comedy",
-            "sandbox",
-            "romance"
+            "Action",
+            "Fantasy",
+            "Comedy",
+            "Sandbox",
+            "Romance"
         ],
         "platforms": [
-            "playstation 4",
-            "pc (microsoft windows)",
-            "mac",
-            "xbox one"
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Xbox One"
         ],
-        "storyline": "choose how sims look, act, and dress. determine how they\u2019ll live out each day. design and build incredible homes for every family, then decorate with your favorite furnishings and d\u00e9cor. travel to different neighborhoods where you can meet other sims and learn about their lives. discover beautiful locations with distinctive environments, and go on spontaneous adventures. manage the ups and downs of sims\u2019 everyday lives and see what happens when you play out realistic or fantastical scenarios. tell your stories your way while developing relationships, pursuing careers and life aspirations, and immersing yourself in an extraordinary game where the possibilities are endless.",
+        "storyline": "Choose how Sims look, act, and dress. Determine how they\u2019ll live out each day. Design and build incredible homes for every family, then decorate with your favorite furnishings and d\u00e9cor. Travel to different neighborhoods where you can meet other Sims and learn about their lives. Discover beautiful locations with distinctive environments, and go on spontaneous adventures. Manage the ups and downs of Sims\u2019 everyday lives and see what happens when you play out realistic or fantastical scenarios. Tell your stories your way while developing relationships, pursuing careers and life aspirations, and immersing yourself in an extraordinary game where the possibilities are endless.",
         "keywords": [
             "casual",
             "cute",
@@ -5858,33 +6251,35 @@ GAMES_DATA = {
             "lgbtq+",
             "you can pet the dog"
         ],
-        "release_date": "2014"
+        "release_date": 2014
     },
     "sly1": {
         "igdb_id": "1798",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1p0r.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1p0r.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Sly Cooper and the Thievius Raccoonus",
-        "igdb_name": "sly cooper and the thievius raccoonus",
+        "igdb_name": "Sly Cooper and the Thievius Raccoonus",
         "age_rating": "7",
         "rating": [
-            "mild violence"
+            "Mild Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "stealth",
-            "comedy"
+            "Action",
+            "Stealth",
+            "Comedy"
         ],
         "platforms": [
-            "playstation 2"
+            "PlayStation 2"
         ],
-        "storyline": "sly cooper comes from a long line of master thieves (the cooper clan) who only steal from other criminals, thus making them vigilantes. the cooper family's heirloom, an ancient book by the name the thievius raccoonus, records all the secret moves and techniques from every member in the clan. on his 8th birthday, sly was supposed to inherit the book and learn all of his family's ancient secrets which was supposed to help him become a master thief, however, a group of thugs by the name \"the fiendish five\" (led by clockwerk, who is the arch-nemesis of the family clan) attack the cooper household and kills sly's parents and stole all of the pages from the thievius raccoonus. after that, the ruthless gang go their separate ways to commit dastardly crimes around the world. sly is sent to an orphanage where he meets and teams up and forms a gang with two guys who become his lifelong best friends, bentley, a technician, inventor and a talented mathematical hacker with encyclopedic knowledge who plays the role as the brains of the gang, and murray, a huge husky cowardly guy with a ginormous appetite who plays the role as the brawns and the getaway driver of the gang. the three leave the orphanage together at age 16 to start their lives becoming international vigilante criminals together, naming themselves \"the cooper gang\". sly swears one day to avenge his family and track down the fiendish five and steal back the thievius raccoonus. two years later, the cooper gang head to paris, france, to infiltrate itnerpol (a police headquarters) in order to find the secret police file which stores details and information about the fiendish five but during the heist they are ambushed by inspector carmelita fox (towards whom sly develops a romantic attraction), a police officer who is affiliated with interpol and is after the cooper gang. the gang manage to steal the police file and successfully escapes from her and the rest of the cops. with the secret police file finally in their hands, the cooper gang manage to track down the fiendish five.",
+        "storyline": "Sly Cooper comes from a long line of master thieves (the Cooper Clan) who only steal from other criminals, thus making them vigilantes. The Cooper family's heirloom, an ancient book by the name The Thievius Raccoonus, records all the secret moves and techniques from every member in the clan. On his 8th birthday, Sly was supposed to inherit the book and learn all of his family's ancient secrets which was supposed to help him become a master thief, however, a group of thugs by the name \"The Fiendish Five\" (led by Clockwerk, who is the arch-nemesis of the family clan) attack the Cooper household and kills Sly's parents and stole all of the pages from the Thievius Raccoonus. After that, the ruthless gang go their separate ways to commit dastardly crimes around the world. Sly is sent to an orphanage where he meets and teams up and forms a gang with two guys who become his lifelong best friends, Bentley, a technician, inventor and a talented mathematical hacker with encyclopedic knowledge who plays the role as the brains of the gang, and Murray, a huge husky cowardly guy with a ginormous appetite who plays the role as the brawns and the getaway driver of the gang. The three leave the orphanage together at age 16 to start their lives becoming international vigilante criminals together, naming themselves \"The Cooper Gang\". Sly swears one day to avenge his family and track down the Fiendish Five and steal back the Thievius Raccoonus. Two years later, the Cooper Gang head to Paris, France, to infiltrate Itnerpol (a police headquarters) in order to find the secret police file which stores details and information about the Fiendish Five but during the heist they are ambushed by Inspector Carmelita Fox (towards whom Sly develops a romantic attraction), a police officer who is affiliated with Interpol and is after the Cooper Gang. The gang manage to steal the police file and successfully escapes from her and the rest of the cops. With the secret police file finally in their hands, the Cooper Gang manage to track down the Fiendish Five.",
         "keywords": [
             "ghosts",
             "mascot",
@@ -5908,38 +6303,40 @@ GAMES_DATA = {
             "invisibility",
             "time trials"
         ],
-        "release_date": "2002"
+        "release_date": 2002
     },
     "sm": {
         "igdb_id": "1103",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5osy.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5osy.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14az.png",
+        "key_art_url": "",
         "game_name": "Super Metroid",
-        "igdb_name": "super metroid",
+        "igdb_name": "Super Metroid",
         "age_rating": "7",
         "rating": [
-            "mild violence"
+            "Mild Violence"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "shooter",
-            "platform",
-            "adventure"
+            "Shooter",
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "thriller"
+            "Action",
+            "Science fiction",
+            "Thriller"
         ],
         "platforms": [
-            "super nintendo entertainment system",
-            "wii",
-            "wii u",
-            "new nintendo 3ds",
-            "super famicom"
+            "Super Nintendo Entertainment System",
+            "Wii",
+            "Wii U",
+            "New Nintendo 3DS",
+            "Super Famicom"
         ],
-        "storyline": "after samus completed her mission and eradicated the entire metroid population on sr388 as commanded by the galactic federation (sans the metroid hatchling, which she nicknamed \"baby\"), she brought the hatchling to the ceres space colony for research. however, shortly after she left, she received a distress signal from the station and returned to investigate.\n\nwhen samus arrives at the space science academy where the baby was being studied, she finds all the scientists slaughtered and the containment unit that held the baby missing. upon further exploration of the station, she finds the baby in a small capsule. as she approaches, ridley appears and grabs the capsule. after a brief battle, samus repels ridley, and he activates a self-destruct sequence to destroy ceres.\n\nafter escaping the explosion, ridley flees to zebes, and samus goes after him.",
+        "storyline": "After Samus completed her mission and eradicated the entire Metroid population on SR388 as commanded by the Galactic Federation (sans the Metroid Hatchling, which she nicknamed \"Baby\"), she brought the Hatchling to the Ceres Space Colony for research. However, shortly after she left, she received a distress signal from the Station and returned to investigate.\n\nWhen Samus arrives at the Space Science Academy where the Baby was being studied, she finds all the scientists slaughtered and the containment unit that held the Baby missing. Upon further exploration of the Station, she finds the Baby in a small capsule. As she approaches, Ridley appears and grabs the capsule. After a brief battle, Samus repels Ridley, and he activates a self-destruct sequence to destroy Ceres.\n\nAfter escaping the explosion, Ridley flees to Zebes, and Samus goes after him.",
         "keywords": [
             "aliens",
             "exploration",
@@ -5965,33 +6362,35 @@ GAMES_DATA = {
             "isolation",
             "interconnected-world"
         ],
-        "release_date": "1994"
+        "release_date": 1994
     },
     "sm64ex": {
         "igdb_id": "1074",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co721v.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co721v.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14k6.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3na7.png",
         "game_name": "Super Mario 64",
-        "igdb_name": "super mario 64",
+        "igdb_name": "Super Mario 64",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "open world"
+            "Action",
+            "Fantasy",
+            "Open world"
         ],
         "platforms": [
-            "wii",
-            "nintendo 64",
-            "wii u"
+            "Wii",
+            "Nintendo 64",
+            "Wii U"
         ],
-        "storyline": "\u201cmario, please come to the castle. i've baked a cake for you. yours truly, princess toadstool.\u201d\n\n\u201cwow, an invitation from peach! i'll head out right away. i hope she can wait for me!\u201d\n\nmario is so excited to receive the invitation from the princess, who lives in the mushroom castle that he quickly dresses in his best and leaves right away.\n\n\u201chmmm, something's not quite right here... it's so quiet...\u201d\n\nshaking off his uneasy premonition, mario steps into the silent castle, where he is greeted by the gruff words, \u201cno one's home! now scram! bwa, ha, ha.\u201d\n\nthe sound seems to come from everywhere.\n\n\u201cwho's there?! i've heard that voice somewhere before...\u201d\n\nmario begins searching all over the castle. most of the doors are locked, but finding one open, he peeks inside. hanging on the wall is the largest painting he has ever seen, and from behind the painting comes the strangest sound that he has ever heard...\n\n\u201ci think i hear someone calling. what secrets does this painting hold?\u201d\n\nwithout a second thought, mario jumps at the painting. as he is drawn into it, another world opens before his very eyes.\n\nonce inside the painting, mario finds himself in the midst of battling bob-ombs. according to the bob-omb buddies, someone...or something...has suddenly attacked the castle and stolen the \u201cpower stars.\u201d these stars protect the castle. with the stars in his control, the beast plans to take over the mushroom castle.\n\nto help him accomplish this, he plans to convert the residents of the painting world into monsters as well. if nothing is done, all those monsters will soon begin to overflow from inside the painting.\n\n\u201ca plan this maniacal, this cunning...this must be the work of bowser!\u201d\n\nprincess toadstool and toad are missing, too. bowser must have taken them and sealed them inside the painting. unless mario recovers the power stars immediately, the inhabitants of this world will become bowser's army.\n\n\u201cwell, bowser's not going to get away with it, not as long as i'm around!\u201d\n\nstolen power stars are hidden throughout the painting world. use your wisdom and strength to recover the power stars and restore peace to the mushroom castle.\n\n\u201cmario! you are the only one we can count on.\u201d",
+        "storyline": "\u201cMario, please come to the castle. I've baked a cake for you. Yours truly, Princess Toadstool.\u201d\n\n\u201cWow, an invitation from Peach! I'll head out right away. I hope she can wait for me!\u201d\n\nMario is so excited to receive the invitation from the princess, who lives in the Mushroom Castle that he quickly dresses in his best and leaves right away.\n\n\u201cHmmm, something's not quite right here... It's so quiet...\u201d\n\nShaking off his uneasy premonition, Mario steps into the silent castle, where he is greeted by the gruff words, \u201cNo one's home! Now scram! Bwa, ha, ha.\u201d\n\nThe sound seems to come from everywhere.\n\n\u201cWho's there?! I've heard that voice somewhere before...\u201d\n\nMario begins searching all over the castle. Most of the doors are locked, but finding one open, he peeks inside. Hanging on the wall is the largest painting he has ever seen, and from behind the painting comes the strangest sound that he has ever heard...\n\n\u201cI think I hear someone calling. What secrets does this painting hold?\u201d\n\nWithout a second thought, Mario jumps at the painting. As he is drawn into it, another world opens before his very eyes.\n\nOnce inside the painting, Mario finds himself in the midst of battling Bob-ombs. According to the Bob-omb Buddies, someone...or something...has suddenly attacked the castle and stolen the \u201cPower Stars.\u201d These stars protect the castle. With the stars in his control, the beast plans to take over the Mushroom Castle.\n\nTo help him accomplish this, he plans to convert the residents of the painting world into monsters as well. If nothing is done, all those monsters will soon begin to overflow from inside the painting.\n\n\u201cA plan this maniacal, this cunning...this must be the work of Bowser!\u201d\n\nPrincess Toadstool and Toad are missing, too. Bowser must have taken them and sealed them inside the painting. Unless Mario recovers the Power Stars immediately, the inhabitants of this world will become Bowser's army.\n\n\u201cWell, Bowser's not going to get away with it, not as long as I'm around!\u201d\n\nStolen Power Stars are hidden throughout the painting world. Use your wisdom and strength to recover the Power Stars and restore peace to the Mushroom Castle.\n\n\u201cMario! You are the only one we can count on.\u201d",
         "keywords": [
             "rabbit",
             "3d platformer",
@@ -6003,33 +6402,35 @@ GAMES_DATA = {
             "speedrun",
             "retroachievements"
         ],
-        "release_date": "1996"
+        "release_date": 1996
     },
     "sm64hacks": {
         "igdb_id": "1074",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co721v.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co721v.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14k6.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3na7.png",
         "game_name": "SM64 Romhack",
-        "igdb_name": "super mario 64",
+        "igdb_name": "Super Mario 64",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "open world"
+            "Action",
+            "Fantasy",
+            "Open world"
         ],
         "platforms": [
-            "wii",
-            "nintendo 64",
-            "wii u"
+            "Wii",
+            "Nintendo 64",
+            "Wii U"
         ],
-        "storyline": "\u201cmario, please come to the castle. i've baked a cake for you. yours truly, princess toadstool.\u201d\n\n\u201cwow, an invitation from peach! i'll head out right away. i hope she can wait for me!\u201d\n\nmario is so excited to receive the invitation from the princess, who lives in the mushroom castle that he quickly dresses in his best and leaves right away.\n\n\u201chmmm, something's not quite right here... it's so quiet...\u201d\n\nshaking off his uneasy premonition, mario steps into the silent castle, where he is greeted by the gruff words, \u201cno one's home! now scram! bwa, ha, ha.\u201d\n\nthe sound seems to come from everywhere.\n\n\u201cwho's there?! i've heard that voice somewhere before...\u201d\n\nmario begins searching all over the castle. most of the doors are locked, but finding one open, he peeks inside. hanging on the wall is the largest painting he has ever seen, and from behind the painting comes the strangest sound that he has ever heard...\n\n\u201ci think i hear someone calling. what secrets does this painting hold?\u201d\n\nwithout a second thought, mario jumps at the painting. as he is drawn into it, another world opens before his very eyes.\n\nonce inside the painting, mario finds himself in the midst of battling bob-ombs. according to the bob-omb buddies, someone...or something...has suddenly attacked the castle and stolen the \u201cpower stars.\u201d these stars protect the castle. with the stars in his control, the beast plans to take over the mushroom castle.\n\nto help him accomplish this, he plans to convert the residents of the painting world into monsters as well. if nothing is done, all those monsters will soon begin to overflow from inside the painting.\n\n\u201ca plan this maniacal, this cunning...this must be the work of bowser!\u201d\n\nprincess toadstool and toad are missing, too. bowser must have taken them and sealed them inside the painting. unless mario recovers the power stars immediately, the inhabitants of this world will become bowser's army.\n\n\u201cwell, bowser's not going to get away with it, not as long as i'm around!\u201d\n\nstolen power stars are hidden throughout the painting world. use your wisdom and strength to recover the power stars and restore peace to the mushroom castle.\n\n\u201cmario! you are the only one we can count on.\u201d",
+        "storyline": "\u201cMario, please come to the castle. I've baked a cake for you. Yours truly, Princess Toadstool.\u201d\n\n\u201cWow, an invitation from Peach! I'll head out right away. I hope she can wait for me!\u201d\n\nMario is so excited to receive the invitation from the princess, who lives in the Mushroom Castle that he quickly dresses in his best and leaves right away.\n\n\u201cHmmm, something's not quite right here... It's so quiet...\u201d\n\nShaking off his uneasy premonition, Mario steps into the silent castle, where he is greeted by the gruff words, \u201cNo one's home! Now scram! Bwa, ha, ha.\u201d\n\nThe sound seems to come from everywhere.\n\n\u201cWho's there?! I've heard that voice somewhere before...\u201d\n\nMario begins searching all over the castle. Most of the doors are locked, but finding one open, he peeks inside. Hanging on the wall is the largest painting he has ever seen, and from behind the painting comes the strangest sound that he has ever heard...\n\n\u201cI think I hear someone calling. What secrets does this painting hold?\u201d\n\nWithout a second thought, Mario jumps at the painting. As he is drawn into it, another world opens before his very eyes.\n\nOnce inside the painting, Mario finds himself in the midst of battling Bob-ombs. According to the Bob-omb Buddies, someone...or something...has suddenly attacked the castle and stolen the \u201cPower Stars.\u201d These stars protect the castle. With the stars in his control, the beast plans to take over the Mushroom Castle.\n\nTo help him accomplish this, he plans to convert the residents of the painting world into monsters as well. If nothing is done, all those monsters will soon begin to overflow from inside the painting.\n\n\u201cA plan this maniacal, this cunning...this must be the work of Bowser!\u201d\n\nPrincess Toadstool and Toad are missing, too. Bowser must have taken them and sealed them inside the painting. Unless Mario recovers the Power Stars immediately, the inhabitants of this world will become Bowser's army.\n\n\u201cWell, Bowser's not going to get away with it, not as long as I'm around!\u201d\n\nStolen Power Stars are hidden throughout the painting world. Use your wisdom and strength to recover the Power Stars and restore peace to the Mushroom Castle.\n\n\u201cMario! You are the only one we can count on.\u201d",
         "keywords": [
             "rabbit",
             "3d platformer",
@@ -6041,34 +6442,36 @@ GAMES_DATA = {
             "speedrun",
             "retroachievements"
         ],
-        "release_date": "1996"
+        "release_date": 1996
     },
     "smo": {
         "igdb_id": "26758",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1mxf.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1mxf.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/lymumhy07tlqyprs0zrn.png",
+        "key_art_url": "",
         "game_name": "Super Mario Odyssey",
-        "igdb_name": "super mario odyssey",
+        "igdb_name": "Super Mario Odyssey",
         "age_rating": "7",
         "rating": [
-            "cartoon violence",
-            "comic mischief"
+            "Cartoon Violence",
+            "Comic Mischief"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "sandbox",
-            "open world"
+            "Action",
+            "Fantasy",
+            "Sandbox",
+            "Open world"
         ],
         "platforms": [
-            "nintendo switch 2",
-            "nintendo switch"
+            "Nintendo Switch 2",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
@@ -6086,33 +6489,35 @@ GAMES_DATA = {
             "underwater gameplay",
             "behind the waterfall"
         ],
-        "release_date": "2017"
+        "release_date": 2017
     },
     "sms": {
         "igdb_id": "1075",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co21rh.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co21rh.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14lj.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3nb8.png",
         "game_name": "Super Mario Sunshine",
-        "igdb_name": "super mario sunshine",
+        "igdb_name": "Super Mario Sunshine",
         "age_rating": "3",
         "rating": [
-            "comic mischief"
+            "Comic Mischief"
         ],
         "player_perspectives": [
-            "third person",
-            "bird view / isometric"
+            "Third person",
+            "Bird view / Isometric"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "sandbox"
+            "Action",
+            "Sandbox"
         ],
         "platforms": [
-            "nintendo gamecube"
+            "Nintendo GameCube"
         ],
-        "storyline": "close your eyes and imagine\u2026soothing sunshine accompanied by the sound of waves gently breaking on the shore. high above, seagulls turn lazy circles in a clear blue sky. this is isle delfino.\n\nfar from the hustle and bustle of the mushroom kingdom, this island resort glitters like a gem in the waters of a southern sea.\n\nmario, peach, and an entourage of toads have come to isle delfino to relax and unwind. at least, that\u2019s their plan\u2026but when they arrive, they find things have gone horribly wrong...\n\naccording to the island inhabitants, the person responsible for the mess has a round nose, a thick mustache, and a cap\u2026\n\nwhat? but\u2026that sounds like mario!!\n\nthe islanders are saying that mario's mess has polluted the island and caused their energy source, the shine sprites, to vanish.\n\nnow the falsely accused mario has promised to clean up the island, but...how?\n\nnever fear! fludd, the latest invention from gadd science, inc., can help mario tidy up the island, take on baddies, and lend a nozzle in all kinds of sticky situations.\n\ncan mario clean the island, capture the villain, and clear his good name? it\u2019s time for another mario adventure to get started!",
+        "storyline": "Close your eyes and imagine\u2026soothing sunshine accompanied by the sound of waves gently breaking on the shore. High above, seagulls turn lazy circles in a clear blue sky. This is Isle Delfino.\n\nFar from the hustle and bustle of the Mushroom Kingdom, this island resort glitters like a gem in the waters of a southern sea.\n\nMario, Peach, and an entourage of Toads have come to Isle Delfino to relax and unwind. At least, that\u2019s their plan\u2026but when they arrive, they find things have gone horribly wrong...\n\nAccording to the island inhabitants, the person responsible for the mess has a round nose, a thick mustache, and a cap\u2026\n\nWhat? But\u2026that sounds like Mario!!\n\nThe islanders are saying that Mario's mess has polluted the island and caused their energy source, the Shine Sprites, to vanish.\n\nNow the falsely accused Mario has promised to clean up the island, but...how?\n\nNever fear! FLUDD, the latest invention from Gadd Science, Inc., can help Mario tidy up the island, take on baddies, and lend a nozzle in all kinds of sticky situations.\n\nCan Mario clean the island, capture the villain, and clear his good name? It\u2019s time for another Mario adventure to get started!",
         "keywords": [
             "ghosts",
             "dinosaurs",
@@ -6151,35 +6556,37 @@ GAMES_DATA = {
             "foreshadowing",
             "retroachievements"
         ],
-        "release_date": "2002"
+        "release_date": 2002
     },
     "smw": {
         "igdb_id": "1070",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co8lo8.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co8lo8.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1ge5.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3nae.png",
         "game_name": "Super Mario World",
-        "igdb_name": "super mario world",
+        "igdb_name": "Super Mario World",
         "age_rating": "7",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "arcade",
-            "super nintendo entertainment system",
-            "wii",
-            "wii u",
-            "new nintendo 3ds",
-            "super famicom"
+            "Arcade",
+            "Super Nintendo Entertainment System",
+            "Wii",
+            "Wii U",
+            "New Nintendo 3DS",
+            "Super Famicom"
         ],
-        "storyline": "mario is having a vacation in dinosaur land when he learns that princess peach toadstool has been kidnapped by the evil king koopa bowser. when mario starts searching for her he finds a giant egg with a dinosaur named yoshi hatching out of it. yoshi tells mario that his fellow dinosaurs have been imprisoned in eggs by bowser's underlings. the intrepid plumber has to travel to their castles, rescue the dinosaurs, and eventually face king koopa himself, forcing him to release the princess.",
+        "storyline": "Mario is having a vacation in Dinosaur Land when he learns that Princess Peach Toadstool has been kidnapped by the evil King Koopa Bowser. When Mario starts searching for her he finds a giant egg with a dinosaur named Yoshi hatching out of it. Yoshi tells Mario that his fellow dinosaurs have been imprisoned in eggs by Bowser's underlings. The intrepid plumber has to travel to their castles, rescue the dinosaurs, and eventually face King Koopa himself, forcing him to release the princess.",
         "keywords": [
             "dinosaurs",
             "princess",
@@ -6188,64 +6595,68 @@ GAMES_DATA = {
             "damsel in distress",
             "retroachievements"
         ],
-        "release_date": "1990"
+        "release_date": 1990
     },
     "smz3": {
         "igdb_id": "210231",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5zep.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5zep.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "SMZ3",
-        "igdb_name": "super metroid and a link to the past crossover randomizer",
-        "age_rating": "nr",
+        "igdb_name": "Super Metroid and A Link to the Past Crossover Randomizer",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric",
-            "side view"
+            "Bird view / Isometric",
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "open world"
+            "Action",
+            "Open world"
         ],
         "platforms": [
-            "super nintendo entertainment system"
+            "Super Nintendo Entertainment System"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2018"
+        "release_date": 2018
     },
     "sm_map_rando": {
         "igdb_id": "1103",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5osy.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5osy.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14az.png",
+        "key_art_url": "",
         "game_name": "Super Metroid Map Rando",
-        "igdb_name": "super metroid",
+        "igdb_name": "Super Metroid",
         "age_rating": "7",
         "rating": [
-            "mild violence"
+            "Mild Violence"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "shooter",
-            "platform",
-            "adventure"
+            "Shooter",
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "thriller"
+            "Action",
+            "Science fiction",
+            "Thriller"
         ],
         "platforms": [
-            "super nintendo entertainment system",
-            "wii",
-            "wii u",
-            "new nintendo 3ds",
-            "super famicom"
+            "Super Nintendo Entertainment System",
+            "Wii",
+            "Wii U",
+            "New Nintendo 3DS",
+            "Super Famicom"
         ],
-        "storyline": "after samus completed her mission and eradicated the entire metroid population on sr388 as commanded by the galactic federation (sans the metroid hatchling, which she nicknamed \"baby\"), she brought the hatchling to the ceres space colony for research. however, shortly after she left, she received a distress signal from the station and returned to investigate.\n\nwhen samus arrives at the space science academy where the baby was being studied, she finds all the scientists slaughtered and the containment unit that held the baby missing. upon further exploration of the station, she finds the baby in a small capsule. as she approaches, ridley appears and grabs the capsule. after a brief battle, samus repels ridley, and he activates a self-destruct sequence to destroy ceres.\n\nafter escaping the explosion, ridley flees to zebes, and samus goes after him.",
+        "storyline": "After Samus completed her mission and eradicated the entire Metroid population on SR388 as commanded by the Galactic Federation (sans the Metroid Hatchling, which she nicknamed \"Baby\"), she brought the Hatchling to the Ceres Space Colony for research. However, shortly after she left, she received a distress signal from the Station and returned to investigate.\n\nWhen Samus arrives at the Space Science Academy where the Baby was being studied, she finds all the scientists slaughtered and the containment unit that held the Baby missing. Upon further exploration of the Station, she finds the Baby in a small capsule. As she approaches, Ridley appears and grabs the capsule. After a brief battle, Samus repels Ridley, and he activates a self-destruct sequence to destroy Ceres.\n\nAfter escaping the explosion, Ridley flees to Zebes, and Samus goes after him.",
         "keywords": [
             "aliens",
             "exploration",
@@ -6271,33 +6682,35 @@ GAMES_DATA = {
             "isolation",
             "interconnected-world"
         ],
-        "release_date": "1994"
+        "release_date": 1994
     },
     "soe": {
         "igdb_id": "1359",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co8kz6.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co8kz6.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Secret of Evermore",
-        "igdb_name": "secret of evermore",
-        "age_rating": "e",
+        "igdb_name": "Secret of Evermore",
+        "age_rating": "E",
         "rating": [
-            "mild animated violence"
+            "Mild Animated Violence"
         ],
         "player_perspectives": [
-            "third person",
-            "bird view / isometric"
+            "Third person",
+            "Bird view / Isometric"
         ],
         "genres": [
-            "role-playing (rpg)"
+            "Role-playing (RPG)"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "historical"
+            "Action",
+            "Science fiction",
+            "Historical"
         ],
         "platforms": [
-            "super nintendo entertainment system"
+            "Super Nintendo Entertainment System"
         ],
-        "storyline": "in dr. sidney ruffleberg's old, decaying mansion, a boy and his dog stumble upon a mysterious machine. by sheer accident they are propelled into evermore, a one-time utopia that now has become a confounding and deadly world. a world of prehistoric jungles, ancient civilizations, medieval kingdoms and futuristic cities. during his odyssey, the boy must master a variety of weapons, learn to harness the forces of alchemy, and make powerful allies to battle evermore's diabolical monsters. what's more, his dog masters shape-changing to aid the quest. but even if they can muster enough skill and courage, even if they can uncover the mysterious clues, they can only find their way home by discovering the secret of evermore.",
+        "storyline": "In Dr. Sidney Ruffleberg's old, decaying mansion, a boy and his dog stumble upon a mysterious machine. By sheer accident they are propelled into Evermore, a one-time utopia that now has become a confounding and deadly world. A world of prehistoric jungles, ancient civilizations, medieval kingdoms and futuristic cities. During his odyssey, the boy must master a variety of weapons, learn to harness the forces of alchemy, and make powerful allies to battle Evermore's diabolical monsters. What's more, his dog masters shape-changing to aid the quest. But even if they can muster enough skill and courage, even if they can uncover the mysterious clues, they can only find their way home by discovering the Secret of Evermore.",
         "keywords": [
             "medieval",
             "dog",
@@ -6305,36 +6718,38 @@ GAMES_DATA = {
             "sprinting mechanics",
             "ambient music"
         ],
-        "release_date": "1995"
+        "release_date": 1995
     },
     "sonic_heroes": {
         "igdb_id": "4156",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co9olx.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co9olx.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Sonic Heroes",
-        "igdb_name": "sonic heroes",
+        "igdb_name": "Sonic Heroes",
         "age_rating": "3",
         "rating": [
-            "mild fantasy violence"
+            "Mild Fantasy Violence"
         ],
         "player_perspectives": [
-            "third person",
-            "bird view / isometric"
+            "Third person",
+            "Bird view / Isometric"
         ],
         "genres": [
-            "platform",
-            "adventure"
+            "Platform",
+            "Adventure"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "xbox",
-            "playstation 3",
-            "nintendo gamecube",
-            "pc (microsoft windows)",
-            "playstation 2"
+            "Xbox",
+            "PlayStation 3",
+            "Nintendo GameCube",
+            "PC (Microsoft Windows)",
+            "PlayStation 2"
         ],
-        "storyline": "dr. eggman has come back to challenge sonic and crew again to defeat his new scheme. sonic the hedgehog, miles \"tails\" prower, and knuckles the echidna gladly accept and race off to tackle the doctor's latest plan. meanwhile, rouge the bat swings in on one of eggman's old fortresses and discovers shadow the hedgehog encapsuled. after an odd encounter, rouge, shadow, and e-123 omega join up to find out what happened to shadow and to get revenge on eggman.\nat a resort, amy rose looks at an ad that shows sonic in it with chocola and froggy, cheese's and big's best friends respectively. after getting over boredom, amy, cream the rabbit, and big the cat decide to find sonic and get what they want back. elsewhere, in a run down building, the chaotix detective agency receive a package that contains a walkie-talkie. tempting them, vector the crocodile, espio the chameleon and charmy bee decide to work for this mysterious person, so they can earn some money.",
+        "storyline": "Dr. Eggman has come back to challenge Sonic and crew again to defeat his new scheme. Sonic the Hedgehog, Miles \"Tails\" Prower, and Knuckles the Echidna gladly accept and race off to tackle the doctor's latest plan. Meanwhile, Rouge the Bat swings in on one of Eggman's old fortresses and discovers Shadow the Hedgehog encapsuled. After an odd encounter, Rouge, Shadow, and E-123 Omega join up to find out what happened to Shadow and to get revenge on Eggman.\nAt a resort, Amy Rose looks at an ad that shows Sonic in it with Chocola and Froggy, Cheese's and Big's best friends respectively. After getting over boredom, Amy, Cream the Rabbit, and Big the Cat decide to find Sonic and get what they want back. Elsewhere, in a run down building, the Chaotix Detective Agency receive a package that contains a walkie-talkie. Tempting them, Vector the Crocodile, Espio the Chameleon and Charmy Bee decide to work for this mysterious person, so they can earn some money.",
         "keywords": [
             "3d",
             "robots",
@@ -6353,41 +6768,43 @@ GAMES_DATA = {
             "temporary invincibility",
             "retroachievements"
         ],
-        "release_date": "2003"
+        "release_date": 2003
     },
     "sotn": {
         "igdb_id": "1128",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co53m8.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co53m8.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1nj6.png",
+        "key_art_url": "",
         "game_name": "Symphony of the Night",
-        "igdb_name": "castlevania: symphony of the night",
+        "igdb_name": "Castlevania: Symphony of the Night",
         "age_rating": "12",
         "rating": [
-            "animated blood and gore",
-            "animated violence",
-            "violence",
-            "blood and gore",
-            "cartoon violence"
+            "Animated Blood and Gore",
+            "Animated Violence",
+            "Violence",
+            "Blood and Gore",
+            "Cartoon Violence"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "role-playing (rpg)",
-            "adventure"
+            "Platform",
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "horror",
-            "open world"
+            "Action",
+            "Horror",
+            "Open world"
         ],
         "platforms": [
-            "playstation 3",
-            "playstation",
-            "playstation portable",
-            "xbox 360"
+            "PlayStation 3",
+            "PlayStation",
+            "PlayStation Portable",
+            "Xbox 360"
         ],
-        "storyline": "the game's story takes place during the year 1797, 5 years after the events of rondo of blood and begins with richter belmont's defeat of count dracula, mirroring the end of the former game. however, despite dracula being defeated, richter vanishes without a trace. castlevania rises again five years later, and while there are no belmonts to storm the castle, alucard, the son of dracula, awakens from his self-induced sleep, and decides to investigate what transpired during his slumber.\n\nmeanwhile, maria renard, richter's sister-in-law, enters castlevania herself to search for the missing richter. she assists alucard multiple times throughout the game.",
+        "storyline": "The game's story takes place during the year 1797, 5 years after the events of Rondo of Blood and begins with Richter Belmont's defeat of Count Dracula, mirroring the end of the former game. However, despite Dracula being defeated, Richter vanishes without a trace. Castlevania rises again five years later, and while there are no Belmonts to storm the castle, Alucard, the son of Dracula, awakens from his self-induced sleep, and decides to investigate what transpired during his slumber.\n\nMeanwhile, Maria Renard, Richter's sister-in-law, enters Castlevania herself to search for the missing Richter. She assists Alucard multiple times throughout the game.",
         "keywords": [
             "ghosts",
             "bloody",
@@ -6433,63 +6850,67 @@ GAMES_DATA = {
             "isolation",
             "interconnected-world"
         ],
-        "release_date": "1997"
+        "release_date": 1997
     },
     "spire": {
         "igdb_id": "296831",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co82c5.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co82c5.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar2w86.png",
+        "key_art_url": "",
         "game_name": "Slay the Spire",
-        "igdb_name": "slay the spire ii",
-        "age_rating": "nr",
+        "igdb_name": "Slay the Spire II",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "strategy",
-            "indie",
-            "card & board game"
+            "Strategy",
+            "Indie",
+            "Card & Board Game"
         ],
         "themes": [
-            "fantasy"
+            "Fantasy"
         ],
         "platforms": [
-            "pc (microsoft windows)"
+            "PC (Microsoft Windows)"
         ],
         "storyline": "",
         "keywords": [
             "roguelike"
         ],
-        "release_date": "2026"
+        "release_date": 2026
     },
     "spyro3": {
         "igdb_id": "1578",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7t4m.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7t4m.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Spyro 3",
-        "igdb_name": "spyro: year of the dragon",
+        "igdb_name": "Spyro: Year of the Dragon",
         "age_rating": "7",
         "rating": [
-            "comic mischief"
+            "Comic Mischief"
         ],
         "player_perspectives": [
-            "third person",
-            "bird view / isometric"
+            "Third person",
+            "Bird view / Isometric"
         ],
         "genres": [
-            "platform",
-            "puzzle",
-            "adventure"
+            "Platform",
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "comedy"
+            "Action",
+            "Comedy"
         ],
         "platforms": [
-            "playstation 3",
-            "playstation",
-            "playstation portable"
+            "PlayStation 3",
+            "PlayStation",
+            "PlayStation Portable"
         ],
-        "storyline": "the game follows the titular purple dragon spyro as he travels to the forgotten worlds after 150 magical dragon eggs are stolen from the land of the dragons by an evil sorceress.",
+        "storyline": "The game follows the titular purple dragon Spyro as he travels to the Forgotten Worlds after 150 magical dragon eggs are stolen from the land of the dragons by an evil sorceress.",
         "keywords": [
             "minigames",
             "mascot",
@@ -6506,37 +6927,39 @@ GAMES_DATA = {
             "gliding",
             "time trials"
         ],
-        "release_date": "2000"
+        "release_date": 2000
     },
     "ss": {
         "igdb_id": "534",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5wrj.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5wrj.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/o7kzk0l7wrtw3gfv4dgb.png",
+        "key_art_url": "",
         "game_name": "Skyward Sword",
-        "igdb_name": "the legend of zelda: skyward sword",
+        "igdb_name": "The Legend of Zelda: Skyward Sword",
         "age_rating": "12",
         "rating": [
-            "fantasy violence",
-            "animated blood",
-            "comic mischief"
+            "Fantasy Violence",
+            "Animated Blood",
+            "Comic Mischief"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "puzzle",
-            "adventure"
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "historical",
-            "open world"
+            "Action",
+            "Fantasy",
+            "Historical",
+            "Open world"
         ],
         "platforms": [
-            "wii",
-            "wii u"
+            "Wii",
+            "Wii U"
         ],
-        "storyline": "born on an island suspended in the sky, a young man called link accepts his destiny to venture to the world below to save his childhood friend zelda after being kidnapped and brought to an abandoned land.",
+        "storyline": "Born on an island suspended in the sky, a young man called Link accepts his destiny to venture to the world below to save his childhood friend Zelda after being kidnapped and brought to an abandoned land.",
         "keywords": [
             "medieval",
             "archery",
@@ -6561,53 +6984,55 @@ GAMES_DATA = {
             "behind the waterfall",
             "monomyth"
         ],
-        "release_date": "2011"
+        "release_date": 2011
     },
     "stardew_valley": {
         "igdb_id": "17000",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coa93h.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coa93h.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar5l8.png",
+        "key_art_url": "",
         "game_name": "Stardew Valley",
-        "igdb_name": "stardew valley",
+        "igdb_name": "Stardew Valley",
         "age_rating": "12",
         "rating": [
-            "fantasy violence",
-            "mild blood",
-            "mild language",
-            "simulated gambling",
-            "use of tobacco",
-            "use of alcohol",
-            "use of alcohol and tobacco"
+            "Fantasy Violence",
+            "Mild Blood",
+            "Mild Language",
+            "Simulated Gambling",
+            "Use of Tobacco",
+            "Use of Alcohol",
+            "Use of Alcohol and Tobacco"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "simulator",
-            "strategy",
-            "adventure",
-            "indie"
+            "Role-playing (RPG)",
+            "Simulator",
+            "Strategy",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "fantasy",
-            "business",
-            "sandbox",
-            "romance"
+            "Fantasy",
+            "Business",
+            "Sandbox",
+            "Romance"
         ],
         "platforms": [
-            "playstation 4",
-            "linux",
-            "nintendo switch 2",
-            "android",
-            "pc (microsoft windows)",
-            "ios",
-            "mac",
-            "wii u",
-            "playstation vita",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "Linux",
+            "Nintendo Switch 2",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "Mac",
+            "Wii U",
+            "PlayStation Vita",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "you\u2019ve inherited your grandfather\u2019s old farm plot in stardew valley. armed with hand-me-down tools and a few coins, you set out to begin your new life. can you learn to live off the land and turn these overgrown fields into a thriving home? it won\u2019t be easy. ever since joja corporation came to town, the old ways of life have all but disappeared. the community center, once the town\u2019s most vibrant hub of activity, now lies in shambles. but the valley seems full of opportunity. with a little dedication, you might just be the one to restore stardew valley to greatness!",
+        "storyline": "You\u2019ve inherited your grandfather\u2019s old farm plot in Stardew Valley. Armed with hand-me-down tools and a few coins, you set out to begin your new life. Can you learn to live off the land and turn these overgrown fields into a thriving home? It won\u2019t be easy. Ever since Joja Corporation came to town, the old ways of life have all but disappeared. The community center, once the town\u2019s most vibrant hub of activity, now lies in shambles. But the valley seems full of opportunity. With a little dedication, you might just be the one to restore Stardew Valley to greatness!",
         "keywords": [
             "minigames",
             "2d",
@@ -6623,34 +7048,36 @@ GAMES_DATA = {
             "deliberately retro",
             "controller support"
         ],
-        "release_date": "2016"
+        "release_date": 2016
     },
     "star_fox_64": {
         "igdb_id": "2591",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2e4k.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2e4k.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1vrq.png",
+        "key_art_url": "",
         "game_name": "Star Fox 64",
-        "igdb_name": "star fox 64",
+        "igdb_name": "Star Fox 64",
         "age_rating": "7",
         "rating": [
-            "violence"
+            "Violence"
         ],
         "player_perspectives": [
-            "first person",
-            "third person"
+            "First person",
+            "Third person"
         ],
         "genres": [
-            "shooter"
+            "Shooter"
         ],
         "themes": [
-            "action",
-            "science fiction"
+            "Action",
+            "Science fiction"
         ],
         "platforms": [
-            "wii",
-            "nintendo 64",
-            "wii u"
+            "Wii",
+            "Nintendo 64",
+            "Wii U"
         ],
-        "storyline": "mad scientist andross arises as the emperor of venom and declares war on the entire lylat system, starting with corneria. general pepper sends in the star fox team to protect the key planets of the lylat system and stop dr. andross.",
+        "storyline": "Mad scientist Andross arises as the emperor of Venom and declares war on the entire Lylat System, starting with Corneria. General Pepper sends in the Star Fox team to protect the key planets of the Lylat System and stop Dr. Andross.",
         "keywords": [
             "gravity",
             "death",
@@ -6672,166 +7099,174 @@ GAMES_DATA = {
             "meme origin",
             "retroachievements"
         ],
-        "release_date": "1997"
+        "release_date": 1997
     },
     "subnautica": {
         "igdb_id": "9254",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coa938.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coa938.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar56g.png",
+        "key_art_url": "",
         "game_name": "Subnautica",
-        "igdb_name": "subnautica",
+        "igdb_name": "Subnautica",
         "age_rating": "7",
         "rating": [
-            "mild language",
-            "fantasy violence"
+            "Mild Language",
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "first person",
-            "virtual reality"
+            "First person",
+            "Virtual Reality"
         ],
         "genres": [
-            "adventure",
-            "indie"
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "science fiction",
-            "survival",
-            "open world"
+            "Science fiction",
+            "Survival",
+            "Open world"
         ],
         "platforms": [
-            "xbox series x|s",
-            "playstation 4",
-            "android",
-            "pc (microsoft windows)",
-            "ios",
-            "steamvr",
-            "playstation 5",
-            "mac",
-            "oculus rift",
-            "xbox one",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "SteamVR",
+            "PlayStation 5",
+            "Mac",
+            "Oculus Rift",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "you have crash-landed on an alien ocean world, and the only way to go is down. subnautica's oceans range from sun drenched shallow coral reefs to treacherous deep-sea trenches, lava fields, and bio-luminescent underwater rivers. manage your oxygen supply as you explore kelp forests, plateaus, reefs, and winding cave systems. the water teems with life: some of it helpful, much of it harmful.\n\nafter crash landing in your life pod, the clock is ticking to find water, food, and to develop the equipment you need to explore. collect resources from the ocean around you. craft diving gear, lights, habitat modules, and submersibles. venture deeper and further form to find rarer resources, allowing you to craft more advanced items.",
+        "storyline": "You have crash-landed on an alien ocean world, and the only way to go is down. Subnautica's oceans range from sun drenched shallow coral reefs to treacherous deep-sea trenches, lava fields, and bio-luminescent underwater rivers. Manage your oxygen supply as you explore kelp forests, plateaus, reefs, and winding cave systems. The water teems with life: Some of it helpful, much of it harmful.\n\nAfter crash landing in your Life Pod, the clock is ticking to find water, food, and to develop the equipment you need to explore. Collect resources from the ocean around you. Craft diving gear, lights, habitat modules, and submersibles. Venture deeper and further form to find rarer resources, allowing you to craft more advanced items.",
         "keywords": [
             "exploration",
             "swimming",
             "underwater gameplay"
         ],
-        "release_date": "2018"
+        "release_date": 2018
     },
     "swr": {
         "igdb_id": "154",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3wj7.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3wj7.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar8f0.png",
+        "key_art_url": "",
         "game_name": "Star Wars Episode I Racer",
-        "igdb_name": "star wars: episode i - racer",
+        "igdb_name": "Star Wars: Episode I - Racer",
         "age_rating": "7",
         "rating": [
-            "mild fantasy violence"
+            "Mild Fantasy Violence"
         ],
         "player_perspectives": [
-            "first person",
-            "third person"
+            "First person",
+            "Third person"
         ],
         "genres": [
-            "racing"
+            "Racing"
         ],
         "themes": [
-            "action",
-            "science fiction"
+            "Action",
+            "Science fiction"
         ],
         "platforms": [
-            "playstation 4",
-            "nintendo 64",
-            "pc (microsoft windows)",
-            "mac",
-            "xbox one",
-            "nintendo switch",
-            "dreamcast"
+            "PlayStation 4",
+            "Nintendo 64",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch",
+            "Dreamcast"
         ],
         "storyline": "",
         "keywords": [
             "robots",
             "retroachievements"
         ],
-        "release_date": "1999"
+        "release_date": 1999
     },
     "tboir": {
         "igdb_id": "310643",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co8kxf.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co8kxf.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar335q.png",
+        "key_art_url": "",
         "game_name": "The Binding of Isaac Repentance",
-        "igdb_name": "the binding of isaac: repentance",
+        "igdb_name": "The Binding of Isaac: Repentance",
         "age_rating": "16",
         "rating": [
-            "blood and gore",
-            "crude humor",
-            "violence"
+            "Blood and Gore",
+            "Crude Humor",
+            "Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "shooter",
-            "indie"
+            "Shooter",
+            "Indie"
         ],
         "themes": [],
         "platforms": [
-            "nintendo switch"
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2021"
+        "release_date": 2021
     },
     "terraria": {
         "igdb_id": "1879",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coaamg.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coaamg.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar5kn.png",
+        "key_art_url": "",
         "game_name": "Terraria",
-        "igdb_name": "terraria",
+        "igdb_name": "Terraria",
         "age_rating": "12",
         "rating": [
-            "mild suggestive themes",
-            "blood and gore",
-            "use of alcohol",
-            "cartoon violence",
-            "suggestive themes",
-            "violence",
-            "blood",
-            "alcohol reference"
+            "Mild Suggestive Themes",
+            "Blood and Gore",
+            "Use of Alcohol",
+            "Cartoon Violence",
+            "Suggestive Themes",
+            "Violence",
+            "Blood",
+            "Alcohol Reference"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "role-playing (rpg)",
-            "simulator",
-            "strategy",
-            "adventure",
-            "indie"
+            "Platform",
+            "Role-playing (RPG)",
+            "Simulator",
+            "Strategy",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "science fiction",
-            "horror",
-            "survival",
-            "sandbox",
-            "open world"
+            "Action",
+            "Fantasy",
+            "Science fiction",
+            "Horror",
+            "Survival",
+            "Sandbox",
+            "Open world"
         ],
         "platforms": [
-            "google stadia",
-            "playstation 3",
-            "playstation 4",
-            "linux",
-            "nintendo 3ds",
-            "windows phone",
-            "android",
-            "pc (microsoft windows)",
-            "ios",
-            "mac",
-            "wii u",
-            "playstation vita",
-            "xbox 360",
-            "xbox one",
-            "nintendo switch"
+            "Google Stadia",
+            "PlayStation 3",
+            "PlayStation 4",
+            "Linux",
+            "Nintendo 3DS",
+            "Windows Phone",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "Mac",
+            "Wii U",
+            "PlayStation Vita",
+            "Xbox 360",
+            "Xbox One",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
@@ -6871,68 +7306,72 @@ GAMES_DATA = {
             "you can pet the dog",
             "bees"
         ],
-        "release_date": "2011"
+        "release_date": 2011
     },
     "tetrisattack": {
         "igdb_id": "2739",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2w6k.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2w6k.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Tetris Attack",
-        "igdb_name": "tetris attack",
-        "age_rating": "e",
+        "igdb_name": "Tetris Attack",
+        "age_rating": "E",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "puzzle"
+            "Puzzle"
         ],
         "themes": [
-            "action",
-            "kids"
+            "Action",
+            "Kids"
         ],
         "platforms": [
-            "super nintendo entertainment system"
+            "Super Nintendo Entertainment System"
         ],
-        "storyline": "the story mode takes place in the world of yoshi's island, where bowser and his minions have cursed all of yoshi's friends. playing as yoshi, the player must defeat each of his friends in order to remove the curse. once all friends have been freed, the game proceeds to a series of bowser's minions, and then to bowser himself. during these final matches, the player can select yoshi or any of his friends to play out the stage.",
+        "storyline": "The story mode takes place in the world of Yoshi's Island, where Bowser and his minions have cursed all of Yoshi's friends. Playing as Yoshi, the player must defeat each of his friends in order to remove the curse. Once all friends have been freed, the game proceeds to a series of Bowser's minions, and then to Bowser himself. During these final matches, the player can select Yoshi or any of his friends to play out the stage.",
         "keywords": [
             "retroachievements"
         ],
-        "release_date": "1996"
+        "release_date": 1996
     },
     "timespinner": {
         "igdb_id": "28952",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co24ag.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co24ag.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar9y3.png",
+        "key_art_url": "",
         "game_name": "Timespinner",
-        "igdb_name": "timespinner",
+        "igdb_name": "Timespinner",
         "age_rating": "12",
         "rating": [
-            "fantasy violence",
-            "sexual themes",
-            "mild language"
+            "Fantasy Violence",
+            "Sexual Themes",
+            "Mild Language"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "role-playing (rpg)",
-            "adventure",
-            "indie"
+            "Platform",
+            "Role-playing (RPG)",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "playstation 4",
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "playstation vita",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "PlayStation Vita",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "with her family murdered in front of her and the ancient timespinner device destroyed, lunais is suddenly transported into a unknown world, stranded with seemingly no hope of return. using her power to control time, lunais vows to take her revenge on the evil lachiem empire, but sometimes the course of history isn\u2019t quite as black and white as it seems...",
+        "storyline": "With her family murdered in front of her and the ancient Timespinner device destroyed, Lunais is suddenly transported into a unknown world, stranded with seemingly no hope of return. Using her power to control time, Lunais vows to take her revenge on the evil Lachiem Empire, but sometimes the course of history isn\u2019t quite as black and white as it seems...",
         "keywords": [
             "time travel",
             "metroidvania",
@@ -6944,70 +7383,74 @@ GAMES_DATA = {
             "merchants",
             "lgbtq+"
         ],
-        "release_date": "2018"
+        "release_date": 2018
     },
     "tloz": {
         "igdb_id": "1022",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1uii.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1uii.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14l0.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3p2o.png",
         "game_name": "The Legend of Zelda",
-        "igdb_name": "the legend of zelda",
+        "igdb_name": "The Legend of Zelda",
         "age_rating": "7",
         "rating": [
-            "mild fantasy violence"
+            "Mild Fantasy Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "adventure"
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "open world"
+            "Action",
+            "Fantasy",
+            "Open world"
         ],
         "platforms": [
-            "family computer disk system",
-            "nintendo 3ds",
-            "wii",
-            "family computer",
-            "wii u",
-            "nintendo entertainment system"
+            "Family Computer Disk System",
+            "Nintendo 3DS",
+            "Wii",
+            "Family Computer",
+            "Wii U",
+            "Nintendo Entertainment System"
         ],
-        "storyline": "in one of the darkest times in the kingdom of hyrule, a young boy named link takes on an epic quest to restore the fragmented triforce of wisdom and save the princess zelda from the clutches of the evil ganon.",
+        "storyline": "In one of the darkest times in the Kingdom of Hyrule, a young boy named Link takes on an epic quest to restore the fragmented Triforce of Wisdom and save the Princess Zelda from the clutches of the evil Ganon.",
         "keywords": [
             "fairy",
             "overworld",
             "meme origin",
             "retroachievements"
         ],
-        "release_date": "1986"
+        "release_date": 1986
     },
     "tloz_ooa": {
         "igdb_id": "1041",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2tw1.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2tw1.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar31pi.png",
+        "key_art_url": "",
         "game_name": "The Legend of Zelda - Oracle of Ages",
-        "igdb_name": "the legend of zelda: oracle of ages",
+        "igdb_name": "The Legend of Zelda: Oracle of Ages",
         "age_rating": "7",
         "rating": [
-            "mild violence"
+            "Mild Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "puzzle",
-            "role-playing (rpg)",
-            "adventure"
+            "Puzzle",
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "game boy color",
-            "nintendo 3ds"
+            "Game Boy Color",
+            "Nintendo 3DS"
         ],
-        "storyline": "a pall of darkness has fallen over the land of labrynna. the sorceress of shadows has captured the oracle of ages and is using her power to do evil. link has been summoned to help and must travel back and forth in time to stop the sorceress of shadows and return labrynna to its former glory.",
+        "storyline": "A pall of Darkness has fallen over the land of Labrynna. The Sorceress of Shadows has captured the Oracle of Ages and is using her power to do evil. Link has been summoned to help and must travel back and forth in time to stop the Sorceress of Shadows and return Labrynna to its former glory.",
         "keywords": [
             "pirates",
             "ghosts",
@@ -7042,34 +7485,36 @@ GAMES_DATA = {
             "status effects",
             "behind the waterfall"
         ],
-        "release_date": "2001"
+        "release_date": 2001
     },
     "tloz_oos": {
         "igdb_id": "1032",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2tw0.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2tw0.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar31pl.png",
+        "key_art_url": "",
         "game_name": "The Legend of Zelda - Oracle of Seasons",
-        "igdb_name": "the legend of zelda: oracle of seasons",
+        "igdb_name": "The Legend of Zelda: Oracle of Seasons",
         "age_rating": "7",
         "rating": [
-            "mild violence"
+            "Mild Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "puzzle",
-            "role-playing (rpg)",
-            "adventure"
+            "Puzzle",
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "game boy color",
-            "nintendo 3ds"
+            "Game Boy Color",
+            "Nintendo 3DS"
         ],
-        "storyline": "the land of holodrum is slowly withering. onox, the general of darkness, has imprisoned the oracle of seasons and is draining the very life out of the land. with the seasons in tumult and the forces of evil running rampant, the world looks for a hero... and finds link. his quest won't be easy - he'll have to master the seasons themselves if he's to turn back the evil tide.",
+        "storyline": "The land of Holodrum is slowly withering. Onox, the General of Darkness, has imprisoned the Oracle of Seasons and is draining the very life out of the land. With the seasons in tumult and the forces of evil running rampant, the world looks for a hero... and finds Link. His quest won't be easy - he'll have to master the seasons themselves if he's to turn back the evil tide.",
         "keywords": [
             "pirates",
             "time travel",
@@ -7110,33 +7555,35 @@ GAMES_DATA = {
             "status effects",
             "damage over time"
         ],
-        "release_date": "2001"
+        "release_date": 2001
     },
     "tloz_ph": {
         "igdb_id": "1037",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3ocu.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3ocu.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/atulchizv5c4ezn2gjob.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3p2i.png",
         "game_name": "The Legend of Zelda - Phantom Hourglass",
-        "igdb_name": "the legend of zelda: phantom hourglass",
+        "igdb_name": "The Legend of Zelda: Phantom Hourglass",
         "age_rating": "7",
         "rating": [
-            "fantasy violence"
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "puzzle",
-            "adventure"
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "wii u",
-            "nintendo ds"
+            "Wii U",
+            "Nintendo DS"
         ],
-        "storyline": "many months have passed since the events of the legend of zelda: the wind waker, and link, tetra and tetra\u2019s band of pirates have set sail in search of new lands. they come across a patch of ocean covered in a dense fog, in which they discover an abandoned ship. tetra falls into danger when she explores the ship alone, and link falls into the ocean when he attempts to rescue her. when he washes up unconscious on the shores of a mysterious island, he is awakened by the sound of a fairy\u2019s voice. with the aid of this fairy, he sets off to find tetra \u2013 and his way back to the seas he once knew.",
+        "storyline": "Many months have passed since the events of The Legend of Zelda: The Wind Waker, and Link, Tetra and Tetra\u2019s band of pirates have set sail in search of new lands. They come across a patch of ocean covered in a dense fog, in which they discover an abandoned ship. Tetra falls into danger when she explores the ship alone, and Link falls into the ocean when he attempts to rescue her. When he washes up unconscious on the shores of a mysterious island, he is awakened by the sound of a fairy\u2019s voice. With the aid of this fairy, he sets off to find Tetra \u2013 and his way back to the seas he once knew.",
         "keywords": [
             "pirates",
             "exploration",
@@ -7173,34 +7620,36 @@ GAMES_DATA = {
             "monomyth",
             "bees"
         ],
-        "release_date": "2007"
+        "release_date": 2007
     },
     "tmc": {
         "igdb_id": "1035",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3nsk.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3nsk.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/shsfsrmdduhlknr5piky.png",
+        "key_art_url": "",
         "game_name": "The Minish Cap",
-        "igdb_name": "the legend of zelda: the minish cap",
+        "igdb_name": "The Legend of Zelda: The Minish Cap",
         "age_rating": "3",
         "rating": [
-            "mild fantasy violence"
+            "Mild Fantasy Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "puzzle",
-            "adventure"
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "nintendo 3ds",
-            "wii u",
-            "game boy advance"
+            "Nintendo 3DS",
+            "Wii U",
+            "Game Boy Advance"
         ],
-        "storyline": "while at a festival with princess zelda, link encounters a mysterious mage called vaati who turns the princess to stone. helpless to stop them, link is asked by the king to meet with a race of tiny people known as the minish, who may be able to help with their predicament. on his travels, link teams up with a talking cap called ezlo, who is able to shrink link to the size of a minish so that he can meet with them. with his newfound abilities, link must save the kingdom from vaati's menace.",
+        "storyline": "While at a festival with Princess Zelda, Link encounters a mysterious mage called Vaati who turns the princess to stone. Helpless to stop them, Link is asked by the king to meet with a race of tiny people known as the Minish, who may be able to help with their predicament. On his travels, Link teams up with a talking cap called Ezlo, who is able to shrink Link to the size of a Minish so that he can meet with them. With his newfound abilities, Link must save the kingdom from Vaati's menace.",
         "keywords": [
             "ghosts",
             "magic",
@@ -7269,147 +7718,157 @@ GAMES_DATA = {
             "damage over time",
             "monomyth"
         ],
-        "release_date": "2004"
+        "release_date": 2004
     },
     "toontown": {
         "igdb_id": "25326",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co28yv.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co28yv.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Toontown",
-        "igdb_name": "toontown online",
+        "igdb_name": "Toontown Online",
         "age_rating": "3",
         "rating": [
-            "cartoon violence",
-            "comic mischief"
+            "Cartoon Violence",
+            "Comic Mischief"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "role-playing (rpg)"
+            "Role-playing (RPG)"
         ],
         "themes": [
-            "comedy",
-            "open world"
+            "Comedy",
+            "Open world"
         ],
         "platforms": [
-            "pc (microsoft windows)",
-            "mac"
+            "PC (Microsoft Windows)",
+            "Mac"
         ],
-        "storyline": "toontown online's story centers on an ongoing battle between a population of cartoon animals known as the toons and a collection of business-minded robots known as the cogs who are trying to take over the town. players would choose and customize their own toon and go on to complete toontasks, play mini-games, and fight the cogs.",
+        "storyline": "Toontown Online's story centers on an ongoing battle between a population of cartoon animals known as the Toons and a collection of business-minded robots known as the Cogs who are trying to take over the town. Players would choose and customize their own toon and go on to complete Toontasks, play mini-games, and fight the Cogs.",
         "keywords": [
             "minigames"
         ],
-        "release_date": "2003"
+        "release_date": 2003
     },
     "tp": {
         "igdb_id": "134014",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3w1h.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3w1h.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar21yd.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3p34.png",
         "game_name": "Twilight Princess",
-        "igdb_name": "the legend of zelda: twilight princess",
+        "igdb_name": "The Legend of Zelda: Twilight Princess",
         "age_rating": "12",
         "rating": [
-            "fantasy violence",
-            "animated blood"
+            "Fantasy Violence",
+            "Animated Blood"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "puzzle",
-            "adventure"
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "wii"
+            "Wii"
         ],
-        "storyline": "link, a young farm boy whose tasks consist of herding goats to watching children in ordon village, is asked by the mayor to run an errand in castle town. but things went strange that day: the land becomes dark and strange creatures appear from another world called the twilight realm which turns most people into ghosts. unlike the others, link transforms into a wolf but is captured. a mysterious figure named midna helps him break free, and with the aid of her magic, they set off to free the land from the shadows. link must explore the vast land of hyrule and uncover the mystery behind its plunge into darkness.",
+        "storyline": "Link, a young farm boy whose tasks consist of herding goats to watching children in Ordon village, is asked by the mayor to run an errand in Castle Town. But things went strange that day: the land becomes dark and strange creatures appear from another world called the Twilight Realm which turns most people into ghosts. Unlike the others, Link transforms into a wolf but is captured. A mysterious figure named Midna helps him break free, and with the aid of her magic, they set off to free the land from the shadows. Link must explore the vast land of Hyrule and uncover the mystery behind its plunge into darkness.",
         "keywords": [],
-        "release_date": "2006"
+        "release_date": 2006
     },
     "trackmania": {
         "igdb_id": "133807",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2fe9.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2fe9.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar8jb.png",
+        "key_art_url": "",
         "game_name": "Trackmania",
-        "igdb_name": "trackmania",
+        "igdb_name": "Trackmania",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "first person",
-            "third person"
+            "First person",
+            "Third person"
         ],
         "genres": [
-            "racing",
-            "sport",
-            "arcade"
+            "Racing",
+            "Sport",
+            "Arcade"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "xbox series x|s",
-            "playstation 4",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "xbox one"
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Xbox One"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2020"
+        "release_date": 2020
     },
     "ttyd": {
         "igdb_id": "328663",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co9p1w.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co9p1w.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Paper Mario The Thousand Year Door",
-        "igdb_name": "paper mario: the thousand-year door",
-        "age_rating": "nr",
+        "igdb_name": "Paper Mario: The Thousand-Year Door",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [],
         "genres": [
-            "puzzle"
+            "Puzzle"
         ],
         "themes": [],
         "platforms": [
-            "web browser"
+            "Web browser"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2004"
+        "release_date": 2004
     },
     "tunic": {
         "igdb_id": "23733",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/td1t8kb33gyo8mvhl2pc.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/td1t8kb33gyo8mvhl2pc.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arklp.png",
+        "key_art_url": "",
         "game_name": "TUNIC",
-        "igdb_name": "tunic",
+        "igdb_name": "Tunic",
         "age_rating": "7",
         "rating": [
-            "fantasy violence"
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "puzzle",
-            "role-playing (rpg)",
-            "adventure",
-            "indie"
+            "Puzzle",
+            "Role-playing (RPG)",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "xbox series x|s",
-            "playstation 4",
-            "pc (microsoft windows)",
-            "playstation 5",
-            "mac",
-            "xbox one",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "PlayStation 5",
+            "Mac",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "tunic is an action adventure game about a small fox in a big world, who must explore the countryside, fight monsters, and discover secrets. crafted to evoke feelings of classic action adventure games, tunic will challenge the player with unique items, skillful combat techniques, and arcane mysteries as our hero forges their way through an intriguing new world.",
+        "storyline": "Tunic is an action adventure game about a small fox in a big world, who must explore the countryside, fight monsters, and discover secrets. Crafted to evoke feelings of classic action adventure games, Tunic will challenge the player with unique items, skillful combat techniques, and arcane mysteries as our hero forges their way through an intriguing new world.",
         "keywords": [
             "exploration",
             "3d",
@@ -7426,32 +7885,34 @@ GAMES_DATA = {
             "controller support",
             "soulslike"
         ],
-        "release_date": "2022"
+        "release_date": 2022
     },
     "tww": {
         "igdb_id": "1033",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3ohz.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3ohz.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/nqujfvlda7lg7bhk7xrq.png",
+        "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3p3f.png",
         "game_name": "The Wind Waker",
-        "igdb_name": "the legend of zelda: the wind waker",
+        "igdb_name": "The Legend of Zelda: The Wind Waker",
         "age_rating": "7",
         "rating": [
-            "violence"
+            "Violence"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "puzzle",
-            "adventure"
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy"
+            "Action",
+            "Fantasy"
         ],
         "platforms": [
-            "nintendo gamecube"
+            "Nintendo GameCube"
         ],
-        "storyline": "set hundreds of years after the events of ocarina of time, the wind waker finds the hero link living with his grandmother on the outset island, one of the many small islands lost amidst the waters of the great sea. on his tenth birthday, link encounters a giant bird carrying a girl. he rescues the girl, but as a result his own sister is taken away by the bird. the girl is a pirate captain named tetra, who agrees to help link find and rescue his sister. during the course of their journey, the two of them realize that a powerful, legendary evil is active again, and must find a way to stop him.",
+        "storyline": "Set hundreds of years after the events of Ocarina of Time, The Wind Waker finds the hero Link living with his grandmother on the Outset Island, one of the many small islands lost amidst the waters of the Great Sea. On his tenth birthday, Link encounters a giant bird carrying a girl. He rescues the girl, but as a result his own sister is taken away by the bird. The girl is a pirate captain named Tetra, who agrees to help Link find and rescue his sister. During the course of their journey, the two of them realize that a powerful, legendary evil is active again, and must find a way to stop him.",
         "keywords": [
             "archery",
             "action-adventure",
@@ -7462,107 +7923,113 @@ GAMES_DATA = {
             "living inventory",
             "retroachievements"
         ],
-        "release_date": "2002"
+        "release_date": 2002
     },
     "tyrian": {
         "igdb_id": "14432",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2zg1.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2zg1.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Tyrian",
-        "igdb_name": "tyrian 2000",
-        "age_rating": "e",
+        "igdb_name": "Tyrian 2000",
+        "age_rating": "E",
         "rating": [
-            "animated violence"
+            "Animated Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "shooter",
-            "arcade"
+            "Shooter",
+            "Arcade"
         ],
         "themes": [
-            "action",
-            "science fiction"
+            "Action",
+            "Science fiction"
         ],
         "platforms": [
-            "pc (microsoft windows)",
-            "mac",
-            "dos"
+            "PC (Microsoft Windows)",
+            "Mac",
+            "DOS"
         ],
         "storyline": "",
         "keywords": [
             "pixel art"
         ],
-        "release_date": "1999"
+        "release_date": 1999
     },
     "ufo50": {
         "igdb_id": "54555",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co24v0.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co24v0.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1udh.png",
+        "key_art_url": "",
         "game_name": "UFO 50",
-        "igdb_name": "ufo 50",
+        "igdb_name": "UFO 50",
         "age_rating": "18",
         "rating": [
-            "blood",
-            "violence",
-            "simulated gambling",
-            "use of drugs"
+            "Blood",
+            "Violence",
+            "Simulated Gambling",
+            "Use of Drugs"
         ],
         "player_perspectives": [
-            "bird view / isometric",
-            "side view"
+            "Bird view / Isometric",
+            "Side view"
         ],
         "genres": [
-            "shooter",
-            "platform",
-            "puzzle",
-            "role-playing (rpg)",
-            "strategy",
-            "adventure",
-            "indie",
-            "arcade"
+            "Shooter",
+            "Platform",
+            "Puzzle",
+            "Role-playing (RPG)",
+            "Strategy",
+            "Adventure",
+            "Indie",
+            "Arcade"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "pc (microsoft windows)",
-            "nintendo switch"
+            "PC (Microsoft Windows)",
+            "Nintendo Switch"
         ],
         "storyline": "",
         "keywords": [
             "digital distribution",
             "deliberately retro"
         ],
-        "release_date": "2024"
+        "release_date": 2024
     },
     "ultrakill": {
         "igdb_id": "124333",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co46s3.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co46s3.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arlq1.png",
+        "key_art_url": "",
         "game_name": "ULTRAKILL",
-        "igdb_name": "ultrakill",
-        "age_rating": "m",
+        "igdb_name": "Ultrakill",
+        "age_rating": "M",
         "rating": [
-            "violence",
-            "blood and gore"
+            "Violence",
+            "Blood and Gore"
         ],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "shooter",
-            "platform",
-            "indie",
-            "arcade"
+            "Shooter",
+            "Platform",
+            "Indie",
+            "Arcade"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "science fiction"
+            "Action",
+            "Fantasy",
+            "Science fiction"
         ],
         "platforms": [
-            "pc (microsoft windows)"
+            "PC (Microsoft Windows)"
         ],
-        "storyline": "mankind has gone extinct and the only beings left on earth are machines fueled by blood.\nbut now that blood is starting to run out on the surface...\n\nmachines are racing to the depths of hell in search of more.",
+        "storyline": "Mankind has gone extinct and the only beings left on earth are machines fueled by blood.\nBut now that blood is starting to run out on the surface...\n\nMachines are racing to the depths of Hell in search of more.",
         "keywords": [
             "bloody",
             "robots",
@@ -7571,47 +8038,49 @@ GAMES_DATA = {
             "great soundtrack",
             "rock music"
         ],
-        "release_date": "2020"
+        "release_date": 2020
     },
     "undertale": {
         "igdb_id": "12517",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2855.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2855.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar4vc.png",
+        "key_art_url": "",
         "game_name": "Undertale",
-        "igdb_name": "undertale",
+        "igdb_name": "Undertale",
         "age_rating": "12",
         "rating": [
-            "mild blood",
-            "mild language",
-            "use of tobacco",
-            "simulated gambling",
-            "fantasy violence"
+            "Mild Blood",
+            "Mild Language",
+            "Use of Tobacco",
+            "Simulated Gambling",
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric"
+            "Bird view / Isometric"
         ],
         "genres": [
-            "puzzle",
-            "role-playing (rpg)",
-            "turn-based strategy (tbs)",
-            "adventure",
-            "indie"
+            "Puzzle",
+            "Role-playing (RPG)",
+            "Turn-based strategy (TBS)",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "fantasy",
-            "horror",
-            "comedy",
-            "drama"
+            "Fantasy",
+            "Horror",
+            "Comedy",
+            "Drama"
         ],
         "platforms": [
-            "playstation 4",
-            "linux",
-            "pc (microsoft windows)",
-            "mac",
-            "playstation vita",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac",
+            "PlayStation Vita",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "\"a long time ago, two races ruled peacefully over the earth: humans and monsters. one day, a terrible war broke out between the two races. after a long battle, the humans were victorious. they sealed the monsters underground with a magical spell.\n\nin the year 201x, a small child scales mt. ebott. it is said that those who climb the mountain never return.\n\nseeking refuge from the rainy weather, the child enters a cave and discovers an enormous hole.\n\nmoving closer to get a better look... the child falls in.\n\nnow, our story begins.\"",
+        "storyline": "\"A long time ago, two races ruled peacefully over the Earth: HUMANS and MONSTERS. One day, a terrible war broke out between the two races. After a long battle, the humans were victorious. They sealed the monsters underground with a magical spell.\n\nIn the year 201X, a small child scales Mt. Ebott. It is said that those who climb the mountain never return.\n\nSeeking refuge from the rainy weather, the child enters a cave and discovers an enormous hole.\n\nMoving closer to get a better look... the child falls in.\n\nNow, our story begins.\"",
         "keywords": [
             "retro",
             "2d",
@@ -7632,46 +8101,48 @@ GAMES_DATA = {
             "fast traveling",
             "you can pet the dog"
         ],
-        "release_date": "2015"
+        "release_date": 2015
     },
     "v6": {
         "igdb_id": "1990",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co4ieg.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co4ieg.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arct2.png",
+        "key_art_url": "",
         "game_name": "VVVVVV",
-        "igdb_name": "vvvvvv",
+        "igdb_name": "VVVVVV",
         "age_rating": "3",
         "rating": [
-            "mild fantasy violence",
-            "mild language"
+            "Mild Fantasy Violence",
+            "Mild Language"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "puzzle",
-            "adventure",
-            "indie",
-            "arcade"
+            "Platform",
+            "Puzzle",
+            "Adventure",
+            "Indie",
+            "Arcade"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "science fiction"
+            "Action",
+            "Fantasy",
+            "Science fiction"
         ],
         "platforms": [
-            "playstation 4",
-            "ouya",
-            "linux",
-            "nintendo 3ds",
-            "android",
-            "pc (microsoft windows)",
-            "ios",
-            "mac",
-            "playstation vita",
-            "nintendo switch"
+            "PlayStation 4",
+            "Ouya",
+            "Linux",
+            "Nintendo 3DS",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "Mac",
+            "PlayStation Vita",
+            "Nintendo Switch"
         ],
-        "storyline": "a spaceship with six crew members - viridian, victoria, vitellary, vermillion, verdigris, and violet - suddenly encountered mysterious trouble while underway.\nthe group escapes by means of a teleportation device, but for some reason all the crew members are sent to different places.\nviridian, the protagonist, must find the other crew members and escape from this mysterious labyrinth...",
+        "storyline": "A spaceship with six crew members - Viridian, Victoria, Vitellary, Vermillion, Verdigris, and Violet - suddenly encountered mysterious trouble while underway.\nThe group escapes by means of a teleportation device, but for some reason all the crew members are sent to different places.\nViridian, the protagonist, must find the other crew members and escape from this mysterious labyrinth...",
         "keywords": [
             "ghosts",
             "exploration",
@@ -7696,108 +8167,116 @@ GAMES_DATA = {
             "time trials",
             "controller support"
         ],
-        "release_date": "2010"
+        "release_date": 2010
     },
     "wargroove": {
         "igdb_id": "27441",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co4hgb.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co4hgb.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar9ii.png",
+        "key_art_url": "",
         "game_name": "Wargroove",
-        "igdb_name": "wargroove",
+        "igdb_name": "Wargroove",
         "age_rating": "7",
         "rating": [
-            "fantasy violence"
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric",
-            "side view"
+            "Bird view / Isometric",
+            "Side view"
         ],
         "genres": [
-            "strategy",
-            "turn-based strategy (tbs)",
-            "tactical",
-            "indie"
+            "Strategy",
+            "Turn-based strategy (TBS)",
+            "Tactical",
+            "Indie"
         ],
         "themes": [
-            "fantasy",
-            "warfare"
+            "Fantasy",
+            "Warfare"
         ],
         "platforms": [
-            "playstation 4",
-            "pc (microsoft windows)",
-            "xbox one",
-            "nintendo switch"
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "wargroove is a modern take on the simple yet deep turn-based tactical gameplay popularised in the 2000s by handheld games such as advance wars. as big fans of those games we were disappointed to find that nothing in this genre was available on current generation platforms and set out to fill the gap ourselves. wargroove aims to recreate the charm and accessibility of the titles that inspired it whilst bringing modern technology into the formula. this modern focus allows for higher resolution pixel art, robust online play and deep modding capability, ultimately creating the most complete experience for advance wars and tbs fans.",
+        "storyline": "Wargroove is a modern take on the simple yet deep turn-based tactical gameplay popularised in the 2000s by handheld games such as Advance Wars. As big fans of those games we were disappointed to find that nothing in this genre was available on current generation platforms and set out to fill the gap ourselves. Wargroove aims to recreate the charm and accessibility of the titles that inspired it whilst bringing modern technology into the formula. This modern focus allows for higher resolution pixel art, robust online play and deep modding capability, ultimately creating the most complete experience for Advance Wars and TBS fans.",
         "keywords": [
             "pixel art"
         ],
-        "release_date": "2019"
+        "release_date": 2019
     },
     "wargroove2": {
         "igdb_id": "241149",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co731u.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co731u.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar28cx.png",
+        "key_art_url": "",
         "game_name": "Wargroove 2",
-        "igdb_name": "wargroove 2",
+        "igdb_name": "Wargroove 2",
         "age_rating": "7",
         "rating": [
-            "fantasy violence"
+            "Fantasy Violence"
         ],
         "player_perspectives": [
-            "bird view / isometric",
-            "side view"
+            "Bird view / Isometric",
+            "Side view"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "strategy",
-            "turn-based strategy (tbs)",
-            "indie"
+            "Role-playing (RPG)",
+            "Strategy",
+            "Turn-based strategy (TBS)",
+            "Indie"
         ],
         "themes": [
-            "fantasy",
-            "warfare"
+            "Fantasy",
+            "Warfare"
         ],
         "platforms": [
-            "xbox series x|s",
-            "pc (microsoft windows)",
-            "xbox one",
-            "nintendo switch"
+            "Xbox Series X|S",
+            "Android",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "Xbox One",
+            "Nintendo Switch"
         ],
-        "storyline": "three years have passed since queen mercia and her allies defeated the ancient adversaries and restored peace to aurania. now, an ambitious foreign faction is unearthing forbidden technologies that could have catastrophic consequences for the land and its people. battle your way through 3 campaigns following 1 interweaving story. only bold decisions, smart resourcing, and tactical know-how can repair a fractured realm\u2026",
+        "storyline": "Three years have passed since Queen Mercia and her allies defeated the ancient adversaries and restored peace to Aurania. Now, an ambitious foreign faction is unearthing forbidden technologies that could have catastrophic consequences for the land and its people. Battle your way through 3 Campaigns following 1 interweaving story. Only bold decisions, smart resourcing, and tactical know-how can repair a fractured realm\u2026",
         "keywords": [
             "pirates"
         ],
-        "release_date": "2023"
+        "release_date": 2023
     },
     "witness": {
         "igdb_id": "5601",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3hih.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3hih.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1cly.png",
+        "key_art_url": "",
         "game_name": "The Witness",
-        "igdb_name": "the witness",
+        "igdb_name": "The Witness",
         "age_rating": "3",
         "rating": [
-            "alcohol reference"
+            "Alcohol Reference"
         ],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "puzzle",
-            "adventure",
-            "indie"
+            "Puzzle",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "science fiction",
-            "open world",
-            "mystery"
+            "Science fiction",
+            "Open world",
+            "Mystery"
         ],
         "platforms": [
-            "playstation 4",
-            "pc (microsoft windows)",
-            "ios",
-            "mac",
-            "xbox one"
+            "PlayStation 4",
+            "PC (Microsoft Windows)",
+            "iOS",
+            "Mac",
+            "Xbox One"
         ],
-        "storyline": "you wake up, alone, on a strange island full of puzzles that will challenge and surprise you.\n\nyou don't remember who you are, and you don't remember how you got here, but there's one thing you can do: explore the island in hope of discovering clues, regaining your memory, and somehow finding your way home.",
+        "storyline": "You wake up, alone, on a strange island full of puzzles that will challenge and surprise you.\n\nYou don't remember who you are, and you don't remember how you got here, but there's one thing you can do: explore the island in hope of discovering clues, regaining your memory, and somehow finding your way home.",
         "keywords": [
             "exploration",
             "maze",
@@ -7814,58 +8293,62 @@ GAMES_DATA = {
             "stat tracking",
             "secret area"
         ],
-        "release_date": "2016"
+        "release_date": 2016
     },
     "wl": {
         "igdb_id": "1072",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co216h.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co216h.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kik.png",
+        "key_art_url": "",
         "game_name": "Wario Land",
-        "igdb_name": "wario land: super mario land 3",
+        "igdb_name": "Wario Land: Super Mario Land 3",
         "age_rating": "3",
         "rating": [
-            "mild fantasy violence"
+            "Mild Fantasy Violence"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform"
+            "Platform"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "nintendo 3ds",
-            "game boy"
+            "Nintendo 3DS",
+            "Game Boy"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "1994"
+        "release_date": 1994
     },
     "wl4": {
         "igdb_id": "1699",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1wpx.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1wpx.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kt5.png",
+        "key_art_url": "",
         "game_name": "Wario Land 4",
-        "igdb_name": "wario land 4",
+        "igdb_name": "Wario Land 4",
         "age_rating": "3",
         "rating": [
-            "comic mischief"
+            "Comic Mischief"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "puzzle",
-            "adventure"
+            "Platform",
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "action"
+            "Action"
         ],
         "platforms": [
-            "nintendo 3ds",
-            "wii u",
-            "game boy advance"
+            "Nintendo 3DS",
+            "Wii U",
+            "Game Boy Advance"
         ],
         "storyline": "",
         "keywords": [
@@ -7887,38 +8370,40 @@ GAMES_DATA = {
             "moving platforms",
             "sequence breaking"
         ],
-        "release_date": "2001"
+        "release_date": 2001
     },
     "xenobladex": {
         "igdb_id": "2366",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1nwh.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1nwh.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar37uu.png",
+        "key_art_url": "",
         "game_name": "Xenoblade X",
-        "igdb_name": "xenoblade chronicles x",
+        "igdb_name": "Xenoblade Chronicles X",
         "age_rating": "12",
         "rating": [
-            "suggestive themes",
-            "use of alcohol",
-            "language",
-            "violence",
-            "animated blood"
+            "Suggestive Themes",
+            "Use of Alcohol",
+            "Language",
+            "Violence",
+            "Animated Blood"
         ],
         "player_perspectives": [
-            "third person"
+            "Third person"
         ],
         "genres": [
-            "role-playing (rpg)",
-            "adventure"
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "science fiction",
-            "sandbox",
-            "open world"
+            "Action",
+            "Science fiction",
+            "Sandbox",
+            "Open world"
         ],
         "platforms": [
-            "wii u"
+            "Wii U"
         ],
-        "storyline": "xenoblade chronicles x opens as humanity, warned of its impending destruction in the crossfire between two warring alien races, constructs interstellar arks to escape earth. however, only a few arks escape the destruction, including the white whale ark. two years after launching, the white whale is attacked and transported to mira. during the crash-landing, the lifehold\u2014a device containing the majority of the human colonists\u2014is separated from the white whale, with lifepods containing colonists being scattered across mira. the avatar is awoken from a lifepod by elma and brought back to new los angeles. while suffering from amnesia, the avatar joins blade, working with elma and lin to recover more lifepods and search for the lifehold. during their missions across mira, blade encounters multiple alien races, learning that those attacking them are part of the ganglion coalition, an alliance of races led by the ganglion race, who are intent on destroying humanity.",
+        "storyline": "Xenoblade Chronicles X opens as humanity, warned of its impending destruction in the crossfire between two warring alien races, constructs interstellar arks to escape Earth. However, only a few arks escape the destruction, including the White Whale ark. Two years after launching, the White Whale is attacked and transported to Mira. During the crash-landing, the Lifehold\u2014a device containing the majority of the human colonists\u2014is separated from the White Whale, with lifepods containing colonists being scattered across Mira. The avatar is awoken from a lifepod by Elma and brought back to New Los Angeles. While suffering from amnesia, the avatar joins BLADE, working with Elma and Lin to recover more lifepods and search for the Lifehold. During their missions across Mira, BLADE encounters multiple alien races, learning that those attacking them are part of the Ganglion coalition, an alliance of races led by the Ganglion race, who are intent on destroying humanity.",
         "keywords": [
             "aliens",
             "robots",
@@ -7934,129 +8419,137 @@ GAMES_DATA = {
             "side quests",
             "real-time combat"
         ],
-        "release_date": "2015"
+        "release_date": 2015
     },
     "yoshisisland": {
         "igdb_id": "1073",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2kn9.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2kn9.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1gep.png",
+        "key_art_url": "",
         "game_name": "Yoshi's Island",
-        "igdb_name": "super mario world 2: yoshi's island",
-        "age_rating": "e",
+        "igdb_name": "Super Mario World 2: Yoshi's Island",
+        "age_rating": "E",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform"
+            "Platform"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "kids"
+            "Action",
+            "Fantasy",
+            "Kids"
         ],
         "platforms": [
-            "satellaview",
-            "super nintendo entertainment system",
-            "super famicom"
+            "Satellaview",
+            "Super Nintendo Entertainment System",
+            "Super Famicom"
         ],
-        "storyline": "a stork carrying the infant mario brothers is attacked by kamek the magikoopa, who steals baby luigi and knocks baby mario out of the sky. baby mario lands on yoshi's island on the back of yoshi himself. with the help of his seven other yoshi friends, yoshi must traverse the island to safely reunite baby mario with his brother and get the babies to their parents.",
+        "storyline": "A stork carrying the infant Mario Brothers is attacked by Kamek the Magikoopa, who steals Baby Luigi and knocks Baby Mario out of the sky. Baby Mario lands on Yoshi's Island on the back of Yoshi himself. With the help of his seven other Yoshi friends, Yoshi must traverse the island to safely reunite Baby Mario with his brother and get the babies to their parents.",
         "keywords": [
             "dinosaurs",
             "side-scrolling",
             "digital distribution"
         ],
-        "release_date": "1995"
+        "release_date": 1995
     },
     "yugioh06": {
         "igdb_id": "49377",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7yau.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7yau.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Yu-Gi-Oh! 2006",
-        "igdb_name": "yu-gi-oh! ultimate masters: world championship tournament 2006",
+        "igdb_name": "Yu-Gi-Oh! Ultimate Masters: World Championship Tournament 2006",
         "age_rating": "3",
         "rating": [],
         "player_perspectives": [
-            "bird view / isometric",
-            "text"
+            "Bird view / Isometric",
+            "Text"
         ],
         "genres": [
-            "strategy",
-            "turn-based strategy (tbs)",
-            "card & board game"
+            "Strategy",
+            "Turn-based strategy (TBS)",
+            "Card & Board Game"
         ],
         "themes": [
-            "fantasy",
-            "survival"
+            "Fantasy",
+            "Survival"
         ],
         "platforms": [
-            "game boy advance"
+            "Game Boy Advance"
         ],
         "storyline": "",
         "keywords": [],
-        "release_date": "2006"
+        "release_date": 2006
     },
     "yugiohddm": {
         "igdb_id": "49211",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5ztw.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5ztw.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Yu-Gi-Oh! Dungeon Dice Monsters",
-        "igdb_name": "yu-gi-oh! dungeon dice monsters",
+        "igdb_name": "Yu-Gi-Oh! Dungeon Dice Monsters",
         "age_rating": "3",
         "rating": [
-            "mild violence"
+            "Mild Violence"
         ],
         "player_perspectives": [
-            "first person",
-            "bird view / isometric"
+            "First person",
+            "Bird view / Isometric"
         ],
         "genres": [
-            "puzzle",
-            "strategy",
-            "turn-based strategy (tbs)",
-            "card & board game"
+            "Puzzle",
+            "Strategy",
+            "Turn-based strategy (TBS)",
+            "Card & Board Game"
         ],
         "themes": [
-            "fantasy"
+            "Fantasy"
         ],
         "platforms": [
-            "game boy advance"
+            "Game Boy Advance"
         ],
-        "storyline": "dungeon dice monsters is the newest addition to the yu-gi-oh! universe. as featured in the dungeon dice monsters story arc in the animated television series, players collect and fight with dice inscribed with mystical powers and magic in order to defeat their opponents. enter a dozen different tournaments and ultimately faceoff against the scheming creator of dungeon dice monsters, duke devlin.",
+        "storyline": "Dungeon Dice Monsters is the newest addition to the Yu-Gi-Oh! universe. As featured in the Dungeon Dice Monsters story arc in the animated television series, players collect and fight with dice inscribed with mystical powers and magic in order to defeat their opponents. Enter a dozen different tournaments and ultimately faceoff against the scheming creator of Dungeon Dice Monsters, Duke Devlin.",
         "keywords": [
             "anime",
             "shopping",
             "merchants"
         ],
-        "release_date": "2001"
+        "release_date": 2001
     },
     "zelda2": {
         "igdb_id": "1025",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1uje.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1uje.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14l5.png",
+        "key_art_url": "",
         "game_name": "Zelda II: The Adventure of Link",
-        "igdb_name": "zelda ii: the adventure of link",
+        "igdb_name": "Zelda II: The Adventure of Link",
         "age_rating": "7",
         "rating": [
-            "mild fantasy violence"
+            "Mild Fantasy Violence"
         ],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "role-playing (rpg)",
-            "adventure"
+            "Platform",
+            "Role-playing (RPG)",
+            "Adventure"
         ],
         "themes": [
-            "action",
-            "fantasy",
-            "sandbox"
+            "Action",
+            "Fantasy",
+            "Sandbox"
         ],
         "platforms": [
-            "family computer disk system",
-            "nintendo 3ds",
-            "wii",
-            "wii u",
-            "nintendo entertainment system"
+            "Family Computer Disk System",
+            "Nintendo 3DS",
+            "Wii",
+            "Wii U",
+            "Nintendo Entertainment System"
         ],
-        "storyline": "several years after the events of the legend of zelda, link has just turned sixteen and discovers a strange birthmark on his hand. with the help of impa, zelda's nursemaid, link learns that this mark is the key to unlock a secret room where princess zelda lies sleeping. when young, princess zelda was given knowledge of the triforce of power which was used to rule the kingdom of hyrule, but when a magician unsuccessfully tried to find out about the triforce from zelda, he put her into an eternal sleep. in his grief, the prince placed zelda in this room hoping she may wake some day. he ordered all female children in the royal household to be named zelda from this point on, so the tragedy would not be forgotten. now, to bring princess zelda back, link must locate all the pieces of the triforce which have been hidden throughout the land.",
+        "storyline": "Several years after the events of The Legend of Zelda, Link has just turned sixteen and discovers a strange birthmark on his hand. With the help of Impa, Zelda's nursemaid, Link learns that this mark is the key to unlock a secret room where Princess Zelda lies sleeping. When young, Princess Zelda was given knowledge of the Triforce of power which was used to rule the kingdom of Hyrule, but when a magician unsuccessfully tried to find out about the Triforce from Zelda, he put her into an eternal sleep. In his grief, the prince placed Zelda in this room hoping she may wake some day. He ordered all female children in the royal household to be named Zelda from this point on, so the tragedy would not be forgotten. Now, to bring Princess Zelda back, Link must locate all the pieces of the Triforce which have been hidden throughout the land.",
         "keywords": [
             "magic",
             "collecting",
@@ -8091,68 +8584,72 @@ GAMES_DATA = {
             "status effects",
             "monomyth"
         ],
-        "release_date": "1987"
+        "release_date": 1987
     },
     "zillion": {
         "igdb_id": "18141",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7xxj.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7xxj.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Zillion",
-        "igdb_name": "zillion",
-        "age_rating": "nr",
+        "igdb_name": "Zillion",
+        "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "side view"
+            "Side view"
         ],
         "genres": [
-            "platform",
-            "puzzle"
+            "Platform",
+            "Puzzle"
         ],
         "themes": [
-            "science fiction"
+            "Science fiction"
         ],
         "platforms": [
-            "sega master system/mark iii"
+            "Sega Master System/Mark III"
         ],
-        "storyline": "are you ready for the ultimate danger? you're alone, outnumbered and there's no guarantee you'll make it alive. you're j.j. your objective: secretly infiltrate the underground labyrinth of the norsa empire and steal their plans for domination. armed with the ultra speed and power of the zillion laser, your mission is complex. and sheer strength will not win this one alone. you'll need more brains than brawn in this sophisticated operation. so, how will you think your way to victory? with cunning strategy and memory to guide you successfully through the maze which awaits. where once inside, you'll find the information needed to destroy the norsas and restore peace forever.",
+        "storyline": "Are you ready for the ultimate danger? You're alone, outnumbered and there's no guarantee you'll make it alive. You're J.J. Your objective: secretly infiltrate the underground labyrinth of The Norsa Empire and steal their plans for domination. Armed with the ultra speed and power of the Zillion Laser, your mission is complex. And sheer strength will not win this one alone. You'll need more brains than brawn in this sophisticated operation. So, how will you think your way to victory? With cunning strategy and memory to guide you successfully through the maze which awaits. Where once inside, you'll find the information needed to destroy the Norsas and restore peace forever.",
         "keywords": [
             "anime",
             "metroidvania",
             "action-adventure"
         ],
-        "release_date": "1987"
+        "release_date": 1987
     },
     "zork_grand_inquisitor": {
         "igdb_id": "1955",
-        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2kql.jpg",
+        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2kql.png",
+        "artwork_url": "",
+        "key_art_url": "",
         "game_name": "Zork Grand Inquisitor",
-        "igdb_name": "zork: grand inquisitor",
-        "age_rating": "t",
+        "igdb_name": "Zork: Grand Inquisitor",
+        "age_rating": "T",
         "rating": [
-            "comic mischief",
-            "suggestive themes",
-            "use of alcohol and tobacco"
+            "Comic Mischief",
+            "Suggestive Themes",
+            "Use of Alcohol and Tobacco"
         ],
         "player_perspectives": [
-            "first person"
+            "First person"
         ],
         "genres": [
-            "point-and-click",
-            "puzzle",
-            "adventure"
+            "Point-and-click",
+            "Puzzle",
+            "Adventure"
         ],
         "themes": [
-            "fantasy",
-            "comedy"
+            "Fantasy",
+            "Comedy"
         ],
         "platforms": [
-            "pc (microsoft windows)",
-            "mac"
+            "PC (Microsoft Windows)",
+            "Mac"
         ],
         "storyline": "",
         "keywords": [
             "magic"
         ],
-        "release_date": "1997"
+        "release_date": 1997
     }
 } # type: ignore
 
@@ -8166,609 +8663,620 @@ SEARCH_INDEX = {
         "sm64ex"
     ],
     "adventure": [
-        "metroidprime",
-        "rogue_legacy",
-        "rac2",
-        "osrs",
-        "ffmq",
-        "luigismansion",
-        "albw",
-        "messenger",
-        "sms",
-        "raft",
-        "mlss",
-        "xenobladex",
-        "getting_over_it",
-        "sa2b",
-        "frogmonster",
-        "banjo_tooie",
-        "ladx",
-        "ff4fe",
-        "blasphemous",
-        "smw",
-        "tloz_ooa",
-        "pseudoregalia",
-        "residentevil2remake",
-        "minecraft",
-        "dark_souls_2",
-        "dark_souls_3",
-        "dontstarvetogether",
-        "hcniko",
-        "adventure",
-        "dkc3",
-        "cuphead",
-        "noita",
-        "hylics2",
-        "bomb_rush_cyberfunk",
-        "simpsonshitnrun",
-        "ahit",
-        "peaks_of_yore",
-        "mm3",
-        "spyro3",
-        "mzm",
-        "tloz_ph",
-        "pokemon_emerald",
-        "v6",
-        "dsr",
-        "kindergarten_2",
-        "metroidfusion",
-        "subnautica",
-        "terraria",
-        "lingo",
-        "pokemon_frlg",
-        "smo",
-        "mm_recomp",
-        "k64",
-        "ror2",
-        "inscryption",
-        "tunic",
-        "sly1",
-        "alttp",
-        "hades",
-        "enderlilies",
-        "sotn",
-        "faxanadu",
-        "celeste64",
-        "zelda2",
-        "sm_map_rando",
-        "hk",
-        "ufo50",
-        "mmx3",
-        "sadx",
-        "sm",
-        "jakanddaxter",
-        "pokemon_crystal",
-        "dk64",
-        "tww",
-        "momodoramoonlitfarewell",
-        "crystal_project",
-        "kdl3",
-        "shivers",
-        "aus",
-        "sm64hacks",
-        "tloz_oos",
-        "crosscode",
-        "monster_sanctuary",
-        "dw1",
         "seaofthieves",
-        "celeste",
-        "dlcquest",
-        "outer_wilds",
-        "cv64",
-        "animal_well",
-        "kh2",
-        "tloz",
-        "smz3",
-        "stardew_valley",
-        "oribf",
-        "oot",
-        "ff1",
-        "ror1",
-        "papermario",
-        "cvcotm",
-        "kh1",
-        "tmc",
-        "satisfactory",
-        "zork_grand_inquisitor",
-        "sm64ex",
-        "undertale",
-        "celeste_open_world",
-        "tp",
-        "lego_star_wars_tcs",
-        "cat_quest",
-        "mm2",
-        "shorthike",
-        "wl4",
-        "pokemon_rb",
-        "gstla",
-        "chainedechoes",
-        "timespinner",
-        "residentevil3remake",
+        "sm64hacks",
+        "momodoramoonlitfarewell",
         "witness",
-        "earthbound",
-        "sonic_heroes",
-        "aquaria",
+        "metroidprime",
+        "undertale",
+        "monster_sanctuary",
+        "ff4fe",
+        "terraria",
+        "mzm",
+        "smw",
+        "hylics2",
+        "rac2",
+        "zork_grand_inquisitor",
+        "mm2",
+        "mm_recomp",
+        "animal_well",
+        "cuphead",
+        "jakanddaxter",
+        "dk64",
+        "cv64",
+        "faxanadu",
+        "tloz_ooa",
+        "pokemon_frlg",
+        "spyro3",
+        "sotn",
+        "ff1",
+        "ladx",
+        "dark_souls_3",
         "poe",
-        "ss"
+        "ror2",
+        "cat_quest",
+        "blasphemous",
+        "oribf",
+        "aus",
+        "papermario",
+        "tunic",
+        "peaks_of_yore",
+        "adventure",
+        "mm3",
+        "pokemon_emerald",
+        "alttp",
+        "sonic_heroes",
+        "timespinner",
+        "dsr",
+        "ahit",
+        "celeste64",
+        "pseudoregalia",
+        "oot",
+        "dw1",
+        "sm_map_rando",
+        "smz3",
+        "outer_wilds",
+        "raft",
+        "sms",
+        "albw",
+        "tp",
+        "nine_sols",
+        "residentevil3remake",
+        "crosscode",
+        "tww",
+        "rogue_legacy",
+        "kh2",
+        "inscryption",
+        "dkc3",
+        "smo",
+        "stardew_valley",
+        "tmc",
+        "tloz",
+        "dlcquest",
+        "shivers",
+        "osrs",
+        "crystal_project",
+        "k64",
+        "kindergarten_2",
+        "zelda2",
+        "v6",
+        "metroidfusion",
+        "frogmonster",
+        "shorthike",
+        "kdl3",
+        "pokemon_rb",
+        "mmx3",
+        "xenobladex",
+        "pokemon_crystal",
+        "banjo_tooie",
+        "luigismansion",
+        "dredge",
+        "ror1",
+        "getting_over_it",
+        "sm",
+        "tloz_oos",
+        "ss",
+        "messenger",
+        "lingo",
+        "aquaria",
+        "wl4",
+        "earthbound",
+        "gstla",
+        "hcniko",
+        "minecraft",
+        "sly1",
+        "chainedechoes",
+        "noita",
+        "celeste_open_world",
+        "tloz_ph",
+        "residentevil2remake",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "satisfactory",
+        "subnautica",
+        "hk",
+        "kh1",
+        "dontstarvetogether",
+        "sadx",
+        "dark_souls_2",
+        "ufo50",
+        "cvcotm",
+        "enderlilies",
+        "mlss",
+        "celeste",
+        "sm64ex",
+        "lego_star_wars_tcs",
+        "simpsonshitnrun",
+        "sa2b",
+        "ffmq"
     ],
     "bird view / isometric": [
-        "soe",
-        "openrct2",
-        "pokemon_frlg",
-        "wargroove",
-        "dontstarvetogether",
-        "pmd_eos",
-        "civ_6",
-        "landstalker",
-        "factorio_saws",
-        "tloz",
-        "mmbn3",
-        "smz3",
-        "stardew_valley",
-        "yugioh06",
-        "inscryption",
-        "adventure",
         "tunic",
-        "wargroove2",
-        "cuphead",
-        "alttp",
-        "ff1",
-        "ffmq",
-        "hades",
-        "meritous",
+        "factorio_saws",
         "osrs",
-        "sims4",
-        "hylics2",
-        "sc2",
-        "albw",
-        "diddy_kong_racing",
-        "tmc",
-        "ufo50",
-        "sms",
-        "placidplasticducksim",
-        "pokemon_crystal",
-        "spyro3",
-        "undertale",
-        "tyrian",
-        "ctjot",
-        "against_the_storm",
+        "adventure",
         "crystal_project",
-        "ladx",
-        "overcooked2",
-        "ff4fe",
-        "rimworld",
-        "shorthike",
         "tloz_ph",
-        "balatro",
-        "pokemon_rb",
-        "ffta",
         "pokemon_emerald",
-        "tloz_oos",
-        "gstla",
-        "chainedechoes",
-        "shapez",
-        "tloz_ooa",
-        "tboir",
-        "yugiohddm",
-        "crosscode",
-        "earthbound",
+        "alttp",
         "sonic_heroes",
+        "ctjot",
+        "balatro",
+        "undertale",
+        "yugioh06",
+        "wargroove2",
+        "ff4fe",
+        "factorio",
+        "shorthike",
+        "tyrian",
+        "pokemon_rb",
         "dw1",
-        "poe",
+        "soe",
+        "hades",
+        "sc2",
+        "smz3",
+        "yugiohddm",
+        "pokemon_crystal",
+        "sms",
+        "albw",
+        "hylics2",
+        "dredge",
+        "openrct2",
         "brotato",
-        "factorio"
+        "against_the_storm",
+        "mmbn3",
+        "diddy_kong_racing",
+        "civ_6",
+        "crosscode",
+        "landstalker",
+        "dontstarvetogether",
+        "tloz_oos",
+        "cuphead",
+        "sims4",
+        "inscryption",
+        "tboir",
+        "tloz_ooa",
+        "pokemon_frlg",
+        "spyro3",
+        "ufo50",
+        "ff1",
+        "ladx",
+        "pmd_eos",
+        "stardew_valley",
+        "wargroove",
+        "poe",
+        "tmc",
+        "shapez",
+        "meritous",
+        "overcooked2",
+        "earthbound",
+        "gstla",
+        "rimworld",
+        "chainedechoes",
+        "ffta",
+        "tloz",
+        "ffmq",
+        "placidplasticducksim"
     ],
     "bird": [
-        "soe",
-        "openrct2",
-        "pokemon_frlg",
-        "wargroove",
-        "dontstarvetogether",
-        "pmd_eos",
-        "civ_6",
-        "landstalker",
-        "factorio_saws",
-        "tloz",
-        "mmbn3",
-        "smz3",
-        "stardew_valley",
-        "yugioh06",
-        "inscryption",
-        "adventure",
-        "dkc3",
-        "rogue_legacy",
         "tunic",
-        "wargroove2",
-        "cuphead",
-        "alttp",
-        "ff1",
-        "ffmq",
-        "hades",
-        "meritous",
+        "factorio_saws",
         "osrs",
-        "sims4",
-        "hylics2",
-        "sc2",
-        "albw",
-        "diddy_kong_racing",
-        "tmc",
-        "ufo50",
-        "sms",
-        "placidplasticducksim",
-        "pokemon_crystal",
-        "spyro3",
-        "undertale",
-        "tyrian",
-        "ctjot",
-        "against_the_storm",
-        "banjo_tooie",
+        "adventure",
         "crystal_project",
-        "ladx",
-        "overcooked2",
-        "ff4fe",
-        "rimworld",
-        "shorthike",
         "tloz_ph",
-        "balatro",
-        "aus",
-        "ffta",
         "pokemon_emerald",
-        "pokemon_rb",
-        "gstla",
-        "chainedechoes",
-        "shapez",
-        "tloz_ooa",
-        "tboir",
-        "tloz_oos",
-        "crosscode",
-        "yugiohddm",
-        "earthbound",
+        "alttp",
         "sonic_heroes",
+        "ctjot",
+        "balatro",
+        "undertale",
+        "yugioh06",
+        "wargroove2",
+        "ff4fe",
+        "factorio",
+        "shorthike",
+        "tyrian",
+        "pokemon_rb",
         "dw1",
-        "minecraft",
-        "poe",
+        "soe",
+        "hades",
+        "sc2",
+        "smz3",
+        "yugiohddm",
+        "pokemon_crystal",
+        "banjo_tooie",
+        "sms",
+        "albw",
+        "hylics2",
+        "dredge",
+        "openrct2",
         "brotato",
-        "factorio"
+        "against_the_storm",
+        "mmbn3",
+        "diddy_kong_racing",
+        "civ_6",
+        "crosscode",
+        "landstalker",
+        "dontstarvetogether",
+        "tloz_oos",
+        "rogue_legacy",
+        "cuphead",
+        "sims4",
+        "inscryption",
+        "tboir",
+        "tloz_ooa",
+        "dkc3",
+        "pokemon_frlg",
+        "spyro3",
+        "ufo50",
+        "ff1",
+        "ladx",
+        "pmd_eos",
+        "stardew_valley",
+        "wargroove",
+        "poe",
+        "tmc",
+        "shapez",
+        "meritous",
+        "overcooked2",
+        "earthbound",
+        "gstla",
+        "minecraft",
+        "rimworld",
+        "chainedechoes",
+        "ffta",
+        "tloz",
+        "ffmq",
+        "placidplasticducksim",
+        "aus"
     ],
     "view": [
-        "factorio_saws",
-        "rogue_legacy",
-        "wargroove2",
-        "osrs",
-        "ffmq",
-        "sc2",
-        "albw",
-        "messenger",
-        "sms",
-        "mlss",
-        "musedash",
-        "getting_over_it",
-        "ctjot",
-        "against_the_storm",
-        "ladx",
-        "ff4fe",
-        "blasphemous",
-        "yugiohddm",
-        "smw",
-        "tloz_ooa",
-        "shapez",
-        "factorio",
-        "dontstarvetogether",
-        "pmd_eos",
-        "civ_6",
-        "adventure",
-        "dkc3",
-        "cuphead",
-        "meritous",
-        "sims4",
-        "noita",
-        "hylics2",
-        "mm3",
-        "spyro3",
-        "tyrian",
-        "megamix",
-        "mzm",
-        "tloz_ph",
-        "rimworld",
-        "balatro",
-        "pokemon_emerald",
-        "wl",
-        "v6",
-        "metroidfusion",
-        "brotato",
-        "terraria",
-        "soe",
-        "openrct2",
-        "pokemon_frlg",
-        "wargroove",
-        "dkc",
-        "k64",
-        "yugioh06",
-        "inscryption",
-        "tunic",
-        "alttp",
-        "hades",
-        "enderlilies",
-        "sotn",
-        "faxanadu",
-        "zelda2",
-        "sm_map_rando",
-        "diddy_kong_racing",
-        "hk",
-        "ufo50",
-        "tetrisattack",
-        "zillion",
-        "mmx3",
-        "sm",
-        "placidplasticducksim",
-        "pokemon_crystal",
         "momodoramoonlitfarewell",
-        "crystal_project",
-        "kdl3",
-        "aus",
-        "tloz_oos",
-        "ffta",
-        "crosscode",
-        "monster_sanctuary",
-        "dw1",
-        "celeste",
-        "dlcquest",
-        "yoshisisland",
-        "landstalker",
-        "animal_well",
-        "tloz",
-        "mmbn3",
-        "smz3",
-        "stardew_valley",
-        "oribf",
-        "ff1",
-        "ror1",
-        "papermario",
-        "lufia2ac",
-        "dkc2",
-        "cvcotm",
-        "tmc",
+        "ctjot",
         "undertale",
-        "celeste_open_world",
-        "marioland2",
+        "wl",
+        "monster_sanctuary",
+        "ff4fe",
+        "terraria",
+        "mzm",
+        "smw",
+        "hylics2",
+        "against_the_storm",
         "mm2",
+        "mmbn3",
+        "megamix",
+        "animal_well",
+        "cuphead",
+        "sims4",
+        "faxanadu",
+        "tloz_ooa",
+        "pokemon_frlg",
+        "spyro3",
+        "sotn",
+        "ff1",
+        "ladx",
+        "poe",
+        "shapez",
+        "blasphemous",
+        "oribf",
+        "aus",
+        "papermario",
+        "tunic",
+        "adventure",
+        "mm3",
+        "pokemon_emerald",
+        "alttp",
+        "sonic_heroes",
+        "spire",
+        "timespinner",
+        "tyrian",
+        "dw1",
+        "yoshisisland",
+        "sm_map_rando",
+        "soe",
+        "sc2",
+        "smz3",
+        "sms",
+        "albw",
+        "dkc2",
+        "tetrisattack",
+        "nine_sols",
+        "crosscode",
+        "rogue_legacy",
+        "inscryption",
+        "dkc3",
+        "wargroove",
+        "stardew_valley",
+        "tmc",
+        "meritous",
         "overcooked2",
+        "rimworld",
+        "ffta",
+        "tloz",
+        "dlcquest",
+        "factorio_saws",
+        "osrs",
+        "crystal_project",
+        "k64",
+        "zelda2",
+        "v6",
+        "yugioh06",
+        "metroidfusion",
+        "wargroove2",
+        "musedash",
+        "factorio",
         "shorthike",
-        "wl4",
+        "kdl3",
         "pokemon_rb",
+        "mmx3",
+        "yugiohddm",
+        "pokemon_crystal",
+        "dredge",
+        "brotato",
+        "ror1",
+        "getting_over_it",
+        "diddy_kong_racing",
+        "civ_6",
+        "landstalker",
+        "sm",
+        "tloz_oos",
+        "messenger",
+        "tboir",
+        "dkc",
+        "aquaria",
+        "pmd_eos",
+        "lufia2ac",
+        "wl4",
+        "earthbound",
         "gstla",
         "chainedechoes",
-        "tboir",
-        "timespinner",
-        "earthbound",
-        "sonic_heroes",
-        "aquaria",
-        "poe",
-        "spire"
+        "noita",
+        "celeste_open_world",
+        "madou",
+        "tloz_ph",
+        "balatro",
+        "zillion",
+        "hades",
+        "openrct2",
+        "marioland2",
+        "hk",
+        "dontstarvetogether",
+        "ufo50",
+        "cvcotm",
+        "enderlilies",
+        "mlss",
+        "celeste",
+        "ffmq",
+        "placidplasticducksim"
     ],
     "/": [
-        "soe",
-        "openrct2",
-        "pokemon_frlg",
-        "wargroove",
-        "dontstarvetogether",
-        "pmd_eos",
-        "civ_6",
-        "landstalker",
-        "factorio_saws",
-        "tloz",
-        "mmbn3",
-        "smz3",
-        "stardew_valley",
-        "yugioh06",
-        "inscryption",
-        "adventure",
         "tunic",
-        "wargroove2",
-        "cuphead",
-        "alttp",
-        "ff1",
-        "ffmq",
-        "hades",
-        "meritous",
+        "factorio_saws",
         "osrs",
-        "sims4",
-        "hylics2",
-        "sc2",
-        "albw",
-        "diddy_kong_racing",
-        "tmc",
-        "ufo50",
-        "sms",
-        "placidplasticducksim",
-        "pokemon_crystal",
-        "spyro3",
-        "undertale",
-        "tyrian",
-        "ctjot",
-        "against_the_storm",
+        "adventure",
         "crystal_project",
-        "ladx",
-        "overcooked2",
-        "ff4fe",
-        "rimworld",
-        "shorthike",
         "tloz_ph",
-        "balatro",
-        "pokemon_rb",
-        "ffta",
         "pokemon_emerald",
-        "tloz_oos",
-        "gstla",
-        "chainedechoes",
-        "shapez",
-        "tloz_ooa",
-        "tboir",
-        "yugiohddm",
-        "crosscode",
-        "earthbound",
+        "alttp",
         "sonic_heroes",
+        "ctjot",
+        "balatro",
+        "undertale",
+        "yugioh06",
+        "wargroove2",
+        "ff4fe",
+        "factorio",
+        "shorthike",
+        "tyrian",
+        "pokemon_rb",
         "dw1",
-        "poe",
+        "soe",
+        "hades",
+        "sc2",
+        "smz3",
+        "yugiohddm",
+        "pokemon_crystal",
+        "sms",
+        "albw",
+        "hylics2",
+        "dredge",
+        "openrct2",
         "brotato",
-        "factorio"
+        "against_the_storm",
+        "mmbn3",
+        "diddy_kong_racing",
+        "civ_6",
+        "crosscode",
+        "landstalker",
+        "dontstarvetogether",
+        "tloz_oos",
+        "cuphead",
+        "sims4",
+        "inscryption",
+        "tboir",
+        "tloz_ooa",
+        "pokemon_frlg",
+        "spyro3",
+        "ufo50",
+        "ff1",
+        "ladx",
+        "pmd_eos",
+        "stardew_valley",
+        "wargroove",
+        "poe",
+        "tmc",
+        "shapez",
+        "meritous",
+        "overcooked2",
+        "earthbound",
+        "gstla",
+        "rimworld",
+        "chainedechoes",
+        "ffta",
+        "tloz",
+        "ffmq",
+        "placidplasticducksim"
     ],
     "isometric": [
-        "soe",
-        "openrct2",
-        "pokemon_frlg",
-        "wargroove",
-        "dontstarvetogether",
-        "pmd_eos",
-        "civ_6",
-        "landstalker",
-        "factorio_saws",
-        "tloz",
-        "mmbn3",
-        "smz3",
-        "stardew_valley",
-        "yugioh06",
-        "inscryption",
-        "adventure",
         "tunic",
-        "wargroove2",
-        "cuphead",
-        "alttp",
-        "ff1",
-        "ffmq",
-        "hades",
-        "meritous",
+        "factorio_saws",
         "osrs",
-        "sims4",
-        "hylics2",
-        "sc2",
-        "albw",
-        "diddy_kong_racing",
-        "tmc",
-        "ufo50",
-        "sms",
-        "placidplasticducksim",
-        "pokemon_crystal",
-        "spyro3",
-        "undertale",
-        "tyrian",
-        "ctjot",
-        "against_the_storm",
+        "adventure",
         "crystal_project",
-        "ladx",
-        "overcooked2",
-        "ff4fe",
-        "rimworld",
-        "shorthike",
         "tloz_ph",
-        "balatro",
-        "pokemon_rb",
-        "ffta",
         "pokemon_emerald",
-        "tloz_oos",
-        "gstla",
-        "chainedechoes",
-        "shapez",
-        "tloz_ooa",
-        "tboir",
-        "yugiohddm",
-        "crosscode",
-        "earthbound",
+        "alttp",
         "sonic_heroes",
+        "ctjot",
+        "balatro",
+        "undertale",
+        "yugioh06",
+        "wargroove2",
+        "ff4fe",
+        "factorio",
+        "shorthike",
+        "tyrian",
+        "pokemon_rb",
         "dw1",
-        "poe",
+        "soe",
+        "hades",
+        "sc2",
+        "smz3",
+        "yugiohddm",
+        "pokemon_crystal",
+        "sms",
+        "albw",
+        "hylics2",
+        "dredge",
+        "openrct2",
         "brotato",
-        "factorio"
+        "against_the_storm",
+        "mmbn3",
+        "diddy_kong_racing",
+        "civ_6",
+        "crosscode",
+        "landstalker",
+        "dontstarvetogether",
+        "tloz_oos",
+        "cuphead",
+        "sims4",
+        "inscryption",
+        "tboir",
+        "tloz_ooa",
+        "pokemon_frlg",
+        "spyro3",
+        "ufo50",
+        "ff1",
+        "ladx",
+        "pmd_eos",
+        "stardew_valley",
+        "wargroove",
+        "poe",
+        "tmc",
+        "shapez",
+        "meritous",
+        "overcooked2",
+        "earthbound",
+        "gstla",
+        "rimworld",
+        "chainedechoes",
+        "ffta",
+        "tloz",
+        "ffmq",
+        "placidplasticducksim"
     ],
     "fantasy": [
-        "rogue_legacy",
-        "wargroove2",
-        "osrs",
-        "ffmq",
-        "albw",
-        "heretic",
-        "mlss",
-        "ctjot",
-        "against_the_storm",
-        "banjo_tooie",
-        "frogmonster",
-        "ladx",
-        "ff4fe",
-        "blasphemous",
-        "yugiohddm",
-        "smw",
-        "pseudoregalia",
-        "minecraft",
-        "dark_souls_2",
-        "dark_souls_3",
-        "pmd_eos",
-        "civ_6",
-        "adventure",
-        "cuphead",
-        "sims4",
-        "noita",
-        "hylics2",
-        "ahit",
-        "tloz_ph",
-        "huniepop",
-        "pokemon_emerald",
-        "v6",
-        "dsr",
-        "terraria",
-        "pokemon_frlg",
-        "wargroove",
-        "smo",
-        "mm_recomp",
-        "yugioh06",
-        "tunic",
-        "alttp",
-        "hades",
-        "enderlilies",
-        "faxanadu",
-        "zelda2",
-        "hk",
-        "pokemon_crystal",
-        "tww",
-        "crystal_project",
-        "tloz_oos",
-        "sm64hacks",
-        "ffta",
-        "monster_sanctuary",
         "seaofthieves",
-        "celeste",
-        "yoshisisland",
-        "landstalker",
-        "kh2",
-        "tloz",
-        "stardew_valley",
-        "oribf",
-        "oot",
-        "ff1",
-        "fm",
-        "ror1",
-        "papermario",
-        "lufia2ac",
-        "dkc2",
-        "kh1",
-        "tmc",
-        "zork_grand_inquisitor",
-        "sm64ex",
+        "sm64hacks",
+        "ctjot",
         "undertale",
-        "celeste_open_world",
-        "tp",
+        "monster_sanctuary",
+        "ff4fe",
+        "terraria",
+        "smw",
+        "hylics2",
+        "zork_grand_inquisitor",
+        "against_the_storm",
+        "mm_recomp",
+        "cuphead",
+        "heretic",
+        "faxanadu",
+        "pokemon_frlg",
+        "ff1",
+        "ladx",
+        "dark_souls_3",
+        "poe",
         "cat_quest",
+        "blasphemous",
+        "oribf",
+        "papermario",
+        "tunic",
+        "adventure",
+        "pokemon_emerald",
+        "timespinner",
+        "alttp",
+        "spire",
+        "dsr",
+        "ahit",
+        "pseudoregalia",
+        "oot",
+        "huniepop",
+        "yoshisisland",
+        "albw",
+        "dkc2",
+        "tp",
+        "nine_sols",
+        "tww",
+        "rogue_legacy",
+        "kh2",
+        "smo",
+        "wargroove",
+        "stardew_valley",
+        "tmc",
+        "ffta",
+        "tloz",
+        "fm",
+        "osrs",
+        "crystal_project",
+        "zelda2",
+        "v6",
+        "yugioh06",
+        "frogmonster",
+        "wargroove2",
         "shorthike",
-        "ultrakill",
         "pokemon_rb",
         "lunacid",
-        "gstla",
-        "chainedechoes",
-        "timespinner",
-        "earthbound",
-        "aquaria",
-        "poe",
+        "yugiohddm",
+        "pokemon_crystal",
+        "banjo_tooie",
+        "ror1",
+        "civ_6",
+        "landstalker",
+        "tloz_oos",
         "ss",
-        "spire"
+        "aquaria",
+        "pmd_eos",
+        "lufia2ac",
+        "ultrakill",
+        "earthbound",
+        "gstla",
+        "minecraft",
+        "chainedechoes",
+        "noita",
+        "celeste_open_world",
+        "madou",
+        "tloz_ph",
+        "hades",
+        "hk",
+        "kh1",
+        "dark_souls_2",
+        "enderlilies",
+        "ffmq",
+        "mlss",
+        "celeste",
+        "sm64ex",
+        "sims4"
     ],
     "bbc microcomputer system": [
         "adventure"
@@ -8780,37 +9288,37 @@ SEARCH_INDEX = {
         "adventure"
     ],
     "system": [
-        "soe",
-        "dkc",
-        "yoshisisland",
-        "tloz",
-        "smz3",
         "adventure",
-        "dkc3",
-        "alttp",
-        "ff1",
-        "ffmq",
-        "papermario",
-        "faxanadu",
-        "lufia2ac",
-        "dkc2",
-        "sm_map_rando",
-        "zelda2",
-        "kh1",
-        "tetrisattack",
-        "mmx3",
-        "sm",
-        "mlss",
-        "xenobladex",
         "mm3",
-        "pokemon_crystal",
+        "pokemon_emerald",
+        "alttp",
+        "zelda2",
         "ff4fe",
         "kdl3",
-        "ffta",
-        "pokemon_emerald",
-        "gstla",
+        "yoshisisland",
+        "mmx3",
+        "sm_map_rando",
+        "soe",
+        "smz3",
+        "xenobladex",
+        "pokemon_crystal",
         "smw",
-        "earthbound"
+        "dkc2",
+        "kh1",
+        "tetrisattack",
+        "sm",
+        "faxanadu",
+        "dkc",
+        "dkc3",
+        "ff1",
+        "mlss",
+        "lufia2ac",
+        "earthbound",
+        "gstla",
+        "ffta",
+        "tloz",
+        "ffmq",
+        "papermario"
     ],
     "acorn electron": [
         "adventure"
@@ -8828,2248 +9336,2295 @@ SEARCH_INDEX = {
         "against_the_storm"
     ],
     "the": [
-        "dkc",
-        "mm_recomp",
-        "hcniko",
-        "smo",
-        "k64",
-        "tloz",
-        "smz3",
-        "oribf",
-        "dkc3",
-        "oot",
-        "rogue_legacy",
-        "sly1",
-        "alttp",
-        "hades",
-        "sims4",
-        "enderlilies",
-        "papermario",
-        "lufia2ac",
-        "celeste64",
-        "sotn",
-        "dkc2",
-        "zelda2",
-        "albw",
-        "diddy_kong_racing",
-        "cvcotm",
-        "tmc",
-        "messenger",
-        "simpsonshitnrun",
-        "jakanddaxter",
-        "mlss",
-        "spyro3",
-        "undertale",
-        "doom_ii",
-        "tp",
-        "tww",
-        "ttyd",
-        "lego_star_wars_tcs",
-        "banjo_tooie",
-        "against_the_storm",
-        "ladx",
-        "overcooked2",
-        "tloz_ph",
-        "blasphemous",
-        "tloz_oos",
-        "ffta",
-        "gstla",
-        "tloz_ooa",
-        "tboir",
-        "witness",
-        "earthbound",
         "seaofthieves",
-        "dark_souls_2",
+        "k64",
+        "tloz_ph",
+        "alttp",
+        "spire",
+        "witness",
+        "zelda2",
         "metroidfusion",
+        "undertale",
+        "celeste64",
+        "oot",
         "terraria",
+        "hades",
+        "smz3",
+        "banjo_tooie",
+        "albw",
+        "dkc2",
+        "against_the_storm",
+        "tp",
+        "doom_ii",
+        "diddy_kong_racing",
+        "tloz_oos",
+        "tww",
+        "mm_recomp",
         "ss",
-        "spire"
+        "ttyd",
+        "rogue_legacy",
+        "jakanddaxter",
+        "dark_souls_2",
+        "messenger",
+        "tboir",
+        "tloz_ooa",
+        "dkc",
+        "dkc3",
+        "smo",
+        "spyro3",
+        "cvcotm",
+        "enderlilies",
+        "sotn",
+        "ladx",
+        "mlss",
+        "tmc",
+        "lego_star_wars_tcs",
+        "lufia2ac",
+        "overcooked2",
+        "earthbound",
+        "gstla",
+        "hcniko",
+        "sly1",
+        "ffta",
+        "simpsonshitnrun",
+        "tloz",
+        "sims4",
+        "blasphemous",
+        "oribf",
+        "papermario"
     ],
     "storm": [
         "against_the_storm"
     ],
     "real time strategy (rts)": [
-        "openrct2",
-        "sc2",
-        "against_the_storm",
         "mmbn3",
-        "rimworld"
+        "sc2",
+        "rimworld",
+        "openrct2",
+        "against_the_storm"
     ],
     "real": [
-        "openrct2",
-        "sc2",
-        "against_the_storm",
         "mmbn3",
-        "rimworld"
+        "sc2",
+        "rimworld",
+        "openrct2",
+        "against_the_storm"
     ],
     "time": [
-        "openrct2",
-        "mk64",
-        "mm_recomp",
-        "metroidprime",
-        "pmd_eos",
-        "mmbn3",
-        "rogue_legacy",
-        "oot",
-        "sly1",
-        "alttp",
-        "ror1",
-        "sc2",
-        "sm_map_rando",
-        "diddy_kong_racing",
-        "tmc",
-        "sms",
-        "simpsonshitnrun",
-        "sm",
-        "jakanddaxter",
-        "ahit",
-        "pokemon_crystal",
-        "spyro3",
-        "ctjot",
         "apeescape",
-        "against_the_storm",
-        "tloz_ph",
-        "rimworld",
-        "shorthike",
-        "tloz_oos",
-        "wl4",
-        "ffta",
         "pokemon_emerald",
-        "tloz_ooa",
         "timespinner",
+        "alttp",
+        "tloz_ph",
+        "ctjot",
         "witness",
-        "earthbound",
+        "metroidprime",
         "v6",
         "metroidfusion",
-        "outer_wilds"
+        "ahit",
+        "shorthike",
+        "oot",
+        "sm_map_rando",
+        "sc2",
+        "outer_wilds",
+        "pokemon_crystal",
+        "sms",
+        "openrct2",
+        "against_the_storm",
+        "ror1",
+        "mmbn3",
+        "diddy_kong_racing",
+        "sm",
+        "tloz_oos",
+        "mm_recomp",
+        "rogue_legacy",
+        "jakanddaxter",
+        "tloz_ooa",
+        "spyro3",
+        "pmd_eos",
+        "tmc",
+        "mk64",
+        "wl4",
+        "earthbound",
+        "sly1",
+        "rimworld",
+        "ffta",
+        "simpsonshitnrun"
     ],
     "strategy": [
-        "openrct2",
-        "pokemon_frlg",
-        "wargroove",
-        "dontstarvetogether",
-        "pmd_eos",
-        "civ_6",
         "factorio_saws",
-        "mmbn3",
-        "stardew_valley",
-        "yugioh06",
-        "inscryption",
-        "wargroove2",
         "fm",
-        "hylics2",
-        "sc2",
-        "ufo50",
-        "satisfactory",
-        "undertale",
-        "huniepop2",
         "crystal_project",
-        "against_the_storm",
-        "overcooked2",
-        "huniepop",
-        "rimworld",
-        "balatro",
-        "pokemon_rb",
-        "ffta",
         "pokemon_emerald",
-        "yugiohddm",
-        "chainedechoes",
-        "shapez",
-        "earthbound",
+        "spire",
+        "balatro",
+        "undertale",
+        "yugioh06",
         "monster_sanctuary",
+        "wargroove2",
         "factorio",
+        "pokemon_rb",
         "terraria",
-        "spire"
+        "huniepop",
+        "sc2",
+        "satisfactory",
+        "yugiohddm",
+        "hylics2",
+        "openrct2",
+        "against_the_storm",
+        "mmbn3",
+        "civ_6",
+        "huniepop2",
+        "dontstarvetogether",
+        "inscryption",
+        "pokemon_frlg",
+        "ufo50",
+        "pmd_eos",
+        "wargroove",
+        "stardew_valley",
+        "shapez",
+        "overcooked2",
+        "earthbound",
+        "rimworld",
+        "chainedechoes",
+        "ffta"
     ],
     "(rts)": [
-        "openrct2",
-        "sc2",
-        "against_the_storm",
         "mmbn3",
-        "rimworld"
+        "sc2",
+        "rimworld",
+        "openrct2",
+        "against_the_storm"
     ],
     "simulator": [
-        "openrct2",
-        "doronko_wanko",
-        "dontstarvetogether",
-        "civ_6",
         "factorio_saws",
-        "stardew_valley",
-        "sims4",
-        "noita",
-        "satisfactory",
-        "raft",
-        "placidplasticducksim",
-        "getting_over_it",
-        "huniepop2",
-        "against_the_storm",
-        "overcooked2",
-        "huniepop",
-        "rimworld",
-        "shapez",
-        "minecraft",
-        "powerwashsimulator",
         "seaofthieves",
         "factorio",
         "terraria",
-        "outer_wilds"
+        "huniepop",
+        "satisfactory",
+        "outer_wilds",
+        "raft",
+        "powerwashsimulator",
+        "dredge",
+        "openrct2",
+        "against_the_storm",
+        "getting_over_it",
+        "civ_6",
+        "huniepop2",
+        "doronko_wanko",
+        "dontstarvetogether",
+        "noita",
+        "stardew_valley",
+        "shapez",
+        "overcooked2",
+        "minecraft",
+        "rimworld",
+        "sims4",
+        "placidplasticducksim"
     ],
     "indie": [
-        "openrct2",
-        "wargroove",
-        "dontstarvetogether",
-        "hcniko",
-        "ror2",
-        "animal_well",
-        "factorio_saws",
-        "osu",
-        "stardew_valley",
-        "inscryption",
-        "terraria",
-        "rogue_legacy",
-        "tunic",
-        "wargroove2",
-        "celeste",
-        "cuphead",
-        "hades",
-        "enderlilies",
-        "noita",
-        "ror1",
-        "celeste64",
-        "hylics2",
-        "lethal_company",
-        "bomb_rush_cyberfunk",
-        "hk",
-        "ufo50",
-        "messenger",
-        "satisfactory",
-        "raft",
-        "ahit",
-        "peaks_of_yore",
-        "musedash",
-        "getting_over_it",
-        "undertale",
-        "celeste_open_world",
-        "huniepop2",
-        "frogmonster",
-        "against_the_storm",
-        "cat_quest",
-        "crystal_project",
-        "momodoramoonlitfarewell",
-        "overcooked2",
         "shivers",
-        "blasphemous",
-        "huniepop",
-        "rimworld",
-        "shorthike",
-        "balatro",
-        "aus",
-        "lunacid",
-        "ultrakill",
-        "chainedechoes",
-        "shapez",
-        "tboir",
+        "factorio_saws",
+        "peaks_of_yore",
+        "crystal_project",
+        "tunic",
+        "momodoramoonlitfarewell",
         "timespinner",
-        "crosscode",
+        "kindergarten_2",
+        "spire",
         "witness",
         "v6",
-        "pseudoregalia",
-        "aquaria",
+        "balatro",
+        "undertale",
+        "frogmonster",
+        "ahit",
+        "celeste64",
         "monster_sanctuary",
-        "outer_wilds",
-        "kindergarten_2",
-        "powerwashsimulator",
-        "brotato",
         "factorio",
+        "musedash",
+        "pseudoregalia",
+        "shorthike",
+        "terraria",
+        "wargroove2",
+        "osu",
+        "huniepop",
+        "lunacid",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "satisfactory",
+        "outer_wilds",
+        "raft",
         "subnautica",
+        "hylics2",
+        "powerwashsimulator",
+        "openrct2",
+        "brotato",
+        "hk",
+        "against_the_storm",
+        "nine_sols",
+        "ror1",
+        "getting_over_it",
+        "lethal_company",
+        "crosscode",
+        "huniepop2",
+        "dontstarvetogether",
+        "animal_well",
         "dlcquest",
+        "rogue_legacy",
+        "cuphead",
+        "messenger",
+        "inscryption",
+        "tboir",
         "lingo",
-        "spire"
+        "ufo50",
+        "aquaria",
+        "enderlilies",
+        "aus",
+        "celeste",
+        "stardew_valley",
+        "ror2",
+        "wargroove",
+        "shapez",
+        "overcooked2",
+        "ultrakill",
+        "hcniko",
+        "cat_quest",
+        "rimworld",
+        "chainedechoes",
+        "blasphemous",
+        "noita",
+        "celeste_open_world"
     ],
     "xbox series x|s": [
-        "ror2",
+        "tunic",
+        "seaofthieves",
+        "momodoramoonlitfarewell",
+        "residentevil2remake",
+        "balatro",
+        "wargroove2",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "satisfactory",
+        "trackmania",
+        "outer_wilds",
+        "raft",
+        "subnautica",
+        "powerwashsimulator",
+        "dredge",
+        "brotato",
+        "against_the_storm",
+        "nine_sols",
+        "residentevil3remake",
         "animal_well",
         "inscryption",
-        "tunic",
-        "wargroove2",
-        "hades",
         "enderlilies",
-        "bomb_rush_cyberfunk",
-        "satisfactory",
-        "raft",
-        "placidplasticducksim",
-        "trackmania",
-        "momodoramoonlitfarewell",
-        "against_the_storm",
-        "balatro",
-        "residentevil3remake",
-        "residentevil2remake",
-        "powerwashsimulator",
-        "seaofthieves",
-        "brotato",
-        "subnautica",
-        "outer_wilds"
+        "ror2",
+        "placidplasticducksim"
     ],
     "xbox": [
-        "wargroove",
-        "ror2",
-        "animal_well",
-        "stardew_valley",
-        "oribf",
-        "inscryption",
-        "terraria",
-        "rogue_legacy",
-        "tunic",
-        "wargroove2",
-        "celeste",
-        "cuphead",
-        "hades",
-        "sims4",
-        "enderlilies",
-        "ror1",
-        "sotn",
-        "bomb_rush_cyberfunk",
-        "hk",
-        "messenger",
-        "satisfactory",
-        "simpsonshitnrun",
-        "sadx",
-        "raft",
-        "swr",
-        "ahit",
-        "placidplasticducksim",
-        "sa2b",
-        "trackmania",
-        "undertale",
-        "celeste_open_world",
-        "lego_star_wars_tcs",
-        "against_the_storm",
-        "momodoramoonlitfarewell",
-        "overcooked2",
         "blasphemous",
-        "shorthike",
-        "balatro",
-        "chainedechoes",
+        "tunic",
+        "seaofthieves",
+        "momodoramoonlitfarewell",
         "timespinner",
-        "crosscode",
-        "residentevil3remake",
+        "residentevil2remake",
+        "sonic_heroes",
         "witness",
         "dsr",
-        "sonic_heroes",
+        "balatro",
+        "undertale",
+        "ahit",
         "monster_sanctuary",
+        "shorthike",
+        "wargroove2",
+        "terraria",
         "dw1",
-        "residentevil2remake",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "satisfactory",
+        "trackmania",
         "outer_wilds",
-        "powerwashsimulator",
-        "dark_souls_2",
-        "poe",
-        "brotato",
-        "seaofthieves",
+        "raft",
         "subnautica",
+        "powerwashsimulator",
+        "dredge",
+        "brotato",
+        "hk",
+        "against_the_storm",
+        "nine_sols",
+        "residentevil3remake",
+        "ror1",
+        "crosscode",
+        "animal_well",
+        "rogue_legacy",
+        "cuphead",
+        "sadx",
+        "oribf",
+        "dark_souls_2",
+        "messenger",
+        "inscryption",
+        "enderlilies",
+        "sotn",
+        "wargroove",
+        "celeste",
+        "dark_souls_3",
+        "poe",
+        "ror2",
+        "lego_star_wars_tcs",
+        "stardew_valley",
+        "overcooked2",
+        "swr",
+        "chainedechoes",
+        "simpsonshitnrun",
+        "sa2b",
+        "sims4",
         "dlcquest",
-        "dark_souls_3"
+        "placidplasticducksim",
+        "celeste_open_world"
     ],
     "series": [
-        "ror2",
-        "animal_well",
-        "inscryption",
         "tunic",
-        "wargroove2",
-        "hades",
-        "enderlilies",
-        "bomb_rush_cyberfunk",
-        "satisfactory",
-        "raft",
-        "placidplasticducksim",
-        "trackmania",
-        "doom_ii",
+        "seaofthieves",
         "momodoramoonlitfarewell",
+        "residentevil2remake",
+        "balatro",
+        "wargroove2",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "satisfactory",
+        "trackmania",
+        "outer_wilds",
+        "raft",
+        "subnautica",
+        "powerwashsimulator",
+        "dredge",
+        "brotato",
         "against_the_storm",
         "doom_1993",
-        "balatro",
+        "nine_sols",
         "residentevil3remake",
-        "residentevil2remake",
-        "powerwashsimulator",
-        "seaofthieves",
-        "brotato",
-        "subnautica",
-        "outer_wilds"
+        "doom_ii",
+        "animal_well",
+        "inscryption",
+        "enderlilies",
+        "ror2",
+        "placidplasticducksim"
     ],
     "x|s": [
-        "ror2",
+        "tunic",
+        "seaofthieves",
+        "momodoramoonlitfarewell",
+        "residentevil2remake",
+        "balatro",
+        "wargroove2",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "satisfactory",
+        "trackmania",
+        "outer_wilds",
+        "raft",
+        "subnautica",
+        "powerwashsimulator",
+        "dredge",
+        "brotato",
+        "against_the_storm",
+        "nine_sols",
+        "residentevil3remake",
         "animal_well",
         "inscryption",
-        "tunic",
-        "wargroove2",
-        "hades",
         "enderlilies",
-        "bomb_rush_cyberfunk",
-        "satisfactory",
-        "raft",
-        "placidplasticducksim",
-        "trackmania",
-        "momodoramoonlitfarewell",
-        "against_the_storm",
-        "balatro",
-        "residentevil3remake",
-        "residentevil2remake",
-        "powerwashsimulator",
-        "seaofthieves",
-        "brotato",
-        "subnautica",
-        "outer_wilds"
+        "ror2",
+        "placidplasticducksim"
     ],
     "pc (microsoft windows)": [
-        "factorio_saws",
-        "rogue_legacy",
-        "wargroove2",
-        "osrs",
-        "lethal_company",
-        "sc2",
-        "messenger",
-        "raft",
-        "heretic",
-        "musedash",
-        "getting_over_it",
-        "sa2b",
-        "frogmonster",
-        "against_the_storm",
-        "blasphemous",
-        "shapez",
-        "quake",
-        "pseudoregalia",
-        "residentevil2remake",
-        "minecraft",
-        "dark_souls_2",
-        "factorio",
-        "dark_souls_3",
-        "doronko_wanko",
-        "bumpstik",
-        "dontstarvetogether",
-        "hcniko",
-        "civ_6",
-        "cuphead",
-        "meritous",
-        "sims4",
-        "noita",
-        "hylics2",
-        "bomb_rush_cyberfunk",
-        "simpsonshitnrun",
-        "ahit",
-        "peaks_of_yore",
-        "doom_ii",
-        "huniepop2",
-        "tyrian",
-        "huniepop",
-        "rimworld",
-        "balatro",
-        "v6",
-        "dsr",
-        "kindergarten_2",
-        "gzdoom",
-        "brotato",
-        "subnautica",
-        "terraria",
-        "lingo",
-        "openrct2",
-        "wargroove",
-        "ror2",
-        "inscryption",
-        "tunic",
-        "hades",
-        "enderlilies",
-        "celeste64",
-        "hk",
-        "ufo50",
-        "sadx",
-        "swr",
-        "placidplasticducksim",
-        "momodoramoonlitfarewell",
-        "crystal_project",
-        "shivers",
-        "aus",
-        "crosscode",
-        "monster_sanctuary",
         "seaofthieves",
-        "celeste",
-        "dlcquest",
-        "osu",
-        "outer_wilds",
-        "landstalker",
-        "animal_well",
-        "stardew_valley",
-        "toontown",
-        "oribf",
-        "ror1",
-        "satisfactory",
-        "zork_grand_inquisitor",
-        "trackmania",
-        "undertale",
-        "celeste_open_world",
-        "lego_star_wars_tcs",
-        "cat_quest",
-        "overcooked2",
-        "shorthike",
-        "ultrakill",
-        "lunacid",
-        "chainedechoes",
-        "timespinner",
-        "residentevil3remake",
+        "momodoramoonlitfarewell",
         "witness",
-        "sonic_heroes",
-        "aquaria",
-        "powerwashsimulator",
+        "undertale",
+        "monster_sanctuary",
+        "terraria",
+        "zork_grand_inquisitor",
+        "hylics2",
+        "against_the_storm",
+        "lethal_company",
+        "animal_well",
+        "cuphead",
+        "heretic",
+        "dark_souls_3",
         "poe",
-        "spire"
+        "ror2",
+        "shapez",
+        "cat_quest",
+        "swr",
+        "blasphemous",
+        "oribf",
+        "aus",
+        "tunic",
+        "peaks_of_yore",
+        "bumpstik",
+        "timespinner",
+        "spire",
+        "sonic_heroes",
+        "dsr",
+        "ahit",
+        "celeste64",
+        "pseudoregalia",
+        "tyrian",
+        "osu",
+        "huniepop",
+        "trackmania",
+        "sc2",
+        "outer_wilds",
+        "raft",
+        "nine_sols",
+        "residentevil3remake",
+        "crosscode",
+        "doronko_wanko",
+        "rogue_legacy",
+        "inscryption",
+        "wargroove",
+        "stardew_valley",
+        "meritous",
+        "overcooked2",
+        "rimworld",
+        "toontown",
+        "dlcquest",
+        "shivers",
+        "factorio_saws",
+        "osrs",
+        "crystal_project",
+        "kindergarten_2",
+        "v6",
+        "frogmonster",
+        "wargroove2",
+        "musedash",
+        "factorio",
+        "shorthike",
+        "lunacid",
+        "quake",
+        "dredge",
+        "brotato",
+        "ror1",
+        "doom_ii",
+        "getting_over_it",
+        "civ_6",
+        "landstalker",
+        "gzdoom",
+        "messenger",
+        "lingo",
+        "aquaria",
+        "ultrakill",
+        "hcniko",
+        "minecraft",
+        "chainedechoes",
+        "noita",
+        "celeste_open_world",
+        "residentevil2remake",
+        "balatro",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "satisfactory",
+        "subnautica",
+        "powerwashsimulator",
+        "openrct2",
+        "hk",
+        "huniepop2",
+        "dontstarvetogether",
+        "sadx",
+        "dark_souls_2",
+        "ufo50",
+        "enderlilies",
+        "celeste",
+        "lego_star_wars_tcs",
+        "simpsonshitnrun",
+        "sa2b",
+        "sims4",
+        "placidplasticducksim"
     ],
     "pc": [
-        "factorio_saws",
-        "rogue_legacy",
-        "wargroove2",
-        "osrs",
-        "lethal_company",
-        "sc2",
-        "messenger",
-        "raft",
-        "heretic",
-        "musedash",
-        "getting_over_it",
-        "sa2b",
-        "frogmonster",
-        "against_the_storm",
-        "blasphemous",
-        "shapez",
-        "quake",
-        "pseudoregalia",
-        "residentevil2remake",
-        "minecraft",
-        "dark_souls_2",
-        "factorio",
-        "dark_souls_3",
-        "doronko_wanko",
-        "bumpstik",
-        "dontstarvetogether",
-        "hcniko",
-        "civ_6",
-        "cuphead",
-        "meritous",
-        "sims4",
-        "noita",
-        "hylics2",
-        "bomb_rush_cyberfunk",
-        "simpsonshitnrun",
-        "ahit",
-        "peaks_of_yore",
-        "doom_ii",
-        "huniepop2",
-        "tyrian",
-        "huniepop",
-        "rimworld",
-        "balatro",
-        "v6",
-        "dsr",
-        "kindergarten_2",
-        "gzdoom",
-        "brotato",
-        "subnautica",
-        "terraria",
-        "lingo",
-        "openrct2",
-        "wargroove",
-        "ror2",
-        "inscryption",
-        "tunic",
-        "hades",
-        "enderlilies",
-        "celeste64",
-        "hk",
-        "ufo50",
-        "sadx",
-        "swr",
-        "placidplasticducksim",
-        "momodoramoonlitfarewell",
-        "crystal_project",
-        "shivers",
-        "aus",
-        "crosscode",
-        "monster_sanctuary",
         "seaofthieves",
-        "celeste",
-        "dlcquest",
-        "osu",
-        "outer_wilds",
-        "landstalker",
-        "animal_well",
-        "stardew_valley",
-        "toontown",
-        "oribf",
-        "ror1",
-        "satisfactory",
-        "zork_grand_inquisitor",
-        "trackmania",
-        "undertale",
-        "celeste_open_world",
-        "lego_star_wars_tcs",
-        "cat_quest",
-        "overcooked2",
-        "shorthike",
-        "ultrakill",
-        "lunacid",
-        "chainedechoes",
-        "timespinner",
-        "residentevil3remake",
+        "momodoramoonlitfarewell",
         "witness",
-        "sonic_heroes",
-        "aquaria",
-        "powerwashsimulator",
+        "undertale",
+        "monster_sanctuary",
+        "terraria",
+        "zork_grand_inquisitor",
+        "hylics2",
+        "against_the_storm",
+        "lethal_company",
+        "animal_well",
+        "cuphead",
+        "heretic",
+        "dark_souls_3",
         "poe",
-        "spire"
+        "ror2",
+        "shapez",
+        "cat_quest",
+        "swr",
+        "blasphemous",
+        "oribf",
+        "aus",
+        "tunic",
+        "peaks_of_yore",
+        "bumpstik",
+        "timespinner",
+        "spire",
+        "sonic_heroes",
+        "dsr",
+        "ahit",
+        "celeste64",
+        "pseudoregalia",
+        "tyrian",
+        "osu",
+        "huniepop",
+        "trackmania",
+        "sc2",
+        "outer_wilds",
+        "raft",
+        "nine_sols",
+        "residentevil3remake",
+        "crosscode",
+        "doronko_wanko",
+        "rogue_legacy",
+        "inscryption",
+        "wargroove",
+        "stardew_valley",
+        "meritous",
+        "overcooked2",
+        "rimworld",
+        "toontown",
+        "dlcquest",
+        "shivers",
+        "factorio_saws",
+        "osrs",
+        "crystal_project",
+        "kindergarten_2",
+        "v6",
+        "frogmonster",
+        "wargroove2",
+        "musedash",
+        "factorio",
+        "shorthike",
+        "lunacid",
+        "quake",
+        "dredge",
+        "brotato",
+        "ror1",
+        "doom_ii",
+        "getting_over_it",
+        "civ_6",
+        "landstalker",
+        "gzdoom",
+        "messenger",
+        "lingo",
+        "aquaria",
+        "ultrakill",
+        "hcniko",
+        "minecraft",
+        "chainedechoes",
+        "noita",
+        "celeste_open_world",
+        "residentevil2remake",
+        "balatro",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "satisfactory",
+        "subnautica",
+        "powerwashsimulator",
+        "openrct2",
+        "hk",
+        "huniepop2",
+        "dontstarvetogether",
+        "sadx",
+        "dark_souls_2",
+        "ufo50",
+        "enderlilies",
+        "celeste",
+        "lego_star_wars_tcs",
+        "simpsonshitnrun",
+        "sa2b",
+        "sims4",
+        "placidplasticducksim"
     ],
     "(microsoft": [
-        "factorio_saws",
-        "rogue_legacy",
-        "wargroove2",
-        "osrs",
-        "lethal_company",
-        "sc2",
-        "messenger",
-        "raft",
-        "heretic",
-        "musedash",
-        "getting_over_it",
-        "sa2b",
-        "frogmonster",
-        "against_the_storm",
-        "blasphemous",
-        "shapez",
-        "quake",
-        "pseudoregalia",
-        "residentevil2remake",
-        "minecraft",
-        "dark_souls_2",
-        "factorio",
-        "dark_souls_3",
-        "doronko_wanko",
-        "bumpstik",
-        "dontstarvetogether",
-        "hcniko",
-        "civ_6",
-        "cuphead",
-        "meritous",
-        "sims4",
-        "noita",
-        "hylics2",
-        "bomb_rush_cyberfunk",
-        "simpsonshitnrun",
-        "ahit",
-        "peaks_of_yore",
-        "doom_ii",
-        "huniepop2",
-        "tyrian",
-        "huniepop",
-        "rimworld",
-        "balatro",
-        "v6",
-        "dsr",
-        "kindergarten_2",
-        "gzdoom",
-        "brotato",
-        "subnautica",
-        "terraria",
-        "lingo",
-        "openrct2",
-        "wargroove",
-        "ror2",
-        "inscryption",
-        "tunic",
-        "hades",
-        "enderlilies",
-        "celeste64",
-        "hk",
-        "ufo50",
-        "sadx",
-        "swr",
-        "placidplasticducksim",
-        "momodoramoonlitfarewell",
-        "crystal_project",
-        "shivers",
-        "aus",
-        "crosscode",
-        "monster_sanctuary",
         "seaofthieves",
-        "celeste",
-        "dlcquest",
-        "osu",
-        "outer_wilds",
-        "landstalker",
-        "animal_well",
-        "stardew_valley",
-        "toontown",
-        "oribf",
-        "ror1",
-        "satisfactory",
-        "zork_grand_inquisitor",
-        "trackmania",
-        "undertale",
-        "celeste_open_world",
-        "lego_star_wars_tcs",
-        "cat_quest",
-        "overcooked2",
-        "shorthike",
-        "ultrakill",
-        "lunacid",
-        "chainedechoes",
-        "timespinner",
-        "residentevil3remake",
+        "momodoramoonlitfarewell",
         "witness",
-        "sonic_heroes",
-        "aquaria",
-        "powerwashsimulator",
+        "undertale",
+        "monster_sanctuary",
+        "terraria",
+        "zork_grand_inquisitor",
+        "hylics2",
+        "against_the_storm",
+        "lethal_company",
+        "animal_well",
+        "cuphead",
+        "heretic",
+        "dark_souls_3",
         "poe",
-        "spire"
+        "ror2",
+        "shapez",
+        "cat_quest",
+        "swr",
+        "blasphemous",
+        "oribf",
+        "aus",
+        "tunic",
+        "peaks_of_yore",
+        "bumpstik",
+        "timespinner",
+        "spire",
+        "sonic_heroes",
+        "dsr",
+        "ahit",
+        "celeste64",
+        "pseudoregalia",
+        "tyrian",
+        "osu",
+        "huniepop",
+        "trackmania",
+        "sc2",
+        "outer_wilds",
+        "raft",
+        "nine_sols",
+        "residentevil3remake",
+        "crosscode",
+        "doronko_wanko",
+        "rogue_legacy",
+        "inscryption",
+        "wargroove",
+        "stardew_valley",
+        "meritous",
+        "overcooked2",
+        "rimworld",
+        "toontown",
+        "dlcquest",
+        "shivers",
+        "factorio_saws",
+        "osrs",
+        "crystal_project",
+        "kindergarten_2",
+        "v6",
+        "frogmonster",
+        "wargroove2",
+        "musedash",
+        "factorio",
+        "shorthike",
+        "lunacid",
+        "quake",
+        "dredge",
+        "brotato",
+        "ror1",
+        "doom_ii",
+        "getting_over_it",
+        "civ_6",
+        "landstalker",
+        "gzdoom",
+        "messenger",
+        "lingo",
+        "aquaria",
+        "ultrakill",
+        "hcniko",
+        "minecraft",
+        "chainedechoes",
+        "noita",
+        "celeste_open_world",
+        "residentevil2remake",
+        "balatro",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "satisfactory",
+        "subnautica",
+        "powerwashsimulator",
+        "openrct2",
+        "hk",
+        "huniepop2",
+        "dontstarvetogether",
+        "sadx",
+        "dark_souls_2",
+        "ufo50",
+        "enderlilies",
+        "celeste",
+        "lego_star_wars_tcs",
+        "simpsonshitnrun",
+        "sa2b",
+        "sims4",
+        "placidplasticducksim"
     ],
     "windows)": [
-        "factorio_saws",
-        "rogue_legacy",
-        "wargroove2",
-        "osrs",
-        "lethal_company",
-        "sc2",
-        "messenger",
-        "raft",
-        "heretic",
-        "musedash",
-        "getting_over_it",
-        "sa2b",
-        "frogmonster",
-        "against_the_storm",
-        "blasphemous",
-        "shapez",
-        "quake",
-        "pseudoregalia",
-        "residentevil2remake",
-        "minecraft",
-        "dark_souls_2",
-        "factorio",
-        "dark_souls_3",
-        "doronko_wanko",
-        "bumpstik",
-        "dontstarvetogether",
-        "hcniko",
-        "civ_6",
-        "cuphead",
-        "meritous",
-        "sims4",
-        "noita",
-        "hylics2",
-        "bomb_rush_cyberfunk",
-        "simpsonshitnrun",
-        "ahit",
-        "peaks_of_yore",
-        "doom_ii",
-        "huniepop2",
-        "tyrian",
-        "huniepop",
-        "rimworld",
-        "balatro",
-        "v6",
-        "dsr",
-        "kindergarten_2",
-        "gzdoom",
-        "brotato",
-        "subnautica",
-        "terraria",
-        "lingo",
-        "openrct2",
-        "wargroove",
-        "ror2",
-        "inscryption",
-        "tunic",
-        "hades",
-        "enderlilies",
-        "celeste64",
-        "hk",
-        "ufo50",
-        "sadx",
-        "swr",
-        "placidplasticducksim",
-        "momodoramoonlitfarewell",
-        "crystal_project",
-        "shivers",
-        "aus",
-        "crosscode",
-        "monster_sanctuary",
         "seaofthieves",
-        "celeste",
-        "dlcquest",
-        "osu",
-        "outer_wilds",
-        "landstalker",
-        "animal_well",
-        "stardew_valley",
-        "toontown",
-        "oribf",
-        "ror1",
-        "satisfactory",
-        "zork_grand_inquisitor",
-        "trackmania",
-        "undertale",
-        "celeste_open_world",
-        "lego_star_wars_tcs",
-        "cat_quest",
-        "overcooked2",
-        "shorthike",
-        "ultrakill",
-        "lunacid",
-        "chainedechoes",
-        "timespinner",
-        "residentevil3remake",
+        "momodoramoonlitfarewell",
         "witness",
-        "sonic_heroes",
-        "aquaria",
-        "powerwashsimulator",
+        "undertale",
+        "monster_sanctuary",
+        "terraria",
+        "zork_grand_inquisitor",
+        "hylics2",
+        "against_the_storm",
+        "lethal_company",
+        "animal_well",
+        "cuphead",
+        "heretic",
+        "dark_souls_3",
         "poe",
-        "spire"
+        "ror2",
+        "shapez",
+        "cat_quest",
+        "swr",
+        "blasphemous",
+        "oribf",
+        "aus",
+        "tunic",
+        "peaks_of_yore",
+        "bumpstik",
+        "timespinner",
+        "spire",
+        "sonic_heroes",
+        "dsr",
+        "ahit",
+        "celeste64",
+        "pseudoregalia",
+        "tyrian",
+        "osu",
+        "huniepop",
+        "trackmania",
+        "sc2",
+        "outer_wilds",
+        "raft",
+        "nine_sols",
+        "residentevil3remake",
+        "crosscode",
+        "doronko_wanko",
+        "rogue_legacy",
+        "inscryption",
+        "wargroove",
+        "stardew_valley",
+        "meritous",
+        "overcooked2",
+        "rimworld",
+        "toontown",
+        "dlcquest",
+        "shivers",
+        "factorio_saws",
+        "osrs",
+        "crystal_project",
+        "kindergarten_2",
+        "v6",
+        "frogmonster",
+        "wargroove2",
+        "musedash",
+        "factorio",
+        "shorthike",
+        "lunacid",
+        "quake",
+        "dredge",
+        "brotato",
+        "ror1",
+        "doom_ii",
+        "getting_over_it",
+        "civ_6",
+        "landstalker",
+        "gzdoom",
+        "messenger",
+        "lingo",
+        "aquaria",
+        "ultrakill",
+        "hcniko",
+        "minecraft",
+        "chainedechoes",
+        "noita",
+        "celeste_open_world",
+        "residentevil2remake",
+        "balatro",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "satisfactory",
+        "subnautica",
+        "powerwashsimulator",
+        "openrct2",
+        "hk",
+        "huniepop2",
+        "dontstarvetogether",
+        "sadx",
+        "dark_souls_2",
+        "ufo50",
+        "enderlilies",
+        "celeste",
+        "lego_star_wars_tcs",
+        "simpsonshitnrun",
+        "sa2b",
+        "sims4",
+        "placidplasticducksim"
     ],
     "playstation 5": [
-        "ror2",
-        "animal_well",
-        "inscryption",
         "tunic",
-        "hades",
-        "bomb_rush_cyberfunk",
-        "messenger",
-        "satisfactory",
-        "raft",
-        "placidplasticducksim",
-        "trackmania",
-        "momodoramoonlitfarewell",
-        "against_the_storm",
-        "balatro",
-        "crosscode",
-        "residentevil3remake",
-        "residentevil2remake",
-        "powerwashsimulator",
         "seaofthieves",
-        "poe",
-        "brotato",
+        "momodoramoonlitfarewell",
+        "residentevil2remake",
+        "balatro",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "satisfactory",
+        "trackmania",
+        "outer_wilds",
+        "raft",
         "subnautica",
-        "outer_wilds"
+        "powerwashsimulator",
+        "dredge",
+        "brotato",
+        "against_the_storm",
+        "nine_sols",
+        "residentevil3remake",
+        "crosscode",
+        "animal_well",
+        "messenger",
+        "inscryption",
+        "poe",
+        "ror2",
+        "placidplasticducksim"
     ],
     "playstation": [
-        "wargroove",
-        "ror2",
-        "animal_well",
-        "kh2",
-        "stardew_valley",
-        "inscryption",
         "tunic",
-        "rogue_legacy",
-        "sly1",
-        "celeste",
-        "rac2",
-        "cuphead",
-        "hades",
         "fm",
-        "sims4",
-        "enderlilies",
-        "ror1",
-        "sotn",
-        "bomb_rush_cyberfunk",
-        "hk",
-        "kh1",
-        "messenger",
-        "satisfactory",
-        "simpsonshitnrun",
-        "sadx",
-        "raft",
-        "swr",
-        "jakanddaxter",
-        "ahit",
-        "placidplasticducksim",
-        "sa2b",
-        "spyro3",
-        "trackmania",
-        "undertale",
-        "celeste_open_world",
-        "lego_star_wars_tcs",
-        "apeescape",
-        "against_the_storm",
-        "cat_quest",
+        "seaofthieves",
         "momodoramoonlitfarewell",
-        "overcooked2",
-        "blasphemous",
-        "shorthike",
-        "balatro",
-        "chainedechoes",
+        "apeescape",
         "timespinner",
-        "crosscode",
-        "residentevil3remake",
-        "v6",
+        "residentevil2remake",
+        "sonic_heroes",
         "witness",
         "dsr",
-        "sonic_heroes",
+        "v6",
+        "balatro",
+        "undertale",
+        "ahit",
         "monster_sanctuary",
-        "dw1",
-        "residentevil2remake",
-        "outer_wilds",
-        "powerwashsimulator",
-        "dark_souls_2",
-        "poe",
-        "brotato",
-        "seaofthieves",
-        "subnautica",
+        "shorthike",
         "terraria",
-        "dark_souls_3"
+        "dw1",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "satisfactory",
+        "trackmania",
+        "outer_wilds",
+        "raft",
+        "subnautica",
+        "powerwashsimulator",
+        "dredge",
+        "rac2",
+        "brotato",
+        "hk",
+        "against_the_storm",
+        "kh1",
+        "nine_sols",
+        "residentevil3remake",
+        "ror1",
+        "crosscode",
+        "animal_well",
+        "rogue_legacy",
+        "cuphead",
+        "jakanddaxter",
+        "kh2",
+        "sadx",
+        "dark_souls_2",
+        "messenger",
+        "inscryption",
+        "spyro3",
+        "enderlilies",
+        "sotn",
+        "wargroove",
+        "celeste",
+        "dark_souls_3",
+        "poe",
+        "ror2",
+        "lego_star_wars_tcs",
+        "stardew_valley",
+        "overcooked2",
+        "cat_quest",
+        "sly1",
+        "chainedechoes",
+        "swr",
+        "simpsonshitnrun",
+        "sa2b",
+        "sims4",
+        "blasphemous",
+        "placidplasticducksim",
+        "celeste_open_world"
     ],
     "5": [
-        "ror2",
-        "animal_well",
-        "inscryption",
         "tunic",
-        "hades",
-        "bomb_rush_cyberfunk",
-        "messenger",
-        "satisfactory",
-        "raft",
-        "placidplasticducksim",
-        "trackmania",
-        "momodoramoonlitfarewell",
-        "against_the_storm",
-        "balatro",
-        "crosscode",
-        "residentevil3remake",
-        "residentevil2remake",
-        "powerwashsimulator",
         "seaofthieves",
-        "poe",
-        "brotato",
+        "momodoramoonlitfarewell",
+        "residentevil2remake",
+        "balatro",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "satisfactory",
+        "trackmania",
+        "outer_wilds",
+        "raft",
         "subnautica",
-        "outer_wilds"
+        "powerwashsimulator",
+        "dredge",
+        "brotato",
+        "against_the_storm",
+        "nine_sols",
+        "residentevil3remake",
+        "crosscode",
+        "animal_well",
+        "messenger",
+        "inscryption",
+        "poe",
+        "ror2",
+        "placidplasticducksim"
     ],
     "nintendo switch": [
-        "doronko_wanko",
-        "wargroove",
-        "smo",
-        "dontstarvetogether",
-        "hcniko",
-        "ror2",
-        "animal_well",
-        "stardew_valley",
-        "oribf",
-        "inscryption",
         "tunic",
-        "rogue_legacy",
-        "wargroove2",
-        "celeste",
-        "cuphead",
-        "hades",
-        "enderlilies",
-        "ror1",
-        "bomb_rush_cyberfunk",
-        "hk",
-        "ufo50",
-        "messenger",
-        "swr",
-        "ahit",
-        "placidplasticducksim",
-        "musedash",
-        "undertale",
-        "celeste_open_world",
-        "megamix",
-        "momodoramoonlitfarewell",
-        "against_the_storm",
-        "cat_quest",
         "crystal_project",
-        "overcooked2",
-        "blasphemous",
-        "shorthike",
-        "balatro",
-        "chainedechoes",
-        "tboir",
+        "momodoramoonlitfarewell",
         "timespinner",
-        "crosscode",
-        "v6",
         "dsr",
+        "v6",
+        "balatro",
+        "undertale",
+        "ahit",
         "monster_sanctuary",
-        "powerwashsimulator",
-        "brotato",
+        "musedash",
         "factorio",
-        "subnautica",
+        "shorthike",
+        "wargroove2",
         "terraria",
-        "outer_wilds"
+        "bomb_rush_cyberfunk",
+        "hades",
+        "outer_wilds",
+        "subnautica",
+        "powerwashsimulator",
+        "dredge",
+        "brotato",
+        "hk",
+        "against_the_storm",
+        "nine_sols",
+        "ror1",
+        "crosscode",
+        "megamix",
+        "doronko_wanko",
+        "dontstarvetogether",
+        "animal_well",
+        "rogue_legacy",
+        "cuphead",
+        "oribf",
+        "messenger",
+        "inscryption",
+        "tboir",
+        "smo",
+        "ufo50",
+        "enderlilies",
+        "wargroove",
+        "celeste",
+        "stardew_valley",
+        "ror2",
+        "overcooked2",
+        "hcniko",
+        "cat_quest",
+        "chainedechoes",
+        "swr",
+        "blasphemous",
+        "placidplasticducksim",
+        "celeste_open_world"
     ],
     "nintendo": [
-        "mk64",
-        "metroidprime",
-        "rogue_legacy",
-        "wargroove2",
-        "ffmq",
-        "luigismansion",
-        "albw",
-        "messenger",
-        "sms",
-        "musedash",
+        "sm64hacks",
+        "momodoramoonlitfarewell",
         "ctjot",
-        "against_the_storm",
-        "banjo_tooie",
-        "ladx",
+        "metroidprime",
+        "undertale",
+        "wl",
+        "monster_sanctuary",
         "ff4fe",
-        "blasphemous",
+        "terraria",
         "smw",
-        "tloz_ooa",
-        "factorio",
-        "doronko_wanko",
-        "dontstarvetogether",
-        "hcniko",
-        "pmd_eos",
-        "star_fox_64",
-        "dkc3",
-        "cuphead",
-        "bomb_rush_cyberfunk",
-        "simpsonshitnrun",
-        "ahit",
-        "mm3",
+        "against_the_storm",
+        "mm2",
         "megamix",
+        "mm_recomp",
+        "animal_well",
+        "cuphead",
+        "dk64",
+        "cv64",
+        "faxanadu",
+        "tloz_ooa",
+        "ff1",
+        "ladx",
+        "ror2",
+        "mk64",
+        "cat_quest",
+        "swr",
+        "blasphemous",
+        "oribf",
+        "papermario",
+        "tunic",
+        "mm3",
+        "timespinner",
+        "alttp",
+        "sonic_heroes",
+        "dsr",
+        "ahit",
+        "oot",
+        "dw1",
+        "yoshisisland",
+        "sm_map_rando",
+        "soe",
+        "smz3",
+        "outer_wilds",
+        "sms",
+        "albw",
+        "dkc2",
+        "tetrisattack",
+        "nine_sols",
+        "crosscode",
+        "tww",
+        "doronko_wanko",
+        "rogue_legacy",
+        "inscryption",
+        "dkc3",
+        "smo",
+        "wargroove",
+        "stardew_valley",
+        "tmc",
+        "overcooked2",
+        "tloz",
+        "star_fox_64",
+        "crystal_project",
+        "k64",
+        "zelda2",
+        "v6",
+        "metroidfusion",
+        "wargroove2",
+        "musedash",
+        "factorio",
+        "shorthike",
+        "kdl3",
+        "pokemon_rb",
+        "mmx3",
+        "pokemon_crystal",
+        "banjo_tooie",
+        "luigismansion",
+        "dredge",
+        "mario_kart_double_dash",
+        "brotato",
+        "ror1",
+        "diddy_kong_racing",
+        "sm",
+        "tloz_oos",
+        "messenger",
+        "tboir",
+        "dkc",
+        "pmd_eos",
+        "lufia2ac",
+        "wl4",
+        "earthbound",
+        "hcniko",
+        "chainedechoes",
+        "celeste_open_world",
         "tloz_ph",
         "balatro",
-        "wl",
-        "v6",
-        "dsr",
-        "metroidfusion",
-        "brotato",
-        "subnautica",
-        "terraria",
-        "soe",
-        "wargroove",
-        "dkc",
-        "mm_recomp",
-        "smo",
-        "k64",
-        "ror2",
-        "inscryption",
-        "tunic",
-        "alttp",
+        "bomb_rush_cyberfunk",
         "hades",
-        "enderlilies",
-        "faxanadu",
-        "zelda2",
-        "sm_map_rando",
-        "diddy_kong_racing",
-        "hk",
-        "ufo50",
-        "tetrisattack",
-        "mmx3",
-        "sm",
-        "swr",
-        "placidplasticducksim",
-        "pokemon_crystal",
-        "dk64",
-        "tww",
-        "momodoramoonlitfarewell",
-        "crystal_project",
-        "kdl3",
-        "tloz_oos",
-        "sm64hacks",
-        "crosscode",
-        "monster_sanctuary",
-        "dw1",
-        "celeste",
-        "outer_wilds",
-        "cv64",
-        "yoshisisland",
-        "animal_well",
-        "tloz",
-        "smz3",
-        "stardew_valley",
-        "oribf",
-        "oot",
-        "ff1",
-        "ror1",
-        "papermario",
-        "lufia2ac",
-        "dkc2",
-        "tmc",
-        "sm64ex",
-        "undertale",
-        "celeste_open_world",
-        "marioland2",
-        "cat_quest",
-        "mm2",
-        "overcooked2",
-        "shorthike",
-        "wl4",
-        "pokemon_rb",
-        "chainedechoes",
-        "tboir",
-        "timespinner",
-        "earthbound",
-        "sonic_heroes",
+        "subnautica",
         "powerwashsimulator",
-        "mario_kart_double_dash"
+        "marioland2",
+        "hk",
+        "dontstarvetogether",
+        "ufo50",
+        "enderlilies",
+        "celeste",
+        "sm64ex",
+        "simpsonshitnrun",
+        "ffmq",
+        "placidplasticducksim"
     ],
     "switch": [
-        "doronko_wanko",
-        "wargroove",
-        "smo",
-        "dontstarvetogether",
-        "hcniko",
-        "ror2",
-        "animal_well",
-        "stardew_valley",
-        "oribf",
-        "inscryption",
         "tunic",
-        "rogue_legacy",
-        "wargroove2",
-        "celeste",
-        "cuphead",
-        "hades",
-        "enderlilies",
-        "ror1",
-        "bomb_rush_cyberfunk",
-        "hk",
-        "ufo50",
-        "messenger",
-        "swr",
-        "ahit",
-        "placidplasticducksim",
-        "musedash",
-        "undertale",
-        "celeste_open_world",
-        "megamix",
-        "momodoramoonlitfarewell",
-        "against_the_storm",
-        "cat_quest",
         "crystal_project",
-        "overcooked2",
-        "blasphemous",
-        "shorthike",
-        "balatro",
-        "chainedechoes",
-        "tboir",
+        "momodoramoonlitfarewell",
         "timespinner",
-        "crosscode",
-        "v6",
         "dsr",
+        "v6",
+        "balatro",
+        "undertale",
+        "ahit",
         "monster_sanctuary",
-        "powerwashsimulator",
-        "brotato",
+        "musedash",
         "factorio",
-        "subnautica",
+        "shorthike",
+        "wargroove2",
         "terraria",
-        "outer_wilds"
+        "bomb_rush_cyberfunk",
+        "hades",
+        "outer_wilds",
+        "subnautica",
+        "powerwashsimulator",
+        "dredge",
+        "brotato",
+        "hk",
+        "against_the_storm",
+        "nine_sols",
+        "ror1",
+        "crosscode",
+        "megamix",
+        "doronko_wanko",
+        "dontstarvetogether",
+        "animal_well",
+        "rogue_legacy",
+        "cuphead",
+        "oribf",
+        "messenger",
+        "inscryption",
+        "tboir",
+        "smo",
+        "ufo50",
+        "enderlilies",
+        "wargroove",
+        "celeste",
+        "stardew_valley",
+        "ror2",
+        "overcooked2",
+        "hcniko",
+        "cat_quest",
+        "chainedechoes",
+        "swr",
+        "blasphemous",
+        "placidplasticducksim",
+        "celeste_open_world"
     ],
     "roguelite": [
-        "hades",
         "ror1",
-        "noita",
+        "hades",
         "ror2",
+        "brotato",
         "against_the_storm",
-        "brotato"
+        "noita"
     ],
     "a hat in time": [
         "ahit"
     ],
     "a": [
-        "ahit",
+        "smz3",
         "alttp",
         "albw",
-        "smz3",
+        "ahit",
         "shorthike"
     ],
     "hat": [
         "ahit"
     ],
     "in": [
-        "ahit",
-        "alttp",
-        "smw",
-        "tloz_ooa",
-        "tloz_ph",
-        "papermario",
-        "metroidprime",
-        "earthbound",
-        "zelda2",
         "sm_map_rando",
-        "albw",
-        "ss",
-        "kh1",
-        "tmc",
-        "sms",
         "sm",
+        "tloz_oos",
+        "tloz_ph",
+        "tmc",
+        "alttp",
+        "ss",
+        "earthbound",
+        "sms",
+        "albw",
+        "metroidprime",
+        "smw",
+        "zelda2",
+        "ahit",
+        "tloz_ooa",
+        "kh1",
         "oot",
-        "tloz_oos"
+        "papermario"
     ],
     "first person": [
-        "cv64",
-        "metroidprime",
-        "star_fox_64",
-        "inscryption",
-        "sims4",
-        "fm",
-        "hylics2",
-        "lethal_company",
-        "satisfactory",
-        "zork_grand_inquisitor",
-        "raft",
-        "swr",
-        "heretic",
-        "ahit",
-        "trackmania",
-        "doom_ii",
-        "huniepop2",
-        "frogmonster",
-        "doom_1993",
         "shivers",
-        "huniepop",
-        "ultrakill",
-        "lunacid",
-        "yugiohddm",
-        "witness",
-        "earthbound",
-        "quake",
-        "minecraft",
-        "outer_wilds",
-        "powerwashsimulator",
+        "fm",
         "seaofthieves",
+        "witness",
+        "metroidprime",
+        "frogmonster",
+        "ahit",
+        "huniepop",
+        "lunacid",
+        "trackmania",
+        "satisfactory",
+        "yugiohddm",
+        "outer_wilds",
+        "raft",
         "subnautica",
-        "lingo"
+        "quake",
+        "hylics2",
+        "powerwashsimulator",
+        "zork_grand_inquisitor",
+        "doom_1993",
+        "doom_ii",
+        "lethal_company",
+        "huniepop2",
+        "heretic",
+        "cv64",
+        "inscryption",
+        "lingo",
+        "ultrakill",
+        "earthbound",
+        "minecraft",
+        "swr",
+        "sims4",
+        "star_fox_64"
     ],
     "first": [
-        "cv64",
-        "metroidprime",
-        "star_fox_64",
-        "inscryption",
-        "sims4",
-        "fm",
-        "hylics2",
-        "lethal_company",
-        "satisfactory",
-        "zork_grand_inquisitor",
-        "raft",
-        "swr",
-        "heretic",
-        "ahit",
-        "trackmania",
-        "doom_ii",
-        "huniepop2",
-        "frogmonster",
-        "doom_1993",
         "shivers",
-        "huniepop",
-        "ultrakill",
-        "lunacid",
-        "yugiohddm",
-        "witness",
-        "earthbound",
-        "quake",
-        "minecraft",
-        "outer_wilds",
-        "powerwashsimulator",
+        "fm",
         "seaofthieves",
+        "witness",
+        "metroidprime",
+        "frogmonster",
+        "ahit",
+        "huniepop",
+        "lunacid",
+        "trackmania",
+        "satisfactory",
+        "yugiohddm",
+        "outer_wilds",
+        "raft",
         "subnautica",
-        "lingo"
+        "quake",
+        "hylics2",
+        "powerwashsimulator",
+        "zork_grand_inquisitor",
+        "doom_1993",
+        "doom_ii",
+        "lethal_company",
+        "huniepop2",
+        "heretic",
+        "cv64",
+        "inscryption",
+        "lingo",
+        "ultrakill",
+        "earthbound",
+        "minecraft",
+        "swr",
+        "sims4",
+        "star_fox_64"
     ],
     "person": [
-        "mk64",
-        "metroidprime",
-        "rac2",
-        "luigismansion",
-        "lethal_company",
-        "albw",
-        "sms",
-        "raft",
-        "heretic",
-        "xenobladex",
-        "getting_over_it",
-        "sa2b",
-        "frogmonster",
-        "banjo_tooie",
-        "apeescape",
-        "yugiohddm",
-        "quake",
-        "pseudoregalia",
-        "residentevil2remake",
-        "minecraft",
-        "dark_souls_2",
-        "dark_souls_3",
-        "hcniko",
-        "star_fox_64",
-        "sims4",
-        "hylics2",
-        "bomb_rush_cyberfunk",
-        "simpsonshitnrun",
-        "ahit",
-        "spyro3",
-        "doom_ii",
-        "huniepop2",
-        "megamix",
-        "huniepop",
-        "dsr",
-        "gzdoom",
-        "subnautica",
-        "lingo",
-        "soe",
-        "smo",
-        "mm_recomp",
-        "ror2",
-        "inscryption",
-        "sly1",
-        "celeste64",
-        "diddy_kong_racing",
-        "sadx",
-        "swr",
-        "jakanddaxter",
-        "placidplasticducksim",
-        "dk64",
-        "tww",
-        "crystal_project",
-        "doom_1993",
-        "shivers",
-        "sm64hacks",
-        "dw1",
         "seaofthieves",
-        "outer_wilds",
-        "cv64",
-        "kh2",
-        "toontown",
-        "oot",
-        "mario_kart_double_dash",
-        "fm",
-        "papermario",
-        "kh1",
-        "satisfactory",
-        "zork_grand_inquisitor",
-        "sm64ex",
-        "trackmania",
-        "tp",
-        "lego_star_wars_tcs",
-        "cat_quest",
-        "ultrakill",
-        "lunacid",
-        "gstla",
+        "sm64hacks",
+        "apeescape",
         "witness",
-        "residentevil3remake",
-        "earthbound",
+        "metroidprime",
+        "zork_grand_inquisitor",
+        "hylics2",
+        "rac2",
+        "lethal_company",
+        "megamix",
+        "mm_recomp",
+        "heretic",
+        "jakanddaxter",
+        "dk64",
+        "cv64",
+        "sims4",
+        "spyro3",
+        "dark_souls_3",
+        "ror2",
+        "mk64",
+        "cat_quest",
+        "papermario",
         "sonic_heroes",
+        "dsr",
+        "ahit",
+        "celeste64",
+        "pseudoregalia",
+        "oot",
+        "dw1",
+        "huniepop",
+        "soe",
+        "trackmania",
+        "outer_wilds",
+        "raft",
+        "sms",
+        "albw",
+        "tp",
+        "residentevil3remake",
+        "tww",
+        "kh2",
+        "inscryption",
+        "smo",
+        "toontown",
+        "star_fox_64",
+        "shivers",
+        "fm",
+        "crystal_project",
+        "frogmonster",
+        "lunacid",
+        "yugiohddm",
+        "xenobladex",
+        "banjo_tooie",
+        "luigismansion",
+        "quake",
+        "mario_kart_double_dash",
+        "doom_ii",
+        "getting_over_it",
+        "diddy_kong_racing",
+        "gzdoom",
+        "ss",
+        "lingo",
+        "ultrakill",
+        "earthbound",
+        "gstla",
+        "hcniko",
+        "minecraft",
+        "sly1",
+        "madou",
+        "residentevil2remake",
+        "bomb_rush_cyberfunk",
+        "satisfactory",
+        "subnautica",
         "powerwashsimulator",
-        "ss"
+        "kh1",
+        "doom_1993",
+        "huniepop2",
+        "sadx",
+        "dark_souls_2",
+        "sm64ex",
+        "lego_star_wars_tcs",
+        "simpsonshitnrun",
+        "sa2b",
+        "swr",
+        "placidplasticducksim"
     ],
     "third person": [
-        "soe",
-        "mk64",
-        "cv64",
-        "smo",
-        "mm_recomp",
-        "hcniko",
-        "ror2",
-        "star_fox_64",
-        "ss",
-        "kh2",
-        "toontown",
-        "oot",
-        "sly1",
-        "rac2",
-        "sims4",
-        "luigismansion",
-        "papermario",
-        "celeste64",
-        "hylics2",
-        "albw",
-        "bomb_rush_cyberfunk",
-        "diddy_kong_racing",
-        "kh1",
-        "sms",
-        "simpsonshitnrun",
-        "sadx",
-        "raft",
-        "swr",
-        "jakanddaxter",
-        "ahit",
-        "xenobladex",
-        "placidplasticducksim",
-        "getting_over_it",
-        "dk64",
-        "sa2b",
-        "sm64ex",
-        "spyro3",
-        "tp",
-        "trackmania",
-        "tww",
-        "megamix",
-        "lego_star_wars_tcs",
-        "banjo_tooie",
-        "apeescape",
-        "cat_quest",
+        "madou",
         "crystal_project",
         "sm64hacks",
-        "gstla",
-        "residentevil3remake",
-        "dsr",
-        "pseudoregalia",
-        "sonic_heroes",
-        "dw1",
+        "apeescape",
         "residentevil2remake",
-        "minecraft",
-        "dark_souls_2",
+        "sonic_heroes",
+        "dsr",
+        "ahit",
+        "celeste64",
+        "pseudoregalia",
+        "oot",
+        "dw1",
+        "soe",
+        "bomb_rush_cyberfunk",
+        "trackmania",
+        "xenobladex",
+        "banjo_tooie",
+        "raft",
+        "luigismansion",
+        "sms",
+        "albw",
+        "hylics2",
+        "rac2",
+        "mario_kart_double_dash",
+        "kh1",
+        "tp",
+        "residentevil3remake",
+        "getting_over_it",
+        "diddy_kong_racing",
+        "megamix",
+        "tww",
+        "mm_recomp",
         "gzdoom",
+        "ss",
+        "jakanddaxter",
+        "kh2",
+        "dk64",
+        "cv64",
+        "dark_souls_2",
+        "sadx",
+        "smo",
+        "spyro3",
         "dark_souls_3",
-        "mario_kart_double_dash"
+        "sm64ex",
+        "ror2",
+        "lego_star_wars_tcs",
+        "mk64",
+        "gstla",
+        "hcniko",
+        "minecraft",
+        "cat_quest",
+        "sly1",
+        "swr",
+        "simpsonshitnrun",
+        "sa2b",
+        "toontown",
+        "sims4",
+        "star_fox_64",
+        "placidplasticducksim",
+        "papermario"
     ],
     "third": [
-        "soe",
-        "mk64",
-        "cv64",
-        "smo",
-        "mm_recomp",
-        "hcniko",
-        "ror2",
-        "star_fox_64",
-        "ss",
-        "kh2",
-        "toontown",
-        "oot",
-        "sly1",
-        "rac2",
-        "sims4",
-        "luigismansion",
-        "papermario",
-        "celeste64",
-        "hylics2",
-        "albw",
-        "bomb_rush_cyberfunk",
-        "diddy_kong_racing",
-        "kh1",
-        "sms",
-        "simpsonshitnrun",
-        "sadx",
-        "raft",
-        "swr",
-        "jakanddaxter",
-        "ahit",
-        "xenobladex",
-        "placidplasticducksim",
-        "getting_over_it",
-        "dk64",
-        "sa2b",
-        "sm64ex",
-        "spyro3",
-        "tp",
-        "trackmania",
-        "tww",
-        "megamix",
-        "lego_star_wars_tcs",
-        "banjo_tooie",
-        "apeescape",
-        "cat_quest",
+        "madou",
         "crystal_project",
         "sm64hacks",
-        "gstla",
-        "residentevil3remake",
-        "dsr",
-        "pseudoregalia",
-        "sonic_heroes",
-        "dw1",
+        "apeescape",
         "residentevil2remake",
-        "minecraft",
-        "dark_souls_2",
+        "sonic_heroes",
+        "dsr",
+        "ahit",
+        "celeste64",
+        "pseudoregalia",
+        "oot",
+        "dw1",
+        "soe",
+        "bomb_rush_cyberfunk",
+        "trackmania",
+        "xenobladex",
+        "banjo_tooie",
+        "raft",
+        "luigismansion",
+        "sms",
+        "albw",
+        "hylics2",
+        "rac2",
+        "mario_kart_double_dash",
+        "kh1",
+        "tp",
+        "residentevil3remake",
+        "getting_over_it",
+        "diddy_kong_racing",
+        "megamix",
+        "tww",
+        "mm_recomp",
         "gzdoom",
+        "ss",
+        "jakanddaxter",
+        "kh2",
+        "dk64",
+        "cv64",
+        "dark_souls_2",
+        "sadx",
+        "smo",
+        "spyro3",
         "dark_souls_3",
-        "mario_kart_double_dash"
+        "sm64ex",
+        "ror2",
+        "lego_star_wars_tcs",
+        "mk64",
+        "gstla",
+        "hcniko",
+        "minecraft",
+        "cat_quest",
+        "sly1",
+        "swr",
+        "simpsonshitnrun",
+        "sa2b",
+        "toontown",
+        "sims4",
+        "star_fox_64",
+        "placidplasticducksim",
+        "papermario"
     ],
     "platform": [
-        "cv64",
-        "dkc",
-        "smo",
-        "hcniko",
-        "metroidprime",
-        "k64",
-        "yoshisisland",
-        "animal_well",
-        "smz3",
-        "oribf",
-        "terraria",
-        "dkc3",
-        "rogue_legacy",
-        "sly1",
-        "rac2",
-        "cuphead",
-        "enderlilies",
-        "ror1",
-        "faxanadu",
-        "celeste64",
-        "hylics2",
-        "dkc2",
-        "sm_map_rando",
-        "sotn",
-        "bomb_rush_cyberfunk",
-        "zelda2",
-        "cvcotm",
-        "hk",
-        "ufo50",
-        "messenger",
-        "sms",
-        "simpsonshitnrun",
-        "mmx3",
-        "sadx",
-        "sm",
-        "zillion",
-        "jakanddaxter",
-        "ahit",
         "peaks_of_yore",
-        "mm3",
-        "getting_over_it",
-        "dk64",
-        "sa2b",
-        "sm64ex",
-        "celeste_open_world",
-        "spyro3",
-        "marioland2",
-        "lego_star_wars_tcs",
-        "apeescape",
-        "banjo_tooie",
         "crystal_project",
-        "momodoramoonlitfarewell",
-        "mm2",
-        "kdl3",
-        "blasphemous",
-        "mzm",
-        "ultrakill",
-        "aus",
         "sm64hacks",
-        "wl4",
-        "smw",
+        "k64",
+        "apeescape",
+        "mm3",
+        "momodoramoonlitfarewell",
         "timespinner",
-        "wl",
-        "v6",
         "sonic_heroes",
-        "pseudoregalia",
-        "aquaria",
-        "monster_sanctuary",
-        "gzdoom",
+        "zelda2",
+        "metroidprime",
+        "v6",
         "metroidfusion",
+        "wl",
+        "ahit",
+        "celeste64",
+        "monster_sanctuary",
+        "pseudoregalia",
+        "zillion",
+        "kdl3",
+        "terraria",
+        "yoshisisland",
+        "mmx3",
+        "sm_map_rando",
+        "bomb_rush_cyberfunk",
+        "mzm",
+        "smz3",
+        "banjo_tooie",
+        "sms",
+        "smw",
+        "hylics2",
+        "rac2",
+        "dkc2",
+        "marioland2",
+        "hk",
+        "nine_sols",
+        "mm2",
+        "ror1",
+        "getting_over_it",
+        "sm",
+        "animal_well",
+        "dlcquest",
+        "gzdoom",
+        "rogue_legacy",
+        "cuphead",
+        "jakanddaxter",
+        "dk64",
+        "cv64",
+        "faxanadu",
+        "messenger",
+        "oribf",
+        "sadx",
+        "dkc",
+        "dkc3",
+        "smo",
+        "spyro3",
+        "ufo50",
+        "aquaria",
+        "cvcotm",
+        "enderlilies",
+        "sotn",
+        "aus",
         "celeste",
-        "dlcquest"
+        "sm64ex",
+        "lego_star_wars_tcs",
+        "wl4",
+        "ultrakill",
+        "hcniko",
+        "sly1",
+        "simpsonshitnrun",
+        "sa2b",
+        "blasphemous",
+        "celeste_open_world"
     ],
     "action": [
-        "mk64",
-        "metroidprime",
-        "ss",
-        "rogue_legacy",
-        "rac2",
-        "ffmq",
-        "luigismansion",
-        "lethal_company",
-        "sc2",
-        "albw",
-        "messenger",
-        "sms",
-        "mlss",
-        "xenobladex",
-        "musedash",
-        "getting_over_it",
-        "sa2b",
-        "ctjot",
+        "seaofthieves",
+        "sm64hacks",
+        "momodoramoonlitfarewell",
         "apeescape",
-        "banjo_tooie",
-        "frogmonster",
-        "ladx",
+        "ctjot",
+        "metroidprime",
+        "wl",
+        "monster_sanctuary",
         "ff4fe",
-        "blasphemous",
+        "terraria",
+        "mzm",
         "smw",
-        "tloz_ooa",
-        "quake",
-        "pseudoregalia",
-        "residentevil2remake",
-        "dark_souls_2",
-        "dark_souls_3",
-        "doronko_wanko",
-        "dontstarvetogether",
-        "hcniko",
-        "star_fox_64",
-        "dkc3",
+        "rac2",
+        "mm2",
+        "mmbn3",
+        "lethal_company",
+        "mm_recomp",
+        "animal_well",
         "cuphead",
+        "jakanddaxter",
+        "dk64",
+        "cv64",
+        "faxanadu",
         "sims4",
-        "noita",
-        "bomb_rush_cyberfunk",
-        "simpsonshitnrun",
-        "ahit",
+        "tloz_ooa",
+        "pokemon_frlg",
+        "spyro3",
+        "sotn",
+        "ff1",
+        "ladx",
+        "dark_souls_3",
+        "poe",
+        "ror2",
+        "mk64",
+        "cat_quest",
+        "swr",
+        "blasphemous",
+        "aus",
+        "oribf",
+        "papermario",
+        "tunic",
         "peaks_of_yore",
         "mm3",
-        "spyro3",
-        "doom_ii",
-        "tyrian",
-        "mzm",
-        "tloz_ph",
         "pokemon_emerald",
-        "wl",
-        "v6",
-        "dsr",
-        "gzdoom",
-        "metroidfusion",
-        "brotato",
-        "terraria",
-        "soe",
-        "pokemon_frlg",
-        "dkc",
-        "mm_recomp",
-        "smo",
-        "k64",
-        "ror2",
-        "tunic",
-        "sly1",
         "alttp",
-        "hades",
-        "enderlilies",
-        "sotn",
-        "faxanadu",
-        "celeste64",
-        "zelda2",
-        "sm_map_rando",
-        "diddy_kong_racing",
-        "hk",
-        "ufo50",
-        "tetrisattack",
-        "mmx3",
-        "sadx",
-        "sm",
-        "swr",
-        "jakanddaxter",
-        "pokemon_crystal",
-        "dk64",
-        "tww",
-        "momodoramoonlitfarewell",
-        "doom_1993",
-        "kdl3",
-        "aus",
-        "sm64hacks",
-        "tloz_oos",
-        "crosscode",
-        "monster_sanctuary",
-        "dw1",
-        "seaofthieves",
-        "celeste",
-        "dlcquest",
-        "osu",
-        "outer_wilds",
-        "cv64",
-        "yoshisisland",
-        "landstalker",
-        "animal_well",
-        "kh2",
-        "tloz",
-        "mmbn3",
-        "smz3",
-        "oribf",
-        "oot",
-        "ff1",
-        "ror1",
-        "papermario",
-        "dkc2",
-        "cvcotm",
-        "kh1",
-        "tmc",
-        "sm64ex",
-        "trackmania",
-        "celeste_open_world",
-        "tp",
-        "marioland2",
-        "lego_star_wars_tcs",
-        "cat_quest",
-        "mm2",
-        "overcooked2",
-        "ultrakill",
-        "wl4",
-        "pokemon_rb",
-        "gstla",
-        "chainedechoes",
-        "timespinner",
-        "residentevil3remake",
-        "earthbound",
         "sonic_heroes",
-        "poe",
-        "mario_kart_double_dash"
+        "timespinner",
+        "dsr",
+        "ahit",
+        "celeste64",
+        "pseudoregalia",
+        "tyrian",
+        "oot",
+        "dw1",
+        "osu",
+        "yoshisisland",
+        "sm_map_rando",
+        "soe",
+        "trackmania",
+        "sc2",
+        "smz3",
+        "outer_wilds",
+        "sms",
+        "albw",
+        "dkc2",
+        "tetrisattack",
+        "tp",
+        "nine_sols",
+        "residentevil3remake",
+        "crosscode",
+        "tww",
+        "doronko_wanko",
+        "rogue_legacy",
+        "kh2",
+        "dkc3",
+        "smo",
+        "tmc",
+        "overcooked2",
+        "tloz",
+        "dlcquest",
+        "star_fox_64",
+        "k64",
+        "zelda2",
+        "v6",
+        "metroidfusion",
+        "frogmonster",
+        "musedash",
+        "kdl3",
+        "pokemon_rb",
+        "mmx3",
+        "xenobladex",
+        "pokemon_crystal",
+        "banjo_tooie",
+        "luigismansion",
+        "quake",
+        "dredge",
+        "mario_kart_double_dash",
+        "brotato",
+        "ror1",
+        "doom_ii",
+        "getting_over_it",
+        "diddy_kong_racing",
+        "landstalker",
+        "sm",
+        "tloz_oos",
+        "gzdoom",
+        "ss",
+        "messenger",
+        "dkc",
+        "wl4",
+        "ultrakill",
+        "earthbound",
+        "gstla",
+        "hcniko",
+        "sly1",
+        "chainedechoes",
+        "noita",
+        "celeste_open_world",
+        "tloz_ph",
+        "residentevil2remake",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "marioland2",
+        "hk",
+        "kh1",
+        "doom_1993",
+        "dontstarvetogether",
+        "sadx",
+        "dark_souls_2",
+        "ufo50",
+        "cvcotm",
+        "enderlilies",
+        "mlss",
+        "celeste",
+        "sm64ex",
+        "lego_star_wars_tcs",
+        "simpsonshitnrun",
+        "sa2b",
+        "ffmq"
     ],
     "playstation 4": [
-        "wargroove",
-        "ror2",
-        "kh2",
-        "stardew_valley",
-        "inscryption",
         "tunic",
-        "rogue_legacy",
-        "celeste",
-        "cuphead",
-        "hades",
-        "sims4",
-        "enderlilies",
-        "ror1",
-        "bomb_rush_cyberfunk",
-        "hk",
-        "messenger",
-        "swr",
-        "jakanddaxter",
-        "ahit",
-        "placidplasticducksim",
-        "trackmania",
-        "undertale",
-        "celeste_open_world",
-        "cat_quest",
-        "overcooked2",
-        "blasphemous",
-        "shorthike",
-        "balatro",
-        "chainedechoes",
         "timespinner",
-        "crosscode",
-        "residentevil3remake",
-        "v6",
+        "residentevil2remake",
         "witness",
         "dsr",
+        "v6",
+        "balatro",
+        "undertale",
+        "ahit",
         "monster_sanctuary",
-        "residentevil2remake",
-        "outer_wilds",
-        "powerwashsimulator",
-        "poe",
-        "brotato",
-        "subnautica",
+        "shorthike",
         "terraria",
-        "dark_souls_3"
+        "bomb_rush_cyberfunk",
+        "hades",
+        "trackmania",
+        "outer_wilds",
+        "subnautica",
+        "powerwashsimulator",
+        "dredge",
+        "brotato",
+        "hk",
+        "nine_sols",
+        "residentevil3remake",
+        "ror1",
+        "crosscode",
+        "rogue_legacy",
+        "cuphead",
+        "jakanddaxter",
+        "kh2",
+        "messenger",
+        "inscryption",
+        "enderlilies",
+        "wargroove",
+        "celeste",
+        "dark_souls_3",
+        "poe",
+        "ror2",
+        "stardew_valley",
+        "overcooked2",
+        "cat_quest",
+        "swr",
+        "chainedechoes",
+        "sims4",
+        "blasphemous",
+        "placidplasticducksim",
+        "celeste_open_world"
     ],
     "4": [
-        "wargroove",
-        "ror2",
-        "kh2",
-        "stardew_valley",
-        "inscryption",
         "tunic",
-        "rogue_legacy",
-        "celeste",
-        "cuphead",
-        "hades",
-        "sims4",
-        "enderlilies",
-        "ror1",
-        "bomb_rush_cyberfunk",
-        "hk",
-        "messenger",
-        "swr",
-        "jakanddaxter",
-        "ahit",
-        "placidplasticducksim",
-        "trackmania",
-        "undertale",
-        "celeste_open_world",
-        "cat_quest",
-        "overcooked2",
-        "blasphemous",
-        "shorthike",
-        "balatro",
-        "wl4",
-        "chainedechoes",
         "timespinner",
-        "crosscode",
-        "residentevil3remake",
-        "v6",
+        "residentevil2remake",
         "witness",
         "dsr",
+        "v6",
+        "balatro",
+        "undertale",
+        "ahit",
         "monster_sanctuary",
-        "dw1",
-        "residentevil2remake",
-        "outer_wilds",
-        "powerwashsimulator",
-        "poe",
-        "brotato",
-        "subnautica",
+        "shorthike",
         "terraria",
-        "dark_souls_3"
+        "dw1",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "trackmania",
+        "outer_wilds",
+        "subnautica",
+        "powerwashsimulator",
+        "dredge",
+        "brotato",
+        "hk",
+        "nine_sols",
+        "residentevil3remake",
+        "ror1",
+        "crosscode",
+        "rogue_legacy",
+        "cuphead",
+        "jakanddaxter",
+        "kh2",
+        "messenger",
+        "inscryption",
+        "enderlilies",
+        "wargroove",
+        "celeste",
+        "dark_souls_3",
+        "poe",
+        "ror2",
+        "stardew_valley",
+        "overcooked2",
+        "wl4",
+        "cat_quest",
+        "swr",
+        "chainedechoes",
+        "sims4",
+        "blasphemous",
+        "placidplasticducksim",
+        "celeste_open_world"
     ],
     "mac": [
-        "openrct2",
-        "dontstarvetogether",
-        "civ_6",
-        "landstalker",
-        "factorio_saws",
-        "stardew_valley",
-        "toontown",
-        "inscryption",
-        "terraria",
-        "rogue_legacy",
-        "tunic",
-        "celeste",
-        "cuphead",
-        "osrs",
-        "hades",
-        "sims4",
-        "ror1",
-        "hylics2",
-        "sc2",
-        "hk",
-        "zork_grand_inquisitor",
-        "swr",
-        "heretic",
-        "ahit",
-        "musedash",
-        "getting_over_it",
-        "undertale",
-        "doom_ii",
-        "celeste_open_world",
-        "huniepop2",
-        "tyrian",
-        "lego_star_wars_tcs",
-        "crystal_project",
-        "cat_quest",
-        "overcooked2",
         "blasphemous",
-        "huniepop",
-        "rimworld",
-        "shorthike",
-        "balatro",
-        "chainedechoes",
-        "shapez",
+        "tunic",
+        "factorio_saws",
+        "osrs",
+        "crystal_project",
         "timespinner",
-        "crosscode",
-        "residentevil3remake",
-        "v6",
-        "witness",
-        "quake",
-        "aquaria",
-        "monster_sanctuary",
         "residentevil2remake",
-        "minecraft",
-        "poe",
-        "brotato",
+        "witness",
+        "v6",
+        "balatro",
+        "undertale",
+        "ahit",
+        "monster_sanctuary",
+        "musedash",
         "factorio",
+        "shorthike",
+        "tyrian",
+        "terraria",
+        "osu",
+        "huniepop",
+        "hades",
+        "sc2",
         "subnautica",
+        "quake",
+        "hylics2",
+        "dredge",
+        "zork_grand_inquisitor",
+        "openrct2",
+        "brotato",
+        "hk",
+        "nine_sols",
+        "residentevil3remake",
+        "ror1",
+        "doom_ii",
+        "getting_over_it",
+        "civ_6",
+        "crosscode",
+        "huniepop2",
+        "dontstarvetogether",
+        "landstalker",
+        "rogue_legacy",
+        "cuphead",
+        "heretic",
+        "inscryption",
+        "aquaria",
+        "celeste",
+        "stardew_valley",
+        "poe",
+        "lego_star_wars_tcs",
+        "shapez",
+        "overcooked2",
+        "minecraft",
+        "cat_quest",
+        "rimworld",
+        "chainedechoes",
+        "swr",
+        "toontown",
+        "sims4",
         "dlcquest",
-        "osu"
+        "celeste_open_world"
     ],
     "xbox one": [
-        "wargroove",
-        "ror2",
-        "stardew_valley",
-        "oribf",
-        "inscryption",
         "tunic",
-        "rogue_legacy",
-        "wargroove2",
-        "celeste",
-        "cuphead",
-        "hades",
-        "sims4",
-        "enderlilies",
-        "ror1",
-        "bomb_rush_cyberfunk",
-        "hk",
-        "messenger",
-        "swr",
-        "ahit",
-        "placidplasticducksim",
-        "trackmania",
-        "undertale",
-        "celeste_open_world",
-        "overcooked2",
-        "blasphemous",
-        "shorthike",
-        "balatro",
-        "chainedechoes",
+        "seaofthieves",
         "timespinner",
-        "crosscode",
-        "residentevil3remake",
+        "residentevil2remake",
         "witness",
         "dsr",
+        "balatro",
+        "undertale",
+        "ahit",
         "monster_sanctuary",
-        "residentevil2remake",
-        "outer_wilds",
-        "powerwashsimulator",
-        "seaofthieves",
-        "poe",
-        "brotato",
-        "subnautica",
+        "shorthike",
+        "wargroove2",
         "terraria",
-        "dark_souls_3"
+        "bomb_rush_cyberfunk",
+        "hades",
+        "trackmania",
+        "outer_wilds",
+        "subnautica",
+        "powerwashsimulator",
+        "dredge",
+        "brotato",
+        "hk",
+        "nine_sols",
+        "residentevil3remake",
+        "ror1",
+        "crosscode",
+        "rogue_legacy",
+        "cuphead",
+        "oribf",
+        "messenger",
+        "inscryption",
+        "enderlilies",
+        "wargroove",
+        "celeste",
+        "dark_souls_3",
+        "poe",
+        "ror2",
+        "stardew_valley",
+        "overcooked2",
+        "swr",
+        "chainedechoes",
+        "sims4",
+        "blasphemous",
+        "placidplasticducksim",
+        "celeste_open_world"
     ],
     "one": [
+        "tunic",
+        "seaofthieves",
+        "timespinner",
+        "residentevil2remake",
+        "witness",
+        "dsr",
+        "balatro",
+        "undertale",
+        "ahit",
+        "monster_sanctuary",
+        "shorthike",
+        "wargroove2",
+        "terraria",
+        "bomb_rush_cyberfunk",
+        "hades",
+        "trackmania",
+        "outer_wilds",
+        "subnautica",
+        "powerwashsimulator",
+        "dredge",
+        "brotato",
+        "hk",
+        "nine_sols",
+        "residentevil3remake",
+        "ror1",
+        "crosscode",
+        "rogue_legacy",
+        "cuphead",
+        "oribf",
+        "messenger",
+        "inscryption",
+        "enderlilies",
         "wargroove",
+        "celeste",
+        "dark_souls_3",
+        "poe",
         "ror2",
         "stardew_valley",
-        "oribf",
-        "inscryption",
-        "tunic",
-        "rogue_legacy",
-        "wargroove2",
-        "celeste",
-        "cuphead",
-        "hades",
-        "sims4",
-        "enderlilies",
-        "ror1",
-        "bomb_rush_cyberfunk",
-        "hk",
-        "messenger",
-        "swr",
-        "ahit",
-        "placidplasticducksim",
-        "trackmania",
-        "undertale",
-        "celeste_open_world",
         "overcooked2",
-        "blasphemous",
-        "shorthike",
-        "balatro",
+        "swr",
         "chainedechoes",
-        "timespinner",
-        "crosscode",
-        "residentevil3remake",
-        "witness",
-        "dsr",
-        "monster_sanctuary",
-        "residentevil2remake",
-        "outer_wilds",
-        "powerwashsimulator",
-        "seaofthieves",
-        "poe",
-        "brotato",
-        "subnautica",
-        "terraria",
-        "dark_souls_3"
+        "sims4",
+        "blasphemous",
+        "placidplasticducksim",
+        "celeste_open_world"
     ],
     "time travel": [
-        "ahit",
-        "tloz_ooa",
-        "timespinner",
-        "mm_recomp",
-        "earthbound",
         "pmd_eos",
-        "ctjot",
+        "tloz_oos",
         "apeescape",
         "outer_wilds",
-        "oot",
-        "tloz_oos"
+        "mm_recomp",
+        "timespinner",
+        "earthbound",
+        "ctjot",
+        "ahit",
+        "tloz_ooa",
+        "oot"
     ],
     "travel": [
-        "ahit",
-        "tloz_ooa",
-        "timespinner",
-        "mm_recomp",
-        "earthbound",
         "pmd_eos",
-        "ctjot",
+        "tloz_oos",
         "apeescape",
         "outer_wilds",
-        "oot",
-        "tloz_oos"
+        "mm_recomp",
+        "timespinner",
+        "earthbound",
+        "ctjot",
+        "ahit",
+        "tloz_ooa",
+        "oot"
     ],
     "spaceship": [
-        "ahit",
+        "mzm",
+        "civ_6",
         "metroidprime",
         "v6",
-        "civ_6",
-        "star_fox_64",
         "metroidfusion",
-        "mzm"
+        "ahit",
+        "star_fox_64"
     ],
     "female protagonist": [
-        "cv64",
-        "hcniko",
+        "timespinner",
         "metroidprime",
+        "metroidfusion",
+        "undertale",
+        "ahit",
+        "celeste64",
+        "shorthike",
+        "sm_map_rando",
+        "mzm",
+        "dkc2",
+        "sm",
         "rogue_legacy",
+        "cv64",
         "dkc3",
         "enderlilies",
-        "celeste64",
-        "dkc2",
-        "sm_map_rando",
-        "sm",
-        "ahit",
-        "undertale",
-        "celeste_open_world",
-        "mzm",
-        "shorthike",
-        "timespinner",
+        "celeste",
         "earthbound",
-        "metroidfusion",
-        "celeste"
+        "hcniko",
+        "celeste_open_world"
     ],
     "female": [
-        "cv64",
-        "hcniko",
+        "timespinner",
         "metroidprime",
+        "metroidfusion",
+        "undertale",
+        "ahit",
+        "celeste64",
+        "shorthike",
+        "sm_map_rando",
+        "mzm",
+        "dkc2",
+        "sm",
         "rogue_legacy",
+        "cv64",
         "dkc3",
         "enderlilies",
-        "celeste64",
-        "dkc2",
-        "sm_map_rando",
-        "sm",
-        "ahit",
-        "undertale",
-        "celeste_open_world",
-        "mzm",
-        "shorthike",
-        "timespinner",
+        "celeste",
         "earthbound",
-        "metroidfusion",
-        "celeste"
+        "hcniko",
+        "celeste_open_world"
     ],
     "protagonist": [
-        "cv64",
-        "dkc",
-        "hcniko",
-        "metroidprime",
         "k64",
-        "dkc3",
-        "oot",
-        "rogue_legacy",
-        "alttp",
-        "enderlilies",
-        "papermario",
-        "celeste64",
-        "dkc2",
-        "sm_map_rando",
-        "zelda2",
-        "hk",
-        "tmc",
-        "sm",
-        "jakanddaxter",
-        "ahit",
-        "mlss",
-        "undertale",
-        "celeste_open_world",
-        "ladx",
-        "mzm",
-        "doom_1993",
         "tloz_ph",
-        "blasphemous",
-        "shorthike",
-        "ultrakill",
-        "tloz_oos",
         "pokemon_emerald",
-        "gstla",
-        "tloz_ooa",
         "timespinner",
-        "earthbound",
-        "quake",
+        "alttp",
+        "zelda2",
+        "metroidprime",
         "metroidfusion",
+        "undertale",
+        "ahit",
+        "celeste64",
+        "shorthike",
+        "oot",
+        "sm_map_rando",
+        "mzm",
+        "quake",
+        "dkc2",
+        "hk",
+        "doom_1993",
+        "sm",
+        "tloz_oos",
+        "ss",
+        "rogue_legacy",
+        "jakanddaxter",
+        "cv64",
+        "tloz_ooa",
+        "dkc",
+        "dkc3",
+        "enderlilies",
+        "ladx",
+        "mlss",
         "celeste",
-        "ss"
+        "tmc",
+        "ultrakill",
+        "earthbound",
+        "gstla",
+        "hcniko",
+        "blasphemous",
+        "celeste_open_world",
+        "papermario"
     ],
     "action-adventure": [
-        "cv64",
-        "mm_recomp",
-        "dontstarvetogether",
-        "metroidprime",
-        "landstalker",
-        "rogue_legacy",
-        "oot",
-        "alttp",
-        "luigismansion",
-        "sotn",
-        "zelda2",
-        "sm_map_rando",
-        "albw",
-        "cvcotm",
-        "hk",
-        "kh1",
-        "tmc",
-        "zillion",
-        "sms",
-        "sm",
-        "ahit",
-        "xenobladex",
-        "tww",
-        "banjo_tooie",
-        "ladx",
-        "tloz_ph",
-        "aus",
-        "tloz_oos",
-        "tloz_ooa",
-        "timespinner",
-        "crosscode",
-        "aquaria",
-        "minecraft",
         "seaofthieves",
-        "dark_souls_2",
+        "tloz_ph",
+        "timespinner",
+        "alttp",
+        "zelda2",
+        "metroidprime",
         "metroidfusion",
+        "zillion",
+        "ahit",
+        "oot",
         "terraria",
+        "sm_map_rando",
+        "xenobladex",
+        "banjo_tooie",
+        "luigismansion",
+        "sms",
+        "albw",
+        "kh1",
+        "hk",
+        "sm",
+        "crosscode",
+        "landstalker",
+        "tloz_oos",
+        "dontstarvetogether",
+        "mm_recomp",
+        "ss",
+        "tww",
+        "rogue_legacy",
+        "cv64",
+        "dark_souls_2",
+        "tloz_ooa",
+        "aquaria",
+        "cvcotm",
+        "sotn",
+        "ladx",
         "dark_souls_3",
-        "ss"
+        "tmc",
+        "minecraft",
+        "aus"
     ],
     "cute": [
-        "ahit",
-        "sims4",
-        "musedash",
-        "undertale",
-        "hcniko",
-        "celeste_open_world",
-        "animal_well",
-        "celeste",
         "tunic",
-        "shorthike"
+        "celeste",
+        "shorthike",
+        "animal_well",
+        "hcniko",
+        "undertale",
+        "ahit",
+        "musedash",
+        "sims4",
+        "celeste_open_world"
     ],
     "snow": [
+        "celeste",
+        "stardew_valley",
+        "diddy_kong_racing",
+        "lego_star_wars_tcs",
+        "mk64",
+        "gstla",
+        "hcniko",
+        "albw",
+        "jakanddaxter",
+        "metroidprime",
+        "minecraft",
         "ffta",
         "ahit",
-        "gstla",
-        "mk64",
-        "dkc",
-        "hcniko",
-        "celeste_open_world",
-        "metroidprime",
-        "albw",
-        "diddy_kong_racing",
-        "minecraft",
-        "lego_star_wars_tcs",
-        "stardew_valley",
-        "celeste",
-        "terraria",
         "shorthike",
+        "dkc",
         "dkc3",
-        "jakanddaxter"
+        "celeste_open_world",
+        "terraria"
     ],
     "wall jump": [
+        "cvcotm",
+        "mmx3",
+        "sm_map_rando",
+        "mzm",
+        "sm",
+        "sms",
+        "metroidfusion",
+        "simpsonshitnrun",
         "ahit",
         "smo",
-        "sm_map_rando",
-        "cvcotm",
-        "mzm",
-        "metroidfusion",
-        "oribf",
-        "simpsonshitnrun",
-        "mmx3",
-        "sm",
-        "sms"
+        "oribf"
     ],
     "wall": [
+        "metroidfusion",
+        "undertale",
+        "ahit",
+        "mmx3",
+        "sm_map_rando",
+        "mzm",
+        "banjo_tooie",
+        "sms",
+        "dkc2",
+        "doom_ii",
+        "sm",
+        "rogue_legacy",
+        "jakanddaxter",
         "dkc",
         "smo",
-        "oribf",
-        "rogue_legacy",
-        "papermario",
-        "dkc2",
-        "sm_map_rando",
         "cvcotm",
-        "tmc",
-        "sms",
-        "simpsonshitnrun",
-        "mmx3",
-        "sm",
-        "jakanddaxter",
-        "ahit",
-        "mlss",
-        "undertale",
-        "doom_ii",
-        "banjo_tooie",
         "ladx",
-        "mzm",
+        "mlss",
+        "tmc",
         "ffta",
-        "metroidfusion"
+        "simpsonshitnrun",
+        "oribf",
+        "papermario"
     ],
     "jump": [
+        "cvcotm",
+        "mmx3",
+        "sm_map_rando",
+        "mzm",
+        "sm",
+        "sms",
+        "metroidfusion",
+        "simpsonshitnrun",
         "ahit",
         "smo",
-        "sm_map_rando",
-        "cvcotm",
-        "mzm",
-        "metroidfusion",
-        "oribf",
-        "simpsonshitnrun",
-        "mmx3",
-        "sm",
-        "sms"
+        "oribf"
     ],
     "3d platformer": [
-        "sm64hacks",
-        "ahit",
-        "sm64ex",
-        "smo",
-        "hcniko",
-        "sonic_heroes",
         "bomb_rush_cyberfunk",
+        "sm64ex",
+        "sm64hacks",
+        "sonic_heroes",
+        "hcniko",
         "sms",
-        "shorthike"
+        "ahit",
+        "shorthike",
+        "smo"
     ],
     "3d": [
-        "mk64",
-        "cv64",
-        "smo",
-        "hcniko",
-        "metroidprime",
-        "k64",
-        "star_fox_64",
         "tunic",
-        "oot",
-        "sly1",
-        "luigismansion",
-        "sotn",
-        "hylics2",
-        "albw",
-        "bomb_rush_cyberfunk",
-        "kh1",
-        "sms",
-        "simpsonshitnrun",
-        "jakanddaxter",
-        "ahit",
-        "xenobladex",
-        "spyro3",
-        "dk64",
-        "sm64ex",
-        "frogmonster",
         "crystal_project",
-        "apeescape",
-        "lego_star_wars_tcs",
-        "dark_souls_3",
-        "tloz_ph",
-        "shorthike",
         "sm64hacks",
+        "k64",
+        "apeescape",
+        "tloz_ph",
         "witness",
-        "dsr",
-        "quake",
         "sonic_heroes",
+        "dsr",
+        "metroidprime",
+        "frogmonster",
+        "ahit",
+        "shorthike",
+        "oot",
         "dw1",
-        "minecraft",
+        "bomb_rush_cyberfunk",
+        "xenobladex",
+        "luigismansion",
+        "sms",
+        "albw",
+        "quake",
+        "hylics2",
+        "dredge",
         "powerwashsimulator",
+        "kh1",
+        "ss",
+        "jakanddaxter",
+        "dk64",
+        "cv64",
         "dark_souls_2",
-        "poe",
+        "smo",
         "lingo",
-        "ss"
+        "spyro3",
+        "sotn",
+        "dark_souls_3",
+        "sm64ex",
+        "poe",
+        "lego_star_wars_tcs",
+        "mk64",
+        "hcniko",
+        "minecraft",
+        "sly1",
+        "simpsonshitnrun",
+        "star_fox_64"
     ],
     "platformer": [
-        "sm64hacks",
-        "ahit",
-        "sm64ex",
-        "smo",
-        "hcniko",
-        "sonic_heroes",
         "bomb_rush_cyberfunk",
+        "sm64ex",
+        "sm64hacks",
+        "sonic_heroes",
+        "hcniko",
         "sms",
-        "shorthike"
+        "ahit",
+        "shorthike",
+        "smo"
     ],
     "swimming": [
+        "sm64hacks",
+        "alttp",
+        "ahit",
+        "oot",
+        "terraria",
+        "banjo_tooie",
+        "subnautica",
+        "sms",
+        "albw",
+        "quake",
+        "dkc2",
+        "kh1",
+        "jakanddaxter",
+        "tloz_ooa",
         "dkc",
         "smo",
-        "hcniko",
         "dkc3",
-        "oot",
-        "alttp",
-        "dkc2",
-        "albw",
-        "kh1",
-        "tmc",
-        "sms",
-        "jakanddaxter",
-        "ahit",
         "spyro3",
-        "sm64ex",
-        "banjo_tooie",
-        "wl4",
-        "sm64hacks",
-        "tloz_ooa",
-        "quake",
         "aquaria",
-        "minecraft",
-        "subnautica",
-        "terraria"
+        "sm64ex",
+        "tmc",
+        "wl4",
+        "hcniko",
+        "minecraft"
     ],
     "a link between worlds": [
         "albw"
@@ -11078,80 +11633,80 @@ SEARCH_INDEX = {
         "albw"
     ],
     "legend": [
-        "alttp",
-        "tloz_ooa",
-        "mm_recomp",
-        "tp",
-        "tww",
-        "albw",
-        "ss",
-        "tloz",
-        "tmc",
         "ladx",
+        "tmc",
+        "tloz_oos",
         "tloz_ph",
-        "oot",
-        "tloz_oos"
+        "tww",
+        "mm_recomp",
+        "alttp",
+        "ss",
+        "albw",
+        "tloz",
+        "tloz_ooa",
+        "tp",
+        "oot"
     ],
     "of": [
-        "soe",
-        "cv64",
-        "dkc",
-        "mm_recomp",
-        "pmd_eos",
-        "ror2",
-        "star_fox_64",
-        "tloz",
-        "oribf",
-        "dkc3",
-        "oot",
-        "rogue_legacy",
-        "sly1",
-        "alttp",
-        "enderlilies",
-        "luigismansion",
-        "lufia2ac",
-        "celeste64",
-        "ror1",
-        "dkc2",
-        "sc2",
-        "albw",
-        "sotn",
-        "zelda2",
-        "cvcotm",
-        "tmc",
-        "sms",
-        "jakanddaxter",
         "peaks_of_yore",
-        "pokemon_crystal",
-        "dk64",
-        "spyro3",
-        "tp",
-        "tww",
-        "ladx",
-        "tloz_ph",
-        "tloz_oos",
-        "ffta",
-        "pokemon_emerald",
-        "tloz_ooa",
-        "tboir",
-        "earthbound",
         "seaofthieves",
+        "tloz_ph",
+        "pokemon_emerald",
+        "alttp",
+        "zelda2",
+        "celeste64",
+        "oot",
+        "soe",
+        "sc2",
+        "pokemon_crystal",
+        "luigismansion",
+        "sms",
+        "albw",
+        "dkc2",
+        "tp",
+        "ror1",
+        "tloz_oos",
+        "tww",
+        "mm_recomp",
+        "ss",
+        "rogue_legacy",
+        "jakanddaxter",
+        "dk64",
+        "cv64",
+        "tboir",
+        "tloz_ooa",
+        "dkc",
+        "dkc3",
+        "spyro3",
+        "cvcotm",
+        "enderlilies",
+        "sotn",
+        "ladx",
+        "pmd_eos",
         "poe",
-        "ss"
+        "ror2",
+        "tmc",
+        "lufia2ac",
+        "earthbound",
+        "sly1",
+        "ffta",
+        "tloz",
+        "star_fox_64",
+        "oribf"
     ],
     "zelda:": [
-        "alttp",
-        "tloz_ooa",
-        "mm_recomp",
-        "tp",
-        "tww",
-        "albw",
-        "ss",
-        "tmc",
         "ladx",
+        "tmc",
+        "tloz_oos",
         "tloz_ph",
-        "oot",
-        "tloz_oos"
+        "tww",
+        "mm_recomp",
+        "alttp",
+        "ss",
+        "albw",
+        "tloz_ooa",
+        "tp",
+        "oot"
     ],
     "link": [
         "albw",
@@ -11166,1490 +11721,1499 @@ SEARCH_INDEX = {
         "albw"
     ],
     "puzzle": [
-        "bumpstik",
-        "cv64",
-        "mm_recomp",
-        "hcniko",
-        "animal_well",
-        "oribf",
-        "inscryption",
-        "tunic",
-        "rogue_legacy",
-        "oot",
-        "alttp",
-        "lufia2ac",
-        "albw",
-        "tmc",
-        "ufo50",
-        "tetrisattack",
-        "zillion",
-        "zork_grand_inquisitor",
-        "candybox2",
-        "placidplasticducksim",
-        "spyro3",
-        "undertale",
-        "doom_ii",
-        "tp",
-        "huniepop2",
-        "tww",
-        "ttyd",
-        "ladx",
-        "tloz_ph",
         "shivers",
-        "huniepop",
-        "tloz_oos",
-        "wl4",
-        "yugiohddm",
-        "tloz_ooa",
-        "shapez",
+        "tunic",
+        "bumpstik",
+        "tloz_ph",
+        "alttp",
         "witness",
-        "crosscode",
+        "candybox2",
         "v6",
-        "outer_wilds",
         "metroidfusion",
+        "undertale",
+        "zillion",
+        "oot",
+        "huniepop",
+        "yugiohddm",
+        "outer_wilds",
+        "albw",
+        "zork_grand_inquisitor",
+        "tetrisattack",
+        "tp",
+        "doom_ii",
+        "crosscode",
+        "huniepop2",
+        "tloz_oos",
+        "mm_recomp",
+        "tww",
+        "animal_well",
+        "ss",
+        "ttyd",
+        "rogue_legacy",
+        "cv64",
+        "inscryption",
+        "tloz_ooa",
         "lingo",
-        "ss"
+        "spyro3",
+        "ufo50",
+        "ladx",
+        "tmc",
+        "shapez",
+        "lufia2ac",
+        "wl4",
+        "hcniko",
+        "placidplasticducksim",
+        "oribf"
     ],
     "historical": [
-        "heretic",
-        "soe",
-        "candybox2",
         "fm",
-        "quake",
+        "soe",
         "civ_6",
+        "ss",
+        "candybox2",
         "albw",
-        "ss"
+        "heretic",
+        "quake"
     ],
     "sandbox": [
-        "smo",
-        "dontstarvetogether",
-        "landstalker",
         "factorio_saws",
-        "stardew_valley",
-        "oot",
         "osrs",
-        "sims4",
-        "noita",
-        "faxanadu",
         "zelda2",
-        "albw",
+        "factorio",
+        "terraria",
+        "oot",
         "satisfactory",
-        "sms",
         "xenobladex",
-        "placidplasticducksim",
+        "sms",
+        "albw",
+        "powerwashsimulator",
+        "landstalker",
+        "dontstarvetogether",
+        "faxanadu",
+        "noita",
+        "smo",
+        "stardew_valley",
         "shapez",
         "minecraft",
-        "powerwashsimulator",
-        "factorio",
-        "terraria"
+        "sims4",
+        "placidplasticducksim"
     ],
     "open world": [
-        "smo",
-        "mm_recomp",
-        "dontstarvetogether",
-        "metroidprime",
-        "tloz",
-        "smz3",
-        "toontown",
-        "oot",
         "osrs",
-        "sotn",
-        "lingo",
-        "albw",
-        "satisfactory",
-        "simpsonshitnrun",
-        "jakanddaxter",
-        "xenobladex",
-        "sm64ex",
-        "frogmonster",
-        "mzm",
-        "shorthike",
-        "pokemon_rb",
-        "sm64hacks",
-        "gstla",
-        "witness",
-        "minecraft",
         "seaofthieves",
-        "subnautica",
+        "sm64hacks",
+        "witness",
+        "metroidprime",
+        "frogmonster",
+        "shorthike",
+        "oot",
+        "pokemon_rb",
         "terraria",
+        "mzm",
+        "smz3",
+        "satisfactory",
+        "xenobladex",
         "outer_wilds",
-        "ss"
+        "subnautica",
+        "albw",
+        "dredge",
+        "dontstarvetogether",
+        "mm_recomp",
+        "ss",
+        "jakanddaxter",
+        "smo",
+        "lingo",
+        "sotn",
+        "sm64ex",
+        "gstla",
+        "minecraft",
+        "simpsonshitnrun",
+        "tloz",
+        "toontown"
     ],
     "open": [
-        "smo",
-        "mm_recomp",
-        "dontstarvetogether",
-        "metroidprime",
-        "tloz",
-        "smz3",
-        "toontown",
-        "oot",
         "osrs",
-        "sotn",
-        "lingo",
-        "albw",
-        "satisfactory",
-        "simpsonshitnrun",
-        "jakanddaxter",
-        "xenobladex",
-        "sm64ex",
-        "frogmonster",
-        "mzm",
-        "shorthike",
-        "pokemon_rb",
-        "sm64hacks",
-        "gstla",
-        "witness",
-        "minecraft",
         "seaofthieves",
-        "subnautica",
+        "sm64hacks",
+        "witness",
+        "metroidprime",
+        "frogmonster",
+        "shorthike",
+        "oot",
+        "pokemon_rb",
         "terraria",
+        "mzm",
+        "smz3",
+        "satisfactory",
+        "xenobladex",
         "outer_wilds",
-        "ss"
+        "subnautica",
+        "albw",
+        "dredge",
+        "dontstarvetogether",
+        "mm_recomp",
+        "ss",
+        "jakanddaxter",
+        "smo",
+        "lingo",
+        "sotn",
+        "sm64ex",
+        "gstla",
+        "minecraft",
+        "simpsonshitnrun",
+        "tloz",
+        "toontown"
     ],
     "world": [
-        "dkc",
-        "mm_recomp",
-        "dontstarvetogether",
-        "metroidprime",
-        "smo",
-        "yoshisisland",
-        "tloz",
-        "smz3",
-        "yugioh06",
-        "toontown",
-        "dkc3",
-        "oot",
-        "alttp",
         "osrs",
-        "sotn",
-        "dkc2",
-        "zelda2",
-        "albw",
-        "tmc",
-        "satisfactory",
-        "simpsonshitnrun",
-        "jakanddaxter",
-        "xenobladex",
-        "pokemon_crystal",
-        "sm64ex",
-        "frogmonster",
-        "ladx",
-        "mzm",
-        "tloz_ph",
-        "shorthike",
-        "tloz_oos",
-        "pokemon_rb",
-        "sm64hacks",
-        "gstla",
-        "smw",
-        "witness",
-        "earthbound",
-        "v6",
-        "aquaria",
-        "dw1",
-        "minecraft",
-        "outer_wilds",
-        "dark_souls_2",
         "seaofthieves",
-        "subnautica",
+        "sm64hacks",
+        "tloz_ph",
+        "alttp",
+        "witness",
+        "zelda2",
+        "metroidprime",
+        "v6",
+        "yugioh06",
+        "frogmonster",
+        "shorthike",
+        "oot",
+        "pokemon_rb",
+        "dw1",
         "terraria",
+        "yoshisisland",
+        "mzm",
+        "smz3",
+        "satisfactory",
+        "xenobladex",
+        "outer_wilds",
+        "pokemon_crystal",
+        "subnautica",
+        "albw",
+        "smw",
+        "dredge",
+        "dkc2",
+        "tloz_oos",
+        "dontstarvetogether",
+        "mm_recomp",
+        "ss",
+        "jakanddaxter",
+        "dark_souls_2",
+        "dkc",
+        "dkc3",
         "lingo",
-        "ss"
+        "smo",
+        "aquaria",
+        "sotn",
+        "ladx",
+        "sm64ex",
+        "tmc",
+        "earthbound",
+        "gstla",
+        "minecraft",
+        "simpsonshitnrun",
+        "tloz",
+        "toontown"
     ],
     "nintendo 3ds": [
-        "pokemon_rb",
-        "ff1",
-        "mm3",
         "tloz_ooa",
+        "ff1",
+        "ladx",
+        "terraria",
+        "tmc",
+        "tloz_oos",
         "pokemon_crystal",
+        "mm3",
         "wl4",
-        "wl",
-        "v6",
         "zelda2",
         "albw",
-        "marioland2",
-        "tloz",
-        "tmc",
+        "v6",
         "metroidfusion",
-        "ladx",
-        "mm2",
-        "terraria",
-        "tloz_oos"
+        "wl",
+        "tloz",
+        "marioland2",
+        "pokemon_rb",
+        "mm2"
     ],
     "3ds": [
-        "dkc",
-        "tloz",
-        "dkc3",
-        "alttp",
-        "ff1",
-        "dkc2",
-        "sm_map_rando",
-        "albw",
-        "zelda2",
-        "tmc",
-        "mmx3",
-        "sm",
         "mm3",
-        "pokemon_crystal",
-        "marioland2",
-        "ladx",
-        "mm2",
-        "tloz_oos",
-        "pokemon_rb",
-        "wl4",
-        "smw",
-        "tloz_ooa",
-        "wl",
-        "earthbound",
+        "alttp",
+        "zelda2",
         "v6",
         "metroidfusion",
-        "terraria"
+        "wl",
+        "terraria",
+        "pokemon_rb",
+        "mmx3",
+        "sm_map_rando",
+        "pokemon_crystal",
+        "albw",
+        "smw",
+        "dkc2",
+        "marioland2",
+        "mm2",
+        "sm",
+        "tloz_oos",
+        "tloz_ooa",
+        "dkc",
+        "dkc3",
+        "ff1",
+        "ladx",
+        "tmc",
+        "wl4",
+        "earthbound",
+        "tloz"
     ],
     "medieval": [
-        "heretic",
         "soe",
-        "candybox2",
-        "quake",
-        "albw",
-        "dark_souls_2",
         "dark_souls_3",
+        "ss",
+        "candybox2",
+        "albw",
+        "heretic",
+        "quake",
         "rogue_legacy",
-        "ss"
+        "dark_souls_2"
     ],
     "magic": [
-        "cv64",
+        "alttp",
+        "ctjot",
+        "candybox2",
+        "dsr",
+        "zelda2",
+        "terraria",
+        "albw",
+        "zork_grand_inquisitor",
+        "tloz_oos",
         "rogue_legacy",
         "cuphead",
-        "alttp",
-        "noita",
-        "faxanadu",
-        "sotn",
-        "zelda2",
-        "albw",
-        "cvcotm",
-        "tmc",
-        "zork_grand_inquisitor",
         "heretic",
-        "candybox2",
-        "ctjot",
-        "ladx",
-        "tloz_oos",
-        "ffta",
-        "gstla",
-        "dsr",
-        "aquaria",
+        "cv64",
         "dark_souls_2",
+        "faxanadu",
+        "aquaria",
+        "cvcotm",
+        "sotn",
+        "ladx",
         "poe",
-        "terraria"
+        "tmc",
+        "gstla",
+        "ffta",
+        "noita"
     ],
     "minigames": [
-        "hcniko",
         "k64",
-        "stardew_valley",
-        "toontown",
-        "rogue_legacy",
-        "dkc3",
+        "apeescape",
+        "pokemon_emerald",
+        "tloz_ph",
         "oot",
+        "pokemon_crystal",
         "albw",
         "kh1",
-        "pokemon_crystal",
+        "rogue_legacy",
         "dk64",
+        "tloz_ooa",
+        "dkc3",
         "spyro3",
-        "apeescape",
-        "tloz_ph",
+        "stardew_valley",
         "wl4",
-        "aus",
-        "pokemon_emerald",
         "gstla",
-        "tloz_ooa"
+        "hcniko",
+        "toontown",
+        "aus"
     ],
     "2.5d": [
-        "heretic",
-        "dkc",
         "doom_ii",
         "k64",
         "albw",
-        "doom_1993",
-        "dkc3"
+        "heretic",
+        "dkc",
+        "dkc3",
+        "doom_1993"
     ],
     "archery": [
-        "alttp",
-        "mm_recomp",
         "tww",
-        "albw",
+        "mm_recomp",
+        "alttp",
         "ss",
+        "albw",
         "minecraft",
         "oot"
     ],
     "fairy": [
-        "alttp",
-        "tloz_ooa",
-        "dk64",
-        "mm_recomp",
-        "huniepop2",
-        "k64",
-        "albw",
-        "landstalker",
-        "tww",
-        "tloz",
-        "tmc",
         "ladx",
         "stardew_valley",
-        "zelda2",
-        "tloz_ph",
         "terraria",
-        "oot",
-        "tloz_oos"
+        "tmc",
+        "k64",
+        "huniepop2",
+        "landstalker",
+        "mm_recomp",
+        "alttp",
+        "tloz_oos",
+        "tloz_ph",
+        "tww",
+        "albw",
+        "zelda2",
+        "dk64",
+        "tloz",
+        "tloz_ooa",
+        "oot"
     ],
     "princess": [
+        "ladx",
+        "mlss",
+        "tmc",
+        "tloz_oos",
+        "lego_star_wars_tcs",
+        "tloz_ph",
         "mk64",
         "alttp",
-        "mlss",
+        "ss",
+        "albw",
         "smw",
         "tloz_ooa",
-        "papermario",
-        "tp",
-        "albw",
-        "ss",
         "kh1",
-        "lego_star_wars_tcs",
-        "ladx",
-        "tmc",
-        "tloz_ph",
+        "tp",
         "oot",
-        "tloz_oos"
+        "papermario"
     ],
     "sequel": [
-        "mk64",
-        "smo",
-        "mm_recomp",
-        "dontstarvetogether",
-        "civ_6",
-        "oot",
+        "mm3",
         "alttp",
+        "zelda2",
+        "oot",
+        "dw1",
+        "mmx3",
+        "banjo_tooie",
+        "sms",
+        "albw",
         "hylics2",
         "dkc2",
-        "zelda2",
-        "albw",
-        "sms",
-        "mmx3",
-        "mm3",
-        "doom_ii",
-        "banjo_tooie",
         "mm2",
-        "wl4",
-        "ffta",
-        "gstla",
-        "dw1",
+        "doom_ii",
+        "civ_6",
+        "dontstarvetogether",
+        "mm_recomp",
         "dark_souls_2",
-        "dark_souls_3"
+        "smo",
+        "dark_souls_3",
+        "mk64",
+        "wl4",
+        "gstla",
+        "ffta"
     ],
     "sword & sorcery": [
+        "kh1",
+        "ladx",
+        "dark_souls_3",
+        "terraria",
+        "tmc",
+        "tloz_oos",
+        "tww",
+        "mm_recomp",
+        "ss",
+        "albw",
         "heretic",
+        "dark_souls_2",
         "tloz_ooa",
         "ffmq",
         "spyro3",
-        "mm_recomp",
-        "tww",
-        "albw",
-        "ss",
-        "kh1",
-        "tmc",
-        "dark_souls_2",
-        "ladx",
-        "terraria",
-        "dark_souls_3",
-        "oot",
-        "tloz_oos"
+        "oot"
     ],
     "sword": [
+        "kh1",
+        "ladx",
+        "dark_souls_3",
+        "terraria",
+        "tmc",
+        "tloz_oos",
+        "tww",
+        "mm_recomp",
+        "ss",
+        "albw",
         "heretic",
+        "dark_souls_2",
         "tloz_ooa",
         "ffmq",
         "spyro3",
-        "mm_recomp",
-        "tww",
-        "albw",
-        "ss",
-        "kh1",
-        "tmc",
-        "dark_souls_2",
-        "ladx",
-        "terraria",
-        "dark_souls_3",
-        "oot",
-        "tloz_oos"
+        "oot"
     ],
     "&": [
-        "mm_recomp",
-        "yugioh06",
-        "inscryption",
-        "oot",
-        "rac2",
-        "ffmq",
         "fm",
+        "spire",
+        "balatro",
+        "yugioh06",
+        "terraria",
+        "oot",
+        "yugiohddm",
         "albw",
+        "rac2",
         "kh1",
+        "tloz_oos",
+        "tww",
+        "mm_recomp",
+        "ss",
+        "heretic",
+        "dark_souls_2",
+        "inscryption",
+        "tloz_ooa",
+        "spyro3",
+        "ladx",
+        "mlss",
+        "dark_souls_3",
         "tmc",
         "simpsonshitnrun",
-        "heretic",
-        "mlss",
-        "spyro3",
-        "tww",
-        "ladx",
-        "balatro",
-        "tloz_oos",
-        "yugiohddm",
-        "tloz_ooa",
-        "dark_souls_2",
-        "terraria",
-        "dark_souls_3",
-        "ss",
-        "spire"
+        "ffmq"
     ],
     "sorcery": [
+        "kh1",
+        "ladx",
+        "dark_souls_3",
+        "terraria",
+        "tmc",
+        "tloz_oos",
+        "tww",
+        "mm_recomp",
+        "ss",
+        "albw",
         "heretic",
+        "dark_souls_2",
         "tloz_ooa",
         "ffmq",
         "spyro3",
-        "mm_recomp",
-        "tww",
-        "albw",
-        "ss",
-        "kh1",
-        "tmc",
-        "dark_souls_2",
-        "ladx",
-        "terraria",
-        "dark_souls_3",
-        "oot",
-        "tloz_oos"
+        "oot"
     ],
     "darkness": [
-        "dkc",
-        "rogue_legacy",
-        "dkc3",
-        "alttp",
-        "luigismansion",
-        "dkc2",
-        "sm_map_rando",
-        "albw",
-        "zelda2",
-        "tmc",
-        "sm",
         "mm3",
-        "doom_ii",
-        "ladx",
+        "alttp",
         "witness",
-        "earthbound",
-        "aquaria",
-        "minecraft",
+        "zelda2",
         "metroidfusion",
-        "terraria"
+        "terraria",
+        "sm_map_rando",
+        "luigismansion",
+        "albw",
+        "dkc2",
+        "doom_ii",
+        "sm",
+        "rogue_legacy",
+        "dkc",
+        "dkc3",
+        "aquaria",
+        "ladx",
+        "tmc",
+        "earthbound",
+        "minecraft"
     ],
     "digital distribution": [
-        "dkc",
-        "dontstarvetogether",
-        "civ_6",
-        "yoshisisland",
-        "oribf",
-        "terraria",
         "tunic",
-        "rogue_legacy",
-        "oot",
-        "cuphead",
-        "sotn",
-        "dkc2",
-        "albw",
-        "tmc",
-        "ufo50",
-        "heretic",
-        "mlss",
-        "musedash",
-        "getting_over_it",
-        "dk64",
-        "sm64ex",
-        "doom_ii",
-        "celeste_open_world",
-        "huniepop2",
-        "banjo_tooie",
-        "apeescape",
-        "ladx",
-        "tloz_oos",
+        "seaofthieves",
         "sm64hacks",
-        "wl4",
-        "smw",
+        "apeescape",
         "timespinner",
-        "crosscode",
         "witness",
         "v6",
-        "quake",
-        "minecraft",
-        "seaofthieves",
-        "celeste",
+        "musedash",
         "factorio",
-        "dlcquest"
+        "oot",
+        "terraria",
+        "yoshisisland",
+        "banjo_tooie",
+        "albw",
+        "quake",
+        "smw",
+        "dredge",
+        "dkc2",
+        "doom_ii",
+        "getting_over_it",
+        "civ_6",
+        "crosscode",
+        "huniepop2",
+        "dontstarvetogether",
+        "tloz_oos",
+        "rogue_legacy",
+        "cuphead",
+        "heretic",
+        "dk64",
+        "oribf",
+        "dkc",
+        "ufo50",
+        "sotn",
+        "ladx",
+        "mlss",
+        "celeste",
+        "sm64ex",
+        "tmc",
+        "wl4",
+        "minecraft",
+        "dlcquest",
+        "celeste_open_world"
     ],
     "digital": [
-        "dkc",
-        "dontstarvetogether",
-        "civ_6",
-        "yoshisisland",
-        "oribf",
-        "terraria",
         "tunic",
-        "rogue_legacy",
-        "oot",
-        "cuphead",
-        "sotn",
-        "dkc2",
-        "albw",
-        "tmc",
-        "ufo50",
-        "heretic",
-        "mlss",
-        "musedash",
-        "getting_over_it",
-        "dk64",
-        "sm64ex",
-        "doom_ii",
-        "celeste_open_world",
-        "huniepop2",
-        "banjo_tooie",
-        "apeescape",
-        "ladx",
-        "tloz_oos",
+        "seaofthieves",
         "sm64hacks",
-        "wl4",
-        "smw",
+        "apeescape",
         "timespinner",
-        "crosscode",
         "witness",
         "v6",
-        "quake",
-        "minecraft",
-        "seaofthieves",
-        "celeste",
+        "musedash",
         "factorio",
-        "dlcquest"
+        "oot",
+        "terraria",
+        "yoshisisland",
+        "banjo_tooie",
+        "albw",
+        "quake",
+        "smw",
+        "dredge",
+        "dkc2",
+        "doom_ii",
+        "getting_over_it",
+        "civ_6",
+        "crosscode",
+        "huniepop2",
+        "dontstarvetogether",
+        "tloz_oos",
+        "rogue_legacy",
+        "cuphead",
+        "heretic",
+        "dk64",
+        "oribf",
+        "dkc",
+        "ufo50",
+        "sotn",
+        "ladx",
+        "mlss",
+        "celeste",
+        "sm64ex",
+        "tmc",
+        "wl4",
+        "minecraft",
+        "dlcquest",
+        "celeste_open_world"
     ],
     "distribution": [
-        "dkc",
-        "dontstarvetogether",
-        "civ_6",
-        "yoshisisland",
-        "oribf",
-        "terraria",
         "tunic",
-        "rogue_legacy",
-        "oot",
-        "cuphead",
-        "sotn",
-        "dkc2",
-        "albw",
-        "tmc",
-        "ufo50",
-        "heretic",
-        "mlss",
-        "musedash",
-        "getting_over_it",
-        "dk64",
-        "sm64ex",
-        "doom_ii",
-        "celeste_open_world",
-        "huniepop2",
-        "banjo_tooie",
-        "apeescape",
-        "ladx",
-        "tloz_oos",
+        "seaofthieves",
         "sm64hacks",
-        "wl4",
-        "smw",
+        "apeescape",
         "timespinner",
-        "crosscode",
         "witness",
         "v6",
-        "quake",
-        "minecraft",
-        "seaofthieves",
-        "celeste",
+        "musedash",
         "factorio",
-        "dlcquest"
+        "oot",
+        "terraria",
+        "yoshisisland",
+        "banjo_tooie",
+        "albw",
+        "quake",
+        "smw",
+        "dredge",
+        "dkc2",
+        "doom_ii",
+        "getting_over_it",
+        "civ_6",
+        "crosscode",
+        "huniepop2",
+        "dontstarvetogether",
+        "tloz_oos",
+        "rogue_legacy",
+        "cuphead",
+        "heretic",
+        "dk64",
+        "oribf",
+        "dkc",
+        "ufo50",
+        "sotn",
+        "ladx",
+        "mlss",
+        "celeste",
+        "sm64ex",
+        "tmc",
+        "wl4",
+        "minecraft",
+        "dlcquest",
+        "celeste_open_world"
     ],
     "anthropomorphism": [
-        "mk64",
-        "cv64",
-        "dkc",
-        "hcniko",
-        "k64",
-        "star_fox_64",
         "tunic",
-        "dkc3",
-        "sly1",
-        "cuphead",
-        "papermario",
-        "dkc2",
-        "albw",
-        "diddy_kong_racing",
-        "kh1",
-        "tmc",
-        "sms",
-        "jakanddaxter",
-        "mlss",
-        "spyro3",
-        "dk64",
-        "undertale",
-        "banjo_tooie",
+        "k64",
         "apeescape",
+        "sonic_heroes",
+        "undertale",
         "shorthike",
+        "banjo_tooie",
+        "sms",
+        "albw",
+        "dkc2",
+        "kh1",
+        "diddy_kong_racing",
         "tloz_oos",
+        "cuphead",
+        "jakanddaxter",
+        "dk64",
+        "cv64",
         "tloz_ooa",
-        "sonic_heroes"
+        "dkc",
+        "dkc3",
+        "spyro3",
+        "mlss",
+        "tmc",
+        "mk64",
+        "hcniko",
+        "sly1",
+        "star_fox_64",
+        "papermario"
     ],
     "polygonal 3d": [
-        "mk64",
-        "cv64",
-        "metroidprime",
         "k64",
-        "star_fox_64",
-        "oot",
-        "sly1",
-        "luigismansion",
-        "sotn",
-        "albw",
-        "kh1",
-        "sms",
-        "simpsonshitnrun",
-        "jakanddaxter",
-        "xenobladex",
-        "spyro3",
-        "dk64",
-        "lego_star_wars_tcs",
         "apeescape",
         "tloz_ph",
         "witness",
-        "quake",
+        "metroidprime",
+        "oot",
         "dw1",
+        "xenobladex",
+        "luigismansion",
+        "sms",
+        "albw",
+        "quake",
+        "kh1",
+        "ss",
+        "jakanddaxter",
+        "dk64",
+        "cv64",
+        "spyro3",
+        "sotn",
+        "lego_star_wars_tcs",
+        "mk64",
         "minecraft",
-        "ss"
+        "sly1",
+        "simpsonshitnrun",
+        "star_fox_64"
     ],
     "polygonal": [
-        "mk64",
-        "cv64",
-        "metroidprime",
         "k64",
-        "star_fox_64",
-        "oot",
-        "sly1",
-        "luigismansion",
-        "sotn",
-        "albw",
-        "kh1",
-        "sms",
-        "simpsonshitnrun",
-        "jakanddaxter",
-        "xenobladex",
-        "spyro3",
-        "dk64",
-        "lego_star_wars_tcs",
         "apeescape",
         "tloz_ph",
         "witness",
-        "quake",
+        "metroidprime",
+        "oot",
         "dw1",
+        "xenobladex",
+        "luigismansion",
+        "sms",
+        "albw",
+        "quake",
+        "kh1",
+        "ss",
+        "jakanddaxter",
+        "dk64",
+        "cv64",
+        "spyro3",
+        "sotn",
+        "lego_star_wars_tcs",
+        "mk64",
         "minecraft",
-        "ss"
+        "sly1",
+        "simpsonshitnrun",
+        "star_fox_64"
     ],
     "bow and arrow": [
-        "ffta",
-        "cuphead",
-        "alttp",
         "ror1",
-        "albw",
-        "ss",
-        "minecraft",
-        "tmc",
-        "dark_souls_2",
         "ladx",
-        "poe",
-        "tloz_ph",
         "terraria",
+        "poe",
+        "tloz_oos",
+        "tloz_ph",
+        "tmc",
+        "alttp",
+        "ss",
+        "albw",
+        "cuphead",
+        "minecraft",
         "rogue_legacy",
-        "oot",
-        "tloz_oos"
+        "ffta",
+        "dark_souls_2",
+        "oot"
     ],
     "bow": [
-        "ffta",
-        "cuphead",
-        "alttp",
         "ror1",
-        "albw",
-        "ss",
-        "minecraft",
-        "tmc",
-        "dark_souls_2",
         "ladx",
-        "poe",
-        "tloz_ph",
         "terraria",
+        "poe",
+        "tloz_oos",
+        "tloz_ph",
+        "tmc",
+        "alttp",
+        "ss",
+        "albw",
+        "cuphead",
+        "minecraft",
         "rogue_legacy",
-        "oot",
-        "tloz_oos"
+        "ffta",
+        "dark_souls_2",
+        "oot"
     ],
     "and": [
-        "openrct2",
-        "cv64",
-        "civ_6",
-        "smz3",
-        "oribf",
-        "rogue_legacy",
-        "oot",
-        "sly1",
-        "cuphead",
-        "alttp",
-        "hades",
-        "ror1",
-        "albw",
-        "tmc",
-        "jakanddaxter",
-        "ladx",
         "tloz_ph",
-        "blasphemous",
-        "tloz_oos",
-        "ffta",
-        "minecraft",
-        "dark_souls_2",
-        "poe",
+        "alttp",
+        "oot",
         "terraria",
-        "ss"
+        "hades",
+        "smz3",
+        "albw",
+        "openrct2",
+        "nine_sols",
+        "ror1",
+        "civ_6",
+        "tloz_oos",
+        "ss",
+        "rogue_legacy",
+        "cuphead",
+        "jakanddaxter",
+        "cv64",
+        "dark_souls_2",
+        "ladx",
+        "poe",
+        "tmc",
+        "minecraft",
+        "sly1",
+        "ffta",
+        "blasphemous",
+        "oribf"
     ],
     "arrow": [
-        "ffta",
-        "cuphead",
-        "alttp",
         "ror1",
-        "albw",
-        "ss",
-        "minecraft",
-        "tmc",
-        "dark_souls_2",
         "ladx",
-        "poe",
-        "tloz_ph",
         "terraria",
+        "poe",
+        "tloz_oos",
+        "tloz_ph",
+        "tmc",
+        "alttp",
+        "ss",
+        "albw",
+        "cuphead",
+        "minecraft",
         "rogue_legacy",
-        "oot",
-        "tloz_oos"
+        "ffta",
+        "dark_souls_2",
+        "oot"
     ],
     "damsel in distress": [
-        "alttp",
-        "smw",
-        "tloz_ooa",
-        "tloz_ph",
-        "papermario",
-        "metroidprime",
-        "earthbound",
-        "zelda2",
         "sm_map_rando",
-        "albw",
-        "ss",
-        "kh1",
-        "tmc",
-        "sms",
         "sm",
+        "tloz_oos",
+        "tloz_ph",
+        "tmc",
+        "alttp",
+        "ss",
+        "earthbound",
+        "sms",
+        "albw",
+        "metroidprime",
+        "smw",
+        "zelda2",
+        "tloz_ooa",
+        "kh1",
         "oot",
-        "tloz_oos"
+        "papermario"
     ],
     "damsel": [
-        "alttp",
-        "smw",
-        "tloz_ooa",
-        "tloz_ph",
-        "papermario",
-        "metroidprime",
-        "earthbound",
-        "zelda2",
         "sm_map_rando",
-        "albw",
-        "ss",
-        "kh1",
-        "tmc",
-        "sms",
         "sm",
+        "tloz_oos",
+        "tloz_ph",
+        "tmc",
+        "alttp",
+        "ss",
+        "earthbound",
+        "sms",
+        "albw",
+        "metroidprime",
+        "smw",
+        "zelda2",
+        "tloz_ooa",
+        "kh1",
         "oot",
-        "tloz_oos"
+        "papermario"
     ],
     "distress": [
-        "alttp",
-        "smw",
-        "tloz_ooa",
-        "tloz_ph",
-        "papermario",
-        "metroidprime",
-        "earthbound",
-        "zelda2",
         "sm_map_rando",
-        "albw",
-        "ss",
-        "kh1",
-        "tmc",
-        "sms",
         "sm",
+        "tloz_oos",
+        "tloz_ph",
+        "tmc",
+        "alttp",
+        "ss",
+        "earthbound",
+        "sms",
+        "albw",
+        "metroidprime",
+        "smw",
+        "zelda2",
+        "tloz_ooa",
+        "kh1",
         "oot",
-        "tloz_oos"
+        "papermario"
     ],
     "upgradeable weapons": [
-        "cv64",
-        "dk64",
-        "metroidprime",
-        "albw",
-        "tmc",
-        "metroidfusion",
-        "dark_souls_2",
+        "mmx3",
         "mzm",
-        "mm2",
-        "mmx3"
+        "tmc",
+        "albw",
+        "metroidprime",
+        "dk64",
+        "metroidfusion",
+        "cv64",
+        "dark_souls_2",
+        "mm2"
     ],
     "upgradeable": [
-        "cv64",
-        "dk64",
-        "metroidprime",
-        "albw",
-        "tmc",
-        "metroidfusion",
-        "dark_souls_2",
+        "mmx3",
         "mzm",
-        "mm2",
-        "mmx3"
+        "tmc",
+        "albw",
+        "metroidprime",
+        "dk64",
+        "metroidfusion",
+        "cv64",
+        "dark_souls_2",
+        "mm2"
     ],
     "weapons": [
-        "cv64",
-        "dk64",
-        "metroidprime",
-        "albw",
-        "tmc",
-        "metroidfusion",
-        "dark_souls_2",
+        "mmx3",
         "mzm",
-        "mm2",
-        "mmx3"
+        "tmc",
+        "albw",
+        "metroidprime",
+        "dk64",
+        "metroidfusion",
+        "cv64",
+        "dark_souls_2",
+        "mm2"
     ],
     "disorientation zone": [
-        "alttp",
-        "tloz_ooa",
-        "albw",
-        "tmc",
         "ladx",
-        "oot",
-        "tloz_oos"
+        "tmc",
+        "tloz_oos",
+        "alttp",
+        "albw",
+        "tloz_ooa",
+        "oot"
     ],
     "disorientation": [
-        "alttp",
-        "tloz_ooa",
-        "albw",
-        "tmc",
         "ladx",
-        "oot",
-        "tloz_oos"
+        "tmc",
+        "tloz_oos",
+        "alttp",
+        "albw",
+        "tloz_ooa",
+        "oot"
     ],
     "zone": [
-        "alttp",
-        "tloz_ooa",
-        "albw",
-        "tmc",
         "ladx",
-        "oot",
-        "tloz_oos"
+        "tmc",
+        "tloz_oos",
+        "alttp",
+        "albw",
+        "tloz_ooa",
+        "oot"
     ],
     "descendants of other characters": [
-        "tloz_ooa",
-        "cv64",
-        "dk64",
-        "dkc",
-        "luigismansion",
-        "earthbound",
-        "mm_recomp",
-        "dkc2",
-        "rogue_legacy",
-        "albw",
         "sotn",
-        "star_fox_64",
         "tmc",
+        "mm_recomp",
+        "earthbound",
+        "luigismansion",
+        "albw",
+        "jakanddaxter",
+        "rogue_legacy",
+        "dk64",
+        "cv64",
+        "dkc2",
+        "sly1",
         "sms",
+        "tloz_ooa",
+        "dkc",
         "dkc3",
         "oot",
-        "sly1",
-        "jakanddaxter"
+        "star_fox_64"
     ],
     "descendants": [
-        "tloz_ooa",
-        "cv64",
-        "dk64",
-        "dkc",
-        "luigismansion",
-        "earthbound",
-        "mm_recomp",
-        "dkc2",
-        "rogue_legacy",
-        "albw",
         "sotn",
-        "star_fox_64",
         "tmc",
+        "mm_recomp",
+        "earthbound",
+        "luigismansion",
+        "albw",
+        "jakanddaxter",
+        "rogue_legacy",
+        "dk64",
+        "cv64",
+        "dkc2",
+        "sly1",
         "sms",
+        "tloz_ooa",
+        "dkc",
         "dkc3",
         "oot",
-        "sly1",
-        "jakanddaxter"
+        "star_fox_64"
     ],
     "other": [
-        "tloz_ooa",
-        "cv64",
-        "dk64",
-        "dkc",
-        "luigismansion",
-        "earthbound",
-        "mm_recomp",
-        "dkc2",
-        "rogue_legacy",
-        "albw",
         "sotn",
-        "star_fox_64",
         "tmc",
+        "mm_recomp",
+        "earthbound",
+        "luigismansion",
+        "albw",
+        "jakanddaxter",
+        "rogue_legacy",
+        "dk64",
+        "cv64",
+        "dkc2",
+        "sly1",
         "sms",
+        "tloz_ooa",
+        "dkc",
         "dkc3",
         "oot",
-        "sly1",
-        "jakanddaxter"
+        "star_fox_64"
     ],
     "characters": [
-        "cv64",
-        "dkc",
-        "mm_recomp",
-        "star_fox_64",
-        "stardew_valley",
-        "rogue_legacy",
-        "dkc3",
         "oot",
-        "sly1",
-        "luigismansion",
-        "sotn",
-        "dkc2",
-        "albw",
-        "tmc",
-        "sms",
-        "jakanddaxter",
-        "xenobladex",
-        "dk64",
-        "lego_star_wars_tcs",
-        "tloz_ooa",
-        "earthbound",
-        "dark_souls_2",
         "terraria",
-        "dark_souls_3"
+        "xenobladex",
+        "luigismansion",
+        "sms",
+        "albw",
+        "dkc2",
+        "mm_recomp",
+        "rogue_legacy",
+        "jakanddaxter",
+        "dk64",
+        "cv64",
+        "dark_souls_2",
+        "tloz_ooa",
+        "dkc",
+        "dkc3",
+        "sotn",
+        "dark_souls_3",
+        "stardew_valley",
+        "tmc",
+        "lego_star_wars_tcs",
+        "earthbound",
+        "sly1",
+        "star_fox_64"
     ],
     "save point": [
-        "cv64",
-        "dkc",
         "metroidprime",
-        "dkc3",
-        "luigismansion",
-        "faxanadu",
-        "papermario",
-        "sotn",
-        "dkc2",
+        "v6",
+        "metroidfusion",
         "sm_map_rando",
+        "mzm",
+        "luigismansion",
         "albw",
-        "cvcotm",
+        "dkc2",
         "kh1",
         "sm",
         "jakanddaxter",
-        "mlss",
-        "mzm",
-        "gstla",
-        "earthbound",
-        "v6",
+        "cv64",
+        "faxanadu",
+        "dkc",
+        "dkc3",
         "aquaria",
-        "metroidfusion"
+        "cvcotm",
+        "sotn",
+        "mlss",
+        "earthbound",
+        "gstla",
+        "papermario"
     ],
     "save": [
-        "cv64",
-        "dkc",
         "metroidprime",
-        "dkc3",
-        "luigismansion",
-        "faxanadu",
-        "papermario",
-        "sotn",
-        "dkc2",
+        "v6",
+        "metroidfusion",
         "sm_map_rando",
+        "mzm",
+        "luigismansion",
         "albw",
-        "cvcotm",
+        "dkc2",
         "kh1",
         "sm",
         "jakanddaxter",
-        "mlss",
-        "mzm",
-        "gstla",
-        "earthbound",
-        "v6",
+        "cv64",
+        "faxanadu",
+        "dkc",
+        "dkc3",
         "aquaria",
-        "metroidfusion"
+        "cvcotm",
+        "sotn",
+        "mlss",
+        "earthbound",
+        "gstla",
+        "papermario"
     ],
     "point": [
-        "cv64",
-        "dkc",
         "metroidprime",
-        "dkc3",
-        "luigismansion",
-        "faxanadu",
-        "papermario",
-        "sotn",
-        "dkc2",
+        "v6",
+        "metroidfusion",
         "sm_map_rando",
+        "mzm",
+        "luigismansion",
         "albw",
-        "cvcotm",
+        "dkc2",
         "kh1",
         "sm",
         "jakanddaxter",
-        "mlss",
-        "mzm",
-        "gstla",
-        "earthbound",
-        "v6",
+        "cv64",
+        "faxanadu",
+        "dkc",
+        "dkc3",
         "aquaria",
-        "metroidfusion"
+        "cvcotm",
+        "sotn",
+        "mlss",
+        "earthbound",
+        "gstla",
+        "papermario"
     ],
     "side quests": [
-        "pokemon_emerald",
-        "alttp",
-        "tloz_ooa",
-        "xenobladex",
-        "pokemon_crystal",
-        "sc2",
-        "albw",
-        "tmc",
         "ladx",
-        "dark_souls_2",
+        "sc2",
+        "tmc",
+        "tloz_oos",
+        "pokemon_crystal",
+        "pokemon_emerald",
         "tloz_ph",
-        "oot",
-        "tloz_oos"
+        "alttp",
+        "xenobladex",
+        "albw",
+        "dark_souls_2",
+        "tloz_ooa",
+        "oot"
     ],
     "side": [
-        "pokemon_frlg",
-        "wargroove",
-        "dkc",
-        "k64",
-        "yoshisisland",
-        "animal_well",
-        "smz3",
-        "oribf",
-        "terraria",
-        "dkc3",
-        "oot",
-        "rogue_legacy",
-        "wargroove2",
-        "cuphead",
-        "alttp",
-        "ff1",
-        "ffmq",
-        "zelda2",
-        "enderlilies",
-        "noita",
-        "faxanadu",
-        "hylics2",
-        "lufia2ac",
-        "dkc2",
-        "papermario",
-        "albw",
-        "ror1",
-        "sc2",
-        "cvcotm",
-        "hk",
-        "sm_map_rando",
-        "tmc",
-        "tetrisattack",
-        "messenger",
-        "ufo50",
-        "zillion",
-        "mmx3",
-        "sm",
-        "mlss",
-        "xenobladex",
-        "mm3",
-        "musedash",
-        "getting_over_it",
-        "pokemon_crystal",
-        "celeste_open_world",
-        "marioland2",
-        "megamix",
-        "momodoramoonlitfarewell",
-        "ladx",
-        "mzm",
-        "mm2",
-        "ff4fe",
         "blasphemous",
-        "kdl3",
-        "sotn",
-        "tloz_ph",
-        "aus",
-        "pokemon_rb",
-        "tloz_oos",
+        "madou",
+        "k64",
+        "momodoramoonlitfarewell",
+        "mm3",
         "pokemon_emerald",
-        "wl4",
-        "smw",
-        "tloz_ooa",
+        "alttp",
+        "spire",
         "timespinner",
-        "wl",
+        "tloz_ph",
+        "zelda2",
         "v6",
-        "aquaria",
-        "monster_sanctuary",
-        "dark_souls_2",
         "metroidfusion",
+        "wl",
+        "zillion",
+        "monster_sanctuary",
+        "ff4fe",
+        "musedash",
+        "wargroove2",
+        "kdl3",
+        "oot",
+        "pokemon_rb",
+        "terraria",
+        "yoshisisland",
+        "mmx3",
+        "sm_map_rando",
+        "mzm",
+        "sc2",
+        "smz3",
+        "xenobladex",
+        "pokemon_crystal",
+        "albw",
+        "smw",
+        "hylics2",
+        "dkc2",
+        "marioland2",
+        "hk",
+        "tetrisattack",
+        "nine_sols",
+        "mm2",
+        "ror1",
+        "getting_over_it",
+        "sm",
+        "tloz_oos",
+        "megamix",
+        "animal_well",
+        "rogue_legacy",
+        "cuphead",
+        "faxanadu",
+        "dark_souls_2",
+        "messenger",
+        "oribf",
+        "tloz_ooa",
+        "dkc",
+        "dkc3",
+        "pokemon_frlg",
+        "ufo50",
+        "aquaria",
+        "cvcotm",
+        "enderlilies",
+        "ff1",
+        "ladx",
+        "aus",
         "celeste",
+        "mlss",
+        "sotn",
+        "tmc",
+        "wargroove",
+        "lufia2ac",
+        "wl4",
+        "ffmq",
         "dlcquest",
-        "spire"
+        "noita",
+        "celeste_open_world",
+        "papermario"
     ],
     "quests": [
-        "pokemon_emerald",
-        "alttp",
-        "tloz_ooa",
-        "xenobladex",
-        "pokemon_crystal",
-        "metroidprime",
+        "ladx",
         "sc2",
+        "tmc",
+        "tloz_oos",
+        "pokemon_crystal",
+        "pokemon_emerald",
+        "tloz_ph",
+        "alttp",
+        "xenobladex",
         "zelda2",
         "albw",
-        "tmc",
-        "ladx",
+        "metroidprime",
         "dark_souls_2",
-        "tloz_ph",
-        "oot",
-        "tloz_oos"
+        "tloz_ooa",
+        "oot"
     ],
     "potion": [
-        "pokemon_emerald",
-        "alttp",
-        "gstla",
-        "pokemon_crystal",
-        "zelda2",
-        "albw",
-        "kh1",
-        "minecraft",
         "ladx",
         "poe",
-        "tmc",
+        "tloz_oos",
+        "pokemon_crystal",
+        "pokemon_emerald",
         "tloz_ph",
-        "rogue_legacy",
+        "alttp",
         "ss",
-        "tloz_oos"
+        "gstla",
+        "tmc",
+        "albw",
+        "minecraft",
+        "rogue_legacy",
+        "zelda2",
+        "kh1"
     ],
     "real-time combat": [
-        "cv64",
-        "dkc",
-        "metroidprime",
-        "landstalker",
-        "oot",
-        "alttp",
-        "sotn",
-        "zelda2",
-        "sm_map_rando",
-        "albw",
-        "kh1",
-        "tmc",
-        "sms",
-        "sm",
-        "xenobladex",
-        "spyro3",
-        "dk64",
-        "sm64ex",
-        "doom_ii",
-        "ladx",
-        "doom_1993",
-        "tloz_ph",
-        "tloz_oos",
         "sm64hacks",
-        "tloz_ooa",
+        "tloz_ph",
+        "alttp",
+        "zelda2",
+        "metroidprime",
+        "oot",
+        "sm_map_rando",
+        "xenobladex",
+        "sms",
+        "albw",
         "quake",
-        "minecraft",
+        "kh1",
+        "doom_1993",
+        "doom_ii",
+        "sm",
+        "landstalker",
+        "tloz_oos",
+        "ss",
+        "dk64",
+        "cv64",
         "dark_souls_2",
-        "ss"
+        "tloz_ooa",
+        "dkc",
+        "spyro3",
+        "sotn",
+        "ladx",
+        "sm64ex",
+        "tmc",
+        "minecraft"
     ],
     "real-time": [
-        "cv64",
-        "dkc",
-        "metroidprime",
-        "landstalker",
-        "oot",
-        "alttp",
-        "sotn",
-        "zelda2",
-        "sm_map_rando",
-        "albw",
-        "kh1",
-        "tmc",
-        "sms",
-        "sm",
-        "xenobladex",
-        "spyro3",
-        "dk64",
-        "sm64ex",
-        "doom_ii",
-        "ladx",
-        "doom_1993",
-        "tloz_ph",
-        "tloz_oos",
         "sm64hacks",
-        "tloz_ooa",
+        "tloz_ph",
+        "alttp",
+        "zelda2",
+        "metroidprime",
+        "oot",
+        "sm_map_rando",
+        "xenobladex",
+        "sms",
+        "albw",
         "quake",
-        "minecraft",
+        "kh1",
+        "doom_1993",
+        "doom_ii",
+        "sm",
+        "landstalker",
+        "tloz_oos",
+        "ss",
+        "dk64",
+        "cv64",
         "dark_souls_2",
-        "ss"
+        "tloz_ooa",
+        "dkc",
+        "spyro3",
+        "sotn",
+        "ladx",
+        "sm64ex",
+        "tmc",
+        "minecraft"
     ],
     "combat": [
-        "cv64",
-        "dkc",
-        "metroidprime",
-        "landstalker",
-        "oot",
-        "alttp",
-        "sotn",
-        "zelda2",
-        "sm_map_rando",
-        "albw",
-        "kh1",
-        "tmc",
-        "sms",
-        "sm",
-        "xenobladex",
-        "spyro3",
-        "dk64",
-        "sm64ex",
-        "doom_ii",
-        "ladx",
-        "doom_1993",
-        "tloz_ph",
-        "tloz_oos",
         "sm64hacks",
-        "tloz_ooa",
+        "tloz_ph",
+        "alttp",
+        "zelda2",
+        "metroidprime",
+        "oot",
+        "sm_map_rando",
+        "xenobladex",
+        "sms",
+        "albw",
         "quake",
-        "minecraft",
+        "kh1",
+        "doom_1993",
+        "doom_ii",
+        "sm",
+        "landstalker",
+        "tloz_oos",
+        "ss",
+        "dk64",
+        "cv64",
         "dark_souls_2",
-        "ss"
+        "tloz_ooa",
+        "dkc",
+        "spyro3",
+        "sotn",
+        "ladx",
+        "sm64ex",
+        "tmc",
+        "minecraft"
     ],
     "self-referential humor": [
         "mlss",
-        "papermario",
         "earthbound",
-        "dkc2",
         "albw",
-        "metroidfusion"
+        "metroidfusion",
+        "dkc2",
+        "papermario"
     ],
     "self-referential": [
         "mlss",
-        "papermario",
         "earthbound",
-        "dkc2",
         "albw",
-        "metroidfusion"
+        "metroidfusion",
+        "dkc2",
+        "papermario"
     ],
     "humor": [
         "mlss",
-        "papermario",
         "earthbound",
-        "dkc2",
         "albw",
-        "metroidfusion"
+        "metroidfusion",
+        "dkc2",
+        "papermario"
     ],
     "rpg elements": [
-        "mlss",
         "sotn",
+        "mlss",
+        "mzm",
+        "lego_star_wars_tcs",
+        "banjo_tooie",
         "zelda2",
         "albw",
         "minecraft",
-        "lego_star_wars_tcs",
         "metroidfusion",
-        "banjo_tooie",
         "dark_souls_2",
-        "mzm",
         "oribf"
     ],
     "rpg": [
-        "mlss",
         "sotn",
+        "mlss",
+        "mzm",
+        "lego_star_wars_tcs",
+        "banjo_tooie",
         "zelda2",
         "albw",
         "minecraft",
-        "lego_star_wars_tcs",
         "metroidfusion",
-        "banjo_tooie",
         "dark_souls_2",
-        "mzm",
         "oribf"
     ],
     "elements": [
-        "mlss",
         "sotn",
+        "mlss",
+        "mzm",
+        "lego_star_wars_tcs",
+        "banjo_tooie",
         "zelda2",
         "albw",
         "minecraft",
-        "lego_star_wars_tcs",
         "metroidfusion",
-        "banjo_tooie",
         "dark_souls_2",
-        "mzm",
         "oribf"
     ],
     "mercenary": [
+        "sm_map_rando",
+        "sc2",
+        "sm",
         "alttp",
+        "ss",
+        "albw",
         "metroidprime",
         "quake",
-        "sc2",
-        "albw",
-        "sm_map_rando",
-        "ss",
         "dark_souls_2",
-        "sm",
         "oot"
     ],
     "coming of age": [
-        "ffta",
+        "tmc",
+        "pokemon_crystal",
         "pokemon_emerald",
         "alttp",
-        "pokemon_crystal",
         "albw",
-        "tmc",
+        "jakanddaxter",
+        "ffta",
         "oribf",
-        "oot",
-        "jakanddaxter"
+        "oot"
     ],
     "coming": [
-        "ffta",
+        "tmc",
+        "pokemon_crystal",
         "pokemon_emerald",
         "alttp",
-        "pokemon_crystal",
         "albw",
-        "tmc",
+        "jakanddaxter",
+        "ffta",
         "oribf",
-        "oot",
-        "jakanddaxter"
+        "oot"
     ],
     "age": [
-        "ffta",
+        "factorio_saws",
+        "tmc",
+        "pokemon_crystal",
         "pokemon_emerald",
         "alttp",
         "gstla",
-        "pokemon_crystal",
         "albw",
-        "factorio_saws",
-        "tmc",
+        "jakanddaxter",
+        "ffta",
         "oribf",
-        "oot",
-        "jakanddaxter"
+        "oot"
     ],
     "androgyny": [
-        "ffta",
-        "gstla",
         "sotn",
-        "albw",
         "ss",
+        "gstla",
+        "albw",
+        "ffta",
         "oot"
     ],
     "fast traveling": [
+        "poe",
+        "tmc",
+        "tloz_ph",
         "pokemon_emerald",
         "alttp",
-        "undertale",
         "albw",
+        "undertale",
         "hk",
-        "tmc",
-        "poe",
-        "tloz_ph",
         "oot"
     ],
     "fast": [
+        "poe",
+        "tmc",
+        "tloz_ph",
         "pokemon_emerald",
         "alttp",
-        "undertale",
         "albw",
+        "undertale",
         "hk",
-        "tmc",
-        "poe",
-        "tloz_ph",
         "oot"
     ],
     "traveling": [
+        "poe",
+        "tmc",
+        "tloz_ph",
         "pokemon_emerald",
         "alttp",
-        "undertale",
         "albw",
+        "undertale",
         "hk",
-        "tmc",
-        "poe",
-        "tloz_ph",
         "oot"
     ],
     "context sensitive": [
-        "alttp",
-        "tloz_ooa",
-        "oot",
-        "albw",
+        "tloz_oos",
         "tloz_ph",
+        "alttp",
         "ss",
-        "tloz_oos"
+        "albw",
+        "tloz_ooa",
+        "oot"
     ],
     "context": [
-        "alttp",
-        "tloz_ooa",
-        "oot",
-        "albw",
+        "tloz_oos",
         "tloz_ph",
+        "alttp",
         "ss",
-        "tloz_oos"
+        "albw",
+        "tloz_ooa",
+        "oot"
     ],
     "sensitive": [
-        "alttp",
-        "tloz_ooa",
-        "oot",
-        "albw",
+        "tloz_oos",
         "tloz_ph",
+        "alttp",
         "ss",
-        "tloz_oos"
+        "albw",
+        "tloz_ooa",
+        "oot"
     ],
     "living inventory": [
-        "alttp",
-        "mm_recomp",
-        "oot",
-        "tww",
-        "albw",
         "tmc",
-        "ss"
+        "tww",
+        "mm_recomp",
+        "alttp",
+        "ss",
+        "albw",
+        "oot"
     ],
     "living": [
-        "alttp",
-        "mm_recomp",
-        "oot",
-        "tww",
-        "albw",
         "tmc",
-        "ss"
+        "tww",
+        "mm_recomp",
+        "alttp",
+        "ss",
+        "albw",
+        "oot"
     ],
     "inventory": [
-        "alttp",
-        "mm_recomp",
-        "oot",
-        "tww",
-        "albw",
         "tmc",
-        "ss"
+        "tww",
+        "mm_recomp",
+        "alttp",
+        "ss",
+        "albw",
+        "oot"
     ],
     "bees": [
-        "alttp",
+        "tloz_ph",
+        "raft",
         "dontstarvetogether",
+        "alttp",
         "albw",
         "minecraft",
-        "tloz_ph",
-        "terraria",
-        "raft"
+        "terraria"
     ],
     "a link to the past": [
         "alttp"
@@ -12666,1213 +13230,1218 @@ SEARCH_INDEX = {
         "smz3"
     ],
     "satellaview": [
-        "alttp",
-        "yoshisisland"
+        "madou",
+        "yoshisisland",
+        "alttp"
     ],
     "super nintendo entertainment system": [
+        "yoshisisland",
+        "mmx3",
+        "sm_map_rando",
         "soe",
-        "alttp",
-        "smw",
-        "ffmq",
-        "dkc",
+        "smz3",
         "sm",
         "lufia2ac",
+        "alttp",
         "earthbound",
+        "smw",
         "dkc2",
-        "sm_map_rando",
-        "yoshisisland",
-        "smz3",
-        "tetrisattack",
         "ff4fe",
-        "mmx3",
+        "ffmq",
+        "dkc",
         "dkc3",
+        "tetrisattack",
         "kdl3"
     ],
     "super": [
+        "madou",
+        "sm64hacks",
+        "alttp",
+        "wl",
+        "ff4fe",
+        "kdl3",
+        "yoshisisland",
+        "mmx3",
+        "sm_map_rando",
         "soe",
+        "smz3",
+        "sms",
+        "smw",
+        "dkc2",
+        "marioland2",
+        "tetrisattack",
+        "sm",
         "dkc",
         "smo",
-        "yoshisisland",
-        "smz3",
         "dkc3",
-        "alttp",
-        "ffmq",
-        "lufia2ac",
-        "dkc2",
-        "sm_map_rando",
-        "tetrisattack",
-        "sms",
-        "mmx3",
-        "sm",
         "sm64ex",
-        "marioland2",
-        "ff4fe",
-        "kdl3",
-        "sm64hacks",
-        "smw",
-        "wl",
-        "earthbound"
+        "lufia2ac",
+        "earthbound",
+        "ffmq"
     ],
     "entertainment": [
-        "soe",
-        "dkc",
-        "yoshisisland",
-        "tloz",
-        "smz3",
-        "dkc3",
-        "alttp",
-        "ff1",
-        "ffmq",
-        "faxanadu",
-        "lufia2ac",
-        "dkc2",
-        "sm_map_rando",
-        "zelda2",
-        "tetrisattack",
-        "mmx3",
-        "sm",
         "mm3",
+        "alttp",
+        "zelda2",
         "ff4fe",
         "kdl3",
+        "yoshisisland",
+        "mmx3",
+        "sm_map_rando",
+        "soe",
+        "smz3",
         "smw",
-        "earthbound"
+        "dkc2",
+        "tetrisattack",
+        "sm",
+        "faxanadu",
+        "dkc",
+        "dkc3",
+        "ff1",
+        "lufia2ac",
+        "earthbound",
+        "tloz",
+        "ffmq"
     ],
     "wii": [
-        "mk64",
-        "dkc",
-        "mm_recomp",
+        "sm64hacks",
         "k64",
-        "pmd_eos",
-        "star_fox_64",
-        "landstalker",
-        "tloz",
-        "stardew_valley",
-        "dkc3",
-        "oot",
-        "alttp",
-        "ff1",
-        "ffmq",
-        "papermario",
-        "faxanadu",
-        "dkc2",
-        "sm_map_rando",
-        "zelda2",
-        "cvcotm",
-        "hk",
-        "tmc",
-        "mmx3",
-        "sm",
-        "mlss",
-        "xenobladex",
-        "mm3",
-        "dk64",
-        "sm64ex",
-        "tp",
-        "lego_star_wars_tcs",
-        "mzm",
         "tloz_ph",
+        "mm3",
+        "alttp",
+        "zelda2",
+        "metroidfusion",
         "ff4fe",
         "kdl3",
-        "wl4",
-        "sm64hacks",
-        "ffta",
-        "gstla",
-        "smw",
-        "earthbound",
-        "metroidfusion",
+        "oot",
         "terraria",
-        "ss"
+        "mmx3",
+        "sm_map_rando",
+        "mzm",
+        "xenobladex",
+        "smw",
+        "dkc2",
+        "hk",
+        "tp",
+        "sm",
+        "landstalker",
+        "mm_recomp",
+        "ss",
+        "dk64",
+        "faxanadu",
+        "dkc",
+        "dkc3",
+        "cvcotm",
+        "ff1",
+        "mlss",
+        "pmd_eos",
+        "sm64ex",
+        "stardew_valley",
+        "tmc",
+        "lego_star_wars_tcs",
+        "mk64",
+        "wl4",
+        "earthbound",
+        "gstla",
+        "ffta",
+        "tloz",
+        "ffmq",
+        "star_fox_64",
+        "papermario"
     ],
     "wii u": [
-        "mk64",
-        "dkc",
-        "mm_recomp",
-        "k64",
-        "pmd_eos",
-        "star_fox_64",
-        "tloz",
-        "stardew_valley",
-        "dkc3",
-        "oot",
-        "alttp",
-        "ff1",
-        "ffmq",
-        "papermario",
-        "dkc2",
-        "sm_map_rando",
-        "zelda2",
-        "cvcotm",
-        "hk",
-        "tmc",
-        "mmx3",
-        "sm",
-        "mlss",
-        "xenobladex",
-        "mm3",
-        "dk64",
-        "sm64ex",
-        "mzm",
-        "tloz_ph",
-        "kdl3",
-        "wl4",
         "sm64hacks",
-        "ffta",
-        "gstla",
-        "smw",
-        "earthbound",
+        "k64",
+        "tloz_ph",
+        "mm3",
+        "alttp",
+        "zelda2",
         "metroidfusion",
+        "kdl3",
+        "oot",
         "terraria",
-        "ss"
+        "mmx3",
+        "sm_map_rando",
+        "mzm",
+        "xenobladex",
+        "smw",
+        "dkc2",
+        "hk",
+        "sm",
+        "mm_recomp",
+        "ss",
+        "dk64",
+        "dkc",
+        "dkc3",
+        "cvcotm",
+        "ff1",
+        "mlss",
+        "pmd_eos",
+        "sm64ex",
+        "stardew_valley",
+        "tmc",
+        "mk64",
+        "wl4",
+        "earthbound",
+        "gstla",
+        "ffta",
+        "tloz",
+        "ffmq",
+        "star_fox_64",
+        "papermario"
     ],
     "u": [
-        "mk64",
-        "dkc",
-        "mm_recomp",
-        "k64",
-        "pmd_eos",
-        "star_fox_64",
-        "tloz",
-        "stardew_valley",
-        "dkc3",
-        "oot",
-        "alttp",
-        "ff1",
-        "ffmq",
-        "papermario",
-        "dkc2",
-        "sm_map_rando",
-        "zelda2",
-        "cvcotm",
-        "hk",
-        "tmc",
-        "mmx3",
-        "sm",
-        "mlss",
-        "xenobladex",
-        "mm3",
-        "dk64",
-        "sm64ex",
-        "mzm",
-        "tloz_ph",
-        "kdl3",
-        "wl4",
         "sm64hacks",
-        "ffta",
-        "gstla",
-        "smw",
-        "earthbound",
+        "k64",
+        "tloz_ph",
+        "mm3",
+        "alttp",
+        "zelda2",
         "metroidfusion",
+        "kdl3",
+        "oot",
         "terraria",
-        "ss"
+        "mmx3",
+        "sm_map_rando",
+        "mzm",
+        "xenobladex",
+        "smw",
+        "dkc2",
+        "hk",
+        "sm",
+        "mm_recomp",
+        "ss",
+        "dk64",
+        "dkc",
+        "dkc3",
+        "cvcotm",
+        "ff1",
+        "mlss",
+        "pmd_eos",
+        "sm64ex",
+        "stardew_valley",
+        "tmc",
+        "mk64",
+        "wl4",
+        "earthbound",
+        "gstla",
+        "ffta",
+        "tloz",
+        "ffmq",
+        "star_fox_64",
+        "papermario"
     ],
     "new nintendo 3ds": [
-        "alttp",
-        "smw",
-        "dkc",
-        "earthbound",
-        "dkc2",
-        "sm_map_rando",
         "mmx3",
-        "dkc3",
-        "sm"
+        "sm_map_rando",
+        "sm",
+        "alttp",
+        "earthbound",
+        "smw",
+        "dkc2",
+        "dkc",
+        "dkc3"
     ],
     "new": [
-        "alttp",
-        "smw",
-        "dkc",
-        "earthbound",
-        "dkc2",
-        "sm_map_rando",
         "mmx3",
-        "dkc3",
-        "sm"
+        "sm_map_rando",
+        "sm",
+        "alttp",
+        "earthbound",
+        "smw",
+        "dkc2",
+        "dkc",
+        "dkc3"
     ],
     "super famicom": [
+        "madou",
+        "yoshisisland",
+        "mmx3",
+        "sm_map_rando",
+        "sm",
+        "lufia2ac",
         "alttp",
+        "earthbound",
         "smw",
+        "dkc2",
         "ffmq",
         "dkc",
-        "lufia2ac",
-        "earthbound",
-        "dkc2",
-        "sm_map_rando",
-        "yoshisisland",
-        "kdl3",
-        "mmx3",
         "dkc3",
-        "sm"
+        "kdl3"
     ],
     "famicom": [
+        "madou",
+        "yoshisisland",
+        "mmx3",
+        "sm_map_rando",
+        "sm",
+        "lufia2ac",
         "alttp",
+        "earthbound",
         "smw",
+        "dkc2",
         "ffmq",
         "dkc",
-        "lufia2ac",
-        "earthbound",
-        "dkc2",
-        "sm_map_rando",
-        "yoshisisland",
-        "kdl3",
-        "mmx3",
         "dkc3",
-        "sm"
+        "kdl3"
     ],
     "ghosts": [
-        "cv64",
-        "metroidprime",
-        "rogue_legacy",
-        "sly1",
-        "cuphead",
         "alttp",
-        "ffmq",
+        "metroidprime",
+        "v6",
         "luigismansion",
-        "papermario",
-        "sotn",
-        "dkc2",
-        "tmc",
         "sms",
-        "simpsonshitnrun",
-        "mlss",
-        "lego_star_wars_tcs",
-        "aus",
-        "wl4",
+        "dkc2",
+        "rogue_legacy",
+        "cuphead",
+        "cv64",
         "tloz_ooa",
+        "sotn",
+        "mlss",
+        "tmc",
+        "lego_star_wars_tcs",
+        "wl4",
         "earthbound",
-        "v6"
+        "sly1",
+        "simpsonshitnrun",
+        "ffmq",
+        "aus",
+        "papermario"
     ],
     "mascot": [
-        "alttp",
-        "tloz_ph",
-        "mm3",
-        "tloz_oos",
-        "spyro3",
-        "papermario",
-        "k64",
-        "tmc",
         "ladx",
-        "mm2",
-        "kdl3",
+        "tmc",
+        "k64",
+        "tloz_oos",
+        "mm3",
+        "tloz_ph",
+        "alttp",
+        "jakanddaxter",
         "sly1",
-        "jakanddaxter"
+        "papermario",
+        "spyro3",
+        "kdl3",
+        "mm2"
     ],
     "death": [
-        "openrct2",
-        "cv64",
-        "dkc",
-        "metroidprime",
-        "star_fox_64",
-        "rogue_legacy",
-        "oot",
-        "sly1",
-        "alttp",
-        "luigismansion",
-        "papermario",
-        "sotn",
-        "zelda2",
-        "cvcotm",
-        "kh1",
-        "tmc",
-        "sms",
-        "mmx3",
-        "heretic",
-        "mm3",
-        "dk64",
-        "doom_ii",
-        "ladx",
-        "mzm",
-        "mm2",
         "tloz_ph",
-        "tloz_oos",
-        "ffta",
-        "gstla",
-        "tloz_ooa",
+        "mm3",
+        "alttp",
+        "zelda2",
+        "metroidprime",
         "v6",
-        "quake",
-        "minecraft",
-        "dark_souls_2",
         "metroidfusion",
+        "oot",
         "terraria",
-        "dark_souls_3"
+        "mmx3",
+        "mzm",
+        "luigismansion",
+        "sms",
+        "quake",
+        "openrct2",
+        "kh1",
+        "mm2",
+        "doom_ii",
+        "tloz_oos",
+        "rogue_legacy",
+        "heretic",
+        "dk64",
+        "cv64",
+        "dark_souls_2",
+        "tloz_ooa",
+        "dkc",
+        "cvcotm",
+        "sotn",
+        "ladx",
+        "dark_souls_3",
+        "tmc",
+        "gstla",
+        "minecraft",
+        "sly1",
+        "ffta",
+        "star_fox_64",
+        "papermario"
     ],
     "maze": [
-        "openrct2",
-        "alttp",
-        "cv64",
-        "witness",
-        "papermario",
-        "tmc",
-        "mzm",
         "ladx",
-        "doom_1993"
+        "mzm",
+        "tmc",
+        "alttp",
+        "witness",
+        "cv64",
+        "openrct2",
+        "doom_1993",
+        "papermario"
     ],
     "backtracking": [
-        "cv64",
-        "metroidprime",
-        "oot",
+        "tloz_ph",
         "alttp",
-        "sotn",
+        "witness",
+        "metroidprime",
+        "metroidfusion",
+        "undertale",
+        "oot",
+        "mzm",
+        "banjo_tooie",
+        "quake",
+        "kh1",
+        "tloz_oos",
+        "jakanddaxter",
+        "cv64",
         "faxanadu",
         "cvcotm",
-        "kh1",
-        "tmc",
-        "jakanddaxter",
-        "undertale",
-        "banjo_tooie",
+        "sotn",
         "ladx",
-        "mzm",
-        "tloz_ph",
-        "tloz_oos",
-        "ffta",
-        "witness",
-        "quake",
-        "metroidfusion"
+        "tmc",
+        "ffta"
     ],
     "undead": [
-        "heretic",
-        "alttp",
-        "mlss",
-        "ffmq",
-        "cv64",
-        "tloz_ooa",
-        "papermario",
         "sotn",
-        "dsr",
-        "tmc",
-        "dark_souls_2",
         "ladx",
+        "mlss",
         "terraria",
+        "tmc",
+        "tloz_oos",
+        "alttp",
+        "dsr",
+        "heretic",
+        "cv64",
+        "dark_souls_2",
+        "tloz_ooa",
+        "ffmq",
         "oot",
-        "tloz_oos"
+        "papermario"
     ],
     "campaign": [
-        "alttp",
-        "tloz_ooa",
-        "oot",
-        "zelda2",
-        "tmc",
         "ladx",
+        "tmc",
+        "tloz_oos",
         "tloz_ph",
+        "alttp",
         "ss",
-        "tloz_oos"
+        "zelda2",
+        "tloz_ooa",
+        "oot"
     ],
     "pixel art": [
-        "wargroove",
-        "hcniko",
-        "animal_well",
-        "stardew_valley",
-        "rogue_legacy",
-        "alttp",
-        "ror1",
-        "sotn",
-        "zelda2",
-        "sm_map_rando",
-        "tmc",
-        "sm",
         "mm3",
-        "undertale",
-        "celeste_open_world",
-        "tyrian",
-        "ladx",
-        "mzm",
-        "mm2",
-        "blasphemous",
-        "tloz_oos",
-        "wl4",
         "timespinner",
-        "crosscode",
+        "alttp",
+        "zelda2",
         "v6",
         "metroidfusion",
+        "undertale",
+        "tyrian",
+        "terraria",
+        "sm_map_rando",
+        "mzm",
+        "mm2",
+        "ror1",
+        "sm",
+        "crosscode",
+        "tloz_oos",
+        "animal_well",
+        "rogue_legacy",
+        "sotn",
+        "ladx",
+        "wargroove",
         "celeste",
-        "terraria"
+        "stardew_valley",
+        "tmc",
+        "wl4",
+        "hcniko",
+        "blasphemous",
+        "celeste_open_world"
     ],
     "pixel": [
-        "wargroove",
-        "hcniko",
-        "animal_well",
-        "stardew_valley",
-        "rogue_legacy",
-        "alttp",
-        "ror1",
-        "sotn",
-        "zelda2",
-        "sm_map_rando",
-        "tmc",
-        "sm",
         "mm3",
-        "undertale",
-        "celeste_open_world",
-        "tyrian",
-        "ladx",
-        "mzm",
-        "mm2",
-        "blasphemous",
-        "tloz_oos",
-        "wl4",
         "timespinner",
-        "crosscode",
+        "alttp",
+        "zelda2",
         "v6",
         "metroidfusion",
+        "undertale",
+        "tyrian",
+        "terraria",
+        "sm_map_rando",
+        "mzm",
+        "mm2",
+        "ror1",
+        "sm",
+        "crosscode",
+        "tloz_oos",
+        "animal_well",
+        "rogue_legacy",
+        "sotn",
+        "ladx",
+        "wargroove",
         "celeste",
-        "terraria"
+        "stardew_valley",
+        "tmc",
+        "wl4",
+        "hcniko",
+        "blasphemous",
+        "celeste_open_world"
     ],
     "art": [
-        "wargroove",
-        "hcniko",
-        "animal_well",
-        "stardew_valley",
-        "rogue_legacy",
-        "alttp",
-        "ror1",
-        "sotn",
-        "zelda2",
-        "sm_map_rando",
-        "tmc",
-        "sm",
         "mm3",
+        "timespinner",
+        "alttp",
+        "zelda2",
+        "v6",
+        "metroidfusion",
         "undertale",
-        "celeste_open_world",
         "tyrian",
-        "ladx",
+        "terraria",
+        "sm_map_rando",
         "mzm",
         "mm2",
-        "blasphemous",
-        "tloz_oos",
-        "wl4",
-        "timespinner",
+        "ror1",
+        "sm",
         "crosscode",
-        "v6",
-        "metroidfusion",
+        "tloz_oos",
+        "animal_well",
+        "rogue_legacy",
+        "sotn",
+        "ladx",
+        "wargroove",
         "celeste",
-        "terraria"
+        "stardew_valley",
+        "tmc",
+        "wl4",
+        "hcniko",
+        "blasphemous",
+        "celeste_open_world"
     ],
     "easter egg": [
-        "openrct2",
-        "alttp",
-        "papermario",
         "doom_ii",
         "ladx",
-        "banjo_tooie",
         "apeescape",
+        "banjo_tooie",
+        "alttp",
+        "rogue_legacy",
         "metroidfusion",
-        "rogue_legacy"
+        "openrct2",
+        "papermario"
     ],
     "easter": [
-        "openrct2",
-        "alttp",
-        "papermario",
         "doom_ii",
         "ladx",
-        "banjo_tooie",
         "apeescape",
+        "banjo_tooie",
+        "alttp",
+        "rogue_legacy",
         "metroidfusion",
-        "rogue_legacy"
+        "openrct2",
+        "papermario"
     ],
     "egg": [
-        "openrct2",
-        "alttp",
-        "papermario",
         "doom_ii",
         "ladx",
-        "banjo_tooie",
         "apeescape",
+        "banjo_tooie",
+        "alttp",
+        "rogue_legacy",
         "metroidfusion",
-        "rogue_legacy"
+        "openrct2",
+        "papermario"
     ],
     "teleportation": [
+        "doom_ii",
+        "tmc",
+        "tloz_oos",
+        "pokemon_crystal",
         "pokemon_emerald",
         "alttp",
-        "tloz_oos",
-        "cv64",
-        "pokemon_crystal",
-        "doom_ii",
         "earthbound",
-        "v6",
-        "tmc",
-        "terraria",
         "rogue_legacy",
-        "jakanddaxter"
+        "jakanddaxter",
+        "v6",
+        "cv64",
+        "terraria"
     ],
     "giant insects": [
         "soe",
+        "mlss",
         "pokemon_emerald",
         "alttp",
-        "mlss",
+        "sms",
         "dk64",
-        "dkc",
         "dkc2",
         "hk",
-        "sms",
+        "dkc",
         "dkc3"
     ],
     "giant": [
         "soe",
+        "mlss",
         "pokemon_emerald",
         "alttp",
-        "mlss",
+        "sms",
         "dk64",
-        "dkc",
         "dkc2",
         "hk",
-        "sms",
+        "dkc",
         "dkc3"
     ],
     "insects": [
         "soe",
+        "mlss",
         "pokemon_emerald",
         "alttp",
-        "mlss",
+        "sms",
         "dk64",
-        "dkc",
         "dkc2",
         "hk",
-        "sms",
+        "dkc",
         "dkc3"
     ],
     "silent protagonist": [
-        "dkc",
         "k64",
-        "oot",
-        "alttp",
-        "papermario",
-        "dkc2",
-        "zelda2",
-        "hk",
-        "tmc",
-        "jakanddaxter",
-        "mlss",
-        "ladx",
         "tloz_ph",
-        "doom_1993",
-        "blasphemous",
-        "ultrakill",
-        "tloz_oos",
         "pokemon_emerald",
-        "gstla",
-        "tloz_ooa",
+        "alttp",
+        "zelda2",
+        "oot",
         "quake",
-        "ss"
+        "dkc2",
+        "hk",
+        "doom_1993",
+        "tloz_oos",
+        "ss",
+        "jakanddaxter",
+        "tloz_ooa",
+        "dkc",
+        "ladx",
+        "mlss",
+        "tmc",
+        "ultrakill",
+        "gstla",
+        "blasphemous",
+        "papermario"
     ],
     "silent": [
-        "dkc",
         "k64",
-        "oot",
-        "alttp",
-        "papermario",
-        "dkc2",
-        "zelda2",
-        "hk",
-        "tmc",
-        "jakanddaxter",
-        "mlss",
-        "ladx",
         "tloz_ph",
-        "doom_1993",
-        "blasphemous",
-        "ultrakill",
-        "tloz_oos",
         "pokemon_emerald",
-        "gstla",
-        "tloz_ooa",
+        "alttp",
+        "zelda2",
+        "oot",
         "quake",
-        "ss"
+        "dkc2",
+        "hk",
+        "doom_1993",
+        "tloz_oos",
+        "ss",
+        "jakanddaxter",
+        "tloz_ooa",
+        "dkc",
+        "ladx",
+        "mlss",
+        "tmc",
+        "ultrakill",
+        "gstla",
+        "blasphemous",
+        "papermario"
     ],
     "explosion": [
-        "openrct2",
-        "mk64",
-        "cv64",
+        "mm3",
+        "alttp",
+        "sonic_heroes",
+        "zelda2",
         "metroidprime",
-        "dkc3",
+        "metroidfusion",
+        "terraria",
+        "mmx3",
+        "sm_map_rando",
+        "mzm",
+        "sms",
+        "quake",
+        "dkc2",
+        "openrct2",
+        "mm2",
+        "doom_ii",
+        "sm",
         "rogue_legacy",
         "cuphead",
-        "alttp",
-        "ffmq",
-        "sotn",
-        "dkc2",
-        "sm_map_rando",
-        "zelda2",
-        "tmc",
-        "sms",
-        "simpsonshitnrun",
-        "mmx3",
-        "sm",
-        "mm3",
-        "doom_ii",
-        "lego_star_wars_tcs",
-        "mzm",
-        "mm2",
-        "ffta",
+        "cv64",
         "tloz_ooa",
-        "quake",
-        "sonic_heroes",
+        "dkc3",
+        "sotn",
+        "tmc",
+        "lego_star_wars_tcs",
+        "mk64",
         "minecraft",
-        "metroidfusion",
-        "terraria"
+        "ffta",
+        "simpsonshitnrun",
+        "ffmq"
     ],
     "monkey": [
+        "ladx",
+        "diddy_kong_racing",
+        "apeescape",
         "mk64",
         "alttp",
         "dk64",
-        "dkc",
         "dkc2",
-        "diddy_kong_racing",
-        "apeescape",
-        "ladx",
+        "dkc",
         "dkc3"
     ],
     "nintendo power": [
+        "sm_map_rando",
+        "sm",
         "alttp",
-        "dkc",
         "earthbound",
         "dkc2",
-        "sm_map_rando",
-        "dkc3",
-        "sm"
+        "dkc",
+        "dkc3"
     ],
     "power": [
+        "sm_map_rando",
+        "sm",
         "alttp",
-        "dkc",
         "earthbound",
         "dkc2",
-        "sm_map_rando",
-        "dkc3",
-        "sm"
+        "dkc",
+        "dkc3"
     ],
     "world map": [
-        "alttp",
+        "aquaria",
+        "ladx",
+        "tmc",
         "tloz_oos",
         "pokemon_crystal",
-        "dkc",
+        "tloz_ph",
+        "alttp",
+        "jakanddaxter",
         "metroidprime",
         "v6",
         "dkc2",
-        "aquaria",
-        "tmc",
-        "ladx",
-        "tloz_ph",
+        "dkc",
         "dkc3",
-        "oot",
-        "jakanddaxter"
+        "oot"
     ],
     "map": [
-        "alttp",
+        "aquaria",
+        "ladx",
+        "tmc",
         "tloz_oos",
         "pokemon_crystal",
-        "dkc",
+        "tloz_ph",
+        "alttp",
+        "jakanddaxter",
         "metroidprime",
         "v6",
         "dkc2",
-        "aquaria",
-        "tmc",
-        "ladx",
-        "tloz_ph",
+        "dkc",
         "dkc3",
-        "oot",
-        "jakanddaxter"
+        "oot"
     ],
     "human": [
-        "cv64",
-        "alttp",
-        "papermario",
-        "sotn",
-        "sc2",
-        "zelda2",
-        "sms",
-        "simpsonshitnrun",
-        "doom_ii",
         "apeescape",
-        "ladx",
         "tloz_ph",
-        "gstla",
-        "quake",
-        "dark_souls_2",
+        "alttp",
+        "zelda2",
         "metroidfusion",
         "terraria",
+        "sc2",
+        "sms",
+        "quake",
+        "doom_ii",
+        "ss",
+        "cv64",
+        "dark_souls_2",
+        "sotn",
+        "ladx",
         "dark_souls_3",
-        "ss"
+        "gstla",
+        "simpsonshitnrun",
+        "papermario"
     ],
     "shopping": [
-        "pokemon_emerald",
-        "cuphead",
-        "alttp",
-        "mlss",
-        "tloz_ooa",
-        "cv64",
-        "pokemon_crystal",
-        "yugiohddm",
-        "sotn",
         "dw1",
+        "sotn",
+        "mlss",
         "tmc",
+        "tloz_oos",
         "lego_star_wars_tcs",
+        "pokemon_crystal",
+        "pokemon_emerald",
+        "alttp",
         "tloz_ph",
-        "tloz_oos"
+        "yugiohddm",
+        "cuphead",
+        "cv64",
+        "tloz_ooa"
     ],
     "ice stage": [
-        "mk64",
-        "alttp",
-        "cv64",
-        "dkc",
-        "wl4",
-        "metroidprime",
-        "dkc2",
+        "terraria",
         "tmc",
         "banjo_tooie",
+        "mk64",
+        "alttp",
+        "wl4",
+        "jakanddaxter",
+        "metroidprime",
+        "cv64",
+        "dkc2",
         "metroidfusion",
-        "terraria",
+        "dkc",
         "dkc3",
-        "oot",
-        "jakanddaxter"
+        "oot"
     ],
     "ice": [
-        "mk64",
-        "alttp",
-        "cv64",
-        "dkc",
-        "wl4",
-        "metroidprime",
-        "dkc2",
+        "terraria",
         "tmc",
         "banjo_tooie",
+        "mk64",
+        "alttp",
+        "wl4",
+        "jakanddaxter",
+        "metroidprime",
+        "cv64",
+        "dkc2",
         "metroidfusion",
-        "terraria",
+        "dkc",
         "dkc3",
-        "oot",
-        "jakanddaxter"
+        "oot"
     ],
     "stage": [
-        "mk64",
-        "alttp",
-        "smw",
-        "cv64",
-        "spyro3",
-        "dkc",
-        "wl4",
-        "metroidprime",
-        "dkc2",
-        "sonic_heroes",
+        "terraria",
         "tmc",
         "banjo_tooie",
+        "mk64",
+        "alttp",
+        "sonic_heroes",
+        "wl4",
+        "jakanddaxter",
+        "metroidprime",
+        "smw",
+        "cv64",
+        "dkc2",
         "metroidfusion",
-        "terraria",
+        "dkc",
         "dkc3",
-        "oot",
-        "jakanddaxter"
+        "spyro3",
+        "oot"
     ],
     "saving the world": [
+        "tmc",
+        "tloz_ph",
         "alttp",
         "earthbound",
         "zelda2",
-        "tmc",
-        "dark_souls_2",
-        "tloz_ph"
+        "dark_souls_2"
     ],
     "saving": [
+        "tmc",
+        "tloz_ph",
         "alttp",
         "earthbound",
         "zelda2",
-        "tmc",
-        "dark_souls_2",
-        "tloz_ph"
+        "dark_souls_2"
     ],
     "grapple": [
-        "alttp",
-        "metroidprime",
         "tmc",
         "lego_star_wars_tcs",
         "tloz_ph",
+        "alttp",
+        "metroidprime",
         "oot"
     ],
     "secret area": [
-        "dkc",
-        "hcniko",
-        "star_fox_64",
         "tunic",
-        "rogue_legacy",
-        "dkc3",
         "alttp",
-        "sotn",
-        "dkc2",
-        "sm_map_rando",
-        "zelda2",
-        "diddy_kong_racing",
-        "tmc",
-        "sm",
-        "heretic",
-        "doom_ii",
-        "tloz_oos",
         "witness",
-        "metroidfusion"
+        "zelda2",
+        "metroidfusion",
+        "sm_map_rando",
+        "dkc2",
+        "doom_ii",
+        "diddy_kong_racing",
+        "sm",
+        "tloz_oos",
+        "rogue_legacy",
+        "heretic",
+        "dkc",
+        "dkc3",
+        "sotn",
+        "tmc",
+        "hcniko",
+        "star_fox_64"
     ],
     "secret": [
-        "soe",
-        "dkc",
-        "hcniko",
-        "star_fox_64",
         "tunic",
-        "rogue_legacy",
-        "dkc3",
         "alttp",
-        "sotn",
-        "dkc2",
-        "sm_map_rando",
-        "zelda2",
-        "diddy_kong_racing",
-        "tmc",
-        "sm",
-        "heretic",
-        "doom_ii",
-        "tloz_oos",
         "witness",
-        "metroidfusion"
+        "zelda2",
+        "metroidfusion",
+        "sm_map_rando",
+        "soe",
+        "dkc2",
+        "doom_ii",
+        "diddy_kong_racing",
+        "sm",
+        "tloz_oos",
+        "rogue_legacy",
+        "heretic",
+        "dkc",
+        "dkc3",
+        "sotn",
+        "tmc",
+        "hcniko",
+        "star_fox_64"
     ],
     "area": [
-        "dkc",
-        "hcniko",
-        "star_fox_64",
         "tunic",
-        "rogue_legacy",
-        "dkc3",
         "alttp",
-        "sotn",
-        "dkc2",
-        "sm_map_rando",
-        "zelda2",
-        "diddy_kong_racing",
-        "tmc",
-        "sm",
-        "heretic",
-        "doom_ii",
-        "tloz_oos",
         "witness",
-        "metroidfusion"
+        "zelda2",
+        "metroidfusion",
+        "sm_map_rando",
+        "dkc2",
+        "doom_ii",
+        "diddy_kong_racing",
+        "sm",
+        "tloz_oos",
+        "rogue_legacy",
+        "heretic",
+        "dkc",
+        "dkc3",
+        "sotn",
+        "tmc",
+        "hcniko",
+        "star_fox_64"
     ],
     "shielded enemies": [
-        "alttp",
-        "tloz_ooa",
-        "rogue_legacy",
-        "hk",
         "tmc",
+        "alttp",
+        "rogue_legacy",
+        "tloz_ooa",
+        "hk",
         "dkc3"
     ],
     "shielded": [
-        "alttp",
-        "tloz_ooa",
-        "rogue_legacy",
-        "hk",
         "tmc",
+        "alttp",
+        "rogue_legacy",
+        "tloz_ooa",
+        "hk",
         "dkc3"
     ],
     "enemies": [
-        "alttp",
-        "tloz_ooa",
-        "rogue_legacy",
-        "hk",
         "tmc",
+        "alttp",
+        "rogue_legacy",
+        "tloz_ooa",
+        "hk",
         "dkc3"
     ],
     "walking through walls": [
-        "alttp",
-        "tloz_ooa",
         "doom_ii",
         "ladx",
-        "oot",
-        "tloz_oos"
+        "tloz_oos",
+        "alttp",
+        "tloz_ooa",
+        "oot"
     ],
     "walking": [
-        "alttp",
-        "tloz_ooa",
         "doom_ii",
         "ladx",
-        "oot",
-        "tloz_oos"
+        "tloz_oos",
+        "alttp",
+        "tloz_ooa",
+        "oot"
     ],
     "through": [
-        "alttp",
-        "tloz_ooa",
         "doom_ii",
         "ladx",
-        "oot",
-        "tloz_oos"
+        "tloz_oos",
+        "alttp",
+        "tloz_ooa",
+        "oot"
     ],
     "walls": [
-        "alttp",
-        "tloz_ooa",
         "doom_ii",
         "ladx",
-        "oot",
-        "tloz_oos"
-    ],
-    "villain": [
+        "tloz_oos",
         "alttp",
         "tloz_ooa",
-        "mm3",
-        "papermario",
-        "sotn",
-        "zelda2",
-        "star_fox_64",
-        "kh1",
-        "lego_star_wars_tcs",
+        "oot"
+    ],
+    "villain": [
         "cvcotm",
-        "banjo_tooie",
-        "metroidfusion",
+        "sotn",
         "tmc",
-        "mm2",
+        "tloz_oos",
+        "lego_star_wars_tcs",
+        "banjo_tooie",
+        "mm3",
+        "alttp",
+        "zelda2",
+        "metroidfusion",
+        "papermario",
+        "tloz_ooa",
+        "kh1",
+        "star_fox_64",
         "oot",
-        "tloz_oos"
+        "mm2"
     ],
     "recurring boss": [
-        "pokemon_emerald",
-        "alttp",
-        "mm3",
-        "dk64",
-        "dkc",
-        "papermario",
-        "dkc2",
-        "kh1",
         "banjo_tooie",
+        "mm3",
+        "alttp",
+        "pokemon_emerald",
+        "dk64",
+        "dkc2",
         "metroidfusion",
-        "dkc3"
+        "kh1",
+        "dkc",
+        "dkc3",
+        "papermario"
     ],
     "recurring": [
-        "pokemon_emerald",
-        "alttp",
-        "mm3",
-        "dk64",
-        "dkc",
-        "papermario",
-        "dkc2",
-        "kh1",
         "banjo_tooie",
+        "mm3",
+        "alttp",
+        "pokemon_emerald",
+        "dk64",
+        "dkc2",
         "metroidfusion",
-        "dkc3"
+        "kh1",
+        "dkc",
+        "dkc3",
+        "papermario"
     ],
     "boss": [
-        "dkc",
-        "mm_recomp",
-        "metroidprime",
-        "rogue_legacy",
-        "dkc3",
-        "oot",
-        "cuphead",
+        "tloz_ph",
+        "mm3",
+        "pokemon_emerald",
         "alttp",
-        "papermario",
+        "metroidprime",
+        "metroidfusion",
+        "oot",
+        "banjo_tooie",
+        "sms",
         "dkc2",
         "kh1",
-        "tmc",
-        "sms",
-        "mm3",
-        "dk64",
         "doom_ii",
-        "banjo_tooie",
-        "tloz_ph",
-        "pokemon_emerald",
+        "mm_recomp",
+        "rogue_legacy",
+        "cuphead",
+        "dk64",
         "dark_souls_2",
-        "metroidfusion"
+        "dkc",
+        "dkc3",
+        "tmc",
+        "papermario"
     ],
     "been here before": [
-        "ffta",
+        "tmc",
+        "pokemon_crystal",
+        "tloz_ph",
         "alttp",
         "gstla",
-        "tloz_ph",
-        "pokemon_crystal",
-        "tmc",
         "sms",
+        "ffta",
         "simpsonshitnrun",
         "oot"
     ],
     "been": [
-        "ffta",
+        "tmc",
+        "pokemon_crystal",
+        "tloz_ph",
         "alttp",
         "gstla",
-        "tloz_ph",
-        "pokemon_crystal",
-        "tmc",
         "sms",
+        "ffta",
         "simpsonshitnrun",
         "oot"
     ],
     "here": [
-        "ffta",
-        "alttp",
-        "gstla",
-        "tloz_ph",
-        "pokemon_crystal",
-        "hcniko",
         "tmc",
+        "pokemon_crystal",
+        "tloz_ph",
+        "alttp",
+        "hcniko",
+        "gstla",
         "sms",
+        "ffta",
         "simpsonshitnrun",
         "oot"
     ],
     "before": [
-        "ffta",
+        "tmc",
+        "pokemon_crystal",
+        "tloz_ph",
         "alttp",
         "gstla",
-        "tloz_ph",
-        "pokemon_crystal",
-        "tmc",
         "sms",
+        "ffta",
         "simpsonshitnrun",
         "oot"
     ],
     "sleeping": [
+        "tmc",
+        "pokemon_crystal",
         "alttp",
         "gstla",
-        "pokemon_crystal",
-        "papermario",
+        "sms",
         "minecraft",
-        "tmc",
-        "sms"
+        "papermario"
     ],
     "merchants": [
-        "candybox2",
-        "alttp",
         "yugiohddm",
         "timespinner",
+        "alttp",
+        "candybox2",
         "faxanadu",
         "hk",
         "terraria"
     ],
     "fetch quests": [
-        "alttp",
-        "metroidprime",
-        "zelda2",
-        "tmc",
         "ladx",
+        "tmc",
+        "tloz_oos",
         "tloz_ph",
-        "tloz_oos"
+        "alttp",
+        "zelda2",
+        "metroidprime"
     ],
     "fetch": [
-        "alttp",
-        "metroidprime",
-        "zelda2",
-        "tmc",
         "ladx",
+        "tmc",
+        "tloz_oos",
         "tloz_ph",
-        "tloz_oos"
+        "alttp",
+        "zelda2",
+        "metroidprime"
     ],
     "poisoning": [
+        "tmc",
+        "tloz_oos",
+        "pokemon_crystal",
         "pokemon_emerald",
         "alttp",
-        "cv64",
-        "pokemon_crystal",
-        "papermario",
         "minecraft",
-        "tmc",
-        "tloz_oos"
+        "cv64",
+        "papermario"
     ],
     "status effects": [
+        "ladx",
+        "tmc",
+        "tloz_oos",
+        "pokemon_crystal",
         "pokemon_emerald",
         "alttp",
-        "tloz_ooa",
-        "pokemon_crystal",
         "earthbound",
         "zelda2",
         "minecraft",
-        "tmc",
-        "ladx",
         "dark_souls_2",
-        "tloz_oos"
+        "tloz_ooa"
     ],
     "status": [
+        "ladx",
+        "tmc",
+        "tloz_oos",
+        "pokemon_crystal",
         "pokemon_emerald",
         "alttp",
-        "tloz_ooa",
-        "pokemon_crystal",
         "earthbound",
         "zelda2",
         "minecraft",
-        "tmc",
-        "ladx",
         "dark_souls_2",
-        "tloz_oos"
+        "tloz_ooa"
     ],
     "effects": [
+        "ladx",
+        "tmc",
+        "tloz_oos",
+        "pokemon_crystal",
         "pokemon_emerald",
         "alttp",
-        "tloz_ooa",
-        "pokemon_crystal",
         "earthbound",
         "zelda2",
         "minecraft",
-        "tmc",
-        "ladx",
         "dark_souls_2",
-        "tloz_oos"
+        "tloz_ooa"
     ],
     "damage over time": [
-        "ffta",
-        "pokemon_emerald",
-        "alttp",
+        "tmc",
         "tloz_oos",
         "pokemon_crystal",
-        "tmc",
+        "pokemon_emerald",
         "tloz_ph",
-        "oot",
-        "jakanddaxter"
+        "alttp",
+        "jakanddaxter",
+        "ffta",
+        "oot"
     ],
     "damage": [
-        "ffta",
-        "pokemon_emerald",
-        "alttp",
+        "tmc",
         "tloz_oos",
         "pokemon_crystal",
-        "tmc",
+        "pokemon_emerald",
         "tloz_ph",
-        "oot",
-        "jakanddaxter"
+        "alttp",
+        "jakanddaxter",
+        "ffta",
+        "oot"
     ],
     "over": [
-        "ffta",
-        "pokemon_emerald",
-        "alttp",
-        "tloz_oos",
         "getting_over_it",
-        "pokemon_crystal",
         "tmc",
+        "tloz_oos",
+        "pokemon_crystal",
+        "pokemon_emerald",
         "tloz_ph",
-        "oot",
-        "jakanddaxter"
+        "alttp",
+        "jakanddaxter",
+        "ffta",
+        "oot"
     ],
     "monomyth": [
-        "tloz_ph",
-        "alttp",
-        "mm3",
-        "zelda2",
         "tmc",
-        "mm2",
-        "ss"
+        "tloz_ph",
+        "mm3",
+        "alttp",
+        "ss",
+        "zelda2",
+        "mm2"
     ],
     "retroachievements": [
-        "mk64",
+        "sm64hacks",
+        "k64",
+        "alttp",
+        "sonic_heroes",
+        "metroidprime",
+        "ff4fe",
+        "oot",
+        "kdl3",
+        "mmx3",
+        "banjo_tooie",
+        "sms",
+        "quake",
+        "smw",
+        "dkc2",
+        "tetrisattack",
+        "diddy_kong_racing",
+        "tww",
+        "mm_recomp",
+        "dk64",
         "cv64",
         "dkc",
-        "mm_recomp",
-        "metroidprime",
-        "k64",
-        "star_fox_64",
-        "tloz",
         "dkc3",
-        "oot",
-        "alttp",
-        "ffmq",
-        "papermario",
-        "lufia2ac",
-        "dkc2",
-        "diddy_kong_racing",
-        "tetrisattack",
-        "sms",
-        "mmx3",
-        "swr",
-        "dk64",
+        "pmd_eos",
         "sm64ex",
-        "tww",
-        "banjo_tooie",
-        "ff4fe",
-        "kdl3",
-        "sm64hacks",
-        "smw",
+        "lufia2ac",
+        "mk64",
         "earthbound",
-        "quake",
-        "sonic_heroes"
+        "swr",
+        "tloz",
+        "ffmq",
+        "star_fox_64",
+        "papermario"
     ],
     "animal well": [
         "animal_well"
@@ -13884,260 +14453,267 @@ SEARCH_INDEX = {
         "animal_well"
     ],
     "side view": [
-        "pokemon_frlg",
-        "wargroove",
-        "dkc",
-        "k64",
-        "yoshisisland",
-        "animal_well",
-        "smz3",
-        "oribf",
-        "terraria",
-        "dkc3",
-        "rogue_legacy",
-        "wargroove2",
-        "cuphead",
-        "ff1",
-        "ffmq",
-        "enderlilies",
-        "noita",
-        "faxanadu",
-        "hylics2",
-        "lufia2ac",
-        "dkc2",
-        "papermario",
-        "ror1",
-        "sm_map_rando",
-        "sotn",
-        "cvcotm",
-        "hk",
-        "ufo50",
-        "zelda2",
-        "tetrisattack",
-        "messenger",
-        "zillion",
-        "mmx3",
-        "sm",
-        "mlss",
-        "mm3",
-        "musedash",
-        "getting_over_it",
-        "pokemon_crystal",
-        "celeste_open_world",
-        "marioland2",
-        "megamix",
-        "momodoramoonlitfarewell",
-        "ladx",
-        "mzm",
-        "mm2",
-        "ff4fe",
         "blasphemous",
-        "kdl3",
-        "aus",
-        "pokemon_rb",
-        "wl4",
+        "madou",
+        "k64",
+        "momodoramoonlitfarewell",
+        "mm3",
         "pokemon_emerald",
-        "smw",
+        "spire",
         "timespinner",
-        "wl",
+        "zelda2",
         "v6",
-        "aquaria",
-        "monster_sanctuary",
         "metroidfusion",
+        "wl",
+        "zillion",
+        "monster_sanctuary",
+        "ff4fe",
+        "musedash",
+        "wargroove2",
+        "kdl3",
+        "pokemon_rb",
+        "terraria",
+        "yoshisisland",
+        "mmx3",
+        "sm_map_rando",
+        "mzm",
+        "smz3",
+        "pokemon_crystal",
+        "smw",
+        "hylics2",
+        "dkc2",
+        "marioland2",
+        "hk",
+        "tetrisattack",
+        "nine_sols",
+        "mm2",
+        "ror1",
+        "getting_over_it",
+        "sm",
+        "megamix",
+        "animal_well",
+        "rogue_legacy",
+        "cuphead",
+        "faxanadu",
+        "oribf",
+        "messenger",
+        "dkc",
+        "dkc3",
+        "pokemon_frlg",
+        "ufo50",
+        "aquaria",
+        "cvcotm",
+        "enderlilies",
+        "ff1",
+        "ladx",
+        "aus",
         "celeste",
+        "mlss",
+        "sotn",
+        "wargroove",
+        "lufia2ac",
+        "wl4",
+        "ffmq",
         "dlcquest",
-        "spire"
+        "noita",
+        "celeste_open_world",
+        "papermario"
     ],
     "horror": [
-        "cv64",
-        "mm_recomp",
-        "dontstarvetogether",
-        "animal_well",
-        "inscryption",
-        "luigismansion",
-        "sotn",
-        "lethal_company",
-        "cvcotm",
-        "getting_over_it",
-        "undertale",
-        "doom_ii",
-        "doom_1993",
         "shivers",
-        "blasphemous",
-        "lunacid",
-        "residentevil3remake",
-        "quake",
         "residentevil2remake",
+        "undertale",
+        "terraria",
+        "lunacid",
+        "luigismansion",
+        "quake",
+        "dredge",
+        "doom_1993",
+        "residentevil3remake",
+        "doom_ii",
+        "getting_over_it",
+        "lethal_company",
+        "dontstarvetogether",
+        "mm_recomp",
+        "animal_well",
+        "cv64",
+        "inscryption",
+        "cvcotm",
+        "sotn",
         "poe",
-        "terraria"
+        "blasphemous"
     ],
     "survival": [
         "ror1",
-        "residentevil3remake",
-        "dontstarvetogether",
+        "factorio_saws",
         "ror2",
+        "raft",
+        "dontstarvetogether",
         "residentevil2remake",
         "animal_well",
+        "subnautica",
         "minecraft",
-        "factorio_saws",
+        "rimworld",
         "yugioh06",
         "factorio",
-        "subnautica",
         "terraria",
-        "rimworld",
-        "raft"
+        "residentevil3remake"
     ],
     "mystery": [
-        "witness",
-        "pmd_eos",
-        "animal_well",
         "crystal_project",
-        "inscryption",
-        "outer_wilds"
+        "pmd_eos",
+        "outer_wilds",
+        "witness",
+        "animal_well",
+        "dredge",
+        "inscryption"
     ],
     "exploration": [
-        "cv64",
-        "hcniko",
-        "metroidprime",
-        "animal_well",
-        "terraria",
         "tunic",
-        "rogue_legacy",
-        "hylics2",
-        "lethal_company",
-        "lingo",
-        "sm_map_rando",
-        "sm",
-        "jakanddaxter",
-        "pokemon_crystal",
-        "celeste_open_world",
+        "seaofthieves",
         "tloz_ph",
-        "shorthike",
         "pokemon_emerald",
         "witness",
+        "metroidprime",
         "v6",
-        "aquaria",
-        "seaofthieves",
         "metroidfusion",
-        "celeste",
+        "shorthike",
+        "terraria",
+        "sm_map_rando",
+        "outer_wilds",
+        "pokemon_crystal",
         "subnautica",
+        "hylics2",
+        "dredge",
+        "lethal_company",
+        "sm",
+        "animal_well",
+        "rogue_legacy",
+        "jakanddaxter",
+        "cv64",
+        "lingo",
+        "aquaria",
+        "celeste",
+        "hcniko",
         "dlcquest",
-        "outer_wilds"
+        "celeste_open_world"
     ],
     "retro": [
-        "cuphead",
-        "terraria",
-        "smo",
+        "celeste",
+        "stardew_valley",
         "timespinner",
-        "undertale",
-        "celeste_open_world",
+        "animal_well",
+        "dlcquest",
+        "ufo50",
+        "minecraft",
+        "cuphead",
         "hylics2",
         "v6",
-        "animal_well",
-        "minecraft",
-        "stardew_valley",
-        "ufo50",
-        "celeste",
+        "undertale",
         "messenger",
-        "dlcquest",
-        "blasphemous"
+        "blasphemous",
+        "smo",
+        "celeste_open_world",
+        "terraria"
     ],
     "2d": [
-        "cuphead",
-        "musedash",
-        "undertale",
-        "sotn",
-        "dontstarvetogether",
-        "celeste_open_world",
-        "earthbound",
-        "v6",
-        "sm_map_rando",
         "zelda2",
-        "animal_well",
-        "hk",
-        "stardew_valley",
-        "celeste",
-        "messenger",
+        "v6",
+        "undertale",
+        "musedash",
         "terraria",
+        "sm_map_rando",
+        "hk",
+        "nine_sols",
+        "sm",
+        "dontstarvetogether",
+        "animal_well",
+        "cuphead",
+        "messenger",
+        "sotn",
+        "celeste",
+        "stardew_valley",
+        "earthbound",
         "blasphemous",
-        "sm"
+        "celeste_open_world"
     ],
     "metroidvania": [
-        "metroidprime",
-        "animal_well",
-        "oribf",
-        "rogue_legacy",
-        "enderlilies",
-        "sotn",
-        "faxanadu",
-        "zelda2",
-        "sm_map_rando",
-        "cvcotm",
-        "hk",
-        "messenger",
-        "zillion",
-        "sm",
-        "frogmonster",
         "crystal_project",
         "momodoramoonlitfarewell",
-        "mzm",
-        "blasphemous",
-        "aus",
         "timespinner",
+        "zelda2",
+        "metroidprime",
         "v6",
-        "pseudoregalia",
-        "aquaria",
+        "metroidfusion",
+        "frogmonster",
+        "zillion",
         "monster_sanctuary",
+        "pseudoregalia",
+        "sm_map_rando",
+        "mzm",
+        "hk",
+        "nine_sols",
+        "sm",
+        "animal_well",
+        "rogue_legacy",
+        "faxanadu",
         "dark_souls_2",
-        "metroidfusion"
+        "messenger",
+        "aquaria",
+        "cvcotm",
+        "enderlilies",
+        "sotn",
+        "aus",
+        "blasphemous",
+        "oribf"
     ],
     "atmospheric": [
-        "dontstarvetogether",
-        "celeste_open_world",
-        "hylics2",
-        "animal_well",
-        "hk",
-        "frogmonster",
-        "crystal_project",
-        "powerwashsimulator",
-        "celeste",
         "tunic",
-        "shorthike"
+        "crystal_project",
+        "celeste",
+        "dontstarvetogether",
+        "animal_well",
+        "hylics2",
+        "powerwashsimulator",
+        "frogmonster",
+        "shorthike",
+        "hk",
+        "celeste_open_world"
     ],
     "relaxing": [
-        "sims4",
-        "hcniko",
-        "animal_well",
-        "powerwashsimulator",
         "stardew_valley",
-        "shorthike"
+        "animal_well",
+        "hcniko",
+        "powerwashsimulator",
+        "shorthike",
+        "sims4"
     ],
     "controller support": [
+        "tunic",
+        "stardew_valley",
+        "animal_well",
         "hcniko",
         "v6",
-        "animal_well",
-        "hk",
-        "stardew_valley",
-        "tunic",
-        "shorthike"
+        "shorthike",
+        "hk"
     ],
     "controller": [
+        "tunic",
+        "stardew_valley",
+        "animal_well",
         "hcniko",
         "v6",
-        "animal_well",
-        "hk",
-        "stardew_valley",
-        "tunic",
-        "shorthike"
+        "shorthike",
+        "hk"
     ],
     "support": [
+        "tunic",
+        "stardew_valley",
+        "animal_well",
         "hcniko",
         "v6",
-        "animal_well",
-        "hk",
-        "stardew_valley",
-        "tunic",
-        "shorthike"
+        "shorthike",
+        "hk"
     ],
     "ape escape": [
         "apeescape"
@@ -14149,311 +14725,311 @@ SEARCH_INDEX = {
         "apeescape"
     ],
     "playstation 3": [
+        "sotn",
+        "apeescape",
+        "lego_star_wars_tcs",
+        "sonic_heroes",
+        "rogue_legacy",
+        "sadx",
+        "kh2",
+        "dark_souls_2",
         "sa2b",
         "spyro3",
-        "sotn",
-        "sonic_heroes",
-        "kh2",
-        "lego_star_wars_tcs",
-        "apeescape",
-        "dark_souls_2",
-        "sadx",
-        "terraria",
-        "rogue_legacy"
+        "terraria"
     ],
     "3": [
-        "mm3",
+        "mmbn3",
+        "sotn",
         "terraria",
+        "apeescape",
+        "lego_star_wars_tcs",
+        "mm3",
+        "sonic_heroes",
+        "rogue_legacy",
+        "sadx",
+        "kh2",
+        "wl",
+        "dark_souls_2",
         "sa2b",
         "spyro3",
-        "residentevil3remake",
-        "sotn",
-        "wl",
-        "sonic_heroes",
-        "kh2",
-        "lego_star_wars_tcs",
-        "apeescape",
-        "dark_souls_2",
-        "mmbn3",
-        "sadx",
         "kdl3",
-        "rogue_legacy"
+        "residentevil3remake"
     ],
     "playstation portable": [
+        "apeescape",
         "spyro3",
-        "sotn",
-        "apeescape"
+        "sotn"
     ],
     "portable": [
+        "apeescape",
         "spyro3",
-        "sotn",
-        "apeescape"
+        "sotn"
     ],
     "anime": [
-        "pokemon_emerald",
-        "yugiohddm",
-        "gstla",
-        "fm",
-        "musedash",
-        "pokemon_crystal",
-        "huniepop2",
         "dw1",
-        "osu",
-        "apeescape",
-        "zillion",
         "huniepop",
-        "wl4"
+        "fm",
+        "osu",
+        "yugiohddm",
+        "apeescape",
+        "huniepop2",
+        "pokemon_crystal",
+        "pokemon_emerald",
+        "wl4",
+        "gstla",
+        "zillion",
+        "musedash"
     ],
     "dinosaurs": [
-        "smw",
-        "smo",
-        "earthbound",
         "yoshisisland",
-        "banjo_tooie",
         "apeescape",
-        "sms"
+        "banjo_tooie",
+        "earthbound",
+        "sms",
+        "smw",
+        "smo"
     ],
     "collecting": [
-        "pokemon_rb",
-        "pokemon_emerald",
-        "pokemon_frlg",
-        "pokemon_crystal",
-        "zelda2",
         "mzm",
+        "apeescape",
         "banjo_tooie",
-        "apeescape"
+        "pokemon_crystal",
+        "pokemon_emerald",
+        "zelda2",
+        "pokemon_frlg",
+        "pokemon_rb"
     ],
     "multiple endings": [
-        "cuphead",
-        "cv64",
-        "wl4",
-        "dk64",
-        "sotn",
         "doom_ii",
-        "metroidprime",
-        "undertale",
-        "dkc2",
-        "civ_6",
-        "k64",
-        "star_fox_64",
-        "witness",
-        "kh1",
-        "apeescape",
-        "mzm",
         "mmx3",
-        "tloz_oos"
+        "sotn",
+        "mzm",
+        "civ_6",
+        "apeescape",
+        "k64",
+        "tloz_oos",
+        "witness",
+        "wl4",
+        "cuphead",
+        "metroidprime",
+        "dk64",
+        "cv64",
+        "dkc2",
+        "undertale",
+        "kh1",
+        "star_fox_64"
     ],
     "multiple": [
-        "cv64",
-        "dkc",
-        "metroidprime",
         "k64",
-        "civ_6",
-        "star_fox_64",
-        "rogue_legacy",
-        "dkc3",
-        "cuphead",
-        "sotn",
+        "apeescape",
+        "witness",
+        "sonic_heroes",
+        "metroidprime",
+        "undertale",
+        "mmx3",
+        "mzm",
         "dkc2",
         "kh1",
-        "mmx3",
-        "mlss",
-        "spyro3",
-        "dk64",
-        "undertale",
         "doom_ii",
-        "lego_star_wars_tcs",
-        "apeescape",
-        "mzm",
+        "civ_6",
         "tloz_oos",
+        "rogue_legacy",
+        "cuphead",
+        "dk64",
+        "cv64",
+        "dkc",
+        "dkc3",
+        "spyro3",
+        "sotn",
+        "mlss",
+        "lego_star_wars_tcs",
         "wl4",
-        "witness",
         "earthbound",
-        "sonic_heroes"
+        "star_fox_64"
     ],
     "endings": [
-        "cuphead",
-        "cv64",
-        "wl4",
-        "dk64",
-        "sotn",
         "doom_ii",
-        "metroidprime",
-        "undertale",
-        "dkc2",
-        "civ_6",
-        "k64",
-        "star_fox_64",
-        "witness",
-        "kh1",
-        "apeescape",
-        "mzm",
         "mmx3",
-        "tloz_oos"
+        "sotn",
+        "mzm",
+        "civ_6",
+        "apeescape",
+        "k64",
+        "tloz_oos",
+        "witness",
+        "wl4",
+        "cuphead",
+        "metroidprime",
+        "dk64",
+        "cv64",
+        "dkc2",
+        "undertale",
+        "kh1",
+        "star_fox_64"
     ],
     "amnesia": [
-        "xenobladex",
-        "witness",
-        "sonic_heroes",
         "aquaria",
+        "xenobladex",
         "apeescape",
-        "tloz_ph"
+        "tloz_ph",
+        "witness",
+        "sonic_heroes"
     ],
     "voice acting": [
-        "cuphead",
-        "xenobladex",
-        "cv64",
-        "witness",
-        "doom_ii",
-        "huniepop2",
-        "civ_6",
-        "sonic_heroes",
         "dw1",
-        "star_fox_64",
-        "kh1",
+        "doom_ii",
+        "civ_6",
         "apeescape",
+        "huniepop2",
+        "xenobladex",
+        "witness",
+        "sonic_heroes",
         "sms",
-        "simpsonshitnrun",
+        "cuphead",
+        "jakanddaxter",
         "sly1",
-        "jakanddaxter"
+        "cv64",
+        "simpsonshitnrun",
+        "kh1",
+        "star_fox_64"
     ],
     "voice": [
-        "cuphead",
-        "xenobladex",
-        "cv64",
-        "witness",
-        "doom_ii",
-        "huniepop2",
-        "civ_6",
-        "sonic_heroes",
         "dw1",
-        "star_fox_64",
-        "kh1",
+        "doom_ii",
+        "civ_6",
         "apeescape",
+        "huniepop2",
+        "xenobladex",
+        "witness",
+        "sonic_heroes",
         "sms",
-        "simpsonshitnrun",
+        "cuphead",
+        "jakanddaxter",
         "sly1",
-        "jakanddaxter"
+        "cv64",
+        "simpsonshitnrun",
+        "kh1",
+        "star_fox_64"
     ],
     "acting": [
-        "cuphead",
-        "xenobladex",
-        "cv64",
-        "witness",
-        "doom_ii",
-        "huniepop2",
-        "civ_6",
-        "sonic_heroes",
         "dw1",
-        "star_fox_64",
-        "kh1",
+        "doom_ii",
+        "civ_6",
         "apeescape",
+        "huniepop2",
+        "xenobladex",
+        "witness",
+        "sonic_heroes",
         "sms",
-        "simpsonshitnrun",
+        "cuphead",
+        "jakanddaxter",
         "sly1",
-        "jakanddaxter"
+        "cv64",
+        "simpsonshitnrun",
+        "kh1",
+        "star_fox_64"
     ],
     "moving platforms": [
+        "k64",
+        "apeescape",
+        "mm3",
+        "tloz_ph",
+        "sonic_heroes",
+        "metroidprime",
+        "v6",
+        "mmx3",
+        "sms",
+        "quake",
+        "mm2",
+        "jakanddaxter",
+        "dk64",
         "cv64",
         "dkc",
-        "metroidprime",
-        "k64",
         "dkc3",
-        "sly1",
-        "papermario",
-        "sotn",
-        "cvcotm",
-        "tmc",
-        "sms",
-        "mmx3",
-        "jakanddaxter",
-        "mm3",
         "spyro3",
-        "dk64",
-        "apeescape",
+        "cvcotm",
+        "sotn",
         "ladx",
-        "mm2",
-        "tloz_ph",
-        "blasphemous",
+        "tmc",
         "wl4",
-        "v6",
-        "quake",
-        "sonic_heroes"
+        "sly1",
+        "blasphemous",
+        "papermario"
     ],
     "moving": [
+        "k64",
+        "apeescape",
+        "mm3",
+        "tloz_ph",
+        "sonic_heroes",
+        "metroidprime",
+        "v6",
+        "mmx3",
+        "sms",
+        "quake",
+        "mm2",
+        "jakanddaxter",
+        "dk64",
         "cv64",
         "dkc",
-        "metroidprime",
-        "k64",
         "dkc3",
-        "sly1",
-        "papermario",
-        "sotn",
-        "cvcotm",
-        "tmc",
-        "sms",
-        "mmx3",
-        "jakanddaxter",
-        "mm3",
         "spyro3",
-        "dk64",
-        "apeescape",
+        "cvcotm",
+        "sotn",
         "ladx",
-        "mm2",
-        "tloz_ph",
-        "blasphemous",
+        "tmc",
         "wl4",
-        "v6",
-        "quake",
-        "sonic_heroes"
+        "sly1",
+        "blasphemous",
+        "papermario"
     ],
     "platforms": [
-        "cv64",
-        "dkc",
-        "metroidprime",
         "k64",
-        "oribf",
-        "dkc3",
-        "sly1",
-        "papermario",
-        "sotn",
+        "apeescape",
+        "mm3",
+        "tloz_ph",
+        "sonic_heroes",
         "zelda2",
-        "sm_map_rando",
-        "cvcotm",
-        "tmc",
-        "sms",
+        "metroidprime",
+        "v6",
         "mmx3",
+        "sm_map_rando",
+        "sms",
+        "quake",
+        "mm2",
+        "doom_ii",
         "sm",
         "jakanddaxter",
-        "mm3",
-        "spyro3",
         "dk64",
-        "doom_ii",
-        "apeescape",
+        "cv64",
+        "dkc",
+        "dkc3",
+        "spyro3",
+        "cvcotm",
+        "sotn",
         "ladx",
-        "mm2",
-        "tloz_ph",
-        "blasphemous",
+        "tmc",
         "wl4",
-        "v6",
-        "quake",
-        "sonic_heroes"
+        "sly1",
+        "blasphemous",
+        "oribf",
+        "papermario"
     ],
     "time trials": [
-        "mk64",
-        "spyro3",
-        "v6",
         "diddy_kong_racing",
         "apeescape",
-        "sly1"
+        "mk64",
+        "sly1",
+        "v6",
+        "spyro3"
     ],
     "trials": [
-        "mk64",
-        "spyro3",
-        "v6",
         "diddy_kong_racing",
         "apeescape",
-        "sly1"
+        "mk64",
+        "sly1",
+        "v6",
+        "spyro3"
     ],
     "aquaria": [
         "aquaria"
@@ -14461,205 +15037,209 @@ SEARCH_INDEX = {
     "drama": [
         "aquaria",
         "undertale",
-        "earthbound",
-        "hades"
+        "hades",
+        "earthbound"
     ],
     "linux": [
-        "openrct2",
-        "bumpstik",
-        "dontstarvetogether",
-        "landstalker",
         "factorio_saws",
-        "stardew_valley",
-        "inscryption",
-        "rogue_legacy",
-        "ror1",
-        "celeste64",
-        "hk",
-        "getting_over_it",
-        "undertale",
-        "celeste_open_world",
         "crystal_project",
-        "cat_quest",
-        "doom_1993",
-        "overcooked2",
-        "blasphemous",
-        "huniepop",
-        "rimworld",
-        "shorthike",
-        "chainedechoes",
-        "shapez",
+        "bumpstik",
         "timespinner",
-        "crosscode",
         "v6",
-        "quake",
-        "aquaria",
+        "undertale",
+        "celeste64",
         "monster_sanctuary",
-        "minecraft",
-        "celeste",
         "factorio",
+        "shorthike",
         "terraria",
-        "osu"
+        "osu",
+        "huniepop",
+        "quake",
+        "openrct2",
+        "hk",
+        "doom_1993",
+        "ror1",
+        "getting_over_it",
+        "crosscode",
+        "landstalker",
+        "dontstarvetogether",
+        "rogue_legacy",
+        "inscryption",
+        "aquaria",
+        "celeste",
+        "stardew_valley",
+        "shapez",
+        "overcooked2",
+        "minecraft",
+        "cat_quest",
+        "rimworld",
+        "chainedechoes",
+        "blasphemous",
+        "celeste_open_world"
     ],
     "android": [
-        "osrs",
-        "shapez",
-        "musedash",
-        "getting_over_it",
-        "v6",
         "aquaria",
         "osu",
-        "lego_star_wars_tcs",
-        "stardew_valley",
-        "cat_quest",
-        "brotato",
-        "subnautica",
-        "terraria",
-        "blasphemous",
-        "balatro"
-    ],
-    "ios": [
-        "stardew_valley",
         "osrs",
-        "hades",
-        "musedash",
+        "stardew_valley",
         "getting_over_it",
         "lego_star_wars_tcs",
-        "cat_quest",
-        "blasphemous",
-        "balatro",
         "shapez",
-        "witness",
-        "residentevil3remake",
-        "v6",
-        "aquaria",
-        "residentevil2remake",
-        "brotato",
         "subnautica",
+        "wargroove2",
+        "cat_quest",
+        "v6",
+        "balatro",
+        "dredge",
+        "brotato",
+        "musedash",
+        "blasphemous",
+        "terraria"
+    ],
+    "ios": [
+        "osrs",
+        "residentevil2remake",
+        "witness",
+        "v6",
+        "balatro",
+        "wargroove2",
+        "musedash",
         "terraria",
-        "osu"
+        "osu",
+        "hades",
+        "subnautica",
+        "dredge",
+        "brotato",
+        "residentevil3remake",
+        "getting_over_it",
+        "aquaria",
+        "stardew_valley",
+        "lego_star_wars_tcs",
+        "shapez",
+        "cat_quest",
+        "blasphemous"
     ],
     "alternate costumes": [
-        "cv64",
-        "smo",
         "aquaria",
-        "kh1",
         "lego_star_wars_tcs",
-        "metroidfusion",
         "sms",
-        "simpsonshitnrun"
+        "metroidfusion",
+        "cv64",
+        "simpsonshitnrun",
+        "kh1",
+        "smo"
     ],
     "alternate": [
-        "cv64",
-        "smo",
         "aquaria",
-        "kh1",
         "lego_star_wars_tcs",
-        "metroidfusion",
         "sms",
-        "simpsonshitnrun"
+        "metroidfusion",
+        "cv64",
+        "simpsonshitnrun",
+        "kh1",
+        "smo"
     ],
     "costumes": [
-        "cv64",
-        "smo",
         "aquaria",
-        "kh1",
         "lego_star_wars_tcs",
-        "metroidfusion",
         "sms",
-        "simpsonshitnrun"
+        "metroidfusion",
+        "cv64",
+        "simpsonshitnrun",
+        "kh1",
+        "smo"
     ],
     "underwater gameplay": [
-        "sm64hacks",
-        "mm3",
-        "dkc",
-        "sm64ex",
-        "metroidprime",
-        "smo",
-        "dkc2",
-        "quake",
         "aquaria",
-        "kh1",
-        "banjo_tooie",
-        "metroidfusion",
-        "subnautica",
-        "mm2",
-        "terraria",
         "mmx3",
+        "sm64ex",
+        "sm64hacks",
+        "terraria",
+        "banjo_tooie",
+        "mm3",
+        "subnautica",
+        "sms",
+        "metroidprime",
+        "quake",
+        "dkc2",
+        "metroidfusion",
+        "kh1",
+        "dkc",
+        "smo",
         "oot",
-        "sms"
+        "mm2"
     ],
     "underwater": [
-        "sm64hacks",
-        "mm3",
-        "dkc",
-        "sm64ex",
-        "metroidprime",
-        "smo",
-        "dkc2",
-        "quake",
         "aquaria",
-        "kh1",
-        "banjo_tooie",
-        "metroidfusion",
-        "subnautica",
-        "mm2",
-        "terraria",
         "mmx3",
+        "sm64ex",
+        "sm64hacks",
+        "terraria",
+        "banjo_tooie",
+        "mm3",
+        "subnautica",
+        "sms",
+        "metroidprime",
+        "quake",
+        "dkc2",
+        "metroidfusion",
+        "kh1",
+        "dkc",
+        "smo",
         "oot",
-        "sms"
+        "mm2"
     ],
     "gameplay": [
-        "sm64hacks",
-        "mm3",
-        "dkc",
-        "sm64ex",
-        "metroidprime",
-        "smo",
-        "dkc2",
-        "quake",
         "aquaria",
-        "kh1",
-        "banjo_tooie",
-        "metroidfusion",
-        "subnautica",
-        "mm2",
-        "terraria",
         "mmx3",
+        "sm64ex",
+        "sm64hacks",
+        "terraria",
+        "banjo_tooie",
+        "mm3",
+        "subnautica",
+        "sms",
+        "metroidprime",
+        "quake",
+        "dkc2",
+        "metroidfusion",
+        "kh1",
+        "dkc",
+        "smo",
         "oot",
-        "sms"
+        "mm2"
     ],
     "shape-shifting": [
-        "mm_recomp",
-        "metroidprime",
+        "aquaria",
         "sotn",
         "k64",
-        "aquaria",
         "banjo_tooie",
+        "mm_recomp",
+        "metroidprime",
         "kdl3"
     ],
     "plot twist": [
+        "aquaria",
+        "metroidfusion",
         "cv64",
         "undertale",
-        "aquaria",
         "kh1",
-        "metroidfusion",
         "oot"
     ],
     "plot": [
+        "aquaria",
+        "metroidfusion",
         "cv64",
         "undertale",
-        "aquaria",
         "kh1",
-        "metroidfusion",
         "oot"
     ],
     "twist": [
+        "aquaria",
+        "metroidfusion",
         "cv64",
         "undertale",
-        "aquaria",
         "kh1",
-        "metroidfusion",
         "oot"
     ],
     "an untitled story": [
@@ -14672,146 +15252,147 @@ SEARCH_INDEX = {
         "aus"
     ],
     "story": [
-        "hades",
-        "getting_over_it",
-        "undertale",
-        "celeste_open_world",
-        "hylics2",
-        "powerwashsimulator",
+        "aus",
         "celeste",
-        "aus"
+        "getting_over_it",
+        "hades",
+        "hylics2",
+        "dredge",
+        "powerwashsimulator",
+        "undertale",
+        "celeste_open_world"
     ],
     "balatro": [
         "balatro"
     ],
     "turn-based strategy (tbs)": [
-        "pokemon_rb",
-        "ffta",
-        "pokemon_emerald",
-        "yugiohddm",
-        "pokemon_frlg",
-        "chainedechoes",
-        "wargroove",
         "fm",
-        "undertale",
-        "earthbound",
-        "hylics2",
-        "pmd_eos",
-        "civ_6",
-        "monster_sanctuary",
         "crystal_project",
-        "yugioh06",
+        "pmd_eos",
+        "wargroove",
+        "yugiohddm",
+        "civ_6",
+        "pokemon_emerald",
+        "earthbound",
         "wargroove2",
-        "balatro"
+        "hylics2",
+        "chainedechoes",
+        "balatro",
+        "ffta",
+        "undertale",
+        "monster_sanctuary",
+        "yugioh06",
+        "pokemon_frlg",
+        "pokemon_rb"
     ],
     "turn-based": [
-        "pokemon_frlg",
-        "wargroove",
-        "pmd_eos",
-        "civ_6",
-        "yugioh06",
-        "wargroove2",
-        "ffmq",
         "fm",
-        "papermario",
-        "hylics2",
-        "mlss",
-        "pokemon_crystal",
-        "undertale",
         "crystal_project",
-        "balatro",
-        "pokemon_rb",
-        "ffta",
         "pokemon_emerald",
+        "balatro",
+        "undertale",
+        "yugioh06",
+        "monster_sanctuary",
+        "wargroove2",
+        "pokemon_rb",
         "yugiohddm",
+        "pokemon_crystal",
+        "hylics2",
+        "civ_6",
+        "pokemon_frlg",
+        "mlss",
+        "pmd_eos",
+        "wargroove",
+        "earthbound",
         "gstla",
         "chainedechoes",
-        "earthbound",
-        "monster_sanctuary"
+        "ffta",
+        "ffmq",
+        "papermario"
     ],
     "(tbs)": [
-        "pokemon_rb",
-        "ffta",
-        "pokemon_emerald",
-        "yugiohddm",
-        "pokemon_frlg",
-        "chainedechoes",
-        "wargroove",
         "fm",
-        "undertale",
-        "earthbound",
-        "hylics2",
-        "pmd_eos",
-        "civ_6",
-        "monster_sanctuary",
         "crystal_project",
-        "yugioh06",
+        "pmd_eos",
+        "wargroove",
+        "yugiohddm",
+        "civ_6",
+        "pokemon_emerald",
+        "earthbound",
         "wargroove2",
-        "balatro"
+        "hylics2",
+        "chainedechoes",
+        "balatro",
+        "ffta",
+        "undertale",
+        "monster_sanctuary",
+        "yugioh06",
+        "pokemon_frlg",
+        "pokemon_rb"
     ],
     "card & board game": [
-        "balatro",
-        "yugiohddm",
         "fm",
+        "yugiohddm",
+        "spire",
         "yugioh06",
-        "inscryption",
-        "spire"
+        "balatro",
+        "inscryption"
     ],
     "card": [
-        "balatro",
-        "yugiohddm",
         "fm",
+        "yugiohddm",
+        "spire",
         "yugioh06",
-        "inscryption",
-        "spire"
+        "balatro",
+        "inscryption"
     ],
     "board": [
-        "balatro",
-        "yugiohddm",
         "fm",
+        "yugiohddm",
+        "spire",
         "yugioh06",
-        "inscryption",
-        "spire"
+        "balatro",
+        "inscryption"
     ],
     "game": [
-        "pokemon_frlg",
-        "hcniko",
-        "mmbn3",
-        "yugioh06",
-        "inscryption",
-        "rogue_legacy",
-        "oot",
         "fm",
-        "dkc2",
-        "cvcotm",
-        "tmc",
-        "mlss",
-        "pokemon_crystal",
-        "spyro3",
-        "doom_ii",
-        "marioland2",
-        "ladx",
-        "mzm",
-        "mm2",
-        "balatro",
-        "pokemon_rb",
-        "ffta",
         "pokemon_emerald",
-        "tloz_oos",
-        "gstla",
-        "tloz_ooa",
-        "wl4",
-        "yugiohddm",
+        "spire",
         "witness",
-        "wl",
-        "earthbound",
+        "balatro",
         "metroidfusion",
-        "spire"
+        "wl",
+        "yugioh06",
+        "oot",
+        "pokemon_rb",
+        "mzm",
+        "yugiohddm",
+        "pokemon_crystal",
+        "dkc2",
+        "marioland2",
+        "mm2",
+        "doom_ii",
+        "mmbn3",
+        "tloz_oos",
+        "rogue_legacy",
+        "inscryption",
+        "tloz_ooa",
+        "pokemon_frlg",
+        "spyro3",
+        "cvcotm",
+        "ladx",
+        "mlss",
+        "tmc",
+        "wl4",
+        "earthbound",
+        "gstla",
+        "hcniko",
+        "ffta"
     ],
     "roguelike": [
-        "hades",
         "ror1",
         "pmd_eos",
+        "hades",
         "spire",
         "rogue_legacy",
         "balatro"
@@ -14823,671 +15404,682 @@ SEARCH_INDEX = {
         "banjo_tooie"
     ],
     "comedy": [
-        "doronko_wanko",
-        "hcniko",
-        "toontown",
-        "rogue_legacy",
-        "sly1",
-        "rac2",
-        "cuphead",
-        "sims4",
-        "luigismansion",
-        "papermario",
-        "lethal_company",
-        "dkc2",
-        "diddy_kong_racing",
-        "kh1",
-        "messenger",
-        "zork_grand_inquisitor",
-        "simpsonshitnrun",
-        "jakanddaxter",
         "candybox2",
-        "mlss",
-        "placidplasticducksim",
-        "musedash",
-        "getting_over_it",
-        "dk64",
-        "spyro3",
         "undertale",
-        "lego_star_wars_tcs",
-        "banjo_tooie",
-        "overcooked2",
-        "huniepop",
-        "quake",
+        "musedash",
         "dw1",
-        "dlcquest"
+        "huniepop",
+        "banjo_tooie",
+        "luigismansion",
+        "quake",
+        "zork_grand_inquisitor",
+        "rac2",
+        "dkc2",
+        "kh1",
+        "getting_over_it",
+        "diddy_kong_racing",
+        "lethal_company",
+        "doronko_wanko",
+        "rogue_legacy",
+        "cuphead",
+        "jakanddaxter",
+        "dk64",
+        "messenger",
+        "spyro3",
+        "mlss",
+        "lego_star_wars_tcs",
+        "overcooked2",
+        "hcniko",
+        "sly1",
+        "simpsonshitnrun",
+        "toontown",
+        "sims4",
+        "dlcquest",
+        "placidplasticducksim",
+        "papermario"
     ],
     "nintendo 64": [
-        "sm64hacks",
-        "mk64",
-        "cv64",
-        "dk64",
-        "mm_recomp",
-        "papermario",
         "sm64ex",
-        "swr",
-        "k64",
-        "star_fox_64",
+        "sm64hacks",
         "diddy_kong_racing",
+        "k64",
         "banjo_tooie",
-        "oot"
+        "mk64",
+        "mm_recomp",
+        "dk64",
+        "cv64",
+        "swr",
+        "star_fox_64",
+        "oot",
+        "papermario"
     ],
     "64": [
-        "sm64hacks",
-        "mk64",
-        "cv64",
-        "dk64",
-        "mm_recomp",
-        "papermario",
         "sm64ex",
-        "swr",
-        "k64",
-        "star_fox_64",
+        "sm64hacks",
         "diddy_kong_racing",
+        "k64",
         "banjo_tooie",
-        "oot"
+        "mk64",
+        "mm_recomp",
+        "dk64",
+        "cv64",
+        "swr",
+        "star_fox_64",
+        "oot",
+        "papermario"
     ],
     "aliens": [
+        "factorio_saws",
+        "sm_map_rando",
+        "mzm",
+        "sc2",
+        "lethal_company",
+        "sm",
+        "lego_star_wars_tcs",
+        "banjo_tooie",
         "xenobladex",
         "hcniko",
         "earthbound",
-        "lethal_company",
         "metroidprime",
         "quake",
-        "sc2",
-        "sm_map_rando",
-        "factorio_saws",
-        "lego_star_wars_tcs",
-        "banjo_tooie",
         "metroidfusion",
-        "mzm",
-        "factorio",
         "simpsonshitnrun",
-        "sm"
+        "factorio"
     ],
     "flight": [
-        "xenobladex",
-        "mm3",
-        "spyro3",
-        "dkc",
-        "hylics2",
-        "star_fox_64",
         "diddy_kong_racing",
+        "xenobladex",
         "lego_star_wars_tcs",
         "banjo_tooie",
-        "mm2",
-        "terraria",
-        "shorthike",
+        "mm3",
+        "wl4",
         "rogue_legacy",
-        "wl4"
+        "hylics2",
+        "shorthike",
+        "dkc",
+        "star_fox_64",
+        "spyro3",
+        "terraria",
+        "mm2"
     ],
     "witches": [
-        "tloz_ooa",
-        "cv64",
         "enderlilies",
-        "minecraft",
         "tmc",
+        "tloz_oos",
         "banjo_tooie",
-        "tloz_oos"
+        "minecraft",
+        "cv64",
+        "tloz_ooa"
     ],
     "achievements": [
-        "cuphead",
-        "musedash",
-        "sotn",
-        "doom_ii",
-        "hcniko",
-        "v6",
-        "huniepop2",
-        "sonic_heroes",
-        "hk",
-        "lego_star_wars_tcs",
-        "banjo_tooie",
-        "dark_souls_2",
-        "minecraft",
-        "stardew_valley",
-        "oribf",
         "tunic",
+        "doom_ii",
+        "sotn",
+        "shorthike",
+        "stardew_valley",
+        "huniepop2",
+        "banjo_tooie",
+        "lego_star_wars_tcs",
+        "sonic_heroes",
+        "hcniko",
+        "minecraft",
+        "cuphead",
+        "v6",
+        "dark_souls_2",
+        "musedash",
+        "hk",
         "blasphemous",
-        "shorthike"
+        "oribf"
     ],
     "talking animals": [
-        "dkc",
-        "hcniko",
-        "dkc2",
-        "star_fox_64",
         "diddy_kong_racing",
         "banjo_tooie",
+        "hcniko",
+        "sly1",
+        "dkc2",
+        "dkc",
         "dkc3",
-        "sly1"
+        "star_fox_64"
     ],
     "talking": [
-        "dkc",
-        "hcniko",
-        "dkc2",
-        "star_fox_64",
         "diddy_kong_racing",
         "banjo_tooie",
+        "hcniko",
+        "sly1",
+        "dkc2",
+        "dkc",
         "dkc3",
-        "sly1"
+        "star_fox_64"
     ],
     "animals": [
-        "dkc",
-        "hcniko",
-        "dkc2",
-        "star_fox_64",
         "diddy_kong_racing",
         "banjo_tooie",
+        "hcniko",
+        "sly1",
+        "dkc2",
+        "dkc",
         "dkc3",
-        "sly1"
+        "star_fox_64"
     ],
     "breaking the fourth wall": [
-        "ffta",
-        "mlss",
-        "dkc",
-        "papermario",
         "doom_ii",
-        "undertale",
-        "dkc2",
+        "ladx",
+        "mlss",
         "tmc",
         "banjo_tooie",
-        "ladx",
+        "rogue_legacy",
+        "jakanddaxter",
+        "ffta",
+        "dkc2",
         "metroidfusion",
         "simpsonshitnrun",
-        "rogue_legacy",
-        "jakanddaxter"
+        "undertale",
+        "dkc",
+        "papermario"
     ],
     "breaking": [
-        "dkc",
         "metroidprime",
-        "rogue_legacy",
-        "oot",
-        "papermario",
-        "sotn",
-        "dkc2",
-        "sm_map_rando",
-        "tmc",
-        "simpsonshitnrun",
-        "sm",
-        "jakanddaxter",
-        "mlss",
+        "metroidfusion",
         "undertale",
-        "doom_ii",
-        "banjo_tooie",
-        "ladx",
+        "oot",
+        "sm_map_rando",
         "mzm",
+        "banjo_tooie",
+        "dkc2",
+        "doom_ii",
+        "sm",
+        "rogue_legacy",
+        "jakanddaxter",
+        "tloz_ooa",
+        "dkc",
+        "sotn",
+        "ladx",
+        "mlss",
+        "tmc",
         "wl4",
         "ffta",
-        "tloz_ooa",
-        "metroidfusion"
+        "simpsonshitnrun",
+        "papermario"
     ],
     "fourth": [
-        "ffta",
-        "mlss",
-        "dkc",
-        "papermario",
         "doom_ii",
-        "undertale",
-        "dkc2",
+        "ladx",
+        "mlss",
         "tmc",
         "banjo_tooie",
-        "ladx",
+        "rogue_legacy",
+        "jakanddaxter",
+        "ffta",
+        "dkc2",
         "metroidfusion",
         "simpsonshitnrun",
-        "rogue_legacy",
-        "jakanddaxter"
+        "undertale",
+        "dkc",
+        "papermario"
     ],
     "temporary invincibility": [
-        "cuphead",
-        "mk64",
-        "papermario",
-        "faxanadu",
         "doom_ii",
-        "dkc2",
-        "quake",
-        "sonic_heroes",
         "banjo_tooie",
+        "mk64",
+        "sonic_heroes",
         "rogue_legacy",
-        "jakanddaxter"
+        "cuphead",
+        "jakanddaxter",
+        "quake",
+        "faxanadu",
+        "dkc2",
+        "papermario"
     ],
     "temporary": [
-        "cuphead",
-        "mk64",
-        "papermario",
-        "faxanadu",
         "doom_ii",
-        "dkc2",
-        "quake",
-        "sonic_heroes",
         "banjo_tooie",
+        "mk64",
+        "sonic_heroes",
         "rogue_legacy",
-        "jakanddaxter"
+        "cuphead",
+        "jakanddaxter",
+        "quake",
+        "faxanadu",
+        "dkc2",
+        "papermario"
     ],
     "invincibility": [
-        "cuphead",
-        "mk64",
-        "papermario",
-        "faxanadu",
         "doom_ii",
-        "dkc2",
-        "quake",
-        "sonic_heroes",
         "banjo_tooie",
+        "mk64",
+        "sonic_heroes",
         "rogue_legacy",
-        "jakanddaxter"
+        "cuphead",
+        "jakanddaxter",
+        "quake",
+        "faxanadu",
+        "dkc2",
+        "papermario"
     ],
     "gliding": [
-        "spyro3",
-        "kh1",
         "tmc",
         "banjo_tooie",
         "sms",
+        "sly1",
         "shorthike",
-        "sly1"
+        "kh1",
+        "spyro3"
     ],
     "lgbtq+": [
-        "sims4",
-        "timespinner",
-        "celeste_open_world",
-        "celeste64",
-        "banjo_tooie",
         "celeste",
+        "banjo_tooie",
+        "timespinner",
+        "rogue_legacy",
         "simpsonshitnrun",
-        "rogue_legacy"
+        "celeste64",
+        "sims4",
+        "celeste_open_world"
     ],
     "blasphemous": [
         "blasphemous"
     ],
     "role-playing (rpg)": [
-        "soe",
-        "pokemon_frlg",
-        "pmd_eos",
-        "landstalker",
-        "kh2",
-        "mmbn3",
-        "stardew_valley",
-        "toontown",
-        "tunic",
-        "rogue_legacy",
-        "wargroove2",
-        "meritous",
-        "ff1",
-        "ffmq",
-        "hades",
+        "madou",
         "osrs",
-        "enderlilies",
-        "noita",
-        "faxanadu",
-        "hylics2",
-        "lufia2ac",
-        "papermario",
-        "ror1",
-        "sotn",
-        "bomb_rush_cyberfunk",
-        "zelda2",
-        "cvcotm",
-        "kh1",
-        "ufo50",
+        "tunic",
+        "crystal_project",
+        "pokemon_emerald",
+        "timespinner",
         "candybox2",
-        "mlss",
+        "ctjot",
+        "dsr",
+        "zelda2",
+        "undertale",
+        "monster_sanctuary",
+        "ff4fe",
+        "wargroove2",
+        "pokemon_rb",
+        "terraria",
+        "dw1",
+        "huniepop",
+        "lunacid",
+        "soe",
+        "bomb_rush_cyberfunk",
+        "hades",
         "xenobladex",
         "pokemon_crystal",
-        "undertale",
-        "ctjot",
-        "crystal_project",
-        "cat_quest",
-        "ff4fe",
-        "blasphemous",
-        "huniepop",
-        "tloz_oos",
-        "pokemon_rb",
-        "ffta",
-        "lunacid",
-        "pokemon_emerald",
-        "gstla",
-        "chainedechoes",
-        "tloz_ooa",
-        "timespinner",
-        "crosscode",
-        "earthbound",
-        "dsr",
-        "monster_sanctuary",
-        "dw1",
-        "sims4",
-        "dark_souls_2",
-        "poe",
+        "hylics2",
+        "dredge",
         "brotato",
-        "terraria",
-        "dark_souls_3"
+        "kh1",
+        "ror1",
+        "mmbn3",
+        "crosscode",
+        "landstalker",
+        "tloz_oos",
+        "rogue_legacy",
+        "sims4",
+        "kh2",
+        "faxanadu",
+        "dark_souls_2",
+        "tloz_ooa",
+        "pokemon_frlg",
+        "ufo50",
+        "cvcotm",
+        "enderlilies",
+        "sotn",
+        "ff1",
+        "mlss",
+        "pmd_eos",
+        "dark_souls_3",
+        "stardew_valley",
+        "poe",
+        "lufia2ac",
+        "meritous",
+        "earthbound",
+        "gstla",
+        "cat_quest",
+        "chainedechoes",
+        "ffta",
+        "toontown",
+        "ffmq",
+        "blasphemous",
+        "noita",
+        "papermario"
     ],
     "role-playing": [
-        "soe",
-        "pokemon_frlg",
-        "pmd_eos",
-        "landstalker",
-        "kh2",
-        "mmbn3",
-        "stardew_valley",
-        "toontown",
-        "tunic",
-        "rogue_legacy",
-        "wargroove2",
-        "meritous",
-        "ff1",
-        "ffmq",
-        "hades",
+        "madou",
         "osrs",
-        "enderlilies",
-        "noita",
-        "faxanadu",
-        "hylics2",
-        "lufia2ac",
-        "papermario",
-        "ror1",
-        "sotn",
-        "bomb_rush_cyberfunk",
-        "zelda2",
-        "cvcotm",
-        "kh1",
-        "ufo50",
+        "tunic",
+        "crystal_project",
+        "pokemon_emerald",
+        "timespinner",
         "candybox2",
-        "mlss",
+        "ctjot",
+        "dsr",
+        "zelda2",
+        "undertale",
+        "monster_sanctuary",
+        "ff4fe",
+        "wargroove2",
+        "pokemon_rb",
+        "terraria",
+        "dw1",
+        "huniepop",
+        "lunacid",
+        "soe",
+        "bomb_rush_cyberfunk",
+        "hades",
         "xenobladex",
         "pokemon_crystal",
-        "undertale",
-        "ctjot",
-        "crystal_project",
-        "cat_quest",
-        "ff4fe",
-        "blasphemous",
-        "huniepop",
-        "tloz_oos",
-        "pokemon_rb",
-        "ffta",
-        "lunacid",
-        "pokemon_emerald",
-        "gstla",
-        "chainedechoes",
-        "tloz_ooa",
-        "timespinner",
-        "crosscode",
-        "earthbound",
-        "dsr",
-        "monster_sanctuary",
-        "dw1",
-        "sims4",
-        "dark_souls_2",
-        "poe",
+        "hylics2",
+        "dredge",
         "brotato",
-        "terraria",
-        "dark_souls_3"
+        "kh1",
+        "ror1",
+        "mmbn3",
+        "crosscode",
+        "landstalker",
+        "tloz_oos",
+        "rogue_legacy",
+        "sims4",
+        "kh2",
+        "faxanadu",
+        "dark_souls_2",
+        "tloz_ooa",
+        "pokemon_frlg",
+        "ufo50",
+        "cvcotm",
+        "enderlilies",
+        "sotn",
+        "ff1",
+        "mlss",
+        "pmd_eos",
+        "dark_souls_3",
+        "stardew_valley",
+        "poe",
+        "lufia2ac",
+        "meritous",
+        "earthbound",
+        "gstla",
+        "cat_quest",
+        "chainedechoes",
+        "ffta",
+        "toontown",
+        "ffmq",
+        "blasphemous",
+        "noita",
+        "papermario"
     ],
     "(rpg)": [
-        "soe",
-        "pokemon_frlg",
-        "pmd_eos",
-        "landstalker",
-        "kh2",
-        "mmbn3",
-        "stardew_valley",
-        "toontown",
-        "tunic",
-        "rogue_legacy",
-        "wargroove2",
-        "meritous",
-        "ff1",
-        "ffmq",
-        "hades",
+        "madou",
         "osrs",
-        "enderlilies",
-        "noita",
-        "faxanadu",
-        "hylics2",
-        "lufia2ac",
-        "papermario",
-        "ror1",
-        "sotn",
-        "bomb_rush_cyberfunk",
-        "zelda2",
-        "cvcotm",
-        "kh1",
-        "ufo50",
+        "tunic",
+        "crystal_project",
+        "pokemon_emerald",
+        "timespinner",
         "candybox2",
-        "mlss",
+        "ctjot",
+        "dsr",
+        "zelda2",
+        "undertale",
+        "monster_sanctuary",
+        "ff4fe",
+        "wargroove2",
+        "pokemon_rb",
+        "terraria",
+        "dw1",
+        "huniepop",
+        "lunacid",
+        "soe",
+        "bomb_rush_cyberfunk",
+        "hades",
         "xenobladex",
         "pokemon_crystal",
-        "undertale",
-        "ctjot",
-        "crystal_project",
-        "cat_quest",
-        "ff4fe",
-        "blasphemous",
-        "huniepop",
-        "tloz_oos",
-        "pokemon_rb",
-        "ffta",
-        "lunacid",
-        "pokemon_emerald",
-        "gstla",
-        "chainedechoes",
-        "tloz_ooa",
-        "timespinner",
-        "crosscode",
-        "earthbound",
-        "dsr",
-        "monster_sanctuary",
-        "dw1",
-        "sims4",
-        "dark_souls_2",
-        "poe",
+        "hylics2",
+        "dredge",
         "brotato",
-        "terraria",
-        "dark_souls_3"
+        "kh1",
+        "ror1",
+        "mmbn3",
+        "crosscode",
+        "landstalker",
+        "tloz_oos",
+        "rogue_legacy",
+        "sims4",
+        "kh2",
+        "faxanadu",
+        "dark_souls_2",
+        "tloz_ooa",
+        "pokemon_frlg",
+        "ufo50",
+        "cvcotm",
+        "enderlilies",
+        "sotn",
+        "ff1",
+        "mlss",
+        "pmd_eos",
+        "dark_souls_3",
+        "stardew_valley",
+        "poe",
+        "lufia2ac",
+        "meritous",
+        "earthbound",
+        "gstla",
+        "cat_quest",
+        "chainedechoes",
+        "ffta",
+        "toontown",
+        "ffmq",
+        "blasphemous",
+        "noita",
+        "papermario"
     ],
     "hack and slash/beat 'em up": [
-        "hades",
-        "cv64",
         "ror1",
+        "hades",
         "poe",
-        "blasphemous"
+        "cv64",
+        "blasphemous",
+        "nine_sols"
     ],
     "hack": [
-        "hades",
-        "cv64",
         "ror1",
+        "hades",
         "poe",
-        "blasphemous"
+        "cv64",
+        "blasphemous",
+        "nine_sols"
     ],
     "slash/beat": [
-        "hades",
-        "cv64",
         "ror1",
+        "hades",
         "poe",
-        "blasphemous"
+        "cv64",
+        "blasphemous",
+        "nine_sols"
     ],
     "'em": [
-        "hades",
-        "cv64",
         "ror1",
+        "hades",
         "poe",
-        "blasphemous"
+        "cv64",
+        "blasphemous",
+        "nine_sols"
     ],
     "up": [
         "pokemon_emerald",
-        "gstla",
-        "hades",
-        "cv64",
-        "pokemon_crystal",
-        "ror1",
-        "papermario",
-        "sotn",
-        "earthbound",
-        "undertale",
         "zelda2",
+        "undertale",
         "dw1",
-        "landstalker",
-        "cvcotm",
+        "hades",
+        "pokemon_crystal",
         "kh1",
+        "nine_sols",
+        "ror1",
+        "landstalker",
+        "cv64",
         "dark_souls_2",
+        "cvcotm",
+        "sotn",
         "poe",
-        "blasphemous"
+        "earthbound",
+        "gstla",
+        "blasphemous",
+        "papermario"
     ],
     "bloody": [
-        "heretic",
-        "cv64",
-        "sotn",
-        "metroidprime",
         "doom_ii",
-        "quake",
-        "residentevil2remake",
+        "sotn",
         "poe",
-        "blasphemous",
-        "ultrakill"
-    ],
-    "difficult": [
-        "hades",
-        "getting_over_it",
-        "ror1",
-        "dontstarvetogether",
-        "celeste_open_world",
-        "zelda2",
-        "celeste",
-        "messenger",
-        "tunic",
+        "residentevil2remake",
+        "ultrakill",
+        "metroidprime",
+        "heretic",
+        "quake",
+        "cv64",
         "blasphemous"
     ],
+    "difficult": [
+        "ror1",
+        "tunic",
+        "celeste",
+        "getting_over_it",
+        "hades",
+        "dontstarvetogether",
+        "zelda2",
+        "messenger",
+        "blasphemous",
+        "celeste_open_world"
+    ],
     "side-scrolling": [
-        "dkc",
         "k64",
+        "mm3",
+        "zelda2",
+        "metroidfusion",
+        "musedash",
+        "kdl3",
         "yoshisisland",
-        "rogue_legacy",
-        "dkc3",
-        "cuphead",
-        "sotn",
+        "mmx3",
+        "sm_map_rando",
+        "mzm",
         "hylics2",
         "dkc2",
-        "sm_map_rando",
-        "zelda2",
-        "mmx3",
-        "sm",
-        "mm3",
-        "musedash",
-        "mzm",
         "mm2",
-        "kdl3",
-        "blasphemous",
-        "metroidfusion"
+        "sm",
+        "rogue_legacy",
+        "cuphead",
+        "dkc",
+        "dkc3",
+        "sotn",
+        "blasphemous"
     ],
     "great soundtrack": [
-        "getting_over_it",
-        "undertale",
-        "celeste_open_world",
-        "hylics2",
+        "tunic",
         "bomb_rush_cyberfunk",
         "celeste",
-        "tunic",
-        "blasphemous",
+        "getting_over_it",
+        "ultrakill",
+        "hylics2",
+        "undertale",
         "shorthike",
-        "ultrakill"
+        "blasphemous",
+        "celeste_open_world"
     ],
     "great": [
-        "getting_over_it",
-        "undertale",
-        "celeste_open_world",
-        "hylics2",
+        "tunic",
         "bomb_rush_cyberfunk",
         "celeste",
-        "tunic",
-        "blasphemous",
+        "getting_over_it",
+        "ultrakill",
+        "hylics2",
+        "undertale",
         "shorthike",
-        "ultrakill"
+        "blasphemous",
+        "celeste_open_world"
     ],
     "soundtrack": [
-        "getting_over_it",
-        "undertale",
-        "celeste_open_world",
-        "hylics2",
+        "tunic",
         "bomb_rush_cyberfunk",
         "celeste",
-        "tunic",
-        "blasphemous",
+        "getting_over_it",
+        "ultrakill",
+        "hylics2",
+        "undertale",
         "shorthike",
-        "ultrakill"
+        "blasphemous",
+        "celeste_open_world"
     ],
     "soulslike": [
         "enderlilies",
-        "blasphemous",
+        "tunic",
+        "dark_souls_3",
         "dsr",
         "dark_souls_2",
-        "tunic",
-        "dark_souls_3"
+        "blasphemous"
     ],
     "you can pet the dog": [
-        "sims4",
-        "hades",
-        "undertale",
         "seaofthieves",
+        "hades",
         "overcooked2",
-        "terraria",
-        "blasphemous"
+        "undertale",
+        "sims4",
+        "blasphemous",
+        "terraria"
     ],
     "you": [
-        "sims4",
-        "hades",
-        "undertale",
         "seaofthieves",
+        "hades",
         "overcooked2",
-        "terraria",
-        "blasphemous"
+        "undertale",
+        "sims4",
+        "blasphemous",
+        "terraria"
     ],
     "can": [
-        "sims4",
-        "hades",
-        "undertale",
         "seaofthieves",
+        "hades",
         "overcooked2",
-        "terraria",
-        "blasphemous"
+        "undertale",
+        "sims4",
+        "blasphemous",
+        "terraria"
     ],
     "pet": [
-        "sims4",
-        "hades",
-        "undertale",
         "seaofthieves",
+        "hades",
         "overcooked2",
-        "terraria",
-        "blasphemous"
+        "undertale",
+        "sims4",
+        "blasphemous",
+        "terraria"
     ],
     "dog": [
         "soe",
-        "doronko_wanko",
-        "hades",
-        "cv64",
-        "sims4",
-        "smo",
-        "undertale",
-        "hcniko",
-        "star_fox_64",
-        "minecraft",
         "seaofthieves",
-        "tmc",
-        "overcooked2",
+        "hades",
         "terraria",
-        "blasphemous",
-        "oot",
+        "tmc",
+        "tloz_oos",
+        "doronko_wanko",
+        "overcooked2",
+        "hcniko",
+        "minecraft",
         "sly1",
-        "tloz_oos"
+        "cv64",
+        "undertale",
+        "sims4",
+        "blasphemous",
+        "smo",
+        "oot",
+        "star_fox_64"
     ],
     "interconnected-world": [
-        "blasphemous",
-        "luigismansion",
         "sotn",
-        "dsr",
         "sm_map_rando",
-        "hk",
-        "dark_souls_2",
         "mzm",
         "dark_souls_3",
-        "sm"
+        "sm",
+        "luigismansion",
+        "dsr",
+        "dark_souls_2",
+        "hk",
+        "blasphemous"
     ],
     "bomb rush cyberfunk": [
         "bomb_rush_cyberfunk"
@@ -15506,133 +16098,136 @@ SEARCH_INDEX = {
         "trackmania"
     ],
     "science fiction": [
-        "soe",
-        "pokemon_frlg",
-        "metroidprime",
-        "ror2",
-        "star_fox_64",
         "factorio_saws",
-        "mmbn3",
-        "rac2",
-        "ror1",
-        "lethal_company",
-        "sc2",
+        "mm3",
+        "witness",
+        "ctjot",
+        "metroidprime",
+        "v6",
+        "metroidfusion",
+        "zillion",
+        "tyrian",
+        "factorio",
+        "terraria",
+        "mmx3",
         "sm_map_rando",
         "bomb_rush_cyberfunk",
-        "satisfactory",
-        "zillion",
-        "mmx3",
-        "sm",
-        "swr",
-        "jakanddaxter",
-        "xenobladex",
-        "mm3",
-        "doom_ii",
-        "tyrian",
-        "ctjot",
-        "lego_star_wars_tcs",
         "mzm",
-        "doom_1993",
-        "mm2",
-        "rimworld",
-        "ultrakill",
-        "witness",
-        "crosscode",
-        "earthbound",
-        "v6",
-        "quake",
-        "metroidfusion",
-        "brotato",
-        "factorio",
+        "satisfactory",
+        "sc2",
+        "soe",
+        "outer_wilds",
         "subnautica",
-        "terraria",
-        "outer_wilds"
+        "xenobladex",
+        "quake",
+        "rac2",
+        "brotato",
+        "doom_1993",
+        "nine_sols",
+        "mm2",
+        "ror1",
+        "doom_ii",
+        "mmbn3",
+        "lethal_company",
+        "crosscode",
+        "sm",
+        "jakanddaxter",
+        "pokemon_frlg",
+        "ror2",
+        "lego_star_wars_tcs",
+        "ultrakill",
+        "earthbound",
+        "rimworld",
+        "swr",
+        "star_fox_64"
     ],
     "science": [
-        "soe",
-        "pokemon_frlg",
-        "metroidprime",
-        "ror2",
-        "star_fox_64",
         "factorio_saws",
-        "mmbn3",
-        "rac2",
-        "ror1",
-        "lethal_company",
-        "sc2",
+        "mm3",
+        "witness",
+        "ctjot",
+        "metroidprime",
+        "v6",
+        "metroidfusion",
+        "zillion",
+        "tyrian",
+        "factorio",
+        "terraria",
+        "mmx3",
         "sm_map_rando",
         "bomb_rush_cyberfunk",
-        "satisfactory",
-        "zillion",
-        "mmx3",
-        "sm",
-        "swr",
-        "jakanddaxter",
-        "xenobladex",
-        "mm3",
-        "doom_ii",
-        "tyrian",
-        "ctjot",
-        "lego_star_wars_tcs",
         "mzm",
-        "doom_1993",
-        "mm2",
-        "rimworld",
-        "ultrakill",
-        "witness",
-        "crosscode",
-        "earthbound",
-        "v6",
-        "quake",
-        "metroidfusion",
-        "brotato",
-        "factorio",
+        "satisfactory",
+        "sc2",
+        "soe",
+        "outer_wilds",
         "subnautica",
-        "terraria",
-        "outer_wilds"
+        "xenobladex",
+        "quake",
+        "rac2",
+        "brotato",
+        "doom_1993",
+        "nine_sols",
+        "mm2",
+        "ror1",
+        "doom_ii",
+        "mmbn3",
+        "lethal_company",
+        "crosscode",
+        "sm",
+        "jakanddaxter",
+        "pokemon_frlg",
+        "ror2",
+        "lego_star_wars_tcs",
+        "ultrakill",
+        "earthbound",
+        "rimworld",
+        "swr",
+        "star_fox_64"
     ],
     "fiction": [
-        "soe",
-        "pokemon_frlg",
-        "metroidprime",
-        "ror2",
-        "star_fox_64",
         "factorio_saws",
-        "mmbn3",
-        "rac2",
-        "ror1",
-        "lethal_company",
-        "sc2",
+        "mm3",
+        "witness",
+        "ctjot",
+        "metroidprime",
+        "v6",
+        "metroidfusion",
+        "zillion",
+        "tyrian",
+        "factorio",
+        "terraria",
+        "mmx3",
         "sm_map_rando",
         "bomb_rush_cyberfunk",
-        "satisfactory",
-        "zillion",
-        "mmx3",
-        "sm",
-        "swr",
-        "jakanddaxter",
-        "xenobladex",
-        "mm3",
-        "doom_ii",
-        "tyrian",
-        "ctjot",
-        "lego_star_wars_tcs",
         "mzm",
-        "doom_1993",
-        "mm2",
-        "rimworld",
-        "ultrakill",
-        "witness",
-        "crosscode",
-        "earthbound",
-        "v6",
-        "quake",
-        "metroidfusion",
-        "brotato",
-        "factorio",
+        "satisfactory",
+        "sc2",
+        "soe",
+        "outer_wilds",
         "subnautica",
-        "terraria",
-        "outer_wilds"
+        "xenobladex",
+        "quake",
+        "rac2",
+        "brotato",
+        "doom_1993",
+        "nine_sols",
+        "mm2",
+        "ror1",
+        "doom_ii",
+        "mmbn3",
+        "lethal_company",
+        "crosscode",
+        "sm",
+        "jakanddaxter",
+        "pokemon_frlg",
+        "ror2",
+        "lego_star_wars_tcs",
+        "ultrakill",
+        "earthbound",
+        "rimworld",
+        "swr",
+        "star_fox_64"
     ],
     "brotato": [
         "brotato"
@@ -15641,49 +16236,49 @@ SEARCH_INDEX = {
         "brotato"
     ],
     "shooter": [
-        "metroidprime",
-        "ror2",
-        "star_fox_64",
-        "rac2",
-        "cuphead",
-        "ror1",
-        "noita",
-        "sm_map_rando",
-        "ufo50",
-        "mmx3",
-        "sm",
-        "heretic",
-        "doom_ii",
-        "tyrian",
-        "frogmonster",
-        "mzm",
-        "doom_1993",
-        "ultrakill",
-        "tboir",
-        "crosscode",
-        "residentevil3remake",
-        "quake",
         "residentevil2remake",
+        "metroidprime",
         "metroidfusion",
-        "brotato"
+        "frogmonster",
+        "tyrian",
+        "mmx3",
+        "sm_map_rando",
+        "mzm",
+        "quake",
+        "rac2",
+        "brotato",
+        "doom_1993",
+        "residentevil3remake",
+        "ror1",
+        "doom_ii",
+        "sm",
+        "crosscode",
+        "cuphead",
+        "heretic",
+        "tboir",
+        "ufo50",
+        "ror2",
+        "ultrakill",
+        "star_fox_64",
+        "noita"
     ],
     "arcade": [
-        "cuphead",
-        "mk64",
-        "smw",
-        "mm3",
-        "trackmania",
-        "noita",
-        "v6",
-        "tyrian",
-        "ultrakill",
-        "megamix",
-        "ufo50",
-        "brotato",
-        "messenger",
-        "overcooked2",
         "osu",
-        "mario_kart_double_dash"
+        "trackmania",
+        "megamix",
+        "mm3",
+        "mk64",
+        "overcooked2",
+        "ultrakill",
+        "cuphead",
+        "smw",
+        "v6",
+        "mario_kart_double_dash",
+        "messenger",
+        "brotato",
+        "tyrian",
+        "noita",
+        "ufo50"
     ],
     "bumper stickers": [
         "bumpstik"
@@ -15714,102 +16309,104 @@ SEARCH_INDEX = {
         "candybox2"
     ],
     "2": [
-        "candybox2",
-        "smo",
-        "hylics2",
-        "rac2",
-        "sonic_heroes",
-        "ror2",
         "dw1",
-        "residentevil2remake",
-        "kh1",
-        "kh2",
-        "kindergarten_2",
         "stardew_valley",
-        "wargroove2",
+        "ror2",
+        "kindergarten_2",
         "overcooked2",
+        "candybox2",
+        "residentevil2remake",
+        "sonic_heroes",
+        "jakanddaxter",
+        "hylics2",
+        "kh2",
+        "rac2",
         "simpsonshitnrun",
         "sly1",
-        "jakanddaxter"
+        "wargroove2",
+        "kh1",
+        "smo"
     ],
     "text": [
-        "candybox2",
+        "huniepop",
         "osrs",
         "huniepop2",
-        "yugioh06",
-        "huniepop"
+        "candybox2",
+        "yugioh06"
     ],
     "web browser": [
-        "candybox2",
-        "ttyd"
+        "ttyd",
+        "candybox2"
     ],
     "web": [
-        "candybox2",
-        "ttyd"
+        "ttyd",
+        "candybox2"
     ],
     "browser": [
-        "candybox2",
-        "ttyd"
+        "ttyd",
+        "candybox2"
     ],
     "cat quest": [
         "cat_quest"
     ],
     "cat": [
-        "cuphead",
-        "wl4",
-        "dkc2",
-        "minecraft",
-        "kh1",
         "tmc",
+        "tloz_oos",
+        "wl4",
+        "minecraft",
         "cat_quest",
-        "tloz_oos"
+        "cuphead",
+        "dkc2",
+        "kh1"
     ],
     "quest": [
-        "ffmq",
+        "cat_quest",
         "dlcquest",
         "dkc2",
-        "cat_quest"
+        "ffmq"
     ],
     "celeste": [
-        "celeste_open_world",
         "celeste64",
+        "celeste_open_world",
         "celeste"
     ],
     "google stadia": [
         "ror2",
-        "terraria",
         "celeste_open_world",
-        "celeste"
+        "celeste",
+        "terraria"
     ],
     "google": [
         "ror2",
-        "terraria",
         "celeste_open_world",
-        "celeste"
+        "celeste",
+        "terraria"
     ],
     "stadia": [
         "ror2",
-        "terraria",
         "celeste_open_world",
-        "celeste"
+        "celeste",
+        "terraria"
     ],
     "story rich": [
         "hades",
+        "celeste",
         "getting_over_it",
-        "undertale",
         "hylics2",
-        "celeste_open_world",
+        "dredge",
         "powerwashsimulator",
-        "celeste"
+        "undertale",
+        "celeste_open_world"
     ],
     "rich": [
         "hades",
+        "celeste",
         "getting_over_it",
-        "undertale",
         "hylics2",
-        "celeste_open_world",
+        "dredge",
         "powerwashsimulator",
-        "celeste"
+        "undertale",
+        "celeste_open_world"
     ],
     "celeste 64": [
         "celeste64"
@@ -15840,14 +16437,14 @@ SEARCH_INDEX = {
         "chainedechoes"
     ],
     "jrpg": [
-        "ffta",
-        "chainedechoes",
-        "ffmq",
         "ff1",
-        "hylics2",
-        "pmd_eos",
         "crystal_project",
-        "ff4fe"
+        "pmd_eos",
+        "hylics2",
+        "chainedechoes",
+        "ffta",
+        "ff4fe",
+        "ffmq"
     ],
     "civilization vi": [
         "civ_6"
@@ -15871,96 +16468,96 @@ SEARCH_INDEX = {
         "civ_6"
     ],
     "4x (explore, expand, exploit, and exterminate)": [
-        "openrct2",
-        "civ_6"
+        "civ_6",
+        "openrct2"
     ],
     "4x": [
-        "openrct2",
-        "civ_6"
+        "civ_6",
+        "openrct2"
     ],
     "(explore,": [
-        "openrct2",
-        "civ_6"
+        "civ_6",
+        "openrct2"
     ],
     "expand,": [
-        "openrct2",
-        "civ_6"
+        "civ_6",
+        "openrct2"
     ],
     "exploit,": [
-        "openrct2",
-        "civ_6"
+        "civ_6",
+        "openrct2"
     ],
     "exterminate)": [
-        "openrct2",
-        "civ_6"
+        "civ_6",
+        "openrct2"
     ],
     "loot gathering": [
-        "xenobladex",
-        "cv64",
-        "dk64",
         "civ_6",
+        "xenobladex",
         "minecraft",
+        "dk64",
+        "cv64",
         "terraria"
     ],
     "loot": [
-        "xenobladex",
-        "cv64",
-        "dk64",
         "civ_6",
+        "xenobladex",
         "minecraft",
+        "dk64",
+        "cv64",
         "terraria"
     ],
     "gathering": [
-        "xenobladex",
-        "cv64",
-        "dk64",
         "civ_6",
+        "xenobladex",
         "minecraft",
+        "dk64",
+        "cv64",
         "terraria"
     ],
     "ambient music": [
         "soe",
-        "cv64",
-        "dkc",
-        "metroidprime",
-        "dkc2",
-        "civ_6",
-        "metroidfusion",
         "mzm",
+        "civ_6",
+        "metroidprime",
+        "cv64",
+        "dkc2",
+        "metroidfusion",
+        "dkc",
         "dkc3"
     ],
     "ambient": [
         "soe",
-        "cv64",
-        "dkc",
-        "metroidprime",
-        "dkc2",
-        "civ_6",
-        "metroidfusion",
         "mzm",
+        "civ_6",
+        "metroidprime",
+        "cv64",
+        "dkc2",
+        "metroidfusion",
+        "dkc",
         "dkc3"
     ],
     "music": [
+        "sonic_heroes",
+        "metroidprime",
+        "metroidfusion",
+        "musedash",
+        "osu",
         "soe",
+        "mzm",
+        "dkc2",
+        "doom_ii",
+        "civ_6",
+        "megamix",
         "cv64",
         "dkc",
-        "metroidprime",
-        "civ_6",
         "dkc3",
-        "ffmq",
         "sotn",
-        "dkc2",
-        "placidplasticducksim",
-        "musedash",
-        "doom_ii",
-        "megamix",
-        "mzm",
         "ultrakill",
-        "ffta",
         "gstla",
-        "sonic_heroes",
-        "metroidfusion",
-        "osu"
+        "ffta",
+        "ffmq",
+        "placidplasticducksim"
     ],
     "crosscode": [
         "crosscode"
@@ -15969,20 +16566,20 @@ SEARCH_INDEX = {
         "crystal_project"
     ],
     "crystal": [
+        "k64",
         "pokemon_crystal",
-        "crystal_project",
-        "k64"
+        "crystal_project"
     ],
     "project": [
         "megamix",
         "crystal_project"
     ],
     "tactical": [
-        "ffta",
-        "wargroove",
-        "crystal_project",
         "mmbn3",
-        "overcooked2"
+        "crystal_project",
+        "wargroove",
+        "overcooked2",
+        "ffta"
     ],
     "chrono trigger jets of time": [
         "ctjot"
@@ -15998,128 +16595,128 @@ SEARCH_INDEX = {
     ],
     "nintendo ds": [
         "tloz_ph",
-        "ctjot",
-        "pmd_eos"
+        "pmd_eos",
+        "ctjot"
     ],
     "ds": [
         "tloz_ph",
-        "ctjot",
-        "pmd_eos"
+        "pmd_eos",
+        "ctjot"
     ],
     "cuphead": [
         "cuphead"
     ],
     "pirates": [
-        "cuphead",
-        "tloz_ooa",
-        "metroidprime",
-        "dkc2",
-        "kh1",
-        "seaofthieves",
-        "metroidfusion",
         "mzm",
+        "seaofthieves",
+        "tloz_oos",
         "tloz_ph",
+        "cuphead",
+        "metroidprime",
+        "metroidfusion",
+        "dkc2",
         "wargroove2",
-        "tloz_oos"
+        "tloz_ooa",
+        "kh1"
     ],
     "robots": [
-        "cuphead",
-        "xenobladex",
-        "mm3",
-        "earthbound",
-        "sonic_heroes",
-        "star_fox_64",
-        "ultrakill",
-        "lego_star_wars_tcs",
-        "metroidfusion",
-        "mm2",
         "mmx3",
+        "xenobladex",
+        "lego_star_wars_tcs",
+        "mm3",
+        "sonic_heroes",
+        "earthbound",
+        "sms",
+        "ultrakill",
+        "cuphead",
+        "metroidfusion",
         "swr",
-        "sms"
+        "star_fox_64",
+        "mm2"
     ],
     "violent plants": [
+        "ss",
+        "sms",
+        "rogue_legacy",
         "cuphead",
         "metroidprime",
         "metroidfusion",
-        "sms",
-        "terraria",
-        "rogue_legacy",
-        "ss"
+        "terraria"
     ],
     "violent": [
+        "ss",
+        "sms",
+        "rogue_legacy",
         "cuphead",
         "metroidprime",
         "metroidfusion",
-        "sms",
-        "terraria",
-        "rogue_legacy",
-        "ss"
+        "terraria"
     ],
     "plants": [
+        "ss",
+        "sms",
+        "rogue_legacy",
         "cuphead",
         "metroidprime",
         "metroidfusion",
-        "sms",
-        "terraria",
-        "rogue_legacy",
-        "ss"
+        "terraria"
     ],
     "auto-scrolling levels": [
+        "k64",
         "cuphead",
-        "dkc",
         "v6",
         "dkc2",
-        "k64",
-        "star_fox_64",
-        "dkc3"
+        "dkc",
+        "dkc3",
+        "star_fox_64"
     ],
     "auto-scrolling": [
+        "k64",
         "cuphead",
-        "dkc",
         "v6",
         "dkc2",
-        "k64",
-        "star_fox_64",
-        "dkc3"
+        "dkc",
+        "dkc3",
+        "star_fox_64"
     ],
     "levels": [
+        "k64",
         "cuphead",
-        "dkc",
         "v6",
         "dkc2",
-        "k64",
-        "star_fox_64",
-        "dkc3"
+        "dkc",
+        "dkc3",
+        "star_fox_64"
     ],
     "boss assistance": [
-        "cuphead",
-        "tloz_ph",
-        "dkc",
-        "mm_recomp",
         "doom_ii",
-        "metroidprime",
-        "papermario",
-        "dkc2",
         "tmc",
-        "dark_souls_2",
+        "tloz_ph",
+        "mm_recomp",
         "sms",
         "rogue_legacy",
-        "oot"
+        "cuphead",
+        "metroidprime",
+        "dkc2",
+        "dark_souls_2",
+        "dkc",
+        "oot",
+        "papermario"
     ],
     "assistance": [
-        "cuphead",
-        "tloz_ph",
-        "dkc",
-        "mm_recomp",
         "doom_ii",
-        "metroidprime",
-        "papermario",
-        "dkc2",
         "tmc",
-        "dark_souls_2",
+        "tloz_ph",
+        "mm_recomp",
         "sms",
         "rogue_legacy",
-        "oot"
+        "cuphead",
+        "metroidprime",
+        "dkc2",
+        "dark_souls_2",
+        "dkc",
+        "oot",
+        "papermario"
     ],
     "castlevania 64": [
         "cv64"
@@ -16128,236 +16725,236 @@ SEARCH_INDEX = {
         "cv64"
     ],
     "horse": [
-        "cv64",
-        "sotn",
         "cvcotm",
+        "sotn",
         "minecraft",
         "rogue_legacy",
+        "cv64",
         "oot"
     ],
     "multiple protagonists": [
-        "mlss",
-        "cv64",
-        "spyro3",
-        "dk64",
-        "dkc",
         "sotn",
+        "mmx3",
+        "mlss",
+        "lego_star_wars_tcs",
+        "sonic_heroes",
         "earthbound",
         "rogue_legacy",
+        "dk64",
+        "cv64",
         "dkc2",
-        "sonic_heroes",
-        "lego_star_wars_tcs",
-        "mmx3",
-        "dkc3"
+        "dkc",
+        "dkc3",
+        "spyro3"
     ],
     "protagonists": [
-        "mlss",
-        "cv64",
-        "spyro3",
-        "dk64",
-        "dkc",
         "sotn",
+        "mmx3",
+        "mlss",
+        "lego_star_wars_tcs",
+        "sonic_heroes",
         "earthbound",
         "rogue_legacy",
+        "dk64",
+        "cv64",
         "dkc2",
-        "sonic_heroes",
-        "lego_star_wars_tcs",
-        "mmx3",
-        "dkc3"
+        "dkc",
+        "dkc3",
+        "spyro3"
     ],
     "traps": [
-        "cv64",
         "doom_ii",
-        "minecraft",
         "tmc",
+        "minecraft",
+        "rogue_legacy",
         "metroidfusion",
-        "dark_souls_2",
-        "rogue_legacy"
+        "cv64",
+        "dark_souls_2"
     ],
     "bats": [
-        "mk64",
-        "cv64",
-        "pokemon_crystal",
-        "sotn",
-        "zelda2",
         "cvcotm",
+        "sotn",
+        "pokemon_crystal",
+        "mk64",
+        "zelda2",
+        "cv64",
         "terraria"
     ],
     "day/night cycle": [
-        "xenobladex",
-        "cv64",
-        "pokemon_crystal",
-        "dk64",
-        "mm_recomp",
         "sotn",
-        "tww",
-        "ss",
-        "minecraft",
         "stardew_valley",
         "terraria",
-        "oot",
-        "jakanddaxter"
+        "xenobladex",
+        "pokemon_crystal",
+        "tww",
+        "mm_recomp",
+        "ss",
+        "minecraft",
+        "jakanddaxter",
+        "dk64",
+        "cv64",
+        "oot"
     ],
     "day/night": [
-        "xenobladex",
-        "cv64",
-        "pokemon_crystal",
-        "dk64",
-        "mm_recomp",
         "sotn",
-        "tww",
-        "ss",
-        "minecraft",
         "stardew_valley",
         "terraria",
-        "oot",
-        "jakanddaxter"
+        "xenobladex",
+        "pokemon_crystal",
+        "tww",
+        "mm_recomp",
+        "ss",
+        "minecraft",
+        "jakanddaxter",
+        "dk64",
+        "cv64",
+        "oot"
     ],
     "cycle": [
-        "xenobladex",
-        "cv64",
-        "pokemon_crystal",
-        "dk64",
-        "mm_recomp",
         "sotn",
-        "tww",
-        "ss",
-        "minecraft",
         "stardew_valley",
         "terraria",
-        "oot",
-        "jakanddaxter"
+        "xenobladex",
+        "pokemon_crystal",
+        "tww",
+        "mm_recomp",
+        "ss",
+        "minecraft",
+        "jakanddaxter",
+        "dk64",
+        "cv64",
+        "oot"
     ],
     "skeletons": [
-        "heretic",
-        "cv64",
-        "undertale",
-        "sotn",
         "cvcotm",
+        "sotn",
         "seaofthieves",
         "minecraft",
-        "terraria",
-        "sly1"
-    ],
-    "unstable platforms": [
-        "cv64",
-        "dkc",
-        "metroidprime",
-        "doom_ii",
-        "v6",
-        "zelda2",
-        "sm_map_rando",
-        "cvcotm",
-        "tmc",
-        "oribf",
-        "sm",
-        "sly1",
-        "sms"
-    ],
-    "unstable": [
-        "cv64",
-        "dkc",
-        "metroidprime",
-        "doom_ii",
-        "v6",
-        "zelda2",
-        "sm_map_rando",
-        "cvcotm",
-        "tmc",
-        "oribf",
-        "sm",
-        "sly1",
-        "sms"
-    ],
-    "melee": [
-        "cv64",
-        "k64",
-        "tunic",
-        "sly1",
-        "papermario",
-        "sotn",
-        "cvcotm",
-        "kh1",
-        "tmc",
         "heretic",
-        "pokemon_crystal",
-        "doom_ii",
-        "lego_star_wars_tcs",
-        "doom_1993",
-        "kdl3",
-        "wl4",
-        "ffta",
-        "pokemon_emerald",
-        "gstla",
-        "quake",
-        "dark_souls_2",
-        "metroidfusion",
+        "sly1",
+        "cv64",
+        "undertale",
         "terraria"
     ],
-    "instant kill": [
+    "unstable platforms": [
+        "cvcotm",
+        "doom_ii",
+        "sm_map_rando",
+        "sm",
+        "tmc",
+        "zelda2",
+        "sms",
+        "metroidprime",
+        "sly1",
+        "v6",
         "cv64",
         "dkc",
+        "oribf"
+    ],
+    "unstable": [
+        "cvcotm",
+        "doom_ii",
+        "sm_map_rando",
+        "sm",
+        "tmc",
+        "zelda2",
+        "sms",
+        "metroidprime",
+        "sly1",
         "v6",
-        "dkc2",
+        "cv64",
+        "dkc",
+        "oribf"
+    ],
+    "melee": [
+        "tunic",
+        "k64",
+        "pokemon_emerald",
         "metroidfusion",
+        "kdl3",
+        "terraria",
+        "pokemon_crystal",
+        "quake",
+        "kh1",
+        "doom_1993",
+        "doom_ii",
+        "heretic",
+        "cv64",
+        "dark_souls_2",
+        "cvcotm",
+        "sotn",
+        "tmc",
+        "lego_star_wars_tcs",
+        "wl4",
+        "gstla",
+        "sly1",
+        "ffta",
+        "papermario"
+    ],
+    "instant kill": [
+        "v6",
+        "metroidfusion",
+        "cv64",
+        "dkc2",
+        "dkc",
         "mm2"
     ],
     "instant": [
-        "cv64",
-        "dkc",
         "v6",
-        "dkc2",
         "metroidfusion",
+        "cv64",
+        "dkc2",
+        "dkc",
         "mm2"
     ],
     "kill": [
-        "cv64",
-        "dkc",
         "v6",
-        "dkc2",
         "metroidfusion",
+        "cv64",
+        "dkc2",
+        "dkc",
         "mm2"
     ],
     "difficulty level": [
+        "osu",
+        "doom_ii",
+        "mzm",
         "mk64",
+        "minecraft",
+        "metroidprime",
         "cv64",
         "musedash",
-        "metroidprime",
-        "doom_ii",
         "star_fox_64",
-        "minecraft",
-        "mzm",
-        "mm2",
-        "osu"
+        "mm2"
     ],
     "difficulty": [
+        "osu",
+        "doom_ii",
+        "mzm",
         "mk64",
+        "minecraft",
+        "metroidprime",
         "cv64",
         "musedash",
-        "metroidprime",
-        "doom_ii",
         "star_fox_64",
-        "minecraft",
-        "mzm",
-        "mm2",
-        "osu"
+        "mm2"
     ],
     "level": [
-        "mk64",
-        "cv64",
-        "musedash",
-        "dkc",
-        "doom_ii",
-        "metroidprime",
-        "dkc2",
-        "star_fox_64",
-        "kh1",
-        "minecraft",
-        "mzm",
-        "mm2",
         "osu",
+        "doom_ii",
+        "mzm",
+        "mk64",
+        "sms",
+        "minecraft",
+        "metroidprime",
+        "cv64",
+        "dkc2",
+        "musedash",
+        "kh1",
+        "dkc",
+        "star_fox_64",
         "oot",
-        "sms"
+        "mm2"
     ],
     "castlevania - circle of the moon": [
         "cvcotm"
@@ -16366,8 +16963,8 @@ SEARCH_INDEX = {
         "cvcotm"
     ],
     "castlevania:": [
-        "sotn",
-        "cvcotm"
+        "cvcotm",
+        "sotn"
     ],
     "circle": [
         "cvcotm"
@@ -16376,213 +16973,213 @@ SEARCH_INDEX = {
         "cvcotm"
     ],
     "game boy advance": [
-        "ffta",
-        "pokemon_emerald",
+        "cvcotm",
+        "mmbn3",
+        "mlss",
+        "mzm",
+        "tmc",
         "yugiohddm",
-        "gstla",
-        "mlss",
-        "pokemon_frlg",
-        "earthbound",
-        "yugioh06",
-        "cvcotm",
-        "tmc",
-        "metroidfusion",
-        "mmbn3",
-        "mzm",
-        "wl4"
-    ],
-    "boy": [
-        "pokemon_frlg",
-        "mmbn3",
-        "yugioh06",
-        "cvcotm",
-        "tmc",
-        "mlss",
-        "pokemon_crystal",
-        "marioland2",
-        "ladx",
-        "mzm",
-        "mm2",
-        "tloz_oos",
-        "pokemon_rb",
-        "ffta",
         "pokemon_emerald",
         "wl4",
         "gstla",
-        "tloz_ooa",
-        "yugiohddm",
-        "wl",
-        "earthbound",
-        "metroidfusion"
-    ],
-    "advance": [
-        "ffta",
-        "pokemon_emerald",
-        "yugiohddm",
-        "gstla",
-        "mlss",
-        "pokemon_frlg",
         "earthbound",
         "yugioh06",
-        "cvcotm",
-        "tmc",
         "metroidfusion",
-        "mmbn3",
+        "ffta",
+        "pokemon_frlg"
+    ],
+    "boy": [
+        "pokemon_emerald",
+        "yugioh06",
+        "metroidfusion",
+        "wl",
+        "pokemon_rb",
         "mzm",
-        "wl4"
+        "yugiohddm",
+        "pokemon_crystal",
+        "marioland2",
+        "mm2",
+        "mmbn3",
+        "tloz_oos",
+        "tloz_ooa",
+        "pokemon_frlg",
+        "cvcotm",
+        "ladx",
+        "mlss",
+        "tmc",
+        "wl4",
+        "gstla",
+        "earthbound",
+        "ffta"
+    ],
+    "advance": [
+        "cvcotm",
+        "mmbn3",
+        "mlss",
+        "mzm",
+        "tmc",
+        "yugiohddm",
+        "pokemon_emerald",
+        "wl4",
+        "gstla",
+        "earthbound",
+        "yugioh06",
+        "metroidfusion",
+        "ffta",
+        "pokemon_frlg"
     ],
     "gravity": [
-        "dk64",
-        "dkc",
-        "metroidprime",
-        "papermario",
-        "sotn",
-        "dkc2",
-        "v6",
-        "star_fox_64",
         "cvcotm",
-        "lego_star_wars_tcs",
-        "metroidfusion",
+        "sotn",
         "mzm",
+        "star_fox_64",
+        "lego_star_wars_tcs",
+        "metroidprime",
+        "v6",
+        "dk64",
+        "dkc2",
+        "metroidfusion",
+        "dkc",
         "dkc3",
-        "oot"
+        "oot",
+        "papermario"
     ],
     "leveling up": [
+        "cvcotm",
+        "dw1",
+        "sotn",
+        "poe",
+        "landstalker",
+        "pokemon_crystal",
         "pokemon_emerald",
         "gstla",
-        "pokemon_crystal",
-        "undertale",
-        "papermario",
-        "sotn",
         "earthbound",
         "zelda2",
-        "dw1",
-        "landstalker",
-        "cvcotm",
-        "kh1",
+        "undertale",
         "dark_souls_2",
-        "poe"
+        "kh1",
+        "papermario"
     ],
     "leveling": [
+        "cvcotm",
+        "dw1",
+        "sotn",
+        "poe",
+        "landstalker",
+        "pokemon_crystal",
         "pokemon_emerald",
         "gstla",
-        "pokemon_crystal",
-        "undertale",
-        "papermario",
-        "sotn",
         "earthbound",
         "zelda2",
-        "dw1",
-        "landstalker",
-        "cvcotm",
-        "kh1",
+        "undertale",
         "dark_souls_2",
-        "poe"
+        "kh1",
+        "papermario"
     ],
     "dark souls ii": [
         "dark_souls_2"
     ],
     "dark": [
+        "dsr",
         "dark_souls_3",
-        "dark_souls_2",
-        "dsr"
+        "dark_souls_2"
     ],
     "souls": [
         "dark_souls_3",
         "dark_souls_2"
     ],
     "ii": [
+        "spire",
         "kh2",
         "dark_souls_2",
-        "mm2",
         "ff4fe",
-        "spire"
+        "mm2"
     ],
     "xbox 360": [
-        "sa2b",
         "sotn",
         "lego_star_wars_tcs",
+        "sadx",
         "dark_souls_2",
-        "terraria",
+        "sa2b",
         "dlcquest",
-        "sadx"
+        "terraria"
     ],
     "360": [
-        "sa2b",
         "sotn",
         "lego_star_wars_tcs",
+        "sadx",
         "dark_souls_2",
-        "terraria",
+        "sa2b",
         "dlcquest",
-        "sadx"
+        "terraria"
     ],
     "spider": [
-        "dkc2",
         "zelda2",
         "minecraft",
+        "sly1",
+        "dkc2",
         "dark_souls_2",
-        "oribf",
-        "sly1"
+        "oribf"
     ],
     "customizable characters": [
+        "dark_souls_3",
+        "stardew_valley",
         "xenobladex",
         "lego_star_wars_tcs",
         "dark_souls_2",
-        "stardew_valley",
-        "terraria",
-        "dark_souls_3"
+        "terraria"
     ],
     "customizable": [
+        "dark_souls_3",
+        "stardew_valley",
         "xenobladex",
         "lego_star_wars_tcs",
         "dark_souls_2",
-        "stardew_valley",
-        "terraria",
-        "dark_souls_3"
+        "terraria"
     ],
     "checkpoints": [
-        "mm3",
-        "dkc",
+        "mmx3",
         "smo",
+        "mm3",
+        "sonic_heroes",
+        "jakanddaxter",
+        "sly1",
         "v6",
         "dkc2",
-        "sonic_heroes",
         "dark_souls_2",
-        "mm2",
-        "mmx3",
+        "dkc",
         "dkc3",
-        "sly1",
-        "jakanddaxter"
+        "mm2"
     ],
     "fire manipulation": [
+        "pokemon_crystal",
         "pokemon_emerald",
         "gstla",
-        "pokemon_crystal",
-        "papermario",
         "earthbound",
         "minecraft",
+        "rogue_legacy",
         "dark_souls_2",
-        "rogue_legacy"
+        "papermario"
     ],
     "fire": [
+        "pokemon_crystal",
         "pokemon_emerald",
         "gstla",
-        "pokemon_crystal",
-        "papermario",
         "earthbound",
         "minecraft",
+        "rogue_legacy",
         "dark_souls_2",
-        "rogue_legacy"
+        "papermario"
     ],
     "manipulation": [
+        "pokemon_crystal",
         "pokemon_emerald",
         "gstla",
-        "pokemon_crystal",
-        "papermario",
         "earthbound",
         "minecraft",
+        "rogue_legacy",
         "dark_souls_2",
-        "rogue_legacy"
+        "papermario"
     ],
     "dark souls iii": [
         "dark_souls_3"
@@ -16598,129 +17195,129 @@ SEARCH_INDEX = {
         "diddy_kong_racing"
     ],
     "kong": [
-        "dk64",
-        "dkc",
-        "dkc2",
         "diddy_kong_racing",
+        "dk64",
+        "dkc2",
+        "dkc",
         "dkc3"
     ],
     "racing": [
-        "mk64",
         "trackmania",
-        "swr",
         "diddy_kong_racing",
-        "simpsonshitnrun",
+        "mk64",
+        "jakanddaxter",
         "mario_kart_double_dash",
-        "jakanddaxter"
+        "simpsonshitnrun",
+        "swr"
     ],
     "behind the waterfall": [
-        "gstla",
-        "tloz_ooa",
-        "smo",
         "sotn",
-        "hcniko",
+        "smo",
         "diddy_kong_racing",
         "tmc",
-        "dkc3",
-        "ss"
+        "ss",
+        "hcniko",
+        "gstla",
+        "tloz_ooa",
+        "dkc3"
     ],
     "behind": [
-        "gstla",
-        "tloz_ooa",
-        "smo",
         "sotn",
-        "hcniko",
+        "smo",
         "diddy_kong_racing",
         "tmc",
-        "dkc3",
-        "ss"
+        "ss",
+        "hcniko",
+        "gstla",
+        "tloz_ooa",
+        "dkc3"
     ],
     "waterfall": [
-        "gstla",
-        "tloz_ooa",
-        "smo",
         "sotn",
-        "hcniko",
+        "smo",
         "diddy_kong_racing",
         "tmc",
-        "dkc3",
-        "ss"
+        "ss",
+        "hcniko",
+        "gstla",
+        "tloz_ooa",
+        "dkc3"
     ],
     "donkey kong 64": [
         "dk64"
     ],
     "donkey": [
-        "dk64",
         "dkc3",
-        "dkc2",
-        "dkc"
+        "dkc",
+        "dk64",
+        "dkc2"
     ],
     "artificial intelligence": [
-        "mk64",
-        "dk64",
-        "metroidprime",
         "doom_ii",
-        "star_fox_64",
+        "mk64",
+        "metroidprime",
+        "jakanddaxter",
+        "dk64",
         "sly1",
-        "jakanddaxter"
+        "star_fox_64"
     ],
     "artificial": [
-        "mk64",
-        "dk64",
-        "metroidprime",
         "doom_ii",
-        "star_fox_64",
+        "mk64",
+        "metroidprime",
+        "jakanddaxter",
+        "dk64",
         "sly1",
-        "jakanddaxter"
+        "star_fox_64"
     ],
     "intelligence": [
-        "mk64",
-        "dk64",
-        "metroidprime",
         "doom_ii",
-        "star_fox_64",
+        "mk64",
+        "metroidprime",
+        "jakanddaxter",
+        "dk64",
         "sly1",
-        "jakanddaxter"
+        "star_fox_64"
     ],
     "completion percentage": [
-        "dk64",
         "sotn",
-        "metroidprime",
-        "dkc2",
         "mzm",
-        "metroidfusion"
+        "metroidprime",
+        "dk64",
+        "metroidfusion",
+        "dkc2"
     ],
     "completion": [
-        "dk64",
         "sotn",
-        "metroidprime",
-        "dkc2",
         "mzm",
-        "metroidfusion"
+        "metroidprime",
+        "dk64",
+        "metroidfusion",
+        "dkc2"
     ],
     "percentage": [
-        "dk64",
         "sotn",
-        "metroidprime",
-        "dkc2",
         "mzm",
-        "metroidfusion"
+        "metroidprime",
+        "dk64",
+        "metroidfusion",
+        "dkc2"
     ],
     "invisibility": [
-        "dk64",
-        "papermario",
         "doom_ii",
         "quake",
+        "sly1",
+        "dk64",
         "doom_1993",
-        "sly1"
+        "papermario"
     ],
     "foreshadowing": [
-        "dk64",
-        "metroidprime",
-        "tmc",
         "mzm",
-        "metroidfusion",
-        "sms"
+        "tmc",
+        "sms",
+        "metroidprime",
+        "dk64",
+        "metroidfusion"
     ],
     "donkey kong country": [
         "dkc"
@@ -16731,55 +17328,55 @@ SEARCH_INDEX = {
         "dkc2"
     ],
     "overworld": [
-        "ffta",
         "gstla",
+        "zelda2",
+        "ffta",
+        "dkc2",
+        "tloz",
         "ffmq",
         "dkc",
-        "dkc2",
-        "zelda2",
-        "tloz",
         "dkc3"
     ],
     "bonus stage": [
-        "smw",
-        "spyro3",
-        "dkc",
         "sonic_heroes",
+        "smw",
         "dkc2",
-        "dkc3"
+        "dkc",
+        "dkc3",
+        "spyro3"
     ],
     "bonus": [
-        "smw",
-        "spyro3",
-        "dkc",
         "sonic_heroes",
+        "smw",
         "dkc2",
-        "dkc3"
+        "dkc",
+        "dkc3",
+        "spyro3"
     ],
     "water level": [
-        "dkc",
+        "sms",
         "dkc2",
         "kh1",
-        "mm2",
+        "dkc",
         "oot",
-        "sms"
+        "mm2"
     ],
     "water": [
-        "dkc",
+        "sms",
         "dkc2",
         "kh1",
-        "mm2",
+        "dkc",
         "oot",
-        "sms"
+        "mm2"
     ],
     "speedrun": [
-        "sm64hacks",
-        "dkc",
-        "sm64ex",
-        "metroidprime",
         "sotn",
+        "sm64ex",
+        "sm64hacks",
+        "metroidprime",
         "quake",
-        "metroidfusion"
+        "metroidfusion",
+        "dkc"
     ],
     "donkey kong country 2": [
         "dkc2"
@@ -16788,10 +17385,10 @@ SEARCH_INDEX = {
         "dkc2"
     ],
     "2:": [
-        "sa2b",
+        "yoshisisland",
         "huniepop2",
         "dkc2",
-        "yoshisisland",
+        "sa2b",
         "marioland2"
     ],
     "diddy's": [
@@ -16799,72 +17396,72 @@ SEARCH_INDEX = {
     ],
     "climbing": [
         "tloz_ooa",
-        "tloz_oos",
-        "dkc2",
         "tmc",
+        "tloz_oos",
         "sms",
-        "terraria",
-        "shorthike",
+        "jakanddaxter",
         "sly1",
-        "jakanddaxter"
+        "dkc2",
+        "shorthike",
+        "terraria"
     ],
     "game reference": [
-        "spyro3",
-        "witness",
         "doom_ii",
-        "hcniko",
-        "dkc2",
         "tmc",
+        "witness",
+        "hcniko",
         "rogue_legacy",
+        "dkc2",
+        "spyro3",
         "oot"
     ],
     "reference": [
+        "doom_ii",
+        "tmc",
+        "witness",
+        "hcniko",
+        "rogue_legacy",
+        "dkc2",
+        "simpsonshitnrun",
         "placidplasticducksim",
         "spyro3",
-        "witness",
-        "doom_ii",
-        "hcniko",
-        "dkc2",
-        "tmc",
-        "simpsonshitnrun",
-        "rogue_legacy",
         "oot"
     ],
     "sprinting mechanics": [
-        "sm64hacks",
         "soe",
-        "pokemon_emerald",
-        "pokemon_crystal",
         "sm64ex",
+        "sm64hacks",
+        "pokemon_crystal",
+        "pokemon_emerald",
         "mm_recomp",
-        "dkc2",
+        "wl4",
         "sms",
-        "oot",
-        "wl4"
+        "dkc2",
+        "oot"
     ],
     "sprinting": [
-        "sm64hacks",
         "soe",
-        "pokemon_emerald",
-        "pokemon_crystal",
         "sm64ex",
+        "sm64hacks",
+        "pokemon_crystal",
+        "pokemon_emerald",
         "mm_recomp",
-        "dkc2",
+        "wl4",
         "sms",
-        "oot",
-        "wl4"
+        "dkc2",
+        "oot"
     ],
     "mechanics": [
-        "sm64hacks",
         "soe",
-        "pokemon_emerald",
-        "pokemon_crystal",
         "sm64ex",
+        "sm64hacks",
+        "pokemon_crystal",
+        "pokemon_emerald",
         "mm_recomp",
-        "dkc2",
+        "wl4",
         "sms",
-        "oot",
-        "wl4"
+        "dkc2",
+        "oot"
     ],
     "donkey kong country 3": [
         "dkc3"
@@ -16882,9 +17479,9 @@ SEARCH_INDEX = {
         "dkc3"
     ],
     "double": [
+        "huniepop2",
         "dkc3",
-        "mario_kart_double_dash",
-        "huniepop2"
+        "mario_kart_double_dash"
     ],
     "trouble!": [
         "dkc3"
@@ -16899,69 +17496,69 @@ SEARCH_INDEX = {
         "dlcquest"
     ],
     "deliberately retro": [
-        "smo",
+        "stardew_valley",
         "timespinner",
+        "minecraft",
         "v6",
         "dlcquest",
-        "minecraft",
-        "stardew_valley",
+        "smo",
         "ufo50",
         "terraria"
     ],
     "deliberately": [
-        "smo",
+        "stardew_valley",
         "timespinner",
+        "minecraft",
         "v6",
         "dlcquest",
-        "minecraft",
-        "stardew_valley",
+        "smo",
         "ufo50",
         "terraria"
     ],
     "punctuation mark above head": [
-        "pokemon_emerald",
-        "tloz_ooa",
-        "pokemon_crystal",
-        "simpsonshitnrun",
         "tmc",
-        "dlcquest",
-        "rogue_legacy"
+        "pokemon_crystal",
+        "pokemon_emerald",
+        "rogue_legacy",
+        "simpsonshitnrun",
+        "tloz_ooa",
+        "dlcquest"
     ],
     "punctuation": [
-        "pokemon_emerald",
-        "tloz_ooa",
-        "pokemon_crystal",
-        "simpsonshitnrun",
         "tmc",
-        "dlcquest",
-        "rogue_legacy"
+        "pokemon_crystal",
+        "pokemon_emerald",
+        "rogue_legacy",
+        "simpsonshitnrun",
+        "tloz_ooa",
+        "dlcquest"
     ],
     "mark": [
-        "pokemon_emerald",
-        "tloz_ooa",
-        "pokemon_crystal",
-        "simpsonshitnrun",
         "tmc",
-        "dlcquest",
-        "rogue_legacy"
+        "pokemon_crystal",
+        "pokemon_emerald",
+        "rogue_legacy",
+        "simpsonshitnrun",
+        "tloz_ooa",
+        "dlcquest"
     ],
     "above": [
-        "pokemon_emerald",
-        "tloz_ooa",
-        "pokemon_crystal",
-        "simpsonshitnrun",
         "tmc",
-        "dlcquest",
-        "rogue_legacy"
+        "pokemon_crystal",
+        "pokemon_emerald",
+        "rogue_legacy",
+        "simpsonshitnrun",
+        "tloz_ooa",
+        "dlcquest"
     ],
     "head": [
-        "pokemon_emerald",
-        "tloz_ooa",
-        "pokemon_crystal",
-        "simpsonshitnrun",
         "tmc",
-        "dlcquest",
-        "rogue_legacy"
+        "pokemon_crystal",
+        "pokemon_emerald",
+        "rogue_legacy",
+        "simpsonshitnrun",
+        "tloz_ooa",
+        "dlcquest"
     ],
     "don't starve together": [
         "dontstarvetogether"
@@ -16976,31 +17573,31 @@ SEARCH_INDEX = {
         "dontstarvetogether"
     ],
     "crafting": [
-        "dontstarvetogether",
         "factorio_saws",
-        "minecraft",
         "seaofthieves",
         "stardew_valley",
         "satisfactory",
+        "raft",
+        "dontstarvetogether",
+        "minecraft",
         "factorio",
-        "terraria",
-        "raft"
+        "terraria"
     ],
     "funny": [
-        "sims4",
         "getting_over_it",
-        "undertale",
-        "dontstarvetogether",
         "huniepop2",
+        "dontstarvetogether",
         "powerwashsimulator",
-        "shorthike"
+        "undertale",
+        "shorthike",
+        "sims4"
     ],
     "doom 1993": [
         "doom_1993"
     ],
     "doom": [
-        "doom_1993",
-        "doom_ii"
+        "doom_ii",
+        "doom_1993"
     ],
     "windows mobile": [
         "doom_1993"
@@ -17010,22 +17607,22 @@ SEARCH_INDEX = {
         "terraria"
     ],
     "mobile": [
-        "doom_1993",
+        "quake",
         "mmx3",
-        "quake"
+        "doom_1993"
     ],
     "pc-9800 series": [
-        "doom_1993",
-        "doom_ii"
+        "doom_ii",
+        "doom_1993"
     ],
     "pc-9800": [
-        "doom_1993",
-        "doom_ii"
+        "doom_ii",
+        "doom_1993"
     ],
     "dos": [
-        "heretic",
         "doom_ii",
         "quake",
+        "heretic",
         "tyrian",
         "doom_1993"
     ],
@@ -17036,10 +17633,10 @@ SEARCH_INDEX = {
         "doom_ii"
     ],
     "ii:": [
-        "zelda2",
         "doom_ii",
         "lufia2ac",
-        "sc2"
+        "sc2",
+        "zelda2"
     ],
     "hell": [
         "doom_ii"
@@ -17060,97 +17657,97 @@ SEARCH_INDEX = {
         "doom_ii"
     ],
     "pop culture reference": [
-        "placidplasticducksim",
-        "witness",
         "doom_ii",
         "tmc",
+        "witness",
+        "rogue_legacy",
         "simpsonshitnrun",
-        "rogue_legacy"
+        "placidplasticducksim"
     ],
     "pop": [
-        "placidplasticducksim",
-        "witness",
         "doom_ii",
         "tmc",
+        "witness",
+        "rogue_legacy",
         "simpsonshitnrun",
-        "rogue_legacy"
+        "placidplasticducksim"
     ],
     "culture": [
-        "placidplasticducksim",
-        "witness",
         "doom_ii",
         "tmc",
+        "witness",
+        "rogue_legacy",
         "simpsonshitnrun",
-        "rogue_legacy"
+        "placidplasticducksim"
     ],
     "stat tracking": [
-        "ffta",
-        "witness",
-        "doom_ii",
-        "kh1",
-        "simpsonshitnrun",
         "osu",
-        "rogue_legacy"
+        "doom_ii",
+        "witness",
+        "rogue_legacy",
+        "ffta",
+        "simpsonshitnrun",
+        "kh1"
     ],
     "stat": [
-        "ffta",
-        "witness",
-        "doom_ii",
-        "kh1",
-        "simpsonshitnrun",
         "osu",
-        "rogue_legacy"
+        "doom_ii",
+        "witness",
+        "rogue_legacy",
+        "ffta",
+        "simpsonshitnrun",
+        "kh1"
     ],
     "tracking": [
-        "ffta",
-        "witness",
-        "doom_ii",
-        "kh1",
-        "simpsonshitnrun",
         "osu",
-        "rogue_legacy"
+        "doom_ii",
+        "witness",
+        "rogue_legacy",
+        "ffta",
+        "simpsonshitnrun",
+        "kh1"
     ],
     "rock music": [
-        "ffta",
-        "gstla",
-        "ffmq",
-        "sotn",
         "doom_ii",
+        "sotn",
         "sonic_heroes",
-        "ultrakill"
+        "gstla",
+        "ultrakill",
+        "ffta",
+        "ffmq"
     ],
     "rock": [
-        "ffta",
-        "gstla",
-        "ffmq",
-        "sotn",
         "doom_ii",
+        "sotn",
         "sonic_heroes",
-        "ultrakill"
+        "gstla",
+        "ultrakill",
+        "ffta",
+        "ffmq"
     ],
     "sequence breaking": [
-        "tloz_ooa",
-        "sotn",
-        "metroidprime",
         "doom_ii",
-        "oot",
         "sm_map_rando",
-        "tmc",
+        "sotn",
         "mzm",
         "sm",
-        "wl4"
+        "tmc",
+        "wl4",
+        "metroidprime",
+        "tloz_ooa",
+        "oot"
     ],
     "sequence": [
-        "tloz_ooa",
-        "sotn",
-        "metroidprime",
         "doom_ii",
-        "oot",
         "sm_map_rando",
-        "tmc",
+        "sotn",
         "mzm",
         "sm",
-        "wl4"
+        "tmc",
+        "wl4",
+        "metroidprime",
+        "tloz_ooa",
+        "oot"
     ],
     "doronko wanko": [
         "doronko_wanko"
@@ -17160,6 +17757,27 @@ SEARCH_INDEX = {
     ],
     "wanko": [
         "doronko_wanko"
+    ],
+    "dredge": [
+        "dredge"
+    ],
+    "fishing": [
+        "ladx",
+        "stardew_valley",
+        "hcniko",
+        "minecraft",
+        "dredge",
+        "shorthike",
+        "terraria"
+    ],
+    "stylized": [
+        "tunic",
+        "hades",
+        "ultrakill",
+        "hcniko",
+        "hylics2",
+        "dredge",
+        "shorthike"
     ],
     "dark souls remastered": [
         "dsr"
@@ -17183,64 +17801,64 @@ SEARCH_INDEX = {
         "dw1"
     ],
     "nintendo gamecube": [
-        "luigismansion",
-        "metroidprime",
-        "sonic_heroes",
-        "tww",
         "dw1",
+        "tww",
+        "sonic_heroes",
+        "luigismansion",
         "sms",
-        "simpsonshitnrun",
-        "mario_kart_double_dash"
+        "metroidprime",
+        "mario_kart_double_dash",
+        "simpsonshitnrun"
     ],
     "gamecube": [
-        "luigismansion",
-        "metroidprime",
-        "sonic_heroes",
-        "tww",
         "dw1",
+        "tww",
+        "sonic_heroes",
+        "luigismansion",
         "sms",
-        "simpsonshitnrun",
-        "mario_kart_double_dash"
+        "metroidprime",
+        "mario_kart_double_dash",
+        "simpsonshitnrun"
     ],
     "playstation 2": [
-        "sonic_heroes",
         "dw1",
-        "kh1",
-        "kh2",
+        "sonic_heroes",
         "jakanddaxter",
-        "simpsonshitnrun",
+        "kh2",
+        "rac2",
         "sly1",
-        "rac2"
+        "simpsonshitnrun",
+        "kh1"
     ],
     "earthbound": [
         "earthbound"
     ],
     "party system": [
-        "ffta",
-        "pokemon_emerald",
-        "gstla",
-        "mlss",
         "ffmq",
+        "mlss",
         "xenobladex",
         "pokemon_crystal",
-        "papermario",
+        "pokemon_emerald",
+        "gstla",
         "earthbound",
-        "kh1"
+        "ffta",
+        "kh1",
+        "papermario"
     ],
     "party": [
-        "ffta",
+        "ffmq",
+        "mlss",
+        "xenobladex",
+        "pokemon_crystal",
         "pokemon_emerald",
         "mk64",
+        "overcooked2",
         "gstla",
-        "mlss",
-        "ffmq",
-        "placidplasticducksim",
-        "pokemon_crystal",
-        "xenobladex",
-        "papermario",
         "earthbound",
+        "ffta",
         "kh1",
-        "overcooked2"
+        "placidplasticducksim",
+        "papermario"
     ],
     "ender lilies": [
         "enderlilies"
@@ -17263,7 +17881,7 @@ SEARCH_INDEX = {
     "factorio": [
         "factorio"
     ],
-    "factorio space age without space": [
+    "factorio - space age without space": [
         "factorio_saws"
     ],
     "factorio: space age": [
@@ -17279,56 +17897,56 @@ SEARCH_INDEX = {
         "faxanadu"
     ],
     "family computer": [
-        "faxanadu",
         "tloz",
         "ff1",
-        "mm3"
+        "mm3",
+        "faxanadu"
     ],
     "family": [
         "ff1",
         "mm3",
-        "faxanadu",
         "zelda2",
+        "faxanadu",
         "tloz"
     ],
     "computer": [
         "ff1",
         "mm3",
-        "faxanadu",
         "zelda2",
+        "faxanadu",
         "tloz"
     ],
     "nintendo entertainment system": [
         "ff1",
         "mm3",
-        "faxanadu",
         "zelda2",
+        "faxanadu",
         "tloz"
     ],
     "final fantasy": [
         "ff1"
     ],
     "final": [
-        "ffta",
         "ff4fe",
+        "ffmq",
         "ff1",
-        "ffmq"
+        "ffta"
     ],
     "kids": [
-        "pokemon_rb",
-        "pokemon_emerald",
-        "mk64",
-        "pokemon_frlg",
-        "ff1",
-        "placidplasticducksim",
-        "pokemon_crystal",
-        "pmd_eos",
         "yoshisisland",
-        "minecraft",
+        "ff1",
+        "pmd_eos",
         "lego_star_wars_tcs",
-        "tetrisattack",
+        "pokemon_crystal",
+        "mk64",
         "overcooked2",
-        "mario_kart_double_dash"
+        "pokemon_emerald",
+        "minecraft",
+        "mario_kart_double_dash",
+        "tetrisattack",
+        "placidplasticducksim",
+        "pokemon_frlg",
+        "pokemon_rb"
     ],
     "final fantasy iv free enterprise": [
         "ff4fe"
@@ -17349,12 +17967,12 @@ SEARCH_INDEX = {
         "ffmq"
     ],
     "casual": [
-        "placidplasticducksim",
-        "ffmq",
-        "musedash",
+        "shorthike",
         "getting_over_it",
         "sims4",
-        "shorthike"
+        "musedash",
+        "ffmq",
+        "placidplasticducksim"
     ],
     "final fantasy tactics advance": [
         "ffta"
@@ -17370,8 +17988,8 @@ SEARCH_INDEX = {
     ],
     "yu-gi-oh!": [
         "yugiohddm",
-        "yugioh06",
-        "fm"
+        "fm",
+        "yugioh06"
     ],
     "forbidden": [
         "fm"
@@ -17434,14 +18052,6 @@ SEARCH_INDEX = {
     "hades": [
         "hades"
     ],
-    "stylized": [
-        "hades",
-        "hcniko",
-        "hylics2",
-        "tunic",
-        "shorthike",
-        "ultrakill"
-    ],
     "here comes niko!": [
         "hcniko"
     ],
@@ -17450,14 +18060,6 @@ SEARCH_INDEX = {
     ],
     "niko!": [
         "hcniko"
-    ],
-    "fishing": [
-        "hcniko",
-        "minecraft",
-        "ladx",
-        "stardew_valley",
-        "terraria",
-        "shorthike"
     ],
     "heretic": [
         "heretic"
@@ -17496,9 +18098,9 @@ SEARCH_INDEX = {
     ],
     "romance": [
         "huniepop",
-        "sims4",
+        "huniepop2",
         "stardew_valley",
-        "huniepop2"
+        "sims4"
     ],
     "hunie pop 2": [
         "huniepop2"
@@ -17531,10 +18133,10 @@ SEARCH_INDEX = {
         "jakanddaxter"
     ],
     "legacy": [
-        "mmx3",
         "rogue_legacy",
-        "quake",
-        "jakanddaxter"
+        "jakanddaxter",
+        "mmx3",
+        "quake"
     ],
     "kirby 64 - the crystal shards": [
         "k64"
@@ -17559,8 +18161,8 @@ SEARCH_INDEX = {
     ],
     "land": [
         "marioland2",
-        "kdl3",
         "wl",
+        "kdl3",
         "wl4"
     ],
     "kingdom hearts": [
@@ -17603,25 +18205,25 @@ SEARCH_INDEX = {
         "ladx"
     ],
     "game boy color": [
-        "pokemon_crystal",
-        "ladx",
         "tloz_oos",
-        "tloz_ooa"
+        "tloz_ooa",
+        "pokemon_crystal",
+        "ladx"
     ],
     "color": [
-        "pokemon_crystal",
-        "ladx",
         "tloz_oos",
-        "tloz_ooa"
+        "tloz_ooa",
+        "pokemon_crystal",
+        "ladx"
     ],
     "tentacles": [
-        "pokemon_emerald",
+        "ladx",
         "mlss",
         "pokemon_crystal",
-        "papermario",
+        "pokemon_emerald",
+        "sms",
         "metroidprime",
-        "ladx",
-        "sms"
+        "papermario"
     ],
     "landstalker - the treasures of king nole": [
         "landstalker"
@@ -17633,17 +18235,17 @@ SEARCH_INDEX = {
         "landstalker"
     ],
     "sega": [
-        "zillion",
         "landstalker",
-        "quake"
+        "quake",
+        "zillion"
     ],
     "mega": [
-        "mm3",
+        "mmbn3",
+        "mmx3",
         "landstalker",
         "megamix",
-        "mmbn3",
-        "mm2",
-        "mmx3"
+        "mm3",
+        "mm2"
     ],
     "drive/genesis": [
         "landstalker"
@@ -17655,8 +18257,8 @@ SEARCH_INDEX = {
         "lego_star_wars_tcs"
     ],
     "star": [
-        "star_fox_64",
         "lego_star_wars_tcs",
+        "star_fox_64",
         "swr"
     ],
     "wars:": [
@@ -17709,6 +18311,24 @@ SEARCH_INDEX = {
     "lunacid": [
         "lunacid"
     ],
+    "madou monogatari hanamaru daiyouchienji": [
+        "madou"
+    ],
+    "madou monogatari: hanamaru daiyouchienji": [
+        "madou"
+    ],
+    "madou": [
+        "madou"
+    ],
+    "monogatari:": [
+        "madou"
+    ],
+    "hanamaru": [
+        "madou"
+    ],
+    "daiyouchienji": [
+        "madou"
+    ],
     "super mario land 2": [
         "marioland2"
     ],
@@ -17716,18 +18336,18 @@ SEARCH_INDEX = {
         "marioland2"
     ],
     "mario": [
+        "yoshisisland",
+        "mlss",
+        "sm64ex",
         "sm64hacks",
         "mk64",
-        "mlss",
-        "smw",
-        "sm64ex",
-        "papermario",
-        "smo",
-        "wl",
-        "yoshisisland",
-        "marioland2",
         "sms",
-        "mario_kart_double_dash"
+        "smw",
+        "mario_kart_double_dash",
+        "wl",
+        "marioland2",
+        "smo",
+        "papermario"
     ],
     "6": [
         "marioland2"
@@ -17736,18 +18356,18 @@ SEARCH_INDEX = {
         "marioland2"
     ],
     "game boy": [
-        "pokemon_rb",
         "marioland2",
         "wl",
+        "pokemon_rb",
         "mm2"
     ],
     "turtle": [
-        "mk64",
         "mlss",
-        "papermario",
-        "marioland2",
+        "mk64",
         "sms",
-        "sly1"
+        "sly1",
+        "marioland2",
+        "papermario"
     ],
     "mario kart double dash": [
         "mario_kart_double_dash"
@@ -17792,91 +18412,91 @@ SEARCH_INDEX = {
         "metroidfusion"
     ],
     "metroid": [
-        "metroidprime",
         "sm_map_rando",
-        "metroidfusion",
         "smz3",
-        "sm"
+        "sm",
+        "metroidprime",
+        "metroidfusion"
     ],
     "fusion": [
         "metroidfusion"
     ],
     "time limit": [
-        "tloz_ph",
         "ror1",
-        "witness",
-        "metroidprime",
-        "rogue_legacy",
         "sm_map_rando",
-        "tmc",
-        "metroidfusion",
-        "sms",
-        "simpsonshitnrun",
-        "shorthike",
         "sm",
-        "wl4"
+        "tmc",
+        "tloz_ph",
+        "witness",
+        "wl4",
+        "sms",
+        "rogue_legacy",
+        "metroidprime",
+        "metroidfusion",
+        "simpsonshitnrun",
+        "shorthike"
     ],
     "limit": [
-        "tloz_ph",
         "ror1",
-        "witness",
-        "metroidprime",
-        "rogue_legacy",
         "sm_map_rando",
-        "tmc",
-        "metroidfusion",
-        "sms",
-        "simpsonshitnrun",
-        "shorthike",
         "sm",
-        "wl4"
+        "tmc",
+        "tloz_ph",
+        "witness",
+        "wl4",
+        "sms",
+        "rogue_legacy",
+        "metroidprime",
+        "metroidfusion",
+        "simpsonshitnrun",
+        "shorthike"
     ],
     "countdown timer": [
-        "metroidprime",
         "sm_map_rando",
-        "tmc",
         "mzm",
-        "metroidfusion",
-        "tloz_ph",
-        "simpsonshitnrun",
         "sm",
+        "tmc",
+        "tloz_ph",
+        "wl4",
         "rogue_legacy",
-        "oot",
-        "wl4"
+        "metroidprime",
+        "metroidfusion",
+        "simpsonshitnrun",
+        "oot"
     ],
     "countdown": [
-        "metroidprime",
         "sm_map_rando",
-        "tmc",
         "mzm",
-        "metroidfusion",
-        "tloz_ph",
-        "simpsonshitnrun",
         "sm",
+        "tmc",
+        "tloz_ph",
+        "wl4",
         "rogue_legacy",
-        "oot",
-        "wl4"
+        "metroidprime",
+        "metroidfusion",
+        "simpsonshitnrun",
+        "oot"
     ],
     "timer": [
-        "metroidprime",
         "sm_map_rando",
-        "tmc",
         "mzm",
-        "metroidfusion",
-        "tloz_ph",
-        "simpsonshitnrun",
         "sm",
+        "tmc",
+        "tloz_ph",
+        "wl4",
         "rogue_legacy",
-        "oot",
-        "wl4"
+        "metroidprime",
+        "metroidfusion",
+        "simpsonshitnrun",
+        "oot"
     ],
     "isolation": [
         "sotn",
-        "metroidprime",
         "sm_map_rando",
         "mzm",
-        "metroidfusion",
-        "sm"
+        "sm",
+        "metroidprime",
+        "metroidfusion"
     ],
     "metroid prime": [
         "metroidprime"
@@ -17885,39 +18505,39 @@ SEARCH_INDEX = {
         "metroidprime"
     ],
     "auto-aim": [
-        "mm_recomp",
-        "metroidprime",
-        "oot",
-        "quake",
         "tww",
-        "ss"
+        "mm_recomp",
+        "ss",
+        "quake",
+        "metroidprime",
+        "oot"
     ],
     "meme origin": [
-        "mm_recomp",
-        "metroidprime",
         "sotn",
+        "mm_recomp",
         "zelda2",
-        "star_fox_64",
         "minecraft",
-        "tloz"
+        "metroidprime",
+        "tloz",
+        "star_fox_64"
     ],
     "meme": [
-        "mm_recomp",
-        "metroidprime",
         "sotn",
+        "mm_recomp",
         "zelda2",
-        "star_fox_64",
         "minecraft",
-        "tloz"
+        "metroidprime",
+        "tloz",
+        "star_fox_64"
     ],
     "origin": [
-        "mm_recomp",
-        "metroidprime",
         "sotn",
+        "mm_recomp",
         "zelda2",
-        "star_fox_64",
         "minecraft",
-        "tloz"
+        "metroidprime",
+        "tloz",
+        "star_fox_64"
     ],
     "minecraft": [
         "minecraft"
@@ -17932,16 +18552,16 @@ SEARCH_INDEX = {
         "minecraft"
     ],
     "virtual reality": [
-        "subnautica",
-        "minecraft"
+        "minecraft",
+        "subnautica"
     ],
     "virtual": [
-        "subnautica",
-        "minecraft"
+        "minecraft",
+        "subnautica"
     ],
     "reality": [
-        "subnautica",
-        "minecraft"
+        "minecraft",
+        "subnautica"
     ],
     "mario kart 64": [
         "mk64"
@@ -17968,10 +18588,10 @@ SEARCH_INDEX = {
         "mm2"
     ],
     "man": [
-        "mm2",
         "mmx3",
         "mmbn3",
-        "mm3"
+        "mm3",
+        "mm2"
     ],
     "mega man 3": [
         "mm3"
@@ -17999,12 +18619,12 @@ SEARCH_INDEX = {
         "mmx3"
     ],
     "legacy mobile device": [
-        "mmx3",
-        "quake"
+        "quake",
+        "mmx3"
     ],
     "device": [
-        "mmx3",
-        "quake"
+        "quake",
+        "mmx3"
     ],
     "majora's mask recompiled": [
         "mm_recomp"
@@ -18070,6 +18690,15 @@ SEARCH_INDEX = {
     "mission": [
         "mzm"
     ],
+    "nine sols": [
+        "nine_sols"
+    ],
+    "nine": [
+        "nine_sols"
+    ],
+    "sols": [
+        "nine_sols"
+    ],
     "noita": [
         "noita"
     ],
@@ -18086,9 +18715,9 @@ SEARCH_INDEX = {
         "openrct2"
     ],
     "business": [
-        "openrct2",
         "powerwashsimulator",
-        "stardew_valley"
+        "stardew_valley",
+        "openrct2"
     ],
     "ori and the blind forest": [
         "oribf"
@@ -18103,9 +18732,9 @@ SEARCH_INDEX = {
         "oribf"
     ],
     "thriller": [
-        "oribf",
         "sm",
-        "sm_map_rando"
+        "sm_map_rando",
+        "oribf"
     ],
     "old school runescape": [
         "osrs"
@@ -18141,16 +18770,16 @@ SEARCH_INDEX = {
         "overcooked2"
     ],
     "nintendo switch 2": [
+        "smo",
         "overcooked2",
-        "stardew_valley",
-        "smo"
+        "stardew_valley"
     ],
     "paper mario": [
         "papermario"
     ],
     "paper": [
-        "papermario",
-        "ttyd"
+        "ttyd",
+        "papermario"
     ],
     "peaks of yore": [
         "peaks_of_yore"
@@ -18180,11 +18809,11 @@ SEARCH_INDEX = {
         "pmd_eos"
     ],
     "pok\u00e9mon": [
-        "pokemon_rb",
+        "pmd_eos",
+        "pokemon_crystal",
         "pokemon_emerald",
         "pokemon_frlg",
-        "pokemon_crystal",
-        "pmd_eos"
+        "pokemon_rb"
     ],
     "dungeon:": [
         "pmd_eos"
@@ -18334,21 +18963,21 @@ SEARCH_INDEX = {
     ],
     "playstation vita": [
         "ror1",
-        "timespinner",
-        "undertale",
-        "v6",
         "stardew_valley",
-        "terraria",
-        "rogue_legacy"
+        "timespinner",
+        "rogue_legacy",
+        "v6",
+        "undertale",
+        "terraria"
     ],
     "vita": [
         "ror1",
-        "timespinner",
-        "undertale",
-        "v6",
         "stardew_valley",
-        "terraria",
-        "rogue_legacy"
+        "timespinner",
+        "rogue_legacy",
+        "v6",
+        "undertale",
+        "terraria"
     ],
     "risk of rain": [
         "ror1"
@@ -18406,9 +19035,9 @@ SEARCH_INDEX = {
         "sc2"
     ],
     "warfare": [
+        "wargroove2",
         "wargroove",
-        "sc2",
-        "wargroove2"
+        "sc2"
     ],
     "sea of thieves": [
         "seaofthieves"
@@ -18426,8 +19055,8 @@ SEARCH_INDEX = {
         "shivers"
     ],
     "point-and-click": [
-        "zork_grand_inquisitor",
-        "shivers"
+        "shivers",
+        "zork_grand_inquisitor"
     ],
     "a short hike": [
         "shorthike"
@@ -18482,15 +19111,15 @@ SEARCH_INDEX = {
         "sm_map_rando"
     ],
     "super mario 64": [
-        "sm64hacks",
-        "sm64ex"
+        "sm64ex",
+        "sm64hacks"
     ],
     "rabbit": [
-        "sm64hacks",
-        "tloz_ooa",
         "sm64ex",
-        "smo",
+        "sm64hacks",
         "sonic_heroes",
+        "tloz_ooa",
+        "smo",
         "terraria"
     ],
     "sm64 romhack": [
@@ -18695,8 +19324,8 @@ SEARCH_INDEX = {
         "tloz_ooa"
     ],
     "oracle": [
-        "tloz_ooa",
-        "tloz_oos"
+        "tloz_oos",
+        "tloz_ooa"
     ],
     "ages": [
         "tloz_ooa"
@@ -18816,8 +19445,8 @@ SEARCH_INDEX = {
         "v6"
     ],
     "wargroove": [
-        "wargroove",
-        "wargroove2"
+        "wargroove2",
+        "wargroove"
     ],
     "wargroove 2": [
         "wargroove2"

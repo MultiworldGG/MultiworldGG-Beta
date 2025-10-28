@@ -40,23 +40,8 @@ def clean_game_data(games_data: dict, rating_filter: str = "NR") -> dict:
 
     cleaned_data = {}
     for world_name, game_data in games_data.items():
-        cleaned_game = {}
-        for field, value in game_data.items():
-            if field == "age_rating" and age_filter and value not in age_filter:
-                continue
-            # Preserve original world_name
-            if field == "game_name":
-                cleaned_game[field] = value
-            elif value is None:
-                cleaned_game[field] = ""
-            elif isinstance(value, list):
-                cleaned_game[field] = [clean_value(item) for item in value]
-            elif isinstance(value, dict):
-                cleaned_game[field] = {k: clean_value(v) for k, v in value.items()}
-            else:
-                cleaned_game[field] = clean_value(value)
-        if cleaned_game:
-            cleaned_data[world_name] = cleaned_game
+        if game_data.get("age_rating", "NR") in age_filter:
+            cleaned_data[world_name] = game_data
     return cleaned_data
 
 def build_search_index(games_data: dict) -> Dict[str, Set[str]]:
@@ -166,7 +151,8 @@ def generate_index_file(rating_filter: str = "NR"):
             games_data = json.load(file)
         
         # Clean the game data
-        games_data = clean_game_data(games_data, rating_filter)
+        if rating_filter != "NR":
+            games_data = clean_game_data(games_data, rating_filter)
         
         # Build search index
         search_index = build_search_index(games_data)

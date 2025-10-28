@@ -1,6 +1,4 @@
 {
-    "version": 6,
-    "compatible_version": 5,
     "game": "gzDoom",
     "authors": ["ToxicFrog"],
     "igdb_id": 307741,
