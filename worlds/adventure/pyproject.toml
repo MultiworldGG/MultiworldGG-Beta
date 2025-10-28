@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.adventure"
-version = "0.0.5"
+version = "0.0.6"
 description = "MultiWorld: Adventure"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
