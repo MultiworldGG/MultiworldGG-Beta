@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.dw1"
-version = "0.0.0"
+version = "0.0.1"
 description = "MultiWorld: Digimon World"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

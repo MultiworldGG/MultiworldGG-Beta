@@ -4,15 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.stardew_valley"
-version = "0.0.0"
+version = "6.0.1"
 description = "MultiWorld: Stardew Valley"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "Kaito Kid"
+name = "KaitoKid"
 
 [[project.authors]]
 name = "Jouramie"
+
+[[project.authors]]
+name = "Witchybun (Mod Support)"
+
+[[project.authors]]
+name = "Exempt-Medic (Proofreading)"
 
 [project.entry-points."mwgg.client"]
 "worlds.stardew_valley.Client" = "worlds.stardew_valley.Register:CLIENT_FUNCTION"

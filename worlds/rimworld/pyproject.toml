@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.rimworld"
-version = "1.2.4"
+version = "1.2.5"
 description = "MultiWorld: Rimworld"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

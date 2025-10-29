@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.ladx"
-version = "12.5.0"
+version = "12.5.1"
 description = "MultiWorld: Link's Awakening DX Beta"
 license = "MIT"
 license-files = [ "LADXR/LADXR_LICENSE",]

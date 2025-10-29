@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.mk64"
-version = "0.0.0"
+version = "0.0.1"
 description = "MultiWorld: Mario Kart 64"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.pokemon_emerald"
-version = "2.4.1"
+version = "2.4.2"
 description = "MultiWorld: Pokemon Emerald"
 license = "MIT"
 license-files = [ "LICENSE",]

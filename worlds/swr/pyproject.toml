@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.swr"
-version = "0.0.0"
+version = "0.0.1"
 description = "MultiWorld: Star Wars Episode I Racer"
 license = "MIT"
 license-files = [ "LICENSE",]

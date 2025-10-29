@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.metroidprime"
-version = "0.0.0"
+version = "0.0.1"
 description = "MultiWorld: Metroid Prime"
 license = "MIT AND (GPL-3.0-only)"
 license-files = [ "lib/dolphin_memory_engine/LICENSE", "lib/ppc_asm/LICENSE", "lib/py_randomprime/LICENSE",]

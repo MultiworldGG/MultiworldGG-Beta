@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.smo"
-version = "0.0.0"
+version = "0.0.1"
 description = "MultiWorld: Super Mario Odyssey"
 license = "MIT AND (Apache-2.0 AND (GPL-3.0-or-later))"
 classifiers = [ "Private :: Do Not Upload",]
