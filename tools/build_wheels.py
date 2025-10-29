@@ -63,6 +63,15 @@ def main():
 
     worlds_with_pyproject = []
 
+    # Default worlds are those that start with _ or are named generic
+    # These don't require archipelago.json
+    default_worlds = set()
+    for world_dir in worlds_dir.iterdir():
+        if world_dir.is_dir():
+            world_name = world_dir.name
+            if world_name.startswith("_") or world_name == "generic":
+                default_worlds.add(world_name)
+    
     if args.world:
         # Build only the specified world
         worlds_to_build = args.world.split(",")
@@ -74,15 +83,15 @@ def main():
             archipelago_json_path = world_path / "archipelago.json"
 
             if not world_path.exists():
-                print_colored(f"Error: World directory '{args.world}' not found in {worlds_dir}", "red")
+                print_colored(f"Error: World directory '{world}' not found in {worlds_dir}", "red")
                 sys.exit(1)
 
             if not pyproject_path.exists():
-                print_colored(f"Error: pyproject.toml not found in {args.world} directory", "red")
+                print_colored(f"Error: pyproject.toml not found in {world} directory", "red")
                 sys.exit(1)
 
-            if not archipelago_json_path.exists() and args.world != "_sni" and args.world != "_bizhawk":
-                print_colored(f"Error: archipelago.json not found in {args.world} directory", "red")
+            if not archipelago_json_path.exists() and world not in default_worlds:
+                print_colored(f"Error: archipelago.json not found in {world} directory", "red")
                 sys.exit(1)
 
             worlds_with_pyproject.append(world)
@@ -112,7 +121,7 @@ def main():
             failed_builds.append(f"{world} (no pyproject.toml)")
             continue
 
-        if not archipelago_json_path.exists() and args.world != "_sni" and args.world != "_bizhawk":
+        if not archipelago_json_path.exists() and world not in default_worlds:
             print_colored(f"  Skipping {world} - no archipelago.json found", "red")
             failed_builds.append(f"{world} (no archipelago.json)")
             continue
@@ -144,7 +153,8 @@ include pyproject.toml
             if args.verbose:
                 print_colored("  Moved pyproject.toml to project root directory", "gray")
 
-            if world != "_sni" and world != "_bizhawk":
+            # Only update version/authors from archipelago.json for non-default worlds
+            if world not in default_worlds and archipelago_json_path.exists():
                 with open(archipelago_json_path, "r") as f:
                     archipelago_json = json.load(f)
                 world_version: str = archipelago_json["world_version"].strip("\"")

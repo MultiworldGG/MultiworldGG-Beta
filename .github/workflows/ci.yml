@@ -250,6 +250,108 @@ jobs:
             git push origin gui-changes
           fi
 
+  build-default-worlds:
+    name: Build Default Worlds
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/gui-changes'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+          fetch-depth: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Check for changes in default worlds
+        id: check_changes
+        run: |
+          cd src
+          CHANGED_WORLDS=""
+          
+          # Find all worlds that start with _ or are named generic
+          for world_dir in worlds/*/; do
+            if [ ! -d "$world_dir" ]; then
+              continue
+            fi
+            
+            world_name=$(basename "$world_dir")
+            
+            # Include worlds that start with _ or are named generic
+            if [[ "$world_name" == "_"* ]] || [[ "$world_name" == "generic" ]]; then
+              if git diff --name-only HEAD~1 HEAD | grep -q "^worlds/$world_name/"; then
+                if [ -z "$CHANGED_WORLDS" ]; then
+                  CHANGED_WORLDS="$world_name"
+                else
+                  CHANGED_WORLDS="$CHANGED_WORLDS $world_name"
+                fi
+                echo "Detected changes in default world: $world_name"
+              fi
+            fi
+          done
+          
+          echo "changed_worlds=$CHANGED_WORLDS" >> $GITHUB_OUTPUT
+          if [ -n "$CHANGED_WORLDS" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Set up Python
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install build dependencies
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install build toml
+      
+      - name: Build changed default worlds
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          source venv/bin/activate
+          cd src
+          # Convert space-separated list to comma-separated for build_wheels.py
+          WORLDS_CSV=$(echo "${{ steps.check_changes.outputs.changed_worlds }}" | tr ' ' ',')
+          python tools/build_wheels.py --world "$WORLDS_CSV"
+      
+      - name: Copy wheels to worlds_wheels
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          cd src
+          mkdir -p worlds_wheels
+          cp dist/worlds_*.whl worlds_wheels/ 2>/dev/null || true
+          cp dist/worlds_*.tar.gz worlds_wheels/ 2>/dev/null || true
+      
+      - name: Configure git
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          cd src
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Commit wheels
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          cd src
+          git add worlds_wheels/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update default world wheels"
+            # Fetch latest changes and rebase before pushing
+            git fetch origin gui-changes
+            git rebase origin/gui-changes || {
+              echo "Rebase failed, trying to pull with merge strategy"
+              git pull --rebase origin gui-changes || exit 1
+            }
+            git push origin gui-changes
+          fi
+
   check-new-worlds:
     name: Check for New Worlds
     runs-on: ubuntu-latest
@@ -377,7 +479,7 @@ jobs:
             
             for world in $WORLDS; do
               # Skip special worlds and check if pyproject.toml exists
-              if [[ "$world" != "_"* ]] && [ -f "worlds/$world/pyproject.toml" ]; then
+              if [[ "$world" != "_"* ]] && [[ "$world" != "generic" ]] && [ -f "worlds/$world/pyproject.toml" ]; then
                 if [ -z "$CHANGED_WORLDS" ]; then
                   CHANGED_WORLDS="$world"
                 else
