@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.zillion"
-version = "0.0.0"
+version = "0.0.1"
 description = "MultiWorld: Zillion"
 requires-python = ">=3.12"
 dependencies = [ "zilliandomizer @ git+https://github.com/beauxq/zilliandomizer@96d9a20f8278cee64bb4db859fbd874e0f332d36#0.9.1", "typing-extensions>=4.7, <5",]

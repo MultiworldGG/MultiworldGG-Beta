@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.faxanadu"
-version = "0.3.0"
+version = "0.3.1"
 description = "MultiWorld: Faxanadu"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

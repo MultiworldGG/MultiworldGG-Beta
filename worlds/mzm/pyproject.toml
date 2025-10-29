@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.mzm"
-version = "0.0.0"
+version = "0.0.1"
 description = "MultiWorld: Metroid Zero Mission"
 license = "MIT"
 license-files = [ "LICENSE",]

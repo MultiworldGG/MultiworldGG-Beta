@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.pokemon_crystal"
-version = "0.0.0"
+version = "5.2.6"
 description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "Unknown"
+name = "James"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

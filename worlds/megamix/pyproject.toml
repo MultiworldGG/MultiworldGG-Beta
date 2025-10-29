@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.megamix"
-version = "0.0.0"
+version = "1.4.1"
 description = "MultiWorld: Hatsune Miku Project Diva Mega Mix+"
 license = "MIT"
 license-files = [ "LICENSE",]
@@ -12,6 +12,9 @@ classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
 name = "Cynichill"
+
+[[project.authors]]
+name = "repodǝɹ"
 
 [project.entry-points."mwgg.client"]
 "worlds.megamix.Client" = "worlds.megamix.Register:CLIENT_FUNCTION"

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.residentevil3remake"
-version = "0.2.4"
+version = "0.2.5"
 description = "MultiWorld: Resident Evil 3 Remake"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

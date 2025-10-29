@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.minecraft"
-version = "10.1"
+version = "10.1.1"
 description = "MultiWorld: Minecraft"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

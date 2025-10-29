@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.meritous"
-version = "0.0.0"
+version = "1.0.1"
 description = "MultiWorld: Meritous"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "FelicitusNeko"
+name = "KewlioMZX"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.noita"
-version = "1.4.0"
+version = "1.4.1"
 description = "MultiWorld: Noita"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

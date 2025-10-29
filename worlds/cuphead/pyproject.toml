@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.cuphead"
-version = "0.2.a4"
+version = "0.2.1"
 description = "MultiWorld: Cuphead"
 license = "MIT"
 license-files = [ "LICENSE.md",]

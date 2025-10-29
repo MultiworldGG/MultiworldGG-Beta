@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.subnautica"
-version = "0.5.1"
+version = "0.5.2"
 description = "MultiWorld: Subnautica"
 license = "MIT"
 license-files = [ "LICENSE",]

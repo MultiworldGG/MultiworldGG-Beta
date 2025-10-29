@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.openrct2"
-version = "v0.1.20-beta"
+version = "v0.1.21-beta"
 description = "MultiWorld: OpenRCT2"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

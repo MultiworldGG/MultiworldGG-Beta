@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.factorio_saws"
-version = "0.0.0"
+version = "0.0.7"
 description = "MultiWorld: Factorio Space Age Without Space"
 license = "MIT"
 license-files = [ "LICENSE",]
@@ -12,10 +12,7 @@ classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 dependencies = [ "factorio-rcon-py>=2.1.2",]
 [[project.authors]]
-name = "Alchav"
-
-[[project.authors]]
-name = "Berserker66"
+name = "Silasary"
 
 [tool.setuptools.packages.find]
 where = [ "src",]
