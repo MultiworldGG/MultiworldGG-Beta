@@ -3,7 +3,7 @@ requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "worlds.tracker"
+name = "worlds._tracker"
 version = "0.0.3"
 description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
@@ -13,5 +13,5 @@ name = "Faris"
 
 [tool.setuptools.packages.find]
 where = [ "src",]
-include = [ "worlds.tracker",]
+include = [ "worlds._tracker",]
 namespaces = true

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds._sni"
-version = "1.0.3"
+version = "1.0.4"
 description = "MultiWorld: SNI Client"
 classifiers = [
     "Private :: Do Not Upload"

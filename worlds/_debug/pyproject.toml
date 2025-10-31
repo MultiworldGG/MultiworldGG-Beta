@@ -3,7 +3,7 @@ requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "worlds.debug"
+name = "worlds._debug"
 version = "0.0.3"
 description = "MultiWorld: debug"
 classifiers = [ "Private :: Do Not Upload",]
@@ -13,5 +13,5 @@ name = "TreZc0"
 
 [tool.setuptools.packages.find]
 where = [ "src",]
-include = [ "worlds.debug",]
+include = [ "worlds._debug",]
 namespaces = true
