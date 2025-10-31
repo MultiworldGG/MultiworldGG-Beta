@@ -322,10 +322,9 @@ jobs:
       - name: Copy wheels to worlds_wheels
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
-          cd src
-          mkdir -p worlds_wheels
-          cp dist/worlds_*.whl worlds_wheels/ 2>/dev/null || true
-          cp dist/worlds_*.tar.gz worlds_wheels/ 2>/dev/null || true
+          mkdir -p src/worlds_wheels
+          cp dist/worlds_*.whl src/worlds_wheels/ 2>/dev/null || true
+          cp dist/worlds_*.tar.gz src/worlds_wheels/ 2>/dev/null || true
       
       - name: Configure git
         if: steps.check_changes.outputs.has_changes == 'true'
