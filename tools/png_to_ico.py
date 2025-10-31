@@ -33,29 +33,32 @@ def convert_png_to_ico(input_path, output_path=None, sizes=None):
         output_path = f"{base_name}.ico"
     
     try:
-        # Open the PNG image
-        with Image.open(input_path) as img:
-            # Convert to RGBA if not already (to preserve transparency)
-            if img.mode != 'RGBA':
-                img = img.convert('RGBA')
-            
-            # Create list of resized images for different sizes
-            images = []
-            for size in sizes:
-                resized_img = img.resize((size, size), Image.Resampling.LANCZOS)
-                images.append(resized_img)
-            
-            # Save as ICO file
-            images[0].save(
-                output_path,
-                format='ICO',
-                sizes=[(size, size) for size in sizes],
-                append_images=images[1:]
-            )
-            
-            print(f"Successfully converted '{input_path}' to '{output_path}'")
-            print(f"Created ICO with sizes: {sizes}")
-            return output_path
+        # Open and load the PNG image (convert outside context manager to keep it in memory)
+        img = Image.open(input_path)
+        # Convert to RGBA if not already (to preserve transparency)
+        if img.mode != 'RGBA':
+            img = img.convert('RGBA')
+        # Load image data into memory
+        img.load()
+        
+        # Create resized images for each size
+        size_tuples = []
+        for size in sizes:
+            size_tuples.append((size, size))
+        
+        # Save as ICO file - save the first image with others appended
+        # The sizes parameter must match the order of images provided
+        img.save(
+            output_path,
+            sizes=size_tuples
+        )
+        
+        # Close the original image
+        img.close()
+        
+        print(f"Successfully converted '{input_path}' to '{output_path}'")
+        print(f"Created ICO with sizes: {size_tuples}")
+        return output_path
             
     except FileNotFoundError:
         print(f"Error: File '{input_path}' not found.")

@@ -2682,9 +2682,14 @@ async def main(args: argparse.Namespace):
 
     if not data_filename:
         try:
-            filetypes = [("Multiworld data", [".archipelago", ".zip"])]
-            data_filename = Utils.open_filename("Select multiworld data", filetypes)
-
+            filetypes = [("Multiworld data", [".archipelago", ".zip"]), ("All Files", ["*.*"])]
+            data_filename = Utils.open_filename(
+                title="Select multiworld data", 
+                filetypes=filetypes,
+                multiple=False,
+                suggest=""
+        )
+        
         except Exception as e:
             if isinstance(e, ImportError) or (e.__class__.__name__ == "TclError" and "no display" in str(e)):
                 if not isinstance(e, ImportError):
