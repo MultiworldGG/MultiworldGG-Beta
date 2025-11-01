@@ -128,7 +128,7 @@ class GameIndex:
 GAMES_DATA = {
     "against_the_storm": {
         "igdb_id": "147519",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coaazl.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coaazl.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/aru5g.png",
         "key_art_url": "",
         "game_name": "Against the Storm",
@@ -167,7 +167,7 @@ GAMES_DATA = {
     },
     "ahit": {
         "igdb_id": "6705",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5pl5.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5pl5.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar75x.png",
         "key_art_url": "",
         "game_name": "A Hat in Time",
@@ -213,7 +213,7 @@ GAMES_DATA = {
     },
     "albw": {
         "igdb_id": "2909",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3p0j.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3p0j.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/wh4w8shdd0oiikmdelth.png",
         "key_art_url": "",
         "game_name": "A Link Between Worlds",
@@ -282,7 +282,7 @@ GAMES_DATA = {
     },
     "alttp": {
         "igdb_id": "1026",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3vzn.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3vzn.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14lb.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3p2x.png",
         "game_name": "A Link to the Past",
@@ -373,7 +373,7 @@ GAMES_DATA = {
     },
     "animal_well": {
         "igdb_id": "191435",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co4hdh.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co4hdh.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1gce.png",
         "key_art_url": "",
         "game_name": "ANIMAL WELL",
@@ -419,7 +419,7 @@ GAMES_DATA = {
     },
     "apeescape": {
         "igdb_id": "3762",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2gzc.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2gzc.png",
         "artwork_url": "",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3scq.png",
         "game_name": "Ape Escape",
@@ -465,7 +465,7 @@ GAMES_DATA = {
     },
     "balatro": {
         "igdb_id": "251833",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co9f4g.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co9f4g.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar2c5g.png",
         "key_art_url": "",
         "game_name": "Balatro",
@@ -503,7 +503,7 @@ GAMES_DATA = {
     },
     "banjo_tooie": {
         "igdb_id": "3418",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co6c1w.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co6c1w.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar7us.png",
         "key_art_url": "",
         "game_name": "Banjo-Tooie",
@@ -564,7 +564,7 @@ GAMES_DATA = {
     },
     "bomb_rush_cyberfunk": {
         "igdb_id": "135940",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co6ya8.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co6ya8.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arzj0.png",
         "key_art_url": "",
         "game_name": "Bomb Rush Cyberfunk",
@@ -607,7 +607,7 @@ GAMES_DATA = {
     },
     "brotato": {
         "igdb_id": "199116",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coaauv.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coaauv.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1m88.png",
         "key_art_url": "",
         "game_name": "Brotato",
@@ -650,7 +650,7 @@ GAMES_DATA = {
     },
     "cat_quest": {
         "igdb_id": "36597",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1qlq.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1qlq.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arab6.png",
         "key_art_url": "",
         "game_name": "Cat Quest",
@@ -686,7 +686,7 @@ GAMES_DATA = {
     },
     "celeste": {
         "igdb_id": "26226",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3byy.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3byy.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar7u5.png",
         "key_art_url": "",
         "game_name": "Celeste",
@@ -738,7 +738,7 @@ GAMES_DATA = {
     },
     "celeste_open_world": {
         "igdb_id": "26226",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3byy.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3byy.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar7u5.png",
         "key_art_url": "",
         "game_name": "Celeste (Open World)",
@@ -790,7 +790,7 @@ GAMES_DATA = {
     },
     "civ_6": {
         "igdb_id": "293",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1rjp.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1rjp.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar6uy.png",
         "key_art_url": "",
         "game_name": "Civilization VI",
@@ -832,7 +832,7 @@ GAMES_DATA = {
     },
     "crosscode": {
         "igdb_id": "35282",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co28wy.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co28wy.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar7wo.png",
         "key_art_url": "",
         "game_name": "CrossCode",
@@ -875,7 +875,7 @@ GAMES_DATA = {
     },
     "crystal_project": {
         "igdb_id": "181444",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co48fv.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co48fv.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar19k4.png",
         "key_art_url": "",
         "game_name": "Crystal Project",
@@ -920,7 +920,7 @@ GAMES_DATA = {
     },
     "ctjot": {
         "igdb_id": "20398",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co54iw.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co54iw.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Chrono Trigger Jets of Time",
@@ -955,7 +955,7 @@ GAMES_DATA = {
     },
     "cuphead": {
         "igdb_id": "9061",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co62ao.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co62ao.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar6yl.png",
         "key_art_url": "",
         "game_name": "Cuphead",
@@ -1017,7 +1017,7 @@ GAMES_DATA = {
     },
     "cv64": {
         "igdb_id": "1130",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5geb.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5geb.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Castlevania 64",
@@ -1093,7 +1093,7 @@ GAMES_DATA = {
     },
     "cvcotm": {
         "igdb_id": "1132",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2zq1.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2zq1.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1vgm.png",
         "key_art_url": "",
         "game_name": "Castlevania - Circle of the Moon",
@@ -1142,7 +1142,7 @@ GAMES_DATA = {
     },
     "diddy_kong_racing": {
         "igdb_id": "2723",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1wgj.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1wgj.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar21yi.png",
         "key_art_url": "",
         "game_name": "Diddy Kong Racing",
@@ -1179,7 +1179,7 @@ GAMES_DATA = {
     },
     "dk64": {
         "igdb_id": "1096",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co289i.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co289i.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kpl.png",
         "key_art_url": "",
         "game_name": "Donkey Kong 64",
@@ -1233,7 +1233,7 @@ GAMES_DATA = {
     },
     "dkc": {
         "igdb_id": "1090",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co70qn.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co70qn.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar407r.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar407t.png",
         "game_name": "Donkey Kong Country",
@@ -1300,7 +1300,7 @@ GAMES_DATA = {
     },
     "dkc2": {
         "igdb_id": "1092",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co217m.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co217m.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar4088.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3okv.png",
         "game_name": "Donkey Kong Country 2",
@@ -1377,7 +1377,7 @@ GAMES_DATA = {
     },
     "dkc3": {
         "igdb_id": "1094",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co217n.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co217n.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar3ozm.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3ozn.png",
         "game_name": "Donkey Kong Country 3",
@@ -1439,7 +1439,7 @@ GAMES_DATA = {
     },
     "dontstarvetogether": {
         "igdb_id": "17832",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coaaqp.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coaaqp.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar5m2.png",
         "key_art_url": "",
         "game_name": "Don't Starve Together",
@@ -1487,7 +1487,7 @@ GAMES_DATA = {
     },
     "doronko_wanko": {
         "igdb_id": "290647",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7zj5.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7zj5.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar2t55.png",
         "key_art_url": "",
         "game_name": "DORONKO WANKO",
@@ -1514,7 +1514,7 @@ GAMES_DATA = {
     },
     "dredge": {
         "igdb_id": "164867",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co9kyk.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co9kyk.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar10y5.png",
         "key_art_url": "",
         "game_name": "Dredge",
@@ -1562,7 +1562,7 @@ GAMES_DATA = {
     },
     "dw1": {
         "igdb_id": "3878",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2dyy.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2dyy.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Digimon World",
@@ -1601,7 +1601,7 @@ GAMES_DATA = {
     },
     "earthbound": {
         "igdb_id": "2899",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co6v07.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co6v07.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1gd3.png",
         "key_art_url": "",
         "game_name": "EarthBound",
@@ -1659,7 +1659,7 @@ GAMES_DATA = {
     },
     "enderlilies": {
         "igdb_id": "138858",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co9s9e.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co9s9e.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar96z.png",
         "key_art_url": "",
         "game_name": "Ender Lilies",
@@ -1700,7 +1700,7 @@ GAMES_DATA = {
     },
     "factorio": {
         "igdb_id": "7046",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1tfy.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1tfy.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1vdh.png",
         "key_art_url": "",
         "game_name": "Factorio",
@@ -1739,7 +1739,7 @@ GAMES_DATA = {
     },
     "faxanadu": {
         "igdb_id": "1974",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5jif.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5jif.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1vkf.png",
         "key_art_url": "",
         "game_name": "Faxanadu",
@@ -1780,7 +1780,7 @@ GAMES_DATA = {
     },
     "ff1": {
         "igdb_id": "385",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2xv8.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2xv8.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1vi4.png",
         "key_art_url": "",
         "game_name": "Final Fantasy",
@@ -1817,7 +1817,7 @@ GAMES_DATA = {
     },
     "ff4fe": {
         "igdb_id": "387",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2y6s.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2y6s.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1vks.png",
         "key_art_url": "",
         "game_name": "Final Fantasy IV Free Enterprise",
@@ -1852,7 +1852,7 @@ GAMES_DATA = {
     },
     "ffmq": {
         "igdb_id": "415",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2y0b.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2y0b.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar21za.png",
         "key_art_url": "",
         "game_name": "Final Fantasy Mystic Quest",
@@ -1897,7 +1897,7 @@ GAMES_DATA = {
     },
     "ffta": {
         "igdb_id": "414",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1wyp.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1wyp.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kju.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3on9.png",
         "game_name": "Final Fantasy Tactics Advance",
@@ -1949,7 +1949,7 @@ GAMES_DATA = {
     },
     "fm": {
         "igdb_id": "4108",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1ui5.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1ui5.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Yu-Gi-Oh! Forbidden Memories",
@@ -1982,7 +1982,7 @@ GAMES_DATA = {
     },
     "getting_over_it": {
         "igdb_id": "72373",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3wl5.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3wl5.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar6y0.png",
         "key_art_url": "",
         "game_name": "Getting Over It",
@@ -2024,7 +2024,7 @@ GAMES_DATA = {
     },
     "gstla": {
         "igdb_id": "1173",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co25rt.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co25rt.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kpa.png",
         "key_art_url": "",
         "game_name": "Golden Sun The Lost Age",
@@ -2078,7 +2078,7 @@ GAMES_DATA = {
     },
     "hades": {
         "igdb_id": "113112",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co39vc.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co39vc.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar17uy.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3m4s.png",
         "game_name": "Hades",
@@ -2128,7 +2128,7 @@ GAMES_DATA = {
     },
     "hcniko": {
         "igdb_id": "142405",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2o6i.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2o6i.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arz25.png",
         "key_art_url": "",
         "game_name": "Here Comes Niko!",
@@ -2180,7 +2180,7 @@ GAMES_DATA = {
     },
     "hk": {
         "igdb_id": "14593",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co93cr.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co93cr.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ylrp6zuf9e7tcu1nvuir.png",
         "key_art_url": "",
         "game_name": "Hollow Knight",
@@ -2230,7 +2230,7 @@ GAMES_DATA = {
     },
     "jakanddaxter": {
         "igdb_id": "1528",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1w7q.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1w7q.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/yvqffc6igxmvpzokkkf2.png",
         "key_art_url": "",
         "game_name": "Jak and Daxter: The Precursor Legacy",
@@ -2288,7 +2288,7 @@ GAMES_DATA = {
     },
     "k64": {
         "igdb_id": "2713",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1wcz.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1wcz.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1krk.png",
         "key_art_url": "",
         "game_name": "Kirby 64 - The Crystal Shards",
@@ -2331,7 +2331,7 @@ GAMES_DATA = {
     },
     "kdl3": {
         "igdb_id": "3720",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co25su.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co25su.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kr4.png",
         "key_art_url": "",
         "game_name": "Kirby's Dream Land 3",
@@ -2366,7 +2366,7 @@ GAMES_DATA = {
     },
     "kh1": {
         "igdb_id": "1219",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co30zf.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co30zf.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/xsqeggrjy7tzab4gtab9.png",
         "key_art_url": "",
         "game_name": "Kingdom Hearts",
@@ -2426,7 +2426,7 @@ GAMES_DATA = {
     },
     "kh2": {
         "igdb_id": "1221",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co30t1.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co30t1.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/quibnp6vdu6lmwsulsdi.png",
         "key_art_url": "",
         "game_name": "Kingdom Hearts 2",
@@ -2459,7 +2459,7 @@ GAMES_DATA = {
     },
     "ladx": {
         "igdb_id": "1027",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co4o47.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co4o47.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kl1.png",
         "key_art_url": "",
         "game_name": "Link's Awakening DX Beta",
@@ -2520,7 +2520,7 @@ GAMES_DATA = {
     },
     "landstalker": {
         "igdb_id": "15072",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2kb9.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2kb9.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar30jm.png",
         "key_art_url": "",
         "game_name": "Landstalker - The Treasures of King Nole",
@@ -2558,7 +2558,7 @@ GAMES_DATA = {
     },
     "lego_star_wars_tcs": {
         "igdb_id": "2682",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1qrr.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1qrr.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arp30.png",
         "key_art_url": "",
         "game_name": "Lego Star Wars: The Complete Saga",
@@ -2617,7 +2617,7 @@ GAMES_DATA = {
     },
     "lufia2ac": {
         "igdb_id": "1178",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co9mg3.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co9mg3.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Lufia II: Ancient Cave",
@@ -2648,7 +2648,7 @@ GAMES_DATA = {
     },
     "luigismansion": {
         "igdb_id": "2485",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1wr1.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1wr1.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar3fnc.png",
         "key_art_url": "",
         "game_name": "Luigi's Mansion",
@@ -2685,7 +2685,7 @@ GAMES_DATA = {
     },
     "marioland2": {
         "igdb_id": "1071",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7gxg.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7gxg.png",
         "artwork_url": "",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar4079.png",
         "game_name": "Super Mario Land 2",
@@ -2713,7 +2713,7 @@ GAMES_DATA = {
     },
     "mario_kart_double_dash": {
         "igdb_id": "2344",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7ndu.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7ndu.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar3k93.png",
         "key_art_url": "",
         "game_name": "Mario Kart Double Dash",
@@ -2742,7 +2742,7 @@ GAMES_DATA = {
     },
     "megamix": {
         "igdb_id": "120278",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coa4vr.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coa4vr.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/araan.png",
         "key_art_url": "",
         "game_name": "Hatsune Miku Project Diva Mega Mix+",
@@ -2771,7 +2771,7 @@ GAMES_DATA = {
     },
     "messenger": {
         "igdb_id": "71628",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2hr9.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2hr9.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar6u0.png",
         "key_art_url": "",
         "game_name": "The Messenger",
@@ -2813,7 +2813,7 @@ GAMES_DATA = {
     },
     "metroidfusion": {
         "igdb_id": "1104",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3w49.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3w49.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14ar.png",
         "key_art_url": "",
         "game_name": "Metroid Fusion",
@@ -2889,7 +2889,7 @@ GAMES_DATA = {
     },
     "metroidprime": {
         "igdb_id": "1105",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3w4w.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3w4w.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/a0lmffyqmm3wqgzdistt.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3qxy.png",
         "game_name": "Metroid Prime",
@@ -2966,7 +2966,7 @@ GAMES_DATA = {
     },
     "minecraft": {
         "igdb_id": "121",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coa77e.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coa77e.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar30cw.png",
         "key_art_url": "",
         "game_name": "Minecraft",
@@ -3038,7 +3038,7 @@ GAMES_DATA = {
     },
     "mk64": {
         "igdb_id": "2342",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co67hm.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co67hm.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar406h.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar406i.png",
         "game_name": "Mario Kart 64",
@@ -3084,7 +3084,7 @@ GAMES_DATA = {
     },
     "mlss": {
         "igdb_id": "3351",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co21rg.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co21rg.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/knx4ne4pefgjivuylmii.png",
         "key_art_url": "",
         "game_name": "Mario & Luigi Superstar Saga",
@@ -3131,7 +3131,7 @@ GAMES_DATA = {
     },
     "mm2": {
         "igdb_id": "1734",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5572.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5572.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar8mv.png",
         "key_art_url": "",
         "game_name": "Mega Man 2",
@@ -3177,7 +3177,7 @@ GAMES_DATA = {
     },
     "mm3": {
         "igdb_id": "1716",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co55ce.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co55ce.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar3p52.png",
         "key_art_url": "",
         "game_name": "Mega Man 3",
@@ -3227,7 +3227,7 @@ GAMES_DATA = {
     },
     "mmbn3": {
         "igdb_id": "1758",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co203k.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co203k.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kmf.png",
         "key_art_url": "",
         "game_name": "MegaMan Battle Network 3",
@@ -3257,7 +3257,7 @@ GAMES_DATA = {
     },
     "mmx3": {
         "igdb_id": "1743",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co55pa.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co55pa.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar2oxu.png",
         "key_art_url": "",
         "game_name": "Mega Man X3",
@@ -3305,7 +3305,7 @@ GAMES_DATA = {
     },
     "mm_recomp": {
         "igdb_id": "1030",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3pah.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3pah.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/jkiwacooqfrtotvqlxba.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3p8l.png",
         "game_name": "Majora's Mask Recompiled",
@@ -3356,7 +3356,7 @@ GAMES_DATA = {
     },
     "momodoramoonlitfarewell": {
         "igdb_id": "188088",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7mxs.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7mxs.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1rhx.png",
         "key_art_url": "",
         "game_name": "Momodora Moonlit Farewell",
@@ -3392,7 +3392,7 @@ GAMES_DATA = {
     },
     "monster_sanctuary": {
         "igdb_id": "89594",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1q3q.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1q3q.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar88x.png",
         "key_art_url": "",
         "game_name": "Monster Sanctuary",
@@ -3434,7 +3434,7 @@ GAMES_DATA = {
     },
     "musedash": {
         "igdb_id": "86316",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co6h43.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co6h43.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar5ul.png",
         "key_art_url": "",
         "game_name": "Muse Dash",
@@ -3480,7 +3480,7 @@ GAMES_DATA = {
     },
     "mzm": {
         "igdb_id": "1107",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1vci.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1vci.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1vh5.png",
         "key_art_url": "",
         "game_name": "Metroid Zero Mission",
@@ -3539,7 +3539,7 @@ GAMES_DATA = {
     },
     "oot": {
         "igdb_id": "1029",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3nnx.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3nnx.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar3p2v.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3p2s.png",
         "game_name": "Ocarina of Time",
@@ -3623,7 +3623,7 @@ GAMES_DATA = {
     },
     "oribf": {
         "igdb_id": "7344",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1y41.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1y41.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/argmx.png",
         "key_art_url": "",
         "game_name": "Ori and the Blind Forest",
@@ -3665,7 +3665,7 @@ GAMES_DATA = {
     },
     "outer_wilds": {
         "igdb_id": "11737",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co65ac.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co65ac.png",
         "artwork_url": "",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3nua.png",
         "game_name": "Outer Wilds",
@@ -3707,7 +3707,7 @@ GAMES_DATA = {
     },
     "overcooked2": {
         "igdb_id": "103341",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1usu.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1usu.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar89w.png",
         "key_art_url": "",
         "game_name": "Overcooked! 2",
@@ -3747,7 +3747,7 @@ GAMES_DATA = {
     },
     "papermario": {
         "igdb_id": "3340",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1qda.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1qda.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Paper Mario",
@@ -3812,7 +3812,7 @@ GAMES_DATA = {
     },
     "placidplasticducksim": {
         "igdb_id": "204122",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co4yq5.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co4yq5.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1oc8.png",
         "key_art_url": "",
         "game_name": "Placid Plastic Duck Simulator",
@@ -3851,7 +3851,7 @@ GAMES_DATA = {
     },
     "pmd_eos": {
         "igdb_id": "2323",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7ovf.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7ovf.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kc2.png",
         "key_art_url": "",
         "game_name": "Pokemon Mystery Dungeon Explorers of Sky",
@@ -3886,7 +3886,7 @@ GAMES_DATA = {
     },
     "pokemon_crystal": {
         "igdb_id": "1514",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5pil.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5pil.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1ox6.png",
         "key_art_url": "",
         "game_name": "Pokemon Crystal",
@@ -3942,7 +3942,7 @@ GAMES_DATA = {
     },
     "pokemon_emerald": {
         "igdb_id": "1517",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1zhr.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1zhr.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar21y7.png",
         "key_art_url": "",
         "game_name": "Pokemon Emerald",
@@ -3998,7 +3998,7 @@ GAMES_DATA = {
     },
     "pokemon_frlg": {
         "igdb_id": "1516",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1zip.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1zip.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Pokemon FireRed and LeafGreen",
@@ -4031,7 +4031,7 @@ GAMES_DATA = {
     },
     "pokemon_rb": {
         "igdb_id": "1561",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5pi4.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5pi4.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1krw.png",
         "key_art_url": "",
         "game_name": "Pokemon Red and Blue",
@@ -4065,7 +4065,7 @@ GAMES_DATA = {
     },
     "powerwashsimulator": {
         "igdb_id": "138590",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7gek.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7gek.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ardhg.png",
         "key_art_url": "",
         "game_name": "Powerwash Simulator",
@@ -4103,7 +4103,7 @@ GAMES_DATA = {
     },
     "rac2": {
         "igdb_id": "1770",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co230n.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co230n.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Ratchet & Clank 2",
@@ -4137,7 +4137,7 @@ GAMES_DATA = {
     },
     "raft": {
         "igdb_id": "27082",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1xdc.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1xdc.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ardgp.png",
         "key_art_url": "",
         "game_name": "Raft",
@@ -4173,7 +4173,7 @@ GAMES_DATA = {
     },
     "rogue_legacy": {
         "igdb_id": "3221",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co27fi.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co27fi.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ard4c.png",
         "key_art_url": "",
         "game_name": "Rogue Legacy",
@@ -4254,7 +4254,7 @@ GAMES_DATA = {
     },
     "ror1": {
         "igdb_id": "3173",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2k2z.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2k2z.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ard5n.png",
         "key_art_url": "",
         "game_name": "Risk of Rain",
@@ -4305,7 +4305,7 @@ GAMES_DATA = {
     },
     "ror2": {
         "igdb_id": "28512",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coaavb.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coaavb.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar758.png",
         "key_art_url": "",
         "game_name": "Risk of Rain 2",
@@ -4346,7 +4346,7 @@ GAMES_DATA = {
     },
     "sa2b": {
         "igdb_id": "192194",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5p3o.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5p3o.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1h09.png",
         "key_art_url": "",
         "game_name": "Sonic Adventure 2 Battle",
@@ -4377,7 +4377,7 @@ GAMES_DATA = {
     },
     "sadx": {
         "igdb_id": "192114",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co4iln.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co4iln.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1nly.png",
         "key_art_url": "",
         "game_name": "Sonic Adventure DX",
@@ -4406,7 +4406,7 @@ GAMES_DATA = {
     },
     "satisfactory": {
         "igdb_id": "90558",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co8tfy.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co8tfy.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar57j.png",
         "key_art_url": "",
         "game_name": "Satisfactory",
@@ -4442,7 +4442,7 @@ GAMES_DATA = {
     },
     "seaofthieves": {
         "igdb_id": "11137",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2558.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2558.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar6pg.png",
         "key_art_url": "",
         "game_name": "Sea of Thieves",
@@ -4485,7 +4485,7 @@ GAMES_DATA = {
     },
     "shivers": {
         "igdb_id": "12477",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7a5z.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7a5z.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/aruss.png",
         "key_art_url": "",
         "game_name": "Shivers",
@@ -4516,7 +4516,7 @@ GAMES_DATA = {
     },
     "shorthike": {
         "igdb_id": "116753",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co6e83.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co6e83.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arcrm.png",
         "key_art_url": "",
         "game_name": "A Short Hike",
@@ -4570,7 +4570,7 @@ GAMES_DATA = {
     },
     "sims4": {
         "igdb_id": "3212",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3h3l.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3h3l.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ary47.png",
         "key_art_url": "",
         "game_name": "The Sims 4",
@@ -4616,7 +4616,7 @@ GAMES_DATA = {
     },
     "sly1": {
         "igdb_id": "1798",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1p0r.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1p0r.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Sly Cooper and the Thievius Raccoonus",
@@ -4668,7 +4668,7 @@ GAMES_DATA = {
     },
     "sm": {
         "igdb_id": "1103",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5osy.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5osy.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14az.png",
         "key_art_url": "",
         "game_name": "Super Metroid",
@@ -4727,7 +4727,7 @@ GAMES_DATA = {
     },
     "sm64ex": {
         "igdb_id": "1074",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co721v.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co721v.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14k6.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3na7.png",
         "game_name": "Super Mario 64",
@@ -4767,7 +4767,7 @@ GAMES_DATA = {
     },
     "sm64hacks": {
         "igdb_id": "1074",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co721v.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co721v.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14k6.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3na7.png",
         "game_name": "SM64 Romhack",
@@ -4807,7 +4807,7 @@ GAMES_DATA = {
     },
     "smo": {
         "igdb_id": "26758",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1mxf.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1mxf.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/lymumhy07tlqyprs0zrn.png",
         "key_art_url": "",
         "game_name": "Super Mario Odyssey",
@@ -4854,7 +4854,7 @@ GAMES_DATA = {
     },
     "sms": {
         "igdb_id": "1075",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co21rh.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co21rh.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14lj.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3nb8.png",
         "game_name": "Super Mario Sunshine",
@@ -4921,7 +4921,7 @@ GAMES_DATA = {
     },
     "smw": {
         "igdb_id": "1070",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co8lo8.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co8lo8.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1ge5.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3nae.png",
         "game_name": "Super Mario World",
@@ -4960,7 +4960,7 @@ GAMES_DATA = {
     },
     "sm_map_rando": {
         "igdb_id": "1103",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5osy.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5osy.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14az.png",
         "key_art_url": "",
         "game_name": "Super Metroid Map Rando",
@@ -5019,7 +5019,7 @@ GAMES_DATA = {
     },
     "soe": {
         "igdb_id": "1359",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co8kz6.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co8kz6.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Secret of Evermore",
@@ -5055,7 +5055,7 @@ GAMES_DATA = {
     },
     "sonic_heroes": {
         "igdb_id": "4156",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co9olx.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co9olx.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Sonic Heroes",
@@ -5105,7 +5105,7 @@ GAMES_DATA = {
     },
     "sotn": {
         "igdb_id": "1128",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co53m8.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co53m8.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1nj6.png",
         "key_art_url": "",
         "game_name": "Symphony of the Night",
@@ -5187,7 +5187,7 @@ GAMES_DATA = {
     },
     "spyro3": {
         "igdb_id": "1578",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7t4m.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7t4m.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Spyro 3",
@@ -5235,7 +5235,7 @@ GAMES_DATA = {
     },
     "ss": {
         "igdb_id": "534",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5wrj.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5wrj.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/o7kzk0l7wrtw3gfv4dgb.png",
         "key_art_url": "",
         "game_name": "Skyward Sword",
@@ -5292,7 +5292,7 @@ GAMES_DATA = {
     },
     "stardew_valley": {
         "igdb_id": "17000",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coa93h.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coa93h.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar5l8.png",
         "key_art_url": "",
         "game_name": "Stardew Valley",
@@ -5356,7 +5356,7 @@ GAMES_DATA = {
     },
     "star_fox_64": {
         "igdb_id": "2591",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2e4k.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2e4k.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1vrq.png",
         "key_art_url": "",
         "game_name": "Star Fox 64",
@@ -5407,7 +5407,7 @@ GAMES_DATA = {
     },
     "subnautica": {
         "igdb_id": "9254",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coa938.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coa938.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar56g.png",
         "key_art_url": "",
         "game_name": "Subnautica",
@@ -5453,7 +5453,7 @@ GAMES_DATA = {
     },
     "swr": {
         "igdb_id": "154",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3wj7.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3wj7.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar8f0.png",
         "key_art_url": "",
         "game_name": "Star Wars Episode I Racer",
@@ -5491,7 +5491,7 @@ GAMES_DATA = {
     },
     "terraria": {
         "igdb_id": "1879",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/coaamg.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/coaamg.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar5kn.png",
         "key_art_url": "",
         "game_name": "Terraria",
@@ -5586,7 +5586,7 @@ GAMES_DATA = {
     },
     "tetrisattack": {
         "igdb_id": "2739",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2w6k.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2w6k.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Tetris Attack",
@@ -5614,7 +5614,7 @@ GAMES_DATA = {
     },
     "timespinner": {
         "igdb_id": "28952",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co24ag.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co24ag.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar9y3.png",
         "key_art_url": "",
         "game_name": "Timespinner",
@@ -5663,7 +5663,7 @@ GAMES_DATA = {
     },
     "tloz": {
         "igdb_id": "1022",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1uii.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1uii.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14l0.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3p2o.png",
         "game_name": "The Legend of Zelda",
@@ -5702,7 +5702,7 @@ GAMES_DATA = {
     },
     "tloz_ooa": {
         "igdb_id": "1041",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2tw1.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2tw1.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar31pi.png",
         "key_art_url": "",
         "game_name": "The Legend of Zelda - Oracle of Ages",
@@ -5765,7 +5765,7 @@ GAMES_DATA = {
     },
     "tloz_oos": {
         "igdb_id": "1032",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2tw0.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2tw0.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar31pl.png",
         "key_art_url": "",
         "game_name": "The Legend of Zelda - Oracle of Seasons",
@@ -5835,7 +5835,7 @@ GAMES_DATA = {
     },
     "tloz_ph": {
         "igdb_id": "1037",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3ocu.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3ocu.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/atulchizv5c4ezn2gjob.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3p2i.png",
         "game_name": "The Legend of Zelda - Phantom Hourglass",
@@ -5900,7 +5900,7 @@ GAMES_DATA = {
     },
     "tmc": {
         "igdb_id": "1035",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3nsk.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3nsk.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/shsfsrmdduhlknr5piky.png",
         "key_art_url": "",
         "game_name": "The Minish Cap",
@@ -5998,7 +5998,7 @@ GAMES_DATA = {
     },
     "toontown": {
         "igdb_id": "25326",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co28yv.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co28yv.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Toontown",
@@ -6030,7 +6030,7 @@ GAMES_DATA = {
     },
     "tp": {
         "igdb_id": "134014",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3w1h.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3w1h.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar21yd.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3p34.png",
         "game_name": "Twilight Princess",
@@ -6060,7 +6060,7 @@ GAMES_DATA = {
     },
     "trackmania": {
         "igdb_id": "133807",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2fe9.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2fe9.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar8jb.png",
         "key_art_url": "",
         "game_name": "Trackmania",
@@ -6092,7 +6092,7 @@ GAMES_DATA = {
     },
     "tunic": {
         "igdb_id": "23733",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/td1t8kb33gyo8mvhl2pc.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/td1t8kb33gyo8mvhl2pc.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arklp.png",
         "key_art_url": "",
         "game_name": "TUNIC",
@@ -6144,7 +6144,7 @@ GAMES_DATA = {
     },
     "tww": {
         "igdb_id": "1033",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3ohz.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3ohz.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/nqujfvlda7lg7bhk7xrq.png",
         "key_art_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/ar3p3f.png",
         "game_name": "The Wind Waker",
@@ -6182,7 +6182,7 @@ GAMES_DATA = {
     },
     "tyrian": {
         "igdb_id": "14432",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2zg1.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2zg1.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Tyrian",
@@ -6215,7 +6215,7 @@ GAMES_DATA = {
     },
     "undertale": {
         "igdb_id": "12517",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2855.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2855.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar4vc.png",
         "key_art_url": "",
         "game_name": "Undertale",
@@ -6278,7 +6278,7 @@ GAMES_DATA = {
     },
     "v6": {
         "igdb_id": "1990",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co4ieg.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co4ieg.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/arct2.png",
         "key_art_url": "",
         "game_name": "VVVVVV",
@@ -6344,7 +6344,7 @@ GAMES_DATA = {
     },
     "wargroove": {
         "igdb_id": "27441",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co4hgb.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co4hgb.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar9ii.png",
         "key_art_url": "",
         "game_name": "Wargroove",
@@ -6381,7 +6381,7 @@ GAMES_DATA = {
     },
     "wargroove2": {
         "igdb_id": "241149",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co731u.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co731u.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar28cx.png",
         "key_art_url": "",
         "game_name": "Wargroove 2",
@@ -6420,7 +6420,7 @@ GAMES_DATA = {
     },
     "witness": {
         "igdb_id": "5601",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co3hih.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co3hih.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1cly.png",
         "key_art_url": "",
         "game_name": "The Witness",
@@ -6470,7 +6470,7 @@ GAMES_DATA = {
     },
     "wl": {
         "igdb_id": "1072",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co216h.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co216h.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kik.png",
         "key_art_url": "",
         "game_name": "Wario Land",
@@ -6498,7 +6498,7 @@ GAMES_DATA = {
     },
     "wl4": {
         "igdb_id": "1699",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1wpx.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1wpx.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1kt5.png",
         "key_art_url": "",
         "game_name": "Wario Land 4",
@@ -6547,7 +6547,7 @@ GAMES_DATA = {
     },
     "xenobladex": {
         "igdb_id": "2366",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1nwh.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1nwh.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar37uu.png",
         "key_art_url": "",
         "game_name": "Xenoblade X",
@@ -6596,7 +6596,7 @@ GAMES_DATA = {
     },
     "yoshisisland": {
         "igdb_id": "1073",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co2kn9.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2kn9.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar1gep.png",
         "key_art_url": "",
         "game_name": "Yoshi's Island",
@@ -6629,7 +6629,7 @@ GAMES_DATA = {
     },
     "yugioh06": {
         "igdb_id": "49377",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co7yau.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co7yau.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Yu-Gi-Oh! 2006",
@@ -6658,7 +6658,7 @@ GAMES_DATA = {
     },
     "yugiohddm": {
         "igdb_id": "49211",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co5ztw.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5ztw.png",
         "artwork_url": "",
         "key_art_url": "",
         "game_name": "Yu-Gi-Oh! Dungeon Dice Monsters",
@@ -6693,7 +6693,7 @@ GAMES_DATA = {
     },
     "zelda2": {
         "igdb_id": "1025",
-        "cover_url": "https:https://images.igdb.com/igdb/image/upload/t_thumb/co1uje.png",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1uje.png",
         "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/ar14l5.png",
         "key_art_url": "",
         "game_name": "Zelda II: The Adventure of Link",
