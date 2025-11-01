@@ -289,7 +289,7 @@ class InitContext:
     @username.setter
     def username(self, value: str):
         self._username = value
-        Utils.persistent_store({'client': {'last_username': value}})
+        Utils.persistent_store('client', 'last_username', value)
 
     @property
     def password(self) -> str:

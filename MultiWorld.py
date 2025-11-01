@@ -60,9 +60,6 @@ def terminate_splash_screen(queue: "Queue" ):
 
 def run_client(*args, queue=None):
     """Start the MWGG client"""
-    
-    print(f"sys.path: {sys.path}")
-    print(f"sys.modules: {sys.modules.keys()}")
 
     async def main(args: list[str]):
         from CommonClient import InitContext

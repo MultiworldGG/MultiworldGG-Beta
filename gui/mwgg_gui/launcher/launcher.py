@@ -980,10 +980,11 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         port_text = self.launcher_view.ids.port.text or self.launcher_view.ids.port.hint_text
         slot_name_text = self.launcher_view.ids.slot_name.text or self.launcher_view.ids.slot_name.hint_text
         if self._password_as_text:
-            slot_password_text = f":{self.launcher_view.ids.slot_password.text}" if self.launcher_view.ids.slot_password.text else ""
+            slot_password_text = self.launcher_view.ids.slot_password.text if self.launcher_view.ids.slot_password.text else ""
         else:
-            slot_password_text = ":********" if self.launcher_view.ids.slot_password.text else ""
-        return f"{slot_name_text}{slot_password_text}@{server_text}:{port_text}" if server_text and port_text else None
+            slot_password_text = "********" if self.launcher_view.ids.slot_password.text else ""
+        colon_text = ":" if slot_name_text else ""
+        return f"{slot_name_text}{colon_text}{slot_password_text}@{server_text}:{port_text}" if server_text and port_text else None
 
     def connect(self):
         """Connect to server and launch the selected game module"""
@@ -993,7 +994,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         current_ctx = self.app.ctx
 
         self._password_as_text = False
-        server_address = self.server_address.copy() if self.server_address else None
+        server_address = "".join(self.server_address) if self.server_address else None
         self._password_as_text = True
 
         # Check if we're in initial state by checking if ctx has a 'game' attribute
