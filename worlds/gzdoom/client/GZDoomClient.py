@@ -65,14 +65,11 @@ class GZDoomContext(SuperContext):
             self.tracker_task = asyncio.create_task(self._tracker_loop())
         else:
             self.tracker_task = None
-        print("Starting server loop")
-        self.server_task = asyncio.create_task(server_loop(self), name="ServerLoop")
         print("All tasks started.")
 
     async def send_check(self, id: int):
-        await self.send_msgs([
-            {"cmd": 'LocationChecks', "locations": [id]}
-            ])
+        self.locations_checked |= {id}
+        await self.check_locations(self.locations_checked)
 
     async def send_chat(self, message: str):
         await self.send_msgs([
@@ -101,7 +98,7 @@ class GZDoomContext(SuperContext):
         await self.get_username()
         await self.send_connect()
 
-    async def on_xon(self, slot: str, seed: str):
+    async def on_xon(self, slot: str, seed: str, server: str):
         self.slot_name = slot
         self.seed_name = seed
         self.last_items = {}  # force a re-send of all items
@@ -110,6 +107,10 @@ class GZDoomContext(SuperContext):
         self.last_hints = {}
         self.found_gzdoom.set()
         self.ipc.send_text("Archipelago<->GZDoom connection established.")
+        if server:
+            await self.connect(server)
+            # TODO: send a message to the game when the connection to the host is
+            # opened or closed.
 
     async def on_xoff(self):
         self.username = None
@@ -207,16 +208,20 @@ class GZDoomContext(SuperContext):
         self.last_tracked_ool = set()
         while not self.exit_event.is_set():
             await self.watcher_event.wait()
+            if self.tracker_core.get_current_world() is None:
+                continue
+
             self.watcher_event.clear()
             new_ool = set(self.glitched_locations) - self.last_tracked_ool
             new_il = set(self.locations_available) - self.last_tracked
 
             # print("tracker_loop IL: ", new_il, self.last_tracked)
             # print("tracker_loop OOL:", new_ool, self.last_tracked_ool)
-            for id in new_ool:
-                self.ipc.send_track(id, "OOL")
-            for id in new_il:
-                self.ipc.send_track(id, "IL")
+            id_map = self.tracker_core.get_current_world().location_name_to_id
+            for name in new_ool:
+                self.ipc.send_track(id_map[name], "OOL")
+            for name in new_il:
+                self.ipc.send_track(id_map[name], "IL")
             self.ipc.flush()
             # Over the course of the game, locations may be added to OOL and then
             # removed from it and added to IL. These locations will gradually

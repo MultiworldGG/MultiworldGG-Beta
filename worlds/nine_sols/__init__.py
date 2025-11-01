@@ -7,7 +7,7 @@ from worlds.AutoWorld import WebWorld, World
 from Options import OptionError
 from .items import NineSolsItem, all_non_event_items_table, item_name_groups, create_item, create_items
 from .locations_and_regions import all_non_event_locations_table, location_name_groups, create_regions
-from .options import NineSolsGameOptions
+from .options import FirstRootNode, NineSolsGameOptions
 from .ut_map_page.map_page_index import map_page_index
 from .jade_costs import generate_random_jade_costs
 
@@ -67,7 +67,7 @@ class NineSolsWorld(World):
                     self.options.seals_for_prison.value = slot_data['seals_for_prison']
                     self.options.seals_for_ethereal.value = slot_data['seals_for_ethereal']
                     self.options.skip_soulscape_platforming.value = slot_data['skip_soulscape_platforming']
-                    # TODO: alternate spawns, etc
+                    self.options.first_root_node = FirstRootNode.from_text(slot_data['first_root_node_name'])
             return
 
         # generate game-specific randomizations separate from AP items/locations
@@ -120,6 +120,7 @@ class NineSolsWorld(World):
             'seals_for_prison',
             'seals_for_ethereal',
         )
+        slot_data["first_root_node_name"] = self.options.first_root_node.current_key  # we want strings instead of ints
         # more client/mod features, these are only in the apworld because we want them fixed per-slot/at gen time
         slot_data["jade_costs"] = self.jade_costs
         # APWorld versions are not (yet?) exposed by AP servers, so the client/mod needs us to put it in slot_data

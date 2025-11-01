@@ -94,6 +94,15 @@ class TrackerCommandProcessor(ClientCommandProcessor):
                 logger.info(event)
 
     @mark_raw
+    def _cmd_event_locations(self, filter_text: str = ""):
+        """Print the list of current event locations in logic"""
+        logger.info("Current Event Locations:")
+        currentState = self.ctx.updateTracker()
+        for location in sorted(currentState.event_locations):
+            if filter_text in location:
+                logger.info(location)
+
+    @mark_raw
     def _cmd_manually_collect(self, item_name: str = ""):
         """Manually adds an item name to the CollectionState to test"""
         self.ctx.tracker_core.manual_items.append(item_name)
@@ -222,10 +231,22 @@ class TrackerCommandProcessor(ClientCommandProcessor):
         """Explains the rule for a location, if the world supports it"""
         if not self.ctx.game:
             logger.info("Not yet loaded into a game")
+            return
         if self.ctx.stored_data and "_read_race_mode" in self.ctx.stored_data and self.ctx.stored_data["_read_race_mode"]:
             logger.info("Explain is disabled during Race Mode")
             return
         explain(self.ctx, lookup_name)
+
+    @mark_raw
+    def _cmd_explain_more(self, argument:str=""):
+        """Asks the internal world to explain more, used to expland on /explain and /get_logical_path"""
+        if not self.ctx.game:
+            logger.info("Not yet loaded into a game")
+            return
+        if self.ctx.stored_data and "_read_race_mode" in self.ctx.stored_data and self.ctx.stored_data["_read_race_mode"]:
+            logger.info("Explain is disabled during Race Mode")
+            return
+        explain_more(self.ctx, argument)
 
     def _cmd_faris_asked(self):
         """Print out the error message and any other information we think might be useful"""
@@ -241,7 +262,7 @@ class TrackerCommandProcessor(ClientCommandProcessor):
         if self.ctx.game:
             connected_cls = AutoWorld.AutoWorldRegister.world_types.get(self.ctx.game)
             if self.ctx.checksums[self.ctx.game] != connected_cls.get_data_package_data()["checksum"]:
-                logger.error(f"Local checksum = {self.ctx.checksums[self.ctx.game]} | remote checksum = {connected_cls.get_data_package_data()["checksum"]}")
+                logger.error(f"Local checksum = {self.ctx.checksums[self.ctx.game]} | remote checksum = {connected_cls.get_data_package_data()['checksum']}")
 
 
 def cmd_load_map(self: TrackerCommandProcessor, map_id: str = "0"):
@@ -486,24 +507,26 @@ class TrackerGameContext(CommonContext):
 
         return (name, maps) if name is not None else maps
 
-    def parse_map_group_node_names(self, node, curr_path):
+    def parse_map_group_node_names(self, node: str | tuple, curr_path: str, has_siblings: bool):
         if isinstance(node, str):
+            if has_siblings:
+                curr_path = node if curr_path is None else f"{curr_path}/{node}"
             self.map_to_name[node] = curr_path
         else:
             name = node[0]
             curr_path = name if curr_path is None else f"{curr_path}/{name}"
             if isinstance(node[1], list):
                 for x in node[1]:
-                    self.parse_map_group_node_names(x, curr_path)
+                    self.parse_map_group_node_names(x, curr_path, len(node[1]) > 1)
             else:
-                self.parse_map_group_node_names(node[1], curr_path)
+                self.parse_map_group_node_names(node[1], curr_path, False)
 
     def parse_map_groups(self):
         self.map_to_name = {}
         if self.tracker_world.map_page_groups is not None:
             self.map_groups = self.tracker_world.map_page_groups
             for x in self.map_groups:
-                self.parse_map_group_node_names(x, None)
+                self.parse_map_group_node_names(x, None, True)
             return
         all_layouts = []
         for layout in self.layouts:
@@ -1370,6 +1393,26 @@ def load_json_zip(pack, path):
         with parentFile.open(path) as childFile:
             return json.loads(childFile.read().decode('utf-8-sig'))
 
+def explain_more(ctx: TrackerGameContext, argument: str):
+    from NetUtils import JSONMessagePart
+    if ctx.tracker_core.player_id is None or ctx.tracker_core.multiworld is None:
+        logger.error("Player YAML not installed of Generator failed")
+        ctx.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}")
+        return
+    current_world = ctx.tracker_core.get_current_world()
+    assert current_world
+    state = ctx.updateTracker().state
+    if not state: return
+
+    if hasattr(current_world, "explain_more"):
+        returned_json = current_world.explain_more(argument, state)
+        if returned_json:
+            ctx.ui.print_json(returned_json)
+            return
+        logger.info("Nothing to explain")
+    logger.error("Current world to track doesn't support command /explain_more")
+    
+
 def explain(ctx: TrackerGameContext, dest_name: str):
     from NetUtils import JSONMessagePart
     if ctx.tracker_core.player_id is None or ctx.tracker_core.multiworld is None:
@@ -1457,8 +1500,10 @@ def get_logical_path(ctx: TrackerGameContext, dest_name: str):
         if location.can_reach(state):
             relevent_region = location.parent_region
     else:
-        logger.info(f"{dest_name} not found in the multiworld")
-
+        from Utils import get_fuzzy_results
+        results = get_fuzzy_results(dest_name,set(ctx.tracker_core.multiworld.regions.location_cache[ctx.tracker_core.player_id].keys()).union(set(ctx.tracker_core.multiworld.regions.region_cache[ctx.tracker_core.player_id].keys())),limit=1)[0]
+        logger.error(f"Did you mean '{results[0]}' ({results[1]}% sure)? ")
+        return
     if state:
         if relevent_region:
             # stolen from core

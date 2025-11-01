@@ -1,5 +1,193 @@
 from dataclasses import dataclass
 from Options import Toggle, Range, Choice, FreeText, PerGameCommonOptions, DeathLink, TextChoice
+import requests
+import json
+import os
+import time
+import logging
+import re
+import Utils
+
+logger = logging.getLogger("SM64Hacks")
+
+
+def _get_json_files_from_github():
+    """Fetch list of JSON files from GitHub repository, with caching."""
+    cache_path = os.path.join(Utils.local_path("data", "sm64hacks", "json_list_cache.json"))
+    cache_duration = 86400
+    
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, 'r') as f:
+                cache_data = json.load(f)
+                if time.time() - cache_data.get('timestamp', 0) < cache_duration:
+                    return cache_data.get('files', [])
+        except Exception as e:
+            logger.debug(f"Could not read cache: {e}")
+    
+    json_files = []
+    api_base = "https://api.github.com/repos/DNVIC/sm64hack-archipelago-jsons/contents"
+    
+    try:
+        root_response = requests.get(api_base, timeout=10)
+        root_response.raise_for_status()
+        folders = [item['name'] for item in root_response.json() if item.get('type') == 'dir']
+        
+        if not folders:
+            logger.warning("No folders found in GitHub repository")
+            return []
+        
+        for folder in folders:
+            try:
+                response = requests.get(f"{api_base}/{folder}", timeout=10)
+                response.raise_for_status()
+                for item in response.json():
+                    if item.get('type') == 'file' and item.get('name', '').endswith('.json'):
+                        json_files.append(item['name'])
+            except requests.RequestException as e:
+                logger.warning(f"Could not fetch {folder} folder from GitHub: {e}")
+                continue
+        
+        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+        with open(cache_path, 'w') as f:
+            json.dump({'timestamp': time.time(), 'files': json_files}, f)
+        
+        return json_files
+    except Exception as e:
+        logger.warning(f"Could not fetch JSON list from GitHub: {e}")
+        if os.path.exists(cache_path):
+            try:
+                with open(cache_path, 'r') as f:
+                    return json.load(f).get('files', [])
+            except Exception:
+                pass
+        return []
+
+
+def _filename_to_option_name(filename: str) -> str:
+    """Convert JSON filename to option attribute name."""
+    name = filename.replace('.json', '').lower().replace('.', '_dot_')
+    name = re.sub(r'[^a-z0-9_]', '_', name)
+    name = re.sub(r'_+', '_', name).strip('_')
+    return name
+
+
+def _format_display_name(filename: str) -> str:
+    """Format JSON filename for display, splitting before numbers, brackets, or uppercase letters."""
+    display_name = filename.replace('.json', '')
+    
+    display_name = re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', display_name)
+    display_name = re.sub(r'(?<!^)(?<![0-9.])(?=\.?\d)', ' ', display_name)
+    display_name = re.sub(r'(?<!^)(?=[\[\](){}])', ' ', display_name)
+    display_name = re.sub(r'(?<=\d)(?=[A-Za-z])', ' ', display_name)
+    display_name = re.sub(r'(?<=[\[\](){}])(?=[A-Za-z])', ' ', display_name)
+    
+    display_name = re.sub(r'\.\s+(\d)', r'.\1', display_name)
+    display_name = re.sub(r'\(\s+', '(', display_name)
+    display_name = re.sub(r'\s+\)', ')', display_name)
+    display_name = re.sub(r'\s+', ' ', display_name).strip()
+    
+    if display_name:
+        display_name = display_name[0].upper() + display_name[1:]
+    
+    display_name = re.sub(r'(?i)\b([Ss][Mm])(\d)', r'SM\2', display_name)
+    display_name = re.sub(r'(?i)\b([Ss][Mm])\b', 'SM', display_name)
+    
+    return display_name
+
+
+def _populate_json_file_options():
+    """Dynamically populate JsonFile class with options from GitHub."""
+    json_files = _get_json_files_from_github()
+    
+    if not json_files:
+        logger.warning("No JSON files found from GitHub, using fallback list")
+        json_files = [
+            "Super Mario 64.json",  # default
+            "24 Hour Hack.json",
+            "Aventure Alpha Redone.json",
+            "Cursed Castles.json",
+            "Despair Marios Gambit 64.json",
+            "Eureka.json",
+            "Grand Star.json",
+            "Kaizo Mario 64.json",
+            "Koopa Power.json",
+            "Lugs Delightful Dioramas.json",
+            "Marios New Earth.json",
+            "Peachs Memory.json",
+            "Phenomena.json",
+            "Plutonium Mario 64.json",
+            "Sapphire.json",
+            "Shining Stars Repainted.json",
+            "SM64 The Green Stars.json",
+            "SM74 TYA.json",
+            "Star Revenge 0.json",
+            "Star Revenge 1.5.json",
+            "Star Revenge 2 TTM.json",
+            "Star Revenge 3.json",
+            "Star Revenge 3.5.json",
+            "Star Revenge 4.json",
+            "Star Revenge 4.5.json",
+            "Star Revenge 5.json",
+            "Star Revenge 5.5.json",
+            "Star Revenge 6.json",
+            "Star Revenge 6.25.json",
+            "Star Revenge 6.5.json",
+            "Star Revenge 7.json",
+            "Star Revenge 7.5.json",
+            "Star Revenge 7.5 Expert.json",
+            "Star Revenge 8.json",
+            "Star Revenge 8 Advanced.json",
+            "Super Donkey Kong 64.json",
+            "Super Mario 74.json",
+            "Super Mario Fantasy 64.json",
+            "Super Mario Star Road.json",
+            "Super Mario Treasure World.json",
+            "Timeless Rendezvous.json",
+            "Unoriginal Cringe Meme Hack.json",
+            "Ztar Attack 2.json",
+            "Ztar Attack Rebooted.json",
+        ]
+    
+    JsonFile._value_to_filename = {}
+    JsonFile._value_to_display_name = {}
+    
+    option_value = 1
+    new_options = {}
+    for json_file in sorted(json_files):
+        option_name = _filename_to_option_name(json_file)
+        display_name = _format_display_name(json_file)
+        setattr(JsonFile, f"option_{option_name}", option_value)
+        new_options[option_name.lower()] = option_value
+        JsonFile._value_to_filename[option_value] = json_file
+        JsonFile._value_to_display_name[option_value] = display_name
+        option_value += 1
+    
+    JsonFile.options.update(new_options)
+    JsonFile.name_lookup.update({option_id: name for name, option_id in new_options.items()})
+    
+    default_value = None
+    default_found = False
+    
+    for json_file in sorted(json_files):
+        normalized_clean = re.sub(r'[^a-z0-9]', '', json_file.lower().replace('.json', '').strip())
+        if normalized_clean == "supermario64" or "supermario64" in normalized_clean:
+            option_name = _filename_to_option_name(json_file)
+            if hasattr(JsonFile, f"option_{option_name}"):
+                default_value = getattr(JsonFile, f"option_{option_name}")
+                default_found = True
+                break
+    
+    if default_found and default_value is not None and default_value in JsonFile.name_lookup:
+        JsonFile.default = default_value
+    elif option_value > 1:
+        JsonFile.default = 1
+        if default_found:
+            logger.warning(f"Found Super Mario 64 (value: {default_value}) but it's not in name_lookup. Using first option instead.")
+        else:
+            logger.warning(f"Could not find Super Mario 64, using first option (value: {JsonFile.default})")
+    else:
+        logger.error("No options were populated, cannot set default")
 
 
 class ProgressiveKeys(Choice):
@@ -46,62 +234,33 @@ class JsonFile(TextChoice):
     Custom jsons can be used with offline generation by placing the json in the data/sm64hacks folder. Note that Custom Value is not supported in web generation."""
     auto_display_name = True
     display_name = "Hack to Use"
-    option_24_hour_hack                = 1
-    option_aventure_alpha_redone       = 2
-    option_cursed_castles              = 3
-    option_despair_marios_gambit_64    = 4
-    option_eureka                      = 5
-    option_grand_star                  = 6
-    option_kaizo_mario_64              = 7
-    option_koopa_power                 = 8
-    option_lugs_delightful_dioramas    = 9
-    option_marios_new_earth            = 10
-    option_peachs_memory               = 11
-    option_phenomena                   = 12
-    option_plutonium_mario_64          = 13
-    option_sapphire                    = 14
-    option_shining_stars_repainted     = 15
-    option_sm64_the_green_stars        = 16
-    option_sm74_tya                    = 17
-    option_star_revenge_0              = 18
-    option_star_revenge_1_dot_5        = 19
-    option_star_revenge_2_to_the_moon  = 20
-    option_star_revenge_3              = 21
-    option_star_revenge_3_dot_5        = 22
-    option_star_revenge_4              = 23
-    option_star_revenge_4_dot_5        = 24
-    option_star_revenge_5              = 25
-    option_star_revenge_5_dot_5        = 26
-    option_star_revenge_6              = 27
-    option_star_revenge_6_dot_25       = 28
-    option_star_revenge_6_dot_5        = 29
-    option_star_revenge_7              = 30
-    option_star_revenge_7_dot_5        = 31
-    option_star_revenge_7_dot_5_expert = 32
-    option_star_revenge_8              = 33
-    option_star_revenge_8_advanced     = 34
-    option_super_donkey_kong_64        = 35
-    option_super_mario_64              = 36
-    option_super_mario_74              = 37
-    option_super_mario_fantasy_64      = 38
-    option_super_mario_star_road       = 39
-    option_super_mario_treasure_world  = 40
-    option_timeless_rendezvous         = 41
-    option_unoriginal_cringe_meme_hack = 42
-    option_ztar_attack_2               = 43
-    option_ztar_attack_rebooted        = 44
-    default = 36
-
+    default = 1  # Will be set by _populate_json_file_options()
+    _value_to_filename = {}  # Mapping of option value -> filename
+    _value_to_display_name = {}  # Mapping of option value -> formatted display name
+    
     @classmethod
     def get_option_name(cls, value) -> str:
+        # Use the formatted display name if available (for dynamic options from GitHub)
+        if hasattr(cls, '_value_to_display_name') and value in cls._value_to_display_name:
+            return cls._value_to_display_name[value]
+        
+        # Fallback to the old format for custom values or edge cases
         if cls.auto_display_name:
             option_name = cls.name_lookup[value]
-            if "_dot_" in cls.name_lookup[value]:
+            if "_dot_" in option_name:
                 option_name = option_name.replace("_dot_", ".")
             return option_name.replace("_", " ").title()
         else:
             return cls.name_lookup[value]
+    
+    @classmethod
+    def get_filename_from_value(cls, value):
+        """Get the JSON filename from an option value."""
+        return cls._value_to_filename.get(value)
 
+
+# Populate JsonFile options from GitHub on module import
+_populate_json_file_options()
     
 @dataclass
 class SM64HackOptions(PerGameCommonOptions):

@@ -3,6 +3,8 @@ import logging
 import os
 import json
 import pkgutil
+import re
+from pathlib import Path
 from typing import Callable, Optional
 
 import Utils
@@ -45,7 +47,7 @@ class SimpsonsHitAndRunWorld(World):
     options_dataclass = SimpsonsHitAndRunOptions
     data_version = 2
     required_client_version = (0, 5, 0)
-    apworld_version = "0.3.3"
+    apworld_version = "0.3.5"
     # These properties are set from the imports of the same name above.
     item_table = item_table
     location_table = location_table # this is likely imported from Data instead of Locations because the Game Complete location should not be in here, but is used for lookups
@@ -64,6 +66,92 @@ class SimpsonsHitAndRunWorld(World):
     location_name_to_location = location_name_to_location
     location_name_groups = location_name_groups
     victory_names = victory_names
+
+    mission_locks = {}
+    vehicle_item_to_vehicle = {
+        "ambul": "Ambulance",
+        "apu_v": "Longhorn",
+        "atv_v": "ATV",
+        "bart_v": "Ferrini - Red",
+        "bbman_v": "El Carro Loco",
+        "bookb_v": "Book Burning Van",
+        "burns_v": "36 Stutz Bearcat",
+        "burnsarm": "Burns Armored Truck",
+        "carhom_v": "Car Built For Homer",
+        "cArmor": "Armored Truck",
+        "cBlbart": "Ferrini - Black",
+        "cBone": "Bonestorm Truck",
+        "cCellA": "Cell Phone Car",
+        "cCola": "Cola Truck",
+        "cCube": "Cube Van",
+        "cCurator": "Curator",
+        "cDonut": "Donut Truck",
+        "cDuff": "Duff Truck",
+        "cFire_v": "Fire Truck",
+        "cHears": "Hearse",
+        "cKlimo": "Krusty's Limo",
+        "cletu_v": "Pickup Truck",
+        "cLimo": "Limo",
+        "cMilk": "Milk Truck",
+        "cNerd": "Nerd Car",
+        "cNonup": "Nonuplets Van",
+        "coffin": "Coffin Car",
+        "comic_v": "Kremlin",
+        "compactA": "Compact Car",
+        "cSedan": "Chase Sedan",
+        "cVan": "Surveillance Van",
+        "dune_v": "R/C Buggy",
+        "elect_v": "Electaurus",
+        "famil_v": "Family Sedan",
+        "fishtruc": "Fish Van",
+        "fone_v": "Open Wheel Race Car",
+        "frink_v": "Hover Car",
+        "garbage": "Garbage Truck",
+        "glastruc": "Glass Truck",
+        "gramp_v": "WWII Vehicle",
+        "gramR_v": "WWII Vehicle W/ Rocket",
+        "hallo": "Hearse",
+        "hbike_v": "Hover Bike",
+        "homer_v": "70's Sports Car",
+        "honor_v": "Honor Roller",
+        "hype_v": "Planet Hype 50's Car",
+        "icecream": "Ice Cream Truck",
+        "IStruck": "Itchy and Scratchy Movie Truck",
+        "knigh_v": "Knight Boat",
+        "krust_v": "Clown Car",
+        "lisa_v": "Malibu Stacy Car",
+        "marge_v": "Canyonero",
+        "minivanA": "Minivan",
+        "moe_v": "Moe's Sedan",
+        "mono_v": "Monorail Car",
+        "mrplo_v": "Mr. Plow",
+        "nuctruck": "Nuclear Waste Truck",
+        "oblit_v": "Obliteratatron Big Wheel Truck",
+        "otto_v": "School Bus",
+        "pickupA": "Pickup",
+        "pizza": "Pizza Van",
+        "plowk_v": "Plow King",
+        "rocke_v": "Speed Rocket",
+        "schoolbu": "Mini School Bus",
+        "scorp_v": "Globex Super Villain Car",
+        "sedanA": "Sedan A",
+        "sedanB": "Sedan B",
+        "ship": "Ghost Ship",
+        "skinn_v": "Skinner's Sedan",
+        "smith_v": "Mr. Burns' Limo",
+        "snake_v": "Bandit",
+        "sportsA": "Sports Car A",
+        "sportsB": "Sports Car B",
+        "SUVA": "SUV",
+        "taxiA": "Taxi",
+        "votetruc": "Vote Quimby Truck",
+        "wagonA": "Station Wagon",
+        "wiggu_v": "Police Car",
+        "willi_v": "Tractor",
+        "witchcar": "Witch's Broom",
+        "zombi_v": "Zombie Car",
+        "tt": "Audi TT"
+    }
 
     def interpret_slot_data(self, slot_data: dict[str, any]):
         #this is called by tools like UT
@@ -96,7 +184,8 @@ class SimpsonsHitAndRunWorld(World):
         location_game_complete.place_locked_item(
             SimpsonsHitAndRunItem("__Victory__", ItemClassification.progression, None, player=self.player))
 
-        cards_data = json.loads(pkgutil.get_data(__name__, "data/cards.json").decode())
+        data_path = Path("data") / "cards.json"
+        cards_data = json.loads(pkgutil.get_data(__name__, str(data_path)).decode())
 
         after_create_regions(self, self.multiworld, self.player, cards_data)
 
@@ -113,6 +202,32 @@ class SimpsonsHitAndRunWorld(World):
             "Hit N Run": "hnr"
         }
 
+        cars_by_level = {}
+        for item in item_name_to_item.values():
+            for category in item.get("category", []):
+                match = re.match(r"Level ([1-7]) Car", category)
+                if match and not item.get("progression", False):
+                    level = int(match.group(1))
+                    cars_by_level.setdefault(level, []).append(item)
+
+        for car in [self.random.choice(cars) for cars in cars_by_level.values()]:
+            car["progression"] = True
+
+        if (self.options.missionlocks != 0):
+            carlocks = self.random.sample(
+                list(self.vehicle_item_to_vehicle.keys()),
+                int(len(self.vehicle_item_to_vehicle) * (self.options.missionlocks / 100))
+            )
+            missions = self.random.sample(range(1, 50), len(carlocks))
+
+            self.mission_locks = dict(zip(missions, carlocks))
+
+            for car in self.mission_locks.values():
+                item = self.item_name_to_item[self.vehicle_item_to_vehicle[car]]
+                item["progression"] = True
+        else:
+            self.mission_locks = {0 : "NO MISSIONLOCKS"}
+
         for name in configured_item_names.values():
             item = self.item_name_to_item[name]
             item_count = int(item.get("count", 1))
@@ -126,7 +241,6 @@ class SimpsonsHitAndRunWorld(World):
 
             if item_count == 0: continue
 
-
             for i in range(item_count):
                 new_item = self.create_item(name)
                 pool.append(new_item)
@@ -137,43 +251,12 @@ class SimpsonsHitAndRunWorld(World):
                 if name not in self.multiworld.local_items[self.player].value:
                     self.options.local_items.value.add(name)
 
+
         pool = before_create_items_starting(pool, self, self.multiworld, self.player)
 
         items_started = []
 
-        #if starting_items: #probably unnecessary
-        if False:
-            for starting_item_block in starting_items:
-                # if there's a condition on having a previous item, check for any of them
-                # if not found in items started, this starting item rule shouldn't execute, and check the next one
-                if "if_previous_item" in starting_item_block:
-                    matching_items = [item for item in items_started if item.name in starting_item_block["if_previous_item"]]
 
-                    if len(matching_items) == 0:
-                        continue
-
-                # start with the full pool of items
-                items = pool
-
-                # if the setting lists specific item names, limit the items to just those
-                if "items" in starting_item_block:
-                    items = [item for item in pool if item.name in starting_item_block["items"]]
-
-                # if the setting lists specific item categories, limit the items to ones that have any of those categories
-                if "item_categories" in starting_item_block:
-                    items_in_categories = [item["name"] for item in self.item_name_to_item.values() if "category" in item and len(set(starting_item_block["item_categories"]).intersection(item["category"])) > 0]
-                    items = [item for item in pool if item.name in items_in_categories]
-
-                self.random.shuffle(items)
-
-                # if the setting lists a specific number of random items that should be pulled, only use a subset equal to that number
-                if "random" in starting_item_block:
-                    items = items[0:starting_item_block["random"]]
-
-                for starting_item in items:
-                    items_started.append(starting_item)
-                    self.multiworld.push_precollected(starting_item)
-                    pool.remove(starting_item)
 
         self.start_inventory = {i.name: items_started.count(i) for i in items_started}
 
@@ -325,14 +408,31 @@ class SimpsonsHitAndRunWorld(World):
             slot_data[option_key] = get_option_value(self.multiworld, self.player, option_key)
 
         slot_data["card_locations"] = [card["id"] for card in card_table]
+        slot_data["VerifyID"] = f"AP-{self.multiworld.seed_name}-P{self.player}-{self.multiworld.get_file_safe_player_name(self.player)}"
 
         slot_data = after_fill_slot_data(slot_data, self, self.multiworld, self.player)
 
         return slot_data
 
     def generate_output(self, output_directory: str):
-        filename = f"{self.multiworld.get_out_file_name_base(self.player)}_SHAR.json"
-        gen(output_directory, filename, card_table, self.player)
+        filename = f"{self.multiworld.get_out_file_name_base(self.player)}_SHAR"
+
+        traffic_table = (
+            self.random.sample(list(self.vehicle_item_to_vehicle.keys()), 35)
+            if self.options.shuffletraffic
+            else ["NO TRAFFIC"]
+        )
+
+        gen(
+            output_directory,
+            filename,
+            f"AP-{self.multiworld.seed_name}-P{self.player}-{self.multiworld.get_file_safe_player_name(self.player)}",
+            f"AP-{self.multiworld.seed_name}-P{self.player}",
+            card_table,
+            traffic_table,
+            self.mission_locks,
+            self.player
+        )
 
     def write_spoiler(self, spoiler_handle):
         before_write_spoiler(self, self.multiworld, spoiler_handle)
@@ -361,7 +461,7 @@ class SimpsonsHitAndRunWorld(World):
                 item_pool.append(extra_item)
 
             for _ in range(0, filler_count):
-                extra_item = self.create_item("Wrench")
+                extra_item = self.create_item("10 Coins")
                 item_pool.append(extra_item)
         elif extras < 0:
             logging.warning(f"{self.game} has more items than locations. {abs(extras)} non-progression items will be removed at random.")

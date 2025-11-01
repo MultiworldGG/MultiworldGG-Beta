@@ -10,12 +10,10 @@ from .Data import sm64hack_items, star_like, traps, badges, sr6_25_locations, Da
 from .client import SM64HackClient
 from BaseClasses import Region, Location, Entrance, Item, ItemClassification, CollectionState, Tutorial
 
-#class SM64HackSettings(settings.Group):
-#    pass
-    #class RomFile(settings.HackRomPath):
-    #    """Insert help text for host.yaml here"""
-    #rom_file: RomFile = RomFile("SM64Hack.z64")
-
+class SM64HackSettings(settings.Group):
+    class AutoUpdate(settings.Bool):
+        """Automatically download updated json files from GitHub when generating SM64Hack worlds"""
+    auto_update: AutoUpdate | bool = True
 
 class SM64HackWebWorld(WebWorld):
     display_name = "Super Mario 64 Romhacks"
@@ -37,10 +35,9 @@ class SM64HackWorld(World):
     The first Super Mario game to feature 3D gameplay, but heavily modded - with support for a lot of popular rom hacks.
     """
     game = "SM64 Romhack"
-    author: str = "DNVIC"
     options_dataclass = SM64HackOptions
     options: SM64HackOptions
-#    settings: ClassVar[SM64HackSettings]
+    settings: ClassVar[SM64HackSettings]
     topology_present = True
     data: Data
     web = SM64HackWebWorld()
@@ -60,11 +57,16 @@ class SM64HackWorld(World):
         self.data = Data()
         
     def generate_early(self):
-        if isinstance(self.options.json_file.value, int):
-            fn = self.normalize_to_json_filename(self.options.json_file.current_key)
-        else:
-            fn = self.options.json_file.value
-        self.data.import_json(fn)
+        # Get filename from TextChoice option value
+        json_filename = self.options.json_file.get_filename_from_value(self.options.json_file.value)
+        if json_filename is None:
+            # Fallback: try using value as string (for custom values or legacy support)
+            if isinstance(self.options.json_file.value, str):
+                json_filename = self.options.json_file.value
+            else:
+                # Try to get from current_key
+                json_filename = self.options.json_file.current_key + ".json"
+        self.data.import_json(json_filename, self.settings.auto_update)
         self.progressive_keys = self.options.progressive_keys.value
         if isinstance(self.data.locations["Other"]["Settings"], list):
             raise ValueError("JSON is too old. \
@@ -79,19 +81,6 @@ class SM64HackWorld(World):
         non_local_traps = [trap for trap in traps if trap != "Mario Choir"]
         self.options.non_local_items.value |= set(non_local_traps)
 
-
-    @staticmethod
-    def normalize_to_json_filename(name: str) -> str:
-        """
-        Replace spaces with underscores and ensure the filename ends with .json 
-        (case-insensitive) if hack was selected on webworld frontend.
-        """
-        # 1. Replace _
-        sanitized = name.replace('_', '').replace('dot', '.')
-        # 2. Check for .json suffix (case-insensitive)
-        if not sanitized.lower().endswith('.json'):
-            sanitized += '.json'
-        return sanitized
 
     def create_item(self, item: str) -> SM64HackItem:
         if item == "Power Star":
@@ -325,8 +314,15 @@ class SM64HackWorld(World):
                     star_data = self.data.locations[course]["Stars"][item]
                     if(star_data.get("exists")):
                         if item == 5:
-                            add_rule(self.multiworld.get_location("Castle Moat", self.player),
-                                     lambda state, star_data=self.data.locations[course]["Stars"][item]: self.can_access_location(state, star_data))
+                            if("sr6.25" in self.data.locations["Other"]["Settings"]):
+                                add_rule(self.multiworld.get_location("Yellow Switch", self.player),
+                                        lambda state, star_data=self.data.locations[course]["Stars"][5]: self.can_access_location(state, star_data))
+                            elif("sr3.5" in self.data.locations["Other"]["Settings"]):
+                                add_rule(self.multiworld.get_location("Black Switch", self.player),
+                                        lambda state, star_data=self.data.locations[course]["Stars"][5]: self.can_access_location(state, star_data))
+                            else:
+                                add_rule(self.multiworld.get_location("Castle Moat", self.player),
+                                        lambda state, star_data=self.data.locations[course]["Stars"][item]: self.can_access_location(state, star_data))
                         else:
                             add_rule(self.multiworld.get_location(sm64hack_items[item], self.player),
                                 lambda state, star_data=self.data.locations[course]["Stars"][item]: self.can_access_location(state, star_data))
@@ -338,17 +334,9 @@ class SM64HackWorld(World):
                     for item in range(5):
                         stardata = self.data.locations[course]["Stars"][item + 7]
                         if(stardata.get("exists")):
-                            print(self.multiworld.get_location(badges[item], self.player))
                             add_rule(self.multiworld.get_location(badges[item], self.player),
                                 lambda state, star_data=self.data.locations[course]["Stars"][item + 7]: self.can_access_location(state, star_data))
                 
-                if("sr6.25" in self.data.locations["Other"]["Settings"]):
-                    add_rule(self.multiworld.get_location("Yellow Switch", self.player),
-                             lambda state, star_data=self.data.locations[course]["Stars"][5]: self.can_access_location(state, star_data))
-                
-                if("sr3.5" in self.data.locations["Other"]["Settings"]):
-                    add_rule(self.multiworld.get_location("Black Switch", self.player),
-                             lambda state, star_data=self.data.locations[course]["Stars"][5]: self.can_access_location(state, star_data))
 
                 star_data = self.data.locations[course]["Stars"][6]
                 add_rule(self.multiworld.get_location("Victory Location", self.player),
