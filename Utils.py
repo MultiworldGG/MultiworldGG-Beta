@@ -145,6 +145,7 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
         """Install module in a separate thread"""
         try:
             restart = ModuleUpdate.install_worlds([module_name])
+
             if restart:
                 # Restart needed - schedule callback on main thread
                 raise ModuleUpdate.RestartException
@@ -202,6 +203,8 @@ def _perform_module_launch(module_id: str, **kwargs):
             while True:
                 # Wait until the module is installed before trying to import it
                 try:
+                    # Invalidate import caches to pick up freshly installed modules
+                    importlib.invalidate_caches()
                     importlib.import_module(module_id)
                     break
                 except ModuleNotFoundError:
