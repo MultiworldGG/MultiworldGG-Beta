@@ -145,7 +145,6 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
         """Install module in a separate thread"""
         try:
             restart = ModuleUpdate.install_worlds([module_name])
-
             if restart:
                 # Restart needed - schedule callback on main thread
                 raise ModuleUpdate.RestartException

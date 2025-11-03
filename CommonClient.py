@@ -403,10 +403,10 @@ class CommonContext(InitContext):
     # remaining type info
     slot_info: dict[int, NetworkSlot]
     """Slot Info from the server for the current connection"""
-    server_address: str | None
-    """Autoconnect address provided by the ctx constructor"""
-    password: str | None
-    """Password used for Connecting, expected by server_auth"""
+    # server_address: str | None
+    # """Autoconnect address provided by the ctx constructor"""
+    # password: str | None
+    # """Password used for Connecting, expected by server_auth"""
     hint_cost: int | None
     """Current Hint Cost per Hint from the server"""
     hint_points: int | None
@@ -478,8 +478,6 @@ class CommonContext(InitContext):
         self._main_task: Optional[asyncio.Task] = None
         # server state
         self.server_address = server_address
-        self._username = None
-        self._password = None
         self.hint_cost = None
         self.slot_info = {}
         self.permissions = {

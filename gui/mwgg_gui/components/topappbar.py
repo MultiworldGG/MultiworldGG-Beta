@@ -31,6 +31,7 @@ from kivy.metrics import dp
 import logging
 import re
 import asyncio
+import urllib.parse
 from Utils import persistent_store, persistent_load
 
 
@@ -384,7 +385,7 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
         """Build complete tooltip data from context"""
         from NetUtils import TEXT_COLORS
         self.game_pages = []  # Reset pages
-        server_address = re.sub(r"^wss?://", "", ctx.server_address)
+        server_address = f"{urllib.parse.urlparse(ctx.server_address).hostname}:{urllib.parse.urlparse(ctx.server_address).port}"
         if ctx.slot is None:
             self.server_name = f"{server_address}"
             self.game_pages = [f"You are not authenticated yet."]

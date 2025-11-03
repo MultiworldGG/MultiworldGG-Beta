@@ -6,14 +6,13 @@ import dataclasses
 from typing import Dict, List
 
 from NetUtils import DataPackage
-from Utils import local_path, user_path, Version, version_tuple, tuplize_version
+from BaseUtils import Version, write_path, is_frozen
 
-local_folder = os.path.dirname(__file__)
-user_folder = user_path("worlds") if user_path() != local_path() else user_path("custom_worlds")
-try:
-    os.makedirs(user_folder, exist_ok=True)
-except OSError:  # can't access/write?
-    user_folder = None
+# Extend __path__ to include venv site-packages for namespace package behavior
+if is_frozen():
+    venv_worlds_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds")
+    if os.path.exists(venv_worlds_path) and venv_worlds_path not in __path__:
+        __path__.append(venv_worlds_path)
 
 __all__ = {
     "network_data_package",
