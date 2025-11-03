@@ -114,6 +114,12 @@ class TTYDPatchExtension(APPatchExtension):
         caller.patcher.dol.data.write(random.randbytes(4))
         caller.patcher.dol.data.seek(0x248)
         caller.patcher.dol.data.write(seed_options["goal_stars"].to_bytes(1, "big"))
+        caller.patcher.dol.data.seek(0x249)
+        caller.patcher.dol.data.write(seed_options["goal"].to_bytes(1, "big"))
+        caller.patcher.dol.data.seek(0x24A)
+        caller.patcher.dol.data.write(seed_options["star_shuffle"].to_bytes(1, "big"))
+        caller.patcher.dol.data.seek(0x24B)
+        caller.patcher.dol.data.write(seed_options["dazzle_rewards"].to_bytes(1, "big"))
         caller.patcher.dol.data.seek(0x260)
         caller.patcher.dol.data.write(seed_options["yoshi_name"].encode("utf-8")[0:8] + b"\x00")
         caller.patcher.dol.data.seek(0xEB6B6)
@@ -162,7 +168,7 @@ class TTYDPatchExtension(APPatchExtension):
     def patch_items(caller: "TTYDProcedurePatch") -> None:
         from CommonClient import logger
         locations: Dict[str, Tuple] = json.loads(caller.get_file(f"locations.json").decode("utf-8"))
-        for location_name, (item_id, player) in locations.items():
+        for location_name, (item_id, player, shop_price) in locations.items():
             data = locationName_to_data.get(location_name, None)
             if data is None:
                 continue
@@ -179,10 +185,10 @@ class TTYDPatchExtension(APPatchExtension):
                             logger.info(f"Writing Tattle item {item_data.item_name} to unit {unit_id}")
                             caller.patcher.dol.data.seek(0xB00 + ((unit_id - 1) * 2))
                             caller.patcher.dol.data.write(item_data.rom_id.to_bytes(2, "big"))
-                    continue
-                    #for offset in data.offset:
-                        #dol.data.seek(offset)
-                        #dol.data.write(item_data.rom_id.to_bytes(4, "big"))
+                        continue
+                    if "Dazzle" in location_name:
+                        caller.patcher.dol.data.seek(data.offset[0])
+                        caller.patcher.dol.data.write(item_data.rom_id.to_bytes(2, "big"))
                 else:
                     for i, offset in enumerate(data.offset):
                         if "30 Coins" in data.name and i == 1:
@@ -196,7 +202,7 @@ class TTYDPatchExtension(APPatchExtension):
                             if item_data.rom_id == 0x71:
                                 caller.patcher.rels[data.rel].write(int.to_bytes(20, 4, "big"))
                             else:
-                                caller.patcher.rels[data.rel].write(int.to_bytes(item_prices.get(item_data.id, 10), 4, "big"))
+                                caller.patcher.rels[data.rel].write(int.to_bytes(shop_price, 4, "big"))
 
 def get_rel_path(rel: Rels):
     return f'files/rel/{rel.value}.rel'
@@ -261,7 +267,10 @@ def write_files(world: "TTYDWorld", patch: TTYDProcedurePatch) -> None:
         "starting_level": world.options.starting_level.value,
         "first_attack": world.options.first_attack.value,
         "music": world.options.music_settings.value,
-        "block_visibility": world.options.block_visibility.value
+        "block_visibility": world.options.block_visibility.value,
+        "goal": world.options.goal.value,
+        "star_shuffle": world.options.star_shuffle.value,
+        "dazzle_rewards": world.options.dazzle_rewards.value
     }
 
     buffer = io.BytesIO()
@@ -291,5 +300,15 @@ def get_base_classification(classification: ItemClassification = ItemClassificat
 
 
 def locations_to_dict(locations: Iterable[Location]) -> Dict[str, Tuple]:
-    return {location.name: (location.item.code, location.item.player) if location.item is not None else (0, 0)
-                    for location in locations}
+    result = {}
+    for location in locations:
+        if location.item is not None:
+            item_code = location.item.code
+            item_player = location.item.player
+            # Add shop price if this location is a shop item
+            is_shop = locationName_to_data[location.name].id in shop_items
+            shop_price = item_prices.get(item_code, 10) if is_shop else 10
+            result[location.name] = (item_code, item_player, shop_price)
+        else:
+            result[location.name] = (0, 0, 0)
+    return result

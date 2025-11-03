@@ -50,6 +50,7 @@ rel_filepaths = [
     "hom",
     "init",
     "jin",
+    "jon",
     "kpa",
     "las",
     "mod",
@@ -713,6 +714,21 @@ location_gsw_info = {
     78780971: (GSWType.GSWF, 4596, 1),   # Tattle: Marilyn
     78780972: (GSWType.GSWF, 4597, 1),   # Tattle: Vivian
     78780973: (GSWType.GSWF, 4598, 1),   # Tattle: Shadow Queen
+    78780974: (GSWType.GSW, 1726, 1),   # Dazzle Item 1
+    78780975: (GSWType.GSW, 1726, 2),   # Dazzle Item 2
+    78780976: (GSWType.GSW, 1726, 3),   # Dazzle Item 3
+    78780977: (GSWType.GSW, 1726, 4),   # Dazzle Item 4
+    78780978: (GSWType.GSW, 1726, 5),   # Dazzle Item 5
+    78780979: (GSWType.GSW, 1726, 6),   # Dazzle Item 6
+    78780980: (GSWType.GSW, 1726, 7),   # Dazzle Item 7
+    78780981: (GSWType.GSW, 1726, 8),   # Dazzle Item 8
+    78780982: (GSWType.GSW, 1726, 9),   # Dazzle Item 9
+    78780983: (GSWType.GSW, 1726, 10),   # Dazzle Item 10
+    78780984: (GSWType.GSW, 1726, 11),   # Dazzle Item 11
+    78780985: (GSWType.GSW, 1726, 12),   # Dazzle Item 12
+    78780986: (GSWType.GSW, 1726, 13),   # Dazzle Item 13
+    78780987: (GSWType.GSW, 1726, 14),   # Dazzle Item 14
+    78780988: (GSWType.GSW, 1726, 15),   # Dazzle Item 15
 }
 
 item_prices = {
@@ -1215,6 +1231,28 @@ star_locations = [
     "Pirate's Grotto Cortez' Hoard: Sapphire Star",
     "Poshley Heights Sanctum Altar: Garnet Star",
     "X-Naut Fortress Boss Room: Crystal Star"
+]
+
+dazzle_location_names = [
+    "Rogueport Sewers Town: Dazzle Item 1",
+    "Rogueport Sewers Town: Dazzle Item 2",
+    "Rogueport Sewers Town: Dazzle Item 3",
+    "Rogueport Sewers Town: Dazzle Item 4",
+    "Rogueport Sewers Town: Dazzle Item 5",
+    "Rogueport Sewers Town: Dazzle Item 6",
+    "Rogueport Sewers Town: Dazzle Item 7",
+    "Rogueport Sewers Town: Dazzle Item 8",
+    "Rogueport Sewers Town: Dazzle Item 9",
+    "Rogueport Sewers Town: Dazzle Item 10",
+    "Rogueport Sewers Town: Dazzle Item 11",
+    "Rogueport Sewers Town: Dazzle Item 12",
+    "Rogueport Sewers Town: Dazzle Item 13",
+    "Rogueport Sewers Town: Dazzle Item 14",
+    "Rogueport Sewers Town: Dazzle Item 15"
+]
+
+dazzle_counts = [
+    1, 3, 6, 10, 14, 18, 23, 29, 35, 42, 50, 60, 70, 85, 100
 ]
 
 chapter_items = {

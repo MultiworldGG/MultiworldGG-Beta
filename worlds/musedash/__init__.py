@@ -50,7 +50,6 @@ class MuseDashWorld(World):
 
     # World Options
     game = "Muse Dash"
-    author: str = "DeamonHunter"
     options_dataclass: ClassVar[Type[PerGameCommonOptions]] = MuseDashOptions
     options: MuseDashOptions
 

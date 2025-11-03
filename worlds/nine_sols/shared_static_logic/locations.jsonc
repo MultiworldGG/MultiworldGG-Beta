@@ -187,11 +187,11 @@
     },
     {
         "address": 511, "name": "FSP: Fully Grown Tree 1st Chest",
-        "region": "FSP - Root Node", "requires": [ { "item": "(Artifact) Unknown Seed" }, { "item": "(Artifact) GM Fertilizer", "count": 2 } ] // and Shennong
+        "region": "FSP - Roof", "requires": [] // and Shennong
     },
     {
         "address": 512, "name": "FSP: Fully Grown Tree 2nd Chest",
-        "region": "FSP - Root Node", "requires": [ { "item": "(Artifact) Unknown Seed" }, { "item": "(Artifact) GM Fertilizer", "count": 2 } ] // and Shennong
+        "region": "FSP - Roof", "requires": []
     },
     {
         "address": 513, "name": "FSP: Isolate the Mutant Gene Sequence",
@@ -316,7 +316,12 @@
     },
     {
         "address": 703, "name": "CTH: Side Room Near Right Exit",
-        "region": "CTH - Upper Right Exit", "requires": [ { "item": "Mystic Nymph: Scout Mode" } ]
+        "region": "CTH - Upper Right Exit", "requires": [
+            { "anyOf": [
+                [ { "item": "Mystic Nymph: Scout Mode" }, { "item": "Ledge Grab" } ], // the intended path all around the room
+                { "item": "Cloud Leap" } // bring boxes to the left, then simply jump on top of them and up to the chest
+            ] }
+        ]
     },
     {
         "address": 704, "name": "CTH: Lower Left Vents",

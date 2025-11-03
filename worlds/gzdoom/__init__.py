@@ -29,11 +29,10 @@ init_wads(__package__)
 
 def launch_client(*args) -> None:
     from .client.GZDoomClient import main
-    # TODO: use launch() here once it's in main
-    LauncherComponents.launch_subprocess(main, name="GZDoomClient", args=args)
+    LauncherComponents.launch(main, name="GZDoom Client", args=args)
 
 
-LauncherComponents.icon_paths["gzdoom_icon"] = f"ap:{__name__}/icon.png"
+LauncherComponents.icon_paths["gzdoom_icon"] = f"ap:{__name__}/gzdoom_icon.png"
 LauncherComponents.components.append(
     LauncherComponents.Component(
         "GZDoom Client",
@@ -86,7 +85,7 @@ class GZDoomUTGlitchToken(Item):
 class GZDoomWeb(WebWorld):
     tutorials = [Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up the gzDoom randomizer connected to an Archipelago Multiworld",
+        "A guide to setting up the gzDoom randomizer connected to a MultiworldGG Multiworld",
         "English",
         "setup_en.md",
         "setup/en",
@@ -103,6 +102,7 @@ class GZDoomWorld(World):
     This randomizer comes with an automated WAD scanner that makes it easy to add support for new WADs.
     """
     game = "gzDoom"
+    author: str = "ToxicFrog"
     options_dataclass = GZDoomOptions
     options: GZDoomOptions
     topology_present = True

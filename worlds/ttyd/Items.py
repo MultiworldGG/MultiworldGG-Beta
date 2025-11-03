@@ -1,7 +1,7 @@
 import typing
 
 from BaseClasses import Item, ItemClassification
-from worlds.ttyd.Data import item_classifications
+from .Data import item_classifications
 
 
 class ItemData:

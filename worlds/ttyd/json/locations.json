@@ -415,7 +415,7 @@
     ]
   },
   {
-    "name": "Rogueport Westside: Mushroom",
+    "name": "Rogueport Westside: Lottery",
     "id": 78780082,
     "rel": "gor",
     "offsets": [
@@ -552,7 +552,7 @@
     ],
     "vanilla_item": 77772177,
     "tags": [
-      "rogueport",
+      "rogueport_westside",
       "chapter_3",
       "star_piece"
     ]
@@ -566,7 +566,7 @@
     ],
     "vanilla_item": 77772177,
     "tags": [
-      "rogueport",
+      "rogueport_westside",
       "panel"
     ]
   },
@@ -1293,7 +1293,7 @@
     ],
     "vanilla_item": 77772038,
     "tags": [
-      "petal_left",
+      "petal_right",
       "chapter_1",
       "shop"
     ]
@@ -1307,7 +1307,7 @@
     ],
     "vanilla_item": 77772059,
     "tags": [
-      "petal_left",
+      "petal_right",
       "chapter_1",
       "shop"
     ]
@@ -1321,7 +1321,7 @@
     ],
     "vanilla_item": 77772088,
     "tags": [
-      "petal_left",
+      "petal_right",
       "chapter_1",
       "shop"
     ]
@@ -1335,7 +1335,7 @@
     ],
     "vanilla_item": 77772118,
     "tags": [
-      "petal_left",
+      "petal_right",
       "chapter_1",
       "shop"
     ]
@@ -1349,7 +1349,7 @@
     ],
     "vanilla_item": 77772120,
     "tags": [
-      "petal_left",
+      "petal_right",
       "chapter_1",
       "shop"
     ]
@@ -1363,7 +1363,7 @@
     ],
     "vanilla_item": 77772139,
     "tags": [
-      "petal_left",
+      "petal_right",
       "chapter_1",
       "shop"
     ]
@@ -1377,7 +1377,7 @@
     ],
     "vanilla_item": 77772177,
     "tags": [
-      "petal_left",
+      "petal_right",
       "chapter_1",
       "panel"
     ]
@@ -1391,7 +1391,7 @@
     ],
     "vanilla_item": 77772114,
     "tags": [
-      "petal_left",
+      "petal_right",
       "chapter_1"
     ]
   },
@@ -1404,7 +1404,7 @@
     ],
     "vanilla_item": 77772177,
     "tags": [
-      "petal_left",
+      "petal_right",
       "chapter_1",
       "panel"
     ]
@@ -1421,7 +1421,7 @@
     ],
     "vanilla_item": 77772201,
     "tags": [
-      "petal_left",
+      "petal_right",
       "chapter_1"
     ]
   },
@@ -6408,6 +6408,201 @@
     "tags": [
       "pit",
       "pit_floor"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 1",
+    "id": 78780974,
+    "rel": "dol",
+    "offsets": [
+      "0x400"
+    ],
+    "vanilla_item": 77772006,
+    "tags": [
+      "rogueport",
+      "dazzle"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 2",
+    "id": 78780975,
+    "rel": "dol",
+    "offsets": [
+      "0x402"
+    ],
+    "vanilla_item": 77772029,
+    "tags": [
+      "rogueport",
+      "dazzle"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 3",
+    "id": 78780976,
+    "rel": "dol",
+    "offsets": [
+      "0x404"
+    ],
+    "vanilla_item": 77772148,
+    "tags": [
+      "rogueport",
+      "dazzle"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 4",
+    "id": 78780977,
+    "rel": "dol",
+    "offsets": [
+      "0x406"
+    ],
+    "vanilla_item": 77772083,
+    "tags": [
+      "rogueport",
+      "dazzle"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 5",
+    "id": 78780978,
+    "rel": "dol",
+    "offsets": [
+      "0x408"
+    ],
+    "vanilla_item": 77772084,
+    "tags": [
+      "rogueport",
+      "dazzle"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 6",
+    "id": 78780979,
+    "rel": "dol",
+    "offsets": [
+      "0x40A"
+    ],
+    "vanilla_item": 77772085,
+    "tags": [
+      "rogueport",
+      "dazzle"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 7",
+    "id": 78780980,
+    "rel": "dol",
+    "offsets": [
+      "0x40C"
+    ],
+    "vanilla_item": 77772100,
+    "tags": [
+      "rogueport",
+      "dazzle"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 8",
+    "id": 78780981,
+    "rel": "dol",
+    "offsets": [
+      "0x40E"
+    ],
+    "vanilla_item": 77772087,
+    "tags": [
+      "rogueport",
+      "dazzle"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 9",
+    "id": 78780982,
+    "rel": "dol",
+    "offsets": [
+      "0x410"
+    ],
+    "vanilla_item": 77772061,
+    "tags": [
+      "rogueport",
+      "dazzle"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 10",
+    "id": 78780983,
+    "rel": "dol",
+    "offsets": [
+      "0x412"
+    ],
+    "vanilla_item": 77772134,
+    "tags": [
+      "rogueport",
+      "dazzle"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 11",
+    "id": 78780984,
+    "rel": "dol",
+    "offsets": [
+      "0x414"
+    ],
+    "vanilla_item": 77772152,
+    "tags": [
+      "rogueport",
+      "dazzle"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 12",
+    "id": 78780985,
+    "rel": "dol",
+    "offsets": [
+      "0x416"
+    ],
+    "vanilla_item": 77772062,
+    "tags": [
+      "rogueport",
+      "dazzle"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 13",
+    "id": 78780986,
+    "rel": "dol",
+    "offsets": [
+      "0x418"
+    ],
+    "vanilla_item": 77772063,
+    "tags": [
+      "rogueport",
+      "dazzle"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 14",
+    "id": 78780987,
+    "rel": "dol",
+    "offsets": [
+      "0x41A"
+    ],
+    "vanilla_item": 77772142,
+    "tags": [
+      "rogueport",
+      "dazzle"
+    ]
+  },
+  {
+    "name": "Rogueport Sewers Town: Dazzle Item 15",
+    "id": 78780988,
+    "rel": "dol",
+    "offsets": [
+      "0x41C"
+    ],
+    "vanilla_item": 77772143,
+    "tags": [
+      "rogueport",
+      "dazzle"
     ]
   }
 ]

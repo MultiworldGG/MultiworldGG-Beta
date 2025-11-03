@@ -188,6 +188,13 @@
     { "from": "CH - Left", "to": "CC - Right Exit", "requires": [] },
     { "from": "CC - Right Exit", "to": "CH - Left", "requires": [] },
 
+    // Four Seasons Pavilion
+    { "from": "FSP - Root Node", "to": "FSP - Roof", "requires": [
+        { "item": "(Artifact) Unknown Seed" }, // plant the tree
+        { "item": "(Artifact) GM Fertilizer", "count": 2 }, // fully grow the tree
+        { "anyOf": [ { "item": "Ledge Grab" }, { "item": "Cloud Leap" } ] } // jump from tree platform to roof
+    ] }, // I don't think logic_level affects this, but retest
+
     // Cortex Center
     { "from": "CC - Right Exit", "to": "CC - Root Node", "requires": [ { "item": "Charged Strike" } ] },
     { "from": "CC - Root Node", "to": "CC - Root Node After Boss", "requires": [
@@ -198,14 +205,14 @@
         { "item": "Tai-Chi Kick" },
         { "item": "Air Dash" }
     ] },
-    { "from": "CC - Root Node", "to": "CC - Caves Upper Right", "requires": [
-        { "item": "Mystic Nymph: Scout Mode" },
+    { "from": "CC - Root Node", "to": "CC - After Large Door", "requires": [
+        { "item": "Mystic Nymph: Scout Mode" }
+    ] }, // one-way nymph hack door
+    { "from": "CC - After Large Door", "to": "CC - Caves Upper Right", "requires": [
         { "item": "Grapple" },
         { "item": "Wall Climb" },
         { "anyOf": [ { "item": "Tai-Chi Kick" }, { "item": "Cloud Leap" } ] }
     ] },
-    //{ "from": "CC - Root Node", "to": "CC - Caves Lower Left", "requires": [...] },
-    // ^on logic_level: ledge_storage, Nymph AND CL AND LG into LS getup
     { "from": "CC - Caves Upper Right", "to": "CC - Caves Upper Left", "requires": [ { "item": "Charged Strike" } ] },
     { "from": "CC - Caves Upper Left", "to": "CC - Caves Upper Right", "requires": [ { "item": "Charged Strike" } ] },
     // on logic_level: easy, Cloud Piercer S/X instead
@@ -227,10 +234,11 @@
         { "item": "Wall Climb" },
         { "item": "Tai-Chi Kick" }
     ] }, // on logic_level: easy, T-dash replaces the (G OR AD) part
-    { "from": "CC - Caves Lower Left", "to": "CC - Root Node", "requires": [] }, // one-way fall + shortcut rope
-    { "from": "CC - Root Node", "to": "CC - Caves Lower Left", "requires": [
+    { "from": "CC - Caves Lower Left", "to": "CC - After Large Door", "requires": [] }, // one-way fall + shortcut rope
+    { "from": "CC - After Large Door", "to": "CC - Caves Lower Left", "requires": [
         { "item": "Grapple" }, { "item": "Air Dash" }, { "item": "Cloud Leap" }
     ] }, // on logic_level: easy, AD AND CL AND (CS OR grapple OR bow), though I took bow knockback out of logic
+    // on logic_level: ledge_storage, Nymph AND CL AND LG into LS getup
     // any% NMG speedrun uses T-dash (and bow and CS and grapple) here, but there's no enemy for rando to get qi
     { "from": "CC - Caves Lower Left", "to": "CC - Left Exit", "requires": [] },
     { "from": "CC - Left Exit", "to": "CC - Caves Lower Left", "requires": [] }, // grapple
@@ -462,11 +470,8 @@
     // on logic_level: easy, Cloud Piercer S/X
     { "from": "W&OS - Center", "to": "W&OS - Root Node", "requires": [ { "anyOf": [
         { "item": "Grapple" },
-        [
-            { "item": "Charged Strike" },
-            { "anyOf": [ { "item": "Air Dash" }, { "item": "Cloud Leap" } ] }
-        ]
-    ] } ] }, // on logic_level: easy, bow hover // on logic_level: ledge_storage, parry hover
+        [ { "item": "Air Dash" }, { "item": "Cloud Leap" } ]
+    ] } ] }, // on logic_level: easy, bow hover OR (CS AND (AD OR CL)) // on logic_level: ledge_storage, parry hover
     // 2 T-dashes is enough, but that's out of logic
     { "from": "W&OS - Root Node", "to": "W&OS - Right Exit", "requires": [ { "item": "Charged Strike" } ] }, // one-way dragon boat ride
     // Thunder Buster and Cloud Piercer S arrows do *not* work on the CS bell, it really has to be CS here

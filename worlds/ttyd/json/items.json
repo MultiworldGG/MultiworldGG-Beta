@@ -522,14 +522,14 @@
     "id": 77772072,
     "progression": "useful",
     "rom_id": 126,
-    "frequency": 2
+    "frequency": 1
   },
   {
     "item_name": "Gold Bar x3",
     "id": 77772073,
     "progression": "useful",
     "rom_id": 127,
-    "frequency": 3
+    "frequency": 1
   },
   {
     "item_name": "Gold Ring",
@@ -1283,7 +1283,7 @@
   {
     "item_name": "Star Piece",
     "id": 77772177,
-    "progression": "useful",
+    "progression": "progression",
     "rom_id": 125,
     "frequency": 100
   },

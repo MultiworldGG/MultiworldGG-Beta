@@ -11,10 +11,10 @@ class Goal(Choice):
     bonetail: Defeat Bonetail.
     """
     display_name = "Goal"
-    option_shadow_queen = 0
-    option_crystal_stars = 1
-    option_bonetail = 2
-    default = 0
+    option_shadow_queen = 1
+    option_crystal_stars = 2
+    option_bonetail = 3
+    default = 1
 
 
 class GoalStars(Range):
@@ -38,12 +38,18 @@ class PalaceStars(Range):
     default = 7
 
 
-class StarShuffle(Toggle):
+class StarShuffle(Choice):
     """
     Crystal Stars will be added as items to the item pool.
-    Completing a chapter will reward you with a random item.
+    vanilla: Crystal Stars will remain in their original locations.
+    stars_only: Crystal Stars will be shuffled into other crystal star locations.
+    all: Crystal Stars will be shuffled into any location.
     """
     display_name = "Star Shuffle"
+    option_vanilla = 1
+    option_stars_only = 2
+    option_all = 3
+    default = 1
 
 
 class PitItems(Choice):
@@ -82,6 +88,14 @@ class Piecesanity(Choice):
     default = 1
 
 
+class Shopsanity(DefaultOnToggle):
+    """
+    Shop items will be randomized.
+    This includes only regular shops.
+    """
+    display_name = "Shopsanity"
+
+
 class Shinesanity(DefaultOnToggle):
     """
     Shine Sprites will be randomized.
@@ -89,12 +103,18 @@ class Shinesanity(DefaultOnToggle):
     display_name = "Shinesanity"
 
 
-class Shopsanity(DefaultOnToggle):
+class DazzleRewards(Choice):
     """
-    Shop items will be randomized.
-    This includes only regular shops.
+    This determines what type of items are given as rewards by Dazzle.
+    vanilla: The rewards are the same as the original game.
+    filler: The rewards will be non-progression items.
+    all: The rewards can be any item.
     """
-    display_name = "Shopsanity"
+    display_name = "Dazzle Rewards"
+    option_vanilla = 1
+    option_filler = 2
+    option_all = 3
+    default = 3
 
 
 class LimitChapterLogic(Toggle):
@@ -317,6 +337,7 @@ class TTYDOptions(PerGameCommonOptions):
     piecesanity: Piecesanity
     shopsanity: Shopsanity
     shinesanity: Shinesanity
+    dazzle_rewards: DazzleRewards
     pit_items: PitItems
     limit_chapter_logic: LimitChapterLogic
     limit_chapter_eight: LimitChapterEight

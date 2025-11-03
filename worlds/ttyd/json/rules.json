@@ -91,10 +91,10 @@
     "function": "super_boots"
   },
   "Great Tree Entrance: Mystic Egg": {
-    "has": "Emerald Star"
+    "can_reach": "Great Tree Entrance: Emerald Star"
   },
   "Great Tree Red Key Room: Mushroom": {
-    "has": "Emerald Star"
+    "can_reach": "Great Tree Entrance: Emerald Star"
   },
   "Keelhaul Key Grotto Entrance: Wedding Ring": {
     "has": "Yoshi"
@@ -3039,5 +3039,65 @@
       "name": "chapter_completions",
       "count": 5
     }
+  },
+  "Rogueport Sewers Town: Dazzle Item 1": {
+    "has": "Star Piece",
+    "count": 1
+  },
+  "Rogueport Sewers Town: Dazzle Item 2": {
+    "has": "Star Piece",
+    "count": 3
+  },
+  "Rogueport Sewers Town: Dazzle Item 3": {
+    "has": "Star Piece",
+    "count": 6
+  },
+  "Rogueport Sewers Town: Dazzle Item 4": {
+    "has": "Star Piece",
+    "count": 10
+  },
+  "Rogueport Sewers Town: Dazzle Item 5": {
+    "has": "Star Piece",
+    "count": 14
+  },
+  "Rogueport Sewers Town: Dazzle Item 6": {
+    "has": "Star Piece",
+    "count": 18
+  },
+  "Rogueport Sewers Town: Dazzle Item 7": {
+    "has": "Star Piece",
+    "count": 23
+  },
+  "Rogueport Sewers Town: Dazzle Item 8": {
+    "has": "Star Piece",
+    "count": 29
+  },
+  "Rogueport Sewers Town: Dazzle Item 9": {
+    "has": "Star Piece",
+    "count": 35
+  },
+  "Rogueport Sewers Town: Dazzle Item 10": {
+    "has": "Star Piece",
+    "count": 42
+  },
+  "Rogueport Sewers Town: Dazzle Item 11": {
+    "has": "Star Piece",
+    "count": 50
+  },
+  "Rogueport Sewers Town: Dazzle Item 12": {
+    "has": "Star Piece",
+    "count": 60
+  },
+  "Rogueport Sewers Town: Dazzle Item 13": {
+    "has": "Star Piece",
+    "count": 70
+  },
+  "Rogueport Sewers Town: Dazzle Item 14": {
+    "has": "Star Piece",
+    "count": 85
+  },
+  "Rogueport Sewers Town: Dazzle Item 15": {
+    "has": "Star Piece",
+    "count": 100
   }
 }
