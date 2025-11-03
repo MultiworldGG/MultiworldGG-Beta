@@ -22,9 +22,7 @@ __all__ = {
     "failed_world_loads",
 }
 
-
 failed_world_loads: List[str] = []
-
 
 @dataclasses.dataclass(order=True)
 class WorldSource:
