@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.toontown"
-version = "0.6.3"
+version = "0.6.4"
 description = "MultiWorld: Toontown"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

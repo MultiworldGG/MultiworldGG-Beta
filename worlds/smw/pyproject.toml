@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.smw"
-version = "2.1.2"
+version = "2.1.3"
 description = "MultiWorld: Super Mario World"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

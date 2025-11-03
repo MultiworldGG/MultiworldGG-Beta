@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.musedash"
-version = "1.5.26"
+version = "1.5.27"
 description = "MultiWorld: Muse Dash"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
