@@ -6,7 +6,7 @@ import zipfile
 
 from typing import Dict
 from settings import get_settings
-from worlds.ttyd.Data import Rels
+from .Data import Rels
 
 
 def setup_gclib_path():

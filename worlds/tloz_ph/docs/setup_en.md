@@ -10,6 +10,9 @@
 ## Recommended Software
 
 * [Universal Tracker](https://github.com/FarisTheAncient/Archipelago/releases)
+* [Item Tracker](https://github.com/ZobeePlays/PH-AP-Item-Tracker/tree/main) (poptracker pack by @ZobeePlays. No map tracking)
+- [Wiki](https://github.com/carrotinator/Archipelago/wiki) contains locations, maps, groupings and stuff
+
 
 ## Setup
 

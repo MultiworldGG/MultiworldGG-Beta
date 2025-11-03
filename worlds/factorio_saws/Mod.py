@@ -17,7 +17,7 @@ from .Technologies import tech_table, recipes, free_sample_exclusions, progressi
     base_tech_table, tech_to_progressive_lookup, fluids, useless_technologies
 
 if TYPE_CHECKING:
-    from . import Factorio
+    from . import FactorioSAWS
 
 template_env: Optional[jinja2.Environment] = None
 
@@ -64,7 +64,7 @@ recipe_time_ranges = {
 
 
 class FactorioModFile(worlds.Files.APPlayerContainer):
-    game = "Factorio"
+    game = "Factorio - Space Age Without Space"
     compression_method = zipfile.ZIP_DEFLATED  # Factorio can't load LZMA archives
     writing_tasks: List[Callable[[], Tuple[str, Union[str, bytes]]]]
     patch_file_ending = ".zip"
@@ -89,7 +89,7 @@ class FactorioModFile(worlds.Files.APPlayerContainer):
         super(FactorioModFile, self).write_contents(opened_zipfile)
 
 
-def generate_mod(world: "Factorio", output_directory: str):
+def generate_mod(world: "FactorioSAWS", output_directory: str):
     player = world.player
     multiworld = world.multiworld
     random = world.random

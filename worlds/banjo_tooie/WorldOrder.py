@@ -14,32 +14,19 @@ else:
 # Shamelessly Stolen from KH2 :D
 
 
-def WorldRandomize(world: BanjoTooieWorld) -> None:
-    # Universal Tracker Magic
-    if hasattr(world.multiworld, "re_gen_passthrough"):
-        if "Banjo-Tooie" in world.multiworld.re_gen_passthrough:
-            passthrough = world.multiworld.re_gen_passthrough["Banjo-Tooie"]
-            world.world_requirements = passthrough["world_order"]
-            world.world_order = passthrough["world_keys"]
-            world.worlds_randomized = bool(passthrough["worlds"] == "true")
-            world.starting_egg = passthrough["starting_egg"]
-            world.starting_attack = passthrough["starting_attack"]
-            world.jamjars_siloname_costs = passthrough["jamjars_siloname_costs"]
-            world.loading_zones = passthrough["loading_zones"]
-    else:
-        randomize_level_order(world)
-        set_level_costs(world)
-        randomize_entrance_loading_zones(world)
-        randomize_boss_loading_zones(world)
-        choose_unlocked_silos(world)
-        handle_early_moves(world)
-        generate_jamjars_costs(world)
+def randomize_world_progression(world: BanjoTooieWorld) -> None:
+    randomize_level_order(world)
+    set_level_costs(world)
+    randomize_entrance_loading_zones(world)
+    randomize_boss_loading_zones(world)
+    choose_unlocked_silos(world)
+    handle_early_moves(world)
+    generate_jamjars_costs(world)
 
 def randomize_level_order(world: BanjoTooieWorld) -> None:
-    world.worlds_randomized = world.options.randomize_worlds
-    if not world.worlds_randomized:
+    if not world.options.randomize_worlds:
         world.world_order = {
-            regionName.MT:  1230944, #These ids stay in the same order, but the keys may switch order when randomized.
+            regionName.MT:  1230944,  # These ids stay in the same order, but the keys may switch order when randomized.
             regionName.GM:  1230945,
             regionName.WW:  1230946,
             regionName.JR:  1230947,
@@ -53,7 +40,6 @@ def randomize_level_order(world: BanjoTooieWorld) -> None:
         if world.options.randomize_world_entrance_loading_zones:
             randomizable_levels = [regionName.MT,regionName.GM,regionName.WW,regionName.JR,regionName.TL,regionName.GIO,regionName.HP,regionName.CC,regionName.CK]
             world_order = generate_world_order(world, randomizable_levels)
-
             world.world_order = {world_order[i]: i+1230944 for i in range(len(world_order))}
         else:
             randomizable_levels = [regionName.MT,regionName.GM,regionName.WW,regionName.JR,regionName.TL,regionName.GIO,regionName.HP,regionName.CC]
@@ -86,14 +72,18 @@ def generate_world_order(world: BanjoTooieWorld, worlds: List[str]) -> List[str]
         regionName.WW: [regionName.MT, regionName.GM, regionName.TL, regionName.CC],
         regionName.JR: [regionName.MT, regionName.GM, regionName.HP],
         # GI is not easy when you need 3 progressive shoes.
-        regionName.TL: [regionName.MT, regionName.GM, regionName.WW, regionName.CC] if world.options.progressive_shoes else [regionName.MT, regionName.GM, regionName.WW, regionName.GIO, regionName.CC],
+        regionName.TL: [regionName.MT, regionName.GM, regionName.WW, regionName.CC]\
+            if world.options.progressive_shoes\
+            else [regionName.MT, regionName.GM, regionName.WW, regionName.GIO, regionName.CC],
         # Reaching CK is not easy when you need 4 progressive shoes.
-        regionName.GIO: [regionName.MT, regionName.GM, regionName.GIO, regionName.TL, regionName.CC] if world.options.progressive_shoes else [regionName.MT, regionName.GM, regionName.GIO, regionName.TL, regionName.CC, regionName.CK],
+        regionName.GIO: [regionName.MT, regionName.GM, regionName.TL, regionName.CC] if world.options.progressive_shoes else [regionName.MT, regionName.GM, regionName.TL, regionName.CC, regionName.CK],
         regionName.HP:  [regionName.MT, regionName.GM, regionName.JR],
         # Same thing with GI here.
         regionName.CC: [regionName.MT, regionName.GM, regionName.WW, regionName.TL] if world.options.progressive_shoes else [regionName.MT, regionName.GM, regionName.WW, regionName.GIO, regionName.TL],
         regionName.CK:  [regionName.MT, regionName.GM, regionName.GIO, regionName.TL, regionName.CC]
     }
+    if regionName.CK in easy_2nd_worlds[world1] and regionName.CK not in worlds:
+        easy_2nd_worlds[world1].remove(regionName.CK)
     world2 = world.random.choice(easy_2nd_worlds[world1])
     left_worlds = [w for w in worlds if w not in [world1, world2]]
     world.random.shuffle(left_worlds)

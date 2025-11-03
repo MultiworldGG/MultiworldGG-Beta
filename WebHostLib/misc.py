@@ -10,6 +10,7 @@ from Utils import __version__
 
 from worlds.AutoWorld import AutoWorldRegister, World
 from . import app, cache
+from .markdown import render_markdown
 from .models import Seed, Room, Command, UUID, uuid4
 from Utils import title_sorted
 
@@ -97,49 +98,6 @@ def get_visible_worlds() -> dict[str, type(World)]:
     return worlds
 
 
-def render_markdown(path: str) -> str:
-    import mistune
-    from collections import Counter
-
-    markdown = mistune.create_markdown(
-        escape=False,
-        plugins=[
-            "strikethrough",
-            "footnotes",
-            "table",
-            "speedup",
-        ],
-    )
-
-    heading_id_count: Counter[str] = Counter()
-
-    def heading_id(text: str) -> str:
-        nonlocal heading_id_count
-        import re  # there is no good way to do this without regex
-
-        s = re.sub(r"[^\w\- ]", "", text.lower()).replace(" ", "-").strip("-")
-        n = heading_id_count[s]
-        heading_id_count[s] += 1
-        if n > 0:
-            s += f"-{n}"
-        return s
-
-    def id_hook(_: mistune.Markdown, state: mistune.BlockState) -> None:
-        for tok in state.tokens:
-            if tok["type"] == "heading" and tok["attrs"]["level"] < 4:
-                text = tok["text"]
-                assert isinstance(text, str)
-                unique_id = heading_id(text)
-                tok["attrs"]["id"] = unique_id
-                tok["text"] = f"<a href=\"#{unique_id}\">{text}</a>"  # make header link to itself
-
-    markdown.before_render_hooks.append(id_hook)
-
-    with open(path, encoding="utf-8-sig") as f:
-        document = f.read()
-    return markdown(document)
-
-
 @app.errorhandler(404)
 @app.errorhandler(jinja2.exceptions.TemplateNotFound)
 def page_not_found(err):
@@ -161,10 +119,9 @@ def game_info(game, lang):
         theme = get_world_theme(game)
         secure_game_name = secure_filename(game)
         lang = secure_filename(lang)
-        document = render_markdown(os.path.join(
-            app.static_folder, "generated", "docs",
-            secure_game_name, f"{lang}_{secure_game_name}.md"
-        ))
+        file_dir = os.path.join(app.static_folder, "generated", "docs", secure_game_name)
+        file_dir_url = url_for("static", filename=f"generated/docs/{secure_game_name}")
+        document = render_markdown(os.path.join(file_dir, f"{lang}_{secure_game_name}.md"), file_dir_url)
         return render_template(
             "markdown_document.html",
             title=f"{game} Guide",
@@ -189,10 +146,9 @@ def tutorial(game: str, file: str):
         theme = get_world_theme(game)
         secure_game_name = secure_filename(game)
         file = secure_filename(file)
-        document = render_markdown(os.path.join(
-            app.static_folder, "generated", "docs",
-            secure_game_name, file+".md"
-        ))
+        file_dir = os.path.join(app.static_folder, "generated", "docs", secure_game_name)
+        file_dir_url = url_for("static", filename=f"generated/docs/{secure_game_name}")
+        document = render_markdown(os.path.join(file_dir, f"{file}.md"), file_dir_url)
         return render_template(
             "markdown_document.html",
             title=f"{game} Guide",
@@ -226,6 +182,10 @@ def tutorial_landing():
         current_world = tutorials[world_name] = {}
         if hasattr(world_type.web, 'tutorials'):
             for tutorial in world_type.web.tutorials:
+                # Skip if tutorial is not a Tutorial object (e.g., if it's a string)
+                if not hasattr(tutorial, 'tutorial_name'):
+                    continue
+                
                 current_tutorial = current_world.setdefault(tutorial.tutorial_name, {
                     "description": tutorial.description, "files": {}})
                 

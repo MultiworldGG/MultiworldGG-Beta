@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from Options import DefaultOnToggle, PerGameCommonOptions, Range, StartInventoryPool, Toggle
+from Options import Choice, DefaultOnToggle, PerGameCommonOptions, Range, StartInventoryPool, Toggle
 
 
 class ShuffleSolSeals(DefaultOnToggle):
@@ -21,10 +21,12 @@ class SealsForEigong(Range):
 class SealsForPrison(Range):
     """The number of Sol Seals needed for Jiequan to appear in Factory (Great Hall), allowing you to "fight" him,
     do the whole Prison escape sequence, and check most of the locations in Factory (Machine Room).
-    Note that you also need Mystic Nymph: Scout Mode before Jiequan will appear,
-    since you can't do the Prison escape sequence without it.
-    Unlike the vanilla game, the real Jiequan fight may be done before or after Prison, and it does not matter
-    which Sol Seals you've collected, only the total number."""
+
+    Note that you also need Mystic Nymph: Scout Mode, Grapple, and either Cloud Leap or Ledge Grab
+    before Jiequan will appear, since you can't finish the Prison escape sequence without them.
+
+    Unlike the vanilla game, the real Jiequan fight may be done before or after Prison.
+    Also, it does not matter which Sol Seals you've collected, only the total number."""
     display_name = "Seals For Prison"
     range_start = 0
     range_end = 8
@@ -34,10 +36,11 @@ class SealsForPrison(Range):
 class SealsForEthereal(Range):
     """The number of Sol Seals needed for the entrance to Lady Ethereal's soulscape to appear in Cortex Center.
     See also the skip_soulscape_platforming option.
-    Unlike the vanilla game, it does not matter which Sol Seals you've collected, only the total number."""
+    Unlike the vanilla game, it does not matter which Sol Seals you've collected, only the total number.
+    The maximum is 7 instead of 8 because 8 would be incompatible with shuffle_sol_seals: false."""
     display_name = "Seals For Ethereal"
     range_start = 0
-    range_end = 8
+    range_end = 7
     default = 4
 
 
@@ -77,6 +80,94 @@ class JadeCostMax(Range):
     default = 3
 
 
+# not yet exposed to players
+class LogicDifficulty(Choice):
+    """
+    `vanilla` is exactly what it sounds like: You will only be expected to do what the vanilla game required.
+
+    `easy` adds tricks that are no harder to execute than what the vanilla game requires, once you've been told these
+    tricks exist. Specifically:
+    - "Pseudo Air Dashes" using either a talisman ("T-dash") or Charged Strike ("CS-dash")
+    - Using a Cloud Piercer S (or X) arrow to break Charged Strike barriers without Charged Strike
+    - Using a Thunder Buster arrow (any level) to break one-way barriers from the "wrong" side
+    - "Bow Hover": Press and hold jump, shoot the bow immediately (during the first half of Yi's upward movement) with
+    any arrow equipped, and then simply never let go of the jump button until you're done hovering.
+    - Using the Swift Runner skill to jump with extra horizontal momentum
+
+    `ledge_storage` adds the following LS-related glitches to logic:
+        - slash vault (also called LS "getup") or parry vault (also called LS "vault")
+        - parry float/hover
+        - moon slash wall side
+    These are harder to explain, so if you would like to learn them, check out the Ledge Storage section of
+    Herdingoats' Nine Sols trick video: https://youtu.be/X9aii18KecU?t=766
+    To avoid the complications of skill logic, setting up ledge storage with a skull kick is out of logic. Logic will
+    assume you're doing the setup with either a Talisman dash, Air Dash, or Cloud Leap.
+
+    Other speedrun tech like respawn manipulation, low gravity, rope storage, invulnerability abuse, dashing
+    between lasers, and combinations thereof like fast Sky Tower climb and miner skip are simply out of logic.
+    No logic level will expect you to carry transient resources (azure sand, qi charges, ledge storage)
+    between areas, or increase your capacity beyond the initial 2 sand and 1 qi.
+    Parrying a flying enemy attack to reset platforming moves is only in logic at the one place in TRC
+    where the vanilla game gives you a respawning enemy for this specific purpose.
+    """
+    display_name = "Logic Difficulty"
+    option_vanilla = 0
+    option_easy = 1
+    option_ledge_storage = 2
+    default = 0
+
+
+class FirstRootNode(Choice):
+    """
+    The first root node you can teleport to from Four Seasons Pavilion after starting a randomized game.
+    This is often referred to as your "spawn", although you technically always spawn in FSP.
+
+    Many root nodes are intentionally excluded from this list, usually because they would be "overly restrictive starts"
+    (i.e. few if any locations would be checkable with no items, especially when Grapple, Ledge Grab and Wall Climb are
+    all shuffled).
+
+    Some first_root_nodes may require certain items to be placed early.
+    For example, if galactic_dock is your first node, Nymph or Tai-Chi Kick will be placed early.
+    See the descriptions of shuffle_grapple, shuffle_wall_climb and shuffle_ledge_grab for similar cases.
+    """
+    display_name = "First Root Node"
+    default = 0
+    option_apeman_facility_monitoring = 0
+    option_galactic_dock = 1
+    option_power_reservoir_east = 2
+    option_lake_yaochi_ruins = 3
+    option_yinglong_canal = 4
+    option_factory_great_hall = 5
+    option_outer_warehouse = 6
+    option_grotto_of_scriptures_entry = 7
+    option_grotto_of_scriptures_east = 8
+    option_grotto_of_scriptures_west = 9
+
+
+class ShuffleGrapple(Toggle):
+    """Takes away Yi's grapple hook and zipline sliding abilities until you collect the 'Grapple' item.
+
+    If your first_root_node is yinglong_canal, then Grapple will be placed early."""
+    display_name = "Shuffle Grapple"
+
+
+class ShuffleWallClimb(Toggle):
+    """Takes away Yi's ability to climb glowing green walls until you collect the 'Wall Climb' item.
+
+    If your first_root_node is apeman_facility_monitoring, then Wall Climb will be placed early."""
+    display_name = "Shuffle Wall Climb"
+
+
+class ShuffleLedgeGrab(Toggle):
+    """Takes away Yi's ability to grab onto ledges and pull himself up until you collect the 'Ledge Grab' item.
+
+    If your first_root_node is yinglong_canal, then Ledge Grab will be placed early.
+
+    This is more impactful than it might sound because of 'ledge storage' glitches.
+    See logic_level (whenever I implement that)."""
+    display_name = "Shuffle Ledge Grab"
+
+
 @dataclass
 class NineSolsGameOptions(PerGameCommonOptions):
     start_inventory_from_pool: StartInventoryPool
@@ -88,4 +179,9 @@ class NineSolsGameOptions(PerGameCommonOptions):
     randomize_jade_costs: RandomizeJadeCosts
     jade_cost_min: JadeCostMin
     jade_cost_max: JadeCostMax
+    # logic_difficulty: LogicDifficulty
+    first_root_node: FirstRootNode
+    shuffle_grapple: ShuffleGrapple
+    shuffle_wall_climb: ShuffleWallClimb
+    shuffle_ledge_grab: ShuffleLedgeGrab
 

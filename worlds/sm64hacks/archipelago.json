@@ -2,6 +2,6 @@
     "game": "SM64 Romhack",
     "authors": ["DNVIC"],
     "igdb_id": 1074,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
+    "minimum_ap_version": "0.6.3",
+    "world_version": "0.4.4"
 }

@@ -32,6 +32,7 @@ CURR_MAP_ID_ADDR = 0x804D80A4
 
 # This address is used to check/set the player's health for DeathLink. (2 bytes / Half word)
 CURR_HEALTH_ADDR = 0x803D8B40
+CHECK_DEATH_ACTIVE = 0x804D07FB
 CURR_HEALTH_OFFSET = 0xB8
 
 # This Furniture address table contains the start of the addresses used for currently loaded in Furniture.
@@ -297,81 +298,15 @@ class LMContext(BaseContext):
         self.set_luigi_dead()
         return
 
-    # def make_gui(self):
-    #     ui = super().make_gui()
-    #     ui.base_title = f"Luigi's Mansion Client v{CLIENT_VERSION}"
-    #     if tracker_loaded:
-    #         if not self.check_universal_tracker_version():
-    #             Utils.messagebox("Universal Tracker needs updated", "The minimum version of Universal Tracker required for LM is v0.2.11", error=True)
-    #             raise ImportError("Need to update universal tracker version to at least v0.2.11.")
-    #         ui.base_title += f" | Universal Tracker {UT_VERSION}"
-
-    #     # AP version is added behind this automatically
-    #     ui.base_title += f" | {apname}"
-    #     return ui
-
-    def check_universal_tracker_version(self) -> bool:
-        import re
-        if not tracker_loaded:
-            return False
-
-        # We are checking for a string that starts with v contains any amount of digits followed by a period
-        # repeating three times (e.x. v0.2.11)
-        match = re.search(r"v\d+.(\d+).(\d+)", UT_VERSION)
-        if len(match.groups()) < 2:
-            return False
-        if int(match.groups()[0]) < 2:
-            return False
-        if int(match.groups()[1]) < 11:
-            return False
-
-        return True
-    
-    async def get_wallet_value(self):
-        # KivyMD support, also keeps support with regular Kivy (hopefully)
-        try:
-            from kivymd.uix.label import MDLabel as Label
-        except ImportError:
-            from kivy.uix.label import Label
-
-        if not hasattr(self, "wallet_ui"):
-            self.wallet_ui = Label(text="", size_hint_x=None, width=120, halign="center")
-            self.ui.connect_layout.add_widget(self.wallet_ui)
-
-        current_worth = 0
-        if self.check_ingame():
-            current_worth = self.wallet.get_wallet_worth()
-            
-        self.wallet_ui.text = f"Wallet:{current_worth}/{self.wallet.get_rank_requirement()}"
-
-    async def update_boo_count_label(self):
-        # KivyMD support, also keeps support with regular Kivy (hopefully)
-        try:
-            from kivymd.uix.label import MDLabel as Label
-        except ImportError:
-            from kivy.uix.label import Label
-
-        if not hasattr(self, "boo_count"):
-            self.boo_count = Label(text="", size_hint_x=None, width=120, halign="center")
-            self.ui.connect_layout.add_widget(self.boo_count)
-
-        curr_boo_count = len(set(([item.item for item in self.items_received if item.item in BOO_AP_ID_LIST])))
-        self.boo_count.text = f"Boo Count: {curr_boo_count}/50"
+    def get_luigi_health(self) -> int:
+        return read_short(dme.follow_pointers(CURR_HEALTH_ADDR, [CURR_HEALTH_OFFSET]))
 
     def check_alive(self):
         # Our health gets messed up in the Lab, so we can just ignore that location altogether.
         if dme.read_word(CURR_MAP_ID_ADDR) == 1:
             return True
 
-        lm_curr_health = read_short(dme.follow_pointers(CURR_HEALTH_ADDR, [CURR_HEALTH_OFFSET]))
-        if "DeathLink" in self.tags:
-            # Get the pointer of Luigi's health, as this changes when warping to bosses or climbing into mouse holes.
-            if lm_curr_health == 0:
-                if time.time() > self.last_health_checked + CHECKS_WAIT:
-                    return False
-                return True
-
-        if lm_curr_health > 0:
+        if self.get_luigi_health() > 0:
             self.last_health_checked = time.time()
             self.is_luigi_dead = False
             return True
@@ -635,7 +570,7 @@ class LMContext(BaseContext):
                     curr_val = min(flower_count + 234, 237)
                     ram_offset = None
                 elif item.item == 8064:  # If it's a vacuum upgrade
-                    curr_val: int = self.get_item_count_by_id(8064)
+                    curr_val: int = min(self.get_item_count_by_id(8064), 5)
                     ram_offset = None
                 elif not addr_to_update.item_count is None:
                     if not ram_offset is None:
@@ -679,7 +614,7 @@ class LMContext(BaseContext):
         try:
             # Always adjust the Vacuum speed as saving and quitting or going to E. Gadds lab could reset it back to normal.
             vac_count = self.get_item_count_by_id(8148)
-            vac_speed = max(min(self.get_item_count_by_id(8064), 5),0)
+            vac_speed = min(self.get_item_count_by_id(8064), 5)
 
             if not self.trap_link.check_vac_trap_active():
                 for item in [8064, 8148]:
@@ -689,6 +624,9 @@ class LMContext(BaseContext):
                         if addr_to_update.ram_addr == 0x804dda54 and vac_count > 0:  # If we're checking against our vacuum-on address
                             curr_val = 1
                             dme.write_bytes(addr_to_update.ram_addr, curr_val.to_bytes(addr_to_update.ram_byte_size, 'big'))
+                            vacc_flag = dme.read_byte(0x803D33A3)
+                            vacc_flag = (vacc_flag | (1 << 2))
+                            dme.write_byte(0x803D33A3, vacc_flag)
                         else:
                             dme.write_bytes(addr_to_update.ram_addr, vac_speed.to_bytes(addr_to_update.ram_byte_size, 'big'))
 
@@ -745,7 +683,13 @@ class LMContext(BaseContext):
         return
 
     async def check_death(self):
-        if not self.last_not_ingame or (self.check_ingame() and self.check_alive()):
+        if self.is_luigi_dead or self.get_luigi_health() > 0:
+            return
+
+        # If this is 0 and our health is 0, it means are health address pointer could have changed
+        # between using a mouse hole or teleporting to a new map, so Luigi may not actually be dead.
+        death_screen_check: int = dme.read_byte(CHECK_DEATH_ACTIVE)
+        if death_screen_check > 0x20:
             return
 
         if not self.is_luigi_dead and time.time() >= float(self.last_death_link + (CHECKS_WAIT * LONGER_MODIFIER * 3)):
@@ -767,16 +711,22 @@ class LMContext(BaseContext):
     async def non_essentials_async_tasks(self):
         try:
             while self.slot:
-                if not (self.check_ingame() and self.check_alive()):
+                if not self.check_ingame():
+                    await self.wait_for_next_loop(0.5)
+                    continue
+
+                # Since DeathLink has to check in_game separately but not health, we will do this outside of
+                # the below statements
+                if "DeathLink" in self.tags:
+                    await self.check_death()
+
+                if not self.check_alive():
                     await self.wait_for_next_loop(0.5)
                     # Resets the logic for determining the currency differences,
                     # needs to be updated to reset inside of wallet_manager.
                     # self.ring_link.reset_ringlink()
                     continue
 
-                # All Link related activities
-                if "DeathLink" in self.tags:
-                    await self.check_death()
                 if self.trap_link.is_enabled():
                     await self.trap_link.handle_traplink_async()
                 if self.ring_link.is_enabled():

@@ -6,9 +6,6 @@ import os
 import random
 from typing import Dict, FrozenSet, Set
 import zipfile
-from pathlib import Path
-
-import Utils
 
 from BaseClasses import CollectionState, Item, ItemClassification, Location, MultiWorld, Region, Tutorial, LocationProgressType
 from worlds.AutoWorld import WebWorld, World
@@ -118,6 +115,7 @@ class GZDoomWorld(World):
     web = GZDoomWeb()
     required_client_version = (0, 5, 1)
     included_item_categories = {}
+    mod_version = resources.files(__package__).joinpath('VERSION').read_text().strip()
 
     # Info fetched from gzDoom; contains item/location ID mappings etc.
     wad_logic: DoomWad
@@ -187,6 +185,9 @@ class GZDoomWorld(World):
             print("Doing Universal Tracker worldgen with settings:", ut_config)
             for opt in ut_config:
                 getattr(self.options, opt).value = ut_config[opt]
+            # Clear all starting levels -- UT will work with whatever level
+            # access tokens it finds in our inventory.
+            self.options.starting_levels.value = []
 
         wadlist = list(self.options.selected_wad.value)
         print(f"Permitted WADs: {wadlist}")
@@ -357,6 +358,11 @@ class GZDoomWorld(World):
                 'selected_wad': [self.wad_logic.name]
             }
 
+    def write_spoiler_header(self, fd):
+        fd.write(f'Random WAD selected:             {self.wad_logic.name}\n')
+        fd.write(f'MAPINFO generation:              {not self.options.pretuning_mode}\n')
+        fd.write(f'apworld version code:            {self.mod_version}\n')
+
     # Called by UT on connection. In UT mode all configuration will come from
     # slot_data rather than via the YAML.
     @staticmethod
@@ -410,14 +416,11 @@ class GZDoomWorld(World):
         def escape(name: str) -> str:
             return name.replace('\\', '\\\\').replace('"', '\\"')
 
-        internal_data_dir = Path(os.path.join(Utils.local_path("data"), "gzdoom")) if Utils.is_frozen() else resources.files(__package__)
-        mod_version = internal_data_dir.joinpath('VERSION').read_text().strip()
-
         data = {
             "singleplayer": self.multiworld.players == 1,
             "pretuning": self.options.pretuning_mode.value,
             "seed": self.multiworld.seed_name,
-            "mod_version": mod_version,
+            "mod_version": self.mod_version,
             "player": self.multiworld.player_name[self.player],
             "slot_number": self.player,
             "spawn_filter": self.spawn_filter,
@@ -460,4 +463,4 @@ class GZDoomWorld(World):
             zip.writestr("archipelago.json", env.get_template("manifest.jinja").render(**data))
             zip.writestr("ZSCRIPT", env.get_template("zscript.jinja").render(**data))
             zip.writestr("MAPINFO", env.get_template("mapinfo.jinja").render(**data))
-            zip.writestr("VERSION", mod_version)
+            zip.writestr("VERSION", self.mod_version)

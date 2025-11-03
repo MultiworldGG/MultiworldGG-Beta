@@ -5,7 +5,7 @@ Use and discussion of this apworld (unfortunately) is not allowed anymore in the
 
 ## Required Software
 * [Luna's Project64](https://github.com/Luna-Project64)
-* [PJ64 Connector Script](https://github.com/DNVIC/archipelago-sm64hacks/releases/download/v0.3.1/connector_pj64_generic.js)
+* [PJ64 Connector Script](https://github.com/DNVIC/archipelago-sm64hacks/releases/latest)
 
 ## Video Guide
 A Video guide can be found [here](https://youtu.be/ugKJhTIC1OE), which describes the setup process in detail. Note that in the MultiworldGG client, the json files go in data/sm64hacks/

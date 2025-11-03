@@ -18,8 +18,8 @@ except ImportError:
     apname = "Archipelago"
 
 from NetUtils import NetworkItem, ClientStatus
-from worlds.ttyd.Data import location_gsw_info, location_to_unit
-from worlds.ttyd.Items import items_by_id
+from .Data import location_gsw_info, location_to_unit
+from .Items import items_by_id
 
 RECEIVED_INDEX = 0x803DB860
 RECEIVED_ITEM_ARRAY = 0x80001000
@@ -33,6 +33,14 @@ ROOM = 0x803DF728
 SHOP_POINTER = 0x8041EB60
 SHOP_ITEM_OFFSET = 0x2F
 SHOP_ITEM_PURCHASED = 0xD7
+
+tracker_loaded = False
+try:
+    from worlds.tracker.TrackerClient import TrackerGameContext as cmmCtx
+    tracker_loaded = True
+except ModuleNotFoundError:
+    from CommonClient import CommonContext as cmmCtx
+    tracker_loaded = False
 
 def read_string(address: int, length: int):
     try:
@@ -79,29 +87,33 @@ def gsw_check(index):
 
 
 class TTYDCommandProcessor(ClientCommandProcessor):
-    def __init__(self, ctx: CommonContext):
+    def __init__(self, ctx: cmmCtx):
         super().__init__(ctx)
 
     def _cmd_set_gswf(self, bit_number: int):
+        """Used to manually set a GSWF bit."""
         byte_address, bit = gswf_set(int(bit_number))
         logger.info(f"Bit {bit} written at {byte_address}")
 
     def _cmd_check_gswf(self, bit_number: int):
+        """Used to manually check a GSWF bit."""
         result = gswf_check(int(bit_number))
         logger.info(f"GSWF Check: 0x{format(result, 'x')}")
 
     def _cmd_set_gsw(self, gsw: int, value: int):
+        """Used to manually set a GSW flag."""
         gsw_set(int(gsw), int(value))
 
     def _cmd_check_gsw(self, gsw: int):
+        """Used to manually check a GSW flag."""
         result = gsw_check(int(gsw))
         logger.info(f"GSWF Check: {result}")
 
 
-class TTYDContext(CommonContext):
+class TTYDContext(cmmCtx):
     command_processor = TTYDCommandProcessor
     game = "Paper Mario: The Thousand-Year Door"
-    items_handling = 0b101
+    tags = {"AP"}
     dolphin_connected: bool = False
     seed_verified: bool = False
     slot_data: dict | None = {}
@@ -117,6 +129,7 @@ class TTYDContext(CommonContext):
         if self.ready_callback:
             from kivy.clock import Clock
             Clock.schedule_once(self.ready_callback, 0.1)
+        self.items_handling = 0b101
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
@@ -125,6 +138,7 @@ class TTYDContext(CommonContext):
         await self.send_connect()
 
     def on_package(self, cmd: str, args: dict):
+        super().on_package(cmd, args)
         if cmd in {"Connected"}:
             self.slot = args["slot"]
             self.slot_data = args["slot_data"]
@@ -270,10 +284,10 @@ async def ttyd_sync_task(ctx: TTYDContext):
                     await ctx.receive_items()
                     await ctx.check_ttyd_locations()
                     goal = ctx.slot_data.get("goal", 0)
-                    if goal == 0: # Shadow Queen
+                    if goal == 1: # Shadow Queen
                         if not ctx.finished_game and gsw_check(1708) >= 18:
                             await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
-                    elif goal == 1: # Crystal Stars
+                    elif goal == 2: # Crystal Stars
                         if not ctx.finished_game and dolphin.read_byte(0x8000323B) >= ctx.slot_data["goal_stars"]:
                             await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
                     else:

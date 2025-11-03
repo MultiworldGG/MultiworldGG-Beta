@@ -17,15 +17,17 @@ _ICON_GUESSES = [
   ('armour',  {'armor', 'armour', 'coat', 'jacket', 'shirt'}),
   ('helmet',  {'helm', 'hat', 'crown', 'circlet', 'diadem'}),
   ('staff',   {'staff', 'wand', 'rod'}),
+  ('music',   {'song', 'music', 'instrument'}),
   ('bomb',    {'bomb', 'tnt', 'explosive', 'firecracker', 'grenade'}),
   ('book',    {'book', 'tome', 'codex', 'grimoire'}),
   ('potion',  {'potion', 'bottle', 'medicine', 'flask', 'drink', 'heal', 'revive'}),
   ('money',   {'rupee', 'money', 'geo_chest', 'geo_rock', 'dollars', 'coins'}),
-  ('gem',     {'gem', 'jewel', 'crystal', 'sapphire', 'ruby', 'emerald', 'diamond'}),
+  ('gem',     {'gem', 'jewel', 'crystal', 'sapphire', 'ruby', 'emerald', 'diamond', 'topaz'}),
   ('key',     {'key', 'triforce', 'questagon', 'access'}),
   ('arrow',   {'arrow', 'missile', 'ammo'}),
   ('upgrade', {'max ', 'upgrade'}),
   ('orb',     {'orb', 'ball'}),
+  ('sword',   {'weapon'}), # Fallback for generic "progressive weapon" and similar
 ]
 
 def guess_generic_icon(name):
@@ -35,7 +37,3 @@ def guess_generic_icon(name):
       if substr in name:
         return icon
   return False
-
-if __name__ == '__main__':
-  build_icons()
-
