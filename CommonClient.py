@@ -267,10 +267,23 @@ class InitContext:
         self.server_address = None
         self._splash_queue: Optional[Queue] = None
 
+    def _set_saved_properties(self):
+        '''Set the server address from the saved properties
+        username:password@hostname:port format
+        No password is saved, using an empty string'''
+        self.server_address = "ws://" + \
+            Utils.persistent_load().get('client', {}).get('last_username', "") + \
+            ":@" + \
+            Utils.persistent_load().get('client', {}).get('last_server_hostname', "multiworld.gg") + \
+            ":" + \
+            str(Utils.persistent_load().get('client', {}).get('last_server_port', "38281"))
+
+
     def run_gui(self, splash_queue: Optional[Queue] = None):
         """Run the GUI as self.ui_task."""
         if splash_queue:
             self._splash_queue = splash_queue
+        self._set_saved_properties()
         self.ui = MultiMDApp(self)
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
@@ -282,9 +295,12 @@ class InitContext:
     def username(self) -> str:
         if self._username:
             return self._username
-        if hasattr(self, 'server_address'):
-            return urllib.parse.urlparse(self.server_address).username or ""
-        return Utils.persistent_load().get('client', {}).get('last_username', '')
+        elif hasattr(self, 'server_address'):
+            self._username = urllib.parse.urlparse(self.server_address).username or ""
+            return self._username
+        else:
+            self._username = Utils.persistent_load().get('client', {}).get('last_username', '')
+            return self._username
     
     @username.setter
     def username(self, value: str):
@@ -295,9 +311,12 @@ class InitContext:
     def password(self) -> str:
         if self._password:
             return self._password
-        if hasattr(self, 'server_address'):
-            return urllib.parse.urlparse(self.server_address).password or ""
-        return ""
+        elif hasattr(self, 'server_address'):
+            self._password = urllib.parse.urlparse(self.server_address).password or ""
+            return self._password
+        else:
+            self._password = ""
+            return self._password
     
     @password.setter
     def password(self, value: str):
@@ -307,13 +326,15 @@ class InitContext:
     def hostname(self) -> str:
         if hasattr(self, 'server_address'):
             return urllib.parse.urlparse(self.server_address).hostname or ""
-        return Utils.persistent_load().get('client', {}).get('last_server_hostname', 'multiworld.gg')
+        else:
+            hostname = Utils.persistent_load().get('client', {}).get('last_server_hostname', 'multiworld.gg')
+            return hostname
 
     @property
     def port(self) -> str:
         if hasattr(self, 'server_address'):
-            return urllib.parse.urlparse(self.server_address).port or ""
-        persistent_port = Utils.persistent_load().get('client', {}).get('last_server_port', '38281')
+            return str(urllib.parse.urlparse(self.server_address).port) or "38281"
+        persistent_port = str(Utils.persistent_load().get('client', {}).get('last_server_port', 38281))
         return persistent_port
 
 class CommonContext(InitContext):

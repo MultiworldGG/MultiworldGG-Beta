@@ -72,6 +72,7 @@ from kivymd.uix.navigationdrawer import MDNavigationLayout
 from kivymd.uix.appbar import MDBottomAppBar
 from kivy.uix.effectwidget import EffectWidget
 from kivymd.uix.textfield import MDTextField
+from kivymd.uix.divider import MDDivider
 from kivymd.uix.screen import MDScreen
 
 from NetUtils import KivyMarkupJSONtoTextParser, JSONMessagePart, SlotType, HintStatus, MWGGUIHintStatus
@@ -531,6 +532,9 @@ class MultiMDApp(MDApp):
         
     def _menu_item_callback(self, item):
         """Callback for menu items to change screens"""
+        if item == "Exit":
+            self.stop()
+            return
         self.change_screen(item.lower())
         if self.top_appbar_menu:
             self.top_appbar_menu.dismiss()
@@ -541,8 +545,15 @@ class MultiMDApp(MDApp):
         if not self.top_appbar_menu:
             menu_items = [
                 self._create_menu_item(item)
-                for item in list(set(["settings", "launcher"] + self.screen_manager.screen_names))
+                for item in list(set(["settings", "launcher"] + self.screen_manager.screen_names + ["Exit"]))
             ]
+
+            for item in menu_items:
+                if item["text"] == "Exit":
+                    menu_items.remove(item)
+                    break
+            
+            menu_items.append(self._create_menu_item("exit"))
 
             self.top_appbar_menu = MDDropdownMenu(
                 caller=menu_button,

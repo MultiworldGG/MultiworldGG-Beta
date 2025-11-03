@@ -370,7 +370,7 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
         
         # Rebuild complete tooltip data
         self._build_tooltip_data(ctx)
-        server_address = re.sub(r"^wss?://", "", ctx.server_address)
+        server_address = f"{urllib.parse.urlparse(ctx.server_address).hostname}:{urllib.parse.urlparse(ctx.server_address).port}"
         # Update main label text
         if ctx.slot is not None:
             name = ctx.player_names[ctx.slot]
