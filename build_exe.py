@@ -65,33 +65,7 @@ def install_wheels(type="default") -> bool:
     wheels_dir = Path(f"{type}_wheels")
     if wheels_dir.exists():
         logger.info(f"Installing wheels from {type}_wheels...")
-        
-        # Handle mwgg_igdb variants: only install sixteen (default, age-filtered)
-        # Users can optionally install nr (unfiltered) variant later
-        igdb_installed = False
-        for wheel_file in wheels_dir.glob("mwgg_igdb_sixteen-*.whl"):
-            try:
-                subprocess.check_call([
-                    sys.executable, "-m", "pip", "install", 
-                    str(wheel_file), "--force-reinstall"
-                ])
-                logger.info(f"[OK] Installed {wheel_file.name}")
-                igdb_installed = True
-                break
-            except subprocess.CalledProcessError as e:
-                logger.debug(f"Failed to install {wheel_file.name} with dependencies: {e}")
-                try:
-                    subprocess.check_call([
-                        sys.executable, "-m", "pip", "install", 
-                        str(wheel_file), "--no-deps", "--force-reinstall"
-                    ])
-                    logger.info(f"[OK] Installed {wheel_file.name} (no-deps)")
-                    igdb_installed = True
-                    break
-                except subprocess.CalledProcessError as e2:
-                    logger.warning(f"[FAILED] Failed to install {wheel_file.name}: {e2}")
-        
-        # Install all other wheels
+
         for wheel_file in wheels_dir.glob("*.whl"):
             # Skip igdb variants (already handled above)
             if any(variant in wheel_file.name for variant in ["mwgg_igdb-", "mwgg_igdb_sixteen-", "mwgg_igdb_twelve-"]):

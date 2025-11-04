@@ -21,7 +21,7 @@ if not logging.getLogger().hasHandlers():
 from pathlib import Path
 from typing import List, Optional
 
-from importlib import metadata
+from importlib import metadata, invalidate_caches
 
 def is_frozen() -> bool:
     return getattr(sys, 'frozen', False)
@@ -181,8 +181,6 @@ if is_frozen():
             python_cmd = venv_path / "bin" / "python"
     else:
         raise RuntimeError("Unsupported platform")
-
-
 
 def check_pip() -> None:
     """Verify pip is available."""
@@ -419,9 +417,10 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
     """
     Install worlds from the multiworld repository.
     
-    In frozen builds, this will stage all library.zip updates and only trigger restart
-    after all worlds are successfully installed. It will also check for additional
+    This will install worlds from the multiworld repository. It will also check for additional
     updates after installation completes.
+
+    If additional updates are found, the restart flag will be set to True.
     
     Args:
         worlds: List of world packages to install
@@ -429,7 +428,7 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
         no_recurse: If True, do not check for additional updates after installation completes.
     
     Returns:
-        True if library.zip was updated, False otherwise.
+        True if additional updates were found, False otherwise.
     """
     check_pip()
 
@@ -448,7 +447,7 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
             # In frozen environments, we need to install to a location that's in the Python path
             # and ensure we use the correct target directory
             
-            executable_args = [python_cmd, "-m", "pip", "install", "--index-url", "https://pypi.org/simple",
+            executable_args = [python_cmd, "-m", "pip", "install", "--no-deps", "--index-url", "https://pypi.org/simple",
                     "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds", 
                     world, "--prefer-binary", "--upgrade", "--no-cache-dir"]
             
@@ -498,18 +497,37 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
             else:
                 logger.info(f"Successfully installed {world}")
     
+    invalidate_caches()
+    if no_recurse:
+        # We've already run through the deps once, so restart instead and run again.
+        return True
     # After all worlds are installed, check if we staged any library.zip updates
     if is_frozen():
         # Check for any additional updates that might be needed
-        logger.info("Checking for additional updates...")
-        additional_updates = check_for_updates(worlds_only=True)
-        if additional_updates and not no_recurse:
-            logger.warning(f"Additional updates found: {additional_updates}")
-            return install_worlds(additional_updates, no_recurse=True)
+        logger.info("Checking for additional dependencies...")
+        additional_deps_args = [python_cmd, "-m", "pip", "check"]
+        additional_deps_result = subprocess.run(additional_deps_args, capture_output=True, text=True)
+        stdout = additional_deps_result.stdout
         
-        # Return callback for caller to handle restart
-        logger.info("All installations complete. Library updates staged.")
-        return True
+        no_deps = ("No broken requirements found." in stdout)
+        if no_deps:
+            logger.info(f"Updates complete.")
+            return False
+        
+        # Parse dependencies from pip check output
+        # Handles: "pyramid 1.5.2 requires WebOb, which is not installed."
+        # Handles: "pyramid 1.5.2 has requirement WebOb>=1.3.1, but you have WebOb 0.8."
+
+        else:
+            packages_to_install = []
+            for line in stdout.splitlines():
+                match = re.search(r'(?:requires|has requirement)\s+([a-zA-Z0-9_-]+)([><=!.0-9]+)?', line)
+                if match:
+                    package = match.group(1)
+                    version_req = match.group(2) if match.group(2) else ""
+                    install_spec = f"{package}{version_req}"
+                    packages_to_install.append(install_spec)
+            return install_worlds(packages_to_install, update=True, no_recurse=True)
     
     return False
 
@@ -700,8 +718,8 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
             restart_needed = install_worlds(updates)
             if restart_needed:
                 # Library updates were staged, need to restart
-                from Utils import exit_for_library_update
-                exit_for_library_update()
+                from Utils import exit_restart_for_update
+                exit_restart_for_update()
         else:
             logger.debug("No updates found.")
     global update_ran

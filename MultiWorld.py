@@ -132,6 +132,32 @@ if __name__ == "__main__":
     init_logging("MultiWorld", logging.DEBUG)
     logger = logging.getLogger("MultiWorld")
 
+    # Parse the command line arguments
+    if sys.argv[1:]:
+        parser = ArgumentParser()
+        parser.add_argument("--game", type=str, default=None, required=False, help="The game module to launch\nGame Name will not work, use the apworld abbreviation")
+        parser.add_argument("--server-address", type=str, default=None, required=False, help="The server address to connect to")
+        parser.add_argument("--slot-name", type=str, default=None, required=False, help="The slot name to connect to")
+        parser.add_argument("--password", type=str, default=None, required=False, help="The password to connect to")
+        parser.add_argument("--update-modules", action="store_true", default=False, required=False, help="Whether to update modules")
+        parser.add_argument("--worlds", nargs="+", default=None, required=False, help="List of worlds to update")
+        args = parser.parse_args(sys.argv[1:])
+    else:
+        args = None
+
+    if args.update_modules:
+        import ModuleUpdate
+        ModuleUpdate.install_worlds(worlds=args.worlds if args.worlds else [])
+        sys.exit(0)
+
+    if not is_windows:
+        # need to check for mwgg_igdb and install it if it's not installed
+        try:
+            import mwgg_igdb
+        except ImportError:
+            import ModuleUpdate
+            ModuleUpdate.install_worlds(worlds=["mwgg_igdb_sixteen"])
+
     # Start the splash screen process
     splash_queue = None
 
@@ -155,15 +181,5 @@ if __name__ == "__main__":
         except Exception as e:
             logger.warning(f"Timeout or error waiting for splash screen: {e}")
         
-    # Parse the command line arguments
-    if sys.argv[1:]:
-        parser = ArgumentParser()
-        parser.add_argument("--game", type=str, default=None, optional=True, help="The game module to launch\nGame Name will not work, use the apworld abbreviation")
-        parser.add_argument("--server-address", type=str, default=None, optional=True, help="The server address to connect to")
-        parser.add_argument("--slot-name", type=str, default=None, optional=True, help="The slot name to connect to")
-        parser.add_argument("--password", type=str, default=None, optional=True, help="The password to connect to")
-        args = parser.parse_args(sys.argv[1:])
-    else:
-        args = None
     # Run the main client in the current process
     run_client(args, queue=splash_queue)

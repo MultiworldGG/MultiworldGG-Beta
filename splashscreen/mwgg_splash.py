@@ -22,6 +22,7 @@ import tkinter as tk
 from PIL import Image, ImageTk, ImageSequence
 import time
 from pathlib import Path
+from ModuleUpdate import check_for_updates, install_worlds
 
 logger = logging.getLogger("MultiWorld")
 
@@ -116,7 +117,7 @@ class SplashScreen:
             
             if update_applied:
                 time.sleep(2)
-                logger.info("Library.zip update complete! Restarting...")
+                logger.info("Updates completed")
                 # Signal main process that update is complete
                 self.queue.put({"type": "update_complete"})
             else:
@@ -198,7 +199,7 @@ class SplashScreen:
 
 def check_and_apply_pending_update() -> bool:
     """
-    Check for pending library.zip updates and apply them.
+    Check for pending updates and apply them.
     This runs in the splash screen process, which is separate from the main process.
     Runs in a background thread so the splash animation continues.
     
@@ -207,55 +208,18 @@ def check_and_apply_pending_update() -> bool:
     """
     try:
         # Only run in frozen builds
+        logger.info("Checking for pending updates...")
         if not getattr(sys, 'frozen', False):
             return False
         
-        exe_dir = Path(sys.executable).parent
-        lib_dir = exe_dir / "lib"
-        staged_zip = lib_dir / "_staged_library.zip"
-        target_zip = lib_dir / "library.zip"
-        
-        if not staged_zip.exists():
-            return False
-        
-        logger.info("Pending updates detected, processing...")
-        
-        # Give the main process time to fully exit
-        time.sleep(2)
-        
-        # Backup existing library.zip
-        backup_zip = None
-        if target_zip.exists():
-            backup_zip = target_zip.parent / f"{target_zip.stem}_backup.zip"
-            logger.debug(f"Backing up existing library.zip...")
-            try:
-                target_zip.rename(backup_zip)
-            except Exception as e:
-                logger.error(f"Failed to backup library.zip: {e}")
-                return False
-        
-        # Replace with staged version
-        try:
-            logger.debug(f"Applying library.zip update...")
-            staged_zip.rename(target_zip)
-            logger.debug("Library.zip successfully updated!")
-            
-            # Clean up backup
-            if backup_zip and backup_zip.exists():
-                backup_zip.unlink()
-            
-            return True
-            
-        except Exception as e:
-            # Restore backup on failure
-            logger.error(f"Failed to replace library.zip: {e}")
-            if backup_zip and backup_zip.exists():
-                logger.debug("Restoring backup...")
-                try:
-                    backup_zip.rename(target_zip)
-                except:
-                    pass
-            return False
+        updates = check_for_updates(worlds_only=False)
+        if updates:
+            logger.info(f"Pending updates found: {updates}")
+            time.sleep(2)
+            logger.info("Installing updates...")
+            return install_worlds(updates, update=True, no_recurse=False)
+        else:
+            return False        
             
     except Exception as e:
         logger.error(f"Error checking/applying pending update: {e}")

@@ -53,6 +53,147 @@ Name: "full"; Description: "Full installation"
 Name: "minimal"; Description: "Minimal installation"
 Name: "custom"; Description: "Custom installation"; Flags: iscustom
 
+[Components]
+Name: "worlds"; Description: "Optional World Modules"; Types: full custom
+Name: "worlds\against_the_storm"; Description: "Against the Storm"; Types: full
+Name: "worlds\ahit"; Description: "A Hat in Time"; Types: full
+Name: "worlds\albw"; Description: "A Link Between Worlds"; Types: full
+Name: "worlds\alttp"; Description: "A Link to the Past"; Types: full
+Name: "worlds\animal_well"; Description: "Animal Well"; Types: full
+Name: "worlds\apeescape"; Description: "Ape Escape"; Types: full
+Name: "worlds\balatro"; Description: "Balatro"; Types: full
+Name: "worlds\banjo_tooie"; Description: "Banjo Tooie"; Types: full
+Name: "worlds\bomb_rush_cyberfunk"; Description: "Bomb Rush Cyberfunk"; Types: full
+Name: "worlds\brotato"; Description: "Brotato"; Types: full
+Name: "worlds\cat_quest"; Description: "Cat Quest"; Types: full
+Name: "worlds\celeste"; Description: "Celeste"; Types: full
+Name: "worlds\celeste_open_world"; Description: "Celeste Open World"; Types: full
+Name: "worlds\civ_6"; Description: "Civilization VI"; Types: full
+Name: "worlds\crosscode"; Description: "CrossCode"; Types: full
+Name: "worlds\crystal_project"; Description: "Crystal Project"; Types: full
+Name: "worlds\ctjot"; Description: "CT Journey of Time"; Types: full
+Name: "worlds\cuphead"; Description: "Cuphead"; Types: full
+Name: "worlds\cv64"; Description: "Castlevania 64"; Types: full
+Name: "worlds\cvcotm"; Description: "Castlevania Circle of the Moon"; Types: full
+Name: "worlds\diddy_kong_racing"; Description: "Diddy Kong Racing"; Types: full
+Name: "worlds\dk64"; Description: "Donkey Kong 64"; Types: full
+Name: "worlds\dkc"; Description: "Donkey Kong Country"; Types: full
+Name: "worlds\dkc2"; Description: "Donkey Kong Country 2"; Types: full
+Name: "worlds\dkc3"; Description: "Donkey Kong Country 3"; Types: full
+Name: "worlds\dontstarvetogether"; Description: "Don't Starve Together"; Types: full
+Name: "worlds\doronko_wanko"; Description: "Doronko Wanko"; Types: full
+Name: "worlds\dredge"; Description: "Dredge"; Types: full
+Name: "worlds\dw1"; Description: "Dragon Warrior"; Types: full
+Name: "worlds\earthbound"; Description: "Earthbound"; Types: full
+Name: "worlds\enderlilies"; Description: "Ender Lilies"; Types: full
+Name: "worlds\factorio"; Description: "Factorio"; Types: full
+Name: "worlds\faxanadu"; Description: "Faxanadu"; Types: full
+Name: "worlds\ff1"; Description: "Final Fantasy I"; Types: full
+Name: "worlds\ff4fe"; Description: "Final Fantasy IV Free Enterprise"; Types: full
+Name: "worlds\ffmq"; Description: "Final Fantasy Mystic Quest"; Types: full
+Name: "worlds\ffta"; Description: "Final Fantasy Tactics Advance"; Types: full
+Name: "worlds\fm"; Description: "Yu-Gi-Oh! Forbidden Memories"; Types: full
+Name: "worlds\getting_over_it"; Description: "Getting Over It"; Types: full
+Name: "worlds\gstla"; Description: "Golden Sun: The Lost Age"; Types: full
+Name: "worlds\hades"; Description: "Hades"; Types: full
+Name: "worlds\hcniko"; Description: "HC Niko"; Types: full
+Name: "worlds\hk"; Description: "Hollow Knight"; Types: full
+Name: "worlds\jakanddaxter"; Description: "Jak and Daxter"; Types: full
+Name: "worlds\k64"; Description: "Kirby 64"; Types: full
+Name: "worlds\kdl3"; Description: "Kirby's Dream Land 3"; Types: full
+Name: "worlds\kh1"; Description: "Kingdom Hearts"; Types: full
+Name: "worlds\kh2"; Description: "Kingdom Hearts II"; Types: full
+Name: "worlds\ladx"; Description: "Link's Awakening DX"; Types: full
+Name: "worlds\landstalker"; Description: "Landstalker"; Types: full
+Name: "worlds\lego_star_wars_tcs"; Description: "LEGO Star Wars: The Complete Saga"; Types: full
+Name: "worlds\lufia2ac"; Description: "Lufia II Ancient Cave"; Types: full
+Name: "worlds\luigismansion"; Description: "Luigi's Mansion"; Types: full
+Name: "worlds\mario_kart_double_dash"; Description: "Mario Kart: Double Dash!!"; Types: full
+Name: "worlds\marioland2"; Description: "Super Mario Land 2"; Types: full
+Name: "worlds\megamix"; Description: "Megamix"; Types: full
+Name: "worlds\messenger"; Description: "The Messenger"; Types: full
+Name: "worlds\metroidfusion"; Description: "Metroid Fusion"; Types: full
+Name: "worlds\metroidprime"; Description: "Metroid Prime"; Types: full
+Name: "worlds\minecraft"; Description: "Minecraft"; Types: full
+Name: "worlds\mk64"; Description: "Mario Kart 64"; Types: full
+Name: "worlds\mlss"; Description: "Mario & Luigi: Superstar Saga"; Types: full
+Name: "worlds\mm_recomp"; Description: "Majora's Mask Recompiled"; Types: full
+Name: "worlds\mm2"; Description: "Mega Man 2"; Types: full
+Name: "worlds\mm3"; Description: "Mega Man 3"; Types: full
+Name: "worlds\mmbn3"; Description: "Mega Man Battle Network 3"; Types: full
+Name: "worlds\mmx3"; Description: "Mega Man X3"; Types: full
+Name: "worlds\momodoramoonlitfarewell"; Description: "Momodora: Moonlit Farewell"; Types: full
+Name: "worlds\monster_sanctuary"; Description: "Monster Sanctuary"; Types: full
+Name: "worlds\musedash"; Description: "Muse Dash"; Types: full
+Name: "worlds\mzm"; Description: "Metroid Zero Mission"; Types: full
+Name: "worlds\oot"; Description: "Ocarina of Time"; Types: full
+Name: "worlds\oribf"; Description: "Ori and the Blind Forest"; Types: full
+Name: "worlds\outer_wilds"; Description: "Outer Wilds"; Types: full
+Name: "worlds\overcooked2"; Description: "Overcooked 2"; Types: full
+Name: "worlds\papermario"; Description: "Paper Mario 64"; Types: full
+Name: "worlds\placidplasticducksim"; Description: "Placid Plastic Duck Simulator"; Types: full
+Name: "worlds\pmd_eos"; Description: "Pokemon Mystery Dungeon: Explorers of Sky"; Types: full
+Name: "worlds\pokemon_crystal"; Description: "Pokemon Crystal"; Types: full
+Name: "worlds\pokemon_emerald"; Description: "Pokemon Emerald"; Types: full
+Name: "worlds\pokemon_frlg"; Description: "Pokemon FireRed/LeafGreen"; Types: full
+Name: "worlds\pokemon_rb"; Description: "Pokemon Red/Blue"; Types: full
+Name: "worlds\powerwashsimulator"; Description: "PowerWash Simulator"; Types: full
+Name: "worlds\rac2"; Description: "Ratchet & Clank 2"; Types: full
+Name: "worlds\raft"; Description: "Raft"; Types: full
+Name: "worlds\rogue_legacy"; Description: "Rogue Legacy"; Types: full
+Name: "worlds\ror1"; Description: "Risk of Rain"; Types: full
+Name: "worlds\ror2"; Description: "Risk of Rain 2"; Types: full
+Name: "worlds\sa2b"; Description: "Sonic Adventure 2: Battle"; Types: full
+Name: "worlds\sadx"; Description: "Sonic Adventure DX"; Types: full
+Name: "worlds\satisfactory"; Description: "Satisfactory"; Types: full
+Name: "worlds\seaofthieves"; Description: "Sea of Thieves"; Types: full
+Name: "worlds\shivers"; Description: "Shivers"; Types: full
+Name: "worlds\shorthike"; Description: "A Short Hike"; Types: full
+Name: "worlds\sims4"; Description: "The Sims 4"; Types: full
+Name: "worlds\sly1"; Description: "Sly Cooper"; Types: full
+Name: "worlds\sm"; Description: "Super Metroid"; Types: full
+Name: "worlds\sm_map_rando"; Description: "Super Metroid Map Rando"; Types: full
+Name: "worlds\sm64ex"; Description: "Super Mario 64 (Port)"; Types: full
+Name: "worlds\sm64hacks"; Description: "Super Mario 64 (Hacks)"; Types: full
+Name: "worlds\smo"; Description: "Super Mario Odyssey"; Types: full
+Name: "worlds\sms"; Description: "Super Mario Sunshine"; Types: full
+Name: "worlds\smw"; Description: "Super Mario World"; Types: full
+Name: "worlds\soe"; Description: "Secret of Evermore"; Types: full
+Name: "worlds\sonic_heroes"; Description: "Sonic Heroes"; Types: full
+Name: "worlds\sotn"; Description: "Castlevania: Symphony of the Night"; Types: full
+Name: "worlds\spyro3"; Description: "Spyro 3"; Types: full
+Name: "worlds\ss"; Description: "Skyward Sword"; Types: full
+Name: "worlds\star_fox_64"; Description: "Star Fox 64"; Types: full
+Name: "worlds\stardew_valley"; Description: "Stardew Valley"; Types: full
+Name: "worlds\subnautica"; Description: "Subnautica"; Types: full
+Name: "worlds\swr"; Description: "Star Wars: Racer"; Types: full
+Name: "worlds\terraria"; Description: "Terraria"; Types: full
+Name: "worlds\tetrisattack"; Description: "Tetris Attack"; Types: full
+Name: "worlds\timespinner"; Description: "Timespinner"; Types: full
+Name: "worlds\tloz"; Description: "The Legend of Zelda"; Types: full
+Name: "worlds\tloz_ooa"; Description: "Oracle of Ages"; Types: full
+Name: "worlds\tloz_oos"; Description: "Oracle of Seasons"; Types: full
+Name: "worlds\tloz_ph"; Description: "Phantom Hourglass"; Types: full
+Name: "worlds\tmc"; Description: "The Minish Cap"; Types: full
+Name: "worlds\toontown"; Description: "Toontown"; Types: full
+Name: "worlds\tp"; Description: "Twilight Princess"; Types: full
+Name: "worlds\trackmania"; Description: "Trackmania"; Types: full
+Name: "worlds\tunic"; Description: "TUNIC"; Types: full
+Name: "worlds\tww"; Description: "The Wind Waker"; Types: full
+Name: "worlds\tyrian"; Description: "Tyrian"; Types: full
+Name: "worlds\undertale"; Description: "Undertale"; Types: full
+Name: "worlds\v6"; Description: "V6"; Types: full
+Name: "worlds\wargroove"; Description: "Wargroove"; Types: full
+Name: "worlds\wargroove2"; Description: "Wargroove 2"; Types: full
+Name: "worlds\witness"; Description: "The Witness"; Types: full
+Name: "worlds\wl"; Description: "Wario Land"; Types: full
+Name: "worlds\wl4"; Description: "Wario Land 4"; Types: full
+Name: "worlds\xenobladex"; Description: "Xenoblade Chronicles X"; Types: full
+Name: "worlds\yoshisisland"; Description: "Yoshi's Island"; Types: full
+Name: "worlds\yugioh06"; Description: "Yu-Gi-Oh! 2006"; Types: full
+Name: "worlds\yugiohddm"; Description: "Yu-Gi-Oh! Dungeon Dice Monsters"; Types: full
+Name: "worlds\zelda2"; Description: "Zelda II"; Types: full
+
 [Dirs]
 NAME: "{app}"; Flags: setntfscompression; Permissions: everyone-modify users-modify authusers-modify;
 
@@ -70,7 +211,7 @@ Name: "{commondesktop}\{#MyAppName} Launcher"; Filename: "{app}\MultiworldGG.exe
 [Run]
 
 Filename: "{tmp}\python-3.12.10-amd64.exe"; Parameters: "/passive InstallAllUsers=1 PrependPath=1 Include_test=0"; Check: IsPythonNeeded; StatusMsg: "Installing Python 3.12.10..."
-; Filename: "{app}\MultiworldGG"; Parameters: "--update_settings"; StatusMsg: "Updating host.yaml..."; Flags: runasoriginaluser runhidden
+Filename: "{app}\MultiworldGG"; Parameters: "--update-modules --worlds {code:GetSelectedWorld}"; StatusMsg: "Updating modules..."; Flags: runasoriginaluser runhidden
 ; Filename: "{app}\MultiworldGG"; Description: "{cm:LaunchProgram,{#StringChange('Launcher', '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 ; Silent install from updater auto starts the launcher again
 ; Filename: "{app}\MultiworldGG"; StatusMsg: "MultiworldGG ... done"; Flags: nowait skipifnotsilent
@@ -407,6 +548,194 @@ Root: HKCR; Subkey: "multiworldgg\shell\open\command"; ValueType: "string"; Valu
 
 
 [Code]
+var
+  WorldPage: TInputOptionWizardPage;
+  ComponentsLabel: TNewStaticText;
+
+procedure InitializeWizard;
+begin
+  // Add custom disclaimer to Components page
+  ComponentsLabel := TNewStaticText.Create(WizardForm);
+  ComponentsLabel.Parent := WizardForm.SelectComponentsPage;
+  ComponentsLabel.Top := WizardForm.ComponentsList.Top + WizardForm.ComponentsList.Height + ScaleY(10);
+  ComponentsLabel.Left := WizardForm.ComponentsList.Left;
+  ComponentsLabel.Width := WizardForm.ComponentsList.Width;
+  ComponentsLabel.Height := ScaleY(32);
+  ComponentsLabel.AutoSize := True;
+  ComponentsLabel.WordWrap := True;
+  ComponentsLabel.Font.Style := [fsBold];
+  ComponentsLabel.Font.Color := clRed;
+  ComponentsLabel.Caption := 'IMPORTANT: These modules are for playing MultiWorlds with your own legally obtained copies of the games listed. They WILL NOT install any version of the games themselves.';
+
+  WorldPage := CreateInputOptionPage(wpSelectTasks,
+    'Select Age Rating for Games List', 
+    'Choose the age rating for the games list to use initially. The options are: 12+, 16+, and NR (Not Rated).  Not rated games can be 18+ or simply games that are unknown.',
+    'Select one of the following age ratings for the initial games list. This setting can be changed later.', 
+    True, False);
+
+  WorldPage.Add('PEGI 12');
+  WorldPage.Add('PEGI 16');
+  WorldPage.Add('NR');
+
+  // Set default to sixteen (index 1)
+  WorldPage.SelectedValueIndex := 1;
+end;
+
+function GetSelectedWorld(Param: String): String;
+var
+  WorldList: String;
+begin
+  // Start with the required IGDB selection
+  if WorldPage.SelectedValueIndex = 0 then
+    WorldList := 'mwgg_igdb_twelve'
+  else if WorldPage.SelectedValueIndex = 1 then
+    WorldList := 'mwgg_igdb_sixteen'
+  else
+    WorldList := 'mwgg_igdb';
+  
+  // Add selected optional world components
+  if WizardIsComponentSelected('worlds\against_the_storm') then WorldList := WorldList + ' worlds.against_the_storm';
+  if WizardIsComponentSelected('worlds\ahit') then WorldList := WorldList + ' worlds.ahit';
+  if WizardIsComponentSelected('worlds\albw') then WorldList := WorldList + ' worlds.albw';
+  if WizardIsComponentSelected('worlds\alttp') then WorldList := WorldList + ' worlds.alttp';
+  if WizardIsComponentSelected('worlds\animal_well') then WorldList := WorldList + ' worlds.animal_well';
+  if WizardIsComponentSelected('worlds\apeescape') then WorldList := WorldList + ' worlds.apeescape';
+  if WizardIsComponentSelected('worlds\balatro') then WorldList := WorldList + ' worlds.balatro';
+  if WizardIsComponentSelected('worlds\banjo_tooie') then WorldList := WorldList + ' worlds.banjo_tooie';
+  if WizardIsComponentSelected('worlds\bomb_rush_cyberfunk') then WorldList := WorldList + ' worlds.bomb_rush_cyberfunk';
+  if WizardIsComponentSelected('worlds\brotato') then WorldList := WorldList + ' worlds.brotato';
+  if WizardIsComponentSelected('worlds\cat_quest') then WorldList := WorldList + ' worlds.cat_quest';
+  if WizardIsComponentSelected('worlds\celeste') then WorldList := WorldList + ' worlds.celeste';
+  if WizardIsComponentSelected('worlds\celeste_open_world') then WorldList := WorldList + ' worlds.celeste_open_world';
+  if WizardIsComponentSelected('worlds\civ_6') then WorldList := WorldList + ' worlds.civ_6';
+  if WizardIsComponentSelected('worlds\crosscode') then WorldList := WorldList + ' worlds.crosscode';
+  if WizardIsComponentSelected('worlds\crystal_project') then WorldList := WorldList + ' worlds.crystal_project';
+  if WizardIsComponentSelected('worlds\ctjot') then WorldList := WorldList + ' worlds.ctjot';
+  if WizardIsComponentSelected('worlds\cuphead') then WorldList := WorldList + ' worlds.cuphead';
+  if WizardIsComponentSelected('worlds\cv64') then WorldList := WorldList + ' worlds.cv64';
+  if WizardIsComponentSelected('worlds\cvcotm') then WorldList := WorldList + ' worlds.cvcotm';
+  if WizardIsComponentSelected('worlds\diddy_kong_racing') then WorldList := WorldList + ' worlds.diddy_kong_racing';
+  if WizardIsComponentSelected('worlds\dk64') then WorldList := WorldList + ' worlds.dk64';
+  if WizardIsComponentSelected('worlds\dkc') then WorldList := WorldList + ' worlds.dkc';
+  if WizardIsComponentSelected('worlds\dkc2') then WorldList := WorldList + ' worlds.dkc2';
+  if WizardIsComponentSelected('worlds\dkc3') then WorldList := WorldList + ' worlds.dkc3';
+  if WizardIsComponentSelected('worlds\dontstarvetogether') then WorldList := WorldList + ' worlds.dontstarvetogether';
+  if WizardIsComponentSelected('worlds\doronko_wanko') then WorldList := WorldList + ' worlds.doronko_wanko';
+  if WizardIsComponentSelected('worlds\dredge') then WorldList := WorldList + ' worlds.dredge';
+  if WizardIsComponentSelected('worlds\dw1') then WorldList := WorldList + ' worlds.dw1';
+  if WizardIsComponentSelected('worlds\earthbound') then WorldList := WorldList + ' worlds.earthbound';
+  if WizardIsComponentSelected('worlds\enderlilies') then WorldList := WorldList + ' worlds.enderlilies';
+  if WizardIsComponentSelected('worlds\factorio') then WorldList := WorldList + ' worlds.factorio';
+  if WizardIsComponentSelected('worlds\faxanadu') then WorldList := WorldList + ' worlds.faxanadu';
+  if WizardIsComponentSelected('worlds\ff1') then WorldList := WorldList + ' worlds.ff1';
+  if WizardIsComponentSelected('worlds\ff4fe') then WorldList := WorldList + ' worlds.ff4fe';
+  if WizardIsComponentSelected('worlds\ffmq') then WorldList := WorldList + ' worlds.ffmq';
+  if WizardIsComponentSelected('worlds\ffta') then WorldList := WorldList + ' worlds.ffta';
+  if WizardIsComponentSelected('worlds\fm') then WorldList := WorldList + ' worlds.fm';
+  if WizardIsComponentSelected('worlds\getting_over_it') then WorldList := WorldList + ' worlds.getting_over_it';
+  if WizardIsComponentSelected('worlds\gstla') then WorldList := WorldList + ' worlds.gstla';
+  if WizardIsComponentSelected('worlds\hades') then WorldList := WorldList + ' worlds.hades';
+  if WizardIsComponentSelected('worlds\hcniko') then WorldList := WorldList + ' worlds.hcniko';
+  if WizardIsComponentSelected('worlds\hk') then WorldList := WorldList + ' worlds.hk';
+  if WizardIsComponentSelected('worlds\jakanddaxter') then WorldList := WorldList + ' worlds.jakanddaxter';
+  if WizardIsComponentSelected('worlds\k64') then WorldList := WorldList + ' worlds.k64';
+  if WizardIsComponentSelected('worlds\kdl3') then WorldList := WorldList + ' worlds.kdl3';
+  if WizardIsComponentSelected('worlds\kh1') then WorldList := WorldList + ' worlds.kh1';
+  if WizardIsComponentSelected('worlds\kh2') then WorldList := WorldList + ' worlds.kh2';
+  if WizardIsComponentSelected('worlds\ladx') then WorldList := WorldList + ' worlds.ladx';
+  if WizardIsComponentSelected('worlds\landstalker') then WorldList := WorldList + ' worlds.landstalker';
+  if WizardIsComponentSelected('worlds\lego_star_wars_tcs') then WorldList := WorldList + ' worlds.lego_star_wars_tcs';
+  if WizardIsComponentSelected('worlds\lufia2ac') then WorldList := WorldList + ' worlds.lufia2ac';
+  if WizardIsComponentSelected('worlds\luigismansion') then WorldList := WorldList + ' worlds.luigismansion';
+  if WizardIsComponentSelected('worlds\mario_kart_double_dash') then WorldList := WorldList + ' worlds.mario_kart_double_dash';
+  if WizardIsComponentSelected('worlds\marioland2') then WorldList := WorldList + ' worlds.marioland2';
+  if WizardIsComponentSelected('worlds\megamix') then WorldList := WorldList + ' worlds.megamix';
+  if WizardIsComponentSelected('worlds\messenger') then WorldList := WorldList + ' worlds.messenger';
+  if WizardIsComponentSelected('worlds\metroidfusion') then WorldList := WorldList + ' worlds.metroidfusion';
+  if WizardIsComponentSelected('worlds\metroidprime') then WorldList := WorldList + ' worlds.metroidprime';
+  if WizardIsComponentSelected('worlds\minecraft') then WorldList := WorldList + ' worlds.minecraft';
+  if WizardIsComponentSelected('worlds\mk64') then WorldList := WorldList + ' worlds.mk64';
+  if WizardIsComponentSelected('worlds\mlss') then WorldList := WorldList + ' worlds.mlss';
+  if WizardIsComponentSelected('worlds\mm_recomp') then WorldList := WorldList + ' worlds.mm_recomp';
+  if WizardIsComponentSelected('worlds\mm2') then WorldList := WorldList + ' worlds.mm2';
+  if WizardIsComponentSelected('worlds\mm3') then WorldList := WorldList + ' worlds.mm3';
+  if WizardIsComponentSelected('worlds\mmbn3') then WorldList := WorldList + ' worlds.mmbn3';
+  if WizardIsComponentSelected('worlds\mmx3') then WorldList := WorldList + ' worlds.mmx3';
+  if WizardIsComponentSelected('worlds\momodoramoonlitfarewell') then WorldList := WorldList + ' worlds.momodoramoonlitfarewell';
+  if WizardIsComponentSelected('worlds\monster_sanctuary') then WorldList := WorldList + ' worlds.monster_sanctuary';
+  if WizardIsComponentSelected('worlds\musedash') then WorldList := WorldList + ' worlds.musedash';
+  if WizardIsComponentSelected('worlds\mzm') then WorldList := WorldList + ' worlds.mzm';
+  if WizardIsComponentSelected('worlds\oot') then WorldList := WorldList + ' worlds.oot';
+  if WizardIsComponentSelected('worlds\oribf') then WorldList := WorldList + ' worlds.oribf';
+  if WizardIsComponentSelected('worlds\outer_wilds') then WorldList := WorldList + ' worlds.outer_wilds';
+  if WizardIsComponentSelected('worlds\overcooked2') then WorldList := WorldList + ' worlds.overcooked2';
+  if WizardIsComponentSelected('worlds\papermario') then WorldList := WorldList + ' worlds.papermario';
+  if WizardIsComponentSelected('worlds\placidplasticducksim') then WorldList := WorldList + ' worlds.placidplasticducksim';
+  if WizardIsComponentSelected('worlds\pmd_eos') then WorldList := WorldList + ' worlds.pmd_eos';
+  if WizardIsComponentSelected('worlds\pokemon_crystal') then WorldList := WorldList + ' worlds.pokemon_crystal';
+  if WizardIsComponentSelected('worlds\pokemon_emerald') then WorldList := WorldList + ' worlds.pokemon_emerald';
+  if WizardIsComponentSelected('worlds\pokemon_frlg') then WorldList := WorldList + ' worlds.pokemon_frlg';
+  if WizardIsComponentSelected('worlds\pokemon_rb') then WorldList := WorldList + ' worlds.pokemon_rb';
+  if WizardIsComponentSelected('worlds\powerwashsimulator') then WorldList := WorldList + ' worlds.powerwashsimulator';
+  if WizardIsComponentSelected('worlds\rac2') then WorldList := WorldList + ' worlds.rac2';
+  if WizardIsComponentSelected('worlds\raft') then WorldList := WorldList + ' worlds.raft';
+  if WizardIsComponentSelected('worlds\rogue_legacy') then WorldList := WorldList + ' worlds.rogue_legacy';
+  if WizardIsComponentSelected('worlds\ror1') then WorldList := WorldList + ' worlds.ror1';
+  if WizardIsComponentSelected('worlds\ror2') then WorldList := WorldList + ' worlds.ror2';
+  if WizardIsComponentSelected('worlds\sa2b') then WorldList := WorldList + ' worlds.sa2b';
+  if WizardIsComponentSelected('worlds\sadx') then WorldList := WorldList + ' worlds.sadx';
+  if WizardIsComponentSelected('worlds\satisfactory') then WorldList := WorldList + ' worlds.satisfactory';
+  if WizardIsComponentSelected('worlds\seaofthieves') then WorldList := WorldList + ' worlds.seaofthieves';
+  if WizardIsComponentSelected('worlds\shivers') then WorldList := WorldList + ' worlds.shivers';
+  if WizardIsComponentSelected('worlds\shorthike') then WorldList := WorldList + ' worlds.shorthike';
+  if WizardIsComponentSelected('worlds\sims4') then WorldList := WorldList + ' worlds.sims4';
+  if WizardIsComponentSelected('worlds\sly1') then WorldList := WorldList + ' worlds.sly1';
+  if WizardIsComponentSelected('worlds\sm') then WorldList := WorldList + ' worlds.sm';
+  if WizardIsComponentSelected('worlds\sm_map_rando') then WorldList := WorldList + ' worlds.sm_map_rando';
+  if WizardIsComponentSelected('worlds\sm64ex') then WorldList := WorldList + ' worlds.sm64ex';
+  if WizardIsComponentSelected('worlds\sm64hacks') then WorldList := WorldList + ' worlds.sm64hacks';
+  if WizardIsComponentSelected('worlds\smo') then WorldList := WorldList + ' worlds.smo';
+  if WizardIsComponentSelected('worlds\sms') then WorldList := WorldList + ' worlds.sms';
+  if WizardIsComponentSelected('worlds\smw') then WorldList := WorldList + ' worlds.smw';
+  if WizardIsComponentSelected('worlds\soe') then WorldList := WorldList + ' worlds.soe';
+  if WizardIsComponentSelected('worlds\sonic_heroes') then WorldList := WorldList + ' worlds.sonic_heroes';
+  if WizardIsComponentSelected('worlds\sotn') then WorldList := WorldList + ' worlds.sotn';
+  if WizardIsComponentSelected('worlds\spyro3') then WorldList := WorldList + ' worlds.spyro3';
+  if WizardIsComponentSelected('worlds\ss') then WorldList := WorldList + ' worlds.ss';
+  if WizardIsComponentSelected('worlds\star_fox_64') then WorldList := WorldList + ' worlds.star_fox_64';
+  if WizardIsComponentSelected('worlds\stardew_valley') then WorldList := WorldList + ' worlds.stardew_valley';
+  if WizardIsComponentSelected('worlds\subnautica') then WorldList := WorldList + ' worlds.subnautica';
+  if WizardIsComponentSelected('worlds\swr') then WorldList := WorldList + ' worlds.swr';
+  if WizardIsComponentSelected('worlds\terraria') then WorldList := WorldList + ' worlds.terraria';
+  if WizardIsComponentSelected('worlds\tetrisattack') then WorldList := WorldList + ' worlds.tetrisattack';
+  if WizardIsComponentSelected('worlds\timespinner') then WorldList := WorldList + ' worlds.timespinner';
+  if WizardIsComponentSelected('worlds\tloz') then WorldList := WorldList + ' worlds.tloz';
+  if WizardIsComponentSelected('worlds\tloz_ooa') then WorldList := WorldList + ' worlds.tloz_ooa';
+  if WizardIsComponentSelected('worlds\tloz_oos') then WorldList := WorldList + ' worlds.tloz_oos';
+  if WizardIsComponentSelected('worlds\tloz_ph') then WorldList := WorldList + ' worlds.tloz_ph';
+  if WizardIsComponentSelected('worlds\tmc') then WorldList := WorldList + ' worlds.tmc';
+  if WizardIsComponentSelected('worlds\toontown') then WorldList := WorldList + ' worlds.toontown';
+  if WizardIsComponentSelected('worlds\tp') then WorldList := WorldList + ' worlds.tp';
+  if WizardIsComponentSelected('worlds\trackmania') then WorldList := WorldList + ' worlds.trackmania';
+  if WizardIsComponentSelected('worlds\tunic') then WorldList := WorldList + ' worlds.tunic';
+  if WizardIsComponentSelected('worlds\tww') then WorldList := WorldList + ' worlds.tww';
+  if WizardIsComponentSelected('worlds\tyrian') then WorldList := WorldList + ' worlds.tyrian';
+  if WizardIsComponentSelected('worlds\undertale') then WorldList := WorldList + ' worlds.undertale';
+  if WizardIsComponentSelected('worlds\v6') then WorldList := WorldList + ' worlds.v6';
+  if WizardIsComponentSelected('worlds\wargroove') then WorldList := WorldList + ' worlds.wargroove';
+  if WizardIsComponentSelected('worlds\wargroove2') then WorldList := WorldList + ' worlds.wargroove2';
+  if WizardIsComponentSelected('worlds\witness') then WorldList := WorldList + ' worlds.witness';
+  if WizardIsComponentSelected('worlds\wl') then WorldList := WorldList + ' worlds.wl';
+  if WizardIsComponentSelected('worlds\wl4') then WorldList := WorldList + ' worlds.wl4';
+  if WizardIsComponentSelected('worlds\xenobladex') then WorldList := WorldList + ' worlds.xenobladex';
+  if WizardIsComponentSelected('worlds\yoshisisland') then WorldList := WorldList + ' worlds.yoshisisland';
+  if WizardIsComponentSelected('worlds\yugioh06') then WorldList := WorldList + ' worlds.yugioh06';
+  if WizardIsComponentSelected('worlds\yugiohddm') then WorldList := WorldList + ' worlds.yugiohddm';
+  if WizardIsComponentSelected('worlds\zelda2') then WorldList := WorldList + ' worlds.zelda2';
+  
+  Result := WorldList;
+end;
+
 function ShouldShowDeleteLibTask: Boolean;
 begin
   Result := DirExists(ExpandConstant('{app}\lib'));

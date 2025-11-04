@@ -118,7 +118,7 @@ def set_game_names(game_names: typing.List[str]):
         restart_needed = ModuleUpdate.install_worlds(_worlds_to_install)
         if restart_needed:
             # Library updates were staged, need to restart
-            exit_for_library_update()
+            exit_restart_for_update()
 
 def game_names() -> typing.List[str]:
     """Get a list of only the game names that we're using"""
@@ -282,10 +282,10 @@ def _perform_module_launch(module_id: str, **kwargs):
                 logging.error(f"Error in error callback: {callback_error}")
         raise
 
-def exit_for_library_update():
+def exit_restart_for_update():
     """
     Spawn a new process with the same arguments, then exit.
-    The new process will have its splashscreen apply the staged library.zip update.
+    The new process will have its splashscreen apply the updates.
     """
     # Spawn new process with same executable and arguments
     subprocess.Popen([sys.executable] + sys.argv, 
