@@ -142,13 +142,13 @@ if __name__ == "__main__":
         parser.add_argument("--update-modules", action="store_true", default=False, required=False, help="Whether to update modules")
         parser.add_argument("--worlds", nargs="+", default=None, required=False, help="List of worlds to update")
         args = parser.parse_args(sys.argv[1:])
+        
+        if args.update_modules:
+            import ModuleUpdate
+            ModuleUpdate.install_worlds(worlds=args.worlds if args.worlds else [])
+            sys.exit(0)
     else:
         args = None
-
-    if args.update_modules:
-        import ModuleUpdate
-        ModuleUpdate.install_worlds(worlds=args.worlds if args.worlds else [])
-        sys.exit(0)
 
     if not is_windows:
         # need to check for mwgg_igdb and install it if it's not installed
