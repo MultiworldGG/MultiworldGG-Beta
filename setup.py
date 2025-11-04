@@ -68,7 +68,6 @@ build_exe_options = {
 
         # Custom packages
         "mwgg_gui",
-        "mwgg_igdb",
         "worlds",
     ],
     "includes": [
@@ -98,7 +97,7 @@ build_exe_options = {
         "kivy_deps.angle"
     ],
     "zip_include_packages": ["*"],
-    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "mwgg_igdb", "PIL"],
+    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "PIL"],
     "include_files": [
         ("data", "data"),
         ("LICENSE", "LICENSE"),
