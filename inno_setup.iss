@@ -49,150 +49,149 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}";
 
 [Types]
-Name: "full"; Description: "Full installation"
 Name: "minimal"; Description: "Minimal installation"
 Name: "custom"; Description: "Custom installation"; Flags: iscustom
+Name: "full"; Description: "Full installation"
 
 [Components]
-Name: "worlds"; Description: "Optional World Modules"; Types: full custom
-Name: "worlds\against_the_storm"; Description: "Against the Storm"; Types: full
-Name: "worlds\ahit"; Description: "A Hat in Time"; Types: full
-Name: "worlds\albw"; Description: "A Link Between Worlds"; Types: full
-Name: "worlds\alttp"; Description: "A Link to the Past"; Types: full
-Name: "worlds\animal_well"; Description: "Animal Well"; Types: full
-Name: "worlds\apeescape"; Description: "Ape Escape"; Types: full
-Name: "worlds\balatro"; Description: "Balatro"; Types: full
-Name: "worlds\banjo_tooie"; Description: "Banjo Tooie"; Types: full
-Name: "worlds\bomb_rush_cyberfunk"; Description: "Bomb Rush Cyberfunk"; Types: full
-Name: "worlds\brotato"; Description: "Brotato"; Types: full
-Name: "worlds\cat_quest"; Description: "Cat Quest"; Types: full
-Name: "worlds\celeste"; Description: "Celeste"; Types: full
-Name: "worlds\celeste_open_world"; Description: "Celeste Open World"; Types: full
-Name: "worlds\civ_6"; Description: "Civilization VI"; Types: full
-Name: "worlds\crosscode"; Description: "CrossCode"; Types: full
-Name: "worlds\crystal_project"; Description: "Crystal Project"; Types: full
-Name: "worlds\ctjot"; Description: "CT Journey of Time"; Types: full
-Name: "worlds\cuphead"; Description: "Cuphead"; Types: full
-Name: "worlds\cv64"; Description: "Castlevania 64"; Types: full
-Name: "worlds\cvcotm"; Description: "Castlevania Circle of the Moon"; Types: full
-Name: "worlds\diddy_kong_racing"; Description: "Diddy Kong Racing"; Types: full
-Name: "worlds\dk64"; Description: "Donkey Kong 64"; Types: full
-Name: "worlds\dkc"; Description: "Donkey Kong Country"; Types: full
-Name: "worlds\dkc2"; Description: "Donkey Kong Country 2"; Types: full
-Name: "worlds\dkc3"; Description: "Donkey Kong Country 3"; Types: full
-Name: "worlds\dontstarvetogether"; Description: "Don't Starve Together"; Types: full
-Name: "worlds\doronko_wanko"; Description: "Doronko Wanko"; Types: full
-Name: "worlds\dredge"; Description: "Dredge"; Types: full
-Name: "worlds\dw1"; Description: "Dragon Warrior"; Types: full
-Name: "worlds\earthbound"; Description: "Earthbound"; Types: full
-Name: "worlds\enderlilies"; Description: "Ender Lilies"; Types: full
-Name: "worlds\factorio"; Description: "Factorio"; Types: full
-Name: "worlds\faxanadu"; Description: "Faxanadu"; Types: full
-Name: "worlds\ff1"; Description: "Final Fantasy I"; Types: full
-Name: "worlds\ff4fe"; Description: "Final Fantasy IV Free Enterprise"; Types: full
-Name: "worlds\ffmq"; Description: "Final Fantasy Mystic Quest"; Types: full
-Name: "worlds\ffta"; Description: "Final Fantasy Tactics Advance"; Types: full
-Name: "worlds\fm"; Description: "Yu-Gi-Oh! Forbidden Memories"; Types: full
-Name: "worlds\getting_over_it"; Description: "Getting Over It"; Types: full
-Name: "worlds\gstla"; Description: "Golden Sun: The Lost Age"; Types: full
-Name: "worlds\hades"; Description: "Hades"; Types: full
-Name: "worlds\hcniko"; Description: "HC Niko"; Types: full
-Name: "worlds\hk"; Description: "Hollow Knight"; Types: full
-Name: "worlds\jakanddaxter"; Description: "Jak and Daxter"; Types: full
-Name: "worlds\k64"; Description: "Kirby 64"; Types: full
-Name: "worlds\kdl3"; Description: "Kirby's Dream Land 3"; Types: full
-Name: "worlds\kh1"; Description: "Kingdom Hearts"; Types: full
-Name: "worlds\kh2"; Description: "Kingdom Hearts II"; Types: full
-Name: "worlds\ladx"; Description: "Link's Awakening DX"; Types: full
-Name: "worlds\landstalker"; Description: "Landstalker"; Types: full
-Name: "worlds\lego_star_wars_tcs"; Description: "LEGO Star Wars: The Complete Saga"; Types: full
-Name: "worlds\lufia2ac"; Description: "Lufia II Ancient Cave"; Types: full
-Name: "worlds\luigismansion"; Description: "Luigi's Mansion"; Types: full
-Name: "worlds\mario_kart_double_dash"; Description: "Mario Kart: Double Dash!!"; Types: full
-Name: "worlds\marioland2"; Description: "Super Mario Land 2"; Types: full
-Name: "worlds\megamix"; Description: "Megamix"; Types: full
-Name: "worlds\messenger"; Description: "The Messenger"; Types: full
-Name: "worlds\metroidfusion"; Description: "Metroid Fusion"; Types: full
-Name: "worlds\metroidprime"; Description: "Metroid Prime"; Types: full
-Name: "worlds\minecraft"; Description: "Minecraft"; Types: full
-Name: "worlds\mk64"; Description: "Mario Kart 64"; Types: full
-Name: "worlds\mlss"; Description: "Mario & Luigi: Superstar Saga"; Types: full
-Name: "worlds\mm_recomp"; Description: "Majora's Mask Recompiled"; Types: full
-Name: "worlds\mm2"; Description: "Mega Man 2"; Types: full
-Name: "worlds\mm3"; Description: "Mega Man 3"; Types: full
-Name: "worlds\mmbn3"; Description: "Mega Man Battle Network 3"; Types: full
-Name: "worlds\mmx3"; Description: "Mega Man X3"; Types: full
-Name: "worlds\momodoramoonlitfarewell"; Description: "Momodora: Moonlit Farewell"; Types: full
-Name: "worlds\monster_sanctuary"; Description: "Monster Sanctuary"; Types: full
-Name: "worlds\musedash"; Description: "Muse Dash"; Types: full
-Name: "worlds\mzm"; Description: "Metroid Zero Mission"; Types: full
-Name: "worlds\oot"; Description: "Ocarina of Time"; Types: full
-Name: "worlds\oribf"; Description: "Ori and the Blind Forest"; Types: full
-Name: "worlds\outer_wilds"; Description: "Outer Wilds"; Types: full
-Name: "worlds\overcooked2"; Description: "Overcooked 2"; Types: full
-Name: "worlds\papermario"; Description: "Paper Mario 64"; Types: full
-Name: "worlds\placidplasticducksim"; Description: "Placid Plastic Duck Simulator"; Types: full
-Name: "worlds\pmd_eos"; Description: "Pokemon Mystery Dungeon: Explorers of Sky"; Types: full
-Name: "worlds\pokemon_crystal"; Description: "Pokemon Crystal"; Types: full
-Name: "worlds\pokemon_emerald"; Description: "Pokemon Emerald"; Types: full
-Name: "worlds\pokemon_frlg"; Description: "Pokemon FireRed/LeafGreen"; Types: full
-Name: "worlds\pokemon_rb"; Description: "Pokemon Red/Blue"; Types: full
-Name: "worlds\powerwashsimulator"; Description: "PowerWash Simulator"; Types: full
-Name: "worlds\rac2"; Description: "Ratchet & Clank 2"; Types: full
-Name: "worlds\raft"; Description: "Raft"; Types: full
-Name: "worlds\rogue_legacy"; Description: "Rogue Legacy"; Types: full
-Name: "worlds\ror1"; Description: "Risk of Rain"; Types: full
-Name: "worlds\ror2"; Description: "Risk of Rain 2"; Types: full
-Name: "worlds\sa2b"; Description: "Sonic Adventure 2: Battle"; Types: full
-Name: "worlds\sadx"; Description: "Sonic Adventure DX"; Types: full
-Name: "worlds\satisfactory"; Description: "Satisfactory"; Types: full
-Name: "worlds\seaofthieves"; Description: "Sea of Thieves"; Types: full
-Name: "worlds\shivers"; Description: "Shivers"; Types: full
-Name: "worlds\shorthike"; Description: "A Short Hike"; Types: full
-Name: "worlds\sims4"; Description: "The Sims 4"; Types: full
-Name: "worlds\sly1"; Description: "Sly Cooper"; Types: full
-Name: "worlds\sm"; Description: "Super Metroid"; Types: full
-Name: "worlds\sm_map_rando"; Description: "Super Metroid Map Rando"; Types: full
-Name: "worlds\sm64ex"; Description: "Super Mario 64 (Port)"; Types: full
-Name: "worlds\sm64hacks"; Description: "Super Mario 64 (Hacks)"; Types: full
-Name: "worlds\smo"; Description: "Super Mario Odyssey"; Types: full
-Name: "worlds\sms"; Description: "Super Mario Sunshine"; Types: full
-Name: "worlds\smw"; Description: "Super Mario World"; Types: full
-Name: "worlds\soe"; Description: "Secret of Evermore"; Types: full
-Name: "worlds\sonic_heroes"; Description: "Sonic Heroes"; Types: full
-Name: "worlds\sotn"; Description: "Castlevania: Symphony of the Night"; Types: full
-Name: "worlds\spyro3"; Description: "Spyro 3"; Types: full
-Name: "worlds\ss"; Description: "Skyward Sword"; Types: full
-Name: "worlds\star_fox_64"; Description: "Star Fox 64"; Types: full
-Name: "worlds\stardew_valley"; Description: "Stardew Valley"; Types: full
-Name: "worlds\subnautica"; Description: "Subnautica"; Types: full
-Name: "worlds\swr"; Description: "Star Wars: Racer"; Types: full
-Name: "worlds\terraria"; Description: "Terraria"; Types: full
-Name: "worlds\tetrisattack"; Description: "Tetris Attack"; Types: full
-Name: "worlds\timespinner"; Description: "Timespinner"; Types: full
-Name: "worlds\tloz"; Description: "The Legend of Zelda"; Types: full
-Name: "worlds\tloz_ooa"; Description: "Oracle of Ages"; Types: full
-Name: "worlds\tloz_oos"; Description: "Oracle of Seasons"; Types: full
-Name: "worlds\tloz_ph"; Description: "Phantom Hourglass"; Types: full
-Name: "worlds\tmc"; Description: "The Minish Cap"; Types: full
-Name: "worlds\toontown"; Description: "Toontown"; Types: full
-Name: "worlds\tp"; Description: "Twilight Princess"; Types: full
-Name: "worlds\trackmania"; Description: "Trackmania"; Types: full
-Name: "worlds\tunic"; Description: "TUNIC"; Types: full
-Name: "worlds\tww"; Description: "The Wind Waker"; Types: full
-Name: "worlds\tyrian"; Description: "Tyrian"; Types: full
-Name: "worlds\undertale"; Description: "Undertale"; Types: full
-Name: "worlds\v6"; Description: "V6"; Types: full
-Name: "worlds\wargroove"; Description: "Wargroove"; Types: full
-Name: "worlds\wargroove2"; Description: "Wargroove 2"; Types: full
-Name: "worlds\witness"; Description: "The Witness"; Types: full
-Name: "worlds\wl"; Description: "Wario Land"; Types: full
-Name: "worlds\wl4"; Description: "Wario Land 4"; Types: full
-Name: "worlds\xenobladex"; Description: "Xenoblade Chronicles X"; Types: full
-Name: "worlds\yoshisisland"; Description: "Yoshi's Island"; Types: full
-Name: "worlds\yugioh06"; Description: "Yu-Gi-Oh! 2006"; Types: full
-Name: "worlds\yugiohddm"; Description: "Yu-Gi-Oh! Dungeon Dice Monsters"; Types: full
-Name: "worlds\zelda2"; Description: "Zelda II"; Types: full
+Name: "against_the_storm"; Description: "Against the Storm"; ExtraDiskSpaceRequired: 182_953
+Name: "ahit"; Description: "A Hat in Time"; ExtraDiskSpaceRequired: 610_238
+Name: "albw"; Description: "A Link Between Worlds"; ExtraDiskSpaceRequired: 310_433
+Name: "alttp"; Description: "A Link to the Past"; ExtraDiskSpaceRequired: 4_013_629
+Name: "animal_well"; Description: "Animal Well"; ExtraDiskSpaceRequired: 644_488
+Name: "apeescape"; Description: "Ape Escape"; ExtraDiskSpaceRequired: 2_262_141
+Name: "balatro"; Description: "Balatro"; ExtraDiskSpaceRequired: 175_457
+Name: "banjo_tooie"; Description: "Banjo Tooie"; ExtraDiskSpaceRequired: 4_345_321
+Name: "bomb_rush_cyberfunk"; Description: "Bomb Rush Cyberfunk"; ExtraDiskSpaceRequired: 357_946
+Name: "brotato"; Description: "Brotato"; ExtraDiskSpaceRequired: 241_712
+Name: "cat_quest"; Description: "Cat Quest"; ExtraDiskSpaceRequired: 59_720
+Name: "celeste"; Description: "Celeste"; ExtraDiskSpaceRequired: 193_688
+Name: "celeste_open_world"; Description: "Celeste Open World"; ExtraDiskSpaceRequired: 4_928_448
+Name: "civ_6"; Description: "Civilization VI"; ExtraDiskSpaceRequired: 446_986
+Name: "crosscode"; Description: "CrossCode"; ExtraDiskSpaceRequired: 2_160_529
+Name: "crystal_project"; Description: "Crystal Project"; ExtraDiskSpaceRequired: 1_409_535
+Name: "ctjot"; Description: "CT Journey of Time"; ExtraDiskSpaceRequired: 167_345
+Name: "cuphead"; Description: "Cuphead"; ExtraDiskSpaceRequired: 1_048_162
+Name: "cv64"; Description: "Castlevania 64"; ExtraDiskSpaceRequired: 913_776
+Name: "cvcotm"; Description: "Castlevania Circle of the Moon"; ExtraDiskSpaceRequired: 794_243
+Name: "diddy_kong_racing"; Description: "Diddy Kong Racing"; ExtraDiskSpaceRequired: 261_037
+Name: "dk64"; Description: "Donkey Kong 64"; ExtraDiskSpaceRequired: 38_933_451
+Name: "dkc"; Description: "Donkey Kong Country"; ExtraDiskSpaceRequired: 1_008_054
+Name: "dkc2"; Description: "Donkey Kong Country 2"; ExtraDiskSpaceRequired: 2_293_435
+Name: "dkc3"; Description: "Donkey Kong Country 3"; ExtraDiskSpaceRequired: 306_259
+Name: "dontstarvetogether"; Description: "Don't Starve Together"; ExtraDiskSpaceRequired: 759_437
+Name: "doronko_wanko"; Description: "Doronko Wanko"; ExtraDiskSpaceRequired: 54_471
+Name: "dredge"; Description: "Dredge"; ExtraDiskSpaceRequired: 124_668
+Name: "dw1"; Description: "Dragon Warrior"; ExtraDiskSpaceRequired: 190_139
+Name: "earthbound"; Description: "Earthbound"; ExtraDiskSpaceRequired: 2_587_999
+Name: "enderlilies"; Description: "Ender Lilies"; ExtraDiskSpaceRequired: 1_483_829
+Name: "factorio"; Description: "Factorio"; ExtraDiskSpaceRequired: 1_044_588
+Name: "faxanadu"; Description: "Faxanadu"; ExtraDiskSpaceRequired: 98_209
+Name: "ff1"; Description: "Final Fantasy I"; ExtraDiskSpaceRequired: 93_036
+Name: "ff4fe"; Description: "Final Fantasy IV Free Enterprise"; ExtraDiskSpaceRequired: 1_484_278
+Name: "ffmq"; Description: "Final Fantasy Mystic Quest"; ExtraDiskSpaceRequired: 513_688
+Name: "ffta"; Description: "Final Fantasy Tactics Advance"; ExtraDiskSpaceRequired: 1_056_544
+Name: "fm"; Description: "Yu-Gi-Oh! Forbidden Memories"; ExtraDiskSpaceRequired: 1_399_547
+Name: "getting_over_it"; Description: "Getting Over It"; ExtraDiskSpaceRequired: 29_455
+Name: "gstla"; Description: "Golden Sun: The Lost Age"; ExtraDiskSpaceRequired: 2_493_105
+Name: "hades"; Description: "Hades"; ExtraDiskSpaceRequired: 274_213
+Name: "hcniko"; Description: "HC Niko"; ExtraDiskSpaceRequired: 1_156_820
+Name: "hk"; Description: "Hollow Knight"; ExtraDiskSpaceRequired: 2_190_871 
+Name: "jakanddaxter"; Description: "Jak and Daxter"; ExtraDiskSpaceRequired: 668_917
+Name: "k64"; Description: "Kirby 64"; ExtraDiskSpaceRequired: 296_419
+Name: "kdl3"; Description: "Kirby's Dream Land 3"; ExtraDiskSpaceRequired: 1_088_257
+Name: "kh1"; Description: "Kingdom Hearts"; ExtraDiskSpaceRequired: 945_036
+Name: "kh2"; Description: "Kingdom Hearts II"; ExtraDiskSpaceRequired: 1_488_039
+Name: "ladx"; Description: "Link's Awakening DX"; ExtraDiskSpaceRequired: 2_301_796
+Name: "landstalker"; Description: "Landstalker"; ExtraDiskSpaceRequired: 406_358
+Name: "lego_star_wars_tcs"; Description: "LEGO Star Wars: The Complete Saga"; ExtraDiskSpaceRequired: 850_576
+Name: "lufia2ac"; Description: "Lufia II Ancient Cave"; ExtraDiskSpaceRequired: 413_492
+Name: "luigismansion"; Description: "Luigi's Mansion"; ExtraDiskSpaceRequired: 1_297_891
+Name: "mario_kart_double_dash"; Description: "Mario Kart: Double Dash!!"; ExtraDiskSpaceRequired: 214_378
+Name: "marioland2"; Description: "Super Mario Land 2"; ExtraDiskSpaceRequired: 416_677
+Name: "megamix"; Description: "Megamix"; ExtraDiskSpaceRequired: 242_687
+Name: "messenger"; Description: "The Messenger"; ExtraDiskSpaceRequired: 521_544
+Name: "metroidfusion"; Description: "Metroid Fusion"; ExtraDiskSpaceRequired: 1_960_796
+Name: "metroidprime"; Description: "Metroid Prime"; ExtraDiskSpaceRequired: 23_480_868
+Name: "minecraft"; Description: "Minecraft"; ExtraDiskSpaceRequired: 555_926
+Name: "mk64"; Description: "Mario Kart 64"; ExtraDiskSpaceRequired: 366_034
+Name: "mlss"; Description: "Mario & Luigi: Superstar Saga"; ExtraDiskSpaceRequired: 886_952
+Name: "mm_recomp"; Description: "Majora's Mask Recompiled"; ExtraDiskSpaceRequired: 698_897
+Name: "mm2"; Description: "Mega Man 2"; ExtraDiskSpaceRequired: 321_918
+Name: "mm3"; Description: "Mega Man 3"; ExtraDiskSpaceRequired: 318_372
+Name: "mmbn3"; Description: "Mega Man Battle Network 3"; ExtraDiskSpaceRequired: 542_094
+Name: "mmx3"; Description: "Mega Man X3"; ExtraDiskSpaceRequired: 627_894
+Name: "momodoramoonlitfarewell"; Description: "Momodora: Moonlit Farewell"; ExtraDiskSpaceRequired: 125_946
+Name: "monster_sanctuary"; Description: "Monster Sanctuary"; ExtraDiskSpaceRequired: 2_403_887
+Name: "musedash"; Description: "Muse Dash"; ExtraDiskSpaceRequired: 290_905
+Name: "mzm"; Description: "Metroid Zero Mission"; ExtraDiskSpaceRequired: 685_806
+Name: "oot"; Description: "Ocarina of Time"; ExtraDiskSpaceRequired: 5_047_802
+Name: "oribf"; Description: "Ori and the Blind Forest"; ExtraDiskSpaceRequired: 413_242
+Name: "outer_wilds"; Description: "Outer Wilds"; ExtraDiskSpaceRequired: 649_509
+Name: "overcooked2"; Description: "Overcooked 2"; ExtraDiskSpaceRequired: 300_159
+Name: "papermario"; Description: "Paper Mario 64"; ExtraDiskSpaceRequired: 3_424_893
+Name: "placidplasticducksim"; Description: "Placid Plastic Duck Simulator"; ExtraDiskSpaceRequired: 19_149
+Name: "pmd_eos"; Description: "Pokemon Mystery Dungeon: Explorers of Sky"; ExtraDiskSpaceRequired: 1_377_055
+Name: "pokemon_crystal"; Description: "Pokemon Crystal"; ExtraDiskSpaceRequired: 2_872_323
+Name: "pokemon_emerald"; Description: "Pokemon Emerald"; ExtraDiskSpaceRequired: 2_556_819
+Name: "pokemon_frlg"; Description: "Pokemon FireRed/LeafGreen"; ExtraDiskSpaceRequired: 4_742_792
+Name: "pokemon_rb"; Description: "Pokemon Red/Blue"; ExtraDiskSpaceRequired: 1_936_425
+Name: "powerwashsimulator"; Description: "PowerWash Simulator"; ExtraDiskSpaceRequired: 619_444 
+Name: "rac2"; Description: "Ratchet & Clank 2"; ExtraDiskSpaceRequired: 531_970
+Name: "raft"; Description: "Raft"; ExtraDiskSpaceRequired: 130_517
+Name: "rogue_legacy"; Description: "Rogue Legacy"; ExtraDiskSpaceRequired: 130_942
+Name: "ror1"; Description: "Risk of Rain"; ExtraDiskSpaceRequired: 88_077
+Name: "ror2"; Description: "Risk of Rain 2"; ExtraDiskSpaceRequired: 196_735
+Name: "sa2b"; Description: "Sonic Adventure 2: Battle"; ExtraDiskSpaceRequired: 2_003_849
+Name: "sadx"; Description: "Sonic Adventure DX"; ExtraDiskSpaceRequired: 4_225_799
+Name: "satisfactory"; Description: "Satisfactory"; ExtraDiskSpaceRequired: 555_598
+Name: "seaofthieves"; Description: "Sea of Thieves"; ExtraDiskSpaceRequired: 10_213_401
+Name: "shivers"; Description: "Shivers"; ExtraDiskSpaceRequired: 164_889
+Name: "shorthike"; Description: "A Short Hike"; ExtraDiskSpaceRequired: 110_942
+Name: "sims4"; Description: "The Sims 4"; ExtraDiskSpaceRequired: 771_131
+Name: "sly1"; Description: "Sly Cooper"; ExtraDiskSpaceRequired: 191_602
+Name: "sm"; Description: "Super Metroid"; ExtraDiskSpaceRequired: 2_046_122
+Name: "sm_map_rando"; Description: "Super Metroid Map Rando"; ExtraDiskSpaceRequired: 45_685_867
+Name: "sm64ex"; Description: "Super Mario 64 (Port)"; ExtraDiskSpaceRequired: 176_915
+Name: "sm64hacks"; Description: "Super Mario 64 (Hacks)"; ExtraDiskSpaceRequired: 782_500
+Name: "smo"; Description: "Super Mario Odyssey"; ExtraDiskSpaceRequired: 3_788_511
+Name: "sms"; Description: "Super Mario Sunshine"; ExtraDiskSpaceRequired: 159_636
+Name: "smw"; Description: "Super Mario World"; ExtraDiskSpaceRequired: 2_225_312
+Name: "soe"; Description: "Secret of Evermore"; ExtraDiskSpaceRequired: 243_401
+Name: "sonic_heroes"; Description: "Sonic Heroes"; ExtraDiskSpaceRequired: 1_175_567
+Name: "sotn"; Description: "Castlevania: Symphony of the Night"; ExtraDiskSpaceRequired: 1_591_279
+Name: "spyro3"; Description: "Spyro 3"; ExtraDiskSpaceRequired: 561_700
+Name: "ss"; Description: "Skyward Sword"; ExtraDiskSpaceRequired: 1_306_049
+Name: "star_fox_64"; Description: "Star Fox 64"; ExtraDiskSpaceRequired: 220_672
+Name: "stardew_valley"; Description: "Stardew Valley"; ExtraDiskSpaceRequired: 6_087_576
+Name: "subnautica"; Description: "Subnautica"; ExtraDiskSpaceRequired: 157_606
+Name: "swr"; Description: "Star Wars: Racer"; ExtraDiskSpaceRequired: 120_281
+Name: "terraria"; Description: "Terraria"; ExtraDiskSpaceRequired: 163_951
+Name: "tetrisattack"; Description: "Tetris Attack"; ExtraDiskSpaceRequired: 387_967
+Name: "timespinner"; Description: "Timespinner"; ExtraDiskSpaceRequired: 509_798
+Name: "tloz"; Description: "The Legend of Zelda"; ExtraDiskSpaceRequired: 252_548
+Name: "tloz_ooa"; Description: "Oracle of Ages"; ExtraDiskSpaceRequired: 809_597
+Name: "tloz_oos"; Description: "Oracle of Seasons"; ExtraDiskSpaceRequired: 1_301_906
+Name: "tloz_ph"; Description: "Phantom Hourglass"; ExtraDiskSpaceRequired: 1_263_666
+Name: "tmc"; Description: "The Minish Cap"; ExtraDiskSpaceRequired: 994_122
+Name: "toontown"; Description: "Toontown"; ExtraDiskSpaceRequired: 905_891
+Name: "tp"; Description: "Twilight Princess"; ExtraDiskSpaceRequired: 1_985_086
+Name: "trackmania"; Description: "Trackmania"; ExtraDiskSpaceRequired: 105_190
+Name: "tunic"; Description: "TUNIC"; ExtraDiskSpaceRequired: 2_861_231
+Name: "tww"; Description: "The Wind Waker"; ExtraDiskSpaceRequired: 1_003_684
+Name: "tyrian"; Description: "Tyrian"; ExtraDiskSpaceRequired: 813_836
+Name: "undertale"; Description: "Undertale"; ExtraDiskSpaceRequired: 705_555
+Name: "v6"; Description: "V6"; ExtraDiskSpaceRequired: 34_013
+Name: "wargroove"; Description: "Wargroove"; ExtraDiskSpaceRequired: 807_667
+Name: "wargroove2"; Description: "Wargroove 2"; ExtraDiskSpaceRequired: 5_966_418
+Name: "witness"; Description: "The Witness"; ExtraDiskSpaceRequired: 1_035_025
+Name: "wl"; Description: "Wario Land"; ExtraDiskSpaceRequired: 718_704
+Name: "wl4"; Description: "Wario Land 4"; ExtraDiskSpaceRequired: 390_328
+Name: "xenobladex"; Description: "Xenoblade Chronicles X"; ExtraDiskSpaceRequired: 3_105_011
+Name: "yoshisisland"; Description: "Yoshi's Island"; ExtraDiskSpaceRequired: 725_033
+Name: "yugioh06"; Description: "Yu-Gi-Oh! 2006"; ExtraDiskSpaceRequired: 344_344
+Name: "yugiohddm"; Description: "Yu-Gi-Oh! Dungeon Dice Monsters"; ExtraDiskSpaceRequired: 130_587
+Name: "zelda2"; Description: "Zelda II"; ExtraDiskSpaceRequired: 242_982 
 
 [Dirs]
 NAME: "{app}"; Flags: setntfscompression; Permissions: everyone-modify users-modify authusers-modify;
@@ -557,11 +556,11 @@ begin
   // Add custom disclaimer to Components page
   ComponentsLabel := TNewStaticText.Create(WizardForm);
   ComponentsLabel.Parent := WizardForm.SelectComponentsPage;
-  ComponentsLabel.Top := WizardForm.ComponentsList.Top + WizardForm.ComponentsList.Height + ScaleY(10);
-  ComponentsLabel.Left := WizardForm.ComponentsList.Left;
-  ComponentsLabel.Width := WizardForm.ComponentsList.Width;
-  ComponentsLabel.Height := ScaleY(32);
-  ComponentsLabel.AutoSize := True;
+  ComponentsLabel.Top := WizardForm.SelectComponentsLabel.Top;
+  ComponentsLabel.Left := WizardForm.SelectComponentsLabel.Left;
+  ComponentsLabel.Width := WizardForm.SelectComponentsLabel.Width + ScaleX(80);
+  ComponentsLabel.Height := WizardForm.SelectComponentsLabel.Height;
+  ComponentsLabel.AutoSize := False;
   ComponentsLabel.WordWrap := True;
   ComponentsLabel.Font.Style := [fsBold];
   ComponentsLabel.Font.Color := clRed;

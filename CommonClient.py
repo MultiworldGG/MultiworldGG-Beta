@@ -1109,7 +1109,9 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
 
     username = f" with username {urllib.parse.urlparse(address).username}" if urllib.parse.urlparse(address).username else ""
     password = f" with password ********" if urllib.parse.urlparse(address).password else ""
-    logger.info(f'Connecting to {apname} server at {urllib.parse.urlparse(address).netloc}{username}{password}.')
+    hostname = urllib.parse.urlparse(address).hostname
+    port = str(urllib.parse.urlparse(address).port)
+    logger.info(f'Connecting to {apname} server at {hostname}:{port}{username}{password}.')
     try:
         socket = await websockets.connect(address, ping_timeout=None, ping_interval=None,
                                           ssl=get_ssl_context() if address.startswith("wss://") else None,
