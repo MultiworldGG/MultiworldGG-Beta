@@ -10,7 +10,12 @@ import logging
 
 logger = logging.getLogger("Patch")
 
-from Utils import set_game_names
+from Utils import set_game_names, write_path, is_frozen
+
+if is_frozen():
+    venv_worlds_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds")
+    if os.path.exists(venv_worlds_path) and venv_worlds_path not in __path__:
+        __path__.append(venv_worlds_path)
 
 if __name__ == "__main__":
     import ModuleUpdate

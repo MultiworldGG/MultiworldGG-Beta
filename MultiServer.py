@@ -37,7 +37,14 @@ except ImportError:
 
 import NetUtils
 import Utils
-from Utils import version_tuple, restricted_loads, Version, async_start, get_intended_text
+from Utils import version_tuple, restricted_loads, Version, async_start, write_path, get_intended_text, is_frozen
+import os
+
+if is_frozen():
+    venv_worlds_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds")
+    if os.path.exists(venv_worlds_path) and venv_worlds_path not in __path__:
+        __path__.append(venv_worlds_path)
+
 from NetUtils import Endpoint, ClientStatus, NetworkItem, decode, encode, NetworkPlayer, Permission, NetworkSlot, \
     SlotType, LocationStore, MultiData, Hint, HintStatus
 from BaseClasses import ItemClassification

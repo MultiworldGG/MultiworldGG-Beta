@@ -15,9 +15,13 @@ from typing import Any
 
 import ModuleUpdate
 
-#ModuleUpdate.update()
-
 import Utils
+
+if Utils.is_frozen():
+    venv_worlds_path = Utils.write_path("mwgg_venv", "Lib", "site-packages", "worlds")
+    if os.path.exists(venv_worlds_path) and venv_worlds_path not in __path__:
+        __path__.append(venv_worlds_path)
+
 import Options
 from BaseClasses import seeddigits, get_seed, PlandoOptions
 from Utils import parse_yamls, version_tuple, __version__, tuplize_version, set_game_names
