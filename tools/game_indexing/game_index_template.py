@@ -124,6 +124,14 @@ class GameIndex:
                 return game_data['game_name']
         return None
 
+    @staticmethod
+    def add_game(game_module: str, game_data: dict):
+        """Add a game to the game index"""
+        GAMES_DATA[game_module] = game_data
+        SEARCH_INDEX[game_module] = set()
+        for term in game_module.lower().split():
+            SEARCH_INDEX[term].add(game_module)
+
 # These constants will be generated during build
 GAMES_DATA = GAMES_DATA_PLACEHOLDER # type: ignore
 

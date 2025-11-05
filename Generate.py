@@ -172,10 +172,16 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
         raise Exception(f"No weights found. "
                         f"Provide a general weights file ({args.weights_file_path}) or individual player files. "
                         f"A mix is also permitted.")
-    
+
     games_to_load = []
-    for player, yaml in weights_cache.items():
-        games_to_load.append(yaml[0]['game'])
+    for player_path, yaml in weights_cache.items():
+        game_name = yaml[0]['game']
+        games_to_load.append(game_name)
+        # If YAML has explicit module field, add to game index
+        if 'module' in yaml[0]:
+            module_name = yaml[0]['module']
+            game_module = module_name.replace("worlds.", "")
+            GameIndex.add_game(game_module, {"game_name": game_name})
     set_game_names(games_to_load)
     from worlds.AutoWorld import AutoWorldRegister
     """ Load worlds *after* setting the game names
@@ -522,26 +528,35 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
             raise Exception(f"Option {option_key} has to be in a game's section, not on its own.")
 
     ret.game = get_choice("game", weights)
-    ret.module_name = GameIndex.get_module_for_game(game_name=ret.game, worlds=True)
     if not isinstance(ret.game, str):
         if ret.game is None:
             raise Exception('"game" not specified')
         raise Exception(f"Invalid game: {ret.game}")
+    
+    # Check if there's an explicit module field in the YAML
+    if "module" in weights:
+        ret.module_name = weights["module"]
+        # Extract module name without "worlds." prefix
+        game_module = ret.module_name.replace("worlds.", "")
+        # Add basic game entry to index for separately installed worlds
+        GameIndex.add_game(game_module, {"game_name": ret.game})
+    else:
+        ret.module_name = GameIndex.get_module_for_game(game_name=ret.game, worlds=True)
 
     from worlds import failed_world_loads, AutoWorldRegister
     available_worlds = Utils.get_available_worlds()
     
     world_module = sys.modules.get(ret.module_name)
     if world_module is None:
-        picks = Utils.get_fuzzy_results(ret.game, list(available_worlds.keys()) + failed_world_loads, limit=1)[0]
+        picks = Utils.get_fuzzy_results(ret.game, available_worlds + failed_world_loads, limit=1)[0]
         world_class = None
         raise Exception(f"No world found to handle game {ret.game}. Did you mean '{picks[0]}' ({picks[1]}% sure)? "
                         f"Check your spelling or installation of that world.")
     else:
-        world_class = AutoWorldRegister.world_types[ret.game]
+        world_class = AutoWorldRegister.world_types.get(ret.game, None)
 
     if world_class is None:
-        picks = Utils.get_fuzzy_results(ret.game, list(available_worlds.keys()) + failed_world_loads, limit=1)[0]
+        picks = Utils.get_fuzzy_results(ret.game, available_worlds + failed_world_loads, limit=1)[0]
         if picks[0] in failed_world_loads:
             raise Exception(f"No functional world found to handle game {ret.game}. "
                             f"Did you mean '{picks[0]}' ({picks[1]}% sure)? "
