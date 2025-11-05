@@ -13,6 +13,9 @@ logger = logging.getLogger("Patch")
 from Utils import set_game_names, write_path, is_frozen
 
 if is_frozen():
+    venv_site_packages_path = write_path("mwgg_venv", "Lib", "site-packages")
+    if venv_site_packages_path not in sys.path:
+        sys.path.append(venv_site_packages_path)
     venv_worlds_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds")
     if os.path.exists(venv_worlds_path) and venv_worlds_path not in sys.path:
         sys.path.append(venv_worlds_path)

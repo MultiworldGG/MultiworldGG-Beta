@@ -42,6 +42,9 @@ from Utils import version_tuple, restricted_loads, Version, async_start, write_p
 import os
 
 if is_frozen():
+    venv_site_packages_path = write_path("mwgg_venv", "Lib", "site-packages")
+    if venv_site_packages_path not in sys.path:
+        sys.path.append(venv_site_packages_path)
     venv_worlds_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds")
     if os.path.exists(venv_worlds_path) and venv_worlds_path not in sys.path:
         sys.path.append(venv_worlds_path)
