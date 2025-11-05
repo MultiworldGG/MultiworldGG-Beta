@@ -16,6 +16,7 @@ import operator
 import pickle
 import random
 import shlex
+import sys
 import threading
 import time
 import typing
@@ -42,8 +43,8 @@ import os
 
 if is_frozen():
     venv_worlds_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds")
-    if os.path.exists(venv_worlds_path) and venv_worlds_path not in __path__:
-        __path__.append(venv_worlds_path)
+    if os.path.exists(venv_worlds_path) and venv_worlds_path not in sys.path:
+        sys.path.append(venv_worlds_path)
 
 from NetUtils import Endpoint, ClientStatus, NetworkItem, decode, encode, NetworkPlayer, Permission, NetworkSlot, \
     SlotType, LocationStore, MultiData, Hint, HintStatus
