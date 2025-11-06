@@ -3,11 +3,6 @@ from datetime import datetime
 from collections import Counter
 import os
 
-def fix_cover_url(cover_url):
-    if cover_url:
-        return cover_url.replace("//", "https://")
-    return None
-
 def convert_timestamp_to_year(timestamp):
     """Convert Unix timestamp to year, or None if invalid. Leave as is if already a year or None."""
     if timestamp in (None, "", []):
@@ -53,10 +48,11 @@ def process_game_details():
     
     # Convert all release dates to years or None
     for game in data.values():
-        if 'cover_url' in game:
-            game['cover_url'] = fix_cover_url(game['cover_url'])
         if 'release_date' in game:
             game['release_date'] = convert_timestamp_to_year(game['release_date'])
+        for key, value in game.items():
+            if value == None:
+                game[key] = ""
     
     # Remove infrequent keywords (<= 4 times)
     remove_infrequent_keywords(data, min_count=5)

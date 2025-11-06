@@ -67,9 +67,6 @@ def install_wheels(type="default") -> bool:
         logger.info(f"Installing wheels from {type}_wheels...")
 
         for wheel_file in wheels_dir.glob("*.whl"):
-            # Skip igdb variants (already handled above)
-            if any(variant in wheel_file.name for variant in ["mwgg_igdb-", "mwgg_igdb_sixteen-", "mwgg_igdb_twelve-"]):
-                continue
             
             # Skip platform-specific wheels that don't match current platform
             wheel_name = wheel_file.name.lower()

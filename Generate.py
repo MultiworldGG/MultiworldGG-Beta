@@ -181,7 +181,16 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
         if 'module' in yaml[0]:
             module_name = yaml[0]['module']
             game_module = module_name.replace("worlds.", "")
+            logging.info(f"Adding custom module to game index: {game_module} -> {game_name}")
             GameIndex.add_game(game_module, {"game_name": game_name})
+        else:
+            abs_path = os.path.abspath(player_path)
+            # Check if module is nested under game name
+            if game_name in yaml[0] and isinstance(yaml[0][game_name], dict) and 'module' in yaml[0][game_name]:
+                module_name = yaml[0][game_name]['module']
+                game_module = module_name.replace("worlds.", "")
+                logging.info(f"Adding custom module to game index (from nested field): {game_module} -> {game_name}")
+                GameIndex.add_game(game_module, {"game_name": game_name})
     set_game_names(games_to_load)
     from worlds.AutoWorld import AutoWorldRegister
     """ Load worlds *after* setting the game names

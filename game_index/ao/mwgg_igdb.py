@@ -2757,6 +2757,23 @@ GAMES_DATA = {
         ],
         "release_date": 2003
     },
+    "flipwitch": {
+        "igdb_id": "361419",
+        "cover_url": "",
+        "artwork_url": "",
+        "key_art_url": "",
+        "game_name": "Flipwitch Forbidden Sex Hex",
+        "igdb_name": "",
+        "age_rating": "AO",
+        "rating": "",
+        "player_perspectives": [],
+        "genres": [],
+        "themes": [],
+        "platforms": [],
+        "storyline": "",
+        "keywords": [],
+        "release_date": ""
+    },
     "fm": {
         "igdb_id": "4108",
         "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co1ui5.png",
@@ -3161,6 +3178,83 @@ GAMES_DATA = {
             "interconnected-world"
         ],
         "release_date": 2017
+    },
+    "huniepop": {
+        "igdb_id": "9655",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co2sor.png",
+        "artwork_url": "",
+        "key_art_url": "",
+        "game_name": "Hunie Pop",
+        "igdb_name": "HuniePop",
+        "age_rating": "AO",
+        "rating": [],
+        "player_perspectives": [
+            "First person",
+            "Text"
+        ],
+        "genres": [
+            "Puzzle",
+            "Role-playing (RPG)",
+            "Simulator",
+            "Strategy",
+            "Indie",
+            "Visual Novel"
+        ],
+        "themes": [
+            "Fantasy",
+            "Comedy",
+            "Erotic",
+            "Romance"
+        ],
+        "platforms": [
+            "Linux",
+            "PC (Microsoft Windows)",
+            "Mac"
+        ],
+        "storyline": "",
+        "keywords": [
+            "anime"
+        ],
+        "release_date": 2015
+    },
+    "huniepop2": {
+        "igdb_id": "72472",
+        "cover_url": "https://images.igdb.com/igdb/image/upload/t_thumb/co5x87.png",
+        "artwork_url": "https://images.igdb.com/igdb/image/upload/t_logo_med/are9g.png",
+        "key_art_url": "",
+        "game_name": "Hunie Pop 2",
+        "igdb_name": "HuniePop 2: Double Date",
+        "age_rating": "AO",
+        "rating": [],
+        "player_perspectives": [
+            "First person",
+            "Text"
+        ],
+        "genres": [
+            "Puzzle",
+            "Simulator",
+            "Strategy",
+            "Indie",
+            "Visual Novel"
+        ],
+        "themes": [
+            "Erotic",
+            "Romance"
+        ],
+        "platforms": [
+            "PC (Microsoft Windows)",
+            "Mac"
+        ],
+        "storyline": "An era of darkness and destruction draws near as an ancient evil of limitless lechery, the Nymphojinn, will soon be awoken by a cosmic super-period of unspeakable PMS. Reunite with Kyu, your old love fairy sidekick, and travel to the island of Inna De Poona to develop your double dating prowess and overcome the insatiable lust of the demonic pair.",
+        "keywords": [
+            "anime",
+            "fairy",
+            "achievements",
+            "funny",
+            "digital distribution",
+            "voice acting"
+        ],
+        "release_date": 2021
     },
     "hylics2": {
         "igdb_id": "98469",
@@ -9555,6 +9649,7 @@ SEARCH_INDEX = {
         "aquaria",
         "smo",
         "celeste",
+        "huniepop",
         "ctjot",
         "sm64ex",
         "pokemon_rb",
@@ -9802,6 +9897,8 @@ SEARCH_INDEX = {
         "yugioh06",
         "ffta",
         "terraria",
+        "huniepop",
+        "huniepop2",
         "pmd_eos",
         "fm",
         "pokemon_rb",
@@ -9840,7 +9937,9 @@ SEARCH_INDEX = {
         "against_the_storm",
         "sims4",
         "terraria",
+        "huniepop",
         "raft",
+        "huniepop2",
         "placidplasticducksim",
         "openrct2",
         "civ_6",
@@ -9891,8 +9990,10 @@ SEARCH_INDEX = {
         "shivers",
         "cuphead",
         "terraria",
+        "huniepop",
         "raft",
         "v6",
+        "huniepop2",
         "hcniko",
         "ahit",
         "celeste64",
@@ -10107,6 +10208,7 @@ SEARCH_INDEX = {
         "chainedechoes",
         "aquaria",
         "celeste",
+        "huniepop",
         "lego_star_wars_tcs",
         "cccharles",
         "timespinner",
@@ -10159,6 +10261,7 @@ SEARCH_INDEX = {
         "osu",
         "terraria",
         "raft",
+        "huniepop2",
         "ahit",
         "celeste64",
         "openrct2",
@@ -10211,6 +10314,7 @@ SEARCH_INDEX = {
         "chainedechoes",
         "aquaria",
         "celeste",
+        "huniepop",
         "lego_star_wars_tcs",
         "cccharles",
         "timespinner",
@@ -10263,6 +10367,7 @@ SEARCH_INDEX = {
         "osu",
         "terraria",
         "raft",
+        "huniepop2",
         "ahit",
         "celeste64",
         "openrct2",
@@ -10315,6 +10420,7 @@ SEARCH_INDEX = {
         "chainedechoes",
         "aquaria",
         "celeste",
+        "huniepop",
         "lego_star_wars_tcs",
         "cccharles",
         "timespinner",
@@ -10367,6 +10473,7 @@ SEARCH_INDEX = {
         "osu",
         "terraria",
         "raft",
+        "huniepop2",
         "ahit",
         "celeste64",
         "openrct2",
@@ -10419,6 +10526,7 @@ SEARCH_INDEX = {
         "chainedechoes",
         "aquaria",
         "celeste",
+        "huniepop",
         "lego_star_wars_tcs",
         "cccharles",
         "timespinner",
@@ -10471,6 +10579,7 @@ SEARCH_INDEX = {
         "osu",
         "terraria",
         "raft",
+        "huniepop2",
         "ahit",
         "celeste64",
         "openrct2",
@@ -10888,8 +10997,10 @@ SEARCH_INDEX = {
         "sims4",
         "inscryption",
         "shivers",
+        "huniepop",
         "raft",
         "doom_1993",
+        "huniepop2",
         "fm",
         "ahit",
         "quake",
@@ -10922,8 +11033,10 @@ SEARCH_INDEX = {
         "sims4",
         "inscryption",
         "shivers",
+        "huniepop",
         "raft",
         "doom_1993",
+        "huniepop2",
         "fm",
         "ahit",
         "quake",
@@ -10974,6 +11087,7 @@ SEARCH_INDEX = {
         "diddy_kong_racing",
         "rac2",
         "smo",
+        "huniepop",
         "sm64ex",
         "lego_star_wars_tcs",
         "luigismansion",
@@ -11016,6 +11130,7 @@ SEARCH_INDEX = {
         "metroidprime",
         "residentevil2remake",
         "raft",
+        "huniepop2",
         "ahit",
         "celeste64",
         "kh1",
@@ -11499,7 +11614,9 @@ SEARCH_INDEX = {
         "celeste",
         "cuphead",
         "terraria",
+        "huniepop",
         "v6",
+        "huniepop2",
         "lego_star_wars_tcs",
         "ahit",
         "musedash",
@@ -12073,10 +12190,12 @@ SEARCH_INDEX = {
         "tloz_oos",
         "oot",
         "shivers",
+        "huniepop",
         "ttyd",
         "v6",
         "alttp",
         "albw",
+        "huniepop2",
         "zillion",
         "hcniko",
         "spyro3",
@@ -12377,8 +12496,9 @@ SEARCH_INDEX = {
     ],
     "fairy": [
         "stardew_valley",
-        "alttp",
+        "huniepop2",
         "albw",
+        "alttp",
         "landstalker",
         "tloz",
         "tloz_oos",
@@ -12564,8 +12684,9 @@ SEARCH_INDEX = {
         "cuphead",
         "terraria",
         "v6",
-        "sm64ex",
+        "huniepop2",
         "albw",
+        "sm64ex",
         "musedash",
         "dkc",
         "oribf",
@@ -12607,8 +12728,9 @@ SEARCH_INDEX = {
         "cuphead",
         "terraria",
         "v6",
-        "sm64ex",
+        "huniepop2",
         "albw",
+        "sm64ex",
         "musedash",
         "dkc",
         "oribf",
@@ -12650,8 +12772,9 @@ SEARCH_INDEX = {
         "cuphead",
         "terraria",
         "v6",
-        "sm64ex",
+        "huniepop2",
         "albw",
+        "sm64ex",
         "musedash",
         "dkc",
         "oribf",
@@ -15099,9 +15222,11 @@ SEARCH_INDEX = {
         "sotn"
     ],
     "anime": [
+        "huniepop",
         "pokemon_emerald",
         "pokemon_crystal",
         "wl4",
+        "huniepop2",
         "yugiohddm",
         "zillion",
         "dw1",
@@ -15210,6 +15335,7 @@ SEARCH_INDEX = {
         "civ_6",
         "doom_ii",
         "star_fox_64",
+        "huniepop2",
         "sonic_heroes",
         "simpsonshitnrun",
         "dw1",
@@ -15227,6 +15353,7 @@ SEARCH_INDEX = {
         "civ_6",
         "doom_ii",
         "star_fox_64",
+        "huniepop2",
         "sonic_heroes",
         "simpsonshitnrun",
         "dw1",
@@ -15244,6 +15371,7 @@ SEARCH_INDEX = {
         "civ_6",
         "doom_ii",
         "star_fox_64",
+        "huniepop2",
         "sonic_heroes",
         "simpsonshitnrun",
         "dw1",
@@ -15461,6 +15589,7 @@ SEARCH_INDEX = {
         "osu",
         "celeste",
         "terraria",
+        "huniepop",
         "v6",
         "doom_1993",
         "celeste64",
@@ -15822,6 +15951,7 @@ SEARCH_INDEX = {
         "diddy_kong_racing",
         "rac2",
         "cuphead",
+        "huniepop",
         "papermario",
         "lego_star_wars_tcs",
         "luigismansion",
@@ -15917,9 +16047,10 @@ SEARCH_INDEX = {
         "doom_ii",
         "stardew_valley",
         "tunic",
+        "huniepop2",
         "sonic_heroes",
-        "v6",
         "lego_star_wars_tcs",
+        "v6",
         "hcniko",
         "sotn",
         "banjo_tooie",
@@ -16112,6 +16243,7 @@ SEARCH_INDEX = {
         "soe",
         "ffta",
         "terraria",
+        "huniepop",
         "ctjot",
         "dark_souls_2",
         "papermario",
@@ -16175,6 +16307,7 @@ SEARCH_INDEX = {
         "soe",
         "ffta",
         "terraria",
+        "huniepop",
         "ctjot",
         "dark_souls_2",
         "papermario",
@@ -16238,6 +16371,7 @@ SEARCH_INDEX = {
         "soe",
         "ffta",
         "terraria",
+        "huniepop",
         "ctjot",
         "dark_souls_2",
         "papermario",
@@ -16724,8 +16858,10 @@ SEARCH_INDEX = {
         "wargroove2"
     ],
     "text": [
-        "yugioh06",
+        "huniepop",
         "candybox2",
+        "huniepop2",
+        "yugioh06",
         "osrs"
     ],
     "web browser": [
@@ -17805,10 +17941,11 @@ SEARCH_INDEX = {
         "dkc2"
     ],
     "2:": [
+        "huniepop2",
         "sa2b",
         "yoshisisland",
-        "marioland2",
-        "dkc2"
+        "dkc2",
+        "marioland2"
     ],
     "diddy's": [
         "dkc2"
@@ -17899,7 +18036,8 @@ SEARCH_INDEX = {
     ],
     "double": [
         "dkc3",
-        "mario_kart_double_dash"
+        "mario_kart_double_dash",
+        "huniepop2"
     ],
     "trouble!": [
         "dkc3"
@@ -18003,6 +18141,7 @@ SEARCH_INDEX = {
     ],
     "funny": [
         "powerwashsimulator",
+        "huniepop2",
         "sims4",
         "dontstarvetogether",
         "getting_over_it",
@@ -18403,6 +18542,9 @@ SEARCH_INDEX = {
     "tactics": [
         "ffta"
     ],
+    "flipwitch forbidden sex hex": [
+        "flipwitch"
+    ],
     "yu-gi-oh! forbidden memories": [
         "fm"
     ],
@@ -18492,6 +18634,44 @@ SEARCH_INDEX = {
     ],
     "knight": [
         "hk"
+    ],
+    "hunie pop": [
+        "huniepop"
+    ],
+    "huniepop": [
+        "huniepop",
+        "huniepop2"
+    ],
+    "visual novel": [
+        "huniepop",
+        "huniepop2"
+    ],
+    "visual": [
+        "huniepop",
+        "huniepop2"
+    ],
+    "novel": [
+        "huniepop",
+        "huniepop2"
+    ],
+    "erotic": [
+        "huniepop",
+        "huniepop2"
+    ],
+    "romance": [
+        "huniepop",
+        "sims4",
+        "stardew_valley",
+        "huniepop2"
+    ],
+    "hunie pop 2": [
+        "huniepop2"
+    ],
+    "huniepop 2: double date": [
+        "huniepop2"
+    ],
+    "date": [
+        "huniepop2"
     ],
     "hylics 2": [
         "hylics2"
@@ -19470,10 +19650,6 @@ SEARCH_INDEX = {
     ],
     "sims": [
         "sims4"
-    ],
-    "romance": [
-        "sims4",
-        "stardew_valley"
     ],
     "sly cooper and the thievius raccoonus": [
         "sly1"

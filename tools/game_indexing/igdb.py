@@ -105,7 +105,7 @@ def get_game_and_igdb_id_from_world(init_path: str) -> Optional[Tuple[str, int]]
         # Look for igdb_id with type annotation
         igdb_id = content["igdb_id"]
         if not igdb_id:
-            return None
+            return game_name, 0
             
         return game_name, igdb_id
                 
@@ -154,14 +154,15 @@ def get_igdb_game_details(game_id: int) -> dict:
 
     response = requests.post(url, headers=headers, data=data)
 
-    if response.status_code != 200 or not response.json():
+    if response.status_code != 200 or not response.json() or response.json() == []:
         return {}
-        
+
     game_data = response.json()[0]
 
     # Extract content descriptions from age ratings
     content_descriptions = []
     age_rating = "NR"
+
     for rating in game_data.get('age_ratings', []):
         if 'organization' in rating:
             if rating['organization']['name'] == 'PEGI':
@@ -188,7 +189,6 @@ def get_igdb_game_details(game_id: int) -> dict:
             key_art_url = artwork['url'].replace("t_thumb", "t_cover_big").replace("//", "https://").replace(".jpg", ".png")
 
     cover_url = game_data.get('cover', {}).get('url', '').replace("//", "https://").replace(".jpg", ".png")
-
     return {
         'igdb_name': game_data.get('name', ''),
         'cover_url': cover_url,
@@ -216,9 +216,15 @@ def generate_game_details_json() -> dict:
     result = {}
     
     for world, data in game_ids.items():
-        if data["igdb_id"]:
+        if data["igdb_id"] and data["igdb_id"] != 0:
             # Get IGDB details for worlds with IGDB IDs
             igdb_details = get_igdb_game_details(data["igdb_id"])
+            # Manually marking the porn games. TODO: remove the hardcoding names deep inside this file.
+            age_rating = ""
+            if 'sex' in data["game_name"].lower() or 'hunie' in data["game_name"].lower():
+                age_rating = "AO"
+            else:
+                age_rating = igdb_details.get('age_rating', '')
             
             # Create the game entry with IGDB data
             result[world] = {
@@ -228,7 +234,7 @@ def generate_game_details_json() -> dict:
                 'key_art_url': igdb_details.get('key_art_url', ''),
                 'game_name': data["game_name"],
                 'igdb_name': igdb_details.get('igdb_name', ''),
-                'age_rating': igdb_details.get('age_rating', ''),
+                'age_rating': age_rating,
                 'rating': igdb_details.get('rating', ''),
                 'player_perspectives': igdb_details.get('player_perspectives', []),
                 'genres': igdb_details.get('genres', []),
@@ -247,7 +253,7 @@ def generate_game_details_json() -> dict:
                 'key_art_url': '',
                 'game_name': data["game_name"],
                 'igdb_name': '',
-                'age_rating': 'E', # Defaulting to "everyone" for original worlds/hint worlds
+                'age_rating': 'MW', # Defaulting to "everyone" for original worlds/hint worlds
                 'rating': '',
                 'player_perspectives': [],
                 'genres': ["Multiplayer"],
@@ -255,9 +261,9 @@ def generate_game_details_json() -> dict:
                 'platforms': ["Archipelago"],
                 'storyline': '',
                 'keywords': ["hints","archipelago","multiworld"],
-                'release_date': ''
+                'release_date': '2025'
             }
-            print(f"Created empty entry for {world} (no IGDB ID)")
+            print(f"Created empty entry for {world} (original world/hint world)")
     
     return result
 
@@ -278,7 +284,7 @@ def get_single_game_details(igdb_id: int) -> dict:
             'game_name': '',  # We don't know the world name for a single ID lookup
             'igdb_name': '',
             'age_rating': '',
-            'rating': '',
+            'rating': 'MW',
             'player_perspectives': [],
             'genres': [],
             'themes': [],

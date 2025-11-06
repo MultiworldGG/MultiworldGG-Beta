@@ -106,31 +106,19 @@ jobs:
             cd ../..
           done
       
-      - name: Copy wheels to default_wheels
+      - name: Publish to PyPI
         if: steps.find_modules.outputs.modules != ''
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+          TWINE_REPOSITORY_URL: ${{ secrets.PYPI_REPOSITORY_URL }}
         run: |
+          source venv/bin/activate
+          pip install twine
+          
           cd src
-          mkdir -p default_wheels
           for module in ${{ steps.find_modules.outputs.modules }}; do
-            cp "game_index/$module/dist/"*.whl default_wheels/ || true
+            echo "Publishing game index module: $module"
+            twine upload "game_index/$module/dist/"*.whl --skip-existing --non-interactive
           done
-      
-      - name: Configure git
-        if: steps.find_modules.outputs.modules != ''
-        run: |
-          cd src
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-      
-      - name: Commit wheels
-        if: steps.find_modules.outputs.modules != ''
-        run: |
-          cd src
-          git add default_wheels/
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "chore: update game index wheels"
-            git push
-          fi
 

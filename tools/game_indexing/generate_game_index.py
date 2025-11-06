@@ -30,13 +30,18 @@ def clean_game_data(games_data: dict, rating_filter: str = "NR") -> dict:
         Cleaned game data dictionary
     """
     age_filter = []
-    filter_16 = ["3", "7", "12", "16", "18", "E", "T"]
-    filter_12 = ["3", "7", "12", "E"]
+    filter_nr = ["MW","3", "7", "12", "16", "18", "E", "T", "M", "NR"]
+    filter_ao = ["MW","3", "7", "12", "16", "18", "E", "T", "M", "NR", "AO"]
+    filter_16 = ["MW","3", "7", "12", "16", "E", "T"]
+    filter_12 = ["MW","3", "7", "12", "E"]
 
-    if rating_filter == "16":
+    if rating_filter == "18_teen":
         age_filter = filter_16
-    elif rating_filter == "12":
+    elif rating_filter == "12_kid":
         age_filter = filter_12
+    elif rating_filter == "18plus_adult":
+        age_filter = filter_ao
+    age_filter = filter_nr
 
     cleaned_data = {}
     for world_name, game_data in games_data.items():
@@ -151,7 +156,7 @@ def generate_index_file(rating_filter: str = "NR"):
             games_data = json.load(file)
         
         # Clean the game data
-        if rating_filter != "NR":
+        if rating_filter != "18plus_adult":
             games_data = clean_game_data(games_data, rating_filter)
         
         # Build search index
@@ -177,10 +182,12 @@ def generate_index_file(rating_filter: str = "NR"):
         code = template.replace("GAMES_DATA_PLACEHOLDER", games_data_str)
         code = code.replace("SEARCH_INDEX_PLACEHOLDER", search_index_str)
         
-        if rating_filter == "12":
+        if rating_filter == "12_kid":
             folder = "twelve"
-        elif rating_filter == "16":
+        elif rating_filter == "18_teen":
             folder = "sixteen"
+        elif rating_filter == "18plus_adult":
+            folder = "ao"
         else:
             folder = "nr"
             
@@ -207,10 +214,13 @@ def main():
     success = generate_index_file()
     if not success:
         exit(1) 
-    success = generate_index_file(rating_filter="12")
+    success = generate_index_file(rating_filter="18plus_adult")
+    if not success:
+        exit(1) 
+    success = generate_index_file(rating_filter="12_kid")
     if not success:
         exit(1)
-    success = generate_index_file(rating_filter="16")
+    success = generate_index_file(rating_filter="18_teen")
     if not success:
         exit(1)
 

@@ -133,6 +133,6 @@ class GameIndex:
             SEARCH_INDEX[term].add(game_module)
 
 # These constants will be generated during build
-GAMES_DATA = GAMES_DATA_PLACEHOLDER # type: ignore
+GAMES_DATA = GAMES_DATA_PLACEHOLDER  # type: ignore  # noqa: F821
 
-SEARCH_INDEX = SEARCH_INDEX_PLACEHOLDER # type: ignore
+SEARCH_INDEX = SEARCH_INDEX_PLACEHOLDER  # type: ignore  # noqa: F821
