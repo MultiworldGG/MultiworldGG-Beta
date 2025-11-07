@@ -267,17 +267,29 @@ class InitContext:
         self.server_address = None
         self._splash_queue: Optional[Queue] = None
 
+    def _set_server_address(self, server_address: str) -> str:
+        prefix = "ws://" if "://" not in server_address else urllib.parse.urlparse(server_address).scheme
+        server_address = f"{prefix}{server_address}"
+        username = urllib.parse.urlparse(server_address).username or ""
+        password = urllib.parse.urlparse(server_address).password or ""
+        server_hostname = urllib.parse.urlparse(server_address).hostname or self.hostname
+        server_port = urllib.parse.urlparse(server_address).port or self.port
+        if username:
+            self.username = username
+            if password:
+                self.password = password
+                return f"{prefix}{self.username}:{self.password}@{server_hostname}:{server_port}"
+            return f"{prefix}{self.username}:@{server_hostname}:{server_port}"
+        return f"{prefix}{server_hostname}:{server_port}"
+
     def _set_saved_properties(self):
         '''Set the server address from the saved properties
         username:password@hostname:port format
         No password is saved, using an empty string'''
-        self.server_address = "ws://" + \
-            Utils.persistent_load().get('client', {}).get('last_username', "") + \
-            ":@" + \
-            Utils.persistent_load().get('client', {}).get('last_server_hostname', "multiworld.gg") + \
-            ":" + \
-            str(Utils.persistent_load().get('client', {}).get('last_server_port', "38281"))
-
+        last_username = Utils.persistent_load().get('client', {}).get('last_username', "")
+        last_server_hostname = Utils.persistent_load().get('client', {}).get('last_server_hostname', "multiworld.gg")
+        last_server_port = str(Utils.persistent_load().get('client', {}).get('last_server_port', 38281))
+        self.server_address = urllib.parse.urlunparse(["ws", last_username, "", last_server_hostname, last_server_port, ""])
 
     def run_gui(self, splash_queue: Optional[Queue] = None):
         """Run the GUI as self.ui_task."""
@@ -296,11 +308,11 @@ class InitContext:
         if self._username:
             return self._username
         elif hasattr(self, 'server_address'):
-            self._username = urllib.parse.urlparse(self.server_address).username or ""
-            return self._username
-        else:
-            self._username = Utils.persistent_load().get('client', {}).get('last_username', '')
-            return self._username
+            self._username = urllib.parse.urlparse(self.server_address).username or None
+            if self._username:
+                return self._username
+        self._username = Utils.persistent_load().get('client', {}).get('last_username', '')
+        return self._username
     
     @username.setter
     def username(self, value: str):
@@ -325,17 +337,20 @@ class InitContext:
     @property
     def hostname(self) -> str:
         if hasattr(self, 'server_address'):
-            return urllib.parse.urlparse(self.server_address).hostname or ""
-        else:
-            hostname = Utils.persistent_load().get('client', {}).get('last_server_hostname', 'multiworld.gg')
-            return hostname
+            hostname = urllib.parse.urlparse(self.server_address).hostname or None
+            if hostname:
+                return hostname
+        hostname = Utils.persistent_load().get('client', {}).get('last_server_hostname', 'multiworld.gg')
+        return hostname
 
     @property
     def port(self) -> str:
         if hasattr(self, 'server_address'):
-            return str(urllib.parse.urlparse(self.server_address).port) or "38281"
-        persistent_port = str(Utils.persistent_load().get('client', {}).get('last_server_port', 38281))
-        return persistent_port
+            port = urllib.parse.urlparse(self.server_address).port or None
+            if port:
+                return str(port)
+        port = str(Utils.persistent_load().get('client', {}).get('last_server_port', 38281))
+        return port
 
 class CommonContext(InitContext):
     # The following attributes are used to Connect and should be adjusted as needed in subclasses
@@ -498,7 +513,8 @@ class CommonContext(InitContext):
         self._initial_ctx: dict[Gui.MultiMDApp, asyncio.Task] = {}
         self._main_task: Optional[asyncio.Task] = None
         # server state
-        self.server_address = server_address
+        if server_address:
+            self.server_address = self._set_server_address(server_address)
         self.hint_cost = None
         self.slot_info = {}
         self.permissions = {

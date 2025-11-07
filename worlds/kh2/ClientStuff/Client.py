@@ -298,7 +298,7 @@ class KH2Context(CommonContext):
         if password_requested and not self.password:
             await super(KH2Context, self).server_auth(password_requested)
         
-        if not self.username:
+        if not self.auth:
             await self.get_username()
         # if slot name != first time login or previous name
         # and seed name is none or saved seed name
@@ -307,7 +307,7 @@ class KH2Context(CommonContext):
         elif self.username == self.auth and self.kh2seedname:
             await self.send_connect()
         else:
-            logger.info(f"You are trying to connect with data still cached in the client. Close client or connect to the correct slot: {self.slot_name}")
+            logger.info(f"You are trying to connect with data still cached in the client. Close client or connect to the correct slot: {self.username}")
             self.serverconnected = False
             self.disconnect_from_server = True
 
@@ -588,7 +588,6 @@ class KH2Context(CommonContext):
                 self.kh2connected = False
             logger.info("Game is not open. If it is open run the launcher/client as admin.")
         self.serverconnected = True
-        self.slot_name = self.auth
 
     def data_package_kh2_cache(self, loc_to_id, item_to_id):
         self.kh2_loc_name_to_id = loc_to_id
