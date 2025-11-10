@@ -56,6 +56,7 @@ class BaseGame(Choice):
     option_hipnotic = 1
     option_rogue = 2
     option_mg1 = 3
+    option_dopa = 4
 
 
 class UnlockAbilities(Toggle):

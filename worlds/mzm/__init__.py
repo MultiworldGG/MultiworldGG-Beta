@@ -60,7 +60,6 @@ class MZMWorld(World):
     used with permission.
     """
     game: str = "Metroid Zero Mission"
-    author: str = "Noise"
     options_dataclass = MZMOptions
     options: MZMOptions
     topology_present = True

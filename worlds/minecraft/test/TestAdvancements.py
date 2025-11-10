@@ -7,8 +7,7 @@ from . import MCTestBase
 class TestAdvancements(MCTestBase):
     options = {
         "shuffle_structures": False,
-        "structure_compasses": False,
-        "include_hard_advancements": False,
+        "structure_compasses": False
     }
 
     def test_42000(self):
@@ -910,8 +909,17 @@ class TestAdvancements(MCTestBase):
         self.run_location_tests([
             ["Country Lode, Take Me Home", False, []],
             ["Country Lode, Take Me Home", False, [], ['Progressive Resource Crafting']],
-            ["Country Lode, Take Me Home", False, [], ['Progressive Tools']],
-            ["Country Lode, Take Me Home", True, ['Progressive Resource Crafting', 'Progressive Tools', 'Progressive Tools']],
+            ["Country Lode, Take Me Home", False, [], ['Flint and Steel']],
+            ["Country Lode, Take Me Home", False, ['Progressive Tools', 'Progressive Tools'], ['Progressive Tools']],
+            ["Country Lode, Take Me Home", False, [], ['Progressive Weapons']],
+            ["Country Lode, Take Me Home", False, [], ['Progressive Armor', 'Shield']],
+            ["Country Lode, Take Me Home", False, [], ['Brewing']],
+            ["Country Lode, Take Me Home", False, [], ['Bottles']],
+            ["Country Lode, Take Me Home", False, [], ['Bed']],
+            ["Country Lode, Take Me Home", True, ['Progressive Resource Crafting', 'Progressive Tools', 'Flint and Steel', 'Progressive Tools', 'Progressive Tools',
+                                                  'Progressive Weapons', 'Progressive Armor', 'Brewing', 'Bottles', 'Bed']],
+            ["Country Lode, Take Me Home", True, ['Progressive Resource Crafting', 'Progressive Tools', 'Flint and Steel', 'Progressive Tools', 'Progressive Tools',
+                                                  'Progressive Weapons', 'Shield', 'Brewing', 'Bottles', 'Bed']],
             ])
 
     def test_42067(self):

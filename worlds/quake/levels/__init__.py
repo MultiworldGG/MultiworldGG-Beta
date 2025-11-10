@@ -88,6 +88,19 @@ from .mge5m2 import mge5m2
 from .mg1start import mg1start
 from .mgend import mgend
 
+# dopa
+from .e5m1 import e5m1
+from .e5m2 import e5m2
+from .e5m3 import e5m3
+from .e5m4 import e5m4
+from .e5m5 import e5m5
+from .e5m6 import e5m6
+from .e5m7 import e5m7
+from .e5sm1 import e5sm1
+from .e5sm2 import e5sm2
+from .e5end import e5end
+from .dopastart import dopastart
+
 
 class E1(Q1Episode):
     name = "Doomed Dimension"
@@ -199,10 +212,23 @@ class MG1SL(Q1Episode):
     maxlevel = len(levels)
 
 
+class DOPAE1(Q1Episode):
+    name = "Dimension of the Past"
+    levels = [e5m1(), e5m2(), e5m3(), e5m4(), e5m5(), e5m6(), e5m7()]
+    maxlevel = len(levels)
+
+
+class DOPASL(Q1Episode):
+    name = "Special Levels DOPA"
+    levels = [dopastart(), e5end()]
+    maxlevel = len(levels)
+
+
 all_episodes_q1 = [E1(), E2(), E3(), E4()]
 all_episodes_hip = [HIPE1(), HIPE2(), HIPE3()]
 all_episodes_rogue = [ROGUEE1(), ROGUEE2()]
 all_episodes_mg1 = [MG1E1(), MG1E2(), MG1E3(), MG1E4(), MG1E5(), MG1SL()]
+all_episodes_dopa = [DOPAE1(), DOPASL()]
 
 all_eps_incl_special = [
     E1(),
@@ -223,6 +249,8 @@ all_eps_incl_special = [
     MG1E4(),
     MG1E5(),
     MG1SL(),
+    DOPAE1(),
+    DOPASL(),
 ]
 
 all_levels_incl_special = [level for ep in all_eps_incl_special for level in ep.levels]

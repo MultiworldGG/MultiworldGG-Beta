@@ -29,13 +29,13 @@ class r2m8(Q1Level):
             "uuid": 44564667278621306,
             "mp": 0,
         },
-        {
-            "id": 4,
-            "name": "Quad Damage (4)",
-            "classname": "item_artifact_super_damage",
-            "uuid": 10414775112788141147,
-            "mp": 1,
-        },
+        # {
+        #    "id": 4,
+        #    "name": "Quad Damage (4)",
+        #    "classname": "item_artifact_super_damage",
+        #    "uuid": 10414775112788141147,
+        #    "mp": 1,
+        # },
         {
             "id": 5,
             "name": "Multi (5)",
@@ -409,11 +409,9 @@ class r2m8(Q1Level):
                 "Large Medkit (21)",
                 "Large Medkit (20)",
                 "Nailgun (22)",
-                "Quad Damage (4)",
                 "All Kills (50)",
             ],
         )
-        self.restrict("Quad Damage (4)", r.bigjump_hard)
         self.restrict("All Kills (50)", r.difficult_combat)
 
         past_door_area = self.region(

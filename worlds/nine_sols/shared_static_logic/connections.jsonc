@@ -199,11 +199,13 @@
     { "from": "CC - Right Exit", "to": "CC - Root Node", "requires": [ { "item": "Charged Strike" } ] },
     { "from": "CC - Root Node", "to": "CC - Root Node After Boss", "requires": [
         { "item": "Event - Lady Ethereal Soulscape Unlocked" },
-        // pre-boss soulscape requires WC AND TCK AND (CL OR AD), the boss herself requires just AD
-        // to evade the phase 3 orb, so that simplifies down to just WC AND TCK AND AD
-        { "item": "Wall Climb" },
-        { "item": "Tai-Chi Kick" },
-        { "item": "Air Dash" }
+        { "item": "Tai-Chi Kick" }, // hard-required after the 4th hot spring to reveal an otherwise invincible and mandatory enemy
+        { "item": "Wall Climb" }, // hard-required multiple times after the 6th hot spring where you follow the nymph,
+            // either clinging to a wall waiting for the nymph, or climbing a wall before the nymph adds spikes to it.
+        { "anyOf": [ { "item": "Ledge Grab" }, { "item": "Cloud Leap" } ] }, // the very last nymph-following section
+            // has 2 innocuous jumps that require the extra verticality of LG OR CL
+        // If we were writing logic for just the soulscape, it would be WC AND TCK AND (AD OR CL), but:
+        { "item": "Air Dash" } // Lady Ethereal herself requires Air Dash to evade the phase 3 orb, making CL fully redundant
     ] },
     { "from": "CC - Root Node", "to": "CC - After Large Door", "requires": [
         { "item": "Mystic Nymph: Scout Mode" }
@@ -243,8 +245,8 @@
     { "from": "CC - Caves Lower Left", "to": "CC - Left Exit", "requires": [] },
     { "from": "CC - Left Exit", "to": "CC - Caves Lower Left", "requires": [] }, // grapple
 
-    { "from": "CC - Left Exit", "to": "FGH - Lower Levels & Root Node", "requires": [] },
-    { "from": "FGH - Lower Levels & Root Node", "to": "CC - Left Exit", "requires": [] },
+    { "from": "CC - Left Exit", "to": "FGH - Right Exit", "requires": [] },
+    { "from": "FGH - Right Exit", "to": "CC - Left Exit", "requires": [] },
 
     // Central Transport Hub
     { "from": "CTH - Upper Left Exit", "to": "CTH - Bottom of Large Shaft", "requires": [] }, // elevator combat gauntlet
@@ -429,8 +431,7 @@
         { "item": "Air Dash" }, { "item": "Cloud Leap" }, // to jump over the two-ninja pit after the roof breaks
         { "item": "Mystic Nymph: Scout Mode" } // or hack the rope to climb out
     ] } ] }, // on logic_level: easy, just T-dash // LS is redundant
-    // then a one-way dragon boat ride; even bow/parry hover can't bypass the boat because of flying enemies
-    // it is *possible* to hover under the flying enemies without getting hit, but this is too unreliable for logic
+    // then a one-way dragon boat ride; bow/parry hover can be used here as long as you start it above the flying enemies
     { "from": "LYR - Root Node", "to": "TRC - Upper Exit", "requires": [ { "item": "Elevator Access Token" } ] },
 
     { "from": "LYR - Root Node", "to": "YC - Upper Exit", "requires": [] },
@@ -986,11 +987,11 @@
     ] } ] }, // on logic_level: easy, bow hover OR (T-dash AND (CL OR AD)) into portal
     // on logic_level: ledge_storage, T-dash setup for LS hover into portal
     { "from": "GoSY - Middle Caves & Lower Portals", "to": "GoSY - Lower Right Exit", "requires": [ { "anyOf": [
-         { "anyOf": [ { "item": "Cloud Leap" }, { "item": "Ledge Grab" } ] }, // climb the ledge to the left
+        { "anyOf": [ { "item": "Cloud Leap" }, { "item": "Ledge Grab" } ] }, // climb the ledge to the left
         [ { "item": "Cloud Leap" }, { "item": "Air Dash" } ] // or take the portal and cross the yellow water
-    ] } ] },
+    ] } ] }, // on logic_level: easy, T-dash
     { "from": "GoSY - Middle Caves & Lower Portals", "to": "GoSY - Upper Caves", "requires": [
-         { "anyOf": [ { "item": "Cloud Leap" }, { "item": "Wall Climb" } ] }
+        { "anyOf": [ { "item": "Cloud Leap" }, { "item": "Wall Climb" } ] }
     ] },
     { "from": "GoSY - Upper Caves", "to": "GoSY - Middle Caves & Lower Portals", "requires": [] }, // fall
     { "from": "GoSY - Upper Caves", "to": "GoSY - Below Elevator & Upper Cave Portals", "requires": [ { "anyOf": [
@@ -1115,7 +1116,14 @@
         { "anyOf": [ { "item": "Cloud Leap" }, { "item": "Air Dash" } ] },
         { "item": "Wall Climb" }
     ] },
-    { "from": "GoSW - Upper Right Exit", "to": "GoSW - Lower Platform Rotation Button", "requires": [] }, // rope to portal, fall
+    { "from": "GoSW - Upper Right Exit", "to": "GoSW - Lower Platform Rotation Button", "requires": [
+        // climb up rope, take portal on the right, fall down
+    ] },
+    { "from": "GoSW - Lower Platform Rotation Button", "to": "GoSW - Upper Right Exit", "requires": [
+        // rotate platforms to vertical
+        { "item": "Wall Climb" } // climb up the platform / green wall on the right
+        // go through portal, fall and walk right
+    ] },
     { "from": "GoSW - Root Node", "to": "GoSW - Lower Platform Rotation Button", "requires": [] }, // fall
     { "from": "GoSW - Lower Platform Rotation Button", "to": "GoSW - Lower Right Exits", "requires": [] }, // press button, fall, go right and open one-way door
     // This single region connection into SBR represents solving the rotating platforms puzzle
@@ -1290,7 +1298,7 @@
 
     // Empyrean Dist. (Living Area)
     { "from": "EDLA - Root Node & Lower Elevator", "to": "EDLA - East Building Interior Part 1", "requires": [
-        { "item": "Cloud Leap" } // AND hacking 2 to activate the lift
+        { "item": "Cloud Leap" }, { "item": "Ledge Grab" } // AND hacking 2 to activate the lift
     ] }, // on logic_level: ledge_storage, T-dash setup left of node into wall slide all the way up the right side of EDLA
     // single jump from high up this wall is plenty to reach EBI, or with more waiting EBR
     //{ "from": "EDLA - Root Node & Lower Elevator", "to": "EDLA - East Building Rooftops", "requires": [] },

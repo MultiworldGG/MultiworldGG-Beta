@@ -4,6 +4,8 @@ import jinja2
 import logging
 import os
 import random
+import Utils
+from pathlib import Path
 from typing import Dict, FrozenSet, Set
 import zipfile
 
@@ -109,7 +111,9 @@ class GZDoomWorld(World):
     web = GZDoomWeb()
     required_client_version = (0, 5, 1)
     included_item_categories = {}
-    mod_version = resources.files(__package__).joinpath('VERSION').read_text().strip()
+
+    internal_data_dir = Path(os.path.join(Utils.local_path("data"), "gzdoom")) if Utils.is_frozen() else resources.files(__package__)
+    mod_version = internal_data_dir.joinpath('VERSION').read_text().strip()
 
     # Info fetched from gzDoom; contains item/location ID mappings etc.
     wad_logic: DoomWad

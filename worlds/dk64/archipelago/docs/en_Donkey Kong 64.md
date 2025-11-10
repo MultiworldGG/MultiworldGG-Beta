@@ -12,7 +12,7 @@ would in the vanilla game.
 
 The level entrances from DK Isles have also been swapped around. This means that you may find Creepy Castle where the entrance for Jungle Japes normally is, and so on.
 
-Due to some current technical constraints brought on by the MultiworldGG framework, a number of randomizer settings cannot be changed, including:
+Due to some current technical constraints brought on by the Archipelago framework, a number of randomizer settings cannot be changed, including:
 
 - Purchases from shopkeepers (Cranky/Funky/Candy) are forced to cost 0 coins
 - B. Lockers' costs are 0 Golden Bananas for all levels, except for Hideout Helm which needs 60 Golden Bananas

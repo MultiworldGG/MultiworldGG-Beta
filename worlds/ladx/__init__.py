@@ -3,15 +3,14 @@ import dataclasses
 import os
 import typing
 import logging
-import struct
 
 import settings
 import Utils
 from BaseClasses import CollectionState, Entrance, Item, ItemClassification, Location, Tutorial
 from Fill import fill_restrictive
 from worlds.AutoWorld import WebWorld, World
-from worlds.LauncherComponents import Component, components, SuffixIdentifier, Type, launch_subprocess, icon_paths
-from .Common import LINKS_AWAKENING, WORLD_VERSION, BASE_ID, DIRECTORY, SUFFIX, AUTHOR
+from worlds.LauncherComponents import Component, components, SuffixIdentifier, Type, launch, icon_paths
+from .Common import *
 from .ForeignItemIcons import ForeignItemIconMatcher
 from .Items import (DungeonItemData, DungeonItemType, ItemName, LinksAwakeningItem, TradeItemData,
                     ladxr_item_to_la_item_name, links_awakening_items, links_awakening_items_by_name,
@@ -33,16 +32,16 @@ DEVELOPER_MODE = False
 
 
 def launch_client(*args):
-    from .LinksAwakeningClient import launch
-    launch_subprocess(launch, name=f"{LINKS_AWAKENING} Client", args=args)
+    from .LinksAwakeningClient import launch as ladx_launch
+    launch(ladx_launch, name=f"{LINKS_AWAKENING} Client", args=args)
 
 components.append(Component(f"{LINKS_AWAKENING} Client",
                             func=launch_client,
                             component_type=Type.CLIENT,
                             icon=LINKS_AWAKENING,
-                            file_identifier=SuffixIdentifier(SUFFIX)))
+                            file_identifier=SuffixIdentifier('.apladxb')))
 
-icon_paths[LINKS_AWAKENING] = f"ap:worlds.{DIRECTORY}/assets/MarinV-3_small.png"
+icon_paths[LINKS_AWAKENING] = "ap:worlds.ladx/assets/MarinV-3_small.png"
 
 
 class LinksAwakeningSettings(settings.Group):
@@ -145,7 +144,6 @@ class LinksAwakeningWorld(World):
     Gather the 8 Instruments of the Sirens to wake the Wind Fish, so that Link can go home!
     """
     game = LINKS_AWAKENING  # name of the game/world
-    author = AUTHOR
     web = LinksAwakeningWebWorld()
 
     options_dataclass = LinksAwakeningOptions
@@ -238,10 +236,10 @@ class LinksAwakeningWorld(World):
 
         assert(start)
 
-        menu_region = LinksAwakeningRegion("Menu", None, "Menu", self.player, self.multiworld)        
+        menu_region = LinksAwakeningRegion("Menu", None, "Menu", self.player, self.multiworld)
         menu_region.exits = [Entrance(self.player, "Start Game", menu_region)]
         menu_region.exits[0].connect(start)
-        
+
         self.multiworld.regions.append(menu_region)
 
         # Place RAFT, other access events
@@ -249,14 +247,14 @@ class LinksAwakeningWorld(World):
             for loc in region.locations:
                 if loc.address is None:
                     loc.place_locked_item(self.create_event(loc.ladxr_item.event))
-        
+
         # Connect Windfish -> Victory
         windfish = self.multiworld.get_region("Windfish", self.player)
         l = Location(self.player, "Windfish", parent=windfish)
         windfish.locations = [l]
-                
+
         l.place_locked_item(self.create_event("An Alarm Clock"))
-        
+
         self.multiworld.completion_condition[self.player] = lambda state: state.has("An Alarm Clock", player=self.player)
 
     def create_item(self, item_name: str):
@@ -332,8 +330,8 @@ class LinksAwakeningWorld(World):
         event_location = Location(self.player, "Can Play Trendy Game", parent=trendy_region)
         trendy_region.locations.insert(0, event_location)
         event_location.place_locked_item(self.create_event("Can Play Trendy Game"))
-       
-        self.dungeon_locations_by_dungeon = [[], [], [], [], [], [], [], [], []]     
+
+        self.dungeon_locations_by_dungeon = [[], [], [], [], [], [], [], [], []]
         for r in self.multiworld.get_regions(self.player):
             # Set aside dungeon locations
             if r.dungeon_index:
@@ -407,7 +405,7 @@ class LinksAwakeningWorld(World):
 
         # set containing the list of all possible dungeon locations for the player
         all_dungeon_locs = set()
-        
+
         # Do dungeon specific things
         for dungeon_index in range(0, 9):
             # set up allow-list for dungeon specific items
@@ -475,6 +473,7 @@ class LinksAwakeningWorld(World):
 
         fill_restrictive(self.multiworld, partial_all_state, all_dungeon_locs_to_fill, all_dungeon_items_to_fill, lock=True, single_player_placement=True, allow_partial=False)
 
+
     def generate_output(self, output_directory: str):
         matcher = ForeignItemIconMatcher()
         # copy items back to locations
@@ -482,7 +481,7 @@ class LinksAwakeningWorld(World):
             for loc in r.locations:
                 if isinstance(loc, LinksAwakeningLocation):
                     assert(loc.item)
-                        
+
                     # If we're a links awakening item, just use the item
                     if isinstance(loc.item, LinksAwakeningItem):
                         loc.ladxr_item.item = loc.item.item_data.ladxr_id
@@ -509,7 +508,7 @@ class LinksAwakeningWorld(World):
                     # Kind of kludge, make it possible for the location to differentiate between local and remote items
                     loc.ladxr_item.location_owner = self.player
 
-
+        
         patch = LADXProcedurePatch(player=self.player, player_name=self.player_name)
         write_patch_data(self, patch)
         out_path = os.path.join(output_directory, f"{self.multiworld.get_out_file_name_base(self.player)}"
@@ -546,10 +545,8 @@ class LinksAwakeningWorld(World):
 
     def fill_slot_data(self):
         slot_data = {
-            "game_name": LINKS_AWAKENING,
-            "pre_release": True,
-            "world_version": WORLD_VERSION,
-            "death_link": self.options.death_link.value,
+            "world_version": self.world_version.as_simple_string(),
+			"death_link": self.options.death_link.value,
         }
 
         if not self.multiworld.is_race:

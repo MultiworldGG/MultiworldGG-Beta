@@ -1,9 +1,9 @@
 import json
 import math
 from random import Random
-from .levels import SL, HIPSL, ROGUESL, MG1SL
+from .levels import SL, HIPSL, ROGUESL, MG1SL, DOPASL
 from typing import Any, Dict, List, Optional, Set, Tuple
-from BaseClasses import CollectionState, Tutorial
+from BaseClasses import CollectionState,Tutorial
 
 # Compatibility across Python versions
 try:
@@ -23,6 +23,7 @@ from .levels import (
     all_episodes_hip,
     all_episodes_rogue,
     all_episodes_mg1,
+    all_episodes_dopa,
 )
 from .options import Difficulty, Q1Options
 from .rules import Rules
@@ -352,6 +353,10 @@ class Q1World(World):
             episode_options = [1, 2, 3, 4, 5]
             all_episodes = all_episodes_mg1
             special_levels = MG1SL()
+        elif self.options.basegame == self.options.basegame.option_dopa:
+            episode_options = [1]
+            all_episodes = all_episodes_dopa
+            special_levels = DOPASL()
         else:
             episode_options = [1, 2, 3, 4]
 
@@ -463,7 +468,7 @@ class Q1World(World):
         for level in self.included_levels:
             if self.options.area_maps == self.options.area_maps.option_start_with:
                 self.options.start_inventory.value[level.map] = 1
-        basegame_lut = ["id1", "hipnotic", "rogue", "mg1"]
+        basegame_lut = ["id1", "hipnotic", "rogue", "mg1", "dopa"]
         self.slot_data["settings"]["basegame"] = basegame_lut[
             self.options.basegame.value
         ]
@@ -504,6 +509,15 @@ class Q1World(World):
             )
         # TODO: Implement no_save
         # self.slot_data["settings"]["no_save"] = not self.options.allow_saving.value
+        # fix not enough locations in dopa:
+        if (
+            self.options.basegame.value == self.options.basegame.option_dopa
+            and self.options.included_locations_preset.value
+            == self.options.included_locations_preset.option_iconic
+        ):
+            self.options.included_locations_preset.value = (
+                self.options.included_locations_preset.option_balanced
+            )
 
     def create_regions(self):
         self.used_locations = set()
@@ -573,7 +587,7 @@ class Q1World(World):
         levels_tried = []
 
         while depth < len(self.included_levels):
-            state = CollectionState(self.multiworld)
+            state = CollectionState(self.multiworld, True)
             # print("Attempt ", depth + 1)
             for level in self.starting_levels:
                 # print("Starting Level: ", level.prefix, level.name)
@@ -1235,7 +1249,8 @@ class Q1World(World):
         # Can fail now if we don't even have enough slots for our required items
         if len(itempool) > len(used_locations):
             raise RuntimeError(
-                "Not enough locations for all mandatory items with these settings!"
+                "\nNot enough locations for all mandatory items with these settings!\n"
+                "Increase included_locations_preset or episode count."
             )
 
         # Add one copy of each remaining weapon to the pool

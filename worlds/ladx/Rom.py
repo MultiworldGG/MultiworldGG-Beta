@@ -10,7 +10,8 @@ import binascii
 import pickle
 import logging
 from typing import TYPE_CHECKING
-from . import Common
+from Options import OptionError
+from .Common import *
 from .LADXR import generator
 from .LADXR.main import get_parser
 from .LADXR.hints import generate_hint_texts
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
     from . import LinksAwakeningWorld
 
 class LADXPatchExtensions(worlds.Files.APPatchExtension):
-    game = Common.LINKS_AWAKENING
+    game = LINKS_AWAKENING
 
     @staticmethod
     def generate_rom(caller: worlds.Files.APProcedurePatch, rom: bytes, data_file: str) -> bytes:
@@ -43,8 +44,8 @@ class LADXPatchExtensions(worlds.Files.APPatchExtension):
 
 class LADXProcedurePatch(worlds.Files.APProcedurePatch):
     hash = LADX_HASH
-    game = Common.LINKS_AWAKENING
-    patch_file_ending: str = Common.SUFFIX
+    game = LINKS_AWAKENING
+    patch_file_ending: str = ".apladxb"
     result_file_ending: str = ".gbc"
 
     procedure = [
@@ -128,7 +129,7 @@ def get_base_rom_bytes(file_name: str = "") -> bytes:
 def get_base_rom_path(file_name: str = "") -> str:
     options = settings.get_settings()
     if not file_name:
-        file_name = options[f"{Common.DIRECTORY}_options"]["rom_file"]
+        file_name = options["ladx_beta_options"]["rom_file"]
     if not os.path.exists(file_name):
         file_name = Utils.user_path(file_name)
     return file_name
@@ -136,17 +137,17 @@ def get_base_rom_path(file_name: str = "") -> str:
 
 def apply_overrides(patch_data: dict) -> None:
     host_settings = settings.get_settings()
-    option_overrides = host_settings[f"{Common.DIRECTORY}_options"].get("option_overrides")
+    option_overrides = host_settings["ladx_beta_options"].get("option_overrides")
     if not option_overrides:
         return
     wrapped_overrides = {
-        "game": Common.LINKS_AWAKENING,
-        Common.LINKS_AWAKENING: option_overrides,
+        "game": LINKS_AWAKENING,
+        LINKS_AWAKENING: option_overrides,
     }
     from Generate import roll_settings
     try:
         rolled_settings = roll_settings(wrapped_overrides)
-    except:
+    except OptionError:
         logger = logging.getLogger("Link's Awakening Logger")
         logger.warning("Failed to apply option overrides, check that they are formatted correctly.")
         return

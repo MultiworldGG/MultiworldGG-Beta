@@ -95,12 +95,11 @@ class GSTLASettings(settings.Group):
 
 
 class GSTLAWorld(World):
-    """
-    Golden Sun: The Lost Age is a 2002 role-playing video game for the Game Boy Advance, developed by Camelot and published by Nintendo. 
-    It is the second installment in the Golden Sun series. 
-    """
+    """Golden Sun The Lost Age puts the player into the roles of an Adept named Felix and his allies
+       as they seek to restore the power of Alchemy to the world of Weyard. Along the way, the player 
+       uses Psynergy to defeat enemies and discover new locations, help out local populations, 
+       and find elemental Djinn which augment the character's powers."""
     game = "Golden Sun The Lost Age"
-    author: str = "Dragion"
     options_dataclass: ClassVar[Type[PerGameCommonOptions]] = GSTLAOptions
     options: GSTLAOptions
     data_version = 1

@@ -68,7 +68,6 @@ class WargrooveWorld(World):
     options_dataclass = WargrooveOptions
     settings: typing.ClassVar[WargrooveSettings]
     game = "Wargroove"
-    author: str = "FlySniper"
     topology_present = True
     web = WargrooveWeb()
 

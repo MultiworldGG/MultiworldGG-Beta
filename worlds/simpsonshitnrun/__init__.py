@@ -4,6 +4,7 @@ import os
 import json
 import pkgutil
 import re
+from typing import Any, Dict, TextIO
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -33,7 +34,7 @@ from .hooks.World import \
     before_create_item, after_create_item, \
     before_set_rules, after_set_rules, \
     before_generate_basic, after_generate_basic, \
-    before_fill_slot_data, after_fill_slot_data, before_write_spoiler, card_table
+    before_fill_slot_data, after_fill_slot_data, before_write_spoiler
 from .hooks.Data import hook_interpret_slot_data
 
 from .SHARContainer import gen
@@ -47,7 +48,7 @@ class SimpsonsHitAndRunWorld(World):
     options_dataclass = SimpsonsHitAndRunOptions
     data_version = 2
     required_client_version = (0, 5, 0)
-    apworld_version = "0.3.5"
+    apworld_version = "0.3.9"
     # These properties are set from the imports of the same name above.
     item_table = item_table
     location_table = location_table # this is likely imported from Data instead of Locations because the Game Complete location should not be in here, but is used for lookups
@@ -67,7 +68,9 @@ class SimpsonsHitAndRunWorld(World):
     location_name_groups = location_name_groups
     victory_names = victory_names
 
+    card_table = []
     mission_locks = {}
+    progcars = []
     vehicle_item_to_vehicle = {
         "ambul": "Ambulance",
         "apu_v": "Longhorn",
@@ -94,7 +97,7 @@ class SimpsonsHitAndRunWorld(World):
         "cLimo": "Limo",
         "cMilk": "Milk Truck",
         "cNerd": "Nerd Car",
-        "cNonup": "Nonuplets Van",
+        "cNonup": "Nonuplets Minivan",
         "coffin": "Coffin Car",
         "comic_v": "Kremlin",
         "compactA": "Compact Car",
@@ -153,17 +156,33 @@ class SimpsonsHitAndRunWorld(World):
         "tt": "Audi TT"
     }
 
-    def interpret_slot_data(self, slot_data: dict[str, any]):
-        #this is called by tools like UT
+    ut_can_gen_without_yaml = True
+    @staticmethod
+    def interpret_slot_data(slot_data: Dict[str, Any]) -> Dict[str, Any]:
+        return slot_data
 
-        regen = False
-        for key, value in slot_data.items():
-            if key in self.options_dataclass.type_hints:
-                getattr(self.options, key).value = value
-                regen = True
+    def generate_early(self) -> None:
+        if self.options.cardlogic != 0:
+            raise OptionError("Chosen cardlogic level is not implemented.")
 
-        regen = hook_interpret_slot_data(self, self.player, slot_data) or regen
-        return regen
+        if self.options.wasplogic == 1 or self.options.wasplogic == 2:
+            raise OptionError("Chosen wasplogic level is not implemented.")
+
+        if hasattr(self.multiworld, "re_gen_passthrough"):
+            if self.game in self.multiworld.re_gen_passthrough:
+                print("Getting UT slot data.")
+                passthrough = self.multiworld.re_gen_passthrough[self.game]
+
+                for key in vars(self.options):
+                    if key in passthrough:
+                        option = getattr(self.options, key)
+                        if hasattr(option, "value"):
+                            option.value = passthrough[key]
+
+                self.mission_locks = passthrough["missionlocks"]
+                self.progcars = passthrough["progcars"]
+
+
 
     @classmethod
     def stage_assert_generate(cls, multiworld) -> None:
@@ -172,6 +191,50 @@ class SimpsonsHitAndRunWorld(World):
 
     def create_regions(self):
         before_create_regions(self, self.multiworld, self.player)
+        locbk = {}
+
+        if (self.options.missionlocks != 0):
+            if not hasattr(self.multiworld, "generation_is_fake"):
+                carlocks = self.random.sample(
+                    list(self.vehicle_item_to_vehicle.keys()),
+                    int(len(self.vehicle_item_to_vehicle) * (self.options.missionlocks / 100))
+                )
+                missions = self.random.sample(range(1, 50), len(carlocks))
+                print(len(self.mission_locks))
+                self.mission_locks = dict(zip(missions, carlocks))
+
+            level_bases = {
+                1: 122289,
+                2: 122300,
+                3: 122311,
+                4: 122322,
+                5: 122333,
+                6: 122344,
+                7: 122355,
+            }
+
+            for m, car in self.mission_locks.items():
+                m = int(m)
+                item = self.item_name_to_item[self.vehicle_item_to_vehicle[car]]
+                item.pop("useful", None)
+                if "Filler" in item.get("category", []):
+                    item["category"].remove("Filler")
+                item["progression"] = True
+                #self.multiworld.local_early_items[self.player][item["name"]] = 1
+
+                level = (m - 1) // 7 + 1
+                mission = (m - 1) % 7 + 1
+                id_number = level_bases[level] + (mission - 1)
+
+                loc = self.location_name_to_location[self.location_id_to_name[id_number]]
+                req = loc.get("requires", "")
+                locbk[loc["name"]] = req
+                if not req:
+                    loc["requires"] = f"|{item["name"]}|"
+                else:
+                    loc["requires"] = f"{req} AND |{item["name"]}|"
+        else:
+            self.mission_locks = {0 : "NO MISSIONLOCKS"}
 
         create_regions(self, self.multiworld, self.player)
 
@@ -186,8 +249,13 @@ class SimpsonsHitAndRunWorld(World):
 
         data_path = Path("data") / "cards.json"
         cards_data = json.loads(pkgutil.get_data(__name__, str(data_path)).decode())
+        self.card_table = []
 
-        after_create_regions(self, self.multiworld, self.player, cards_data)
+        for l, r in locbk.items():
+            loc = self.location_name_to_location[l]
+            loc["requires"] = r
+
+        after_create_regions(self, self.multiworld, self.player, cards_data, self.card_table)
 
     def create_items(self):
         # Generate item pool
@@ -210,23 +278,15 @@ class SimpsonsHitAndRunWorld(World):
                     level = int(match.group(1))
                     cars_by_level.setdefault(level, []).append(item)
 
-        for car in [self.random.choice(cars) for cars in cars_by_level.values()]:
-            car["progression"] = True
-
-        if (self.options.missionlocks != 0):
-            carlocks = self.random.sample(
-                list(self.vehicle_item_to_vehicle.keys()),
-                int(len(self.vehicle_item_to_vehicle) * (self.options.missionlocks / 100))
-            )
-            missions = self.random.sample(range(1, 50), len(carlocks))
-
-            self.mission_locks = dict(zip(missions, carlocks))
-
-            for car in self.mission_locks.values():
-                item = self.item_name_to_item[self.vehicle_item_to_vehicle[car]]
-                item["progression"] = True
+        if not hasattr(self.multiworld, "generation_is_fake"):
+            for car in [self.random.choice(cars) for cars in cars_by_level.values()]:
+                car.pop("useful", None)
+                car["progression"] = True
+                self.progcars.append(car)
         else:
-            self.mission_locks = {0 : "NO MISSIONLOCKS"}
+            for car in self.progcars:
+                car.pop("useful", None)
+                car["progression"] = True
 
         for name in configured_item_names.values():
             item = self.item_name_to_item[name]
@@ -407,7 +467,9 @@ class SimpsonsHitAndRunWorld(World):
                 continue
             slot_data[option_key] = get_option_value(self.multiworld, self.player, option_key)
 
-        slot_data["card_locations"] = [card["id"] for card in card_table]
+        slot_data["card_locations"] = [card["id"] for card in self.card_table]
+        slot_data["missionlocks"] = self.mission_locks
+        slot_data["progcars"] = self.progcars
         slot_data["VerifyID"] = f"AP-{self.multiworld.seed_name}-P{self.player}-{self.multiworld.get_file_safe_player_name(self.player)}"
 
         slot_data = after_fill_slot_data(slot_data, self, self.multiworld, self.player)
@@ -428,7 +490,7 @@ class SimpsonsHitAndRunWorld(World):
             filename,
             f"AP-{self.multiworld.seed_name}-P{self.player}-{self.multiworld.get_file_safe_player_name(self.player)}",
             f"AP-{self.multiworld.seed_name}-P{self.player}",
-            card_table,
+            self.card_table,
             traffic_table,
             self.mission_locks,
             self.player
@@ -436,6 +498,29 @@ class SimpsonsHitAndRunWorld(World):
 
     def write_spoiler(self, spoiler_handle):
         before_write_spoiler(self, self.multiworld, spoiler_handle)
+
+        if self.options.missionlocks:
+            level_bases = {
+                1: 122289,
+                2: 122300,
+                3: 122311,
+                4: 122322,
+                5: 122333,
+                6: 122344,
+                7: 122355,
+            }
+            spoiler_handle.write(f"\n{self.multiworld.get_file_safe_player_name(self.player)} Mission Locks\n")
+            for m, car in self.mission_locks.items():
+                item = self.item_name_to_item[self.vehicle_item_to_vehicle[car]]
+
+                level = (m - 1) // 7 + 1
+                mission = (m - 1) % 7 + 1
+                id_number = level_bases[level] + (mission - 1)
+
+                loc = self.location_name_to_location[self.location_id_to_name[id_number]]
+
+                spoiler_handle.write(f"{m}: {loc["name"]} requires {item["name"]}\n")
+
 
     ###
     # Non-standard AP world methods
@@ -483,7 +568,6 @@ class SimpsonsHitAndRunWorld(World):
                     logging.warning("Could not remove enough non-progression items from the pool.")
                     break
                 item_pool.remove(popped)
-
         return item_pool
 
     def get_item_counts(self, player: Optional[int] = None, reset: bool = False) -> dict[str, int]:

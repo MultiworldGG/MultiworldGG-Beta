@@ -31,23 +31,15 @@ import uuid
 ## The fill_slot_data method will be used to send data to the client for later use, like deathlink.
 ########################################################################################
 
-card_table = []
-
 # Called before regions and locations are created. Not clear why you'd want this, but it's here. Victory location is included, but Victory event is not placed yet.
 def before_create_regions(world: World, multiworld: MultiWorld, player: int):
     pass
 
 # Called after regions and locations are created, in case you want to see or modify that information. Victory location is included.
-def after_create_regions(world: World, multiworld: MultiWorld, player: int, cards_data):
+def after_create_regions(world: World, multiworld: MultiWorld, player: int, cards_data, card_table):
     # Use this hook to remove locations from the world
 
     all_chosen_card_names = []
-
-    if world.options.cardlogic != 0:
-        raise OptionError("Chosen cardlogic level is not implemented.")
-
-    if world.options.wasplogic == 1 or world.options.wasplogic == 2:
-        raise OptionError("Chosen wasplogic level is not implemented.")
 
     if world.options.cardlogic == 0:
         logic = 'carless'

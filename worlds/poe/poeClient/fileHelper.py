@@ -255,8 +255,10 @@ def build_world_key(ctx: "PathOfExileContext") -> str:
     Build a unique key for the world based on the context.
     This key is used to store and retrieve settings for the specific world.
     """
+    if ctx is None:
+        return "unconnected"
     world_prefix = ctx.slot_data.get('poe-uuid', '')
-    return f"world {str((ctx.seed_name if ctx.seed_name is not None else '') + world_prefix + (ctx.username if ctx.username is not None else ''))}"
+    return f"world {str((ctx.seed_name if ctx.seed_name is not None else '') + world_prefix + " : " + (ctx.username if ctx.username is not None else ''))}"
 
 async def save_settings(ctx: "PathOfExileContext", path: Path = settings_file_path):
     # Read existing settings first
@@ -274,7 +276,9 @@ async def save_settings(ctx: "PathOfExileContext", path: Path = settings_file_pa
             "client_txt": str(ctx.client_text_path),
             "last_char": str(ctx.character_name),
             "base_item_filter": str(ctx.base_item_filter),
-            "poe_doc_path": str(ctx.poe_doc_path)
+            "poe_doc_path": str(ctx.poe_doc_path),
+            "whisper_updates": str(ctx.whisper_updates_enabled),
+            "already_received_items": ctx.last_received_item_ids,
         }
 
         # Add/update the world entry in existing settings
@@ -317,6 +321,9 @@ async def load_settings(ctx: "PathOfExileContext", path: Path = settings_file_pa
                                              default_settings.get("client_txt", find_possible_client_txt_path())),
             "last_char": world_settings.get("last_char", default_settings.get("last_char")),
             "base_item_filter": world_settings.get("base_item_filter", default_settings.get("base_item_filter")),
+            "whisper_updates": world_settings.get("whisper_updates", default_settings.get("whisper_updates", None)),
+            # List of item IDs already received for whisper updates. Not saved to defaults, nor loaded from defaults.
+            "already_received_items": world_settings.get("already_received_items", []),
         }
 
         return loaded_data

@@ -2,9 +2,9 @@
 
 - Simpsons Hit And Run PC release - Created and tested on the English release but *should* work on other versions.
 - [Lucas' Mod Manager](https://modbakery.donutteam.com/releases/view/6)
-- [MultiworldGG](https://multiworld.gg/)
+- [Archipelago](https://archipelago.gg/)
 - The latest release of the [client/memory manager and the lmlm mod](https://github.com/nmize1/AP-SHARRandomizer/releases/latest)
-- The latest release of the [apworld](https://github.com/nmize1/Archipelago/releases/latest) (shipping with MWGG)
+- The latest release of the [apworld](https://github.com/nmize1/Archipelago/releases/latest).
 - [.NET 8 (x86)](https://dotnet.microsoft.com/en-us/download) (**NOT x64**)
 
 # Install Lucas' Mod Manager, the lmlm mod, and the client/memory monitor mod.
@@ -18,7 +18,7 @@
 - Finally, extract SHARRandomizer.zip where ever you'd like.
 
 # Connecting and Playing
-- Download the Config file by going to the MultiworldGG Room link and clicking "Download Patch File"
+- Download the Config file by going to the Archipelago Room link and clicking "Download Patch File"
 
 - Extract the "SHAR.ini" file from the downloaded .zip and place it in "Documents\My Games\Lucas' Simpsons Hit & Run Mod Launcher\Saved Games\APSHARRandomizer" If that folder doesn't exist, create it.
 
