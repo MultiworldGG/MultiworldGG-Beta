@@ -369,6 +369,9 @@
 # Phantom Hourglass
 /worlds/tloz_ph/ @carrotinator
 
+# Phoenotopia
+/worlds/phoa/ @Amphyros
+
 # Placid Plastic Duck Simulator
 /worlds/placidplasticducksim/ @SWCreeperKing
 
@@ -395,6 +398,9 @@
 
 # Quake 1
 /worlds/quake/ @randomcodegen
+
+# Rabi Ribi
+/worlds/rabi_ribi/ @tdkollins
 
 # Raft
 /worlds/raft/ @SunnyBat

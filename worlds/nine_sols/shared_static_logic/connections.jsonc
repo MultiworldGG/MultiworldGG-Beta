@@ -14,7 +14,9 @@
 
     // Apeman Facility (Elevator)
     { "from": "AFE - Upper Root Node", "to": "AFE - Between Root Nodes", "requires": [ { "anyOf": [
-        { "item": "Grapple" }, { "item": "Air Dash" }, { "item": "Cloud Leap" }
+        { "item": "Grapple" },
+        [ { "item": "Air Dash" }, { "item": "Ledge Grab" } ],
+        { "item": "Cloud Leap" }
         // T-Dash works, but there's no enemy on this side. CS-Dash is too short.
         // Bow hover from the pagoda works, but you need AD or CL to get up there anyway.
         // Then the arena happens to require exactly Grapple OR (AD OR T-Dash) OR CL, so no change there.
@@ -24,7 +26,9 @@
         { "item": "Grapple" }, { "item": "Air Dash" }, { "item": "Cloud Leap" } // to reach the arena's upper enemy
     ] } ] }, // on logic_level: easy, this requires: [] because you can T-dash
     { "from": "AFE - Between Root Nodes", "to": "AFE - Upper Right Pagoda", "requires": [ { "anyOf": [
-        { "item": "Grapple" }, { "item": "Air Dash" }, { "item": "Cloud Leap" }
+        { "item": "Grapple" },
+        [ { "item": "Air Dash" }, { "item": "Ledge Grab" } ],
+        { "item": "Cloud Leap" }
     ] } ] }, // on logic_level: easy, AD is replaced by T-dash
     // moving boxes requires nothing to traverse (though the lower level of it is a trap without WC/LG/AD/CL),
     // which is why "Between Root Nodes" gets to remain a single region
@@ -37,6 +41,7 @@
         { "item": "Wall Climb" },
         [ { "item": "Cloud Leap" }, { "item": "Ledge Grab" } ]
     ] } ] },
+    { "from": "AFE - Lower Root Node", "to": "AFE - Statue Chest", "requires": [] }, // drop down
     { "from": "AFE - Right Exit", "to": "AFE - Baichang Arena", "requires": [] }, // one-way door
     { "from": "AFE - Baichang Arena", "to": "AFE - Lower Root Node", "requires": [
         { "item": "Cloud Leap" }
@@ -273,13 +278,15 @@
         { "anyOf": [ { "item": "Wall Climb" }, { "item": "Air Dash" } ] }
     ] }, // on logic_level: easy, just T-dash
     { "from": "CTH - Lower Left Vents", "to": "CTH - Stairs Near Large Shaft", "requires": [ { "item": "Wall Climb" } ] },
-    { "from": "CTH - Lower Left Vents", "to": "CTH - Root Node", "requires": [ { "item": "Wall Climb" } ] },
+    { "from": "CTH - Lower Left Vents", "to": "CTH - Under Root Node", "requires": [] }, // single jump is enough
+    { "from": "CTH - Under Root Node", "to": "CTH - Root Node", "requires": [ { "item": "Wall Climb" } ] },
     // on logic_level: ledge storage, wall slide works (with AD or CL setup)
-    { "from": "CTH - Root Node", "to": "CTH - Lower Left Vents", "requires": [
+    { "from": "CTH - Root Node", "to": "CTH - Under Root Node", "requires": [] }, // fall
+    { "from": "CTH - Under Root Node", "to": "CTH - Lower Left Vents", "requires": [
         { "anyOf": [ { "item": "Ledge Grab" }, { "item": "Cloud Leap" } ] }
     ] },
     { "from": "CTH - Root Node", "to": "CTH - Stairs Near Large Shaft", "requires": [] }, // one-way door
-    { "from": "CTH - Lower Left Vents", "to": "CTH - Lower Right Vents", "requires": [ { "anyOf": [
+    { "from": "CTH - Under Root Node", "to": "CTH - Lower Right Vents", "requires": [ { "anyOf": [
         { "item": "Tai-Chi Kick" },
         [ { "item": "Cloud Leap" }, { "item": "Ledge Grab" } ]
     ] } ] }, // on logic_level: easy, swift runner AND AD AND LG also works
@@ -1016,8 +1023,10 @@
     { "from": "GoSE - Lower Exit", "to": "GoSY - Upper Right Exit", "requires": [] },
 
     // Grotto of Scriptures (East)
-    { "from": "GoSE - Lower Exit", "to": "GoSE - Spike Ball Hall Floor", "requires": [ { "item": "Cloud Leap" } ] },
-    { "from": "GoSE - Spike Ball Hall Floor", "to": "GoSE - Lower Exit", "requires": [ { "item": "Cloud Leap" } ] },
+    { "from": "GoSE - Lower Exit", "to": "GoSE - Above Lower Exit", "requires": [ { "item": "Cloud Leap" } ] },
+    { "from": "GoSE - Above Lower Exit", "to": "GoSE - Lower Exit", "requires": [] },
+    { "from": "GoSE - Above Lower Exit", "to": "GoSE - Spike Ball Hall Floor", "requires": [] },
+    { "from": "GoSE - Spike Ball Hall Floor", "to": "GoSE - Above Lower Exit", "requires": [ { "item": "Cloud Leap" } ] },
     // on logic_level: ledge_storage, bow hover into parry vault might work, needs testing
     { "from": "GoSE - Spike Ball Hall Floor", "to": "GoSE - Spike Ball Hall Platforms", "requires": [
         { "item": "Cloud Leap" }, // the spike balls are slightly too large to single jump over
@@ -1378,7 +1387,7 @@
         { "anyOf": [ { "item": "Cloud Leap" }, { "item": "Air Dash" } ] }
     ] }, // you could T-dash using the flying enemy, but it tends to knock you off the rope, and then you need
     // CL OR AD to reliably get back on the rope, so I'd rather leave this out of logic
-    { "from": "TRC - Lower Mutant Spike Room", "to": "TRC - Right Stairwell", "requires": [
+    { "from": "TRC - Lower Mutant Spike Room", "to": "TRC - Lower Right Stairwell", "requires": [
         { "item": "Super Mutant Buster" } // one-way mutant barrier
     ] },
     { "from": "TRC - Ground Floor & Exits", "to": "TRC - Lower Sickbay", "requires": [
@@ -1393,8 +1402,13 @@
         { "anyOf": [ { "item": "Cloud Leap" }, { "item": "Air Dash" } ] }
     ] }, // also a precise single jump I'd rather leave out of logic
     { "from": "TRC - Upper Levels", "to": "TRC - Root Node", "requires": [] }, // one-way door
-    { "from": "TRC - Upper Levels", "to": "TRC - Right Stairwell", "requires": [] }, // fall
-    { "from": "TRC - Right Stairwell", "to": "TRC - Ground Floor & Exits", "requires": [] }, // fall
+    { "from": "TRC - Upper Levels", "to": "TRC - Mutant Barrier Platform", "requires": [] }, // fall
+    { "from": "TRC - Upper Levels", "to": "TRC - Lower Right Stairwell", "requires": [] }, // fall
+    //{ "from": "TRC - Mutant Barrier Platform", "to": "TRC - Upper Levels", "requires": [] }, // on logic_level: ledge_storage, CL + LG + AD
+    { "from": "TRC - Lower Right Stairwell", "to": "TRC - Mutant Barrier Platform", "requires": [
+        [ { "item": "Cloud Leap" }, { "item": "Ledge Grab" } ]
+    ] },
+    { "from": "TRC - Lower Right Stairwell", "to": "TRC - Ground Floor & Exits", "requires": [] }, // fall
     { "from": "TRC - Ground Floor & Exits", "to": "TRC - Dusk Guardian HQ Upper Levels", "requires": [
         { "item": "Super Mutant Buster" },
         // left node
@@ -1403,7 +1417,7 @@
         // center node
         { "region": "TRC - Upper Levels" }, // from root node level, jump left to the platform above this node
         // right node
-        { "region": "TRC - Right Stairwell" }
+        { "region": "TRC - Lower Right Stairwell" }
     ] }
     //{ "from": "TRC - Dusk Guardian HQ Upper Levels", "to": "TRC - Dusk Guardian HQ Lower Levels", "requires": [
     //    { "anyOf": [

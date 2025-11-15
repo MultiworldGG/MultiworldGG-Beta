@@ -7,6 +7,7 @@ import re
 from typing import Any, Dict, TextIO
 from pathlib import Path
 from typing import Callable, Optional
+from Options import OptionError
 
 import Utils
 from worlds.generic.Rules import forbid_items_for_player
@@ -48,7 +49,7 @@ class SimpsonsHitAndRunWorld(World):
     options_dataclass = SimpsonsHitAndRunOptions
     data_version = 2
     required_client_version = (0, 5, 0)
-    apworld_version = "0.3.9"
+    apworld_version = "0.3.11"
     # These properties are set from the imports of the same name above.
     item_table = item_table
     location_table = location_table # this is likely imported from Data instead of Locations because the Game Complete location should not be in here, but is used for lookups
@@ -176,10 +177,13 @@ class SimpsonsHitAndRunWorld(World):
                 for key in vars(self.options):
                     if key in passthrough:
                         option = getattr(self.options, key)
+                        print(f"{key} : {option}")
                         if hasattr(option, "value"):
-                            option.value = passthrough[key]
+                            value = passthrough[key]
+                            option.value = value
+                            print(f"{key} : {option} : {value}")
 
-                self.mission_locks = passthrough["missionlocks"]
+                self.mission_locks = passthrough["missionlockdic"]
                 self.progcars = passthrough["progcars"]
 
 
@@ -193,11 +197,11 @@ class SimpsonsHitAndRunWorld(World):
         before_create_regions(self, self.multiworld, self.player)
         locbk = {}
 
-        if (self.options.missionlocks != 0):
+        if self.options.missionlocks != 0:
             if not hasattr(self.multiworld, "generation_is_fake"):
                 carlocks = self.random.sample(
                     list(self.vehicle_item_to_vehicle.keys()),
-                    int(len(self.vehicle_item_to_vehicle) * (self.options.missionlocks / 100))
+                    int(49 * (self.options.missionlocks / 100))
                 )
                 missions = self.random.sample(range(1, 50), len(carlocks))
                 print(len(self.mission_locks))
@@ -230,9 +234,9 @@ class SimpsonsHitAndRunWorld(World):
                 req = loc.get("requires", "")
                 locbk[loc["name"]] = req
                 if not req:
-                    loc["requires"] = f"|{item["name"]}|"
+                    loc["requires"] = f"|{item['name']}|"
                 else:
-                    loc["requires"] = f"{req} AND |{item["name"]}|"
+                    loc["requires"] = f"{req} AND |{item['name']}|"
         else:
             self.mission_locks = {0 : "NO MISSIONLOCKS"}
 
@@ -468,7 +472,7 @@ class SimpsonsHitAndRunWorld(World):
             slot_data[option_key] = get_option_value(self.multiworld, self.player, option_key)
 
         slot_data["card_locations"] = [card["id"] for card in self.card_table]
-        slot_data["missionlocks"] = self.mission_locks
+        slot_data["missionlockdic"] = self.mission_locks
         slot_data["progcars"] = self.progcars
         slot_data["VerifyID"] = f"AP-{self.multiworld.seed_name}-P{self.player}-{self.multiworld.get_file_safe_player_name(self.player)}"
 

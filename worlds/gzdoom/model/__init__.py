@@ -90,7 +90,7 @@ def init_wads(package):
         return
     _init_done = True
 
-    gzd_dir = os.path.join(Utils.home_path(), "gzdoom")
+    gzd_dir = os.path.join(Utils.local_path("data"), "gzdoom")
     os.makedirs(os.path.join(gzd_dir, "logic"), exist_ok=True) # in-dev logic files
     os.makedirs(os.path.join(gzd_dir, "tuning"), exist_ok=True) # in-dev tuning files
 

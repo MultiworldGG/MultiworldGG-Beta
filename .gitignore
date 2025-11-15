@@ -220,6 +220,9 @@ data/sprites/remote/*.zspr
 # gzDoom
 gzdoom/*
 gzdoom/cache/*
+data/gzdoom/cache/*
+data/gzdoom/ipc/*
+data/gzdoom/gzdoom.log
 
 # Minecraft
 minecraft_versions.json

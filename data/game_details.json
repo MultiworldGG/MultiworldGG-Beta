@@ -3434,6 +3434,33 @@
         ],
         "release_date": 2007
     },
+    "Phoenotopia": {
+        "igdb_id": "136805",
+        "world_name": "Phoenotopia: Awakening",
+        "igdb_name": "Phoenotopia: Awakening",
+        "us_rating": [
+            "E10+"
+        ],
+        "player_perspectives": [
+            "Side view",
+            "Bird view / Isometric"
+        ],
+        "genres": [
+            "Platform",
+            "Role-playing (RPG)",
+            "Adventure",
+            "Indie"
+        ],
+        "themes": [
+            "Action",
+            "Fantasy",
+            "Open world"
+        ],
+        "keywords": [
+            "metroidvania","fishing","cooking","side-scrolling","world map","zelda-like"
+        ],
+        "release_date": 2020
+    },
     "Placid Plastic Duck Simulator": {
         "igdb_id": "204122",
         "world_name": "Placid Plastic Duck Simulator",
@@ -3700,6 +3727,45 @@
         ],
         "keywords": [],
         "release_date": 2003
+    },
+    "Rabi-Ribi": {
+        "igdb_id": "28545",
+        "world_name": "Rabi-Ribi",
+        "igdb_name": "Rabi-Ribi",
+        "us_rating": [
+            "T"
+        ],
+        "player_perspectives": [
+            "Side view"
+        ],
+        "genres": [
+            "Platform",
+            "Role-playing (RPG)",
+            "Adventure",
+            "Indie",
+            "Arcade"
+        ],
+        "themes": [
+            "Action",
+            "Fantasy"
+        ],
+        "keywords": [
+            "exploration",
+            "anime",
+            "wizards",
+            "magic",
+            "2d",
+            "metroidvania",
+            "rabbit",
+            "bulelt hell",
+            "female protagonist",
+            "action-adventure",
+            "labyrinth",
+            "fairy",
+            "cute",
+            "pixel graphics"
+        ],
+        "release_date": 2016
     },
     "Raft": {
         "igdb_id": "27082",

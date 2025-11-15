@@ -74,7 +74,7 @@ class StardewWebWorld(WebWorld):
         "English",
         "setup_en.md",
         "setup/en",
-        ["KaitoKid", "Jouramie", "Witchybun (Mod Support)", "Exempt-Medic (Proofreading)"]
+        ["Kaito Kid", "Jouramie", "Witchybun (Mod Support)", "Exempt-Medic (Proofreading)"]
     )
 
     setup_fr = Tutorial(
@@ -117,7 +117,6 @@ class StardewValleyWorld(World):
     befriend villagers, and uncover dark secrets.
     """
     game = STARDEW_VALLEY
-    author: str = "Kaito Kid & Jouramie"
     topology_present = False
 
     item_name_to_id = {name: data.code for name, data in item_table.items()}

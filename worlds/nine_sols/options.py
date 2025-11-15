@@ -137,26 +137,36 @@ class FirstRootNode(Choice):
     The first root node you can teleport to from Four Seasons Pavilion after starting a randomized game.
     This is often referred to as your "spawn", although you technically always spawn in FSP.
 
-    Many root nodes are intentionally excluded from this list, usually because they would be "overly restrictive starts"
-    (i.e. few if any locations would be checkable with no items, especially when Grapple, Ledge Grab and Wall Climb are
-    all shuffled).
+    Many root nodes are intentionally excluded from this list, usually because if you started there
+    no locations would be checkable at the start of the game when you have no items yet.
 
-    Some first_root_nodes may require certain items to be placed early.
-    For example, if galactic_dock is your first node, Nymph or Tai-Chi Kick will be placed early.
-    See the descriptions of shuffle_grapple, shuffle_wall_climb and shuffle_ledge_grab for similar cases.
+    Some first_root_nodes will force items to be placed early, since the randomizer would be unbeatable otherwise:
+    - galactic_dock early-places one of Nymph or Tai-Chi Kick
+    - central_transport_hub early-places Tai-Chi Kick
+    - factory_underground early-places one of Air Dash or Cloud Leap
+    - inner_warehouse early-places Wall Climb and one of Cloud Leap, Air Dash or Ledge Grab
+    - power_reservoir_west early-places one of Cloud Leap, Air Dash or Tai-Chi Kick
+    See the descriptions of shuffle_grapple, shuffle_wall_climb and shuffle_ledge_grab for additional cases.
     """
     display_name = "First Root Node"
     default = 0
-    option_apeman_facility_monitoring = 0
-    option_galactic_dock = 1
-    option_power_reservoir_east = 2
-    option_lake_yaochi_ruins = 3
-    option_yinglong_canal = 4
-    option_factory_great_hall = 5
-    option_outer_warehouse = 6
-    option_grotto_of_scriptures_entry = 7
-    option_grotto_of_scriptures_east = 8
-    option_grotto_of_scriptures_west = 9
+    option_agrarian_hall = 1
+    option_apeman_facility_depths = 2
+    option_apeman_facility_monitoring = 0  # default
+    option_central_transport_hub = 3
+    option_factory_great_hall = 4
+    option_factory_underground = 5
+    option_galactic_dock = 6
+    option_outer_warehouse = 7
+    option_grotto_of_scriptures_entry = 8
+    option_grotto_of_scriptures_east = 9
+    option_grotto_of_scriptures_west = 10
+    option_inner_warehouse = 11
+    option_lake_yaochi_ruins = 12
+    option_power_reservoir_east = 13
+    option_power_reservoir_west = 14
+    option_radiant_pagoda = 15
+    option_yinglong_canal = 16
 
 
 class ShuffleGrapple(Toggle):

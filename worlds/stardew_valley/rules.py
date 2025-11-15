@@ -141,7 +141,6 @@ def set_rules(world):
     set_craftsanity_rules(all_location_names, logic, rule_collector, world_options)
     set_booksanity_rules(logic, rule_collector, world_content)
     set_isolated_locations_rules(logic, rule_collector, trash_bear_requests)
-    set_traveling_merchant_day_rules(logic, rule_collector)
     set_arcade_machine_rules(logic, rule_collector, world_options)
     set_movie_rules(logic, rule_collector, world_options, world_content)
     set_secrets_rules(logic, rule_collector, world_options, world_content)
@@ -243,7 +242,7 @@ def set_entrance_rules(logic: StardewLogic, rule_collector: StardewRuleCollector
     set_skull_cavern_floor_entrance_rules(logic, rule_collector)
     set_blacksmith_entrance_rules(logic, rule_collector)
     set_skill_entrance_rules(logic, rule_collector, content)
-    set_traveling_merchant_day_rules(logic, rule_collector)
+    set_traveling_merchant_day_entrance_rules(logic, rule_collector)
     set_dangerous_mine_rules(logic, rule_collector, content)
 
     rule_collector.set_entrance_rule(Entrance.enter_tide_pools, logic.received("Beach Bridge") | logic.mod.magic.can_blink())
@@ -325,7 +324,12 @@ def set_bookseller_rules(logic, rule_collector):
 
 def set_raccoon_rules(logic: StardewLogic, rule_collector: StardewRuleCollector, bundle_rooms: List[BundleRoom], world_options: StardewValleyOptions):
     rule_collector.set_entrance_rule(LogicEntrance.has_giant_stump, logic.received(CommunityUpgrade.raccoon))
-    rule_collector.set_entrance_rule(LogicEntrance.buy_from_raccoon, logic.quest.has_raccoon_shop())
+    rule_collector.set_entrance_rule(LogicEntrance.buy_from_raccoon_1, logic.quest.has_raccoon_shop())
+    rule_collector.set_entrance_rule(LogicEntrance.buy_from_raccoon_2, logic.quest.has_raccoon_shop(2))
+    rule_collector.set_entrance_rule(LogicEntrance.buy_from_raccoon_3, logic.quest.has_raccoon_shop(3))
+    rule_collector.set_entrance_rule(LogicEntrance.buy_from_raccoon_4, logic.quest.has_raccoon_shop(4))
+    rule_collector.set_entrance_rule(LogicEntrance.buy_from_raccoon_5, logic.quest.has_raccoon_shop(5))
+    rule_collector.set_entrance_rule(LogicEntrance.buy_from_raccoon_6, logic.quest.has_raccoon_shop(6))
 
     raccoon_room = next(iter(room for room in bundle_rooms if room.name == CCRoom.raccoon_requests))
     extra_raccoons = 1 if world_options.quest_locations.has_story_quests() else 0
@@ -930,7 +934,7 @@ def set_booksanity_rules(logic: StardewLogic, rule_collector: StardewRuleCollect
         rule_collector.set_location_rule(booksanity.to_location_name(book), logic.received(booksanity.progressive_lost_book, i))
 
 
-def set_traveling_merchant_day_rules(logic: StardewLogic, rule_collector: StardewRuleCollector):
+def set_traveling_merchant_day_entrance_rules(logic: StardewLogic, rule_collector: StardewRuleCollector):
     for day in Weekday.all_days:
         item_for_day = f"Traveling Merchant: {day}"
         entrance_name = f"Buy from Traveling Merchant {day}"
@@ -1032,7 +1036,7 @@ def set_secrets_rules(logic: StardewLogic, rule_collector: StardewRuleCollector,
         rule_collector.set_location_rule("Decorative Trash Can", logic.fishing.can_fish_at(Region.town))
         rule_collector.set_location_rule("Iridium Krobus", logic.fishing.can_fish_with_cast_distance(Region.forest, 7))
         rule_collector.set_location_rule("Pyramid Decal", logic.fishing.can_fish_with_cast_distance(Region.desert, 4))
-        rule_collector.set_location_rule("'Vista'", logic.fishing.can_fish_at(Region.railroad))
+        rule_collector.set_location_rule("'Vista'", logic.fishing.can_fish_at(Region.railroad) & logic.season.has_any_not_winter())
         rule_collector.set_location_rule("Wall Basket", logic.fishing.can_fish_at(Region.secret_woods))
 
     if SecretsanityOptionName.difficult in world_options.secretsanity:

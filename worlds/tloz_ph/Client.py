@@ -11,7 +11,7 @@ ROM_ADDRS = {
 
 RAM_ADDRS = {
     "game_state": (0x060C48, 1, "Main RAM"),
-    "in_cutscene": (0x060F78, 1, "Main RAM"),
+    "in_cutscene": (0x1BBCF4, 1, "Main RAM"),
 
     "link_health": (0x1CB08E, 2, "Main RAM"),
     "boat_health": (0x1FA036, 1, "Main RAM"),
@@ -148,6 +148,10 @@ class PhantomHourglassClient(DSZeldaClient):
         # Ban player from harrow if not randomized
         if ctx.slot_data["randomize_harrow"] == 0:
             write_list += [(0x1B559A, [0x18], "Main RAM")]
+
+        # Print starting hints
+        if ctx.slot_data["dungeon_hint_location"] == 0:
+            self.dungeon_hints(ctx)
 
         return write_list
 
@@ -680,7 +684,10 @@ class PhantomHourglassClient(DSZeldaClient):
             await write_memory_value(ctx, data["ammo_address"], 0, size=2, overwrite=True)
             return False
 
-        elif "Boss Key" in vanilla_item and ctx.slot_data.get("boss_key_behaviour", True):
+        elif "Boss Key" in vanilla_item :
+            # Don't do anything if vanilla bk behaviour
+            if not ctx.slot_data["boss_key_behaviour"]:
+                return True
             # Read actor id in link's held item address. For some reason it's somewhere else in GT
             if self.current_stage == 0x20:
                 bk_id = await read_memory_value(ctx, 0x1CD770, silent=True, size=2)
@@ -725,7 +732,8 @@ class PhantomHourglassClient(DSZeldaClient):
         return game_clear
 
     async def process_deathlink(self, ctx: "BizHawkClientContext", is_dead, stage, read_result):
-        if not read_result.get("drawing_sea_route", False) and not read_result["in_cutscene"]:
+        if (not read_result.get("drawing_sea_route", False) and read_result["in_cutscene"]
+                and self.current_scene not in [0x1701]):
             if ctx.last_death_link > self.last_deathlink and not is_dead:
                 # A death was received from another player, make our player die as well
                 if stage == 0:
@@ -823,6 +831,7 @@ class PhantomHourglassClient(DSZeldaClient):
         return None
 
     async def update_stored_entrances(self, ctx: "BizHawkClientContext"):
+        self.visited_entrances.clear()
         storage_key = f"ph_checked_entrances_{ctx.slot}_{ctx.team}"
         stored_entrances = await ctx.send_msgs([{
                 "cmd": "Get",
@@ -838,6 +847,7 @@ class PhantomHourglassClient(DSZeldaClient):
         storage_key = f"ph_checked_entrances_{ctx.slot}_{ctx.team}"
         self.visited_entrances.add(detect_data.id)
         self.visited_entrances.add(exit_data.id)
+        print(f"visited: {self.visited_entrances} old {old_visited_entrances}")
         print(f"sending entrances: {self.visited_entrances-old_visited_entrances}")
         if len(old_visited_entrances) != len(self.visited_entrances):
             await ctx.send_msgs([{
@@ -890,7 +900,7 @@ class PhantomHourglassClient(DSZeldaClient):
             else:
                 logger.info(f"You have no required dungeons.")
 
-
+        # Send excluded dungeon hints
         if ctx.slot_data["excluded_dungeon_hints"]:
             dungeons = ctx.slot_data["required_dungeons"]
             excluded = [d for d in DUNGEON_NAMES[2:] if d not in dungeons]

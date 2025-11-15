@@ -9,7 +9,6 @@ from itertools import chain
 class Constants:
     """Constants for the FM world."""
     GAME_NAME: str = "Yu-Gi-Oh! Forbidden Memories"
-    AUTHOR: str = "sg4e"
     FM_ID_OFFSET: int = 0x4B1DDE000000
     CARD_ID_OFFSET: int = FM_ID_OFFSET + 0x00
     DUELIST_ID_OFFSET: int = FM_ID_OFFSET + 0x1000

@@ -1424,7 +1424,7 @@ class DSZeldaClient(BizHawkClient):
 
     async def _load_local_locations(self, ctx, scene):
         # Load locations in room into loop
-        self.locations_in_scene = self.location_area_to_watches.get(scene, {})
+        self.locations_in_scene = self.location_area_to_watches.get(scene, {}).copy()
         print(f"Locations in scene {scene}: {self.locations_in_scene.keys()}")
         self.watches = {}
         sram_read_list = {}

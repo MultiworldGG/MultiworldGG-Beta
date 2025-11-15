@@ -22,7 +22,7 @@ class WadLogicLoader:
         self.wad = DoomWad(self.name)
         self.external = external
         self.counters = defaultdict(lambda: 0)
-        os.makedirs(os.path.join(Utils.home_path(), "gzdoom/cache"), exist_ok=True)
+        os.makedirs(os.path.join(Utils.local_path("data"), "gzdoom/cache"), exist_ok=True)
 
     def __enter__(self):
         return self
@@ -36,7 +36,7 @@ class WadLogicLoader:
         return True
 
     def cache_path(self, type):
-        gzd_dir = os.path.join(Utils.home_path(), "gzdoom")
+        gzd_dir = os.path.join(Utils.local_path("data"), "gzdoom")
         if self.external:
             suffix = "ext.pickle"
         else:

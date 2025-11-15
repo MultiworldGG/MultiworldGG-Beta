@@ -97,3 +97,19 @@ In order to access Day 2 and 3, you need to collect an amount of `Raft Materials
 ### Why can't I use the summon I obtained?
 
 You need at least one magic spell before you can use summons.
+
+## Troubleshooting
+
+### Why am I not sending or receiving any items despite being connected to the server?
+
+Make sure you are using the KH1 Client and not the Text Client. You will need to open the client manually via the Archipelago Launcher.
+
+### Why don't I have any worlds on the world map?
+
+If you have any of these symptoms: you find that the title screen does not have the Archipelago logo, that you had to do the entirety of Dive to the Heart, that you do not warp to the world map after choosing your Dream Weapons, or that when you get to the world map there are no worlds there;<br><br>
+
+This is likely due to the mod not being applied properly. First, reinstall both Panacea and Lua Backend via the Setup Wizard under Settings. Second, make sure the seed mod is enabled [x]. Finally, ensure the game builds with no errors after selecting Build and Run under Mod Loader.
+
+### Why did the game send checks that I had not collected?
+
+The client caches your inventory and does not clear the cache when switching slots. The game also does something similar, even if backed out to the title screen. Therefore, it's highly encouraged, whenever switching slots or connecting to a different server, to always fully close both the game and the client first.

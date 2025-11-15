@@ -126,6 +126,7 @@ Currently, the following games are supported:
 * Paper Mario: The Thousand-Year Door
 * Path of Exile
 * Peaks of Yore
+* Phoenotopia: Awakening
 * Placid Plastic Duck Simulator
 * Pokémon Crystal
 * Pokémon Emerald
@@ -135,6 +136,7 @@ Currently, the following games are supported:
 * Powerwash Simulator
 * Pseudoregalia
 * Quake 1
+* Rabi-Ribi
 * Raft
 * Ratchet & Clank 2
 * Resident Evil 2 Remake
