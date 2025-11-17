@@ -466,6 +466,37 @@
         ],
         "release_date": 2000
     },
+    "Battle for Bikini Bottom": {
+        "igdb_id": "2765",
+        "world_name": "Battle for Bikini Bottom",
+        "igdb_name": "SpongeBob SquarePants: Battle For Bikini Bottom",
+        "us_rating": [
+            "E"
+        ],
+        "player_perspectives": [
+            "Third person"
+        ],
+        "genres": [
+            "Platform",
+            "Adventure"
+        ],
+        "themes": [
+            "Action",
+            "Comedy"
+        ],
+        "keywords": [
+            "underwater",
+            "robots",
+            "compilation",
+            "based on - tv show",
+            "kid friendly",
+            "talking animals",
+            "3d platformer",
+            "squirrel",
+            "cartoony"
+        ],
+        "release_date": 2003
+    },
     "Blasphemous": {
         "igdb_id": "26820",
         "world_name": "Blasphemous",
@@ -3337,6 +3368,40 @@
             "passive ability"
         ],
         "release_date": 2013
+    },
+    "PEAK": {
+        "igdb_id": "238690",
+        "world_name": "PEAK",
+        "igdb_name": "PEAK",
+        "us_rating": [],
+        "player_perspectives": [
+            "First person",
+            "Third person"
+        ],
+        "genres": [
+            "Platform",
+            "Adventure",
+            "Indie"
+        ],
+        "themes": [
+            "Action",
+            "Open world"
+        ],
+        "keywords": [
+            "exploration",
+            "character customization",
+            "3d",
+            "procedural generation",
+            "rock climbing",
+            "running",
+            "online co-op",
+            "nature",
+            "achievements",
+            "wall climbing",
+            "atmospheric",
+            "climbing"
+        ],
+        "release_date": 2025
     },
     "Peaks of Yore": {
         "igdb_id": "238690",

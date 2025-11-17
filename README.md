@@ -125,6 +125,7 @@ Currently, the following games are supported:
 * Paper Mario
 * Paper Mario: The Thousand-Year Door
 * Path of Exile
+* PEAK
 * Peaks of Yore
 * Phoenotopia: Awakening
 * Placid Plastic Duck Simulator
@@ -156,6 +157,7 @@ Currently, the following games are supported:
 * Sonic Adventure 2: Battle
 * Sonic Adventure DX
 * Sonic Heroes
+* Spongebob Squarepants: Battle for Bikini Bottom
 * Spyro 3: Year of the Dragon
 * StarCraft II
 * Stardew Valley

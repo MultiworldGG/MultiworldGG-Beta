@@ -4,7 +4,7 @@ Phoenotopia: Awakening a Platformer Adventure videogame you missed out on becaus
 ## What does randomization do to this game?
 Items get shuffled between the different locations in the game. These locations include key item locations, chests, gifts from NPCs, enemy and even lizard drops if you want those to be included. So each playthrough is unique.
 
-# Should I play the vanilla game before I play the randomizer?
+## Should I play the vanilla game before I play the randomizer?
 Probably yea
 
 ## WHY IS LOCATION X NOT RANDOMIZED??? I'LL SUE YOU!

@@ -363,6 +363,9 @@
 # Path of Exile
 /worlds/poe/ @stubobis1
 
+# PEAK
+/worlds/peak/ @Mickemoose
+
 # Peaks of Yore
 /worlds/peaks_of_yore/ @c0der23
 
@@ -464,6 +467,9 @@
 
 # Sonic Heroes
 /worlds/sonic_heroes/ @xMcacutt
+
+# Spongebob Squarepants: Battle for Bikini Bottom
+/worlds/bfbb/ @Cyb3RGER
 
 # Spyro 3
 /worlds/spyro3/ @ArsonAssassin

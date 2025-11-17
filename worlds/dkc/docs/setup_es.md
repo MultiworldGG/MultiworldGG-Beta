@@ -8,7 +8,7 @@
    - [snes9x-nwa](https://github.com/Skarsnik/snes9x-emunwa/releases)
    - [snes9x-rr](https://github.com/gocha/snes9x-rr/releases)
    - [BSNES-plus](https://github.com/black-sliver/bsnes-plus). **Nota:** No usen el `Reset` del emulador, causa corrupción de RAM y puede mandar Checks de manera aleatoria.
-- Una copia de tu Donkey Kong Country v1.0 US proveniente del cartucho original. La comunidad de MultiworldGG no puede proveer ni uno de estos.
+- Una copia de tu Donkey Kong Country v1.1 US proveniente del cartucho original. La comunidad de MultiworldGG no puede proveer ni uno de estos.
    - SNES v1.0 US MD5: `30c5f292ff4cbbfcc00fd8fa96c2de3b`
 
 ## Software opcional

@@ -8,7 +8,7 @@ from settings import get_settings
 from .RomData import RomData
 from .Util import *
 from .asm import asm_files
-from .text import simple_hex, normalize_text
+from .text import normalize_text
 from .z80asm.Assembler import Z80Assembler, GameboyAddress
 from .z80asm.Util import parse_hex_string_to_value
 from ..Hints import make_hint_texts
@@ -34,6 +34,8 @@ def get_asm_files(patch_data):
         files += asm_files["instant_rosa"]
     if get_settings()["tloz_oos_options"]["remove_music"]:
         files += asm_files["mute_music"]
+    if patch_data["options"]["cross_items"]:
+        files += asm_files["cross_items"]
     if patch_data["options"]["secret_locations"]:
         files += asm_files["secret_locations"]
     return files
@@ -398,10 +400,15 @@ def set_player_start_inventory(assembler: Z80Assembler, patch_data):
     if "Progressive Shield" in start_inventory_data:
         start_inventory_changes[parse_hex_string_to_value(DEFINES["wShieldLevel"])] \
             = start_inventory_data["Progressive Shield"]
+    bombs = 0
     if "Bombs (10)" in start_inventory_data:
+        bombs += start_inventory_data["Bombs (10)"] * 0x10
+    if "Bombs (20)" in start_inventory_data:
+        bombs += start_inventory_data["Bombs (20)"] * 0x20
+    if bombs > 0:
         start_inventory_changes[parse_hex_string_to_value(DEFINES["wCurrentBombs"])] \
             = start_inventory_changes[parse_hex_string_to_value(DEFINES["wMaxBombs"])] \
-            = min(start_inventory_data["Bombs (10)"] * 0x10, 0x99)
+            = min(bombs, 0x99)
         # The bomb amounts are stored in decimal
     if "Progressive Sword" in start_inventory_data:
         start_inventory_changes[0xc6ac] = start_inventory_data["Progressive Sword"]
@@ -419,9 +426,25 @@ def set_player_start_inventory(assembler: Z80Assembler, patch_data):
     if "Progressive Feather" in start_inventory_data:
         start_inventory_changes[parse_hex_string_to_value(DEFINES["wFeatherLevel"])] \
             = start_inventory_data["Progressive Feather"]
+    if "Switch Hook" in start_inventory_data:
+        start_inventory_changes[parse_hex_string_to_value(DEFINES["wSwitchHookLevel"])] \
+            = start_inventory_data["Switch Hook"]
+    bombchus = 0
+    if "Bombchus (10)" in start_inventory_data:
+        bombchus += start_inventory_data["Bombchus (10)"] * 0x10
+    if "Bombchus (20)" in start_inventory_data:
+        bombchus += start_inventory_data["Bombchus (20)"] * 0x20
+    if bombchus > 0:
+        start_inventory_changes[parse_hex_string_to_value(DEFINES["wNumBombchus"])] \
+            = start_inventory_changes[parse_hex_string_to_value(DEFINES["wMaxBombchus"])] \
+            = min(bombchus, 0x99)
+        # The bombchus amounts are stored in decimal
+
     seed_amount = 0
     if "Progressive Slingshot" in start_inventory_data:
         start_inventory_changes[0xc6b3] = start_inventory_data["Progressive Slingshot"]  # Slingshot level
+        seed_amount = 0x20
+    if "Seed Shooter" in start_inventory_data:
         seed_amount = 0x20
     if "Seed Satchel" in start_inventory_data:
         satchel_level = start_inventory_data["Seed Satchel"]
@@ -538,6 +561,9 @@ def alter_treasure_types(rom: RomData):
     # Make bombs increase max carriable quantity when obtained from treasures,
     # not drops (see asm/seasons/bomb_bag_behavior)
     set_treasure_data(rom, "Bombs (10)", None, None, 0x90)
+    set_treasure_data(rom, "Bombs (20)", 0x94, None, 0xa0)
+    set_treasure_data(rom, "Bombchus (10)", None, None, 0x90)
+    set_treasure_data(rom, "Bombchus (20)", None, None, 0xa0)
 
     # Colored Rod of Seasons to make them recognizable
     set_treasure_data(rom, "Rod of Seasons (Spring)", None, 0x4f)
@@ -597,6 +623,7 @@ def set_fixed_subrosia_seaside_location(rom: RomData, patch_data):
 
 
 def set_file_select_text(assembler: Z80Assembler, slot_name: str):
+    from .. import OracleOfSeasonsWorld
     def char_to_tile(c: str) -> int:
         if "0" <= c <= "9":
             return ord(c) - 0x20
@@ -611,7 +638,9 @@ def set_file_select_text(assembler: Z80Assembler, slot_name: str):
         else:
             return 0xfc  # All other chars are blank spaces
 
-    row_1 = [char_to_tile(c) for c in f"ARCHIPELAGO {VERSION[0]}.{VERSION[1]}".ljust(16, " ")]
+    row_1 = [char_to_tile(c) for c in
+             f"ARCHIPELAGO {OracleOfSeasonsWorld.world_version.major}.{OracleOfSeasonsWorld.world_version.minor}"
+             .ljust(16, " ")]
     row_2 = [char_to_tile(c) for c in slot_name.replace("-", " ").upper()]
     row_2_left_padding = int((16 - len(row_2)) / 2)
     row_2_right_padding = int(16 - row_2_left_padding - len(row_2))
@@ -644,7 +673,7 @@ def process_item_name_for_shop_text(item: Dict) -> str:
     return item_name
 
 
-def make_text_data(text: dict[str, str], patch_data):
+def make_text_data(assembler: Z80Assembler, text: dict[str, str], patch_data):
     # Process shops
     OVERWORLD_SHOPS = [
         "Horon Village: Shop",
@@ -735,6 +764,9 @@ def make_text_data(text: dict[str, str], patch_data):
     text["TX_0058"] = ("You got 🟥25\n"
                        "Ore Chunks⬜!")
 
+    # Brand-new texts, for 20 bombs
+    text["TX_0094"] = text["TX_004d"].replace("ten", "twenty")
+
     # Trade items
     # Cuccodex is fine
     text["TX_005b"] = ("You got a\n"
@@ -772,6 +804,75 @@ def make_text_data(text: dict[str, str], patch_data):
     text["TX_0065"] = ("You got a\n"
                        "\\col(84)📻🟥 Phonograph⬜!\n"
                        "What a tune!")
+
+    # Cross items
+    text["TX_003b"] = ("You got the\n"
+                       "🟥Switch Hook⬜!\n"
+                       "Shoot at an\n"
+                       "object to switch\n"
+                       "places with it.\n")  # Strange flute
+    assembler.define_byte("text.hook1.treasure", 0x3b)
+
+    text["TX_0051"] = ("You got the 🟥Long\n"
+                       "Switch⬜! Switch\n"
+                       "places with\n"
+                       "objects from a\n"
+                       "distance.")  # Warrior child heart
+    assembler.define_byte("text.hook2.treasure", 0x51)
+    if patch_data["options"]["cross_items"]:
+        # Obtain text
+        text["TX_0053"] = ("You got the\n"
+                           "🟥Cane of Somaria⬜!\n"
+                           "Use it to create\n"
+                           "blocks.")  # Warrior child heart refill
+        assembler.define_byte("text.cane.treasure", 0x53)
+
+        # text[] = ("You got the\n"
+        #                    "🟥Power Glove⬜!\n"
+        #                    "You can now lift\n"
+        #                    "heavy objects.")
+        # assembler.define_byte("text.bracelet2.treasure", )
+
+        text["TX_0054"] = ("You got the\n"
+                           "🟥Seed Shooter⬜!\n"
+                           "Pick your 🟥seeds⬜,\n"
+                           "fire, then watch\n"
+                           "them ricochet.")  # Unappraised ring
+        assembler.define_byte("text.shooter.treasure", 0x54)
+
+        # text["TX_0059"] = ("You got a\n"
+        #                    "🟥Mermaid Suit⬜!\n"
+        #                    "Press Ⓑ to dive\n"
+        #                    "and Ⓐ to use\n"
+        #                    "items.")  # L-3 ring box
+        # assembler.define_byte("text.mermaid.treasure", 0x59)
+
+        # Inventory text
+        text["TX_091d"] = ("Cane of Somaria\n"
+                           "Used to create\n"
+                           "blocks.")  # Replaces ring box 1
+        assembler.define_byte("text.cane.inventory", 0x1d)
+        text["TX_091e"] = ("Switch Hook\n"
+                           "User and target\n"
+                           "trade places.")  # Replaces ring box 2
+        assembler.define_byte("text.hook1.inventory", 0x1e)
+        text["TX_0917"] = ("Long Hook\n"
+                           "Switches places\n"
+                           "from a distance.")  # Replaces unappraised ring
+        assembler.define_byte("text.hook2.inventory", 0x1e)
+        # text["TX_0938"] = ("Power Gloves\n"
+        #                    "Used to lift\n"
+        #                    "large objects.")  # Replaces unused scent text ?
+        # assembler.define_byte("text.bracelet2.inventory", 0x38)
+        text["TX_092e"] = ("Seed Shooter\n"
+                           "Used to bounce\n"
+                           "seeds around.")  # Replaces strange flute
+        assembler.define_byte("text.shooter.inventory", 0x2e)
+        # text["TX_0937"] = ("Mermaid Suit\n"
+        #                    "The skin of the\n"
+        #                    "mythical beast.")  # Replaces unused ember text ?
+        # assembler.define_byte("text.mermaid.inventory", 0x37)
+        # Note: 3 other seemingly unused seeds follow
 
     # Appraisal text
     text["TX_301c"] = ("You got the\n"
@@ -873,18 +974,18 @@ def make_text_data(text: dict[str, str], patch_data):
 
     # Maku tree sign
     essence_count = patch_data["options"]["required_essences"]
-    text["TX_2e00"] = (f"Find 🟥{essence_count} essence{'s' if essence_count != 0 else ''}⬜\n"
+    text["TX_2e00"] = (f"Find 🟥{essence_count} essence{'s' if essence_count != 1 else ''}⬜\n"
                        "to get the seed!")
 
     # Tarm ruins sign
     jewel_count = patch_data["options"]["tarm_gate_required_jewels"]
-    text["TX_2e12"] = (f"Bring 🟩{jewel_count}⬜ jewel{'s' if jewel_count != 0 else ''}\n"
+    text["TX_2e12"] = (f"Bring 🟩{jewel_count}⬜ jewel{'s' if jewel_count != 1 else ''}\n"
                        "for the door\n"
                        "to open.")
 
     # Tree house old man
-    essence_count = patch_data["options"]["required_essences"]
-    text["TX_3601"] = text["TX_3601"].replace("knows many\n🟥essences⬜...", f"has 🟥{essence_count} essence{'s' if essence_count != 0 else ''}⬜!")
+    essence_count = patch_data["options"]["treehouse_old_man_requirement"]
+    text["TX_3601"] = text["TX_3601"].replace("knows many\n🟥essences⬜...", f"has 🟥{essence_count} essence{'s' if essence_count != 1 else ''}⬜!")
 
     # Change D8 introduction text to “Sword & Shield Dungeon” from “Sword & Shield Maze”,
     # since every other mention of it was using “Dungeon” naming

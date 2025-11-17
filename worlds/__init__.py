@@ -150,10 +150,10 @@ if apworlds:
             try:
                 apworld.read()
             except InvalidDataError as e:
-                if version_tuple < (0, 7, 200):
+                if version_tuple < (0, 7, 250):
                     logging.error(
                         f"Invalid or missing manifest file for {apworld_source.resolved_path}. "
-                        "This apworld will stop working with MultiworldGG ~v0.7.200."
+                        "This apworld will stop working with MultiworldGG ~v0.7.250."
                     )
                     logging.error(e)
                 else:

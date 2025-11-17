@@ -40,10 +40,6 @@ text_offset_split_index = 0x2c
 text_addresses_limit = GameboyAddress(0x21, 0x4f71).address_in_rom()
 
 
-def simple_hex(num: int) -> str:
-    return hex(num)[2:].rjust(2, "0")
-
-
 def normalize_text(text: str) -> str:
     normalized_text = ""
     current_line = 0

@@ -179,8 +179,8 @@ class APWorldContainer(APContainer):
         try:
             manifest = super().read_contents(opened_zipfile)
         except KeyError as e:
-            # Feature gate: archipelago.json is optional for versions < 0.7.200
-            if version_tuple < (0, 7, 200):
+            # Feature gate: archipelago.json is optional for versions < 0.7.250
+            if version_tuple < (0, 7, 250):
                 # Return empty manifest, metadata will remain None
                 return {}
             raise

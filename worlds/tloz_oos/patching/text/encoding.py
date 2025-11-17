@@ -2,9 +2,10 @@ import re
 from collections import defaultdict
 from functools import lru_cache
 from typing import List, Union, Optional
-from . import char_table, kanji_table, text_offset_split_index, text_offset_1_table_address, text_offset_2_table_address, text_table_eng_address, simple_hex, \
+from . import char_table, kanji_table, text_offset_split_index, text_offset_1_table_address, text_offset_2_table_address, text_table_eng_address, \
     text_addresses_limit
 from ..RomData import RomData
+from ..Util import simple_hex
 from ..z80asm.Assembler import GameboyAddress
 
 control_sequence_pattern = re.compile(r"""

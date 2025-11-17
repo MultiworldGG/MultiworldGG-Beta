@@ -1,7 +1,8 @@
 from typing import Optional
 
 from ..RomData import RomData
-from . import simple_hex, char_table, kanji_table, text_offset_1_table_address, text_offset_2_table_address, text_table_eng_address, text_offset_split_index
+from . import char_table, kanji_table, text_offset_1_table_address, text_offset_2_table_address, text_table_eng_address, text_offset_split_index
+from ..Util import simple_hex
 from ..z80asm.Assembler import GameboyAddress
 
 
