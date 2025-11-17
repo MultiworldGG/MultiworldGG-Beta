@@ -4,6 +4,7 @@ Data classes to store User data and hint information locally
 from __future__ import annotations
 __all__ = ("UIHint", "UIPlayerData")
 from dataclasses import dataclass
+import re
 from NetUtils import Hint, HintStatus, MWGGUIHintStatus
 from BaseClasses import ItemClassification
 from typing import Optional

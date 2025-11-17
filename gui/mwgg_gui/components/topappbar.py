@@ -122,7 +122,10 @@ class Timer(MDTopAppBarTitle):
     def on_ui_built(self):
         self.ctx = MDApp.get_running_app().ctx
         self.slot_info = self.ctx.slot_info
-        self.elapsed_time = float(persistent_load().get('client', {}).get('timer', '0'))
+        if self.ctx.timer:
+            self.start()
+        else:
+            self.elapsed_time = float(persistent_load().get('client', {}).get('timer', '0'))
         # Only schedule if not already scheduled
         if self._update_event is None:
             self._update_event = Clock.schedule_interval(self._update_timer_wrapper, 0.1)
@@ -137,7 +140,10 @@ class Timer(MDTopAppBarTitle):
     def start(self):
         """Start the timer (initial start or resume from pause)"""
         if not self.is_running:
-            self.start_time = time() - self.elapsed_time
+            if self.ctx.timer:
+                self.start_time = self.ctx.timer
+            else:
+                self.start_time = time() - self.elapsed_time
             self.has_been_started = True
             self.is_running = True
             Clock.schedule_interval(self._update_timer_wrapper, 0.1)
@@ -167,7 +173,7 @@ class Timer(MDTopAppBarTitle):
     def update_timer(self):
         """Update the elapsed time and check for goal condition"""
         # Check for countdown timer from server first
-        if hasattr(self.ctx, 'countdown_timer') and self.ctx.countdown_timer:
+        if hasattr(self.ctx, 'countdown_timer'):
             if self.ctx.countdown_timer > 0 and not self.has_been_started:
                 # Server provided a countdown - start timer as negative
                 self.elapsed_time = -self.ctx.countdown_timer  # Negative countdown
@@ -178,6 +184,7 @@ class Timer(MDTopAppBarTitle):
         
         # Normal timer operation
         if self.is_running:
+            self.start_time = self.ctx.timer
             self.elapsed_time = time() - self.start_time
             persistent_store('client', 'timer', self.elapsed_time)
             # Check for goal completion
@@ -211,23 +218,14 @@ class ServerRichTooltip(MDTooltipRich, HoverBehavior):
         super().__init__(*args, **kwargs)
         self.server_label = None  # Will be set by parent
         self.auto_dismiss = False
-    
+
     def on_leave(self, *args):
         """Override to prevent early dismissal while allowing normal KivyMD behavior"""
         # Add a small delay before dismissing to prevent accidental early dismissal
         # This gives users time to move mouse back if they accidentally moved off
-        Clock.schedule_once(self._delayed_leave, .5)
-    
-    def _delayed_leave(self, dt):
-        """Delayed leave that calls the parent's on_leave for proper dismissal"""
-        # Check if mouse is still outside tooltip bounds
-        from kivy.core.window import Window
-        mouse_pos = Window.mouse_pos
-        
-        if not self.collide_point(*mouse_pos):
-            # Clean up tooltip reference before dismissing
-            if self.server_label:
-                self.server_label.tooltip = None
+        if self.server_label:
+            Clock.schedule_once(self.server_label._delayed_leave, .5)
+        else:
             super().on_leave()
 
 class ServerLabel(MDTooltip, MDTopAppBarTitle):
@@ -441,6 +439,16 @@ You currently have [color={TEXT_COLORS['command_echo_color']}]{ctx.hint_points}[
         """Clean up when widget is removed"""
         if parent is None:
             self._connected = False
+    
+    def _delayed_leave(self, dt):
+        """Delayed leave that calls the parent's on_leave for proper dismissal"""
+        # Check if mouse is still outside tooltip bounds
+        from kivy.core.window import Window
+        mouse_pos = Window.mouse_pos
+        
+        if not self.tooltip.collide_point(*mouse_pos):
+            Clock.schedule_once(self.animation_tooltip_dismiss)
+            super().on_leave()
 
 class TopAppBar(MDTopAppBar):
     """

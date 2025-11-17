@@ -289,7 +289,8 @@ class InitContext:
         last_username = Utils.persistent_load().get('client', {}).get('last_username', "")
         last_server_hostname = Utils.persistent_load().get('client', {}).get('last_server_hostname', "multiworld.gg")
         last_server_port = str(Utils.persistent_load().get('client', {}).get('last_server_port', 38281))
-        self.server_address = urllib.parse.urlunparse(["ws", last_username, "", last_server_hostname, last_server_port, ""])
+        netloc = lambda: f"{last_username}@{last_server_hostname}:{last_server_port}" if last_username else f"{last_server_hostname}:{last_server_port}"
+        self.server_address = f"ws://{netloc()}" if netloc() else None
 
     def run_gui(self, splash_queue: Optional[Queue] = None):
         """Run the GUI as self.ui_task."""
@@ -315,7 +316,9 @@ class InitContext:
         return self._username
     
     @username.setter
-    def username(self, value: str):
+    def username(self, value: str|bytes):
+        if isinstance(value, bytes):
+            value = value.decode('utf-8')
         self._username = value
         Utils.persistent_store('client', 'last_username', value)
 
@@ -465,6 +468,10 @@ class CommonContext(InitContext):
     """Name used in Connect packet"""
     seed_name: str | None
     """Seed name that will be validated on opening a socket if present"""
+    timer: float
+    """Start time based on first location checked"""
+    admin: bool
+    """Bool to keep track of admin login state"""
 
     # locations
     locations_checked: set[int]
@@ -530,7 +537,8 @@ class CommonContext(InitContext):
         self.slot = None
         self.auth = None
         self.seed_name = None
-
+        self.timer = 0
+        self.admin = False
         self.locations_checked = set()  # local state
         self.locations_scouted = set()
         self.items_received = []
@@ -647,6 +655,8 @@ class CommonContext(InitContext):
         self.auth = None
         self.slot = None
         self.team = None
+        self.timer = 0
+        self.admin = False
         self.items_received = []
         self.locations_info = {}
         self.server_version = Version(0, 0, 0)
@@ -725,6 +735,8 @@ class CommonContext(InitContext):
         """Send new location checks to the server. Returns the set of actually new locations that were sent."""
         locations = set(locations) & self.missing_locations
         if locations:
+            if self.timer == 0:
+                await self.sync_timer()
             await self.send_msgs([{"cmd": 'LocationChecks', "locations": tuple(locations)}])
         return locations
 
@@ -777,6 +789,9 @@ class CommonContext(InitContext):
         if self.ui:
             # send copy to UI
             self.ui.print_json(copy.deepcopy(args["data"]))
+
+        if args["type"] == "Countdown":
+            self.countdown_timer = args["countdown"]
 
         logging.getLogger("FileLog").info(self.rawjsontotextparser(copy.deepcopy(args["data"])),
                                           extra={"NoStream": True})
@@ -870,6 +885,18 @@ class CommonContext(InitContext):
                "operations": [{"operation": "replace", "value": {f"{finding_player}_{location}": mwgg_status.value}}]}
         async_start(self.send_msgs([msg]), name="update_mwgg_hint")
     
+    async def sync_timer(self, new_start: float = 0.0):
+        '''Set up a timer on the server via the stored data
+        Should be set up on the server side but lol core would never.'''
+        if not new_start:
+            new_start = time.time()
+        msg = {"cmd": "Set", 
+                "key": "timer", 
+                "want_reply": False,
+                "default": time.time(),
+                "operations": [{"operation": "replace", "value": new_start}]}
+        async_start(self.send_msgs([msg]), name="sync_timer")
+
     # DataPackage
     async def prepare_data_package(self, relevant_games: typing.Set[str],
                                    remote_data_package_checksums: typing.Dict[str, str]):
@@ -1177,6 +1204,8 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
 
 
 async def server_autoreconnect(ctx: CommonContext):
+    if ctx.exit_event.is_set():
+        return
     await asyncio.sleep(ctx.current_reconnect_delay)
     if ctx.server_address and ctx.server_task is None:
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
@@ -1349,6 +1378,11 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.on_print(args)
 
     elif cmd == 'PrintJSON':
+        if "CommandResult" in args["type"] and "successful" in args["data"]["text"]:
+            if "Login" in [a["text"] for a in args["data"] if "text" in a]:
+                ctx.admin = True
+            elif "Logout" in [a["text"] for a in args["data"] if "text" in a]:
+                ctx.admin = False
         ctx.on_print_json(args)
 
     elif cmd == 'InvalidPacket':
@@ -1364,6 +1398,10 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.stored_data.update(args["keys"])
         if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" in args["keys"]:
             ctx.ui.update_hints()
+        elif ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}_mwgg" in args["keys"]:
+            ctx.ui.update_mwgg_hints()
+        elif ctx.ui and "_read_timer" in args["keys"]:
+            ctx.timer = args["keys"]["_read_timer"]
 
     elif cmd == "SetReply":
         ctx.stored_data[args["key"]] = args["value"]

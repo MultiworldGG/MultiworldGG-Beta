@@ -94,7 +94,10 @@ class BottomBarTextInput(MDTextField):
         self.leading_icon.icon = value
 
     def on_admin_message(self, text):
-        self.app.on_message("!admin /"+text, self)
+        if "login" in text.lower() or "logout" in text.lower():
+            self.app.on_message("!admin "+text, self)
+        else:
+            self.app.on_message("!admin /"+text, self)
 
     def on_hint_search(self, text):
         if text in self.item_names:
@@ -120,24 +123,23 @@ class BottomBarTextInput(MDTextField):
     def on_admin_input(self, instance, value):
         self.dropdown.items.clear()
         ctx = self.app.ctx
-        if not ctx.connected:
+        if not ctx.server:
             return
 
-        self.admin_commands = {"login": "Login to the server"}
-        if ctx.admin:
-            self.admin_commands.extend({
-                'collect': 'Usage: collect <username>', 
-                'release': 'Usage: release <username>', 
-                'send_location': 'Usage: send_location <user_with_location> <location_name>', 
-                'hint': 'Usage: hint <username> <item_name>', 
-                'hint_location': 'Usage: hint_location <username> <location_name>', 
-                'option': 'Usage: option <server_option_name> <server_option_value>'})
+        self.admin_commands = {"login": "Login to the server"} if not ctx.admin else {
+            'collect': 'Usage: collect <username>', 
+            'release': 'Usage: release <username>', 
+            'send_location': 'Usage: send_location <user_with_location> <location_name>', 
+            'hint': 'Usage: hint <username> <item_name>', 
+            'hint_location': 'Usage: hint_location <username> <location_name>', 
+            'option': 'Usage: option <server_option_name> <server_option_value>',
+            'logout': 'Usage: logout'
+        }
         
         # Add commands to dropdown
         for command in sorted(self.admin_commands.items()):
             self.dropdown.items.append({
                 "text": command[0],
-                "viewclass": "OneLineListItem",
                 "on_release": lambda x, cmd=command: self._select_admin_command(cmd),
             })
 

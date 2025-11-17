@@ -265,7 +265,7 @@ class MultiMDApp(MDApp):
         # titlebar bindings
         Window.bind(on_restore=self.title_bar.tb_onres)
         Window.bind(on_maximize=self.title_bar.tb_onmax)
-        Window.bind(on_close=lambda x: self.on_stop())
+        Window.bind(on_close=lambda x: self.stop())
 
         self.change_screen("launcher")
 
@@ -532,7 +532,7 @@ class MultiMDApp(MDApp):
         
     def _menu_item_callback(self, item):
         """Callback for menu items to change screens"""
-        if item == "Exit":
+        if item.lower() == "exit":
             self.stop()
             return
         self.change_screen(item.lower())
@@ -549,7 +549,7 @@ class MultiMDApp(MDApp):
             ]
 
             for item in menu_items:
-                if item["text"] == "Exit":
+                if "exit" in item["text"].lower():
                     menu_items.remove(item)
                     break
             

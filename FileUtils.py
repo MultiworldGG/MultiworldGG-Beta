@@ -42,6 +42,9 @@ class WinFileUtils(FileUtils):
             filter_parts = []
             for text, ext in filetypes:
                 # Convert extensions like ["*.txt", "*.log"] to "*.txt;*.log"
+                for i, e in enumerate(ext):
+                    if not "*" in e:
+                        ext[i] = "*" + e
                 ext_str = ";".join(ext)
                 filter_parts.append(text + " (" + ext_str + ")")
                 filter_parts.append(ext_str)

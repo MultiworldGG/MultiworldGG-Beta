@@ -347,11 +347,15 @@ class SlotListItem(MWBaseListItem):
         This method sets up the visual elements of the slot item including
         entrance information, location text, item text, and goal icon.
         """
-        if self.entrance_name == "Vanilla":
-            # I hate it, but somehow != didn't work.
-            if not self.entrance_name:
-                pass
-        else:
+        if "Vanilla" not in self.entrance_name:
+            # Normalize entrance display; server currently encodes unknown entrances as
+            # "Unknown location (ID: X)". For UI, we want to show just the identifier (e.g. "B1").
+            entrance_text = self.entrance_name
+            # Server uses a fixed format: "Unknown location (ID:{code})"
+            match = re.match(r"Unknown location \(ID:(.+)\)", entrance_text)
+            if match:
+                self.entrance_name = match.group(1).strip()
+
             self.slot_text_entrance = (MDListItemSupportingText(text=self.entrance_name, do_wrap=True))
             self.slot_icon_entrance = (MDListItemLeadingIcon(icon="door-open", pos_hint={"center_y": 0.55}))
             self.slot_item_middle_container = (MDBoxLayout(orientation="horizontal", spacing=dp(4), size_hint_y=.5, pos_hint={"center_y": 0.5}))
@@ -404,6 +408,14 @@ class HintListItem(MWBaseListItem):
         """
         if self.hint_data.entrance == "Vanilla" or not self.hint_data.entrance:
             self.remove_widget(self.ids.hint_item_entrance_container)
+        else:   
+        # Normalize entrance display; server currently encodes unknown entrances as
+        # "Unknown location (ID: X)". For UI, we want to show just the identifier (e.g. "B1").
+            entrance_text = self.hint_data.entrance
+            # Server uses a fixed format: "Unknown location (ID:{code})"
+            match = re.match(r"Unknown location \(ID:(.+)\)", entrance_text)
+            if match:
+                self.hint_data.entrance = match.group(1).strip()
 
     def open_dropdown(self):
         """Open the status dropdown menu"""
