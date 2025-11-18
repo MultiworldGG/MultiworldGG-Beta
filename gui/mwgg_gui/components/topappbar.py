@@ -32,6 +32,7 @@ import logging
 import re
 import asyncio
 import urllib.parse
+import asynckivy
 from Utils import persistent_store, persistent_load
 
 
@@ -218,6 +219,12 @@ class ServerRichTooltip(MDTooltipRich, HoverBehavior):
         super().__init__(*args, **kwargs)
         self.server_label = None  # Will be set by parent
         self.auto_dismiss = False
+        Clock.schedule_interval(self.hover_sanity_check, 10)
+
+    def hover_sanity_check(self, dt):
+        """Check if the tooltip is still hovering over the server label or tooltip"""
+        if not self.hovering and not self.server_label.hovering:
+            Clock.schedule_once(self.on_leave, 0)
 
     def on_leave(self, *args):
         """Override to prevent early dismissal while allowing normal KivyMD behavior"""
@@ -253,10 +260,9 @@ class ServerLabel(MDTooltip, MDTopAppBarTitle):
         self.font_style = "Monospace"
         self.role = "large"
         self.tooltip = None  # Single tooltip instance
-        self.tooltip_display_delay = 2
+        self.tooltip_display_delay = 0 # This is a delay, it does not verify hovering
         # Initialize tooltip content
         self._update_tooltip_content()
-        
 
     def on_text(self, instance, value):
         """Called when the text is changed"""
@@ -439,16 +445,20 @@ You currently have [color={TEXT_COLORS['command_echo_color']}]{ctx.hint_points}[
         """Clean up when widget is removed"""
         if parent is None:
             self._connected = False
+
+    def on_enter(self, *args):
+        """Override to prevent early display while allowing normal KivyMD behavior"""
+        Clock.schedule_once(lambda *args: self._delayed_enter(*args) if self.hovering else None, 2)
+
+    def _delayed_enter(self, *args):
+        """Delayed enter that calls the parent's on_enter for proper display"""
+        Clock.schedule_once(self.animation_tooltip_show)
+        super().on_enter()
     
-    def _delayed_leave(self, dt):
+    def _delayed_leave(self, *args):
         """Delayed leave that calls the parent's on_leave for proper dismissal"""
-        # Check if mouse is still outside tooltip bounds
-        from kivy.core.window import Window
-        mouse_pos = Window.mouse_pos
-        
-        if not self.tooltip.collide_point(*mouse_pos):
-            Clock.schedule_once(self.animation_tooltip_dismiss)
-            super().on_leave()
+        Clock.schedule_once(self.animation_tooltip_dismiss)
+        super().on_leave()
 
 class TopAppBar(MDTopAppBar):
     """

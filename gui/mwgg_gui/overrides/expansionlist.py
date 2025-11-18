@@ -31,6 +31,7 @@ from kivymd.uix.tooltip import MDTooltip
 
 from kivy.lang import Builder
 import os
+import re
 from kivy.clock import Clock
 from kivymd.app import MDApp
 from kivymd.icon_definitions import md_icons

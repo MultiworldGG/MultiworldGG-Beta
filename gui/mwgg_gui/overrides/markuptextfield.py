@@ -18,6 +18,8 @@ from kivy.clock import Clock
 from kivy.core.clipboard import Clipboard
 from kivy.animation import Animation
 from kivy.config import Config
+from kivy.effects.dampedscroll import DampedScrollEffect
+from kivy.effects.scroll import ScrollEffect
 from kivy.uix.textinput import TextInput, FL_IS_LINEBREAK, FL_IS_WORDBREAK
 from kivy.core.text.markup import MarkupLabel as Label
 from kivy.cache import Cache
@@ -144,6 +146,8 @@ class MarkupTextField(TextInput, ThemableBehavior):
     required = BooleanProperty(False) #MD
     line_color_normal = ColorProperty(None) #MD
     line_color_focus = ColorProperty(None) #MD # Remove the invalid truncate parameter
+    effect_cls = ObjectProperty(DampedScrollEffect, allow_none=True)
+    
     _helper_text_label = ObjectProperty() #MD
     _hint_text_label = ObjectProperty() #MD
     _leading_icon = ObjectProperty() #MD
@@ -173,6 +177,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
         self.ignore_patterns = ignore_patterns or None # Patterns to ignore when stripping markup
         super().__init__(**kwargs)
 
+        self.scroll_from_swipe = True
         self.use_bubble = False
         self.bind(text=self.set_text) #MD
         self._line_options = kw = self._get_line_options()
@@ -181,6 +186,9 @@ class MarkupTextField(TextInput, ThemableBehavior):
         
         # Initialize the cut/copy/paste menu
         self._cut_copy_paste_menu = None
+        # Initialize ScrollEffect for swipe scrolling
+        self._swipe_scroll_effect = ScrollEffect()
+        self._swipe_scroll_effect.target_widget = self
         Clock.schedule_once(self._check_text)
 
     def on_text(self, instance, value):
@@ -1408,4 +1416,78 @@ class MarkupTextField(TextInput, ThemableBehavior):
 
     def _refresh_hint_text(self):
         """Method override to avoid duplicate hint text texture."""
-    
+
+    def scroll_text_from_swipe(self, touch):
+        _scroll_timeout = (touch.time_update - touch.time_start) * 1000
+        self._scroll_distance_x += abs(touch.dx)
+        self._scroll_distance_y += abs(touch.dy)
+        if not self._have_scrolled:
+            # To be considered a scroll, touch should travel more than
+            # scroll_distance in less than the scroll_timeout since touch_down
+            if not (
+                _scroll_timeout <= self.scroll_timeout
+                and (
+                    (self._scroll_distance_x >= self.scroll_distance)
+                    or (self._scroll_distance_y >= self.scroll_distance)
+                )
+            ):
+                # Distance isn't enough (yet) to consider it as a scroll
+                if _scroll_timeout <= self.scroll_timeout:
+                    # Timeout is not reached, scroll is still enabled.
+                    return False
+                else:
+                    self._enable_scroll = False
+                    self._cancel_update_selection(self._touch_down)
+                    return False
+            # We have a scroll!
+            self._have_scrolled = True
+
+        self.cancel_long_touch_event()
+
+        # Use ScrollEffect for bounds-aware scrolling
+        effect = self._swipe_scroll_effect
+
+        if self.multiline:
+            # Vertical scrolling
+            max_scroll_y = max(0, self.minimum_height - self.height)
+            effect.min = 0
+            effect.max = max_scroll_y
+            
+            # Initialize effect on first scroll
+            if not hasattr(self, '_swipe_scroll_started_y'):
+                # Reset effect state and start tracking
+                effect.value = self.scroll_y
+                effect.start(self.scroll_y)
+                self._swipe_scroll_started_y = True
+            
+            # Update scroll position based on touch movement
+            # Calculate new position from current effect value (not widget scroll_y)
+            new_scroll = effect.value + touch.dy
+            effect.update(new_scroll)
+            
+            # Apply the bounded scroll value
+            self.scroll_y = effect.scroll
+        else:
+            # Horizontal scrolling
+            max_scroll_x = self.get_max_scroll_x()
+            effect.min = 0
+            effect.max = max_scroll_x
+            
+            # Initialize effect on first scroll
+            if not hasattr(self, '_swipe_scroll_started_x'):
+                # Reset effect state and start tracking
+                effect.value = self.scroll_x
+                effect.start(self.scroll_x)
+                self._swipe_scroll_started_x = True
+            
+            # Update scroll position based on touch movement (note: negative dx)
+            # Calculate new position from current effect value (not widget scroll_x)
+            new_scroll = effect.value - touch.dx
+            effect.update(new_scroll)
+            
+            # Apply the bounded scroll value
+            self.scroll_x = effect.scroll
+
+        self._trigger_update_graphics()
+        self._position_handles()
+        return True
