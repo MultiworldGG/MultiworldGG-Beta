@@ -118,6 +118,24 @@ KV = '''
         MDButtonText:
             text: root.current_item
 
+<LabeledSlider>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: dp(48)
+    MDLabel:
+        theme_text_color: "Secondary"
+        text: root.text
+        size_hint_x: 0.7
+    MDSlider:
+        id: slider
+        min: root.min
+        max: root.max
+        step: root.step
+        value: root.value
+        on_value: root.on_value(self, self.value)
+        MDSliderHandle:
+        MDSliderValueLabel:
+
 <ColorBox>:
     orientation: "horizontal"
     size_hint_y: None
@@ -237,6 +255,15 @@ class LabeledDropdown(MDBoxLayout):
         if self.on_select:
             self.on_select(item)
         self.menu.dismiss()
+
+class LabeledSlider(MDBoxLayout):
+    """Slider with a label"""
+    text = StringProperty("")
+    value = NumericProperty(0)
+    step = NumericProperty(1)
+    min = NumericProperty(0)
+    max = NumericProperty(100)
+    on_value = ObjectProperty(None)
 
 class PaletteSection(MDBoxLayout):
     """Section containing palette color buttons with a label"""
@@ -874,17 +901,28 @@ class InterfaceSettings(SettingsScrollBox):
             on_switch=self.toggle_device_orientation
         ))
 
+        scroll_section = SettingsSection(name="scroll_settings", title="Scroll")
+        scroll_section.add_widget(LabeledSlider(
+            text="Lines to Scroll",
+            theme_text_color="Secondary",
+            value=int(self.app.config.get('client', 'scroll_lines', fallback="3")),
+            on_value=self.scroll_lines_change
+        ))
+
+
         age_filter_section = SettingsSection(name="age_filter_settings", title="Age Filter")
+        age_item, age_items = self.get_age_rating()
         age_filter_section.add_widget(LabeledDropdown(
             text="Age Filter",
-            items=["Not Rated", "16 (Teen)", "12 (Everyone)"],
-            current_item="Not Rated",
+            items=age_items,
+            current_item=age_item,
             on_select=self.on_age_filter_select
         ))
         
         # Add all sections to the layout
         self.layout.add_widget(display_section)
         self.layout.add_widget(layout_section)
+        self.layout.add_widget(scroll_section)
         self.layout.add_widget(age_filter_section)
     
     def toggle_fullscreen(self, instance, value):
@@ -901,13 +939,39 @@ class InterfaceSettings(SettingsScrollBox):
         except Exception as e:
             logger.error(f"Error in toggle_device_orientation: {e}", exc_info=True) 
 
+    def scroll_lines_change(self, instance, value):
+        try:
+            self.app.app_config.set('client', 'scroll_lines', str(value))
+            self.app.app_config.write()
+            if self.app(hasattr(self.app, 'ui_console')) and self.app.ui_console:
+                self.app.ui_console.text_console.lines_to_scroll = value
+        except Exception as e:
+            logger.error(f"Error in scroll_lines_change: {e}", exc_info=True)
+
+
+    def get_age_rating(self):
+        items = ["Not Rated", "16 (Teen)", "12 (Everyone)"]
+        from importlib.metadata import distribution
+        try:
+            rating = distribution('mwgg_igdb').name.split('_')[-1]
+            if rating == "sixteen":
+                return items[1], items
+            elif rating == "twelve":
+                return items[2], items
+            elif rating == "ao":
+                return "AO (Adult Only)", items
+            return items[0], items
+        except Exception as e:
+            logger.error(f"Error in get_age_rating: {e}", exc_info=True)
+            return items[0], items
+
     def on_age_filter_select(self, value):
         # Show dialog to confirm age filter selection
         self.age_filter_value = value
         MessageBox(title="Age Filter", message = f'''This will change the age filter for the game list.
-            This will take a few seconds to complete.
-            You have selected '{value}' as your age filter.
-            Are you sure you want to continue?'''.replace("            ", ""),
+This will take a few seconds to complete.
+You have selected '{value}' as your age filter.
+Are you sure you want to continue?''',
             callback=lambda result: self._dialog_filter_select(result)).open()
 
     def _dialog_filter_select(self, result):

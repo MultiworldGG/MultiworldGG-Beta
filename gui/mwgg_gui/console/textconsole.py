@@ -53,6 +53,7 @@ class TextConsole(MarkupTextField, ThemableBehavior):
         self.readonly = True
         self.cursor_color = self.theme_cls.primaryColor
         self.text_buffer = self.app.text_buffer
+        self.lines_to_scroll = int(self.app.config.get('client', 'scroll_lines', fallback=3))
 
         Clock.schedule_interval(self.add_text_from_buffer, 0.001)
 

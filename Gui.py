@@ -207,6 +207,7 @@ class MultiMDApp(MDApp):
         config.setdefaults('client', {
             'password': '',
             'admin_password': '',
+            'scroll_lines': '3',
             'theme_style': 'Dark',
             'primary_palette': 'Purple',
             'font_scale': '1.0',

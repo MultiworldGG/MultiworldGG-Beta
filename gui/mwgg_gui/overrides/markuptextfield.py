@@ -18,7 +18,6 @@ from kivy.clock import Clock
 from kivy.core.clipboard import Clipboard
 from kivy.animation import Animation
 from kivy.config import Config
-from kivy.effects.dampedscroll import DampedScrollEffect
 from kivy.effects.scroll import ScrollEffect
 from kivy.uix.textinput import TextInput, FL_IS_LINEBREAK, FL_IS_WORDBREAK
 from kivy.core.text.markup import MarkupLabel as Label
@@ -146,7 +145,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
     required = BooleanProperty(False) #MD
     line_color_normal = ColorProperty(None) #MD
     line_color_focus = ColorProperty(None) #MD # Remove the invalid truncate parameter
-    effect_cls = ObjectProperty(DampedScrollEffect, allow_none=True)
+    effect_cls = ObjectProperty(ScrollEffect, allow_none=True)
     
     _helper_text_label = ObjectProperty() #MD
     _hint_text_label = ObjectProperty() #MD
@@ -165,6 +164,12 @@ class MarkupTextField(TextInput, ThemableBehavior):
     text_default_color = StringProperty("cdcdcd") #MD
     _empty_texture = ObjectProperty(None) #MD
     _saved_markup = StringProperty("[color=FFFFFF]") #MD
+    effect_y = ObjectProperty(None)
+    _effect_y_start_height = None
+    _effect_y_start_scroll = None
+    _unclamped_scroll_y = None  # Track unclamped scroll position for velocity calculation
+    _scroll_speed_factor = NumericProperty(0.5)  # Scale factor to slow down scrolling
+    # __events__ = ('on_scroll_start', 'on_scroll_move', 'on_scroll_stop')
 
     def __init__(self, ignore_patterns: Pattern = None, **kwargs):
         self._label_cached = Label()
@@ -186,10 +191,27 @@ class MarkupTextField(TextInput, ThemableBehavior):
         
         # Initialize the cut/copy/paste menu
         self._cut_copy_paste_menu = None
-        # Initialize ScrollEffect for swipe scrolling
-        self._swipe_scroll_effect = ScrollEffect()
-        self._swipe_scroll_effect.target_widget = self
+
         Clock.schedule_once(self._check_text)
+
+        # self._trigger_update_from_scroll = Clock.create_trigger(
+        #     self.update_from_scroll, -1)
+
+        # self.register_event_type('on_scroll_start')
+        # self.register_event_type('on_scroll_move')
+        # self.register_event_type('on_scroll_stop')
+
+        effect_cls = self.effect_cls
+        if self.effect_y is None and effect_cls is not None:
+            self.effect_y = effect_cls(target_widget=self)
+            self.effect_y.bind(scroll=self._update_effect_y)
+        self.fbind('height', self._update_effect_y_bounds)
+        # self.fbind('scroll_y', self._trigger_update_from_scroll)
+        # self.fbind('pos', self._trigger_update_from_scroll)
+        # self.fbind('size', self._trigger_update_from_scroll)
+        #self.fbind('scroll_y', self.update_effect_y_bounds)
+
+        # self.effect_y.bind(scroll=self._update_effect_y)
 
     def on_text(self, instance, value):
         # Update the plain text lines list
@@ -529,8 +551,14 @@ class MarkupTextField(TextInput, ThemableBehavior):
         # For right-click touches, don't call parent to prevent deselection
         if touch.button == 'right':
             return True
+        if self.effect_y and self.effect_y.is_manual:
+            # Stop tracking - pass unclamped scroll position for velocity calculation
+            # The effect's history contains the scroll positions, so it can calculate velocity
+            # Use unclamped position (which may be beyond bounds for momentum)
+            final_scroll = self._unclamped_scroll_y if self._unclamped_scroll_y is not None else self.effect_y.value
+            self.effect_y.stop(final_scroll)
+            self._unclamped_scroll_y = None  # Reset for next scroll
         return super().on_touch_up(touch)
-        
 
     def copy(self, data=''):
         """Override copy to use plain text for selection"""
@@ -1444,50 +1472,74 @@ class MarkupTextField(TextInput, ThemableBehavior):
 
         self.cancel_long_touch_event()
 
-        # Use ScrollEffect for bounds-aware scrolling
-        effect = self._swipe_scroll_effect
-
         if self.multiline:
             # Vertical scrolling
-            max_scroll_y = max(0, self.minimum_height - self.height)
-            effect.min = 0
-            effect.max = max_scroll_y
+            if self.minimum_height - self.height < 0:
+                return True
+
+            if self.effect_y and not self.effect_y.is_manual:
+                # Starting a new scroll - initialize effect for velocity tracking
+                self._update_effect_y_bounds()
+                # Track unclamped scroll position for velocity calculation
+                self._unclamped_scroll_y = self.scroll_y
+                # Effect history tracks scroll position values for velocity calculation
+                self.effect_y.value = self.scroll_y
+                self.effect_y.start(self.scroll_y)
             
-            # Initialize effect on first scroll
-            if not hasattr(self, '_swipe_scroll_started_y'):
-                # Reset effect state and start tracking
-                effect.value = self.scroll_y
-                effect.start(self.scroll_y)
-                self._swipe_scroll_started_y = True
-            
-            # Update scroll position based on touch movement
-            # Calculate new position from current effect value (not widget scroll_y)
-            new_scroll = effect.value + touch.dy
-            effect.update(new_scroll)
-            
-            # Apply the bounded scroll value
-            self.scroll_y = effect.scroll
+            # During manual scrolling, update scroll_y directly to follow the mouse
+            # Also update effect history so it can calculate velocity when touch ends
+            if self.effect_y and self.effect_y.is_manual:
+                # Calculate scroll delta with speed factor
+                scroll_delta = touch.dy * self._scroll_speed_factor
+                max_scroll_y = max(0, self.minimum_height - self.height)
+                
+                # Update unclamped scroll position (for velocity calculation)
+                if self._unclamped_scroll_y is None:
+                    self._unclamped_scroll_y = self.scroll_y
+                self._unclamped_scroll_y += scroll_delta
+                
+                # Update scroll_y directly - clamp to bounds so it follows mouse within limits
+                # touch.dy is positive when dragging down, scroll_y increases when dragging down
+                self.scroll_y = min(
+                    max(0, self._unclamped_scroll_y),
+                    max_scroll_y
+                )
+                
+                # Update effect history with unclamped scroll position for velocity calculation
+                # This allows proper velocity calculation even when mouse goes beyond widget bounds
+                self.effect_y.value = self._unclamped_scroll_y
+                self.effect_y.update(self._unclamped_scroll_y)
         else:
-            # Horizontal scrolling
             max_scroll_x = self.get_max_scroll_x()
-            effect.min = 0
-            effect.max = max_scroll_x
-            
-            # Initialize effect on first scroll
-            if not hasattr(self, '_swipe_scroll_started_x'):
-                # Reset effect state and start tracking
-                effect.value = self.scroll_x
-                effect.start(self.scroll_x)
-                self._swipe_scroll_started_x = True
-            
-            # Update scroll position based on touch movement (note: negative dx)
-            # Calculate new position from current effect value (not widget scroll_x)
-            new_scroll = effect.value - touch.dx
-            effect.update(new_scroll)
-            
-            # Apply the bounded scroll value
-            self.scroll_x = effect.scroll
+            self.scroll_x = min(
+                max(0, self.scroll_x - touch.dx),
+                max_scroll_x
+            )
 
         self._trigger_update_graphics()
         self._position_handles()
         return True
+
+    def _update_effect_y_bounds(self, *args):
+        if not self.effect_y:
+            return
+        # Both scroll_y and effect_y use pixel-based coordinates
+        # Direct assignment since coordinate systems match
+        self.effect_y.min = 0
+        max_scroll = max(0, self.minimum_height - self.height)
+        self.effect_y.max = max_scroll
+        # Set current value to current scroll position
+        self.effect_y.value = self.scroll_y
+
+    def _update_effect_y(self, *args):
+        if not self.effect_y:
+            return
+        if not self.effect_y.is_manual:
+            # During momentum scrolling (after touch ends)
+            # effect_y.scroll is the computed scroll position (pixel-based)
+            # Clamp to bounds and apply directly
+            max_scroll = max(0, self.minimum_height - self.height)
+            self.scroll_y = max(0, min(self.effect_y.scroll, max_scroll))
+        # During manual scrolling, scroll_y is updated directly in scroll_text_from_swipe
+        self._trigger_update_graphics()
+        self._position_handles()
