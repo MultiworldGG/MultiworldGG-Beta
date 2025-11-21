@@ -12,7 +12,10 @@ from kivymd.uix.floatlayout import MDFloatLayout
 from kivy.properties import ObjectProperty
 from kivymd.app import MDApp
 from kivymd.theming import ThemableBehavior
+from kivymd.uix.button import MDFabButton
 from kivy.clock import Clock
+from kivy.lang import Builder
+from kivy.metrics import dp
 import logging
 from logging.handlers import QueueHandler
 from multiprocessing import Queue
@@ -23,6 +26,17 @@ from mwgg_gui.overrides.markuptextfield import MarkupTextField
 from NetUtils import TEXT_COLORS
 
 __all__ = ('TextConsole', 'ConsoleView',)
+
+Builder.load_string('''
+<BottomScrollButton>:
+    id: bottom_scroll_button
+    icon: 'arrow-down-bold-outline'
+    style: 'small'
+    pos_hint: {'x': 0.94, 'y': 0.02}
+''')
+
+class BottomScrollButton(MDFabButton):
+    pass
 
 ## helper class to return both Client and Archipelago logs
 class ConsoleFilter(logging.Filter):
@@ -37,8 +51,8 @@ class TextConsole(MarkupTextField, ThemableBehavior):
     text_buffer: Queue
     app: MDApp
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, bottom_scroll_button=None, **kwargs):
+        super().__init__(bottom_scroll_button=bottom_scroll_button, **kwargs)
         self.app = MDApp.get_running_app()
         self.font_name = self.theme_cls.font_styles.Monospace['small']['font-name'] 
         self.font_size = self.theme_cls.font_styles.Monospace['small']['font-size']
@@ -53,9 +67,9 @@ class TextConsole(MarkupTextField, ThemableBehavior):
         self.readonly = True
         self.cursor_color = self.theme_cls.primaryColor
         self.text_buffer = self.app.text_buffer
-        self.lines_to_scroll = int(self.app.config.get('client', 'scroll_lines', fallback=3))
+        # self.lines_to_scroll = int(self.app.config.get('client', 'scroll_lines', fallback=3))
 
-        Clock.schedule_interval(self.add_text_from_buffer, 0.001)
+        Clock.schedule_interval(self.add_text_from_buffer, 0)
 
     def add_text_from_buffer(self, dt):
         try:
@@ -70,48 +84,19 @@ class TextConsole(MarkupTextField, ThemableBehavior):
             return
         except Exception as e:
             print(e)
-        # finally:
-        #     if self.cursor_row == self.line_count-5:
-        #         self.scroll_to_bottom()
-
-    def scroll_to_bottom(self, *args):
-        """Scroll the text console to the bottom"""
-        self.focus = True
-        self.cursor = self.end_cursor
-
-    def on_scroll_y(self, *args):
-        pass
-    #         return True
 
 class ConsoleView(MDFloatLayout):
     text_console = ObjectProperty(None)
-    
+    bottom_scroll_button = ObjectProperty(None)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.text_console = TextConsole(pos_hint={"x": 0, "y": 0}, 
+        self.bottom_scroll_button = BottomScrollButton(opacity=0)
+        self.text_console = TextConsole(bottom_scroll_button=self.bottom_scroll_button, pos_hint={"x": 0, "y": 0}, 
                                         size_hint=(1-(4/Window.width),1-(185/Window.height)))
         self.add_widget(self.text_console)
-        
-        # # Create the "To Bottom" button
-        # self.to_bottom_button = MDExtendedFabButton(MDExtendedFabButtonText(text="Current"),
-        #     pos_hint={"center_x": 0.5, "y": 0},
-        #     on_release=self.scroll_to_bottom
-        # )
-        # self.add_widget(self.to_bottom_button)
-        # self.to_bottom_button.opacity = 0
-        # self.to_bottom_button.disabled = True
-        # self.text_console.bind(on_scroll_y=lambda x: self._show_to_bottom_button(x))
-
-    # def _show_to_bottom_button(self, value):
-    #     if value > self.text_console.cursor_row:
-    #         self.to_bottom_button.opacity = 1
-    #         self.to_bottom_button.disabled = False
-
-    # def scroll_to_bottom(self, *args):
-    #     """Callback for the To Bottom button"""
-    #     self.to_bottom_button.opacity = 0
-    #     self.to_bottom_button.disabled = True
-    #     self.text_console.scroll_to_bottom(self.to_bottom_button.x, self.to_bottom_button.y)
+        self.text_console.fbind('scroll_y', self.set_bottom_scroll_button_opacity)
+        self.add_widget(self.bottom_scroll_button)
 
     def console_handler(self) -> QueueHandler:
         """Create a StreamHandler that writes directly to the text_buffer"""
@@ -120,3 +105,6 @@ class ConsoleView(MDFloatLayout):
         _console_out.setLevel(logging.INFO)
         _console_out.addFilter(ConsoleFilter())
         return _console_out
+
+    def set_bottom_scroll_button_opacity(self, instance,value):
+        self.bottom_scroll_button.opacity = 1 if value < self.text_console.height - dp(10) else 0

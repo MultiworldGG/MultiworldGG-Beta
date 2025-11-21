@@ -122,6 +122,7 @@ KV = '''
     orientation: "horizontal"
     size_hint_y: None
     height: dp(48)
+    slider: slider.value
     MDLabel:
         theme_text_color: "Secondary"
         text: root.text
@@ -131,8 +132,7 @@ KV = '''
         min: root.min
         max: root.max
         step: root.step
-        value: root.value
-        on_value: root.on_value(self, self.value)
+        on_value: root.on_slide(self,self.value)
         MDSliderHandle:
         MDSliderValueLabel:
 
@@ -259,11 +259,16 @@ class LabeledDropdown(MDBoxLayout):
 class LabeledSlider(MDBoxLayout):
     """Slider with a label"""
     text = StringProperty("")
-    value = NumericProperty(0)
     step = NumericProperty(1)
     min = NumericProperty(0)
-    max = NumericProperty(100)
-    on_value = ObjectProperty(None)
+    max = NumericProperty(20)
+    slider = ObjectProperty(None)
+    on_slide = ObjectProperty(None)
+
+    def __init__(self, value, on_slide, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.on_slide = on_slide
+        self.slider = value
 
 class PaletteSection(MDBoxLayout):
     """Section containing palette color buttons with a label"""
@@ -884,6 +889,8 @@ class InterfaceSettings(SettingsScrollBox):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
+        self._scroll_settings = {'scroll_lines': None, 'scroll_velocity': None}
+        self._scroll_write_events = {'scroll_lines': None, 'scroll_velocity': None}
         
         # Display section
         display_section = SettingsSection(name="display_settings", title="Display")
@@ -904,11 +911,16 @@ class InterfaceSettings(SettingsScrollBox):
         scroll_section = SettingsSection(name="scroll_settings", title="Scroll")
         scroll_section.add_widget(LabeledSlider(
             text="Lines to Scroll",
-            theme_text_color="Secondary",
             value=int(self.app.config.get('client', 'scroll_lines', fallback="3")),
-            on_value=self.scroll_lines_change
+            on_slide=self.scroll_lines_change
         ))
-
+        scroll_section.add_widget(LabeledSlider(
+            text="Scroll Velocity",
+            max=20,
+            step=1,
+            value=int(float(self.app.config.get('client', 'scroll_velocity', fallback="0.5")) * 10),
+            on_slide=self.scroll_velocity_change
+        ))
 
         age_filter_section = SettingsSection(name="age_filter_settings", title="Age Filter")
         age_item, age_items = self.get_age_rating()
@@ -940,13 +952,51 @@ class InterfaceSettings(SettingsScrollBox):
             logger.error(f"Error in toggle_device_orientation: {e}", exc_info=True) 
 
     def scroll_lines_change(self, instance, value):
+        """Handle scroll lines slider change"""
+        self._scroll_setting_change('scroll_lines', value, value_type='int')
+    
+    def scroll_velocity_change(self, instance, value):
+        """Handle scroll velocity slider change (slider value is int, divide by 10 for actual float)"""
+        # Store the slider int value; will divide by 10 when writing
+        self._scroll_setting_change('scroll_velocity', int(value), value_type='float')
+    
+    def _scroll_setting_change(self, setting_name, value, value_type='int'):
+        """Generic handler for scroll setting changes with debounced config write"""
+
+        self._scroll_settings[setting_name] = int(value)
+        
+        # Cancel any pending config write for this setting
+        if self._scroll_write_events[setting_name] is not None:
+            Clock.unschedule(self._scroll_write_events[setting_name])
+        
+        # Schedule config write after 30 seconds
+        self._scroll_write_events[setting_name] = Clock.schedule_once(
+            lambda dt, name=setting_name: self._write_scroll_setting(name), 30
+        )
+    
+    def _write_scroll_setting(self, setting_name):
+        """Write the stored scroll setting value to config and update console"""
         try:
-            self.app.app_config.set('client', 'scroll_lines', str(value))
-            self.app.app_config.write()
-            if self.app(hasattr(self.app, 'ui_console')) and self.app.ui_console:
-                self.app.ui_console.text_console.lines_to_scroll = value
+            if self._scroll_settings[setting_name] is not None:
+                value = self._scroll_settings[setting_name]
+                
+                # For scroll_velocity, divide by 10 to convert from slider int to actual float
+                if setting_name == 'scroll_velocity':
+                    value = float(value) / 10.0
+                
+                self.app.app_config.set('client', setting_name, str(value))
+                self.app.app_config.write()
+                
+                # Update console if available
+                if hasattr(self.app, 'ui_console') and self.app.ui_console:
+                    if setting_name == 'scroll_lines':
+                        self.app.ui_console.text_console.lines_to_scroll = int(value)
+                    elif setting_name == 'scroll_velocity':
+                        self.app.ui_console.text_console.scroll_velocity = float(value)
+                
+                self._scroll_write_events[setting_name] = None
         except Exception as e:
-            logger.error(f"Error in scroll_lines_change: {e}", exc_info=True)
+            logger.error(f"Error writing {setting_name} to config: {e}", exc_info=True)
 
 
     def get_age_rating(self):

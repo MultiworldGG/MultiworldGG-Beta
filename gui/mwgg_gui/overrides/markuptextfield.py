@@ -30,6 +30,7 @@ from kivymd.uix.textfield import (MDTextFieldHelperText,
                                   MDTextFieldHintText,
                                   MDTextFieldLeadingIcon,
                                   )
+from kivymd.uix.button import MDFabButton
 import re
 from re import Pattern, compile
 import os
@@ -60,9 +61,8 @@ Cache_register('textinput.markup_width', timeout=60.)
 
 if Config:
     _is_desktop = Config.getboolean('kivy', 'desktop')
-    # _scroll_timeout = Config.getint('widgets', 'scroll_timeout')
-    # _scroll_distance = '{}sp'.format(Config.getint('widgets',
-    #                                                'scroll_distance'))
+    _scroll_timeout = Config.getint('widgets', 'scroll_timeout')
+    _scroll_distance = '{}sp'.format(Config.getint('widgets', 'scroll_distance'))
 
 class MarkupTextFieldCutCopyPaste(MDDropdownMenu):
     """Internal class used for showing the dropdown menu when
@@ -146,6 +146,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
     line_color_normal = ColorProperty(None) #MD
     line_color_focus = ColorProperty(None) #MD # Remove the invalid truncate parameter
     effect_cls = ObjectProperty(ScrollEffect, allow_none=True)
+    bottom_scroll_button = ObjectProperty(None)
     
     _helper_text_label = ObjectProperty() #MD
     _hint_text_label = ObjectProperty() #MD
@@ -168,10 +169,11 @@ class MarkupTextField(TextInput, ThemableBehavior):
     _effect_y_start_height = None
     _effect_y_start_scroll = None
     _unclamped_scroll_y = None  # Track unclamped scroll position for velocity calculation
-    _scroll_speed_factor = NumericProperty(0.5)  # Scale factor to slow down scrolling
-    # __events__ = ('on_scroll_start', 'on_scroll_move', 'on_scroll_stop')
+    scroll_velocity = NumericProperty(0.5)  # Scale factor to slow down scrolling
+    _manually_scrolled = BooleanProperty(False)
 
-    def __init__(self, ignore_patterns: Pattern = None, **kwargs):
+    def __init__(self, bottom_scroll_button=None, ignore_patterns: Pattern = None, **kwargs):
+        self.bottom_scroll_button = bottom_scroll_button
         self._label_cached = Label()
         self.selection_previous = None
         self.plaintext = ""
@@ -194,13 +196,6 @@ class MarkupTextField(TextInput, ThemableBehavior):
 
         Clock.schedule_once(self._check_text)
 
-        # self._trigger_update_from_scroll = Clock.create_trigger(
-        #     self.update_from_scroll, -1)
-
-        # self.register_event_type('on_scroll_start')
-        # self.register_event_type('on_scroll_move')
-        # self.register_event_type('on_scroll_stop')
-
         effect_cls = self.effect_cls
         if self.effect_y is None and effect_cls is not None:
             self.effect_y = effect_cls(target_widget=self)
@@ -212,6 +207,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
         #self.fbind('scroll_y', self.update_effect_y_bounds)
 
         # self.effect_y.bind(scroll=self._update_effect_y)
+        self.bottom_scroll_button.bind(on_release=self.scroll_to_bottom)
 
     def on_text(self, instance, value):
         # Update the plain text lines list
@@ -296,6 +292,99 @@ class MarkupTextField(TextInput, ThemableBehavior):
         super(MarkupTextField, self)._refresh_text(*args)
         self._update_plaintext_lines()
         self._update_markup_to_plain_map()
+        # Check if we should reset manual scroll flag after text refresh
+        self._check_and_reset_manual_scroll()
+
+    def _check_and_reset_manual_scroll(self):
+        """Check if cursor is at/near the bottom and reset _manually_scrolled flag if so.
+        
+        This allows the viewport to follow the cursor again when the user scrolls
+        back to the bottom or when the cursor is already at the bottom.
+        """
+        if not self._lines or not self._manually_scrolled:
+            return
+        
+        # Calculate the visible viewport range
+        dy = self.line_height + self.line_spacing
+        if dy <= 0:
+            return
+            
+        padding_top = self.padding[1]
+        padding_bottom = self.padding[3]
+        viewport_height = self.height - padding_top - padding_bottom - dy
+        
+        # Calculate max scroll position
+        max_scroll_y = max(0, self.minimum_height - self.height)
+        
+        # Check if we're scrolled to the bottom (within a small buffer)
+        # Buffer is 2 lines worth of scroll distance
+        buffer = dy * 2
+        is_at_bottom = self.scroll_y >= max_scroll_y - buffer
+        
+        # Check if cursor is at the end
+        total_rows = len(self._lines)
+        cr = self.cursor_row
+        is_cursor_at_end = cr >= total_rows - 1
+        
+        # If scrolled to bottom and cursor is at end, reset the flag
+        if is_at_bottom and is_cursor_at_end:
+            self._manually_scrolled = False
+
+    def on_cursor(self, instance, value):
+        """Override to check and reset manual scroll flag when cursor moves."""
+        super().on_cursor(instance, value)
+        # Check if we should reset manual scroll flag after cursor movement
+        self._check_and_reset_manual_scroll()
+
+    def scroll_to_bottom(self, *args):
+        """Scroll the viewport to the bottom and reset the manual scroll flag.
+        
+        This method can be called by a FAB button to return to following new text.
+        """
+        max_scroll_y = max(0, self.minimum_height - self.height)
+        self.scroll_y = max_scroll_y
+        self._manually_scrolled = False
+        self._trigger_update_graphics()
+
+    def _adjust_viewport(self, cc, cr):
+        """Override to prevent viewport from following cursor when text is added programmatically.
+        
+        When text is added at the end (programmatically), the cursor moves there automatically.
+        This prevents the viewport from scrolling to follow the cursor if the user has manually
+        scrolled away from the bottom.
+        """
+        if not self._lines:
+            return
+        
+        # Check if we should reset the manual scroll flag
+        self._check_and_reset_manual_scroll()
+        
+        # If user hasn't manually scrolled, use normal viewport adjustment
+        if not self._manually_scrolled:
+            super()._adjust_viewport(cc, cr)
+            return
+        
+        # User has manually scrolled - only adjust viewport if cursor is in visible area
+        # Calculate the visible viewport range
+        dy = self.line_height + self.line_spacing
+        if dy <= 0:
+            # Fallback to parent if line height is invalid
+            super()._adjust_viewport(cc, cr)
+            return
+            
+        padding_top = self.padding[1]
+        padding_bottom = self.padding[3]
+        viewport_height = self.height - padding_top - padding_bottom - dy
+        
+        # Calculate what row would be at the bottom of the visible viewport
+        visible_bottom_row = int((self.scroll_y + viewport_height) / dy) if dy > 0 else 0
+        visible_top_row = int(self.scroll_y / dy) if dy > 0 else 0
+        
+        # Only adjust viewport if cursor is within or near the visible area
+        # This allows normal cursor following when user is actively editing
+        if visible_top_row - 1 <= cr <= visible_bottom_row + 1:
+            super()._adjust_viewport(cc, cr)
+        # Otherwise, don't scroll - user is viewing elsewhere
 
     def _create_line_label(self, text, hint=False):
         '''Create a label from a text, using line options'''
@@ -528,6 +617,15 @@ class MarkupTextField(TextInput, ThemableBehavior):
                 'text': self.selection_text
             }
             return True
+
+        if 'button' in touch.profile and touch.button.startswith('scroll'):
+            if self.minimum_height - self.height < 0:
+                return super().on_touch_down(touch)
+            self._manually_scrolled = True
+        # If the touch is a scroll button while the effect is running. Halt the effect.
+            if self.effect_y.velocity > 0:
+                self.effect_y.cancel() # this is .halt in the master branch of kivy
+
         # For all other touches, let the parent handle it
         return super().on_touch_down(touch)
 
@@ -1478,6 +1576,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
                 return True
 
             if self.effect_y and not self.effect_y.is_manual:
+                self._manually_scrolled = True
                 # Starting a new scroll - initialize effect for velocity tracking
                 self._update_effect_y_bounds()
                 # Track unclamped scroll position for velocity calculation
@@ -1490,7 +1589,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
             # Also update effect history so it can calculate velocity when touch ends
             if self.effect_y and self.effect_y.is_manual:
                 # Calculate scroll delta with speed factor
-                scroll_delta = touch.dy * self._scroll_speed_factor
+                scroll_delta = touch.dy * self.scroll_velocity
                 max_scroll_y = max(0, self.minimum_height - self.height)
                 
                 # Update unclamped scroll position (for velocity calculation)
