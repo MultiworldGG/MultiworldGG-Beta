@@ -32,7 +32,6 @@ Builder.load_string('''
     id: bottom_scroll_button
     icon: 'arrow-down-bold-outline'
     style: 'small'
-    pos_hint: {'x': 0.94, 'y': 0.02}
 ''')
 
 class BottomScrollButton(MDFabButton):
@@ -91,7 +90,7 @@ class ConsoleView(MDFloatLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.bottom_scroll_button = BottomScrollButton(opacity=0)
+        self.bottom_scroll_button = BottomScrollButton(opacity=0, x=Window.width - dp(60), y=dp(10))
         self.text_console = TextConsole(bottom_scroll_button=self.bottom_scroll_button, pos_hint={"x": 0, "y": 0}, 
                                         size_hint=(1-(4/Window.width),1-(185/Window.height)))
         self.add_widget(self.text_console)
@@ -106,5 +105,9 @@ class ConsoleView(MDFloatLayout):
         _console_out.addFilter(ConsoleFilter())
         return _console_out
 
-    def set_bottom_scroll_button_opacity(self, instance,value):
-        self.bottom_scroll_button.opacity = 1 if value < self.text_console.height - dp(10) else 0
+    def set_bottom_scroll_button_opacity(self, instance, value):
+        """Show button when not at the bottom of the scroll"""
+        max_scroll_y = max(0, self.text_console.minimum_height - self.text_console.height)
+        # Show button if scroll_y is less than max_scroll_y (not at bottom)
+        # Add small threshold to avoid flickering at the exact bottom
+        self.bottom_scroll_button.opacity = 1 if value < max_scroll_y - dp(10) else 0

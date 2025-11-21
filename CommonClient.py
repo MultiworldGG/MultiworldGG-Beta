@@ -1378,10 +1378,12 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.on_print(args)
 
     elif cmd == 'PrintJSON':
-        if "CommandResult" in args["type"] and "successful" in args["data"]["text"]:
-            if "Login" in [a["text"] for a in args["data"] if "text" in a]:
+        data = args.get("data", [])
+        if "CommandResult" in args.get("type", "") and any("successful" in a.get("text", "") for a in data if "text" in a):
+            text_parts = [a["text"] for a in data if "text" in a]
+            if "Login" in text_parts:
                 ctx.admin = True
-            elif "Logout" in [a["text"] for a in args["data"] if "text" in a]:
+            elif "Logout" in text_parts:
                 ctx.admin = False
         ctx.on_print_json(args)
 
