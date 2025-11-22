@@ -119,8 +119,8 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
         orientation (str): Layout orientation, set to "vertical"
         search_placeholder (MDBoxLayout): Placeholder for future search features
     """
-    adjust_title_bar = False
-    adjust_app_bar = False
+    adjust_title_bar = True
+    adjust_app_bar = True
     adjust_bottom_appbar = True
     adjust_custom = 0
     
@@ -299,7 +299,7 @@ class HintListPanel(GameListPanel):
                 continue
             
             hint_item = HintListItem(hint_data=hint, game_status=self.item_data.game_status, shadow_colors=item_colors,
-                                     hint_icon_status=status_icons[hint.hint_status], hint_status_text=status_names[hint.hint_status]
+                                     hint_icon_status=status_icons.get(hint.hint_status, "blank"), hint_status_text=status_names.get(hint.hint_status, "")
                                      )
             
             # Only add dropdown for non-found items

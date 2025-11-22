@@ -110,4 +110,4 @@ class ConsoleView(MDFloatLayout):
         max_scroll_y = max(0, self.text_console.minimum_height - self.text_console.height)
         # Show button if scroll_y is less than max_scroll_y (not at bottom)
         # Add small threshold to avoid flickering at the exact bottom
-        self.bottom_scroll_button.opacity = 1 if value < max_scroll_y - dp(10) else 0
+        self.bottom_scroll_button.opacity = 1 if value < max_scroll_y - self.text_console.height else 0

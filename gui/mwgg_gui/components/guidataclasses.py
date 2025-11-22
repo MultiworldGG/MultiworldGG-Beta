@@ -57,6 +57,8 @@ class UIHint:
         self._for_goal = False
         self._from_shop = False
         self._hide = False
+        # Initialize mwgg_hint_status to a default value before setting it
+        self.mwgg_hint_status = MWGGUIHintStatus.HINT_UNSPECIFIED
         self.set_status(hint_status)
         self.set_status_from_mwgg(mwgg_hint_status)
 
@@ -82,15 +84,44 @@ class UIHint:
 
         self.hint_status = hint_status
 
-    def set_status_from_mwgg(self, mwgg_status: MWGGUIHintStatus):
+    def set_status_from_mwgg(self, mwgg_status: Optional[MWGGUIHintStatus]):
         """
         Update the hint's status and classification based on MWGG GUI specific status information.
+        
+        Args:
+            mwgg_status: The MWGG hint status flags to set. If None, defaults to HINT_UNSPECIFIED.
         """
-        self.from_shop = mwgg_status & MWGGUIHintStatus.HINT_SHOP
-        self.for_goal = mwgg_status & MWGGUIHintStatus.HINT_GOAL
-        self.for_bk_mode = mwgg_status & MWGGUIHintStatus.HINT_BK_MODE
+        if mwgg_status is None:
+            mwgg_status = MWGGUIHintStatus.HINT_UNSPECIFIED
+        
+        self.from_shop = bool(mwgg_status & MWGGUIHintStatus.HINT_SHOP)
+        self.for_goal = bool(mwgg_status & MWGGUIHintStatus.HINT_GOAL)
+        self.for_bk_mode = bool(mwgg_status & MWGGUIHintStatus.HINT_BK_MODE)
 
         self.mwgg_hint_status = mwgg_status
+    
+    def toggle_mwgg_flag(self, flag: int, value: bool):
+        """
+        Toggle a specific MWGG flag on or off, combining with existing flags.
+        
+        Args:
+            flag: The MWGG flag to toggle as integer (0b001 for SHOP, 0b010 for GOAL, 0b100 for BK_MODE)
+            value: True to set the flag, False to clear it
+        """
+        # Convert integer to MWGGUIHintStatus enum if needed
+        flag_enum = MWGGUIHintStatus(flag) if not isinstance(flag, MWGGUIHintStatus) else flag
+        
+        if value:
+            # Set the flag by combining with existing flags using bitwise OR
+            self.mwgg_hint_status = self.mwgg_hint_status | flag_enum
+        else:
+            # Clear the flag by using bitwise AND with the inverted flag
+            self.mwgg_hint_status = self.mwgg_hint_status & ~flag_enum
+        
+        # Update the individual boolean properties
+        self.from_shop = bool(self.mwgg_hint_status & MWGGUIHintStatus.HINT_SHOP)
+        self.for_goal = bool(self.mwgg_hint_status & MWGGUIHintStatus.HINT_GOAL)
+        self.for_bk_mode = bool(self.mwgg_hint_status & MWGGUIHintStatus.HINT_BK_MODE)
 
     @property
     def from_shop(self) -> bool:
@@ -189,12 +220,17 @@ class UIPlayerData:
     def get(self, key: str, default=None):
         return getattr(self, key, default)
 
-    # Backwards compatibility: some UI code refers to "in_bk"
-    # @property
-    # def in_bk(self) -> bool:
-    #     return self.bk_mode
-
-    # @in_bk.setter
-    # def in_bk(self, value: bool):
-    #     self.bk_mode = value
-
+    def to_profile_dict(self) -> dict:
+        """
+        Convert UIPlayerData to a dictionary containing only profile-relevant fields.
+        Excludes hints, game_status, game, and end_user as those are either managed by the server
+        or are local-only flags (end_user designates the local user).
+        """
+        return {
+            "slot_id": self.slot_id,
+            "slot_name": self.slot_name,
+            "avatar": self.avatar,
+            "pronouns": self.pronouns,
+            "bk_mode": self.bk_mode,
+            "deafened": self.deafened,
+        }

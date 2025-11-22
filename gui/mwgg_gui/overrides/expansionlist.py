@@ -428,19 +428,28 @@ class HintListItem(MWBaseListItem):
         hint_instance.hint_data.hide = value
 
     @staticmethod
+    def _toggle_mwgg_flag_and_update(hint_instance, flag: int, value: bool):
+        """Helper method to toggle MWGG flag and update hints"""
+        from kivymd.app import MDApp
+        hint_instance.hint_data.toggle_mwgg_flag(flag, value)
+        app = MDApp.get_running_app()
+        if hasattr(app, 'update_mwgg_hints'):
+            app.update_mwgg_hints()
+
+    @staticmethod
     def set_bkmode(hint_instance, value):
         """Handle BK mode button activation"""
-        hint_instance.hint_data.set_status_from_mwgg(mwgg_status=0b100)
+        HintListItem._toggle_mwgg_flag_and_update(hint_instance, 0b100, value)
     
     @staticmethod
     def set_goal(hint_instance, value):
         """Handle goal button activation"""
-        hint_instance.hint_data.set_status_from_mwgg(mwgg_status=0b010)
+        HintListItem._toggle_mwgg_flag_and_update(hint_instance, 0b010, value)
     
     @staticmethod
     def set_shop(hint_instance, value):
         """Handle shop button activation"""
-        hint_instance.hint_data.set_status_from_mwgg(mwgg_status=0b001)
+        HintListItem._toggle_mwgg_flag_and_update(hint_instance, 0b001, value)
 
 class HintListDropdown(MDDropdownMenu):
     def __init__(self, *args, status_names: dict[HintStatus, str], status_icons: dict[HintStatus, str], 

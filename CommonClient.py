@@ -790,8 +790,8 @@ class CommonContext(InitContext):
             # send copy to UI
             self.ui.print_json(copy.deepcopy(args["data"]))
 
-        if args["type"] == "Countdown":
-            self.countdown_timer = args["countdown"]
+        if args.get("type") == "Countdown":
+            self.countdown_timer = args.get("countdown", 0)
 
         logging.getLogger("FileLog").info(self.rawjsontotextparser(copy.deepcopy(args["data"])),
                                           extra={"NoStream": True})
@@ -879,7 +879,7 @@ class CommonContext(InitContext):
 
     def update_mwgg_hint(self, location: int, finding_player: int, mwgg_status: MWGGUIHintStatus) -> None:
         msg = {"cmd": "Set", 
-               "key": f"mwgg_hints_{self.team}_{self.slot}", 
+               "key": f"hints_{self.team}_{self.slot}_mwgg", 
                "want_reply": False, 
                "default": {}, 
                "operations": [{"operation": "replace", "value": {f"{finding_player}_{location}": mwgg_status.value}}]}
@@ -1308,6 +1308,10 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.consume_players_package(args["players"])
         ctx.stored_data_notification_keys.add(f"_read_hints_{ctx.team}_{ctx.slot}")
         ctx.stored_data_notification_keys.add(f"_read_hints_{ctx.team}_{ctx.slot}_mwgg")
+        # Add profile_data keys for all players in the multiworld
+        for slot_id in ctx.slot_info.keys():
+            if slot_id != 0:  # Skip Archipelago slot
+                ctx.stored_data_notification_keys.add(f"profile_data_{ctx.team}_{slot_id}")
         msgs = []
         if ctx.locations_checked:
             msgs.append({"cmd": "LocationChecks",
@@ -1400,15 +1404,38 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.stored_data.update(args["keys"])
         if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" in args["keys"]:
             ctx.ui.update_hints()
-        elif ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}_mwgg" in args["keys"]:
+        if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}_mwgg" in args["keys"]:
             ctx.ui.update_mwgg_hints()
-        elif ctx.ui and "_read_timer" in args["keys"]:
+        if ctx.ui and "_read_timer" in args["keys"]:
             ctx.timer = args["keys"]["_read_timer"]
+        # Update profile data for all players when retrieved (on connect)
+        if ctx.ui:
+            for key in args["keys"]:
+                if key.startswith(f"profile_data_{ctx.team}_"):
+                    slot_id = int(key.split("_")[-1])
+                    if slot_id in ctx.ui.ui_player_data:
+                        profile_data = args["keys"][key]
+                        if profile_data:
+                            for item, data in profile_data.items():
+                                if hasattr(ctx.ui.ui_player_data[slot_id], item):
+                                    setattr(ctx.ui.ui_player_data[slot_id], item, data)
 
     elif cmd == "SetReply":
         ctx.stored_data[args["key"]] = args["value"]
         if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" == args["key"]:
             ctx.ui.update_hints()
+        elif ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}_mwgg" == args["key"]:
+            ctx.ui.update_mwgg_hints()
+        elif args["key"].startswith(f"profile_data_{ctx.team}_"):
+            # Update profile data when another client changes their profile
+            if ctx.ui:
+                slot_id = int(args["key"].split("_")[-1])
+                if slot_id in ctx.ui.ui_player_data and slot_id != ctx.slot:
+                    profile_data = args["value"]
+                    if profile_data:
+                        for item, data in profile_data.items():
+                            if hasattr(ctx.ui.ui_player_data[slot_id], item):
+                                setattr(ctx.ui.ui_player_data[slot_id], item, data)
         elif args["key"].startswith("EnergyLink"):
             ctx.current_energy_link_value = args["value"]
             if ctx.ui:

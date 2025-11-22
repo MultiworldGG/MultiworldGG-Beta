@@ -674,14 +674,14 @@ class MultiMDApp(MDApp):
 
     def update_hints(self):
         hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}", [])
-        mwgg_hints = self.ctx.stored_data.get(f"mwgg_hints_{self.ctx.team}_{self.ctx.slot}", {})
+        mwgg_hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}_mwgg", {})
         if hints:
             self.refresh_hints(hints, mwgg_hints)
 
 
     def refresh_hints(self, hints, mwgg_hints):
         hints_key = f"_read_hints_{self.ctx.team}_{self.ctx.slot}"
-        mwgg_hints_key = f"mwgg_hints_{self.ctx.team}_{self.ctx.slot}"
+        mwgg_hints_key = f"_read_hints_{self.ctx.team}_{self.ctx.slot}_mwgg"
         
         # Ensure mwgg_hints is a dict, not None
         if mwgg_hints is None:
@@ -723,7 +723,7 @@ class MultiMDApp(MDApp):
             if slot in self.ui_hint_data:
                 self.ui_player_data[slot].hints = self.ui_hint_data[slot]
 
-        #self.update_player_data()
+        self.update_player_data()
 
         # Update hints lists if it exists
         if "console" in self.screen_manager.screen_names:
@@ -745,7 +745,10 @@ class MultiMDApp(MDApp):
             mwgg_hints = self.ui_hint_data
         
         # Get current stored data to compare
-        current_stored = self.ctx.stored_data.get(f"mwgg_hints_{self.ctx.team}_{self.ctx.slot}", {})
+        current_stored = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}_mwgg", {})
+        # Ensure current_stored is a dict, not None
+        if current_stored is None:
+            current_stored = {}
         
         # Only store hints that have non-default MWGG status
         mwgg_data_to_store = {}
@@ -765,7 +768,7 @@ class MultiMDApp(MDApp):
         if has_changes:
             asynckivy.start(self.ctx.send_msgs([{
                 "cmd": "Set",
-                "key": f"mwgg_hints_{self.ctx.team}_{self.ctx.slot}",
+                "key": f"hints_{self.ctx.team}_{self.ctx.slot}_mwgg",
                 "want_reply": False,
                 "default": {},
                 "operations": [{"operation": "replace", "value": mwgg_data_to_store}]
@@ -784,8 +787,7 @@ class MultiMDApp(MDApp):
     def update_player_data(self):
         player_data: dict[int, dict[str, any]] = {}
         for slot in self.ui_player_data:
-            player_data[slot] = self.ui_player_data[slot].to_dict()
-            # TODO: change to_dict to a better function that only includes the profile data we care about
+            player_data[slot] = self.ui_player_data[slot].to_profile_dict()
         
         # Get current stored data to compare
         current_player_data: dict[int, dict[str, any]] = {}
@@ -794,20 +796,24 @@ class MultiMDApp(MDApp):
                 current_player_data[slot] = self.ctx.stored_data.get(f"profile_data_{self.ctx.team}_{slot}", {})
         
         for slot, local_data in player_data.items():
-            remote_data = current_player_data[slot]
+            remote_data = current_player_data.get(slot, {})
+            # Skip if data is unchanged
             if local_data == remote_data:
                 continue
-            if local_data["slot_id"] == remote_data["slot_id"]:
-                if local_data["slot_id"] == self.ctx.slot:
-                    asynckivy.start(self.ctx.send_msgs([{
-                        "cmd": "Set",
-                        "key": f"profile_data_{self.ctx.team}_{self.ctx.slot}",
-                        "want_reply": False,
-                        "default": {},
-                        "operations": [{"operation": "replace", "value": local_data}]
-                    }]))
-                else:
-                    for item, data in remote_data.items():
+            
+            # Only update our own slot's data on the server
+            if local_data["slot_id"] == self.ctx.slot:
+                asynckivy.start(self.ctx.send_msgs([{
+                    "cmd": "Set",
+                    "key": f"profile_data_{self.ctx.team}_{self.ctx.slot}",
+                    "want_reply": False,
+                    "default": {},
+                    "operations": [{"operation": "replace", "value": local_data}]
+                }]))
+            # For other slots, update local data from remote if remote exists
+            elif remote_data and local_data["slot_id"] == remote_data.get("slot_id"):
+                for item, data in remote_data.items():
+                    if hasattr(self.ui_player_data[slot], item):
                         setattr(self.ui_player_data[slot], item, data)
 
     @property
