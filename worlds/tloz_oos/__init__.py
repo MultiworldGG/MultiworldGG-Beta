@@ -123,6 +123,10 @@ class OracleOfSeasonsWorld(World):
     location_name_groups = LOCATION_GROUPS
     origin_region_name = "impa's house"
 
+    @classmethod
+    def version(cls) -> str:
+        return f"{cls.world_version.major}.{cls.world_version.minor}"
+
     def __init__(self, multiworld, player):
         super().__init__(multiworld, player)
 

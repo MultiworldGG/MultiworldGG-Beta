@@ -2,7 +2,7 @@ import binascii
 import dataclasses
 import os
 import typing
-import logging
+import struct
 
 import settings
 import Utils
@@ -22,6 +22,7 @@ from .LADXR.logic import Logic as LADXRLogic
 from .LADXR.settings import Settings as LADXRSettings
 from .LADXR.worldSetup import WorldSetup as LADXRWorldSetup
 from .LADXR.explorer import Explorer as LADXRExplorer
+from .LADXR.hints import generate_hint_texts
 from .Locations import (LinksAwakeningLocation,
                         LinksAwakeningRegion,
                         create_regions_from_ladxr,
@@ -198,12 +199,11 @@ class LinksAwakeningWorld(World):
         world_setup = LADXRWorldSetup()
         world_setup.randomize(self.ladxr_settings, self.random, self.options)
         self.ladxr_logic = LADXRLogic(configuration_options=self.ladxr_settings, world_setup=world_setup)
-        self.ladxr_itempool = LADXRItemPool(self.ladxr_logic, self.ladxr_settings, self.random, bool(self.options.stabilize_item_pool)).toDict()
+        self.ladxr_itempool = LADXRItemPool(self.ladxr_logic, self.ladxr_settings, self.random, bool(self.options.more_filler)).toDict()
 
 
     def generate_early(self) -> None:
-        self.dungeon_item_types = {
-        }
+        self.dungeon_item_types = {}
         for dungeon_item_type in ["maps", "compasses", "small_keys", "nightmare_keys", "stone_beaks", "instruments"]:
             option_name = "shuffle_" + dungeon_item_type
             option: DungeonItemShuffle = getattr(self.options, option_name)
@@ -222,6 +222,22 @@ class LinksAwakeningWorld(World):
                 self.options.non_local_items.value |= {
                     ladxr_item_to_la_item_name[f"{option.ladxr_item}{i}"] for i in range(1, num_items + 1)
                 }
+
+        if self.options.filler_pool == 'ammo':
+            self.filler_choices = ("Bomb", "Single Arrow", "10 Arrows", "Magic Powder", "Medicine")
+            self.filler_weights = ( 10,     5,              10,          10,             1)
+        elif self.options.filler_pool == 'rupees':
+            self.filler_choices = ("20 Rupees", "50 Rupees")
+            self.filler_weights = ( 3,           1)
+        elif self.options.filler_pool == 'seashells':
+            self.filler_choices = ("Seashell",)
+            self.filler_weights = (1,)
+        elif self.options.filler_pool == 'traps':
+            self.filler_choices = ("Zol Attack",)
+            self.filler_weights = (1,)
+        else:
+            self.filler_choices = ("Nothing",)
+            self.filler_weights = (1,)
 
     def create_regions(self) -> None:
         # Initialize
@@ -279,6 +295,9 @@ class LinksAwakeningWorld(World):
         # option_delete = 5
 
         for ladx_item_name, count in self.ladxr_itempool.items():
+            if ladx_item_name == 'FILLER':
+                for _ in range(count):
+                    itempool.append(self.create_item(self.get_filler_item_name()))
             # event
             if ladx_item_name not in ladxr_item_to_la_item_name:
                 continue
@@ -480,6 +499,9 @@ class LinksAwakeningWorld(World):
         fill_restrictive(self.multiworld, partial_all_state, all_dungeon_locs_to_fill, all_dungeon_items_to_fill, lock=True, single_player_placement=True, allow_partial=False)
 
 
+    def post_fill(self) -> None:
+        self.ladx_in_game_hints = generate_hint_texts(self)
+
     def generate_output(self, output_directory: str):
         matcher = ForeignItemIconMatcher()
         # copy items back to locations
@@ -538,21 +560,31 @@ class LinksAwakeningWorld(World):
         change = super().remove(state, item)
         if change and item.name in self.rupees:
             state.prog_items[self.player]["RUPEES"] -= self.rupees[item.name]
-        return change
-
-    # Same fill choices and weights used in LADXR.itempool.__randomizeRupees
-    filler_choices = ("Bomb", "Single Arrow", "10 Arrows", "Magic Powder", "Medicine")
-    filler_weights = ( 10,     5,              10,          10,             1)
+        return change    
 
     def get_filler_item_name(self) -> str:
-        if self.options.stabilize_item_pool:
-            return "Nothing"
         return self.random.choices(self.filler_choices, self.filler_weights)[0]
 
     def fill_slot_data(self):
+        hint_data = {
+            k: {"location": v["location"], "player": v["player"]}
+            for k, v in self.ladx_in_game_hints.items()
+            if v is not None
+        }
+        hint_data.update({
+            0x030: {
+                "location": self.location_name_to_id["Shop 200 Item (Mabe Village)"],
+                "player": self.player,
+            },
+            0x02C: {
+                "location": self.location_name_to_id["Shop 980 Item (Mabe Village)"],
+                "player": self.player,
+            }
+        })
         slot_data = {
             "world_version": self.world_version.as_simple_string(),
 			"death_link": self.options.death_link.value,
+            "hint_data": hint_data,
         }
 
         if not self.multiworld.is_race:

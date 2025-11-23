@@ -1,4 +1,3 @@
-import settings
 import worlds.Files
 import hashlib
 import Utils
@@ -14,7 +13,6 @@ from Options import OptionError
 from .Common import *
 from .LADXR import generator
 from .LADXR.main import get_parser
-from .LADXR.hints import generate_hint_texts
 from .LADXR.locations.keyLocation import KeyLocation
 LADX_HASH = "07c211479386825042efb4ad31bb525f"
 
@@ -61,6 +59,7 @@ class LADXProcedurePatch(worlds.Files.APProcedurePatch):
 def write_patch_data(world: "LinksAwakeningWorld", patch: LADXProcedurePatch):
     item_list = pickle.dumps([item for item in world.ladxr_logic.iteminfo_list if not isinstance(item, KeyLocation)])
     data_dict = {
+        "generated_world_version": world.world_version.as_simple_string(),
         "out_base": world.multiworld.get_out_file_name_base(patch.player),
         "is_race": world.multiworld.is_race,
         "seed": world.multiworld.seed,
@@ -70,7 +69,10 @@ def write_patch_data(world: "LinksAwakeningWorld", patch: LADXProcedurePatch):
         "player_name": patch.player_name,
         "other_player_names": list(world.multiworld.player_name.values()),
         "item_list": binascii.hexlify(item_list).decode(),
-        "hint_texts": generate_hint_texts(world),
+        "hint_texts": {
+            k: (v["text"] if v is not None else None)
+            for k, v in world.ladx_in_game_hints.items()
+        },
         "world_setup": {
             "goal": world.ladxr_logic.world_setup.goal,
             "bingo_goals": world.ladxr_logic.world_setup.bingo_goals,
@@ -127,17 +129,17 @@ def get_base_rom_bytes(file_name: str = "") -> bytes:
 
 
 def get_base_rom_path(file_name: str = "") -> str:
-    options = settings.get_settings()
+    from . import LinksAwakeningWorld
     if not file_name:
-        file_name = options["ladx_beta_options"]["rom_file"]
+        file_name = LinksAwakeningWorld.settings.rom_file
     if not os.path.exists(file_name):
         file_name = Utils.user_path(file_name)
     return file_name
 
 
 def apply_overrides(patch_data: dict) -> None:
-    host_settings = settings.get_settings()
-    option_overrides = host_settings["ladx_beta_options"].get("option_overrides")
+    from . import LinksAwakeningWorld
+    option_overrides = getattr(LinksAwakeningWorld.settings, "option_overrides", None)
     if not option_overrides:
         return
     wrapped_overrides = {

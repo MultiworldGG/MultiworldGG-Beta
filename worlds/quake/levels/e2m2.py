@@ -469,21 +469,33 @@ class e2m2(Q1Level):
                 "Nailgun (32)",
                 "Quad Damage (50)",
                 "Shells (37)",
-                "Shells (48)",
-                "Rockets (23)",
-                "Large Medkit (34)",
-                "Cells (53)",
-                "Red Armor (16)",
-                "Large Medkit (33)",
-                "Large Medkit (35)",
                 "Spikes (36)",
                 "Small Medkit (41)",
             ],
         )
         self.connect(castle_outside_secret_area, castle_inside_area, r.jump)
-        self.connect(castle_inside_area, castle_outside_secret_area, r.jump)
+        # can airstrafe from above through the window
+        self.connect(
+            castle_inside_area,
+            castle_outside_secret_area,
+            (r.jump | r.difficulty("hard")),
+        )
         self.connect(ret, castle_inside_area, r.can_shootswitch)
-        self.connect(castle_inside_area, castle_behind_bars_area, r.can_button)
+        self.connect(castle_inside_area, castle_behind_bars_area, r.can_button & r.jump)
+
+        castle_inside_upper_area = self.region(
+            "Castle Inside Upper Area",
+            [
+                "Rockets (23)",
+                "Shells (48)",
+                "Large Medkit (34)",
+                "Cells (53)",
+                "Red Armor (16)",
+                "Large Medkit (33)",
+                "Large Medkit (35)",
+            ],
+        )
+        self.connect(castle_inside_area, castle_inside_upper_area, r.jump)
 
         past_gold_door_area = self.region(
             "Past Gold Door Area",

@@ -639,10 +639,20 @@ class mge4m1(Q1Level):
         self.restrict("Secret (22)", r.can_shootswitch)
         self.restrict("Invulnerability (28)", r.can_shootswitch)
         self.restrict("Rockets (26)", r.can_shootswitch)
-        self.restrict("Green Armor (12)", r.can_button | r.bigjump_hard)
-        self.restrict("Spikes (6)", r.can_button | r.bigjump_hard)
-        self.restrict("Large Medkit (21)", r.can_button | r.bigjump_hard)
-        self.restrict("Spikes (7)", r.can_button | r.bigjump_hard)
+        self.restrict(
+            "Green Armor (12)",
+            r.can_button | (r.can_jump & (r.can_gj_extr | r.can_rj_hard)),
+        )
+        self.restrict(
+            "Spikes (6)", r.can_button | (r.can_jump & (r.can_gj_extr | r.can_rj_hard))
+        )
+        self.restrict(
+            "Large Medkit (21)",
+            r.can_button | (r.can_jump & (r.can_gj_extr | r.can_rj_hard)),
+        )
+        self.restrict(
+            "Spikes (7)", r.can_button | (r.can_jump & (r.can_gj_extr | r.can_rj_hard))
+        )
 
         underground_area = self.region(
             "Underground Area",
@@ -683,7 +693,7 @@ class mge4m1(Q1Level):
                 "Large Medkit (8)",
             ],
         )
-        self.connect(past_door_area, underground_door_area, r.can_door)
+        self.connect(underground_area, underground_door_area, r.can_door)
 
         self.restrict("Secret (82)", r.can_shootswitch)
         self.restrict("Yellow Armor (73)", r.can_shootswitch)

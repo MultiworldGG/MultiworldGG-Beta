@@ -3,7 +3,7 @@ import math
 from random import Random
 from .levels import SL, HIPSL, ROGUESL, MG1SL, DOPASL
 from typing import Any, Dict, List, Optional, Set, Tuple
-from BaseClasses import CollectionState,Tutorial
+from BaseClasses import CollectionState, Tutorial
 
 # Compatibility across Python versions
 try:

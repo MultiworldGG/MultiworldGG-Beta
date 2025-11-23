@@ -79,6 +79,7 @@ Currently, the following games are supported:
 * Hatsune Miku: Project Diva Mega Mix+
 * Here comes Niko!
 * Heretic
+* HITMAN World of Assassination
 * Hollow Knight
 * HuniePop
 * HuniePop 2

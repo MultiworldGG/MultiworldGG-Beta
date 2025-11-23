@@ -45,6 +45,10 @@
    - Receive items from other players as they complete their objectives
    - Work together (or compete) to complete your goals!
 
+## Note
+
+- If you play in multiplayer mode, only the host should connect to the MultiworldGG server. Note that only the world connected by the host will send and receive items, so consider to only add one world to the seed if you want to play together.
+
 ## Troubleshooting
 
 ### Plugin Not Loading

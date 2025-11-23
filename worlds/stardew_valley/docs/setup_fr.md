@@ -4,14 +4,14 @@
 
 - Stardew Valley 1.6 sur PC (Recommandé: [Steam](https://store.steampowered.com/app/413150/Stardew_Valley/))
 - SMAPI ([Mod loader pour Stardew Valley](https://www.nexusmods.com/stardewvalley/mods/2400?tab=files))
-- [StardewArchipelago Version 6.x.x](https://github.com/agilbert1412/StardewArchipelago/releases)
+- [StardewArchipelago Version 7.x.x](https://github.com/agilbert1412/StardewArchipelago/releases)
   - Il est important d'utiliser une release en 7.x.x pour jouer sur des seeds générées ici.
 
 ## Logiciels optionnels
 
 - Launcher MultiworldGG à partir de la [page des versions de MultiworldGG](https://github.com/MultiworldGG/MultiworldGG/releases)
   - (Uniquement pour le client textuel)
-- Autres [mods supportés](https://github.com/agilbert1412/StardewArchipelago/blob/6.x.x/Documentation/Supported%20Mods.md) que vous pouvez ajouter au yaml pour les inclure dans la randomization d'Archipelago
+- Autres [mods supportés](https://github.com/agilbert1412/StardewArchipelago/blob/7.x.x/Documentation/Supported%20Mods.md) que vous pouvez ajouter au yaml pour les inclure dans la randomization d'Archipelago
 
   - Il n'est **pas** recommandé de modder Stardew Valley avec des mods non supportés, même s'il est possible de le faire.
     Les interactions entre mods peuvent être imprévisibles, et aucune aide ne sera fournie pour les bugs qui y sont liés.
@@ -80,7 +80,7 @@ Pour une meilleure expérience avec le chat, vous pouvez aussi utiliser le clien
 
 ### Jouer avec des mods supportés
 
-Voir la [documentation des mods supportés](https://github.com/agilbert1412/StardewArchipelago/blob/6.x.x/Documentation/Supported%20Mods.md) (en Anglais).
+Voir la [documentation des mods supportés](https://github.com/agilbert1412/StardewArchipelago/blob/7.x.x/Documentation/Supported%20Mods.md) (en Anglais).
 
 ### Multijoueur
 

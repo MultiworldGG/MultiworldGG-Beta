@@ -54,7 +54,7 @@ But not a separate one. We have modified the base game to provide in-game tracki
 
 ## Connect to the MultiServer
 
-1. Start a new game in Crystal Project. An MultiworldGG connection screen will appear.
+1. Start a new game in Crystal Project. An AP/MultiworldGG connection screen will appear.
 1. Fill out the hostname and port (multiworld.gg: #####), slot name, and password (if applicable). You can use your keyboard to type, or you can hit the Paste button on controller.
 1. Hit the Connect button. You should now be connected!
 

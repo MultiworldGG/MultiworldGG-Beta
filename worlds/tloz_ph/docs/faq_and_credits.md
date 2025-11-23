@@ -37,6 +37,8 @@ Things not implemented:
 - Postman locations
 - That one treasure map from the girl on Molida Island
 
+It's still early alpha, and there are lots of issues around! Report issues to the [phantom hourglass thread](https://discord.com/channels/731205301247803413/1256012365049233438) in the [Archipelago Discord](https://discord.gg/8Z65BR2)
+
 ### Is there a tracker?
 
 [Universal Tracker](https://github.com/FarisTheAncient/Archipelago/releases) is supported, and includes a map screen by palex00.  

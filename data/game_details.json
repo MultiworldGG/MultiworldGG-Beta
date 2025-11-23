@@ -2025,6 +2025,35 @@
         ],
         "release_date": 1994
     },
+    "HITMAN World of Assassination": {
+        "igdb_id": "233571",
+        "world_name": "HITMAN World of Assasination",
+        "igdb_name": "Hitman World of Assassination",
+        "us_rating": [
+            "M"
+        ],
+        "player_perspectives": [
+            "Third person"
+        ],
+        "genres": [
+            "Shooter",
+            "Tactical",
+            "Adventure"
+        ],
+        "themes": [
+            "Action",
+            "Thriller",
+            "Stealth",
+            "Sandbox"
+        ],
+        "keywords": [
+            "assassin",
+            "hitman",
+            "agent 47",
+            "assassination"
+        ],
+        "release_date": 2023
+    },
     "Hollow Knight": {
         "igdb_id": "14593",
         "world_name": "Hollow Knight",

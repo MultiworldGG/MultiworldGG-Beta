@@ -81,7 +81,7 @@ def make_d1_logic(player: int):
             all([
                 oos_can_remove_rockslide(state, player, False),
                 oos_has_small_keys(state, player, 1, 2),
-                oos_can_kill_armored_enemy(state, player, False, False)
+                oos_can_kill_armored_enemy(state, player, False, True)
             ])
         ])],
     ]
@@ -1229,6 +1229,7 @@ def make_d8_logic(player: int):
         ["d8 ice puzzle room", "d8 pols voice chest", False, lambda state: any([
             oos_has_magic_boomerang(state, player),
             oos_can_jump_6_wide_pit(state, player),
+            oos_has_shooter(state, player),
             all([
                 oos_option_medium_logic(state, player),
                 oos_has_bombchus(state, player, 2)

@@ -149,7 +149,6 @@ class LMWorld(World):
     """
 
     game: ClassVar[str] = "Luigi's Mansion"
-    author: ClassVar[str] = "BootsinSoots"
     options_dataclass = LuigiOptions.LMOptions
     options: LuigiOptions.LMOptions
 
@@ -379,17 +378,15 @@ class LMWorld(World):
                 add_rule(entry, lambda state: state.has("Poltergust 3000", self.player), "and")
                 if entry.region == "Twins' Room" and self.open_doors.get(28) == 0:
                     add_rule(entry, lambda state: state.has("Twins Bedroom Key", self.player), "and")
-                if data.region == "Nursery" and self.open_doors.get(27) == 0:
+                elif data.region == "Nursery" and self.open_doors.get(27) == 0:
                     add_rule(entry, lambda state: state.has("Nursery Key", self.player), "and")
-                if data.region == "Fortune-Teller's Room": # If it's Clairvoya's room, should match Mario item count
+                elif data.region == "Fortune-Teller's Room": # If it's Clairvoya's room, should match Mario item count
                     add_rule(entry,
                              lambda state: state.has_group("Mario Item", self.player, self.options.mario_items.value),
                              "and")
-                if entry.parent_region.name == self.origin_region_name:
-                    if self.spawn_full_locked:
+                if entry.parent_region.name == self.origin_region_name and self.spawn_full_locked:
                         keys = spawn_locations[self.origin_region_name]["door_keys"]
-                        for key in keys:
-                            add_rule(entry, lambda state, k=key: state.has(k, self.player), "or")
+                        add_rule(entry, lambda state: state.has_any(keys, self.player), "and")
                 set_element_rules(self, entry, True)
                 region.locations.append(entry)
             for location, data in BOOLOSSUS_LOCATION_TABLE.items():
@@ -409,17 +406,15 @@ class LMWorld(World):
                 add_rule(entry, lambda state: state.has("Poltergust 3000", self.player), "and")
                 if entry.region == "Twins' Room" and self.open_doors.get(28) == 0:
                     add_rule(entry, lambda state: state.has("Twins Bedroom Key", self.player), "and")
-                if data.region == "Nursery" and self.open_doors.get(27) == 0:
+                elif data.region == "Nursery" and self.open_doors.get(27) == 0:
                     add_rule(entry, lambda state: state.has("Nursery Key", self.player), "and")
-                if data.region == "Fortune-Teller's Room": # If it's Clairvoya's room, should match Mario item count
+                elif data.region == "Fortune-Teller's Room": # If it's Clairvoya's room, should match Mario item count
                     add_rule(entry,
                              lambda state: state.has_group("Mario Item", self.player, self.options.mario_items.value),
                              "and")
-                if entry.parent_region.name == self.origin_region_name:
-                    if self.spawn_full_locked:
+                if entry.parent_region.name == self.origin_region_name and self.spawn_full_locked:
                         keys = spawn_locations[self.origin_region_name]["door_keys"]
-                        for key in keys:
-                            add_rule(entry, lambda state, k=key: state.has(k, self.player), "or")
+                        add_rule(entry, lambda state: state.has_any(keys, self.player), "and")
                 entry.code = None
                 set_element_rules(self, entry, True)
                 region.locations.append(entry)
@@ -449,7 +444,6 @@ class LMWorld(World):
         add_rule(loc, lambda state: state.has("Poltergust 3000", self.player), "and")
 
     def generate_early(self):
-        self.options.grassanity.value = 1
         if self.options.energy_link == 1 and self.options.ring_link == 1:
             raise Options.OptionError("In Luigi's Mansion, both energy_link and ring_link cannot be enabled.\n"
                                       f"This error was found in {self.player_name}'s Luigi's Mansion world."
@@ -692,7 +686,7 @@ class LMWorld(World):
         if sum(filler_weights) != 0:
             return self.random.choices(other_filler, weights=filler_weights, k=1)[0]
         else:
-            return "Grass"
+            return "Dust"
 
     def get_filler_item_name(self) -> str:
         filler = list(filler_items.keys())
@@ -717,7 +711,7 @@ class LMWorld(World):
         if sum(filler_weights) != 0:
             return self.random.choices(filler, weights=filler_weights, k=1)[0]
         else:
-            return "Grass"
+            return "Dust"
 
     def set_rules(self):
         self.multiworld.completion_condition[self.player] = lambda state: state.has("Mario's Painting", self.player)

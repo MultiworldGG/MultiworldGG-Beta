@@ -63,3 +63,7 @@
 # Asset redistribution rights.  If true, the host affirms they have been given explicit permission to redistribute
 # the proprietary assets in WebHostLib
 #ASSET_RIGHTS: false
+
+# Admin token for monitoring API endpoints (/api/monitoring/*). If not set, monitoring endpoints will be disabled.
+# The token must be provided via Authorization header: Authorization: Bearer <token>
+#MONITORING_ADMIN_TOKEN: "your-secret-admin-token-here"

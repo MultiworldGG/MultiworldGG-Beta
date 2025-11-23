@@ -49,10 +49,14 @@ def logic_files(package):
     internal = [
         file for file in internal_data_dir.joinpath("logic").iterdir()
     ]
-    external = [
-        file for file in (Path(Utils.home_path()) / "gzdoom" / "logic").iterdir()
-        if file.is_file()
-    ]
+    external_path = Path(Utils.home_path()) / "gzdoom" / "logic"
+    if external_path.exists():
+        external = [
+            file for file in external_path.iterdir()
+            if file.is_file()
+        ]
+    else:
+        external = []
     return sorted(internal, key=lambda f: f.name), sorted(external)
 
 def tuning_files(package, wad):
@@ -68,10 +72,14 @@ def tuning_files(package, wad):
         p for p in internal_data_dir.joinpath("tuning").iterdir()
         if p.is_file() and (p.name == wad or p.name.startswith(f"{wad}."))
     ]
-    external = [
-        p for p in (Path(Utils.home_path()) / "gzdoom" / "tuning").iterdir()
-        if p.is_file() and (p.name == wad or p.name.startswith(f"{wad}."))
-    ]
+    external_path = Path(Utils.home_path()) / "gzdoom" / "tuning"
+    if external_path.exists():
+        external = [
+            p for p in external_path.iterdir()
+            if p.is_file() and (p.name == wad or p.name.startswith(f"{wad}."))
+        ]
+    else:
+        external = []
     return sorted(internal, key=lambda f: f.name) + sorted(external)
 
 def init_wad(package, logic_file, is_external, apworld_mtime):

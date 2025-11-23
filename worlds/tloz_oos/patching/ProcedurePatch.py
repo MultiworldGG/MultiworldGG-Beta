@@ -2,12 +2,11 @@ import json
 import pkgutil
 
 import yaml
-from worlds.Files import APProcedurePatch, APTokenMixin, APPatchExtension
 
+from worlds.Files import APProcedurePatch, APTokenMixin, APPatchExtension
 from .Functions import *
-from .Constants import *
 from .RomData import RomData
-from .text.decoding import parse_all_texts, parse_dict_seasons
+from .data_manager.text import get_text_data
 from .text.encoding import write_text_data
 from .z80asm.Assembler import Z80Assembler, Z80Block
 
@@ -46,8 +45,7 @@ class OoSPatchExtensions(APPatchExtension):
         random.seed(patch_data["seed"] + caller.player)
 
         assembler = Z80Assembler(CAVE_DATA, DEFINES, rom, ages_rom)
-        dictionary = parse_dict_seasons(rom_data)
-        texts = parse_all_texts(rom_data, dictionary)
+        dictionary, texts = get_text_data(rom_data, True)
 
         # Define assembly constants & floating chunks
         define_location_constants(assembler, patch_data)
@@ -67,7 +65,7 @@ class OoSPatchExtensions(APPatchExtension):
 
         # Parse assembler files, compile them and write the result in the ROM
         print("Compiling ASM files...")
-        write_text_data(rom_data, dictionary, texts)
+        write_text_data(rom_data, dictionary, texts, True)
         for file_path in get_asm_files(patch_data):
             data_loaded = yaml.safe_load(pkgutil.get_data(__name__, file_path))
             for metalabel, contents in data_loaded.items():

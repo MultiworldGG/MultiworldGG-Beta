@@ -23,6 +23,9 @@ Current endpoints:
 - User API
     - [`/get_rooms`](#getrooms)
     - [`/get_seeds`](#getseeds)
+- Monitoring API
+    - [`/monitoring/rooms`](#monitoringrooms)
+    - [`/monitoring/games`](#monitoringgames)
 
 
 ## Datapackage Endpoints
@@ -554,4 +557,132 @@ Example:
         "seed_id": "a528e34c-3b4f-42a9-9f8f-00a4fd40bacb"
     }
 ]
+```
+
+## Monitoring Endpoints
+Monitoring endpoints provide information about currently active rooms and games running on the webhost. These endpoints require an admin token configured in the webhost config (`MONITORING_ADMIN_TOKEN`). If no token is configured, the endpoints will return 503. The token must be provided via Authorization header: `Authorization: Bearer <token>`
+
+**Note**: These endpoints are disabled by default. To enable them, set `MONITORING_ADMIN_TOKEN` in your `config.yaml` file.
+
+### `/monitoring/rooms`  
+<a name="monitoringrooms"></a>
+Retrieves a list of all currently active rooms with their ports and last activity times.  
+A room is considered active if it has a valid port and hasn't timed out based on its last activity.
+
+**Authentication**: Requires `MONITORING_ADMIN_TOKEN` to be set in config. Provide token via Authorization header: `Authorization: Bearer <token>`
+
+**Example request**:
+```bash
+curl -H "Authorization: Bearer your-secret-token" https://your-webhost/api/monitoring/rooms
+```
+
+Returns a dict with:
+- `active_rooms`: A list of active room objects, each containing:
+    - `room_id`: Full UUID of the room
+    - `room_id_short`: Short base64-encoded UUID (SUUID) of the room
+    - `port`: The port number the room is running on
+    - `last_activity_timestamp`: ISO format timestamp of last activity (room-level, when any player was active)
+    - `time_until_timeout`: Seconds remaining until the room will timeout and shut down (integer)
+    - `games`: List of games in this room, with one entry per player slot
+      - `game`: Game name
+      - `player_id`: Player slot ID
+      - `player_name`: Player name
+      - `last_activity_timestamp`: ISO format timestamp of last activity for this player's game (or null if no activity)
+    - `player_count`: Number of players in the room
+    - `creation_time`: ISO format timestamp of room creation
+- `total_active_rooms`: Total count of active rooms
+- `timestamp`: Current server timestamp in ISO format
+
+Example:
+```
+{
+    "active_rooms": [
+        {
+            "room_id": "90ae5f9b-177c-4df8-ac53-9629fc3bff7a",
+            "room_id_short": "kK75mBd8TNyqU5Yp_Dv3ug",
+            "port": 52122,
+            "last_activity_timestamp": "2025-04-18T21:16:02.123456",
+            "time_until_timeout": 6842,
+            "games": [
+                {
+                    "game": "Ocarina of Time",
+                    "player_id": 1,
+                    "player_name": "Player1",
+                    "last_activity_timestamp": "2025-04-18T21:15:30.123456"
+                },
+                {
+                    "game": "A Link to the Past",
+                    "player_id": 2,
+                    "player_name": "Player2",
+                    "last_activity_timestamp": "2025-04-18T21:16:02.123456"
+                }
+            ],
+            "player_count": 2,
+            "creation_time": "2025-04-18T19:46:53.123456"
+        }
+    ],
+    "total_active_rooms": 1,
+    "timestamp": "2025-04-18T21:16:15.123456"
+}
+```
+
+### `/monitoring/games`  
+<a name="monitoringgames"></a>
+Retrieves a list of all games currently active, grouped by game type, with port and last activity information for each instance.
+
+**Authentication**: Requires `MONITORING_ADMIN_TOKEN` to be set in config. Provide token via:
+- Header: `Authorization: Bearer <token>`
+- Query: `?token=<token>`
+
+**Example requests**:
+```bash
+# Using Authorization header
+curl -H "Authorization: Bearer your-secret-token" https://your-webhost/api/monitoring/games
+
+# Using query parameter
+curl https://your-webhost/api/monitoring/games?token=your-secret-token
+```
+
+Returns a dict with:
+- `games`: A list of game objects, each containing:
+    - `game`: The game name
+    - `active_instances`: List of game instances, each containing:
+        - `room_id`: Full UUID of the room
+        - `room_id_short`: Short base64-encoded UUID (SUUID) of the room
+        - `port`: The port number the room is running on
+        - `last_activity_timestamp`: ISO format timestamp of last activity (room-level)
+        - `game_last_activity_timestamp`: ISO format timestamp of last activity for this specific player's game (or null if no activity)
+        - `player_name`: Name of the player slot
+        - `player_id`: ID of the player slot
+        - `time_until_timeout`: Seconds remaining until timeout (integer)
+    - `instance_count`: Number of active instances of this game
+- `total_games`: Total number of unique games
+- `total_instances`: Total number of game instances across all games
+- `timestamp`: Current server timestamp in ISO format
+
+Example:
+```
+{
+    "games": [
+        {
+            "game": "Ocarina of Time",
+            "active_instances": [
+                {
+                    "room_id": "90ae5f9b-177c-4df8-ac53-9629fc3bff7a",
+                    "room_id_short": "kK75mBd8TNyqU5Yp_Dv3ug",
+                    "port": 52122,
+                    "last_activity": "2025-04-18T21:16:02.123456",
+                    "last_activity_timestamp": 1713467762.123456,
+                    "player_name": "Player1",
+                    "player_id": 1,
+                    "time_until_timeout": 6842.5
+                }
+            ],
+            "instance_count": 1
+        }
+    ],
+    "total_games": 1,
+    "total_instances": 1,
+    "timestamp": "2025-04-18T21:16:15.123456"
+}
 ```

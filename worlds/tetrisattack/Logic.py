@@ -504,7 +504,7 @@ def get_starting_sc_round(options: "TetrisAttackOptions"):
     include_puzzle = options.puzzle_goal != PuzzleGoal.option_no_puzzle or options.puzzle_inclusion != PuzzleInclusion.option_no_puzzle
     include_vs = options.versus_goal != VersusGoal.option_no_vs or options.versus_inclusion
     starting_sc_round = options.starter_pack + 1
-    if starting_sc_round > 6 and not include_puzzle and not include_vs:
+    if not include_puzzle and not include_vs and starting_sc_round > 6:
         starting_sc_round = 1
     return starting_sc_round
 
@@ -513,8 +513,10 @@ def get_starting_puzzle_level(options: "TetrisAttackOptions") -> int:
     include_stage_clear = options.stage_clear_goal or options.stage_clear_inclusion
     include_vs = options.versus_goal != VersusGoal.option_no_vs or options.versus_inclusion
     starting_puzzle_level = options.starter_pack + 1 - StarterPack.option_puzzle_level_1
-    if starting_puzzle_level < 1 and not include_stage_clear and not include_vs:
+    if not include_stage_clear and not include_vs and (starting_puzzle_level < 1 or starting_puzzle_level > 5):
         starting_puzzle_level = 1
+    if starting_puzzle_level > 5:
+        starting_puzzle_level = 0
     if starting_puzzle_level > 0 and not normal_puzzle_set_included(options):
         starting_puzzle_level += 6
     return starting_puzzle_level

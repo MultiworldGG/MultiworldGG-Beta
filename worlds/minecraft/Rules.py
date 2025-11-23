@@ -263,8 +263,7 @@ def get_rules_lookup(world, player: int):
                                                  and state.can_reach_region("The Nether", player)  # Regeneration, Fire Resistance, gold nuggets
                                                  and state.can_reach_region("Village", player)  # Night Vision, Invisibility
                                                  and state.can_reach_location("Bring Home the Beacon", player)
-                                                 and can_adventure(world, state, player)
-                                                 and has_explorer_maps(world, state, player)),  # Wind Charged
+                                                 and can_adventure(world, state, player)),
             # Resistance
             "Bring Home the Beacon": lambda state: can_kill_wither(world, state, player)
                                                    and has_diamond_pickaxe(world, state, player)
@@ -326,7 +325,7 @@ def get_rules_lookup(world, player: int):
             "Acquire Hardware": lambda state: has_iron_ingots(world, state, player),
             "Not Quite \"Nine\" Lives": lambda state: can_piglin_trade(world, state, player)
                                                       and state.has("Progressive Resource Crafting", player, 2),
-            "Cover Me with Diamonds": lambda state: state.has("Progressive Armor", player, 2)
+            "Cover Me With Diamonds": lambda state: state.has("Progressive Armor", player, 2)
                                                     and state.has("Progressive Tools", player, 2)
                                                     and has_iron_ingots(world, state, player),
             "Sky's the Limit": lambda state: basic_combat(world, state, player),

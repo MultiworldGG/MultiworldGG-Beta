@@ -553,11 +553,11 @@ class TestAdvancements(MCTestBase):
 
     def test_42041(self):
         self.run_location_tests([
-            ["Cover Me with Diamonds", False, []],
-            ["Cover Me with Diamonds", False, ['Progressive Armor'], ['Progressive Armor']],
-            ["Cover Me with Diamonds", False, ['Progressive Tools'], ['Progressive Tools', 'Progressive Tools']],
-            ["Cover Me with Diamonds", False, [], ['Progressive Resource Crafting']],
-            ["Cover Me with Diamonds", True, ['Progressive Resource Crafting', 'Progressive Tools', 'Progressive Tools', 'Progressive Armor', 'Progressive Armor']],
+            ["Cover Me With Diamonds", False, []],
+            ["Cover Me With Diamonds", False, ['Progressive Armor'], ['Progressive Armor']],
+            ["Cover Me With Diamonds", False, ['Progressive Tools'], ['Progressive Tools', 'Progressive Tools']],
+            ["Cover Me With Diamonds", False, [], ['Progressive Resource Crafting']],
+            ["Cover Me With Diamonds", True, ['Progressive Resource Crafting', 'Progressive Tools', 'Progressive Tools', 'Progressive Armor', 'Progressive Armor']],
             ])
 
     def test_42042(self):

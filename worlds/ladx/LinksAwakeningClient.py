@@ -51,6 +51,10 @@ class BadRetroArchResponse(GameboyException):
     pass
 
 
+class VersionError(Exception):
+    pass
+
+
 def clamp(minimum, number, maximum):
     return max(minimum, min(maximum, number))
 
@@ -61,6 +65,8 @@ class LAClientConstants:
     SlotName = 0x0134
     wGameplayType = 0xDB95
     wHealth = 0xDB5A
+    wDialogIndex = 0xC173
+    wDialogIndexHi = 0xC112
 
     wMWRecvIndexHi = 0xDDF6   # RO: The index of the next item to receive.
     wMWRecvIndexLo = 0xDDF7   #     If given something different it will be ignored.
@@ -513,16 +519,28 @@ class LinksAwakeningClient():
         if not ctx.slot or not self.tracker.has_start_item():
             return
 
+        wDialogIndex = (await self.gameboy.async_read_memory(LAClientConstants.wDialogIndex))[0]
+        wDialogIndexHi = (await self.gameboy.async_read_memory(LAClientConstants.wDialogIndexHi))[0]
+        dialog_index = wDialogIndexHi << 8 | wDialogIndex
+        hint_data = ctx.slot_data.get("hint_data", {}).get(dialog_index.__str__(), None)
+        if hint_data and dialog_index not in ctx.hinted_locations:
+            ctx.hinted_locations.add(dialog_index)
+            await ctx.send_msgs([{
+                "cmd": "CreateHints",
+                "locations": [hint_data["location"]],
+                "player": hint_data["player"],
+            }])
+
         wGameplayType = (await self.gameboy.async_read_memory(LAClientConstants.wGameplayType))[0]
+        if wGameplayType == 1: # Credits
+            await win_cb()
+
         wHealth = (await self.gameboy.async_read_memory(LAClientConstants.wHealth))[0]
         cmd_block = await self.gameboy.async_read_memory(LAClientConstants.wMWRecvIndexHi, 3)
         if not await self.gameboy.check_safe_gameplay():
             return
 
         [wMWRecvIndexHi, wMWRecvIndexLo, wMWCommand] = cmd_block
-
-        if wGameplayType == 1: # Credits
-            await win_cb()
 
         if self.death_link_status == DeathLinkStatus.NONE:
             if not wHealth: # natural death
@@ -603,6 +621,7 @@ class LinksAwakeningContext(CommonContext):
     client = None
     found_checks = set()
     scouted_locations = set()
+    hinted_locations = set()
     recvd_checks = {}
     last_resend = time.time()
 
@@ -635,7 +654,7 @@ class LinksAwakeningContext(CommonContext):
                 ("Client", "Archipelago"),
                 ("Tracker", "Tracker"),
             ]
-            base_title = f"{apname} Links Awakening DX Beta Client"
+            base_title = f"Links Awakening DX Beta Client {LinksAwakeningWorld.world_version.as_simple_string()} | {apname}"
 
             def build(self):
                 b = super().build()
@@ -734,12 +753,20 @@ class LinksAwakeningContext(CommonContext):
         if cmd == "Connected":
             self.game = self.slot_info[self.slot].game
             self.slot_data = args.get("slot_data", {})
+            generated_version = Utils.tuplize_version(self.slot_data.get("world_version", "13.1.0"))
+            client_version = LinksAwakeningWorld.world_version
+            if generated_version.major != client_version.major:
+                self.disconnected_intentionally = True
+                raise VersionError(
+                    f"The installed world ({client_version.as_simple_string()}) is incompatible with "
+                    f"the world this game was generated on ({generated_version.as_simple_string()})"
+                )
             # This is sent to magpie over local websocket to make its own connection
             self.slot_data.update({
                 "server_address": self.server_address,
                 "slot_name": self.player_names[self.slot],
                 "password": self.password,
-                "client_version": LinksAwakeningWorld.world_version.as_simple_string(),
+                "client_version": client_version.as_simple_string(),
             })
             if self.slot_data.get("death_link"):
                 Utils.async_start(self.update_death_link(True))
