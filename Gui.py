@@ -702,7 +702,7 @@ class MultiMDApp(MDApp):
                     self.ui_hint_data[hint["finding_player"]] = {}
                 if hint["location"] not in self.ui_hint_data[hint["finding_player"]]:
                     self.ui_hint_data[hint["finding_player"]][hint["location"]] = \
-                        UIHint(hint, True, self.ctx.location_names, self.ctx.item_names, hint.get("status"), mwgg_status)
+                        UIHint(hint=hint, my_item=True, location_names=self.ctx.location_names, item_names=self.ctx.item_names, hint_status=hint.get("status"), mwgg_hint_status=mwgg_status)
                 else:
                     self.ui_hint_data[hint["finding_player"]][hint["location"]].set_status(hint.get("status"))
                     self.ui_hint_data[hint["finding_player"]][hint["location"]].set_status_from_mwgg(mwgg_status)
@@ -711,7 +711,7 @@ class MultiMDApp(MDApp):
                     self.ui_hint_data[hint["receiving_player"]] = {}
                 if hint["location"] not in self.ui_hint_data[hint["receiving_player"]]:
                     self.ui_hint_data[hint["receiving_player"]][hint["location"]] = \
-                        UIHint(hint, False, self.ctx.location_names, self.ctx.item_names, hint.get("status"), mwgg_status)
+                        UIHint(hint=hint, my_item=False, location_names=self.ctx.location_names, item_names=self.ctx.item_names, hint_status=hint.get("status"), mwgg_hint_status=mwgg_status)
                 else:
                     self.ui_hint_data[hint["receiving_player"]][hint["location"]].set_status(hint.get("status"))
                     self.ui_hint_data[hint["receiving_player"]][hint["location"]].set_status_from_mwgg(mwgg_status)

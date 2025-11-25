@@ -44,6 +44,7 @@ class UIHint:
             hint_status: Optional status indicating user-defined status
             mwgg_hint_status: Optional MWGG GUI specific hint information
         """
+        self.player_name = hint['finding_player'] if not my_item else hint['receiving_player']
         self.location_id = hint['location']
         self.item = item_names.lookup_in_slot(hint['item'], hint['receiving_player'])
         self.location = location_names.lookup_in_slot(hint['location'], hint['finding_player'])

@@ -6,6 +6,7 @@ __all__ = ['GameListPanel',
            'GameTrailingPressedIconButton',
            'SlotListItemHeader',
            'SlotListItem',
+           'HintListItemHeader',
            'HintListItem',
            'HintListDropdown',
            'IconBadge',
@@ -15,8 +16,10 @@ from textwrap import wrap
 
 from kivy.animation import Animation
 from kivy.metrics import dp, sp
-from kivy.properties import StringProperty, DictProperty, ObjectProperty, NumericProperty, BooleanProperty
+from kivy.uix.boxlayout import BoxLayout
+from kivy.properties import StringProperty, DictProperty, ObjectProperty, NumericProperty, BooleanProperty, ColorProperty
 from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivymd.uix.behaviors import RotateBehavior, CommonElevationBehavior
 from kivymd.theming import ThemableBehavior
 from kivymd.uix.menu import MDDropdownMenu
@@ -68,6 +71,20 @@ class IconBadge(MDBadge):
     """
     pass
 
+class HintListItemHeader(MDBoxLayout, ButtonBehavior, ThemableBehavior):
+    """
+    Header widget for displaying hint item information.
+    """
+    hint_icon: StringProperty
+    hint_text: StringProperty
+    panel: ObjectProperty
+    
+    def __init__(self, hint_icon: str, hint_text: str, panel: "HintListPanel", **kwargs):
+        self.hint_icon = hint_icon
+        self.hint_text = hint_text
+        self.panel = panel
+        super().__init__(**kwargs)
+
 class SlotListItemHeader(MDBoxLayout, CommonElevationBehavior):
     """
     Header widget for displaying slot item information, it 
@@ -95,6 +112,7 @@ class SlotListItemHeader(MDBoxLayout, CommonElevationBehavior):
         self.panel = panel
         self.item_data = item_data
         self.theme_shadow_color = "Custom"
+        self.theme_elevation_level = "Custom"
         self.elevation_level = 0
         if self.item_data.pronouns:
             self.slot_name = self.item_data.slot_name + " (" + self.item_data.pronouns + ")"
@@ -240,7 +258,8 @@ class MWBaseListItem(MDBoxLayout, CommonElevationBehavior):
     classification: StringProperty
     assigned_level: StringProperty
     found: StringProperty
-    badge_text: StringProperty
+    item_badge_text: StringProperty
+    location_badge_text: StringProperty
 
     def __init__(self, hint_data: UIHint, game_status: str, shadow_colors: dict, **kwargs):
         """
@@ -264,13 +283,14 @@ class MWBaseListItem(MDBoxLayout, CommonElevationBehavior):
 
         super().__init__(**kwargs)
 
-        self.badge_text = ""
+        self.item_badge_text = ""
+        self.location_badge_text = ""
         if self.mwgg_status & MWGGUIHintStatus.HINT_BK_MODE:
-            self.badge_text += md_icons["food"] + " "
+            self.item_badge_text += md_icons["food"] + " "
         if self.mwgg_status & MWGGUIHintStatus.HINT_GOAL:
-            self.badge_text += md_icons["flag_checkered"] + " "
+            self.item_badge_text += md_icons["flag_checkered"] + " "
         if self.mwgg_status & MWGGUIHintStatus.HINT_SHOP:
-            self.badge_text += md_icons["shop"] + " "
+            self.location_badge_text += md_icons["shop"]
 
     def populate_slot_item(self):
         pass
@@ -333,8 +353,10 @@ class SlotListItem(MWBaseListItem):
         self.slot_text_item = self.ids.slot_text_item
         self.slot_icon_goal = self.ids.slot_icon_goal
 
-        if self.badge_text != "":
-            self.slot_icon_item.add_widget(IconBadge(text=self.badge_text.rstrip()))
+        if self.item_badge_text != "":
+            self.slot_icon_item.add_widget(IconBadge(text=self.item_badge_text.rstrip()))
+        if self.location_badge_text != "":
+            self.slot_icon_location.add_widget(IconBadge(text=self.location_badge_text.rstrip()))
 
         Clock.schedule_once(lambda x: self.populate_slot_item())
         Clock.schedule_once(lambda x: self.set_prio_behavior(shadow_colors), .5)
@@ -388,40 +410,119 @@ class SlotListItem(MWBaseListItem):
         
         return nheight
 
-class HintListItem(MWBaseListItem):
-    hint_icon_status: StringProperty
-    hint_status_text: StringProperty
+class HintListItem(RecycleDataViewBehavior, BoxLayout, CommonElevationBehavior):
+    """
+    Widget for displaying individual hint items in the hint list.
+    """
+    player_name = StringProperty("")
+    player_avatar = StringProperty("")
+    hint_icon_status = StringProperty("")
+    hint_status_text = StringProperty("")
+    hint_data = ObjectProperty(None)
+    entrance_texture: Tuple[NumericProperty, NumericProperty]
+    slot_icon_entrance: ObjectProperty
+    slot_text_entrance: ObjectProperty
+    slot_icon_location: ObjectProperty
+    slot_text_location: ObjectProperty
+    slot_icon_item: ObjectProperty
+    slot_text_item: ObjectProperty
+    slot_icon_goal: ObjectProperty
+    item_name = StringProperty("")
+    location_name = StringProperty("")
+    entrance_name = StringProperty("")
+    game_status = StringProperty("")
+    my_item = BooleanProperty(False)
+    for_bk_mode = StringProperty("")
+    for_goal = StringProperty("")
+    from_shop = StringProperty("")
+    classification = StringProperty("")
+    assigned_level = StringProperty("")
+    found = StringProperty("")
+    item_badge_text = StringProperty("")
+    location_badge_text = StringProperty("")
+    dropdown: MDDropdownMenu
+    editable = BooleanProperty(False)
+    shadow_color = ColorProperty([0,0,0,0])
+    elevation_level = NumericProperty(0)
+    hide = BooleanProperty(False)
+    panel: ObjectProperty
+    theme_shadow_color: ColorProperty
+    theme_elevation_level: NumericProperty
+    index = None
 
-    def __init__(self, hint_data: UIHint, game_status: str, shadow_colors: dict, hint_icon_status: str, hint_status_text: str, **kwargs):
-        self.hint_icon_status = hint_icon_status
-        self.hint_status_text = hint_status_text
-        self.dropdown = None  # Will be set by the parent
-        super().__init__(hint_data, game_status, shadow_colors, **kwargs)
-        Clock.schedule_once(lambda x: self.populate_slot_item())
-        Clock.schedule_once(lambda x: self.set_prio_behavior(shadow_colors), .5)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.dropdown = None
 
-    def populate_slot_item(self):
-        """
-        Populate the hint item with entrance, location, item, and goal information.
+    def refresh_view_attrs(self, rv, index, data):
+        """Update view when RecycleView data changes"""
+        self.index = index
         
-        This method sets up the visual elements of the hint item including
-        entrance information, location text, item text, and goal icon.
-        """
-        if self.hint_data.entrance == "Vanilla" or not self.hint_data.entrance:
-            self.remove_widget(self.ids.hint_item_entrance_container)
-        else:   
-        # Normalize entrance display; server currently encodes unknown entrances as
-        # "Unknown location (ID: X)". For UI, we want to show just the identifier (e.g. "B1").
-            entrance_text = self.hint_data.entrance
-            # Server uses a fixed format: "Unknown location (ID:{code})"
-            match = re.match(r"Unknown location \(ID:(.+)\)", entrance_text)
+        # Directly set properties from data dict (like HintLabel pattern)
+        self.player_name = data.get("player_name", "")
+        self.player_avatar = data.get("player_avatar", "")
+        self.location_name = data.get("location_name", "")
+        self.item_name = data.get("item_name", "")
+        self.entrance_name = data.get("entrance_name", "Vanilla")
+        self.item_badge_text = data.get("item_badge_text", "")
+        self.location_badge_text = data.get("location_badge_text", "")
+        self.hint_icon_status = data.get("hint_icon_status", "")
+        self.hint_status_text = data.get("hint_status_text", "")
+        self.hint_data = data.get("hint_data", None)
+        self.editable = data.get("editable", False)
+        self.hide = data.get("hide", False)
+        self.shadow_color = data.get("shadow_color", [0, 0, 0, 0])
+        self.elevation_level = data.get("elevation_level", 0)
+        
+        # Normalize entrance name if needed
+        if "Vanilla" not in self.entrance_name and self.entrance_name:
+            match = re.match(r"Unknown location \(ID:(.+)\)", self.entrance_name)
             if match:
-                self.hint_data.entrance = match.group(1).strip()
+                self.entrance_name = match.group(1).strip()
+        
+        # Setup dropdown if editable
+        if self.editable and self.hint_data:
+            self._ensure_dropdown()
+        elif self.dropdown:
+            self.dropdown.dismiss()
+            self.dropdown = None
+        
+        # Setup hide checkbox
+        if hasattr(self, 'ids') and 'hide_checkbox' in self.ids:
+            self.ids.hide_checkbox.active = self.hide
+        
+        return super().refresh_view_attrs(rv, index, data)
+    
+    def _ensure_dropdown(self):
+        """Ensure dropdown is created if needed"""
+        if self.dropdown or not hasattr(self, 'ids') or 'hint_item_status_button' not in self.ids:
+            return
+        
+        from mwgg_gui.hint.hintscreen import status_names, status_icons
+        from NetUtils import HintStatus
+        
+        def on_select_status(status: HintStatus):
+            if self.hint_data:
+                self.hint_data.set_status(hint_status=status)
+        
+        self.dropdown = HintListDropdown(
+            caller=self.ids.hint_item_status_button,
+            status_names=status_names,
+            status_icons=status_icons,
+            dropdown_callback=on_select_status
+        )
 
     def open_dropdown(self):
         """Open the status dropdown menu"""
         if self.dropdown:
             self.dropdown.open()
+    
+    
+    @staticmethod
+    def on_hide(hint_instance, value):
+        """Handle hide checkbox change"""
+        if hint_instance.hint_data:
+            hint_instance.hint_data.hide = value
 
     @staticmethod
     def hide_hint(hint_instance, value):
