@@ -60,7 +60,8 @@ def create_location(world: SonicHeroesWorld, region, name, code, rule=None):
     for level in constants.emerald_levels:
         if f"{level} {constants.EMERALD}" == loc.name:
             if world.options.goal_unlock_condition.value != 0 and world.options.ability_unlocks.value != 1:
-                loc.progress_type = LocationProgressType.PRIORITY
+                #loc.progress_type = LocationProgressType.PRIORITY
+                pass
             else:
                 #print("Unable to Set Emerald Location as Priority Due to Options")
                 pass

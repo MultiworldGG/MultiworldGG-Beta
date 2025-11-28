@@ -4,13 +4,20 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from worlds.sonic_heroes import SonicHeroesWorld
 
-
 import csv
-
-from worlds.sonic_heroes.options import SonicStory, SonicCheckpointSanity, SonicKeySanity
-
 from . import Connections, Locations, Regions
+from ..options import SonicStory, SonicCheckpointSanity, SonicKeySanity
 from ..constants import *
+
+location_groups: dict[str, set[str]] = \
+{
+    LEVEL: set(),
+    BOSS: set(),
+    EMERALD: set(),
+    OBJSANITY: set(),
+    KEYSANITY: set(),
+    CHECKPOINTSANITY: set(),
+}
 
 
 def get_full_location_list() -> list[LocationCSVData]:
@@ -26,6 +33,7 @@ def get_full_location_list() -> list[LocationCSVData]:
         for x in reader:
             #full_location_list[f"{x[LEVEL]} {x[TEAM]} {ACT} {x[ACT]} {x[NAME]}".replace(f"{ACT} 0 ", "")] = x[CODE]
             loc = LocationCSVData(x[NAME], int(x[CODE], 16), x[TEAM], x[LEVEL], int(x[ACT]), x[REGION], x[RULE], x[LOCATIONTYPE], x[HINTINFO], x[NOTES])
+            location_groups[loc.loc_type].add(loc.name)
             full_location_list.append(loc)
 
     return full_location_list
@@ -211,7 +219,7 @@ def is_loc_in_world(world: SonicHeroesWorld, team: str, loc: LocationCSVData) ->
             pass
         return False
 
-    if loc.loc_type == NORMAL:
+    if loc.loc_type == LEVEL:
         if team == SONIC:
             if loc.level not in world.allowed_levels_per_team[team]:
                 if loc.code in codes:
@@ -256,14 +264,14 @@ def is_loc_in_world(world: SonicHeroesWorld, team: str, loc: LocationCSVData) ->
                     pass
                 return False
 
-            elif world.options.sonic_checkpoint_sanity == SonicCheckpointSanity.option_Only1SetNormal and loc.act != 0:
+            elif world.options.sonic_checkpoint_sanity == SonicCheckpointSanity.option_only_1_set_normal and loc.act != 0:
                 if loc.code in codes:
                     #print(f"Loc {loc.name} ID {hex(loc.code)} failed because of not Act 0 with Checkpoint Sanity only 1 Set")
                     pass
                 return False
 
 
-            elif world.options.sonic_checkpoint_sanity == SonicCheckpointSanity.option_SetForEachAct:
+            elif world.options.sonic_checkpoint_sanity == SonicCheckpointSanity.option_set_for_each_act:
                 if loc.act == 0:
                     if loc.code in codes:
                         #print(f"Loc {loc.name} ID {hex(loc.code)} failed because of Act 0 with Checkpoint Sanity set to each Act")
@@ -295,13 +303,13 @@ def is_loc_in_world(world: SonicHeroesWorld, team: str, loc: LocationCSVData) ->
                     pass
                 return False
 
-            elif world.options.sonic_key_sanity == SonicKeySanity.option_Only1Set and loc.act != 0:
+            elif world.options.sonic_key_sanity == SonicKeySanity.option_only_1_set and loc.act != 0:
                 if loc.code in codes:
                     #print(f"Loc {loc.name} ID {hex(loc.code)} failed because of not Act 0 when only 1 Set")
                     pass
                 return False
 
-            elif world.options.sonic_key_sanity == SonicKeySanity.option_SetForEachAct:
+            elif world.options.sonic_key_sanity == SonicKeySanity.option_set_for_each_act:
                 if loc.act == 0:
                     if loc.code in codes:
                         #print(f"Loc {loc.name} ID {hex(loc.code)} failed because of Act 0 when each Act")

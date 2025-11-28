@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from math import floor
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from worlds.sonic_heroes import SonicHeroesWorld
 
-
 from BaseClasses import Item, ItemClassification
 from .constants import *
+from .options import GoalUnlockCondition, SonicStoryStartingCharacter, AbilityUnlocks
 
 
 class SonicHeroesItem(Item):
@@ -36,35 +37,7 @@ def create_items(world: SonicHeroesWorld):
     #create_item(world, EMBLEM, ItemClassification.progression)
     #total_location_count -= 1
 
-    if world.options.sonic_story_starting_character != 0:
-        create_item(world, get_playable_char_item_name(CHARSONIC), ItemClassification.progression)
-        total_location_count -= 1
-
-    if world.options.sonic_story_starting_character != 1:
-        create_item(world, get_playable_char_item_name(CHARTAILS), ItemClassification.progression)
-        total_location_count -= 1
-
-    if world.options.sonic_story_starting_character != 2:
-        create_item(world, get_playable_char_item_name(CHARKNUCKLES), ItemClassification.progression)
-        total_location_count -= 1
-
-
-    if world.options.ability_unlocks == 0:
-        for region in world.regular_regions:
-            for team in world.enabled_teams:
-                for ability in get_all_abilities_for_team(team):
-                    create_item(world, get_ability_item_name_without_world(team, region, ability), ItemClassification.progression)
-                    total_location_count -= 1
-
-
-    elif world.options.ability_unlocks == 1:
-        for team in world.enabled_teams:
-            for ability in get_all_abilities_for_team(team):
-                create_item(world, get_ability_item_name_without_world(team, ALLREGIONS, ability), ItemClassification.progression)
-                total_location_count -= 1
-
-
-    if world.options.goal_unlock_condition >= 1:
+    if world.options.goal_unlock_condition != GoalUnlockCondition.option_level_completions:
         create_item(world, GREENCHAOSEMERALD, ItemClassification.progression)
         create_item(world, BLUECHAOSEMERALD, ItemClassification.progression)
         create_item(world, YELLOWCHAOSEMERALD, ItemClassification.progression)
@@ -74,14 +47,48 @@ def create_items(world: SonicHeroesWorld):
         create_item(world, REDCHAOSEMERALD, ItemClassification.progression)
         total_location_count -= 7
 
+    if world.options.sonic_story_starting_character != SonicStoryStartingCharacter.option_sonic:
+        create_item(world, get_playable_char_item_name(CHARSONIC), ItemClassification.progression)
+        total_location_count -= 1
+
+    if world.options.sonic_story_starting_character != SonicStoryStartingCharacter.option_tails:
+        create_item(world, get_playable_char_item_name(CHARTAILS), ItemClassification.progression)
+        total_location_count -= 1
+
+    if world.options.sonic_story_starting_character != SonicStoryStartingCharacter.option_knuckles:
+        create_item(world, get_playable_char_item_name(CHARKNUCKLES), ItemClassification.progression)
+        total_location_count -= 1
+
+
+    if world.options.ability_unlocks == AbilityUnlocks.option_all_regions_separate:
+        for region in world.regular_regions:
+            for team in world.enabled_teams:
+                for ability in get_all_abilities_for_team(team):
+                    create_item(world, get_ability_item_name_without_world(team, region, ability), ItemClassification.progression)
+                    total_location_count -= 1
+
+
+    elif world.options.ability_unlocks == AbilityUnlocks.option_entire_story:
+        for team in world.enabled_teams:
+            for ability in get_all_abilities_for_team(team):
+                create_item(world, get_ability_item_name_without_world(team, ALLREGIONS, ability), ItemClassification.progression)
+                total_location_count -= 1
+
 
 
     world.extra_items = total_location_count
 
     #print(f"Extra Items count: {total_location_count}")
 
-    create_filler_items(world, world.extra_items)
-        #create_item(world, EXTRALIFE, ItemClassification.filler)
+    trap_count = round(total_location_count * world.options.trap_fill.value / 100)
+    junk_count = total_location_count - trap_count
+
+    #print(f"Junk count: {junk_count}")
+    #print(f"Trap count: {trap_count}")
+
+    create_filler_items(world, junk_count)
+    create_trap_items(world, trap_count)
+
 
 
 itemList: list[ItemData] = \
@@ -173,6 +180,25 @@ trap_items_to_weights = \
     {item.name: item.fillerweight for item in itemList if item.classification == ItemClassification.trap}
 
 
+item_groups: dict[str, set[str]] = \
+{
+    #FILLER: {item.name for item in itemList if item.classification == ItemClassification.filler},
+    FILLER: {x for x in filler_items_to_weights.keys()},
+    #TRAP: {item.name for item in itemList if item.classification == ItemClassification.trap},
+    TRAP: {x for x in trap_items_to_weights.keys()},
+    EMERALD: set(emeralds),
+    CHARACTER: {get_playable_char_item_name(x) for y in team_char_names.keys() for x in
+                team_char_names[y]},
+    ABILITY: set(),
+    STAGEOBJECT: set(),
+}
+"""
+This is for item groups
+"""
+
+
+
+
 
 item_id = 0x939301F0
 
@@ -191,6 +217,7 @@ for item_team in item_teams:
             #    })
 
             itemList.append(ItemData(item_id, get_ability_item_name_without_world(item_team, item_region, item_ability), ItemClassification.progression))
+            item_groups[ABILITY].add(get_ability_item_name_without_world(item_team, item_region, item_ability))
             item_id += 1
 
         hex_mod = item_id % 16
@@ -215,6 +242,7 @@ for item_team in item_teams:
             #    })
 
             itemList.append(ItemData(item_id, get_stage_obj_item_name_without_world(item_team, item_region, stage_obj), ItemClassification.progression))
+            item_groups[STAGEOBJECT].add(get_stage_obj_item_name_without_world(item_team, item_region, stage_obj))
             item_id += 1
 
         hex_mod = item_id % 256

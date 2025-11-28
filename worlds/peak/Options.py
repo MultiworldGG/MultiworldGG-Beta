@@ -11,11 +11,14 @@ class Goal(Choice):
     Complete All Badges: Collect the specified number of badges
 
     24 Karat Badge: Toss the Ancient Idol into The Kiln's lava.
+
+    Peak and Badges: Reach the peak on the specified ascent level and collect the specified number of badges
     """
     display_name = "Goal"
     option_reach_peak = 0
     option_complete_all_badges = 1
     option_24_karat_badge = 2
+    option_peak_and_badges = 3
     default = 0
 
 
@@ -305,6 +308,11 @@ class BeetleHordeTrapWeight(BaseTrapWeight):
     Likelihood of receiving a trap which spawns a horde of beetles to chase a player
     """
     display_name = "Beetle Horde Trap Weight"
+class CustomTriviaTrapWeight(BaseTrapWeight):
+    """
+    Likelihood of receiving a trap which quizzes the player with custom trivia questions
+    """
+    display_name = "Custom Trivia Trap Weight"
 
 class TrapPercentage(Range):
     """
@@ -317,17 +325,43 @@ class TrapPercentage(Range):
 
 class DisableMultiplayerBadges(Toggle):
     """
-    Exclude multiplayer-only badge checks
+    Exclude multiplayer-only badge checks. These badges are normally earned by cooperating with other players.
+    These badges include:
+        Ultimate Badge
+        Clutch Badge
+        Participation Badge
+        Emergency Preparedness Badge
+        First Aid Badge
+        Resourcefulness Badge
+        Disaster Response Badge
+        Applied Esoterica Badge
+        Needlepoint Badge
     """
     display_name = "Disable Multiplayer Badges"
 class DisableHardBadges(Toggle):
     """
-    Exclude somewhat hard badge checks
+    Exclude somewhat hard badge checks. These badges include:
+        Speed Climber Badge
+        Lone Wolf Badge
+        Balloon Badge
+        Bing Bong Badge
+        Competitive Eating Badge
     """
     display_name = "Disable Hard Badges"
 class DisableBiomeBadges(Toggle):
     """
-    Exclude biome exclusive badge checks
+    Exclude biome exclusive badge checks. These will not remove the badges involved with completing the biomes.
+    These badges include:
+        Astronomy Badge
+        Bundled Up Badge
+        Undead Encounter Badge
+        Mycoacrobatics Badge
+        Web Security Badge
+        Cool Cucumber Badge
+        Daredevil Badge
+        Megaentomology Badge
+        Tread Lightly Badge
+        Advanced Mycology Badge
     """
     display_name = "Disable Biome Specific Badges"
 
@@ -388,6 +422,7 @@ peak_option_groups = [
         PixelTrapWeight,
         EruptionTrapWeight,
         BeetleHordeTrapWeight,
+        CustomTriviaTrapWeight,
     ]),
     OptionGroup("Badge Settings", [
         DisableMultiplayerBadges,
@@ -448,6 +483,7 @@ class PeakOptions(PerGameCommonOptions):
     pixel_trap_weight: PixelTrapWeight
     eruption_trap_weight: EruptionTrapWeight
     beetle_horde_trap_weight: BeetleHordeTrapWeight
+    custom_trivia_trap_weight: CustomTriviaTrapWeight
 
     disable_multiplayer_badges: DisableMultiplayerBadges
     disable_hard_badges: DisableHardBadges

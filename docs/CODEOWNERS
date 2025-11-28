@@ -29,6 +29,10 @@
 # Ape Escape
 /worlds/apeescape/ @Thedragon005
 
+# APQuest
+# NewSoupVi is acting maintainer, but world belongs to core with the exception of the music
+/worlds/apquest/ @NewSoupVi
+
 # Sudoku (APSudoku)
 /worlds/apsudoku/ @EmilyV99
 

@@ -32,7 +32,7 @@ from .Options import DungeonItemShuffle, ShuffleInstruments, LinksAwakeningOptio
 from .Rom import LADXProcedurePatch, write_patch_data
 
 DEVELOPER_MODE = False
-
+TEST_PATCH = False
 
 def launch_client(*args):
     from .LinksAwakeningClient import launch as ladx_launch
@@ -182,6 +182,8 @@ class LinksAwakeningWorld(World):
     ladxr_logic: LADXRLogic
     ladxr_itempool: LADXRItemPool
 
+    ladx_in_game_hints: dict = {}
+
     multi_key: bytearray
 
     rupees = {
@@ -202,7 +204,21 @@ class LinksAwakeningWorld(World):
         self.ladxr_itempool = LADXRItemPool(self.ladxr_logic, self.ladxr_settings, self.random, bool(self.options.more_filler)).toDict()
 
 
+    filler_choices = ("Nothing",)
+    filler_weights = (1,)
     def generate_early(self) -> None:
+        if self.options.filler_pool == 'ammo':
+            self.filler_choices = ("Bomb", "Single Arrow", "10 Arrows", "Magic Powder", "Medicine")
+            self.filler_weights = ( 10,     5,              10,          10,             1)
+        elif self.options.filler_pool == 'rupees':
+            self.filler_choices = ("20 Rupees", "50 Rupees")
+            self.filler_weights = ( 3,           1)
+        elif self.options.filler_pool == 'seashells':
+            self.filler_choices = ("Seashell",)
+        elif self.options.filler_pool == 'traps':
+            self.filler_choices = ("Zol Attack",)
+            
+
         self.dungeon_item_types = {}
         for dungeon_item_type in ["maps", "compasses", "small_keys", "nightmare_keys", "stone_beaks", "instruments"]:
             option_name = "shuffle_" + dungeon_item_type
@@ -223,21 +239,6 @@ class LinksAwakeningWorld(World):
                     ladxr_item_to_la_item_name[f"{option.ladxr_item}{i}"] for i in range(1, num_items + 1)
                 }
 
-        if self.options.filler_pool == 'ammo':
-            self.filler_choices = ("Bomb", "Single Arrow", "10 Arrows", "Magic Powder", "Medicine")
-            self.filler_weights = ( 10,     5,              10,          10,             1)
-        elif self.options.filler_pool == 'rupees':
-            self.filler_choices = ("20 Rupees", "50 Rupees")
-            self.filler_weights = ( 3,           1)
-        elif self.options.filler_pool == 'seashells':
-            self.filler_choices = ("Seashell",)
-            self.filler_weights = (1,)
-        elif self.options.filler_pool == 'traps':
-            self.filler_choices = ("Zol Attack",)
-            self.filler_weights = (1,)
-        else:
-            self.filler_choices = ("Nothing",)
-            self.filler_weights = (1,)
 
     def create_regions(self) -> None:
         # Initialize
@@ -297,7 +298,7 @@ class LinksAwakeningWorld(World):
         for ladx_item_name, count in self.ladxr_itempool.items():
             if ladx_item_name == 'FILLER':
                 for _ in range(count):
-                    itempool.append(self.create_item(self.get_filler_item_name()))
+                    itempool.append(self.create_filler())
             # event
             if ladx_item_name not in ladxr_item_to_la_item_name:
                 continue
@@ -498,12 +499,9 @@ class LinksAwakeningWorld(World):
 
         fill_restrictive(self.multiworld, partial_all_state, all_dungeon_locs_to_fill, all_dungeon_items_to_fill, lock=True, single_player_placement=True, allow_partial=False)
 
-
-    def post_fill(self) -> None:
-        self.ladx_in_game_hints = generate_hint_texts(self)
-
     def generate_output(self, output_directory: str):
         matcher = ForeignItemIconMatcher()
+        self.ladx_in_game_hints = generate_hint_texts(self)
         # copy items back to locations
         for r in self.multiworld.get_regions(self.player):
             for loc in r.locations:
@@ -543,6 +541,10 @@ class LinksAwakeningWorld(World):
                                                   f"{patch.patch_file_ending}")
 
         patch.write(out_path)
+
+        if TEST_PATCH:
+            import Patch
+            Patch.create_rom_file(out_path)
 
     def generate_multi_key(self):
         return bytearray(self.random.getrandbits(8) for _ in range(10)) + self.player.to_bytes(2, 'big')
@@ -599,8 +601,12 @@ class LinksAwakeningWorld(World):
                 "logic",
                 "tradequest",
                 "rooster",
-                "experimental_dungeon_shuffle",
-                "experimental_entrance_shuffle",
+                "random_start_location",
+                "dungeon_shuffle",
+                "entrance_shuffle",
+                "shuffle_junk",
+                "shuffle_annoying",
+                "shuffle_water",
                 "trendy_game",
                 "gfxmod",
                 "shuffle_nightmare_keys",

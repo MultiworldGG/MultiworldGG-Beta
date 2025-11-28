@@ -32,8 +32,8 @@ class SonicHeroesWorld(World):
     defeat robots, and collect the seven Chaos Emeralds needed to defeat Doctor Eggman. Within each level, the player switches between the team's three characters, 
     who each have unique abilities, to overcome obstacles.
     """
-    game = SONICHEROES
-    web = SonicHeroesWeb()
+    game: ClassVar[str] = SONICHEROES
+    web: ClassVar[WebWorld] = SonicHeroesWeb()
     options_dataclass = SonicHeroesOptions
     options: SonicHeroesOptions
     item_name_to_id: ClassVar[dict[str, int]] = \
@@ -41,10 +41,12 @@ class SonicHeroesWorld(World):
     location_name_to_id: ClassVar[dict[str, int]] = {loc.name: loc.code for loc in get_full_location_list()}
     #{k: v for k, v in full_location_dict.items()}
 
-    topology_present = True
+    item_name_groups: ClassVar[dict[str, set[str]]] = item_groups
+    location_name_groups: ClassVar[dict[str, set[str]]] = location_groups
+    topology_present: bool = True
 
     #UT Stuff Here
-    ut_can_gen_without_yaml = True
+    ut_can_gen_without_yaml: bool = True
 
     @staticmethod
     def interpret_slot_data(slot_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -129,12 +131,13 @@ class SonicHeroesWorld(World):
         self.handle_ut_yamlless(None)
 
 
+        if self.options.goal_unlock_condition == GoalUnlockCondition.option_emerald_hunt:
+            self.options.goal_level_completions.value = 0
 
         #Check invalid options here
         check_invalid_options(self)
 
-        if self.options.goal_unlock_condition == 1:
-            self.options.goal_level_completions.value = 0
+
 
 
         """
@@ -148,22 +151,22 @@ class SonicHeroesWorld(World):
 
         create_special_region_csv_data(self)
 
-        if self.options.sonic_story > 0:
-            self.allowed_levels_per_team[SONIC] = self.regular_levels
+        #if self.options.sonic_story != SonicStory.option_disabled:
+        self.allowed_levels_per_team[SONIC] = self.regular_levels
 
-            # handle rule mapping here
-            self.logic_mapping_dict[SONIC] = self.init_logic_mapping_sonic()
+        # handle rule mapping here
+        self.logic_mapping_dict[SONIC] = self.init_logic_mapping_sonic()
 
-            #import csv data
-            self.import_csv_data(SONIC)
+        #import csv data
+        self.import_csv_data(SONIC)
 
 
-            #level completion event locs
-            self.team_level_goal_event_locations[SONIC] = []
-            self.bonus_key_event_items_per_team[SONIC] = {}
+        #level completion event locs
+        self.team_level_goal_event_locations[SONIC] = []
+        self.bonus_key_event_items_per_team[SONIC] = {}
 
-            for level in self.allowed_levels_per_team[SONIC]:
-                self.bonus_key_event_items_per_team[SONIC][level] = []
+        for level in self.allowed_levels_per_team[SONIC]:
+            self.bonus_key_event_items_per_team[SONIC][level] = []
 
             #map regions
             #map_sonic_regions(self)
@@ -204,12 +207,14 @@ class SonicHeroesWorld(World):
     def create_items(self) -> None:
         create_items(self)
 
-        if self.options.sonic_story_starting_character == 0:
+        if self.options.sonic_story_starting_character == SonicStoryStartingCharacter.option_sonic:
             self.multiworld.push_precollected(self.create_item(PLAYABLESONIC))
-        if self.options.sonic_story_starting_character == 1:
+        elif self.options.sonic_story_starting_character == SonicStoryStartingCharacter.option_tails:
             self.multiworld.push_precollected(self.create_item(PLAYABLETAILS))
-        if self.options.sonic_story_starting_character == 2:
+        elif self.options.sonic_story_starting_character == SonicStoryStartingCharacter.option_knuckles:
             self.multiworld.push_precollected(self.create_item(PLAYABLEKNUCKLES))
+        else:
+            print("Cannot Determine Starting Character. Please Help")
         pass
 
 
@@ -289,6 +294,8 @@ class SonicHeroesWorld(World):
 
     def write_spoiler_header(self, spoiler_handle: TextIO) -> None:
         spoiler_handle.write(self.spoiler_string)
+        #print(self.item_name_groups)
+        #print(self.location_name_groups)
         pass
 
     def write_spoiler(self, spoiler_handle: TextIO) -> None:

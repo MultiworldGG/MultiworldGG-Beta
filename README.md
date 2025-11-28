@@ -20,6 +20,7 @@ Currently, the following games are supported:
 * A Hat in Time
 * Animal Well
 * Ape Escape
+* APQuest
 * Archipela-Go!
 * A Short Hike
 * Aquaria

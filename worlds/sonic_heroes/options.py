@@ -96,8 +96,8 @@ class SonicKeySanity(Choice):
     internal_name = "sonic_key_sanity"
     display_name = "Sonic Key Sanity"
     option_disabled = 0
-    option_Only1Set = 1
-    option_SetForEachAct = 2
+    option_only_1_set = 1
+    option_set_for_each_act = 2
     default = 1
 
 
@@ -111,9 +111,9 @@ class SonicCheckpointSanity(Choice):
     internal_name = "sonic_checkpoint_sanity"
     display_name = "Sonic Checkpoint Sanity"
     option_disabled = 0
-    option_Only1SetNormal = 1
-    #option_OnlySuperHard = 2
-    option_SetForEachAct = 3
+    option_only_1_set_normal = 1
+    #option_only_super_hard = 2
+    option_set_for_each_act = 3
     default = 1
 
 
@@ -126,6 +126,14 @@ class RemoveCasinoParkVIPTableLaserGate(DefaultOnToggle):
     display_name = "Remove Casino Park VIP Table Laser Gate"
     """"""
 
+class TrapFill(Range):
+    """
+    What percent of filler items should be replaced with trap items?
+    """
+    display_name = "Trap Fill"
+    range_start = 0
+    range_end = 100
+    default = 0
 
 
 
@@ -165,6 +173,10 @@ sonic_heroes_option_groups = \
             [
                 RemoveCasinoParkVIPTableLaserGate,
             ]),
+        OptionGroup("Traps",
+            [
+                TrapFill,
+            ]),
         OptionGroup("DeathLink",
             [
                 DeathLink
@@ -185,6 +197,7 @@ class SonicHeroesOptions(PerGameCommonOptions):
     sonic_checkpoint_sanity: SonicCheckpointSanity
     #secret_locations: SecretLocations
     remove_casino_park_vip_table_laser_gate: RemoveCasinoParkVIPTableLaserGate
+    trap_fill: TrapFill
 
     death_link: DeathLink
 
@@ -192,8 +205,18 @@ class SonicHeroesOptions(PerGameCommonOptions):
 
 def check_invalid_options(world: SonicHeroesWorld):
 
-    #if world.options.sonic_story == "disabled":
+    #if world.options.sonic_story == SonicStory.option_disabled:
         #raise OptionError(f"SONIC STORY MUST BE ENABLED")
+
+
+    if world.options.accessibility == Accessibility.option_minimal:
+        if world.options.goal_level_completions.value == 0:
+            if (world.options.sonic_key_sanity == SonicKeySanity.option_disabled or
+                    world.options.sonic_checkpoint_sanity == SonicCheckpointSanity.option_disabled):
+                raise OptionError(f"Minimal Accessibility with MacGuffin Hunt "
+                                  f"(no level completions) requires both Keys and Checkpoints")
+                pass
+
 
     if world.options.ability_unlocks == AbilityUnlocks.option_all_regions_separate:
         if world.options.sonic_story != SonicStory.option_both_missions_enabled: #Not Both Acts
@@ -201,16 +224,17 @@ def check_invalid_options(world: SonicHeroesWorld):
                     world.options.sonic_checkpoint_sanity == SonicCheckpointSanity.option_disabled):
                 raise OptionError(f"Region Based Ability Unlocks with only 1 Act Requires "
                                   f"Both Key Sanity and Checkpoint Sanity")
+                pass
         else:
             if (world.options.sonic_key_sanity == SonicKeySanity.option_disabled or
                     world.options.sonic_checkpoint_sanity == SonicCheckpointSanity.option_disabled):
-                if (world.options.sonic_key_sanity != SonicKeySanity.option_SetForEachAct and
-                        world.options.sonic_checkpoint_sanity != SonicCheckpointSanity.option_SetForEachAct):
+                if (world.options.sonic_key_sanity != SonicKeySanity.option_set_for_each_act and
+                        world.options.sonic_checkpoint_sanity != SonicCheckpointSanity.option_set_for_each_act):
                     raise OptionError(f"Region Based Ability Unlocks with both acts Requires "
                                       f"either Both Key Sanity and Checkpoint Sanity or one of "
                                       f"those with both sets (Set For Each Act)")
 
-    else:
+    else:   #entire story ability unlocks
         if (world.options.sonic_key_sanity == SonicKeySanity.option_disabled and
                 world.options.sonic_checkpoint_sanity == SonicCheckpointSanity.option_disabled):
             raise OptionError(f"Entire Story Ability Unlocks Requires Either Key Sanity "

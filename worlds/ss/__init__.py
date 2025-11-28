@@ -12,7 +12,7 @@ import yaml
 from BaseClasses import MultiWorld, Region, Tutorial, LocationProgressType, ItemClassification as IC
 from Options import Toggle, OptionError
 from worlds.AutoWorld import WebWorld, World
-from worlds.Files import APPlayerContainer, AutoPatchRegister
+from worlds.Files import APPlayerContainer
 from worlds.generic.Rules import add_item_rule
 from worlds.LauncherComponents import (
     Component,
@@ -88,7 +88,7 @@ class SSWeb(WebWorld):
     rich_text_options_doc = True
 
 
-class SSContainer(APPlayerContainer, metaclass=AutoPatchRegister):
+class SSContainer(APPlayerContainer):
     """
     This class defines the container file for Skyward Sword.
     """

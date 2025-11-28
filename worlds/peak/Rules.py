@@ -6,19 +6,20 @@ if TYPE_CHECKING:
     from . import PeakWorld
 
 CALDERA_LOCATIONS = [
-    "Acquire Big Egg", "Acquire Egg", "Acquire Cooked Bird", "Volcanology Badge", "Gourmand Badge",
+    "Acquire Big Egg", "Acquire Egg", "Acquire Cooked Bird", "Volcanology Badge","Nomad Badge","Alpinist Badge",
 ]
 
 KILN_LOCATIONS = [
-    "Acquire Strange Gem", "Peak Badge", "Speed Climber Badge", "Lone Wolf Badge",
-    "Survivalist Badge", "Naturalist Badge", "Leave No Trace Badge",
+    "Acquire Strange Gem", "Peak Badge", "Speed Climber Badge", "Lone Wolf Badge", "Participation Badge",
+    "Survivalist Badge", "Naturalist Badge", "Leave No Trace Badge", "Balloon Badge", "Bing Bong Badge",
+    "Gourmand Badge", "High Altitude Badge", "Knot Tying Badge",
 ]
 
 ROOTS_LOCATIONS = [
     "Acquire Red Shroomberry", "Acquire Blue Shroomberry", "Acquire Yellow Shroomberry", 
     "Acquire Green Shroomberry", "Acquire Purple Shroomberry",
     "Acquire Mandrake", "Acquire Bounce Shroom", "Acquire Cloud Fungus", "Mycoacrobatics Badge",
-    "Tread Lightly Badge", "Forestry Badge", "Undead Encounter Badge",
+    "Tread Lightly Badge",  "Undead Encounter Badge",
     "Web Security Badge", "Advanced Mycology Badge",
 ]
 
@@ -26,21 +27,21 @@ TROPICS_LOCATIONS = [
     "Acquire Red Clusterberry", "Acquire Yellow Clusterberry", "Acquire Black Clusterberry",
     "Acquire Purple Kingberry", "Acquire Yellow Kingberry", "Acquire Green Kingberry",
     "Acquire Brown Berrynana", "Acquire Blue Berrynana", "Acquire Pink Berrynana", 
-    "Acquire Yellow Berrynana", "Acquire Berrynana Peel", "Acquire Honeycomb", 
-    "Acquire Beehive", "Arborist Badge", "Foraging Badge", "Trailblazer Badge",
-    "Acquire Magic Bean", "Acquire Tick",
+    "Acquire Yellow Berrynana", "Acquire Yellow Berrynana Peel","Acquire Pink Berrynana Peel", "Acquire Honeycomb", 
+    "Acquire Beehive", "Arborist Badge", "Foraging Badge","Acquire Blue Berrynana Peel",
+    "Acquire Magic Bean", "Acquire Tick","Acquire Brown Berrynana Peel",
 ]
 
 MESA_LOCATIONS = [
     "Acquire Cactus", "Acquire Aloe Vera", "Acquire Sunscreen", "Acquire Ancient Idol", 
     "Acquire Red Prickleberry", "Acquire Gold Prickleberry", "Acquire Scorpion", "Acquire Torch",
     "Megaentomology Badge", "Cool Cucumber Badge", "24 Karat Badge", "Astronomy Badge", 
-    "Nomad Badge", "Daredevil Badge", "Needlepoint Badge", "Acquire Parasol","Acquire Dynamite", 
+     "Daredevil Badge", "Needlepoint Badge", "Acquire Parasol","Acquire Dynamite", "Forestry Badge",
 ]
 
 ALPINE_LOCATIONS = [
     "Acquire Orange Winterberry", "Acquire Napberry", "Bundled Up Badge", "Acquire Yellow Winterberry",
-    "Alpinist Badge", "Animal Serenading Badge", "Acquire Heat Pack",
+     "Animal Serenading Badge", "Acquire Heat Pack", "Trailblazer Badge",
 ]
 
 
@@ -64,6 +65,7 @@ def apply_rules(world: "PeakWorld"):
     player = world.player
     required_ascent = world.options.ascent_count.value
     goal_type = world.options.goal.value
+    progressive_stamina_enabled = world.options.progressive_stamina.value
 
     try:
         # Roots and Tropics require 1 Progressive Mountain
@@ -87,16 +89,16 @@ def apply_rules(world: "PeakWorld"):
     
     # All regular badge locations are always accessible
     regular_badges = [
-        "Mycology Badge", "Balloon Badge",
+        "Mycology Badge",
         "Endurance Badge", "Toxicology Badge", "Bouldering Badge",
-        "Bing Bong Badge", "Cooking Badge", "Plunderer Badge",
+        "Cooking Badge", "Plunderer Badge",
         "Esoterica Badge", "Beachcomber Badge", "Mentorship Badge",
-        "Aeronautics Badge",  "Knot Tying Badge",
+        "Aeronautics Badge",
         "Disaster Response Badge", "Competitive Eating Badge",
         "Cryptogastronomy Badge", "Calcium Intake Badge", "Applied Esoterica Badge",  
         "Happy Camper Badge", "First Aid Badge", "Clutch Badge",
         "Emergency Preparedness Badge", "Bookworm Badge", "Resourcefulness Badge",
-        "Ultimate Badge", "High Altitude Badge", 
+        "Ultimate Badge",
     ]
     
     for badge_name in regular_badges:
@@ -107,9 +109,21 @@ def apply_rules(world: "PeakWorld"):
     
     # Luggage locations are always accessible
     luggage_locations = [
-        "Open 1 luggage", "Open 5 luggage in a single run", "Open 10 luggage",
-        "Open 10 luggage in a single run", "Open 20 luggage in a single run",
-        "Open 25 luggage", "Open 50 luggage"
+        "Open 1 luggage", 
+        "Open 5 luggage",
+        "Open 10 luggage",
+        "Open 15 luggage",
+        "Open 20 luggage",
+        "Open 25 luggage",
+        "Open 30 luggage",
+        "Open 35 luggage",
+        "Open 40 luggage",
+        "Open 45 luggage", 
+        "Open 50 luggage",
+        "Open 5 luggage in a single run", 
+        "Open 10 luggage in a single run", 
+        "Open 20 luggage in a single run",
+
     ]
     
     for luggage_name in luggage_locations:
@@ -122,7 +136,7 @@ def apply_rules(world: "PeakWorld"):
     roman_numerals = ["II", "III", "IV", "V", "VI", "VII", "VIII"]
     
     max_relevant_ascent = 7
-    if goal_type == 0:  # Peak Goal
+    if goal_type == 0 or goal_type == 3:  # Peak Goal or Peak and Badges Goal
         max_relevant_ascent = required_ascent
     
     # Event locations for ascent completion
@@ -135,20 +149,33 @@ def apply_rules(world: "PeakWorld"):
                             state.has("Kiln Access", player) and
                             state.has("Progressive Ascent", player, asc))
             elif ascent_num in [3, 4, 5]:
-                # Ascents 3-5 require Progressive Ascent + 3 stamina bars
-                set_rule(world.get_location(f"Ascent {ascent_num} Completed"),
-                        lambda state, asc=ascent_num: 
-                            state.has("Kiln Access", player) and
-                            state.has("Progressive Ascent", player, asc) and
-                            state.has("Progressive Stamina Bar", player, 3))
+                # Ascents 3-5 require Progressive Ascent + optionally 3 stamina bars
+                if progressive_stamina_enabled:
+                    set_rule(world.get_location(f"Ascent {ascent_num} Completed"),
+                            lambda state, asc=ascent_num: 
+                                state.has("Kiln Access", player) and
+                                state.has("Progressive Ascent", player, asc) and
+                                state.has("Progressive Stamina Bar", player, 3))
+                else:
+                    set_rule(world.get_location(f"Ascent {ascent_num} Completed"),
+                            lambda state, asc=ascent_num: 
+                                state.has("Kiln Access", player) and
+                                state.has("Progressive Ascent", player, asc))
             elif ascent_num in [6, 7]:
-                # Ascents 6-7 require Progressive Ascent + 3 stamina + 4 endurance
-                set_rule(world.get_location(f"Ascent {ascent_num} Completed"),
-                        lambda state, asc=ascent_num: 
-                            state.has("Kiln Access", player) and
-                            state.has("Progressive Ascent", player, asc) and
-                            state.has("Progressive Stamina Bar", player, 3) and
-                            state.has("Progressive Endurance", player, 4))
+                # Ascents 6-7 require Progressive Ascent + optionally 3 stamina + 4 endurance
+                if progressive_stamina_enabled:
+                    set_rule(world.get_location(f"Ascent {ascent_num} Completed"),
+                            lambda state, asc=ascent_num: 
+                                state.has("Kiln Access", player) and
+                                state.has("Progressive Ascent", player, asc) and
+                                state.has("Progressive Stamina Bar", player, 3) and
+                                state.has("Progressive Endurance", player, 4))
+                else:
+                    set_rule(world.get_location(f"Ascent {ascent_num} Completed"),
+                            lambda state, asc=ascent_num: 
+                                state.has("Kiln Access", player) and
+                                state.has("Progressive Ascent", player, asc) and
+                                state.has("Progressive Endurance", player, 4))
         except KeyError:
             pass
     
@@ -249,7 +276,7 @@ def apply_rules(world: "PeakWorld"):
         "Acquire Sports Drink", "Acquire Big Lollipop", "Acquire Button Shroom", "Acquire Bugle Shroom",
         "Acquire Cluster Shroom", "Acquire Chubby Shroom", "Acquire Conch",
         "Acquire Bing Bong", "Acquire Red Crispberry", "Acquire Green Crispberry",
-        "Acquire Yellow Crispberry", "Acquire Coconut", "Acquire Coconut Half",
+        "Acquire Yellow Crispberry", "Acquire Coconut", "Acquire Coconut Half", "Acquire Blowgun",
         "Acquire Book of Bones", "Acquire Marshmallow", "Acquire Glizzy", "Acquire Rescue Claw", "Acquire Fortified Milk", "Acquire Scoutmaster's Bugle"
     ]
     

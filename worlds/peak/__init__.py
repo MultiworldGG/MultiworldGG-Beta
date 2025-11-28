@@ -105,10 +105,10 @@ class PeakWorld(World):
         total_locations = len(LOCATION_TABLE)
         
         # Add event locations
-        total_locations += 15  # 7 Ascent Completed + Mesa/Roots/Alpine/Tropics/Caldera/Kiln Access + Idol Dunked + All Badges Collected
+        #total_locations += 15  # 7 Ascent Completed + Mesa/Roots/Alpine/Tropics/Caldera/Kiln Access + Idol Dunked + All Badges Collected
         
         # Subtract excluded ascent locations if goal is Reach Peak
-        if goal_type == 0:  # Reach Peak goal
+        if goal_type == 0 or goal_type == 3: # Reach Peak goal or Peak and Badges goal
             excluded_ascent_count = 7 - required_ascent  # Number of ascents to exclude
             # Each excluded ascent has 6 badge locations (Beachcomber, Trailblazer, Alpinist, Volcanology, Nomad, Forestry)
             # Plus 1 Scout Sashe location
@@ -137,7 +137,7 @@ class PeakWorld(World):
         item_pool = []
         
         # Add Progressive Ascent items based on goal requirements
-        if goal_type == 0:  # Reach Peak goal - only add enough Progressive Ascent for the required level
+        if goal_type == 0 or goal_type == 3:  # Reach Peak goal - only add enough Progressive Ascent for the required level
             for _ in range(required_ascent):
                 item_pool.append(self.create_item("Progressive Ascent"))
             logging.debug(f"[Player {self.multiworld.player_name[self.player]}] Added {required_ascent} Progressive Ascent items (Reach Peak goal)")
@@ -210,6 +210,7 @@ class PeakWorld(World):
         trap_weights += (["Pixel Trap"] * self.options.pixel_trap_weight.value)
         trap_weights += (["Eruption Trap"] * self.options.eruption_trap_weight.value)
         trap_weights += (["Beetle Horde Trap"] * self.options.beetle_horde_trap_weight.value)
+        trap_weights += (["Custom Trivia Trap"] * self.options.custom_trivia_trap_weight.value)
         
         # Calculate number of trap items based on TrapPercentage
         trap_count = 0 if (len(trap_weights) == 0) else math.ceil(remaining_slots * (self.options.trap_percentage.value / 100.0))
@@ -271,6 +272,7 @@ class PeakWorld(World):
         trap_data["pixel_trap"] = self.options.pixel_trap_weight.value
         trap_data["eruption_trap"] = self.options.eruption_trap_weight.value
         trap_data["beetle_horde_trap"] = self.options.beetle_horde_trap_weight.value
+        trap_data["custom_trivia_trap"] = self.options.custom_trivia_trap_weight.value
 
         return trap_data
 
@@ -281,7 +283,7 @@ class PeakWorld(World):
 
         player = self.player
         # Count total Progressive items we're placing
-        prog_ascent_count = 7 if self.options.goal.value != 0 else self.options.ascent_count.value
+        prog_ascent_count = 7 if self.options.goal.value != 0 and self.options.goal.value != 3 else self.options.ascent_count.value
         prog_stamina_count = 0
         if self.options.progressive_stamina.value:
             prog_stamina_count = 7 if self.options.additional_stamina_bars.value else 4
@@ -303,8 +305,6 @@ class PeakWorld(World):
                 location.name not in ALPINE_LOCATIONS and
                 location.name not in CALDERA_LOCATIONS and
                 location.name not in KILN_LOCATIONS and
-                "berry" not in location.name.lower() and
-                "conch" not in location.name.lower() and
                 "(Ascent" not in location.name):
                 shore_accessible_locations.append(location)
         
@@ -462,7 +462,11 @@ class PeakWorld(World):
             self.multiworld.completion_condition[self.player] = (
                 lambda state: state.has("Idol Dunked", self.player)
             )
-
+        elif goal == 3:  # Peak and Badges
+            if 1 <= ascent_num <= 7:
+                self.multiworld.completion_condition[self.player] = (
+                    lambda state, n=ascent_num: state.has(f"Ascent {n} Completed", self.player) and state.has("All Badges Collected", self.player)
+                )
         else:
             return  # Unsupported goal type, exit early
 

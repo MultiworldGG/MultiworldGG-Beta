@@ -16,7 +16,7 @@ CookieConsent.run({
             en: {
                 consentModal: {
                     title: 'This website uses cookies',
-                    description: 'We use cookies to personalise content, and to analyse our traffic. We also share information about your use of our site with our analytics partners who may combine it with other information that you’ve provided to them.',
+                    description: 'We use cookies to personalise content, and to analyse usage locally.',
                     acceptAllBtn: 'Accept all',
                     acceptNecessaryBtn: 'Reject all',
                     showPreferencesBtn: 'Manage Individual preferences'
@@ -34,11 +34,6 @@ CookieConsent.run({
 
                             //this field will generate a toggle linked to the 'necessary' category
                             linkedCategory: 'necessary'
-                        },
-                        {
-                            title: 'Performance and Analytics',
-                            description: 'These cookies collect information about how you use our website. All of the data is anonymized and cannot be used to identify you.',
-                            linkedCategory: 'analytics'
                         },
                         {
                             title: 'More information',

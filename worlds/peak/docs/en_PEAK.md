@@ -2,8 +2,7 @@
 
 ## Where is the settings page?
 
-The [player settings page for this game](../player-settings) contains all the options you need to configure and export a
-config file.
+The [player settings page for this game](../player-settings) contains all the options you need to configure and export a config file.
 
 ## Features
 * Ascent Progression: Unlock ascents (1-7) by receiving Archipelago items

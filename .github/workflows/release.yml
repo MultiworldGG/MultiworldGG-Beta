@@ -182,39 +182,68 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - name: Free disk space
+        run: |
+          # Remove pip cache
+          rm -rf ~/Library/Caches/pip
+          # Remove Python cache from checkout
+          find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+          find . -type f -name "*.pyc" -delete 2>/dev/null || true
+          # Show available disk space
+          df -h
+
       - name: Install Homebrew dependencies
         run: |
           brew update
           brew install gtk+3 gobject-introspection
+          # Clean up Homebrew cache immediately after install
+          brew cleanup --prune=all
 
       - name: Get a recent Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           check-latest: true
+          cache: 'pip'  # Use pip cache to avoid re-downloading
 
       - name: Install build-time dependencies
         run: |
           # set your python command;
           echo "PYTHON=python3" >> $GITHUB_ENV
-          python3 -m pip install --upgrade pip
-          python3 -m pip install dmgbuild
+          python3 -m pip install --upgrade pip --no-cache-dir
+          python3 -m pip install dmgbuild --no-cache-dir
+          # Clean pip cache after install
+          python3 -m pip cache purge || true
 
       - name: Install run-time dependencies
         run: |
           wget -nv https://github.com/Ijwu/Enemizer/releases/download/$ENEMIZER_VERSION/osx.10.12-x64.zip
           unzip -d EnemizerCLI osx.10.12-x64.zip
+          rm osx.10.12-x64.zip
 
       - name: Build
         run: |
           "${{ env.PYTHON }}" -m venv venv
           source venv/bin/activate
-          pip install --upgrade pip PyGObject charset-normalizer
+          pip install --upgrade pip --no-cache-dir
+          pip install PyGObject charset-normalizer --no-cache-dir
+          # Clean pip cache before build
+          pip cache purge || true
           python setup.py bdist_mac --yes
 
           APP_BINARY=$(ls build/ | grep ".app" | head -n 1 || echo "")
           echo "release: $APP_BINARY"
           echo "MACOS_APP=$APP_BINARY" >> $GITHUB_ENV
+          # Cleanup to save space for dmgbuild
+          rm -rf EnemizerCLI
+          rm -rf SNI
+          rm -rf build/exe.*
+          # Remove venv after build (dmgbuild doesn't need it)
+          deactivate || true
+          rm -rf venv
+          # Remove Python build artifacts
+          rm -rf .build
+          find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
 
       - name: Attest Build
         uses: actions/attest-build-provenance@v2

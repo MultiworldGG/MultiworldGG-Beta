@@ -1,5 +1,9 @@
 # HITMAN Worlds of Assassination
 
+## Where is the settings page?
+
+The [player settings page for this game](../player-settings) contains all the options you need to configure and export a config file.
+
 ## What is considered a location check in HITMAN?
 
 The Completion of each Level, as well as the completion of each Level with a rating of "Silent Assassin", "Suit Only" and "Silent Assassin, Suit Only" can each be configured to give a check. "Itemsanity" can be enabled to give one check for each different Item picked up while ingame. Only Items that go into the inventory and can be dropped give checks (i.e. Crowbar, Screwdriver), items like keys and collectable information do not.

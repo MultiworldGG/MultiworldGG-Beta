@@ -1,4 +1,4 @@
-# Sonic Adventure 2: Battle Randomizer Setup Guide
+# Sonic Heroes Setup Guide
 
 ## Required Software
 
