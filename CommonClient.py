@@ -1307,7 +1307,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.players = args["players"]
         ctx.consume_players_package(args["players"])
         ctx.stored_data_notification_keys.add(f"_read_hints_{ctx.team}_{ctx.slot}")
-        ctx.stored_data_notification_keys.add(f"_read_hints_{ctx.team}_{ctx.slot}_mwgg")
+        ctx.stored_data_notification_keys.add(f"hints_{ctx.team}_{ctx.slot}_mwgg")
         # Add profile_data keys for all players in the multiworld
         for slot_id in ctx.slot_info.keys():
             if slot_id != 0:  # Skip Archipelago slot
@@ -1404,10 +1404,10 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.stored_data.update(args["keys"])
         if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" in args["keys"]:
             ctx.ui.update_hints()
-        if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}_mwgg" in args["keys"]:
+        if ctx.ui and f"hints_{ctx.team}_{ctx.slot}_mwgg" in args["keys"]:
             ctx.ui.update_mwgg_hints()
-        if ctx.ui and "_read_timer" in args["keys"]:
-            ctx.timer = args["keys"]["_read_timer"]
+        if ctx.ui and "timer" in args["keys"]:
+            ctx.timer = args["keys"]["timer"]
         # Update profile data for all players when retrieved (on connect)
         if ctx.ui:
             for key in args["keys"]:
@@ -1424,7 +1424,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.stored_data[args["key"]] = args["value"]
         if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" == args["key"]:
             ctx.ui.update_hints()
-        elif ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}_mwgg" == args["key"]:
+        elif ctx.ui and f"hints_{ctx.team}_{ctx.slot}_mwgg" == args["key"]:
             ctx.ui.update_mwgg_hints()
         elif args["key"].startswith(f"profile_data_{ctx.team}_"):
             # Update profile data when another client changes their profile

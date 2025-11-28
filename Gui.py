@@ -533,9 +533,6 @@ class MultiMDApp(MDApp):
         
     def _menu_item_callback(self, item):
         """Callback for menu items to change screens"""
-        if item.lower() == "exit":
-            self.stop()
-            return
         self.change_screen(item.lower())
         if self.top_appbar_menu:
             self.top_appbar_menu.dismiss()
@@ -544,17 +541,15 @@ class MultiMDApp(MDApp):
         """Open dropdown menu to change screens 
         when menu button is pressed"""
         if not self.top_appbar_menu:
-            menu_items = [
-                self._create_menu_item(item)
-                for item in list(set(["settings", "launcher"] + self.screen_manager.screen_names + ["Exit"]))
-            ]
+            menu_items = []
+            for item in self.screen_manager.screen_names:
+                menu_items.append(self._create_menu_item(item))
 
-            for item in menu_items:
-                if "exit" in item["text"].lower():
-                    menu_items.remove(item)
-                    break
-            
-            menu_items.append(self._create_menu_item("exit"))
+            menu_items.sort(key=lambda x: x["text"].lower())
+
+            menu_items.append({"text": "Exit", 
+                                "divider": "Full", 
+                                "on_release": lambda x=None: self.stop()})
 
             self.top_appbar_menu = MDDropdownMenu(
                 caller=menu_button,
@@ -630,7 +625,6 @@ class MultiMDApp(MDApp):
                     hints=self.ui_hint_data[slot],
                 )
 
-        self.update_mwgg_hints()
         self.update_hints()
         self.set_pronouns()
         self.top_appbar_layout.top_appbar.ui_built()
@@ -674,14 +668,14 @@ class MultiMDApp(MDApp):
 
     def update_hints(self):
         hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}", [])
-        mwgg_hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}_mwgg", {})
+        mwgg_hints = self.ctx.stored_data.get(f"hints_{self.ctx.team}_{self.ctx.slot}_mwgg", {})
         if hints:
             self.refresh_hints(hints, mwgg_hints)
 
 
     def refresh_hints(self, hints, mwgg_hints):
         hints_key = f"_read_hints_{self.ctx.team}_{self.ctx.slot}"
-        mwgg_hints_key = f"_read_hints_{self.ctx.team}_{self.ctx.slot}_mwgg"
+        mwgg_hints_key = f"hints_{self.ctx.team}_{self.ctx.slot}_mwgg"
         
         # Ensure mwgg_hints is a dict, not None
         if mwgg_hints is None:
@@ -740,30 +734,25 @@ class MultiMDApp(MDApp):
         #     for screen in self.custom_screens:
         #         self.custom_screens[screen].update_hints_list()
 
-    def update_mwgg_hints(self, mwgg_hints: typing.Optional[dict] = None):
-        if mwgg_hints is None:
-            mwgg_hints = self.ui_hint_data
-        
-        # Get current stored data to compare
-        current_stored = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}_mwgg", {})
-        # Ensure current_stored is a dict, not None
-        if current_stored is None:
-            current_stored = {}
+    def update_mwgg_hints(self, mwgg_hints_stored: typing.Optional[dict] = None):
+        mwgg_hints = {}
+        for finding_player, locations in self.ui_hint_data.items():
+            if locations is not None:
+                for location_id, hint_data in locations.items():
+                    mwgg_hints[f"{finding_player}_{location_id}"] = hint_data.mwgg_hint_status.value
         
         # Only store hints that have non-default MWGG status
         mwgg_data_to_store = {}
         has_changes = False
         
-        for finding_player, locations in mwgg_hints.items():
-            for location_id, hint_data in locations.items():
-                key = f"{finding_player}_{location_id}"
-                current_status = hint_data.mwgg_hint_status
-
-                mwgg_data_to_store[key] = current_status.value
-                # Check if this is a change
-                if key not in current_stored or current_stored[key] != current_status.value:
-                    has_changes = True
-        
+        if mwgg_hints_stored is not None and mwgg_hints is not None:
+            mwgg_data_to_store = {**mwgg_hints_stored, **mwgg_hints}
+            has_changes = mwgg_data_to_store != mwgg_hints_stored
+        elif mwgg_hints is not None:
+            mwgg_data_to_store = mwgg_hints
+            has_changes = True
+        else:
+            return
         # Only send update if there are actual changes
         if has_changes:
             asynckivy.start(self.ctx.send_msgs([{

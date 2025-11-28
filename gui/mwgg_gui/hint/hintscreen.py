@@ -69,7 +69,7 @@ KV = '''
             RecycleExpansionPanelContent:
                 id: recycle_layout
                 orientation: 'vertical'
-                default_size: None, dp(30)
+                default_size: None, dp(72)
                 default_size_hint: 1, None
                 size_hint_y: None
                 height: self.minimum_height
@@ -95,7 +95,7 @@ class HintFeaturebar(MDBoxLayout):
     """
     pass
 
-class RecycleExpansionPanelContent(RecycleBoxLayout, CommonElevationBehavior):
+class RecycleExpansionPanelContent(RecycleBoxLayout):
     """
     Override to make the panel a recycle view
     Recycle view for the hint list panel.
@@ -152,12 +152,13 @@ class HintScreen(MDScreen):
         self.hint_layout = HintLayout()
         self.hint_scroll = self.hint_layout.hint_scroll
         self.hints_mdlist = MDList(size_hint_y=None, size_hint_x=1)
-        self.hints_by_type = {"Hidden": [], "Receiving": [], "Finding": []}
         # Schedule initialization
         Clock.schedule_once(lambda x: self.init_components())
 
     def populate_hints_by_type(self):
         """Initialize and add all components to the screen"""
+        # Clear existing data to prevent duplicates on refresh
+        self.hints_by_type = {"Hidden": [], "Receiving": [], "Finding": []}
         # Reorganizing hints for the hint screen
         for slot_id, slot_data in self.app.ctx.ui.ui_player_data.items():
             if hasattr(slot_data, 'hints') and slot_data.hints:
@@ -190,10 +191,6 @@ class HintScreen(MDScreen):
         """Update the hints list when hint data becomes available"""
         if not self._updating_hints:
             asynckivy.start(self.set_hints_list())
-
-    def _on_hint_scroll_height_change(self, instance, value):
-        """Update the hint panel height when the hint scroll height changes"""
-        return self.hint_layout.height - dp(142) if self.hint_layout.height > dp(142) else dp(50)
 
     async def set_hints_list(self):
         """Async method to populate the hints list"""
@@ -369,6 +366,7 @@ class HintListPanel(GameListPanel):
         # Set properties after super().__init__() so widget tree is built
         self.panel_header_height = dp(50)
         self.content_height = dp(8)
+        self.content_min_height = dp(54)
         self.padding = (dp(16), dp(16), dp(16), dp(16))
         self.spacing = dp(8)
         self._populated = False
@@ -391,7 +389,7 @@ class HintListPanel(GameListPanel):
         hint_count = len(self.hint_content.data) if hasattr(self, 'hint_content') and self.hint_content and self.hint_content.data else 0
         
         # Calculate height needed for all hints
-        hints_height = hint_count * self.hint_item_height
+        hints_height = hint_count * (self.hint_item_height + self.spacing) + self.padding[0] + self.padding[2]
         
         # Calculate maximum available height
         if self.hint_layout:
@@ -401,7 +399,7 @@ class HintListPanel(GameListPanel):
             max_height = Window.height - self.featurebar_height - self.panel_header_height
         
         # Use minimum of hints height and max available height
-        calculated_height = min(hints_height, max_height) if max_height > 0 else hints_height
+        calculated_height = min(hints_height, max_height) if max_height > 0 else self.content_min_height
         
         # Ensure minimum height
         return max(calculated_height, dp(8))
@@ -426,39 +424,6 @@ class HintListPanel(GameListPanel):
         """Recalculate height when layout height changes"""
         if self.is_open:
             Clock.schedule_once(lambda dt: self._update_original_content_height(None), 0.1)
-    # def on_open(self, *args):
-    #     """Override to refresh RecycleView when panel opens"""
-    #     super().on_open(*args)
-    #     # Refresh RecycleView to create widgets now that panel has size
-    #     if hasattr(self, 'panel_content') and self.panel_content:
-    #         Clock.schedule_once(lambda dt: self.panel_content.refresh_from_data(), 0.1)
-    # def update_content_height(self, instance, value):
-    #     """Update content height based on available space"""
-    #     # Calculate new height
-    #     if value > self.panel_header_height:
-    #         new_height = value - self.panel_header_height
-    #     else:
-    #         new_height = dp(50)
-        
-    #     # Only update if the value actually changed to prevent infinite loops
-    #     if abs(new_height - self.content_height) > 1:  # 1 pixel tolerance
-    #         # Temporarily unbind to prevent circular updates
-    #         self.unbind(height=self.update_content_height)
-    #         self.content_height = new_height
-    #         # Rebind after a short delay to allow layout to settle
-    #         Clock.schedule_once(lambda dt: self.bind(height=self.update_content_height), 0.1)
-
-
-    # def _set_viewclass(self):
-    #     """Set the viewclass on panel_content after initialization"""
-    #     if hasattr(self, 'panel_content') and self.panel_content:
-    #         self.panel_content.viewclass = f"HintListItem_{self.hint_type}"
-    #         # Set _panel reference on RecycleExpansionPanelContent for height updates
-    #         recycle_layout = self.panel_content.children[0] if self.panel_content.children else None
-    #         if isinstance(recycle_layout, RecycleExpansionPanelContent):
-    #             recycle_layout._panel = self
-    #             # Bind RecycleView height to layout's minimum_height
-    #             recycle_layout.bind(minimum_height=lambda instance, value: setattr(self.panel_content, 'height', value))
 
     def populate_slot_item(self, ctx: "CommonContext"):
         """
@@ -480,10 +445,6 @@ class HintListPanel(GameListPanel):
         self.panel_header = self.ids.panel_header
         self.panel_content = self.ids.panel_content
         self.hint_content = self.ids.rv
-        # Set _panel reference on RecycleExpansionPanelContent for height updates
-        # recycle_layout = self.panel_content.children[0] if self.panel_content.children else None
-        # if isinstance(recycle_layout, RecycleExpansionPanelContent):
-        #     recycle_layout._panel = self
         self.panel_header_layout = HintListItemHeader(hint_icon=hint_icons[self.hint_type], hint_text=self.hint_type, panel=self, height=self.panel_header_height)
         
         # Set up bindings for height recalculation after hint_content is available
@@ -494,6 +455,7 @@ class HintListPanel(GameListPanel):
         # self.leading_avatar.source = "" if not self.item_data['avatar'] else self.item_data['avatar']
 
         i = 1 if self.app.theme_cls.theme_style == "Dark" else 0
+        item_bg_color = self.app.theme_cls.surfaceContainerColor
         item_colors = {
             "trap": get_color_from_hex(self.app.theme_mw.markup_tags_theme.trap_item_color[i]),
             "regular": get_color_from_hex(self.app.theme_mw.markup_tags_theme.regular_item_color[i]),
@@ -533,12 +495,13 @@ class HintListPanel(GameListPanel):
             item_badge_text = ""
             location_badge_text = ""
             prio_behavior = get_prio_behavior(hint.classification)
-            if hint.mwgg_hint_status & MWGGUIHintStatus.HINT_BK_MODE:
-                item_badge_text += md_icons["food"] + " "
-            if hint.mwgg_hint_status & MWGGUIHintStatus.HINT_GOAL:
-                item_badge_text += md_icons["flag_checkered"] + " "
-            if hint.mwgg_hint_status & MWGGUIHintStatus.HINT_SHOP:
-                location_badge_text += md_icons["shop"]
+            if not hint.my_item:
+                if hint.mwgg_hint_status & MWGGUIHintStatus.HINT_BK_MODE:
+                    item_badge_text += md_icons["food"] + " "
+                if hint.mwgg_hint_status & MWGGUIHintStatus.HINT_GOAL:
+                    item_badge_text += md_icons["flag_checkered"] + " "
+                if hint.mwgg_hint_status & MWGGUIHintStatus.HINT_SHOP:
+                    location_badge_text += md_icons["shop"]
 
             hint_item = {"player_name": slot_data.slot_name, 
                          "player_avatar": slot_data.avatar, 
@@ -546,19 +509,30 @@ class HintListPanel(GameListPanel):
                          "item_name": hint.item, 
                          "entrance_name": hint.entrance if hint.entrance else "Vanilla",
                          "game_status": slot_data.game_status, 
-                         "shadow_color": prio_behavior["shadow_color"],
-                         "elevation_level": prio_behavior["elevation_level"],
                          "item_badge_text": item_badge_text, 
                          "location_badge_text": location_badge_text,   
                          "hint_icon_status": status_icons.get(hint.hint_status, "blank"), 
                          "hint_status_text": status_names.get(hint.hint_status, ""),
+                        #  "for_bk_mode": hint.mwgg_hint_status & MWGGUIHintStatus.HINT_BK_MODE,
+                        #  "for_goal": hint.mwgg_hint_status & MWGGUIHintStatus.HINT_GOAL,
+                        #  "from_shop": hint.mwgg_hint_status & MWGGUIHintStatus.HINT_SHOP,
                          "hint_data": hint,
-                         "hide": hint.hide if hasattr(hint, 'hide') else False}
+                         "hide": hint.hide if hasattr(hint, 'hide') else False,
+                         "md_bg_color": item_bg_color,
+                         "shadow_color": prio_behavior["shadow_color"],
+                         "elevation_level": prio_behavior["elevation_level"],
+                         }
             # Only add editable flag for non-found items (dropdown created in refresh_view_attrs)
             if not (hint.hint_status == HintStatus.HINT_FOUND or hint.found or not hint.my_item):
                 hint_item["editable"] = True
+                hint_item["bk_check"] = hint.for_bk_mode
+                hint_item["goal_check"] = hint.for_goal
+                hint_item["shop_check"] = hint.from_shop
             else:
                 hint_item["editable"] = False
+                hint_item["bk_icon"] = "food" if hint.for_bk_mode else "blank"
+                hint_item["goal_icon"] = "flag_checkered" if hint.for_goal else "blank"
+                hint_item["shop_icon"] = "shop" if hint.from_shop else "blank"
 
             hint_items.append(hint_item)
 

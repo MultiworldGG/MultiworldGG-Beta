@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from kivymd.uix.behaviors.backgroundcolor_behavior import BackgroundColorBehavior
 __all__ = ['GameListPanel', 
            'GameListItem', 
            'GameListItemLongText', 
@@ -39,9 +41,9 @@ from kivy.clock import Clock
 from kivymd.app import MDApp
 from kivymd.icon_definitions import md_icons
 from typing import TYPE_CHECKING, Any, Callable, Tuple
+from NetUtils import MWGGUIHintStatus, HintStatus
 
 if TYPE_CHECKING:
-    from NetUtils import HintStatus, MWGGUIHintStatus
     from CommonClient import CommonContext
 
 from mwgg_gui.components.guidataclasses import UIPlayerData, UIHint, HintStatus
@@ -233,9 +235,9 @@ class MWBaseListItem(MDBoxLayout, CommonElevationBehavior):
         location_name (StringProperty): Name of the location
         entrance_name (StringProperty): Name of the entrance
         game_status (StringProperty): Current status of the game
-        for_bk_mode (StringProperty): Indicates if item is for BK mode
-        for_goal (StringProperty): Indicates if item is for their goal
-        from_shop (StringProperty): Indicates if item is from a shop
+        for_bk_mode (BooleanProperty): Indicates if item is for BK mode
+        for_goal (BooleanProperty): Indicates if item is for their goal
+        from_shop (BooleanProperty): Indicates if item is from a shop
         classification (StringProperty): Classification of the item
         assigned_level (StringProperty): Assigned level
     """
@@ -252,9 +254,9 @@ class MWBaseListItem(MDBoxLayout, CommonElevationBehavior):
     entrance_name: StringProperty
     game_status: StringProperty
     my_item: BooleanProperty
-    for_bk_mode: StringProperty
-    for_goal: StringProperty
-    from_shop: StringProperty
+    for_bk_mode: BooleanProperty
+    for_goal: BooleanProperty
+    from_shop: BooleanProperty
     classification: StringProperty
     assigned_level: StringProperty
     found: StringProperty
@@ -410,31 +412,33 @@ class SlotListItem(MWBaseListItem):
         
         return nheight
 
-class HintListItem(RecycleDataViewBehavior, BoxLayout, CommonElevationBehavior):
+class HintListItem(RecycleDataViewBehavior, BoxLayout, BackgroundColorBehavior, CommonElevationBehavior):
     """
     Widget for displaying individual hint items in the hint list.
     """
+    theme_bg_color = StringProperty("Custom")
+    theme_shadow_color = StringProperty("Custom")
+    theme_elevation_level = StringProperty("Custom")
+    md_bg_color = ColorProperty([0,0,0,1])
     player_name = StringProperty("")
     player_avatar = StringProperty("")
     hint_icon_status = StringProperty("")
     hint_status_text = StringProperty("")
     hint_data = ObjectProperty(None)
-    entrance_texture: Tuple[NumericProperty, NumericProperty]
-    slot_icon_entrance: ObjectProperty
-    slot_text_entrance: ObjectProperty
-    slot_icon_location: ObjectProperty
-    slot_text_location: ObjectProperty
-    slot_icon_item: ObjectProperty
-    slot_text_item: ObjectProperty
-    slot_icon_goal: ObjectProperty
     item_name = StringProperty("")
     location_name = StringProperty("")
     entrance_name = StringProperty("")
     game_status = StringProperty("")
     my_item = BooleanProperty(False)
-    for_bk_mode = StringProperty("")
-    for_goal = StringProperty("")
-    from_shop = StringProperty("")
+    bk_check = BooleanProperty(False)
+    goal_check = BooleanProperty(False)
+    shop_check = BooleanProperty(False)
+    bk_icon = StringProperty("blank")
+    goal_icon = StringProperty("blank")
+    shop_icon = StringProperty("blank")
+    # for_bk_mode = BooleanProperty(False)
+    # for_goal = BooleanProperty(False)
+    # from_shop = BooleanProperty(False)
     classification = StringProperty("")
     assigned_level = StringProperty("")
     found = StringProperty("")
@@ -446,33 +450,33 @@ class HintListItem(RecycleDataViewBehavior, BoxLayout, CommonElevationBehavior):
     elevation_level = NumericProperty(0)
     hide = BooleanProperty(False)
     panel: ObjectProperty
-    theme_shadow_color: ColorProperty
-    theme_elevation_level: NumericProperty
+    elevation_levels = {0: dp(0), 1: dp(1), 2: dp(1), 3: dp(1), 4: dp(2), 5: dp(2), 6: dp(2)}
     index = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.dropdown = None
+        self._remove_hint_event = None
+        # self.fbind('bk_check', self.for_bk_mode)
+        # self.fbind('goal_check', self.for_goal)
+        # self.fbind('shop_check', self.from_shop)
+        # self.fbind('bk_icon', lambda icon: icon = "food" if self.for_bk_mode else "blank")
+        # self.fbind('goal_icon', lambda icon: icon = "flag_checkered" if self.for_goal else "blank")
+        # self.fbind('shop_icon', lambda icon: icon = "shop" if self.from_shop else "blank")
 
     def refresh_view_attrs(self, rv, index, data):
         """Update view when RecycleView data changes"""
         self.index = index
         
         # Directly set properties from data dict (like HintLabel pattern)
-        self.player_name = data.get("player_name", "")
-        self.player_avatar = data.get("player_avatar", "")
-        self.location_name = data.get("location_name", "")
-        self.item_name = data.get("item_name", "")
-        self.entrance_name = data.get("entrance_name", "Vanilla")
-        self.item_badge_text = data.get("item_badge_text", "")
-        self.location_badge_text = data.get("location_badge_text", "")
-        self.hint_icon_status = data.get("hint_icon_status", "")
-        self.hint_status_text = data.get("hint_status_text", "")
         self.hint_data = data.get("hint_data", None)
-        self.editable = data.get("editable", False)
-        self.hide = data.get("hide", False)
-        self.shadow_color = data.get("shadow_color", [0, 0, 0, 0])
-        self.elevation_level = data.get("elevation_level", 0)
+        self.hide = self.hint_data.hide
+        self.bk_check = self.hint_data.for_bk_mode
+        self.goal_check = self.hint_data.for_goal
+        self.shop_check = self.hint_data.from_shop
+        self.bk_icon = "food" if self.hint_data.for_bk_mode else "blank"
+        self.goal_icon = "flag_checkered" if self.hint_data.for_goal else "blank"
+        self.shop_icon = "shop" if self.hint_data.from_shop else "blank"
         
         # Normalize entrance name if needed
         if "Vanilla" not in self.entrance_name and self.entrance_name:
@@ -487,11 +491,17 @@ class HintListItem(RecycleDataViewBehavior, BoxLayout, CommonElevationBehavior):
             self.dropdown.dismiss()
             self.dropdown = None
         
-        # Setup hide checkbox
-        if hasattr(self, 'ids') and 'hide_checkbox' in self.ids:
-            self.ids.hide_checkbox.active = self.hide
+
+        super().refresh_view_attrs(rv, index, data)
         
-        return super().refresh_view_attrs(rv, index, data)
+        setattr(self.ids.slot_mwgg_status_checkbox_bk, 'active', self.bk_check)    
+        setattr(self.ids.slot_mwgg_status_checkbox_goal, 'active', self.goal_check)
+        setattr(self.ids.slot_mwgg_status_checkbox_shop, 'active', self.shop_check)
+        setattr(self.ids.slot_mwgg_status_icon_bk, 'icon', self.bk_icon)
+        setattr(self.ids.slot_mwgg_status_icon_goal, 'icon', self.goal_icon)
+        setattr(self.ids.slot_mwgg_status_icon_shop, 'icon', self.shop_icon)
+        setattr(self.ids.hide_checkbox, 'active', self.hide)
+
     
     def _ensure_dropdown(self):
         """Ensure dropdown is created if needed"""
@@ -512,6 +522,13 @@ class HintListItem(RecycleDataViewBehavior, BoxLayout, CommonElevationBehavior):
             dropdown_callback=on_select_status
         )
 
+
+    def store_checkbox_state(self, value):
+        """Store the checkbox state"""
+        rv = MDApp.get_running_app().root.ids.RelativeLayout
+        rv.data[self.index]["hide"] = self.ids.hide_checkbox.active
+        self.checkbox_state = self.ids.hide_checkbox.active
+
     def open_dropdown(self):
         """Open the status dropdown menu"""
         if self.dropdown:
@@ -523,6 +540,43 @@ class HintListItem(RecycleDataViewBehavior, BoxLayout, CommonElevationBehavior):
         """Handle hide checkbox change"""
         if hint_instance.hint_data:
             hint_instance.hint_data.hide = value
+            # return if it's already hidden
+            if isinstance(hint_instance, "HintListItem_Hidden"):
+                return
+            # Unschedule any existing pending removal
+            if hint_instance._remove_hint_event:
+                Clock.unschedule(hint_instance._remove_hint_event)
+            # Schedule new removal and store the event
+            hint_instance._remove_hint_event = Clock.schedule_once(
+                lambda x: hint_instance.remove_hint(hint_instance, value), 1.5
+            )
+
+    @staticmethod
+    def remove_hint(hint_instance, value):
+        try:
+            # Clear the stored event since it's now executing
+            hint_instance._remove_hint_event = None
+            if not hint_instance.hint_data.hide:
+                return
+            parent = getattr(hint_instance, 'parent', None)
+            if parent and parent.recycleview and hint_instance.index is not None:
+                animation = Animation(x=-(hint_instance.width+dp(24)), duration=0.5)
+                animation.start(hint_instance)
+                animation.on_complete = hint_instance.on_complete
+        except:
+            return
+
+    @staticmethod
+    def on_complete(hint_instance):
+        try:
+            parent = getattr(hint_instance, 'parent', None)
+            if parent and parent.recycleview and hint_instance.index is not None:
+                    parent.recycleview.data.pop(hint_instance.index)
+                    parent.recycleview.refresh_from_data()
+            hint_instance._remove_hint_event = None
+        except:
+            return
+
 
     @staticmethod
     def hide_hint(hint_instance, value):
