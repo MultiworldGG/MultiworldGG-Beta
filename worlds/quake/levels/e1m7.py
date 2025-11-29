@@ -277,4 +277,5 @@ class e1m7(Q1Level):
             ],
         )
         self.restrict("Exit", r.can_button & r.can_door)
+        self.restrict("All Kills (32)", r.can_button & r.can_door)
         return ret

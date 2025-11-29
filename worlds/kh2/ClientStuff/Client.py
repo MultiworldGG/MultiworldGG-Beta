@@ -714,9 +714,6 @@ class KH2Context(CommonContext):
 async def kh2_watcher(ctx: KH2Context):
     while not ctx.exit_event.is_set():
         try:
-            if ctx.pause_game:
-                await asyncio.sleep(5)
-                continue
             if ctx.kh2connected and ctx.serverconnected:
                 ctx.sending = []
                 await asyncio.create_task(ctx.checkWorldLocations())
@@ -769,7 +766,7 @@ async def kh2_watcher(ctx: KH2Context):
                             # Still waiting for memory to be readable, retry after short delay
                             await asyncio.sleep(0.5)
                     except Exception as e:
-                        logger.info("Game not found, retrying in 5 seconds...")
+                        # Retry search for game silently
                         if not ctx.exit_event.is_set():
                             await asyncio.sleep(5)
             if ctx.disconnect_from_server:
@@ -779,10 +776,8 @@ async def kh2_watcher(ctx: KH2Context):
             if ctx.kh2connected:
                 ctx.kh2connected = False
                 logger.info("Game connection lost, will attempt to reconnect.")
-            if "Could not find process" in str(e):
-                logger.info("Game process not found, retrying in 5 seconds...")
             else:
-                logger.info(f"Watcher error: {str(e)}")
+                logger.debug(f"Watcher error: {str(e)}")
         await asyncio.sleep(0.5)
 
 

@@ -1,7 +1,7 @@
 {
-    "game": "Landstalker - The Treasures of King Nole",
-    "authors": ["Dinopony"],
-    "igdb_id": 15072,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.4.7"
+  "game": "Landstalker - The Treasures of King Nole",
+  "authors": ["Dinopony"],
+  "igdb_id": 15072,
+  "minimum_ap_version": "0.6.4",
+  "world_version": "1.8.7"
 }

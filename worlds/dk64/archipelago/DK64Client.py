@@ -17,15 +17,13 @@ try:
 except ImportError:
     apname = "Archipelago"
 
-
-from client.common import DK64MemoryMap, create_task_log_exception, check_version
+from client.common import DK64MemoryMap, create_task_log_exception, check_version, get_ap_version
 from client.emu_loader import EmuLoaderClient
 from client.items import item_ids, item_names_to_id, trap_name_to_index, trap_index_to_name
 from client.check_flag_locations import location_flag_to_name, location_name_to_flag
 from client.ap_check_ids import check_id_to_name, check_names_to_id
 from CommonClient import CommonContext, get_base_parser, gui_enabled, logger, server_loop, ClientCommandProcessor
 from NetUtils import ClientStatus
-from ap_version import version as ap_version
 from randomizer.Patching.ItemRando import normalize_location_name
 
 # Constants
@@ -672,11 +670,34 @@ class DK64Client:
     def getCheckStatus(self, check_type, flag_index=None, shop_index=None, level_index=None, kong_index=None) -> bool:
         """Get the status of a check."""
         if check_type == "shop" and shop_index is not None and level_index is not None and kong_index is not None:
-            # Calculate shop flag using the same formula as the C code
-            # FLAG_SHOPFLAG = 800 (0x320)
-            # Shop flag = FLAG_SHOPFLAG + (vendor * 40) + (level * 5) + kong
             FLAG_SHOPFLAG = 800
-            shop_flag = FLAG_SHOPFLAG + (shop_index * 40) + (level_index * 5) + kong_index
+            LEVEL_AZTEC = 1
+            LEVEL_GALLEON = 3
+            LEVEL_CAVES = 5
+            LEVEL_CASTLE = 6
+            SHOP_CRANKY = 0
+            SHOP_FUNKY = 1
+            SHOP_CANDY = 2
+
+            shop_flag = None
+
+            if shop_index == SHOP_CRANKY:
+                # Cranky: FLAG_SHOPFLAG + (level * 5) + kong
+                shop_flag = FLAG_SHOPFLAG + (level_index * 5) + kong_index
+            elif shop_index == SHOP_FUNKY and level_index < 7:
+                # Funky: FLAG_SHOPFLAG + ((level + 8) * 5) + kong
+                shop_flag = FLAG_SHOPFLAG + ((level_index + 8) * 5) + kong_index
+            elif shop_index == SHOP_CANDY:
+                # Candy has two ranges (Aztec-Galleon and Caves/Castle)
+                if LEVEL_AZTEC <= level_index <= LEVEL_GALLEON:
+                    candy_offset = level_index - LEVEL_AZTEC
+                    shop_flag = FLAG_SHOPFLAG + ((candy_offset + 15) * 5) + kong_index
+                elif LEVEL_CAVES <= level_index <= LEVEL_CASTLE:
+                    candy_offset = level_index - LEVEL_CAVES
+                    shop_flag = FLAG_SHOPFLAG + ((candy_offset + 18) * 5) + kong_index
+            if shop_flag is None:
+                return False
+
             return self.readFlag(shop_flag)
         else:
             return self.readFlag(flag_index)

@@ -38,6 +38,7 @@ from randomizer.Enums.Settings import (
     MoveRando,
     ProgressiveHintItem,
     RandomPrices,
+    RandomStartingRegion,
     RandomRequirement,
     RemovedBarriersSelected,
     ShockwaveStatus,
@@ -418,7 +419,7 @@ def GetAccessibleLocations(
                             if levelExitTransitionId not in spoiler.playthroughTransitionOrder:
                                 spoiler.playthroughTransitionOrder.append(levelExitTransitionId)
                 # If loading zones are not shuffled but you have a random starting location, you may need to exit level to escape some regions
-                elif settings.random_starting_region and region.level != Levels.DKIsles and region.level != Levels.Shops and region.restart is None:
+                elif settings.random_starting_region_new == RandomStartingRegion.all and region.level != Levels.DKIsles and region.level != Levels.Shops and region.restart is None:
                     levelLobby = GetLobbyOfRegion(region.level)
                     if levelLobby is not None and levelLobby not in kongAccessibleRegions[kong]:
                         exits.append(TransitionFront(levelLobby, lambda _: True))
@@ -443,7 +444,7 @@ def GetAccessibleLocations(
 
                     # Handle water/lava restrictions
                     is_lava_water = spoiler.LogicVariables.IsLavaWater()
-                    if is_lava_water and (settings.shuffle_loading_zones == ShuffleLoadingZones.all or settings.random_starting_region):
+                    if is_lava_water and (settings.shuffle_loading_zones == ShuffleLoadingZones.all or settings.random_starting_region_new != RandomStartingRegion.off):
                         if destination in UnderwaterRegions and spoiler.LogicVariables.Melons < 3:
                             continue
                         if destination in SurfaceWaterRegions and spoiler.LogicVariables.Melons < 2:
@@ -551,36 +552,61 @@ def GetAccessibleLocations(
 
 def VerifyMinimalLogic(spoiler: Spoiler) -> bool:
     """Verify a world in the context of minimal logic."""
-    # Key 5 not in Level 7 with non-LZR
     level_7 = None
+    level_7_lobby_map = None
     if spoiler.settings.shuffle_loading_zones != ShuffleLoadingZones.all:  # Non-LZR
-        level_7 = Levels.CreepyCastle
         if spoiler.settings.shuffle_loading_zones == ShuffleLoadingZones.levels:
-            level_7 = spoiler.settings.level_order[6]
+            # In level shuffle, check level 7
+            level_7 = spoiler.settings.level_order[7]
+        else:
+            # Vanilla Order
+            level_7 = Levels.CreepyCastle
 
-    # Kongs not in shops tied to them
-    kong_shop_locations = [
-        [],  # DK
-        [],  # Diddy
-        [],  # Lanky
-        [],  # Tiny
-        [],  # Chunky
-    ]
-    for level, shop_level_data in ShopLocationReference.items():
-        for vendor, shop_vendor_data in shop_level_data.items():
-            for kong_idx, kong_loc in enumerate(shop_vendor_data):
-                if kong_idx < 5:
-                    kong_shop_locations[kong_idx].append(kong_loc)
+        # Map the level to its lobby map
+        lobby_map_dict = {
+            Levels.JungleJapes: Maps.JungleJapesLobby,
+            Levels.AngryAztec: Maps.AngryAztecLobby,
+            Levels.FranticFactory: Maps.FranticFactoryLobby,
+            Levels.GloomyGalleon: Maps.GloomyGalleonLobby,
+            Levels.FungiForest: Maps.FungiForestLobby,
+            Levels.CrystalCaves: Maps.CrystalCavesLobby,
+            Levels.CreepyCastle: Maps.CreepyCastleLobby,
+        }
+        level_7_lobby_map = lobby_map_dict.get(level_7)
+    level_7_items = []
+
     kong_items = [Items.Donkey, Items.Diddy, Items.Lanky, Items.Tiny, Items.Chunky]
     for loc, data in spoiler.LocationList.items():
-        if level_7 is not None:
-            if data.level == level_7 and data.item == Items.FungiForestKey:
-                print("Placement invalid because of Key 5 being in Level 7")
+
+        # Track items in Level 7
+        if level_7 is not None and data.level == level_7 and data.item is not None:
+            level_7_items.append(data.item)
+
+        # Key 5 cannot be in Level 7 or its lobby
+        if level_7 is not None and data.item == Items.FungiForestKey:
+            # Check if in the level itself
+            if data.level == level_7:
+                print(f"Placement invalid because of Key 5 being in Level 7 at {data.name}")
                 return False
-        for kong_index, kong_locs in enumerate(kong_shop_locations):
-            if loc in kong_locs and data.item == kong_items[kong_index]:
-                print("Placement invalid due to shop in shop location")
+            # Check if in the level's lobby
+            if level_7_lobby_map is not None and data.default_mapid_data is not None:
+                for map_data in data.default_mapid_data:
+                    if map_data.map == level_7_lobby_map:
+                        print(f"Placement invalid because of Key 5 being in Level 7 lobby at {data.name}")
+                        return False
+
+        # Kongs cannot be locked behind shops that require that specific Kong to access
+        if data.type == Types.Shop and data.kong < 5:
+            if data.item == kong_items[data.kong]:
+                print(f"Placement invalid: {kong_items[data.kong].name} is locked behind their own shop at {data.name}")
                 return False
+
+        # Kongs cannot be on their own banana medal or half-medal locations
+        if data.type in (Types.Medal, Types.HalfMedal) and data.kong < 5:
+            if data.item == kong_items[data.kong]:
+                print(f"Placement invalid: {kong_items[data.kong].name} is on their own medal location at {data.name}")
+                return False
+
     # Blasts/Arcade R2 can't contain DK
     non_dk_locations = [
         Locations.JapesDonkeyBaboonBlast,
@@ -1466,6 +1492,15 @@ def RandomFill(spoiler: Spoiler, itemsToPlace: List[Items], inOrder: bool = Fals
         spoiler.settings.random.shuffle(itemEmpty)
         locationId = itemEmpty.pop()
         spoiler.LocationList[locationId].PlaceItem(spoiler, item)
+
+        # In minimal logic, verify placement doesn't violate minimal logic rules
+        if settings.logic_type == LogicType.minimal:
+            if not VerifyMinimalLogic(spoiler):
+                # Placement violated minimal logic, unplace and try another location
+                spoiler.LocationList[locationId].UnplaceItem(spoiler)
+                itemsToPlace.append(item)
+                continue
+
         empty.remove(locationId)
         if locationId in SharedShopLocations:
             settings.placed_shared_shops += 1
@@ -2420,18 +2455,13 @@ def Fill(spoiler: Spoiler) -> None:
         Types.FillerPearl,
         Types.FillerMedal,
         Types.FillerRainbowCoin,
+        Types.JunkItem,
     ]
     filler_types_in_pool = [x for x in filler_types if x in spoiler.settings.shuffled_location_types]
     if len(filler_types_in_pool) > 0:
         placed_types.extend(filler_types_in_pool)
         spoiler.Reset()
         PlaceItems(spoiler, FillAlgorithm.random, ItemPool.FillerItems(spoiler.settings), [])
-    # Fill in junk items
-    if Types.JunkItem in spoiler.settings.shuffled_location_types:
-        placed_types.append(Types.JunkItem)
-        spoiler.Reset()
-        PlaceItems(spoiler, FillAlgorithm.random, ItemPool.JunkItems(), [])
-        # Don't raise exception if unplaced junk items
     if Types.CrateItem in spoiler.settings.shuffled_location_types:
         placed_types.append(Types.CrateItem)
         # Crates hold nothing, so leave this one empty
@@ -2994,7 +3024,7 @@ def FillWorld(spoiler: Spoiler) -> None:
             # Every 3rd fill, retry more aggressively by reshuffling level order, move prices, and starting location as applicable
             if retries % 3 == 0:
                 js.postMessage("Retrying fill really hard. Tries: " + str(retries))
-                if spoiler.settings.random_starting_region:
+                if spoiler.settings.random_starting_region_new != RandomStartingRegion.off:
                     spoiler.settings.RandomizeStartingLocation(spoiler)
                 if spoiler.settings.shuffle_loading_zones == ShuffleLoadingZones.levels:  # TODO: Reshuffling LZR doesn't work yet, but it might be nice? Not sure how necessary it is
                     ShuffleExits.ShuffleExits(spoiler)
@@ -4010,7 +4040,7 @@ def CheckForIncompatibleSettings(settings: Settings) -> None:
     if not settings.fast_start_beginning_of_game:
         if settings.shuffle_loading_zones == ShuffleLoadingZones.all:
             found_incompatibilities += "Cannot turn off Fast Start with Loading Zones Randomized. "
-        if settings.random_starting_region:
+        if settings.random_starting_region_new != RandomStartingRegion.off:
             found_incompatibilities += "Cannot turn off Fast Start with a Random Starting Location. "
         if not settings.start_with_slam:
             found_incompatibilities += "Cannot turn off Fast Start unless you are guaranteed to start with a Progressive Slam. "

@@ -5,7 +5,7 @@ import weakref
 from enum import Enum, auto
 from typing import Optional, Callable, List, Iterable, Tuple
 
-from Utils import local_path, open_filename, is_frozen, is_kivy_running
+from Utils import local_path, open_filename, is_frozen, is_kivy_running, open_file, user_path
 
 try:
     from Utils import instance_name as apname
@@ -209,6 +209,18 @@ def install_apworld(apworld_path: str = "") -> None:
         Utils.messagebox("Install complete.", f"Installed APWorld from {source}.")
 
 
+def export_datapackage() -> None:
+    import json
+
+    from worlds import network_data_package
+
+    path = user_path("datapackage_export.json")
+    with open(path, "w") as f:
+        json.dump(network_data_package, f, indent=4)
+
+    open_file(path)
+
+
 components: List[Component] = [
     # Launcher
     Component('Launcher', 'Launcher', component_type=Type.HIDDEN),
@@ -224,7 +236,8 @@ components: List[Component] = [
               description="Connect to a multiworld using the text client."),
     # Manual games in Arch
     Component('Manual Client', 'ManualClient', file_identifier=SuffixIdentifier('.apmanual'),
-        description="Client for a manual game with self-imposed rules.")
+        description="Client for a manual game with self-imposed rules."),
+    Component("Export Datapackage", func=export_datapackage, component_type=Type.TOOL),
 ]
 
 

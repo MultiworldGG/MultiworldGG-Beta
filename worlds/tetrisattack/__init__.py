@@ -38,7 +38,6 @@ class TetrisAttackSettings(settings.Group):
     rom_file: RomFile = RomFile("Tetris Attack (USA) (En,Ja).sfc")
 
 class TetrisAttackWebWorld(WebWorld):
-    theme = "grass"
 
     setup_en = Tutorial(
         "Multiworld Setup Guide",

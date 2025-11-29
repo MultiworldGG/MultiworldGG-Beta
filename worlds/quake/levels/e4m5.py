@@ -950,7 +950,7 @@ class e4m5(Q1Level):
         )
         self.connect(past_gold_door_area, past_gold_button_area, r.can_button)
 
-        self.restrict("All Kills (112)", r.difficult_combat)
+        self.restrict("All Kills (112)", r.difficult_combat & r.can_shootswitch)
 
         self.restrict("Invulnerability (88)", r.can_dive)
         self.restrict("Quad Damage (76)", r.can_dive)

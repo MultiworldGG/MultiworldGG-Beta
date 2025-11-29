@@ -4,9 +4,10 @@ from .Options import CCCharlesOptions
 from .Rules import set_rules
 from .Regions import create_regions
 from BaseClasses import Tutorial, ItemClassification
-from worlds.AutoWorld import World, WebWorld
 from BaseUtils import get_archipelago_json
 game, author, minimum_ap_version, version = get_archipelago_json("cccharles")
+from worlds.AutoWorld import InvalidItemError, World, WebWorld
+
 
 class CCCharlesWeb(WebWorld):
     """
@@ -159,7 +160,7 @@ class CCCharlesWorld(World):
             case "Bug Spray":
                 classification = ItemClassification.progression
             case _: # Should not occur
-                raise Exception("Unexpected case met: classification cannot be set for unknown item \"" + name + "\"")
+                raise InvalidItemError("Unexpected case met: classification cannot be set for unknown item \"" + name + "\"")
 
         return CCCharlesItem(name, classification, item_id, self.player)
 

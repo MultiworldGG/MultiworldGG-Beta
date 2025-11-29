@@ -41,7 +41,7 @@
         "The End... Again...",
         "Acquire Hardware",
         "Not Quite \"Nine\" Lives",
-        "Cover Me with Diamonds",
+        "Cover Me With Diamonds",
         "Sky's the Limit",
         "Hired Help",
         "Return to Sender",
@@ -121,19 +121,7 @@
         "Smithing with Style",
         "Respecting the Remnants",
         "Careful Restoration",
-        "The Power of Books",
-        "Isn't It Scute?",
-        "Shear Brilliance",
-        "Good as New",
-        "The Whole Pack",
-        "Minecraft: Trial(s) Edition",
-        "Under Lock and Key",
-        "Blowback",
-        "Who Needs Rockets?",
-        "Crafters Crafting Crafters",
-        "Lighten Up",
-        "Over-Overkill",
-        "Revaulting"
+        "The Power of Books"
     ],
     "locations_by_region": {
         "Overworld": [
@@ -158,7 +146,7 @@
             "Total Beelocation",
             "Arbalistic",
             "Acquire Hardware",
-            "Cover Me with Diamonds",
+            "Cover Me With Diamonds",
             "Hired Help",
             "Sweet Dreams",
             "Adventure",
@@ -169,7 +157,6 @@
             "Adventuring Time",
             "A Seedy Place",
             "Husbandry",
-            "Country Lode, Take Me Home",
             "Bee Our Guest",
             "Diamonds!",
             "A Throwaway Joke",
@@ -208,17 +195,7 @@
             "Crafting a New Look",
             "Smithing with Style",
             "Respecting the Remnants",
-            "Careful Restoration",
-            "Isn't It Scute?",
-            "Shear Brilliance",
-            "Good as New",
-            "The Whole Pack",
-            "Minecraft: Trial(s) Edition",
-            "Under Lock and Key",
-            "Blowback",
-            "Who Needs Rockets?",
-            "Crafters Crafting Crafters",
-            "Lighten Up"
+            "Careful Restoration"
         ],
         "The Nether": [
             "Hot Tourist Destinations",
@@ -231,6 +208,7 @@
             "Serious Dedication",
             "Hidden in the Depths",
             "Subspace Bubble",
+            "Country Lode, Take Me Home",
             "Uneasy Alliance",
             "Cover Me in Debris",
             "Is It a Balloon?",
@@ -272,9 +250,7 @@
             "Who's the Pillager Now?",
             "Voluntary Exile",
             "Birthday Song",
-            "You've Got a Friend in Me",
-            "Over-Overkill",
-            "Revaulting"
+            "You've Got a Friend in Me"
         ],
         "Bastion Remnant": [
             "War Pigs",

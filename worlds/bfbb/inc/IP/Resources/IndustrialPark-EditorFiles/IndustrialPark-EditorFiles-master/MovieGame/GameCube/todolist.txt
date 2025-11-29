@@ -1,0 +1,16 @@
+turret:
+	v1 thug
+	v2 trench
+	v3 plank
+
+spawners:
+	junk
+	plank
+	bosses?
+	arenas?
+	are there more?
+missing pipt in all spawners
+
+other:
+	spongeball stuff
+	arena challenge stuff

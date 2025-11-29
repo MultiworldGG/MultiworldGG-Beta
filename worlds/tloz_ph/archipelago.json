@@ -1,7 +1,1 @@
-{
-    "game": "The Legend of Zelda - Phantom Hourglass",
-    "authors": ["Carrotinator"],
-    "igdb_id": 1037,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.3.3"
-}
+{"game": "The Legend of Zelda - Phantom Hourglass", "world_version": "0.7.6", "authors": ["carrotinator", "Tanker50207", "palex00", "CelestialKitsune", "DayKat", "1313e"], "igdb_id": 1037, "minimum_ap_version": "0.6.0", "compatible_version": 7, "version": 7}

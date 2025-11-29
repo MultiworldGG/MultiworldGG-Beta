@@ -1,5 +1,8 @@
 # Peaks of Yore Setup Guide
 
+## Note
+The latest Peaks of Yore update broke this implementation, so it is required to downgrade Peaks of Yore before playing.
+
 ## Install using r2modman
 
 ### Install r2modman

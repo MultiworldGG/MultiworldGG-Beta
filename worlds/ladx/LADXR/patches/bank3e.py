@@ -83,7 +83,6 @@ MainJumpTable:
         dw   RenderOwlStatueItem                  ; F
         dw   UpdateInventoryMenu                  ; 10
         dw   LocalOnlyItemAndMessage              ; 11
-        dw   HandleSeashellMansionItem            ; 12
 StartGameMarinMessage:
         ; Injection to reset our frame counter
         call $27D0 ; Enable SRAM
@@ -117,7 +116,7 @@ UpdateInventoryMenu:
         ld   hl, wTradeSequenceItem2
         or   [hl]
         ret  z
-
+        
         ld   hl, TradeSequenceItemData
         ld   a, [$C109]
         ld   e, a
@@ -125,7 +124,7 @@ UpdateInventoryMenu:
         add  hl, de
 
         ; Check if we need to increase the counter
-        ldh  a, [$E7] ; frame counter
+        ldh  a, [$FFE7] ; frame counter
         and  $0F
         jr   nz, .noInc
         ld   a, e
@@ -163,45 +162,45 @@ UpdateInventoryMenu:
 
         ; Write the tile attribute data
         ld   a, $01
-        ldh  [$4F], a
+        ldh  [$FF4F], a
 
         ld   hl, $9C6E
         call WriteToVRAM
-        inc  hl
+        inc  hl  
         call WriteToVRAM
         ld   de, $001F
         add  hl, de
         call WriteToVRAM
-        inc  hl
+        inc  hl  
         call WriteToVRAM
 
         ; Write the tile data
         xor  a
-        ldh  [$4F], a
-
+        ldh  [$FF4F], a
+        
         pop  hl
         ld   de, 14
         add  hl, de
         ld   b, [hl]
-
+        
         ld   hl, $9C6E
         call WriteToVRAM
         inc  b
         inc  b
-        inc  hl
+        inc  hl  
         call WriteToVRAM
         ld   de, $001F
         add  hl, de
         dec  b
         call WriteToVRAM
-        inc  hl
+        inc  hl  
         inc  b
         inc  b
         call WriteToVRAM
         ret
 
 WriteToVRAM:
-        ldh  a, [$41]
+        ldh  a, [$FF41]
         and  $02
         jr   nz, WriteToVRAM
         ld   [hl], b
@@ -221,10 +220,10 @@ LocalOnlyItemAndMessage:
     # 3E:3300-3616: Multiworld flags per room (for both chests and dropped keys)
     # 3E:3800-3B16: DroppedKey item types
     # 3E:3B16-3E2C: Owl statue or trade quest items
-
+    
     # Put 20 rupees in all owls by default.
     rom.patch(0x3E, 0x3B16, "00" * 0x316, "1C" * 0x316)
-
+   
 
     # Prevent the photo album from crashing due to serial interrupts
     rom.patch(0x28, 0x00D2, ASM("ld a, $09"), ASM("ld a, $01"))

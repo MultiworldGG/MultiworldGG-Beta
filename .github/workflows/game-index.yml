@@ -75,13 +75,6 @@ jobs:
             fi
           fi
       
-      - name: Generate game indexes
-        if: steps.detect_changed.outputs.rebuild_all == 'true' || inputs.rebuild_all
-        run: |
-          source venv/bin/activate
-          cd src/tools/game_indexing
-          python igdb.py
-      
       - name: Find game index modules
         id: find_modules
         if: steps.detect_changed.outputs.rebuild_all == 'true' || inputs.rebuild_all

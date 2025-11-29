@@ -1,12 +1,8 @@
 from dataclasses import dataclass
 
-import os.path
-import typing
 import logging
-from Options import (Choice, Toggle, DefaultOnToggle, Range, FreeText, PerGameCommonOptions, OptionGroup, Removed,
-                     DeathLink, StartInventoryPool)
-from collections import defaultdict
-import Utils
+from Options import (Choice, Toggle, DefaultOnToggle, Range, PerGameCommonOptions, OptionGroup, Removed,
+                     DeathLink, StartInventoryPool, ItemSet)
 
 DefaultOffToggle = Toggle
 
@@ -78,31 +74,12 @@ class Rooster(DefaultOnToggle, LADXROption):
     ladxr_name = "rooster"
 
 
-class EntranceShuffle(Choice, LADXROption):
+class RandomStartLocation(DefaultOffToggle, LADXROption):
     """
-    Randomizes where overworld entrances lead.
-
-    **Simple:** Single-entrance caves/houses that have items are shuffled
-    amongst each other.
-
-    If *Dungeon Shuffle* is enabled, then dungeons will be shuffled with all the
-    non-connector entrances in the pool. Note, some entrances can lead into water, use
-    the warp-to-home from the save&quit menu to escape this.
+    Randomize where your starting house is located.
     """
-
-    # [Advanced] Simple, but two-way connector caves are shuffled in their own pool as well.
-    # [Expert] Advanced, but caves/houses without items are also shuffled into the Simple entrance pool.
-    # [Insanity] Expert, but the Raft Minigame hut and Mamu's cave are added to the non-connector pool.
-
-    option_none = 0
-    option_simple = 1
-    # option_advanced = 2
-    # option_expert = 3
-    # option_insanity = 4
-    default = option_none
-    display_name = "Entrance Shuffle"
-    ladxr_name = "entranceshuffle"
-    rich_text_doc = True
+    display_name = "Random Start Location"
+    ladxr_name = "randomstartlocation"
 
 
 class DungeonShuffle(DefaultOffToggle, LADXROption):
@@ -111,6 +88,64 @@ class DungeonShuffle(DefaultOffToggle, LADXROption):
     """
     display_name = "Dungeon Shuffle"
     ladxr_name = "dungeonshuffle"
+
+
+class EntranceShuffle(Choice, LADXROption):
+    """
+    Randomizes where overworld entrances lead.
+
+    **Simple:** Single-entrance caves/houses that contain items are shuffled.
+
+    **Split:** Connector caves are also shuffled, in a separate pool from single entrance caves.
+
+    **Mixed:** Connector caves are also shuffled, in the same pool as single entrance caves.
+
+    **Wild:** Connections can go from overworld to overworlds, or inside to inside.
+
+    **Chaos:** Entrances and exits are decoupled.
+
+    **Insane:** Combines chaos and wild, anything goes anywhere, there is no God.
+
+    If *Random Start Location* and/or *Dungeon Shuffle* is enabled, then these will be shuffled with all the
+    other entrances.
+    """
+    option_none = 0
+    option_simple = 1
+    option_split = 2
+    option_mixed = 3
+    option_wild = 4
+    option_chaos = 5
+    option_insane = 6
+    default = option_none
+    display_name = "Entrance Shuffle"
+    rich_text_doc = True
+    ladxr_name = "entranceshuffle"
+
+
+class ShuffleJunk(DefaultOffToggle, LADXROption):
+    """
+    Caves/houses without items are also shuffled when entrance shuffle is set.
+    """
+    display_name = "Shuffle Junk"
+    ladxr_name = "shufflejunk"
+
+
+class ShuffleAnnoying(DefaultOffToggle, LADXROption):
+    """
+    A few very annoying entrances (Mamu and the Raft House) will also be shuffled when entrance shuffle is set.
+    """
+    display_name = "Shuffle Annoying"
+    ladxr_name = "shuffleannoying"
+
+
+class ShuffleWater(DefaultOffToggle, LADXROption):
+    """
+    Entrances that lead to water (Manbo and Damp Cave) will also be shuffled when entrance shuffle is set.
+
+    Use the warp-to-home from the Save & Quit menu if you get stuck (hold A+B+Start+Select until it works).
+    """
+    display_name = "Shuffle Water"
+    ladxr_name = "shufflewater"
 
 
 class APTitleScreen(DefaultOnToggle):
@@ -256,8 +291,7 @@ class Goal(Choice, LADXROption):
 
     **Open:** The Egg will start pre-opened.
 
-    **Specific:** The Wind Fish's Egg will open with specific instruments,
-    check the sign at the egg to see which.
+	**Specific:** The Wind Fish's Egg will open with specific instruments, check the sign at the egg to see which.
     """
     display_name = "Goal"
     rich_text_doc = True
@@ -332,15 +366,10 @@ class HardMode(Choice, LADXROption):
 
 class Stealing(Choice, LADXROption):
     """
-    **In Logic**: Stealing is in logic if the player has a sword.
-
-    **Out of Logic**: Stealing is possible but not in logic.
-
-    **Disabled**: Stealing is disabled.
+    Puts stealing from the shop in logic if the player has a sword.
     """
     display_name = "Stealing"
     ladxr_name = "steal"
-    rich_text_doc = True
     option_in_logic = 1
     option_out_of_logic = 2
     option_disabled = 3
@@ -382,6 +411,7 @@ class TextMode(Choice, LADXROption):
     rich_text_doc = True
     option_normal = 0
     option_fast = 1
+    option_none = 2
     default = option_fast
 
 
@@ -556,41 +586,69 @@ class Warps(Choice):
     default = option_vanilla
 
 
-class InGameHints(DefaultOnToggle):
+class InGameHintCount(Range):
     """
-    When enabled, owl statues and library books may indicate the location of
-    your items in the multiworld.
+    Determines how many owl statues and library books will indicate the location
+    of your items in the multiworld. All others will give junk hints that reveal
+    nothing.
+
+    There are:
+    - 10 overworld owl statues
+    - 21 dungeon owl statues
+    - 7 hint books in the library
     """
-    display_name = "In-game Hints"
-
-
-class TarinsGift(Choice):
-    """
-    **Local Progression:** Forces Tarin's gift to be an item that immediately
-    opens up local checks. Has little effect in single player games, and isn't
-    always necessary with randomized entrances.
-
-    **Bush Breaker:** Forces Tarin's gift to be an item that can destroy bushes.
-
-    **Any Item:** Tarin's gift can be any item for any world
-    """
-    display_name = "Tarin's Gift"
+    display_name = "In-Game Hint Count"
     rich_text_doc = True
-    option_local_progression = 0
-    option_bush_breaker = 1
-    option_any_item = 2
-    default = option_local_progression
+    range_start = 0
+    range_end = 38
+    default = 26
 
 
-class StabilizeItemPool(DefaultOffToggle):
+class InGameHintExcludedItems(ItemSet):
     """
-    By default, some rupees in the item pool are randomly swapped with bombs,
-    arrows, powders, or capacity upgrades. This set of items is also used as
-    filler. This option disables that swapping and makes *Nothing* the filler
-    item.
+    Indicated items will not be used for in-game hints.
     """
-    display_name = "Stabilize Item Pool"
+    display_name = "In-Game Hint Excluded Items"
     rich_text_doc = True
+
+
+class InGameHintPriorityItems(ItemSet):
+    """
+    Indicated items will be prioritized for in-game hints.
+    """
+    display_name = "In-Game Hint Priority Items"
+    rich_text_doc = True
+
+
+class ExpandStart(Range):
+    """
+    Starting from Tarin's Gift, locally place progression items until the target
+    number of locations or more can be reached. Does nothing if set to *1*.
+    """
+    display_name = "Expand Start"
+    range_start = 1
+    range_end = 10
+    default = 5
+
+
+class MoreFiller(DefaultOnToggle):
+    """
+    Removes some rupees from the vanilla item pool to make more room for filler.
+    """
+    display_name = "More Filler"
+
+
+class FillerPool(Choice):
+    """
+    Sets which items can be added to the item pool to replace removed items.
+    """
+    display_name = "Filler Pool"
+    option_ammo = 0
+    option_rupees = 1
+    option_seashells = 2
+    # option_powerups = 3
+    option_traps = 4
+    option_nothing = 5
 
 
 class ForeignItemIcons(Choice):
@@ -609,18 +667,32 @@ class ForeignItemIcons(Choice):
     default = option_guess_by_name
 
 
+class Follower(Choice):
+    """
+    Gives you a pet follower in the game.
+    """
+    display_name = "Follower"
+    option_none = 0
+    option_fox = 1
+    option_navi = 2
+    option_ghost = 3
+    option_yip_yip = 4
+
+
 ladx_option_groups = [
     OptionGroup("Gameplay Adjustments", [
-        InGameHints,
-        TarinsGift,
         HardMode,
         TrendyGame,
     ]),
     OptionGroup("World Layout", [
         Overworld,
         Warps,
+        RandomStartLocation,
         DungeonShuffle,
         EntranceShuffle,
+        ShuffleJunk,
+        ShuffleAnnoying,
+        ShuffleWater,
     ]),
     OptionGroup("Item Pool", [
         ShuffleInstruments,
@@ -631,7 +703,8 @@ ladx_option_groups = [
         ShuffleStoneBeaks,
         TradeQuest,
         Rooster,
-        StabilizeItemPool,
+        MoreFiller,
+        FillerPool,
     ]),
     OptionGroup("Quality of Life & Aesthetic", [
         NagMessages,
@@ -648,7 +721,13 @@ ladx_option_groups = [
         MusicChangeCondition,
         LowHpBeep,
         NoFlash,
-    ])
+        Follower,
+    ]),
+    OptionGroup("In-Game Hints", [
+        InGameHintCount,
+        InGameHintExcludedItems,
+        InGameHintPriorityItems,
+    ]),
 ]
 
 @dataclass
@@ -656,8 +735,12 @@ class LinksAwakeningOptions(PerGameCommonOptions):
     logic: Logic
     tradequest: TradeQuest
     rooster: Rooster
-    experimental_dungeon_shuffle: DungeonShuffle
-    experimental_entrance_shuffle: EntranceShuffle
+    random_start_location: RandomStartLocation
+    dungeon_shuffle: DungeonShuffle
+    entrance_shuffle: EntranceShuffle
+    shuffle_junk: ShuffleJunk
+    shuffle_annoying: ShuffleAnnoying
+    shuffle_water: ShuffleWater
     goal: Goal
     instrument_count: InstrumentCount
     link_palette: LinkPalette
@@ -684,12 +767,21 @@ class LinksAwakeningOptions(PerGameCommonOptions):
     low_hp_beep: LowHpBeep
     text_mode: TextMode
     no_flash: NoFlash
-    in_game_hints: InGameHints
-    tarins_gift: TarinsGift
+    in_game_hint_count: InGameHintCount
+    in_game_hint_excluded_items: InGameHintExcludedItems
+    in_game_hint_priority_items: InGameHintPriorityItems
     overworld: Overworld
-    stabilize_item_pool: StabilizeItemPool
     death_link: DeathLink
+    more_filler: MoreFiller
+    filler_pool: FillerPool
     start_inventory_from_pool: StartInventoryPool
+    expand_start: ExpandStart
+    follower: Follower
 
     warp_improvements: Removed
     additional_warp_points: Removed
+    stabilize_item_pool: Removed
+    tarins_gift: Removed
+    experimental_dungeon_shuffle: Removed
+    experimental_entrance_shuffle: Removed
+    in_game_hints: Removed

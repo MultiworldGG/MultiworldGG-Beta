@@ -266,13 +266,12 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
     """
     Launch the client
     """
-    import logging
-    logging.getLogger("GZDoomClient")
+    Utils.init_logging("GZDoomClient")
 
     async def main():
         # Initialize the gzDoom IPC structures on disk
         # TODO: do we want to support multiple running instances as the same user?
-        gzd_dir = os.path.join(Utils.home_path(), "gzdoom")
+        gzd_dir = os.path.join(Utils.local_path("data"), "gzdoom")
         ipc_dir = os.path.join(gzd_dir, "ipc")
         os.makedirs(ipc_dir, exist_ok=True) # communication with gzdoom
         os.makedirs(os.path.join(gzd_dir, "logic"), exist_ok=True) # in-dev logic files

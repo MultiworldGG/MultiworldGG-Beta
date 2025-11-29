@@ -99,7 +99,7 @@ class UsableStartingGear(Choice):
     option_starting_weapon_and_flask_slots = 2
     option_starting_weapon_and_gems = 3
     option_starting_weapon_flask_and_gems = 4
-    default = 3
+    default = 4
 
 class GucciHoboMode(Choice):
     """
@@ -146,7 +146,7 @@ class GearUpgrades(Choice):
     option_all_normal_gear_unlocked = 2
     option_all_uniques_unlocked = 3
     option_no_gear_unlocked = 4
-    default = 2
+    default = 4
 
 class GearUpgradesPerAct(Range):
     """

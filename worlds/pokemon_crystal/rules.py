@@ -263,7 +263,7 @@ class PokemonCrystalLogic:
         return lambda state: state.has_all(required_items, self.player) and badge_requirement(state)
 
     def can_flash(self, kanto: bool = False, allow_ool: bool = True) -> CollectionRule:
-        if self.options.require_flash == RequireFlash.option_not_required:
+        if self.options.require_flash == RequireFlash.option_not_required and allow_ool:
             return lambda _: True
         badge_requirement = self.has_hm_badge_requirement("FLASH", kanto=kanto)
         required_items = {"HM05 Flash"}
@@ -273,8 +273,7 @@ class PokemonCrystalLogic:
             return lambda state: (state.has_all(required_items, self.player) and badge_requirement(
                 state)) or state.has(PokemonCrystalGlitchedToken.TOKEN_NAME, self.player)
         else:
-            return lambda state: (state.has_all(required_items, self.player) and badge_requirement(
-                state))
+            return lambda state: (state.has_all(required_items, self.player) and badge_requirement(state))
 
     def can_whirlpool(self, kanto: bool = False) -> CollectionRule:
         badge_requirement = self.has_hm_badge_requirement("WHIRLPOOL", kanto=kanto)
@@ -1670,7 +1669,7 @@ def set_rules(world: "PokemonCrystalWorld") -> None:
             if encounter.pokemon == "UNOWN":
                 add_rule(location, lambda state: state.has_any(unown_unlocks, world.player))
 
-            if encounter_access is LogicalAccess.OutOfLogic and not world.options.enforce_wild_encounter_methods_logic:
+            if encounter_access is LogicalAccess.OutOfLogic:
                 add_rule(location, lambda state: state.has(PokemonCrystalGlitchedToken.TOKEN_NAME, world.player))
 
     def evolution_logic(state: CollectionState, evolved_from: str, evolutions: list[EvolutionData],
@@ -1754,7 +1753,7 @@ def verify_hm_accessibility(world: "PokemonCrystalWorld") -> None:
         elif hm == "STRENGTH":
             return logic.can_strength()(state) or logic.can_strength(True)(state)
         elif hm == "FLASH":
-            return logic.can_flash()(state) or logic.can_flash(True)(state)
+            return logic.can_flash(allow_ool=False)(state) or logic.can_flash(True, allow_ool=False)(state)
         elif hm == "WHIRLPOOL":
             return logic.can_whirlpool()(state) or logic.can_whirlpool(True)(state)
         elif hm == "WATERFALL":

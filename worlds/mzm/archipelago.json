@@ -1,7 +1,1 @@
-{
-    "game": "Metroid Zero Mission",
-    "authors": ["Noise"],
-    "igdb_id": 1107,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
-}
+{"game": "Metroid Zero Mission", "authors": ["lil David", "Noise"], "igdb_id": 1107, "world_version": "0.4.1", "minimum_ap_version": "0.6.3", "compatible_version": 7, "version": 7}

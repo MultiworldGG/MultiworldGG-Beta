@@ -61,6 +61,7 @@ app.config["CACHE_DEFAULT_TIMEOUT"] = 300  # 5 minutes default
 app.config["CACHE_KEY_PREFIX"] = "multiworld_"
 app.config["HOST_ADDRESS"] = ""
 app.config["ASSET_RIGHTS"] = False
+app.config["MONITORING_ADMIN_TOKEN"] = None  # Admin token for monitoring API endpoints
 
 cache = Cache()
 Compress(app)

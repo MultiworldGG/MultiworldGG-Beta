@@ -29,6 +29,10 @@
 # Ape Escape
 /worlds/apeescape/ @Thedragon005
 
+# APQuest
+# NewSoupVi is acting maintainer, but world belongs to core with the exception of the music
+/worlds/apquest/ @NewSoupVi
+
 # Sudoku (APSudoku)
 /worlds/apsudoku/ @EmilyV99
 
@@ -207,6 +211,9 @@
 # Heretic
 /worlds/heretic/ @Daivuk @KScl
 
+# HITMAN World of Assassination
+/worlds/hitman_woa/ @BenDipp
+
 # Hollow Knight
 /worlds/hk/ @BadMagic100 @qwint
 
@@ -363,11 +370,17 @@
 # Path of Exile
 /worlds/poe/ @stubobis1
 
+# PEAK
+/worlds/peak/ @Mickemoose
+
 # Peaks of Yore
 /worlds/peaks_of_yore/ @c0der23
 
 # Phantom Hourglass
 /worlds/tloz_ph/ @carrotinator
+
+# Phoenotopia
+/worlds/phoa/ @Amphyros
 
 # Placid Plastic Duck Simulator
 /worlds/placidplasticducksim/ @SWCreeperKing
@@ -395,6 +408,9 @@
 
 # Quake 1
 /worlds/quake/ @randomcodegen
+
+# Rabi Ribi
+/worlds/rabi_ribi/ @tdkollins
 
 # Raft
 /worlds/raft/ @SunnyBat
@@ -458,6 +474,9 @@
 
 # Sonic Heroes
 /worlds/sonic_heroes/ @xMcacutt
+
+# Spongebob Squarepants: Battle for Bikini Bottom
+/worlds/bfbb/ @Cyb3RGER
 
 # Spyro 3
 /worlds/spyro3/ @ArsonAssassin

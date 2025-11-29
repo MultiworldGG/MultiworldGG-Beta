@@ -258,10 +258,21 @@ class JsonFile(TextChoice):
         """Get the JSON filename from an option value."""
         return cls._value_to_filename.get(value)
 
+class FillerTrapPercentage(Range):
+    """Decides what percent chance of filler items should be traps, compared to coins. This only matters if some items need to be created outside of the APWorld (for example, due to item_links), not for internal junk (i.e. Troll Stars)
+    
+    0 - All filler is coins
+    
+    100 - All filler is traps"""
+
+    display_name = "Filler Trap Percentage"
+    range_start = 0
+    default = 30
+    range_end = 100
 
 # Populate JsonFile options from GitHub on module import
 _populate_json_file_options()
-    
+
 @dataclass
 class SM64HackOptions(PerGameCommonOptions):
     progressive_keys: ProgressiveKeys
@@ -269,4 +280,4 @@ class SM64HackOptions(PerGameCommonOptions):
     json_file: JsonFile
     randomize_moat: RandomizeMoat
     death_link: DeathLink
-
+    filler_trap_percentage: FillerTrapPercentage

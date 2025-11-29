@@ -17,6 +17,7 @@ class TestDefaultSpawnAllShuffle(NineSolsTestBase):
         "shuffle_wall_climb": True,
         "shuffle_ledge_grab": True,
     }
+    run_default_tests = False
 
     def test_locations(self):
         self.assertEqual(len(self.multiworld.get_reachable_locations()), 1)
@@ -44,6 +45,7 @@ class TestGDSpawnAllShuffle(NineSolsTestBase):
         "shuffle_wall_climb": True,
         "shuffle_ledge_grab": True,
     }
+    run_default_tests = False
 
     def test_locations(self):
         self.assertEqual(len(self.multiworld.get_reachable_locations()), 4)
@@ -71,6 +73,7 @@ class TestPRESpawnAllShuffle(NineSolsTestBase):
         "shuffle_wall_climb": True,
         "shuffle_ledge_grab": True,
     }
+    run_default_tests = False
 
     def test_locations(self):
         self.assertEqual(len(self.multiworld.get_reachable_locations()), 3)
@@ -98,6 +101,7 @@ class TestLYRSpawnAllShuffle(NineSolsTestBase):
         "shuffle_wall_climb": True,
         "shuffle_ledge_grab": True,
     }
+    run_default_tests = False
 
     def test_locations(self):
         self.assertEqual(len(self.multiworld.get_reachable_locations()), 4)
@@ -125,6 +129,7 @@ class TestYCSpawnAllShuffle(NineSolsTestBase):
         "shuffle_wall_climb": True,
         "shuffle_ledge_grab": True,
     }
+    run_default_tests = False
 
     def test_locations(self):
         self.assertEqual(len(self.multiworld.get_reachable_locations()), 1)
@@ -152,6 +157,7 @@ class TestFGHSpawnAllShuffle(NineSolsTestBase):
         "shuffle_wall_climb": True,
         "shuffle_ledge_grab": True,
     }
+    run_default_tests = False
 
     def test_locations(self):
         self.assertEqual(len(self.multiworld.get_reachable_locations()), 11)  # the shuffles don't change this
@@ -179,6 +185,7 @@ class TestOWSpawnAllShuffle(NineSolsTestBase):
         "shuffle_wall_climb": True,
         "shuffle_ledge_grab": True,
     }
+    run_default_tests = False
 
     def test_locations(self):
         self.assertEqual(len(self.multiworld.get_reachable_locations()), 15)
@@ -206,6 +213,7 @@ class TestGoSYSpawnAllShuffle(NineSolsTestBase):
         "shuffle_wall_climb": True,
         "shuffle_ledge_grab": True,
     }
+    run_default_tests = False
 
     def test_locations(self):
         self.assertEqual(len(self.multiworld.get_reachable_locations()), 4)
@@ -220,7 +228,7 @@ class TestGoSESpawn(NineSolsTestBase):
     }
 
     def test_locations(self):
-        self.assertEqual(len(self.multiworld.get_reachable_locations()), 20)
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 19)
 
         self.assertReachableWith("GoS (East): Portal Below Root Node", [])
         self.assertReachableWith("GoS (Entry): Lower Left Caves", [])
@@ -233,9 +241,10 @@ class TestGoSESpawnAllShuffle(NineSolsTestBase):
         "shuffle_wall_climb": True,
         "shuffle_ledge_grab": True,
     }
+    run_default_tests = False
 
     def test_locations(self):
-        self.assertEqual(len(self.multiworld.get_reachable_locations()), 15)
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 14)
 
         self.assertReachableWith("GoS (East): Portal Below Root Node", [])
         self.assertNotReachableWith("GoS (Entry): Lower Left Caves", [])  # because shuffle_ledge_grab
@@ -247,10 +256,11 @@ class TestGoSWSpawn(NineSolsTestBase):
     }
 
     def test_locations(self):
-        self.assertEqual(len(self.multiworld.get_reachable_locations()), 16)
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 19)
 
         self.assertReachableWith("GoS (Entry): Near Greenhouse Roof", [])
         self.assertReachableWith("GoS (Entry): Lower Left Caves", [])
+        self.assertReachableWith("GoS (East): Portal Below Root Node", [])
 
 
 class TestGoSWSpawnAllShuffle(NineSolsTestBase):
@@ -260,10 +270,165 @@ class TestGoSWSpawnAllShuffle(NineSolsTestBase):
         "shuffle_wall_climb": True,
         "shuffle_ledge_grab": True,
     }
+    run_default_tests = False
 
     def test_locations(self):
         self.assertEqual(len(self.multiworld.get_reachable_locations()), 11)
 
         self.assertReachableWith("GoS (Entry): Near Greenhouse Roof", [])
         self.assertNotReachableWith("GoS (Entry): Lower Left Caves", [])  # because shuffle_ledge_grab
+        self.assertNotReachableWith("GoS (East): Portal Below Root Node", [])  # because shuffle_wall_climb
 
+
+class TestAHSpawn(NineSolsTestBase):
+    options = {
+        "first_root_node": "agrarian_hall",
+    }
+
+    def test_locations(self):
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 8)
+
+
+class TestAHSpawnAllShuffle(NineSolsTestBase):
+    options = {
+        "first_root_node": "agrarian_hall",
+        "shuffle_grapple": True,
+        "shuffle_wall_climb": True,
+        "shuffle_ledge_grab": True,
+    }
+    run_default_tests = False
+
+    def test_locations(self):
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 4)
+
+
+class TestRPSpawn(NineSolsTestBase):
+    options = {
+        "first_root_node": "radiant_pagoda",
+    }
+
+    def test_locations(self):
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 7)
+
+
+class TestRPSpawnAllShuffle(NineSolsTestBase):
+    options = {
+        "first_root_node": "radiant_pagoda",
+        "shuffle_grapple": True,
+        "shuffle_wall_climb": True,
+        "shuffle_ledge_grab": True,
+    }
+    run_default_tests = False
+
+    def test_locations(self):
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 7)
+
+
+class TestAFDSpawn(NineSolsTestBase):
+    options = {
+        "first_root_node": "apeman_facility_depths",
+    }
+
+    def test_locations(self):
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 3)
+
+
+class TestAFDSpawnAllShuffle(NineSolsTestBase):
+    options = {
+        "first_root_node": "apeman_facility_depths",
+        "shuffle_grapple": True,
+        "shuffle_wall_climb": True,
+        "shuffle_ledge_grab": True,
+    }
+    run_default_tests = False
+
+    def test_locations(self):
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 3)
+
+
+class TestCTHSpawn(NineSolsTestBase):
+    options = {
+        "first_root_node": "central_transport_hub",
+    }
+
+    def test_locations(self):
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 3)
+
+
+class TestCTHSpawnAllShuffle(NineSolsTestBase):
+    options = {
+        "first_root_node": "central_transport_hub",
+        "shuffle_grapple": True,
+        "shuffle_wall_climb": True,
+        "shuffle_ledge_grab": True,
+    }
+    run_default_tests = False
+
+    def test_locations(self):
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 2)
+
+
+class TestFUSpawn(NineSolsTestBase):
+    options = {
+        "first_root_node": "factory_underground",
+    }
+
+    def test_locations(self):
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 2)
+
+
+class TestFUSpawnAllShuffle(NineSolsTestBase):
+    options = {
+        "first_root_node": "factory_underground",
+        "shuffle_grapple": True,
+        "shuffle_wall_climb": True,
+        "shuffle_ledge_grab": True,
+    }
+    run_default_tests = False
+
+    def test_locations(self):
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 2)
+
+
+class TestIWSpawn(NineSolsTestBase):
+    options = {
+        "first_root_node": "inner_warehouse",
+    }
+
+    def test_locations(self):
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 4)
+
+
+class TestIWSpawnAllShuffle(NineSolsTestBase):
+    options = {
+        "first_root_node": "inner_warehouse",
+        "shuffle_grapple": True,
+        "shuffle_wall_climb": True,
+        "shuffle_ledge_grab": True,
+    }
+    run_default_tests = False
+
+    def test_locations(self):
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 2)
+
+
+class TestPRWSpawn(NineSolsTestBase):
+    options = {
+        "first_root_node": "power_reservoir_west",
+    }
+
+    def test_locations(self):
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 2)
+
+
+class TestPRWSpawnAllShuffle(NineSolsTestBase):
+    options = {
+        "first_root_node": "power_reservoir_west",
+        "shuffle_grapple": True,
+        "shuffle_wall_climb": True,
+        "shuffle_ledge_grab": True,
+    }
+    run_default_tests = False
+
+    def test_locations(self):
+        self.assertEqual(len(self.multiworld.get_reachable_locations()), 2)

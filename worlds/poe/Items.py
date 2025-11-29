@@ -279,8 +279,15 @@ def get_main_skill_gems_by_required_level(level_minimum:int=0, level_maximum:int
     return result
 
 def get_main_skill_gems_by_required_level_and_useable_weapon(available_weapons: set[str], level_minimum:int=0, level_maximum:int=100, table: Dict[int, ItemDict] = item_table) -> list[ItemDict]:
-    return [item for item in table.values() if "MainSkillGem" in item["category"] and (item["reqLevel"] is not None and (level_minimum <= item["reqLevel"] <= level_maximum))
+    # Create a sorted, hashable key from the weapons set
+    weapons_key = "_".join(sorted(available_weapons))
+    key = f"MainSkillGemsUseable_{weapons_key}_{level_minimum}_{level_maximum}"
+    if table is item_table and key in memoize_cache:
+        return memoize_cache[key]
+    result = [item for item in table.values() if "MainSkillGem" in item["category"] and (item["reqLevel"] is not None and (level_minimum <= item["reqLevel"] <= level_maximum))
             and (any(weapon in available_weapons for weapon in item.get("reqToUse", [])) or not item.get("reqToUse", []))] # we have the weapon, or there are no reqToUse
+    if table is item_table: memoize_cache[key] = result
+    return result
 
 def get_support_gems_by_required_level(level_minimum:int=0, level_maximum:int=100, table: Dict[int, ItemDict] = item_table) -> list[ItemDict]:
     key = f"SupportGems_{level_minimum}_{level_maximum}"

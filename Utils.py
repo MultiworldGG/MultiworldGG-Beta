@@ -464,12 +464,8 @@ def get_public_ipv6() -> str:
     return ip
 
 
-OptionsType = Settings  # TODO: remove when removing get_options
-
-
 def get_options() -> Settings:
-    # TODO: switch to Utils.deprecate after 0.4.4
-    warnings.warn("Utils.get_options() is deprecated. Use the settings API instead.", DeprecationWarning)
+    deprecate("Utils.get_options() is deprecated. Use the settings API instead.")
     return get_settings()
 
 
@@ -793,6 +789,11 @@ def _mp_open_filename(res: "multiprocessing.Queue[typing.Optional[str]]", *args:
     res.put(open_file_input_dialog(*args))
 
 
+def _mp_save_filename(res: "multiprocessing.Queue[typing.Optional[str]]", *args: Any) -> None:
+    if is_kivy_running():
+        raise RuntimeError("kivy should not be running in multiprocess")
+    res.put(save_filename(*args))
+    
 def _run_for_stdout(*args: str):
     env = os.environ
     if "LD_LIBRARY_PATH" in env:

@@ -25,7 +25,6 @@ from pathlib import Path
 logger = logging.getLogger("poeClient.main")
 _debug = True  # Set to True for debug output, False for production
 validate_char_debounce_time = 2  # seconds
-loop_timer = 0.1  # Time in seconds to wait before reloading the item filter
 context = None  # This will be set in the client_start function
 _run_update_item_filter = False
 _last_pressed_key: keyboard.Key | None = None
@@ -125,8 +124,52 @@ async def async_load(ctx: "PathOfExileContext" = None):
     await inputHelper.important_send_poe_text(f"/itemfilter {itemFilter.AP_FILTER_NAME}")
 
 
+async def text_queue_processor(ctx: "PathOfExileContext"):
+    """Dedicated task for processing text message queue"""
+    logger.info("Text queue processor started.")
+    polling_rate = 0.05  # seconds
+    try:
+        while True:
+            # Wait a bit before checking
+            await asyncio.sleep(polling_rate)
+            # Process messages one at a time
+            if ctx.text_to_send: # [] is false
+                try:
+                    message, prepend_char_name = ctx.text_to_send.pop(0)
+                    name = ctx.character_name if ctx.character_name else "_ap"
+                    max_length = 500 - ((len(name) + 2) if prepend_char_name else 0)
+                    if len(message) > max_length:
+                        # Split the message into chunks of max_length, and put them back in the queue
+                        chunks = [message[i:i+max_length] for i in range(0, len(message), max_length)]
+                        for chunk in chunks:
+                            ctx.text_to_send.append((chunk, prepend_char_name))
+                        continue #
 
-async def timer_loop():
+                    # Prepend character name if requested
+                    if prepend_char_name:
+                        message = f"@{name} {message}"
+                    await inputHelper.send_poe_text(message, retry_times=3, retry_delay=1)
+                    await asyncio.sleep(inputHelper.DEBOUNCE_TIME + 0.001) 
+                    
+                except IndexError:
+                    # Queue was empty (race condition)
+                    pass
+                except Exception as e:
+                    logger.error(f"Error sending message: {e}")
+                    await asyncio.sleep(1)  # Back off on error
+                    
+    except asyncio.CancelledError:
+        logger.info("Text queue processor cancelled.")
+        raise
+    except Exception as e:
+        logger.error(f"Error in text queue processor: {e}")
+        raise
+    finally:
+        logger.info("Text queue processor stopped.")
+
+
+async def timer_loop(ctx: "PathOfExileContext" = None):
+    loop_timer = 0.1  # Time in seconds to wait before polling
     ticks = 0.1
     global _run_update_item_filter, _last_pressed_key
     try:
@@ -143,7 +186,6 @@ async def timer_loop():
                     logger.error(f"[ERROR] Error executing function for key {_last_pressed_key}: {e}")
                     raise e
                 _last_pressed_key = None
-
 
     except asyncio.CancelledError:
         logger.info("Timer loop cancelled.")
@@ -198,7 +240,8 @@ async def main_async(context: "PathOfExileContext"):
         
         tasks = [
             asyncio.create_task(fileHelper.callback_on_file_change(path_to_client_txt, [enter_new_zone_callback, chat_commands]), name="file_watcher"),
-            asyncio.create_task(timer_loop(), name="timer_loop")
+            asyncio.create_task(timer_loop(context), name="timer_loop"),
+            asyncio.create_task(text_queue_processor(context), name="text_queue")
         ]
         
         await asyncio.gather(*tasks)

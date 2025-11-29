@@ -19,8 +19,8 @@ from .Options import StarterPack, StageClearMode, PuzzleMode, PuzzleGoal, Versus
 if TYPE_CHECKING:
     from . import TetrisAttackWorld
 
-WORLD_VERSION: str = "0.4.0"
-MASKED_VERSION: int = 4
+WORLD_VERSION: str = "0.4.2"
+MASKED_VERSION: int = 5
 
 USAHASH = "44bb94606356f1c0965e12bbc50866b3"
 
@@ -148,8 +148,8 @@ def patch_rom(world: "TetrisAttackWorld", patch: TATKProcedurePatch) -> None:
     #     vs_goals |= 0b01100
     patch.write_bytes(GOALS_POSITION, [int(world.options.stage_clear_goal), puzzle_goals, vs_goals])
     patch.write_byte(DEATHLINKHINT, 1 if world.options.death_link else 0)
-    patch.write_bytes(STRING_DATA, WORLD_VERSION.encode('ascii')[:8])
-    patch.write_bytes(STRING_DATA + 0x8, world.player_name.encode('ascii')[:16])
+    patch.write_bytes(STRING_DATA, (WORLD_VERSION + '\0').encode('ascii')[:8])
+    patch.write_bytes(STRING_DATA + 0x8, (world.player_name + '\0').encode('ascii')[:16])
     patch.write_byte(MUSICFILTER, world.options.music_filter.value)
 
     # Stage Clear
@@ -267,13 +267,13 @@ def patch_rom(world: "TetrisAttackWorld", patch: TATKProcedurePatch) -> None:
         # case VersusMode.option_progressive_per_stage:
         #     vs_mode |= 0b010
     patch.write_byte(VSMODE, vs_mode)
-    goal_diff = 2
+    goal_diff = 0
     if include_versus:
         match world.options.versus_goal:
-            case VersusGoal.option_easy:
-                goal_diff = 0
             case VersusGoal.option_normal:
                 goal_diff = 1
+            case VersusGoal.option_hard:
+                goal_diff = 2
             case VersusGoal.option_very_hard:
                 goal_diff = 3
         goal_stage = 12

@@ -12,7 +12,7 @@
 
 - Go to your MultiworldGG installation folder. Typically that will be `C:\Program Files\MultiworldGG`.
 - Put the `Nine.Sols.yaml` file in `MultiworldGG\Players`. You may leave the `.yaml` unchanged to play on default settings, or use your favorite text editor to read and change the settings in it.
-- If you are not using MultiworldGG: Double click on the `nine_sols.apworld` file. MultiworldGG should display a popup saying it installed the apworld. Optionally, you can double-check that there's now an `nine_sols.apworld` file in `Archipelago\custom_worlds\`.
+- If you are not using MultiworldGG: Double click on the `nine_sols.apworld` file. AP should display a popup saying it installed the apworld. Optionally, you can double-check that there's now an `nine_sols.apworld` file in `Archipelago\custom_worlds\`.
 
 ### I've never used MultiworldGG before. How do I generate a multiworld?
 

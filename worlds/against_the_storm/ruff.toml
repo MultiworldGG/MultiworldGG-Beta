@@ -1,0 +1,11 @@
+line-length = 120
+
+[lint]
+select = ["C", "E", "F", "R", "W", "I", "N", "Q", "UP", "RUF", "ISC", "T20"]
+ignore = ["N999", "RUF021", "RET505"]
+[lint.mccabe]
+max-complexity = 20
+
+[lint.per-file-ignores]
+# It's preferrable to read the Location rules without strange indentation breaking it up
+"Locations.py" = ["E501"]

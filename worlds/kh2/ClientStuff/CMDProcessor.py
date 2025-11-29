@@ -79,14 +79,6 @@ class KH2CommandProcessor(ClientCommandProcessor):
         if player_name in self.ctx.deathlink_blacklist:
             self.ctx.deathlink_blacklist.remove(player_name)
 
-    def _cmd_pause_game(self):
-        """Pauses the game process search for the game"""
-        self.ctx.pause_game = not self.ctx.pause_game
-        if self.ctx.pause_game:
-            self.output("Game process search paused")
-        else:
-            self.output("Game process search restarted")
-
     #def _cmd_kill(self):
     #    self.ctx.kh2_write_byte(0x810000, 1)
 

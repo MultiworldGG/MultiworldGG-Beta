@@ -20,6 +20,7 @@ Currently, the following games are supported:
 * A Hat in Time
 * Animal Well
 * Ape Escape
+* APQuest
 * Archipela-Go!
 * A Short Hike
 * Aquaria
@@ -79,6 +80,7 @@ Currently, the following games are supported:
 * Hatsune Miku: Project Diva Mega Mix+
 * Here comes Niko!
 * Heretic
+* HITMAN World of Assassination
 * Hollow Knight
 * HuniePop
 * HuniePop 2
@@ -125,7 +127,9 @@ Currently, the following games are supported:
 * Paper Mario
 * Paper Mario: The Thousand-Year Door
 * Path of Exile
+* PEAK
 * Peaks of Yore
+* Phoenotopia: Awakening
 * Placid Plastic Duck Simulator
 * Pokémon Crystal
 * Pokémon Emerald
@@ -135,6 +139,7 @@ Currently, the following games are supported:
 * Powerwash Simulator
 * Pseudoregalia
 * Quake 1
+* Rabi-Ribi
 * Raft
 * Ratchet & Clank 2
 * Resident Evil 2 Remake
@@ -154,6 +159,7 @@ Currently, the following games are supported:
 * Sonic Adventure 2: Battle
 * Sonic Adventure DX
 * Sonic Heroes
+* Spongebob Squarepants: Battle for Bikini Bottom
 * Spyro 3: Year of the Dragon
 * StarCraft II
 * Stardew Valley

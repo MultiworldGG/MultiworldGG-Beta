@@ -817,10 +817,10 @@ class e2m7(Q1Level):
         self.restrict("Large Medkit (71)", r.biosuit(1) | r.difficulty("hard"))
         self.restrict("Large Medkit (13)", r.can_door)
         self.restrict("Spikes (15)", r.can_door)
-        self.restrict("Green Armor (4)", r.can_button)
+        self.restrict("Green Armor (4)", r.can_button & r.can_door)
         self.restrict("Shells (36)", r.can_button)
         self.restrict("Lightning (92)", r.can_button)
-        self.restrict("Quad Damage (52)", r.can_button)
+        self.restrict("Quad Damage (52)", r.can_button & r.can_door)
         self.restrict("Secret (33)", r.can_button)
 
         past_gold_door_area = self.region(

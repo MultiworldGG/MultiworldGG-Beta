@@ -1,6 +1,7 @@
 import platform
 from pathlib import Path
 
+from .proto import sc2api_pb2 as sc_pb
 from . import logger
 from s2clientprotocol import sc2api_pb2 as sc_pb
 

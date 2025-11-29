@@ -35,7 +35,7 @@ DEFAULT_ITEM_POOL = {
     RUPEES_200: 3,
     RUPEES_50: 19,
 
-    SEASHELL: 26,
+    SEASHELL: 24,
     MEDICINE: 3,
     GEL: 4,
     MESSAGE: 1,
@@ -45,7 +45,7 @@ DEFAULT_ITEM_POOL = {
     MAP1: 1, MAP2: 1, MAP3: 1, MAP4: 1, MAP5: 1, MAP6: 1, MAP7: 1, MAP8: 1, MAP9: 1,
     NIGHTMARE_KEY1: 1, NIGHTMARE_KEY2: 1, NIGHTMARE_KEY3: 1, NIGHTMARE_KEY4: 1, NIGHTMARE_KEY5: 1, NIGHTMARE_KEY6: 1, NIGHTMARE_KEY7: 1, NIGHTMARE_KEY8: 1, NIGHTMARE_KEY9: 1,
     STONE_BEAK1: 1, STONE_BEAK2: 1, STONE_BEAK3: 1, STONE_BEAK4: 1, STONE_BEAK5: 1, STONE_BEAK6: 1, STONE_BEAK7: 1, STONE_BEAK8: 1, STONE_BEAK9: 1,
-
+    
     INSTRUMENT1: 1, INSTRUMENT2: 1, INSTRUMENT3: 1, INSTRUMENT4: 1, INSTRUMENT5: 1, INSTRUMENT6: 1, INSTRUMENT7: 1, INSTRUMENT8: 1,
 
     TRADING_ITEM_YOSHI_DOLL: 1,
@@ -68,11 +68,11 @@ DEFAULT_ITEM_POOL = {
 
 
 class ItemPool:
-    def __init__(self, logic, settings, rnd, stabilize_item_pool: bool):
+    def __init__(self, logic, settings, rnd, more_filler: bool):
         self.__pool = {}
         self.__setup(logic, settings)
 
-        if not stabilize_item_pool:
+        if more_filler:
             self.__randomizeRupees(settings, rnd)
 
     def add(self, item, count=1):
@@ -109,6 +109,12 @@ class ItemPool:
             default_item_pool = logic.world.map.get_item_pool()
         for item, count in default_item_pool.items():
             self.add(item, count)
+        goal = logic.world_setup.goal
+        if isinstance(goal, str) and goal.startswith('='):
+            instruments_to_remove = [i for i in range(1, 9) if str(i) not in goal]
+            for i in instruments_to_remove:
+                self.remove(f"INSTRUMENT{i}")
+                self.add(RUPEES_20)
         if settings.boomerang != 'default' and settings.overworld != "random":
             self.add(BOOMERANG)
         if settings.owlstatues == 'both':
@@ -136,9 +142,6 @@ class ItemPool:
         elif settings.hpmode == 'extralow':
             self.add(RUPEES_20, self.get(HEART_CONTAINER))
             self.remove(HEART_CONTAINER, self.get(HEART_CONTAINER))
-
-        if settings.goal == 'seashells':
-            self.remove(SEASHELL, 2)
 
         if settings.itempool == 'casual':
             self.add(FLIPPERS)
@@ -260,9 +263,9 @@ class ItemPool:
         #     rupees50 = self.__pool.get(RUPEES_50, 0)
         #     self.add(RUPEES_200, rupees50 // 5)
         #     self.remove(RUPEES_50, rupees50 // 5)
-
+        
     def __randomizeRupees(self, options, rnd):
-        # Remove rupees from the item pool and replace them with other items to create more variety
+        # Remove rupees from the item pool to create more variety, will replace them with other items later
         rupee_item = []
         rupee_item_count = []
         for k, v in self.__pool.items():
@@ -271,12 +274,11 @@ class ItemPool:
                 rupee_item_count.append(v)
         rupee_chests = sum(v for k, v in self.__pool.items() if k.startswith("RUPEES_"))
         for n in range(rupee_chests // 5):
-            new_item = rnd.choices((BOMB, SINGLE_ARROW, ARROWS_10, MAGIC_POWDER, MEDICINE), (10, 5, 10, 10, 1))[0]
             while True:
                 remove_item = rnd.choices(rupee_item, rupee_item_count)[0]
                 if self.get(remove_item) > 0:
                     break
-            self.add(new_item)
+            self.add('FILLER')
             self.remove(remove_item)
 
     def toDict(self):

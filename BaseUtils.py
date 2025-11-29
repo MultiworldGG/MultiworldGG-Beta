@@ -77,7 +77,7 @@ def tuplize_version(version: str) -> Version:
     except (ValueError, IndexError):
         return Version(0, 0, 0)
 
-__version__ = "0.6.4"
+__version__ = "0.6.5"
 version_tuple = tuplize_version(__version__)
 
 instance_name = "MultiworldGG"

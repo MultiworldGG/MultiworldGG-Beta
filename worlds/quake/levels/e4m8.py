@@ -929,7 +929,7 @@ class e4m8(Q1Level):
             (r.can_button & r.jump & r.can_shootswitch) | r.bigjump_hard,
         )
         # TODO: Is this an overkill requirement?
-        self.restrict("Silver Key (55)", r.difficult_combat)
+        self.restrict("Silver Key (55)", r.difficult_combat & r.can_door)
 
         past_silver_door_area = self.region(
             "Past Silver Door",

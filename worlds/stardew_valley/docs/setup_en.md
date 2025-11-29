@@ -11,7 +11,7 @@
 - MultiworldGG from the [MultiworldGG Releases Page](https://github.com/MultiworldGG/MultiworldGG/releases)
     * (Only for the TextClient)
 - Other Stardew Valley Mods [Nexus Mods](https://www.nexusmods.com/stardewvalley)
-    * There are [supported mods](https://github.com/agilbert1412/StardewArchipelago/blob/6.x.x/Documentation/Supported%20Mods.md) 
+    * There are [supported mods](https://github.com/agilbert1412/StardewArchipelago/blob/7.x.x/Documentation/Supported%20Mods.md) 
   that you can add to your yaml to include them with the MultiworldGG randomization
 
     * It is **not** recommended to further mod Stardew Valley with unsupported mods, although it is possible to do so. 
@@ -88,7 +88,7 @@ Stardew-exclusive commands.
 
 ### Playing with supported mods
 
-See the [Supported mods documentation](https://github.com/agilbert1412/StardewArchipelago/blob/6.x.x/Documentation/Supported%20Mods.md)
+See the [Supported mods documentation](https://github.com/agilbert1412/StardewArchipelago/blob/7.x.x/Documentation/Supported%20Mods.md)
 
 ### Multiplayer
 
