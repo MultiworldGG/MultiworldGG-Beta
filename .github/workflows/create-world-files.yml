@@ -69,6 +69,8 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "chore: add template files for worlds" -m "Manually triggered workflow for worlds: ${{ inputs.worlds }}" -m "MANUAL ACTION REQUIRED: Replace placeholder strings in the generated files."
+            # Stash any unstaged changes before rebasing
+            git stash push -m "Temporary stash for rebase" || true
             # Fetch latest changes and rebase before pushing
             git fetch origin "$BRANCH_NAME"
             git rebase "origin/$BRANCH_NAME" || {
@@ -76,6 +78,8 @@ jobs:
               git pull --rebase origin "$BRANCH_NAME" || exit 1
             }
             git push origin "$BRANCH_NAME"
+            # Restore stashed changes
+            git stash pop || true
           fi
 
   build-changed-worlds:
@@ -124,6 +128,8 @@ jobs:
             echo "No pyproject.toml changes to commit"
           else
             git commit -m "chore: update world pyproject.toml versions [skip ci]"
+            # Stash any unstaged changes (e.g., dist/ build artifacts) before rebasing
+            git stash push -m "Temporary stash for rebase" || true
             # Fetch latest changes and rebase before pushing
             git fetch origin gui-changes
             git rebase origin/gui-changes || {
@@ -131,6 +137,8 @@ jobs:
               git pull --rebase origin gui-changes || exit 1
             }
             git push origin gui-changes
+            # Restore stashed changes (build artifacts)
+            git stash pop || true
           fi
       
       - name: Upload to private PyPI
