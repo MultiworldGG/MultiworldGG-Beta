@@ -360,18 +360,16 @@ class HintListPanel(GameListPanel):
         # Store references for height calculations
         self.hint_layout = hint_layout
         self.featurebar_height = featurebar_height
-        self.hint_item_height = dp(30)  # From HintListItem KV definition
+        self.hint_item_height = dp(72)  # TODO: screw hardcodingggggg (from expansionlist.kv)
         # GameListPanel requires item_name as first positional arg
         super().__init__(item_name=hint_type, item_data=item_data, *args, **kwargs)
         # Set properties after super().__init__() so widget tree is built
         self.panel_header_height = dp(50)
         self.content_height = dp(8)
-        self.content_min_height = dp(54)
+        self.content_min_height = dp(96) # TODO: screw hardcodinggggggs (hint_item_height + spacing, padding, other random crap)
         self.padding = (dp(16), dp(16), dp(16), dp(16))
         self.spacing = dp(8)
         self._populated = False
-        # Set viewclass on panel_content after it's created
-        #Clock.schedule_once(lambda x: self._set_viewclass(), 0)
         Clock.schedule_once(lambda x: self.populate_slot_item(self.app.ctx), 0)
         
         # Bind to layout height changes for height recalculation

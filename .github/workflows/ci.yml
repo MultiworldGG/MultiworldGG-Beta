@@ -378,6 +378,10 @@ jobs:
           NEW_WORLDS=""
           HAS_NEW=false
           
+          # Find the merge base to handle merge commits correctly
+          # For regular commits, this will be HEAD~1; for merges, it's the common ancestor
+          BASE=$(git merge-base HEAD~1 HEAD 2>/dev/null || echo "HEAD~1")
+          
           # Get all current world directories
           for world_dir in worlds/*/; do
             if [ ! -d "$world_dir" ]; then
@@ -391,8 +395,8 @@ jobs:
               continue
             fi
             
-            # Check if this directory existed in the previous commit
-            if ! git ls-tree HEAD~1 "worlds/$world_name" >/dev/null 2>&1; then
+            # Check if this directory existed in the base commit
+            if ! git ls-tree "$BASE" "worlds/$world_name" >/dev/null 2>&1; then
               NEW_WORLDS="$NEW_WORLDS $world_name"
               HAS_NEW=true
               echo "Found new world directory: $world_name"
