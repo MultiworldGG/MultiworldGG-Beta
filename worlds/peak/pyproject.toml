@@ -1,0 +1,17 @@
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds.peak"
+version = "0.0.1"
+description = "MultiWorld: Archipelago"
+classifiers = [ "Private :: Do Not Upload",]
+requires-python = ">=3.12"
+[[project.authors]]
+name = "Unknown"
+
+[tool.setuptools.packages.find]
+where = [ "src",]
+include = [ "worlds.peak",]
+namespaces = true
