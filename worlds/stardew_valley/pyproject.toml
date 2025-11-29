@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.stardew_valley"
-version = "6.0.1"
+version = "7.2.12"
 description = "MultiWorld: Stardew Valley"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "KaitoKid"
+name = "Kaito Kid"
 
 [[project.authors]]
 name = "Jouramie"

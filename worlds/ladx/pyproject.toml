@@ -4,12 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.ladx"
-version = "12.5.2"
+version = "13.2.8"
 description = "MultiWorld: Link's Awakening DX Beta"
 license = "MIT"
 license-files = [ "LADXR/LADXR_LICENSE",]
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "zig"
+
 [[project.authors]]
 name = "threeandthree"
 

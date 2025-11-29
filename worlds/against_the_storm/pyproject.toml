@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.against_the_storm"
-version = "0.0.1"
+version = "1.0.0"
 description = "MultiWorld: Against the Storm"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

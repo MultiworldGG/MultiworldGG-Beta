@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.dk64"
-version = "1.0.40"
+version = "1.4.15"
 description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
@@ -12,10 +12,25 @@ requires-python = ">=3.12"
 name = "2dos"
 
 [[project.authors]]
-name = "Killklli,"
+name = "AlmostSeagull"
 
 [[project.authors]]
 name = "Ballaam"
+
+[[project.authors]]
+name = "Green Bean"
+
+[[project.authors]]
+name = "Killklli"
+
+[[project.authors]]
+name = "Lrauq"
+
+[[project.authors]]
+name = "PoryGone"
+
+[[project.authors]]
+name = "Umed"
 
 [tool.setuptools.packages.find]
 where = [ "src",]
