@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from kivymd.uix.behaviors.backgroundcolor_behavior import BackgroundColorBehavior
+from kivymd.uix.label import MDLabel
 __all__ = ['GameListPanel', 
            'GameListItem', 
            'GameListItemLongText', 
@@ -10,6 +11,7 @@ __all__ = ['GameListPanel',
            'SlotListItem',
            'HintListItemHeader',
            'HintListItem',
+           'HintListItemLabel',
            'HintListDropdown',
            'IconBadge',
            'calculate_text_height',
@@ -131,11 +133,22 @@ class SlotListItemHeader(MDBoxLayout, CommonElevationBehavior):
         Calculate the header height based on actual text rendering.
         Uses LabelBase to get real texture dimensions without creating reactive bindings.
         """
-        # Available width for text (total width - avatar - trailing icon - padding - spacing)
+        # Available width for text 100 default kivy width
+        # total width - children(avatar - trailing icon - spacing) - padding - spacing
+        children_width = 0
+        for child in self.children:
+            if child.__class__.__name__ == "MDBoxLayout":
+                children_width += child.padding[0]
+                children_width += child.padding[2]
+                children_width += self.spacing
+            else:
+                children_width += 0 if child.width == 100 else child.width
+                children_width += self.spacing
+
         if self.panel.width == 100:
-            text_width = 256 - dp(40) - dp(24) - dp(36) - dp(8)
+            text_width = 256 - dp(40) - dp(24) - children_width - self.padding[0] - self.padding[2]
         else:
-            text_width = self.width - dp(40) - dp(24) - dp(20) - dp(8)
+            text_width = self.width - children_width - self.padding[0] - self.padding[2]
 
         name_height = calculate_text_height(self.slot_name, self.ids.slot_item_name.font_size, text_width)
         game_height = calculate_text_height(self.game, self.ids.slot_item_game.font_size, text_width)
@@ -540,16 +553,21 @@ class HintListItem(RecycleDataViewBehavior, BoxLayout, BackgroundColorBehavior, 
         """Handle hide checkbox change"""
         if hint_instance.hint_data:
             hint_instance.hint_data.hide = value
-            # return if it's already hidden
-            if isinstance(hint_instance, "HintListItem_Hidden"):
-                return
-            # Unschedule any existing pending removal
-            if hint_instance._remove_hint_event:
-                Clock.unschedule(hint_instance._remove_hint_event)
-            # Schedule new removal and store the event
-            hint_instance._remove_hint_event = Clock.schedule_once(
-                lambda x: hint_instance.remove_hint(hint_instance, value), 1.5
-            )
+            # return if it's already hidden (no removal animation needed)
+            try:
+                weak_class_name = hint_instance.__class__.__name__
+                if weak_class_name == "HintListItem_Hidden":
+                    return
+                # Unschedule any existing pending removal animation
+                if hint_instance._remove_hint_event:
+                    Clock.unschedule(hint_instance._remove_hint_event)
+                # Schedule new removal and store the event
+                hint_instance._remove_hint_event = Clock.schedule_once(
+                    lambda x: hint_instance.remove_hint(hint_instance, value), 1.5
+                )
+            except Exception as e:
+                # weakref was probably deleted, pass silently
+                pass
 
     @staticmethod
     def remove_hint(hint_instance, value):
@@ -563,8 +581,9 @@ class HintListItem(RecycleDataViewBehavior, BoxLayout, BackgroundColorBehavior, 
                 animation = Animation(x=-(hint_instance.width+dp(24)), duration=0.5)
                 animation.start(hint_instance)
                 animation.on_complete = hint_instance.on_complete
-        except:
-            return
+        except Exception as e:
+            # weakref was probably deleted, pass silently
+            pass
 
     @staticmethod
     def on_complete(hint_instance):
@@ -574,8 +593,9 @@ class HintListItem(RecycleDataViewBehavior, BoxLayout, BackgroundColorBehavior, 
                     parent.recycleview.data.pop(hint_instance.index)
                     parent.recycleview.refresh_from_data()
             hint_instance._remove_hint_event = None
-        except:
-            return
+        except Exception as e:
+            # weakref was probably deleted, pass silently
+            pass
 
 
     @staticmethod
@@ -634,6 +654,28 @@ class ListItemTooltip(MDTooltip):
     Provides tooltip functionality for game list items.
     """
     pass
+
+class HintListItemLabel(ListItemTooltip, MDLabel):
+    """
+    List item with tooltip behavior for long text.
+    
+    Implements a list item with tooltip behavior for text that may be
+    truncated and needs a tooltip to show the full content.
+    
+    Attributes:
+        text (StringProperty): The display text
+        tooltip_text (StringProperty): The full text shown in tooltip
+    """
+    tooltip_text = StringProperty("")
+    def __init__(self, **kwargs):
+        """
+        Initialize the HintListItemLabel.
+        
+        Args:
+            tooltip_text (str): The tooltip text for long items
+        """
+        super().__init__(**kwargs)
+        self.tooltip_text = self.text
 
 class GameListItemLongText(ListItemTooltip, MDListItemSupportingText):
     """
@@ -898,12 +940,13 @@ class GameListPanel(MDExpansionPanel):
         Args:
             instance: The widget instance that triggered the toggle
         """
-        Animation(
-            padding=[dp(4), dp(12), dp(4), dp(12)]
-            if not self.is_open
-            else [dp(8),dp(4),dp(8),dp(4)],
-            d=0.2,
-        ).start(self)
+        current_padding = self.padding
+        new_padding = [dp(4), dp(12), dp(4), dp(12)] if not self.is_open else [dp(8),dp(4),dp(8),dp(4)]
+        if current_padding != new_padding:
+            Animation(
+                padding=new_padding,
+                d=0.2,
+            ).start(self)
         self.open() if not self.is_open else self.close()
         self.set_chevron_up(instance) if self.is_open else self.set_chevron_down(instance)
 

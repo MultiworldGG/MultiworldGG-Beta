@@ -315,6 +315,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
         ctx.server_address = None
 
         await progression_watcher
+
         await ctx.shutdown()
 
     import colorama

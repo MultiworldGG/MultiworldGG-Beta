@@ -278,6 +278,8 @@ class MultiMDApp(MDApp):
             self.loading_layout.size = (self.root.width, self.root.height)
             self.loading_layout.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
             self.root_layout.add_widget(self.loading_layout)
+            
+            self._create_screen("settings")
 
         super().on_start()
         Clock.schedule_once(on_start)

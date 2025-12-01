@@ -14,6 +14,7 @@ from .expansionlist import (
     SlotListItem,
     HintListDropdown,
     HintListItem,
+    HintListItemLabel,
     IconBadge,
 )
 

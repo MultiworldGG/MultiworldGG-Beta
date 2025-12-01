@@ -6,7 +6,6 @@ from math import ceil
 from BaseClasses import Tutorial
 from worlds.AutoWorld import WebWorld, World
 from .Items import KH1Item, KH1ItemData, event_item_table, get_items_by_category, item_table, item_name_groups
-
 from .Locations import KH1Location, location_table, get_locations_by_type, location_name_groups
 from .Options import KH1Options, kh1_option_groups
 from .Regions import connect_entrances, create_regions
@@ -17,9 +16,9 @@ from .GenerateJSON import generate_json
 from .Data import VANILLA_KEYBLADE_STATS, VANILLA_PUPPY_LOCATIONS, CHAR_TO_KH, VANILLA_ABILITY_AP_COSTS, WORLD_KEY_ITEMS, VANILLA_SPELL_COSTS_LVL, VANILLA_SPELL_COSTS_SPELL, POSSIBLE_SPELL_COSTS
 from worlds.LauncherComponents import Component, components, Type, launch_subprocess
 
-def launch_client(*args: str):
-    from .Client import main
-    launch_component(main, name="KH1 Client", args=args)
+def launch_client():
+    from .Client import launch
+    launch_component(launch, name="KH1 Client")
 
 
 components.append(Component("KH1 Client", func=launch_client, component_type=Type.CLIENT, icon="kh1_heart"))
@@ -47,11 +46,7 @@ class KH1World(World):
     Kingdom Hearts is an action RPG following Sora on his journey 
     through many worlds to find Riku and Kairi.
     """
-    from BaseUtils import get_archipelago_json
-    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("kh1")
-
-    game = GAME_NAME
-    author: str = AUTHOR
+    game = "Kingdom Hearts"
     options_dataclass = KH1Options
     options: KH1Options
     topology_present = True
@@ -341,6 +336,7 @@ class KH1World(World):
                     "scaling_spell_potency": bool(self.options.scaling_spell_potency),
                     "seed": self.multiworld.seed_name,
                     "shorten_go_mode": bool(self.options.shorten_go_mode),
+                    "slot_name": self.multiworld.get_player_name(self.player),
                     "slot_2_level_checks": int(self.options.slot_2_level_checks.value),
                     "spell_mp_cost_max": int(self.options.spell_mp_cost_max.value),
                     "spell_mp_cost_min": int(self.options.spell_mp_cost_min.value),

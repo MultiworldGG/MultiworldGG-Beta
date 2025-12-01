@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+from kivymd.uix.chip import MDChip
+from kivymd.uix.gridlayout import MDGridLayout
 """
 HINT SCREEN
 
@@ -14,7 +17,7 @@ from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.metrics import dp
-from kivy.properties import ObjectProperty, NumericProperty
+from kivy.properties import ObjectProperty, NumericProperty, StringProperty
 from kivymd.uix.scrollview import MDScrollView
 from kivymd.uix.selectioncontrol import MDSwitch
 from kivymd.app import MDApp
@@ -42,11 +45,17 @@ KV = '''
         size: dp(128), dp(80)
         pos_hint: {"x": 0, "top": 1}
 
+<SearchFilterChip>:
+    type: "filter"
+    pos_hint: {"x": 0, "center_y": 0.5}
+    MDChipText:
+        text: root.filter_text
+
 <-HintListPanel>:
     orientation: 'vertical'
     size_hint_y: None
     height: self.minimum_height
-    padding: dp(8),dp(4),dp(8),dp(4)
+    padding: dp(12),dp(4),dp(12),dp(4)
     id: game_item
     MDExpansionPanelHeader:
         padding: dp(8),0,dp(8),0
@@ -94,6 +103,22 @@ class HintFeaturebar(MDBoxLayout):
     Feature bar for the hint screen.
     """
     pass
+
+class SearchFilterChip(MDChip):
+    filter_text = StringProperty("")
+    sort_key = StringProperty("")
+
+    def __init__(self, filter_text: str, sort_key: str = "", **kwargs):
+        super().__init__(**kwargs)
+        self.filter_text = filter_text
+        self.sort_key = sort_key
+        self.bind(on_release=self._on_chip_click)
+        self.hint_layout = None
+    
+    def _on_chip_click(self, instance):
+        """Handle chip click - notify parent layout to update sorting"""
+        if self.hint_layout:
+            self.hint_layout.on_filter_chip_selected(self)
 
 class RecycleExpansionPanelContent(RecycleBoxLayout):
     """
@@ -212,6 +237,13 @@ class HintScreen(MDScreen):
                     featurebar_height=self.hint_layout.search_placeholder.height
                 )
                 self.hints_mdlist.add_widget(hint_panel)
+            
+            # Store reference to hint_screen in hint_layout for sorting
+            self.hint_layout._hint_screen_ref = self
+            
+            # Apply current sort if one is active
+            if self.hint_layout.active_sort_key:
+                self.hint_layout.apply_sort_to_all_panels(self.hint_layout.active_sort_key)
         finally:
             self._updating_hints = False
 
@@ -234,7 +266,13 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
     orientation = "vertical"
     app: MDApp
     hint_scroll: MDScrollView
-
+    active_sort_key = StringProperty("")
+    active_filter_text = StringProperty("")  # Store selected filter_text (e.g., player name)
+    sort_reverse = False  # Toggle for reverse sort direction
+    sort_chips: list[tuple[str, str]] = []
+    _filter_chips: list[SearchFilterChip] = []
+    _filter_chips_base: list[SearchFilterChip] = []
+    _hint_screen_ref: ObjectProperty = None
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.app = MDApp.get_running_app()
@@ -248,12 +286,41 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
             spacing=dp(16),
             padding=[dp(16), dp(8), dp(16), dp(8)]
         )
+        self.search_placeholder.bind(width=self.on_search_placeholder_width_changed)
         scroll_height = 1/self.search_placeholder.height
         self.hint_scroll = MDScrollView(size_hint_y=self.size_hint_y-scroll_height, size_hint_x=1)
         # Add placeholder label for future search functionality
         placeholder_label = MDLabel(
-            text="Search & Filter Options (Future Feature)"
+            text="Search & Filter Options",
+            pos_hint={"x": 0, "top": 1}
         )
+
+        self.filter_chip_box = MDGridLayout(
+            cols=8,
+            spacing=dp(12),
+            size_hint_x=.7,
+            adaptive_height=True
+        )
+        
+        # Create filter chips for all sort options
+        self.sort_chips = [
+            ("All", ""),
+            ("Player", "player_name"),
+            ("Item", "item_name"),
+            ("Location", "location_name"),
+            ("Entrance", "entrance_name"),
+            ("BK Mode", "for_bk_mode"),
+            ("Goal", "for_goal"),
+            ("Shop", "from_shop"),
+        ]
+        
+        self.add_chips()
+        
+        # Set "All" as default selected
+        if self._filter_chips:
+            self._filter_chips[0].active = True
+        
+        self.search_placeholder.add_widget(self.filter_chip_box)
 
         self.show_all_hints_switch = MDSwitch(
             icon_inactive="eye-off",
@@ -266,12 +333,25 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
             on_release=self.on_refresh_hints
         )
         
+        self.sort_reverse_switch = MDSwitch(
+            icon_inactive="sort-ascending",
+            icon_active="sort-descending",
+            on_active=self.on_sort_reverse
+        )
+        
         self.search_placeholder.add_widget(placeholder_label)
         self.search_placeholder.add_widget(self.show_all_hints_switch)
+        self.search_placeholder.add_widget(self.sort_reverse_switch)
         self.search_placeholder.add_widget(self.refresh_button)
 
         self.add_widget(self.search_placeholder)
         self.add_widget(self.hint_scroll)
+
+    def on_search_placeholder_width_changed(self, instance, value):
+        if value > dp(100):
+            self.filter_chip_box.cols = int(value/dp(100))
+        else:
+            self.filter_chip_box.cols = 8
 
     def on_show_all_hints(self, instance, value):
         self.app.show_all_hints = value
@@ -280,9 +360,137 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
         """Refresh the hints list when refresh button is clicked"""
         # Get the hint screen from the app
         self.app.update_hints()
+    
+    def on_sort_reverse(self, instance, value):
+        """Handle sort reverse toggle"""
+        self.sort_reverse = value
+        if self.active_sort_key:
+            self.apply_sort_to_all_panels(self.active_sort_key)
+
+    def add_chips(self):
+        for filter_text, sort_key in self.sort_chips:
+            chip = SearchFilterChip(filter_text=filter_text, sort_key=sort_key)
+            chip.hint_layout = self
+            self._filter_chips.append(chip)
+            self.filter_chip_box.add_widget(chip)
+        self.sort_chips = []
+
+    def remove_chips(self):
+        filter_chips_to_remove = []
+        for chip in self._filter_chips:
+            if chip.filter_text in self.sort_chips:
+                filter_chips_to_remove.append(chip)
+        for chip in filter_chips_to_remove:
+            self.filter_chip_box.remove_widget(chip)
+            self._filter_chips.remove(chip)
+    
+    def on_filter_chip_selected(self, selected_chip: SearchFilterChip):
+        """Handle filter chip selection - update sort key and apply sorting"""
+        sort_key = selected_chip.sort_key
+        filter_text = selected_chip.filter_text
+
+        self.active_sort_key = sort_key
+        self.active_filter_text = filter_text  # Store the selected filter text (e.g., player name)
+
+        if filter_text == "Player":
+            for slot_id, player in self.app.ctx.ui.ui_player_data.items():
+                self.sort_chips.append((player.slot_name, "player_name"))
+                self.add_chips()
+        elif self.active_sort_key != "player_name":
+            for slot_id, player in self.app.ctx.ui.ui_player_data.items():
+                self.sort_chips.append((player.slot_name, sort_key))
+                self.remove_chips()
+ 
+        # Apply sorting to all panels
+        self.apply_sort_to_all_panels(self.active_sort_key)
+    
+    def _get_status_sort_weight(self, hint_item: dict) -> int:
+        """Get the status sort weight for a hint item"""
+        hint = hint_item.get("hint_data")
+        if not hint:
+            return 999  # Default to end if no hint data
+        
+        hint_status = getattr(hint, 'hint_status', HintStatus.HINT_UNSPECIFIED)
+
+        # Check if hint is found first (highest priority for sorting)
+        if getattr(hint, 'found', False) or getattr(hint, 'hint_status', hint_status) == HintStatus.HINT_FOUND:
+            return status_sort_weights[HintStatus.HINT_FOUND]
+        
+        # Get MWGG flags weight by iterating through flags
+        mwgg_status = getattr(hint, 'mwgg_hint_status', None)
+        status_weight = 999
+        if mwgg_status:
+            # These are different sizes, but it will leave off HINT_FOUND which we've already checked
+            for mwgg_hint, hint in zip(MWGGUIHintStatus, HintStatus):
+                mw = mwgg_status & mwgg_hint
+                hw = hint_status & hint
+                if mw or hw:
+                    status_weight = min(status_weight, min(status_sort_weights[hint], status_sort_weights[mwgg_hint]))
+        return min(status_weight, status_sort_weights[HintStatus.HINT_FOUND])
+    
+    def apply_sort_to_all_panels(self, sort_key: str):
+        """Apply sorting to all HintListPanel RecycleViews"""
+        if not self._hint_screen_ref:
+            return
+        
+        # Find all HintListPanel widgets in the hints_mdlist
+        for panel in self._hint_screen_ref.hints_mdlist.children:
+            if isinstance(panel, HintListPanel) and hasattr(panel, 'hint_content'):
+                self._sort_panel_data(panel, sort_key)
+    
+    def _sort_panel_data(self, panel: "HintListPanel", sort_key: str):
+        """Sort the data in a specific panel's RecycleView with simplified logic"""
+        if not panel.hint_content or not panel.hint_content.data:
+            return
+        
+        hint_items = panel.hint_content.data.copy()
+        
+        # Define key functions for each sort type
+        key_functions = {
+            "player_name": lambda item: item.get("player_name", "").lower(),
+            "item_name": lambda item: item.get("item_name", "").lower(),
+            "location_name": lambda item: item.get("location_name", "").lower(),
+            "entrance_name": lambda item: item.get("entrance_name", "").lower(),
+            "for_bk_mode": lambda item: not item.get("for_bk_mode", False),  # True first
+            "for_goal": lambda item: not item.get("for_goal", False),  # True first
+            "from_shop": lambda item: not item.get("from_shop", False),  # True first
+        }
+        
+        # Get secondary key function
+        secondary_key = key_functions.get(sort_key) if sort_key else None
+        
+        # Determine if we're filtering by a specific value (e.g., specific player name)
+        # When a specific player chip is clicked, prioritize that player's items first
+        filter_value = self.active_filter_text if sort_key == "player_name" and self.active_filter_text and self.active_filter_text != "Player" else None
+        
+        def sort_key_func(item: dict):
+            """Create sort key function with priority, status, and sort_key"""
+            # Priority: If filtering by specific player name, matching items come first
+            priority = 0
+            if filter_value:
+                item_player = item.get("player_name", "")
+                if item_player.lower() != filter_value.lower():
+                    priority = 1  # Non-matching items go after matching ones
+            
+            # Primary sort: status_weight (always used, lower = higher priority)
+            status_weight = self._get_status_sort_weight(item)
+            
+            # Secondary sort: selected sort_key (if any)
+            if secondary_key:
+                sort_value = secondary_key(item)
+                return (priority, status_weight, sort_value)
+            else:
+                return (priority, status_weight)
+        
+        # Sort with optional reverse
+        sorted_items = sorted(hint_items, key=sort_key_func, reverse=self.sort_reverse)
+        
+        # Update the RecycleView data
+        panel.hint_content.data = sorted_items
+        panel.hint_content.refresh_from_data()
 
 hint_icons: typing.Dict[str, str] = {
-    "Finding": "map-pin",
+    "Finding": "map_pin",
     "Receiving": "map-clock-outline",
     "Hidden": "eye-off",
 }
@@ -312,16 +520,16 @@ mwggstatus_colors: typing.Dict[MWGGUIHintStatus, str] = {
 """Mapping of MWGG hint status values to their corresponding color names for display."""
 
 status_icons = {
-    HintStatus.HINT_NO_PRIORITY: "altimeter", #bottle-tonic
-    HintStatus.HINT_PRIORITY: "baguette", #bottle-tonic-plus
-    HintStatus.HINT_AVOID: "hand-middle-finger" #"sign-caution" #biohazard #bottle-tonic-skull
+    HintStatus.HINT_NO_PRIORITY: "peace", #bottle-tonic altimeter
+    HintStatus.HINT_PRIORITY: "key-variant", #bottle-tonic-plus heart
+    HintStatus.HINT_AVOID: "hand_middle_finger" #"sign-caution" #biohazard #bottle-tonic-skull
 }
 """Mapping of hint status values to their corresponding icon names."""
 
 status_names: typing.Dict[HintStatus, str] = {
-    HintStatus.HINT_NO_PRIORITY: "Doesn't Matter",
-    HintStatus.HINT_AVOID: "Don't Get This",
-    HintStatus.HINT_PRIORITY: "This is Important",
+    HintStatus.HINT_NO_PRIORITY: "",
+    HintStatus.HINT_AVOID: "Avoid",
+    HintStatus.HINT_PRIORITY: "Important",
 }
 """Mapping of hint status values to their human-readable display names."""
 
@@ -511,9 +719,9 @@ class HintListPanel(GameListPanel):
                          "location_badge_text": location_badge_text,   
                          "hint_icon_status": status_icons.get(hint.hint_status, "blank"), 
                          "hint_status_text": status_names.get(hint.hint_status, ""),
-                        #  "for_bk_mode": hint.mwgg_hint_status & MWGGUIHintStatus.HINT_BK_MODE,
-                        #  "for_goal": hint.mwgg_hint_status & MWGGUIHintStatus.HINT_GOAL,
-                        #  "from_shop": hint.mwgg_hint_status & MWGGUIHintStatus.HINT_SHOP,
+                         "for_bk_mode": hint.for_bk_mode,
+                         "for_goal": hint.for_goal,
+                         "from_shop": hint.from_shop,
                          "hint_data": hint,
                          "hide": hint.hide if hasattr(hint, 'hide') else False,
                          "md_bg_color": item_bg_color,
@@ -535,6 +743,12 @@ class HintListPanel(GameListPanel):
             hint_items.append(hint_item)
 
         self.hint_content.data = hint_items
+        
+        # Apply sorting if hint_layout has an active sort key
+        if self.hint_layout and self.hint_layout.active_sort_key:
+            self.hint_layout._sort_panel_data(self, self.hint_layout.active_sort_key)
+        
         # Force RecycleView to refresh and create widgets
         if self.hint_content:
             self.hint_content.refresh_from_data()
+
