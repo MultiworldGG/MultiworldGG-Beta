@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.phoa"
-version = "0.0.1"
+version = "0.1.0"
 description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "Unknown"
+name = "Lenamphy"
 
 [tool.setuptools.packages.find]
 where = [ "src",]
