@@ -73,7 +73,7 @@
 <HintListItemHeader>:
     id: hint_item_header
     padding: dp(8),0,dp(8),0
-    radius: dp(8),0,dp(8),0
+    radius: dp(8)
     variable_height: True
     orientation: "horizontal"
     theme_bg_color: "Custom"
@@ -81,14 +81,12 @@
     MDListItemLeadingIcon:
         icon: root.hint_icon
         pos_hint: {"center_y": 0.5, "center_x": 0.5}
-    MDListItemSupportingText:
+    MDListItemHeadlineText:
         id: hint_item_header_text
         text: root.hint_text
         text_color: app.theme_cls.onSurfaceColor
         theme_text_color: "Custom"
-        role: "small"
         shorten: False
-        do_wrap: True
         pos_hint: {"center_y": 0.5, "center_x": 0.5}
     GameTrailingPressedIconButton:
         width: dp(40)

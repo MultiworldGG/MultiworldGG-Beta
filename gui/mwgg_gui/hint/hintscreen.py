@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 HINT SCREEN
 
@@ -14,7 +15,8 @@ from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.metrics import dp
-from kivy.properties import ObjectProperty, NumericProperty, StringProperty, ListProperty
+from kivy.properties import ObjectProperty, NumericProperty, StringProperty, ListProperty, DictProperty
+from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.scrollview import MDScrollView
 from kivymd.uix.selectioncontrol import MDSwitch
 from kivymd.app import MDApp
@@ -24,7 +26,8 @@ from kivymd.uix.chip import MDChip, MDChipText
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.list import MDList
 from kivymd.uix.behaviors import CommonElevationBehavior
-from kivy.uix.recycleview import RecycleDataModelBehavior, RecycleView
+from kivy.uix.recycleview import RecycleDataModel, RecycleDataModelBehavior, RecycleView
+from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from NetUtils import HintStatus, MWGGUIHintStatus, TEXT_COLORS
 from mwgg_gui.overrides.expansionlist import HintListItem, IconBadge, HintListItemHeader, GameListPanel, HintListDropdown
 from mwgg_gui.components.guidataclasses import UIHint
@@ -44,16 +47,17 @@ KV = '''
         mode: "contain"
         pos_hint: {"x": 0, "top": 1}
 
-<RVSearchChipsLayout>:
+<RDMSearchChips>:
     orientation: "horizontal"
     spacing: dp(12)
     size_hint_x: 1
     size_hint_y: None
     height: self.minimum_height
     chips: []
+    recycleview: app.hint_screen.filter_chip_box
 
 <RVSearchChips>:
-    viewclass: "RVSearchChipsLayout"
+    viewclass: "RDMSearchChips"
     remaining_chips: []
     size_hint_x: 1
     size_hint_y: 1
@@ -71,11 +75,11 @@ KV = '''
     orientation: 'vertical'
     size_hint_y: None
     height: self.minimum_height
-    padding: dp(12),dp(4),dp(12),dp(4)
+    padding: dp(8),dp(4),dp(8),dp(4)
     id: game_item
     MDExpansionPanelHeader:
         padding: dp(8),0,dp(8),0
-        radius: dp(8),0,dp(8),0
+        radius: dp(16)
         height: root.panel_header_height
         id: panel_header
     MDExpansionPanelContent:
@@ -98,15 +102,12 @@ KV = '''
                 default_size_hint: 1, None
                 size_hint_y: None
                 height: self.minimum_height
-                padding: dp(36), 0, dp(36), dp(12)
+                padding: dp(8), dp(0), dp(8), dp(0)
                 spacing: dp(8)
 
 
 <RecycleExpansionPanelContent>:
 
-# <HintListItem_Hidden@HintListItem>:
-# <HintListItem_Finding@HintListItem>:
-# <HintListItem_Receiving@HintListItem>:
 '''
 
 Builder.load_string(KV)
@@ -124,39 +125,28 @@ class MDChip(MDChip):
     '''
     Override to toggle active state on press instead of long press
     '''
-    def on_release(self):
+    def on_release(self, *args) -> None:
         """Toggle active state on release for filter chips"""
         if self.type == "filter":
             self.active = not self.active
-        super().on_release()
+        self._on_release(args)
 
-class RVSearchChips(RecycleView):
-    remaining_chips = ListProperty([])
+    def on_press(self, *args) -> None:
+        """Call parent's on_press to maintain other behaviors"""
+        self._on_press(args)
+
+class RVSearchChips(RecycleDataViewBehavior, RecycleView):
+    remaining_chips = DictProperty(default_factory=lambda: {"chips": [], "width": None})
     # viewclass can be string or class object - will be set to class object after definition
     hint_layout = ObjectProperty(None, allownone=True)
-    
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # Initialize with empty data
-        if not hasattr(self, 'data') or self.data is None:
-            self.data = []
-        # Bind to data changes to ensure views are created
-        self.bind(data=self._on_data_changed)
-    
-    def _on_data_changed(self, instance, value):
-        """Ensure views are created when data changes"""
-        if value:
-            Clock.schedule_once(lambda dt: self.refresh_from_data(), 0)
 
-class RVSearchChipsLayout(RecycleDataModelBehavior, MDBoxLayout):
+class RDMSearchChips(RecycleDataModelBehavior, MDBoxLayout):
     """Recyclable BoxLayout for search filter chips.
     
     Each instance represents a row of chips that fit within the available width.
     Chips that don't fit are stored in remaining_chips for the next row.
     """
     chips = ListProperty([])
-    width = NumericProperty(dp(100))
-    _rv = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -165,79 +155,37 @@ class RVSearchChipsLayout(RecycleDataModelBehavior, MDBoxLayout):
         self.size_hint_x = 1
         self.size_hint_y = None
         self.height = dp(80)
-        # Since refresh_view_attrs is never called, we need to initialize from data here
-        Clock.schedule_once(self._create_chips, 0.1)
+        self.fbind('chips', self._create_chips)
     
-    def _create_chips(self, dt=None):
-        """Bind chip selection handlers to active property.
-        
-        Called from refresh_view_attrs after chips are added. Binds each chip's
-        active property to the selection handler per MDChip documentation.
+    def _create_chips(self, instance=None, chips: list[MDChip] = []):
+        """Create chips and add them to the layout
+        instance: The instance of the RDMSearchChips
+        chips: The list of chips to create
         """
-        self.clear_widgets()
-        if self.chips:
-            for chip in self.chips:
-                self.add_widget(chip)
-
-        # Update height and check fitting
-        Clock.schedule_once(lambda dt: self._update_height(), 0)
-        if self.width:
-            Clock.schedule_once(lambda dt: self._check_fitted_chips(self.width), 0.1)
+        chips_width = 0
+        if self.width > dp(100):
+            self.clear_widgets()
+            for i, chip in enumerate(self.chips):
+                chips_width += chip.width + self.spacing + dp(24) # chip icon width
+                if chips_width > self.width:
+                    self.recycleview.remaining_chips = {"chips": self.chips[i:], "width": self.width}
+                    break
+                else:
+                    if chip.parent is not None:
+                        chip.parent.remove_widget(chip)
+                    self.add_widget(chip)
 
     def refresh_view_attrs(self, rv, index, data):
         """Update view when RecycleView data changes - this is called by RecycleView when creating/updating views"""
         self.index = index
-        self._rv = rv
         # Set chips from data dict
         self.chips = data.get("chips", [])
-        self.width = data.get("width", dp(100))
-        
-        # Set sizing
-        self.size_hint_x = 1
-        self.size_hint_y = None
 
-        Clock.schedule_once(lambda dt: self._create_chips(), 0.1)
-        
-        # Call super to handle other data bindings
         super().refresh_view_attrs(rv, index, data)
-    
-    def _update_height(self):
-        """Update height based on content"""
-        if self.children:
-            self.height = max(self.minimum_height, dp(80))
-    
-    def _check_fitted_chips(self, available_width):
-        """Check which chips fit and remove those that don't"""
-        if not self.chips or not self.children:
-            if self._rv:
-                self._rv.remaining_chips = []
-            return
-        
-        # Remove chips that don't fit, starting from the end
-        chips_to_remove = []
-        while self.minimum_width > available_width and len(self.children) > 0:
-            # Remove the last chip
-            last_chip = self.children[-1]
-            self.remove_widget(last_chip)
-            chips_to_remove.append(last_chip)
-        
-        # Store remaining chips that didn't fit
-        if self._rv and chips_to_remove:
-            # Find the index of the first removed chip
-            first_removed = chips_to_remove[-1]  # Last one removed (first that didn't fit)
-            try:
-                start_index = self.chips.index(first_removed)
-                self._rv.remaining_chips = self.chips[start_index:]
-            except ValueError:
-                # Chip not in list, use remaining count
-                self._rv.remaining_chips = []
-        elif self._rv:
-            self._rv.remaining_chips = []
 
     def on_width(self, instance, value):
         """Handle width changes - not used for fitting logic, but kept for compatibility"""
-        pass
-
+        self._create_chips(instance=instance, chips=self.chips)
 
 class RecycleExpansionPanelContent(RecycleBoxLayout):
     """
@@ -400,18 +348,15 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
         )
         # self.search_placeholder.bind(height=self.on_search_placeholder_height_changed)
         scroll_height = 1/self.search_placeholder.height
-        self.hint_scroll = MDScrollView(size_hint_y=self.size_hint_y-scroll_height, size_hint_x=1)
-        # Add placeholder label for future search functionality
-        # placeholder_label = MDLabel(
-        #     text="Search & Filter Options",
-        #     pos_hint={"x": 0, "top": 1}
-        # )
+        self.hint_scroll = MDScrollView(size_hint_y=self.size_hint_y-scroll_height, 
+                                        size_hint_x=1,
+                                        bar_width=dp(4))
         for chip_data in FILTER_CHIPS:
             chip = MDChip(MDChipText(text = chip_data["filter_text"]),
                                              type="filter", 
                                              pos_hint={"x": 0, "center_y": 0.5}, 
                                              active=chip_data["active"])
-            chip.bind(active=lambda inst, value, filter_text=chip_data["filter_text"], sort_key=chip_data["sort_key"]: self.on_filter_chip_selected(value, filter_text, sort_key))
+            chip.bind(active=lambda inst, value, chip_data=chip_data: self.on_filter_chip_selected(value, chip_data))
 
             self._default_filter_chips.append(chip)
         self.search_placeholder.bind(width=self.on_search_width_changed)
@@ -419,36 +364,36 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
         self.filter_chip_box = RVSearchChips()
         self.filter_chip_box.hint_layout = self
         # Set viewclass to the actual class object, not string
-        # This must be done after RVSearchChipsLayout is defined
-        self.filter_chip_box.viewclass = RVSearchChipsLayout
+        # This must be done after RDMSearchChips is defined
+        self.filter_chip_box.viewclass = RDMSearchChips
         self.search_placeholder.add_widget(self.filter_chip_box)
         # Set "All" as default selected
         self.filter_chip_box.bind(remaining_chips=self.on_remaining_chips_changed)
         Clock.schedule_once(lambda x: self.add_chips(filter_data=self._default_filter_chips.copy(), width=self._search_width), 0)
 
-        self.action_box = MDBoxLayout(
+        self.action_box = MDGridLayout(
             width=dp(128),
             size_hint_x=None,
-            orientation="vertical",
+            cols=2,
             spacing=dp(4),
             padding=dp(0)
         )
         self.action_box.add_widget(MDSwitch(
             icon_inactive="eye-off",
             icon_active="eye",
-            size_hint_x=.3,
+            size_hint_x=.5,
             on_active=self.on_show_all_hints
         ))
                 
         self.action_box.add_widget(MDSwitch(
             icon_inactive="sort-ascending",
             icon_active="sort-descending",
-            size_hint_x=.3,
+            size_hint_x=.5,
             on_active=self.on_sort_reverse
         ))
         self.action_box.add_widget(MDIconButton(
             icon="refresh",
-            size_hint_x=.3,
+            size_hint_x=.5,
             on_release=self.on_refresh_hints
         ))
 
@@ -469,14 +414,22 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
             self.filter_chip_box.refresh_from_data()
     
     def on_remaining_chips_changed(self, instance, value):
-        """Handle when remaining chips are detected - add a new row"""
-        if value:  # If there are remaining chips, add them as a new row
-            # Check if we already have a row with these chips to prevent duplicates
-            current_data = self.filter_chip_box.data.copy() if self.filter_chip_box.data else []
-            # Only add if the last row doesn't already have these exact chips
-            if not current_data or current_data[-1].get("chips") != value:
-                current_data.append({"chips": value, "width": self._search_width})
-                self.filter_chip_box.data = current_data
+        """Handle when remaining chips are detected - add a new row
+        current data: [{"chips": [MDChip, MDChip, MDChip], "width": dp(100)}{...}]
+             This is the set of data that is already in the recycle view and not clipped
+             We will be truncating the chip list, so that only the chips that fit are in the 
+             data dictionary.
+        value: {"chips": [MDChip, MDChip, MDChip], "width": int}
+            This is the set of chips that are remaining and need to be placed in a new row
+        """
+        if value:  
+            truncated_chips = self.filter_chip_box.data[-1]["chips"][len(value):]
+            new_data = self.filter_chip_box.data[:len(self.filter_chip_box.data)-1] or []
+            new_data.append({"chips": truncated_chips, "width": value["width"]})
+            new_data.append(value)
+
+            self.filter_chip_box.data = new_data
+            self.filter_chip_box.refresh_from_data()
 
     def on_search_width_changed(self, instance, value):
         self._search_width = dp(100) if not value > dp(308) else value - dp(208)
@@ -509,14 +462,13 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
         if self.active_sort_key:
             self.apply_sort_to_all_panels(self.active_sort_key)
 
-    def on_filter_chip_selected(self, active: bool, filter_text: str, sort_key: str):
+    def on_filter_chip_selected(self, active: bool, chip_data: dict):
         """Handle filter chip selection - update sort key and apply sorting"""
 
+        self.active_sort_key = chip_data["sort_key"]
+        self.active_filter_text = chip_data["filter_text"]
 
-        self.active_sort_key = sort_key
-        self.active_filter_text = filter_text
-
-        if filter_text == "Player":
+        if self.active_filter_text == "Player":
             # Create new chips list with player chips - create new instances to avoid modifying originals
             new_chips = self._default_filter_chips.copy()
             # Add player chips
@@ -525,7 +477,7 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
                     type="filter",
                     pos_hint={"x": 0, "center_y": 0.5},
                     active=False)
-                chip.bind(active=lambda inst, value, player_name=player.slot_name: self.on_filter_chip_selected(value, player_name, sort_key))
+                chip.bind(active=lambda inst, value, chip_data={"filter_text": player.slot_name, "sort_key": "player_name", "active": False}: self.on_filter_chip_selected(value, chip_data))
                 new_chips.append(chip)
             # Update RecycleView data and refresh
             self.filter_chip_box.data = [{"chips": new_chips, "width": self._search_width}]
@@ -625,9 +577,9 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
         panel.hint_content.refresh_from_data()
 
 hint_icons: typing.Dict[str, str] = {
-    "Finding": "map_pin",
-    "Receiving": "map-clock-outline",
-    "Hidden": "eye-off",
+    "Finding": ["Items to Get from My World", "map_pin"],
+    "Receiving": ["What I need from other Worlds", "map-clock-outline"],
+    "Hidden": ["Hidden Items", "eye-off"],
 }
 
 mwggstatus_icons: typing.Dict[MWGGUIHintStatus, str] = {
@@ -711,7 +663,6 @@ class HintListPanel(GameListPanel):
         self.panel_header_height = dp(50)
         self.content_height = dp(8)
         self.content_min_height = dp(96) # TODO: screw hardcodinggggggs (hint_item_height + spacing, padding, other random crap)
-        self.padding = (dp(16), dp(16), dp(16), dp(16))
         self.spacing = dp(8)
         self._populated = False
         Clock.schedule_once(lambda x: self.populate_slot_item(self.app.ctx), 0)
@@ -787,7 +738,10 @@ class HintListPanel(GameListPanel):
         self.panel_header = self.ids.panel_header
         self.panel_content = self.ids.panel_content
         self.hint_content = self.ids.rv
-        self.panel_header_layout = HintListItemHeader(hint_icon=hint_icons[self.hint_type], hint_text=self.hint_type, panel=self, height=self.panel_header_height)
+        self.panel_header_layout = HintListItemHeader(hint_icon=hint_icons[self.hint_type][1], 
+                                                      hint_text=hint_icons[self.hint_type][0], 
+                                                      panel=self, 
+                                                      height=self.panel_header_height)
         
         # Set up bindings for height recalculation after hint_content is available
         if self.hint_content:
