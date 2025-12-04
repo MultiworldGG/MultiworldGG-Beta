@@ -60,15 +60,16 @@ KV = '''
     viewclass: "RDMSearchChips"
     remaining_chips: []
     size_hint_x: 1
-    size_hint_y: 1
+    size_hint_y: None
+    height: dp(80)
     RecycleBoxLayout:
         id: rv_layout
         orientation: "vertical"
-        default_size: None, dp(80)
+        default_size: None, dp(40)
         default_size_hint: 1, None
         size_hint_y: None
         height: self.minimum_height
-        spacing: dp(12)
+        spacing: dp(1)
         padding: dp(8), 0, dp(8), 0
 
 <-HintListPanel>:
@@ -154,7 +155,6 @@ class RDMSearchChips(RecycleDataModelBehavior, MDBoxLayout):
         self.bind(width=self.on_width)
         self.size_hint_x = 1
         self.size_hint_y = None
-        self.height = dp(80)
         self.fbind('chips', self._create_chips)
     
     def _create_chips(self, instance=None, chips: list[MDChip] = []):
@@ -165,10 +165,16 @@ class RDMSearchChips(RecycleDataModelBehavior, MDBoxLayout):
         chips_width = 0
         if self.width > dp(100):
             self.clear_widgets()
+            # Check if we're in a refresh cycle to prevent recursion
+            hint_layout = getattr(self.recycleview, 'hint_layout', None)
+            is_refreshing = getattr(hint_layout, '_refreshing_chips', False) if hint_layout else False
+            
             for i, chip in enumerate(self.chips):
-                chips_width += chip.width + self.spacing + dp(24) # chip icon width
+                chips_width += chip.width + self.spacing # chip icon width
                 if chips_width > self.width:
-                    self.recycleview.remaining_chips = {"chips": self.chips[i:], "width": self.width}
+                    # Only set remaining_chips if not already refreshing
+                    if not is_refreshing:
+                        self.recycleview.remaining_chips = {"chips": self.chips[i:], "width": self.width}
                     break
                 else:
                     if chip.parent is not None:
@@ -333,6 +339,7 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
     _default_filter_chips:  list[MDChip] = []
     _search_width = NumericProperty(dp(100))
     _hint_screen_ref: ObjectProperty = None
+    _refreshing_chips = False  # Guard flag to prevent recursive refresh calls
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.app = MDApp.get_running_app()
@@ -404,6 +411,9 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
         self.add_widget(self.hint_scroll)
 
     def add_chips(self, filter_data: list[MDChip], width: int):
+        if self._refreshing_chips:
+            return
+        self._refreshing_chips = True
         if filter_data:
             # Replace data instead of appending to ensure single row
             self.filter_chip_box.data = [{"chips": filter_data, "width": width}]
@@ -412,6 +422,7 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
             # Clear data if no chips
             self.filter_chip_box.data = []
             self.filter_chip_box.refresh_from_data()
+        Clock.schedule_once(lambda dt: setattr(self, '_refreshing_chips', False), 0.1)
     
     def on_remaining_chips_changed(self, instance, value):
         """Handle when remaining chips are detected - add a new row
@@ -422,14 +433,17 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
         value: {"chips": [MDChip, MDChip, MDChip], "width": int}
             This is the set of chips that are remaining and need to be placed in a new row
         """
-        if value:  
-            truncated_chips = self.filter_chip_box.data[-1]["chips"][len(value):]
-            new_data = self.filter_chip_box.data[:len(self.filter_chip_box.data)-1] or []
-            new_data.append({"chips": truncated_chips, "width": value["width"]})
-            new_data.append(value)
+        if self._refreshing_chips or not value:
+            return
+        self._refreshing_chips = True
+        truncated_chips = self.filter_chip_box.data[-1]["chips"][len(value["chips"]):]
+        new_data = self.filter_chip_box.data[:len(self.filter_chip_box.data)-1] or []
+        new_data.append({"chips": truncated_chips, "width": value["width"]})
+        new_data.append(value)
 
-            self.filter_chip_box.data = new_data
-            self.filter_chip_box.refresh_from_data()
+        self.filter_chip_box.data = new_data
+        self.filter_chip_box.refresh_from_data()
+        Clock.schedule_once(lambda dt: setattr(self, '_refreshing_chips', False), 0.1)
 
     def on_search_width_changed(self, instance, value):
         self._search_width = dp(100) if not value > dp(308) else value - dp(208)
@@ -464,13 +478,16 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
 
     def on_filter_chip_selected(self, active: bool, chip_data: dict):
         """Handle filter chip selection - update sort key and apply sorting"""
+        if self._refreshing_chips:
+            return
 
         self.active_sort_key = chip_data["sort_key"]
         self.active_filter_text = chip_data["filter_text"]
 
+        self._refreshing_chips = True
         if self.active_filter_text == "Player":
             # Create new chips list with player chips - create new instances to avoid modifying originals
-            new_chips = self._default_filter_chips.copy()
+            new_chips = self.filter_chip_box.data[-1]["chips"]
             # Add player chips
             for slot_id, player in self.app.ctx.ui.ui_player_data.items():
                 chip = MDChip(MDChipText(text = player.slot_name),
@@ -480,13 +497,14 @@ class HintLayout(AutoAdjustHeightBehavior, MDBoxLayout):
                 chip.bind(active=lambda inst, value, chip_data={"filter_text": player.slot_name, "sort_key": "player_name", "active": False}: self.on_filter_chip_selected(value, chip_data))
                 new_chips.append(chip)
             # Update RecycleView data and refresh
-            self.filter_chip_box.data = [{"chips": new_chips, "width": self._search_width}]
+            self.filter_chip_box.data[-1]["chips"] = new_chips
             self.filter_chip_box.refresh_from_data()
         else:
             # Reset to default filter chips - create new instances
             # This handles "All" and other non-player filter chips
             self.filter_chip_box.data = [{"chips": self._default_filter_chips.copy(), "width": self._search_width}]
             self.filter_chip_box.refresh_from_data()
+        Clock.schedule_once(lambda dt: setattr(self, '_refreshing_chips', False), 0.1)
  
         # Apply sorting to all panels
         self.apply_sort_to_all_panels(self.active_sort_key)
