@@ -19,7 +19,7 @@ readme = "src/README.md"
 license = "GPL-3.0-or-later"
 
 [tool.setuptools.dynamic]
-version = {attr = "BaseUtils.__version__"}
+version = {file = "src/_version.txt"}
 
 [tool.setuptools.packages.find]
 where = ["src"]

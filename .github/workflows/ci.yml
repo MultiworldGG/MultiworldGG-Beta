@@ -205,6 +205,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install build
       
+      - name: Extract WORLDS_VERSION from BaseUtils.py
+        if: steps.check_changes.outputs.changed == 'true'
+        id: get_worlds_version
+        run: |
+          cd src
+          WORLDS_VERSION=$(python -c "import sys; sys.path.insert(0, '.'); from BaseUtils import __version__; print(__version__)")
+          echo "WORLDS_VERSION=$WORLDS_VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted WORLDS_VERSION: $WORLDS_VERSION"
+      
+      - name: Create version.txt for build
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd src
+          mkdir -p world_build_setuptools/src
+          echo "${{ steps.get_worlds_version.outputs.WORLDS_VERSION }}" > world_build_setuptools/src/_version.txt
+      
       - name: Copy namespace files to build directory
         if: steps.check_changes.outputs.changed == 'true'
         run: |
