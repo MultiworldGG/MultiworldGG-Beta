@@ -240,3 +240,4 @@ jdk*/*
 
 # SM64Hacks
 data/sm64hacks/**/*
+world_build_setuptools/src/_version.txt

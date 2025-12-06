@@ -67,7 +67,7 @@ from .AutoWorld import AutoWorldRegister
 # Add version for each world.
 for world in AutoWorldRegister.world_types:
     world_name, author, minimum_ap_version, version = get_archipelago_json(world)
-    AutoWorldRegister.world_types[world].version = Version(version)
+    AutoWorldRegister.world_types[world].version = Version(version.split("."))
 # Build the data package for each game.
 network_data_package: DataPackage = {
     "games": {world_name: world.get_data_package_data() for world_name, world in AutoWorldRegister.world_types.items()},
