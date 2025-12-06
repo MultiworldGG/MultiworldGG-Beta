@@ -367,7 +367,10 @@ def uninstall_worlds(worlds: List[str]) -> None:
 
 
 def find_world_modules() -> List[str]:
-    """Find all world modules in the multiworld repository."""
+    """Find all world modules in the multiworld repository and currently installed packages."""
+    world_modules = []
+    
+    # First, fetch from the repository
     try:
         # Fetch the simple index page from the multiworld PyPI repository
         url = "https://pypi.multiworld.gg/mwgg/apworlds/+simple"
@@ -386,19 +389,43 @@ def find_world_modules() -> List[str]:
         packages = re.findall(package_pattern, html_content)
         
         # Filter for world packages and strip the "worlds-" prefix
-        world_modules = []
         for package in packages:
             if package.startswith("worlds-"):
                 world_modules.append(package[7:])  # Remove "worlds-" prefix
         
-        return world_modules
-        
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
         logger.warning(f"Failed to fetch world modules from {url}: {e}")
-        return []
     except Exception as e:
         logger.warning(f"Unexpected error while fetching world modules: {e}")
-        return []
+    
+    # Convert to set for efficient lookup
+    world_modules_set = set(world_modules)
+    
+    # Also check for currently installed world modules
+    try:
+        executable_args = [python_cmd, "-m", "pip", "list", "--format", "json"]
+        logger.debug(f"Executing subprocess command to find installed worlds: {executable_args}")
+        response = subprocess.run(executable_args, capture_output=True, text=True, timeout=45)
+        
+        if response.returncode == 0:
+            installed_packages = json.loads(response.stdout)
+            
+            # Filter for world packages and add any that aren't already in the list
+            for package in installed_packages:
+                package_name = package.get("name", "")
+                if package_name.startswith("worlds."):
+                    world_name = package_name[7:]  # Remove "worlds." prefix
+                    if world_name not in world_modules_set:
+                        world_modules.append(world_name)
+                        world_modules_set.add(world_name)
+        else:
+            logger.warning(f"Could not list installed packages: {response.stderr}")
+    except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError) as e:
+        logger.warning(f"Could not check installed world modules: {e}")
+    except Exception as e:
+        logger.warning(f"Unexpected error while checking installed world modules: {e}")
+    
+    return world_modules
 
 def _parse_package_name_version(filename: str) -> tuple[str, str]:
     """
