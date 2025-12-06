@@ -69,6 +69,7 @@ Output Logs/
 /data/user.kv
 /datapackage
 /custom_worlds
+/certs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

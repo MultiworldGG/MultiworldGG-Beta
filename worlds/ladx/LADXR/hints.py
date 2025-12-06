@@ -55,7 +55,7 @@ def addHints(rom, rnd, hint_texts):
     for text_id, hint in hint_texts.items():
         if not hint:
             hint = rnd.choice(hints).format(*rnd.choice(useless_hint))
-        formatted = formatText(hint)
+        formatted = formatText(hint, skip_names=True)
         if len(formatted) > 97:
             formatted = formatted[:96] + formatted[-1:]
         rom.texts[int(text_id)] = formatted
@@ -89,8 +89,7 @@ def generate_hint_texts(world):
 
         hint = f"Your {item.name} is at {location_name}"
         if item.location.player != world.player:
-            # filter out { and } since they cause issues with string.format later on
-            player_name = world.multiworld.player_name[item.location.player].replace("{", "").replace("}", "")
+            player_name = world.multiworld.player_name[item.location.player]
             hint += f" in {player_name}'s world."
         else:
             hint += " in your world."

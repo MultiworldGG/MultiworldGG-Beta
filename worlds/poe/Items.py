@@ -24,6 +24,8 @@ ACT_0_WEAPON_TYPES = 2
 ACT_0_ARMOUR_TYPES = 2
 ACT_0_ADDITIONAL_LOCATIONS = 8
 
+ACT_1_MOVEMENT_GEMS = 2
+
 class ItemDict(TypedDict, total=False): 
     classification: ItemClassification 
     count: int | None
@@ -48,173 +50,6 @@ alternate_gems: Dict[str, Dict] = ItemTable.alternate_gems
 if _verbose_debug:
     logger.debug(f"Loaded {len(item_table)} items from ItemTable.")
 memoize_cache: Dict[str, list[ItemDict]] = {}
-
-def deprioritize_non_logic_gems(world: "PathOfExileWorld", table: Dict[int, ItemDict]) -> Dict[int, ItemDict]:
-    opt: PathOfExileOptions = world.options
-    
-    # Early exit if no gems are in the table (e.g., when gems are disabled)
-    all_gems = get_all_gems(table)
-    if not all_gems:
-        return table
-    
-    still_required_gem_ids = set()
-
-    #act 0 starter gems
-    selected_gems = [] # a list, we may have duplicates, but that's fine
-    lvl_1_gems = [item for item in get_main_skill_gem_items(table) if item["reqLevel"] == 1]
-    selected_gems.extend(world.random.sample(lvl_1_gems, k=min(ACT_0_USABLE_GEMS, len(lvl_1_gems)))) # 4 starting gems
-
-    for act in range(1, world.goal_act + 1):
-        main_gems_for_act = [item for item in get_main_skill_gem_items(table) if item["reqLevel"] <= Locations.acts[act]["maxMonsterLevel"] and item not in selected_gems]
-        support_gems_for_act = [item for item in get_support_gem_items(table) if item["reqLevel"] <= Locations.acts[act]["maxMonsterLevel"] and item not in selected_gems]
-        utility_gems_for_act = [item for item in get_utility_skill_gem_items(table) if item["reqLevel"] <= Locations.acts[act]["maxMonsterLevel"] and item not in selected_gems]
-
-        if main_gems_for_act:
-            selected_gems.extend(world.random.sample(main_gems_for_act, k=min(max(opt.skill_gems_per_act.value, 1), len(main_gems_for_act)))) #need at _least_ one main skill gem per act
-        if support_gems_for_act:
-            selected_gems.extend(world.random.sample(support_gems_for_act, k=min(opt.support_gems_per_act.value, len(support_gems_for_act))))
-        if utility_gems_for_act:
-            selected_gems.extend(world.random.sample(utility_gems_for_act, k=min(opt.skill_gems_per_act.value, len(utility_gems_for_act))))
-
-    still_required_gem_ids.update(item["id"] for item in selected_gems)
-    
-    for item in table.values():
-        if "MainSkillGem" in item["category"]\
-            or "SupportGem" in item["category"] \
-            or "UtilSkillGem" in item["category"] \
-                :
-            if item["id"] in still_required_gem_ids:
-                item["classification"] = ItemClassification.progression
-            else:
-                if item["classification"] == ItemClassification.progression:
-                    item["classification"] = ItemClassification.useful
-#                elif item["classification"] == ItemClassification.useful:
-#                    item["classification"] = ItemClassification.filler
-    return table
-
-def deprioritize_non_logic_gear(world: "PathOfExileWorld", table: Dict[int, ItemDict]) -> Dict[int, ItemDict]:
-    opt: PathOfExileOptions = world.options
-
-    # If gear upgrades are disabled, don't try to deprioritize any gear, flask are already progressive.
-    if opt.gear_upgrades.value == opt.gear_upgrades.option_all_gear_unlocked_at_start:
-        return table
-
-    required_categories = list()
-    progression_main_gems = [gem for gem in get_main_skill_gem_items(table) if gem["classification"] == ItemClassification.progression]
-    for gem in progression_main_gems:
-        if gem.get("reqToUse"):
-            required_categories.append(random.choice(gem.get("reqToUse")))
-    
-    required_categories = world.random.sample(required_categories, k=min(ACT_0_WEAPON_TYPES, len(required_categories)))
-    if "Unarmed" in required_categories: required_categories.remove("Unarmed")
-    required_categories.extend(["Wand", "Bow", "Sword"])
-    required_categories = required_categories[:ACT_0_WEAPON_TYPES]  # Ensure we only keep the guaranteed number of weapons
-
-    required_armor_ids = [i['id'] for i in  world.random.sample(get_armor_items(table), k=min(ACT_0_ARMOUR_TYPES, len(get_armor_items(table))))]
-    gear_ids = [item["id"] for item in get_gear_items(table)]
-    progression_sample_size = min(opt.gear_upgrades_per_act.value * world.goal_act, len(gear_ids))
-    progression_gear_ids = world.random.sample(gear_ids, progression_sample_size)
-
-    required_categories.append("Flask") # Flasks are always progression
-    for item in [ item for item in get_gear_items(table)]:
-        if (any(cat in item["category"] for cat in required_categories)
-            or item["id"] in required_armor_ids
-            or item["id"] in progression_gear_ids):
-            item["classification"] = ItemClassification.progression
-        else:
-            if item["classification"] == ItemClassification.progression:
-                item["classification"] = ItemClassification.useful
- #           elif item["classification"] == ItemClassification.useful:
- #               item["classification"] = ItemClassification.filler
-    
-    return table
-
-def cull_items_to_place(world: "PathOfExileWorld", items: Dict[int, ItemDict], locations: Dict[int, ItemDict]) -> Dict[int, ItemDict]:
-    total_locations_count = len(locations)
-
-    # Keep culling until we match the location count
-    while True:
-        total_items_count = sum(item.get("count", 1) for item in items.values())
-        amount_to_cull = total_items_count - total_locations_count
-        
-        if amount_to_cull <= 0:
-            break
-
-        filler_items = [(item_id, item) for item_id, item in items.items() 
-                       if item.get("classification") == ItemClassification.filler]
-
-        useful_items = [(item_id, item) for item_id, item in items.items()
-                       if item.get("classification") == ItemClassification.useful]
-        
-        
-        if not filler_items and not useful_items:
-            logger.error("[ERROR] No items available to remove. Cannot match location count.")
-            break
-
-        if len(filler_items + useful_items) < amount_to_cull:
-            logger.error(f"\n[ERROR] Not enough non-progressive items to cull ({len(filler_items + useful_items)}) to meet location count need to cull({amount_to_cull}).")
-
-        filler_items = world.random.sample(filler_items, k=min(len(filler_items), amount_to_cull))
-        useful_items = world.random.sample(useful_items, k=min(len(useful_items), amount_to_cull))
-
-        culled_count = 0
-        def cull_item_func(cull_items, culled_count=0, amount_to_cull=amount_to_cull):
-            starting_culled_count = culled_count
-            items_to_remove = []
-
-            for item_id, item in cull_items:
-                if culled_count >= amount_to_cull:
-                    break
-
-                item_count = item.get("count", 1)
-
-                if item_count <= (amount_to_cull - culled_count):
-                    # Remove entire item
-                    items_to_remove.append(item_id)
-                    culled_count += item_count
-                else:
-                    # Reduce item count
-                    reduction = amount_to_cull - culled_count
-                    item["count"] = item_count - reduction
-                    culled_count += reduction
-
-            # Remove items marked for removal
-            for item_id in items_to_remove:
-                items.pop(item_id, None)
-            return culled_count - starting_culled_count
-
-        culled_count += cull_item_func(filler_items, culled_count, amount_to_cull)
-        culled_count += cull_item_func(useful_items, culled_count, amount_to_cull)
-
-        logger.info(f"[INFO] Culled {culled_count} items.")
-
-    # Final verification
-    final_count = sum(item.get("count", 1) for item in items.values())
-    if final_count > total_locations_count:
-        logger.error(f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-                     f"\n"
-                     f"\nGENERATION ERROR! with player ({world.player_name})"
-                     f"\nFinal item count ({final_count}) is greater than location count ({total_locations_count})"
-                     f"\nWill precollect random items to make up the difference."
-                     f"\n"
-                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n")
-        while final_count > total_locations_count:
-            # Precollect random items to fill the gap
-            random_item: ItemDict = world.random.choice(list(items.values()))
-            logger.debug(f"Precollecting item: {random_item['name']}")
-            random_item["count"] = random_item.get("count", 1) - 1
-            if random_item["count"] <= 0:
-                items.pop(random_item["id"])
-            item_obj = Items.PathOfExileItem(random_item["name"], random_item["classification"], random_item["id"], world.player)
-            world.precollect(item_obj)
-            final_count -= 1
-        
-    return items
-
 
 def get_item_name_groups() -> Dict[str, Set[str]]:
     categories: Dict[str, Set[str]] = defaultdict(set)
@@ -297,7 +132,18 @@ def get_support_gems_by_required_level(level_minimum:int=0, level_maximum:int=10
     if table is item_table: memoize_cache[key] = result
     return result
 
-def get_utility_skill_gems_by_required_level(level_minimum:int=0, level_maximum:int=100, table: Dict[int, ItemDict] = item_table) -> list[ItemDict]:
+def get_utility_skill_gems_by_required_level_usable_weapon_and_category(available_weapons: set[str], level_minimum:int=0, level_maximum:int=100, table: Dict[int, ItemDict] = item_table, required_categories:set[str]=set()) -> list[ItemDict]:
+    key = f"UtilitySkillGems_{level_minimum}_{level_maximum}_category_" + "_".join(sorted(required_categories))
+    if table is item_table and key in memoize_cache:
+        return memoize_cache[key]
+    result = [item for item in get_utility_skill_gems_by_required_level(level_minimum, level_maximum, table) if
+              any(cat in item["category"] for cat in required_categories) and
+              (any(weapon in available_weapons for weapon in item.get("reqToUse", [])) or not item.get("reqToUse", [])) # we have the weapon, or there are no reqToUse]
+              ]
+    if table is item_table: memoize_cache[key] = result
+    return result
+
+def get_utility_skill_gems_by_required_level(level_minimum:int=0, level_maximum:int=100, table: Dict[int, ItemDict] = item_table, additional_categories:list[str] = None) -> list[ItemDict]:
     key = f"UtilitySkillGems_{level_minimum}_{level_maximum}"
     if table is item_table and key in memoize_cache:
         return memoize_cache[key]

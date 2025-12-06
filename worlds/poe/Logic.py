@@ -4,9 +4,14 @@ from BaseClasses import Region, MultiWorld, Item, Location, LocationProgressType
 from worlds.AutoWorld import World, WebWorld
 from Utils import visualize_regions
 import logging
-
+import random
 from .Options import PathOfExileOptions
-from . import Items
+from collections import defaultdict
+from BaseClasses import Item, ItemClassification
+from typing import TypedDict, Dict, Set
+
+from worlds.poe import Locations
+from worlds.poe import Items
 from .data import ItemTable
 from . import Locations
 from . import Regions as poeRegions
@@ -42,8 +47,8 @@ def generate_items_logic(world: "PathOfExileWorld"):
 
         setup_early_items(world)
 
-        world.items_to_place = Items.deprioritize_non_logic_gems(world, world.items_to_place)
-        # world.items_to_place = Items.deprioritize_non_logic_gear(world, world.items_to_place) # this can lead to some generation issues, so not doing it for now.
+        world.items_to_place = deprioritize_non_logic_gems(world, world.items_to_place)
+        # world.items_to_place = deprioritize_non_logic_gear(world, world.items_to_place) # this can lead to some generation issues, so not doing it for now.
 
         world.total_items_to_place_count = sum(item.get("count", 1) for item in world.items_to_place.values())
         world.locations_to_place = poeRules.SelectLocationsToAdd(world=world, target_amount=world.total_items_to_place_count)
@@ -61,7 +66,7 @@ def generate_items_logic(world: "PathOfExileWorld"):
             world.total_items_to_place_count = sum(item.get("count", 1) for item in world.items_to_place.values())
             logger.debug(
                 f"[POE]: total items to place before culling: {world.total_items_to_place_count} / {table_total_item_count} possible")
-            world.items_to_place = Items.cull_items_to_place(world, world.items_to_place, world.locations_to_place)
+            world.items_to_place = cull_items_to_place(world, world.items_to_place, world.locations_to_place)
             world.total_items_to_place_count = sum(item.get("count", 1) for item in world.items_to_place.values())
             logger.debug(
                 f"[POE]: total items to place after  culling: {world.total_items_to_place_count} / {table_total_item_count} possible")
@@ -329,3 +334,193 @@ def get_goal_act(world, opt) -> int:
     elif opt.goal.value == opt.goal.option_complete_act_9: return 9
     elif opt.goal.value == opt.goal.option_complete_the_campaign: return 10
     else: return 11
+
+def deprioritize_non_logic_gems(world: "PathOfExileWorld",
+                                table: Dict[int, Items.ItemDict]) -> Dict[int, Items.ItemDict]:
+    opt: PathOfExileOptions = world.options
+
+    # Early exit if no gems are in the table (e.g., when gems are disabled)
+    all_gems = Items.get_all_gems(table)
+    if not all_gems:
+        return table
+
+    still_required_gem_ids = set()
+
+    # act 0 starter gems
+    selected_gems = []  # a list, we may have duplicates, but that's fine
+    lvl_1_gems = [item for item in Items.get_main_skill_gem_items(table) if item["reqLevel"] == 1]
+    movement_gems = [item for item in Items.get_by_has_every_category({"EarlyMovement"})]
+    selected_gems.extend(
+        world.random.sample(lvl_1_gems, k=min(Items.ACT_0_USABLE_GEMS, len(lvl_1_gems))))  # 4 starting gems
+    selected_gems.extend(
+        world.random.sample(movement_gems, k=min(Items.ACT_1_MOVEMENT_GEMS, len(movement_gems))))  # 2 movement gems
+
+    for act in range(1, world.goal_act + 1):
+        main_gems_for_act = [item for item in Items.get_main_skill_gem_items(table) if
+                             item["reqLevel"] <= Locations.acts[act]["maxMonsterLevel"] and item not in selected_gems]
+        support_gems_for_act = [item for item in Items.get_support_gem_items(table) if
+                                item["reqLevel"] <= Locations.acts[act][
+                                    "maxMonsterLevel"] and item not in selected_gems]
+        utility_gems_for_act = [item for item in Items.get_utility_skill_gem_items(table) if
+                                item["reqLevel"] <= Locations.acts[act][
+                                    "maxMonsterLevel"] and item not in selected_gems]
+
+        if main_gems_for_act:
+            selected_gems.extend(world.random.sample(main_gems_for_act, k=min(max(opt.skill_gems_per_act.value, 1),
+                                                                              len(main_gems_for_act))))  # need at _least_ one main skill gem per act
+        if support_gems_for_act:
+            selected_gems.extend(world.random.sample(support_gems_for_act,
+                                                     k=min(opt.support_gems_per_act.value, len(support_gems_for_act))))
+        if utility_gems_for_act:
+            selected_gems.extend(world.random.sample(utility_gems_for_act,
+                                                     k=min(opt.skill_gems_per_act.value, len(utility_gems_for_act))))
+
+    still_required_gem_ids.update(item["id"] for item in selected_gems)
+
+    for item in table.values():
+        if "MainSkillGem" in item["category"] \
+                or "SupportGem" in item["category"] \
+                or "UtilSkillGem" in item["category"] \
+                :
+            if item["id"] in still_required_gem_ids:
+                item["classification"] = ItemClassification.progression
+            else:
+                if item["classification"] == ItemClassification.progression:
+                    item["classification"] = ItemClassification.useful
+    #                elif item["classification"] == ItemClassification.useful:
+    #                    item["classification"] = ItemClassification.filler
+    return table
+
+
+def deprioritize_non_logic_gear(world: "PathOfExileWorld",
+                                table: Dict[int, Items.ItemDict]) -> Dict[int, Items.ItemDict]:
+    opt: PathOfExileOptions = world.options
+
+    # If gear upgrades are disabled, don't try to deprioritize any gear, flask are already progressive.
+    if opt.gear_upgrades.value == opt.gear_upgrades.option_all_gear_unlocked_at_start:
+        return table
+
+    required_categories = list()
+    progression_main_gems = [gem for gem in Items.get_main_skill_gem_items(table) if
+                             gem["classification"] == ItemClassification.progression]
+    for gem in progression_main_gems:
+        if gem.get("reqToUse"):
+            required_categories.append(random.choice(gem.get("reqToUse")))
+
+    required_categories = world.random.sample(required_categories,
+                                              k=min(Items.ACT_0_WEAPON_TYPES, len(required_categories)))
+    if "Unarmed" in required_categories: required_categories.remove("Unarmed")
+    required_categories.extend(["Wand", "Bow", "Sword"])
+    required_categories = required_categories[
+                          :Items.ACT_0_WEAPON_TYPES]  # Ensure we only keep the guaranteed number of weapons
+
+    required_armor_ids = [i['id'] for i in world.random.sample(Items.get_armor_items(table),
+                                                               k=min(Items.ACT_0_ARMOUR_TYPES,
+                                                                     len(Items.get_armor_items(table))))]
+    gear_ids = [item["id"] for item in Items.get_gear_items(table)]
+    progression_sample_size = min(opt.gear_upgrades_per_act.value * world.goal_act, len(gear_ids))
+    progression_gear_ids = world.random.sample(gear_ids, progression_sample_size)
+
+    required_categories.append("Flask")  # Flasks are always progression
+    for item in [item for item in Items.get_gear_items(table)]:
+        if (any(cat in item["category"] for cat in required_categories)
+                or item["id"] in required_armor_ids
+                or item["id"] in progression_gear_ids):
+            item["classification"] = ItemClassification.progression
+        else:
+            if item["classification"] == ItemClassification.progression:
+                item["classification"] = ItemClassification.useful
+    #           elif item["classification"] == ItemClassification.useful:
+    #               item["classification"] = ItemClassification.filler
+
+    return table
+
+
+def cull_items_to_place(world: "PathOfExileWorld", items: Dict[int, Items.ItemDict],
+                        locations: Dict[int, Items.ItemDict]) -> Dict[int, Items.ItemDict]:
+    total_locations_count = len(locations)
+
+    # Keep culling until we match the location count
+    while True:
+        total_items_count = sum(item.get("count", 1) for item in items.values())
+        amount_to_cull = total_items_count - total_locations_count
+
+        if amount_to_cull <= 0:
+            break
+
+        filler_items = [(item_id, item) for item_id, item in items.items()
+                        if item.get("classification") == ItemClassification.filler]
+
+        useful_items = [(item_id, item) for item_id, item in items.items()
+                        if item.get("classification") == ItemClassification.useful]
+
+        if not filler_items and not useful_items:
+            logger.error("[ERROR] No items available to remove. Cannot match location count.")
+            break
+
+        if len(filler_items + useful_items) < amount_to_cull:
+            logger.error(
+                f"\n[ERROR] Not enough non-progressive items to cull ({len(filler_items + useful_items)}) to meet location count need to cull({amount_to_cull}).")
+
+        filler_items = world.random.sample(filler_items, k=min(len(filler_items), amount_to_cull))
+        useful_items = world.random.sample(useful_items, k=min(len(useful_items), amount_to_cull))
+
+        culled_count = 0
+
+        def cull_item_func(cull_items, culled_count=0, amount_to_cull=amount_to_cull):
+            starting_culled_count = culled_count
+            items_to_remove = []
+
+            for item_id, item in cull_items:
+                if culled_count >= amount_to_cull:
+                    break
+
+                item_count = item.get("count", 1)
+
+                if item_count <= (amount_to_cull - culled_count):
+                    # Remove entire item
+                    items_to_remove.append(item_id)
+                    culled_count += item_count
+                else:
+                    # Reduce item count
+                    reduction = amount_to_cull - culled_count
+                    item["count"] = item_count - reduction
+                    culled_count += reduction
+
+            # Remove items marked for removal
+            for item_id in items_to_remove:
+                items.pop(item_id, None)
+            return culled_count - starting_culled_count
+
+        culled_count += cull_item_func(filler_items, culled_count, amount_to_cull)
+        culled_count += cull_item_func(useful_items, culled_count, amount_to_cull)
+
+        logger.info(f"[INFO] Culled {culled_count} items.")
+
+    # Final verification
+    final_count = sum(item.get("count", 1) for item in items.values())
+    if final_count > total_locations_count:
+        logger.error(f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+                     f"\n"
+                     f"\nGENERATION ERROR! with player ({world.player_name})"
+                     f"\nFinal item count ({final_count}) is greater than location count ({total_locations_count})"
+                     f"\nWill precollect random items to make up the difference."
+                     f"\n"
+                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+                     f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n")
+        while final_count > total_locations_count:
+            # Precollect random items to fill the gap
+            random_item: Items.ItemDict = world.random.choice(list(items.values()))
+            logger.debug(f"Precollecting item: {random_item['name']}")
+            random_item["count"] = random_item.get("count", 1) - 1
+            if random_item["count"] <= 0:
+                items.pop(random_item["id"])
+            item_obj = Items.PathOfExileItem(random_item["name"], random_item["classification"], random_item["id"],
+                                             world.player)
+            world.precollect(item_obj)
+            final_count -= 1
+
+    return items

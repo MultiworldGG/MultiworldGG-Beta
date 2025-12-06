@@ -12,6 +12,10 @@ def adjust_options(world):
         world.options.max_elevator_cost.value, world.options.min_elevator_cost.value = \
          world.options.min_elevator_cost.value, world.options.max_elevator_cost.value
 
+    if world.options.max_custom_goal_cost < world.options.min_custom_goal_cost:
+        world.options.max_custom_goal_cost.value, world.options.min_custom_goal_cost.value = \
+         world.options.min_custom_goal_cost.value, world.options.max_custom_goal_cost.value
+
     tot_coins: int = total_coins(world)
     if world.options.max_kiosk_cost > tot_coins - 6:
         world.options.max_kiosk_cost.value = min(70, tot_coins - 6)
@@ -25,14 +29,42 @@ def adjust_options(world):
     if world.options.min_elevator_cost > tot_coins:
         world.options.min_elevator_cost.value = min(79, tot_coins)
 
+    if world.options.max_custom_goal_cost > tot_coins:
+        world.options.max_custom_goal_cost.value = tot_coins
+
+    if world.options.min_custom_goal_cost > tot_coins:
+        world.options.min_custom_goal_cost.value = tot_coins
+
     if world.options.swimming.value == 0:
         world.options.precisejumps.value = 0
+
+    if world.options.cassette_logic.value == 0:
+        world.options.extra_cassettes.value = 0
+
+    if world.options.shuffle_kiosk_reward.value == 0:
+        world.options.access_garys_garden.value = 0
+
+    if world.options.goal_completion.value == 3:
+        world.options.shuffle_garys_garden.value = 1
+
+    if world.options.goal_completion.value == 4:
+        world.options.shuffle_kiosk_reward.value = 1
+        world.options.shuffle_garys_garden.value = 1
+        world.options.access_garys_garden.value = 2
+        if world.options.cassette_logic.value == 1:
+            world.options.cassette_logic.value = 2
+        world.options.fishsanity.value = 2
+        world.options.seedsanity.value = 2
+        world.options.flowersanity.value = 2
+        world.options.bonesanity.value = 2
+
+    if world.options.shuffle_kiosk_reward.value == 0:
+        world.options.start_with_ticket.value = 1
 
 def total_coins(world) -> int:
     count: int = 76
     if world.options.shuffle_garys_garden.value:
         count += 3
-
     return count
 
 class ShuffleKioskReward(DefaultOnToggle):
@@ -90,10 +122,16 @@ class KeysLevelBased(Toggle):
 class GoalCompletion(Choice):
     """Set your Completion Goal.
     Hired: Reach Pepper's Interview and get hired!
-    Employee: Get 76 Coins and be the Employee Of The Month!"""
+    Employee: Get 76 Coins and be the Employee Of The Month!
+    Custom: Get a custom amount of coins to complete the game!
+    Garden: Restore Gary's Garden to its former glory!
+    Friend: Be everyone's best friend by helping Mitch, Mai, Little Gabi, Fischer, Moomy and co. (This will enable Fishsanity, Seedsanity, Flowersanity and Bonesanity)"""
     display_name = "Completion Goal"
     option_hired = 0
     option_employee = 1
+    option_custom = 2
+    option_garden = 3
+    option_friend = 4
     default = 0
 
 
@@ -131,6 +169,22 @@ class MaxElevatorCost(Range):
     default = 46
 
 
+class MinCustomGoalCost(Range):
+    """Determines the lowest possible cost the custom goal."""
+    display_name = "Minimum Custom Goal Cost"
+    range_start = 10
+    range_end = 79
+    default = 20
+
+
+class MaxCustomGoalCost(Range):
+    """Determines the highest possible cost the custom goal."""
+    display_name = "Maximum Custom Goal Cost"
+    range_start = 20
+    range_end = 79
+    default = 50
+
+
 class CassetteLogic(Choice):
     """This changes how Mitch & Mai work
 
@@ -151,6 +205,15 @@ class CassetteLogic(Choice):
     default = 2
 
 
+class ExtraAmountOfCassettes(Range):
+    """This option will try to add extra 'Cassettes' to the Item Pool.
+    If there are not enough locations, it will add as many as it can!"""
+    display_name = "Extra Cassettes in Item Pool"
+    range_start = 0
+    range_end = 50
+    default = 10
+
+
 class ProgressiveContactList(DefaultOnToggle):
     """If this option is enabled, the Contact Lists will not be separate, so you cannot get Contact List 2 before Contact List 1."""
     display_name = "Progressive Contact List"
@@ -159,6 +222,14 @@ class ProgressiveContactList(DefaultOnToggle):
 class SnailShopLocations(Toggle):
     """When enabled the clothes shop from the Tamagotchi Snail will contain AP Items."""
     display_name = "Snail Shop"
+
+
+class SpeedBoostAmountInPool(Range):
+    """Determines how many 'Speed Boost' are in the pool."""
+    display_name = "Speed Boost in Item Pool"
+    range_start = 0
+    range_end = 8
+    default = 4
 
 
 class BonkPermit(Toggle):
@@ -187,10 +258,18 @@ class Swimming(Toggle):
     display_name = "Swimming"
 
 
-class Textbox(Toggle):
-    """When enabled, the item 'Textbox' is required to talk to NPCs."""
+class Textbox(Choice):
+    """Want to have a break talking with NPCs?
+    Vanilla: Normal Here Comes Niko! behaviour
+    -----------------------------------------------------------
+    Global: The item 'Textbox' is required to interact with anything that uses the textbox
+    -----------------------------------------------------------
+    Level: Every level requires its own textbox item to interact with anything that uses the textbox, so Hairball City needs 'Hairball City Textbox'"""
     display_name = "Textbox"
-
+    option_vanilla = 0
+    option_global = 1
+    option_level = 2
+    default = 0
 
 class AirConditioning(Toggle):
     """When enabled, ACs are broken, the item 'AC Repair' will make the frog engineers repair them."""
@@ -404,19 +483,64 @@ class JumpingJacksTrapWeight(Range):
     default = 25
 
 
+class CameraStuckTrapWeight(Range):
+    """The weight of Camera Stuck Traps in the trap pool.
+    Camera Stuck Traps will stop the camera from turning."""
+    display_name = "Camera Stuck Trap Weight"
+    range_start = 0
+    range_end = 100
+    default = 15
+
+
+class InvertedCameraTrapWeight(Range):
+    """The weight of Inverted Camera Traps in the trap pool.
+    Inverted Camera Traps will invert the cameras X and Y controls."""
+    display_name = "Inverted Camera Trap Weight"
+    range_start = 0
+    range_end = 100
+    default = 25
+
+
+class ThereGoesNikoTrapWeight(Range):
+    """The weight of There Goes Niko Traps in the trap pool.
+    There Goes Niko Traps will make the camera stop in place."""
+    display_name = "There Goes Niko Trap Weight"
+    range_start = 0
+    range_end = 100
+    default = 10
+
+
 class HCNDeathLink(DeathLink):
-    """When somebody dies the level will be reloaded"""
+    """When somebody dies the level will be reloaded.
+    Can be toggled with '/deathlink' in-game"""
+
+
+class DeathLinkAmnesty(Range):
+    """How many water/scissor touches it takes to send a DeathLink"""
+    display_name = "Death Link Amnesty"
+    range_start = 1
+    range_end = 30
+    default = 10
 
 
 class TrapLink(Toggle):
-    """Traps with other TrapLink players are shared."""
+    """Traps with other TrapLink players are shared.
+    Can be toggled with '/traplink' in-game"""
     display_name = "Trap Link"
+
+
+class RingLink(Toggle):
+    """Apples will be shared with other RingLink players.
+    Can be toggled with '/ringlink' in-game"""
+    display_name = "Ring Link"
 
 
 @dataclass
 class HereComesNikoOptions(PerGameCommonOptions):
     death_link: HCNDeathLink
+    death_link_amnesty: DeathLinkAmnesty
     trap_link: TrapLink
+    #ring_link: RingLink
 
     shuffle_kiosk_reward: ShuffleKioskReward
     start_with_ticket: StartWithTicket
@@ -426,14 +550,18 @@ class HereComesNikoOptions(PerGameCommonOptions):
     access_garys_garden: GarysGardenAccess
     level_based_keys: KeysLevelBased
     cassette_logic: CassetteLogic
+    extra_cassettes: ExtraAmountOfCassettes
     progressive_contact_list: ProgressiveContactList
     snail_shop: SnailShopLocations
+    speed_boost_amount: SpeedBoostAmountInPool
 
     goal_completion: GoalCompletion
     min_kiosk_cost: MinKioskCost
     max_kiosk_cost: MaxKioskCost
     min_elevator_cost: MinElevatorCost
     max_elevator_cost: MaxElevatorCost
+    min_custom_goal_cost: MinCustomGoalCost
+    max_custom_goal_cost: MaxCustomGoalCost
 
     bonk_permit: BonkPermit
     bug_catching: BugNet
@@ -465,6 +593,9 @@ class HereComesNikoOptions(PerGameCommonOptions):
     phone_trapweight: PhoneTrapWeight
     tiny_trapweight: TinyTrapWeight
     jumpingjacks_trapweight: JumpingJacksTrapWeight
+    camerastuck_trapweight: CameraStuckTrapWeight
+    invertedcamera_trapweight: InvertedCameraTrapWeight
+    theregoesniko_trapweight: ThereGoesNikoTrapWeight
     start_inventory_from_pool: StartInventoryPool
 
 hcniko_option_groups = [
@@ -473,17 +604,21 @@ hcniko_option_groups = [
         MinKioskCost,
         MaxKioskCost,
         MinElevatorCost,
-        MaxElevatorCost
+        MaxElevatorCost,
+        MinCustomGoalCost,
+        MaxCustomGoalCost
     ]),
     OptionGroup("General Options", [
         ShuffleKioskReward,
         StartWithTicket,
         CassetteLogic,
+        ExtraAmountOfCassettes,
         EnableAchievements,
         ShuffleHandsomeFrog,
         ShuffleGarysGarden,
         GarysGardenAccess,
-        SnailShopLocations
+        SnailShopLocations,
+        SpeedBoostAmountInPool
     ]),
     OptionGroup("Item & Logic Options", [
         KeysLevelBased,
@@ -519,6 +654,9 @@ hcniko_option_groups = [
         WideTrapWeight,
         PhoneTrapWeight,
         TinyTrapWeight,
-        JumpingJacksTrapWeight
+        JumpingJacksTrapWeight,
+        CameraStuckTrapWeight,
+        InvertedCameraTrapWeight,
+        ThereGoesNikoTrapWeight
     ])
 ]

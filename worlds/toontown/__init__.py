@@ -31,6 +31,7 @@ class ToontownWeb(WebWorld):
     )]
     theme = "partyTime"
     option_groups = toontown_option_groups
+    disable_wiki_link: bool = True
 
 
 class ToontownWorld(World):

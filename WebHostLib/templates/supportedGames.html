@@ -77,6 +77,11 @@
             <span class="link-spacer">|</span>
             <a href="{{ url_for("tutorial_landing", _anchor=(world.web.display_name | default(game_name) | encodeURIComponent)) }}">Setup Guides</a>
             {% endif %}
+            {% if game_name != 'Archipelago' and not world.web.disable_wiki_link %}
+            <span class="link-spacer">|</span>
+            <a href="https://archipelago.miraheze.org/wiki/{{ world.web.custom_wiki_link_key if world.web.custom_wiki_link_key else game_name | replace(' ', '_') }}"
+                target="_blank">Wiki</a>
+            {% endif %}
             {% if world.web.options_page is string %}
             <span class="link-spacer">|</span>
             <a href="{{ world.web.options_page }}" target="_blank">Options Page (External Link)</a>

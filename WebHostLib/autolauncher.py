@@ -166,13 +166,17 @@ def autogen(config: dict):
                         select(generation for generation in Generation if generation.state == STATE_ERROR).delete()
 
                     while not stop_event.wait(0.1):
-                        with db_session:
-                            # for update locks the database row(s) during transaction, preventing writes from elsewhere
-                            to_start = select(
-                                generation for generation in Generation
-                                if generation.state == STATE_QUEUED).for_update()
-                            for generation in to_start:
-                                launch_generator(generator_pool, generation, timeout=job_time)
+                        try:
+                            with db_session:
+                                # for update locks the database row(s) during transaction, preventing writes from elsewhere
+                                to_start = select(
+                                    generation for generation in Generation
+                                    if generation.state == STATE_QUEUED).for_update()
+                                for generation in to_start:
+                                    launch_generator(generator_pool, generation, timeout=job_time)
+                        except Exception as e:
+                            logging.exception(e)
+                            stop_event.wait(5)
         except AlreadyRunningException:
             logging.info("Autogen reports as already running, not starting another.")
 

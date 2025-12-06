@@ -67,7 +67,7 @@ def get_world_version(world: type(World)) -> str:
                         world_version = manifest['world_version']
                         # Don't show version if it's 0.0.0
                         if world_version != "0.0.0":
-                            return f"Version {world_version}"
+                            return f"{world_version}"
             except (FileNotFoundError, json.JSONDecodeError, UnicodeDecodeError):
                 pass
     except (ImportError, AttributeError, OSError):

@@ -2,7 +2,6 @@ from typing import List, Dict, TextIO, Any
 
 from BaseClasses import MultiWorld
 from BaseClasses import Region, Tutorial, ItemClassification
-from Utils import visualize_regions
 from worlds.AutoWorld import World, WebWorld
 from .Items import item_data_table, HereComesNikoItem, item_table, item_name_groups
 from .Locations import location_data_table, HereComesNikoLocation, locked_locations, location_table, \
@@ -32,7 +31,6 @@ class HereComesNikoWorld(World):
     """A cozy little game, about frogs and being a good friend"""
 
     game = "Here Comes Niko!"
-    author: str = "nieli"
     web = HereComesNikoWebWorld()
     options: HereComesNikoOptions
     options_dataclass = HereComesNikoOptions
@@ -74,6 +72,8 @@ class HereComesNikoWorld(World):
             "Gary's Garden - Mai": 0,
             "Gary's Garden - Mitch": 0,
         }
+        self.extra_cassettes = 0
+        self.custom_goal_required = 0
 
     def generate_early(self):
         adjust_options(self)
@@ -140,23 +140,28 @@ class HereComesNikoWorld(World):
         mw = self.multiworld
 
         item_pool: List[HereComesNikoItem] = []
-        item_pool_count: Dict[str, int] = {}
+
         for name, item in item_data_table.items():
-            item_pool_count[name] = 0
-            if item.id and item.can_create(self.options):
-                if item.type in {ItemClassification.filler, ItemClassification.trap}:
-                    continue
-                while item_pool_count[name] < item.num_exist and name != "Speed Boost":
-                    item_pool.append(self.create_item(name))
-                    item_pool_count[name] += 1
+            if not item.id or not item.can_create(self.options):
+                continue
+            if item.type in {ItemClassification.filler, ItemClassification.trap}:
+                continue
+            if name == "Speed Boost":
+                continue
+            for _ in range(item.num_exist):
+                item_pool.append(self.create_item(name))
+
         if not self.options.shuffle_garys_garden.value:
             for _ in range(3):
                 item_pool.remove(self.create_item("Coin"))
             if self.options.cassette_logic.value != 0:
                 for _ in range(10):
                     item_pool.remove(self.create_item("Cassette"))
+
         if self.options.goal_completion.value == 1:
             coins_needed = 76
+        elif self.options.goal_completion.value == 2:
+            coins_needed = self.custom_goal_required
         else:
             coins_needed = self.kiosk_cost["Elevator"]
         coin_count = 0
@@ -164,13 +169,25 @@ class HereComesNikoWorld(World):
             if item.name == "Coin":
                 coin_count += 1
                 if coin_count <= coins_needed:
-                    item.classification = ItemClassification.progression
+                    item.classification = ItemClassification.progression_deprioritized
         if self.options.start_with_ticket.value:
             item_pool = [item for item in item_pool if item.name != self.selected_ticket]
+
+        # Add extra cassettes to the item pool
+        if self.options.extra_cassettes.value > 0 and self.options.cassette_logic.value != 0:
+            total_locations = len(self.multiworld.get_unfilled_locations(self.player))
+            remaining_spots = total_locations - len(item_pool)
+            extra_cassettes_amount = self.options.extra_cassettes.value
+            extra_cassettes_to_add = min(extra_cassettes_amount, remaining_spots)
+            for _ in range(extra_cassettes_to_add):
+                item_pool.append(self.create_item("Cassette"))
+            self.extra_cassettes = extra_cassettes_to_add
+
         # Determine available locations before adding Speed Boosts
         total_locations = len(self.multiworld.get_unfilled_locations(self.player))
         remaining_spots = total_locations - len(item_pool)
-        speed_boosts_to_add = min(8, remaining_spots)
+        speed_boost_amount = self.options.speed_boost_amount.value
+        speed_boosts_to_add = min(speed_boost_amount, remaining_spots)
         for _ in range(speed_boosts_to_add):
             item_pool.append(self.create_item("Speed Boost"))
         total_locations = len(self.multiworld.get_unfilled_locations(self.player))
@@ -245,6 +262,9 @@ class HereComesNikoWorld(World):
                     "Phone Trap": self.options.phone_trapweight.value,
                     "Tiny Trap": self.options.tiny_trapweight.value,
                     "Jumping Jacks Trap": self.options.jumpingjacks_trapweight.value,
+                    "Camera Stuck Trap": self.options.camerastuck_trapweight.value,
+                    "Inverted Camera Trap": self.options.invertedcamera_trapweight.value,
+                    "There Goes Niko Trap": self.options.theregoesniko_trapweight.value,
                 }
                 if name in option_map:
                     trap_list[name] = option_map[name]
@@ -285,6 +305,8 @@ class HereComesNikoWorld(World):
             self.kiosk_cost["Kiosk Public Pool"] = self.passthrough["kioskpp"]
             self.kiosk_cost["Kiosk Bathhouse"] = self.passthrough["kioskbath"]
             self.kiosk_cost["Elevator"] = self.passthrough["kioskhq"]
+            if self.options.goal_completion.value == 2:
+                self.custom_goal_required = self.passthrough["custom_goal"]
             if self.options.cassette_logic.value == 0:
                 self.cassette_cost["Hairball City - Mitch"] = self.passthrough["chc1"]
                 self.cassette_cost["Hairball City - Mai"] = self.passthrough["chc2"]
@@ -316,6 +338,12 @@ class HereComesNikoWorld(World):
                 self.cassette_cost["Gary's Garden - Mitch"] = self.passthrough["cgg1"] * 5
                 self.cassette_cost["Gary's Garden - Mai"] = self.passthrough["cgg2"] * 5
 
+    def scout_swim_course(self) -> Any:
+        if not self.options.swimming.value:
+            return None
+        loc = self.multiworld.find_item("Swim Course", self.player)
+        return [{"player": loc.player, "location": loc.address}]
+
     def write_spoiler_header(self, spoiler_handle: TextIO):
         if self.options.start_with_ticket.value:
             spoiler_handle.write(f"Starting Ticket: {self.selected_ticket}\n")
@@ -327,6 +355,9 @@ class HereComesNikoWorld(World):
             else:
                 real_cassette_cost = self.cassette_cost[i] * 5
             spoiler_handle.write(f"%s Cassette Cost: %i\n" %(i, real_cassette_cost))
+        spoiler_handle.write(f"Extra added Cassettes: {self.extra_cassettes}")
+        if self.options.goal_completion.value == 2:
+            spoiler_handle.write(f"Required Coins for custom goal: {self.custom_goal_required}\n")
 
     def fill_slot_data(self) -> Dict[str, Any]:
         return  {
@@ -379,6 +410,7 @@ class HereComesNikoWorld(World):
             "precisejumps": self.options.precisejumps.value,
             "bonesanity": self.options.bonesanity.value,
             "death_link": self.options.death_link.value,
+            "death_link_amnesty": self.options.death_link_amnesty.value,
             "trap_link": self.options.trap_link.value,
             "trapchance": self.options.trapchance.value,
             "freeze_trapweight": self.options.freeze_trapweight.value,
@@ -391,6 +423,11 @@ class HereComesNikoWorld(World):
             "phone_trapweight": self.options.phone_trapweight.value,
             "tiny_trapweight": self.options.tiny_trapweight.value,
             "jumpingjacks_trapweight": self.options.jumpingjacks_trapweight.value,
+            "camerastuck_trapweight": self.options.camerastuck_trapweight.value,
+            "invertedcamera_trapweight": self.options.invertedcamera_trapweight.value,
+            "theregoesniko_trapweight": self.options.theregoesniko_trapweight.value,
+            "custom_goal": self.custom_goal_required,
+            "hint_swim": self.scout_swim_course(),
         }
 
     # for the universal tracker, doesn't get called in standard gen
