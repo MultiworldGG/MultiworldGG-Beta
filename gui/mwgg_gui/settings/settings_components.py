@@ -28,12 +28,13 @@ from kivymd.uix.textfield import MDTextField, MDTextFieldHelperText
 from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogSupportingText, MDDialogContentContainer
 from kivymd.uix.snackbar import MDSnackbar, MDSnackbarText 
 
-from mwgg_gui.components.mw_theme import THEME_OPTIONS, DEFAULT_TEXT_COLORS
+from mwgg_gui.components.mw_theme import THEME_OPTIONS, DEFAULT_TEXT_COLORS, RegisterFonts
 from mwgg_gui.overrides.colorpicker import MWColorPicker
 from mwgg_gui.components.dialog import MessageBox
 
 from dataclasses import fields
 import logging
+from Utils import persistent_store, persistent_load
 logger = logging.getLogger("Client")
 
 # KV string for settings components
@@ -509,13 +510,13 @@ class ConnectionSettings(SettingsScrollBox):
         hostname_box = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=dp(55), padding=dp(4), spacing=dp(4))
         hostname_box.add_widget(MDLabel(text="Hostname", theme_text_color="Primary"))
         self.hostname_input = MDTextField(
-            text=self.app.app_config.get('client', 'hostname', fallback='multiworld.gg'),
+            text=persistent_load().get('client', {}).get('last_server_hostname', 'multiworld.gg'),
             on_text_validate=self.save_hostname
         )
         hostname_box.add_widget(self.hostname_input)
         hostname_box.add_widget(MDLabel(text="Port", theme_text_color="Primary"))
         self.port_input = MDTextField(
-            text=self.app.app_config.get('client', 'port', fallback='38281'),
+            text=str(persistent_load().get('client', {}).get('last_server_port', 38281)),
             on_text_validate=self.save_port
         )
         hostname_box.add_widget(self.port_input)
@@ -525,7 +526,7 @@ class ConnectionSettings(SettingsScrollBox):
         slot_box = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=dp(55), padding=dp(4), spacing=dp(4))
         slot_box.add_widget(MDLabel(text="Player Slot", theme_text_color="Primary"))
         self.slot_input = MDTextField(
-            text=self.app.app_config.get('client', 'slot', fallback=''),
+            text=persistent_load().get('client', {}).get('last_username', ''),
             on_text_validate=self.save_slot
         )
         slot_box.add_widget(self.slot_input)
@@ -639,11 +640,12 @@ class ConnectionSettings(SettingsScrollBox):
 
     def save_hostname(self, instance):
         try:
-            self.app.app_config.set('client', 'hostname', instance.text)
-            self.app.app_config.write()
+            persistent_store('client', 'last_server_hostname', instance.text)
             logger.info(f"Hostname saved: {instance.text}")
+            self.show_feedback(f"Hostname saved: {instance.text}")
         except Exception as e:
             logger.error(f"Error saving hostname: {e}", exc_info=True)
+            self.show_feedback("Error saving hostname", is_error=True)
 
     def save_port(self, instance):
         try:
@@ -652,35 +654,36 @@ class ConnectionSettings(SettingsScrollBox):
             if port_value:
                 port_num = int(port_value)
                 if 1 <= port_num <= 65535:
-                    self.app.app_config.set('client', 'port', port_value)
-                    self.app.app_config.write()
+                    persistent_store('client', 'last_server_port', port_num)
                     logger.info(f"Port saved: {port_value}")
                     self.show_feedback(f"Port saved: {port_value}")
                 else:
                     error_msg = f"Invalid port: {port_value}. Must be between 1 and 65535."
                     logger.error(error_msg)
                     self.show_feedback(error_msg, is_error=True)
-                    instance.text = self.app.app_config.get('client', 'port', fallback='38281')
+                    instance.text = str(persistent_load().get('client', {}).get('last_server_port', 38281))
             else:
                 # Reset to default if empty
-                instance.text = self.app.app_config.get('client', 'port', fallback='38281')
+                instance.text = '38281'
+                persistent_store('client', 'last_server_port', 38281)
                 self.show_feedback("Port reset to default: 38281")
         except ValueError:
             error_msg = f"Invalid port: {instance.text}. Must be a number."
             logger.error(error_msg)
             self.show_feedback(error_msg, is_error=True)
-            instance.text = self.app.app_config.get('client', 'port', fallback='38281')
+            instance.text = str(persistent_load().get('client', {}).get('last_server_port', 38281))
         except Exception as e:
             logger.error(f"Error saving port: {e}", exc_info=True)
             self.show_feedback("Error saving port", is_error=True)
 
     def save_slot(self, instance):
         try:
-            self.app.app_config.set('client', 'slot', instance.text)
-            self.app.app_config.write()
+            persistent_store('client', 'last_username', instance.text)
             logger.info(f"Slot saved: {instance.text}")
+            self.show_feedback(f"Slot saved: {instance.text}")
         except Exception as e:
             logger.error(f"Error saving slot: {e}", exc_info=True)
+            self.show_feedback("Error saving slot", is_error=True)
 
     def save_password(self, instance):
         try:
@@ -779,6 +782,16 @@ class ThemingSettings(SettingsScrollBox):
             font_box.add_widget(reset_btn)
             
             font_section.add_widget(font_box)
+            
+            # Monospace font dropdown
+            monospace_font_items = ["Argon", "Krypton", "Neon", "Radon", "Xenon"]
+            current_monospace_font = self.app.app_config.get('client', 'monospace_font', fallback='Argon')
+            font_section.add_widget(LabeledDropdown(
+                text="Monospace Font",
+                items=monospace_font_items,
+                current_item=current_monospace_font,
+                on_select=self.on_monospace_font_select
+            ))
             
             # Add all sections to the layout
             self.layout.add_widget(theme_style_section)
@@ -883,6 +896,39 @@ class ThemingSettings(SettingsScrollBox):
         # Save to config
         self.app.app_config.set('client', 'font_scale', str(scale))
         self.app.app_config.write()
+    
+    def on_monospace_font_select(self, font_name):
+        """Handle monospace font selection"""
+        try:
+            # Save to config
+            self.app.app_config.set('client', 'monospace_font', font_name)
+            self.app.app_config.write()
+            
+            # Re-register fonts with the new monospace font
+            RegisterFonts(self.app, font_name)
+            
+            logger.info(f"Monospace font changed to: {font_name}")
+            self.show_feedback(f"Monospace font changed to: {font_name}")
+        except Exception as e:
+            logger.error(f"Error changing monospace font: {e}", exc_info=True)
+            self.show_feedback("Error changing monospace font", is_error=True)
+    
+    def show_feedback(self, message: str, is_error: bool = False):
+        """Show feedback message to user"""
+        try:
+            # Create snackbar with message
+            snackbar = MDSnackbar(
+                MDSnackbarText(
+                    text=message,
+                ),
+                y=dp(24),
+                pos_hint={"center_x": 0.5},
+                size_hint_x=0.8,
+                md_bg_color=self.app.theme_cls.errorColor if is_error else self.app.theme_cls.primaryColor,
+            )
+            snackbar.open()
+        except Exception as e:
+            logger.error(f"Error showing feedback: {e}", exc_info=True)
 
 class InterfaceSettings(SettingsScrollBox):
     """Interface settings section"""

@@ -6,7 +6,7 @@ import dataclasses
 from typing import Dict, List
 
 from NetUtils import DataPackage
-from BaseUtils import Version, write_path, is_frozen
+from BaseUtils import Version, write_path, is_frozen, get_archipelago_json
 
 # Extend __path__ to include venv site-packages for namespace package behavior
 if is_frozen():
@@ -64,7 +64,10 @@ for world_source in world_sources:
     world_source.load()
 
 from .AutoWorld import AutoWorldRegister
-
+# Add version for each world.
+for world in AutoWorldRegister.world_types:
+    world_name, author, minimum_ap_version, version = get_archipelago_json(world)
+    AutoWorldRegister.world_types[world].version = Version(version)
 # Build the data package for each game.
 network_data_package: DataPackage = {
     "games": {world_name: world.get_data_package_data() for world_name, world in AutoWorldRegister.world_types.items()},

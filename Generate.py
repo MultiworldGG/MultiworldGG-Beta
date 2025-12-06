@@ -183,14 +183,7 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
             game_module = module_name.replace("worlds.", "")
             logging.info(f"Adding custom module to game index: {game_module} -> {game_name}")
             GameIndex.add_game(game_module, {"game_name": game_name})
-        else:
-            abs_path = os.path.abspath(player_path)
-            # Check if module is nested under game name
-            if game_name in yaml[0] and isinstance(yaml[0][game_name], dict) and 'module' in yaml[0][game_name]:
-                module_name = yaml[0][game_name]['module']
-                game_module = module_name.replace("worlds.", "")
-                logging.info(f"Adding custom module to game index (from nested field): {game_module} -> {game_name}")
-                GameIndex.add_game(game_module, {"game_name": game_name})
+
     set_game_names(games_to_load)
     from worlds.AutoWorld import AutoWorldRegister
     """ Load worlds *after* setting the game names
@@ -198,9 +191,15 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
     args.outputname = seed_name
     args.name = {}
 
-    settings_cache: dict[str, tuple[argparse.Namespace, ...]] = \
-        {fname: (tuple(roll_settings(yaml, args.plando) for yaml in yamls) if args.sameoptions else None)
-         for fname, yamls in weights_cache.items()}
+    settings_cache: dict[str, tuple[argparse.Namespace, ...]] = {}
+    for fname, yamls in weights_cache.items():
+        if args.sameoptions:
+            try:
+                settings_cache[fname] = tuple(roll_settings(yaml, args.plando) for yaml in yamls)
+            except Exception as e:
+                raise ValueError(f"File {fname} is invalid. Please fix your yaml.") from e
+        else:
+            settings_cache[fname] = None
 
     if meta_weights:
         for category_name, category_dict in meta_weights.items():
@@ -235,8 +234,18 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
         path = player_path_cache[player]
         if path:
             try:
-                settings: tuple[argparse.Namespace, ...] = settings_cache[path] if settings_cache[path] else \
-                    tuple(roll_settings(yaml, args.plando) for yaml in weights_cache[path])
+                if settings_cache[path]:
+                    settings: tuple[argparse.Namespace, ...] = settings_cache[path]
+                else:
+                    try:
+                        settings = tuple(roll_settings(yaml, args.plando) for yaml in weights_cache[path])
+                    except Exception as roll_error:
+                        # Preserve the original exception message if it contains useful information
+                        error_msg = str(roll_error)
+                        if "world" in error_msg.lower() or "module" in error_msg.lower():
+                            raise ValueError(f"File {path} is invalid: {error_msg}") from roll_error
+                        else:
+                            raise ValueError(f"File {path} is invalid. Please fix your yaml.") from roll_error
                 for settingsObject in settings:
                     for k, v in vars(settingsObject).items():
                         if v is not None:
@@ -258,8 +267,16 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
                     args.name[player] = handle_name(args.name[player], player, name_counter)
 
                     player += 1
+            except ValueError as e:
+                # If it's already a ValueError with file information, re-raise as-is
+                raise
             except Exception as e:
-                raise ValueError(f"File {path} is invalid. Please fix your yaml.") from e
+                # Preserve the original exception message if it contains useful information
+                error_msg = str(e)
+                if "world" in error_msg.lower() or "module" in error_msg.lower():
+                    raise ValueError(f"File {path} is invalid: {error_msg}") from e
+                else:
+                    raise ValueError(f"File {path} is invalid. Please fix your yaml.") from e
         else:
             raise RuntimeError(f'No weights specified for player {player}')
 
@@ -506,6 +523,8 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
     """
 
     from worlds import AutoWorldRegister
+    for world in AutoWorldRegister.world_types:
+        print(world)
 
     if "linked_options" in weights:
         weights = roll_linked_options(weights)
@@ -528,7 +547,7 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
         games = requirements.get("game", {})
         for game, version in games.items():
             if game not in AutoWorldRegister.world_types:
-                continue
+                raise Exception(f"Game {game} not found in world types.")
             if not version:
                 raise Exception(f"Invalid version for game {game}: {version}.")
             if isinstance(version, str):
@@ -567,9 +586,8 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
     
     world_module = sys.modules.get(ret.module_name)
     if world_module is None:
-        picks = Utils.get_fuzzy_results(ret.game, available_worlds + failed_world_loads, limit=1)[0]
         world_class = None
-        raise Exception(f"No world found to handle game {ret.game}. Did you mean '{picks[0]}' ({picks[1]}% sure)? "
+        raise Exception(f"No world found to handle game {ret.game} with module {ret.module_name}. "
                         f"Check your spelling or installation of that world.")
     else:
         world_class = AutoWorldRegister.world_types.get(ret.game, None)
@@ -577,7 +595,7 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
     if world_class is None:
         picks = Utils.get_fuzzy_results(ret.game, available_worlds + failed_world_loads, limit=1)[0]
         if picks[0] in failed_world_loads:
-            raise Exception(f"No functional world found to handle game {ret.game}. "
+            raise Exception(f"No functional world found to handle game {ret.game} with module {ret.module_name}. "
                             f"Did you mean '{picks[0]}' ({picks[1]}% sure)? "
                             f"If so, it appears the world failed to initialize correctly.")
         raise Exception(f"No world found to handle game {ret.game}. Did you mean '{picks[0]}' ({picks[1]}% sure)? "
