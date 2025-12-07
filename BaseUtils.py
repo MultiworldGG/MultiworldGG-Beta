@@ -367,7 +367,9 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
     """
     try:
         if is_frozen():
-            with open(local_path("lib", "worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
+            # In frozen builds, worlds are installed as wheels in venv site-packages
+            archipelago_json_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds", world, "archipelago.json")
+            with open(archipelago_json_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
         else:
             with open(local_path("worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:

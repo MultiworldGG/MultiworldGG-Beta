@@ -523,8 +523,6 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
     """
 
     from worlds import AutoWorldRegister
-    for world in AutoWorldRegister.world_types:
-        print(world)
 
     if "linked_options" in weights:
         weights = roll_linked_options(weights)
