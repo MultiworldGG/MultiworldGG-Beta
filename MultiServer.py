@@ -16,6 +16,7 @@ import operator
 import pickle
 import random
 import shlex
+import signal
 import sys
 import threading
 import time
@@ -2724,6 +2725,29 @@ async def main(args: argparse.Namespace):
         raise
 
     ctx.init_save(not args.disable_save)
+
+    # Set up signal handler for Ctrl+C (SIGINT) - cross-platform compatible
+    def shutdown_handler():
+        logging.info("Received interrupt signal (Ctrl+C), shutting down...")
+        try:
+            if ctx.server and hasattr(ctx.server, 'ws_server'):
+                ctx.server.ws_server.close()
+        except Exception:
+            pass  # Server may not be initialized yet
+        finally:
+            ctx.exit_event.set()
+
+    loop = asyncio.get_running_loop()
+    # Use asyncio's signal handler on Unix (more reliable), fallback to signal.signal() on Windows
+    if hasattr(loop, 'add_signal_handler'):
+        try:
+            loop.add_signal_handler(signal.SIGINT, shutdown_handler)
+        except NotImplementedError:
+            # Windows doesn't support add_signal_handler, fall back to signal.signal()
+            signal.signal(signal.SIGINT, lambda s, f: shutdown_handler())
+    else:
+        # Fallback for older Python versions or Windows
+        signal.signal(signal.SIGINT, lambda s, f: shutdown_handler())
 
     ssl_context = load_server_cert(args.cert, args.cert_key) if args.cert else None
 
