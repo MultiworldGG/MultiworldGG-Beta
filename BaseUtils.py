@@ -369,12 +369,16 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
         if is_frozen():
             # In frozen builds, worlds are installed as wheels in venv site-packages
             archipelago_json_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds", world, "archipelago.json")
+            if not os.path.exists(archipelago_json_path):
+                # Fall back to local_path for worlds bundled with the executable
+                archipelago_json_path = local_path("lib", "worlds", world, "archipelago.json")
             with open(archipelago_json_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
         else:
             with open(local_path("worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
                 data = json.load(f)
     except FileNotFoundError:
+        # TODO: add a lookup here for the game name
         return world, ["Unknown"], "0.0.0", "0.0.0"
     return data["game"], data["authors"], data["minimum_ap_version"], data["world_version"]
 
