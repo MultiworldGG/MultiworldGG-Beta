@@ -61,7 +61,7 @@ Window.borderless = True
 Window.set_title("MultiWorldGG")
 
 from kivy.clock import Clock
-from kivy.properties import ObjectProperty, BooleanProperty
+from kivy.properties import ObjectProperty, BooleanProperty, NumericProperty
 from kivymd.app import MDApp
 from kivy.uix.screenmanager import SwapTransition
 from kivymd.uix.screenmanager import MDScreenManager
@@ -148,6 +148,7 @@ class MultiMDApp(MDApp):
 
     _show_all_hints: BooleanProperty(False)
     _logo_png: str = None
+    countdown_timer = NumericProperty(0)
 
     def __init__(self, ctx: context_type, **kwargs):
         super().__init__(**kwargs)
@@ -267,6 +268,8 @@ class MultiMDApp(MDApp):
         Window.bind(on_restore=self.title_bar.tb_onres)
         Window.bind(on_maximize=self.title_bar.tb_onmax)
         Window.bind(on_close=lambda x: self.stop())
+        # add binding for countdown timer
+        self.bind(countdown_timer=self.on_countdown_timer)
 
         self.change_screen("launcher")
 
@@ -667,6 +670,27 @@ class MultiMDApp(MDApp):
         else:
             tags.append("in_bk")
         asynckivy.start(self.ctx.update_tags(tags))
+
+    def on_countdown_timer(self, instance, value):
+        '''
+        This is called when the countdown timer is updated from the server. It will set the countdown timer.
+        '''
+        value = -value
+        if value < 0:
+            self.top_appbar_layout.top_appbar.timer.elapsed_time = value
+        else:
+            self.top_appbar_layout.top_appbar.timer.start()
+
+    def update_timer(self, value):
+        '''
+        This is called when a "break" is added from the server. It will add the break time to the start
+        time of the timer, reducing the elapsed time to the correct value.
+        '''
+        # timer = self.ctx.stored_data.get(f"timer_{self.ctx.team}_{self.ctx.slot}", [])
+        timer = value
+        if not timer:
+            return
+        self.top_appbar_layout.top_appbar.timer.start_time = self.ctx.timer - sum(float(time) for time in timer) if timer else self.ctx.timer
 
     def update_hints(self):
         hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}", [])

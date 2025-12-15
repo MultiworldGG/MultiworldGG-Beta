@@ -505,6 +505,8 @@ class CommonContext(InitContext):
     """Current container of watched Data Storage keys, managed by ctx.set_notify"""
 
     # internals
+    _last_activity_time: float | None = None
+    """Time of last activity, used to track elapsed time"""
     _messagebox: typing.Optional["Gui.MessageBox"] = None
     """Current message box through Gui"""
     _messagebox_connection_loss: typing.Optional["Gui.MessageBox"] = None
@@ -537,7 +539,8 @@ class CommonContext(InitContext):
         self.slot = None
         self.auth = None
         self.seed_name = None
-        self.timer = 0
+        self.timer = 0.0
+        self._last_activity_time = None
         self.admin = False
         self.locations_checked = set()  # local state
         self.locations_scouted = set()
@@ -655,7 +658,7 @@ class CommonContext(InitContext):
         self.auth = None
         self.slot = None
         self.team = None
-        self.timer = 0
+        self.timer = 0.0
         self.admin = False
         self.items_received = []
         self.locations_info = {}
@@ -735,8 +738,7 @@ class CommonContext(InitContext):
         """Send new location checks to the server. Returns the set of actually new locations that were sent."""
         locations = set(locations) & self.missing_locations
         if locations:
-            if self.timer == 0:
-                await self.sync_timer()
+            self.update_timer(time.time())
             await self.send_msgs([{"cmd": 'LocationChecks', "locations": tuple(locations)}])
         return locations
 
@@ -795,7 +797,7 @@ class CommonContext(InitContext):
             self.ui.print_json(copy.deepcopy(args["data"]))
 
         if args.get("type") == "Countdown":
-            self.countdown_timer = args.get("countdown", 0)
+            self.ui.countdown_timer = args.get("countdown", 0)
 
         logging.getLogger("FileLog").info(self.rawjsontotextparser(copy.deepcopy(args["data"])),
                                           extra={"NoStream": True})
@@ -888,18 +890,26 @@ class CommonContext(InitContext):
                "default": {}, 
                "operations": [{"operation": "replace", "value": {f"{finding_player}_{location}": mwgg_status.value}}]}
         async_start(self.send_msgs([msg]), name="update_mwgg_hint")
-    
-    async def sync_timer(self, new_start: float = 0.0):
-        '''Set up a timer on the server via the stored data
-        Should be set up on the server side but lol core would never.'''
-        if not new_start:
-            new_start = time.time()
-        msg = {"cmd": "Set", 
-                "key": "timer", 
+
+    def update_timer(self, activity_time: float):
+        '''
+        Update the timer based on the activity time.
+        If the activity time is more than 300 seconds since the last activity, add the "break" time to the timer list.
+        If the activity time is less than 300 seconds since the last activity, track this as the "last" activity time.
+        If the activity time is not set, this is the first activity, so set the timer to the activity time.
+        '''
+        if self._last_activity_time is None:
+            self._last_activity_time = activity_time
+            self.timer = activity_time #start time
+        elapsed_break = activity_time - self._last_activity_time
+        if elapsed_break > 300:
+            msg = {"cmd": "Set", 
+                "key": f"timer_{self.team}_{self.slot}", 
                 "want_reply": False,
-                "default": time.time(),
-                "operations": [{"operation": "replace", "value": new_start}]}
-        async_start(self.send_msgs([msg]), name="sync_timer")
+                "default": [],
+                "operations": [{"operation": "add", "value": [str(elapsed_break)]}]}
+            async_start(self.send_msgs([msg]), name="update_timer")
+        self._last_activity_time = activity_time
 
     # DataPackage
     async def prepare_data_package(self, relevant_games: typing.Set[str],
@@ -1312,6 +1322,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.consume_players_package(args["players"])
         ctx.stored_data_notification_keys.add(f"_read_hints_{ctx.team}_{ctx.slot}")
         ctx.stored_data_notification_keys.add(f"hints_{ctx.team}_{ctx.slot}_mwgg")
+        ctx.stored_data_notification_keys.add(f"timer_{ctx.team}_{ctx.slot}")
         # Add profile_data keys for all players in the multiworld
         for slot_id in ctx.slot_info.keys():
             if slot_id != 0:  # Skip Archipelago slot
@@ -1410,8 +1421,8 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             ctx.ui.update_hints()
         if ctx.ui and f"hints_{ctx.team}_{ctx.slot}_mwgg" in args["keys"]:
             ctx.ui.update_mwgg_hints()
-        if ctx.ui and "timer" in args["keys"]:
-            ctx.timer = args["keys"]["timer"]
+        if ctx.ui and f"timer_{ctx.team}_{ctx.slot}" in args["keys"]:
+            ctx.ui.update_timer(args["keys"].get(f"timer_{ctx.team}_{ctx.slot}"))
         # Update profile data for all players when retrieved (on connect)
         if ctx.ui:
             for key in args["keys"]:
@@ -1430,6 +1441,8 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             ctx.ui.update_hints()
         elif ctx.ui and f"hints_{ctx.team}_{ctx.slot}_mwgg" == args["key"]:
             ctx.ui.update_mwgg_hints()
+        elif ctx.ui and f"timer_{ctx.team}_{ctx.slot}" == args["key"]:
+            ctx.ui.update_timer(args["value"].get(f"timer_{ctx.team}_{ctx.slot}"))
         elif args["key"].startswith(f"profile_data_{ctx.team}_"):
             # Update profile data when another client changes their profile
             if ctx.ui:

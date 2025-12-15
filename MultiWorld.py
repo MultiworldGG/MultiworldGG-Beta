@@ -129,18 +129,19 @@ if __name__ == "__main__":
     # This prevents fork bombs when creating subprocesses in cx_Freeze builds
     freeze_support()
 
-    init_logging("MultiWorld", logging.DEBUG)
-    logger = logging.getLogger("MultiWorld")
-
     # Parse the command line arguments
+    parser = ArgumentParser()
+    parser.add_argument("--game", type=str, default=None, required=False, help="The game module to launch\nGame Name will not work, use the apworld abbreviation")
+    parser.add_argument("--server-address", type=str, default=None, required=False, help="The server address to connect to")
+    parser.add_argument("--slot-name", type=str, default=None, required=False, help="The slot name to connect to")
+    parser.add_argument("--password", type=str, default=None, required=False, help="The password to connect to")
+    parser.add_argument("--update-modules", action="store_true", default=False, required=False, help="Whether to update modules")
+    parser.add_argument("--worlds", nargs="+", default=None, required=False, help="List of worlds to update")
+    parser.add_argument("--loglevel", default="debug",
+                        choices=['debug', 'info', 'warning', 'error', 'critical'],
+                        help="Set the logging level")
+    
     if sys.argv[1:]:
-        parser = ArgumentParser()
-        parser.add_argument("--game", type=str, default=None, required=False, help="The game module to launch\nGame Name will not work, use the apworld abbreviation")
-        parser.add_argument("--server-address", type=str, default=None, required=False, help="The server address to connect to")
-        parser.add_argument("--slot-name", type=str, default=None, required=False, help="The slot name to connect to")
-        parser.add_argument("--password", type=str, default=None, required=False, help="The password to connect to")
-        parser.add_argument("--update-modules", action="store_true", default=False, required=False, help="Whether to update modules")
-        parser.add_argument("--worlds", nargs="+", default=None, required=False, help="List of worlds to update")
         args = parser.parse_args(sys.argv[1:])
         
         if args.update_modules:
@@ -148,7 +149,10 @@ if __name__ == "__main__":
             ModuleUpdate.install_worlds(worlds=args.worlds if args.worlds else [])
             sys.exit(0)
     else:
-        args = None
+        args = parser.parse_args([])
+
+    init_logging("MultiWorld", args.loglevel.lower())
+    logger = logging.getLogger("MultiWorld")
 
     if not is_windows:
         # need to check for mwgg_igdb and install it if it's not installed
