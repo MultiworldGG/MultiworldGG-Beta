@@ -123,13 +123,6 @@ class Timer(MDTopAppBarTitle):
     def on_ui_built(self):
         self.ctx = MDApp.get_running_app().ctx
         self.slot_info = self.ctx.slot_info
-        if self.ctx.timer:
-            self.start()
-        else:
-            self.elapsed_time = float(persistent_load().get('client', {}).get('timer', '0'))
-        # Only schedule if not already scheduled
-        if self._update_event is None:
-            self._update_event = Clock.schedule_interval(self._update_timer_wrapper, 0.1)
 
     def on_is_running(self, instance, value):
         """Called when is_running property changes"""
@@ -142,9 +135,14 @@ class Timer(MDTopAppBarTitle):
         """Start the timer (initial start or resume from pause)"""
         if not self.is_running:
             if self.ctx.timer:
-                self.start_time = self.ctx.timer
+                if self.ctx.timer < 1:
+                    self.start_time = time()
+                    self.ctx.timer = self.start_time
+                else:
+                    self.start_time = self.ctx.timer
             else:
-                self.start_time = time() - self.elapsed_time
+                self.start_time = time()
+                self.ctx.timer = self.start_time
             self.has_been_started = True
             self.is_running = True
             Clock.schedule_interval(self._update_timer_wrapper, 0.1)
@@ -158,8 +156,6 @@ class Timer(MDTopAppBarTitle):
     def reset(self):
         """Reset the timer to 00:00:00 and set new start time"""
         self.stop()
-        self.elapsed_time = 0
-        persistent_store('client', 'timer', 0)
         self.text = "00:00:00"
         self.has_been_started = False
         self.start_time = 0
@@ -174,23 +170,20 @@ class Timer(MDTopAppBarTitle):
     def update_timer(self):
         """Update the elapsed time and check for goal condition"""
         # Check for countdown timer from server first
-        if hasattr(self.ctx, 'countdown_timer'):
-            if self.ctx.countdown_timer > 0 and not self.has_been_started:
-                # Server provided a countdown - start timer as negative
-                self.elapsed_time = -self.ctx.countdown_timer  # Negative countdown
-                self.start_time = time() + self.ctx.countdown_timer  # Adjusted start time
-                self.is_running = True
-                self.has_been_started = True
-                return
+        # if hasattr(self.ctx, 'countdown_timer'):
+        #     if self.ctx.countdown_timer > 0 and not self.has_been_started:
+        #         # Server provided a countdown - start timer as negative
+        #         self.elapsed_time = -self.ctx.countdown_timer  # Negative countdown
+        #         self.is_running = True
+        #         self.has_been_started = True
+        #         return
         
         # Normal timer operation
         if self.is_running:
             self.start_time = self.ctx.timer
             self.elapsed_time = time() - self.start_time
-            persistent_store('client', 'timer', self.elapsed_time)
             # Check for goal completion
             if self.slot_info and self.slot_info.get('game_status') == "GOAL":
-                persistent_store('client', 'timer', 0)
                 self.stop()
                 return
 
@@ -204,7 +197,7 @@ class Timer(MDTopAppBarTitle):
             self.text = "-" + strftime("%H:%M:%S", gmtime(abs_value))
         else:
             # Positive time - normal display
-            self.text = strftime("%H:%M:%S", gmtime(value))
+            self.text = strftime("%H:%M:%S", gmtime(int(value)))
     
     def on_parent(self, instance, parent):
         """Clean up scheduled events when widget is removed"""
