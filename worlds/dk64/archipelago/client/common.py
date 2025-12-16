@@ -11,7 +11,7 @@ from Utils import get_settings
 
 def get_ap_version():
     """Get the AP version from the manifest file."""
-    apworld_manifest = json.loads(pkgutil.get_data(__name__, "archipelago.json").decode("utf-8"))
+    apworld_manifest = json.loads(pkgutil.get_data("worlds.dk64", "archipelago.json").decode("utf-8"))
     return apworld_manifest["world_version"]
 
 

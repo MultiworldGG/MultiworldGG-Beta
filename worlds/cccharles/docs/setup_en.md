@@ -19,7 +19,7 @@ The Mod can be installed and played by following these steps (see the [Mod Downl
 2. Launch the game, if "OFFLINE" is visible in the upper-right corner of the screen, the Mod is working
 
 ### Create a Config (.yaml) File
-The purpose of a YAML file is described in the [Basic Multiworld Setup Guide](https://multiworld.gg/tutorial/Archipelago/setup/en#generating-a-game).
+The purpose of a YAML file is described in the [Basic Multiworld Setup Guide](/tutorial/Archipelago/setup/en#generating-a-game).
 
 The [Player Options page](/games/Choo-Choo%20Charles/player-options) allows to configure personal options and export a config YAML file.
 
@@ -37,7 +37,7 @@ In this section, **MultiworldGG/** refers to the path where [MultiworldGG](https
 Follow these steps to host a remote multiplayer or a local single-player session:
 2. Put the **CCCharles.yaml** to **Archipelago/Players/** with the YAML of each player to host
 3. Launch the MultiworldGG launcher and click "Generate" to configure a game with the YAMLs in **MultiworldGG/output/**
-4. For a multiplayer session, go to the [MultiworldGG HOST GAME page](https://multiworld.gg/uploads)
+4. For a multiplayer session, go to the [MultiworldGG HOST GAME page](/uploads)
 5. Click "Upload File" and select the generated **AP_\<seed\>.zip** in **MultiworldGG/output/**
 6. Send the generated room page to each player
 

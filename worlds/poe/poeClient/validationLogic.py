@@ -120,7 +120,7 @@ def check_for_victory(ctx: "PathOfExileContext", zone: str, char: gggAPI.Charact
         for i in boss_set:
             bosses.append(Locations.bosses_by_id[i].get("name", "Unknown Boss"))
         if bosses:
-            await asyncio.create_task(inputHelper.send_poe_text(f"@{ctx.character_name} You have defeated {", ".join(bosses)}!", retry_times=40, retry_delay=0.5))
+            await asyncio.create_task(inputHelper.send_poe_text(f"@{ctx.character_name} You have completed {", ".join(bosses)}!", retry_times=40, retry_delay=0.5))
     # we should probably create a location and fill it with a goal item for each boss.
     if goal == Options.Goal.option_defeat_bosses:
         held_items = get_held_item_names_ilvls_from_char(char)
@@ -131,10 +131,11 @@ def check_for_victory(ctx: "PathOfExileContext", zone: str, char: gggAPI.Charact
             if not boss_data:
                 logger.error(f"Boss {boss} not found in Locations.bosses.")
                 raise ValueError(f"Boss {boss} not found in Locations.bosses.")
-            drops = boss_data.get("drops", [])
+            boss_drops = boss_data.get("drops", [])
             for item, ilvl in held_items:
-                if item in [i["name"] for i in drops]:
-                    if ilvl and drops[item].get("ilvl", 0) and ilvl < drops[item]["ilvl"]:
+                held_boss_drops = [i for i in boss_drops if i["name"] == item]
+                for boss_drop in held_boss_drops:
+                    if ilvl and boss_drop.get("ilvl", False) and ilvl < boss_drops[item]["ilvl"]:
                         continue # item is not high enough level
                     logger.info(f"Found goal item {item} in {zone}.")
                     boss_sent.append(boss)

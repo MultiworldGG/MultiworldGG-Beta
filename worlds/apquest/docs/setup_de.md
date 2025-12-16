@@ -11,16 +11,16 @@
 Zuerst brauchst du einen Raum, mit dem du dich verbinden kannst.
 Dafür musst du oder jemand den du kennst ein Spiel generieren.  
 Dieser Schritt wird hier nicht erklärt, aber du kannst den
-[MultiworldGG Setup Guide](https://multiworld.gg/tutorial/Archipelago/setup_en#generating-a-game) lesen.
+[MultiworldGG Setup Guide](/tutorial/Archipelago/setup_en#generating-a-game) lesen.
 
-Du musst außerdem [MultiworldGG](github.com/MultiworldGG/MultiworldGG/releases/latest) installiert haben
+Du musst außerdem [MultiworldGG](https://github.com/MultiworldGG/MultiworldGG/releases/latest) installiert haben
 und die [APQuest apworld](https://github.com/NewSoupVi/Archipelago/releases) darin installieren.
 
 Von hier ist es einfach, dich mit deinem Slot zu verbinden.
 
 ### Webhost-Raum
 
-Wenn dein Raum auf einem WebHost läuft (z.B. [multiworld.gg](multiworld.gg))
+Wenn dein Raum auf einem WebHost läuft (z.B. [multiworld.gg](https://multiworld.gg))
 kannst du einfach auf deinen Namen in der Spielerliste klicken.  
 Dies öffnet den MultiworldGG Launcher, welcher dich dann fragt,
 ob du den Text Client oder den APQuest Client öffnen willst.  

@@ -72,3 +72,94 @@ Contact List 2 adds:
   - Little Gabi
   - Blippy
   - Blippy (Dog variant)
+
+## What does the "Friend" goal need to be completed?
+This goal requires you to complete various quests from NPCs.
+
+You can check the in-game tracker to see which ones are missing
+
+### In detail:
+- Home - Give High Frog Lunchbox
+#### Hairball City
+- Hairball City - BIG VOLLEY
+- Hairball City - Dustan on Lighthouse
+- Hairball City - Gunter on Skyscraper
+- Hairball City - Nina
+- Hairball City - Moomy
+- Hairball City - Fish with Fischer
+- Hairball City - Game Kid
+- Hairball City - Blippy Dog
+- Hairball City - Blippy
+- Hairball City - Serschel & Louist
+- Hairball City - Little Gabi's Flowers
+- Hairball City - Blessley
+- Hairball City - Mitch
+- Hairball City - Mai
+#### Turbine Town
+- Turbine Town - Blippy Dog
+- Turbine Town - Blippy
+- Turbine Town - Serschel & Louist
+- Turbine Town - Dustan on Wind Turbine
+- Turbine Town - Little Gabi's Flowers
+- Turbine Town - Blessley
+- Turbine Town - AIR VOLLEY
+- Turbine Town - Pelly the Engineer
+- Turbine Town - Fish with Fischer
+- Turbine Town - Mitch
+- Turbine Town - Mai
+#### Salmon Creek Forest
+- Salmon Creek Forest - Dustan on Mountain
+- Salmon Creek Forest - Nina
+- Salmon Creek Forest - Stijn & Melissa
+- Salmon Creek Forest - Treeman
+- Salmon Creek Forest - Blessley
+- Salmon Creek Forest - Little Gabi's Flowers
+- Salmon Creek Forest - Game Kid
+- Salmon Creek Forest - Blippy
+- Salmon Creek Forest - Serschel & Louist
+- Salmon Creek Forest - Blippy Dog
+- Salmon Creek Forest - Fish with Fischer
+- Salmon Creek Forest - SPORTVIVAL
+- Salmon Creek Forest - Moomy
+- Salmon Creek Forest - Mitch
+- Salmon Creek Forest - Mai
+#### Public Pool
+- Public Pool - Blippy
+- Public Pool - Frogtective
+- Public Pool - Blippy Dog
+- Public Pool - Little Gabi's Flowers
+- Public Pool - Blessley
+- Public Pool - SPORTVIVAL VOLLEY
+- Public Pool - Fish with Fischer
+- Public Pool - Mitch
+- Public Pool - Mai
+#### Bathhouse
+- Bathhouse - Poppy
+- Bathhouse - Fish with Fischer
+- Bathhouse - Blessley
+- Bathhouse - Little Gabi's Flowers
+- Bathhouse - Blippy Dog
+- Bathhouse - Blippy
+- Bathhouse - Dustan on Bathhouse
+- Bathhouse - Game Kid
+- Bathhouse - LONG VOLLEY
+- Bathhouse - Nina
+- Bathhouse - Serschel & Louist
+- Bathhouse - Moomy
+- Bathhouse - Mitch
+- Bathhouse - Mai
+#### Tadpole HQ
+- Tadpole HQ - Blippy
+- Tadpole HQ - Little Gabi's Flowers
+- Tadpole HQ - Blippy Dog
+- Tadpole HQ - Blessley
+- Tadpole HQ - Serschel & Louist
+- Tadpole HQ - Frog King
+- Tadpole HQ - HUGE VOLLEY
+- Tadpole HQ - Fish with Fischer
+- Tadpole HQ - Mitch
+- Tadpole HQ - Mai
+#### Gary's Garden
+- Gary's Garden - Gunter & Little Gabi
+- Gary's Garden - Mitch
+- Gary's Garden - Mai

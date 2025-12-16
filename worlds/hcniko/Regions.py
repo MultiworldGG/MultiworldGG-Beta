@@ -1,4 +1,4 @@
-from typing import NamedTuple, List, Dict, Callable
+from typing import NamedTuple, List, Dict
 
 
 class HereComesNikoRegionData(NamedTuple):

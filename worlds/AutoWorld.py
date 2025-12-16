@@ -240,6 +240,12 @@ class WebWorld(metaclass=WebWorldRegister):
     bug_report_page: Optional[str]
     """display a link to a bug report page, most likely a link to a GitHub issue page."""
 
+    disable_wiki_link: bool = False
+    """If True, the link to the unofficial wiki will be hidden."""
+
+    custom_wiki_link_key: Optional[str] = None
+    """If set, this key will be used for the wiki link instead of the game name."""
+
     options_presets: Dict[str, Dict[str, Any]] = {}
     """A dictionary containing a collection of developer-defined game option presets."""
 

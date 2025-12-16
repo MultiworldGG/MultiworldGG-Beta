@@ -2,7 +2,10 @@ import os
 import json
 import pkgutil
 
-# ID of first item and location", "could be hard-coded but code may be easier
+# Sent to the game to verify that the plugin version is compatible
+apworld_version = "v0.1.20-beta"
+
+# ID of first item and location, could be hard-coded but code may be easier
 # to read with this as a property.
 
 base_id = 2000000

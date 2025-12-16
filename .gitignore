@@ -69,6 +69,7 @@ Output Logs/
 /data/user.kv
 /datapackage
 /custom_worlds
+/certs
 /tools/access_token
 
 # Byte-compiled / optimized / DLL files

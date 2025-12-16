@@ -1,7 +1,1 @@
-{
-    "game": "Pokemon FireRed and LeafGreen",
-    "authors": ["Vyneras"],
-    "igdb_id": 1516,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
-}
+{"game": "Pokemon FireRed and LeafGreen", "world_version": "1.0.1", "minimum_ap_version": "0.6.3", "authors": ["Vyneras"], "igdb_id":  1516, "compatible_version": 7, "version": 7}

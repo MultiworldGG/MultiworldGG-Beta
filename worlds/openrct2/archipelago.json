@@ -1,7 +1,1 @@
-{
-    "game": "OpenRCT2",
-    "authors": ["Crazycolbster"],
-    "igdb_id": 80720,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "v0.1.21-beta"
-}
+{"game": "OpenRCT2", "world_version": "0.1.20", "authors": ["Crazycolbster, Die4Ever"], "igdb_id": 80720, "compatible_version": 7, "version": 7}
