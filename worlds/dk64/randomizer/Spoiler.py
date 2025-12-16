@@ -404,13 +404,13 @@ class Spoiler:
         settings["Lanky Model"] = self.settings.kong_model_lanky.name
         settings["Tiny Model"] = self.settings.kong_model_tiny.name
         settings["Chunky Model"] = self.settings.kong_model_chunky.name
-
-        settings["Key 8 Required"] = self.settings.krool_access
+        settings["Model Swap Mode"] = self.settings.kong_model_mode.name
+        settings["Don't Start with Key 8"] = self.settings.krool_access
         settings["Vanilla K. Rool Requirement"] = self.settings.k_rool_vanilla_requirement
         settings["Key 8 in Helm"] = self.settings.key_8_helm
         settings["Select Starting Keys"] = self.settings.select_keys
         if not self.settings.keys_random:
-            settings["Number of Keys Required"] = self.settings.krool_key_count
+            settings["Number of Keys Pregiven"] = self.settings.krool_key_count
         settings["Starting Moves Count"] = self.settings.starting_moves_count
         settings["Fast Start"] = self.settings.fast_start_beginning_of_game
         settings["Helm Setting"] = self.settings.helm_setting.name

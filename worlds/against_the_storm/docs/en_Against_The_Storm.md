@@ -9,6 +9,7 @@ Optionally, all production recipes can be shuffled.
 "Items" in this case are the ability to acquire the blocked resources. 
 The exceptions to this are you can always gather Wood and Water, and you will always receive resources from embarkation and deconstruction.
 In addition, blueprints can be shuffled as well, and will be added as essential bluperints for every settlement once received from the multiworld.
+Lastly, the biomes themselves can be shuffled as items, restricting your access to them until finding their corresponding key.
 
 ## What do Locations look like in Against the Storm?
 Locations are essentially just a list of custom deeds designed to cover many aspects of the game. Here is an overview of them:

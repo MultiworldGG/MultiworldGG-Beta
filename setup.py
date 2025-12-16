@@ -682,7 +682,7 @@ cx_Freeze.setup(
                          "pandas"],
             "zip_includes": [],
             "zip_include_packages": ["*"],
-            "zip_exclude_packages": ["worlds", "sc2", "kivymd"],
+            "zip_exclude_packages": ["worlds", "sc2", "kivymd", "clr_loader", "pythonnet"], # clr_loader and pythonnet use absolute paths
             "include_files": [],  # broken in cx 6.14.0, we use more special sauce now
             "include_msvcr": False,
             "replace_paths": ["*."],

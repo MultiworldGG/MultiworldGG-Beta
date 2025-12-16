@@ -418,6 +418,25 @@ def mission_rules(world, player):
                             add_rule(world.multiworld.get_location(f"{location.name} Outlaw {j + 1}", player),
                                      lambda state: state.has("Main Game Unlock", player))
 
+                elif location.name == "The Nightmare":
+                    for j in range(world.options.late_mission_checks.value):
+                        set_rule(world.multiworld.get_location(f"{location.name} Mission {j + 1}", player),
+                                 lambda state, ln=location.name, p=player: ready_for_late_game(state, p, world)
+                                                                           and state.can_reach_location("Mt. Bristle", p)
+                                                                           and state.has(ln, p))
+                        if special_episode_sanity_no_exclusion(world, player):
+                            add_rule(world.multiworld.get_location(f"{location.name} Mission {j + 1}", player),
+                                     lambda state: state.has("Main Game Unlock", player))
+
+                    for j in range(world.options.late_outlaw_checks.value):
+                        set_rule(world.multiworld.get_location(f"{location.name} Outlaw {j + 1}", player),
+                                 lambda state, ln=location.name, p=player: ready_for_late_game(state, p, world)
+                                                                           and state.can_reach_location("Mt. Bristle", p)
+                                                                           and state.has(ln, p))
+                        if special_episode_sanity_no_exclusion(world, player):
+                            add_rule(world.multiworld.get_location(f"{location.name} Outlaw {j + 1}", player),
+                                     lambda state: state.has("Main Game Unlock", player))
+
                 else:
                     for j in range(world.options.late_mission_checks.value):
                         set_rule(world.multiworld.get_location(f"{location.name} Mission {j + 1}", player),
@@ -441,15 +460,15 @@ def subx_rules(world, player):
         if item.flag_definition == "Unused" or item.default_item == "ignore":
             continue
         if world.options.goal.value == 0 and item.classification in ["Manaphy", "LateSubX", "Legendary", "Instrument",
-                                                                     "OptionalSubX", "SecretRank"]:
+                                                                      "SecretRank"]:
             continue
         if world.options.goal.value == 0 and item.flag_definition in ["Recycle Shop Dungeon #4",
                                                                       "Recycle Shop Dungeon #5"]:
             continue
         if world.options.goal.value == 0 and item.flag_definition == "Bag Upgrade 5":
             continue
-        if world.options.long_location.value == 0 and item.classification in ["OptionalSubX"]:
-            continue
+        # if world.options.long_location.value == 0 and item.classification in ["OptionalSubX"]:
+        #   continue
         if item.classification == "Rank":
             rank_toid_dict = {"Bronze Rank": 1, "Silver Rank": 2, "Gold Rank": 3, "Diamond Rank": 4, "Super Rank": 5,
                               "Ultra Rank": 6, "Hyper Rank": 7, "Master Rank": 8, "Master ★ Rank": 9,

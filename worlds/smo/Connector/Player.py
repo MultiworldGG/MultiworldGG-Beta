@@ -1,8 +1,7 @@
-from NetUtils import NetworkItem, NetworkPlayer
+from NetUtils import NetworkItem
 from .Data import moon_list, id_to_name, goals
 
 class SMOPlayer:
-    player : NetworkPlayer
     moons = {}
     MAX_MOONS = {
         "Cascade Story Moon": 1,
@@ -50,6 +49,7 @@ class SMOPlayer:
         "Darker": 1
     }
     goal : int
+    current_home_stage : str = "Cap"
 
     def __init__(self):
         self.reset_moons()
@@ -108,7 +108,7 @@ class SMOPlayer:
 
         if item_name in self.MAX_MOONS:
             if self.moons[item_name] >= self.MAX_MOONS[item_name]:
-                raise f"{item_name} out of bounds. Already received max amount of {item_name}s"
+                return -1
         moon_id : int = moon_list["Mushroom" if item_name == "Power Star" else item_name.split(" ")[0]][self.moons[item_name]]
         self.moons[item_name] += 1
         return moon_id
@@ -154,10 +154,9 @@ class SMOPlayer:
             case _:
                 return [self.messages.pop(0), self.messages[0], self.messages[1]]
 
-    def check_goal(self, item : NetworkItem) -> bool:
-        if goals[self.goal].item == item.item:
-            if goals[self.goal].item_index == self.moons[id_to_name[item.item]]:
-                return True
+    def check_goal(self, location : int) -> bool:
+        if self.goal and self.goal in goals:
+            return goals[self.goal] == location
         return False
 
     def get_scenario_dict(self) -> dict:

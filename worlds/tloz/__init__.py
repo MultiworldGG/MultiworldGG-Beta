@@ -20,26 +20,17 @@ from .Locations import location_table, level_locations, major_locations, shop_lo
 from .Options import TlozOptions
 from .Rom import TLOZProcedurePatch
 from .Rules import set_rules
-from .EntranceRandoRules import create_entrance_randomizer_set
+from .Client import TLOZClient
 from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import add_rule
-from worlds.LauncherComponents import Component, components, launch as launch_component, Type, SuffixIdentifier
 
-
-def launch_client(*args: str):
-    from .Client import main
-    launch_component(main, name="Zelda 1 Client", args=args)
-
-
-components.append(Component(display_name="Zelda 1 Client", func=launch_client, component_type=Type.CLIENT,
-                            file_identifier=SuffixIdentifier('.aptloz')))
 
 class TLoZSettings(settings.Group):
     class RomFile(settings.UserFilePath):
         """File name of the Zelda 1"""
         description = "The Legend of Zelda (U) ROM File"
         copy_to = "Legend of Zelda, The (U) (PRG0) [!].nes"
-        md5s = [TLOZProcedurePatch.hash]
+        md5s = TLOZProcedurePatch.hash
 
     class RomStart(str):
         """
@@ -60,7 +51,7 @@ class TLoZWeb(WebWorld):
     theme = "stone"
     setup = Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up The Legend of Zelda for MultiworldGG on your computer.",
+        "A guide to setting up The Legend of Zelda for Archipelago on your computer.",
         "English",
         "multiworld_en.md",
         "multiworld/en",
@@ -81,8 +72,7 @@ class TLoZWorld(World):
     options: TlozOptions
     settings: typing.ClassVar[TLoZSettings]
     game = "The Legend of Zelda"
-    author: str = "Rosalie-A & t3hf1gm3nt"
-    patch_file_ending: str = ".aptloz"
+    author: typing.ClassVar[str] = "Rosalie-A & t3hf1gm3nt"
     topology_present = True
     base_id = 7000
     web = TLoZWeb()
@@ -168,7 +158,7 @@ class TLoZWorld(World):
             overworld.connect(
                 level,
                 f"Level {i} Entrance at {entrando_entrance}",
-                lambda state, rule=entrando_rule: rule(state, self.player))
+                lambda state, rule=entrando_rule: rule(state, self.player, self.options))
 
             self.multiworld.regions.append(level)
 
@@ -190,7 +180,7 @@ class TLoZWorld(World):
                 region = Region(location, self.player, self.multiworld)
                 entrando_screen = [screen for screen, entrance in self.entrance_randomizer_set.items() if entrance[1] == location][0]
                 entrando_rule = self.entrance_randomizer_set[entrando_screen][0]
-                overworld.connect(region, f"Overworld to {entrando_screen}", lambda state, rule=entrando_rule: rule(state, self.player))
+                overworld.connect(region, f"Overworld to {entrando_screen}", lambda state, rule=entrando_rule: rule(state, self.player, self.options))
                 region.locations.append(
                     self.create_location(location, self.location_name_to_id[location], region))
             elif "Take Any" not in location:
@@ -206,7 +196,7 @@ class TLoZWorld(World):
                 screen_region.connect(
                     region,
                     f"{screen_region} to Take Any Item",
-                    lambda state, rule=entrando_rule: rule(state, self.player)
+                    lambda state, rule=entrando_rule: rule(state, self.player, self.options)
                 )
                 overworld.connect(screen_region, f"Overworld to {screen}", lambda state: True)
             for location in take_any_locations:
@@ -223,7 +213,7 @@ class TLoZWorld(World):
                 screen_region.connect(
                     shop_region,
                     f"{screen_region} to {shop_category}",
-                    lambda state, rule=entrando_rule: rule(state, self.player))
+                    lambda state, rule=entrando_rule: rule(state, self.player, self.options))
                 overworld.connect(screen_region,
                                   f"Overworld {screen}",
                                   lambda state: True

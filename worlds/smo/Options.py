@@ -36,9 +36,22 @@ class ShopSanity(Choice):
     option_off = 0
     default = 0  # default to off
 
-class RandomizeMoonColors(Toggle):
-    """Randomizes each kingdom's moon color."""
+class RandomizeMoonColors(Choice):
+    """Changes the color of moons.
+    kingdom : shuffles color dependent on kingdom (all moons in one kingdom will be the same color similar to the original implementation)
+    item : color is dependent on the item at the location (SMO items only)
+    classification : color is dependent on the item classification of the item at the location
+    random : randomizes the colors instead of using the default set.
+    chaos : colors are completely random for each moon individually."""
     display_name = "Randomize Moon Colors"
+    option_off = 0
+    option_kingdom_random = 1
+    option_item = 2
+    option_classification = 3
+    option_item_random = 4
+    option_classification_random = 5
+    option_chaos = 6
+    default = 0
     #visibility = 0b1101
 
 class RandomizeMoonCount(Choice):
@@ -57,6 +70,51 @@ class RandomizeMoonCount(Choice):
     option_off = 0
     default = 0
 
+class CaptureSanity(Toggle):
+    """Randomizes Captures.
+    Warning this is an experimental feature!
+    NOT ALL Captures have logic, use at YOU OWN RISK!
+    Logic for post game is still missing.
+    """
+    display_name = "Randomize Captures"
+    #visibility = 0b1101
+
+class ExtraMoons(Choice):
+    """
+    Sets the multiplier for the number of extra moons available in the pool for each kingdom.
+    Default: some = 1.2x moons
+    """
+    display_name = "Extra Moons"
+    option_none = 1.0
+    option_some = 1.2
+    option_more = 1.5
+    option_many = 1.75
+    option_double = 2.0
+
+    default = 1.2  # default to some
+
+class TrickJumpLogic(Choice):
+    """
+        Difficulty of trick jumps considered as in logic.
+    """
+    option_off = 0
+    option_easy = 1
+    option_intermediate = 2
+    option_hard = 3
+
+    default = 0  # default to off
+
+class MiscTrickLogic(Choice):
+    """
+        Difficulty of clips and glitches considered as in logic.
+    """
+    option_off = 0
+    option_easy = 1
+    option_intermediate = 2
+    option_hard = 3
+
+    default = 0  # default to off
+
 class SMODeathLink(DeathLink):
     __doc__ = DeathLink.__doc__ + "\n    In Super Mario Odyssey, Mario dying in any way sends a death and receiving a death causes Mario to die where he stands."
 
@@ -64,9 +122,11 @@ class SMODeathLink(DeathLink):
 class SMOOptions(PerGameCommonOptions):
     goal: Goal
     story : StorySanity
+    extra_moons : ExtraMoons
     shop_sanity : ShopSanity
     # replace: ReplaceUnneededMoons
     colors : RandomizeMoonColors
     counts : RandomizeMoonCount
+    capture_sanity : CaptureSanity
     death_link : SMODeathLink
 

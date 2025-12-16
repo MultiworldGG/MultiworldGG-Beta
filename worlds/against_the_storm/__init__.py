@@ -64,7 +64,14 @@ class AgainstTheStormWorld(World):
                                 classification == ATSItemClassification.guardian_part and self.options.seal_items or
                                 classification == ATSItemClassification.blueprint and self.options.blueprint_items or
                                 classification == ATSItemClassification.keepers_dlc_blueprint and
-                                    self.options.enable_keepers_dlc])
+                                    self.options.enable_keepers_dlc or
+                                classification == ATSItemClassification.biome_key and self.options.enable_biome_keys or
+                                classification == ATSItemClassification.keepers_dlc_biome_key and
+                                    self.options.enable_keepers_dlc and self.options.enable_biome_keys or
+                                classification == ATSItemClassification.nightwatchers_dlc_biome_key and
+                                    self.options.enable_nightwatchers_dlc and self.options.enable_biome_keys])
+        if self.options.enable_biome_keys:
+            total_item_count -= 1 # One biome will get pulled for starting inventory
         if total_location_count < total_item_count:
             while total_location_count < total_item_count:
                 self.options.reputation_locations_per_biome.value += 1
@@ -134,16 +141,17 @@ class AgainstTheStormWorld(World):
             self.production_recipes = all_production
 
     def get_filler_item_name(self):
-        choice = self.multiworld.random.choices(self.filler_items)[0]
+        choice = self.random.choices(self.filler_items)[0]
         # Reroll Survivor Bonding to halve its occurence
-        return (self.multiworld.random.choices(self.filler_items)[0] if
-                choice == "Survivor Bonding" and self.multiworld.random.random() < 0.5 else choice)
+        return (self.random.choices(self.filler_items)[0] if
+                choice == "Survivor Bonding" and self.random.random() < 0.5 else choice)
 
     def create_item(self, name: str) -> AgainstTheStormItem:
         return AgainstTheStormItem(name, item_dict[name][0], self.item_name_to_id[name], self.player)
 
     def create_items(self) -> None:
         itempool: list[str] = []
+        biome_keys: list[str] = []
         for item_key, (_ap_classification, classification, _item_group) in item_dict.items():
             match classification:
                 case ATSItemClassification.good:
@@ -159,6 +167,22 @@ class AgainstTheStormWorld(World):
                 case ATSItemClassification.keepers_dlc_blueprint:
                     if self.options.enable_keepers_dlc and self.options.blueprint_items:
                         itempool.append(item_key)
+                case ATSItemClassification.biome_key:
+                    if self.options.enable_biome_keys:
+                        biome_keys.append(item_key)
+                case ATSItemClassification.keepers_dlc_biome_key:
+                    if self.options.enable_biome_keys and self.options.enable_keepers_dlc:
+                        biome_keys.append(item_key)
+                case ATSItemClassification.nightwatchers_dlc_biome_key:
+                    if self.options.enable_biome_keys and self.options.enable_nightwatchers_dlc:
+                        biome_keys.append(item_key)
+
+        if self.options.enable_biome_keys:
+            # Pick a random biome to be the starting biome
+            starting_biome = self.random.choice(biome_keys)
+            biome_keys.remove(starting_biome)
+            self.multiworld.push_precollected(self.create_item(starting_biome))
+            itempool.extend(biome_keys)
 
         # Fill remaining itempool space with filler
         while len(itempool) < len(self.multiworld.get_unfilled_locations(self.player)):
@@ -217,8 +241,8 @@ class AgainstTheStormWorld(World):
         menu_region.connect(main_region)
 
     def can_goal(self, state: CollectionState) -> bool:
-        if self.options.seal_items and not state.has_all(
-            ["Guardian Heart", "Guardian Blood", "Guardian Feathers", "Guardian Essence"], self.player):
+        if self.options.seal_items and not state.has_all(["Sealed Forest",
+                "Guardian Heart", "Guardian Blood", "Guardian Feathers", "Guardian Essence"], self.player):
             return False
 
         if self.options.required_seal_tasks.value > 1:
@@ -239,11 +263,20 @@ class AgainstTheStormWorld(World):
         self.multiworld.completion_condition[self.player] = lambda state: self.can_goal(state)
 
         production_recipes = self.production_recipes if self.options.blueprint_items.value else None
+        biome_keys = [key for key, (_classification, item_class, _group) in item_dict.items() if
+                      item_class == ATSItemClassification.biome_key or
+                      item_class == ATSItemClassification.keepers_dlc_biome_key or
+                      item_class == ATSItemClassification.nightwatchers_dlc_biome_key]
 
         for location in self.multiworld.get_locations(self.player):
-            logic = location_dict[location.name][1]
+            (_classification, logic, group) = location_dict[location.name]
             set_rule(location,
                      lambda state, logic=logic: satisfies_recipe(state, self.player, production_recipes, logic))
+            # Most locations that would need a biome key have the biome they're in as a group
+            if group in biome_keys and self.options.enable_biome_keys:
+                add_rule(location, lambda state, group=group: state.has(group, self.player))
+            if group == "Coastal Grove Expeditions" and self.options.enable_biome_keys:
+                add_rule(location, lambda state: state.has("Coastal Grove", self.player))
 
         if self.options.blueprint_items.value:
             add_rule(self.get_location("The Marshlands - Harvest from an Ancient Proto Wheat"),
@@ -266,6 +299,7 @@ class AgainstTheStormWorld(World):
             "required_seal_tasks": self.options.required_seal_tasks.value,
             "enable_keepers_dlc": self.options.enable_keepers_dlc.value,
             "enable_nightwatchers_dlc": self.options.enable_nightwatchers_dlc.value,
+            "enable_biome_keys": self.options.enable_biome_keys.value,
             "rep_location_indices": self.included_location_indices,
             "production_recipes": prod_recipes
         }

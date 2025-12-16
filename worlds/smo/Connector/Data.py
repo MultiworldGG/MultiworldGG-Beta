@@ -1,11 +1,14 @@
+class ShopReplaceText:
+    game_index : int = -1
+    slot_index : int = -1
+    item_index : int = -1
+    item_classification : int = 0
 
-class Goal:
-    item : int
-    item_index : int
-
-    def __init__(self, item : int, item_index : int):
-        self.item = item
+    def __init__(self, game_index : int, slot_index : int, item_index : int, classification : int):
+        self.game_index = game_index
+        self.slot_index = slot_index
         self.item_index = item_index
+        self.item_classification = classification
 
 shop_items = {
     "MarioInvisibleCap" : 2502,
@@ -134,90 +137,176 @@ shop_items = {
     "TuxedoClothes" : 2625
 }
 
+new_shop_items = {
+    2501  : "MarioTailCoatCap",
+    2502  : "MarioPrimitiveManCap",
+    2503  : "MarioPonchoCap",
+    2504  : "MarioGunmanCap",
+    2505  : "MarioSwimwearCap",
+    2506  : "MarioExplorerCap",
+    2507  : "MarioScientistCap",
+    2508  : "MarioPilotCap",
+    2509  : "MarioMakerCap",
+    2510  : "MarioGolfCap",
+    2511  : "MarioSnowSuitCap",
+    2512  : "MarioAlohaCap",
+    2513  : "MarioSailorCap",
+    2514  : "MarioCookCap",
+    2515  : "MarioPainterCap",
+    2516  : "MarioArmorCap",
+    2517  : "MarioHappiCap",
+    2518  : "MarioSpaceSuitCap",
+    2519  : "Mario64Cap",
+    2520  : "MarioShopmanCap",
+    2521  : "MarioNew3DSCap",
+    2522  : "MarioMechanicCap",
+    2523  : "MarioSuitCap",
+    2524  : "MarioPirateCap",
+    2525  : "MarioClownCap",
+    2526  : "MarioFootballCap",
+    2527  : "MarioColorClassicCap",
+    2528  : "MarioColorLuigiCap",
+    2529  : "MarioColorWarioCap",
+    2530  : "MarioColorWaluigiCap",
+    2531  : "MarioColorGoldCap",
+    2532  : "MarioDoctorCap",
+    2533  : "MarioDiddyKongCap",
+    2534  : "MarioKoopaCap",
+    2535  : "MarioPeachCap",
+    2536  : "Mario64MetalCap",
+    2537  : "MarioKingCap",
+    2538  : "MarioTuxedoCap",
+    # Clothes
+    2539  : "MarioTailCoatClothes",
+    2540  : "MarioPrimitiveManClothes",
+    2541  : "MarioPonchoClothes",
+    2542  : "MarioGunmanClothes",
+    2543  : "MarioSwimwearClothes",
+    2544  : "MarioExplorerClothes",
+    2545  : "MarioScientistClothes",
+    2546  : "MarioPilotClothes",
+    2547  : "MarioMakerClothes",
+    2548  : "MarioGolfClothes",
+    2549  : "MarioSnowSuitClothes",
+    2550  : "MarioAlohaClothes",
+    2551  : "MarioSailorClothes",
+    2552  : "MarioCookClothes",
+    2553  : "MarioPainterClothes",
+    2554  : "MarioArmorClothes",
+    2555  : "MarioHappiClothes",
+    2556  : "MarioSpaceSuitClothes",
+    2557  : "Mario64Clothes",
+    2558  : "MarioShopmanClothes",
+    2559  : "MarioNew3DSClothes",
+    2560  : "MarioMechanicClothes",
+    2561  : "MarioSuitClothes",
+    2562  : "MarioPirateClothes",
+    2563  : "MarioClownClothes",
+    2564  : "MarioFootballClothes",
+    2565  : "MarioColorClassicClothes",
+    2566  : "MarioColorLuigiClothes",
+    2567  : "MarioColorWarioClothes",
+    2568  : "MarioColorWaluigiClothes",
+    2569  : "MarioColorGoldClothes",
+    2570  : "MarioDoctorClothes",
+    2571  : "MarioDiddyKongClothes",
+    2572  : "MarioKoopaClothes",
+    2573  : "MarioPeachClothes",
+    2574  : "Mario64MetalClothes",
+    2575  : "MarioKingClothes",
+    2576  : "MarioTuxedoClothes",
+    # Single Piece
+    2577  : "MarioCaptainCap",
+    2578  : "MarioUnderwearClothes",
+    2579  : "MarioHakamaClothes",
+    2580  : "MarioBoneClothes",
+    2581  : "MarioInvisibleCap",
+    # Shop Items
+    2582: "StickerCap",
+    2583: "StickerWaterfall",
+    2584: "StickerSand",
+    2585: "StickerLake",
+    2586: "StickerForest",
+    2587: "StickerClash",
+    2588: "StickerCity",
+    2589: "StickerSnow",
+    2590: "StickerSea",
+    2591: "StickerLava",
+    2592: "StickerSky",
+    2593: "StickerMoon",
+    2594: "StickerPeachDokan",
+    2595: "StickerPeachCoin",
+    2596: "StickerPeachBlock",
+    2597: "StickerPeachBlockQuestion",
+    2598: "StickerPeach",
+    2599: "SouvenirHat1",
+    2600: "SouvenirHat2",
+    2601: "SouvenirFall1",
+    2602: "SouvenirFall2",
+    2603: "SouvenirSand1",
+    2604: "SouvenirSand2",
+    2605: "SouvenirLake1",
+    2606: "SouvenirLake2",
+    2607: "SouvenirForest1",
+    2608: "SouvenirForest2",
+    2609: "SouvenirCrash1",
+    2610: "SouvenirCrash2",
+    2611: "SouvenirCity1",
+    2612: "SouvenirCity2",
+    2613: "SouvenirSnow1",
+    2614: "SouvenirSnow2",
+    2615: "SouvenirSea1",
+    2616: "SouvenirSea2",
+    2617: "SouvenirLava1",
+    2618: "SouvenirLava2",
+    2619: "SouvenirSky1",
+    2620: "SouvenirSky2",
+    2621: "SouvenirMoon1",
+    2622: "SouvenirMoon2",
+    2623: "SouvenirPeach1",
+    2624: "SouvenirPeach2"
+}
+
 inverse_shop_items = {
-    2502 : "MarioInvisibleCap",
     2503  : "MarioCaptainCap",
     2504  : "MarioTailCoatCap",
     2505  : "MarioTailCoatClothes",
-    2506  : "StickerCap",
-    2507  : "SouvenirHat1",
-    2508  : "SouvenirHat2",
     2509  : "MarioPrimitiveManCap",
     2510  : "MarioPrimitiveManClothes",
-    2511  : "StickerWaterfall",
-    2512  : "SouvenirFall1",
-    2513  : "SouvenirFall2",
     2514  : "MarioPonchoCap",
     2515  : "MarioPonchoClothes",
     2516  : "MarioGunmanCap",
     2517  : "MarioGunmanClothes",
-    2518  : "StickerSand",
-    2519  : "SouvenirSand2",
-    2520  : "SouvenirSand1",
     2521  : "MarioSwimwearCap",
     2522  : "MarioSwimwearClothes",
-    2523  : "StickerLake",
-    2524  : "SouvenirLake2",
-    2525  : "SouvenirLake1",
     2526  : "MarioExplorerCap",
     2527  : "MarioExplorerClothes",
     2528  : "MarioScientistCap",
     2529  : "MarioScientistClothes",
-    2530  : "StickerForest",
-    2531  : "SouvenirForest1",
-    2532  : "SouvenirForest2",
     2533  : "MarioPilotCap",
     2534  : "MarioPilotClothes",
-    2535  : "StickerClash",
-    2536  : "SouvenirCrash1",
-    2537  : "SouvenirCrash2",
     2538  : "MarioMakerCap",
     2539  : "MarioMakerClothes",
     2540  : "MarioGolfCap",
     2541  : "MarioGolfClothes",
-    2542  : "StickerCity",
-    2543  : "SouvenirCity2",
-    2544  : "SouvenirCity1",
     2545  : "MarioSnowSuitCap",
     2546  : "MarioSnowSuitClothes",
-    2547  : "StickerSnow",
-    2548  : "SouvenirSnow1",
-    2549  : "SouvenirSnow2",
     2550  : "MarioAlohaCap",
     2551  : "MarioAlohaClothes",
     2552  : "MarioSailorCap",
     2553  : "MarioSailorClothes",
-    2554  : "StickerSea",
-    2555  : "SouvenirSea2",
-    2556  : "SouvenirSea1",
     2557  : "MarioCookCap",
     2558  : "MarioCookClothes",
     2559  : "MarioPainterCap",
     2560  : "MarioPainterClothes",
-    2561  : "StickerLava",
-    2562  : "SouvenirLava1",
-    2563  : "SouvenirLava2",
     2564  : "MarioArmorCap",
     2565  : "MarioArmorClothes",
     2566  : "MarioHappiCap",
     2567  : "MarioHappiClothes",
-    2568  : "StickerSky",
-    2569  : "SouvenirSky1",
-    2570  : "SouvenirSky2",
     2571  : "MarioSpaceSuitCap",
     2572  : "MarioSpaceSuitClothes",
-    2573  : "StickerMoon",
-    2574  : "SouvenirMoon1",
-    2575  : "SouvenirMoon2",
     2576  : "Mario64Cap",
     2577  : "Mario64Clothes",
-    2578  : "StickerPeachDokan",
-    2579  : "StickerPeachCoin",
-    2580  : "StickerPeachBlock",
-    2581  : "StickerPeachBlockQuestion",
-    2582  : "StickerPeach",
-    2583  : "SouvenirPeach1",
-    2584  : "SouvenirPeach2",
     2585  : "MarioShopmanCap",
     2586  : "MarioShopmanClothes",
     2587  : "MarioUnderwearClothes",
@@ -233,32 +322,77 @@ inverse_shop_items = {
     2597  : "MarioClownClothes",
     2598  : "MarioFootballCap",
     2599  : "MarioFootballClothes",
+    2602  : "MarioBoneClothes",
     2600  : "MarioColorClassicCap",
     2601  : "MarioColorClassicClothes",
-    2602  : "MarioBoneClothes",
     2603  : "MarioColorLuigiCap",
     2604  : "MarioColorLuigiClothes",
-    2605  : "MarioDoctorCap",
-    2606  : "MarioDoctorClothes",
-    2607  : "MarioColorWaluigiCap",
-    2608  : "MarioColorWaluigiClothes",
-    2609  : "MarioDiddyKongCap",
-    2610  : "MarioDiddyKongClothes",
     2611  : "MarioColorWarioCap",
     2612  : "MarioColorWarioClothes",
+    2607  : "MarioColorWaluigiCap",
+    2608  : "MarioColorWaluigiClothes",
+    2618: "MarioColorGoldCap",
+    2619: "MarioColorGoldClothes",
+    2605  : "MarioDoctorCap",
+    2606  : "MarioDoctorClothes",
+    2609  : "MarioDiddyKongCap",
+    2610  : "MarioDiddyKongClothes",
     2613  : "MarioHakamaClothes",
     2614  : "MarioKoopaCap",
     2615  : "MarioKoopaClothes",
     2616  : "MarioPeachCap",
     2617  : "MarioPeachClothes",
-    2618  : "MarioColorGoldCap",
-    2619  : "MarioColorGoldClothes",
     2620  : "Mario64MetalCap",
     2621  : "Mario64MetalClothes",
     2622  : "MarioKingCap",
     2623  : "MarioKingClothes",
     2624  : "MarioTuxedoCap",
-    2625  : "MarioTuxedoClothes"
+    2625  : "MarioTuxedoClothes",
+    2502 : "MarioInvisibleCap",
+    2506: "StickerCap",
+    2511: "StickerWaterfall",
+    2518: "StickerSand",
+    2523: "StickerLake",
+    2530: "StickerForest",
+    2535: "StickerClash",
+    2542: "StickerCity",
+    2547: "StickerSnow",
+    2554: "StickerSea",
+    2561: "StickerLava",
+    2568: "StickerSky",
+    2573: "StickerMoon",
+    2578: "StickerPeachDokan",
+    2579: "StickerPeachCoin",
+    2580: "StickerPeachBlock",
+    2581: "StickerPeachBlockQuestion",
+    2582: "StickerPeach",
+    2507: "SouvenirHat1",
+    2508: "SouvenirHat2",
+    2512: "SouvenirFall1",
+    2513: "SouvenirFall2",
+    2520: "SouvenirSand1",
+    2519: "SouvenirSand2",
+    2525: "SouvenirLake1",
+    2524: "SouvenirLake2",
+    2531: "SouvenirForest1",
+    2532: "SouvenirForest2",
+    2536: "SouvenirCrash1",
+    2537: "SouvenirCrash2",
+    2544: "SouvenirCity1",
+    2543: "SouvenirCity2",
+    2548: "SouvenirSnow1",
+    2549: "SouvenirSnow2",
+    2556: "SouvenirSea1",
+    2555: "SouvenirSea2",
+    2562: "SouvenirLava1",
+    2563: "SouvenirLava2",
+    2569: "SouvenirSky1",
+    2570: "SouvenirSky2",
+    2574: "SouvenirMoon1",
+    2575: "SouvenirMoon2",
+    2583: "SouvenirPeach1",
+    2584: "SouvenirPeach2",
+
 }
 
 dark_side_hint_arts = {
@@ -1086,6 +1220,26 @@ moon_list = {
         1061
     ]
 }
+
+world_prefixes = [
+    "Cap",
+    "Waterfall",
+    "Sand",
+    "Forest",
+    "Lake",
+    "Cloud",
+    "Clash",
+    "City",
+    "Sea",
+    "Snow",
+    "Lava",
+    "BossRaid",
+    "Sky",
+    "Moon",
+    "Peach",
+    "Special1",
+    "Special2"
+]
 
 worlds = {
     "Cap": 0,
@@ -2769,13 +2923,13 @@ valid_warps = {
 }
 
 goals = {
-    4: Goal(27,3),
-    5: Goal(29,  0),
-    9: Goal(30,6),
-    12: Goal(33, 4),
-    14: Goal(39, item_index=-1),
-    17: Goal(38, 0),
-    18: Goal(17, 0)
+    4: 560,
+    5: 424,
+    9: 95,
+    12: 290,
+    14: 2499,
+    17: 1055,
+    18: 1061
 }
 
 def get_item_type(item : int) -> int:
@@ -2785,25 +2939,28 @@ def get_item_type(item : int) -> int:
     Returns:
          The in-game item type enum value corresponding to the item name.
     """
-    if item in inverse_shop_items:
-        item_name = inverse_shop_items[item]
-        if "Sticker" in item_name:
-            return 3
-        elif "Souvenir" in item_name:
-            return 2
-        elif "Cap" in item_name:
-            return 1
-        else:
-            return 0
-    else:
-        # Moons
-        if item in inverse_moon_items:
-            return -1
 
-        # Filler
-        elif item in inverse_filler_items:
-            return -3
-        else:
-            return 0
+    # Moons
+    if item < 2500:
+        return -1
+    elif 3700 < item < 9000:
+        return 5
+    elif 2599 > item > 2581:
+        return 3
+    elif 2625 > item > 2598:
+        return 2
+    elif item < 2539 or item == 2577 or item == 2581:
+        return 1
+    elif 2581 > item > 2538:
+        return 0
+
+
+    # Filler
+    elif item > 9990:
+        return -2
+    # Regional Coin
+    else:
+        return 4
+    # Add Capture
 
 

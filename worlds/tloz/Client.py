@@ -1,390 +1,406 @@
-import asyncio
-import copy
-import json
 import logging
-import os
-import subprocess
-import time
-import typing
-import Utils
+from copy import deepcopy, copy
+from typing import TYPE_CHECKING
 
-apname = Utils.instance_name if Utils.instance_name else "Archipelago"
-from Utils import async_start
-from CommonClient import CommonContext, server_loop, gui_enabled, ClientCommandProcessor, logger, \
-    get_base_parser
+from NetUtils import ClientStatus
 
-from .Items import item_game_ids
-from .Locations import location_ids
-from . import Locations, Rom
+import worlds._bizhawk as bizhawk
+from worlds._bizhawk.client import BizHawkClient
 
-from settings import get_settings
+from worlds.tloz import Rom, Locations, Items
 
-SYSTEM_MESSAGE_ID = 0
-
-CONNECTION_TIMING_OUT_STATUS = "Connection timing out. Please restart your emulator, then restart connector_tloz.lua"
-CONNECTION_REFUSED_STATUS = "Connection Refused. Please start your emulator and make sure connector_tloz.lua is running"
-CONNECTION_RESET_STATUS = "Connection was reset. Please restart your emulator, then restart connector_tloz.lua"
-CONNECTION_TENTATIVE_STATUS = "Initial Connection Made"
-CONNECTION_CONNECTED_STATUS = "Connected"
-CONNECTION_INITIAL_STATUS = "Connection has not been initiated"
-
-DISPLAY_MSGS = True
-
-item_ids = item_game_ids
-location_ids = location_ids
-items_by_id = {id: item for item, id in item_ids.items()}
-locations_by_id = {id: location for location, id in location_ids.items()}
+if TYPE_CHECKING:
+    from worlds._bizhawk.context import BizHawkClientContext
 
 
-class ZeldaCommandProcessor(ClientCommandProcessor):
+base_id = 7000
+logger = logging.getLogger("Client")
 
-    def _cmd_nes(self):
-        """Check NES Connection State"""
-        if isinstance(self.ctx, ZeldaContext):
-            logger.info(f"NES Status: {self.ctx.nes_status}")
+WRAM_NAMES = {
+    "NesHawk": "Battery RAM",
+    "SubNESHawk": "Battery RAM",
+    "QuickNes": "WRAM",
+    "quickerNES": "WRAM",
+}
 
-    def _cmd_toggle_msgs(self):
-        """Toggle displaying messages in EmuHawk"""
-        global DISPLAY_MSGS
-        DISPLAY_MSGS = not DISPLAY_MSGS
-        logger.info(f"Messages are now {'enabled' if DISPLAY_MSGS else 'disabled'}")
+class TLOZClient(BizHawkClient):
+    game = "The Legend of Zelda"
+    system = "NES"
+    patch_suffix = ".aptloz"
 
-
-class ZeldaContext(CommonContext):
-    command_processor = ZeldaCommandProcessor
-    items_handling = 0b101  # get sent remote and starting items
-    # Infinite Hyrule compatibility
-    overworld_item = 0x5F
-    armos_item = 0x24
-
-    def __init__(self, server_address, password):
-        super().__init__(server_address, password)
+    def __init__(self):
+        self.wram = "RAM"
+        self.sram = "WRAM" # Placeholder
+        self.rom = "PRG ROM"
         self.bonus_items = []
-        self.nes_streams: (StreamReader, StreamWriter) = None
-        self.nes_sync_task = None
-        self.messages = {}
-        self.locations_array = None
-        self.nes_status = CONNECTION_INITIAL_STATUS
-        self.game = 'The Legend of Zelda'
-        self.awaiting_rom = False
-        self.shop_slots_left = 0
-        self.shop_slots_middle = 0
-        self.shop_slots_right = 0
-        self.shop_slots = [self.shop_slots_left, self.shop_slots_middle, self.shop_slots_right]
-        self.slot_data = dict()
+        self.major_location_offsets = None
+        self.base_guard_list = [(Rom.game_mode, [0x05], self.wram)] # 0x05 is normal gameplay in overworld or dungeon
+        self.guard_list = [(Rom.game_mode, [0x05], self.wram)]
+        self.take_any_item_ids = None
 
-    async def server_auth(self, password_requested: bool = False):
-        if password_requested and not self.password:
-            await super(ZeldaContext, self).server_auth(password_requested)
-        if not self.auth:
-            self.awaiting_rom = True
-            logger.info('Awaiting connection to NES to get Player information')
+
+    async def validate_rom(self, ctx: "BizHawkClientContext") -> bool:
+        try:
+            # Check ROM name/patch version
+            rom_name = ((await bizhawk.read(ctx.bizhawk_ctx, [(Rom.rom_name_location, 3, self.rom)]))[0]).decode("ascii")
+            if rom_name != "LOZ":
+                return False
+            #nes_core = (await bizhawk.get_cores(ctx.bizhawk_ctx))["NES"]
+        except (bizhawk.RequestFailedError, UnicodeDecodeError):
+            return False  # Not able to get a response, say no for now
+
+        ctx.game = self.game
+        ctx.items_handling = 0b101
+        ctx.want_slot_data = True
+
+        #self.sram_name = WRAM_NAMES[nes_core]
+
+        return True
+
+    async def set_auth(self, ctx: "BizHawkClientContext") -> None:
+        import base64
+        auth_raw = (await bizhawk.read(
+            ctx.bizhawk_ctx,
+            [(Rom.player_name_location, Rom.player_name_length, "PRG ROM")]))[0]
+        ctx.auth = auth_raw.decode().replace('\x00', ' ').strip()
+
+    async def game_watcher(self, ctx: "BizHawkClientContext") -> None:
+        if ctx.server is None or ctx.server.socket.closed or ctx.slot_data is None:
             return
+        try:
+            if self.major_location_offsets is None:
+                location_offsets = await self.read_rom(ctx, Rom.major_offsets_location, 4)
+                self.major_location_offsets = deepcopy(Locations.major_location_offsets)
+                self.major_location_offsets["Starting Sword Cave"] = location_offsets[0]
+                self.major_location_offsets["White Sword Pond"] = location_offsets[1]
+                self.major_location_offsets["Magical Sword Grave"] = location_offsets[2]
+                self.major_location_offsets["Letter Cave"] = location_offsets[3]
+            if self.take_any_item_ids is None:
+                from . import TLoZWorld
+                self.take_any_item_ids = {}
+                self.take_any_item_ids["Left"] = TLoZWorld.location_name_to_id["Take Any Item Left"]
+                self.take_any_item_ids["Middle"] = TLoZWorld.location_name_to_id["Take Any Item Middle"]
+                self.take_any_item_ids["Right"] = TLoZWorld.location_name_to_id["Take Any Item Right"]
+            self.guard_list = [*self.base_guard_list]
+            await self.check_victory(ctx)
+            await self.location_check(ctx)
+            await self.received_items_check(ctx)
+            await self.resolve_shop_items(ctx)
+            await self.resolve_triforce_fragments(ctx)
+            await self.resolve_bonus_items(ctx)
 
-        await self.send_connect()
+        except bizhawk.RequestFailedError:
+            # The connector didn't respond. Exit handler and return to main loop to reconnect
+            pass
 
-    def _set_message(self, msg: str, msg_id: int):
-        if DISPLAY_MSGS:
-            self.messages[(time.time(), msg_id)] = msg
-
-    def on_package(self, cmd: str, args: dict):
-        if cmd == 'Connected':
-            self.slot_data = args.get("slot_data", {})
-            asyncio.create_task(parse_locations(self.locations_array, self, True))
-        elif cmd == 'Print':
-            msg = args['text']
-            if ': !' not in msg:
-                self._set_message(msg, SYSTEM_MESSAGE_ID)
-
-    def on_print_json(self, args: dict):
-        if self.ui:
-            self.ui.print_json(copy.deepcopy(args["data"]))
-        else:
-            text = self.jsontotextparser(copy.deepcopy(args["data"]))
-            logger.info(text)
-        relevant = args.get("type", None) in {"Hint", "ItemSend"}
-        if relevant:
-            item = args["item"]
-            # goes to this world
-            if self.slot_concerns_self(args["receiving"]):
-                relevant = True
-            # found in this world
-            elif self.slot_concerns_self(item.player):
-                relevant = True
-            # not related
-            else:
-                relevant = False
-            if relevant:
-                item = args["item"]
-                msg = self.raw_text_parser(copy.deepcopy(args["data"]))
-                self._set_message(msg, item.item)
-
-    def run_gui(self):
-        from kvui import GameManager
-
-        class ZeldaManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = apname + " Zelda 1 Client"
-
-        self.ui = ZeldaManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
-
-
-def get_payload(ctx: ZeldaContext):
-    current_time = time.time()
-    bonus_items = [item for item in ctx.bonus_items]
-    return json.dumps(
-        {
-            "items": [item.item for item in ctx.items_received],
-            "messages": {f'{key[0]}:{key[1]}': value for key, value in ctx.messages.items()
-                         if key[0] > current_time - 10},
-            "shops": {
-                "left": ctx.shop_slots_left,
-                "middle": ctx.shop_slots_middle,
-                "right": ctx.shop_slots_right
-            },
-            "bonusItems": bonus_items
-        }
-    )
-
-
-def reconcile_shops(ctx: ZeldaContext):
-    checked_location_names = [ctx.location_names.lookup_in_game(location) for location in ctx.checked_locations]
-    shops = [location for location in checked_location_names if "Shop" in location]
-    left_slots = [shop for shop in shops if "Left" in shop]
-    middle_slots = [shop for shop in shops if "Middle" in shop]
-    right_slots = [shop for shop in shops if "Right" in shop]
-    for shop in left_slots:
-        ctx.shop_slots_left |= get_shop_bit_from_name(shop)
-    for shop in middle_slots:
-        ctx.shop_slots_middle |= get_shop_bit_from_name(shop)
-    for shop in right_slots:
-        ctx.shop_slots_right |= get_shop_bit_from_name(shop)
-
-
-def get_shop_bit_from_name(location_name):
-    if "Potion" in location_name:
-        return Rom.potion_shop
-    elif "Arrow" in location_name:
-        return Rom.arrow_shop
-    elif "Shield" in location_name:
-        return Rom.shield_shop
-    elif "Ring" in location_name:
-        return Rom.ring_shop
-    elif "Candle" in location_name:
-        return Rom.candle_shop
-    elif "Take" in location_name:
-        return Rom.take_any
-    return 0  # this should never be hit
-
-
-async def parse_locations(locations_array, ctx: ZeldaContext, force: bool, zone="None"):
-    if locations_array == ctx.locations_array and not force:
-        return
-    else:
-        # print("New values")
-        ctx.locations_array = locations_array
-        locations_checked = []
-        location = None
-        for location in ctx.missing_locations:
-            location_name = ctx.location_names.lookup_in_game(location)
-
-            if location_name in Locations.overworld_locations and zone == "overworld":
-                status = locations_array[Locations.major_location_offsets[location_name]]
-                if location_name == "Ocean Heart Container":
-                    status = locations_array[ctx.overworld_item]
-                if location_name == "Armos Knights":
-                    status = locations_array[ctx.armos_item]
-                if status & 0x10:
-                    ctx.locations_checked.add(location)
-                    locations_checked.append(location)
-            elif location_name in Locations.underworld1_locations and zone == "underworld1":
-                status = locations_array[Locations.floor_location_game_offsets_early[location_name]]
-                if status & 0x10:
-                    ctx.locations_checked.add(location)
-                    locations_checked.append(location)
-            elif location_name in Locations.underworld2_locations and zone == "underworld2":
-                status = locations_array[Locations.floor_location_game_offsets_late[location_name]]
-                if status & 0x10:
-                    ctx.locations_checked.add(location)
-                    locations_checked.append(location)
-            elif (location_name in Locations.shop_locations or "Take" in location_name) and zone == "caves":
-                shop_bit = get_shop_bit_from_name(location_name)
-                slot = 0
-                context_slot = 0
-                if "Left" in location_name:
-                    slot = "slot1"
-                    context_slot = 0
-                elif "Middle" in location_name:
-                    slot = "slot2"
-                    context_slot = 1
-                elif "Right" in location_name:
-                    slot = "slot3"
-                    context_slot = 2
-                if locations_array[slot] & shop_bit > 0:
-                    locations_checked.append(location)
-                    ctx.shop_slots[context_slot] |= shop_bit
-                if locations_array["takeAnys"] and locations_array["takeAnys"] >= 4:
-                    if "Take Any" in location_name:
-                        short_name = None
-                        if "Left" in location_name:
-                            short_name = "TakeAnyLeft"
-                        elif "Middle" in location_name:
-                            short_name = "TakeAnyMiddle"
-                        elif "Right" in location_name:
-                            short_name = "TakeAnyRight"
-                        if short_name is not None:
-                            item_code = ctx.slot_data[short_name]
-                            if item_code > 0:
-                                ctx.bonus_items.append(item_code)
-                            locations_checked.append(location)
-        if locations_checked:
+    async def check_victory(self, ctx: "BizHawkClientContext"):
+        game_mode = await self.read_ram_value(ctx, Rom.game_mode)
+        if game_mode == 19 and ctx.finished_game == False:
+            ctx.finished_game = True
             await ctx.send_msgs([
-                {"cmd": "LocationChecks",
-                 "locations": locations_checked}
+                {"cmd": "StatusUpdate",
+                 "status": ClientStatus.CLIENT_GOAL}
             ])
 
+    async def location_check(self, ctx: "BizHawkClientContext"):
+        locations_checked = []
+        overworld_data = await self.read_ram_values_guarded(ctx, Rom.overworld_status_block, 0x80)
+        underworld_early_data = await self.read_ram_values_guarded(ctx, Rom.underworld_early_status_block, 0x80)
+        underworld_late_data = await self.read_ram_values_guarded(ctx, Rom.underworld_late_status_block, 0x80)
+        if overworld_data is None or underworld_early_data is None or underworld_late_data is None:
+            return
+        for location, index in self.major_location_offsets.items():
+            if (overworld_data[index] & 0x10) > 0:
+                locations_checked.append(Locations.location_table[location])
+        for location, index in Locations.floor_location_game_offsets_early.items():
+            if (underworld_early_data[index] & 0x10) > 0:
+                locations_checked.append(Locations.location_table[location])
+        for location, index in Locations.floor_location_game_offsets_late.items():
+            if (underworld_late_data[index] & 0x10) > 0:
+                locations_checked.append(Locations.location_table[location])
 
-async def nes_sync_task(ctx: ZeldaContext):
-    logger.info("Starting nes connector. Use /nes for status information")
-    while not ctx.exit_event.is_set():
-        error_status = None
-        if ctx.nes_streams:
-            (reader, writer) = ctx.nes_streams
-            msg = get_payload(ctx).encode()
-            writer.write(msg)
-            writer.write(b'\n')
-            try:
-                await asyncio.wait_for(writer.drain(), timeout=1.5)
-                try:
-                    # Data will return a dict with up to two fields:
-                    # 1. A keepalive response of the Players Name (always)
-                    # 2. An array representing the memory values of the locations area (if in game)
-                    data = await asyncio.wait_for(reader.readline(), timeout=5)
-                    data_decoded = json.loads(data.decode())
-                    if data_decoded["overworldHC"] is not None:
-                        ctx.overworld_item = data_decoded["overworldHC"]
-                    if data_decoded["overworldPB"] is not None:
-                        ctx.armos_item = data_decoded["overworldPB"]
-                    if data_decoded['gameMode'] == 19 and ctx.finished_game == False:
-                        await ctx.send_msgs([
-                            {"cmd": "StatusUpdate",
-                             "status": 30}
-                        ])
-                        ctx.finished_game = True
-                    if ctx.game is not None and 'overworld' in data_decoded:
-                        # Not just a keep alive ping, parse
-                        asyncio.create_task(parse_locations(data_decoded['overworld'], ctx, False, "overworld"))
-                    if ctx.game is not None and 'underworld1' in data_decoded:
-                        asyncio.create_task(parse_locations(data_decoded['underworld1'], ctx, False, "underworld1"))
-                    if ctx.game is not None and 'underworld2' in data_decoded:
-                        asyncio.create_task(parse_locations(data_decoded['underworld2'], ctx, False, "underworld2"))
-                    if ctx.game is not None and 'caves' in data_decoded:
-                        asyncio.create_task(parse_locations(data_decoded['caves'], ctx, False, "caves"))
-                    if not ctx.auth:
-                        ctx.auth = ''.join([chr(i) for i in data_decoded['playerName'] if i != 0])
-                        if ctx.auth == '':
-                            logger.info("Invalid ROM detected. No player name built into the ROM. Please regenerate "
-                                        "the ROM using the same link but adding your slot name")
-                        if ctx.awaiting_rom:
-                            await ctx.server_auth(False)
-                    reconcile_shops(ctx)
-                except asyncio.TimeoutError:
-                    logger.debug("Read Timed Out, Reconnecting")
-                    error_status = CONNECTION_TIMING_OUT_STATUS
-                    writer.close()
-                    ctx.nes_streams = None
-                except ConnectionResetError as e:
-                    logger.debug("Read failed due to Connection Lost, Reconnecting")
-                    error_status = CONNECTION_RESET_STATUS
-                    writer.close()
-                    ctx.nes_streams = None
-            except TimeoutError:
-                logger.debug("Connection Timed Out, Reconnecting")
-                error_status = CONNECTION_TIMING_OUT_STATUS
-                writer.close()
-                ctx.nes_streams = None
-            except ConnectionResetError:
-                logger.debug("Connection Lost, Reconnecting")
-                error_status = CONNECTION_RESET_STATUS
-                writer.close()
-                ctx.nes_streams = None
-            if ctx.nes_status == CONNECTION_TENTATIVE_STATUS:
-                if not error_status:
-                    logger.info("Successfully Connected to NES")
-                    ctx.nes_status = CONNECTION_CONNECTED_STATUS
-                else:
-                    ctx.nes_status = f"Was tentatively connected but error occured: {error_status}"
-            elif error_status:
-                ctx.nes_status = error_status
-                logger.info("Lost connection to nes and attempting to reconnect. Use /nes for status updates")
-        else:
-            try:
-                logger.debug("Attempting to connect to NES")
-                ctx.nes_streams = await asyncio.wait_for(asyncio.open_connection("localhost", 52980), timeout=10)
-                ctx.nes_status = CONNECTION_TENTATIVE_STATUS
-            except TimeoutError:
-                logger.debug("Connection Timed Out, Trying Again")
-                ctx.nes_status = CONNECTION_TIMING_OUT_STATUS
-                continue
-            except ConnectionRefusedError:
-                logger.debug("Connection Refused, Trying Again")
-                ctx.nes_status = CONNECTION_REFUSED_STATUS
-                await asyncio.sleep(1)
-                continue
+        left_shop_slots = await self.read_ram_value_guarded(ctx, Rom.left_shop_slots)
+        middle_shop_slots = await self.read_ram_value_guarded(ctx, Rom.middle_shop_slots)
+        right_shop_slots = await self.read_ram_value_guarded(ctx, Rom.right_shop_slots)
+        if left_shop_slots is None or middle_shop_slots is None or right_shop_slots is None:
+            return
+        shop_slots = {"Left": left_shop_slots, "Middle": middle_shop_slots, "Right": right_shop_slots}
+        for name, shop in shop_slots.items():
+            if shop & Rom.arrow_shop > 0:
+                locations_checked.append(Locations.location_table[f"Arrow Shop Item {name}"])
+            if shop & Rom.candle_shop > 0:
+                locations_checked.append(Locations.location_table[f"Candle Shop Item {name}"])
+            if shop & Rom.shield_shop > 0:
+                locations_checked.append(Locations.location_table[f"Shield Shop Item {name}"])
+            if shop & Rom.ring_shop > 0:
+                locations_checked.append(Locations.location_table[f"Blue Ring Shop Item {name}"])
+            if shop & Rom.potion_shop > 0:
+                locations_checked.append(Locations.location_table[f"Potion Shop Item {name}"])
+            if shop & Rom.take_any > 0:
+                locations_checked.append(Locations.location_table[f"Take Any Item {name}"])
+        take_any_caves_checked = await self.read_ram_value_guarded(ctx, Rom.take_any_caves_checked)
+        if take_any_caves_checked is None:
+            return
+        if take_any_caves_checked >= 4:
+            if self.take_any_item_ids["Left"] not in ctx.checked_locations:
+                locations_checked.append(Locations.location_table[f"Take Any Item Left"])
+                self.bonus_items.append(ctx.slot_data["TakeAnyLeft"])
+            if self.take_any_item_ids["Middle"] not in ctx.checked_locations:
+                locations_checked.append(Locations.location_table[f"Take Any Item Middle"])
+                self.bonus_items.append(ctx.slot_data["TakeAnyMiddle"])
+            if self.take_any_item_ids["Right"] not in ctx.checked_locations:
+                locations_checked.append(Locations.location_table[f"Take Any Item Right"])
+                self.bonus_items.append(ctx.slot_data["TakeAnyRight"])
+
+        found_locations = await ctx.check_locations(locations_checked)
+        for location in found_locations:
+            ctx.locations_checked.add(location)
+            location_name = ctx.location_names.lookup_in_game(location)
+            logger.info(
+                f'New Check: {location_name} ({len(ctx.locations_checked)}/'
+                f'{len(ctx.missing_locations) + len(ctx.checked_locations)})')
 
 
-def main(*launcher_args: str):
-    # Text Mode to use !hint and such with games that have no text entry
-    Utils.init_logging("ZeldaClient")
 
-    global DISPLAY_MSGS
-    DISPLAY_MSGS = get_settings()["tloz_options"]["display_msgs"]
+    async def received_items_check(self, ctx: "BizHawkClientContext"):
+        items_received_count_low = await self.read_ram_value_guarded(ctx, Rom.items_obtained_low)
+        items_received_count_high = await self.read_ram_value_guarded(ctx, Rom.items_obtained_high)
+        if items_received_count_low is None or items_received_count_high is None:
+            return
+        items_received_count_value = (items_received_count_high << 8) | items_received_count_low
+        if items_received_count_value < len(ctx.items_received):
+            current_item = ctx.items_received[items_received_count_value]
+            current_item_id = current_item.item
+            current_item_name = ctx.item_names.lookup_in_game(current_item_id, ctx.game)
+            items_received_count_value += 1
+            new_items_received_count_low = items_received_count_value % 256
+            new_items_received_count_high = items_received_count_value // 256
+            new_items_received_count_low_write = (Rom.items_obtained_low, [new_items_received_count_low], self.wram)
+            new_items_received_count_high_write = (Rom.items_obtained_high, [new_items_received_count_high], self.wram)
+            write_list: list[tuple[int, list[int], str]] = [new_items_received_count_low_write, new_items_received_count_high_write]
+            await self.write_item(ctx, current_item_name, write_list)
 
-    async def run_game(romfile: str) -> None:
-        auto_start = typing.cast(typing.Union[bool, str],
-                                 get_settings()["tloz_options"].get("rom_start", True))
-        if auto_start is True:
-            import webbrowser
-            webbrowser.open(romfile)
-        elif isinstance(auto_start, str) and os.path.isfile(auto_start):
-            subprocess.Popen([auto_start, romfile],
-                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    async def resolve_shop_items(self, ctx: "BizHawkClientContext"):
+        left_shop_slots = await self.read_ram_value_guarded(ctx, Rom.left_shop_slots)
+        middle_shop_slots = await self.read_ram_value_guarded(ctx, Rom.middle_shop_slots)
+        right_shop_slots = await self.read_ram_value_guarded(ctx, Rom.right_shop_slots)
+        if left_shop_slots is None or middle_shop_slots is None or right_shop_slots is None:
+            return
+        for shop_category, shops in Locations.shop_categories.items():
+            bit = Rom.shop_correspondance[shop_category]
+            for shop in shops:
+                shop_id = Locations.location_table[shop] + base_id
+                if shop_id in ctx.checked_locations:
+                    if "Left" in shop:
+                        left_shop_slots = left_shop_slots | bit
+                    if "Middle" in shop:
+                        middle_shop_slots = middle_shop_slots | bit
+                    if "Right" in shop:
+                        right_shop_slots = right_shop_slots | bit
+        bit = Rom.take_any
+        for slot in Locations.take_any_locations:
+            slot_id = Locations.location_table[slot] + base_id
+            if slot_id in ctx.checked_locations:
+                if "Left" in slot:
+                    left_shop_slots = left_shop_slots | bit
+                if "Middle" in slot:
+                    middle_shop_slots = middle_shop_slots | bit
+                if "Right" in slot:
+                    right_shop_slots = right_shop_slots | bit
+        left_shop_write = (Rom.left_shop_slots, [left_shop_slots], self.wram)
+        middle_shop_write = (Rom.middle_shop_slots, [middle_shop_slots], self.wram)
+        right_shop_write = (Rom.right_shop_slots, [right_shop_slots], self.wram)
+        await self.write(ctx, [left_shop_write, middle_shop_write, right_shop_write])
 
-    async def main():
-        parser = get_base_parser()
-        parser.add_argument('diff_file', default="", type=str, nargs="?",
-                            help='Path to a MultiworldGG Binary Patch file')
-        args = parser.parse_args(launcher_args)
+    async def resolve_triforce_fragments(self, ctx: "BizHawkClientContext"):
+        current_triforce_count = await self.read_ram_value_guarded(ctx, Rom.triforce_count)
+        if current_triforce_count is None:
+            return
+        current_triforce_byte = 0xFF >> (8 - min(current_triforce_count, 8))
+        write_list = [(Rom.triforce_fragments, [current_triforce_byte], self.wram)]
+        await self.write(ctx, write_list)
 
-        if args.diff_file:
-            import Patch
-            logging.info("Patch file was supplied. Creating nes rom..")
-            meta, romfile = Patch.create_rom_file(args.diff_file)
-            if "server" in meta:
-                args.connect = meta["server"]
-            logging.info(f"Wrote rom file to {romfile}")
-            async_start(run_game(romfile))
-        ctx = ZeldaContext(args.connect, args.password)
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
-        ctx.nes_sync_task = asyncio.create_task(nes_sync_task(ctx), name="NES Sync")
+    async def write_item(self, ctx, item_name, write_list: list[tuple[int, list[int], str]]):
+        item_game_id = Items.item_game_ids[item_name]
+        if item_name == "Bomb":
+            item_game_id = 0x29 # Hack to allow bombs to be shown being lifted.
+        lift_write = (Rom.item_to_lift, [item_game_id], self.wram)
+        timer_write = (Rom.item_lift_timer, [128], self.wram) # 128 frames of lifting an item
+        sound_write = (Rom.sound_effect_queue, [4], self.wram) # "Found secret" sound
+        write_list.extend([lift_write, timer_write, sound_write])
+        return await self.handle_item(ctx, item_name, write_list)
 
-        await ctx.exit_event.wait()
-        ctx.server_address = None
+    async def resolve_bonus_items(self, ctx: "BizHawkClientContext"):
+        new_bonus_items = copy(self.bonus_items)
+        for item in self.bonus_items:
+            current_item_name = ctx.item_names.lookup_in_game(item, ctx.game)
+            success = await self.write_item(ctx, current_item_name, [])
+            if success:
+                new_bonus_items.remove(item)
+        self.bonus_items = new_bonus_items
 
-        await ctx.shutdown()
+    async def handle_item(self, ctx: "BizHawkClientContext", item_name, write_list: list[tuple[int, list[int], str]]):
+        # No nice way to do this, since basically every item needs to be handled a little differently.
+        if item_name == "Sword":
+            current_sword_value = await self.read_ram_value_guarded(ctx, Rom.sword)
+            if current_sword_value is None:
+                return
+            self.guard_list.append((Rom.sword, [current_sword_value], self.wram))
+            write_list.append((Rom.sword, [max(1, current_sword_value)], self.wram))
+        elif item_name == "White Sword":
+            current_sword_value = await self.read_ram_value_guarded(ctx, Rom.sword)
+            if current_sword_value is None:
+                return
+            self.guard_list.append((Rom.sword, [current_sword_value], self.wram))
+            write_list.append((Rom.sword, [max(2, current_sword_value)], self.wram))
+        elif item_name == "Magical Sword":
+            write_list.append((Rom.sword, [3], self.wram))
+        elif item_name == "Bomb":
+            current_bombs_value = await self.read_ram_value_guarded(ctx, Rom.bombs)
+            current_max_bombs_value = await self.read_ram_value_guarded(ctx, Rom.max_bombs)
+            if current_bombs_value is None or current_max_bombs_value is None:
+                return
+            self.guard_list.append((Rom.bombs, [current_bombs_value], self.wram))
+            write_list.append((Rom.bombs, [min(current_max_bombs_value, current_bombs_value + 4)], self.wram))
+        elif item_name == "Bow":
+            write_list.append((Rom.bow, [1], self.wram))
+        elif item_name == "Arrow":
+            current_arrow_value = await self.read_ram_value_guarded(ctx, Rom.arrow)
+            if current_arrow_value is None:
+                return
+            self.guard_list.append((Rom.arrow, [current_arrow_value], self.wram))
+            write_list.append((Rom.arrow, [max(1, current_arrow_value)], self.wram))
+        elif item_name == "Silver Arrow":
+            write_list.append((Rom.arrow, [2], self.wram))
+        elif item_name == "Candle":
+            current_candle_value = await self.read_ram_value_guarded(ctx, Rom.candle)
+            if current_candle_value is None:
+                return
+            self.guard_list.append((Rom.candle, [current_candle_value], self.wram))
+            write_list.append((Rom.candle, [max(1, current_candle_value)], self.wram))
+        elif item_name == "Red Candle":
+            write_list.append(((Rom.candle, [2], self.wram)))
+        elif item_name == "Recorder":
+            write_list.append((Rom.recorder, [1], self.wram))
+        elif item_name == "Water of Life (Blue)":
+            current_potion_value = await self.read_ram_value_guarded(ctx, Rom.potion)
+            if current_potion_value is None:
+                return
+            self.guard_list.append((Rom.potion, [current_potion_value], self.wram))
+            write_list.append((Rom.potion, [max(1, current_potion_value)], self.wram))
+        elif item_name == "Water of Life (Red)":
+            write_list.append((Rom.potion, [2], self.wram))
+        elif item_name == "Magical Rod":
+            write_list.append((Rom.magical_rod, [1], self.wram))
+        elif item_name == "Book of Magic":
+            write_list.append((Rom.book_of_magic, [1], self.wram))
+        elif item_name == "Raft":
+            write_list.append((Rom.raft, [1], self.wram))
+        elif item_name == "Blue Ring":
+            current_ring_value = await self.read_ram_value_guarded(ctx, Rom.ring)
+            if current_ring_value is None:
+                return
+            self.guard_list.append((Rom.ring, [current_ring_value], self.wram))
+            if current_ring_value < 2:
+                write_list.append((Rom.ring, [max(1, current_ring_value)], self.wram))
+                write_list.extend([(0x0B92, [0x32], self.sram), (0x0804, [0x32], self.sram)]) # Palette data
+        elif item_name == "Red Ring":
+            write_list.append((Rom.ring, [2], self.wram))
+            write_list.extend([(0x0B92, [0x16], self.sram), (0x0804, [0x16], self.sram)])
+        elif item_name == "Stepladder":
+            write_list.append((Rom.stepladder, [1], self.wram))
+        elif item_name == "Magical Key":
+            write_list.append((Rom.magical_key, [1], self.wram))
+        elif item_name == "Power Bracelet":
+            write_list.append((Rom.power_bracelet, [1], self.wram))
+        elif item_name == "Letter":
+            write_list.append((Rom.letter, [1], self.wram))
+        elif item_name == "Heart Container":
+            current_heart_byte_value = await self.read_ram_value_guarded(ctx, Rom.heart_containers)
+            if current_heart_byte_value is None:
+                return
+            current_container_count = min(((current_heart_byte_value & 0xF0) >> 4) + 1, 15)
+            current_hearts_count = min((current_heart_byte_value & 0x0F) + 1, 15)
+            self.guard_list.append((Rom.heart_containers, [current_heart_byte_value], self.wram))
+            write_list.append((Rom.heart_containers, [(current_container_count << 4) | current_hearts_count], self.wram))
+        elif item_name == "Triforce Fragment":
+            current_triforce_value = await self.read_ram_value_guarded(ctx, Rom.triforce_count)
+            if current_triforce_value is None:
+                return
+            self.guard_list.append((Rom.triforce_count, [current_triforce_value], self.wram))
+            write_list.append((Rom.triforce_count, [min(current_triforce_value + 1, 8)], self.wram))
+        elif item_name == "Boomerang":
+            write_list.append((Rom.boomerang, [1], self.wram))
+        elif item_name == "Magical Boomerang":
+            write_list.append((Rom.magical_boomerang, [1], self.wram))
+        elif item_name == "Magical Shield":
+            write_list.append((Rom.magical_shield, [1], self.wram))
+        elif item_name == "Recovery Heart":
+            current_heart_byte_value = await self.read_ram_value_guarded(ctx, Rom.heart_containers)
+            if current_heart_byte_value is None:
+                return
+            self.guard_list.append((Rom.heart_containers, [current_heart_byte_value], self.wram))
+            current_container_count = ((current_heart_byte_value & 0xF0) >> 4)
+            current_hearts_count = current_heart_byte_value & 0x0F
+            if current_hearts_count >= current_container_count:
+                write_list.append((Rom.partial_hearts, [0xFF], self.wram))
+                write_list.append((Rom.heart_containers, [(current_container_count << 4) | current_container_count], self.wram))
+            else:
+                current_hearts_count = min(current_hearts_count + 1, 15)
+                write_list.append((Rom.heart_containers, [(current_container_count << 4) | current_hearts_count], self.wram))
+        elif item_name == "Fairy":
+            current_heart_byte_value = await self.read_ram_value_guarded(ctx, Rom.heart_containers)
+            if current_heart_byte_value is None:
+                return
+            self.guard_list.append((Rom.heart_containers, [current_heart_byte_value], self.wram))
+            current_container_count = ((current_heart_byte_value & 0xF0) >> 4)
+            current_hearts_count = current_heart_byte_value & 0x0F
+            if (current_hearts_count + 3) >= current_container_count:
+                write_list.append((Rom.partial_hearts, [0xFF], self.wram))
+                write_list.append((Rom.heart_containers, [(current_container_count << 4) | current_container_count], self.wram))
+            else:
+                current_hearts_count = min(current_hearts_count + 3, 15)
+                write_list.append((Rom.heart_containers, [(current_container_count << 4) | current_hearts_count], self.wram))
+        elif item_name == "Clock":
+            write_list.append((Rom.clock, [1], self.wram))
+        elif item_name == "Five Rupees":
+            current_rupees_to_add_value = await self.read_ram_value_guarded(ctx, Rom.rupees_to_add)
+            if current_rupees_to_add_value is None:
+                return
+            self.guard_list.append((Rom.rupees_to_add, [current_rupees_to_add_value], self.wram))
+            write_list.append((Rom.rupees_to_add, [min(current_rupees_to_add_value + 5, 255)], self.wram))
+        elif item_name == "Small Key":
+            current_keys = await self.read_ram_value_guarded(ctx, Rom.keys)
+            if current_keys is None:
+                return
+            self.guard_list.append((Rom.keys, [current_keys], self.wram))
+            write_list.append((Rom.keys, [min(current_keys + 1, 255)], self.wram))
+        elif item_name == "Food":
+            write_list.append((Rom.food, [1], self.wram))
+        return await self.write(ctx, write_list)
 
-        if ctx.nes_sync_task:
-            await ctx.nes_sync_task
 
-    import colorama
+    async def read_ram_value(self, ctx, location):
+        return (await bizhawk.read(ctx.bizhawk_ctx, [(location, 1, self.wram)]))[0][0]
 
-    colorama.just_fix_windows_console()
+    async def read_ram_value_guarded(self, ctx: "BizHawkClientContext", location):
+        value = await bizhawk.guarded_read(ctx.bizhawk_ctx,
+                                           [(location, 1, self.wram)],
+                                           self.guard_list)
+        if value is None:
+            return None
+        return value[0][0]
 
-    asyncio.run(main())
-    colorama.deinit()
+    async def read_ram_values_guarded(self, ctx: "BizHawkClientContext", location, size):
+        value = await bizhawk.guarded_read(ctx.bizhawk_ctx,
+                                          [(location, size, self.wram)],
+                                          self.guard_list)
+        if value is None:
+            return None
+        return value[0]
+
+    async def read_rom(self, ctx: "BizHawkClientContext", location, size):
+        return (await bizhawk.read(ctx.bizhawk_ctx, [(location, size, self.rom)]))[0]
+
+    async def write(self, ctx: "BizHawkClientContext", write_list: list[tuple[int, list[int], str]]):
+        return await bizhawk.guarded_write(ctx.bizhawk_ctx, write_list, self.guard_list)

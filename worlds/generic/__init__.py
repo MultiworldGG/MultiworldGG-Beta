@@ -19,7 +19,7 @@ class GenericWeb(WebWorld):
                         'A guide detailing the commands available to the user when participating in a MultiworldGG session.',
                         'English', 'commands_en.md', 'commands/en', ['jat2980', 'Ijwu'])
     mac = Tutorial('MultiworldGG Setup Guide for Mac', 'A guide detailing how to run MultiworldGG clients on macOS.', 
-                   'English', 'mac_en.md','mac/en', ['Bicoloursnake'])
+                   'English', 'mac_en.md','mac/en', ['Bicoloursnake', 'silasary'])
     plando = Tutorial('MultiworldGG Plando Guide', 'A guide to understanding and using plando for your game.',
                       'English', 'plando_en.md', 'plando/en', ['alwaysintreble', 'Alchav'])
     setup = Tutorial('Getting Started',

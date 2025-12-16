@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from Options import DefaultOnToggle, Choice, PerGameCommonOptions, Toggle, ItemSet
+from Options import DefaultOnToggle, Choice, PerGameCommonOptions, Toggle, ItemSet, Range
 from .Items import item_names, default_shop_items
 
 
@@ -33,29 +33,106 @@ class StartingPosition(Choice):
     option_dangerous = 2
     option_very_dangerous = 3
 
-class WeaponLogic(Choice):
-    """What level of offensive power is logically required for later dungeons.
-    Easy means the Sword will be required for level 1 and later, the White Sword for levels 4 and later,
-    and the Magical Sword for levels 6, 8, and 9.
-    Moderate means the Swrod for level 1 and later and the White Sword or Magical Rod for levels 4 and later.
-    Hard means no safety logic is added. You may be required to defeat enemies with weak or unusual weaponry, such as
-    Wizzrobes with the basic Sword or Darknuts with the Magical Rod."""
-    display_name = "Weapon Logic"
-    option_easy = 0
-    option_moderate = 1
-    option_hard = 2
+class StartingWeapon(Choice):
+    """For StartingPosition settings that guarantee a starting weapon, determines what that weapon will be.
+    bluecandle makes the starting weapon a Blue Candle which is likely to be very difficult.
+    sword makes the starting weapon a basic wooden Sword which is an average challenge.
+    weapon makes the starting weapon any repeating weapon which on average will be very powerful."""
+    display_name = "Starting Weapon"
+    option_bluecandle = 0
+    option_sword = 1
+    option_weapon = 2
+    default = 2
 
-class DefenseLogic(Choice):
-    """What level of defensive power is logically required for later dungeons.
-    Easy means you're guaranteed to have one Heart Container per previous dungeon level plus three additional,
-    and the Blue Ring is guaranteed to be available before levels 5 and later.
-    Moderate means you're guaranteed to have one extra heart per previous dungeon level,
-    taking into account available Rings.
-    Hard means no safety logic is added, so all hearts and rings could be in any location."""
-    display_name = "Defense Logic"
-    option_easy = 0
-    option_moderate = 1
-    option_hard = 2
+class BlueCandleFighting(Toggle):
+    """This allows the Blue Candle to be used to fight enemies and farm resources.
+    This can be very tedious and is only recommended for expert players."""
+    display_name = "Blue Candle Fighting"
+
+class BlueWizzrobeBombs(Toggle):
+    """This allows defeating Blue Wizzrobes with bombs to be in logic.
+    This requires skillful 10 counts and is only recommended for expert players."""
+    display_name = "Blue Wizzrobe Bombs"
+
+class CombatDifficulty(Choice):
+    """This setting allows the player to decide how much equipment is needed to fight difficult enemies.
+    Difficulty in this case is looking at how hard the player can hit (sword upgrades, Wand) and how
+    defensive the player is (rings). Hearts are not considered as the player always respawns
+    with 3 hearts and refilling health is often inconvenient. Expect the most help for fighting Blue
+    Darknuts/Wizzrobes and hard bosses, some help for most enemies that take several hits, and
+    minimal help for the weakest enemies.
+
+    Very Easy: Expect both defense and offense upgrades for any multi-hit enemy.
+    Easy: Expect the maximum stats for the hardest enemies and somewhat more help for other enemies than normal.
+    Normal: The hardest fights guarantee you help to both defense and offense. Middling enemies get at least one piece of help.
+    Hard: Only the hardest fights offer any help, and you can only be sure of one of defense or offense.
+    Very Hard: You get minimal help for the hardest fights.
+    Disabled: The logic does not care about combat difficulty and could make you do anything.
+    Custom: Advanced options can be used to tune the difficulty in a player chosen way."""
+
+    display_name = "Combat Difficulty"
+    option_veryeasy = 0
+    option_easy = 1
+    option_normal = 2
+    option_hard = 3
+    option_veryhard = 4
+    option_disabled = 5
+    option_custom = 6
+    default = 2
+
+class HardEnemyCombatHelp(Range):
+    """This is the amount of combat help guaranteed to the player to fight hard enemies.
+    Each sword upgrade (beyond wooden) is worth one point, and each ring upgrade is worth one point.
+    Wizzrobes and Ganon understand that the Wand is ineffective, but otherwise, the Wand is equivalent
+    to the White Sword (one point, does not stack with sword upgrades).
+    The hard enemy list is Blue Darknuts, Blue Wizzrobes, Blue Lanmolas, Manhandla, Gleeok, Patra, and Ganon."""
+    display_name = "Hard Enemy Combat Help"
+    range_start = 0
+    range_end = 4
+    default = 2
+
+class MediumEnemyCombatHelp(Range):
+    """This is the amount of combat help guaranteed to the player to fight medium enemies.
+    Each sword upgrade (beyond wooden) is worth one point, and each ring upgrade is worth one point.
+    Wizzrobes understand that the Wand is ineffective, but otherwise, the Wand is equivalent
+    to the White Sword (one point, does not stack with sword upgrades).
+    The medium enemy list is Red Darknuts, Red Wizzrobes, Red Lanmolas, Goriyas (all), Gibdos,
+    Like Likes, Digdogger, and Super Ropes (2q only)."""
+    display_name = "Medium Enemy Combat Help"
+    range_start = 0
+    range_end = 4
+    default = 0
+
+class EasyEnemyCombatHelp(Range):
+    """This is the amount of combat help guaranteed to the player to fight easy enemies.
+    Each sword upgrade (beyond wooden) is worth one point, and each ring upgrade is worth one point.
+    The Wand is equivalent to the White Sword (one point, does not stack with sword upgrades).
+    The easy enemy list is Keese, Vires, Gels, Zols, Stalfos, Wallmasters, Moldorms, Aquamentus,
+    Dodongos, Gohma (all), and Ropes (1q only)."""
+    display_name = "Easy Enemy Combat Help"
+    range_start = 0
+    range_end = 4
+    default = 0
+
+class PolsVoiceCombatHelp(Range):
+    """This is the amount of combat help guaranteed to the player to fight Pols Voice without arrows.
+    Each sword upgrade (beyond wooden) is worth one point, and each ring upgrade is worth one point.
+    The Wand is equivalent to the White Sword (one point, does not stack with sword upgrades).
+    Set this to 5 to make arrows always required to fight Pols Voice."""
+    display_name = "Pols Voice Combat Help"
+    range_start = 0
+    range_end = 5
+    default = 1
+
+class LogicTrickq1d1KeyDoor(DefaultOnToggle):
+    """This setting dictates whether entering and exiting First Quest Dungeon 1 to force open
+    the key door in the first room can be required by logic."""
+    display_name: "1st-1 Key Door Logic Trick"
+
+class LogicTrickBlindDarkRooms(Toggle):
+    """This setting dictates whether the player can be forced to navigate dark rooms without
+    the ability to illuminate them."""
+    display_name: "Blind Dark Rooms Logic Trick"
 
 class EntranceShuffle(Choice):
     """Shuffle entrances around.
@@ -64,10 +141,9 @@ class EntranceShuffle(Choice):
     will be shuffled with each other
     Open means that only dungeon entrances and open caves will be shuffled with each other.
     Major Open is a combination combines and shuffles both Major and Open locations.
-    All means all entrances will be shuffled amongst each other.
-    Warp Caves will be included as major locations if the Randomize Warp Caves setting is turned on.
-    On Open, Major Open, and All, Starting Sword Cave will be in an open location and have a weapon,
-    and the Blue Ring Shop will be in an open location.
+    All means all entrances will be shuffled amongst each other. Starting Sword Cave will be in an open location
+    and have a weapon.
+    Warp Caves will be included as major locations if the Randomize Warp Caves setting is turned on
     """
     display_name = "Entrance Shuffle"
     option_off = 0
@@ -89,19 +165,24 @@ class ShopItems(ItemSet):
     valid_keys = item_names
     default = default_shop_items
 
-
-
 @dataclass
 class TlozOptions(PerGameCommonOptions):
     ExpandedPool: ExpandedPool
     TriforceLocations: TriforceLocations
     StartingPosition: StartingPosition
-    WeaponLogic: WeaponLogic
-    DefenseLogic: DefenseLogic
+    StartingWeapon: StartingWeapon
+    BlueCandleFighting: BlueCandleFighting
+    BlueWizzrobeBombs: BlueWizzrobeBombs
+    CombatDifficulty: CombatDifficulty
+    HardEnemyCombatHelp: HardEnemyCombatHelp
+    MediumEnemyCombatHelp: MediumEnemyCombatHelp
+    EasyEnemyCombatHelp: EasyEnemyCombatHelp
+    PolsVoiceCombatHelp: PolsVoiceCombatHelp
+    LogicTrickq1d1KeyDoor: LogicTrickq1d1KeyDoor
+    LogicTrickBlindDarkRooms: LogicTrickBlindDarkRooms
     EntranceShuffle: EntranceShuffle
     RandomizeWarpCaves: RandomizeWarpCaves
     ShopItems: ShopItems
-
 
 def is_open_cave_shuffled(option_value) -> bool:
     # A couple of things care if Starting Sword Cave is in the shuffle. This centralizes the check for that.

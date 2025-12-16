@@ -18,14 +18,13 @@ from worlds._bizhawk.client import BizHawkClient
 if TYPE_CHECKING:
     from worlds._bizhawk.context import BizHawkClientContext
 
-game_version = "v0.3.2rc1"
+game_version = "v0.3.2rc3"
 
 
 class EoSClient(BizHawkClient):
     game = "Pokemon Mystery Dungeon Explorers of Sky"
     system = "NDS"
-    patch_suffix = ".apeos"  # Might need to change the patch suffix
-    local_checked_locations: Set[int]
+    patch_suffix = ".apeos"
     goal_flag: int
     rom_slot_name: Optional[str]
     eUsed: List[int]
@@ -37,12 +36,13 @@ class EoSClient(BizHawkClient):
     ram_mem_domain = "Main RAM"
     goal_complete = False
     bag_given = False
+    #Macguffins = relic fragment shards
     macguffins_collected = 0
     macguffin_unlock_amount = 0
     instruments_collected = 0
     required_instruments = 0
-    spinda_events = 0
-    spinda_drinks = 0
+    # spinda_events = 0
+    # spinda_drinks = 0
     skypeaks_open = 0
     aegis_seals = 0
     dialga_complete = False
@@ -70,6 +70,7 @@ class EoSClient(BizHawkClient):
 
     async def update_received_items(self, ctx: "BizHawkClientContext", received_items_offset, received_index,
                                     i) -> None:
+        # write the received index to the rom to save where we are at with the queue
         await bizhawk.write(
             ctx.bizhawk_ctx,
             [
@@ -92,7 +93,7 @@ class EoSClient(BizHawkClient):
         except bizhawk.RequestFailedError:
             return False  # Should verify on the next pass
 
-
+        #
         ctx.game = self.game
         ctx.items_handling = 0b111
         ctx.want_slot_data = True
@@ -146,7 +147,7 @@ class EoSClient(BizHawkClient):
                 # logger.info("slot data not initialized")
                 return
             # else:
-                # logger.info("slot data initialized correctly")
+            # logger.info("slot data initialized correctly")
             if not self.seed_verify:
                 # Need to figure out where we are putting the seed and then update this
                 seed = await bizhawk.read(ctx.bizhawk_ctx, [(0x3DE020, 8, self.ram_mem_domain)])
@@ -195,18 +196,18 @@ class EoSClient(BizHawkClient):
             if (self.player_name + "GenericStorage") not in ctx.stored_data:
                 await (ctx.send_msgs(
                     [
-                        {"cmd": "Set",
-                         "key": self.player_name + "Dungeon Missions",
-                         "default": {location: 0 for location in location_table_by_groups["Mission"]},
-                         "want_reply": True,
-                         "operations": [{"operation": "update", "value": {}}]
-                         },
-                        {"cmd": "Set",
-                         "key": self.player_name + "Dungeon Outlaws",
-                         "default": {location: 0 for location in location_table_by_groups["Mission"]},
-                         "want_reply": True,
-                         "operations": [{"operation": "update", "value": {}}]
-                         },
+                        #{"cmd": "Set",
+                        # "key": self.player_name + "Dungeon Missions",
+                        # "default": {location: 0 for location in location_table_by_groups["Mission"]},
+                        # "want_reply": True,
+                        # "operations": [{"operation": "update", "value": {}}]
+                        # },
+                        #{"cmd": "Set",
+                        # "key": self.player_name + "Dungeon Outlaws",
+                        # "default": {location: 0 for location in location_table_by_groups["Mission"]},
+                        # "want_reply": True,
+                        # "operations": [{"operation": "update", "value": {}}]
+                        # },
                         {"cmd": "Set",
                          "key": self.player_name + "Item Boxes Collected",
                          "default": {0: []},
@@ -293,16 +294,16 @@ class EoSClient(BizHawkClient):
                 except TypeError:
                     logger.info("hint locations not initialized. Please tell Cryptic if you see this")
 
-            if (self.player_name + "Dungeon Missions") in ctx.stored_data:
-                dungeon_missions_dict = ctx.stored_data[self.player_name + "Dungeon Missions"]
-            else:
-                dungeon_missions_dict = {}
-                return
-            if (self.player_name + "Dungeon Outlaws") in ctx.stored_data:
-                dungeon_outlaws_dict = ctx.stored_data[self.player_name + "Dungeon Outlaws"]
-            else:
-                dungeon_outlaws_dict = {}
-                return
+            # if (self.player_name + "Dungeon Missions") in ctx.stored_data:
+                # dungeon_missions_dict = ctx.stored_data[self.player_name + "Dungeon Missions"]
+            # else:
+            #     dungeon_missions_dict = {}
+            #     return
+            # if (self.player_name + "Dungeon Outlaws") in ctx.stored_data:
+            #     dungeon_outlaws_dict = ctx.stored_data[self.player_name + "Dungeon Outlaws"]
+            # else:
+            #     dungeon_outlaws_dict = {}
+            #     return
             if (self.player_name + "Item Boxes Collected") in ctx.stored_data:
                 item_boxes_collected = ctx.stored_data[self.player_name + "Item Boxes Collected"]["0"]
             else:
@@ -329,8 +330,8 @@ class EoSClient(BizHawkClient):
                 self.dialga_complete = max(stored["dialga_complete"], self.dialga_complete)
                 self.skypeaks_open = max(stored["skypeaks_open"], self.skypeaks_open)
                 self.aegis_seals = max(stored["aegis_seals"], self.aegis_seals)
-                self.spinda_events = max(stored["spinda_events"], self.spinda_events)
-                self.spinda_drinks = max(stored["spinda_drinks"], self.spinda_drinks)
+                # self.spinda_events = max(stored["spinda_events"], self.spinda_events)
+                # self.spinda_drinks = max(stored["spinda_drinks"], self.spinda_drinks)
                 self.item_box_count = max(stored["box_number"], self.item_box_count)
 
             else:
@@ -561,6 +562,14 @@ class EoSClient(BizHawkClient):
                             )
 
                     await self.update_received_items(ctx, received_items_offset, received_index, i)
+                    await (ctx.send_msgs(
+                        [
+                            {"cmd": "Set",
+                             "key": self.player_name + "GenericStorage",
+                             "want_reply": True,
+                             "operations": [{"operation": "update", "value": {"skypeaks_open": self.skypeaks_open}}]
+                             }
+                        ]))
                     await asyncio.sleep(0.1)
 
                 elif item_data.name == "Main Game Unlock":
@@ -820,72 +829,27 @@ class EoSClient(BizHawkClient):
                         await self.update_received_items(ctx, received_items_offset, received_index, i)
                 elif "Macguffin" in item_data.group:
                     if item_data.name == "Relic Fragment Shard":
-                        if self.macguffins_collected >= 20:
-                            logger.info("Max Relic Fragment Shards Reached")
-                            await bizhawk.write(
-                                ctx.bizhawk_ctx,
-                                [
-                                    (relic_shards_offset, int.to_bytes(self.macguffins_collected),
-                                     self.ram_mem_domain)],
-                            )
-                        elif relic_shards_amount == self.macguffins_collected:
-                            self.macguffins_collected += 1
-                            relic_shards_amount += 1
-                            logger.info(
-                                "The Relic Fragment Shard count from AP is " + str(self.macguffins_collected) +
-                                "\nAnd the Relic Fragments written to the ROM should now be: " + str(
-                                    relic_shards_amount)
-                            )
-                            await bizhawk.write(
-                                ctx.bizhawk_ctx,
-                                [
-                                    (relic_shards_offset, int.to_bytes(relic_shards_amount),
-                                     self.ram_mem_domain)],
-                            )
-                            await asyncio.sleep(0.1)
-                        elif relic_shards_amount > self.macguffins_collected:
-                            # uhhhh I don't know how this could happen? Also what do I do????
-                            old_macguffins = self.macguffins_collected
-                            self.macguffins_collected = relic_shards_amount
-                            self.macguffins_collected += 1
-                            old_relic_shards_amount = relic_shards_amount
-                            relic_shards_amount += 1
-                            await bizhawk.write(
-                                ctx.bizhawk_ctx,
-                                [
-                                    #relic_shards_amount.to_bytes(),
-                                    (relic_shards_offset, int.to_bytes(relic_shards_amount),
-                                     self.ram_mem_domain)],
-                            )
-                            await asyncio.sleep(0.1)
-                            logger.info(
-                                "Something Weird Happened Please tell Cryptic if you see this " +
-                                "\nThe Relic Fragment Shard count from AP was " + str(old_macguffins) +
-                                "\nThe Relic Fragment Shard count from AP is " + str(self.macguffins_collected) +
-                                "\nThe Relic Fragment Shard count from ROM was" + str(old_relic_shards_amount) +
-                                "\nAnd the Relic Fragments written to the ROM should now be: " + str(
-                                    relic_shards_amount)
-                                #"\n And just for Hecka, the bytes written are " + str(int.to_bytes(relic_shards_amount)) +
-                                #"\n And just for Hecka, doing it the other way would result in " +
-                                #str(relic_shards_amount.to_bytes())
-                            )
-                        else:
-                            relic_shards_amount += 1
-                            logger.info(
-                                "The Rom decided to be lower than the AP count probably due to save states " +
-                                "\nThe Relic Fragment Shard count from AP is " + str(self.macguffins_collected) +
-                                "\nAnd the Relic Fragments written to the ROM should now be: " + str(
-                                    relic_shards_amount)
-                            )
-                            await bizhawk.write(
-                                ctx.bizhawk_ctx,
-                                [
-                                    (relic_shards_offset, int.to_bytes(relic_shards_amount),
-                                     self.ram_mem_domain)],
-                            )
-                            await asyncio.sleep(0.1)
+                        items_received = ctx.items_received
+                        rfs_count = 0
+                        for item in items_received:
+                            if item.item == 200:
+                                rfs_count += 1
 
-                        if self.macguffins_collected >= self.macguffin_unlock_amount:
+                        if rfs_count >= 20:
+                            logger.info("Max Relic Fragment Shards Reached")
+                            rfs_count = 20
+                        logger.info(
+                            "The Relic Fragment Shard count from AP is " + str(rfs_count)
+                        )
+                        await bizhawk.write(
+                            ctx.bizhawk_ctx,
+                            [
+                                (relic_shards_offset, int.to_bytes(rfs_count),
+                                 self.ram_mem_domain)],
+                        )
+                        await asyncio.sleep(0.1)
+
+                        if rfs_count >= self.macguffin_unlock_amount:
                             item_memory_offset = 0x26  # the location in memory of Hidden Land
                             sig_digit = item_memory_offset // 8
                             non_sig_digit = item_memory_offset % 8
@@ -902,9 +866,6 @@ class EoSClient(BizHawkClient):
 
                             await asyncio.sleep(0.1)
 
-                    #elif item_data.name == "Cresselia Feather":
-                    #    self.cresselia_feather_acquired = True
-
                     await self.update_received_items(ctx, received_items_offset, received_index, i)
                 elif "Item" in item_data.group:
                     if received_index + i <= self.item_box_count:
@@ -915,78 +876,52 @@ class EoSClient(BizHawkClient):
                             {"name": item_data.name, "id": item_data.id, "memory_offset": item_data.memory_offset}]
                         self.item_box_count = received_index + i
                         if "Instrument" in item_data.group:
-                            if self.instruments_collected >= 20:
+                            # JUST RECOUNT THE INSTRUMENTS GOSH DARN IT
+
+                            items_received = ctx.items_received
+                            instrument_count = 0
+                            for item in items_received:
+                                if 526 <= item.item <= 545:
+                                    instrument_count += 1
+
+                            if instrument_count >= 20:
                                 logger.info("Max Instrument count reached")
-                                await bizhawk.write(
-                                    ctx.bizhawk_ctx,
-                                    [
-                                        (instruments_offset, int.to_bytes(self.instruments_collected),
-                                         self.ram_mem_domain)],
-                                )
-                            if instruments_amount == self.instruments_collected:
-                                self.instruments_collected += 1
-                                instruments_amount += 1
+                                instrument_count = 20
 
-                                await bizhawk.write(
-                                    ctx.bizhawk_ctx,
-                                    [
-                                        (instruments_offset, int.to_bytes(instruments_amount),
-                                         self.ram_mem_domain)],
-                                )
-                                logger.info(
-                                    "The Instrument count from AP is " + str(self.instruments_collected) +
-                                    "\nAnd the instruments written to the ROM should now be: " + str(
-                                        instruments_amount)
-                                )
+                            await bizhawk.write(
+                                ctx.bizhawk_ctx,
+                                [
+                                    (instruments_offset, int.to_bytes(instrument_count),
+                                     self.ram_mem_domain)],
+                            )
+                            logger.info(
+                                        "The Instrument count from AP is " + str(instrument_count)
+                                    )
 
-                                await asyncio.sleep(0.1)
-                            elif instruments_amount > self.instruments_collected:
-                                # uhhhh I don't know how this could happen? Also what do I do????
-                                old_instruments_ap = self.instruments_collected
-                                old_instruments_rom = instruments_amount
-                                self.instruments_collected = instruments_amount
-                                self.instruments_collected += 1
-                                instruments_amount += 1
-                                await bizhawk.write(
-                                    ctx.bizhawk_ctx,
-                                    [
-                                        (instruments_offset, int.to_bytes(instruments_amount),
-                                         self.ram_mem_domain)],
-                                )
-                                await asyncio.sleep(0.1)
-                                logger.info(
-                                    "Something Weird Happened Please tell Cryptic if you see this " +
-                                    "\nThe Instrument count from AP was " + str(old_instruments_ap) +
-                                    "\nThe Instrument count from AP is " + str(self.instruments_collected) +
-                                    "\nAnd the Instrument written to the ROM was: " + str(
-                                        old_instruments_rom) +
-                                    "\nAnd the Instrument written to the ROM should now be: " + str(
-                                        instruments_amount)
-                                    # "\n And just for Hecka, the bytes written are " + str(int.to_bytes(relic_shards_amount)) +
-                                    # "\n And just for Hecka, doing it the other way would result in " +
-                                    # str(relic_shards_amount.to_bytes())
-                                )
-                            else:
-                                instruments_amount += 1
-                                await bizhawk.write(
-                                    ctx.bizhawk_ctx,
-                                    [
-                                        (instruments_offset, int.to_bytes(instruments_amount),
-                                         self.ram_mem_domain)],
-                                )
-                                await asyncio.sleep(0.1)
-                                logger.info(
-                                    "The Rom decided to be lower than the AP count probably due to save states " +
-                                    "\nThe Instrument count from AP is " + str(self.instruments_collected) +
-                                    "\nAnd the Instruments written to the ROM should now be: " + str(
-                                        instruments_amount)
-                                )
-
+                    await (ctx.send_msgs(
+                        [
+                            {"cmd": "Set",
+                             "key": self.player_name + "Item Boxes Collected",
+                             "want_reply": True,
+                             "operations": [{"operation": "replace", "value": {0: item_boxes_collected}}]
+                             },
+                        ]))
                     await self.update_received_items(ctx, received_items_offset, received_index, i)
                 elif "Legendary" in item_data.group:
                     legendaries_recruited += [
                         {"name": item_data.name, "id": item_data.id, "memory_offset": item_data.memory_offset}]
+
+                    await (ctx.send_msgs(
+                        [
+                            {"cmd": "Set",
+                             "key": self.player_name + "Legendaries Recruited",
+                             "want_reply": True,
+                             "operations": [{"operation": "replace", "value": {0: legendaries_recruited}}]
+                             }
+                        ]))
+
                     await self.update_received_items(ctx, received_items_offset, received_index, i)
+
                 elif "Aegis" in item_data.group:
                     main_offset_for_seals = 0
                     if ctx.slot_data["CursedAegisCave"] == 0:
@@ -1007,6 +942,16 @@ class EoSClient(BizHawkClient):
                                  self.ram_mem_domain),
                             ]
                         )
+
+                    await (ctx.send_msgs(
+                        [
+                            {"cmd": "Set",
+                             "key": self.player_name + "GenericStorage",
+                             "want_reply": True,
+                             "operations": [{"operation": "update", "value":
+                                 {"aegis_seals": self.aegis_seals}}]
+                             }
+                        ]))
                     await self.update_received_items(ctx, received_items_offset, received_index, i)
 
                 elif "Trap" in item_data.group:
@@ -1128,24 +1073,32 @@ class EoSClient(BizHawkClient):
                         if "Mission" in location_dict_by_start_id[i].group:
                             location_name = location_dict_by_start_id[i].name
                             location_id = location_dict_by_start_id[i].id
-                            dungeons_complete = dungeon_missions_dict[location_name]
+                            #dungeons_complete = dungeon_missions_dict[location_name]
                             current_missions_completed = mission_status[2 * i]
-                            if current_missions_completed > dungeons_complete:
-                                if "Early" in location_dict_by_start_id[i].group:
-                                    for k in range(current_missions_completed - dungeons_complete):
-                                        if dungeons_complete < ctx.slot_data["EarlyMissionsAmount"]:
-                                            locs_to_send.add(location_id + mission_start_id + (
-                                                    100 * location_id) + dungeons_complete + k)
-                                            dungeon_missions_dict[location_name] += 1
-                                            # location.id + mission_start_id + (100 * i) + j`
 
-                                elif "Late" in location_dict_by_start_id[i].group:
-                                    for k in range(current_missions_completed - dungeons_complete):
-                                        if dungeons_complete < ctx.slot_data["LateMissionsAmount"]:
-                                            locs_to_send.add(location_id + mission_start_id + (
-                                                    100 * location_id) + dungeons_complete + k)
-                                            dungeon_missions_dict[location_name] += 1
-                                            # location.id + mission_start_id + (100 * i) + j
+                            if "Early" in location_dict_by_start_id[i].group:
+                                for k in range(current_missions_completed):
+                                    if k < ctx.slot_data["EarlyMissionsAmount"]:
+                                        locs_to_send.add(location_id + mission_start_id + (
+                                                100 * location_id) + k)
+                                        #dungeon_missions_dict[location_name] += 1
+                                        # location.id + mission_start_id + (100 * i) + j`
+
+                            elif "Late" in location_dict_by_start_id[i].group:
+                                for k in range(current_missions_completed):
+                                    if k < ctx.slot_data["LateMissionsAmount"]:
+                                        locs_to_send.add(location_id + mission_start_id + (
+                                                100 * location_id) + k)
+                                        #dungeon_missions_dict[location_name] += 1
+                                        # location.id + mission_start_id + (100 * i) + j
+                #await (ctx.send_msgs(
+                #    [
+                #        {"cmd": "Set",
+                #         "key": self.player_name + "Dungeon Missions",
+                #         "want_reply": True,
+                #         "operations": [{"operation": "update", "value": dungeon_missions_dict}]
+                #         }
+                #    ]))
 
                 scenario_talk_bitfield_248_list = scenario_talk_bitfield_248_list & 0xDF
                 await bizhawk.write(
@@ -1162,32 +1115,43 @@ class EoSClient(BizHawkClient):
                     ctx.bizhawk_ctx,
                     [(mission_status_offset, 384, self.ram_mem_domain)])
                 mission_status = array.array('i', [item for item in mission_status_read[0]])
+                # checking every dungeon
                 for i in range(192):
+                    # check to make sure it's the dungeon start not a random place in the dungeon
                     if i not in location_dict_by_start_id:
                         continue
                     else:
+                        # Make sure the dungeon we are checking has missions
                         if "Mission" in location_dict_by_start_id[i].group:
                             location_name = location_dict_by_start_id[i].name
                             location_id = location_dict_by_start_id[i].id
-                            dungeons_complete = dungeon_outlaws_dict[location_name]
+                            # grab the current status of the dungeon outlaws
+                            #dungeons_complete = dungeon_outlaws_dict[location_name]
+                            # grab from rom how many missions are complete for the specified dungeon
                             current_missions_completed = mission_status[2 * i + 1]
-                            if current_missions_completed > dungeons_complete:
-                                if "Early" in location_dict_by_start_id[i].group:
-                                    for k in range(current_missions_completed - dungeons_complete):
-                                        if dungeons_complete < ctx.slot_data["EarlyOutlawsAmount"]:
-                                            locs_to_send.add(location_id + mission_start_id + 50 + (
-                                                    100 * location_id) + dungeons_complete + k)
-                                            dungeon_outlaws_dict[location_name] += 1
-                                            # location.id + mission_start_id + (100 * i) + j`
 
-                                elif "Late" in location_dict_by_start_id[i].group:
-                                    for k in range(current_missions_completed - dungeons_complete):
-                                        if dungeons_complete < ctx.slot_data["LateOutlawsAmount"]:
-                                            locs_to_send.add(location_id + mission_start_id + 50 + (
-                                                    100 * location_id) + dungeons_complete + k)
-                                            dungeon_outlaws_dict[location_name] += 1
-                                            # location.id + mission_start_id + (100 * i) + j
-
+                            if "Early" in location_dict_by_start_id[i].group:
+                                for k in range(current_missions_completed):
+                                    if k < ctx.slot_data["EarlyOutlawsAmount"]:
+                                        locs_to_send.add(location_id + mission_start_id + 50 + (
+                                                100 * location_id) + k)
+                                        #dungeon_outlaws_dict[location_name] += 1
+                                        # location.id + mission_start_id + (100 * i) + j`
+                            elif "Late" in location_dict_by_start_id[i].group:
+                                for k in range(current_missions_completed):
+                                    if k < ctx.slot_data["LateOutlawsAmount"]:
+                                        locs_to_send.add(location_id + mission_start_id + 50 + (
+                                                100 * location_id) + k)
+                                        #dungeon_outlaws_dict[location_name] += 1
+                                        # location.id + mission_start_id + (100 * i) + j
+                #await (ctx.send_msgs(
+                #    [
+                #        {"cmd": "Set",
+                #         "key": self.player_name + "Dungeon Outlaws",
+                #         "want_reply": True,
+                #         "operations": [{"operation": "update", "value": dungeon_outlaws_dict}]
+                #         }
+                #    ]))
                 scenario_talk_bitfield_248_list = scenario_talk_bitfield_248_list & 0xEF
                 await bizhawk.write(
                     ctx.bizhawk_ctx,
@@ -1220,6 +1184,15 @@ class EoSClient(BizHawkClient):
                          "create_as_hint": 2
                          }]))
                 self.hint_issue = False
+                await (ctx.send_msgs(
+                    [
+                        {"cmd": "Set",
+                         "key": self.player_name + "Hinted Hints",
+                         "want_reply": True,
+                         "operations": [{"operation": "update", "value": {0: self.hints_hinted}}]
+                         }
+                    ]))
+
             except IndexError:
                 if not self.hint_issue:
                     logger.info("Cannot send hint, list issue")
@@ -1251,11 +1224,11 @@ class EoSClient(BizHawkClient):
                 )
                 await asyncio.sleep(0.1)
             if self.outside_deathlink != 0:
-
-                write_message = str(self.deathlink_message).translate(trans_table).split(chr(0))[0].encode("cp1252")[0:128]
+                write_message = str(self.deathlink_message).translate(trans_table).split(chr(0))[0].encode("cp1252")[
+                                0:128]
                 write_message2 = f"[CS:N]{str(self.deathlink_sender).translate(trans_table).split(chr(0))[0][0:18]}[CR]".encode(
                     "cp1252")
-                await bizhawk.write(    
+                await bizhawk.write(
                     ctx.bizhawk_ctx,
                     [
                         (death_link_ally_death_message_offset, write_message, self.ram_mem_domain),
@@ -1322,6 +1295,15 @@ class EoSClient(BizHawkClient):
                         )
                         await asyncio.sleep(0.1)
                     elif item_data["name"] in item_table_by_groups["Instrument"]:
+                        items_received = ctx.items_received
+                        instrument_count = 0
+                        for item in items_received:
+                            if 526 <= item.item <= 545:
+                                instrument_count += 1
+                        # Make sure we don't overflow
+                        if instrument_count >= 20:
+                            instrument_count = 20
+
                         write_byte = performance_progress_bitfield[4] | (0x1 << 3)
                         performance_progress_bitfield[4] = write_byte
                         write_byte2 = [item_data["memory_offset"] % 256, item_data["memory_offset"] // 256]
@@ -1335,6 +1317,8 @@ class EoSClient(BizHawkClient):
                                  self.ram_mem_domain),
                                 (performance_progress_offset + 0x4, int.to_bytes(write_byte), self.ram_mem_domain),
                                 (scenario_talk_bitfield_offset + 0x1F, int.to_bytes(scenario_talk_bitfield_248_list),
+                                 self.ram_mem_domain),
+                                (instruments_offset, int.to_bytes(instrument_count),
                                  self.ram_mem_domain)
 
                             ]
@@ -1428,6 +1412,15 @@ class EoSClient(BizHawkClient):
                         )
                         await asyncio.sleep(0.1)
                     elif item_data["name"] in item_table_by_groups["Instrument"]:
+                        items_received = ctx.items_received
+                        instrument_count = 0
+                        for item in items_received:
+                            if 526 <= item.item <= 545:
+                                instrument_count += 1
+                        # Make sure we don't overflow
+                        if instrument_count >= 20:
+                            instrument_count = 20
+
                         write_byte = performance_progress_bitfield[4] | (0x1 << 3)
                         performance_progress_bitfield[4] = write_byte
                         write_byte2 = [item_data["memory_offset"] % 256, item_data["memory_offset"] // 256]
@@ -1441,6 +1434,8 @@ class EoSClient(BizHawkClient):
                                  self.ram_mem_domain),
                                 (performance_progress_offset + 0x4, int.to_bytes(write_byte), self.ram_mem_domain),
                                 (scenario_talk_bitfield_offset + 0x1F, int.to_bytes(scenario_talk_bitfield_248_list),
+                                 self.ram_mem_domain),
+                                (instruments_offset, int.to_bytes(instrument_count),
                                  self.ram_mem_domain)
                             ]
                         )
@@ -1539,17 +1534,18 @@ class EoSClient(BizHawkClient):
             # Check for Spinda flag and release the spinda checks based on the amount in ram
             if ((scenario_talk_bitfield_240_list >> 7) & 1) == 1:
 
-                if spinda_drinks_ram[0] > self.spinda_events:
-                    spinda_events_start_id = 900
-                    for spindaid in range(self.spinda_events, spinda_drinks_ram[0]):
-                        locs_to_send.add(spinda_events_start_id + spindaid)
-                    self.spinda_events = spinda_drinks_ram[0]
-                if spinda_drinks_ram[1] > self.spinda_drinks:
-                    spinda_drinks_start_id = 920
-                    for spindaid in range(self.spinda_events, spinda_drinks_ram[1]):
-                        locs_to_send.add(spinda_drinks_start_id + spindaid)
-                    self.spinda_drinks = spinda_drinks_ram[1]
-                    scenario_talk_bitfield_240_list = scenario_talk_bitfield_240_list & 0x7F
+                #if spinda_drinks_ram[0] > self.spinda_events:
+                spinda_events_start_id = 900
+                for spindaid in range(spinda_drinks_ram[0]):
+                    locs_to_send.add(spinda_events_start_id + spindaid)
+                self.spinda_events = spinda_drinks_ram[0]
+                # if spinda_drinks_ram[1] > self.spinda_drinks:
+                spinda_drinks_start_id = 920
+                for spindaid in range(spinda_drinks_ram[1]):
+                    locs_to_send.add(spinda_drinks_start_id + spindaid)
+                self.spinda_drinks = spinda_drinks_ram[1]
+                scenario_talk_bitfield_240_list = scenario_talk_bitfield_240_list & 0x7F
+
                 await bizhawk.write(
                     ctx.bizhawk_ctx,
                     [
@@ -1557,50 +1553,13 @@ class EoSClient(BizHawkClient):
                          self.ram_mem_domain),
                     ]
                 )
-            if locs_to_send != self.local_checked_locations:
-                self.local_checked_locations = locs_to_send
 
-                if locs_to_send is not None:
-                    await ctx.send_msgs([{"cmd": "LocationChecks", "locations": list(locs_to_send)}])
-
-            #if (performance_progress_bitfield[4] >> 6) & 1 == 1:
-
-            #await ctx.update_data_package()
-            #await (ctx.send_msgs(
-            # [
-            #     {"cmd": "LocationScouts",
-            #      "locations": self.hint_loc,
-            #      "create_as_hint": 0
-            #      }]))
+            # send the locations checked to the server
+            await ctx.check_locations(locs_to_send)
 
             # Update data storage
             await (ctx.send_msgs(
                 [
-                    {"cmd": "Set",
-                     "key": self.player_name + "Dungeon Missions",
-                     "want_reply": True,
-                     "operations": [{"operation": "update", "value": dungeon_missions_dict}]
-                     },
-                    {"cmd": "Set",
-                     "key": self.player_name + "Dungeon Outlaws",
-                     "want_reply": True,
-                     "operations": [{"operation": "update", "value": dungeon_outlaws_dict}]
-                     },
-                    {"cmd": "Set",
-                     "key": self.player_name + "Item Boxes Collected",
-                     "want_reply": True,
-                     "operations": [{"operation": "replace", "value": {0: item_boxes_collected}}]
-                     },
-                    {"cmd": "Set",
-                     "key": self.player_name + "Legendaries Recruited",
-                     "want_reply": True,
-                     "operations": [{"operation": "replace", "value": {0: legendaries_recruited}}]
-                     },
-                    {"cmd": "Set",
-                     "key": self.player_name + "Hinted Hints",
-                     "want_reply": True,
-                     "operations": [{"operation": "update", "value": {0: self.hints_hinted}}]
-                     },
                     {"cmd": "Set",
                      "key": self.player_name + "GenericStorage",
                      "want_reply": True,
@@ -1611,8 +1570,8 @@ class EoSClient(BizHawkClient):
                           "required_instruments": self.required_instruments,
                           "instruments_collected": self.instruments_collected,
                           "dialga_complete": self.dialga_complete, "skypeaks_open": self.skypeaks_open,
-                          "aegis_seals": self.aegis_seals, "spinda_events": self.spinda_events,
-                          "spinda_drinks": self.spinda_drinks, "box_number": self.item_box_count}}]
+                          "aegis_seals": self.aegis_seals,
+                          "box_number": self.item_box_count}}]
                      }
                 ]))
             await asyncio.sleep(0.1)

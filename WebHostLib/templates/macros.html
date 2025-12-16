@@ -52,7 +52,7 @@
                             {% endif %}
                         {% else %}
                             {% if patch.game == "Jigsaw" %}
-                            <a href="http://jigsaw-ap.netlify.app/?hostport={{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&name={{ patch.player_name | e}}">
+                            <a href="https://jigsaw-ap.netlify.app/?hostport={{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&name={{ patch.player_name | e}}">
                                 Open game on jigsaw-ap.netlify.app</a>
                             {% elif patch.game == "Candy Box 2" %}
                             <a href="https://candybox2-ap.vicr123.com">
@@ -71,7 +71,13 @@
                             {% endif %}
                         {% endif %}
                     </td>
-                    <td><a href="{{ url_for("get_player_tracker", tracker=room.tracker, tracked_team=0, tracked_player=patch.player_id) }}">Tracker</a></td>
+                    <td>
+                        <a href="{{ url_for("get_player_tracker", tracker=room.tracker, tracked_team=0, tracked_player=patch.player_id) }}">Tracker</a>
+                        {% if patch.game == "The Wind Waker" %}
+                        <br />
+                        <a href=" https://sizival.github.io/tww-rando-tracker/#/tracker/new/eJwLtlAIyS8tykvMTc0rUSgzYnBkmL8hgQEH4GBkEEDmT3EAkUfUTapmMzF4vGEEchxgSgGy6Qwx?ap_host={{ config['HOST_ADDRESS'] }}&ap_port={{ room.last_port }}&ap_slot={{ patch.player_name | e}}">Web Auto Tracker</a>
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>

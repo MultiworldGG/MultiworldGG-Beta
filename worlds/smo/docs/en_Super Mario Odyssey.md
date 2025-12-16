@@ -9,6 +9,7 @@ The [player options page for this game](../player-options) contains all the opti
 
 ## Features
 - Randomize Power Moons
+- Randomize Captures
 - Supports all non-achievement (Toadette Moon) power moon locations.
 - Supports all outfits, stickers, and souvenirs.
 - Choose which kingdom is your win condition.

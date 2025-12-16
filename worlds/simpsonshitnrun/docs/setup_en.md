@@ -1,18 +1,18 @@
-# Required Software
+## Required Software
 
 - Simpsons Hit And Run PC release
-- [Lucas' Mod Manager](https://modbakery.donutteam.com/releases/view/6)
-- [MultiworldGG](https://multiworld.gg/) (Latest release [here](https://github.com/MultiworldGG/MultiworldGG/releases/latest).)
+- [Lucas' Mod Manager](https://modbakery.donutteam.com/releases/view/
+- [MultiworldGG](https://multiworld.gg/) (Latest release [here](https://github.com/MultiworldGG/MultiworldGG/releases/latest))
 - The latest release of the [client/memory manager and the lmlm mod](https://github.com/nmize1/AP-SHARRandomizer/releases/latest)
 - The latest release of the [apworld](https://github.com/nmize1/Archipelago/releases/latest) (ships with MultiworldGG)
 - [.NET 8 (x86)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) (**NOT x64**)
 
-# AP Setup 
+## AP Setup 
 
 - Run Setup.MultiworldGG.version number.exe but don't open the launcher yet
 - Double click simpsonshitandrun.apworld, it should pop up something saying APWorld successfully installed (and telling you to restart the AP launcher if you have it open) (this is not needed if you run MultiworldGG)
 
-# Game Generation 
+## Game Generation 
 
 - Open MultiworldGGLauncher.exe in the MultiworldGG folder created when you ran the AP setup
 - Search for and click Generate Template Yamls which will open a folder full of yamls
@@ -21,15 +21,15 @@
 - Optionally add more yamls for other players or other games you want to play. The multiworld will have 1 slot per yaml included here.
 - In the AP Launcher again, search for and click Generate
 
-# Game Hosting
+## Game Hosting
 
 - Go to [MultiworldGG](https://multiworld.gg/) and click Get Started (top right) -> Host Game then click Upload File
-- Go to the Archipelago/output folder and choose the .zip that was created when you clicked Generate (should be the newest one)
+- Go to the MultiworldGG/output folder and choose the .zip that was created when you clicked Generate (should be the newest one)
 - Click Create Room and wait for it to spin up. This is the room. You're good to go once there's a line that says /connect multiworld.gg:{port}
 
-Note: You can also self host an MultiworldGG game server, but that's outside the scope of this guide.
+Note: You can also self host a MultiworldGG game server, but that's outside the scope of this guide.
   
-# Install Lucas' Mod Manager, the lmlm mod, and the client/memory monitor mod.
+## Install Lucas' Mod Manager, the lmlm mod, and the client/memory monitor mod.
 
 - Follow [these](https://docs.donutteam.com/docs/lucasmodlauncher/setup) instructions to setup Lucas' Mod Manager.
 - Place SHARAP.lmlm in the mods folder.
@@ -41,19 +41,36 @@ Note: You can also self host an MultiworldGG game server, but that's outside the
 
 - Finally, extract SHARRandomizer.zip where ever you'd like.
 
-# Connecting and Playing
-- Download the Config file by going to the MultiworldGG Room and clicking "Download Patch File"
-- Extract the "SHAR.ini" file from the downloaded .zip and place it in "Documents\My Games\Lucas' Simpsons Hit & Run Mod Launcher\Saved Games\APSHARRandomizer" If that folder doesn't exist, create it. You can also reach the folder by clicking Open in the mod launcher and choosing Saved Games if the mod is enabled.
-
-- Run SHARRandomizer.exe
-- First it'll ask for the connection string. If you're hosting on the AP website as described earlier, then you can just enter the port
-- Then it'll ask for the slot name, this is what you put as Name in the yaml and also shows in the room on the website
+## Connecting and Playing
+- Download the Config file (*.apshar) by going to the MultiworldGG Room and clicking "Download Patch File"
+- Open the MultiworldGG Launcher and start the Simpsons Hit & Run Client
+- The Client will prompt you for the location of your .apshar patchfile, the SHARRandomizer.exe, your installation of the Lucas' Mod Manager
+- The randomizer application will ask for the connection string. Then it'll ask for the slot name, this is what you put as Name in the yaml and also shows in the room on the website
 - Then it'll ask for a password. By default this is blank.
 
-- Launch the game via Lucas' Mod Launcher ensuring the above steps have been completed.
+- The game should auto launch. If not, launch it via the Lucas' Mod Manager.
 
 - Enjoy!
 
-# I'm having issues!
+## Optional Extra Steps
+- Use the Text Client in the MultiworldGG launcher and connect with the same info used to connect in SHARRandomizer.exe. This will give you a better list of all items sent/received, an optional chat with other players in the multiworld, and an interface to use for hints.
+
+OR
+
+- Use Universal Tracker as a Text Client and a tracker to help identify in logic checks.
+  - Use the Universal Tracker in the launcher and connect the same as in the text client.
+  - You now have a text client tab and a tracker tab. Text client behaves exactly like the default text client, tracker gives you a list of available checks based on what items you've received and your game settings.
+
+## I'm having issues!
 
 This is in active development! Check the pinned FAQ and/or ask for help in the [Discord channel](https://discord.com/channels/731205301247803413/1158211913495359548). 
+
+## I'm new to AP/MWGG, what does this do to the game?
+
+I'll assume you're familiar with randomizers in general. AP/MWGG randos are separated into items you receive and checks you do to send items. In SHAR, the items are (depending on your yaml settings): Each character's jump and double jump, each characters attack, a "Gagfinder" for each character that enables them to do gags, a "Level X" for each level that unlocks that level's missions, a "Checkered Flag" for each character that unlocks the level's races, all the cars, and then some filler items in the form of an inventory of wrenches and hit and run resets you can use on demand and some various traps.
+hes and hit and run resets you can use on demand and some various traps.
+
+The checks are: Missions, wasps, cards, gags, talking to the character that would sell you a mission needed car (Barney, Homer, Otto, Willie, etc), and Gil's shops.
+
+Your goal is configurable in the yaml, generally its some combination of mission, wasp, and card completions. The "goal" is for every slot in the multiworld to reach its goal. By default, reaching your goal will send all of your undone checks and make all unsent items for your game be sent to you. This can be configured. 
+

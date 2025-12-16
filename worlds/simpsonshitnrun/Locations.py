@@ -56,6 +56,8 @@ location_table = [
         "category": [
             "Level 1 Mission"
         ],
+
+        "requires": "|Homer Progressive Jump:1| OR |Itchy and Scratchy Movie Truck|",
         "id": 122290
     },
     {
@@ -117,7 +119,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)}  AND |Homer Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 1|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Homer')} AND |Homer Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Homer')} AND |Level 1|",
         "id": 122297
     },
     {
@@ -126,7 +128,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)}  AND |Homer Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 1|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Homer')} AND |Homer Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Homer')} AND |Level 1|",
         "id": 122298
     },
     {
@@ -135,7 +137,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)}  AND |Homer Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 1|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Homer')} AND |Homer Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Homer')} AND |Level 1|",
         "id": 122299
     },
     {
@@ -184,7 +186,7 @@ location_table = [
         "category": [
             "Level 2 Mission"
         ],
-        "requires": "|Mr. Plow| AND |Bart Progressive Jump:2|",
+        "requires": "|Mr. Plow| AND (|Bart Progressive Jump:1| OR |Itchy and Scratchy Movie Truck|)",
         "id": 122305
     },
     {
@@ -210,7 +212,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Bart Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 2|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Bart')} AND |Bart Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Bart')} AND (|Level 2| OR |Progressive Level:1|)",
         "id": 122308
     },
     {
@@ -219,7 +221,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Bart Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 2|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Bart')} AND |Bart Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Bart')} AND (|Level 2| OR |Progressive Level:1|)",
         "id": 122309
     },
     {
@@ -228,7 +230,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Bart Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 2|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Bart')} AND |Bart Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Bart')} AND (|Level 2| OR |Progressive Level:1|)",
         "id": 122310
     },
     {
@@ -288,7 +290,7 @@ location_table = [
         "category": [
             "Level 3 Mission"
         ],
-        "requires": "",
+        "requires": "|Family Sedan| OR |Electaurus| OR |Pickup Truck| OR |Plow King| OR |Duff Truck| OR |Surveillance Van| OR |Honor Roller| OR |Moe\'s Sedan| OR |WWII Vehicle| OR |Mr. Plow| OR |Limo| OR |Fire Truck| OR |Malibu Stacy Car| OR |Book Burning Van| OR |Skinner\'s Sedan| OR |School Bus| OR |Donut Truck| OR |Nerd Car| OR |Canyonero| OR |Clown Car| OR |Kermlin| OR |Tractor| OR |Krusty\'s Limo| OR |Curator| OR |Longhorn| OR |El Carro Loco| OR |Hover Car| OR |Car Built for Homer| OR |Police Car| OR |Cola Truck| OR |Ferrini - Red| OR |36 Stutz Bearcat| OR |Bandit| OR |Globex Super Villain Car| OR |Chase Sedan| OR |70\'s Sports Car| OR |Open Wheel Race Car| OR |Mr. Burns\' Limo| OR |Zombie Car| OR |Hover Bike| OR |Hearse| OR |Speed Rocket| OR |Monorail Car| OR |Knight Boat| OR |ATV| OR |Obliteratatron Big Wheel Truck| OR |Planet Hype 50\'s Car| OR |Mini School Bus| OR |Glass Truck| OR |Minivan| OR |Pizza Van| OR |Taxi| OR |Sedan B| OR |Fish Van| OR |Nuclear Waste Truck| OR |Ambulance| OR |Sports Car B| OR |Itchy and Scratchy Movie Truck| OR |Sports Car A| OR |Compact Car| OR |SUV| OR |Hallo Hearse| OR |Coffin Car| OR |Ghost Ship| OR |Sedan A| OR |Station Wagon| OR |Ice Cream Truck| OR |Cell Phone Car A| OR |Cube Van| OR |Milk Truck| OR |Nonuplets Minivan| OR |WWII Vehicle w/Rocket| OR |Ferrini - Black|",
         "id": 122317
     },
     {
@@ -305,7 +307,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Lisa Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 3|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Lisa')} AND |Lisa Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Lisa')} AND (|Level 3| OR |Progressive Level:2|)",
         "id": 122319
     },
     {
@@ -314,7 +316,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Lisa Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 3|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Lisa')} AND |Lisa Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Lisa')} AND (|Level 3| OR |Progressive Level:2|)",
         "id": 122320
     },
     {
@@ -323,7 +325,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Lisa Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 3|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Lisa')} AND |Lisa Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Lisa')} AND (|Level 3| OR |Progressive Level:2|)",
         "id": 122321
     },
     {
@@ -375,7 +377,7 @@ location_table = [
         "category": [
             "Level 4 Mission"
         ],
-        "requires": "|Marge - Police| AND |Marge Progressive Jump:2|",
+        "requires": "|Marge - Police| AND |Marge Progressive Jump:1|",
         "id": 122327
     },
     {
@@ -402,7 +404,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Marge Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 4|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Marge')} AND |Marge Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Marge')} AND (|Level 4| OR |Progressive Level:3|)",
         "id": 122330
     },
     {
@@ -411,7 +413,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Marge Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 4|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Marge')} AND |Marge Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Marge')} AND (|Level 4| OR |Progressive Level:3|)",
         "id": 122331
     },
     {
@@ -420,7 +422,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Marge Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 4|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Marge')} AND |Marge Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Marge')} AND (|Level 4| OR |Progressive Level:3|)",
         "id": 122332
     },
     {
@@ -463,7 +465,7 @@ location_table = [
         "category": [
             "Level 5 Mission"
         ],
-        "requires": "|Apu Progressive Jump:2| OR {YamlDisabled(moverandomizer)}",
+        "requires": "|Apu Progressive Jump:2|",
         "id": 122337
     },
     {
@@ -498,7 +500,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Apu Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 5|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Apu')} AND |Apu Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Apu')} AND (|Level 5| OR |Progressive Level:4|)",
         "id": 122341
     },
     {
@@ -507,7 +509,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Apu Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 5|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Apu')} AND |Apu Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Apu')} AND (|Level 5| OR |Progressive Level:4|)",
         "id": 122342
     },
     {
@@ -516,7 +518,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Apu Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 5|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Apu')} AND |Apu Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Apu')} AND (|Level 5| OR |Progressive Level:4|)",
         "id": 122343
     },
     {
@@ -549,6 +551,7 @@ location_table = [
         "category": [
             "Level 6 Mission"
         ],
+        "requires": "|Bart Progressive Jump:1| OR |Itchy and Scratchy Movie Truck|",
         "id": 122347
     },
     {
@@ -590,7 +593,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Bart Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 6|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Bart')} AND |Bart Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Bart')} AND (|Level 6| OR |Progressive Level:5|)",
         "id": 122352
     },
     {
@@ -599,7 +602,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Bart Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 6|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Bart')} AND |Bart Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Bart')} AND (|Level 6| OR |Progressive Level:5|)",
         "id": 122353
     },
     {
@@ -608,7 +611,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Bart Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 6|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Bart')} AND |Bart Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Bart')} AND (|Level 6| OR |Progressive Level:5|)",
         "id": 122354
     },
     {
@@ -617,6 +620,7 @@ location_table = [
         "category": [
             "Level 7 Mission"
         ],
+        "requires": "|Homer Progressive Jump:1|",
         "id": 122355
     },
     {
@@ -652,7 +656,7 @@ location_table = [
         "category": [
             "Level 7 Mission"
         ],
-        "requires": "",
+        "requires": "|Homer Progressive Jump:2|",
         "id": 122359
     },
     {
@@ -688,7 +692,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Homer Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 7|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Homer')} AND |Homer Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Homer')} AND (|Level 7| OR |Progressive Level:6|)",
         "id": 122363
     },
     {
@@ -697,7 +701,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Homer Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 7|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Homer')} AND |Homer Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Homer')} AND (|Level 7| OR |Progressive Level:6|)",
         "id": 122364
     },
     {
@@ -706,7 +710,7 @@ location_table = [
         "category": [
             "Bonus Mission"
         ],
-        "requires": "({YamlEnabled(shufflecheckeredflags)} AND |Homer Checkered Flag|) OR ({YamlDisabled(shufflecheckeredflags)} AND |Level 7|)",
+        "requires": "({CheckSetForCharacter(shufflecheckeredflags, 'Homer')} AND |Homer Checkered Flag|) OR ({CheckSetForNotCharacter(shufflecheckeredflags, 'Homer')} AND (|Level 7| OR |Progressive Level:6|)",
         "id": 122365
     },
     {
@@ -715,7 +719,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, none)} AND {waspCarReq(Homer,['all'])}",
         "id": 122366
     },
     {
@@ -724,7 +728,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{waspCarReq(Homer,[])}",
         "id": 122367
     },
     {
@@ -733,7 +737,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{waspCarReq(Homer,['all'])}",
         "id": 122368
     },
     {
@@ -742,7 +746,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 0, Medium)} AND {waspCarReq(Homer,['all'])}",
         "id": 122369
     },
     {
@@ -751,7 +755,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, none)} AND {waspCarReq(Homer,['all'])}",
         "id": 122370
     },
     {
@@ -760,7 +764,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, none)} AND {waspCarReq(Homer,['all'])}",
         "id": 122371
     },
     {
@@ -769,7 +773,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 0, Medium)} AND {waspCarReq(Homer,['all'])}",
         "id": 122372
     },
     {
@@ -778,7 +782,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, Large)} AND {waspCarReq(Homer,['all'])}",
         "id": 122373
     },
     {
@@ -787,7 +791,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 0, none)} AND {waspCarReq(Homer,['Honor Roller', 'Malibu Stacy Car', 'Ferrini - Red', 'Bandit', 'Open Wheel Race Car', 'Ferrini - Black'])}",
         "id": 122374
     },
     {
@@ -796,7 +800,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, none)} AND {waspCarReq(Homer,['all'])}",
         "id": 122375
     },
     {
@@ -805,7 +809,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, none)} AND {waspCarReq(Homer,['all'])}",
         "id": 122376
     },
     {
@@ -814,7 +818,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, none)} AND {waspCarReq(Homer,['all'])}",
         "id": 122377
     },
     {
@@ -823,7 +827,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 0, none)} AND {waspCarReq(Homer,['ATV'])}",
         "id": 122378
     },
     {
@@ -832,7 +836,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, none)} AND {waspCarReq(Homer,[])}",
         "id": 122379
     },
     {
@@ -841,7 +845,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, none)} AND {waspCarReq(Homer,[])}",
         "id": 122380
     },
     {
@@ -850,7 +854,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, none)} AND {waspCarReq(Homer,['Family Sedan', 'Malibu Stacy Car', 'Nerd Car', 'Open Wheel Race Car', 'Hover Bike', 'Coffin Car'])}",
         "id": 122381
     },
     {
@@ -859,7 +863,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, none)} AND {waspCarReq(Homer,['Nerd Car', '70\'s Sports Car', 'Open Wheel Race Car'])}",
         "id": 122382
     },
     {
@@ -868,7 +872,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Progressive Jump:2| AND (|Homer Attack|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, Large)} AND {waspCarReq(Homer,['all'])}",
         "id": 122383
     },
     {
@@ -877,7 +881,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Progressive Jump:2| AND (|Homer Attack|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 2, none)} AND {waspCarReq(Homer,['all'])}",
         "id": 122384
     },
     {
@@ -886,7 +890,7 @@ location_table = [
         "category": [
             "Level 1 WASP"
         ],
-        "requires": "|Homer Progressive Jump:2| AND (|Homer Attack|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 2, none)} AND {waspCarReq(Homer,['all'])}",
         "id": 122385
     },
     {
@@ -895,7 +899,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122393
     },
     {
@@ -904,7 +908,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122394
     },
     {
@@ -913,7 +917,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122395
     },
     {
@@ -922,7 +926,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122396
     },
     {
@@ -931,7 +935,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122397
     },
     {
@@ -940,7 +944,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122398
     },
     {
@@ -949,7 +953,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122399
     },
     {
@@ -958,7 +962,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122400
     },
     {
@@ -967,7 +971,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122401
     },
     {
@@ -976,7 +980,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122402
     },
     {
@@ -985,7 +989,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122403
     },
     {
@@ -994,7 +998,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122404
     },
     {
@@ -1003,7 +1007,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122405
     },
     {
@@ -1012,7 +1016,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122406
     },
     {
@@ -1021,7 +1025,7 @@ location_table = [
         "category": [
             "Level 1 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND |Level 1|) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND |Level 1|)",
         "id": 122691
     },
     {
@@ -1084,7 +1088,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart,['Family Sedan', 'Moe\'s Sedan', 'Malibu Stacy Car', 'Nerd Car', 'Krusty\'s Limo', '36 Stutz Bearcat', 'Bandit', 'Hover Bike'])}",
         "id": 122413
     },
     {
@@ -1093,7 +1097,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart,['Honor Roller', 'Moe\'s Sedan', 'Malibu Stacy Car', 'Clown Car', 'Krusty\'s Limo', 'Longhorn', 'Ferrini - Red', '36 Stutz Bearcat', 'Globex Super Villain Car', '70\'s Sports Car', 'Open Wheel Race Car', 'Hover Bike', 'Hearse', 'Ghost Ship', 'Ferrini - Black'])}",
         "id": 122414
     },
     {
@@ -1102,7 +1106,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart,['Moe\'s Sedan', 'Mailibu Stacy Car', 'Nerd Car', 'Kremlin', 'El Carro Loco', 'Ferrini - Red', '36 Stutz Bearcat', 'Globex Super Villain Car', '70\'s Sports Car', 'Open Wheel Race Car', 'Zombie Car', 'Hover Bike', 'Knight Boat', 'ATV', 'Planet Hype 50\'s Car', Taxi', 'Sedan B', 'Sports Car B', 'Sports Car A', 'Compact Car', 'Coffin Car', 'Ghost Ship', 'Sedan A', 'Ferrini - Black'])}",
         "id": 122415
     },
     {
@@ -1111,7 +1115,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart,['Family Sedan', 'Electaurus', 'Honor Roller', 'Moe\'s Sedan', 'Mailibu Stacy Car', 'Nerd Car', 'Longhorn', 'El Carro Loco', 'Ferrini - Red', '36 Stutz Bearcat', 'Bandit', 'Globex Super Villain Car', '70\'s Sports Car', 'Open Wheel Race Car', 'Hover Bike', 'Compact Car', 'Coffin Car', 'Ferrini - Black'])}",
         "id": 122416
     },
     {
@@ -1120,7 +1124,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "((|Bart Attack|) AND |Bart Progressive Jump:2|)",
+        "requires": "{jumpsRequired(Bart, 1, Large)} AND {waspCarReq(Bart,['all'])}",
         "id": 122417
     },
     {
@@ -1129,7 +1133,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart,['Family Sedan', 'Honor Roller', 'Malibu Stacy Car', 'Clown Car', 'Krusty\'s Limo', 'Bandit', 'Open Wheel Race Car', 'Hover Bike', 'Hearse', 'Ghost Ship'])}",
         "id": 122418
     },
     {
@@ -1138,7 +1142,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart,['Family Sedan', 'Honor Roller', 'Malibu Stacy Car', 'Clown Car', 'Krusty\'s Limo', 'Bandit', 'Open Wheel Race Car', 'Hover Bike', 'Hearse', 'Ghost Ship'])}",
         "id": 122419
     },
     {
@@ -1147,7 +1151,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart,['Open Wheel Race Car', 'Knight Boat', 'ATV', 'Coffin Car'])}",
         "id": 122420
     },
     {
@@ -1156,7 +1160,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 1, none)} AND {waspCarReq(Bart,['all'])}",
         "id": 122421
     },
     {
@@ -1165,7 +1169,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, Medium)} AND {waspCarReq(Bart,['all'])}",
         "id": 122422
     },
     {
@@ -1174,7 +1178,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "((|Bart Attack|) AND |Bart Progressive Jump:2|)",
+        "requires": "{jumpsRequired(Bart, 2, none)} AND {waspCarReq(Bart,['all'])}",
         "id": 122423
     },
     {
@@ -1183,7 +1187,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 1, none)} AND {waspCarReq(Bart,['all'])}",
         "id": 122424
     },
     {
@@ -1192,7 +1196,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "((|Bart Attack|) AND |Bart Progressive Jump:2|)",
+        "requires": "{jumpsRequired(Bart, 1, none)} AND {waspCarReq(Bart,['all'])}",
         "id": 122425
     },
     {
@@ -1201,7 +1205,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "((|Bart Attack|) AND |Bart Progressive Jump:2|)",
+        "requires": "{jumpsRequired(Bart, 2, none)} AND {waspCarReq(Bart,['all'])}",
         "id": 122426
     },
     {
@@ -1210,7 +1214,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "|Bart Attack|",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart,[])}",
         "id": 122427
     },
     {
@@ -1219,7 +1223,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart,['Family Sedan', 'Moe\'s Sedan', 'Longhorn', 'Ferrini - Red', '36 Stutz Bearcat', 'Globex Super Villain Car', '70\'s Sports Car', 'Open Wheel Race Car', 'Zombie Car', 'Hover Bike', 'Knight Boat', 'Coffin Car', 'Ghost Ship', 'Ferrini - Black'])}",
         "id": 122428
     },
     {
@@ -1228,7 +1232,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "((|Bart Attack|) AND |Bart Progressive Jump:2|)",
+        "requires": "{jumpsRequired(Bart, 1, Medium)} AND {waspCarReq(Bart,['all'])}",
         "id": 122429
     },
     {
@@ -1237,7 +1241,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "((|Bart Attack|) AND |Bart Progressive Jump:2|)",
+        "requires": "{jumpsRequired(Bart, 1, Medium)} AND {waspCarReq(Bart,['all'])}",
         "id": 122430
     },
     {
@@ -1246,7 +1250,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "(|Bart Attack| AND |Bart Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 1, none)} AND {waspCarReq(Bart,['all'])}",
         "id": 122431
     },
     {
@@ -1255,7 +1259,7 @@ location_table = [
         "category": [
             "Level 2 WASP"
         ],
-        "requires": "((|Bart Attack|) AND |Bart Progressive Jump:2|)",
+        "requires": "{jumpsRequired(Bart, 1, Large)} AND {waspCarReq(Bart,['all'])}",
         "id": 122432
     },
     {
@@ -1264,7 +1268,7 @@ location_table = [
         "category": [
             "Level 2 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 2| OR |Progressive Level:1|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 2| OR |Progressive Level:1|))",
         "id": 122440
     },
     {
@@ -1273,7 +1277,7 @@ location_table = [
         "category": [
             "Level 2 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 2| OR |Progressive Level:1|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 2| OR |Progressive Level:1|))",
         "id": 122441
     },
     {
@@ -1282,7 +1286,7 @@ location_table = [
         "category": [
             "Level 2 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 2| OR |Progressive Level:1|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 2| OR |Progressive Level:1|))",
         "id": 122442
     },
     {
@@ -1291,7 +1295,7 @@ location_table = [
         "category": [
             "Level 2 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 2| OR |Progressive Level:1|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 2| OR |Progressive Level:1|))",
         "id": 122443
     },
     {
@@ -1300,7 +1304,7 @@ location_table = [
         "category": [
             "Level 2 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 2| OR |Progressive Level:1|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 2| OR |Progressive Level:1|))",
         "id": 122444
     },
     {
@@ -1309,7 +1313,7 @@ location_table = [
         "category": [
             "Level 2 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 2| OR |Progressive Level:1|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 2| OR |Progressive Level:1|))",
         "id": 122445
     },
     {
@@ -1318,7 +1322,7 @@ location_table = [
         "category": [
             "Level 2 GAG"
         ],
-        "requires": "(({YamlDisabled(shufflegagfinder)} AND (|Level 2| OR |Progressive Level:1|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)) AND (|Bart Progressive Jump:2| OR {YamlDisabled(moverandomizer)})",
+        "requires": "(({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 2| OR |Progressive Level:1|))) AND |Bart Progressive Jump:2|",
         "id": 122446
     },
     {
@@ -1327,7 +1331,7 @@ location_table = [
         "category": [
             "Level 2 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 2| OR |Progressive Level:1|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 2| OR |Progressive Level:1|))",
         "id": 122447
     },
     {
@@ -1336,7 +1340,7 @@ location_table = [
         "category": [
             "Level 2 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 2| OR |Progressive Level:1|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 2| OR |Progressive Level:1|))",
         "id": 122448
     },
     {
@@ -1345,7 +1349,7 @@ location_table = [
         "category": [
             "Level 2 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 2| OR |Progressive Level:1|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 2| OR |Progressive Level:1|))",
         "id": 122449
     },
     {
@@ -1354,7 +1358,7 @@ location_table = [
         "category": [
             "Level 2 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 2| OR |Progressive Level:1|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 2| OR |Progressive Level:1|))",
         "id": 122450
     },
     {
@@ -1471,7 +1475,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 0, none)} AND {waspCarReq(Lisa,['all'])}",
         "id": 122463
     },
     {
@@ -1480,7 +1484,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 1, none)} AND {waspCarReq(Lisa,['all'])}",
         "id": 122464
     },
     {
@@ -1489,7 +1493,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 1, none)} AND {waspCarReq(Lisa,['all'])}",
         "id": 122465
     },
     {
@@ -1498,7 +1502,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 0, none)} AND {waspCarReq(Lisa,['all'])}",
         "id": 122466
     },
     {
@@ -1507,7 +1511,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 0, none)} AND {waspCarReq(Lisa,['all'])}",
         "id": 122467
     },
     {
@@ -1516,7 +1520,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 0, none)} AND {waspCarReq(Lisa,['ATV'])}",
         "id": 122468
     },
     {
@@ -1525,7 +1529,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 0, none)} AND {waspCarReq(Lisa,['Limo', 'Fire Truck', 'Longhorn', '36 Stutz Bearcat', 'ATV', 'Garbage Truck', 'Itchy and Scratchy Movie Truck', 'Coffin Car'])}",
         "id": 122469
     },
     {
@@ -1534,7 +1538,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 0, none)} AND {waspCarReq(Lisa,['Coffin Car'])}",
         "id": 122470
     },
     {
@@ -1543,7 +1547,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 0, none)} AND {waspCarReq(Lisa,['ATV', 'Coffin Car'])}",
         "id": 122471
     },
     {
@@ -1552,7 +1556,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 0, none)} AND {waspCarReq(Lisa,['ATV', 'Coffin Car'])}",
         "id": 122472
     },
     {
@@ -1561,7 +1565,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 1, none)} AND {waspCarReq(Lisa,['all'])}",
         "id": 122473
     },
     {
@@ -1570,34 +1574,34 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 1, none)} AND {waspCarReq(Lisa,['all'])}",
         "id": 122474
     },
     {
-        "name": "(LVL 3) WASP - (Boat) Front end of Boat",
+        "name": "(LVL 3) WASP - Globex Ship Front End",
         "region": "Collectables",
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "((|Lisa Attack|) AND |Lisa Progressive Jump:2|)",
+        "requires": "{jumpsRequired(Lisa, 0, Small)} AND {waspCarReq(Lisa,['Garbage Truck', 'Vote Quimby Truck', 'Burns Armored Truck', 'Bonestorm Truck'])}",
         "id": 122475
     },
     {
-        "name": "(LVL 3) WASP - (Boat) Next to the Crane",
+        "name": "(LVL 3) WASP - Globex Ship Next to the Crane",
         "region": "Collectables",
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "((|Lisa Attack|) AND |Lisa Progressive Jump:2|)",
+        "requires": "{jumpsRequired(Lisa, 0, Small)} AND {waspCarReq(Lisa,['Hover Bike', 'Garbage Truck', 'Vote Quimby Truck', 'Burns Armored Truck', 'Bonestorm Truck'])}",
         "id": 122476
     },
     {
-        "name": "(LVL 3) WASP - (Boat) Stairs",
+        "name": "(LVL 3) WASP - Globex Ship Stairs",
         "region": "Collectables",
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "((|Lisa Attack|) AND |Lisa Progressive Jump:2|)",
+        "requires": "{jumpsRequired(Lisa, 0, Small)} AND {waspCarReq(Lisa,['Skinner\'s Sedan', 'Nerd Car', 'Curator', 'Longhorn', 'El Carro Loco', 'Ferrini - Red', '36 Stutz Bearcat', 'Bandit', 'Globex Super Villain Car', '70\'s Sports Car', 'Open Wheel Race Car', 'Hover Bike', 'Garbage Truck', 'Vote Quimby Truck', 'Burns Armored Truck', 'Bonestorm Truck', 'Ferrini - Black'])}",
         "id": 122477
     },
     {
@@ -1606,7 +1610,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 0, none)} AND {waspCarReq(Lisa,['Family Sedan', 'Honor Roller', 'Moe\'s Sedan', 'WWII Vehicle', 'Limo', 'Malibu Stacy Car', 'Nerd Car', 'Krusty\'s Limo', 'Curator', 'Longhorn', 'El Carro Loco', 'Police Car', 'Ferrini - Red', '36 Stutz Bearcat', 'Bandit', 'Globex Super Villain Car', '70\'s Sports Car', 'Open Wheel Race Car', 'Zombie Car', 'Hover Bike', 'Hearse', 'WWII Vehicle W// Rocket', 'Ferrini - Black'])}",
         "id": 122478
     },
     {
@@ -1615,7 +1619,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 1, none)} AND {waspCarReq(Lisa,['all'])}",
         "id": 122479
     },
     {
@@ -1624,7 +1628,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 1, none)} AND {waspCarReq(Lisa,['Family Sedan', 'Electaurus', 'Pickup Truck', 'Surveillance Van', 'Honor Roller', 'Moe\'s Sedan', 'WWII Vehicle', 'Limo', 'Malibu Stacy Car', 'Nerd Car', 'Krusty\'s Limo', 'Curator', 'Longhorn', 'El Carro Loco', 'Police Car', 'Ferrini - Red', '36 Stutz Bearcat', 'Bandit', 'Globex Super Villain Car', '70\'s Sports Car', 'Open Wheel Race Car', 'Mr. Burns\' Limo', 'Zombie Car', 'Hover Bike', 'Hearse', 'Knight Boat', 'ATV', 'Obliteratron Big Wheel Truck', 'Planet Hype 50\'s Car', 'Taxi', 'Sedan B', 'Nuclear Waste Truck', 'Sports Car B', 'Sports Car A', 'Compact Car', 'SUV', 'Hallo Hearse', 'Coffin Car', 'Ghost Ship', 'Sedan A', 'Station Wagon', 'Cell Phone Car A', 'Milk Truck', 'WWI Vehicle W/ Rocket', 'Ferrini - Black'])}",
         "id": 122480
     },
     {
@@ -1633,7 +1637,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "((|Lisa Attack|) AND |Lisa Progressive Jump:2|)",
+        "requires": "{jumpsRequired(Lisa, 0, Large)} AND {waspCarReq(Lisa,['all'])}",
         "id": 122481
     },
     {
@@ -1642,7 +1646,7 @@ location_table = [
         "category": [
             "Level 3 WASP"
         ],
-        "requires": "|Lisa Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Lisa, 1, none)} AND {waspCarReq(Lisa,['all'])}",
         "id": 122482
     },
     {
@@ -1651,7 +1655,7 @@ location_table = [
         "category": [
             "Level 3 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 3| OR |Progressive Level:2|)) OR ({YamlEnabled(shufflegagfinder)} AND |Lisa Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Lisa')} AND |Lisa Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Lisa')} AND (|Level 3| OR |Progressive Level:2|))",
         "id": 122490
     },
     {
@@ -1660,7 +1664,7 @@ location_table = [
         "category": [
             "Level 3 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 3| OR |Progressive Level:2|)) OR ({YamlEnabled(shufflegagfinder)} AND |Lisa Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Lisa')} AND |Lisa Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Lisa')} AND (|Level 3| OR |Progressive Level:2|))",
         "id": 122491
     },
     {
@@ -1669,7 +1673,7 @@ location_table = [
         "category": [
             "Level 3 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 3| OR |Progressive Level:2|)) OR ({YamlEnabled(shufflegagfinder)} AND |Lisa Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Lisa')} AND |Lisa Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Lisa')} AND (|Level 3| OR |Progressive Level:2|))",
         "id": 122492
     },
     {
@@ -1678,7 +1682,7 @@ location_table = [
         "category": [
             "Level 3 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 3| OR |Progressive Level:2|)) OR ({YamlEnabled(shufflegagfinder)} AND |Lisa Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Lisa')} AND |Lisa Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Lisa')} AND (|Level 3| OR |Progressive Level:2|))",
         "id": 122493
     },
     {
@@ -1687,7 +1691,7 @@ location_table = [
         "category": [
             "Level 3 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 3| OR |Progressive Level:2|)) OR ({YamlEnabled(shufflegagfinder)} AND |Lisa Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Lisa')} AND |Lisa Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Lisa')} AND (|Level 3| OR |Progressive Level:2|))",
         "id": 122494
     },
     {
@@ -1696,7 +1700,7 @@ location_table = [
         "category": [
             "Level 3 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 3| OR |Progressive Level:2|)) OR ({YamlEnabled(shufflegagfinder)} AND |Lisa Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Lisa')} AND |Lisa Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Lisa')} AND (|Level 3| OR |Progressive Level:2|))",
         "id": 122495
     },
     {
@@ -1705,7 +1709,7 @@ location_table = [
         "category": [
             "Level 3 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 3| OR |Progressive Level:2|)) OR ({YamlEnabled(shufflegagfinder)} AND |Lisa Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Lisa')} AND |Lisa Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Lisa')} AND (|Level 3| OR |Progressive Level:2|))",
         "id": 122496
     },
     {
@@ -1714,7 +1718,7 @@ location_table = [
         "category": [
             "Level 3 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 3| OR |Progressive Level:2|)) OR ({YamlEnabled(shufflegagfinder)} AND |Lisa Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Lisa')} AND |Lisa Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Lisa')} AND (|Level 3| OR |Progressive Level:2|))",
         "id": 122497
     },
     {
@@ -1723,7 +1727,7 @@ location_table = [
         "category": [
             "Level 3 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 3| OR |Progressive Level:2|)) OR ({YamlEnabled(shufflegagfinder)} AND |Lisa Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Lisa')} AND |Lisa Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Lisa')} AND (|Level 3| OR |Progressive Level:2|))",
         "id": 122498
     },
     {
@@ -1732,7 +1736,7 @@ location_table = [
         "category": [
             "Level 3 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 3| OR |Progressive Level:2|)) OR ({YamlEnabled(shufflegagfinder)} AND |Lisa Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Lisa')} AND |Lisa Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Lisa')} AND (|Level 3| OR |Progressive Level:2|))",
         "id": 122499
     },
     {
@@ -1741,7 +1745,7 @@ location_table = [
         "category": [
             "Level 3 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 3| OR |Progressive Level:2|)) OR ({YamlEnabled(shufflegagfinder)} AND |Lisa Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Lisa')} AND |Lisa Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Lisa')} AND (|Level 3| OR |Progressive Level:2|))",
         "id": 122500
     },
     {
@@ -1750,7 +1754,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 0, none)} AND {waspCarReq(Marge,['Malibu Stacy Car', 'Nerd Car', 'Ferrini - Red', '36 Stutz Bearcat', 'Bandit', 'Open Wheel Race Car', 'Hover Bike', 'Ferrini - Black'])}",
         "id": 122501
     },
     {
@@ -1759,7 +1763,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 0, none)} AND {waspCarReq(Marge,['Malibu Stacy Car', 'Nerd Car', 'Ferrini - Red', '36 Stutz Bearcat', 'Bandit', 'Open Wheel Race Car', 'Hover Bike', 'Ferrini - Black'])}",
         "id": 122502
     },
     {
@@ -1768,7 +1772,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 0, none)} AND {waspCarReq(Marge,['all'])}",
         "id": 122503
     },
     {
@@ -1777,7 +1781,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 0, Medium)} AND {waspCarReq(Marge,['all'])}",
         "id": 122504
     },
     {
@@ -1786,7 +1790,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 1, none)} AND {waspCarReq(Marge,['all'])}",
         "id": 122505
     },
     {
@@ -1795,7 +1799,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 1, none)} AND {waspCarReq(Marge,['all'])}",
         "id": 122506
     },
     {
@@ -1804,7 +1808,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 1, none)} AND {waspCarReq(Marge,['all'])}",
         "id": 122507
     },
     {
@@ -1813,7 +1817,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 1, none)} AND {waspCarReq(Marge,['all'])}",
         "id": 122508
     },
     {
@@ -1822,7 +1826,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 0, none)} AND {waspCarReq(Marge,[])}",
         "id": 122509
     },
     {
@@ -1831,7 +1835,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 0, none)} AND {waspCarReq(Marge,[])}",
         "id": 122510
     },
     {
@@ -1840,7 +1844,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 0, none)} AND {waspCarReq(Marge,['Electaurus', 'Pickup Truck', 'Plow King', 'Duff Truck', 'Surveillance Van', 'Honor Roller', 'Limo', 'Book Burning Van', 'School Bus', 'Donut Truck', 'Nerd Car', 'Canyonero', 'Kremlin', 'Tractor', 'Krusty\'s Limo', 'Curator', 'Longhorn', 'El Carro Loco', 'Hover Car', 'Car Built For Homer', 'Police Car', 'Cola Truck', 'Globex Super Villain Car', 'Armored Truck', 'Chase Sedan', 'Mr. Burns\' Limo', 'Zombie Car', 'Hearse', 'Speed Rocket', 'Monorail Car', 'Obliteratatron Big Wheel Truck', 'Planet Hype 50\'s Car', 'Mini School Bus', 'Glass Truck', 'Minivan', 'Pizza Van', 'Taxi', 'Sedan B', 'Fish Van', 'Garbage Truck', 'Nuclear Waste Truck', 'Vote Quimby Truck', 'Ambulance', 'Sports Car B', 'Itchy and Scratchy Movie Truck', 'Burns Armored Truck' ,'Pickup', 'Sports Car A',' Compact Car', 'SUV', 'Hallo Hearse', 'Sedan A', 'Station Wagon', 'Ice Cream Truck', 'Cell Phone Car A', 'Cube Van', 'Milk Truck', 'Nonuplets Minivan'])}",
         "id": 122511
     },
     {
@@ -1849,7 +1853,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 0, none)} AND {waspCarReq(Marge,['Electaurus', 'Pickup Truck', 'Plow King', 'Duff Truck', 'Surveillance Van', 'Honor Roller', 'Limo', 'Book Burning Van', 'School Bus', 'Donut Truck', 'Nerd Car', 'Canyonero', 'Kremlin', 'Tractor', 'Krusty\'s Limo', 'Curator', 'Longhorn', 'El Carro Loco', 'Hover Car', 'Car Built For Homer', 'Police Car', 'Cola Truck', 'Globex Super Villain Car', 'Armored Truck', 'Chase Sedan', 'Mr. Burns\' Limo', 'Zombie Car', 'Hearse', 'Speed Rocket', 'Monorail Car', 'Obliteratatron Big Wheel Truck', 'Planet Hype 50\'s Car', 'Mini School Bus', 'Glass Truck', 'Minivan', 'Pizza Van', 'Taxi', 'Sedan B', 'Fish Van', 'Garbage Truck', 'Nuclear Waste Truck', 'Vote Quimby Truck', 'Ambulance', 'Sports Car B', 'Itchy and Scratchy Movie Truck', 'Burns Armored Truck' ,'Pickup', 'Sports Car A',' Compact Car', 'SUV', 'Hallo Hearse', 'Sedan A', 'Station Wagon', 'Ice Cream Truck', 'Cell Phone Car A', 'Cube Van', 'Milk Truck', 'Nonuplets Minivan'])}",
         "id": 122512
     },
     {
@@ -1858,7 +1862,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 0, none)} AND {waspCarReq(Marge,[])}",
         "id": 122513
     },
     {
@@ -1867,7 +1871,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 0, none)} AND {waspCarReq(Marge,['all'])}",
         "id": 122514
     },
     {
@@ -1876,7 +1880,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 0, none)} AND {waspCarReq(Marge,['Open Wheel Race Car'])}",
         "id": 122515
     },
     {
@@ -1885,7 +1889,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 1, Medium)} AND {waspCarReq(Marge,['all'])}",
         "id": 122516
     },
     {
@@ -1894,7 +1898,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 0, none)} AND {waspCarReq(Marge,['ATV'])}",
         "id": 122517
     },
     {
@@ -1903,7 +1907,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 1, none)} AND {waspCarReq(Marge,['all'])}",
         "id": 122518
     },
     {
@@ -1912,7 +1916,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 1, none)} AND {waspCarReq(Marge,['all'])}",
         "id": 122519
     },
     {
@@ -1921,7 +1925,7 @@ location_table = [
         "category": [
             "Level 4 WASP"
         ],
-        "requires": "|Marge Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Marge, 1, none)} AND {waspCarReq(Marge,['all'])}",
         "id": 122520
     },
     {
@@ -1930,7 +1934,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "id": 122528
     },
     {
@@ -1939,7 +1943,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "id": 122529
     },
     {
@@ -1948,7 +1952,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "id": 122530
     },
     {
@@ -1956,7 +1960,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "region": "Collectables",
         "id": 122531
     },
@@ -1966,7 +1970,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "id": 122532
     },
     {
@@ -1975,7 +1979,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "id": 122533
     },
     {
@@ -1984,7 +1988,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "id": 122534
     },
     {
@@ -1993,7 +1997,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "id": 122535
     },
     {
@@ -2002,7 +2006,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "id": 122536
     },
     {
@@ -2011,7 +2015,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "id": 122537
     },
     {
@@ -2020,7 +2024,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "id": 122538
     },
     {
@@ -2029,7 +2033,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "id": 122539
     },
     {
@@ -2038,7 +2042,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "id": 122540
     },
     {
@@ -2047,7 +2051,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "id": 122541
     },
     {
@@ -2056,7 +2060,7 @@ location_table = [
         "category": [
             "Level 4 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 4| OR |Progressive Level:3|)) OR ({YamlEnabled(shufflegagfinder)} AND |Marge Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Marge')} AND |Marge Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Marge')} AND (|Level 4| OR |Progressive Level:3|))",
         "id": 122542
     },
     {
@@ -2119,7 +2123,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "|Apu Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 1, none)} AND {waspCarReq(Apu ,['Family Sedan', 'Electaurus', 'Pickup Truck', 'Duff Truck', 'Surveillance Van', 'Honor Roller', 'Moe\'s Sedan', 'WWII Vehicle', 'Mr. Plow', 'Limo', 'Malibu Stacy Car', 'Nerd Car', 'Clown Car', 'Krusty\'s Limo', 'Curator', 'Longhorn', 'El Carro Loco', 'Hover Car', 'Car Built For Homer', 'Ferrini - Red', '36 Stutz Bearcat', 'Bandit', 'Globex Super Villain Car', 'Chase Sedan', '70\'s Sports Car', 'Open Wheel Race Car', 'Zombie Car', 'Hover Bike', 'ATV', 'Planet Hype 50\'s Car', 'Compact Car', 'Coffin Car', 'Ferrini - Black'])}",
         "id": 122549
     },
     {
@@ -2128,7 +2132,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "|Apu Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 0, none)} AND {waspCarReq(Apu ,['Family Sedan', 'Electaurus', 'Honor Roller', 'WWII Vehicle', 'Malibu Stacy Car', 'Nerd Car', 'Curator', 'Longhorn', 'Ferrini - Red', '36 Stutz Bearcat', 'Bandit', 'Globex Super Villain Car', '70\'s Sports Car', 'Open Wheel Race Car', 'Hover Bike', 'ATV', 'Planet 50's Hype Car', 'Compact Car', 'Coffin Car', 'Ghost Ship', 'WWII Vehicle W// Rocket', 'Ferrini - Black'])}",
         "id": 122550
     },
     {
@@ -2137,7 +2141,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "|Apu Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 0, none)} AND {waspCarReq(Apu ,['Malibu Stacy Car', 'Curator', 'Longhorn', 'Ferrini - Red', '36 Stutz Bearcat', 'Open Wheel Race Car', 'Zombie Car', 'Hover Bike', 'ATV', 'Vote Quimby Truck', 'Itchy and Scratchy Movie Truck', 'Compact Car', 'Ghost Ship', 'Station Wagon', 'Ferrini - Black'])}",
         "id": 122551
     },
     {
@@ -2146,7 +2150,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "|Apu Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 1, none)} AND {waspCarReq(Apu, ['Family Sedan', 'Electaurus', 'Pickup Truck', 'Duff Truck', 'Surveillance Van', 'Honor Roller', 'Moe\'s Sedan', 'WWII Vehicle', 'Mr. Plow', 'Limo', 'Malibu Stacy Car', 'Skinner\'s Sedan', 'Donut Truck', 'Nerd Car', 'Canyonero', 'Clown Car', 'Kremlin', 'Krusty\'s Limo', 'Curator', 'Longhorn', 'El Carro Loco', 'Hover Car', ' Car Built For Homer', 'Police Car', 'Ferrini - Red', '36 Stutz Bearcast', 'Bandit', 'Globex Super Villain Car', 'Chase Sedan', '70\'s Sports Car', 'Open Wheel Race Car', 'Mr. Burns\' Limo, 'Zombie Car', 'Hover Bike', 'Hearse', 'Speed Rocket', 'Monorail Car', 'Knight Boat', 'ATV', 'Planet Hype 50\'s Car', 'Vote Quimby Truck', 'Sports Car B', 'Sports Car A', 'Compact Car', 'Coffin Car', 'Ghost Ship', 'Station Wagon', 'Cell Phone Car', 'WWII Vehicle W// Rocket', 'Ferrini - Black])}",
         "id": 122552
     },
     {
@@ -2155,7 +2159,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "((|Apu Attack|) AND |Apu Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 1, Medium)} AND {waspCarReq(Apu, ['all'])}",
         "id": 122553
     },
     {
@@ -2164,7 +2168,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "((|Apu Attack|) AND |Apu Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 1, Medium)} AND {waspCarReq(Apu, ['all'])}",
         "id": 122554
     },
     {
@@ -2173,7 +2177,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "((|Apu Attack|) AND |Apu Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 1, Medium)} AND {waspCarReq(Apu, ['all'])}",
         "id": 122555
     },
     {
@@ -2182,7 +2186,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "|Apu Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 1, none)} AND {waspCarReq(Apu, ['all'])}",
         "id": 122556
     },
     {
@@ -2191,7 +2195,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "((|Apu Attack|) AND |Apu Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 1, none)} AND {waspCarReq(Apu, ['all'])}",
         "id": 122557
     },
     {
@@ -2200,7 +2204,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "((|Apu Attack|) AND |Apu Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 2, none)} AND {waspCarReq(Apu, ['all'])}",
         "id": 122558
     },
     {
@@ -2209,7 +2213,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "((|Apu Attack|) AND |Apu Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 2, none)} AND {waspCarReq(Apu, ['all'])}",
         "id": 122559
     },
     {
@@ -2218,7 +2222,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "|Apu Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 0, none)} AND {waspCarReq(Apu, ['WWII Vehicle', 'Malibu Stacy Car', 'Donut Truck', 'Nerd Car', 'Clown Car', 'Tractor', 'Curator', '36 Stutz Bearcat', '70\'s Sports Car', 'Zombie Car', 'Hover Bike', 'ATV', 'Planet Hype 50\'s Car', 'Mini School Bus', 'Vote Quimby Truck', 'Coffin Car', 'Ghost Ship', 'WWII Vehicle W//  Rocket', 'Ferrini - Black'])}",
         "id": 122560
     },
     {
@@ -2227,7 +2231,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "|Apu Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 1, none)} AND {waspCarReq(Apu, ['all'])}",
         "id": 122561
     },
     {
@@ -2236,7 +2240,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "((|Apu Attack|) AND |Apu Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 1, none)} AND {waspCarReq(Apu, ['all'])}",
         "id": 122562
     },
     {
@@ -2245,7 +2249,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "((|Apu Attack|) AND |Apu Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 2, none)} AND {waspCarReq(Apu, ['all'])}",
         "id": 122563
     },
     {
@@ -2254,7 +2258,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "((|Apu Attack|) AND |Apu Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 2, none)} AND {waspCarReq(Apu, ['all'])}",
         "id": 122564
     },
     {
@@ -2263,7 +2267,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "|Apu Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 1, none)} AND {waspCarReq(Apu, ['Electaurus', 'Malibu Stacy Car', 'Curator', 'Longhorn', 'El Carro Loco', 'Ferrini - Red', 'Globex Super Villain Car', 'Open Wheel Race Car', 'Hover Bike', 'ATV', 'Compact Car', 'Ferrini - Black'])}",
         "id": 122565
     },
     {
@@ -2272,7 +2276,7 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "|Apu Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 1, none)} AND {waspCarReq(Apu, ['Electaurus', 'Malibu Stacy Car', 'Curator', 'Longhorn', 'El Carro Loco', 'Ferrini - Red', 'Globex Super Villain Car', 'Open Wheel Race Car', 'Hover Bike', 'ATV', 'Compact Car', 'Ferrini - Black'])}",
         "id": 122566
     },
     {
@@ -2281,16 +2285,16 @@ location_table = [
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "|Apu Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 1, none)} AND {waspCarReq(Apu, ['Electaurus', 'Malibu Stacy Car', 'Curator', 'Longhorn', 'El Carro Loco', 'Ferrini - Red', 'Globex Super Villain Car', 'Open Wheel Race Car', 'Hover Bike', 'ATV', 'Compact Car', 'Ferrini - Black'])}",
         "id": 122567
     },
     {
-        "name": "(LVL 5) WASP - Fountain in from Stadium",
+        "name": "(LVL 5) WASP - Fountain Near Stadium",
         "region": "Collectables",
         "category": [
             "Level 5 WASP"
         ],
-        "requires": "((|Apu Attack|) AND |Apu Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Apu, 1, Large)} AND {waspCarReq(Apu, ['all'])}",
         "id": 122568
     },
     {
@@ -2299,7 +2303,7 @@ location_table = [
         "category": [
             "Level 5 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 5| OR |Progressive Level:4|)) OR ({YamlEnabled(shufflegagfinder)} AND |Apu Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Apu')} AND |Apu Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Apu')} AND (|Level 5| OR |Progressive Level:4|))",
         "id": 122576
     },
     {
@@ -2308,7 +2312,7 @@ location_table = [
         "category": [
             "Level 5 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 5| OR |Progressive Level:4|)) OR ({YamlEnabled(shufflegagfinder)} AND |Apu Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Apu')} AND |Apu Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Apu')} AND (|Level 5| OR |Progressive Level:4|))",
         "id": 122577
     },
     {
@@ -2317,7 +2321,7 @@ location_table = [
         "category": [
             "Level 5 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 5| OR |Progressive Level:4|)) OR ({YamlEnabled(shufflegagfinder)} AND |Apu Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Apu')} AND |Apu Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Apu')} AND (|Level 5| OR |Progressive Level:4|))",
         "id": 122578
     },
     {
@@ -2326,7 +2330,7 @@ location_table = [
         "category": [
             "Level 5 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 5| OR |Progressive Level:4|)) OR ({YamlEnabled(shufflegagfinder)} AND |Apu Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Apu')} AND |Apu Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Apu')} AND (|Level 5| OR |Progressive Level:4|))",
         "id": 122579
     },
     {
@@ -2335,7 +2339,7 @@ location_table = [
         "category": [
             "Level 5 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 5| OR |Progressive Level:4|)) OR ({YamlEnabled(shufflegagfinder)} AND |Apu Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Apu')} AND |Apu Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Apu')} AND (|Level 5| OR |Progressive Level:4|))",
         "id": 122580
     },
     {
@@ -2344,7 +2348,7 @@ location_table = [
         "category": [
             "Level 5 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 5| OR |Progressive Level:4|)) OR ({YamlEnabled(shufflegagfinder)} AND |Apu Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Apu')} AND |Apu Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Apu')} AND (|Level 5| OR |Progressive Level:4|))",
         "id": 122690
     },
     {
@@ -2434,7 +2438,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart, ['all'])}",
         "id": 122590
     },
     {
@@ -2443,7 +2447,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart, ['all'])}",
         "id": 122591
     },
     {
@@ -2452,7 +2456,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart, ['all'])}",
         "id": 122592
     },
     {
@@ -2461,7 +2465,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart, ['all'])}",
         "id": 122593
     },
     {
@@ -2470,7 +2474,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 1, none)} AND {waspCarReq(Bart, ['all'])}",
         "id": 122594
     },
     {
@@ -2479,7 +2483,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 1, none)} AND {waspCarReq(Bart, ['all'])}",
         "id": 122595
     },
     {
@@ -2488,7 +2492,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart, ['Family Sedan', 'Electaurus', 'Surveillance Van', 'Honor Roller', 'Moe\'s Sedan', 'WWII Vehicle', 'Limo', 'Fire Truck', 'Malibu Stacy Car', 'Nerd Car', 'Clown Car', 'Curator', 'Longhorn', 'El Carro Loco', 'Cola Truck', 'Ferrini - Red', '36 Stutz Bearcat', 'Bandit', 'Globex Super Villain Car', '70\'s Sports Car', 'Open Wheel Race Car', 'Zombie Car', 'Hover Bike', 'ATV', 'Obliteratatron Big Wheel Truck', 'Planet Hype 50\'s Car', 'Taxi', 'Garbage Truck', 'Vote Quimby Truck', 'Itchy and Scratchy movie Truck', 'Compact Car', 'Coffin Car', 'Ghost Ship', 'Ferrini - Black'])}",
         "id": 122596
     },
     {
@@ -2497,7 +2501,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart, ['Family Sedan', 'Electaurus', 'Honor Roller', 'Moe\'s Sedan', 'Malibu Stacy Car', 'Nerd Car', 'Curator', 'Longhorn', 'El Carro Loco', 'Ferrini - Red', '36 Stutz Bearcat', 'Bandit', 'Globex Super Villain Car', '70\'s Sports Car', 'Open Wheel Race Car', 'Hover Bike' , 'ATV', 'Ferrini - Black'])}",
         "id": 122597
     },
     {
@@ -2506,7 +2510,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart, ['Family Sedan', 'Electaurus', 'Surveillance Van' ,'Honor Roller', 'Moe\'s Sedan', 'WWII Vehicle', 'Malibu Stacy Car', 'Nerd Car', 'Clown Car', 'Krusty\'s Limo', 'Curator', 'Longhorn', 'El Carro Loco', 'Car Built For Homer', 'Police Car', 'Ferrini - Red', '36 Sttuz Bearcat', 'Bandit', 'Globex Super Villain Car', 'Chase Sedan', '70\'s Sports Car', 'Open Wheel Race Car', 'Mr. Burns\' Limo', 'Zombie Car', 'Hover Bike', Hearse', 'ATV', 'Sports Car A', 'Coffin Car', 'Ghost Ship', 'WWII Vehicle W// Rocket', 'Ferrini - Black'])}",
         "id": 122598
     },
     {
@@ -2515,7 +2519,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 1, none)} AND {waspCarReq(Bart, ['all'])}",
         "id": 122599
     },
     {
@@ -2524,7 +2528,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 1, none)} AND {waspCarReq(Bart, ['all'])}",
         "id": 122600
     },
     {
@@ -2533,34 +2537,34 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "((|Bart Attack|) AND |Bart Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 1, none)} AND {waspCarReq(Bart, ['all'])}",
         "id": 122601
     },
     {
-        "name": "(LVL 6) WASP - (Boat) Crane",
+        "name": "(LVL 6) WASP - Globex Ship Crane",
         "region": "Collectables",
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "((|Bart Attack|) AND |Bart Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, Small)} AND {waspCarReq(Bart, ['Moe\'s Sedan', 'Open Wheel Race Car', 'Hover Bike', 'ATV', 'Garbage Truck', 'Vote Quimby Truck', 'Burns Armored Truck', 'Bonestorm Truck'])}",
         "id": 122602
     },
     {
-        "name": "(LVL 6) WASP - (Boat) Staircase 1",
+        "name": "(LVL 6) WASP - Globex Ship Staircase 1",
         "region": "Collectables",
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "((|Bart Attack|) AND |Bart Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, Small)} AND {waspCarReq(Bart, ['Honor Roller', 'Moe\'s Sedan', 'Limo', 'Malibu Stacy Car', 'Nerd Car', 'Longhorn', 'El Carro Loco', '36 Stutz Bearcat', 'Globex Super Villain Car', 'Open Wheel Race Car', 'Hover Bike', 'ATV', 'Garbage Truck',  'Vote Quimby Truck', 'Burns Armored Truck', 'Bonestorm Truck'])}",
         "id": 122603
     },
     {
-        "name": "(LVL 6) WASP - (Boat) Staircase 2",
+        "name": "(LVL 6) WASP - Globex Ship Staircase 2",
         "region": "Collectables",
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "((|Bart Attack|) AND |Bart Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, Small)} AND {waspCarReq(Bart, ['Honor Roller', 'Moe\'s Sedan', 'Limo', 'Malibu Stacy Car', 'Nerd Car', 'Longhorn', 'El Carro Loco', '36 Stutz Bearcat', 'Globex Super Villain Car', 'Open Wheel Race Car', 'Hover Bike', 'ATV', 'Garbage Truck',  'Vote Quimby Truck', 'Burns Armored Truck', 'Bonestorm Truck'])}",
         "id": 122604
     },
     {
@@ -2569,7 +2573,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart, ['Family Sedan', 'Electaurus', 'Surveillance Van', 'Honor Roller', 'Moe\'s Sedan', 'WWII Vehicle', 'Limo', 'Malibu Stacy Car', 'Nerd Car', 'Clown Car', 'Kremlin', 'Krusty\'s Limo', 'Curator', 'Longhorn', 'El Carro Loco', 'Hover Car', 'Car Built For Homer', 'Police Car', 'Ferrini - Red', '36 Stutz Bearcat', 'Bandit', 'Globex Super Villain Car', 'Chase Sedan', '70\'s Sports Car', 'Open Wheel Race Car', 'Mr. Burns\' Limo', 'Zombie Car', 'Hover Bike', 'Hearse', 'ATV', 'Sports Car B', 'Ghost Ship, 'WWII Vehicle W// Rocket', 'Ferrini - Black'])}",
         "id": 122605
     },
     {
@@ -2578,7 +2582,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 0, none)} AND {waspCarReq(Bart, ['all'])}",
         "id": 122606
     },
     {
@@ -2587,7 +2591,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "((|Bart Attack|) AND |Bart Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 1, none)} AND {waspCarReq(Bart, ['all'])}",
         "id": 122607
     },
     {
@@ -2596,7 +2600,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 1, none)} AND {waspCarReq(Bart, ['all'])}",
         "id": 122608
     },
     {
@@ -2605,7 +2609,7 @@ location_table = [
         "category": [
             "Level 6 WASP"
         ],
-        "requires": "|Bart Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Bart, 1, none)} AND {waspCarReq(Bart, ['all'])}",
         "id": 122609
     },
     {
@@ -2614,7 +2618,7 @@ location_table = [
         "category": [
             "Level 6 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 6| OR |Progressive Level:5|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 6| OR |Progressive Level:5|))",
         "id": 122617
     },
     {
@@ -2623,7 +2627,7 @@ location_table = [
         "category": [
             "Level 6 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 6| OR |Progressive Level:5|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 6| OR |Progressive Level:5|))",
         "id": 122618
     },
     {
@@ -2632,7 +2636,7 @@ location_table = [
         "category": [
             "Level 6 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 6| OR |Progressive Level:5|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 6| OR |Progressive Level:5|))",
         "id": 122619
     },
     {
@@ -2641,7 +2645,7 @@ location_table = [
         "category": [
             "Level 6 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 6| OR |Progressive Level:5|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 6| OR |Progressive Level:5|))",
         "id": 122620
     },
     {
@@ -2650,7 +2654,7 @@ location_table = [
         "category": [
             "Level 6 GAG"
         ],
-        "requires": "(({YamlDisabled(shufflegagfinder)} AND (|Level 6| OR |Progressive Level:5|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)) AND (|Bart Progressive Jump:2| OR {YamlDisabled(moverandomizer)})",
+        "requires": "(({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 6| OR |Progressive Level:5|))) AND (|Bart Progressive Jump:2|",
         "id": 122621
     },
     {
@@ -2659,7 +2663,7 @@ location_table = [
         "category": [
             "Level 6 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 6| OR |Progressive Level:5|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 6| OR |Progressive Level:5|))",
         "id": 122622
     },
     {
@@ -2668,7 +2672,7 @@ location_table = [
         "category": [
             "Level 6 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 6| OR |Progressive Level:5|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 6| OR |Progressive Level:5|))",
         "id": 122623
     },
     {
@@ -2677,7 +2681,7 @@ location_table = [
         "category": [
             "Level 6 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 6| OR |Progressive Level:5|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 6| OR |Progressive Level:5|))",
         "id": 122624
     },
     {
@@ -2686,7 +2690,7 @@ location_table = [
         "category": [
             "Level 6 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 6| OR |Progressive Level:5|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 6| OR |Progressive Level:5|))",
         "id": 122625
     },
     {
@@ -2695,7 +2699,7 @@ location_table = [
         "category": [
             "Level 6 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 6| OR |Progressive Level:5|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 6| OR |Progressive Level:5|))",
         "id": 122626
     },
     {
@@ -2704,7 +2708,7 @@ location_table = [
         "category": [
             "Level 6 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 6| OR |Progressive Level:5|)) OR ({YamlEnabled(shufflegagfinder)} AND |Bart Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Bart')} AND |Bart Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Bart')} AND (|Level 6| OR |Progressive Level:5|))",
         "id": 122627
     },
     {
@@ -2767,7 +2771,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, none)} AND {waspCarReq(Homer, ['Family Sedan', 'Honor Roller', 'Moe\'s Sedan', 'Malibu Stacy Car', 'Nerd Car', 'Curator', 'Longhorn', 'El Carro Loco', 'Car Built For Homer', 'Ferrini - Red', '36 Stutz Bearcat', 'Bandit', 'Globex Super Villain Car', '70\'s Sports Car', 'Open Wheel Race Car', 'Zombie Car', 'Hover Bike', 'Knight Boat', 'ATV', 'Ferrini - Black'])}",
         "id": 122634
     },
     {
@@ -2776,7 +2780,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 0, none)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122635
     },
     {
@@ -2785,7 +2789,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 0, Medium)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122636
     },
     {
@@ -2794,7 +2798,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 0, none)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122637
     },
     {
@@ -2803,7 +2807,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, Medium)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122638
     },
     {
@@ -2812,7 +2816,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, none)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122639
     },
     {
@@ -2821,7 +2825,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "((|Homer Attack|) AND |Homer Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, none)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122640
     },
     {
@@ -2830,7 +2834,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 0, Medium)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122641
     },
     {
@@ -2839,16 +2843,16 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 0, Small)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122642
     },
     {
-        "name": "(LVL 7) WASP - School playground",
+        "name": "(LVL 7) WASP - School Playground",
         "region": "Collectables",
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 0, Large)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122643
     },
     {
@@ -2857,7 +2861,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 0, none)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122644
     },
     {
@@ -2866,7 +2870,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "(|Homer Attack| AND |Homer Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 2, none)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122645
     },
     {
@@ -2875,7 +2879,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "(|Homer Attack| AND |Homer Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 2, none)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122646
     },
     {
@@ -2884,7 +2888,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 0, none)} AND {waspCarReq(Homer, ['Family Sedan', 'Electaurus', 'Surveillance Van', 'Honor Roller', 'Moe\'s Sedan', 'WWII Vehicle', 'Limo', 'Malibu Stacy Car', 'Book Burning Van', 'Skinner\'s Sedan', 'Donut Truck', 'Nerd Car', 'Clown Car', 'Kremlin', 'Tractor', Krusty\'s Limo', 'Curator', Longhorn', 'El Carro Loco', 'Hover Car', 'Car Built For Homer', 'Police Car', Ferrini - Red', '36 Stutz Bearcat', 'Bandit', 'Globex Super Villain Car', 'Chase Sedan', '70\'s Sports Car', 'Open Wheel Race Car', 'Mr. Burns\' Limo','Zombie Car', Hover Bike', 'Hearse', 'Speed Rocket', 'Monorail Car', 'Knight Boat', 'ATV', 'Planet Hype 50\'s Car', 'Taxi', 'Sedan B', 'Sports Car B', 'Sports Car A', 'Compact Car', 'SUV', 'Ghost Ship', 'Sedan A', 'Station Wagon','Cell Phone Car', 'WWII Vehicle W// Rocket', 'Ferrini - Black'])}",
         "id": 122647
     },
     {
@@ -2893,7 +2897,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "((|Homer Attack|) AND |Homer Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 2, none)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122648
     },
     {
@@ -2902,7 +2906,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "((|Homer Attack|) AND |Homer Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, Large)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122649
     },
     {
@@ -2911,7 +2915,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "((|Homer Attack|) AND |Homer Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 1, Large)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122650
     },
     {
@@ -2920,7 +2924,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "((|Homer Attack|) AND |Homer Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 2, none)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122651
     },
     {
@@ -2929,7 +2933,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "|Homer Attack| OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 0, none)} AND {waspCarReq(Homer, ['Family Sedan', 'Electaurus', 'Surveillance Van', 'Honor Roller', 'Moe\'s Sedan', 'Limo', 'Malibu Stacy Car', 'Nerd Car', 'Kremlin', 'Tractor', 'Curator', 'Longhorn', 'El Carro Loco', 'Car Built For Homer', 'Ferrini - Red', '36 Stutz Bearcat', 'Bandit', 'Globex Super Villain Car', '70\'s Sports Car', 'Open Wheel Race Car', 'Mr. Burns\' Limo', 'Zombie Car', 'Hover Bike', 'Hearse', 'Speed Rocket', 'Monorail Car', 'Knight Boat', 'ATV', 'Planet Hype 50\'s Car', Sedan B', 'Sports Car B', 'Sports Car A', 'Compact Car', 'Hallo Hearse' ,'Ghost Ship', 'Sedan A', 'Station Wagon', 'Ferrini - Black'])}",
         "id": 122652
     },
     {
@@ -2938,7 +2942,7 @@ location_table = [
         "category": [
             "Level 7 WASP"
         ],
-        "requires": "((|Homer Attack|) AND |Homer Progressive Jump:2|) OR {YamlDisabled(moverandomizer)}",
+        "requires": "{jumpsRequired(Homer, 2, none)} AND {waspCarReq(Homer, ['all'])}",
         "id": 122653
     },
     {
@@ -2947,7 +2951,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122661
     },
     {
@@ -2956,7 +2960,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122662
     },
     {
@@ -2965,7 +2969,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122663
     },
     {
@@ -2974,7 +2978,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122664
     },
     {
@@ -2983,7 +2987,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122665
     },
     {
@@ -2992,7 +2996,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122666
     },
     {
@@ -3001,7 +3005,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122667
     },
     {
@@ -3010,7 +3014,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122668
     },
     {
@@ -3019,7 +3023,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122669
     },
     {
@@ -3028,7 +3032,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122670
     },
     {
@@ -3037,7 +3041,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122671
     },
     {
@@ -3046,7 +3050,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122672
     },
     {
@@ -3055,7 +3059,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122673
     },
     {
@@ -3064,7 +3068,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122674
     },
     {
@@ -3073,7 +3077,7 @@ location_table = [
         "category": [
             "Level 7 GAG"
         ],
-        "requires": "({YamlDisabled(shufflegagfinder)} AND (|Level 7| OR |Progressive Level:6|)) OR ({YamlEnabled(shufflegagfinder)} AND |Homer Gagfinder|)",
+        "requires": "({CheckSetForCharacter(shufflegagfinder, 'Homer')} AND |Homer Gagfinder|) OR ({CheckSetForNotCharacter(shufflegagfinder, 'Homer')} AND (|Level 7| OR |Progressive Level:6|))",
         "id": 122675
     },
     {

@@ -12,6 +12,9 @@ class ATSItemClassification(Enum):
     filler = 3
     guardian_part = 4
     keepers_dlc_blueprint = 5
+    biome_key = 6
+    keepers_dlc_biome_key = 7
+    nightwatchers_dlc_biome_key = 8
 
 item_dict: dict[str, tuple[ItemClassification, ATSItemClassification, str | None]] = {
     "Guardian Heart": (ItemClassification.progression, ATSItemClassification.guardian_part, "Guardian Part"),
@@ -164,6 +167,17 @@ item_dict: dict[str, tuple[ItemClassification, ATSItemClassification, str | None
     "Temple": (ItemClassification.progression, ATSItemClassification.blueprint, "Service Blueprint"),
 
     "Forum": (ItemClassification.progression, ATSItemClassification.keepers_dlc_blueprint, "Service Blueprint"),
+
+    "Royal Woodlands": (ItemClassification.progression, ATSItemClassification.biome_key, "Biome Key"),
+    "Coral Forest": (ItemClassification.progression, ATSItemClassification.biome_key, "Biome Key"),
+    "The Marshlands": (ItemClassification.progression, ATSItemClassification.biome_key, "Biome Key"),
+    "Scarlet Orchard": (ItemClassification.progression, ATSItemClassification.biome_key, "Biome Key"),
+    "Cursed Royal Woodlands": (ItemClassification.progression, ATSItemClassification.biome_key, "Biome Key"),
+    "Coastal Grove": (ItemClassification.progression, ATSItemClassification.keepers_dlc_biome_key, "Biome Key"),
+    "Ashen Thicket": (ItemClassification.progression, ATSItemClassification.keepers_dlc_biome_key, "Biome Key"),
+    "Bamboo Flats": (ItemClassification.progression, ATSItemClassification.nightwatchers_dlc_biome_key, "Biome Key"),
+    "Rocky Ravine": (ItemClassification.progression, ATSItemClassification.nightwatchers_dlc_biome_key, "Biome Key"),
+    "Sealed Forest": (ItemClassification.progression, ATSItemClassification.biome_key, "Biome Key"),
 }
 
 def get_item_name_groups(item_dict: dict[str, tuple[ItemClassification, ATSItemClassification, str | None]]):

@@ -1,4 +1,5 @@
 import logging
+import math
 from typing import List, Union
 from dataclasses import dataclass
 from Options import Range, Toggle, PerGameCommonOptions, OptionSet, OptionError, Choice, Accessibility
@@ -338,24 +339,29 @@ def check_options(world, locations: List[str]):
 							 "Can't pick goal levels from 0 possible levels, make sure goal levels are included in their respective locations")
 
 		amount_to_goal: int = options.amount_of_levels_to_goal.value
-
-		if amount_to_goal == 0:
-			amount_to_goal = len(raw_goal_levels)
-
 		max_random = len(locations)
+
+		if "Random" in options.levels_to_goal or amount_to_goal > len(raw_goal_levels) or amount_to_goal < 0:
+			levels_to_goal = random.sample(locations, random.randint(math.ceil(max_random / 2), max_random))
+		elif "All" in options.levels_to_goal:
+			levels_to_goal = locations
+		else:
+			levels_to_goal = raw_goal_levels
+
+		if amount_to_goal == 0 or amount_to_goal > len(levels_to_goal):
+			amount_to_goal = len(levels_to_goal)
+
+		if amount_to_goal < 0:
+			max_levels_to_goal = len(levels_to_goal)
+			amount_to_goal = random.randint(int(max_levels_to_goal / 2), max_levels_to_goal)
+			print(f"rand: [{amount_to_goal},{int(max_levels_to_goal / 2)},{max_levels_to_goal},{levels_to_goal}]")
+
 		allow_below_50 = settings.allow_potentially_excessive_releases
 		if amount_to_goal > len(locations):
 			raise_yaml_error(world.player_name, "You cannot have more levels required to goal than goal-able levels")
 
 		if (amount_to_goal < max_random / 2) and not allow_below_50:
 			raise_yaml_error(world.player_name, f"Goal level amount ({amount_to_goal}) required to goal can not be less than 50% ({int(max_random/2)}) of your total enabled levels ({max_random})")
-
-		if "Random" in options.levels_to_goal or amount_to_goal > len(raw_goal_levels):
-			levels_to_goal = random.sample(locations, random.randint(amount_to_goal, max_random))
-		elif "All" in options.levels_to_goal:
-			levels_to_goal = locations
-		else:
-			levels_to_goal = raw_goal_levels
 
 		options.levels_to_goal = LevelsToGoal(levels_to_goal)
 		options.amount_of_levels_to_goal = AmountOfLevelsToGoal(amount_to_goal)

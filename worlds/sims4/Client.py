@@ -214,7 +214,7 @@ async def game_watcher(ctx: SimsContext):
             sync_msg = [{'cmd': 'Sync'}]
             await ctx.send_msgs(sync_msg)
             ctx.syncing = False
-        if (ctx.server and ctx.slot) is not None:
+        if ctx.server is not None and ctx.slot is not None:
             json_data = load_json('locations_cached.json')
             if json_data is not None:
                 if "Locations" in json_data and json_data["Locations"] is not None and json_data["Seed"] == ctx.seed_name:

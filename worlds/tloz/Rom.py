@@ -8,9 +8,10 @@ import bsdiff4
 
 import Utils
 from BaseClasses import ItemClassification
-from worlds.Files import APDeltaPatch, APProcedurePatch, APTokenMixin, APPatchExtension
+from worlds.Files import APProcedurePatch, APTokenMixin, APPatchExtension
 
-NA10CHECKSUM = 'd9a1631d5c32d35594b9484862a26cba'
+NA10CHECKSUM = 'd9a1631d5c32d35594b9484862a26cba'  # Headerless ROM hash
+NA10CHECKSUM_HEADERED = '337bd6f1a1163df31bf2633665589ab0'  # Headered ROM hash (with 16-byte iNES header)
 NES2HEADER = bytes([ 0x4E, 0x45, 0x53, 0x1A, 0x08, 0x00, 0x12, 0x08, 0x00, 0x00, 0x70, 0x07, 0x00, 0x00, 0x00, 0x01])
 
 rom_name_location = 0x00
@@ -123,13 +124,17 @@ def get_base_rom_bytes(file_name: str = "") -> bytes:
     if not base_rom_bytes:
         file_name = get_base_rom_path(file_name)
         base_rom_bytes = bytes(Utils.read_snes_rom(open(file_name, "rb"), strip_header=False))
-        if len(base_rom_bytes) == 131088: # Headered rom length
+        
+        # Calculate hash and determine if we need to strip header
+        rom_hash = hashlib.md5(base_rom_bytes).hexdigest()
+        
+        if rom_hash == NA10CHECKSUM_HEADERED:
+            # Headered ROM - strip the 16-byte iNES header
             base_rom_bytes = base_rom_bytes[16:]
-        basemd5 = hashlib.md5()
-        basemd5.update(base_rom_bytes)
-        if NA10CHECKSUM != basemd5.hexdigest():
+        elif rom_hash != NA10CHECKSUM:
             raise Exception('Supplied Base Rom does not match known MD5 for NA (1.0) release. '
                             'Get the correct game and version, then dump it')
+        
         base_rom_bytes = NES2HEADER + base_rom_bytes
         get_base_rom_bytes.base_rom_bytes = base_rom_bytes
     return base_rom_bytes
@@ -263,7 +268,7 @@ class TLOZPatchExtension(APPatchExtension):
 
 class TLOZProcedurePatch(APProcedurePatch, APTokenMixin):
     game = "The Legend of Zelda"
-    hash = NA10CHECKSUM
+    hash = [NA10CHECKSUM, NA10CHECKSUM_HEADERED]
     patch_file_ending = ".aptloz"
     result_file_ending = ".nes"
 

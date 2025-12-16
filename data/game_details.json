@@ -950,6 +950,44 @@
         ],
         "release_date": 1999
     },
+    "Castlevania: Dawn of Sorrow": {
+        "igdb_id": "1136",
+        "world_name": "Castlevania: Dawn of Sorrow",
+        "igdb_name": "Castlevania: Dawn of Sorrow",
+        "us_rating": [
+        ],
+        "player_perspectives": [
+            "Side view"
+        ],
+        "genres": [
+            "Platform",
+            "Role-playing (RPG)",
+            "Adventure"
+        ],
+        "themes": [
+            "Action",
+            "Fantasy",
+            "Horror"
+        ],
+        "keywords": [
+            "ghosts",
+            "monsters",
+            "bloody",
+            "gravity",
+            "vampire",
+            "magic",
+            "grinding",
+            "collecting",
+            "metroidvania",
+            "summoning support",
+            "death",
+            "horse",
+            "female protagonist",
+            "side-scrolling",
+            "witches"
+        ],
+        "release_date": 2005
+    },
     "Castlevania - Circle of the Moon": {
         "igdb_id": "222410",
         "world_name": "Castlevania - Circle of the Moon",

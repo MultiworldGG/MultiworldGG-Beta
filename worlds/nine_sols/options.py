@@ -95,13 +95,12 @@ class JadeCostPlando(OptionDict):
     default = {}
 
 
-# not yet exposed to players
 class LogicDifficulty(Choice):
     """
     `vanilla` is exactly what it sounds like: You will only be expected to do what the vanilla game required.
 
-    `easy` adds tricks that are no harder to execute than what the vanilla game requires, once you've been told these
-    tricks exist. Specifically:
+    `medium` adds tricks that are easy to execute, once you're aware of them, but may require more effort to notice,
+    set up and/or retry after failure. Specifically:
     - "Pseudo Air Dashes" using either a talisman ("T-dash") or Charged Strike ("CS-dash")
     - Using a Cloud Piercer S (or X) arrow to break Charged Strike barriers without Charged Strike
     - Using a Thunder Buster arrow (any level) to break one-way barriers from the "wrong" side
@@ -112,7 +111,7 @@ class LogicDifficulty(Choice):
     `ledge_storage` adds the following LS-related glitches to logic:
         - slash vault (also called LS "getup") or parry vault (also called LS "vault")
         - parry float/hover
-        - moon slash wall side
+        - moon slash wall slide
     These are harder to explain, so if you would like to learn them, check out the Ledge Storage section of
     Herdingoats' Nine Sols trick video: https://youtu.be/X9aii18KecU?t=766
     To avoid the complications of skill logic, setting up ledge storage with a skull kick is out of logic. Logic will
@@ -127,7 +126,7 @@ class LogicDifficulty(Choice):
     """
     display_name = "Logic Difficulty"
     option_vanilla = 0
-    option_easy = 1
+    option_medium = 1
     option_ledge_storage = 2
     default = 0
 
@@ -188,8 +187,7 @@ class ShuffleLedgeGrab(Toggle):
 
     If your first_root_node is yinglong_canal, then Ledge Grab will be placed early.
 
-    This is more impactful than it might sound because of 'ledge storage' glitches.
-    See logic_level (whenever I implement that)."""
+    This is more impactful than it might sound because of 'ledge storage' glitches. See logic_difficulty."""
     display_name = "Shuffle Ledge Grab"
 
 
@@ -205,7 +203,7 @@ class NineSolsGameOptions(PerGameCommonOptions):
     jade_cost_min: JadeCostMin
     jade_cost_max: JadeCostMax
     jade_cost_plando: JadeCostPlando
-    # logic_difficulty: LogicDifficulty
+    logic_difficulty: LogicDifficulty
     first_root_node: FirstRootNode
     shuffle_grapple: ShuffleGrapple
     shuffle_wall_climb: ShuffleWallClimb

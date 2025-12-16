@@ -589,3 +589,16 @@ class AEItem(Enum):
     CameraRotateTrap = "Camera Rotate Trap"
     RainbowCookie = "Rainbow Cookie"
     FAKE_OOL_ITEM = "Fake OOL Item"
+
+DS_Options = ["kickoutprevention","deathlink","autoequip","bhdisplay"]
+DS_ButtonAndDoors = ["DIButton","CrCWaterButton","MM_Painting_Button","MM_MonkeyHead_Button","TVT_Lobby_Button","DR_Block"]
+
+Commands_Dict = {
+    "ae_commands" : "cmd_ae_commands",
+    "bh_itemdisplay" : "cmd_bh_itemdisplay",
+    "prevent_kickout":"cmd_prevent_kickout",
+    "deathlink" : "cmd_deathlink",
+    "auto_equip" : "cmd_auto_equip",
+    "syncprogress" : "cmd_syncprogress",
+    "spikecolor" : "cmd_spikecolor",
+}

@@ -161,11 +161,12 @@ class Settings:
             ItemRandoListSelected.moves: [36, 0],
             ItemRandoListSelected.shockwave: [2, 0],
             ItemRandoListSelected.bfi_gift: [0, 1],
-            ItemRandoListSelected.banana: [201, 0],
+            ItemRandoListSelected.banana: [161, 0],
             ItemRandoListSelected.banana_checks: [0, 134],
             ItemRandoListSelected.racebanana: [0, 11],
             ItemRandoListSelected.gauntletbanana: [0, 16],
-            ItemRandoListSelected.blueprintbanana: [0, 40],
+            ItemRandoListSelected.blueprintbanana: [40, 0],
+            ItemRandoListSelected.sniderewards: [0, 40],
             ItemRandoListSelected.arenas: [0, 10],
             ItemRandoListSelected.crown: [10, 0],
             ItemRandoListSelected.blueprint: [40, 0],
@@ -539,7 +540,7 @@ class Settings:
         self.helm_phase_count = 3
         self.helm_random = False
         # krool_key_count: int, [0-8]
-        self.krool_key_count = 8
+        self.krool_key_count = 0
         self.keys_random = False
         # starting_kongs_count: int, [1-5]
         self.starting_kong = Kongs.any
@@ -716,6 +717,7 @@ class Settings:
         self.kong_model_lanky = KongModels.default
         self.kong_model_tiny = KongModels.default
         self.kong_model_chunky = KongModels.default
+        self.kong_model_mode = KongModelMode.manual
         self.krusha_kong = None
         self.misc_cosmetics = False
         self.remove_water_oscillation = False
@@ -762,6 +764,7 @@ class Settings:
         self.enable_tag_anywhere = None
         self.krool_phase_order_rando = None
         self.krool_access = False
+        self.win_condition_spawns_ship = 0  # 0 = Key-based, 1 = Win condition-based
         self.helm_phase_order_rando = None
         self.open_lobbies = None
         self.randomize_pickups = False
@@ -934,7 +937,7 @@ class Settings:
         self.big_head_mode = BigHeadMode.off
         # self.win_condition = WinCondition.beat_krool  # Deprecated
         self.win_condition_random = False
-        self.win_condition_item = WinConditionComplex.beat_krool
+        self.win_condition_item = WinConditionComplex.get_keys_3_and_8
         self.win_condition_count = 1
         self.key_8_helm = False
         self.k_rool_vanilla_requirement = False
@@ -1517,7 +1520,8 @@ class Settings:
                 ItemRandoListSelected.banana_checks: (Types.Banana, Types.Banana, True),
                 ItemRandoListSelected.racebanana: (Types.Banana, Types.RaceBanana, True),
                 ItemRandoListSelected.gauntletbanana: (Types.Banana, Types.GauntletBanana, True),
-                ItemRandoListSelected.blueprintbanana: (Types.Banana, Types.BlueprintBanana, True),
+                ItemRandoListSelected.blueprintbanana: (Types.BlueprintBanana, Types.BlueprintBanana, False),
+                ItemRandoListSelected.sniderewards: (Types.BlueprintBanana, Types.BlueprintBanana, True),
                 ItemRandoListSelected.arenas: (Types.Crown, Types.Crown, True),
                 ItemRandoListSelected.crown: (Types.Crown, Types.Crown, False),
                 ItemRandoListSelected.blueprint: (Types.Blueprint, Types.Blueprint, False),
@@ -1740,6 +1744,9 @@ class Settings:
                 phases = self.random.sample(phases, self.krool_phase_count)
             else:
                 phases = phases[: self.krool_phase_count]
+        if phases[-1] == Maps.GalleonBoss:
+            # Pufftoss can't be last. Pick something else
+            phases[-1] = self.random.choice([x for x in possible_phases if x not in phases])
         # Plandomized K. Rool algorithm
         if self.enable_plandomizer:
             planned_phases = []
@@ -1866,6 +1873,7 @@ class Settings:
                 HelmDoorRandomInfo(1, 1, 0.03),
             ),
             WinConditionComplex.get_key8: HelmDoorInfo(1),
+            WinConditionComplex.get_keys_3_and_8: HelmDoorInfo(1),
             WinConditionComplex.req_gb: HelmDoorInfo(
                 self.total_gbs,
                 HelmDoorRandomInfo(int(0.4 * self.total_gbs), int(0.75 * self.total_gbs), 0.1),
@@ -2099,7 +2107,8 @@ class Settings:
         if self.keys_random:
             required_key_count = self.random.randint(0, 8)
         else:
-            required_key_count = self.krool_key_count
+            # I mean, I guess this works
+            required_key_count = 8 - self.krool_key_count
         key_8_required = self.krool_access or self.win_condition_item == WinConditionComplex.get_key8
         # Remove the need for keys we intend to start with
         if self.select_keys:
@@ -2283,6 +2292,14 @@ class Settings:
             self.kasplat_rando = True
             self.kasplat_location_rando = True
 
+        # Force win_condition_spawns_ship based on win condition
+        # Krool's Challenge always requires beating K. Rool
+        if self.win_condition_item == WinConditionComplex.krools_challenge:
+            self.win_condition_spawns_ship = 1
+        # Kill the Rabbit cannot require beating K. Rool (would softlock)
+        elif self.win_condition_item == WinConditionComplex.kill_the_rabbit:
+            self.win_condition_spawns_ship = 0
+
         # Some settings (mostly win conditions) require modification of items in order to better generate the spoiler log
         if self.win_condition_item == WinConditionComplex.req_fairy or self.crown_door_item == BarrierItems.Fairy or self.coin_door_item == BarrierItems.Fairy:
             ItemList[Items.BananaFairy].playthrough = True
@@ -2379,9 +2396,48 @@ class Settings:
             count_to_exclude = 40 - self.most_snide_rewards
             self.excluded_bp_locations = self.excluded_bp_locations[-count_to_exclude:]
 
+        # Kong Model Mode Randomization
+        if self.kong_model_mode == KongModelMode.none:
+            self.kong_model_dk = KongModels.default
+            self.kong_model_diddy = KongModels.default
+            self.kong_model_lanky = KongModels.default
+            self.kong_model_tiny = KongModels.default
+            self.kong_model_chunky = KongModels.default
+
+        if self.kong_model_mode == KongModelMode.random_one:
+            random_krusha = self.random.randint(0, 4)
+            kong_model_array = [KongModels.default, KongModels.default, KongModels.default, KongModels.default, KongModels.default]
+            kong_model_array[random_krusha] = KongModels.krusha
+
+            self.kong_model_dk = kong_model_array[0]
+            self.kong_model_diddy = kong_model_array[1]
+            self.kong_model_lanky = kong_model_array[2]
+            self.kong_model_tiny = kong_model_array[3]
+            self.kong_model_chunky = kong_model_array[4]
+
+        elif self.kong_model_mode == KongModelMode.sometimes_one:
+            random_krusha = self.random.randint(0, 4)
+            kong_model_array = [KongModels.default, KongModels.default, KongModels.default, KongModels.default, KongModels.default]
+            kong_model_array[random_krusha] = self.random.choice([KongModels.default, KongModels.krusha])
+
+            self.kong_model_dk = kong_model_array[0]
+            self.kong_model_diddy = kong_model_array[1]
+            self.kong_model_lanky = kong_model_array[2]
+            self.kong_model_tiny = kong_model_array[3]
+            self.kong_model_chunky = kong_model_array[4]
+
+        elif self.kong_model_mode == KongModelMode.random_all:
+            kong_model_list = [KongModels.default, KongModels.krusha]
+
+            self.kong_model_dk = self.random.choice(kong_model_list)
+            self.kong_model_diddy = self.random.choice(kong_model_list)
+            self.kong_model_lanky = self.random.choice(kong_model_list)
+            self.kong_model_tiny = self.random.choice(kong_model_list)
+            self.kong_model_chunky = self.random.choice(kong_model_list)
+
     def isBadIceTrapLocation(self, location: Locations):
         """Determine whether an ice trap is safe to house an ice trap outside of individual cases."""
-        bad_fake_types = [Types.TrainingBarrel, Types.PreGivenMove]
+        bad_fake_types = [Types.TrainingBarrel, Types.PreGivenMove, Types.Hint]
         is_bad = location.type in bad_fake_types
         if self.ice_traps_damage:
             if self.damage_amount in (DamageAmount.quad, DamageAmount.ohko) or self.perma_death or self.wipe_file_on_death:
@@ -2611,12 +2667,11 @@ class Settings:
             if Types.Snide in self.shuffled_location_types:
                 # Snide can't be placed in/after expected Helm Access. To help out fill, we'll ban Snide from any locations in Helm
                 self.valid_locations[Types.Snide] = [x for x in shuffledLocationsShopOwner.copy() if spoiler.LocationList[x].level != Levels.HideoutHelm]
-            if Types.RainbowCoin in self.shuffled_location_types:
-                self.valid_locations[Types.RainbowCoin] = [
-                    x for x in shuffledNonMoveLocations if spoiler.LocationList[x].type not in (Types.Shop, Types.TrainingBarrel, Types.Shockwave, Types.PreGivenMove, Types.Climbing)
-                ]
-            if Types.FillerRainbowCoin in self.shuffled_location_types:
-                self.valid_locations[Types.FillerRainbowCoin] = self.valid_locations[Types.RainbowCoin].copy()
+            for item in (Types.RainbowCoin, Types.FillerRainbowCoin):
+                if item in self.shuffled_location_types:
+                    self.valid_locations[item] = [
+                        x for x in shuffledNonMoveLocations if spoiler.LocationList[x].type not in (Types.Shop, Types.TrainingBarrel, Types.Shockwave, Types.PreGivenMove, Types.Climbing)
+                    ]
             if Types.FakeItem in self.shuffled_location_types:
                 bad_fake_locations = (
                     # Miscellaneous issues
@@ -2985,15 +3040,16 @@ class Settings:
         if Types.Snide in self.shuffled_location_types:
             self.item_check_counts[ItemRandoListSelected.shopowners][0] += 1
         self.item_check_counts[ItemRandoListSelected.medal][0] = self.total_medals
-        self.item_check_counts[ItemRandoListSelected.banana][0] = self.total_gbs
+        self.item_check_counts[ItemRandoListSelected.banana][0] = self.total_gbs - 40  # Blueprint GBs are their own category for item pool calculations
         self.item_check_counts[ItemRandoListSelected.fairy][0] = self.total_fairies
         self.item_check_counts[ItemRandoListSelected.rainbowcoin][0] = self.total_rainbow_coins
         self.item_check_counts[ItemRandoListSelected.crown][0] = self.total_crowns
         self.item_check_counts[ItemRandoListSelected.pearl][0] = self.total_pearls
+        self.item_check_counts[ItemRandoListSelected.blueprintbanana][0] = self.most_snide_rewards
+        self.item_check_counts[ItemRandoListSelected.sniderewards][1] = self.most_snide_rewards
         misc_banana_mapping = {
             Types.RaceBanana: ItemRandoListSelected.racebanana,
             Types.GauntletBanana: ItemRandoListSelected.gauntletbanana,
-            Types.BlueprintBanana: ItemRandoListSelected.blueprintbanana,
         }
         for item_type, list_type in misc_banana_mapping.items():
             if item_type not in self.shuffled_location_types:
@@ -3100,12 +3156,13 @@ class Settings:
                         pool_buckets[bk["pools"][0]] += bk["size"]
                     else:
                         temp_bk.append(bk)
-                bk_copy = temp_bk.copy()
+                bk_copy_largest_to_smallest = temp_bk.copy()
+                bk_copy_largest_to_smallest.sort(key=lambda x: x["size"], reverse=True)
                 # Rule 4:
                 # For all remaining buckets, check the pools which need the checks the most
                 bucket_deficit = [x - pool_buckets[xi] for xi, x in enumerate(pool_liquids)]
                 temp_bk = []
-                for bk in bk_copy:
+                for bk in bk_copy_largest_to_smallest:
                     remove = False
                     bucket_needed = None
                     bucket_deficit_needed = None
@@ -3118,6 +3175,7 @@ class Settings:
                         bucket_capacity_supplied = min(bucket_deficit_needed, bk["size"])
                         bk["size"] -= bucket_capacity_supplied
                         pool_buckets[bucket_needed] += bucket_capacity_supplied
+                        bucket_deficit[bucket_needed] -= bucket_capacity_supplied
                         bk["pools"] = [x for x in bk["pools"] if x != bucket_needed]
                         if bk["size"] < 1:
                             remove = True

@@ -109,6 +109,10 @@ def set_doors(self, logic):
                         lambda state: True)
     connect_regions(self, AEDoor.TIME_MINIGAME_MAIN.value, AEDoor.TIME_MAIN_MINIGAME.value,
                         lambda state: True)
+
+    connect_regions(self, AEDoor.TIME_TRAINING_MAIN.value, AEDoor.TIME_TRAINING_WATERNET.value,
+                    lambda state: True)
+
     # Fossil Field (level contains no doors)
     # Primordial Ooze (level contains no doors)
     # Molten Lava
@@ -2542,7 +2546,13 @@ def set_locations(self, logic):
     if self.options.goal != "mm":
         connect_regions(self, AEDoor.PPM_ENTRY.value, AELocation.Specter2.value, 
                         lambda state: HasSling(state, self) and (HasClub(state, self) or HasHoop(state, self) or HasPunch(state, self)) and HasNet(state, self))
-
+    if self.options.fasttokengoal == self.options.fasttokengoal.option_on:
+        if self.options.goal == "mmtoken":
+            connect_regions(self, AEDoor.TIME_TRAINING_WATERNET.value, AEDoor.MM_SPECTER1_ROOM.value,
+                            lambda state: Tokens(state, self,min(self.options.requiredtokens, self.options.totaltokens)))
+        if self.options.goal == "ppmtoken":
+            connect_regions(self, AEDoor.TIME_TRAINING_WATERNET.value, AEDoor.PPM_ENTRY.value,
+                            lambda state: Tokens(state, self, min(self.options.requiredtokens, self.options.totaltokens)))
 # Item Checking Helper Functions
 def Keys(state, world, count):
     return state.has(AEItem.Key.value, world.player, count)

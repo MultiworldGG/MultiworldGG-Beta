@@ -49,7 +49,6 @@ class ApeEscapeWorld(World):
     by an army of monkeys led by Specter, the main antagonist.
     """
     game = "Ape Escape"
-    author: str = "Thedragon005"
     web: ClassVar[WebWorld] = ApeEscapeWeb()
     topology_present = True
 
@@ -131,6 +130,8 @@ class ApeEscapeWorld(World):
                 self.using_ut = True
                 self.passthrough = self.multiworld.re_gen_passthrough["Ape Escape"]
                 self.options.goal.value = self.passthrough["goal"]
+                self.options.fasttokengoal.value = self.passthrough["fasttokengoal"]
+                self.options.allowcollect.value = self.passthrough["allowcollect"]
                 self.options.requiredtokens.value = self.passthrough["requiredtokens"]
                 self.options.totaltokens.value = self.passthrough["totaltokens"]
                 self.options.tokenlocations.value = self.passthrough["tokenlocations"]
@@ -434,9 +435,11 @@ class ApeEscapeWorld(World):
             bytestowrite += self.entranceorder[x].bytes
             bytestowrite.append(0)  # We need a separator byte after each level name.
         #self.firstrooms = orderedfirstroomids
-        #print(f"INIT_FirstRooms{self.firstrooms}")
+
         return {
             "goal": self.options.goal.value,
+            "fasttokengoal": self.options.fasttokengoal.value,
+            "allowcollect": self.options.allowcollect.value,
             "requiredtokens": self.options.requiredtokens.value,
             "totaltokens": self.options.totaltokens.value,
             "tokenlocations": self.options.tokenlocations.value,
@@ -444,7 +447,6 @@ class ApeEscapeWorld(World):
             "infinitejump": self.options.infinitejump.value,
             "superflyer": self.options.superflyer.value,
             "entrance": self.options.entrance.value,
-            #"randomizestartingroom": self.options.randomizestartingroom.option_off,
             "randomizestartingroom": self.options.randomizestartingroom.value,
             "unlocksperkey": self.options.unlocksperkey.value,
             "extrakeys": self.options.extrakeys.value,
@@ -456,10 +458,10 @@ class ApeEscapeWorld(World):
             "shufflewaternet": self.options.shufflewaternet.value,
             "lowoxygensounds": self.options.lowoxygensounds.value,
             "fillerpreset": self.options.fillerpreset.value,
-            "customfillerweights":self.options.customfillerweights.value,
+            "customfillerweights": self.options.customfillerweights.value,
             "trappercentage": self.options.trappercentage.value,
             "trapweights": self.options.trapweights.value,
-            "trapsonreconnect": self.options.trapsonreconnect.value,
+            "trapsonreconnect": list(self.options.trapsonreconnect.value),
             "trap_link": self.options.trap_link.value,
             "itemdisplay": self.options.itemdisplay.value,
             "kickoutprevention": self.options.kickoutprevention.value,
@@ -490,12 +492,21 @@ class ApeEscapeWorld(World):
                 spoiler_handle.write(f"\n  {self.levellist[x].name} ==> {self.entranceorder[x].name}")
             spoiler_handle.write(f"\n")
 
-
-    def generate_output(self, output_directory: str):
-        data = {
-            "slot_data": self.fill_slot_data()
-        }
-        # Remove .apae output because it does nothing, we do everything in RAM
-        # filename = f"{self.multiworld.get_out_file_name_base(self.player)}.apae"
-        # with open(os.path.join(output_directory, filename), 'w') as f:
-        #     json.dump(data, f)
+    #def generate_output(self, output_directory: str):
+        #data = {
+        #    "slot_data": self.fill_slot_data(),
+        #    "location_to_item": {self.location_name_to_id[i.name] : item_table[i.item.name] for i in self.multiworld.get_locations() if not i.is_event},
+        #    "data_package": {
+        #        "data": {
+        #            "games": {
+        #                self.game: {
+        #                    "item_name_to_id": self.item_name_to_id,
+        #                    "location_name_to_id": self.location_name_to_id
+        #                }
+        #            }
+        #        }
+        #    }
+        #}
+        #filename = f"{self.multiworld.get_out_file_name_base(self.player)}.apae"
+        #with open(os.path.join(output_directory, filename), 'w') as f:
+        #    json.dump(data, f)

@@ -27,10 +27,6 @@ Connecting to the Connector from Super Mario Odyssey.
 - When prompted, the `IP Address` you are connecting to is your computer's local ipv4 this is found by entering the `ipconfig` command into command prompt on Windows.
 - When prompted, the `Port` is `1027` by default which does not need to be changed.
 
-Using Options that Generate a Patch
-- If a world is generated using options that require additional romFS patches (`shop_sanity`, `colors`, `counts`) then an `<seed><slot><slot_name>.apsmo` file will be generated.
-- To generate the patch files open the patch file with the `Open Patch` option in the Archipelago Launcher.
-
 <details>
 <summary>Switch</summary> 
   

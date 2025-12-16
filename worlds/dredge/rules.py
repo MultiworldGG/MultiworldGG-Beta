@@ -81,6 +81,9 @@ def set_fish_rule(world_location: Location, location: DredgeLocationData, player
     )
 
 def can_catch(location: DredgeLocationData, is_iron_rig: bool, state: CollectionState, player: int, options: DredgeOptions) -> bool:
+    if location.is_behind_debris and not state.has("Packed Explosives", player):
+        return False
+
     if location.requirement == "Crab":
         return state.has_any(get_harvest_tool_by_requirement(location.requirement, "Crab Pot"), player)
     else:
@@ -95,6 +98,9 @@ def can_catch_fish(is_iron_rig: bool, location: DredgeLocationData, player: int,
     has_rod = False
     has_net = False
     if location.can_catch_rod:
+        if location.is_exotic and not state.has("Exotic Bait", player):
+                return False
+
         has_rod = state.has_any(get_harvest_tool_by_requirement(location.requirement, "Rod"), player) or (
                 is_iron_rig and state.has_any(get_harvest_tool_by_requirement(location.requirement, "Rod", is_iron_rig),
                                               player))

@@ -62,7 +62,7 @@ from randomizer.Patching.EntranceRando import (
     placeLevelOrder,
 )
 from randomizer.Patching.FairyPlacer import PlaceFairies
-from randomizer.Patching.ItemRando import place_randomized_items, alterTextboxRequirements, calculateInitFileScreen
+from randomizer.Patching.ItemRando import place_randomized_items, alterTextboxRequirements, calculateInitFileScreen, place_spoiler_hint_data
 from randomizer.Patching.KasplatLocationRando import randomize_kasplat_locations
 from randomizer.Patching.KongRando import apply_kongrando_cosmetic
 from randomizer.Patching.Library.Generic import setItemReferenceName, addNewScript, IsItemSelected, getProgHintBarrierItem, getHintRequirementBatch, IsDDMSSelected
@@ -462,6 +462,9 @@ def patching_response(spoiler):
         WinConditionComplex.get_key8: {
             "index": 1,
         },
+        WinConditionComplex.get_keys_3_and_8: {
+            "index": 7,
+        },
         WinConditionComplex.krem_kapture: {
             "index": 2,
         },
@@ -608,8 +611,8 @@ def patching_response(spoiler):
 
     # Set K. Rool ship spawn method
     ROM_COPY.seek(sav + 0x1B6)
-    krool_ship_spawn_method = 1 if spoiler.settings.win_condition_item == WinConditionComplex.krools_challenge else 0
-    ROM_COPY.writeMultipleBytes(krool_ship_spawn_method, 1)
+    # Write the user's setting directly - beat_krool/krools_challenge will use key-based spawning unless this is explicitly enabled
+    ROM_COPY.writeMultipleBytes(spoiler.settings.win_condition_spawns_ship, 1)
 
     # Mill Levers
     if spoiler.settings.mill_levers[0] > 0:
@@ -693,6 +696,7 @@ def patching_response(spoiler):
     spoiler.arcade_item_reward = Items.NintendoCoin
     spoiler.jetpac_item_reward = Items.RarewareCoin
     place_randomized_items(spoiler, ROM_COPY)  # Has to be after kong rando cosmetic and moves
+    place_spoiler_hint_data(sav, spoiler, ROM_COPY)
     # Arcade detection for colorblind mode
     arcade_item_index = 0
     potion_pools = [

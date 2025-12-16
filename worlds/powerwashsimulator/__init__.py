@@ -38,6 +38,8 @@ class PowerwashSimulator(World):
 	item_name_groups = {
 		"unlocks": unlock_items
 	}
+
+	topology_present = True
 	ut_can_gen_without_yaml = True
 	gen_puml = False
 
