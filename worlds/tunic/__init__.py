@@ -46,7 +46,7 @@ class TunicWeb(WebWorld):
     tutorials = [
         Tutorial(
             tutorial_name="Multiworld Setup Guide",
-            description="A guide to setting up the TUNIC Randomizer for Archipelago multiworld games.",
+            description="A guide to setting up the TUNIC Randomizer for MultiworldGG multiworld games.",
             language="English",
             file_name="setup_en.md",
             link="setup/en",

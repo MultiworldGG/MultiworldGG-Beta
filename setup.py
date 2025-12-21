@@ -678,8 +678,7 @@ cx_Freeze.setup(
         "build_exe": {
             "packages": ["worlds", "kivy", "cymem", "websockets", "kivymd", "werkzeug"],
             "includes": [],
-            "excludes": ["numpy", "Cython", "PySide2", "PIL",
-                         "pandas"],
+            "excludes": ["Cython", "PySide2"],
             "zip_includes": [],
             "zip_include_packages": ["*"],
             "zip_exclude_packages": ["worlds", "sc2", "kivymd", "clr_loader", "pythonnet"], # clr_loader and pythonnet use absolute paths

@@ -2,10 +2,18 @@ from typing import Dict
 from collections import Counter
 import struct
 import math
+from typing import TYPE_CHECKING
+from logging import warning
+if TYPE_CHECKING:
+    from .. import EarthBoundWorld
+    from ..Rom import LocalRom
+
 
 
 class EarthBoundEnemy:
-    def __init__(self, name, address, hp, pp, exp, money, speed, offense, defense, level, guts, luck, is_scaled, shield=None, attack_extensions=0):
+    def __init__(self, name: str, address: int, hp: int, pp: int, exp: int, money: int, speed: int, offense: int,
+                 defense: int, level: int, guts: int, luck: int, is_scaled: bool, shield: str | None = None,
+                 attack_extensions: int = 0):
         self.name = name
         self.address = address
         self.hp = hp
@@ -23,7 +31,7 @@ class EarthBoundEnemy:
         self.attack_extensions = attack_extensions
 
 
-def initialize_enemies(world) -> None:
+def initialize_enemies(world: "EarthBoundWorld") -> None:
     world.enemy_psi = {
         "Dept. Store Spook": ["freeze", "fire", "lifeup", "null"],
         "Dept. Store Spook (2)": ["null", "null", "freeze", "null"],
@@ -123,10 +131,10 @@ def initialize_enemies(world) -> None:
         "Criminal Caterpillar": ["fire", "fire", "fire", "fire"],
         "Evil Eye": ["null", "diamond_eyes", "paralysis", "null"],
         "Master Criminal Worm": ["fire", "fire", "fire", "fire"],
-        "Giygas (4)": ["giygas_phase2_thunder", "giygas_phase2_freeze", "giygas_phase2_flash", "null"],
+        "Giygas": ["giygas_phase2_thunder", "giygas_phase2_freeze", "giygas_phase2_flash", "null"],
         "Giygas (5)": ["giygas_phase3_thunder", "giygas_phase3_freeze", "giygas_phase3_flash", "null"],
         "Giygas (6)": ["giygas_phase4_thunder", "giygas_phase4_freeze", "giygas_phase4_flash", "null"],
-        "Starman Junior": ["fire", "freeze", "null", "fire"],
+        "Starman Junior": ["fire", "null", "freeze", "fire"],
         "Ultimate Octobot": ["null", "stuffiness_beam", "null", "stuffiness_beam"],
         "Mechanical Octobot": ["null", "null", "null", "stuffiness_beam"]
     }
@@ -236,7 +244,7 @@ def initialize_enemies(world) -> None:
         "Trick or Trick Kid": 0x01BC,
         "Cave Boy": 0x0149,
         "Abstract Art": 0x012C,
-        "Shattered Man": 0x0133,
+        "Shattered Man": 0x0142,
         "Fierce Shattered Man": 0x0133,
         "Ego Orb": 0x0147,
         "Yes Man Junior": 0x011C,
@@ -475,7 +483,7 @@ def initialize_enemies(world) -> None:
         # "Heavily Armed Pokey": EarthBoundEnemy("Heavily Armed Pokey", 0x15e537, 1746, 999, 0, 0, 51, 150, 274, 72, False), Cutscene?
         "Giygas (2)": EarthBoundEnemy("Giygas (2)", 0x15e595, 9999, 999, 70000, 0, 80, 255, 255, 80, 5, 255, False),
         "Giygas (3)": EarthBoundEnemy("Giygas (3)", 0x15e5f3, 9999, 0, 0, 0, 80, 255, 255, 80, 5, 255, False),
-        "Giygas (4)": EarthBoundEnemy("Giygas (4)", 0x15e651, 2000, 0, 0, 0, 80, 255, 255, 80, 5, 255, False),
+        "Giygas": EarthBoundEnemy("Giygas", 0x15e651, 2000, 0, 0, 0, 80, 255, 255, 80, 5, 255, False),
         "Giygas (5)": EarthBoundEnemy("Giygas (5)", 0x15e6af, 9999, 0, 0, 0, 80, 255, 255, 80, 5, 255, False),
         "Farm Zombie": EarthBoundEnemy("Farm Zombie", 0x15e70d, 171, 0, 700, 58, 10, 31, 24, 19, 15, 24, False),
         "Criminal Caterpillar": EarthBoundEnemy("Criminal Caterpillar", 0x15e76b, 250, 168, 30384, 0, 134, 37, 16, 23, 0, 0, False),
@@ -500,7 +508,8 @@ def initialize_enemies(world) -> None:
         "Carbon Dog": world.enemies[world.boss_list[27]],  # This should be the enemy that gets shuffled WITH carbon dog, right? Fix???
         "Skate Punk": [shuffled_enemies["Pogo Punk"], shuffled_enemies["Yes Man Junior"]],
         "Loaded Dice": [shuffled_enemies["Care Free Bomb"], shuffled_enemies["Beautiful UFO"], shuffled_enemies["High-class UFO"]],
-        "Loaded Dice 2": [shuffled_enemies["Electro Swoosh"], shuffled_enemies["Fobby"], shuffled_enemies["Uncontrollable Sphere"]]
+        "Loaded Dice 2": [shuffled_enemies["Electro Swoosh"], shuffled_enemies["Fobby"], shuffled_enemies["Uncontrollable Sphere"]],
+        "Starman Super": [shuffled_enemies["Starman"]]
     }
 
     world.regional_enemies = {"Northern Onett": {shuffled_enemies["Spiteful Crow"], shuffled_enemies["Runaway Dog"], shuffled_enemies["Coil Snake"]},
@@ -559,6 +568,13 @@ def initialize_enemies(world) -> None:
                               "Endgame": {world.enemies[world.boss_list[25]], world.enemies["Giygas (2)"], world.enemies[world.boss_list[28]], world.enemies["Giygas (3)"], world.enemies["Giygas (5)"], world.enemies["Giygas (6)"]},
                         
                               }
+
+    if world.options.randomize_enemy_attacks:
+        del flunkies["Loaded Dice 2"]
+        del flunkies["Skate Punk"]
+        del flunkies["Loaded Dice"]
+        del flunkies["Starman Super"]
+
     for region in world.regional_enemies:
         enemy_list = world.regional_enemies[region]
         updated_list = set(enemy_list)
@@ -571,7 +587,7 @@ def initialize_enemies(world) -> None:
 
             if enemy.name in flunkies:
                 # Can I just always update instead of doing an add? Would probably need to make singulars a list of one item...
-                if enemy.name in ["Starman Deluxe", "Skate Punk", "Loaded Dice", "Loaded Dice 2"]:
+                if enemy.name in ["Starman Deluxe", "Skate Punk", "Loaded Dice", "Loaded Dice 2", "Starman Super"]:
                     updated_list.update(flunkies[enemy.name])
                 else:
                     updated_list.add(flunkies[enemy.name])
@@ -678,7 +694,7 @@ levels = [
     74,
     75]  # gigyas
 
-spell_breaks: Dict[str, Dict[int, str]] = {
+spell_breaks: dict[str, dict[int, str]] = {
     "freeze": {8: "zeta", 12: "epsilon", 20: "delta", 25: "lambda", 40: "alpha", 65: "beta", 70: "gamma", 100: "omega"},
     "fire": {5: "zeta", 10: "epsilon", 20: "alpha", 50: "beta", 70: "gamma", 100: "omega"},  # zeta needs to do less damage
     "lifeup": {20: "alpha", 100: "beta"},
@@ -764,10 +780,11 @@ spell_breaks: Dict[str, Dict[int, str]] = {
 }
 
 
-def get_psi_levels(level: int, breaks: Dict[int, str]) -> str:
-    for top_val, psi_level in breaks.items():
-        if level <= top_val:
-            return psi_level
+def get_psi_levels(level: int, breaks: dict[str, dict[int, str]]):
+  for top_level, psi_val in breaks.items():
+    if level <= top_level:
+      return psi_val
+  return breaks[max(breaks)]
 
 
 spell_elements = {
@@ -1154,18 +1171,18 @@ shield_table = {
 }
 
 
-def assumed_player_speed_for_level(level) -> int:
+def assumed_player_speed_for_level(level: int) -> int:
     return 2 + 58 * (level - 1) / 80
 
 
-def scale_enemy_speed(enemy, new_level) -> int:
+def scale_enemy_speed(enemy: EarthBoundEnemy, new_level: int) -> int:
     normal_dodge_chance = (2 * enemy.speed - assumed_player_speed_for_level(enemy.level)) / 500
 
     enemy_scaled_speed = (normal_dodge_chance * 500 + assumed_player_speed_for_level(new_level)) / 2
     return enemy_scaled_speed
 
 
-def scale_exp_2(base_exp, base_level, new_level, world) -> int:
+def scale_exp_2(base_exp: int, base_level: int, new_level: int, world: "EarthBoundWorld") -> int:
     base_scaled_exp = calculate_exp(base_level)
     scaled_exp = calculate_exp(new_level)
     new_exp = base_exp * scaled_exp / base_scaled_exp
@@ -1174,7 +1191,7 @@ def scale_exp_2(base_exp, base_level, new_level, world) -> int:
     return new_exp
 
 
-def calculate_exp(level):
+def calculate_exp(level: int) -> float:
     if level > 30:
         return 1000 * math.exp(0.05 * level)
     else:
@@ -1182,7 +1199,7 @@ def calculate_exp(level):
         # return 10 * math.exp(0.2 * level) if not boosted
 
 
-def scale_shield(level, shield) -> str:
+def scale_shield(level: int, shield: str | None) -> str:
     if shield is not None:
         if level < 10:
             enemy_shield = "disabled"
@@ -1196,6 +1213,9 @@ def scale_shield(level, shield) -> str:
                 enemy_shield = "psi_1"
             else:
                 enemy_shield = "psi_2"
+        else:
+            warning(f"Could not scale shield, found initial value of {shield}, this is probably a typo")
+            enemy_shield = "disabled"
         return enemy_shield
 
 
@@ -1222,7 +1242,7 @@ guardian_intro = {
 }
 
 
-def scale_enemies(world, rom) -> None:
+def scale_enemies(world: "EarthBoundWorld", rom: "LocalRom") -> None:
     additional_party_members = 0
     if world.options.auto_scale_party_members:
         if world.starting_character != "Ness":
@@ -1268,22 +1288,16 @@ def scale_enemies(world, rom) -> None:
                 enemy_defense = int(enemy.defense * level / enemy.level)
                 enemy_level = int(enemy.level * level / enemy.level)
                 enemy_shield = scale_shield(level, enemy.shield)
-                enemy_hp = struct.pack('<H', enemy_hp)
-                enemy_pp = struct.pack('<H', enemy_pp)
-                enemy_exp = struct.pack('<I', enemy_exp)
-                enemy_money = struct.pack('<H', enemy_money)
-                enemy_offense = struct.pack('<H', enemy_offense)
-                enemy_defense = struct.pack('<H', enemy_defense)
-                rom.write_bytes(enemy.address + 33, bytearray(enemy_hp))
-                rom.write_bytes(enemy.address + 35, bytearray(enemy_pp))
-                rom.write_bytes(enemy.address + 37, bytearray(enemy_exp))
-                rom.write_bytes(enemy.address + 41, bytearray(enemy_money))
-                rom.write_bytes(enemy.address + 60, bytearray([enemy_speed]))
-                rom.write_bytes(enemy.address + 56, bytearray(enemy_offense))
-                rom.write_bytes(enemy.address + 58, bytearray(enemy_defense))
-                rom.write_bytes(enemy.address + 54, bytearray([enemy_level]))
+                rom.write_bytes(enemy.address + 33, enemy_hp.to_bytes(2, "little"))
+                rom.write_bytes(enemy.address + 35, enemy_pp.to_bytes(2, "little"))
+                rom.write_bytes(enemy.address + 37, enemy_exp.to_bytes(4, "little"))
+                rom.write_bytes(enemy.address + 41, enemy_money.to_bytes(2, "little"))
+                rom.write_bytes(enemy.address + 60, enemy_speed.to_bytes(1, "little"))
+                rom.write_bytes(enemy.address + 56, enemy_offense.to_bytes(2, "little"))
+                rom.write_bytes(enemy.address + 58, enemy_defense.to_bytes(2, "little"))
+                rom.write_bytes(enemy.address + 54, enemy_level.to_bytes(1, "little"))
                 if enemy.shield is not None:
-                    rom.write_bytes(enemy.address + 89, bytearray([shield_table[enemy_shield]]))
+                    rom.write_bytes(enemy.address + 89, shield_table[enemy_shield].to_bytes(1, "little"))
                 
                 if enemy.name in world.enemy_psi:
                     for index, spell in [(i, s) for i, s in enumerate(world.enemy_psi[enemy.name]) if s != "null"]:

@@ -1,5 +1,9 @@
 import struct
 from ..game_data.text_data import text_encoder
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .. import EarthBoundWorld
+    from ..Rom import LocalRom
 
 enemy_ids = {
     "Insane Cultist": 0x01,
@@ -483,7 +487,7 @@ can_walkthrough = [
 ]
 
 
-def shuffle_enemies(world) -> None:
+def shuffle_enemies(world: "EarthBoundWorld") -> None:
     """Shuffles the global enemy table."""
     world.acting_enemy_list = {}
     shuffled_enemies = base_enemy_table.copy()
@@ -493,7 +497,7 @@ def shuffle_enemies(world) -> None:
         world.acting_enemy_list[base_enemy_table[index]] = enemy
 
 
-def apply_enemy_shuffle(world, rom) -> None:
+def apply_enemy_shuffle(world: "EarthBoundWorld", rom: "LocalRom") -> None:
     """Writes the shuffled enemy table into ROM."""
     rom.write_bytes(0x10d54d, bytearray([enemy_ids[world.acting_enemy_list["Spiteful Crow"]]]))
     rom.write_bytes(0x10d551, bytearray([enemy_ids[world.acting_enemy_list["Runaway Dog"]]]))
@@ -1169,20 +1173,22 @@ def apply_enemy_shuffle(world, rom) -> None:
     rom.write_bytes(0x10df5e, bytearray([enemy_ids[world.acting_enemy_list["Even Slimier Little Pile"]]]))
 
     # Calls for help
-    rom.write_bytes(0x15A601, bytearray([enemy_ids[world.acting_enemy_list["Care Free Bomb"]]]))  # Loaded Dice
-    rom.write_bytes(0x15A602, bytearray([enemy_ids[world.acting_enemy_list["Beautiful UFO"]]]))
-    rom.write_bytes(0x15A603, bytearray([enemy_ids[world.acting_enemy_list["High-class UFO"]]]))
-    rom.write_bytes(0x15A604, bytearray([enemy_ids[world.acting_enemy_list["Care Free Bomb"]]]))
 
-    rom.write_bytes(0x15DD73, bytearray([enemy_ids[world.acting_enemy_list["Electro Swoosh"]]]))  # Loaded Dice 2
-    rom.write_bytes(0x15DD74, bytearray([enemy_ids[world.acting_enemy_list["Fobby"]]]))
-    rom.write_bytes(0x15DD75, bytearray([enemy_ids[world.acting_enemy_list["Uncontrollable Sphere"]]]))
-    rom.write_bytes(0x15DD76, bytearray([enemy_ids[world.acting_enemy_list["Electro Swoosh"]]]))
+    if not world.options.randomize_enemy_attacks:
+        rom.write_bytes(0x15A601, bytearray([enemy_ids[world.acting_enemy_list["Care Free Bomb"]]]))  # Loaded Dice
+        rom.write_bytes(0x15A602, bytearray([enemy_ids[world.acting_enemy_list["Beautiful UFO"]]]))
+        rom.write_bytes(0x15A603, bytearray([enemy_ids[world.acting_enemy_list["High-class UFO"]]]))
+        rom.write_bytes(0x15A604, bytearray([enemy_ids[world.acting_enemy_list["Care Free Bomb"]]]))
 
-    rom.write_bytes(0x15AD5B, bytearray([enemy_ids[world.acting_enemy_list["Yes Man Junior"]]]))  # Skate Punk
-    rom.write_bytes(0x15AD5C, bytearray([enemy_ids[world.acting_enemy_list["Pogo Punk"]]]))
+        rom.write_bytes(0x15DD73, bytearray([enemy_ids[world.acting_enemy_list["Electro Swoosh"]]]))  # Loaded Dice 2
+        rom.write_bytes(0x15DD74, bytearray([enemy_ids[world.acting_enemy_list["Fobby"]]]))
+        rom.write_bytes(0x15DD75, bytearray([enemy_ids[world.acting_enemy_list["Uncontrollable Sphere"]]]))
+        rom.write_bytes(0x15DD76, bytearray([enemy_ids[world.acting_enemy_list["Electro Swoosh"]]]))
 
-    rom.write_bytes(0x15AED2, bytearray([enemy_ids[world.acting_enemy_list["Starman"]]]))  # S Super
+        rom.write_bytes(0x15AD5B, bytearray([enemy_ids[world.acting_enemy_list["Yes Man Junior"]]]))  # Skate Punk
+        rom.write_bytes(0x15AD5C, bytearray([enemy_ids[world.acting_enemy_list["Pogo Punk"]]]))
+
+        rom.write_bytes(0x15AED2, bytearray([enemy_ids[world.acting_enemy_list["Starman"]]]))  # S Super
 
     rom.write_bytes(0x15B108, bytearray([enemy_ids[world.acting_enemy_list["Starman Super"]]]))  # SDX
     rom.write_bytes(0x15DA86, bytearray([enemy_ids[world.acting_enemy_list["Starman Super"]]]))

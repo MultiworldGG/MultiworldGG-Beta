@@ -122,6 +122,7 @@ Currently, the following games are supported:
 * Old School RuneScape
 * Open Rollercoaster Tycoon 2
 * Ori and the Blind Forest
+* Ori and the Will of the Wisps
 * Osu!
 * Outer Wilds
 * Overcooked 2

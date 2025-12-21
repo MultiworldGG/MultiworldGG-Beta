@@ -27,88 +27,6 @@ except ImportError:
     pass
 if baseclasses_loaded:
 
-    def display_error_box(title: str, text: str) -> bool | None:
-        """Display an error message box."""
-        from tkinter import Tk, messagebox
-
-        root = Tk()
-        root.withdraw()
-        ret = messagebox.showerror(title, text)
-        root.update()
-
-    def copy_dependencies(zip_path, file):
-        """Copy a ZIP file from the package to a temporary directory, extracts its contents.
-
-        Ensures the temporary directory exists.
-        Args:
-            zip_path (str): The relative path to the ZIP file within the package.
-        Behavior:
-            - Creates a temporary directory if it does not exist.
-            - Reads the ZIP file from the package using `pkgutil.get_data`.
-            - Writes the ZIP file to the temporary directory if it does not already exist.
-            - Extracts the contents of the ZIP file into the temporary directory.
-        Prints:
-            - A message if the ZIP file could not be read.
-            - A message when the ZIP file is successfully copied.
-            - A message when the ZIP file is successfully extracted.
-        """
-        # Create a temporary directory
-        temp_dir = tempfile.mkdtemp()
-
-        zip_dest = os.path.join(temp_dir, file)
-        try:
-            # Load the ZIP file from the package
-            zip_data = pkgutil.get_data(__name__, zip_path)
-            # Check if the zip already exists in the destination
-            if not os.path.exists(zip_dest):
-                if zip_data is None:
-                    print(f"Failed to read {zip_path}")
-                else:
-                    # Write the ZIP file to the destination
-                    with open(zip_dest, "wb") as f:
-                        f.write(zip_data)
-
-                    # Extract the ZIP file
-                    with zipfile.ZipFile(zip_dest, "r") as zip_ref:
-                        zip_ref.extractall(temp_dir)
-
-        except PermissionError:
-            display_error_box("Permission Error", "Unable to install Dependencies to AP, please try to install AP as an admin.")
-            raise PermissionError("Permission Error: Unable to install Dependencies to AP, please try to install AP as an admin.")
-
-        # Add the temporary directory to sys.path
-        if temp_dir not in sys.path:
-            sys.path.insert(0, temp_dir)
-
-    platform_type = sys.platform
-    baseclasses_path = os.path.dirname(os.path.dirname(BaseClasses.__file__))
-    if not baseclasses_path.endswith("lib"):
-        baseclasses_path = os.path.join(baseclasses_path, "lib")
-    # Remove ANY PIL folders from the baseclasses_path
-    # Or Pyxdelta or pillow folders
-    try:
-        for folder in os.listdir(baseclasses_path):
-            if folder.startswith("PIL") or folder.startswith("pyxdelta") or folder.startswith("pillow"):
-                folder_path = os.path.join(baseclasses_path, folder)
-                if os.path.isdir(folder_path):
-                    shutil.rmtree(folder_path)
-                elif os.path.isfile(folder_path):
-                    os.remove(folder_path)
-            # Also if its windows.zip or linux.zip, remove it
-            if folder.startswith("windows.zip") or folder.startswith("linux.zip"):
-                os.remove(os.path.join(baseclasses_path, folder))
-    except Exception as e:
-        pass
-
-    if platform_type == "win32":
-        zip_path = "vendor/windows.zip"  # Path inside the package
-        copy_dependencies(zip_path, "windows.zip")
-    elif platform_type == "linux":
-        zip_path = "vendor/linux.zip"
-        copy_dependencies(zip_path, "linux.zip")
-    else:
-        raise Exception(f"Unsupported platform: {platform_type}")
-
     sys.path.append("worlds/dk64/")
     sys.path.append("worlds/dk64/archipelago/")
     from BaseClasses import Item, MultiWorld, Tutorial, ItemClassification, CollectionState
@@ -266,7 +184,7 @@ if baseclasses_loaded:
 
         theme = "jungle"
 
-        setup_en = Tutorial("Multiworld Setup Guide", "A guide to setting up the Donkey Kong 64 randomizer connected to an Archipelago Multiworld.", "English", "setup_en.md", "setup/en", ["PoryGone"])
+        setup_en = Tutorial("Multiworld Setup Guide", "A guide to setting up the Donkey Kong 64 randomizer connected to a MultiworldGG Multiworld.", "English", "setup_en.md", "setup/en", ["PoryGone"])
 
         tutorials = [setup_en]
         option_groups = dk64_option_groups

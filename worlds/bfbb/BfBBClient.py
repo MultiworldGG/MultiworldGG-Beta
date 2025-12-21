@@ -1,6 +1,8 @@
 import asyncio
 import os.path
 import shutil
+import subprocess
+import sys
 import time
 import traceback
 import zipfile
@@ -10,13 +12,30 @@ from typing import Callable, Optional, Any, Dict, Tuple
 import dolphin_memory_engine
 
 import Utils
-from CommonClient import CommonContext, server_loop, gui_enabled, ClientCommandProcessor, logger, \
-    get_base_parser
+import settings
+
+tracker_loaded = False
+try:
+    if settings.get_settings().get('bfbb_options', {}).get('use_tracker', True):
+        from worlds.tracker.TrackerClient import TrackerGameContext as SuperContext
+        from worlds.tracker.TrackerClient import TrackerCommandProcessor as SuperClientCommandProcessor
+        tracker_loaded = True
+    else:
+        from CommonClient import CommonContext as SuperContext
+        from CommonClient import ClientCommandProcessor as SuperClientCommandProcessor
+except ModuleNotFoundError:
+    from CommonClient import CommonContext as SuperContext
+    from CommonClient import ClientCommandProcessor as SuperClientCommandProcessor
+from CommonClient import server_loop, gui_enabled, logger, \
+    get_base_parser, handle_url_arg
+from settings import get_settings
 from .Rom import BfBBContainer
+
 try:
     from Utils import instance_name as apname
 except ImportError:
     apname = "Archipelago"
+
 
 class CheckTypes(Flag):
     SPAT = 1
@@ -28,7 +47,7 @@ class CheckTypes(Flag):
 
 
 CONNECTION_REFUSED_VANILLA_GAME_STATUS = "Vanilla game detected. Please load the patched game."
-CONNECTION_REFUSED_GAME_STATUS = "Dolphin Connection refused due to invalid Game. Please load the US Version of BfBB."
+CONNECTION_REFUSED_GAME_STATUS = "Dolphin Connection refused due to invalid Game. Please load the US Version of BfBB or if you already do, restart dolphin."
 CONNECTION_REFUSED_SAVE_STATUS = "Dolphin Connection refused due to invalid Save. " \
                                  "Please make sure you loaded a save file used on this slot and seed."
 CONNECTION_LOST_STATUS = "Dolphin Connection was lost. Please restart your emulator and make sure BfBB is running."
@@ -553,8 +572,8 @@ invalid_scenes = [
 ]
 
 
-class BfBBCommandProcessor(ClientCommandProcessor):
-    def __init__(self, ctx: CommonContext):
+class BfBBCommandProcessor(SuperClientCommandProcessor):
+    def __init__(self, ctx: SuperContext):
         super().__init__(ctx)
 
     def _cmd_dolphin(self):
@@ -620,10 +639,11 @@ class BfBBCommandProcessor(ClientCommandProcessor):
             logger.info(f"Set Shiny Object to Ring ratio to: {self.ctx.so_to_ring_ratio}")
 
 
-class BfBBContext(CommonContext):
+class BfBBContext(SuperContext):
     command_processor = BfBBCommandProcessor
     game = 'Battle for Bikini Bottom'
     items_handling = 0b111  # full remote
+    tags = {"AP"}
 
     def __init__(self, server_address, password):
         super().__init__(server_address, password)
@@ -692,6 +712,7 @@ class BfBBContext(CommonContext):
                 related_tags = args["tags"]
                 if "RingLink" in related_tags:
                     self.on_ringlink(args["data"])
+        super().on_package(cmd, args)
 
     async def update_tags(self):
         old_tags = self.tags.copy()
@@ -747,17 +768,15 @@ class BfBBContext(CommonContext):
             await super(BfBBContext, self).server_auth(password_requested)
         await self.send_connect()
 
-    def run_gui(self):
-        from kvui import GameManager
+    def make_gui(self) -> type["kvui.GameManager"]:
+        """
+        Initialize the GUI for The Wind Waker client.
 
-        class BfBBManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = f"{apname} Battle for Bikini Bottom Client"
-
-        self.ui = BfBBManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+        :return: The client's GUI.
+        """
+        ui = super().make_gui()
+        ui.base_title = f"{apname} Battle for Bikini Bottom Client"
+        return ui
 
 
 def _is_ptr_valid(ptr):
@@ -1234,7 +1253,7 @@ async def check_locations(ctx: BfBBContext):
         await _check_purple_so(ctx, ctx.locations_checked)
     # ignore already in server state
     send_locations = await ctx.check_locations(ctx.locations_checked)
-    print([ctx.location_names[location] for location in send_locations])
+    # print([ctx.location_names[location] for location in send_locations])
 
 
 async def check_alive(ctx: BfBBContext):
@@ -1408,11 +1427,13 @@ async def dolphin_sync_task(ctx: BfBBContext):
                 logger.info("Attempting to connect to Dolphin")
                 dolphin_memory_engine.hook()
                 if dolphin_memory_engine.is_hooked():
+                    cur_game_id = dolphin_memory_engine.read_bytes(0x80000000, 6)
                     if dolphin_memory_engine.read_bytes(0x80000000, 6) == GAME_ID:
                         logger.info(CONNECTION_CONNECTED_STATUS)
                         ctx.dolphin_status = CONNECTION_CONNECTED_STATUS
                         ctx.locations_checked = set()
                     else:
+                        logger.debug(f"got GAME_ID {cur_game_id} instead of {GAME_ID}")
                         logger.info(CONNECTION_REFUSED_GAME_STATUS)
                         ctx.dolphin_status = CONNECTION_REFUSED_GAME_STATUS
                         dolphin_memory_engine.un_hook()
@@ -1435,23 +1456,33 @@ async def dolphin_sync_task(ctx: BfBBContext):
 
 async def patch_and_run_game(ctx: BfBBContext, patch_file):
     try:
-        result_path = os.path.splitext(patch_file)[0] + BfBBContainer.result_file_ending
-        with zipfile.ZipFile(patch_file, 'r') as patch_archive:
-            if not BfBBContainer.check_version(patch_archive):
-                logger.error(
-                    "apbfbb version doesn't match this client.  Make sure your generator and client are the same")
-                raise Exception("apbfbb version doesn't match this client.")
+        rom_path = BfBBContainer.get_rom_path()
+        def _run_full_patch_process() -> str:
+            result_path = os.path.splitext(patch_file)[0] + BfBBContainer.result_file_ending
+            logger.info("Applying patch file, please wait...")
 
-        # check hash
-        BfBBContainer.check_hash()
+            with zipfile.ZipFile(patch_file, 'r') as patch_archive:
+                if not BfBBContainer.check_version(patch_archive):
+                    raise Exception("apbfbb version doesn't match this client. "
+                                    "Make sure your generator and client are the same.")
 
-        shutil.copy(BfBBContainer.get_rom_path(), result_path)
-        await BfBBContainer.apply_hiphop_changes(zipfile.ZipFile(patch_file, 'r'), BfBBContainer.get_rom_path(),
-                                                 result_path)
-        await BfBBContainer.apply_binary_changes(zipfile.ZipFile(patch_file, 'r'), result_path)
+            # BfBBContainer.check_hash()
+            shutil.copy(rom_path, result_path)
+            BfBBContainer.apply_hiphop_changes(
+                zipfile.ZipFile(patch_file, 'r'), rom_path, result_path
+            )
+            BfBBContainer.apply_binary_changes(
+                zipfile.ZipFile(patch_file, 'r'), result_path
+            )
+            return result_path
 
-        logger.info('--patching success--')
-        os.startfile(result_path)
+        loop = asyncio.get_running_loop()
+        final_path = await loop.run_in_executor(None, _run_full_patch_process)
+
+        logger.info(f'Successfully patched the game at {final_path}')
+        auto_start = get_settings().bfbb_options.rom_start
+        if auto_start:
+            run_game(final_path)
 
     except Exception as msg:
         logger.info(msg, extra={'compact_gui': True})
@@ -1459,56 +1490,98 @@ async def patch_and_run_game(ctx: BfBBContext, patch_file):
         ctx.gui_error('Error', msg)
 
 
-def main(connect=None, password=None, patch_file=None):
-    # Text Mode to use !hint and such with games that have no text entry
+def run_game(gcm_file):
+    dolphin_path = get_settings().bfbb_options.dolphin_path
+    subprocess.Popen(
+        [
+            dolphin_path,
+            gcm_file,
+        ],
+        cwd=Utils.local_path("."),
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+async def main(args):
+    ctx = BfBBContext(args.connect, args.password)
+    ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+    if tracker_loaded:
+        ctx.run_generator()
+    if gui_enabled:
+        ctx.run_gui()
+    ctx.run_cli()
+
+    ctx.patch_task = None
+    if args.patch_file:
+        ext = os.path.splitext(args.patch_file)[1]
+        if ext == BfBBContainer.patch_file_ending:
+            logger.info("apbfbb file supplied, beginning patching process...")
+            ctx.patch_task = asyncio.create_task(patch_and_run_game(ctx, args.patch_file), name="PatchGame")
+        elif ext == BfBBContainer.result_file_ending:
+            run_game(args.patch_file)
+        else:
+            logger.warning(f"Unknown patch file extension {ext}")
+
+    async def waitForPatchThenStartSync(ctx: BfBBContext):
+        try:
+            if ctx.patch_task:
+                await ctx.patch_task
+        except asyncio.CancelledError:
+            return
+
+        if not ctx.exit_event.is_set():
+            ctx.dolphin_sync_task = asyncio.create_task(dolphin_sync_task(ctx), name="DolphinSync")
+    asyncio.create_task(waitForPatchThenStartSync(ctx))
+
+    await ctx.exit_event.wait()
+    ctx.server_address = None
+
+    tasks_to_await = []
+    if ctx.patch_task:
+        ctx.patch_task.cancel()
+        tasks_to_await.append(ctx.patch_task)
+    if ctx.dolphin_sync_task:
+        ctx.dolphin_sync_task.cancel()
+        tasks_to_await.append(ctx.dolphin_sync_task)
+
+    if tasks_to_await:
+        await asyncio.gather(*tasks_to_await, return_exceptions=True)
+
+    await ctx.shutdown()
+
+def launch(*args):
+    parser = get_base_parser("BfBB Client")
+    parser.add_argument('--name', default=None, help="Slot Name to connect as.")
+    parser.add_argument('patch_or_url', default=[], nargs="*",
+                        help='Path to an .apbfbb patch file and/or url.')
+    args = parser.parse_args(args)
+    if not hasattr(args, 'url'):
+        args.url = None
+    if not hasattr(args, 'patch_file'):
+        args.patch_file = ""
+
+    for v in args.patch_or_url:
+        if v.startswith("archipelago://") and not args.url:
+            args.url = v
+            args = handle_url_arg(args, parser=parser)
+        elif v.endswith(BfBBContainer.patch_file_ending) and not args.patch_file:
+            args.patch_file = v
+
+    if not args.patch_file:
+        file_types = (('BfBB Patch File', ('.apbfbb',)), ('NGC iso', ('.gcm',)),)
+        args.patch_file = Utils.open_filename("Select .apbfbb", file_types) or ""
+
     Utils.init_logging("BfBBClient")
 
-    # logger.warning(f"starting {connect}, {password}, {patch_file}")
-
-    async def _main(connect, password, patch_file):
-        ctx = BfBBContext(connect, password)
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
-        if gui_enabled:
-            ctx.run_gui()
-        ctx.run_cli()
-
-        ctx.patch_task = None
-        if patch_file:
-            ext = os.path.splitext(patch_file)[1]
-            if ext == BfBBContainer.patch_file_ending:
-                logger.info("apbfbb file supplied, beginning patching process...")
-                ctx.patch_task = asyncio.create_task(patch_and_run_game(ctx, patch_file), name="PatchGame")
-            elif ext == BfBBContainer.result_file_ending:
-                os.startfile(patch_file)
-            else:
-                logger.warning(f"Unknown patch file extension {ext}")
-
-        if ctx.patch_task:
-            await ctx.patch_task
-
-        await asyncio.sleep(1)
-
-        ctx.dolphin_sync_task = asyncio.create_task(dolphin_sync_task(ctx), name="DolphinSync")
-
-        await ctx.exit_event.wait()
-        ctx.server_address = None
-
-        await ctx.shutdown()
-
-        if ctx.dolphin_sync_task:
-            await asyncio.sleep(3)
-            await ctx.dolphin_sync_task
+    # logger.warning(f"starting args {args}")
 
     import colorama
 
     colorama.init()
-    asyncio.run(_main(connect, password, patch_file))
+    asyncio.run(main(args))
     colorama.deinit()
 
 
 if __name__ == '__main__':
-    parser = get_base_parser()
-    parser.add_argument('patch_file', default="", type=str, nargs="?",
-                        help='Path to an .apbfbb patch file')
-    args = parser.parse_args()
-    main(args.connect, args.password, args.patch_file)
+    launch(*sys.argv[1:])

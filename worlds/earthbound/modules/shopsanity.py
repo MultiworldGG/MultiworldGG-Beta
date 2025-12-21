@@ -2,8 +2,19 @@ from ..game_data.local_data import psi_item_table, character_item_table, special
 from ..game_data.text_data import calc_pixel_width, text_encoder
 from ..game_data.static_location_data import location_ids
 from ..Options import ShopRandomizer, MagicantMode, MonkeyCavesMode
-from BaseClasses import ItemClassification
+from BaseClasses import ItemClassification, Location
 import struct
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from . import EarthBoundWorld
+    from .Rom import LocalRom
+
+high_purchase_areas = {
+    "Twoson",
+    "Fourside",
+    "Scaraba",
+    "Andonuts Lab Area"  # long walk with no atm
+}
 
 shop_locations = {
     "Onett Drugstore - Right Counter Slot 1",
@@ -285,7 +296,7 @@ shop_locations = {
 }
 
 
-def write_shop_checks(world, rom, shop_checks) -> None:
+def write_shop_checks(world: "EarthBoundWorld", rom: "LocalRom", shop_checks: list[Location]) -> None:
     unsellable_filler_prices = {
         "Broken Machine": 150,
         "Broken Air Gun": 110,
@@ -360,11 +371,11 @@ def write_shop_checks(world, rom, shop_checks) -> None:
             if ItemClassification.trap in location.item.classification:
                 price = 0
             else:
-                price = world.random.randint(1, (75 * (world.accessible_regions.index(location.parent_region.name) + 1)))
-            if not world.accessible_regions.index(location.parent_region.name):
-                price = int(price / 2)
-            elif location.parent_region.name == "Onett" and not world.options.random_start_location:
-                price = int(price / 3)
+                price = world.random.randint(1, (75 * world.area_levels[location.parent_region.name]))
+
+            if location.parent_region.name in high_purchase_areas:
+                price = int(price / 1.5)
+            
             item_struct = struct.pack('<BHBH', item_id, price, item_type, flag)
             rom.write_bytes(0x34002A + (0x06 * flag), item_struct)
             menu_long_name = text_encoder(location.item.name, 127)

@@ -1,0 +1,422 @@
+{
+    "tracker_default": {
+        "type": "container",
+        "background": "#000000",
+        "content": {
+            "type": "dock",
+            "dropshadow": true,
+            "content": [
+                {
+                    "type": "dock",
+                    "dock": "bottom",
+                    "content": [
+                        {
+                            "type": "group",
+                            "header": "Items",
+                            "dock": "left",
+                            "margin": "0,0,3,0",
+                            "content": {
+                                "type": "layout",
+                                "h_alignment": "center",
+                                "v_alignment": "center",
+                                "key": "shared_item_grid"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "tabbed",
+                    "tabs": [
+                        {
+                            "title": "Hub",
+                            "content": {
+                                "type": "map",
+                                "maps": [
+                                    "overview"
+                                ]
+                            }
+                        },
+                        {
+                            "title": "Jellyfish Fields",
+                            "content": {
+                                "type": "tabbed",
+                                "tabs": [
+                                    {
+                                        "title": "Area 1",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "jf01"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 2",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "jf02"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 3",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "jf03"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 4",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "jf04"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "title": "Downtown Bikini Bottom",
+                            "content": {
+                                "type": "tabbed",
+                                "tabs": [
+                                    {
+                                        "title": "Area 1",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "bb01"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 2",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "bb02"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 3",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "bb03"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 4",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "bb04"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "title": "Goo Lagoon",
+                            "content": {
+                                "type": "tabbed",
+                                "tabs": [
+                                    {
+                                        "title": "Area 1",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "gl01"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 2",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "gl02"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 3",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "gl03"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "title": "Mermalair",
+                            "content": {
+                                "type": "tabbed",
+                                "tabs": [
+                                    {
+                                        "title": "Area 1",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "bc01"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 2",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "bc02"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 3",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "bc03"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 4",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "bc04"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "title": "Rock Bottom",
+                            "content": {
+                                "type": "tabbed",
+                                "tabs": [
+                                    {
+                                        "title": "Area 1",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "rb01"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 2",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "rb02"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 3",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "rb03"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "title": "Sand Mountain",
+                            "content": {
+                                "type": "tabbed",
+                                "tabs": [
+                                    {
+                                        "title": "Area 1",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "sm01"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 2",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "sm02"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 3",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "sm03"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 4",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "sm04"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "title": "Kelp Forest",
+                            "content": {
+                                "type": "tabbed",
+                                "tabs": [
+                                    {
+                                        "title": "Area 1",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "kf01"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 2",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "kf02"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 4",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "kf04"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 5",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "kf05"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "title": "Flying Dutchman's Graveyard",
+                            "content": {
+                                "type": "tabbed",
+                                "tabs": [
+                                    {
+                                        "title": "Area 1",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "gy01"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 2",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "gy02"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 3",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "gy03"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 4",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "gy04"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "title": "Spongebob's Dream",
+                            "content": {
+                                "type": "tabbed",
+                                "tabs": [
+                                    {
+                                        "title": "Area 1",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "db01"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 2",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "db02"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 3",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "db03"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "title": "Area 4",
+                                        "content": {
+                                            "type": "map",
+                                            "maps": [
+                                                "db04"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

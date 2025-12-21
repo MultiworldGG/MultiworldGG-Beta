@@ -1,0 +1,584 @@
+[
+    {
+        "name": "gl",
+        "access_rules": [
+            "$has_spats_for_gate|Hub1->GL01"
+        ],
+        "children": [
+            {
+                "name": "King of the Castle",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 192,
+                        "y": 712
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Connect the Towers",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 1160,
+                        "y": 245
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Save the Children",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 966,
+                        "y": 405
+                    }
+                ],
+                "access_rules": [
+                    "lvl_item_gl:5",
+                    "$not_include_level_items"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Over the Moat",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 160,
+                        "y": 668
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Through the Sea Caves",
+                "map_locations": [
+                    {
+                        "map": "gl02",
+                        "x": 206,
+                        "y": 590
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Clean out the Bumper Boats",
+                "map_locations": [
+                    {
+                        "map": "gl03",
+                        "x": 203,
+                        "y": 530
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Slip and Slide Under the Pier",
+                "map_locations": [
+                    {
+                        "map": "gl03",
+                        "x": 1224,
+                        "y": 669
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Tower Bungee",
+                "map_locations": [
+                    {
+                        "map": "gl03",
+                        "x": 1004,
+                        "y": 477
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (On watchtower)",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 1408,
+                        "y": 437
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (In sand castle)",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 361,
+                        "y": 743
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #3 (On juice bar)",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 904,
+                        "y": 375
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #4 (On top of sand castle)",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 212,
+                        "y": 763
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #5 (Sand castle entrance gate)",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 653,
+                        "y": 708
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (Under ledge near entrance)",
+                "map_locations": [
+                    {
+                        "map": "gl02",
+                        "x": 1200,
+                        "y": 543
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (On goo)",
+                "map_locations": [
+                    {
+                        "map": "gl02",
+                        "x": 630,
+                        "y": 373
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #3 (On side ledge)",
+                "map_locations": [
+                    {
+                        "map": "gl02",
+                        "x": 1105,
+                        "y": 380
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (Tiki minigame)",
+                "map_locations": [
+                    {
+                        "map": "gl03",
+                        "x": 841,
+                        "y": 781
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (Sliding minigame)",
+                "map_locations": [
+                    {
+                        "map": "gl03",
+                        "x": 825,
+                        "y": 80
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #3 (On booth)",
+                "map_locations": [
+                    {
+                        "map": "gl03",
+                        "x": 720,
+                        "y": 460
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Balloon Kid #1 (Near Ms. Puff)",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 975,
+                        "y": 345
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_gl_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_gl.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Balloon Kid #2 (On beach near moving logs)",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 925,
+                        "y": 260
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_gl_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_gl.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Balloon Kid #3 (On beach near sinking logs)",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 797,
+                        "y": 259
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_gl_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_gl.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Balloon Kid #4 (On Water near moving logs)",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 878,
+                        "y": 732
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_gl_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_gl.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Balloon Kid #5 (On Water near sinking logs)",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 1025,
+                        "y": 500
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_gl_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_gl.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (End of log path near Ms. Puff)",
+                "map_locations": [
+                    {
+                        "map": "gl01",
+                        "x": 955,
+                        "y": 479
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (On ledge under checkpoint)",
+                "map_locations": [
+                    {
+                        "map": "gl02",
+                        "x": 588,
+                        "y": 832
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (On tikis after slide)",
+                "map_locations": [
+                    {
+                        "map": "gl03",
+                        "x": 795,
+                        "y": 405
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    }
+]

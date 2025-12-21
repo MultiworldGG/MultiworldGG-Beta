@@ -196,14 +196,12 @@ loc_Sand = {
     "Sand Kingdom - Desert Gardening: Ruins Seed": 1113,
     "Sand Kingdom - Desert Gardening: Seed on the Cliff": 1114,
     "Sand Kingdom - Taking Notes: Jump on the Palm": 525,
-    "Sand Kingdom - Herding Sheep in the Dunes": 532,
     "Sand Kingdom - Among the Five Cactuses": 893,
     "Sand Kingdom - Wandering Cactus": 509,
     "Sand Kingdom - Sand Quiz: Wonderful!": 498,
     "Sand Kingdom - Shopping in Tostarena": 565,
     "Sand Kingdom - Employees Only": 564,
     "Sand Kingdom - Sand Kingdom Slots": 1047,
-    "Sand Kingdom - Walking the Desert!": 533,
     "Sand Kingdom - Ice Cave Treasure": 567,
     "Sand Kingdom - Sphynx's Treasure Vault": 566,
     "Sand Kingdom - A Rumble from the Sandy Floor": 1136,
@@ -230,6 +228,8 @@ loc_Sand_Underground = {
 }
 
 loc_Sand_Peace = {
+    "Sand Kingdom - Herding Sheep in the Dunes": 532,
+    "Sand Kingdom - Walking the Desert!": 533,
     "Sand Kingdom - Hang Your Hat on the Fountain": 534,
     "Sand Kingdom - Found in the Sand! Good Dog!": 512,
     "Sand Kingdom - Sand Kingdom Timer Challenge 1": 531,

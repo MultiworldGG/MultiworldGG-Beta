@@ -3207,6 +3207,30 @@
         ],
         "release_date": 2016
     },
+    "Ori and the Will of the Wisps": {
+        "igdb_id": "37001",
+        "world_name": "Ori and the Will of the Wisps",
+        "igdb_name": "Ori and the Will of the Wisps",
+        "us_rating": [
+            "E"
+        ],
+        "player_perspectives": [
+            "Side view"
+        ],
+        "genres": [
+            "Platform",
+            "Adventure"
+        ],
+        "themes": [
+            "Action",
+            "Fantasy"
+        ],
+        "keywords": [
+            "metroidvania",
+            "achievements"
+        ],
+        "release_date": 2020
+    },
     "Old School Runescape": {
         "igdb_id": "79824",
         "world_name": "Old School Runescape",

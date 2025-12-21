@@ -257,7 +257,7 @@ Root: HKCR; Subkey: "{#MyAppName}dkc2patch\DefaultIcon";         ValueData: "{ap
 Root: HKCR; Subkey: "{#MyAppName}dkc2patch\shell\open\command";  ValueData: """{app}\MultiworldGGSNIClient.exe"" ""%1""";                  ValueType: string;  ValueName: "";
 
 Root: HKCR; Subkey: ".apeb";                                   ValueData: "{#MyAppName}apebpatch";        Flags: uninsdeletevalue;         ValueType: string;  ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}apebpatch";                     ValueData: "MultiworldGG Tetris Attack Patch"; Flags: uninsdeletekey;     ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apebpatch";                     ValueData: "MultiworldGG Earthbound Patch"; Flags: uninsdeletekey;     ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apebpatch\DefaultIcon";         ValueData: "{app}\MultiworldGGSNIClient.exe,0";                           ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apebpatch\shell\open\command";  ValueData: """{app}\MultiworldGGSNIClient.exe"" ""%1""";                  ValueType: string;  ValueName: "";
 
@@ -342,7 +342,7 @@ Root: HKCR; Subkey: "{#MyAppName}apsotnpatch\DefaultIcon";         ValueData: "{
 Root: HKCR; Subkey: "{#MyAppName}apsotnpatch\shell\open\command";  ValueData: """{app}\MultiworldGGBizHawkClient.exe"" ""%1""";      ValueType: string; ValueName: "";
 
 Root: HKCR; Subkey: ".aptatk";                                     ValueData: "{#MyAppName}aptatkpatch";        Flags: uninsdeletevalue;     ValueType: string;  ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}aptatkpatch";                     ValueData: "MultiworldGG Earthbound Patch"; Flags: uninsdeletekey;        ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}aptatkpatch";                     ValueData: "MultiworldGG Tetris Attack Patch"; Flags: uninsdeletekey;        ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}aptatkpatch\DefaultIcon";         ValueData: "{app}\MultiworldGGSNIClient.exe,0";                           ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}aptatkpatch\shell\open\command";  ValueData: """{app}\MultiworldGGSNIClient.exe"" ""%1""";                  ValueType: string;  ValueName: "";
 

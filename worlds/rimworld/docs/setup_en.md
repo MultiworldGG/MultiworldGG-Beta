@@ -42,7 +42,7 @@
 
 This mod has been designed to attempt to support future expansions as well as mods. If mods don't mess with research, they should be simple enough to add alongside this mod. If you want to set up a multiworld that includes modded content, follow these steps:
 1. Set up a client with all the mods that will be used **by all RimWorld players** in the multiworld you're targeting. (If player A is using Vanilla Genetics Expanded and player B is using Dub's Bad Hygiene, the person doing setup needs both to perform this setup.)
-2. Open RimWorld, and DO NOT connect to an Archipelago server
+2. Open RimWorld, and DO NOT connect to a MultiworldGG server
 3. Open Options -> Mod options -> Archipelago
 4. Click the `Extract Ap Data` button. This wil export all of the game's data into a format that both the generator/server and the client can read. It will be saved in the user's Documents folder (note that modernly, there are two Documents folders, one connected to OneDrive, and one local - it's in the local one.)
 5. Send the ArchipelagoItemDefs.xml file to all Rimworld players in this multiworld.

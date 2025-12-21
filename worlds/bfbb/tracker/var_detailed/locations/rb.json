@@ -1,0 +1,550 @@
+[
+    {
+        "name": "rb",
+        "access_rules": [
+            "@hb/Poseidome, $has_spats_for_gate|Hub2->RB01"
+        ],
+        "children": [
+            {
+                "name": "Get to the Museum",
+                "map_locations": [
+                    {
+                        "map": "rb01",
+                        "x": 711,
+                        "y": 87
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Slip Sliding Away",
+                "map_locations": [
+                    {
+                        "map": "rb01",
+                        "x": 461,
+                        "y": 540
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Return the Museum's Art",
+                "map_locations": [
+                    {
+                        "map": "rb01",
+                        "x": 1060,
+                        "y": 949
+                    }
+                ],
+                "access_rules": [
+                    "lvl_item_rb:6",
+                    "$not_include_level_items"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Swingalong Spatula",
+                "map_locations": [
+                    {
+                        "map": "rb01",
+                        "x": 969,
+                        "y": 410
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    },
+                    {
+                        "name": "Purple Shiny Object (Under Swingalong Spatula)",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false,
+                        "visibility_rules": [
+                            "$include_purple_so"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "Plundering Robots in the Museum",
+                "map_locations": [
+                    {
+                        "map": "rb02",
+                        "x": 341,
+                        "y": 467
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Across the Trench of Darkness",
+                "map_locations": [
+                    {
+                        "map": "rb03",
+                        "x": 1110,
+                        "y": 215
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Lasers are Fun and Good for You",
+                "map_locations": [
+                    {
+                        "map": "rb03",
+                        "x": 733,
+                        "y": 623
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "How in Tarnation Do You Get There?",
+                "map_locations": [
+                    {
+                        "map": "rb03",
+                        "x": 988,
+                        "y": 704
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (On roof near elevator)",
+                "map_locations": [
+                    {
+                        "map": "rb01",
+                        "x": 734,
+                        "y": 520
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (On rock)",
+                "map_locations": [
+                    {
+                        "map": "rb01",
+                        "x": 782,
+                        "y": 331
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #3 (Near slide end)",
+                "map_locations": [
+                    {
+                        "map": "rb01",
+                        "x": 626,
+                        "y": 633
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (Ledge near exit)",
+                "map_locations": [
+                    {
+                        "map": "rb02",
+                        "x": 301,
+                        "y": 681
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (Midway right ledge)",
+                "map_locations": [
+                    {
+                        "map": "rb02",
+                        "x": 934,
+                        "y": 148
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #3 (Under entrance)",
+                "map_locations": [
+                    {
+                        "map": "rb02",
+                        "x": 1574,
+                        "y": 515
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (Bungee)",
+                "map_locations": [
+                    {
+                        "map": "rb03",
+                        "x": 767,
+                        "y": 524
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (Near Duplicatotron)",
+                "map_locations": [
+                    {
+                        "map": "rb03",
+                        "x": 899,
+                        "y": 710
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #3 (At button under laser)",
+                "map_locations": [
+                    {
+                        "map": "rb03",
+                        "x": 614,
+                        "y": 639
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Museum Art #1 (On ledge above bubble buddy)",
+                "map_locations": [
+                    {
+                        "map": "rb01",
+                        "x": 842,
+                        "y": 454
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_rb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_rb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Museum Art #2 (Near start)",
+                "map_locations": [
+                    {
+                        "map": "rb01",
+                        "x": 986,
+                        "y": 785
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_rb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_rb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Museum Art #3 (Bottom)",
+                "map_locations": [
+                    {
+                        "map": "rb02",
+                        "x": 565,
+                        "y": 715
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_rb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_rb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Museum Art #4 (Near exit)",
+                "map_locations": [
+                    {
+                        "map": "rb02",
+                        "x": 184,
+                        "y": 472
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_rb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_rb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Museum Art #5 (Behind laser)",
+                "map_locations": [
+                    {
+                        "map": "rb03",
+                        "x": 393,
+                        "y": 616
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_rb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_rb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Museum Art #6 (On Sleepy-Time platform)",
+                "map_locations": [
+                    {
+                        "map": "rb03",
+                        "x": 963,
+                        "y": 843
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_rb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_rb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (On roof)",
+                "map_locations": [
+                    {
+                        "map": "rb02",
+                        "x": 1284,
+                        "y": 395
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (By floating tiki near exit)",
+                "map_locations": [
+                    {
+                        "map": "rb03",
+                        "x": 1150,
+                        "y": 215
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    }
+]

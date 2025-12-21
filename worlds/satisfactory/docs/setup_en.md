@@ -14,7 +14,7 @@
 ## Overview
 
 This guide walks you through installing the Satisfactory Archipelago mod via the Satisfactory Mod Manager,
-configuring an Archipelago slot for Satisfactory,
+configuring a MultiworldGG slot for Satisfactory,
 and playing the game with a Satisfactory client.
 
 ### Defining Some Terms
@@ -26,7 +26,7 @@ This guide uses the following terms to refer to the software:
 
 - **MultiworldGG Server** - The central MultiworldGG server, which connects all games to each other.
 - **MultiworldGG Client** - The desktop application used by many MultiworldGG games as middleware. Satisfactory does NOT require this software, unless you would like to generate a world locally.
-- **Archipelago (Satisfactory) mod** - The Satisfactory mod which implements MultiworldGG/AP in-game functionality and connectivity.
+- **Archipelago (Satisfactory) mod** - The Satisfactory mod which implements MultiworldGG in-game functionality and connectivity.
   All Satisfactory hosts and clients must have this mod installed.
 - **Satisfactory Host** - The Satisfactory instance which will be used to host the game.
   This could be a Satisfactory Client using Singleplayer or host-and-play multiplayer, or it could be a Satisfactory dedicated server.
@@ -46,7 +46,7 @@ This guide uses the following terms to refer to the software:
 - Satisfactory Modding 'Frequently Asked Questions' page: [Satisfactory Modding Documentation FAQ](https://docs.ficsit.app/satisfactory-modding/latest/faq.html)
 - Satisfactory Archipelago Item names (for hints/starting inventory/etc.) can be found [on the mod's github](https://github.com/Jarno458/Archipelago/blob/Satisfactory/worlds/satisfactory/Items.py)
 
-## Preparing to Play Satisfactory Archipelago
+## Preparing to Play Satisfactory MultiworldGG
 
 ### Installing Satisfactory
 
@@ -150,7 +150,7 @@ to futher customize their experience.
 
 ### Generating and Hosting the Multiworld
 
-Generating a game and hosting a MultiworldGG server is explained in the [MultiworldGG Setup Guide](/tutorial/Archipelago/setup/en).
+Generating a game and hosting an MultiworldGG server is explained in the [MultiworldGG Setup Guide](/tutorial/Archipelago/setup/en).
 
 ### Creating the Satisfactory World
 

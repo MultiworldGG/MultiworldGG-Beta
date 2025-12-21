@@ -35,7 +35,7 @@ class NotConnectedLayout(BoxLayout):
         self.ctx = ctx
 
         self.add_widget(
-            Label(text="Please connect to an Archipelago server first to view this tab.", font_size="24dp")
+            Label(text="Please connect to a MultiworldGG server first to view this tab.", font_size="24dp")
         )
 
     def show(self):

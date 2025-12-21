@@ -49,7 +49,7 @@ class SMOPlayer:
         "Darker": 1
     }
     goal : int
-    current_home_stage : str = "Cap"
+    current_home_stage : str = ""
 
     def __init__(self):
         self.reset_moons()

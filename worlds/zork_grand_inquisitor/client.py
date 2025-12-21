@@ -32,7 +32,7 @@ class ZorkGrandInquisitorCommandProcessor(CommonClient.ClientCommandProcessor):
     def _cmd_zork(self) -> None:
         """Attach to an open Zork Grand Inquisitor process."""
         if not self.ctx.server or not self.ctx.slot:
-            self.output("You must be connected to an Archipelago server before using /zork.")
+            self.output("You must be connected to a MultiworldGG server before using /zork.")
             return
 
         result: bool = self.ctx.game_controller.open_process_handle()
@@ -305,11 +305,11 @@ class ZorkGrandInquisitorContext(CommonClient.CommonContext):
                 if self.process_attached_at_least_once:
                     process_message = (
                         "Connection to the Zork Grand Inquisitor process was lost. Ensure you are connected "
-                        "to an Archipelago server and the game is running, then use the /zork command to reconnect."
+                        "to a MultiworldGG server and the game is running, then use the /zork command to reconnect."
                     )
                 else:
                     process_message = (
-                        "To start playing, connect to an Archipelago server and use the /zork command to "
+                        "To start playing, connect to a MultiworldGG server and use the /zork command to "
                         "link to an active Zork Grand Inquisitor process."
                     )
 

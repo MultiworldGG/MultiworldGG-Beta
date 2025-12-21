@@ -487,12 +487,12 @@ class ShineColor:
         for i in range(51):
             if i < len(self.info):
                 data += self.info[i][0].to_bytes(2,"little")
-                data += self.info[i][1].to_bytes(1,"little")
+                data += self.info[i][1].to_bytes(1,"little", signed=True)
 
             else:
                 filler = 0
                 data += filler.to_bytes(2,"little")
-                data += filler.to_bytes(1,"little")
+                data += filler.to_bytes(1,"little", signed=True)
 
         if len(data) != self.SIZE:
             print(len(data))

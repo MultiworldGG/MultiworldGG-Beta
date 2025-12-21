@@ -552,6 +552,7 @@ async def handle_proxy(reader : asyncio.StreamReader, writer : asyncio.StreamWri
                     if len(ctx.slot_data) > 0 and needs_slot_data:
                         ctx.forward_slot_data()
                         ctx.forward_shine_data()
+                    ctx.server_msgs.append({"cmd": "Sync"})
 
                 case PacketType.Disconnect:
                     ctx.game_connected = False
@@ -562,7 +563,8 @@ async def handle_proxy(reader : asyncio.StreamReader, writer : asyncio.StreamWri
                     if stage[0:stage.index("World")] != ctx.player_data.current_home_stage:
                         ctx.player_data.current_home_stage = stage[0:stage.index("World")]
                         print(f"Player Changed Home Stage to {ctx.player_data.current_home_stage}")
-                        if ctx.is_connected():
+
+                        if ctx.is_connected() and len(ctx.player_data.current_home_stage) > 0:
                             ctx.forward_shine_data()
 
                 case PacketType.Check:
@@ -618,8 +620,13 @@ async def handle_proxy(reader : asyncio.StreamReader, writer : asyncio.StreamWri
 
                 #print(num_bytes)
                 #print(packets)
+                packet_send_offset : int = 0
                 for i in range(len(ctx.proxy_msgs)):
-                    response : Packet = ctx.proxy_msgs.pop(0)
+                    if ctx.proxy_msgs[0].header.packet_type == PacketType.Check and ctx.player_data.current_home_stage == "":
+                        packet_send_offset += 1
+                        #print("Skipping packet cannot be sent now")
+                        continue
+                    response : Packet = ctx.proxy_msgs.pop(packet_send_offset)
                     b = response.serialize()
                     # if response.header.packet_type == PacketType.ShineColor:
                     #     print("This one", b[20:])
@@ -639,6 +646,7 @@ async def handle_proxy(reader : asyncio.StreamReader, writer : asyncio.StreamWri
         print("Connection Error ", e)
         traceback.print_exc()
         ctx.player_data.item_index = 0
+        ctx.player_data.current_home_stage = ""
         ctx.awaiting_connection = True
         writer.close()
 

@@ -44,7 +44,7 @@ class EBWeb(WebWorld):
 
     setup_en = Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up the EarthBound randomizer"
+        "A guide to setting up the EarthBound randomizer "
         "and connecting to a MultiworldGG server.",
         "English",
         "setup_en.md",
@@ -57,18 +57,20 @@ class EBWeb(WebWorld):
     option_groups = eb_option_groups
     # option_presets = eb_option_presets
 
+class EBItem(Item):
+    game: str = "EarthBound"
+
 
 class EarthBoundWorld(World):
     """EarthBound is a contemporary-themed JRPG. Take four psychically-endowed children
        across the world in search of 8 Melodies to defeat Giygas, the cosmic evil."""
     
     game = "EarthBound"
-    author: str = "Pink Switch"
     option_definitions = EBOptions
     data_version = 1
     required_client_version = (0, 5, 0) 
 
-    item_name_to_id = {item: item_table[item].code for item in item_table if item_table[item].code}
+    item_name_to_id = {item: data.code for item, data in item_table.items() if data.code}
     location_name_to_id = location_ids
     item_name_groups = get_item_names_per_category()
     location_name_groups = location_groups
@@ -90,18 +92,17 @@ class EarthBoundWorld(World):
         self.locked_locations = []
         self.location_cache = []
         self.event_count = 8
-        self.progressive_filler_bats = 0
-        self.progressive_filler_pans = 0
-        self.progressive_filler_guns = 0
-        self.progressive_filler_bracelets = 0
-        self.progressive_filler_other = 0
-        self.world_version = world_version
-        self.removed_teleports = []
-        self.armor_list: Dict[str, EBArmor]
-        self.weapon_list: Dict[str, EBWeapon]
-        self.boss_slots: Dict[str, SlotInfo]
-        self.boss_info: Dict[str, BossData]
-        self.starting_character = None
+        self.progressive_filler_bats: int = 0
+        self.progressive_filler_pans: int = 0
+        self.progressive_filler_guns: int = 0
+        self.progressive_filler_bracelets: int = 0
+        self.progressive_filler_other: int = 0
+        self.world_version: str = world_version
+        self.armor_list = Dict[str, EBArmor]
+        self.weapon_list = Dict[str, EBWeapon]
+        self.boss_slots = Dict[str, SlotInfo]
+        self.boss_info = Dict[str, BossData]
+        self.starting_character: str | None = None
         self.locals = []
         self.rom_name = None
         self.starting_area_teleport = None
@@ -110,10 +111,11 @@ class EarthBoundWorld(World):
         self.rare_gear = []
         self.get_all_spheres = threading.Event()
         self.boss_list: List[str] = []
-        self.starting_region = int
-        self.dungeon_connections = {}
+        self.starting_region = str
+        self.start_location = int
+        self.dungeon_connections: dict[str, str] = {}
         self.has_generated_output: bool = False
-        self.hint_man_hints: List[Tuple] = []
+        self.hint_man_hints: list[tuple[int | str, player]] = []
 
         self.common_items = [
             "Cookie",
@@ -293,7 +295,7 @@ class EarthBoundWorld(World):
 
     def create_items(self) -> None:
         pool = self.get_item_pool(self.get_excluded_items())
-        self.generate_filler(pool)
+        self.fill_item_pool(pool)
 
         self.multiworld.itempool += pool
 
@@ -333,10 +335,10 @@ class EarthBoundWorld(World):
             add_item_rule(self.multiworld.get_location("Dalaam - Throne Character", self.player), lambda item: item.name in self.item_name_groups["Characters"])
             add_item_rule(self.multiworld.get_location("Deep Darkness - Barf Character", self.player), lambda item: item.name in self.item_name_groups["Characters"])
 
-        fill_restrictive(self.multiworld, self.multiworld.get_all_state(False), prefill_locations, prefill_items, True, True)
+        fill_restrictive(self.multiworld, self.multiworld.get_all_state(False, collect_pre_fill_items=False), prefill_locations, prefill_items, True, True)
         setup_hints(self)
 
-    def get_pre_fill_items(self) -> list:
+    def get_pre_fill_items(self) -> list[Item]:
         characters = ["Ness", "Paula", "Jeff", "Poo"]
         prefill_items = []
         for character in characters:
@@ -345,10 +347,14 @@ class EarthBoundWorld(World):
         return prefill_items
 
     @classmethod
-    def stage_generate_output(cls, multiworld, output_directory) -> None:
-        multiworld.eb_spheres = list(multiworld.get_spheres())
-        for world in multiworld.get_game_worlds("EarthBound"):
-            world.get_all_spheres.set()
+    def stage_generate_output(cls, multiworld: MultiWorld, output_directory: str) -> None:
+        try:
+            multiworld.earthbound_locations_by_sphere = list(multiworld.get_spheres())
+        except Exception:
+            raise
+        finally:
+            for world in multiworld.get_game_worlds("EarthBound"):
+                world.get_all_spheres.set()
 
     def generate_output(self, output_directory: str) -> None:
         self.has_generated_output = True  # Make sure data defined in generate output doesn't get added to spoiler only mode
@@ -474,9 +480,9 @@ class EarthBoundWorld(World):
                 if area not in spoiler_excluded_areas:
                     spoiler_handle.write(f" {area}: Level {self.area_levels[area]}\n")
 
-    def create_item(self, name: str) -> Item:
+    def create_item(self, name: str) -> EBItem:
         data = item_table[name]
-        return Item(name, data.classification, data.code, self.player)
+        return EBItem(name, data.classification, data.code, self.player)
 
     def get_filler_item_name(self) -> str:  # Todo: make this suck less
         weights = {"rare": self.options.rare_filler_weight.value, "uncommon": self.options.uncommon_filler_weight.value, "common": self.options.common_filler_weight.value,
@@ -549,7 +555,7 @@ class EarthBoundWorld(World):
             item.classification = ItemClassification.useful
         return item
 
-    def generate_filler(self, pool: List[Item]) -> None:
+    def fill_item_pool(self, pool: List[Item]) -> None:
         item_to_counts = {
             "Progressive Bat": self.progressive_filler_bats,
             "Progressive Fry Pan": self.progressive_filler_pans,

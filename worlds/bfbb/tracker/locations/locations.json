@@ -1,0 +1,2498 @@
+[
+    {
+        "name": "Hub 1",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 190,
+                "y": 530
+            }
+        ],
+        "access_rules": [
+            "spat:1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Golden Underwear",
+                "item_count": 1,
+                "chest_opened_img": "images/items/golden_underwear_disabled.png",
+                "chest_unopened_img": "images/items/golden_underwear.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_golden_underwear"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Hub 2",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 560,
+                "y": 615
+            }
+        ],
+        "access_rules": [
+            "@Poseidome"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "bubble_bowl",                    
+                    "cruise_bubble",
+                    "$not_include_skills"
+                ]
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Golden Underwear",
+                "item_count": 1,
+                "chest_opened_img": "images/items/golden_underwear_disabled.png",
+                "chest_unopened_img": "images/items/golden_underwear.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "bubble_bowl",
+                    "cruise_bubble",
+                    "$not_include_skills"
+                ],
+                "visibility_rules": [
+                    "$include_golden_underwear"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Hub 3",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 920,
+                "y": 630
+            }
+        ],
+        "access_rules": [
+            "@Industrial Park"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills"
+                ]
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Golden Underwear",
+                "item_count": 1,
+                "chest_opened_img": "images/items/golden_underwear_disabled.png",
+                "chest_unopened_img": "images/items/golden_underwear.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills"
+                ],
+                "visibility_rules": [
+                    "$include_golden_underwear"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Pineapple",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 75,
+                "y": 558
+            }
+        ],        
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Squidward",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 140,
+                "y": 620
+            }
+        ],
+        "access_rules": [
+            "@Hub 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Tree Dome",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 475,
+                "y": 500
+            }
+        ],
+        "access_rules": [
+            "@Hub 2"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            }
+        ]
+    },
+    {
+        "name": "Krusty Krab",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 885,
+                "y": 750
+            }
+        ],
+        "access_rules": [
+            "@Hub 3"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Chum Bucket",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 890,
+                "y": 510
+            }
+        ],
+        "access_rules": [
+            "@Hub 3"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            }
+        ]
+    },
+    {
+        "name": "Jellyfish Fields 1",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 220,
+                "y": 200
+            }
+        ],
+        "access_rules": [
+            "@Hub 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Golden Spatula (requires King Jellyfish Jelly)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [                    
+                    "lvl_item_jf",
+                    "$not_include_level_items"
+                ]
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 5,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (requires Bubble Bowl)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @Hub 2"
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Jellyfish Fields 2",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 260,
+                "y": 200
+            }
+        ],
+        "access_rules": [
+            "@Jellyfish Fields 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 4,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Jellyfish Fields 3",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 300,
+                "y": 200
+            }
+        ],
+        "access_rules": [
+            "@Jellyfish Fields 2"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 2,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (requires Cruise Bubble)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @Hub 3"
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Jellyfish Fields 4",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 340,
+                "y": 200
+            }
+        ],
+        "access_rules": [
+            "@Jellyfish Fields 3"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "King Jellyfish Jelly",
+                "item_count": 1,
+                "chest_opened_img": "images/items/lvl_item_jf_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_jf.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Downtown Bikini Bottom 1",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 0,
+                "y": 350
+            }
+        ],
+        "access_rules": [
+            "@Hub 1, $has_spats_for_gate|Hub1->BB01"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Golden Spatula (requires Steering Wheels)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "lvl_item_bb:11",
+                    "$not_include_level_items"
+                ]
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 4,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Steering Wheel",
+                "item_count": 5,
+                "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_bb.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 2,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Downtown Bikini Bottom 2",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 0,
+                "y": 390
+            }
+        ],
+        "access_rules": [
+            "@Downtown Bikini Bottom 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 3,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Steering Wheel",
+                "item_count": 3,
+                "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_bb.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 2,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Downtown Bikini Bottom 3",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 0,
+                "y": 430
+            }
+        ],
+        "access_rules": [
+            "@Downtown Bikini Bottom 2"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Steering Wheel",
+                "item_count": 1,
+                "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_bb.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Downtown Bikini Bottom 4",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 0,
+                "y": 470
+            }
+        ],
+        "access_rules": [
+            "@Downtown Bikini Bottom 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Golden Spatula (requires Cruise Bubble)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @Hub 3"
+                ]
+            },
+            {
+                "name": "Lost Sock (requires Cruise Bubble)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @Hub 3"
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Steering Wheel",
+                "item_count": 2,
+                "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_bb.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (requires Cruise Bubble)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @Hub 3"
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Goo Lagoon 1",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 90,
+                "y": 835
+            }
+        ],
+        "access_rules": [
+            "@Hub 1, $has_spats_for_gate|Hub1->GL01"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 3,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Golden Spatula (requires Balloon Kids)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "lvl_item_gl:5",
+                    "$not_include_level_items"
+                ]
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 5,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Balloon Kid",
+                "item_count": 5,
+                "chest_opened_img": "images/items/lvl_item_gl_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_gl.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Goo Lagoon 2",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 130,
+                "y": 835
+            }
+        ],
+        "access_rules": [
+            "@Goo Lagoon 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 3,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Goo Lagoon 3",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 170,
+                "y": 835
+            }
+        ],
+        "access_rules": [
+            "@Goo Lagoon 2"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 3,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 3,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Poseidome",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 345,
+                "y": 605
+            }
+        ],
+        "access_rules": [
+            "@Hub 1, $has_spats_for_gate|Hub1->Poseidome"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Bubble Bowl",
+                "item_count": 1,
+                "chest_opened_img": "images/items/bubble_bowl_disabled.png",
+                "chest_unopened_img": "images/items/bubble_bowl.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_skills"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Rock Bottom 1",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 585,
+                "y": 280
+            }
+        ],
+        "access_rules": [
+            "@Hub 2, $has_spats_for_gate|Hub2->RB01"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 3,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Golden Spatula (requires Museum Art)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "lvl_item_rb:6",
+                    "$not_include_level_items"
+                ]
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 3,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Museum Art",
+                "item_count": 2,
+                "chest_opened_img": "images/items/lvl_item_rb_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_rb.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Rock Bottom 2",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 625,
+                "y": 280
+            }
+        ],
+        "access_rules": [
+            "@Rock Bottom 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 3,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Museum Art",
+                "item_count": 2,
+                "chest_opened_img": "images/items/lvl_item_rb_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_rb.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Rock Bottom 3",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 665,
+                "y": 280
+            }
+        ],
+        "access_rules": [
+            "@Rock Bottom 2"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 3,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 3,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Museum Art",
+                "item_count": 2,
+                "chest_opened_img": "images/items/lvl_item_rb_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_rb.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Mermalair 1",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 480,
+                "y": 755
+            }
+        ],
+        "access_rules": [
+            "@Shoals"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula (requires Bubble Bowl)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "[bubble_bowl]",
+                    "$not_include_skills"
+                ]
+            },
+            {
+                "name": "Lost Sock (requires Bubble Bowl)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills"
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (requires Bubble Bowl or Cruise Bubble)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "bubble_bowl",
+                    "cruise_bubble",
+                    "$not_include_skills"
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Mermalair 2",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 520,
+                "y": 755
+            }
+        ],
+        "access_rules": [
+            "@Mermalair 1, bubble_bowl",
+            "@Mermalair 1, $not_include_skills"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 3,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills"
+                ]
+            },
+            {
+                "name": "Golden Spatula (requires Security Override Buttons)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "bubble_bowl, lvl_item_bc:4",                    
+                    "$not_include_skills, lvl_item_bc:4",
+                    "bubble_bowl, $not_include_level_items",                    
+                    "$not_include_skills, $not_include_level_items"
+                ]
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills"
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Security Override Button",
+                "item_count": 2,
+                "chest_opened_img": "images/items/lvl_item_bc_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_bc.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills"
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 2,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Mermalair 3",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 560,
+                "y": 755
+            }
+        ],
+        "access_rules": [
+            "@Mermalair 2"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Security Override Button",
+                "item_count": 1,
+                "chest_opened_img": "images/items/lvl_item_bc_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_bc.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Mermalair 4",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 500,
+                "y": 795
+            }
+        ],
+        "access_rules": [
+            "@Mermalair 3"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Security Override Button",
+                "item_count": 1,
+                "chest_opened_img": "images/items/lvl_item_bc_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_bc.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Mermalair 5",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 540,
+                "y": 795
+            }
+        ],
+        "access_rules": [
+            "@Mermalair 2, bubble_bowl, lvl_item_bc:4",
+            "@Mermalair 2, $not_include_skills, lvl_item_bc:4",
+            "@Mermalair 2, bubble_bowl, $not_include_level_items",
+            "@Mermalair 2, $not_include_skills, $not_include_level_items"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            }
+        ]
+    },
+    {
+        "name": "Sand Mountain 1",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 500,
+                "y": 940
+            }
+        ],
+        "access_rules": [
+            "@Hub 2, $has_spats_for_gate|Hub2->SM01"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 2,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Sand Mountain 2",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 540,
+                "y": 940
+            }
+        ],
+        "access_rules": [
+            "@Sand Mountain 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 3,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 2,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Sand Mountain 3",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 580,
+                "y": 940
+            }
+        ],
+        "access_rules": [
+            "@Sand Mountain 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (requires Sandman)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "lvl_item_sm:8",
+                    "$not_include_level_items"
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Sandman",
+                "item_count": 8,
+                "chest_opened_img": "images/items/lvl_item_sm_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_sm.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Sand Mountain 4",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 620,
+                "y": 940
+            }
+        ],
+        "access_rules": [
+            "@Sand Mountain 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 3,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Industrial Park",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 745,
+                "y": 575
+            }
+        ],
+        "access_rules": [
+            "@Hub 2, bubble_bowl, $has_spats_for_gate|Hub2->IP",
+            "@Hub 2, cruise_bubble, $has_spats_for_gate|Hub2->IP",
+            "@Hub 2, $not_include_skills, $has_spats_for_gate|Hub2->IP"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Cruise Bubble",
+                "item_count": 1,
+                "chest_opened_img": "images/items/cruise_bubble_disabled.png",
+                "chest_unopened_img": "images/items/cruise_bubble.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_skills"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Kelp Forest 1",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 1020,
+                "y": 270
+            }
+        ],
+        "access_rules": [
+            "@Hub 3, $has_spats_for_gate|Hub3->KF01"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Golden Spatula (requires Lost Campers)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "lvl_item_kf1:6",
+                    "$not_include_level_items, cruise_bubble",
+                    "$not_include_level_items, $not_include_skills"
+                ]
+            },
+            {
+                "name": "Lost Camper (requires Cruise Bubble)",
+                "item_count": 3,
+                "chest_opened_img": "images/items/lvl_item_kf1_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_kf1.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills"
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 2,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (requires Bubble Bowl)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills"
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (requires Cruise Bubble)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills"
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Kelp Forest 2",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 1060,
+                "y": 270
+            }
+        ],
+        "access_rules": [
+            "@Kelp Forest 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 2,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Camper",
+                "item_count": 2,
+                "chest_opened_img": "images/items/lvl_item_kf1_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_kf1.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Kelp Forest 4",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 1100,
+                "y": 270
+            }
+        ],
+        "access_rules": [
+            "@Kelp Forest 2"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula (requires Cruise Bubble)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills"
+                ]
+            },
+            {
+                "name": "Golden Spatula (requires Cruise Bubble and Power Crystals)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "lvl_item_kf2:6",
+                    "$not_include_level_items, cruise_bubble",
+                    "$not_include_level_items, $not_include_skills"                    
+                ]
+            },
+            {
+                "name": "Power Crystal (requires Cruise Bubble)",
+                "item_count": 6,
+                "chest_opened_img": "images/items/lvl_item_kf2_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_kf2.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills"
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Lost Sock (requires Cruise Bubble)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills"
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Camper (requires Cruise Bubble)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/lvl_item_kf1_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_kf1.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills"
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (requires Cruise Bubble)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills"
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Kelp Forest 5",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 1140,
+                "y": 270
+            }
+        ],
+        "access_rules": [
+            "@Kelp Forest 4, cruise_bubble"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Flying Dutchman's Graveyard 1",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 1020,
+                "y": 910
+            }
+        ],
+        "access_rules": [
+            "@Hub 3, $has_spats_for_gate|Hub3->GY01"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Golden Spatula (requires Cruise Bubble)",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills"
+                ]
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Flying Dutchman's Graveyard 2",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 1060,
+                "y": 910
+            }
+        ],
+        "access_rules": [
+            "@Flying Dutchman's Graveyard 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Flying Dutchman's Graveyard 3",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 1100,
+                "y": 910
+            }
+        ],
+        "access_rules": [
+            "@Flying Dutchman's Graveyard 2"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula (requires Cannons)",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "lvl_item_gy:4",
+                    "$not_include_level_items"
+                ]
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Ship Cannon",
+                "item_count": 4,
+                "chest_opened_img": "images/items/lvl_item_gy_disabled.png",
+                "chest_unopened_img": "images/items/lvl_item_gy.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (requires Cannons)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "lvl_item_gy:4",
+                    "$not_include_level_items"
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Flying Dutchman's Graveyard 4",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 1140,
+                "y": 910
+            }
+        ],
+        "access_rules": [
+            "@Flying Dutchman's Graveyard 3, lvl_item_gy:4",
+            "@Flying Dutchman's Graveyard 3, $not_include_level_items"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            }
+        ]
+    },
+    {
+        "name": "Spongebob's Dream 1",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 990,
+                "y": 595
+            }
+        ],
+        "access_rules": [
+            "@Hub 3"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Golden Spatula (requires Bubble Bowl)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Spongebob's Dream 2",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 1030,
+                "y": 595
+            }
+        ],
+        "access_rules": [
+            "@Spongebob's Dream 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 2,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 3,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 2,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Spongebob's Dream 3",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 1070,
+                "y": 595
+            }
+        ],
+        "access_rules": [
+            "@Spongebob's Dream 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Spongebob's Dream 4",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 1010,
+                "y": 635
+            }
+        ],
+        "access_rules": [
+            "@Spongebob's Dream 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object",
+                "item_count": 1,
+                "chest_opened_img": "images/items/so_purple_disabled.png",
+                "chest_unopened_img": "images/items/so_purple.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Spongebob's Dream 5",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 1050,
+                "y": 635
+            }
+        ],
+        "access_rules": [
+            "@Spongebob's Dream 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            }
+        ]
+    },
+    {
+        "name": "Chum Bucket Lab",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 930,
+                "y": 510
+            }
+        ],
+        "access_rules": [
+            "@Chum Bucket, $has_spats_for_gate|Chum Bucket->CB Lab, cruise_bubble"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false
+            },
+            {
+                "name": "Golden Spatula (requires Bubble Bowl)",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Patrick",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 260,
+                "y": 590
+            }
+        ],
+        "access_rules": [
+            "@Hub 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula #1",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "sock:10"
+                ]
+            },
+            {
+                "name": "Golden Spatula #2",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "sock:20"
+                ]
+            },
+            {
+                "name": "Golden Spatula #3",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "sock:30"
+                ]
+            },
+            {
+                "name": "Golden Spatula #4",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "sock:40"
+                ]
+            },
+            {
+                "name": "Golden Spatula #5",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "sock:50"
+                ]
+            },
+            {
+                "name": "Golden Spatula #6",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "sock:60"
+                ]
+            },
+            {
+                "name": "Golden Spatula #7",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "sock:70"
+                ]
+            },
+            {
+                "name": "Golden Spatula #8",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "sock:80"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Mr. Krabs",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 140,
+                "y": 555
+            },
+            {
+                "map": "overview",
+                "x": 655,
+                "y": 640
+            },
+            {
+                "map": "overview",
+                "x": 840,
+                "y": 670
+            }
+        ],
+        "access_rules": [
+            "@Hub 1"
+        ],
+        "sections": [
+            {
+                "name": "Golden Spatula #1",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "[$has_so|1500]"
+                ]
+            },
+            {
+                "name": "Golden Spatula #2",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "[$has_so|3250]"
+                ]
+            },
+            {
+                "name": "Golden Spatula #3",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "[$has_so|5250]"
+                ]
+            },
+            {
+                "name": "Golden Spatula #4",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "[$has_so|7500]"
+                ]
+            },
+            {
+                "name": "Golden Spatula #5",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "[$has_so|10000]"
+                ]
+            },
+            {
+                "name": "Golden Spatula #6",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "[$has_so|12750]"
+                ]
+            },
+            {
+                "name": "Golden Spatula #7",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "[$has_so|16000]"
+                ]
+            },
+            {
+                "name": "Golden Spatula #8",
+                "item_count": 1,
+                "chest_opened_img": "images/items/spat_disabled.png",
+                "chest_unopened_img": "images/items/spat.png",
+                "clear_as_group": false,
+                "access_rules": [
+                    "[$has_so|19750]"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Patrick's Rock",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 220,
+                "y": 660
+            }
+        ],
+        "access_rules": [
+            "@Hub 1"
+        ],
+        "sections": [
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Shoals",
+        "map_locations": [
+            {
+                "map": "overview",
+                "x": 520,
+                "y": 715
+            }
+        ],
+        "access_rules": [
+            "@Hub 2"
+        ],
+        "sections": [
+            {
+                "name": "Lost Sock",
+                "item_count": 1,
+                "chest_opened_img": "images/items/sock_disabled.png",
+                "chest_unopened_img": "images/items/sock.png",
+                "clear_as_group": false,
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            }
+        ]
+    }
+]
