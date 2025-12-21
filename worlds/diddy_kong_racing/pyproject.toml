@@ -4,12 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.diddy_kong_racing"
-version = "0.6.3"
+version = "1.1.1"
 description = "MultiWorld: Diddy Kong Racing"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
 name = "zakwiz"
+
+[[project.authors]]
+name = "jjjj12212"
 
 [project.entry-points."mwgg.client"]
 "worlds.diddy_kong_racing.Client" = "worlds.diddy_kong_racing.Register:CLIENT_FUNCTION"
