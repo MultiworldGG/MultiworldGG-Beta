@@ -4,12 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.pmd_eos"
-version = "0.0.1"
+version = "0.3.2"
 description = "MultiWorld: Pokemon Mystery Dungeon Explorers of Sky"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
 name = "CrypticMonkey33"
+
+[[project.authors]]
+name = "Chesyon"
+
+[[project.authors]]
+name = "happylappy"
+
+[[project.authors]]
+name = "HeckaBad"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

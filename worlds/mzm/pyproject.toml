@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.mzm"
-version = "0.4.1"
+version = "0.4.2"
 description = "MultiWorld: Metroid Zero Mission"
 license = "MIT"
 license-files = [ "LICENSE",]
@@ -14,7 +14,7 @@ requires-python = ">=3.12"
 name = "lil David"
 
 [[project.authors]]
-name = "Noise"
+name = "NoiseCrush"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

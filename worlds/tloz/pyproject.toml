@@ -4,16 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.tloz"
-version = "0.0.1"
+version = "1.0.0"
 description = "MultiWorld: The Legend of Zelda"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 dependencies = [ "bsdiff4>=1.2.2",]
 [[project.authors]]
-name = "Rosalie-A"
-
-[[project.authors]]
-name = "t3hf1gm3nt"
+name = "Rosalie"
 
 [project.entry-points."mwgg.client"]
 "worlds.tloz.Client" = "worlds.tloz.Register:CLIENT_FUNCTION"
