@@ -6,23 +6,17 @@ You can read through all the options and generate a YAML [here](../player-option
 
 ## What does randomization do to this game?
 
-The Explorers of Sky Randomizer randomizes all dungeon unlocks and end game goals, as well as quite a bit more. Here's a 
-breakdown of what the checks and locations look like:  
-Checks: Dungeon Completion, Mission/Outlaw completions per dungeon, spinda drinks and drink events, legendary recruits, 
-a few shop items, ranks, and donating to the bank among other smaller things.  
+The Explorers of Sky Randomizer randomizes all dungeon unlocks and end game goals, as well as quite a bit more. Here's a breakdown of what the checks and locations look like:  
+Checks: Dungeon Completion, Mission/Outlaw completions per dungeon, spinda drinks and drink events, legendary recruits, a few shop items, ranks, and donating to the bank among other smaller things.  
 [Full List of Locations](https://github.com/CrypticMonkey33/ArchipelagoExplorersOfSky/blob/main/worlds/pmd_eos/Locations.py)  
 [SubX checks not included in location list](https://github.com/CrypticMonkey33/ArchipelagoExplorersOfSky/blob/main/worlds/pmd_eos/RomTypeDefinitions.py)
 
-Items: Dungeon Unlocks, Relic Fragment Shards (Macguffins), Special Episode unlocks, Dojo unlocks, Legendaries added to 
-Chimeco assembly, instruments (macguffins), with the addition of a lot of filler items that can be items normally retrieved
- from the main game.  
+Items: Dungeon Unlocks, Relic Fragment Shards (Macguffins), Special Episode unlocks, Dojo unlocks, Legendaries added to Chimeco assembly, instruments (macguffins), with the addition of a lot of filler items that can be items normally retrieved from the main game.  
 [Full List of Items](https://github.com/CrypticMonkey33/ArchipelagoExplorersOfSky/blob/main/worlds/pmd_eos/Items.py)
 
-There are two main goals, either beating Dialga (default) or beating Darkrai. Based on which goal you choose, the checks 
-and item lists are configured down to be manageable.
+There are two main goals, either beating Dialga (default) or beating Darkrai. Based on which goal you choose, the checks and item lists are configured down to be manageable.
 
-There is a lot of QoL added to the game configurable in the yaml, such as IQ and XP scaling, level scaling, and starter 
-options 
+There is a lot of QoL added to the game configurable in the yaml, such as IQ and XP scaling, level scaling, and starter options.
 
 
 ## How would I dump this game from my console to play it with AP?
@@ -116,3 +110,11 @@ Yes! Go talk to Torkoal in Hot Springs. Any hint that you have already claimed h
 
 Yeah, EOS has poor automatic line-breaking so if your hint is excessively long, it might make the the formatting look a little 
 weird. You should be able to see it just fine in the Archipelago Client and Server though!
+
+### I see a dungeon that looks close to the correct dungeon name, but not quite. What is that?
+
+That is one of our traps! There are lookalike dungeons (similar to lookalike items) that are silly gimmick dungeons that don't actually give you anything (and thus are traps)
+
+### My partner got removed from the party and I can't add them back!
+
+Talk to your partner in the overworld (press R), and select "Add To Team". This will force them back onto the team!

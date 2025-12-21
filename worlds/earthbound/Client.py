@@ -61,9 +61,9 @@ class EarthBoundClient(SNIClient):
     game = "EarthBound"
     patch_suffix = ".apeb"
     most_recent_connect: str = ""
-    client_version = world_version
-    hint_list = []
-    hinted_shop_locations = []
+    client_version: str = world_version
+    hint_list: list[int] = []
+    hinted_shop_locations: list[int] = []
 
     async def deathlink_kill_player(self, ctx: "SNIContext") -> None:
         from worlds._sni.context import DeathState
@@ -124,14 +124,14 @@ class EarthBoundClient(SNIClient):
         ctx.death_state = DeathState.dead
         ctx.last_death_link = time.time()
 
-    def on_package(self, ctx, cmd: str, args: dict):
+    def on_package(self, ctx, cmd: str, args: dict[str, typing.Any]) -> None:
         super().on_package(ctx, cmd, args)
 
         if cmd == "Connected":
             self.slot_data = args.get("slot_data", None)
 
-    async def validate_rom(self, ctx) -> bool:
-        from worlds._sni import snes_read
+    async def validate_rom(self, ctx: "SNIContext") -> bool:
+        from SNIClient import snes_read
 
         rom_name = await snes_read(ctx, EB_ROMHASH_START, ROMHASH_SIZE)
         apworld_version = await snes_read(ctx, WORLD_VERSION, 16)
@@ -158,8 +158,8 @@ class EarthBoundClient(SNIClient):
             await ctx.update_death_link(bool(death_link[0] & 0b1))
         return True
 
-    async def game_watcher(self, ctx) -> None:
-        from worlds._sni import snes_buffered_write, snes_flush_writes, snes_read, snes_write
+    async def game_watcher(self, ctx: "SNIContext") -> None:
+        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read, snes_write
         giygas_clear = await snes_read(ctx, GIYGAS_CLEAR, 0x1)
         game_clear = await snes_read(ctx, GAME_CLEAR, 0x1)
         item_received = await snes_read(ctx, ITEM_RECEIVED, 0x1)
@@ -193,10 +193,12 @@ class EarthBoundClient(SNIClient):
         if outgoing_energy is None: #None Catcher
             return
 
-        await ctx.send_msgs([{
-            "cmd": "Get",
-            "keys": [f"GiftBoxes;{ctx.team}"]
-        }])
+
+        if f"GiftBoxes;{ctx.team}" not in ctx.stored_data:
+            await ctx.send_msgs([{
+                "cmd": "SetNotify",
+                "keys": [f"GiftBoxes;{ctx.team}"]
+            }])
 
         # GIFTING DATA
         if f"GiftBox;{ctx.team};{ctx.slot}" not in ctx.stored_data:
@@ -220,10 +222,10 @@ class EarthBoundClient(SNIClient):
                         "keys": [f"GiftBox;{ctx.team};{ctx.slot}"]
                     }])
 
-        await ctx.send_msgs([{
-                    "cmd": "SetNotify",
-                    "keys": [f"GiftBox;{ctx.team};{ctx.slot}", f"GiftBoxes;{ctx.team}"]
-                }])
+            await ctx.send_msgs([{
+                        "cmd": "SetNotify",
+                        "keys": [f"GiftBox;{ctx.team};{ctx.slot}", f"GiftBoxes;{ctx.team}"]
+                    }])
 
         inbox = ctx.stored_data.get(f"GiftBox;{ctx.team};{ctx.slot}")
         motherbox = ctx.stored_data.get(f"GiftBoxes;{ctx.team}")
@@ -237,9 +239,6 @@ class EarthBoundClient(SNIClient):
                 item = item_id_table[gift_item_name]
             else:
                 item = trait_interpreter(gift)
-
-        if outgoing_energy is None: # None Catcher
-            return
 
             inbox_queue = await snes_read(ctx, WRAM_START + 0x3200, 1)
             # Pause if the receiver queue is full
@@ -341,7 +340,7 @@ class EarthBoundClient(SNIClient):
             outbox_full_byte = outbox_full_byte[0] & ~0x08
             await snes_write(ctx, [(WRAM_START + 0xB622, bytes([outbox_full_byte]))])
 
-        if game_clear[0] & 0x01 == 0x01:  # Goal should ignore the item queue and textbox check
+        if (game_clear[0] & 0x01 == 0x01) and not ctx.finished_game:  # Goal should ignore the item queue and textbox check
             await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
             ctx.finished_game = True
         
@@ -380,21 +379,25 @@ class EarthBoundClient(SNIClient):
                     if prog_shops:
                         await ctx.send_msgs([{"cmd": "CreateHints", "locations": prog_shops, "player": ctx.slot}])
 
-        await ctx.send_msgs([{
-                    "cmd": "Set",
-                    "key": f"{ctx.team}_{ctx.slot}_melody_status",
-                    "default": None,
-                    "want_reply": True,
-                    "operations": [{"operation": "replace", "value": int.from_bytes(melody_table, "little")}]
-                }])
+        melody_data = f"{ctx.team}_{ctx.slot}_melody_status"
+        earth_power_data = f"{ctx.team}_{ctx.slot}_earthpower"
+        current_melodies = int.from_bytes(melody_table, "little")
+        earth_power_state = int.from_bytes(earth_power_absorbed, "little")
 
-        await ctx.send_msgs([{
-                    "cmd": "Set",
-                    "key": f"{ctx.team}_{ctx.slot}_earthpower",
-                    "default": None,
-                    "want_reply": True,
-                    "operations": [{"operation": "replace", "value": int.from_bytes(earth_power_absorbed, "little")}]
-                }])
+        if melody_data not in ctx.stored_data or (ctx.stored_data[melody_data] != current_melodies) or (ctx.stored_data[earth_power_data] != earth_power_state):
+            await ctx.send_msgs([{
+                        "cmd": "Set",
+                        "key": melody_data,
+                        "default": None,
+                        "want_reply": True,
+                        "operations": [{"operation": "replace", "value": int.from_bytes(melody_table, "little")}]},
+                        {
+                        "cmd": "Set",
+                        "key": earth_power_data,
+                        "default": None,
+                        "want_reply": True,
+                        "operations": [{"operation": "replace", "value": int.from_bytes(earth_power_absorbed, "little")}]
+                    }])
 
         # death link handling goes here
         if "DeathLink" in ctx.tags and ctx.last_death_link + 1 < time.time():

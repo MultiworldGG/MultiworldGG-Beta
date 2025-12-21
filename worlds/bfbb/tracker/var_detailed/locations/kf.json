@@ -1,0 +1,753 @@
+[
+    {
+        "name": "kf",
+        "access_rules": [
+            "@hb/Industrial Park, $has_spats_for_gate|Hub3->KF01"
+        ],
+        "children": [
+            {
+                "name": "Through the Woods",
+                "map_locations": [
+                    {
+                        "map": "kf01",
+                        "x": 174,
+                        "y": 599
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Find All the Lost Campers",
+                "map_locations": [
+                    {
+                        "map": "kf01",
+                        "x": 930,
+                        "y": 387
+                    }
+                ],
+                "access_rules": [
+                    "lvl_item_kf1:6",
+                    "$not_include_level_items, cruise_bubble",
+                    "$not_include_level_items, $not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_kf1_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_kf1.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Tiki Roundup",
+                "map_locations": [
+                    {
+                        "map": "kf02",
+                        "x": 537,
+                        "y": 342
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Down in the Swamp",
+                "map_locations": [
+                    {
+                        "map": "kf02",
+                        "x": 707,
+                        "y": 388
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Through the Kelp Caves",
+                "map_locations": [
+                    {
+                        "map": "kf04",
+                        "x": 226,
+                        "y": 480
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Power Crystal Crisis",
+                "map_locations": [
+                    {
+                        "map": "kf04",
+                        "x": 1014,
+                        "y": 223
+                    }
+                ],
+                "access_rules": [
+                    "lvl_item_kf2:6",
+                    "$not_include_level_items"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Kelp Vine Slide",
+                "map_locations": [
+                    {
+                        "map": "kf05",
+                        "x": 146,
+                        "y": 624
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Beat Mermaid Man's Time",
+                "map_locations": [
+                    {
+                        "map": "kf05",
+                        "x": 1499,
+                        "y": 450
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (On high platform near Ms. Puff)",
+                "map_locations": [
+                    {
+                        "map": "kf01",
+                        "x": 1149,
+                        "y": 265
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (At waterfall)",
+                "map_locations": [
+                    {
+                        "map": "kf01",
+                        "x": 277,
+                        "y": 877
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #3 (Tiki bowling)",
+                "map_locations": [
+                    {
+                        "map": "kf01",
+                        "x": 1055,
+                        "y": 218
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (On ledge)",
+                "map_locations": [
+                    {
+                        "map": "kf02",
+                        "x": 1012,
+                        "y": 763
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (On tiki stack)",
+                "map_locations": [
+                    {
+                        "map": "kf02",
+                        "x": 1031,
+                        "y": 165
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (On ledge near entrance)",
+                "map_locations": [
+                    {
+                        "map": "kf04",
+                        "x": 1007,
+                        "y": 290
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (On slide)",
+                "map_locations": [
+                    {
+                        "map": "kf05",
+                        "x": 441,
+                        "y": 644
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Camper #1 (Near Ms Puff)",
+                "map_locations": [
+                    {
+                        "map": "kf01",
+                        "x": 1009,
+                        "y": 199
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_kf1_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_kf1.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Lost Camper #2 (Near waterfall)",
+                "map_locations": [
+                    {
+                        "map": "kf01",
+                        "x": 272,
+                        "y": 828
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_kf1_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_kf1.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Lost Camper #3 (Near slide area exit)",
+                "map_locations": [
+                    {
+                        "map": "kf01",
+                        "x": 1337,
+                        "y": 668
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_kf1_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_kf1.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Lost Camper #4",
+                "map_locations": [
+                    {
+                        "map": "kf02",
+                        "x": 231,
+                        "y": 954
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_kf1_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_kf1.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Lost Camper #5 (At gate)",
+                "map_locations": [
+                    {
+                        "map": "kf02",
+                        "x": 1340,
+                        "y": 724
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_kf1_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_kf1.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Lost Camper #6 (Near exit)",
+                "map_locations": [
+                    {
+                        "map": "kf04",
+                        "x": 230,
+                        "y": 645
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_kf1_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_kf1.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Power Crystal #1 (behind 1st gate)",
+                "map_locations": [
+                    {
+                        "map": "kf04",
+                        "x": 1180,
+                        "y": 434
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_kf2_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_kf2.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Power Crystal #2 (water room top)",
+                "map_locations": [
+                    {
+                        "map": "kf04",
+                        "x": 1639,
+                        "y": 851
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_kf2_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_kf2.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Power Crystal #3 (top near 3rd gate)",
+                "map_locations": [
+                    {
+                        "map": "kf04",
+                        "x": 889,
+                        "y": 794
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_kf2_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_kf2.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Power Crystal #4 (top big room)",
+                "map_locations": [
+                    {
+                        "map": "kf04",
+                        "x": 420,
+                        "y": 498
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_kf2_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_kf2.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Power Crystal #5 (top tall vine room)",
+                "map_locations": [
+                    {
+                        "map": "kf04",
+                        "x": 639,
+                        "y": 132
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_kf2_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_kf2.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Power Crystal #6 (top last room)",
+                "map_locations": [
+                    {
+                        "map": "kf04",
+                        "x": 240,
+                        "y": 306
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_kf2_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_kf2.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (Near waterfall)",
+                "map_locations": [
+                    {
+                        "map": "kf01",
+                        "x": 149,
+                        "y": 760
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (Bungee near waterfall)",
+                "map_locations": [
+                    {
+                        "map": "kf02",
+                        "x": 680,
+                        "y": 166
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (Top of tall room)",
+                "map_locations": [
+                    {
+                        "map": "kf04",
+                        "x": 759,
+                        "y": 357
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (On slide)",
+                "map_locations": [
+                    {
+                        "map": "kf05",
+                        "x": 276,
+                        "y": 705
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    }
+]

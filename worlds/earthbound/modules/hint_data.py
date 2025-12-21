@@ -4,9 +4,13 @@ from ..game_data.static_location_data import location_groups
 from ..modules.shopsanity import shop_locations
 from ..Options import ShopRandomizer, MagicantMode
 import struct
-
-
-def setup_hints(world) -> None:
+from BaseClasses import Location
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .. import EarthBoundWorld
+    from ..Rom import LocalRom
+    
+def setup_hints(world: "EarthBoundWorld") -> None:
     hint_types = [
         # gives a hint for a specific out of the way location in this player's world, regardless of what item it is
         "item_at_location",
@@ -235,17 +239,15 @@ def setup_hints(world) -> None:
             world.hinted_dungeons[index] = dungeon
 
 
-def parse_hint_data(world, location, rom, hint, index) -> None:
+def parse_hint_data(world: "EarthBoundWorld", location: Location, rom: "LocalRom", hint: str, index: int) -> None:
     if hint == "item_at_location":
         if world.player == location.item.player and location.item.name in character_item_table and location.item.name != "Photograph":
             player_text = "your friend "
-            # In-game text command to display party member names
-            item_text = bytearray([0x1C, 0x02, party_id_nums[location.item.name]])
+            item_text = bytearray([0x1C, 0x02, party_id_nums[location.item.name]]) # In-game text command to display party member names
         elif world.player == location.item.player:
             player_text = "your "
             if location.item.name in item_id_table:
-                # In-game text command to display item names
-                item_text = bytearray([0x1C, 0x05, item_id_table[location.item.name]])
+                item_text = bytearray([0x1C, 0x05, item_id_table[location.item.name]]) # In-game text command to display item names
             else:
                 # if the item doesn't have a name (e.g it's PSI)
                 item_text = text_encoder(location.item.name, 128)

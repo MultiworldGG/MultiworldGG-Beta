@@ -385,63 +385,63 @@ class StunTrapHandler:
         Spike_PosUpdates_keys = list(Spike_PosUpdatesAddress.keys())
         Spike_PosUpdates_values = list(Spike_PosUpdatesAddress.values())
 
-        for x in range(len(Spike_PosUpdates_keys)):
-            PosUpdates_values = list(Spike_PosUpdates_values[x])
-            PosUpdates_bytes = PosUpdates_values[0]
-            PosUpdates_onvalue = PosUpdates_values[1].to_bytes(PosUpdates_bytes, "little")
-            PosUpdates_offvalue = PosUpdates_values[2].to_bytes(PosUpdates_bytes, "little")
-            PosUpdates_address = (Spike_PosUpdates_keys[x])
-            if enable:
-                writes_list += [(PosUpdates_address, PosUpdates_offvalue, "MainRAM")]
-            else:
-                writes_list += [(PosUpdates_address, PosUpdates_onvalue, "MainRAM")]
+        #for x in range(len(Spike_PosUpdates_keys)):
+        #    PosUpdates_values = list(Spike_PosUpdates_values[x])
+        #    PosUpdates_bytes = PosUpdates_values[0]
+        #    PosUpdates_onvalue = PosUpdates_values[1].to_bytes(PosUpdates_bytes, "little")
+        #    PosUpdates_offvalue = PosUpdates_values[2].to_bytes(PosUpdates_bytes, "little")
+        #    PosUpdates_address = (Spike_PosUpdates_keys[x])
+        if enable:
+            writes_list += [(RAM.Spike_CanMove, 0x01.to_bytes(1,"little"), "MainRAM")]
+        else:
+            writes_list += [(RAM.Spike_CanMove, 0x00.to_bytes(1,"little"), "MainRAM")]
 
         Spike_VelocityUpdatesAddress = RAM.Spike_VelocityUpdates
         Spike_VelocityUpdates_keys = list(Spike_VelocityUpdatesAddress.keys())
         Spike_VelocityUpdates_values = list(Spike_VelocityUpdatesAddress.values())
 
-        for x in range(len(Spike_VelocityUpdates_keys)):
-            VelocityUpdates_values = list(Spike_VelocityUpdates_values[x])
-            VelocityUpdates_bytes = VelocityUpdates_values[0]
-            VelocityUpdates_onvalue = VelocityUpdates_values[1].to_bytes(VelocityUpdates_bytes, "little")
-            VelocityUpdates_offvalue = VelocityUpdates_values[2].to_bytes(VelocityUpdates_bytes, "little")
-            VelocityUpdates_address = (Spike_VelocityUpdates_keys[x])
-            if enable:
-                writes_list += [(VelocityUpdates_address, VelocityUpdates_offvalue, "MainRAM")]
-            else:
-                writes_list += [(VelocityUpdates_address, VelocityUpdates_onvalue, "MainRAM")]
+        #for x in range(len(Spike_VelocityUpdates_keys)):
+        #    VelocityUpdates_values = list(Spike_VelocityUpdates_values[x])
+        #    VelocityUpdates_bytes = VelocityUpdates_values[0]
+        #    VelocityUpdates_onvalue = VelocityUpdates_values[1].to_bytes(VelocityUpdates_bytes, "little")
+        #    VelocityUpdates_offvalue = VelocityUpdates_values[2].to_bytes(VelocityUpdates_bytes, "little")
+        #    VelocityUpdates_address = (Spike_VelocityUpdates_keys[x])
+        #    if enable:
+        #        writes_list += [(VelocityUpdates_address, VelocityUpdates_offvalue, "MainRAM")]
+        #    else:
+        #        writes_list += [(VelocityUpdates_address, VelocityUpdates_onvalue, "MainRAM")]
 
-        LastState = self.lastspikestate
+        #LastState = self.lastspikestate
 
-        InvalidLastStates = [0x80, 0x81, 0x82, 0x83, 0x84,0x2F,0x30,0x58]
+        #InvalidLastStates = [0x80, 0x81, 0x82, 0x83, 0x84,0x2F,0x30,0x58]
         # If enabling the Trap set it to 0x58, else set it to the last saved state
-        if enable:
-            Spikestate2_value = 0x58
-            CameraMode = 0x00
-        else:
-            #If LastState is invalid,
-            Spikestate2_value = 0x00 if LastState in InvalidLastStates else LastState
-            CameraMode = 0x01
-            self.lastspikestate = 0x00
+        #if enable:
+        #    Spikestate2_value = 0x58
+        #    CameraMode = 0x00
+        #else:
+        #    #If LastState is invalid,
+        #    Spikestate2_value = 0x00 if LastState in InvalidLastStates else LastState
+        #    CameraMode = 0x01
+        #    self.lastspikestate = 0x00
 
         #SpecialRooms = [30,83, 84, 87, 88, 90, 91]
         #BossRooms = [item for item in RAM.bossListLocal.keys() if item not in SpecialRooms]
 
-        if self.RoomType == "Special":
-            CameraModeAddress = RAM.SpecialRoom_CameraMode
-        elif self.RoomType == "Boss":
-            CameraModeAddress = RAM.Boss_CameraMode
-        else:
-            if self.RoomType == "Inside":
-                CameraModeAddress = RAM.Inside_CameraMode
-            else:
-                CameraModeAddress = RAM.Outside_CameraMode
+        #if self.RoomType == "Special":
+        #    CameraModeAddress = RAM.SpecialRoom_CameraMode
+        #elif self.RoomType == "Boss":
+        #    CameraModeAddress = RAM.Boss_CameraMode
+        #else:
+        #    if self.RoomType == "Inside":
+        #        CameraModeAddress = RAM.Inside_CameraMode
+        #    else:
+        #        CameraModeAddress = RAM.Outside_CameraMode
 
-        Spikestate2_bytes = list(Spikestate2_value.to_bytes(1, "little"))
-        CameraMode_bytes = list(CameraMode.to_bytes(1, "little"))
+        #Spikestate2_bytes = list(Spikestate2_value.to_bytes(1, "little"))
+        #CameraMode_bytes = list(CameraMode.to_bytes(1, "little"))
 
-        writes_list.append((RAM.spikeState2Address, Spikestate2_bytes, "MainRAM"))
-        writes_list.append((CameraModeAddress, CameraMode_bytes, "MainRAM"))
+        #writes_list.append((RAM.spikeState2Address, Spikestate2_bytes, "MainRAM"))
+        #writes_list.append((CameraModeAddress, CameraMode_bytes, "MainRAM"))
 
         try:
             await bizhawk.write(self.bizhawk_context, writes_list)

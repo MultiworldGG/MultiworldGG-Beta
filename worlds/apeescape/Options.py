@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from Options import Choice, Range, DeathLink, PerGameCommonOptions, OptionDict, FreeText, OptionSet, OptionCounter, \
-    Toggle
+    Toggle, OptionList, DefaultOnToggle
 from .Items import AEItem
 
 class GoalOption(Choice):
@@ -23,6 +23,29 @@ class GoalOption(Choice):
     option_mmtoken = 0x03
     option_ppmtoken = 0x04
     default = option_mm
+
+class FastTokenGoalOption(Choice):
+    """If this is enabled and the chosen Goal is `mmtoken` or `ppmtoken`, provides easy access to the end boss once enough tokens have been obtained.
+       The warp will be available in the Training Room where the first training warp would be (Water Net).
+       NOTE : Music does not change when warping. Using this warp will result in fighting your goal boss with the Time Station music.
+
+        off: Depending on goal, MM/PPM will be unlocked with world keys and will need to be accessed through Level Select
+        on: When enough tokens have been obtained,a warp taking you directly to your Goal boss in the Training Room will be activated, skipping all other requirements
+
+        Supported values: off, on
+        Default value: off
+    """
+
+    display_name = "Fast Token Goal"
+    option_off = 0x00
+    option_on = 0x01
+    default = option_off
+
+class AllowCollectOption(Toggle):
+        """
+        Allows for !collect to catch Monkeys or collect Coins containing items for other players.
+        """
+        display_name = "Allow Collect"
 
 
 class RequiredTokensOption(Range):
@@ -515,6 +538,8 @@ class CustomSpikeColor(FreeText):
 @dataclass
 class ApeEscapeOptions(PerGameCommonOptions):
     goal: GoalOption
+    fasttokengoal: FastTokenGoalOption
+    allowcollect: AllowCollectOption
     requiredtokens: RequiredTokensOption
     totaltokens: TotalTokensOption
     tokenlocations: TokenLocationsOption

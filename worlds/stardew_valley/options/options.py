@@ -559,6 +559,7 @@ class Shipsanity(Choice):
     option_full_shipment = 5
     option_full_shipment_with_fish = 7
     option_everything = 9
+    alias_all = option_everything
 
 
 class Cooksanity(Choice):
@@ -576,13 +577,11 @@ class Cooksanity(Choice):
 
 
 class Chefsanity(OptionSet):
-    """Locations for learning cooking recipes?
-    None: All cooking recipes are learned normally
-    Queen of Sauce: Every Queen of Sauce episode is a check, all Queen of Sauce recipes are items
+    """Locations for learning cooking recipes? Omitted categories are learned normally
+    Queen of Sauce: Every Queen of Sauce episode is a check
     Purchases: Every purchasable recipe is a check
     Friendship: Recipes obtained from friendship are checks
     Skills: Recipes obtained from skills are checks
-    All: Learning every cooking recipe is a check
     """
     internal_name = "chefsanity"
     display_name = "Chefsanity"

@@ -18,14 +18,14 @@
 
 ## Connecting
 
-To connect to an Archipelago server, open the in-game console (default key: `/`) and use the command `/connect [address:port] [name] [password]`. The port and password are both optional - if no port is provided then the default port of 38281 is used.
+To connect to a MultiworldGG server, open the in-game console (default key: `/`) and use the command `/connect [address:port] [name] [password]`. The port and password are both optional - if no port is provided then the default port of 38281 is used.
 **Make sure that you have connected to a server at least once before attempting to check any locations.**
 
 ## Other Commands
 
 There are a few additional commands that can be used while playing Hylics 2 randomizer:
 
-- `/disconnect` - Disconnect from an Archipelago server.
+- `/disconnect` - Disconnect from an MultiworldGG server.
 - `/popups` - Enables or disables in-game messages when an item is found or recieved.
 - `/airship` - Resummons the airship at the dock above New Muldul and teleports Wayne to it, in case the player gets stuck. Player must have the DOCK KEY to use this command.
 - `/respawn` - Moves Wayne back to the spawn position of the current area in case you get stuck. `/respawn home` will teleport Wayne back to his original starting position.

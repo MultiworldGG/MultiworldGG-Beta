@@ -32,6 +32,10 @@ Currently, the following games are supported:
 * Brotato
 * Bumper Stickers
 * Candy Box 2
+* Castlevania 64
+* Castlevania: Curse of the Moon
+* Castlevania: Dawn of Sorrow
+* Castlevania: Sympfony of the Night
 * Cat Quest
 * Celeste (+ Open World)
 * Celeste 64
@@ -44,9 +48,6 @@ Currently, the following games are supported:
 * Clique
 * CrossCode
 * Cuphead
-* Castlevania 64
-* Castlevania: Curse of the Moon
-* Castlevania: Sympfony of the Night
 * Crystal Project
 * Dark Souls II
 * Dark Souls III
@@ -121,6 +122,7 @@ Currently, the following games are supported:
 * Old School RuneScape
 * Open Rollercoaster Tycoon 2
 * Ori and the Blind Forest
+* Ori and the Will of the Wisps
 * Osu!
 * Outer Wilds
 * Overcooked 2

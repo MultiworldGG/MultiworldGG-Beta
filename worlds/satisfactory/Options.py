@@ -64,9 +64,9 @@ class ElevatorPhase(NamedRange):
     
     - **Phase 1 (Tiers 1-2)**: ~3 Hours
     - **Phase 2 (Tiers 1-4)**: ~8 Hours
-    - **Phase 3 (Tiers 1-6)**: ~2 Days
-    - **Phase 4 (Tiers 1-8)**: ~1 Week
-    - **Phase 5 (Tiers 1-9)**: ~1.5 Weeks
+    - **Phase 3 (Tiers 1-6)**: ~50 Hours
+    - **Phase 4 (Tiers 1-8)**: ~100 Hours
+    - **Phase 5 (Tiers 1-9)**: ~150 Hours
     """
     display_name = "Final Space Elevator Phase in logic"
     default = 2
@@ -147,7 +147,7 @@ class ResourceSinkPointsPerMinute(NamedRange):
         "~20 crystal oscillator/min": 60000,
         "~50 motor/min": 76000,
         "~10 heavy modular frame/min": 100000,
-        "~10 radio control unit": 300000,
+        "~10 radio control unit/min": 300000,
         "~10 fused modular frame/min": 625000,
         "~10 supercomputer/min": 1000000,
         "~10 pressure conversion cube/min": 2500000,

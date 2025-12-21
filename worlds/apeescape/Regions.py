@@ -306,6 +306,7 @@ def create_regions(world: "ApeEscapeWorld"):
     TSR1T2 = Region(AEDoor.TIME_MAIN_TRAINING.value, player, multiworld)
     TSR1T3 = Region(AEDoor.TIME_MAIN_MINIGAME.value, player, multiworld)
     TSR2T1 = Region(AEDoor.TIME_TRAINING_MAIN.value, player, multiworld)
+    TSR2T2 = Region(AEDoor.TIME_TRAINING_WATERNET.value, player, multiworld)
     TSR3T1 = Region(AEDoor.TIME_MINIGAME_MAIN.value, player, multiworld)
     
     # 1-1
@@ -978,7 +979,7 @@ def create_regions(world: "ApeEscapeWorld"):
     bg.locations += [ApeEscapeLocation(player, loc_name, location_table[loc_name], bg) for loc_name in get_array([204])]
     
     regions = [menu,
-               TS, TSR1T2, TSR1T3, TSR2T1, TSR3T1,
+               TS, TSR1T2, TSR1T3, TSR2T1, TSR2T2, TSR3T1,
                L11, noonan, jorjy, nati, trayc,
                L12, shay, drmonk, grunt, ahchoo, gornif, tyrone,
                L13, L13R1T2, L13R1T3, L13R2T1, L13R3T1, scotty, coco, jthomas, mattie, barney, rocky, moggan,

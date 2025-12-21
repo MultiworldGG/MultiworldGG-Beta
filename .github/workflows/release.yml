@@ -173,11 +173,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build-macos-app:
+  build-release-macos:
     runs-on: macos-latest
     needs: create-release
-    outputs:
-      app_name: ${{ steps.set_app_name.outputs.app_name }}
     steps:
       - name: Set RELEASE_VERSION
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
@@ -213,6 +211,7 @@ jobs:
           # set your python command;
           echo "PYTHON=python3" >> $GITHUB_ENV
           python3 -m pip install --upgrade pip --no-cache-dir
+          python3 -m pip install dmgbuild --no-cache-dir
           # Clean pip cache after install
           python3 -m pip cache purge || true
 
@@ -223,7 +222,6 @@ jobs:
           rm osx.10.12-x64.zip
 
       - name: Build
-        id: set_app_name
         run: |
           "${{ env.PYTHON }}" -m venv venv
           source venv/bin/activate
@@ -234,7 +232,6 @@ jobs:
           APP_BINARY=$(ls build/ | grep ".app" | head -n 1 || echo "")
           echo "release: $APP_BINARY"
           echo "MACOS_APP=$APP_BINARY" >> $GITHUB_ENV
-          echo "app_name=$APP_BINARY" >> $GITHUB_OUTPUT
 
       - name: Attest Build
         uses: actions/attest-build-provenance@v2
@@ -243,34 +240,6 @@ jobs:
             build/${{ env.MACOS_APP }}/Contents/MacOS/MultiworldGGLauncher
             build/${{ env.MACOS_APP }}/Contents/MacOS/MultiworldGGGenerate
             build/${{ env.MACOS_APP }}/Contents/MacOS/MultiworldGGServer
-
-      - name: Upload App Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-app
-          path: build/${{ env.MACOS_APP }}
-          retention-days: 1
-
-  package-macos-dmg:
-    runs-on: macos-latest
-    needs: [create-release, build-macos-app]
-    env:
-      MACOS_APP: ${{ needs.build-macos-app.outputs.app_name }}
-    steps:
-      - name: Set RELEASE_VERSION
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-
-      - uses: actions/checkout@v4
-
-      - name: Download App Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-app
-          path: build/${{ env.MACOS_APP }}
-
-      - name: Install dmgbuild
-        run: |
-          python3 -m pip install dmgbuild
 
       - name: Create DMG with dmgbuild
         run: |

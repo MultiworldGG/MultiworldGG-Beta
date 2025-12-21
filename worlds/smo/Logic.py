@@ -1,5 +1,5 @@
 from BaseClasses import CollectionState
-from.Items import outfits, shop_items
+from.Items import outfits, shop_items, moon_types
 
 def count_moons(self, state: CollectionState, kingdom : str, player: int) -> int:
     """ Counts the number of in logic moons available for a given kingdom.
@@ -9,7 +9,7 @@ def count_moons(self, state: CollectionState, kingdom : str, player: int) -> int
             kingdom: A string containing the kingdom name.
             player: The index of this world's player.
         Return:
-            The bytes of the yaz0 compressed SARC archive.
+            Count of the moons for Kingdom 'kingdom'
     """
     amt = 0
     player_prog_items = state.prog_items[player]
@@ -35,9 +35,10 @@ def total_moons(self, state: CollectionState, player: int) -> int:
     amt = 0
     player_prog_items = state.prog_items[player]
     for item_name in self.multiworld.worlds[player].item_names:
-        if item_name not in outfits and item_name not in shop_items:
+        if item_name in moon_types:
             amt += player_prog_items[item_name] if "Multi-Moon" not in item_name else player_prog_items[item_name] * 3
 
+    #print (amt)
     return amt
 
 

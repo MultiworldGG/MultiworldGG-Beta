@@ -1,0 +1,406 @@
+[
+    {
+        "name": "gy",
+        "access_rules": [
+            "@hb/Industrial Park, $has_spats_for_gate|Hub3->GY01"
+        ],
+        "children": [
+            {
+                "name": "Top of the Entrance Area",
+                "map_locations": [
+                    {
+                        "map": "gy01",
+                        "x": 206,
+                        "y": 924
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "A Path Through the Goo",
+                "map_locations": [
+                    {
+                        "map": "gy01",
+                        "x": 929,
+                        "y": 899
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Goo Tanker Ahoy!",
+                "map_locations": [
+                    {
+                        "map": "gy01",
+                        "x": 404,
+                        "y": 179
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Top of the Stack of Ships",
+                "map_locations": [
+                    {
+                        "map": "gy02",
+                        "x": 916,
+                        "y": 142
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Shipwreck Bungee",
+                "map_locations": [
+                    {
+                        "map": "gy02",
+                        "x": 730,
+                        "y": 562
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Destroy the Robot Ship",
+                "map_locations": [
+                    {
+                        "map": "gy03",
+                        "x": 1256,
+                        "y": 798
+                    }
+                ],
+                "access_rules": [
+                    "lvl_item_gy:4",
+                    "$not_include_level_items"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Get Aloft There, Matey!",
+                "map_locations": [
+                    {
+                        "map": "gy03",
+                        "x": 1410,
+                        "y": 296
+                    }
+                ],
+                "access_rules": [
+                    "lvl_item_gy:4",
+                    "$not_include_level_items"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Defeat the Flying Dutchman",
+                "map_locations": [
+                    {
+                        "map": "gy04",
+                        "x": 804,
+                        "y": 368
+                    }
+                ],
+                "access_rules": [
+                    "lvl_item_gy:4",
+                    "$not_include_level_items"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Lost Sock (On mast platform in goo)",
+                "map_locations": [
+                    {
+                        "map": "gy01",
+                        "x": 924,
+                        "y": 288
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (In shipwreck)",
+                "map_locations": [
+                    {
+                        "map": "gy02",
+                        "x": 349,
+                        "y": 776
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (On rope on robot ship)",
+                "map_locations": [
+                    {
+                        "map": "gy03",
+                        "x": 451,
+                        "y": 291
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Ship Cannon #1 (On deck)",
+                "map_locations": [
+                    {
+                        "map": "gy03",
+                        "x": 1093,
+                        "y": 457
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_gy_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_gy.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Ship Cannon #2 (On middle mast)",
+                "map_locations": [
+                    {
+                        "map": "gy03",
+                        "x": 1183,
+                        "y": 476
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_gy_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_gy.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Ship Cannon #3 (On front mast)",
+                "map_locations": [
+                    {
+                        "map": "gy03",
+                        "x": 1230,
+                        "y": 278
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_gy_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_gy.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Ship Cannon #4 (Near steering wheel)",
+                "map_locations": [
+                    {
+                        "map": "gy03",
+                        "x": 1162,
+                        "y": 746
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_gy_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_gy.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (On left wall near tubelet)",
+                "map_locations": [
+                    {
+                        "map": "gy01",
+                        "x": 849,
+                        "y": 55
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (On mast under 1st ship wall jump section)",
+                "map_locations": [
+                    {
+                        "map": "gy02",
+                        "x": 490,
+                        "y": 533
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (On top of mast)",
+                "map_locations": [
+                    {
+                        "map": "gy03",
+                        "x": 1480,
+                        "y": 686
+                    }
+                ],
+                "access_rules": [
+                    "lvl_item_gy:4",
+                    "$not_include_level_items"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    }
+]

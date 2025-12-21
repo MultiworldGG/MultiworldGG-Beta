@@ -35,17 +35,14 @@ class NineSolsWorld(World):
     author: str = "Ixrec"
     web = NineSolsWebWorld()
 
-    jade_costs = 'vanilla'
-    # TODO: alternate spawns, etc
-
     # this is how we tell the Universal Tracker we want to use re_gen_passthrough
     @staticmethod
     def interpret_slot_data(slot_data: dict[str, Any]) -> dict[str, Any]:
         return slot_data
 
-    # and this is how we tell Universal Tracker we don't need the yaml
+    # Universal Tracker configuration
     ut_can_gen_without_yaml = True
-
+    glitches_item_name = "UT Glitch Logic"
     tracker_world: ClassVar = {
         "map_page_folder": "ut_map_page",
         "map_page_maps": "maps.json",
@@ -53,6 +50,13 @@ class NineSolsWorld(World):
         "map_page_setting_key": "{player}_{team}_nine_sols_area",
         "map_page_index": map_page_index
     }
+
+    def __init__(self, multiworld, player):
+        super(NineSolsWorld, self).__init__(multiworld, player)
+
+        # initial values of instance attributes (*not* class attributes)
+        self.jade_costs = 'vanilla'
+        self.using_ut = False
 
     def generate_early(self) -> None:
         if self.options.jade_cost_max < self.options.jade_cost_min:
@@ -62,12 +66,14 @@ class NineSolsWorld(World):
         if hasattr(self.multiworld, "generation_is_fake"):
             if hasattr(self.multiworld, "re_gen_passthrough"):
                 if "Nine Sols" in self.multiworld.re_gen_passthrough:
+                    self.using_ut = True
                     slot_data = self.multiworld.re_gen_passthrough["Nine Sols"]
                     self.options.seals_for_eigong.value = slot_data['seals_for_eigong']
                     self.options.seals_for_prison.value = slot_data['seals_for_prison']
                     self.options.seals_for_ethereal.value = slot_data['seals_for_ethereal']
                     self.options.skip_soulscape_platforming.value = slot_data['skip_soulscape_platforming']
                     self.options.first_root_node = FirstRootNode.from_text(slot_data['first_root_node_name'])
+                    self.options.logic_difficulty.value = slot_data.get('logic_difficulty', 0)
             return
 
         # generate game-specific randomizations separate from AP items/locations
@@ -88,7 +94,7 @@ class NineSolsWorld(World):
     item_name_groups = item_name_groups
 
     def create_item(self, name: str) -> NineSolsItem:
-        return create_item(self.player, name)
+        return create_item(self, name)
 
     def create_items(self) -> None:
         create_items(self)
@@ -119,6 +125,7 @@ class NineSolsWorld(World):
             'seals_for_eigong',
             'seals_for_prison',
             'seals_for_ethereal',
+            'logic_difficulty',
         )
         slot_data["first_root_node_name"] = self.options.first_root_node.current_key  # we want strings instead of ints
         # more client/mod features, these are only in the apworld because we want them fixed per-slot/at gen time

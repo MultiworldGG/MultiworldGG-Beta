@@ -7,7 +7,7 @@ files = ['build/' + application]
 symlinks = {'Applications': '/Applications'}
 
 format = 'UDZO'
-size = '500M'
+size = '750m'
 
 window_rect = ((100, 100), (640, 280))
 icon_locations = {

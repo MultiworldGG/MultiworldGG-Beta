@@ -1,5 +1,6 @@
 
 from BaseClasses import Tutorial
+from enum import Enum
 from worlds.AutoWorld import World, WebWorld
 from .Data import meta_table
 from .Helpers import convert_to_long_string
@@ -10,7 +11,7 @@ from .Helpers import convert_to_long_string
 class ManualWeb(WebWorld):
     tutorials = [Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up manual game integration for Archipelago multiworld games.",
+        "A guide to setting up manual game integration for MultiworldGG multiworld games.",
         "English",
         "setup_en.md",
         "setup/en",
@@ -48,7 +49,7 @@ def set_world_webworld(web: WebWorld) -> WebWorld:
                 # Converting json to Tutorials
                 tutorials.append(Tutorial(
                     tutorial.get("name", "Multiworld Setup Guide"),
-                    tutorial.get("description", "A guide to setting up manual game integration for Archipelago multiworld games."),
+                    tutorial.get("description", "A guide to setting up manual game integration for MultiworldGG multiworld games."),
                     tutorial.get("language", "English"),
                     tutorial.get("file_name", "setup_en.md"),
                     tutorial.get("link", "setup/en"),

@@ -1,0 +1,650 @@
+[
+    {
+        "name": "sm",
+        "access_rules": [
+            "@hb/Poseidome, $has_spats_for_gate|Hub2->SM01"
+        ],
+        "children": [
+            {
+                "name": "Frosty Bungee",
+                "map_locations": [
+                    {
+                        "map": "sm01",
+                        "x": 756,
+                        "y": 858
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Top of the Lodge",
+                "map_locations": [
+                    {
+                        "map": "sm01",
+                        "x": 636,
+                        "y": 429
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Defeat Robots on Guppy Mound",
+                "map_locations": [
+                    {
+                        "map": "sm02",
+                        "x": 1543,
+                        "y": 908
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Beat Mrs. Puff's Time",
+                "map_locations": [
+                    {
+                        "map": "sm02",
+                        "x": 409,
+                        "y": 705
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Defeat Robots on Flounder Hill",
+                "map_locations": [
+                    {
+                        "map": "sm03",
+                        "x": 45,
+                        "y": 775
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Beat Bubble Buddy's Time",
+                "map_locations": [
+                    {
+                        "map": "sm03",
+                        "x": 1805,
+                        "y": 244
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Defeat Robots on Sand Mountain",
+                "map_locations": [
+                    {
+                        "map": "sm04",
+                        "x": 975,
+                        "y": 880
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Beat Larry's Time",
+                "map_locations": [
+                    {
+                        "map": "sm04",
+                        "x": 284,
+                        "y": 883
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (Below bridge)",
+                "map_locations": [
+                    {
+                        "map": "sm01",
+                        "x": 874,
+                        "y": 281
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (Snowman)",
+                "map_locations": [
+                    {
+                        "map": "sm01",
+                        "x": 969,
+                        "y": 614
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (Ledge near start)",
+                "map_locations": [
+                    {
+                        "map": "sm02",
+                        "x": 143,
+                        "y": 250
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (Underpass)",
+                "map_locations": [
+                    {
+                        "map": "sm02",
+                        "x": 880,
+                        "y": 193
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #3 (Ledge near end)",
+                "map_locations": [
+                    {
+                        "map": "sm02",
+                        "x": 1488,
+                        "y": 525
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (At end after destroying all Sandmans)",
+                "map_locations": [
+                    {
+                        "map": "sm03",
+                        "x": 108,
+                        "y": 751
+                    }
+                ],
+                "access_rules": [
+                    "lvl_item_sm:8",
+                    "$not_include_level_items"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (On last tunnel near end)",
+                "map_locations": [
+                    {
+                        "map": "sm03",
+                        "x": 185,
+                        "y": 558
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (Top ledge near start)",
+                "map_locations": [
+                    {
+                        "map": "sm04",
+                        "x": 398,
+                        "y": 584
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (In hidden cave)",
+                "map_locations": [
+                    {
+                        "map": "sm04",
+                        "x": 892,
+                        "y": 185
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #3 (On ice platforms)",
+                "map_locations": [
+                    {
+                        "map": "sm04",
+                        "x": 520,
+                        "y": 52
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Sandman #1 (At Start)",
+                "map_locations": [
+                    {
+                        "map": "sm03",
+                        "x": 1833,
+                        "y": 250
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_sm_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_sm.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Sandman #2 (Lower path after first turn)",
+                "map_locations": [
+                    {
+                        "map": "sm03",
+                        "x": 1570,
+                        "y": 351
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_sm_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_sm.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Sandman #3 (On shortcut)",
+                "map_locations": [
+                    {
+                        "map": "sm03",
+                        "x": 1525,
+                        "y": 234
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_sm_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_sm.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Sandman #4 (On right spiral)",
+                "map_locations": [
+                    {
+                        "map": "sm03",
+                        "x": 940,
+                        "y": 493
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_sm_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_sm.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Sandman #5 (On left spiral)",
+                "map_locations": [
+                    {
+                        "map": "sm03",
+                        "x": 976,
+                        "y": 577
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_sm_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_sm.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Sandman #6 (Middle path of 1st 3-way split near end)",
+                "map_locations": [
+                    {
+                        "map": "sm03",
+                        "x": 337,
+                        "y": 437
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_sm_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_sm.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Sandman #7 (Left path of 1st 3-way split near end)",
+                "map_locations": [
+                    {
+                        "map": "sm03",
+                        "x": 278,
+                        "y": 469
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_sm_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_sm.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Sandman #8 (On turn after cave)",
+                "map_locations": [
+                    {
+                        "map": "sm03",
+                        "x": 556,
+                        "y": 247
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_sm_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_sm.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (On ledge near entrance)",
+                "map_locations": [
+                    {
+                        "map": "sm01",
+                        "x": 1115,
+                        "y": 737
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object #1 (On slide under tikis)",
+                "map_locations": [
+                    {
+                        "map": "sm02",
+                        "x": 1309,
+                        "y": 256
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object #2 (On stone arch)",
+                "map_locations": [
+                    {
+                        "map": "sm02",
+                        "x": 572,
+                        "y": 16
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (In cave on drop to cave exit)",
+                "map_locations": [
+                    {
+                        "map": "sm04",
+                        "x": 886,
+                        "y": 281
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    }
+]

@@ -1,1 +1,0 @@
-This is a repository for HIP archives to be imported and used in custom levels in games editable with Industrial Park.

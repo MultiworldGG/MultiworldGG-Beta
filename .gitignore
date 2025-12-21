@@ -68,6 +68,7 @@ Output Logs/
 /installdelete.iss
 /data/user.kv
 /datapackage
+/datapackage_export.json
 /custom_worlds
 /certs
 /tools/access_token
@@ -78,6 +79,7 @@ __pycache__/
 
 # C extensions
 *.dll
+!worlds/bfbb/inc/IP/*.dll
 
 # Distribution / packaging
 .Python

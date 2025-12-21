@@ -115,6 +115,12 @@ This is normal. The client becomes unresponsive while patching, which can take a
 
 ### I get an error during patching...
 
+#### Error: `No module named [...]`
+
+This means the client is missing a required Python library. The most common cause is that the additional libraries were not installed correctly.  
+
+Double-check that you copied **all** files from the included `lib\` folder in the download into your Archipelago `lib\` folder. If anything is missing, reinstall them and try again.
+
 #### Error: `Failed to resolve Python.Runtime.Loader.Initialize from [...]\lib\pythonnet\runtime\Python.Runtime.dll`
 
 Windows may block this DLL included in the download. To fix this:

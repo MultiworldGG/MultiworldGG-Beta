@@ -53,6 +53,25 @@ if typing.TYPE_CHECKING:
 def normalize_tag(tag: str) -> str:
     return tag[1:] if tag and tag[0].lower() == "v" else tag
 
+def tuplize_version(version: str) -> Version:
+    return Version(*(int(piece) for piece in version.split(".")))
+
+
+class Version(typing.NamedTuple):
+    major: int
+    minor: int
+    build: int
+
+    def as_simple_string(self) -> str:
+        return ".".join(str(item) for item in self)
+
+
+__version__ = "0.6.6"
+version_tuple = tuplize_version(__version__)
+
+instance_name = "MultiworldGG"
+archipelago_guid = "{{918BA46A-FAB8-460C-9DFF-AE691E1C865D}}"
+
 def get_config_file_path() -> str:
     if getattr(sys, 'frozen', False):
         # When frozen, the executable's directory is the base path.

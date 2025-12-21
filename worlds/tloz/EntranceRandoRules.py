@@ -11,22 +11,28 @@ option_open = 3
 option_major_open = 4
 option_all = 5
 
-def has_bombs(state: CollectionState, player: int):
-    return state.has_group("weapons", player)
+def has_sword(state: CollectionState, player: int, options: World):
+    return (state.has("Sword", player) or state.has("White Sword", player) or state.has("Magical Sword", player))
 
-def has_candle(state: CollectionState, player: int):
+def can_farm(state: CollectionState, player: int, options: World):
+    return (has_sword(state, player, options) or state.has("Magical Rod", player) or state.has("Red Candle", player) or (options.BlueCandleFighting and state.has("Candle", player)))
+
+def has_bombs(state: CollectionState, player: int, options: World):
+    return can_farm(state, player, options)
+
+def has_candle(state: CollectionState, player: int, options: World):
     return state.has_group("candles", player)
 
-def has_power_bracelet(state: CollectionState, player: int):
+def has_power_bracelet(state: CollectionState, player: int, options: World):
     return state.has("Power Bracelet", player)
 
-def has_raft(state: CollectionState, player: int):
+def has_raft(state: CollectionState, player: int, options: World):
     return state.has("Raft", player)
 
-def has_recorder(state: CollectionState, player: int):
+def has_recorder(state: CollectionState, player: int, options: World):
     return state.has("Recorder", player)
 
-def has_anything(state: CollectionState, player: int):
+def has_anything(state: CollectionState, player: int, options: World):
     return True
 
 

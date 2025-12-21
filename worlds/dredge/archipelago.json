@@ -1,7 +1,9 @@
 {
-    "game": "Dredge",
+    "game": "DREDGE",
     "authors": ["Alextric"],
     "igdb_id": 164867,
     "minimum_ap_version": "0.6.3",
-    "world_version": "0.0.1"
+    "world_version": "0.0.1",
+    "compatible_version": 7,
+    "version": 7
 }

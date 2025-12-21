@@ -1,0 +1,725 @@
+[
+    {
+        "name": "hb",
+        "children": [
+            {
+                "name": "On Top of the Pineapple",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 49,
+                        "y": 541
+                    }
+                ],
+                "access_rules": [
+                    "spat:1"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "On Top of Shady Shoals",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 528,
+                        "y": 722
+                    }
+                ],
+                "access_rules": [
+                    "@hb/Poseidome, bubble_bowl",
+                    "@hb/Poseidome, $not_include_skills",
+                    "@hb/Poseidome, cruise_bubble",
+                    "@hb/Poseidome, $not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "On Top of the Chum Bucket",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 934,
+                        "y": 482
+                    }
+                ],
+                "access_rules": [
+                    "@hb/Industrial Park, cruise_bubble",
+                    "@hb/Industrial Park, $not_include_skills"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Pineapple",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 98,
+                        "y": 535
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "SpongeBob's Closet",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    },
+                    {
+                        "name": "Lost Sock (Library)",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false,
+                        "visibility_rules": [
+                            "$include_socks"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "Squidward",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 161,
+                        "y": 599
+                    }
+                ],
+                "access_rules": [
+                    "spat:1"
+                ],
+                "sections": [
+                    {
+                        "name": "Annoy Squidward",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    },
+                    {
+                        "name": "Lost Sock (Destroy furniture)",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false,
+                        "visibility_rules": [
+                            "$include_socks"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "Ambush at the Tree Dome",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 479,
+                        "y": 496
+                    }
+                ],
+                "access_rules": [
+                    "@hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Krusty Krab",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 886,
+                        "y": 758
+                    }
+                ],
+                "access_rules": [
+                    "@hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "Infestation at the Krusty Krab",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    },
+                    {
+                        "name": "Lost Sock (Destroy furniture)",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false,
+                        "visibility_rules": [
+                            "$include_socks"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "A Wall Jump in the Bucket",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 865,
+                        "y": 557
+                    }
+                ],
+                "access_rules": [
+                    "@hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Poseidome",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 342,
+                        "y": 612
+                    }
+                ],
+                "access_rules": [
+                    "$has_spats_for_gate|Hub1->Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "Defeat Robo-Sandy",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    },
+                    {
+                        "name": "Bubble Bowl",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/bubble_bowl_disabled.png",
+                        "chest_unopened_img": "images/items/bubble_bowl.png",
+                        "clear_as_group": false,
+                        "visibility_rules": [
+                            "$include_skills"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "Industrial Park",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 748,
+                        "y": 572
+                    }
+                ],
+                "access_rules": [
+                    "$has_spats_for_gate|Hub2->IP, bubble_bowl",
+                    "$has_spats_for_gate|Hub2->IP, $not_include_skills, @hb/Poseidome",
+                    "$has_spats_for_gate|Hub2->IP, cruise_bubble",
+                    "$has_spats_for_gate|Hub2->IP, $not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "Defeat Robo-Patrick",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    },
+                    {
+                        "name": "Cruise Bubble",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/cruise_bubble_disabled.png",
+                        "chest_unopened_img": "images/items/cruise_bubble.png",
+                        "clear_as_group": false,
+                        "visibility_rules": [
+                            "$include_skills"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "Chum Bucket Lab",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 905,
+                        "y": 557
+                    }
+                ],
+                "access_rules": [
+                    "$has_spats_for_gate|Chum Bucket->CB Lab, cruise_bubble",
+                    "$has_spats_for_gate|Chum Bucket->CB Lab, $not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "KAH - RAH - TAE!",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    },
+                    {
+                        "name": "The Small Shall Rule... Or No",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Patrick",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 257,
+                        "y": 595
+                    }
+                ],
+                "access_rules": [
+                    "spat:1"
+                ],
+                "sections": [
+                    {
+                        "name": "Lost Sock (Patrick)",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false,
+                        "visibility_rules": [
+                            "$include_socks"
+                        ]
+                    },
+                    {
+                        "name": "Return 10 Socks To Patrick",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "sock:10"
+                        ]
+                    },
+                    {
+                        "name": "Return 20 Socks To Patrick",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "sock:20"
+                        ]
+                    },
+                    {
+                        "name": "Return 30 Socks To Patrick",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "sock:30"
+                        ]
+                    },
+                    {
+                        "name": "Return 40 Socks To Patrick",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "sock:40"
+                        ]
+                    },
+                    {
+                        "name": "Return 50 Socks To Patrick",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "sock:50"
+                        ]
+                    },
+                    {
+                        "name": "Return 60 Socks To Patrick",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "sock:60"
+                        ]
+                    },
+                    {
+                        "name": "Return 70 Socks To Patrick",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "sock:70"
+                        ]
+                    },
+                    {
+                        "name": "Return 80 Socks To Patrick",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "sock:80"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "Mr. Krabs",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 140,
+                        "y": 555
+                    },
+                    {
+                        "map": "overview",
+                        "x": 655,
+                        "y": 640
+                    },
+                    {
+                        "map": "overview",
+                        "x": 840,
+                        "y": 670
+                    }
+                ],
+                "access_rules": [
+                    "spat:1"
+                ],
+                "sections": [
+                    {
+                        "name": "Pay Mr. Krabs 3000 Shiny Objects",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "[$has_so|1500]"
+                        ]
+                    },
+                    {
+                        "name": "Pay Mr. Krabs 3500 Shiny Objects",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "[$has_so|3250]"
+                        ]
+                    },
+                    {
+                        "name": "Pay Mr. Krabs 4000 Shiny Objects",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "[$has_so|5250]"
+                        ]
+                    },
+                    {
+                        "name": "Pay Mr. Krabs 4500 Shiny Objects",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "[$has_so|7500]"
+                        ]
+                    },
+                    {
+                        "name": "Pay Mr. Krabs 5000 Shiny Objects",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "[$has_so|10000]"
+                        ]
+                    },
+                    {
+                        "name": "Pay Mr. Krabs 5500 Shiny Objects",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "[$has_so|12750]"
+                        ]
+                    },
+                    {
+                        "name": "Pay Mr. Krabs 6500 Shiny Objects",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "[$has_so|16000]"
+                        ]
+                    },
+                    {
+                        "name": "Pay Mr. Krabs 7500 Shiny Objects",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false,
+                        "access_rules": [
+                            "[$has_so|19750]"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "Lost Sock (Behind KK under trash)",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 904,
+                        "y": 816
+                    }
+                ],
+                "access_rules": [
+                    "@hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (Fountain)",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 578,
+                        "y": 686
+                    }
+                ],
+                "access_rules": [
+                    "@hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Patrick's Rock",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 236,
+                        "y": 648
+                    }
+                ],
+                "access_rules": [
+                    "spat:1"
+                ],
+                "sections": [
+                    {
+                        "name": "Lost Sock (Destroy furniture)",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false,
+                        "visibility_rules": [
+                            "$include_socks"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "Lost Sock (Shoals)",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 510,
+                        "y": 682
+                    }
+                ],
+                "access_rules": [
+                    "@hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Golden Underwear #1",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 104,
+                        "y": 598
+                    }
+                ],
+                "access_rules": [
+                    "spat:1"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/golden_underwear_disabled.png",
+                        "chest_unopened_img": "images/items/golden_underwear.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_golden_underwear"
+                ]
+            },
+            {
+                "name": "Golden Underwear #2",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 696,
+                        "y": 443
+                    }
+                ],
+                "access_rules": [
+                    "@hb/Poseidome, bubble_bowl",
+                    "@hb/Poseidome, $not_include_skills",
+                    "@hb/Poseidome, cruise_bubble",
+                    "@hb/Poseidome, $not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/golden_underwear_disabled.png",
+                        "chest_unopened_img": "images/items/golden_underwear.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_golden_underwear"
+                ]
+            },
+            {
+                "name": "Golden Underwear #3",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 968,
+                        "y": 647
+                    }
+                ],
+                "access_rules": [
+                    "@hb/Industrial Park, cruise_bubble",
+                    "@hb/Industrial Park, $not_include_skills"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/golden_underwear_disabled.png",
+                        "chest_unopened_img": "images/items/golden_underwear.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_golden_underwear"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (Behind Chum Bucket)",
+                "map_locations": [
+                    {
+                        "map": "overview",
+                        "x": 849,
+                        "y": 428
+                    }
+                ],
+                "access_rules": [
+                    "@hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    }
+]

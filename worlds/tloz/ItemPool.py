@@ -2,7 +2,8 @@ from collections import Counter
 
 from BaseClasses import ItemClassification
 from .Locations import level_locations, all_level_locations, standard_level_locations, shop_locations
-from .Options import TriforceLocations, StartingPosition, is_open_cave_shuffled, EntranceShuffle
+from .Options import TriforceLocations, StartingPosition, StartingWeapon, is_open_cave_shuffled, EntranceShuffle
+import time
 
 # Swords are in starting_weapons
 overworld_items = {
@@ -83,6 +84,7 @@ def generate_itempool(tlozworld):
             location.item.classification = ItemClassification.progression
 
 def get_pool_core(world):
+    print("Pool Core start")
     random = world.random
 
     pool = []
@@ -106,7 +108,12 @@ def get_pool_core(world):
                               if weapon not in world.options.non_local_items and weapon not in guaranteed_shop_items]
     if not final_starting_weapons:
         final_starting_weapons = ["Sword"]
-    starting_weapon = random.choice(final_starting_weapons)
+    if world.options.StartingWeapon == StartingWeapon.option_bluecandle:
+        starting_weapon = "Candle"
+    elif world.options.StartingWeapon == StartingWeapon.option_sword:
+        starting_weapon = "Sword"
+    else:
+        starting_weapon = random.choice(final_starting_weapons)
     if (world.options.StartingPosition == StartingPosition.option_safe
             or is_open_cave_shuffled(world.options.EntranceShuffle.value)): # Major, Major Open, and All
         placed_items[start_weapon_locations[0]] = starting_weapon

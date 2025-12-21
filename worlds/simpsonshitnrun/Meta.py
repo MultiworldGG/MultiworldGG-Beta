@@ -9,7 +9,7 @@ from .Data import meta_table
 class SimpsonsHitAndRunWeb(WebWorld):
     tutorials = [Tutorial(
         "Multiworld Setup Guide",
-        "A guide to setting up Simpsons Hit & Run for Archipelago multiworld games.",
+        "A guide to setting up Simpsons Hit & Run for MultiworldGG multiworld games.",
         "English",
         "setup_en.md",
         "setup/en",

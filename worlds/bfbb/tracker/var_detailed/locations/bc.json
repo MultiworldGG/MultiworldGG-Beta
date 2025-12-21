@@ -1,0 +1,538 @@
+[
+    {
+        "name": "bc",
+        "access_rules": [
+            "@hb/Poseidome"
+        ],
+        "children": [
+            {
+                "name": "Top of the Entrance Area",
+                "map_locations": [
+                    {
+                        "map": "bc01",
+                        "x": 170,
+                        "y": 425
+                    }
+                ],
+                "access_rules": [
+                    "[bubble_bowl]",
+                    "[$not_include_skills], [@hb/Poseidome]"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Top of the Computer Area",
+                "map_locations": [
+                    {
+                        "map": "bc02",
+                        "x": 496,
+                        "y": 851
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Shut Down the Security System",
+                "map_locations": [
+                    {
+                        "map": "bc02",
+                        "x": 543,
+                        "y": 903
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl, lvl_item_bc:4",
+                    "bubble_bowl, $not_include_level_items",
+                    "$not_include_skills, @hb/Poseidome, lvl_item_bc:4",
+                    "$not_include_skills, @hb/Poseidome, $not_include_level_items"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "The Funnel Machines",
+                "map_locations": [
+                    {
+                        "map": "bc02",
+                        "x": 968,
+                        "y": 333
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "The Spinning Towers of Power",
+                "map_locations": [
+                    {
+                        "map": "bc02",
+                        "x": 683,
+                        "y": 353
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Top of the Security Tunnel",
+                "map_locations": [
+                    {
+                        "map": "bc03",
+                        "x": 843,
+                        "y": 168
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Complete the Rolling Ball Room",
+                "map_locations": [
+                    {
+                        "map": "bc04",
+                        "x": 732,
+                        "y": 406
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Defeat Prawn",
+                "map_locations": [
+                    {
+                        "map": "bc02",
+                        "x": 502,
+                        "y": 15
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl, lvl_item_bc:4",
+                    "bubble_bowl, $not_include_level_items",
+                    "$not_include_skills, @hb/Poseidome, lvl_item_bc:4",
+                    "$not_include_skills, @hb/Poseidome, $not_include_level_items"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Lost Sock (Bungee)",
+                "map_locations": [
+                    {
+                        "map": "bc01",
+                        "x": 775,
+                        "y": 808
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (On light)",
+                "map_locations": [
+                    {
+                        "map": "bc02",
+                        "x": 978,
+                        "y": 552
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (Conveyor clamp)",
+                "map_locations": [
+                    {
+                        "map": "bc03",
+                        "x": 855,
+                        "y": 662
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (Behind tilting platform near end)",
+                "map_locations": [
+                    {
+                        "map": "bc04",
+                        "x": 212,
+                        "y": 625
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Security Override Button #1 (At Computer)",
+                "map_locations": [
+                    {
+                        "map": "bc02",
+                        "x": 478,
+                        "y": 917
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bc_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bc.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Security Override Button #2 (At Lasers)",
+                "map_locations": [
+                    {
+                        "map": "bc02",
+                        "x": 656,
+                        "y": 368
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bc_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bc.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Security Override Button #3 (At Top)",
+                "map_locations": [
+                    {
+                        "map": "bc03",
+                        "x": 684,
+                        "y": 314
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bc_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bc.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Security Override Button #4 (Next to ramp)",
+                "map_locations": [
+                    {
+                        "map": "bc04",
+                        "x": 550,
+                        "y": 400
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bc_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bc.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (Duplicatotron bowling)",
+                "map_locations": [
+                    {
+                        "map": "bc01",
+                        "x": 755,
+                        "y": 418
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "cruise_bubble",
+                    "$not_include_skills, @hb/Poseidome",
+                    "$not_include_skills, @hb/Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object #1 (In hidden cave near entrance)",
+                "map_locations": [
+                    {
+                        "map": "bc02",
+                        "x": 1325,
+                        "y": 490
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object #2 (On slide)",
+                "map_locations": [
+                    {
+                        "map": "bc02",
+                        "x": 900,
+                        "y": 150
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (Above disco floor at 2nd tunnel entrance)",
+                "map_locations": [
+                    {
+                        "map": "bc03",
+                        "x": 575,
+                        "y": 650
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (In ball dispenser)",
+                "map_locations": [
+                    {
+                        "map": "bc04",
+                        "x": 475,
+                        "y": 250
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_skills, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    }
+]

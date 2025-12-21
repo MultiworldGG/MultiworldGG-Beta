@@ -421,7 +421,77 @@ hundoCoinsCount = {
     0x18: 10 # Specter
     #0x1E: 0 # Specter2
 }
-
+cointable = {
+    301,
+    302,
+    303,
+    306,
+    307,
+    308,
+    309,
+    311,
+    312,
+    313,
+    314,
+    317,
+    295,
+    296,
+    297,
+    298,
+    299,
+    321,
+    323,
+    324,
+    325,
+    328,
+    329,
+    330,
+    331,
+    332,
+    334,
+    335,
+    290,
+    291,
+    292,
+    293,
+    294,
+    337,
+    338,
+    339,
+    340,
+    341,
+    344,
+    345,
+    346,
+    349,
+    350,
+    353,
+    354,
+    355,
+    358,
+    359,
+    364,
+    366,
+    373,
+    374,
+    375,
+    377,
+    378,
+    379,
+    380,
+    385,
+    384,
+    382,
+    374,
+    375,
+    377,
+    378,
+    379,
+    380,
+    385,
+    384,
+    382,
+}
 # These values are the room ID of the room, and the door ID the room is entered through. To get these, stand near the transition that leads to that entrance. As an example, {45, 5} will spawn Spike at the top of the Bell Tower, as though he entered from outside. 
 # Array order: {TargetRoom, TargetDoor, Transition ID}
 # -- TargetRoom     : (Exit) If you want to warp to this Room, set the Entering door's TargetRoomAddress value to this
@@ -609,7 +679,7 @@ doorTransitions = {
     AEDoor.MM_SPECTER1_ROOM.value: [83, 0, 0],
     AEDoor.MM_MONKEY_HEAD_CASTLE_MAIN.value: [84, 0, 1],
     AEDoor.MM_SIDE_ENTRY_OUTSIDE_CASTLE.value: [85, 0, 1],
-    # AEDoor.PPM_ENTRY.value: [87, 0, 0], # IHNN note - noticed this was missing, have not validated the room.
+    AEDoor.PPM_ENTRY.value: [87, 0, 0], # IHNN note - noticed this was missing, have not validated the room.
     AEDoor.TIME_ENTRY.value: [88, 0, 0],
     AEDoor.TIME_MAIN_TRAINING.value: [88, 3, 1],
     AEDoor.TIME_MAIN_MINIGAME.value: [88, 2, 2],
@@ -682,7 +752,7 @@ def createLocationGroups():
             GROUPED_LOCATIONS.setdefault("Specter Coins", []).append(locname)
         elif ("Specter" in locname and "Factory" not in locname) or "Boss" in locname or "Jake" in locname or "Professor" in locname:
             GROUPED_LOCATIONS.setdefault("Bosses", []).append(locname)
-        elif "Monkey" in locname and "Madness" not in locname:
+        elif ("Monkey" in locname and "Monkey Madness" not in locname) or ("Monkey Madness Monkey" in locname):
             GROUPED_LOCATIONS.setdefault("Monkeys", []).append(locname)
 
 createLocationGroups()

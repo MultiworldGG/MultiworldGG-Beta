@@ -57,6 +57,11 @@ class EnableNightwatchersDLC(Toggle):
     """Enable Nightwatchers DLC related locations: Bats, Bamboo Flats, and Rocky Ravine."""
     display_name = "Enable Nightwatchers DLC"
 
+class EnableBiomeKeys(DefaultOnToggle):
+    """Enable biome keys, progression items that prevent you from playing in a biome until
+    receiving the corresponding key."""
+    display_name = "Enable Biome Keys"
+
 class GroveExpeditionLocations(Range):
     """Number of locations to place in the Coastal Grove's Strider Port. Will be ignored if DLC is off."""
     display_name = "Coastal Grove Expedition Locations"
@@ -95,6 +100,7 @@ class AgainstTheStormOptions(PerGameCommonOptions):
     required_seal_tasks: RequiredSealTasks
     enable_keepers_dlc: EnableKeepersDLC
     enable_nightwatchers_dlc: EnableNightwatchersDLC
+    enable_biome_keys: EnableBiomeKeys
     grove_expedition_locations: GroveExpeditionLocations
     reputation_locations_per_biome: ReputationLocationsPerBiome
     extra_trade_locations: ExtraTradeLocations

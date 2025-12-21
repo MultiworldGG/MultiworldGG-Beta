@@ -1,0 +1,749 @@
+[
+    {
+        "name": "bb",
+        "access_rules": [
+            "$has_spats_for_gate|Hub1->BB01"
+        ],
+        "children": [
+            {
+                "name": "End of the Road",
+                "map_locations": [
+                    {
+                        "map": "bb01",
+                        "x": 1274,
+                        "y": 447
+                    }
+                ],
+                "access_rules": [
+                    "lvl_item_bb:11",
+                    "$not_include_level_items"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Learn Sandy's Moves",
+                "map_locations": [
+                    {
+                        "map": "bb01",
+                        "x": 495,
+                        "y": 198
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Tikis Go Boom",
+                "map_locations": [
+                    {
+                        "map": "bb01",
+                        "x": 1182,
+                        "y": 152
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Across the Rooftops",
+                "map_locations": [
+                    {
+                        "map": "bb02",
+                        "x": 502,
+                        "y": 788
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Swingin' Sandy",
+                "map_locations": [
+                    {
+                        "map": "bb02",
+                        "x": 645,
+                        "y": 97
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Ambush in the Lighthouse",
+                "map_locations": [
+                    {
+                        "map": "bb03",
+                        "x": 953,
+                        "y": 762
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Extreme Bungee",
+                "map_locations": [
+                    {
+                        "map": "bb04",
+                        "x": 368,
+                        "y": 284
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Come Back With the Cruise Bubble",
+                "map_locations": [
+                    {
+                        "map": "bb04",
+                        "x": 164,
+                        "y": 126
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (On broken house)",
+                "map_locations": [
+                    {
+                        "map": "bb01",
+                        "x": 1026,
+                        "y": 888
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (In broken house)",
+                "map_locations": [
+                    {
+                        "map": "bb01",
+                        "x": 860,
+                        "y": 90
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #3 (On floating platform)",
+                "map_locations": [
+                    {
+                        "map": "bb01",
+                        "x": 377,
+                        "y": 830
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #4 (On copper house)",
+                "map_locations": [
+                    {
+                        "map": "bb01",
+                        "x": 747,
+                        "y": 77
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (On windmill)",
+                "map_locations": [
+                    {
+                        "map": "bb02",
+                        "x": 519,
+                        "y": 85
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (Under slide)",
+                "map_locations": [
+                    {
+                        "map": "bb02",
+                        "x": 989,
+                        "y": 547
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #3 (Behind lighthouse)",
+                "map_locations": [
+                    {
+                        "map": "bb02",
+                        "x": 287,
+                        "y": 934
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (On top)",
+                "map_locations": [
+                    {
+                        "map": "bb03",
+                        "x": 759,
+                        "y": 80
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (South side)",
+                "map_locations": [
+                    {
+                        "map": "bb04",
+                        "x": 258,
+                        "y": 350                       
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Steering Wheel #1 (On tikis near start)",
+                "map_locations": [
+                    {
+                        "map": "bb01",
+                        "x": 1137,
+                        "y": 429
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Steering Wheel #2 (On canopy)",
+                "map_locations": [
+                    {
+                        "map": "bb01",
+                        "x": 1202,
+                        "y": 503
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Steering Wheel #3 (On house with cannon near rooftops exit)",
+                "map_locations": [
+                    {
+                        "map": "bb01",
+                        "x": 628,
+                        "y": 40
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Steering Wheel #4 (On crashed boat near sea needle)",
+                "map_locations": [
+                    {
+                        "map": "bb01",
+                        "x": 598,
+                        "y": 457
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Steering Wheel #5 (Above G-Love near hole)",
+                "map_locations": [
+                    {
+                        "map": "bb01",
+                        "x": 854,
+                        "y": 456
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Steering Wheel #6 (On pipe near start)",
+                "map_locations": [
+                    {
+                        "map": "bb02",
+                        "x": 936,
+                        "y": 317
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Steering Wheel #7 (Under slide)",
+                "map_locations": [
+                    {
+                        "map": "bb02",
+                        "x": 1060,
+                        "y": 507
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Steering Wheel #8 (On floating platforms)",
+                "map_locations": [
+                    {
+                        "map": "bb02",
+                        "x": 999,
+                        "y": 402
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Steering Wheel #9 (At bottom)",
+                "map_locations": [
+                    {
+                        "map": "bb03",
+                        "x": 644,
+                        "y": 818
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Steering Wheel #10 (East side)",
+                "map_locations": [
+                    {
+                        "map": "bb04",
+                        "x": 337,
+                        "y": 423
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Steering Wheel #11 (North side)",
+                "map_locations": [
+                    {
+                        "map": "bb04",
+                        "x": 420,
+                        "y": 320
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/lvl_item_bb_disabled.png",
+                        "chest_unopened_img": "images/items/lvl_item_bb.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_level_items"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object #1 (At fenced off glove near lighthouse)",
+                "map_locations": [
+                    {
+                        "map": "bb01",
+                        "x": 570,
+                        "y": 625
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object #2 (On platform near lighthouse)",
+                "map_locations": [
+                    {
+                        "map": "bb01",
+                        "x": 470,
+                        "y": 727
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object #1 (On floating platforms)",
+                "map_locations": [
+                    {
+                        "map": "bb02",
+                        "x": 1066,
+                        "y": 393
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object #2 (On top of windmill blades)",
+                "map_locations": [
+                    {
+                        "map": "bb02",
+                        "x": 501,
+                        "y": 23
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (In tiki stack)",
+                "map_locations": [
+                    {
+                        "map": "bb03",
+                        "x": 815,
+                        "y": 797
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (South side)",
+                "map_locations": [
+                    {
+                        "map": "bb04",
+                        "x": 258,
+                        "y": 300
+                    }
+                ],
+                "access_rules": [
+                    "cruise_bubble",
+                    "$not_include_skills, @Industrial Park"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    }
+]

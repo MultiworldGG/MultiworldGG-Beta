@@ -1,7 +1,1 @@
-{
-    "game": "Candy Box 2",
-    "authors": ["Victor Tran", "Aren Merzoian"],
-    "igdb_id": 62779,
-    "minimum_ap_version": "0.6.0",
-    "world_version": "1.20251023.2"
-}
+{"game": "Candy Box 2", "world_version": "1.20251208.1", "minimum_ap_version": "0.6.0", "authors": ["Victor Tran", "Aren Merzoian"], "igdb_id": 62779, "compatible_version": 7, "version": 7}

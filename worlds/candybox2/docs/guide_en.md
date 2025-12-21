@@ -13,7 +13,7 @@ You can customize your options by visiting the [Candy Box 2 Player Options Page]
 
 ## Joining a MultiWorld Game
 
-1. Visit the Candy Box 2 MultiworldGG Game page at [https://candybox2-ap.vicr123.com](https://candybox2-ap.vicr123.com)
+1. Visit the Candy Box 2 MultiworldGG/AP Game page at [https://candybox2-ap.vicr123.com](https://candybox2-ap.vicr123.com)
 2. Enter the following information:
     - Enter the server url and port from your game (for example, `multiworld.gg:55819`)
     - Enter the name of the slot you wish to connect to

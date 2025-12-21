@@ -72,6 +72,9 @@
 # Castlevania: Circle of the Moon
 /worlds/cvcotm/ @LiquidCat64
 
+# Castlevania: Dawn of Sorrow
+/worlds/cv_dos/ @PinkSwitch
+
 # Castlevania: Symphony of the Night
 /worlds/sotn/ @fdelduque
 
@@ -349,6 +352,9 @@
 # Ori and the Blind Forest
 /worlds/oribf/ @c-ostic
 
+# Ori and the Will of the Wisps
+/worlds/ori_wotw/ @Satisha10
+
 # osu!
 /worlds/osu/ @lilymnky-F
 
@@ -437,7 +443,7 @@
 /worlds/ror2/ @kindasneaki
 
 # Satisfactory
-/worlds/satisfactory/ @Jarno458
+/worlds/satisfactory/ @Jarno458 @budak7273
 
 # Saving Princess
 /worlds/saving_princess/ @LeonarthCG
@@ -482,7 +488,8 @@
 /worlds/spyro3/ @ArsonAssassin
 
 # Starcraft 2
-/worlds/sc2/ @Ziktofel
+# Note: @Ziktofel acts as a mentor
+/worlds/sc2/ @MatthewMarinets @Snarkie @SirChuckOfTheChuckles
 
 # Star Fox 64
 /worlds/star_fox_64/ @Auztin

@@ -1,5 +1,9 @@
 from ..modules.enemy_data import combat_regions
 from ..Options import MagicantMode
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .. import EarthBoundWorld
+
 
 expected_level_gains = {
     "Ness's Mind": 0,
@@ -132,7 +136,7 @@ locations_with_item_requirements = [
     "Dalaam Restaurant - Slot 4"]
 
 
-def calculate_scaling(world) -> None:
+def calculate_scaling(world: "EarthBoundWorld") -> None:
     """Calculates the individual scaled level of each region/major area."""
     arcade = world.dungeon_connections["Arcade"]
     giant_step = world.dungeon_connections["Giant Step"]
@@ -458,7 +462,7 @@ def calculate_scaling(world) -> None:
         if item.name == "Franklin Badge":
             badge_scaled = True
 
-    for num, sphere in enumerate(world.multiworld.eb_spheres):
+    for num, sphere in enumerate(world.multiworld.earthbound_locations_by_sphere):
         if num + 1 not in inventory:
             inventory[num + 1] = []
 

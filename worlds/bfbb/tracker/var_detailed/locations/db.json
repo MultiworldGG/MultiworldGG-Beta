@@ -1,0 +1,386 @@
+[
+    {
+        "name": "db",
+        "access_rules": [
+            "@hb/Industrial Park"
+        ],
+        "children": [
+            {
+                "name": "Across the Dreamscape",
+                "map_locations": [
+                    {
+                        "map": "db01",
+                        "x": 403,
+                        "y": 468
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Follow the Bouncing Ball",
+                "map_locations": [
+                    {
+                        "map": "db01",
+                        "x": 563,
+                        "y": 908
+                    }
+                ],
+                "access_rules": [
+                    "bubble_bowl",
+                    "$not_include_level_items, @hb/Poseidome"
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Slidin' Texas Style",
+                "map_locations": [
+                    {
+                        "map": "db02",
+                        "x": 810,
+                        "y": 256
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Swingers Ahoy",
+                "map_locations": [
+                    {
+                        "map": "db02",
+                        "x": 155,
+                        "y": 604
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Music is in the Ear of the Beholder",
+                "map_locations": [
+                    {
+                        "map": "db03",
+                        "x": 680,
+                        "y": 214
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Krabby Patty Platforms",
+                "map_locations": [
+                    {
+                        "map": "db04",
+                        "x": 658,
+                        "y": 956
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Super Bounce",
+                "map_locations": [
+                    {
+                        "map": "db01",
+                        "x": 902,
+                        "y": 18
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Here You Go",
+                "map_locations": [
+                    {
+                        "map": "db01",
+                        "x": 320,
+                        "y": 334
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/spat_disabled.png",
+                        "chest_unopened_img": "images/items/spat.png",
+                        "clear_as_group": false
+                    }
+                ]
+            },
+            {
+                "name": "Lost Sock #1 (On top slide near skull)",
+                "map_locations": [
+                    {
+                        "map": "db02",
+                        "x": 1039,
+                        "y": 472
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #2 (Oil tower)",
+                "map_locations": [
+                    {
+                        "map": "db02",
+                        "x": 1294,
+                        "y": 240
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock #3 (Behind house on Swingers platform)",
+                "map_locations": [
+                    {
+                        "map": "db02",
+                        "x": 193,
+                        "y": 541
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (In air near trampoline)",
+                "map_locations": [
+                    {
+                        "map": "db03",
+                        "x": 956,
+                        "y": 379
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Lost Sock (Behind grill)",
+                "map_locations": [
+                    {
+                        "map": "db04",
+                        "x": 859,
+                        "y": 297
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/sock_disabled.png",
+                        "chest_unopened_img": "images/items/sock.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_socks"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (Behind Krusty Krab)",
+                "map_locations": [
+                    {
+                        "map": "db01",
+                        "x": 548,
+                        "y": 76
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object #1 (On tikis near start)",
+                "map_locations": [
+                    {
+                        "map": "db02",
+                        "x": 704,
+                        "y": 104
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object #2 (In flower)",
+                "map_locations": [
+                    {
+                        "map": "db02",
+                        "x": 734,
+                        "y": 607
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (On clarinet)",
+                "map_locations": [
+                    {
+                        "map": "db03",
+                        "x": 717,
+                        "y": 278
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            },
+            {
+                "name": "Purple Shiny Object (On floating tiki near start)",
+                "map_locations": [
+                    {
+                        "map": "db04",
+                        "x": 734,
+                        "y": 972
+                    }
+                ],
+                "sections": [
+                    {
+                        "name": "",
+                        "item_count": 1,
+                        "chest_opened_img": "images/items/so_purple_disabled.png",
+                        "chest_unopened_img": "images/items/so_purple.png",
+                        "clear_as_group": false
+                    }
+                ],
+                "visibility_rules": [
+                    "$include_purple_so"
+                ]
+            }
+        ]
+    }
+]

@@ -13,20 +13,19 @@ from .regions import dredge_regions
 class DredgeWeb(WebWorld):
     tutorials = [Tutorial(
         tutorial_name="Multiworld Setup Guide",
-        description="A guide to setting up the Dredge for Archipelago multiworld games.",
+        description="A guide to setting up DREDGE for MultiworldGG multiworld games.",
         language="English",
         file_name="setup_en.md",
         link="setup/en",
         authors=["Alextric"]
     )]
     theme = "ocean"
-    game = "Dredge"
 
 class DredgeItem(Item):
-    game: str = "Dredge"
+    game: str = "DREDGE"
 
 class DredgeLocation(Location):
-    game: str = "Dredge"
+    game: str = "DREDGE"
 
 class DredgeWorld(World):
     """
@@ -34,7 +33,7 @@ class DredgeWorld(World):
     and discover why some things are best left forgotten.
     """
 
-    game = "Dredge"
+    game = "DREDGE"
     author: str = "Alextric"
     web = DredgeWeb()
     options: DredgeOptions
@@ -60,7 +59,7 @@ class DredgeWorld(World):
 
         progression_classes = {ItemClassification.progression, ItemClassification.progression_skip_balancing}
         for item, data in item_table.items():
-            if data.classification not in progression_classes:
+            if data.classification not in progression_classes and data.item_group != "Books":
                 continue
 
             for index in range(data.classification):
@@ -88,7 +87,7 @@ class DredgeWorld(World):
         filler_pool = [
             item
             for item, data in item_table.items()
-            if data.classification == ItemClassification.filler
+            if data.classification == ItemClassification.filler and data.item_group != "Books"
             and (
                 data.expansion == "Base"
                 or (self.options.include_pale_reach_dlc and data.expansion == "PaleReach")

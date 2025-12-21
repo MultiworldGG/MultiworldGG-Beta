@@ -208,14 +208,12 @@ def BuildItemPool(world, count, preplaced_eggs, options, locked_levels):
         # Game caps egg count at 150 and can encounter issues above this number.
         if eggs_to_place > 150:
             eggs_to_place = 150
-    print(f"{options.egg_count.value}, {1.0 + options.percent_extra_eggs / 100.0}, {eggs_to_place}")
     eggs_to_place = eggs_to_place - preplaced_eggs
     # Portals with egg requirements can't be set to require 0, so start with 1 egg to ensure level unlocks
     # work correctly when unlocks are not vanilla or keys and eggs.
     if options.level_lock_option.value not in [LevelLockOptions.VANILLA]:
         multiworld.push_precollected(world.create_item("Egg"))
         eggs_to_place = eggs_to_place - 1
-    print(eggs_to_place)
     for i in range(eggs_to_place):
         item_pool.append(item_dictionary["Egg"])
     remaining_count = remaining_count - eggs_to_place

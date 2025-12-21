@@ -44,4 +44,3 @@ If you picked up a phantom on a check that should be implemented, you can open a
 ## Known Issues
 
 - Kotake sometimes does not show the price of her shopsanity item in the second dialogue.
-- Trying to buy a progression item normally sold in a shop (such as the Bomb Bag) will not work, but will take your Rupees anyway.

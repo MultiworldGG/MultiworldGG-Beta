@@ -1,0 +1,2 @@
+Pillow==11.3.0
+pyxdelta==0.2.2

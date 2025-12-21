@@ -1,7 +1,9 @@
 {
-    "game": "Ape Escape",
-    "authors": ["Thedragon005"],
-    "igdb_id": 3762,
     "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
+    "world_version": "0.9.4",
+    "authors": ["Thedragon005","IHNN"],
+    "igdb_id": 3762,
+    "version": 7,
+    "compatible_version": 7,
+    "game": "Ape Escape"
 }

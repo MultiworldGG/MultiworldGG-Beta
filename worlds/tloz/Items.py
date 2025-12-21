@@ -13,16 +13,16 @@ class ItemData(typing.NamedTuple):
 
 
 item_table: Dict[str, ItemData] = {
-    "Boomerang": ItemData(100, useful),
+    "Boomerang": ItemData(100, progression),
     "Bow": ItemData(101, progression),
-    "Magical Boomerang": ItemData(102, useful),
+    "Magical Boomerang": ItemData(102, progression),
     "Raft": ItemData(103, progression),
     "Stepladder": ItemData(104, progression),
     "Recorder": ItemData(105, progression),
     "Magical Rod": ItemData(106, progression),
     "Red Candle": ItemData(107, progression),
     "Book of Magic": ItemData(108, progression),
-    "Magical Key": ItemData(109, useful),
+    "Magical Key": ItemData(109, progression),
     "Red Ring": ItemData(110, progression),
     "Silver Arrow": ItemData(111, progression),
     "Sword": ItemData(112, progression),
@@ -38,7 +38,7 @@ item_table: Dict[str, ItemData] = {
     "Water of Life (Red)": ItemData(122, useful),
     "Blue Ring": ItemData(123, progression),
     "Triforce Fragment": ItemData(124, progression),
-    "Power Bracelet": ItemData(125, useful),
+    "Power Bracelet": ItemData(125, progression),
     "Small Key": ItemData(126, filler),
     "Bomb": ItemData(127, filler),
     "Recovery Heart": ItemData(128, filler),

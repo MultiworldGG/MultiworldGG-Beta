@@ -8,10 +8,13 @@ from typing import Any, Dict, TextIO
 from pathlib import Path
 from typing import Callable, Optional
 from Options import OptionError
+import asyncio
+import typing
+import settings
 
 import Utils
 from worlds.generic.Rules import forbid_items_for_player
-from worlds.LauncherComponents import Component, SuffixIdentifier, components, Type, launch_subprocess
+from worlds.LauncherComponents import Component, SuffixIdentifier, components, Type, launch_subprocess, icon_paths
 
 from .Data import region_table, category_table, meta_table
 from .Meta import world_description, world_webworld, enable_region_diagram
@@ -41,6 +44,63 @@ from .hooks.Data import hook_interpret_slot_data
 
 from .SHARContainer import gen
 
+def get_options():
+    return SimpsonsHitAndRunOptions
+
+def get_world():
+    return SimpsonsHitAndRunWorld
+
+def _launch_shar_client_process():
+    import os, sys, subprocess
+    client_path = os.path.join(os.path.dirname(__file__), "SHARClient.py")
+    subprocess.Popen([sys.executable, client_path])
+
+async def run_client_async(ap_url=None):
+    from .SHARClient import SHARContext
+    ctx = SHARContext()  # lightweight constructor
+    await ctx.initialize()  # tasks can be scheduled safely
+    if ap_url:
+        await ctx.handle_apshar(Path(ap_url))
+    else:
+        await ctx.start()
+
+def run_client(ap_url=None):
+    asyncio.run(run_client_async(ap_url))
+
+
+
+# ---- Component Registration ----
+components.append(
+    Component(
+        "Simpsons Hit & Run Client",
+        func=run_client,
+        component_type=Type.CLIENT,
+        file_identifier=SuffixIdentifier(".apshar"),
+        cli=True,
+        icon="Donut"
+    )
+)
+
+icon_paths["Donut"] = f"ap:{__name__}/icons/Donut.png"
+class SHARSettings(settings.Group):
+    class SHARRandomizerExe(settings.FilePath):
+        """
+        Path to SHARRandomizer.exe to auto-launch.
+        Example: "C:/Program Files (x86)/Vivendi Universal Games/The Simpsons Hit & Run/SHARRandomizer.exe"
+        """
+        description = "Path to SHARRandomizer.exe"
+
+    class LucasLauncherExe(settings.FilePath):
+        """
+        Path to Lucas' Mod Launcher.exe to auto-launch.
+        Can't auto launch straight into running the mod saldy.
+        Example: "C:/Program Files (x86)/Vivendi Universal Games/The Simpsons Hit & Run/Lucas Simpsons Hit & Run Mod Launcher.exe"
+        """
+        description = "Path to Lucas' Mod Launcher.exe"
+
+    sharrandomizer: SHARRandomizerExe = SHARRandomizerExe("")
+    lucas_launcher: LucasLauncherExe = LucasLauncherExe("")
+
 class SimpsonsHitAndRunWorld(World):
     """A 2003 Action Adventure game similar to the GTA series starring the Simpsons"""
     from BaseUtils import get_archipelago_json
@@ -50,10 +110,11 @@ class SimpsonsHitAndRunWorld(World):
     author: str = AUTHOR
     web = world_webworld
 
+    settings: typing.ClassVar[SHARSettings]
     options_dataclass = SimpsonsHitAndRunOptions
     data_version = WORLD_VERSION
     required_client_version = (0, 5, 0)
-    apworld_version = "0.3.11"
+    apworld_version = "0.4.3"
     # These properties are set from the imports of the same name above.
     item_table = item_table
     location_table = location_table # this is likely imported from Data instead of Locations because the Game Complete location should not be in here, but is used for lookups
@@ -167,11 +228,8 @@ class SimpsonsHitAndRunWorld(World):
         return slot_data
 
     def generate_early(self) -> None:
-        if self.options.cardlogic != 0:
+        if self.options.cardlogic == 2:
             raise OptionError("Chosen cardlogic level is not implemented.")
-
-        if self.options.wasplogic == 1 or self.options.wasplogic == 2:
-            raise OptionError("Chosen wasplogic level is not implemented.")
 
         if hasattr(self.multiworld, "re_gen_passthrough"):
             if self.game in self.multiworld.re_gen_passthrough:
@@ -191,6 +249,15 @@ class SimpsonsHitAndRunWorld(World):
                 self.progcars = passthrough["progcars"]
 
 
+        if "None" in self.options.earlyforward.value:
+            self.options.earlyforward.value = set()
+
+        elif "All" in self.options.earlyforward.value:
+            self.options.earlyforward.value = {"Homer", "Bart", "Lisa", "Marge", "Apu"}
+
+        for c in self.options.earlyforward.value:
+            if c in self.options.shuffleforward.value:
+                self.multiworld.local_early_items[self.player][f"{c} Forward"] = 1
 
     @classmethod
     def stage_assert_generate(cls, multiworld) -> None:
@@ -208,7 +275,6 @@ class SimpsonsHitAndRunWorld(World):
                     int(49 * (self.options.missionlocks / 100))
                 )
                 missions = self.random.sample(range(1, 50), len(carlocks))
-                print(len(self.mission_locks))
                 self.mission_locks = dict(zip(missions, carlocks))
 
             level_bases = {
@@ -483,9 +549,39 @@ class SimpsonsHitAndRunWorld(World):
         slot_data["progcars"] = self.progcars
         slot_data["VerifyID"] = f"AP-{self.multiworld.seed_name}-P{self.player}-{self.multiworld.get_file_safe_player_name(self.player)}"
 
+        slot_data["ingamehints"] = self.get_ingame_hints() if self.options.extrahintpolicy else "No hints"
+
         slot_data = after_fill_slot_data(slot_data, self, self.multiworld, self.player)
 
         return slot_data
+
+    def get_ingame_hints(self):
+        igh = {}
+
+        for item in self.progcars:
+            try:
+                loc = self.multiworld.find_item(item["name"], self.player)
+
+            except StopIteration:
+                pass
+
+            igh[item["id"]] = (loc.address, loc.player)
+
+        for _, item in self.mission_locks.items():
+            if item == "NO MISSIONLOCKS":
+                continue
+
+            itemName = self.vehicle_item_to_vehicle[item]
+            item = item_name_to_item[itemName]
+            try:
+                loc = self.multiworld.find_item(item["name"], self.player)
+
+            except StopIteration:
+                pass
+
+            igh[item["id"]] = (loc.address, loc.player)
+
+        return igh
 
     def generate_output(self, output_directory: str):
         filename = f"{self.multiworld.get_out_file_name_base(self.player)}_SHAR"
@@ -530,8 +626,9 @@ class SimpsonsHitAndRunWorld(World):
 
                 loc = self.location_name_to_location[self.location_id_to_name[id_number]]
 
-                spoiler_handle.write(f"{m}: {loc["name"]} requires {item["name"]}\n")
-
+                loc_name = loc["name"]
+                item_name = item["name"]
+                spoiler_handle.write(f"{m}: {loc_name} requires {item_name}\n")
 
     ###
     # Non-standard AP world methods

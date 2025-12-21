@@ -1,13 +1,25 @@
 import typing
 from BaseClasses import Location
-from .names import LocationNames
+from .constants import LocationNames, game_name
 
 
 class BfBBLocation(Location):
-    game: str = "Battle for Bikini Bottom"
+    game: str = game_name
 
 
 base_id = 1490000
+
+
+patrick_location_table = {
+    LocationNames.spat_ps_01: base_id + 84,
+    LocationNames.spat_ps_02: base_id + 85,
+    LocationNames.spat_ps_03: base_id + 86,
+    LocationNames.spat_ps_04: base_id + 87,
+    LocationNames.spat_ps_05: base_id + 88,
+    LocationNames.spat_ps_06: base_id + 89,
+    LocationNames.spat_ps_07: base_id + 90,
+    LocationNames.spat_ps_08: base_id + 91,
+}
 
 spat_location_table = {
     # Hub (0-7)
@@ -108,14 +120,7 @@ spat_location_table = {
     LocationNames.spat_b3_01: base_id + 82,
     LocationNames.spat_b3_02: base_id + 83,
     # Patrick (84-91)
-    LocationNames.spat_ps_01: base_id + 84,
-    LocationNames.spat_ps_02: base_id + 85,
-    LocationNames.spat_ps_03: base_id + 86,
-    LocationNames.spat_ps_04: base_id + 87,
-    LocationNames.spat_ps_05: base_id + 88,
-    LocationNames.spat_ps_06: base_id + 89,
-    LocationNames.spat_ps_07: base_id + 90,
-    LocationNames.spat_ps_08: base_id + 91,
+    **patrick_location_table,
     # Mr. Krabs (92-99)
     LocationNames.spat_ks_01: base_id + 92,
     LocationNames.spat_ks_02: base_id + 93,
@@ -126,6 +131,7 @@ spat_location_table = {
     LocationNames.spat_ks_07: base_id + 98,
     LocationNames.spat_ks_08: base_id + 99,
 }
+
 
 sock_location_table = {
     LocationNames.sock_hub3_01: base_id + 100 + 0,

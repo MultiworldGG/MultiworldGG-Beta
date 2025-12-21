@@ -234,10 +234,10 @@ components: List[Component] = [
             #   description="Install an APWorld to play games not included with Archipelago by default."),
     Component('Text Client', 'CommonClient', f'{apname}TextClient', func=launch_textclient,
               description="Connect to a multiworld using the text client."),
-    # Manual games in Arch
     Component('Manual Client', 'ManualClient', file_identifier=SuffixIdentifier('.apmanual'),
         description="Client for a manual game with self-imposed rules."),
-    Component("Export Datapackage", func=export_datapackage, component_type=Type.TOOL),
+    Component("Export Datapackage", func=export_datapackage, component_type=Type.TOOL,
+            description="Write item/location data for installed worlds to a file and open it."),
 ]
 
 

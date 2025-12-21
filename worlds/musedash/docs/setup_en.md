@@ -25,7 +25,7 @@
 5. Download the latest [Muse Dash Archipelago Mod](https://github.com/DeamonHunter/ArchipelagoMuseDash/releases/latest) and then extract that into the newly created `/Mods/` folder in MuseDash's install location.
   - All files must be under the `/Mods/` folder and not within a sub folder inside of `/Mods/`
 
-If you've successfully installed everything, a button will appear in the bottom right which will allow you to log into an Archipelago server.
+If you've successfully installed everything, a button will appear in the bottom right which will allow you to log into a MultiworldGG server.
 
 ## Generating a MultiWorld Game
 1. Visit the [Player Options](/games/Muse%20Dash/player-options) page and configure the game-specific options to your taste.

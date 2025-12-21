@@ -67,7 +67,7 @@ client, and will also create your ROM in the same place as your patch file.
 
 Once the MultiworldGG server has been hosted:
 
-1. Navigate to your MultiworldGG install folder and run `MultiworldGGZelda1Client.exe`.
+1. Start the MultiworldGG Launcher and open the Bizhawk Client.
 2. Notice the `/connect command` on the server hosting page. (It should look like `/connect multiworld.gg:*****`
    where ***** are numbers)
 3. Type the connect command into the client OR add the port to the pre-populated address on the top bar (it should

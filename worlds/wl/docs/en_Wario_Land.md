@@ -20,7 +20,7 @@ The same applies to Mt Teapot 13, which overwrites Mt Teapot 10 (and is unlocked
 - Turning off autoscrollers messes with stage graphics and can lead to the cart stopping if it goes off screen.\
 Use at your own risk.
 
-- Overworld and Subworld movement will be activated once a connection to an Archipelago Server has been established.
+- Overworld and Subworld movement will be activated once a connection to a MultiworldGG Server has been established.
 
 ## Blocksanity Tips
 
