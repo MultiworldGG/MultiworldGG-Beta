@@ -155,6 +155,7 @@ class BottomBarTextInput(MDTextField):
             ctx = self.app.ctx
             if not ctx.game:
                 return
+            # TODO: Grab the flag, too to set the color in the dropdown
             self.item_names = [item for item in ctx.item_names._game_store[ctx.game].values()]
             self.location_names = [location for location in ctx.location_names._game_store[ctx.game].values()]
 
@@ -170,12 +171,16 @@ class BottomBarTextInput(MDTextField):
                 except ValueError:
                     pass  # substring not found
                 else:
-                    text = hint_name[:index]+hint_name[index:index+len(value)]+hint_name[index+len(value):]
+                    # text = escape_markup(hint_name)
+                    # text = text[:index]+text[index:index+len(value)]+text[index+len(value):]
                     self.dropdown.items.append({
-                        "text": text,
-                        "on_release": lambda txt=text: on_press(txt),
-                        "leading_icon": "map-marker" if hint_name in self.location_names else "treasure-chest"
+                        "text": hint_name, #text to add markup
+                        "on_release": lambda txt=hint_name: on_press(txt),
+                        "leading_icon": "map-marker" if hint_name in self.location_names else "treasure-chest",
+                        "markup": True
                     })
+                    if len(self.dropdown.items) >= 10:
+                        break
             if not self.dropdown.parent:
                 self.dropdown.open()
             # else:

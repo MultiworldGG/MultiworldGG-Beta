@@ -252,6 +252,8 @@ class InitContext:
     expected format: url://username:password@hostname:port"""
 
     command_processor: typing.Type[CommandProcessor] = ClientCommandProcessor
+    all_players_chat: bool = True
+    """If False only your own server chatter (items, locations, hints) will be shown in the console."""
     # internals
     _messagebox: typing.Optional["Gui.MessageBox"] = None
     """Current message box through Gui"""
@@ -262,9 +264,10 @@ class InitContext:
     def __init__(self):
         self.loop = asyncio.get_event_loop()
         self.exit_event = asyncio.Event()
+        self.server_address = None
+        self.all_players_chat = True
         self._state = ClientState.INITIAL
         self._is_transitioning = False
-        self.server_address = None
         self._splash_queue: Optional[Queue] = None
 
     def _set_server_address(self, server_address: str) -> str:
@@ -505,8 +508,10 @@ class CommonContext(InitContext):
     """Current container of watched Data Storage keys, managed by ctx.set_notify"""
 
     # internals
-    _last_activity_time: float | None = None
+    _last_activity_time: float | None
     """Time of last activity, used to track elapsed time"""
+    _shared_activity_time: float | None
+    """Time of all players' last activity, used to track elapsed time"""
     _messagebox: typing.Optional["Gui.MessageBox"] = None
     """Current message box through Gui"""
     _messagebox_connection_loss: typing.Optional["Gui.MessageBox"] = None
@@ -521,6 +526,8 @@ class CommonContext(InitContext):
         self._is_transitioning = False
         self._initial_ctx: dict[Gui.MultiMDApp, asyncio.Task] = {}
         self._main_task: Optional[asyncio.Task] = None
+        self._shared_activity_time = None
+        self._last_activity_time = None
         # server state
         if server_address:
             self.server_address = self._set_server_address(server_address)
@@ -540,7 +547,6 @@ class CommonContext(InitContext):
         self.auth = None
         self.seed_name = None
         self.timer = 0.0
-        self._last_activity_time = None
         self.admin = False
         self.locations_checked = set()  # local state
         self.locations_scouted = set()
@@ -689,6 +695,8 @@ class CommonContext(InitContext):
         """ `msgs` JSON serializable """
         if not self.server or not self.server.socket.open or self.server.socket.closed:
             return
+        if msgs[0]["cmd"] == "LocationChecks":
+            self.update_timer()
         await self.server.socket.send(encode(msgs))
 
     def consume_players_package(self, package: typing.List[tuple]):
@@ -737,9 +745,7 @@ class CommonContext(InitContext):
     async def check_locations(self, locations: typing.Collection[int]) -> set[int]:
         """Send new location checks to the server. Returns the set of actually new locations that were sent."""
         locations = set(locations) & self.missing_locations
-        if locations:
-            self.update_timer(time.time())
-            await self.send_msgs([{"cmd": 'LocationChecks', "locations": tuple(locations)}])
+        await self.send_msgs([{"cmd": 'LocationChecks', "locations": tuple(locations)}])
         return locations
 
     async def console_input(self, prompt: Optional[str] = "") -> str:
@@ -793,11 +799,23 @@ class CommonContext(InitContext):
 
     def on_print_json(self, args: dict):
         if self.ui:
-            # send copy to UI
-            self.ui.print_json(copy.deepcopy(args["data"]))
-
+            '''
+            Filter out ItemSend messages that are not relevant to the local player if all_players_chat is False.
+            '''
+            if args["type"] == 'Hint' and not self.slot_concerns_self(args["receiving"]) and args["found"]:
+                pass
+            elif args["type"] == 'ItemSend' and not self.all_players_chat:
+                if self.slot_concerns_self(args["receiving"]):
+                    self.ui.print_json(copy.deepcopy(args["data"]))
+                elif self.slot_concerns_self(args["item"].player):
+                    self.ui.print_json(copy.deepcopy(args["data"]))
+            else:
+                # send copy to UI
+                self.ui.print_json(copy.deepcopy(args["data"]))
+                
         if args.get("type") == "Countdown":
             self.ui.countdown_timer = args.get("countdown", 0)
+            self.update_timer(offset_time = self.ui.countdown_timer)  
 
         logging.getLogger("FileLog").info(self.rawjsontotextparser(copy.deepcopy(args["data"])),
                                           extra={"NoStream": True})
@@ -891,25 +909,58 @@ class CommonContext(InitContext):
                "operations": [{"operation": "replace", "value": {f"{finding_player}_{location}": mwgg_status.value}}]}
         async_start(self.send_msgs([msg]), name="update_mwgg_hint")
 
-    def update_timer(self, activity_time: float):
+    @property
+    def shared_activity_time(self) -> float | None:
+        return self._shared_activity_time
+
+    @shared_activity_time.setter
+    def shared_activity_time(self, activity_time: float):
+        self._shared_activity_time = activity_time
+
+    @property
+    def activity_time(self) -> float | None:
+        return self._last_activity_time
+
+    @activity_time.setter
+    def activity_time(self, activity_time: float):
+        self._last_activity_time = activity_time
+        msg = {"cmd": "Set", 
+            "key": f"activity_{self.team}_{self.slot}", 
+            "want_reply": False,
+            "default": [],
+            "operations": [{"operation": "replace", "value": activity_time}]}
+        async_start(self.send_msgs([msg]), name="set_last_activity")
+
+    def update_timer(self, offset_time: float = 0):
         '''
         Update the timer based on the activity time.
         If the activity time is more than 300 seconds since the last activity, add the "break" time to the timer list.
         If the activity time is less than 300 seconds since the last activity, track this as the "last" activity time.
         If the activity time is not set, this is the first activity, so set the timer to the activity time.
         '''
-        if self._last_activity_time is None:
-            self._last_activity_time = activity_time
-            self.timer = activity_time #start time
-        elapsed_break = activity_time - self._last_activity_time
-        if elapsed_break > 300:
+        if offset_time != 0:
+            self.activity_time = time.time() + offset_time
+            self.timer = self.activity_time #start time
             msg = {"cmd": "Set", 
-                "key": f"timer_{self.team}_{self.slot}", 
+                "key": f"timer", 
                 "want_reply": False,
                 "default": [],
-                "operations": [{"operation": "add", "value": [str(elapsed_break)]}]}
+                "operations": [{"operation": "replace", "value": [0]}]}
             async_start(self.send_msgs([msg]), name="update_timer")
-        self._last_activity_time = activity_time
+            return
+        else:
+            if self.shared_activity_time is None:
+                return
+            activity_time = time.time()
+            elapsed_break = activity_time - self.shared_activity_time
+            if elapsed_break > 300:
+                msg = {"cmd": "Set", 
+                    "key": f"timer", 
+                    "want_reply": False,
+                    "default": [],
+                    "operations": [{"operation": "add", "value": [elapsed_break]}]}
+                async_start(self.send_msgs([msg]), name="update_timer")
+            self.activity_time = activity_time
 
     # DataPackage
     async def prepare_data_package(self, relevant_games: typing.Set[str],
@@ -1322,11 +1373,12 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.consume_players_package(args["players"])
         ctx.stored_data_notification_keys.add(f"_read_hints_{ctx.team}_{ctx.slot}")
         ctx.stored_data_notification_keys.add(f"hints_{ctx.team}_{ctx.slot}_mwgg")
-        ctx.stored_data_notification_keys.add(f"timer_{ctx.team}_{ctx.slot}")
+        ctx.stored_data_notification_keys.add(f"timer")
         # Add profile_data keys for all players in the multiworld
         for slot_id in ctx.slot_info.keys():
             if slot_id != 0:  # Skip Archipelago slot
                 ctx.stored_data_notification_keys.add(f"profile_data_{ctx.team}_{slot_id}")
+                ctx.stored_data_notification_keys.add(f"activity_{ctx.team}_{slot_id}")
         msgs = []
         if ctx.locations_checked:
             msgs.append({"cmd": "LocationChecks",
@@ -1421,8 +1473,8 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             ctx.ui.update_hints()
         if ctx.ui and f"hints_{ctx.team}_{ctx.slot}_mwgg" in args["keys"]:
             ctx.ui.update_mwgg_hints()
-        if ctx.ui and f"timer_{ctx.team}_{ctx.slot}" in args["keys"]:
-            ctx.ui.update_timer(args["keys"].get(f"timer_{ctx.team}_{ctx.slot}"))
+        if ctx.ui and f"timer" in args["keys"]:
+            ctx.ui.update_timer(args["keys"].get("timer"))
         # Update profile data for all players when retrieved (on connect)
         if ctx.ui:
             for key in args["keys"]:
@@ -1434,6 +1486,8 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
                             for item, data in profile_data.items():
                                 if hasattr(ctx.ui.ui_player_data[slot_id], item):
                                     setattr(ctx.ui.ui_player_data[slot_id], item, data)
+        if f"activity_{ctx.team}_" in args["keys"]:
+            ctx.shared_activity_time = args["keys"].get(f"activity_{ctx.team}_{ctx.slot}", 0)
 
     elif cmd == "SetReply":
         ctx.stored_data[args["key"]] = args["value"]
@@ -1441,8 +1495,8 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             ctx.ui.update_hints()
         elif ctx.ui and f"hints_{ctx.team}_{ctx.slot}_mwgg" == args["key"]:
             ctx.ui.update_mwgg_hints()
-        elif ctx.ui and f"timer_{ctx.team}_{ctx.slot}" == args["key"]:
-            ctx.ui.update_timer(args["value"].get(f"timer_{ctx.team}_{ctx.slot}"))
+        elif ctx.ui and f"timer" == args["key"]:
+            ctx.ui.update_timer(args["value"])
         elif args["key"].startswith(f"profile_data_{ctx.team}_"):
             # Update profile data when another client changes their profile
             if ctx.ui:
@@ -1453,6 +1507,8 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
                         for item, data in profile_data.items():
                             if hasattr(ctx.ui.ui_player_data[slot_id], item):
                                 setattr(ctx.ui.ui_player_data[slot_id], item, data)
+        elif args["key"].startswith(f"activity_{ctx.team}_"):
+            ctx.shared_activity_time = args["value"]
         elif args["key"].startswith("EnergyLink"):
             ctx.current_energy_link_value = args["value"]
             if ctx.ui:

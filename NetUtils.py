@@ -309,7 +309,7 @@ class JSONtoTextParser(metaclass=HandlerMeta):
 
     def _handle_item_id(self, node: JSONMessagePart):
         item_id = int(node["text"])
-        node["text"] = escape_markup(self.ctx.item_names.lookup_in_slot(item_id, node["player"]))
+        node["text"] = self.ctx.item_names.lookup_in_slot(item_id, node["player"])
         return self._handle_item_name(node)
 
     def _handle_location_name(self, node: JSONMessagePart):
