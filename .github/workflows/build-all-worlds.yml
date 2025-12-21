@@ -1,0 +1,94 @@
+name: Build All Worlds and Publish to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      worlds:
+        description: 'Comma-separated list of worlds to build (leave empty to build all)'
+        required: false
+        type: string
+  push:
+    branches: [gui-changes]
+    paths:
+      - '.github/workflows/build-all-worlds.yml'
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  build-all-worlds:
+    name: Build All Worlds and Publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install build toml twine
+      
+      - name: Build worlds
+        run: |
+          source venv/bin/activate
+          cd src
+          if [ -n "${{ inputs.worlds }}" ]; then
+            echo "Building specified worlds: ${{ inputs.worlds }}"
+            python tools/build_wheels.py --world "${{ inputs.worlds }}"
+          else
+            echo "Building all worlds"
+            python tools/build_wheels.py
+          fi
+      
+      - name: Verify wheels exist
+        id: verify_wheels
+        run: |
+          cd src
+          if [ -d dist ] && ls dist/worlds_*.whl dist/worlds_*.tar.gz 2>/dev/null | grep -q .; then
+            echo "has_wheels=true" >> $GITHUB_OUTPUT
+            echo "Found wheels to upload:"
+            ls -lh dist/worlds_*.whl dist/worlds_*.tar.gz 2>/dev/null || true
+          else
+            echo "has_wheels=false" >> $GITHUB_OUTPUT
+            echo "No wheels found in dist/"
+            exit 1
+          fi
+      
+      - name: Upload to private PyPI
+        if: steps.verify_wheels.outputs.has_wheels == 'true'
+        env:
+          TWINE_USERNAME: delilah
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+          TWINE_REPOSITORY_URL: ${{ vars.PYPI_URL }}
+        run: |
+          source venv/bin/activate
+          cd src
+          for file in dist/worlds_*.whl dist/worlds_*.tar.gz; do
+            if [ -f "$file" ]; then
+              echo "Uploading $file..."
+              python -m twine upload "$file" --verbose || {
+                echo "Failed to upload $file, continuing..."
+              }
+            fi
+          done
+      
+      - name: Upload world wheels as artifacts
+        if: steps.verify_wheels.outputs.has_wheels == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-wheels
+          path: |
+            src/dist/worlds_*.whl
+            src/dist/worlds_*.tar.gz
+          retention-days: 30
+
