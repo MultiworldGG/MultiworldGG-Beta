@@ -546,7 +546,7 @@ jobs:
       - name: Upload to private PyPI
         if: steps.detect_changed.outputs.changed_worlds != ''
         env:
-          TWINE_USERNAME: delilah
+          TWINE_USERNAME: ${{ vars.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
           TWINE_REPOSITORY_URL: ${{ vars.PYPI_URL }}
         run: |

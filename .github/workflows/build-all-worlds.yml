@@ -41,19 +41,17 @@ jobs:
       - name: Build worlds
         run: |
           source venv/bin/activate
-          cd src
           if [ -n "${{ inputs.worlds }}" ]; then
             echo "Building specified worlds: ${{ inputs.worlds }}"
-            python tools/build_wheels.py --world "${{ inputs.worlds }}"
+            python src/tools/build_wheels.py --world "${{ inputs.worlds }}"
           else
             echo "Building all worlds"
-            python tools/build_wheels.py
+            python src/tools/build_wheels.py
           fi
       
       - name: Verify wheels exist
         id: verify_wheels
         run: |
-          cd src
           if [ -d dist ] && ls dist/worlds_*.whl dist/worlds_*.tar.gz 2>/dev/null | grep -q .; then
             echo "has_wheels=true" >> $GITHUB_OUTPUT
             echo "Found wheels to upload:"
@@ -67,12 +65,11 @@ jobs:
       - name: Upload to private PyPI
         if: steps.verify_wheels.outputs.has_wheels == 'true'
         env:
-          TWINE_USERNAME: delilah
+          TWINE_USERNAME: ${{ vars.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
           TWINE_REPOSITORY_URL: ${{ vars.PYPI_URL }}
         run: |
           source venv/bin/activate
-          cd src
           for file in dist/worlds_*.whl dist/worlds_*.tar.gz; do
             if [ -f "$file" ]; then
               echo "Uploading $file..."
