@@ -11,7 +11,9 @@ from kivy.properties import (ObjectProperty,
                              ColorProperty, 
                              BooleanProperty,
                              StringProperty,
-                             OptionProperty)
+                             OptionProperty,
+                             DictProperty,
+                             ListProperty)
 from kivy.base import EventLoop
 from kivy.metrics import dp
 from kivy.clock import Clock
@@ -135,6 +137,8 @@ class MarkupTextField(TextInput, ThemableBehavior):
 
     __events__ = ('on_touch_up',)
 
+    plaintext = StringProperty("", cache=True)
+    markup_to_plain_map = DictProperty({}, cache=True)
     admin_enabled = BooleanProperty(False)
     role = StringProperty("large") #MD
     mode = OptionProperty("outlined", options=["outlined", "filled"]) #MD
@@ -147,6 +151,12 @@ class MarkupTextField(TextInput, ThemableBehavior):
     line_color_focus = ColorProperty(None) #MD # Remove the invalid truncate parameter
     effect_cls = ObjectProperty(ScrollEffect, allow_none=True)
     bottom_scroll_button = ObjectProperty(None)
+    current_color_tag = None
+    all_patterns = {"color": re.compile(r'\[color=[0-9A-Fa-f]{6}\]'), "bold": re.compile(r'\[b\]'), "italic": re.compile(r'\[i\]'), "underline": re.compile(r'\[u\]')}
+    # Pattern to match any valid Kivy markup tag (opening or closing)
+    # Matches: [tag], [/tag], [tag=value], [tag=value,value2], etc.
+    # Pattern: [ or [/ followed by tag name (letters/numbers/underscores), optionally =value, then ]
+    _markup_tag_pattern = re.compile(r'\[/?[a-zA-Z][a-zA-Z0-9_]*(?:[=][^\]]*)?\]')
     
     _helper_text_label = ObjectProperty() #MD
     _hint_text_label = ObjectProperty() #MD
@@ -164,23 +174,22 @@ class MarkupTextField(TextInput, ThemableBehavior):
     _right_x_axis_pos = NumericProperty(dp(32)) #MD
     text_default_color = StringProperty("cdcdcd") #MD
     _empty_texture = ObjectProperty(None) #MD
-    _saved_markup = StringProperty("[color=FFFFFF]") #MD
+    _saved_markup = {"color": "", "bold": "", "italic": "", "underline": ""}
+    _lines_plaintext = ListProperty([], cache=True)
     effect_y = ObjectProperty(None)
     _effect_y_start_height = None
     _effect_y_start_scroll = None
     _unclamped_scroll_y = None  # Track unclamped scroll position for velocity calculation
     scroll_velocity = NumericProperty(0.5)  # Scale factor to slow down scrolling
     _manually_scrolled = BooleanProperty(False)
+    _markup_to_plain_map = DictProperty({}, cache=True)
 
     def __init__(self, bottom_scroll_button=None, ignore_patterns: Pattern = None, **kwargs):
         self.bottom_scroll_button = bottom_scroll_button
         self._label_cached = Label()
         self.selection_previous = None
-        self.plaintext = ""
         self.use_markup = True
         self.hint_info = [] # for use in hinting, 2nd item is for host/admin hinting
-        self._lines_plaintext = []  # Add a list to store plain text lines
-        self._markup_to_plain_map = {}  # Dictionary to map markup positions to plain text positions
         self.ignore_patterns = ignore_patterns or None # Patterns to ignore when stripping markup
         super().__init__(**kwargs)
 
@@ -201,19 +210,13 @@ class MarkupTextField(TextInput, ThemableBehavior):
             self.effect_y = effect_cls(target_widget=self)
             self.effect_y.bind(scroll=self._update_effect_y)
         self.fbind('height', self._update_effect_y_bounds)
-        # self.fbind('scroll_y', self._trigger_update_from_scroll)
-        # self.fbind('pos', self._trigger_update_from_scroll)
-        # self.fbind('size', self._trigger_update_from_scroll)
-        #self.fbind('scroll_y', self.update_effect_y_bounds)
-
-        # self.effect_y.bind(scroll=self._update_effect_y)
         self.bottom_scroll_button.bind(on_release=self.scroll_to_bottom)
 
-    def on_text(self, instance, value):
-        # Update the plain text lines list
-        self._update_plaintext_lines()
-        # Update the markup to plain text mapping
-        self._update_markup_to_plain_map()
+    def set_texts(self, text, plaintext):
+         # Set texts in a function to pass everything through
+         self.plaintext = self.plaintext + u"\n" + plaintext if self.plaintext else plaintext
+         self.text = self.text + u"\n" + text if self.text else text
+         self._update_plaintext_lines()
         
     @property
     def line_count(self) -> int:
@@ -246,27 +249,51 @@ class MarkupTextField(TextInput, ThemableBehavior):
         _text = self.text
         _lines = self._lines
         self._lines_plaintext = [self.strip_markup(line, ignore_patterns=self.ignore_patterns) for line in _lines]
-        self.plaintext = self.strip_markup(_text, ignore_patterns=self.ignore_patterns)
+        self._update_markup_to_plain_map()
 
     def _update_markup_to_plain_map(self):
-        """Create a mapping between markup positions and plain text positions"""
-        self._markup_to_plain_map = {}
+        """Create a mapping between markup positions and plain text positions.
+        Uses stored plaintext from tuples where available for more accurate mapping."""
+
+
         markup_index = [0]
-        plain_index = 1 # Start at 0, increase on found markup characters
+        def _plain_index():
+            return len(self._markup_to_plain_map) | 0
+
+        plain_index = _plain_index()
+
+        #plain_index = 0 # #1 Start at 0, increase on found markup characters
         in_markup = False
+        idx = 0 # #1 Start enum at 1
         text = self.text
-        # Work directly with the text string
-        for i, char in enumerate(text, 1):
+        plaintext = self.plaintext
+        and_char = None
+        # Start at current position in the text and plaintext, and work from there.
+        if self._markup_to_plain_map:
+            k = list(self._markup_to_plain_map.keys())[-1]
+            idx = k[-1] + 1
+            #plain_index = v
+        for i, char in enumerate(text[idx:], idx):
             try:
-                if char == '[':
-                    # Start of a markup tag
+                if char == '&':
+                # If we're in an escaped character, skip the first 3 characters and only count the last. Catch index errors rather than checking everything.
+                    and_char = text[i:i+3]
+                    if and_char == '&br;' or and_char == '&bl;':
+                        continue
+                elif and_char is not None and char != ';':
+                    continue
+                elif and_char is not None and char == ';':
+                    and_char = None              
+
+                if char == '[' and plaintext[_plain_index()] != '[':
+                    # Check if it's a '[' in the plaintext to see if it's markup or not.
                     if not in_markup:
                         markup_index = [i]
                         in_markup = True
                     else:
                         # If we're already in a markup tag, add this position to the current tag
                         markup_index.append(i)
-                elif char == ']' and in_markup:
+                elif char == ']' and in_markup and plaintext[_plain_index()] != ']':
                     # End of a markup tag...but wait theres more!
                     # Check if we're not at the end of the string before accessing text[i]
                     if i < len(text) and text[i] == '[':
@@ -274,12 +301,12 @@ class MarkupTextField(TextInput, ThemableBehavior):
                     # End of a markup tag
                     else:
                         # Map all positions in the markup tag to the same plain text position
-                        self._markup_to_plain_map[tuple(markup_index)] = plain_index
+                        markup_index.append(i)
+                        self._markup_to_plain_map[tuple(markup_index)] = _plain_index()
                         in_markup = False
                 elif not in_markup:
                     # Regular character outside of markup
-                    self._markup_to_plain_map[tuple([i])] = plain_index
-                    plain_index += 1
+                    self._markup_to_plain_map[tuple([i])] = _plain_index()
                 else:
                     # Character inside a markup tag
                     markup_index.append(i)
@@ -287,11 +314,14 @@ class MarkupTextField(TextInput, ThemableBehavior):
                 # If we hit an index error, just continue to the next character
                 continue
 
-    def _refresh_text(self, *args):
+    def _refresh_text(self, text, *largs):
         """Override to update plain text lines when text is refreshed"""
-        super(MarkupTextField, self)._refresh_text(*args)
-        self._update_plaintext_lines()
-        self._update_markup_to_plain_map()
+        # Check if our tokenizer made the lines empty.
+        if text == '':
+            return
+        # For non-empty text call parent normally
+        super(MarkupTextField, self)._refresh_text(text, *largs)
+        #self._update_plaintext_lines()
         # Check if we should reset manual scroll flag after text refresh
         self._check_and_reset_manual_scroll()
 
@@ -389,12 +419,10 @@ class MarkupTextField(TextInput, ThemableBehavior):
     def _create_line_label(self, text, hint=False):
         '''Create a label from a text, using line options'''
 
-        # If the text is not in a color tag and has no new lines, we're not using it
-        # These are created because kivy can't dectect how much space a line takes up
-        # so we increment until we find something that works - we know this doesn't work
+        # increment until we find something that works - we know this doesn't work
         # so just fail it.
         if not self._is_color_tag(text) and text.find(u'\n') == 0:
-            return self._empty_texture
+            return super()._create_line_label(text, hint)
         
         ntext = text.replace(u'\n', u'').replace(u'\t', u' ' * self.tab_width)
         
@@ -413,37 +441,42 @@ class MarkupTextField(TextInput, ThemableBehavior):
             # do this. try to find the maximum text we can handle
 
             # TODO: God this is so fucking stupid, and won't work in some cases.
-            #Need to instead find the max character amt in the space
-            #That doesn't work with non-monospace fonts but should work here
+            # We're making a label and if it's too big we're trying again. Need to iterate
+            # through markup tags and correctly match them up. Doing this fast is hard, but it does cache the label.
+            # Make tuples of the patterns and a string for their end tag, match the pattern, get the end tag.
 
             label = Label(text=ntext, **kw)
-            start_tag = ""
-            end_tag = ""
-            almost_end_tag = ""
-            if len(label.markup) > 0:
-                start_tag = label.markup[0]
-                end_tag = label.markup[-1]
-                if len(label.markup) > 1:
-                    almost_end_tag = label.markup[-2]
-                    if start_tag == " ":
-                        start_tag = label.markup[1]
-                    if end_tag == " ":
-                        end_tag = label.markup[-2]
-                    if almost_end_tag == " " and len(label.markup) > 2:
-                        almost_end_tag = label.markup[-3]
-            if start_tag == '[b]' and end_tag != '[/b]':
-                ntext = u'{}[/b]'.format(ntext)
+            color_pattern = (re.compile(r'\[color=[0-9A-Fa-f]{6}\]'), r"[/color]")
+            bold_pattern = (re.compile(r'\[b\]'), r"[/b]")
+            italic_pattern = (re.compile(r'\[i\]'), r"[/i]")
+            underline_pattern = (re.compile(r'\[u\]'), r"[/u]")
+            end_pattern = re.compile(r'\[/.*\]')
+            all_patterns = {"color": color_pattern, "bold": bold_pattern, "italic": italic_pattern, "underline": underline_pattern}
+            start_tag = {"color": {}, "bold": {}, "italic": {}, "underline": {}}
+            end_tag = {"color": {}, "bold": {}, "italic": {}, "underline": {}}
+            markup_tags = label.markup
+            if markup_tags:
+                for i, tag in enumerate(markup_tags):
+                    for mktype, pattern in all_patterns.items():
+                        if re.match(pattern[0], tag):
+                            start_tag[mktype][i] = (tag, pattern[1]) # Start tag at i index. Store the end in case we need it.
+                            break
+                        elif re.match(end_pattern, tag):
+                            end_tag[mktype][i] = tag
+                            break
+                for mktype in all_patterns.keys():
+                    if len(start_tag[mktype]) > len(end_tag[mktype]):
+                        # more start tags than end tags, so we need to add the end tag from the last 
+                        # start tag of this kind, and store the start tag for the next line
+                        last_key = max(start_tag[mktype].keys())
+                        ntext = u'{}{}'.format(ntext, start_tag[mktype][last_key][1])
+                        self._saved_markup[mktype] = start_tag[mktype][last_key][0]
+                    elif len(end_tag[mktype]) > len(start_tag[mktype]):
+                        # more end tags than start tags, so we need to add the start tag we stored
+                        ntext = u'{}{}'.format(self._saved_markup[mktype], ntext)
+                        self._saved_markup[mktype] = ""
                 label = Label(text=ntext, **kw)
-            elif end_tag == '[/b]' and start_tag != '[b]':
-                ntext = u'[b]{}'.format(ntext)
-                label = Label(text=ntext, **kw)
-            elif end_tag != '[/color]':
-                self._saved_markup = almost_end_tag
-                ntext = u'{}[/color]'.format(ntext)
-                label = Label(text=ntext, **kw)
-            elif start_tag.count('color') == 0 and end_tag == '[/color]':
-                ntext = u'{}{}'.format(self._saved_markup, ntext)
-                label = Label(text=ntext, **kw)
+
             if text.find(u'\n') > 0:
                 label.text = u''
             else:
@@ -463,6 +496,14 @@ class MarkupTextField(TextInput, ThemableBehavior):
 
     def _get_text_width(self, text, tab_width, _label_cached):
         # Return the width of a text, according to the current line options.
+        # TODO: The mouse position vs cursor position is slightly off when selecting text.
+        # Your mouse position is correct for where you want to start the selection, but the
+        # graphics (viewable selection) isn't quite right.
+        # python shenanigans here with typing...
+        plain_text = ''
+        if isinstance(text, tuple):
+            markup_text, plain_text = text
+            text = markup_text
         kw = self._get_line_options()
         
         # Create cache key based on text and options
@@ -481,13 +522,9 @@ class MarkupTextField(TextInput, ThemableBehavior):
         # If not in cache, calculate width
         if self.use_markup:
             # For markup text, we need to handle the width calculation differently
-            # First, check if we're in the middle of a markup tag
-            if '[' in text and ']' not in text or ']' in text and '[' not in text:
-                # If we're in the middle of a markup tag, return 0 width
-                return 0
-               
             # Get the plaintext version
-            plain_text = self.strip_markup(text, ignore_patterns=self.ignore_patterns)
+            if not plain_text:
+                plain_text = self.strip_markup(text, ignore_patterns=self.ignore_patterns)
             # Create a label with the plaintext
             temp_kw = kw.copy()
             temp_kw['markup'] = False
@@ -512,14 +549,15 @@ class MarkupTextField(TextInput, ThemableBehavior):
         """Check if the text is in a color tag with format [color=XXXXXX]text[/color]
         where XXXXXX is a 6-digit hex color code (0-9A-F), or if it contains just a closing color tag"""
         # Pattern for complete color tag pair
-        complete_pattern = r'.*\[color=[0-9A-Fa-f]{6}\].*\[\/color\].*'
-        # Pattern for just a closing color tag - this will flag the markup warning but necessary for
-        # word wraps
-        closing_pattern = r'.*\[\/color\].*'
-        return bool(re.match(complete_pattern, text) or re.match(closing_pattern, text))
+        color_pattern = re.compile(r'\[color=[0-9A-Fa-f]{6}\]')
+        closing_pattern = re.compile(r'\[\/color\]')
+        other_pattern = re.compile(r'\[/?(?:b|i|u)\]')
+        all_patterns = [color_pattern, closing_pattern, other_pattern]
+        return bool(any(re.search(pattern, text) for pattern in all_patterns))
 
     def _get_bbcode(self, ntext):
         # get bbcoded text for python
+        # I think I may be doing this twice now...
         try:
             ntext[0]
             # replace brackets with special chars that aren't highlighted
@@ -528,9 +566,10 @@ class MarkupTextField(TextInput, ThemableBehavior):
             #ntext = highlight(ntext, self.lexer, self.formatter)
             #ntext = ntext.replace(u'\x01', u'&bl;').replace(u'\x02', u'&br;')
             # replace special chars with &bl; and &br;
-            color_tag = f'[color={self.text_default_color}]'
+            color_pattern = re.compile(r'\[color=[0-9A-Fa-f]{6}\]')
+            color_tag = self.current_color_tag if self.current_color_tag else f"[color={self.text_default_color}]"
             end_color_tag = '[/color]'
-            if not ntext.startswith(color_tag):
+            if not re.match(color_pattern, ntext):
                 if ntext.endswith(end_color_tag):
                     ntext = u''.join((color_tag, ntext))
                 else:
@@ -538,6 +577,12 @@ class MarkupTextField(TextInput, ThemableBehavior):
             else:
                 if not ntext.endswith(end_color_tag):
                     ntext = u''.join((ntext, end_color_tag))
+                    self.current_color_tag = re.findall(color_pattern, ntext)
+                    if self.current_color_tag:
+                        try:
+                            self.current_color_tag = self.current_color_tag[-1]
+                        except IndexError:
+                            self.current_color_tag = None
             #ntext = ntext.replace(u'\n', u'')
             # remove possible extra highlight options
             ntext = ntext.replace(u'[u]', '').replace(u'[/u]', '')
@@ -545,38 +590,109 @@ class MarkupTextField(TextInput, ThemableBehavior):
         except IndexError:
             return ''
 
+    def _tokenize(self, text):
+        """Override _tokenize to handle markup tags as single tokens.
+        
+        Markup tags like [color=FFFFFF] or [b] should be treated as single tokens
+        and not split on brackets. This prevents word wrapping from breaking
+        markup tags or splitting text that uses brackets like [Hint].
+        """
+        if text is None:
+            return
+        
+        # For empty text, yield empty string to match parent behavior
+        if not text:
+            yield ''
+            return
+        
+        delimiters = self._tokenize_delimiters
+        
+        # Find all markup tag positions in the text
+        markup_ranges = []
+        for match in self._markup_tag_pattern.finditer(text):
+            markup_ranges.append((match.start(), match.end()))
+        
+        # If no markup tags, use parent's tokenization
+        if not markup_ranges:
+            for token in super()._tokenize(text):
+                yield token
+            return
+        
+        # Tokenize text, treating markup tags as single tokens
+        old_index = 0
+        prev_char = ''
+        
+        for markup_start, markup_end in markup_ranges:
+            # Tokenize text before this markup tag using parent logic
+            if old_index < markup_start:
+                segment = text[old_index:markup_start]
+                for token in self._tokenize_segment(segment, delimiters, prev_char):
+                    yield token
+                if segment:
+                    prev_char = segment[-1]
+            
+            # Yield the entire markup tag as a single token
+            yield text[markup_start:markup_end]
+            old_index = markup_end
+            prev_char = text[markup_end - 1] if markup_end > 0 else ''
+        
+        # Tokenize any remaining text after the last markup tag
+        if old_index < len(text):
+            segment = text[old_index:]
+            for token in self._tokenize_segment(segment, delimiters, prev_char):
+                yield token
+    
+    def _tokenize_segment(self, text_segment, delimiters, prev_char):
+        """Helper method to tokenize a text segment using parent class logic."""
+        if not text_segment:
+            return
+        
+        old_index = 0
+        for index, char in enumerate(text_segment):
+            if char not in delimiters:
+                if char != u'\n':
+                    if index > 0 and (prev_char in delimiters):
+                        if old_index < index:
+                            yield text_segment[old_index:index]
+                        old_index = index
+                else:
+                    if old_index < index:
+                        yield text_segment[old_index:index]
+                    yield text_segment[index:index + 1]
+                    old_index = index + 1
+            prev_char = char
+        if old_index < len(text_segment):
+            yield text_segment[old_index:]
+
     def cursor_offset(self):
         '''Get the cursor x offset on the current line'''
         row = int(self.cursor_row)
         col = int(self.cursor_col)
         lines = self._lines
+        plaintext_lines = self._lines_plaintext
         offset = 0
 
         try:
-            # If not multiline, treat the entire text as a single line
-            if not self.multiline:
-                markup_text = self.text[:col]
-                offset = self._get_text_width(markup_text, self.tab_width, self._label_cached)
-                return offset
-
             if col:
                 # Get the text up to the cursor position
                 markup_text = lines[row][:col]
+                plain_text = plaintext_lines[row][:col]
                 
                 # Special handling for beginning of line
                 if col == len(lines[row]):
                     # If at end of line, use the whole line
-                    offset = self._get_text_width(markup_text, self.tab_width, self._label_cached)
+                    offset = self._get_text_width(text=(markup_text, plain_text), tab_width=self.tab_width, _label_cached=self._label_cached)
                 else:
                     # Find the first ] in the line to determine where actual text starts
-                    first_bracket_end = lines[row].find(']')
+                    for pattern in self.all_patterns.values():
+                        first_bracket_end = re.match(pattern, lines[row]).end()
+                        break
                     if first_bracket_end >= 0 and col <= first_bracket_end:
                         # If cursor is before or at the first ], width should be 0
                         offset = 0
                     else:
                         # Use cached width calculation
-                        offset = self._get_text_width(markup_text, self.tab_width, self._label_cached)
-          
+                        offset = self._get_text_width(text=(markup_text, plain_text), tab_width=self.tab_width, _label_cached=self._label_cached)
                 return offset
         except Exception as e:
             logger.debug(f"Error calculating cursor offset - {str(e)}")
@@ -693,7 +809,6 @@ class MarkupTextField(TextInput, ThemableBehavior):
         plain_b = self._get_plain_from_markup_index(b)
   
         _selection_text = self.plaintext[plain_a:plain_b]
-
         self.selection_text = ("" if not self.allow_copy else
                                ((self.password_mask * (plain_b - plain_a)) if
                                 self.password else _selection_text))
@@ -743,7 +858,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
         position += col
         full_length = 0 
         for i, line in enumerate(lines):
-            full_length += len(line) + lines_flags[i]
+            full_length += len(unescape_markup(line)) + lines_flags[i]
 
         # if full_length == 8472:
         #     logger.debug(f"full_length: {full_length}") # adding the flags, and now they match!
@@ -756,7 +871,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
         # Ensure we don't exceed the text length
         return min(position, len(self.text))
         
-    def _select_word(self, delimiters=u' .,:;!?\'"<>(){}'):
+    def _select_word(self, delimiters=u' .,:;!?\'"<>(){}\n'):
         '''Select the tag's contents at the cursor, or 
         the word at the cursor if no tag is selected'''
         cindex = self.cursor_index()

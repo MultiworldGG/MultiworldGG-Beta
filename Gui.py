@@ -88,7 +88,7 @@ from mwgg_gui.components.topappbar import TopAppBarLayout
 from mwgg_gui.launcher.launcher import LauncherScreen
 from mwgg_gui.loadanimlayout import MWGGLoadingLayout
 from mwgg_gui.components.bottomappbar import BottomAppBar, BottomBarTextInput
-from mwgg_gui.components.guidataclasses import UIPlayerData, UIHint
+from mwgg_gui.components.guidataclasses import UIPlayerData, UIHint, MarkupPair
 
 if typing.TYPE_CHECKING:
     import CommonClient
@@ -641,10 +641,10 @@ class MultiMDApp(MDApp):
         # Convert the list of JSONMessagePart to a single text message
         # Use KivyMarkupJSONtoTextParser to convert the JSON message parts to Kivy markup with hex colors
         parser = KivyMarkupJSONtoTextParser(self.ctx)
-        text = parser(data)
-        
+        markup_text = parser(data)
+        plaintext = "".join([node.get("text") for node in data])
         # Always use the text buffer for consistency
-        self.text_buffer.put_nowait(text)
+        self.text_buffer.put_nowait(MarkupPair(markup_text, plaintext))
 
     def set_pronouns(self):
         pronouns = self.local_player_data.pronouns

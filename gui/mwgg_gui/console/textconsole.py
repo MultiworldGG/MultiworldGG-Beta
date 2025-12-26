@@ -22,6 +22,7 @@ from multiprocessing import Queue
 from multiprocessing.queues import Empty
 from kivy.utils import get_hex_from_color
 from mwgg_gui.overrides.markuptextfield import MarkupTextField
+from mwgg_gui.components.guidataclasses import MarkupPair
 
 from NetUtils import TEXT_COLORS
 
@@ -72,13 +73,23 @@ class TextConsole(MarkupTextField, ThemableBehavior):
 
     def add_text_from_buffer(self, dt):
         try:
-            text = self.text_buffer.get_nowait()
-            # Handle both string and object with msg attribute
-            if isinstance(text, str):
-                message_text = text
+            queue_item = self.text_buffer.get_nowait()
+            # Handle MarkupPair tuple and string (log record) cases
+            if isinstance(queue_item, MarkupPair):
+                text = queue_item.text
+                plaintext = queue_item.plaintext
+            elif isinstance(queue_item, str):
+                # String comes in as plaintext (no markup) - use tuple with same value for both
+                text = queue_item
+                plaintext = queue_item
             else:
-                message_text = text.msg
-            self.text = self.text + u"\n" + message_text if self.text else message_text
+                # Handle objects with msg attribute (log records)
+                if hasattr(queue_item, 'msg'):
+                    text = queue_item.msg
+                    plaintext = queue_item.msg
+                else:
+                    raise ValueError(f"Invalid queue item type: {type(queue_item)}")
+            self.set_texts(text, plaintext)
         except Empty:
             return
         except Exception as e:

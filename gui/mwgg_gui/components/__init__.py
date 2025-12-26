@@ -11,6 +11,7 @@ from .dialog import (
 from .guidataclasses import (
     UIHint,
     UIPlayerData,
+    MarkupPair,
 )
 from .mw_theme import (
     DefaultTheme,

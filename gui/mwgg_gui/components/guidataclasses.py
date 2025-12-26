@@ -2,13 +2,20 @@
 Data classes to store User data and hint information locally
 """
 from __future__ import annotations
-__all__ = ("UIHint", "UIPlayerData")
+__all__ = ("UIHint", "UIPlayerData", "MarkupPair")
 from dataclasses import dataclass
 import re
 from NetUtils import Hint, HintStatus, MWGGUIHintStatus
 from BaseClasses import ItemClassification
 from typing import Optional
 
+@dataclass
+class MarkupPair:
+    """
+    A pair of strings representing a text output with and without markup.
+    """
+    text: str
+    plaintext: str
 
 @dataclass
 class UIHint:
