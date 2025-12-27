@@ -690,8 +690,14 @@ class MultiMDApp(MDApp):
         '''
         # timer = self.ctx.stored_data.get(f"timer", [time.time()])
         timer = value
-        if not timer:
+        if not timer or timer == [] or timer == [0.0] or timer == 0.0:
             return
+        if isinstance(timer, list):
+            start_timer = timer[0]
+            if self.ctx.timer == 0.0:
+                self.ctx.timer = start_timer
+        else:
+            start_timer = timer
         self.top_appbar_layout.top_appbar.timer.start_time = self.ctx.timer - sum(float(time) for time in timer) if timer else self.ctx.timer
         if not self.top_appbar_layout.top_appbar.timer.is_running:
             self.top_appbar_layout.top_appbar.timer.start_running_timer()
