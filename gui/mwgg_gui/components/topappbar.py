@@ -131,6 +131,12 @@ class Timer(MDTopAppBarTitle):
         else:
             instance.text_color = self.theme_cls.onSurfaceVariantColor
     
+    def start_running_timer(self):
+        """Start the timer (initial start or resume from pause)"""
+        if self.ctx.timer:
+            if self.ctx.timer > time():
+                self.start()
+
     def start(self):
         """Start the timer (initial start or resume from pause)"""
         if not self.is_running:
@@ -169,15 +175,7 @@ class Timer(MDTopAppBarTitle):
     
     def update_timer(self):
         """Update the elapsed time and check for goal condition"""
-        # Check for countdown timer from server first
-        # if hasattr(self.ctx, 'countdown_timer'):
-        #     if self.ctx.countdown_timer > 0 and not self.has_been_started:
-        #         # Server provided a countdown - start timer as negative
-        #         self.elapsed_time = -self.ctx.countdown_timer  # Negative countdown
-        #         self.is_running = True
-        #         self.has_been_started = True
-        #         return
-        
+       
         # Normal timer operation
         if self.is_running:
             self.start_time = self.ctx.timer
@@ -197,7 +195,11 @@ class Timer(MDTopAppBarTitle):
             self.text = "-" + strftime("%H:%M:%S", gmtime(abs_value))
         else:
             # Positive time - normal display
-            self.text = strftime("%H:%M:%S", gmtime(int(value)))
+            if value > 86400:
+                plural = "s" if value > 172800 else ""
+                self.text = strftime(f"%d day{plural}, %H:%M:%S", gmtime(int(value)))
+            else:
+                self.text = strftime("%H:%M:%S", gmtime(int(value)))
     
     def on_parent(self, instance, parent):
         """Clean up scheduled events when widget is removed"""

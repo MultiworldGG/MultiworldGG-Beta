@@ -938,29 +938,42 @@ class CommonContext(InitContext):
         If the activity time is less than 300 seconds since the last activity, track this as the "last" activity time.
         If the activity time is not set, this is the first activity, so set the timer to the activity time.
         '''
-        if offset_time != 0:
+        if self.timer == 0.0:
             self.activity_time = time.time() + offset_time
-            self.timer = self.activity_time #start time
-            msg = {"cmd": "Set", 
-                "key": f"timer", 
-                "want_reply": False,
-                "default": [],
-                "operations": [{"operation": "replace", "value": [0]}]}
-            async_start(self.send_msgs([msg]), name="update_timer")
-            return
+            if self.server and self.server.socket:
+                if offset_time != 0 or len(self.checked_locations) > 0:
+                    server_timer = self.stored_data.get("timer", [self.activity_time])#start time
+                    self.timer = server_timer[0]
+                    msg = {"cmd": "Set", 
+                        "key": f"timer", 
+                        "want_reply": True,
+                        "default": [self.timer],
+                        "operations": [{"operation": "replace", "value": server_timer}]}
+                    async_start(self.send_msgs([msg]), name="update_timer")
+                    return
         else:
-            if self.shared_activity_time is None:
-                return
-            activity_time = time.time()
-            elapsed_break = activity_time - self.shared_activity_time
-            if elapsed_break > 300:
-                msg = {"cmd": "Set", 
-                    "key": f"timer", 
-                    "want_reply": False,
-                    "default": [],
-                    "operations": [{"operation": "add", "value": [elapsed_break]}]}
-                async_start(self.send_msgs([msg]), name="update_timer")
-            self.activity_time = activity_time
+            if self.server and self.server.socket:
+                if self.shared_activity_time is None:
+                    self.shared_activity_time = 0
+                    for i in self.player_names.keys():
+                        if i != self.slot:
+                            activity = self.stored_data.get(f"activity_{self.team}_{i}", 0)
+                            if activity:
+                                self.shared_activity_time = activity if activity > self.shared_activity_time else self.shared_activity_time
+                    if self.shared_activity_time == 0:
+                        return
+                activity_time = time.time()
+                elapsed_break = activity_time - self.shared_activity_time
+                if elapsed_break > 300:
+                    stored_activity_idx = self.stored_data.get("timer", [self.timer])
+                    stored_activity_idx.append(elapsed_break)
+                    msg = {"cmd": "Set", 
+                        "key": f"timer", 
+                        "want_reply": False,
+                        "default": [self.timer],
+                        "operations": [{"operation": "replace", "value": stored_activity_idx}]}
+                    async_start(self.send_msgs([msg]), name="update_timer")
+                self.activity_time = activity_time
 
     # DataPackage
     async def prepare_data_package(self, relevant_games: typing.Set[str],
@@ -1187,6 +1200,7 @@ async def keep_alive(ctx: CommonContext, seconds_between_checks=100):
         if ctx.server and ctx.slot:
             seconds_elapsed += 1
             if seconds_elapsed > seconds_between_checks:
+                ctx.update_timer()
                 await ctx.send_msgs([{"cmd": "Bounce", "slots": [ctx.slot]}])
                 seconds_elapsed = 0
 
@@ -1487,7 +1501,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
                                 if hasattr(ctx.ui.ui_player_data[slot_id], item):
                                     setattr(ctx.ui.ui_player_data[slot_id], item, data)
         if f"activity_{ctx.team}_" in args["keys"]:
-            ctx.shared_activity_time = args["keys"].get(f"activity_{ctx.team}_{ctx.slot}", 0)
+            ctx.shared_activity_time = args["keys"].get(f"activity_{ctx.team}_{ctx.slot}") if args["keys"].get(f"activity_{ctx.team}_{ctx.slot}") is not None and args["keys"].get(f"activity_{ctx.team}_{ctx.slot}") > ctx.shared_activity_time else ctx.shared_activity_time
 
     elif cmd == "SetReply":
         ctx.stored_data[args["key"]] = args["value"]
@@ -1508,7 +1522,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
                             if hasattr(ctx.ui.ui_player_data[slot_id], item):
                                 setattr(ctx.ui.ui_player_data[slot_id], item, data)
         elif args["key"].startswith(f"activity_{ctx.team}_"):
-            ctx.shared_activity_time = args["value"]
+            ctx.shared_activity_time = args["value"] if args["value"] is not None and args["value"] > ctx.shared_activity_time else ctx.shared_activity_time
         elif args["key"].startswith("EnergyLink"):
             ctx.current_energy_link_value = args["value"]
             if ctx.ui:

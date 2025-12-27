@@ -21,7 +21,7 @@ from kivy.core.clipboard import Clipboard
 from kivy.animation import Animation
 from kivy.config import Config
 from kivy.effects.scroll import ScrollEffect
-from kivy.uix.textinput import TextInput, FL_IS_LINEBREAK, FL_IS_WORDBREAK
+from kivy.uix.textinput import TextInput, FL_IS_NEWLINE
 from kivy.core.text.markup import MarkupLabel as Label
 from kivy.cache import Cache
 from kivymd.uix.menu import MDDropdownMenu
@@ -244,7 +244,7 @@ class MarkupTextField(TextInput, ThemableBehavior):
         text = re.sub(r'\^.*]', '', text)
         return text
 
-    def _update_plaintext_lines(self):
+    def _update_plaintext_lines(self) -> None:
         """Update the _lines_plaintext list with plain text versions of each line"""
         _text = self.text
         _lines = self._lines
@@ -572,8 +572,10 @@ class MarkupTextField(TextInput, ThemableBehavior):
             if not re.match(color_pattern, ntext):
                 if ntext.endswith(end_color_tag):
                     ntext = u''.join((color_tag, ntext))
+                    self.current_color_tag = None
                 else:
                     ntext = u''.join((color_tag, ntext, end_color_tag))
+                    self.current_color_tag = None
             else:
                 if not ntext.endswith(end_color_tag):
                     ntext = u''.join((ntext, end_color_tag))
@@ -805,8 +807,8 @@ class MarkupTextField(TextInput, ThemableBehavior):
         self._selection_finished = finished
 
         # Map the selection indices to the plaintext
-        plain_a = self._get_plain_from_markup_index(a)
-        plain_b = self._get_plain_from_markup_index(b)
+        plain_a = self._get_plain_from_markup_index(a) + 1
+        plain_b = self._get_plain_from_markup_index(b) + 1
   
         _selection_text = self.plaintext[plain_a:plain_b]
         self.selection_text = ("" if not self.allow_copy else
@@ -851,23 +853,15 @@ class MarkupTextField(TextInput, ThemableBehavior):
         
         # Calculate the position in the markup text
         position = 0
-        for i, line in enumerate(lines[:row]):
-            position += len(line) + lines_flags[i]
+        for i, line in enumerate(lines[:row], 1):
+            if lines_flags[i] & FL_IS_NEWLINE:
+                position += len(line) + 1
+            else:
+                position += len(line)
         
         # Add the column position
         position += col
-        full_length = 0 
-        for i, line in enumerate(lines):
-            full_length += len(unescape_markup(line)) + lines_flags[i]
-
-        # if full_length == 8472:
-        #     logger.debug(f"full_length: {full_length}") # adding the flags, and now they match!
-        #     logger.debug(f"len(self.text): {len(self.text)}") # printing 8472
-        #     logger.debug(f"len(self.plaintext): {len(self.plaintext)}") # 4030
-        # for i in self._markup_to_plain_map.keys():
-        #     if full_length in i:
-        #         logger.debug(f"last mapped position: {self._markup_to_plain_map[i]}") #4030 please
-
+        
         # Ensure we don't exceed the text length
         return min(position, len(self.text))
         
@@ -882,6 +876,8 @@ class MarkupTextField(TextInput, ThemableBehavior):
         line_length = len(line)
         enil = str(line[::-1]) #backwards line to find the closest tag
         start = 0
+        roloc_tluafed = self.text_default_color[::-1]
+        no_color = False
         end = 0
 
         if col >= line_length:
@@ -891,26 +887,28 @@ class MarkupTextField(TextInput, ThemableBehavior):
             if char == ']':
                 start_tag = re.search(r"\][A-Fa-f0-9]{6}=roloc\[", enil[-(col):]) #search for the start tag...backwards
                 #logger.debug(f"start_tag: {start_tag}")
-                if start_tag:
+                if start_tag and not start_tag.group(0) == (f']{roloc_tluafed}=roloc['):
                     start = start_tag.end()-flag
                     break
                 else:
                     # if we find a tag that isn't a color tag, break
                     if re.search(r"\]", enil[-(col):]):
+                        no_color=True
                         break
-        for char in line[col:]:
-            if char == '[':
-                end_tag = re.search(r"\[/color\]", line[col:]) #search for the end tag
-                #logger.debug(f"end_tag: {end_tag}")
-                if end_tag:
-                    end = end_tag.start()+1
-                    break     
-                else:
-                    # if we find a tag that isn't a color tag, break
-                    if re.search(r"\[", line[col:]):
-                        break
+        if not no_color:
+            for char in line[col:]:
+                if char == '[':
+                    end_tag = re.search(r"\[/color\]", line[col:]) #search for the end tag
+                    #logger.debug(f"end_tag: {end_tag}")
+                    if end_tag:
+                        end = end_tag.start()+1
+                        break     
+                    else:
+                        # if we find a tag that isn't a color tag, break
+                        if re.search(r"\[", line[col:]):
+                            break
         
-        if start==0 and end==0:
+        if start==0 or end==0:
             # if no color markup tag is found, select the word at the cursor
             start = max(0, len(line[:col]) -
                         max(line[:col].rfind(s) for s in delimiters) - 1)

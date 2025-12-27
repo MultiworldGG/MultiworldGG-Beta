@@ -61,7 +61,7 @@ Window.borderless = True
 Window.set_title("MultiWorldGG")
 
 from kivy.clock import Clock
-from kivy.properties import ObjectProperty, BooleanProperty, NumericProperty
+from kivy.properties import ObjectProperty, BooleanProperty, NumericProperty, StringProperty
 from kivymd.app import MDApp
 from kivy.uix.screenmanager import SwapTransition
 from kivymd.uix.screenmanager import MDScreenManager
@@ -112,7 +112,7 @@ class MainScreenMgr(MDScreenManager):
 
 class MultiMDApp(MDApp): 
 
-    title = "MultiWorldGG"
+    base_title = StringProperty("MultiWorldGG")
 
     title_bar: Titlebar
     main_layout: MainLayout
@@ -315,6 +315,7 @@ class MultiMDApp(MDApp):
 
         self.title_bar = Titlebar()
         Window.set_custom_titlebar(self.title_bar)
+        self.bind(base_title=self.set_base_title)
 
         # Navigation layout (bottom sheet)
         self.navigation_layout = NavLayout()
@@ -632,6 +633,7 @@ class MultiMDApp(MDApp):
 
         self.update_hints()
         self.set_pronouns()
+        self.update_timer(self.ctx.timer)
         self.top_appbar_layout.top_appbar.ui_built()
         if not "hint" in self.screen_manager.screen_names:
             self._create_screen("hint")
@@ -686,11 +688,13 @@ class MultiMDApp(MDApp):
         This is called when a "break" is added from the server. It will add the break time to the start
         time of the timer, reducing the elapsed time to the correct value.
         '''
-        # timer = self.ctx.stored_data.get(f"timer_{self.ctx.team}_{self.ctx.slot}", [])
+        # timer = self.ctx.stored_data.get(f"timer", [time.time()])
         timer = value
         if not timer:
             return
         self.top_appbar_layout.top_appbar.timer.start_time = self.ctx.timer - sum(float(time) for time in timer) if timer else self.ctx.timer
+        if not self.top_appbar_layout.top_appbar.timer.is_running:
+            self.top_appbar_layout.top_appbar.timer.start_running_timer()
 
     def update_hints(self):
         hints = self.ctx.stored_data.get(f"_read_hints_{self.ctx.team}_{self.ctx.slot}", [])
@@ -840,6 +844,10 @@ class MultiMDApp(MDApp):
     @logo_png.setter
     def logo_png(self, value: str):
         self._logo_png = value.replace("t_thumb", "t_cover_big").replace(".jpg", ".png")
+
+    @staticmethod
+    def set_base_title(instance, value: str):
+        Window.set_title(value)
 
 def is_command_input(string: str) -> bool:
     return len(string) > 0 and string[0] in "/!"

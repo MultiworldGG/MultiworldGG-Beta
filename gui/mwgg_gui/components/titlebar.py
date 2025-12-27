@@ -71,7 +71,7 @@ KV = '''
             MDLabel:
                 pos_hint: {"center_x": .5, "center_y": .45}
                 id: tblabel_title
-                text: app.title
+                text: app.base_title
                 font_style: "TitleBar"
                 role: "small"
                 text_size: self.width, None
@@ -85,7 +85,7 @@ KV = '''
             pos_hint: {"center_x": .499, "center_y": .47}
             size_hint: 1, 1
             id: tblabeltext
-            text: app.title
+            text: app.base_title
             font_style: "TitleBar"
             text_size: self.width, None
             role: "small"
