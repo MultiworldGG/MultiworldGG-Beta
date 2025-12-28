@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.stardew_valley"
-version = "7.3.4"
+version = "7.3.5"
 description = "MultiWorld: Stardew Valley"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.kh1"
-version = "0.9.0"
+version = "0.11.0"
 description = "MultiWorld: Kingdom Hearts"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"

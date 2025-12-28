@@ -9,7 +9,7 @@ description = "MultiWorld: Paint"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "MairoManTAW"
+name = "MarioManTAW"
 
 [tool.setuptools.packages.find]
 where = [ "src",]
