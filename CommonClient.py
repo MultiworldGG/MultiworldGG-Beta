@@ -802,12 +802,12 @@ class CommonContext(InitContext):
             '''
             Filter out ItemSend messages that are not relevant to the local player if all_players_chat is False.
             '''
-            if args["type"] == 'Hint' and not self.slot_concerns_self(args["receiving"]) and args["found"]:
+            if args.get("type") == 'Hint' and not self.slot_concerns_self(args.get("receiving")) and args.get("found"):
                 pass
-            elif args["type"] == 'ItemSend' and not self.all_players_chat:
-                if self.slot_concerns_self(args["receiving"]):
+            elif args.get("type") == 'ItemSend' and not self.all_players_chat:
+                if self.slot_concerns_self(args.get("receiving")):
                     self.ui.print_json(copy.deepcopy(args["data"]))
-                elif self.slot_concerns_self(args["item"].player):
+                elif args.get("item") and self.slot_concerns_self(args["item"].player):
                     self.ui.print_json(copy.deepcopy(args["data"]))
             else:
                 # send copy to UI
