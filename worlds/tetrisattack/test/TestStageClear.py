@@ -1,4 +1,4 @@
-﻿from worlds.tetrisattack import VersusGoal
+﻿from worlds.tetrisattack import VersusGoal, get_items
 from worlds.tetrisattack.Options import StarterPack, StageClearMode, PuzzleGoal
 from worlds.tetrisattack.test import TetrisAttackTestBase
 
@@ -93,6 +93,16 @@ class TestStageClearMaxFiller(TetrisAttackTestBase):
         "starter_pack": StarterPack.option_stage_clear_round_6,
         "stage_clear_mode": StageClearMode.option_whole_rounds,
         "stage_clear_filler": 1,
-        "special_stage_traps": 30,
+        "special_stage_trap_count": 30,
         "shock_panel_checks": 100,
     }
+
+    def test_item_presence(self) -> None:
+        all_traps = list(
+            filter(lambda item: item.name == "Stage Clear Special Stage Trap" and item.player == self.player,
+                   self.multiworld.itempool))
+        self.assertEqual(len(all_traps), 30)
+        all_shock_panels = list(
+            filter(lambda item: item.name == "Stage Clear ! Panels" and item.player == self.player,
+                   self.multiworld.itempool))
+        self.assertEqual(len(all_shock_panels), 100)

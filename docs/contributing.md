@@ -19,6 +19,8 @@ game contributions:
   is [Python 3.12](https://www.python.org/downloads/release/python-31210/).
   It is recommended that automated github actions are turned on in your fork to have github run unit tests after
   pushing.
+  You can turn them on here:  
+  ![Github actions example](/docs/img/github-actions-example.png)
 
 * **When reviewing PRs, please leave a message about what was done.**
   We don't have full test coverage, so manual testing can help.
@@ -42,4 +44,4 @@ the [adding games documentation](/docs/adding%20games.md)
 which details what is required to implement support for a game, and has tips on to get started.
 
 For other questions, feel free to explore the [main documentation folder](/docs), and ask us questions in the
-#ap-world-dev channel of the [Discord](https://multiworld.gg/discord).
+#mwgg-discussion channel of the [Discord](https://multiworld.gg/discord).

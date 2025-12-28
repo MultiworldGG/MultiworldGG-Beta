@@ -1,15 +1,13 @@
-import orjson
-import pkgutil
 from typing import Any, ClassVar, TextIO
 
 from BaseClasses import Tutorial
 from worlds.AutoWorld import WebWorld, World
-from Options import OptionError
+from Options import OptionError, OptionGroup
 from .items import NineSolsItem, all_non_event_items_table, item_name_groups, create_item, create_items
 from .locations_and_regions import all_non_event_locations_table, location_name_groups, create_regions
-from .options import FirstRootNode, NineSolsGameOptions
 from .ut_map_page.map_page_index import map_page_index
 from .jade_costs import generate_random_jade_costs
+from .options import *
 
 
 class NineSolsWebWorld(WebWorld):
@@ -23,6 +21,35 @@ class NineSolsWebWorld(WebWorld):
             link="guide/en",
             authors=["Ixrec"]
         )
+    ]
+    option_groups = [
+        OptionGroup("General Progression", [
+            ShuffleSolSeals,
+            SealsForEigong,
+            SealsForPrison,
+            SealsForEthereal,
+            SkipSoulscapePlatforming,
+            PreventAnnoyingRunbacks,
+        ]),
+        OptionGroup("Jade Cost Randomization", [
+            RandomizeJadeCosts,
+            JadeCostMin,
+            JadeCostMax,
+            JadeCostPlando,
+        ]),
+        OptionGroup("Shop Unlocks", [
+            ShopUnlocks,
+            KuafuShopUnlockSolSeals,
+            ChiyouShopUnlockSolSeals,
+            KuafuExtraInventoryUnlockSolSeals,
+        ]),
+        OptionGroup("Additional Randomizations", [
+            FirstRootNode,
+            ShuffleGrapple,
+            ShuffleWallClimb,
+            ShuffleLedgeGrab,
+            LogicDifficulty,
+        ]),
     ]
 
 
@@ -51,6 +78,9 @@ class NineSolsWorld(World):
         "map_page_index": map_page_index
     }
 
+    using_ut: bool
+    jade_costs: dict[str, int] | str
+
     def __init__(self, multiworld, player):
         super(NineSolsWorld, self).__init__(multiworld, player)
 
@@ -74,6 +104,11 @@ class NineSolsWorld(World):
                     self.options.skip_soulscape_platforming.value = slot_data['skip_soulscape_platforming']
                     self.options.first_root_node = FirstRootNode.from_text(slot_data['first_root_node_name'])
                     self.options.logic_difficulty.value = slot_data.get('logic_difficulty', 0)
+                    self.options.shop_unlocks.value = slot_data.get('shop_unlocks', 0)
+                    self.options.kuafu_shop_unlock_sol_seals.value = slot_data.get('kuafu_shop_unlock_sol_seals', 0)
+                    self.options.chiyou_shop_unlock_sol_seals.value = slot_data.get('chiyou_shop_unlock_sol_seals', 0)
+                    self.options.kuafu_extra_inventory_unlock_sol_seals.value = (
+                        slot_data.get('kuafu_extra_inventory_unlock_sol_seals', 0))
             return
 
         # generate game-specific randomizations separate from AP items/locations
@@ -126,6 +161,10 @@ class NineSolsWorld(World):
             'seals_for_prison',
             'seals_for_ethereal',
             'logic_difficulty',
+            'shop_unlocks',
+            'kuafu_shop_unlock_sol_seals',
+            'chiyou_shop_unlock_sol_seals',
+            'kuafu_extra_inventory_unlock_sol_seals',
         )
         slot_data["first_root_node_name"] = self.options.first_root_node.current_key  # we want strings instead of ints
         # more client/mod features, these are only in the apworld because we want them fixed per-slot/at gen time

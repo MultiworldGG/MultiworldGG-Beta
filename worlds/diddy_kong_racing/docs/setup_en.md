@@ -32,12 +32,12 @@ EmuHawk.exe.
 
 ## How To Install - Server Side (Not needed with MWGG)
 
-Double-click `diddy_kong_racing.apworld` to install it into the `custom_worlds` folder of your MultiworldGG install.
+Double-click `diddy_kong_racing.apworld` to install it into the `custom_worlds` folder of your Archipelago install.
 
 ## How To Install - Client Side
 
 - (Not needed with MWGG) Double-click `diddy_kong_racing.apworld` to install it into the `custom_worlds` folder of your Archipelago install.
-- (Not needed with MWGG) Move `connector_diddy_kong_racing.lua` into the `data/lua` folder of your MultiworldGG install.
+- (Not needed with MWGG) Move `connector_diddy_kong_racing.lua` into the `data/lua` folder of your Archipelago install.
 - Run the MultiworldGG launcher and select Diddy Kong Racing Client.
 - The client will prompt you to select your ROM so it can be patched.
 - Once the patching is complete, connect the Diddy Kong Racing client to the server by clicking the Connect button.
@@ -49,7 +49,7 @@ Double-click `diddy_kong_racing.apworld` to install it into the `custom_worlds` 
 ## Generating Your World
 
 Familiarize yourself on how MultiworldGG works. Here is a guide to learn how to generate your
-world: https://multiworld.gg/tutorial/Archipelago/setup/en#generating-a-game
+world: [MultiworldGG Tutorial](/tutorial/Archipelago/setup/en#generating-a-game)
 
 ## Connect To The Multiserver
 

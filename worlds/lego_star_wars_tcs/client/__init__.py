@@ -53,6 +53,11 @@ from .game_state_modifiers.text_display import InGameTextDisplay
 from .game_state_modifiers.text_replacer import TextReplacer
 from .game_state_modifiers.uncap_high_jump import UncapHighJump
 
+try:
+    from Utils import instance_name as apname
+except ImportError:
+    apname = "Archipelago"
+
 
 logger = logging.getLogger("Client")
 debug_logger = logging.getLogger("TCS Debug")
@@ -775,7 +780,7 @@ class LegoStarWarsTheCompleteSagaContext(CommonContext):
                 logging_pairs = [
                     ("Client", "Archipelago"),
                 ]
-            base_title = "Archipelago Lego Star Wars: The Complete Saga Client"
+            base_title = f"{apname} Lego Star Wars: The Complete Saga Client"
 
         self.ui = LegoStarWarsTheCompleteSagaManager(self)
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")

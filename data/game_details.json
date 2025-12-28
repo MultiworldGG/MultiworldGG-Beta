@@ -2234,6 +2234,37 @@
         "keywords": [],
         "release_date": 2021
     },
+    "Into the Breach": {
+        "igdb_id": "27117",
+        "world_name": "Into the Breach",
+        "igdb_name": "Into the Breach",
+        "us_rating": [
+            "E10+"
+        ],
+        "player_perspectives": [
+            "Bird view / Isometric"
+        ],
+        "genres": [
+            "Puzzle",
+            "Role-playing (RPG)",
+            "Simulator",
+            "Strategy",
+            "Turn-based strategy (TBS)",
+            "Indie"
+        ],
+        "themes": [
+            "Science fiction"
+        ],
+        "keywords": [
+            "aliens",
+            "monsters",
+            "mech",
+            "roguelike",
+            "mecha",
+            "randomly generated dungeons"
+        ],
+        "release_date": 2018
+    },
     "Jak and Daxter The Precursor Legacy": {
         "igdb_id": "1528",
         "world_name": "Jak and Daxter The Precursor Legacy",
@@ -4043,6 +4074,38 @@
             "colony simulator"
         ],
         "release_date": 2018
+    },
+    "Rift of the Necrodancer": {
+        "igdb_id": "214492",
+        "world_name": "Rift of the NecroDancer",
+        "igdb_name": "Rift of the NecroDancer",
+        "us_rating": [
+            "E10+"
+        ],
+        "player_perspectives": [
+            "Side view",
+            "Auditory"
+        ],
+        "genres": [
+            "Music",
+            "Role-playing (RPG)",
+            "Indie",
+            "Arcade"
+        ],
+        "themes": [
+            "Action",
+            "Comedy"
+        ],
+        "keywords": [
+            "level editor",
+            "minigames",
+            "female protagonist",
+            "cute",
+            "cartoon graphics",
+            "colorful",
+            "music and rhythm"
+        ],
+        "release_date": 2025
     },
     "Rogue Legacy": {
         "igdb_id": "3221",

@@ -9,8 +9,10 @@ from .in_game_data import (global_weapon_table, base_weapons, valid_random_start
                            base_check_address_table, easter_egg_table, warp_room_bits, world_version, global_item_table, common_filler_pool,
                            boss_list, enemy_table)
 from .music_randomizer import area_music_randomizer, boss_music_randomizer
+from .synthesis_randomizer import write_synthesis
+from .bullet_wall_randomizer import apply_souls_and_gfx
 from Options import OptionError
-from .Options import StartingWeapon, SoulRandomizer
+from .Options import StartingWeapon, SoulRandomizer, SoulsanityLevel
 from .Items import soul_filler_table
 from BaseClasses import ItemClassification
 
@@ -115,6 +117,10 @@ def patch_rom(world, rom, player: int, code_patch):
         rom.write_bytes(0xC1C38, bytearray([0xD0]))
         rom.write_bytes(0xB05A1, bytearray([0x00]))
 
+        rom.write_bytes(0x2F6DDFD, bytearray([0xFF])) # Remove Death, Abaddon, and Aguni from the Soulstiary
+        rom.write_bytes(0x2F6DDFE, bytearray([0xFF]))
+        rom.write_bytes(0x2F6DE02, bytearray([0xFF]))
+
     if world.options.goal == 2:
         rom.write_bytes(0x2F6DD48, bytearray([0x01]))
 
@@ -127,13 +133,27 @@ def patch_rom(world, rom, player: int, code_patch):
     if world.options.death_link:
         rom.write_bytes(0x2F6DD8D, bytearray([0x01]))
 
+    if world.options.no_mp_bat:
+        rom.write_bytes(0xA1782, bytearray([0x00])) # Zero the Bat's MP cost
+
     rom.write_bytes(0x2F6DD8E, struct.pack("H", world.options.experience_percentage))
 
     rom.write_bytes(0x2F6DD90, struct.pack("H", world.options.soul_drop_percentage))
+    soul_total = set(world.common_souls)
+    if world.options.soulsanity_level:
+        soul_total |= world.uncommon_souls
+
+    if world.options.soulsanity_level == SoulsanityLevel.option_rare:
+        soul_total |= world.rare_souls
+    soul_total = list(soul_total)
+
+    for i, soul in enumerate(soul_total):  # Fill IDs of souls in the loc pool
+        rom.write_bytes(0x2F6DD94 + i, bytearray([global_soul_table.index(soul)]))
 
     if world.options.soul_randomizer == SoulRandomizer.option_shuffled:
-        vanilla_souls = {"Skeleton Soul", "Axe Armor Soul", "Killer Clown Soul", "Ukoback Soul", "Skeleton Ape Soul", "Bone Ark Soul"}
-        shuffled_keys = [item for item in soul_filler_table.copy() if item not in vanilla_souls]
+        vanilla_souls = [soul for soul in world.important_souls if soul not in world.excluded_static_souls]
+
+        shuffled_keys = [item for item in soul_filler_table.copy() if item not in vanilla_souls]  # Will this break with Aguni/Abaddon since they're not filler?
         souls_output = {key: key for key in soul_filler_table.copy()}  # this is assuming all vanilla souls are in soul_filler_table
         shuffled_vals = world.random.sample(shuffled_keys, k=len(shuffled_keys))
         for key, val in zip(shuffled_keys, shuffled_vals):
@@ -144,11 +164,11 @@ def patch_rom(world, rom, player: int, code_patch):
             rom.write_bytes(soul_check_table + (global_soul_table.index(soul) * 2), soul_data)
 
     elif world.options.soul_randomizer == SoulRandomizer.option_soulsanity:
-        # This is crashing when I enter the second room. I wonder why?
         rom.write_bytes(0x2F6DD49, bytearray([0x01]))
 
     if world.options.shop_randomizer:
         shop_pool = common_filler_pool.copy()
+        shop_pool = [item for item in shop_pool if item not in ["Potion", "Mind Up", "Claymore"]]
         for i in range(10):
             # Shop pool 2
             item = world.random.choice(shop_pool)
@@ -196,15 +216,26 @@ def patch_rom(world, rom, player: int, code_patch):
             rom.write_bytes(common_drop_address, bytearray([common_item]))
             rom.write_bytes(rare_drop_address, bytearray([rare_item]))
 
+    write_synthesis(world, rom)
+
     if world.options.area_music_randomizer:
         area_music_randomizer(world, rom)
 
     if world.options.boss_music_randomizer:
         boss_music_randomizer(world, rom)
 
+    if world.options.randomize_red_soul_walls:
+        rom.write_bytes(0x2F6DE06, bytearray([0x01])) #Tell the rom we have this on
+
+        rom.write_bytes(0x158BC0, bytearray([global_soul_table.index(world.red_soul_walls[0])]))
+        rom.write_bytes(0x158BBA, bytearray([global_soul_table.index(world.red_soul_walls[1])]))
+        rom.write_bytes(0x158BB4, bytearray([global_soul_table.index(world.red_soul_walls[2])]))
+        rom.write_bytes(0x158BC6, bytearray([global_soul_table.index(world.red_soul_walls[3])]))
+
     for location in world.multiworld.get_locations(player):
         item_type = 0
         item_id = 0
+        
         if location.address:
             if location.item.player == world.player:   # If this is an item for the player, we need to extract it's Type and ID
                 item_type = (location.item.code & 0xFF00) >> 8
@@ -265,7 +296,8 @@ class DoSProcPatch(APProcedurePatch, APTokenMixin):
         ("apply_bsdiff4", ["dos_base.bsdiff4"]),
         ("apply_tokens", ["token_patch.bin"]),
         ("adjust_item_positions", []),
-        ("apply_modifiers", [])
+        ("apply_modifiers", []),
+        ("modify_soulwall_gfx", [])
     ]
 
     @classmethod
@@ -318,7 +350,7 @@ class DoSPatchExtensions(APPatchExtension):
             exp_address = address + 18  # Offset where EXP is stored
             exp = rom.read_bytes(exp_address, 2)
             exp = struct.unpack("H", exp)[0]
-            exp = int(exp * exp_multiplier)
+            exp = int(min(0xFFFF, (exp * exp_multiplier)))
             rom.write_bytes(exp_address, struct.pack("H", exp))
 
             soul_chance_address = address + 20
@@ -327,6 +359,14 @@ class DoSPatchExtensions(APPatchExtension):
                 soul_chance = int(min(0xFF, (soul_chance * soul_chance_multiplier)))
                 rom.write_bytes(soul_chance_address, bytearray([soul_chance]))
 
+        return rom.get_bytes()
+
+    @staticmethod
+    def modify_soulwall_gfx(caller: APProcedurePatch, rom: bytes) -> bytes:
+        rom = LocalRom(rom)
+        soul_wall_randomizer = int.from_bytes(rom.read_bytes(0x2F6DE06, 1))
+        if soul_wall_randomizer:
+            apply_souls_and_gfx(rom)
         return rom.get_bytes()
 
 

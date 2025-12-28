@@ -1,15 +1,15 @@
 # Yu-Gi-Oh! Dungeon Dice Monsters Setup Guide
 
 ## Playing YGO DDM in the Multiworld
-- The game will play out solely in Free Duel. Do not enter any tournaments!
+- If your progression mode is Free Duel, do not participate in tournaments!
 
 ## Required Software
-- [MultiworldGG](https://github.com/MultiworldGG/MultiworldGG/releases). Please use version 0.4.4 or later for integrated
+- [MultiworldGG](https://github.com/MultiworldGG/MultiworldGG/releases). Please use version 0.7.50 or later for integrated
 BizHawk support.
 - Yu-Gi-Oh! Dungeon Dice Monsters .GBA rom.
 - Make sure to launch a "New Game" for each seed you play.
 - [BizHawk](https://tasvideos.org/BizHawk/ReleaseHistory) 2.7 or later. Other emulators are not supported.
-- The latest `ygoddm.apworld` file. You can find this on the [Releases page](https://github.com/JustinMarshall98/Archipelago/releases/latest). Put this in your `Archipelago/lib/worlds` folder.
+- Unless you use MWGG: The latest `ygoddm.apworld` file. You can find this on the [Releases page](https://github.com/JustinMarshall98/Archipelago/releases/latest). Put this in your `Archipelago/lib/worlds` folder.
 
 ### Configuring BizHawk
 
@@ -26,13 +26,16 @@ clear it.
 
 ## Generating a Game
 
-1. Create your options file (YAML). After installing the `ygoddm.apworld` file, you can generate a template within the Archipelago Launcher by clicking `Generate Template Settings`.
-2. Follow the general Archipelago instructions for [generating a game](https://multiworld.gg/tutorial/Archipelago/setup/en#generating-a-game).
+1. Create your options file (YAML). You can generate a template within the MultiworldGG Launcher by clicking `Generate Template Settings`.
+2. Follow the general MultiworldGG instructions for [generating a game](/tutorial/Archipelago/setup/en#generating-a-game).
 3. Open `MultiworldGGLauncher.exe`
-4. Select "BizHawk Client" in the right-side column. On your first time opening BizHawk Client, you will also be asked to
-locate `EmuHawk.exe` in your BizHawk install.
+4. Select "Open Patch" in the right-side column. On your first time opening a patch for this game, you will also be asked to
+locate `EmuHawk.exe` in your BizHawk install and your YuGiOh Dungeon Dice Monsters rom.
+5. Select your patch from the generated output or downloaded from the MultiworldGG site from the hosted game room.
 
 ## Connecting to a Server
+
+(Selecting Open Patch each time should do steps 1-6 for you)
 
 1. If EmuHawk didn't launch automatically, open it manually.
 2. Open your Yu-Gi-Oh! Dungeon Dice Monsters .gba file in EmuHawk.
@@ -51,10 +54,10 @@ perfectly safe to make progress offline; everything will re-sync when you reconn
 
 ## Notes and Limitations
 
-1. Only defeating duelists in free play counts as checks. Unlocking more duelists through tournament play is vanilla
-game functionality but these unlocks are expected to be given as checks to you by the players in the multiworld,
-so **do not enter tournaments.**
+1. Playing in Tournaments when your Progression mode is Free Duel will unlock duelists out of logic. Don't do this!
 2. If you get Dice items while modifying your Dice Pool you may need to back out of editing it and re-enter that screen to
 have your dice inventory updated.
 3. If you get a Duelist Unlock item while on the Free Duel screen, you just need to scroll up or down enough to make the screen
 move to get the game to display the new duelist.
+4. If collecting dice are locations in your game (Bonus Item Mode - Shop), you can get the checks from your initial dice pool
+by removing them from your active dice pool and letting them sit in your collection for a moment.

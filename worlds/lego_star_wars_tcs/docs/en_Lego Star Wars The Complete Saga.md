@@ -1,7 +1,7 @@
 # Lego Star Wars: The Complete Saga
 
-This Archipelago randomizer implementation is playable, but is a work in progress. This notice will be removed once the
-logic has been rewritten from scratch, into a format that is more suitable for Archipelago.
+This MultiworldGG randomizer implementation is playable, but is a work in progress. This notice will be removed once the
+logic has been rewritten from scratch, into a format that is more suitable for MultiworldGG.
 
 ## What does randomization do to this game?
 

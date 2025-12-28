@@ -208,6 +208,8 @@ def get_items(world: Optional["TetrisAttackWorld"]) -> Dict[str, ItemData]:
         included_classes.append(SC_ROUND_GATE)
     if shock_panel_group_count > 0:
         included_classes.append(SHOCK_PANEL)
+    if special_stage_trap_count > 0:
+        included_classes.append(SC_TRAP)
     if include_pz_progressive_unlocks:
         included_classes.append(PZ_PROGRESSIVE_UNLOCK)
     if include_pz_individual_unlocks:

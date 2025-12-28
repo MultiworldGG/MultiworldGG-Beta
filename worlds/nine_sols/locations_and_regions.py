@@ -182,7 +182,7 @@ def create_regions(world: "NineSolsWorld") -> None:
 
         exit_connections = [cd for cd in connections_to_create if cd["from"] == region_name]
         for connection in exit_connections:
-            [rule, indirect_region_names] = get_combined_access_rule(connection, world)
+            rule, indirect_region_names = get_combined_access_rule(connection, world)
             entrance = region.connect(mw.get_region(connection["to"], p), None, rule)
             for indirect_region_name in indirect_region_names:
                 mw.register_indirect_condition(mw.get_region(indirect_region_name, p), entrance)
@@ -190,7 +190,7 @@ def create_regions(world: "NineSolsWorld") -> None:
     # add access rules to the created locations
     for ld in locations_data:
         if ld["name"] in locations_to_create:
-            [rule, _] = get_combined_access_rule(ld, world)
+            rule, _ = get_combined_access_rule(ld, world)
             set_rule(mw.get_location(ld["name"], p), rule)
 
     world.origin_region_name = "FSP - Root Node"
@@ -233,20 +233,9 @@ def create_regions(world: "NineSolsWorld") -> None:
 
     mw.get_region(world.origin_region_name, p).add_exits([first_node_region])
 
-
 # `logic` can be a location or a connection
-def get_combined_access_rule(logic: Any, world: "NineSolsWorld") -> [CollectionRule, list[str]]:
+def get_combined_access_rule(logic: Any, world: "NineSolsWorld") -> tuple[CollectionRule, list[str]]:
     vanilla_requires = logic["requires"] if "requires" in logic else None
-    # TODO: replace this hack with a generic "requires": { "option": ... } syntax
-    if (
-        "from" in logic and "to" in logic
-        and logic["from"] == "CC - Root Node" and logic["to"] == "CC - Root Node After Boss"
-        and world.options.skip_soulscape_platforming
-    ):
-        vanilla_requires = [  # no WC/TCK/LG/CL, only the platforming required that
-            {"item": "Event - Lady Ethereal Soulscape Unlocked"},
-            {"item": "Air Dash"}
-        ]
 
     medium_requires = None
     if "medium_requires" in logic:
@@ -264,15 +253,16 @@ def get_combined_access_rule(logic: Any, world: "NineSolsWorld") -> [CollectionR
 
     all_requires_levels = [x for x in [vanilla_requires, medium_requires, ls_requires] if x is not None]
     if len(all_requires_levels) == 0:
-        return [lambda state: False, []]
+        return lambda state: False, []
     elif all(len(r) == 0 for r in all_requires_levels):
-        return [lambda state: True, []]
+        return lambda state: True, []
     else:
         requires = all_requires_levels[0] if len(all_requires_levels) == 1 else [{"anyOf": all_requires_levels}]
-        return [
+        requires = pre_eval_option_criteria_in_rule(world.options, requires)
+        return (
             lambda state, r=requires: eval_rule(state, world.player, world.options, r),  # noqa
             regions_referenced_by_rule(requires)
-        ]
+        )
 
 
 # In the .jsonc files we use, a location or region connection's "access rule" is defined
@@ -291,13 +281,11 @@ def eval_criterion(state: CollectionState, p: int, options: NineSolsGameOptions,
         return all(eval_criterion(state, p, options, sub_criterion) for sub_criterion in criterion)
 
     if isinstance(criterion, dict):
+        # we can ignore "option" criteria here, because those should have been "pre-eval"ed already
         key, value = next(iter(criterion.items()))
-
-        # { "item": "..." } and { "anyOf": [ ... ] } and { "location": "foo" } and { "region": "bar" }
-        # mean exactly what they sound like, and those are the only kinds of criteria.
         if (key == "item" or key == "item_group") and isinstance(value, str):
             count = 1
-            if "count" in criterion:  # technically no longer in use, but I still want it to be part of the format
+            if "count" in criterion:
                 count = criterion["count"]
             if "count_option" in criterion:
                 count = getattr(options, criterion["count_option"]).value
@@ -317,6 +305,25 @@ def eval_criterion(state: CollectionState, p: int, options: NineSolsGameOptions,
     raise ValueError("Unable to evaluate rule criterion: " + json.dumps(criterion))
 
 
+def pre_eval_option_criteria_in_rule(options: NineSolsGameOptions, rule: list[Any]) -> list[Any]:
+    return [pre_eval_option_criterion(options, c) for c in rule]
+
+
+def pre_eval_option_criterion(options: NineSolsGameOptions, criterion: Any) -> Any:
+    if isinstance(criterion, list):
+        return pre_eval_option_criteria_in_rule(options, criterion)
+
+    if isinstance(criterion, dict):
+        if "option" in criterion:
+            option_name = criterion["option"]
+            option_str_value = getattr(options, option_name).current_key
+            return pre_eval_option_criterion(options, criterion[option_str_value])
+        else:
+            return criterion
+
+    raise ValueError("Unable to pre-evaluate rule criterion: " + json.dumps(criterion))
+
+
 # Per AP docs:
 # "When using state.can_reach within an entrance access condition,
 # you must also use multiworld.register_indirect_condition."
@@ -332,6 +339,7 @@ def regions_referenced_by_criterion(criterion: Any) -> list[str]:
         return [region for sub_criterion in criterion for region in regions_referenced_by_criterion(sub_criterion)]
 
     if isinstance(criterion, dict):
+        # we can ignore "option" criteria here, because those should have been "pre-eval"ed already
         key, value = next(iter(criterion.items()))
         if key == "item" or key == "item_group" or key == "count":
             return []

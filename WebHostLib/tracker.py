@@ -817,7 +817,7 @@ if "Minecraft" in network_data_package["games"]:
             player=player,
             team=team,
             room=tracker_data.room,
-            player_name=tracker_data.get_player_name(team, player),
+            player_name=tracker_data.get_player_name(player),
             saving_second=tracker_data.get_room_saving_second(),
             checks_done=checks_done,
             checks_in_area=checks_in_area,

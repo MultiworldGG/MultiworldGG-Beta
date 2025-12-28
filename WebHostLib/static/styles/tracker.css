@@ -74,6 +74,25 @@
     resize: vertical;
 }
 
+.table-options {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+}
+
+.table-options label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.table-options input[type="checkbox"] {
+    margin-right: 0.5rem;
+    cursor: pointer;
+}
+
 #search {
     border: 1px solid #000000;
     border-radius: 3px;

@@ -57,7 +57,13 @@
                     </tbody>
                 </table>
             </div>
-            <div class="table-wrapper">
+            <div class="table-options">
+                <label>
+                    <input type="checkbox" id="hide-checked-locations">
+                    Hide checked locations
+                </label>
+            </div>
+            <div class="table-wrapper" id="locations-table-wrapper">
                 <table id="locations-table" class="table non-unique-item-table">
                     <thead>
                         <tr>
@@ -68,7 +74,7 @@
                     <tbody>
 
                     {%- for location in locations -%}
-                        <tr>
+                        <tr data-checked="{% if location in checked_locations %}true{% else %}false{% endif %}">
                             <td>{{ location_id_to_name[game][location] }}</td>
                             <td class="center-column">
                                 {% if location in checked_locations %}✔{% endif %}

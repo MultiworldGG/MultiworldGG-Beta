@@ -191,21 +191,105 @@ class ShuffleLedgeGrab(Toggle):
     display_name = "Shuffle Ledge Grab"
 
 
+class ShopUnlocks(Choice):
+    """
+    The condition for unlocking the three shops in Four Seasons Pavilion. That is: Kuafu's shop, Chiyou's shop,
+    and Kuafu's extra inventory (visiting Chiyou outside FSP is considered out of logic)
+
+    - vanilla_like_locations means the shops are unlocked by checking AP locations that try to resemble the vanilla
+    game's unlock conditions (to the extent feasible in a randomizer).
+    In other words: Kuafu's shop is unlocked when you check the "Kuafu's Vital Sanctum" location,
+    Chiyou's shop is unlocked when you check the "Factory (GH): Raise the Bridge for Chiyou" location,
+    and Kuafu's extra inventory is unlocked at the same time as Chiyou's shop.
+    The main change from vanilla is unlocking Chiyou with the bridge location instead of the Prison escape sequence,
+    because forcing you to do the entire escape (up to Factory (Underground)) would be far too linear for a randomizer.
+
+    - sol_seals will unlock each shop after a certain number of Sol Seal items have been collected.
+    See kuafu_shop_unlock_sol_seals, chiyou_shop_unlock_sol_seals and kuafu_extra_inventory_unlock_sol_seals.
+
+    - unlock_items will add 3 "Progressive Shop Unlock" items to this slot, and unlock the 3 shops as they're found.
+    Since these are AP items, you can add them to start_inventory, local_items, and other generic options.
+    """
+    display_name = "Shop Unlocks"
+    default = 0
+    option_vanilla_like_locations = 0
+    option_sol_seals = 1
+    option_unlock_items = 2
+
+
+class KuafuShopUnlockSolSeals(Range):
+    """The number of Sol Seals needed to unlock Kuafu's shop in Four Seasons Pavilion.
+    Has no effect unless shop_unlocks is set to sol_seals."""
+    display_name = "Kuafu Shop Unlock Sol Seals"
+    range_start = 0
+    range_end = 8
+    default = 1
+
+
+class ChiyouShopUnlockSolSeals(Range):
+    """The number of Sol Seals needed to unlock Chiyou's shop in Four Seasons Pavilion.
+    Has no effect unless shop_unlocks is set to sol_seals."""
+    display_name = "Chiyou Shop Unlock Sol Seals"
+    range_start = 0
+    range_end = 8
+    default = 3
+
+
+class KuafuExtraInventoryUnlockSolSeals(Range):
+    """The number of Sol Seals needed to unlock Kuafu's extra inventory in Four Seasons Pavilion.
+    Has no effect unless shop_unlocks is set to sol_seals."""
+    display_name = "Kuafu Extra Inventory Unlock Sol Seals"
+    range_start = 0
+    range_end = 8
+    default = 5
+
+
+class PreventAnnoyingRunbacks(DefaultOnToggle):
+    """If the path to a boss or other difficult arena fight has a shortcut requiring items to open,
+    this option makes those items logically required for the fight.
+    This prevents the randomizer from potentially forcing you to attempt these fights while they have
+    annoyingly long runbacks because you can't open the shortcuts yet.
+
+	Two fights are currently affected by this option:
+	- Ji's boss fight and the 3 locations behind it will logically require Mystic Nymph: Scout Mode,
+	because nymph can open the shortcut from Grotto (West)'s root node to his boss arena
+	- The location "Central Hall: Turrets and Double Axe Robot Room" will logically require Mystic Nymph: Scout Mode,
+	because nymph can open the door to the left side of Central Hall
+    """
+
+
+# actual Option Groups are specified in the WebWorld in __init__.py for some reason
 @dataclass
 class NineSolsGameOptions(PerGameCommonOptions):
     start_inventory_from_pool: StartInventoryPool
+
+    # General Progression
     shuffle_sol_seals: ShuffleSolSeals
     seals_for_eigong: SealsForEigong
     seals_for_prison: SealsForPrison
+    # skip weakened prison state?
     seals_for_ethereal: SealsForEthereal
     skip_soulscape_platforming: SkipSoulscapePlatforming
+    prevent_annoying_runbacks: PreventAnnoyingRunbacks
+
+    # Jade Costs
     randomize_jade_costs: RandomizeJadeCosts
     jade_cost_min: JadeCostMin
     jade_cost_max: JadeCostMax
     jade_cost_plando: JadeCostPlando
-    logic_difficulty: LogicDifficulty
+
+    # Shop Unlocks
+    shop_unlocks: ShopUnlocks
+    kuafu_shop_unlock_sol_seals: KuafuShopUnlockSolSeals
+    chiyou_shop_unlock_sol_seals: ChiyouShopUnlockSolSeals
+    kuafu_extra_inventory_unlock_sol_seals: KuafuExtraInventoryUnlockSolSeals
+
+    # Additional Randomizations
     first_root_node: FirstRootNode
     shuffle_grapple: ShuffleGrapple
     shuffle_wall_climb: ShuffleWallClimb
     shuffle_ledge_grab: ShuffleLedgeGrab
-
+    # skill_tree_randomization
+    # shop_randomization
+    logic_difficulty: LogicDifficulty
+    # entrance_randomization

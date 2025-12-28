@@ -1,6 +1,3 @@
-# Guide for Phoenotopia: Awakening in MultiworldGG
-This is going to be a guide to set up Phoenotopia: Awakening in MultiworldGG. This guide will be written once the World and Client are completed.
-
 ## Required Software
 * Phoenotopia: Awakening: [Available on Steam](https://store.steampowered.com/app/1436590/Phoenotopia_Awakening/)
 * BepInEx: Follow the installation guide [here](https://docs.bepinex.dev/articles/user_guide/installation/index.html)
@@ -20,10 +17,10 @@ After following the steps, your game folder should have a `BepInEx` folder conta
 
 ## Generating a Multiworld Game
 
-1. Visit the [Player Options](/games/Phoenotopia%3A+Awakening/player-options) and configure which types of checks you want to include.
+1. Visit the [Player Options](/games/Phoenotopia:%20Awakening/player-options) and configure which types of checks you want to include.
 2. Export your YAML file and use it to generate a new randomized game. If you're playing solo, you can also generate a single player game. The site will start hosting a multiworld server which you can join
 
-* For more information about generating a Multiworld game, please refer to the [Web guide](https://multiworld.gg/tutorial/Archipelago/setup_en)
+* For more information about generating a Multiworld game, please refer to the [Web guide](/tutorial/Archipelago/setup_en)
 
 ## Joining a Multiworld Game
 

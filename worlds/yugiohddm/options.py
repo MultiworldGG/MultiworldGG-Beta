@@ -6,53 +6,80 @@ from dataclasses import dataclass
 
 class Progression(Choice):
     """
-    Free Duel mode means all progression will be made through the Free Duel menu
+    Free Duel mode means progression will be made through the Free Duel menu
     culminating in a fight against Yami Yugi.
     Your game will be longer per duelist you set to play against.
-    Grandpa's Shop will never advance in this mode.
+    You do not enter tournaments in this mode.
 
-    Tournament mode means all progression will be made in Tournaments with the
+    Tournament mode means progression will be made in Tournaments with the
     goal being completing The Last Judgement in the Dark Tournament Division.
     24 - 72 duel wins required, depending on checks you receive.
     """
     display_name = "Goal"
     option_free_duel = 0
     option_tournaments = 1
-    default = 1
+    default = 0
 
-class DuelistRematches(Choice):
+class TournamentRewards(Choice):
+    """
+    This option only matters when your Progression mode is Tournament.
+
+    Choose whether you will be awarded one, two or three checks every time
+    you complete a Tournament.
+    """
+    display_name = "Tournament Rewards"
+    option_one = 0
+    option_two = 1
+    option_three = 2
+    default = 2
+
+class FreeDuelRewards(Choice):
     """
     This option only matters when your Progression mode is Free Duel.
 
-    No matter what choice is made here, Yami Yugi will be unlocked after defeating every duelist
-    at least once.
-
-    "No Rematches" means each duelist you unlock can be beaten only once to yield a check.
-
-    "One Rematch" means each duelist you unlock can be beaten twice to yield two different checks.
-
-    The more rematches you add, the more game time you can expect to have.
-    Extra check locations are randomized dice rewards that get added to your dice pool.
+    Choose whether you will be awarded one or two checks every time
+    a duelist is defeated in Free Duel.
     """
-    display_name = "Duelist Rematches"
-    option_no_rematches = 0
-    option_one_rematch = 1
-    default = 0
+    display_name = "Free Duel Rewards"
+    option_one = 0
+    option_two = 1
+    default = 1
 
 class StartingDuelists(Range):
     """
     This option only matters when your Progression mode is Free Duel.
      
     The number of Duelists to start with unlocked.
-    There are 92 duelists in total, Yami Yugi is reserved for the game's goal so the limit is 91.
-    Setting the number to 91 would automatically put you in go-mode.
-    Each extra duelist you start with unlocked also represents one more filler item for you
-    instead of their normal progression item.
     """
     display_name = "Starting Duelists"
     range_start = 1
     range_end = 91
     default = 10
+
+class FreeDuelGoal(Range):
+    """
+    This option only matters when your Progression mode is Free Duel.
+
+    The number of duelists defeated required to unlock your goal duel (against Yami Yugi).
+    A higher number leads to a longer game.
+    """
+    display_name = "Free Duel Goal"
+    range_start = 1
+    range_end = 91
+    default = 45
+
+class DiceStats(Choice):
+    """
+    The double option changes all dice crest faces to have
+    double their normal value. This can reduce the amount of time
+    spent rolling for necessary crests in battle and can give
+    AI opponents a little more bite than normal.
+    Normal leaves crest faces as they are in vanilla gameplay.
+    """
+    display_name = "Dice Stats"
+    option_normal = 0
+    option_double = 1
+    default = 1
 
 class RandomizeStartingDice(Toggle):
     """
@@ -67,58 +94,46 @@ class RandomizeStartingDice(Toggle):
     """
     display_name = "Randomize Starting Dice"
 
-#class BonusItemMode(Choice):
-#    """
-#    Decide what you would like to receive from filler checks.
-#
-#    Random Dice will reward any random die from the game. You won't receive
-#    two of the same dice as rewards in this way, all rewards are unique.
-#    In Tournament Progression mode, Grandpa's Shop can still progress this way
-#    although it is quite slow. Approximately 3-6 Tournament wins per shop level.
-#
-#    Shop Progress will divide the number of filler checks between
-#    Shop Levels and Gold items. This will halt normal shop progression
-#    if you have chosen Tournament mode instead of Free Duel.
-#    """
-#    display_name = "Bonus Item Mode"
-#    option_random_dice = 0
-#    option_shop_progress = 1
-#    default = 0
-#
-#class GoldRewardMinimum(Range):
-#    """
-#    This option only matters when your Bonus Item Mode option is Shop Progress.
-#    
-#    The minimum amount of gold you will receive from Gold filler checks.
-#    """
-#    display_name = "Gold Reward Minimum"
-#    range_start = 0
-#    range_end = 65534
-#    default = 1000
-#
-#class GoldRewardMaximum(Range):
-#    """
-#    This option only matters when your Bonus Item Mode option is Shop Progress.
-#    
-#    The maximum amount of gold you will receive from Gold filler checks.
-#    The player can't hold more than 65,535 gold at a time. Any gold received
-#    that would overflow is capped at 65,535.
-#    The most expensive shop item costs 50,000 gold.
-#    """
-#    display_name = "Gold Reward Maximum"
-#    range_start = 1
-#    range_end = 65535
-#    default = 10000
+class BonusItemMode(Choice):
+    """
+    Decide what you would like to receive from filler checks.
+
+    Random Dice will reward any random die from the game.
+    In Tournament Progression mode, Grandpa's Shop can still progress
+    although it is quite slow. Approximately 3-6 Tournament wins per shop level.
+
+    Shop Progress makes collecting Dice locations. You may be required
+    to buy dice from Grandpa's Shop to progress. This mode will divide the 
+    number of filler checks between Shop Levels and Gold items.
+    This will halt normal shop progression if you have chosen Tournament mode.
+    """
+    display_name = "Bonus Item Mode"
+    option_random_dice = 0
+    option_shop_progress = 1
+    default = 0
+
+class GoldRewardAmount(Range):
+    """
+    This option only matters when your Bonus Item Mode option is Shop Progress.
+    
+    The amount of gold you will receive from Gold filler checks.
+    """
+    display_name = "Gold Reward Amount"
+    range_start = 50
+    range_end = 200
+    default = 100
 
 @dataclass
 class YGODDMOptions(PerGameCommonOptions):
     progression: Progression
-    duelist_rematches: DuelistRematches
+    tournament_rewards: TournamentRewards
+    free_duel_rewards: FreeDuelRewards
     starting_duelists: StartingDuelists
+    free_duel_goal: FreeDuelGoal
+    dice_stats: DiceStats
     randomize_starting_dice: RandomizeStartingDice
-    #bonus_item_mode: BonusItemMode
-    #gold_reward_minimum: GoldRewardMinimum
-    #gold_reward_maximum: GoldRewardMaximum
+    bonus_item_mode: BonusItemMode
+    gold_reward_amount: GoldRewardAmount
 
     
 

@@ -87,6 +87,7 @@ Currently, the following games are supported:
 * HuniePop 2
 * Hylics 2
 * Inscryption
+* Into the Breach
 * Jak and Daxter: The Precursor Legacy
 * Jigsaw Puzzles
 * Kindergarten 2
@@ -147,6 +148,7 @@ Currently, the following games are supported:
 * Resident Evil 2 Remake
 * Resident Evil 3 Remake
 * Rimworld
+* Rift of the Necrodancer
 * Risk of Rain
 * Risk of Rain 2
 * Rogue Legacy
@@ -271,7 +273,7 @@ contributions of their developers, past and present.
 * [Archipelago](https://github.com/ArchipelagoMW/Archipelago)
 * [z3randomizer](https://github.com/ArchipelagoMW/z3randomizer)
 * [Enemizer](https://github.com/Ijwu/Enemizer)
-* [Ocarina of Time Randomizer](https://github.com/OoT-Randomizer/OoT-Randomizer)
+* [Ocarina of Time Randomizer](https://github.com/OoTRandomizer/OoT-Randomizer)
 
 ## Contributing
 

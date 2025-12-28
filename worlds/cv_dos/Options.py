@@ -105,7 +105,7 @@ class ShuffleDrops(Toggle):
     display_name = "Drop Shuffle"
 
 class ExperiencePercent(NamedRange):
-    """Percentage applied to an enemy's base chance of dropping their soul."""
+    """What percentage of EXP enemies give you. This is a percent of their original EXP amount."""
     display_name = "Experience Percentage"
     range_start = 50
     range_end = 500
@@ -118,7 +118,7 @@ class ExperiencePercent(NamedRange):
     }
 
 class SoulDropPercent(NamedRange):
-    """What percentage of EXP enemies give you. This is a percent of their original EXP amount."""
+    """Percentage applied to an enemy's base chance of dropping their soul."""
     display_name = "Soul Drop Percentage"
     range_start = 50
     range_end = 500
@@ -137,6 +137,29 @@ class AreaMusicShuffle(Toggle):
 class BossMusicShuffle(Toggle):
     """Randomizes boss music."""
     display_name = "Boss Music Randomizer"
+
+class SoulWallRandomizer(Toggle):
+    """Randomizes which souls are needed to break the red Soul Barriers."""
+    display_name = "Soul Wall Randomizer"
+
+class RandomizeSynthSouls(Toggle):
+    """Randomizes which souls are required for Synthesis crafting."""
+    display_name = "Shuffle Synthesis Souls"
+
+class FreeBat(Toggle):
+    """Removes Bat Company's MP cost"""
+    display_name = "Free Bat"
+
+#class RevealBreakableWalls(Choice):
+ #   """Controls how breakable walls act.
+  #     Normal: Breakable walls are breakable, you are assumed to already know where they are.
+   #    Revealed: All breakable walls are already broken
+    #   Eye Spy: Breakable walls are breakable, you require Peeping Eye's soul to break them at all."""
+    #display_name = "Breakable Walls"
+    #option_normal = 0
+    #option_revealed = 1
+    #option_eye_spy = 2
+    #default = 0
 
 @dataclass
 class DoSOptions(PerGameCommonOptions):
@@ -164,6 +187,9 @@ class DoSOptions(PerGameCommonOptions):
     soul_drop_percentage: SoulDropPercent
     area_music_randomizer: AreaMusicShuffle
     boss_music_randomizer: BossMusicShuffle
+    randomize_red_soul_walls: SoulWallRandomizer
+    randomize_synthesis_souls: RandomizeSynthSouls
+    no_mp_bat: FreeBat
 
 dos_option_groups = [
     OptionGroup("Goal Options", [
@@ -187,9 +213,15 @@ dos_option_groups = [
 
     ]),
 
+    OptionGroup("Weapon Synth Settings", [
+        RandomizeSynthSouls,
+
+    ]),
+
     OptionGroup("World Settings", [
         RandomizeStartingWarp,
-        OpenDrawbridge
+        OpenDrawbridge,
+        SoulWallRandomizer,
 
     ]),
 
@@ -206,7 +238,8 @@ dos_option_groups = [
         RevealBreakableWalls,
         FixLuck,
         BoostSpeed,
-        OneScreenMode
+        OneScreenMode,
+        FreeBat
     ]),
 
     OptionGroup("Music Randomizer", [

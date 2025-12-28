@@ -2,21 +2,24 @@ from dataclasses import dataclass
 
 from schema import Schema
 from Options import Choice, ItemSet, OptionCounter, OptionGroup, OptionSet, PerGameCommonOptions, Range, Toggle, Visibility, DefaultOnToggle
+from .locations import game_changers_table
 
 class Goal(Choice):
     """The goal condition for your Archipelago run.
     -level_completion: requires beating a specific level with a specific rating 
-    -contract_collection: requires collection a certain number of Contract Pieces to instantly goal
-    -contract_collection_level_completion: requires beating a specific level with a specific rating, after collecting a certain number of Contract Pieces to unlock that level"""
+    -contract_collection: shuffles a number of \"Contract Piece\" items into the item pool and requires the collection of them to instantly goal
+    -contract_collection_level_completion: requires beating a specific level with a specific rating, after collecting a certain number of Contract Pieces from the item pool to unlock that level
+    -number_of_completions: forces Contract Pieces to only be placed on beating each level with a specific rating and requires the collection of a number of them to instantly goal """
     display_name = "Goal"
-    # TODO: didnt work out right now option_number_of_completions = 1
     option_level_completion = 2
     option_contract_collection = 3
     option_contract_collection_level_completion = 4
+    option_number_of_completions = 5
     default = 2
     
 class GoalDifficulty(Choice):
-    """When goal is set to level_completion or contract_collection_level_completion, which rating the goal level needs to be completed with to win."""
+    """When goal is set to contract_collection_level_completion or level_completion, which rating the goal level needs to be completed with to win.
+    When goal is set to number_of_completions, which rating each level needs to be completed with to gain a Contract Piece."""
     display_name = "Goal Level Rating"
     option_any = 1
     option_silent_assassin = 2
@@ -51,22 +54,22 @@ class GoalLevel(Choice):
     option_ambrose_island = 21
     default = 20
 
-#class GoalAmount(Range):
-#    """When the goal is set to Number of Completions, how many levels must be beaten in with the selected rating to award the goal."""
-#    display_name = "Goal Amount"
-#    range_end = 22
-#    range_start = 1
-#    default = 5
+class GoalAmount(Range):
+   """When the goal is set to number_of_completions, how many levels must be beaten with the selected rating to award the goal."""
+   display_name = "Goal Amount"
+   range_end = 22
+   range_start = 1
+   default = 5
 
 class RequiredContractPieceAmount(Range):
-    """When the goal is set to contract_colleciton, how many contract pieces are required to award the goal."""
+    """When the goal is set to contract_collection or contract_collection_level_completion, how many contract pieces are shuffled into the item pool and are required to be collected to award the goal."""
     display_name = "Required Contract Pieces"
     range_end = 100
     range_start = 1
     default = 5
 
 class AdditionalContractPieces(Range):
-    """When the goal is set to contract_colleciton, number of additional contract pieces in the item pool."""
+    """When the goal is set to contract_colleciton or contract_collection_level_completion, how many additional contract pieces are added in the item pool."""
     display_name = "Number of Additional Contract Pieces"
     range_end = 100
     range_start = 0
@@ -143,7 +146,7 @@ class CheckForCompletion(OptionSet):
     default = ["all"]
 
 class CheckForSA(OptionSet):
-    """Add a check for beating each of the listed levels with a Silent Assasin Rating
+    """Add a check for beating each of the listed levels with a Silent Assassin Rating
     valid options: all, ica_facility, paris, sapienza, marrakesh, bangkok, colorado, hokkaido, hawkes_bay, miami, santa_fortuna, mumbai, whittleton_creek, isle_of_sgail, new_york, haven_island, dubai, dartmoor, berlin, chongqing, mendoza, carpathian_mountains, ambrose_island"""
     display_name = "Levels with Silent Assassin checks"
     valid_keys = ["all", "ica_facility", "paris", "sapienza", "marrakesh", "bangkok", "colorado", "hokkaido", "hawkes_bay", "miami", "santa_fortuna", "mumbai", "whittleton_creek", "isle_of_sgail", "new_york", "haven_island", "dubai", "dartmoor", "berlin", "chongqing", "mendoza", "carpathian_mountains", "ambrose_island"]
@@ -189,7 +192,7 @@ class GameDifficulty(Choice):
     default = 1
 
 class RandomTargets(Toggle):
-    """Should random Targets be assigend to each Level. For each level, a random number of targets between min_number_of_targets and max_number_of_targets is choosen. If off, the vanilla targets will be chosen (Note: Carpathian Mountains will always remain vanilla.)"""
+    """Should random Targets be assigned to each Level. For each level, a random number of targets between min_number_of_targets and max_number_of_targets is choosen. If off, the vanilla targets will be chosen (Note: Carpathian Mountains will always remain vanilla.)"""
     display_name = "Random Targets"
 
 class MaxRandomTargets(Range):
@@ -207,7 +210,7 @@ class MinRandomTargets(Range):
     default = 2
 
 class RandomComplications(Toggle):
-    """Should random Complications be assigend to each Level. For each level, a random number of complications between min_number_of_complications and max_number_of_complications is choosen (Note: Carpathian Mountains will always remain vanilla.)"""
+    """Should random Complications be assigend to each Level. For each level, a random number of complications between min_number_of_complications and max_number_of_complications is chosen (Note: Carpathian Mountains will always remain vanilla.)"""
     display_name = "Random Complications"
 
 class MaxComplications(Range):
@@ -232,12 +235,12 @@ class ComplicationWeights(OptionCounter):
     default = {
         "No Agility": 1,
         "No Disguises": 1,
-        "All Bodies Hidden": 1,
+        #"All Bodies Hidden": 1,
         "Do Not get Spotted": 1,
         "No Non-Target Civilian Kills or Pacifications": 1,
         "Target Only": 1,
         "5 min Timer": 0,
-        "Hide all Bodies within 90 sec": 0,
+        #"Hide all Bodies within 90 sec": 0,
         "No Surveillance Recordings": 1,
         "No Bodies Found": 1,
         "Headshots Only": 1,
@@ -253,10 +256,17 @@ class ComplicationWeights(OptionCounter):
         "Accident Kills Only": 0,
         "No Lethal Poison Kills": 1,
     }
+    valid_keys = game_changers_table
 
-class EnableEverythingItem(Toggle):
-    """Adds the \"Photo of a Flamingo\" to your inventory. When starting a mission with it equipped, all unlocked and concealable items will be added to 47's pocket."""
-    display_name = "Enable Flamingo Photo"
+class EnableEverythingItem(Choice):
+    """Adds multiple Item Packages one for each type of item (Pistol, Poison, Explosive etc.). When starting a mission with a package equipped, all unlocked and concealable items will be added to 47's pocket. 
+    
+    The \"in_inventory\" option adds the packages directly to your starting inventory, the \"in_itempool\" options adds the packages to the itempool and shuffles them to to any check in the multiworld."""
+    display_name = "Enable Item Packages"
+    option_off = 0
+    option_in_inventory = 1
+    option_in_itempool = 2
+    default = 0
 
 class ExcludedItems(ItemSet):
     """List of Items to not be shuffled the multiworld. 
@@ -310,6 +320,10 @@ class IncludeBankerItems(Toggle):
 class IncludeBruceLeeItems(Toggle):
     """Include Items from the Bruce Lee Pack"""
     display_name = "Include Bruce Lee Pack Items"
+
+class IncludeEminemItems(Toggle):
+    """Include Items from the Eminem vs. Slim Shady Pack"""
+    display_name = "Include Eminem vs. Slim Shady Pack Items"
 
 class IncludeTrinityItems(Toggle):
     """Include Items from the Trinity Pack"""
@@ -365,13 +379,13 @@ class HitmanOptions(PerGameCommonOptions):
 
     excluded_items: ExcludedItems
     excluded_starting_items: ExcludedStartingItems
-    enable_flamingo_photo: EnableEverythingItem
+    item_packages: EnableEverythingItem
 
     starting_location: StartingLevel
     goal_mode: Goal
     goal_rating: GoalDifficulty
     goal_level: GoalLevel
-    #goal_amount: GoalAmount
+    goal_amount: GoalAmount
     goal_required_contract_pieces: RequiredContractPieceAmount
     goal_additional_contract_pieces: AdditionalContractPieces
 
@@ -394,6 +408,7 @@ class HitmanOptions(PerGameCommonOptions):
     include_drop_items: IncludeTomorrowlandItems
     include_banker_items: IncludeBankerItems
     include_bruce_lee_items: IncludeBruceLeeItems
+    include_eminem_items: IncludeEminemItems
 
     include_trinity_items: IncludeTrinityItems
     include_street_art_items: IncludeConcreteArtItems
@@ -436,6 +451,7 @@ option_groups = [
             Goal,
             GoalLevel,
             GoalDifficulty,
+            GoalAmount,
             RequiredContractPieceAmount,
             AdditionalContractPieces
         ]),
@@ -444,7 +460,7 @@ option_groups = [
             ExcludedItems,
             ExcludedStartingItems
         ]),
-        OptionGroup("Inlcuded Items from DLC",[
+        OptionGroup("Included Items from DLC",[
             IncludeDeluxeItems,
             IncludeExpansionItems,
             IncludeSinsItems,
@@ -454,6 +470,7 @@ option_groups = [
             IncludeTomorrowlandItems,
             IncludeBankerItems,
             IncludeBruceLeeItems,
+            IncludeEminemItems,
             IncludeTrinityItems,
             IncludeConcreteArtItems,
             IncludeMakeshiftItems,
