@@ -28,7 +28,7 @@ except ImportError:
     from ..overrides import md_icons
 
 from PIL import Image
-import numpy as np
+import numpy
 
 from NetUtils import TEXT_COLORS
 from BaseUtils import local_path
@@ -220,27 +220,27 @@ class DefaultTheme(ThemableBehavior):
             # Open and convert the image
             atlas = Image.open(atlas_path)
             atlas = atlas.convert("RGBA")
-            data = np.array(atlas)
+            data = numpy.array(atlas)
 
             # Define the target colors and their replacements
             color_pairs = [
-                (np.array([50, 164, 206]), np.array(self.theme_cls.primaryColor[:3]) * 255, 100),      # cyanish -> primary
-                (np.array([141, 178, 200]), np.array(self.theme_cls.secondaryColor[:3]) * 255, 40),    # blueish -> secondary
-                (np.array([10, 72, 77]), np.array(self.theme_cls.onPrimaryColor[:3]) * 255, 21),       # tealish -> onPrimary
-                (np.array([32, 72, 77]), np.array(self.theme_cls.onSecondaryColor[:3]) * 255, 15),       # alphatealish -> onPrimary
+                (numpy.array([50, 164, 206]), numpy.array(self.theme_cls.primaryColor[:3]) * 255, 100),      # cyanish -> primary
+                (numpy.array([141, 178, 200]), numpy.array(self.theme_cls.secondaryColor[:3]) * 255, 40),    # blueish -> secondary
+                (numpy.array([10, 72, 77]), numpy.array(self.theme_cls.onPrimaryColor[:3]) * 255, 21),       # tealish -> onPrimary
+                (numpy.array([32, 72, 77]), numpy.array(self.theme_cls.onSecondaryColor[:3]) * 255, 15),       # alphatealish -> onPrimary
             ]
             
             # Process each color pair sequentially
             for old_color, new_color, tolerance in color_pairs:
                 # Calculate color distances for this color
                 rgb_data = data[:, :, :3]
-                color_diff = np.sqrt(np.sum((rgb_data - old_color) ** 2, axis=2))
+                color_diff = numpy.sqrt(numpy.sum((rgb_data - old_color) ** 2, axis=2))
                 
                 # Create a mask for pixels within tolerance
                 mask = color_diff < tolerance
                 
                 # First, replace exact matches
-                exact_match = np.all(rgb_data == old_color, axis=2)
+                exact_match = numpy.all(rgb_data == old_color, axis=2)
                 data[exact_match, :3] = new_color
                 
                 # Then handle all other pixels within tolerance
@@ -249,13 +249,13 @@ class DefaultTheme(ThemableBehavior):
                         if mask[i, j] and not exact_match[i, j]:  # Skip exact matches
                             current_pixel = rgb_data[i, j]
                             direction = current_pixel - old_color
-                            direction_norm = np.linalg.norm(direction)
+                            direction_norm = numpy.linalg.norm(direction)
                             if direction_norm > 0:  # Avoid division by zero
                                 direction = direction / direction_norm
                                 # Apply the same direction from the new color
                                 replacement_color = new_color + direction * color_diff[i, j]
                                 # Ensure values stay within valid range
-                                replacement_color = np.clip(replacement_color, 0, 255)
+                                replacement_color = numpy.clip(replacement_color, 0, 255)
                                 data[i, j, :3] = replacement_color
             
             # Convert back to image and save

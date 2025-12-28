@@ -696,9 +696,13 @@ class MultiMDApp(MDApp):
             start_timer = timer[0]
             if self.ctx.timer == 0.0:
                 self.ctx.timer = start_timer
+            # Sum all values in the list (breaks + start time)
+            timer_sum = sum(float(time) for time in timer)
+            self.top_appbar_layout.top_appbar.timer.start_time = self.ctx.timer - timer_sum
         else:
             start_timer = timer
-        self.top_appbar_layout.top_appbar.timer.start_time = self.ctx.timer - sum(float(time) for time in timer) if timer else self.ctx.timer
+            # When timer is a float, use it directly as the start time
+            self.top_appbar_layout.top_appbar.timer.start_time = start_timer
         if not self.top_appbar_layout.top_appbar.timer.is_running:
             self.top_appbar_layout.top_appbar.timer.start_running_timer()
 

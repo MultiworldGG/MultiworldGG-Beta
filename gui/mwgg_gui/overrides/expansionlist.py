@@ -417,7 +417,9 @@ class SlotListItem(MWBaseListItem):
         
         # Calculate entrance height if present
         if self.entrance_name != "Vanilla" and self.entrance_name:
-            nheight += calculate_text_height(self.entrance_name, self.slot_text_entrance.font_size, text_width)
+            slot_text_entrance = getattr(self, 'slot_text_entrance', None)
+            entrance_font_size = slot_text_entrance.font_size if slot_text_entrance else self.slot_text_location.font_size
+            nheight += calculate_text_height(self.entrance_name, entrance_font_size, text_width)
         
         # Calculate location and item heights
         nheight += calculate_text_height(self.location_name, self.slot_text_location.font_size, text_width)

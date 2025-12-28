@@ -942,7 +942,7 @@ class CommonContext(InitContext):
             self.activity_time = time.time() + offset_time
             if self.server and self.server.socket:
                 if offset_time != 0 or len(self.checked_locations) > 0:
-                    server_timer = self.stored_data.get("timer", [self.activity_time])#start time
+                    server_timer = self.stored_data.get("timer") or [self.activity_time]#start time
                     self.timer = server_timer[0]
                     msg = {"cmd": "Set", 
                         "key": f"timer", 
@@ -965,7 +965,7 @@ class CommonContext(InitContext):
                 activity_time = time.time()
                 elapsed_break = activity_time - self.shared_activity_time
                 if elapsed_break > 300:
-                    stored_activity_idx = self.stored_data.get("timer", [self.timer])
+                    stored_activity_idx = self.stored_data.get("timer") or [self.timer]
                     stored_activity_idx.append(elapsed_break)
                     msg = {"cmd": "Set", 
                         "key": f"timer", 
@@ -1427,6 +1427,9 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
 
     elif cmd == 'ReceivedItems':
         start_index = args["index"]
+        
+        if ctx.items_received is None:
+            ctx.items_received = []
 
         if start_index == 0:
             ctx.items_received = []
@@ -1501,7 +1504,9 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
                                 if hasattr(ctx.ui.ui_player_data[slot_id], item):
                                     setattr(ctx.ui.ui_player_data[slot_id], item, data)
         if f"activity_{ctx.team}_" in args["keys"]:
-            ctx.shared_activity_time = args["keys"].get(f"activity_{ctx.team}_{ctx.slot}") if args["keys"].get(f"activity_{ctx.team}_{ctx.slot}") is not None and args["keys"].get(f"activity_{ctx.team}_{ctx.slot}") > ctx.shared_activity_time else ctx.shared_activity_time
+            activity_value = args["keys"].get(f"activity_{ctx.team}_{ctx.slot}")
+            if activity_value is not None and (ctx.shared_activity_time is None or activity_value > ctx.shared_activity_time):
+                ctx.shared_activity_time = activity_value
 
     elif cmd == "SetReply":
         ctx.stored_data[args["key"]] = args["value"]
@@ -1522,7 +1527,8 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
                             if hasattr(ctx.ui.ui_player_data[slot_id], item):
                                 setattr(ctx.ui.ui_player_data[slot_id], item, data)
         elif args["key"].startswith(f"activity_{ctx.team}_"):
-            ctx.shared_activity_time = args["value"] if args["value"] is not None and args["value"] > ctx.shared_activity_time else ctx.shared_activity_time
+            if args["value"] is not None and (ctx.shared_activity_time is None or args["value"] > ctx.shared_activity_time):
+                ctx.shared_activity_time = args["value"]
         elif args["key"].startswith("EnergyLink"):
             ctx.current_energy_link_value = args["value"]
             if ctx.ui:
