@@ -51,6 +51,11 @@ from .game_state_modifiers.text_display import InGameTextDisplay
 from .game_state_modifiers.text_replacer import TextReplacer
 from .game_state_modifiers.uncap_high_jump import UncapHighJump
 
+try:
+    from Utils import instance_name as apname
+except ImportError:
+    apname = "Archipelago"
+
 
 logger = logging.getLogger("Client")
 debug_logger = logging.getLogger("TCS Debug")

@@ -1,7 +1,7 @@
 {
     "game": "Timespinner",
-    "authors": ["Jarno458"],
+    "authors": ["Jarno"],
     "igdb_id": 28952,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
+    "minimum_ap_version": "0.6.3",
+    "world_version": "1.38.0"
 }

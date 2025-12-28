@@ -301,12 +301,17 @@
     { "from": "CC - Right Exit", "to": "CC - Root Node", "requires": [ { "item": "Charged Strike" } ] },
     { "from": "CC - Root Node", "to": "CC - Root Node After Boss", "requires": [
         { "item": "Event - Lady Ethereal Soulscape Unlocked" },
-        { "item": "Tai-Chi Kick" }, // hard-required after the 4th hot spring to reveal an otherwise invincible and mandatory enemy
-        { "item": "Wall Climb" }, // hard-required multiple times after the 6th hot spring where you follow the nymph,
-            // either clinging to a wall waiting for the nymph, or climbing a wall before the nymph adds spikes to it.
-        { "anyOf": [ { "item": "Ledge Grab" }, { "item": "Cloud Leap" } ] }, // the very last nymph-following section
-            // has 2 innocuous jumps that require the extra verticality of LG OR CL
-        // If we were writing logic for just the soulscape, it would be WC AND TCK AND (AD OR CL), but:
+        {
+            "option": "skip_soulscape_platforming",
+            "true": [],
+            "false": [
+                { "item": "Tai-Chi Kick" }, // hard-required after the 4th hot spring to reveal an otherwise invincible and mandatory enemy
+                { "item": "Wall Climb" }, // hard-required multiple times after the 6th hot spring where you follow the nymph,
+                    // either clinging to a wall waiting for the nymph, or climbing a wall before the nymph adds spikes to it.
+                { "anyOf": [ { "item": "Ledge Grab" }, { "item": "Cloud Leap" } ] } // the very last nymph-following section
+                    // has 2 innocuous jumps that require the extra verticality of LG OR CL
+            ] // If we were writing logic for just the soulscape, there'd also be an AD in here
+        },
         { "item": "Air Dash" } // Lady Ethereal herself requires Air Dash to evade the phase 3 orb, making CL fully redundant
     ] },
     { "from": "CC - Root Node", "to": "CC - After Large Door", "requires": [
@@ -559,23 +564,26 @@
     {
         "from": "PRW - Root Node", "to": "PRW - Guarded Chest",
         "requires": [ { "anyOf": [
+            // without WC, using a TCK target is the only way to go between the two long platforms in the big room
             [ { "item": "Cloud Leap" }, { "item": "Tai-Chi Kick" } ],
             [
                 { "item": "Wall Climb" },
-                { "anyOf": [
+                { "anyOf": [ // with WC and without TCK, the hard jump is from the right green wall to the upper long platform
                     [
-                        { "item": "Cloud Leap" },
-                        { "anyOf": [ { "item": "Air Dash" }, { "item": "Charged Strike" } ] }
+                        { "item": "Cloud Leap" }, // is its own horizontal aid, so only 1 more horizontal boost needed
+                        { "anyOf": [
+                            { "item": "Tai-Chi Kick" }, // either using one or both TCK targets
+                            { "item": "Air Dash" } // or the one other horizontal movement we have on vanilla
+                        ] }
                     ],
                     [
-                        { "item": "Grapple" },
-                        { "item": "Air Dash" },
-                        { "item": "Charged Strike" }
+                        { "item": "Grapple" }, // doesn't help in the big room, so 2 horizontal boosts needed
+                        { "item": "Tai-Chi Kick" } // which on vanilla logic can only mean both TCK targets
                     ]
                 ] }
             ]
         ] } ],
-        "medium_requires": [
+        "medium_requires": [ // the new logic here is using CS-dash and T-dash as possible "horizontal boosts"
             { "item": "Wall Climb" },
             { "anyOf": [
                 { "item": "Cloud Leap" }, // and T-dash
@@ -587,9 +595,9 @@
         ],
         "ls_requires": [
             { "item": "Ledge Grab" }, // wall slide up the big room
-            { "anyOf": [ // after we get past the two grapple points somehow
+            { "anyOf": [ // still need CL or G for the grapple points, and CL or T-dash for the final rope->platform jump
                 { "item": "Cloud Leap" },
-                [{ "item": "Grapple" }, { "item": "Air Dash" }] // after wall slide we still need AD OR CL to finish
+                { "item": "Grapple" }
             ] }
         ]
     },
@@ -805,6 +813,10 @@
     ] } ] },
     { "from": "FGH - Above Root Node", "to": "FGH - Hammer Brothers Roof", "requires": [] }, // fall
     { "from": "FGH - Above Root Node", "to": "FGH - Lower Levels & Root Node", "requires": [] }, // fall farther
+    { "from": "FGH - Above Root Node", "to": "FGH - Upper Platforms of Nymph Puzzle Room", "requires": [
+        { "item": "Mystic Nymph: Scout Mode" }, // to rearrange the platforms
+        { "anyOf": [{ "item": "Ledge Grab" }, { "item": "Cloud Leap" }] } // to actually climb onto them
+    ] },
     { "from": "FGH - Lower Levels & Root Node", "to": "FGH - Platform Above Factory (Underground)", "requires": [] }, // fall
     { "from": "FGH - Platform Above Factory (Underground)", "to": "FGH - Lower Levels & Root Node", "requires": [ { "anyOf": [
         { "item": "Wall Climb" }, { "item": "Ledge Grab" }, { "item": "Cloud Leap" }
@@ -836,12 +848,16 @@
     ] },
     { "from": "FU - Kuiyan Arena", "to": "FU - Main Intersection", "requires": [] }, // hacking one-way door
     {
-        "from": "FU - Main Intersection", "to": "FU - Broken Shanhai",
+        "from": "FU - Main Intersection", "to": "FU - Broken Shanhai (with qi)",
         "requires": [ { "anyOf": [
             { "item": "Air Dash" }, { "item": "Cloud Leap" }
-        ] } ],
+        ] } ]
+    },
+    {
+        "from": "FU - Main Intersection", "to": "FU - Broken Shanhai",
         "medium_requires": [] // T-dash
     },
+    { "from": "FU - Broken Shanhai (with qi)", "to": "FU - Broken Shanhai", "requires": [] },
     {
         "from": "FU - Broken Shanhai", "to": "FU - Middle Right Exit",
         "requires": [
@@ -850,7 +866,11 @@
                 { "item": "Tai-Chi Kick" }, // kinda tight, may revisit
                 [ { "item": "Cloud Leap" }, { "item": "Air Dash" } ]
             ] }
-        ] // T-dash isn't an option here because you likely already spent it reaching FU-BS
+        ] // can't assume you have T-dash since you may have already spent it reaching FU-BS
+    },
+    {
+        "from": "FU - Broken Shanhai (with qi)", "to": "FU - Middle Right Exit",
+        "medium_requires": [] // T-dash
     },
     // we skip the BS <- MRE connection because MRE -> MI -> BS has weaker requirements (unless we want a precise TCK-only jump)
     {
@@ -1631,9 +1651,17 @@
 
     // Ancient Stone Pillar
     // No root node in here, so no need for a 2nd region.
-    { "from": "GoSW - Above Western Cliffs", "to": "ASP - After Ji", "requires": [
-        { "item": "Tai-Chi Kick" } // or else Ji's divinations are a softlock
-    ] }, // TODO: (more) combat logic?
+    {
+        "from": "GoSW - Above Western Cliffs", "to": "ASP - After Ji",
+        "requires": [
+            { "item": "Tai-Chi Kick" }, // or else Ji's divinations are a softlock
+            {
+                "option": "prevent_annoying_runbacks",
+                "true": [{ "item": "Mystic Nymph: Scout Mode" }],
+                "false": []
+            }
+        ]
+    }, // TODO: (more) combat logic?
 
     // Sky Tower
     {
@@ -1985,9 +2013,11 @@
     { "from": "TRC - Lower Sickbay", "to": "TRC - Upper Levels", "requires": [
         { "item": "Wall Climb" }
     ] },
-    { "from": "TRC - Upper Levels", "to": "TRC - Xingtian Sickbay", "requires": [
-        { "anyOf": [ { "item": "Cloud Leap" }, { "item": "Air Dash" } ] }
-    ] }, // also a precise single jump I'd rather leave out of logic
+    {
+        "from": "TRC - Upper Levels", "to": "TRC - Xingtian Sickbay",
+        "requires": [ { "anyOf": [ { "item": "Cloud Leap" }, { "item": "Air Dash" } ] } ],
+        "medium_requires": []
+    }, // also a precise single jump I'd rather leave out of logic
     { "from": "TRC - Upper Levels", "to": "TRC - Root Node", "requires": [] }, // one-way door
     { "from": "TRC - Upper Levels", "to": "TRC - Mutant Barrier Platform", "requires": [] }, // fall
     { "from": "TRC - Upper Levels", "to": "TRC - Lower Right Stairwell", "requires": [] }, // fall

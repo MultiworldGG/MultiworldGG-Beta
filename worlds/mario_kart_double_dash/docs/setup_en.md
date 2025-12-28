@@ -15,9 +15,15 @@ You'll need the following components to be able to play MKDD AP:
 * A rom of Mario Kart: Double Dash!! (NTSC-U / USA version)
     * Format (`.iso`, `.rvz`) doesn't matter.
 
-Optionally, you can also download:
-* [Universal Tracker](https://github.com/FarisTheAncient/Archipelago/releases)
+Optionally, there's 2 options for tracking your progress:
+* [PopTracker pack](https://github.com/Razerock/double-dash-ap-tracker/releases) by Raze
+    * Requires [PopTracker](https://github.com/black-sliver/PopTracker/releases).
+    * Shows available locations and obtained items with a nice interface.
+    * Logic doesn't follow the difficulty modeling exactly, but is close enough.
+* [Universal Tracker](https://github.com/FarisTheAncient/Archipelago/releases) (ships with MultiworldGG)
+    * Text-based, shows a list of accessible locations.
     * If you have Universal Tracker installed, the client will have a tracker page automatically.
+    * Might be better on single screen / small screen setups.
 
 ## Setting Up a YAML
 
@@ -37,7 +43,7 @@ Do note, that using the randomizer unlocks everything in your save of MKDD and y
 * Open Mario Kart Double Dash Client from MultiworldGG Launcher.
 * Open Dolphin and launch the game.
   * At this point, the client should say "Patch Applied".
-  * **Important!** Do not go further than the player count selection screen before you are connected to the host!
+  * **Important!** Do not go further than the title screen before you are connected to the host!
 * Write your host connection info in the box at the top of the client (if you are hosting yourself it's `localhost`) and press enter.
 * Write your slot/player name (if you didn't modify the YAML then it's `Player1`) into the box at the bottom and press enter.
 
@@ -52,7 +58,7 @@ You should now get checks whenever you finish races. To see what is currently un
 * I can't select character X.
   * The characters need to be unlocked by completing checks. The game currently doesn't give any visual indication what is unlocked, but you can use `/unlocked` command in the client to see your current status.
 * The client doesn't register any checks.
-  * Restart both the game and the client.
+  * Restart both the game and the client. Open the client before launching the game to apply the patch as early as possible.
 * Where's my patch?
   * There's no patch, use vanilla rom.
 * Can I use ar/gecko cheat codes?
@@ -63,3 +69,6 @@ You should now get checks whenever you finish races. To see what is currently un
   * Use MultiworldGG 0.7.100 or newer.
   * Try running the client with admin privileges.
   * As a last resort try resetting your settings (MAKE BACKUP FIRST - deleting `%appdata%/Dolphin Emulator` deletes your saves as well).
+* On-screen notifications doesn't appear.
+  * They don't appear in the title screen due to limitations posed by the patching system used.
+  * If they don't appear in other screens, it might be a cache issue. Try making a savestate (shift + F1) and loading it (F1) to invalidate cache.

@@ -35,7 +35,29 @@ logger = logging.getLogger("Client")
 DEBUG = False
 ITEMS_HANDLING = 0b111
 UT_MAP_TAB_KEY = "UT_MAP"
-   
+
+def get_ut_color(color: str)->str:
+    from kvui import Widget
+    from typing import ClassVar
+    from kivy.properties import StringProperty
+    class UTTextColor(Widget):
+        in_logic: ClassVar[str] = StringProperty("")
+        glitched: ClassVar[str] = StringProperty("") 
+        out_of_logic: ClassVar[str] = StringProperty("") 
+        collected: ClassVar[str] = StringProperty("") 
+        in_logic_glitched: ClassVar[str] = StringProperty("") 
+        out_of_logic_glitched: ClassVar[str] = StringProperty("") 
+        mixed_logic: ClassVar[str] = StringProperty("") 
+        collected_light: ClassVar[str] = StringProperty("") 
+        hinted: ClassVar[str] = StringProperty("") 
+        hinted_in_logic: ClassVar[str] = StringProperty("") 
+        hinted_out_of_logic: ClassVar[str] = StringProperty("") 
+        hinted_glitched: ClassVar[str] = StringProperty("") 
+        excluded: ClassVar[str] = StringProperty("")
+        unconnected: ClassVar[str] = StringProperty("")
+    if not hasattr(get_ut_color,"utTextColor"):
+        get_ut_color.utTextColor = UTTextColor()
+    return str(getattr(get_ut_color.utTextColor,color,"DD00FF"))
     
 class TrackerCommandProcessor(ClientCommandProcessor):
     ctx: "TrackerGameContext"
@@ -57,6 +79,15 @@ class TrackerCommandProcessor(ClientCommandProcessor):
         for item, count in sorted(currentState.prog_items.items()):
             if filter_text in item:
                 logger.info(str(count) + "x: " + item)
+
+    if not gui_enabled:
+        @mark_raw
+        def _cmd_locations_in_logic(self, filter_text: str = ""):
+            """Print the list of locations currently accessible in logic"""
+            currentState = self.ctx.updateTracker()
+            for location in sorted(currentState.in_logic_locations):
+                if filter_text in location:
+                    logger.info(location)
 
     @mark_raw
     def _cmd_event_inventory(self, filter_text: str = ""):
@@ -358,6 +389,11 @@ class TrackerGameContext(CommonContext):
             self.disconnected_intentionally = True
             async_start(self.disconnect(False), name="disconnecting")
             raise e
+        if updateTracker_ret.state is None:
+            return updateTracker_ret # core.updateTracker failed, just pass it along
+        current_world = self.tracker_core.get_current_world()
+        if current_world is None:
+            return updateTracker_ret #something has gone VERY badly, should never happen but makes the type checker happy
         if self.tracker_page:
             self.tracker_page.refresh_from_data()
         if self.update_callback is not None:
@@ -396,7 +432,7 @@ class TrackerGameContext(CommonContext):
                 relevent_coords = self.deferred_dict.get(entrance_name,[])
                 if not relevent_coords:
                     continue
-                temp_entrance = self.tracker_core.get_current_world().get_entrance(entrance_name)
+                temp_entrance = current_world.get_entrance(entrance_name)
                 if temp_entrance.can_reach(updateTracker_ret.state):
                     if temp_entrance.connected_region:
                         status = "passed"
@@ -406,7 +442,7 @@ class TrackerGameContext(CommonContext):
                     status = "impassable"
                 for coord in relevent_coords:
                     coord.update_status(entrance_name, status)
-            event_loc_cache = [loc for loc in self.tracker_core.get_current_world().get_locations() if loc.address is None and loc.parent_region is not None]
+            event_loc_cache = [loc for loc in current_world.get_locations() if loc.address is None and loc.parent_region is not None]
             for loc in event_loc_cache:
                 relevent_coords = self.ldeferred_dict.get(loc.name,[])
                 if not relevent_coords:
@@ -439,6 +475,13 @@ class TrackerGameContext(CommonContext):
             self.tracker_glitched_locs_label.text = f"Glitched: [color={get_ut_color('glitched')}]{len(updateTracker_ret.glitched_locations)}[/color]"
         if hasattr(self, "tracker_hinted_locs_label"):
             self.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color('hinted_in_logic')}]{len(updateTracker_ret.hinted_locations)}[/color]"
+        if hasattr(self, "tracker_go_mode_label"):
+            if self.tracker_core.multiworld.has_beaten_game(updateTracker_ret.state,current_world.player):
+                self.tracker_go_mode_label.text = f"Go mode: [color={get_ut_color("in_logic")}]Yes[/color]"
+            elif updateTracker_ret.glitches_state and self.tracker_core.multiworld.has_beaten_game(updateTracker_ret.glitches_state,current_world.player):
+                self.tracker_go_mode_label.text = f"Go mode: [color={get_ut_color("glitched")}]Glitched[/color]"
+            else:
+                self.tracker_go_mode_label.text = f"Go mode: [color={get_ut_color("out_of_logic")}]No[/color]"
 
         return updateTracker_ret
 
@@ -813,15 +856,14 @@ class TrackerGameContext(CommonContext):
                     self.scout_checked_locations()
                 self.updateTracker()
             elif cmd == 'SetReply' or cmd == 'Retrieved':
-                from worlds import AutoWorld
-                if self.ui is not None and hasattr(AutoWorld.AutoWorldRegister.world_types.get(self.game), "tracker_world") and self.tracker_world:
+                if self.ui is not None and self.tracker_world:
                     key = self.tracker_world.map_page_setting_key or f"{self.slot}_{self.team}_{UT_MAP_TAB_KEY}"
                     icon_key = self.tracker_world.location_setting_key
                     if "key" in args:
                         if args["key"] == key:
                             self.load_map(None)
                             self.updateTracker()
-                        elif args["key"] == icon_key:
+                        if args["key"] == icon_key:
                             self.update_location_icon_coords()
                     elif "keys" in args:
                         if icon_key in args["keys"]:
@@ -889,6 +931,8 @@ class TrackerGameContext(CommonContext):
                 self.tracker_glitched_locs_label.text = f"Glitched: [color={get_ut_color('glitched')}]0[/color]"
             if hasattr(self, "tracker_hinted_locs_label"):
                 self.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color('hinted_in_logic')}]0[/color]"
+            if hasattr(self, "tracker_go_mode_label"):
+                self.tracker_go_mode_label.text = f"Go Mode: [color={get_ut_color('out_of_logic')}]No[/color]"
             self.tracker_core.disconnect()
         self.local_items.clear()
 

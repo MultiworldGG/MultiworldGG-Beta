@@ -2,15 +2,16 @@ import asyncio
 
 import threading
 import time
+import typing
 import requests
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
+
 from CommonClient import ClientCommandProcessor, get_base_parser, handle_url_arg, server_loop, gui_enabled, logger, CommonContext
 from NetUtils import ClientStatus, NetworkItem
 from settings import get_settings
 from .items import item_table, base_id
 from .locations import goal_table
-
 
 class HitmanCommandProcessor(ClientCommandProcessor):
     def __init__(self, ctx: CommonContext):
@@ -18,7 +19,7 @@ class HitmanCommandProcessor(ClientCommandProcessor):
 
 class HitmanContext(CommonContext):
     command_processor = HitmanCommandProcessor
-    game = "HITMAN World of Assasination"
+    game = "HITMAN World of Assassination"
     tags = {"AP"}
     items_handling = 0b111
     want_slot_data = True
@@ -35,18 +36,20 @@ class HitmanContext(CommonContext):
         settings._world_settings_name_cache_updated = False
         self.peacock_url = "http://"+get_settings().hitman_woa_options.peacock_url+ "/_wf/archipelago"
 
-    async def server_auth(self, password_requested: bool = False):
+    async def connect(self, address: typing.Optional[str] = None) -> None:
         # check if Peacock is running
         logger.info("Testing connection to Peacock...")
         try:
             r = requests.get(self.peacock_url)
             r.raise_for_status()
         except Exception as e:
-            logger.error("No respone from Peacock, please make sure the Peacock server is running before connecting.")
-            self.exit_event.set()
+            self.print_error("No respone from Peacock, please make sure the Peacock server is running before connecting.")
             return
         logger.info("Peacock connection established.")            
 
+        await super().connect(address)
+
+    async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
             await super(HitmanContext, self).server_auth(password_requested)
         await self.get_username()
@@ -60,19 +63,22 @@ class HitmanContext(CommonContext):
 
                 self.game = self.slot_info[self.slot].game
                 self.slot_data = args["slot_data"]
-                self.set_slot_data()
-                self.set_goal()
-                self.process_checked_locations(args["checked_locations"])
-                self.sse_thread = threading.Thread(name="SSE-Thread",target=self.periodically_get_checks, daemon=True)
-                self.sse_thread.start() 
+                try:
+                    self.set_slot_data()
+                    self.set_goal()
+                    self.process_checked_locations(args["checked_locations"])
+                    self.sse_thread = threading.Thread(name="SSE-Thread",target=self.periodically_get_checks, daemon=True)
+                    self.sse_thread.start()
+                except RuntimeError as e:
+                    asyncio.run_coroutine_threadsafe(self.disconnect(False), asyncio.get_running_loop())
             case "ReceivedItems":
                 self.process_recieved_items(args["items"])
             case "RoomUpdate":
-                self.process_checked_locations(args["checked_locations"])
+                self.process_checked_locations(args.get("checked_locations",[]))
             case "PrintJSON"| "Retrieved" |  "Bounced" | "SetReply" | "DataPackage":
                 pass
             case "RoomInfo":
-                self.current_seed = args["seed_name"].removeprefix("W")
+                self.current_seed = args["seed_name"]
             case _:
                 print("Not implemented cmd: "+cmd+", with args: "+str(args))
 
@@ -94,14 +100,16 @@ class HitmanContext(CommonContext):
     def set_slot_data(self):
         logger.info("Sending Slot Data to Peacock...")
         try:
+            cares_about_goal_rating = self.slot_data["goal_mode"] == "level_completion" or\
+                    self.slot_data["goal_mode"] == "contract_collection_level_completion"
+
             enabled_levels = self.slot_data["included_s1_locations"]+\
             self.slot_data["included_s2_locations"]+\
             self.slot_data["included_s2_dlc_locations"]+\
             self.slot_data["included_s3_locations"]+\
             [self.slot_data["starting_location"]]
 
-            if(self.slot_data["goal_mode"] == "level_completion" or\
-               self.slot_data["goal_mode"] == "contract_collection_level_completion"):
+            if(cares_about_goal_rating):
                 enabled_levels.append(self.slot_data["goal_location_name"])
 
             enabled_string = ""
@@ -112,19 +120,27 @@ class HitmanContext(CommonContext):
                     enabled_string += "t-"
 
                     if location in self.slot_data["levels_with_check_for_completion"] or\
-                    "all" in self.slot_data["levels_with_check_for_completion"]:
+                    "all" in self.slot_data["levels_with_check_for_completion"] or\
+                    (cares_about_goal_rating and location == self.slot_data["goal_location_name"] and\
+                     self.slot_data["goal_rating"] == "any"):
                         completion_string+="completed_"
             
                     if location in self.slot_data["levels_with_check_for_sa"] or\
-                    "all" in self.slot_data["levels_with_check_for_sa"]:
+                    "all" in self.slot_data["levels_with_check_for_sa"] or\
+                    (cares_about_goal_rating and location == self.slot_data["goal_location_name"] and\
+                     self.slot_data["goal_rating"] == "silent_assassin"):
                         completion_string+="sa_"
 
                     if location in self.slot_data["levels_with_check_for_so"] or\
-                    "all" in self.slot_data["levels_with_check_for_so"]:
+                    "all" in self.slot_data["levels_with_check_for_so"] or\
+                    (cares_about_goal_rating and location == self.slot_data["goal_location_name"] and\
+                     self.slot_data["goal_rating"] == "suit_only"):
                         completion_string+="so_" 
 
                     if location in self.slot_data["levels_with_check_for_saso"] or\
-                    "all" in self.slot_data["levels_with_check_for_saso"]:
+                    "all" in self.slot_data["levels_with_check_for_saso"] or\
+                    (cares_about_goal_rating and location == self.slot_data["goal_location_name"] and\
+                     self.slot_data["goal_rating"] == "silent_assassin_suit_only"):
                         completion_string+="saso_"
 
                     completion_string+="-"
@@ -150,14 +166,14 @@ class HitmanContext(CommonContext):
                 self.slot_data.get("complications","vanilla")+"/"+
                 itemsanity_string+"/"+
                 str(self.slot_data.get("enable_disguisesanity",0)==1)+"/"+
-                str(self.slot_data.get("everything_item",False)))
+                str(self.slot_data.get("item_packages","off")))
             r.raise_for_status()
             logger.info("Slot Data sent.")
         except Exception as e:
-                logger.error("Error occured while attempting to set slot data, disconnecting!")
-                print("Error sending slot data:", e)
-                asyncio.run_coroutine_threadsafe(self.disconnect(False), asyncio.get_running_loop())
-
+            self.print_error("No response when sending slot data to Peacock, disconnecting")
+            print("Error sending slot data:", e)
+            raise RuntimeError()
+        
     def set_goal(self):
         try:
             match self.slot_data["goal_mode"]:
@@ -173,15 +189,19 @@ class HitmanContext(CommonContext):
                     goalData = self.slot_data["goal_amount"]
                     moreGoalData = self.slot_data["goal_location_name"]
                     evenMoreGoalData = self.slot_data["goal_rating"]
+                case "number_of_completions":
+                    goalData = self.slot_data["goal_amount"]
+                    moreGoalData = self.slot_data["goal_rating"]
+                    evenMoreGoalData = "none"
 
             logger.info("Sending Goal information...")
             r = requests.get(self.peacock_url+"/setGoal/"+self.slot_data["goal_mode"]+"/"+str(goalData)+"/"+moreGoalData+"/"+evenMoreGoalData)
             r.raise_for_status()
             logger.info("Goal information sent.")
         except Exception as e:
-                logger.error("Error occured while attempting to set goal, disconnecting!")
-                print("Error sending goal info:", e)
-                asyncio.run_coroutine_threadsafe(self.disconnect(False), asyncio.get_running_loop())
+            self.print_error("No response when sending Goal Data to Peacock, disconnecting!")
+            print("Error sending goal info:", e)
+            raise RuntimeError()
 
     def process_recieved_items(self, items:list[NetworkItem]):
         itemIds = []
@@ -201,12 +221,16 @@ class HitmanContext(CommonContext):
             r = requests.post(self.peacock_url+"/sendItems?items="+str(itemIds)) 
             r.raise_for_status()
         except Exception as e:
-            logger.error("No response when sending Items to Peacock, disconnecting!")
+            self.print_error("No response when sending Items to Peacock, disconnecting!")
             asyncio.run_coroutine_threadsafe(self.disconnect(False), asyncio.get_running_loop())
  
     def process_checked_locations(self, locations:list[int]):
         locationIds = []
         for locationId in locations:
+            if locationId == self.slot_data["goal_location_id"]:
+                continue #If goal was collected or cheated, don't let Peacock know
+                        #so challange remains completeable and thus goalable (don't check for goal here, as a collect could goal you)
+
             locationIds.append(locationId-base_id)
 
             if len(locationIds) > 500:
@@ -220,7 +244,7 @@ class HitmanContext(CommonContext):
             r = requests.post(self.peacock_url+"/sendCheckedLocations?items="+str(locationIds)) 
             r.raise_for_status()
         except Exception as e:
-            logger.error("No response when sending checked Locations to Peacock, disconnecting!")
+            self.print_error("No response when sending checked Locations to Peacock, disconnecting")
             asyncio.run_coroutine_threadsafe(self.disconnect(False), asyncio.get_running_loop())
 
     def periodically_get_checks(self):
@@ -233,15 +257,17 @@ class HitmanContext(CommonContext):
                 checks = response.json()
                 asyncio.run(self.check_locations(checks))
 
-                if (self.slot_data["goal_mode"] == "level_completion" or self.slot_data["goal_mode"] == "contract_collection_level_completion" or self.slot_data["goal_mode"] == "contract_collection") and self.slot_data["goal_location_id"] in checks:
+                if self.slot_data["goal_location_id"] in checks:
                     asyncio.run(self.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}]))
             except requests.RequestException as e:
                 print("Error fetching checks:", e)
-                logger.error("Error while trying to get Checks, disconnecting")
+                self.print_error("No response when trying to get Checks from Peacock, disconnecting")
                 asyncio.run(self.disconnect(False))
                 self.sse_running = False
             if self.sse_running:
                 time.sleep(3)
+    def print_error(self, text:str):
+        self.ui.print_json([{"text":text,"type":"color","color":"red"}])
 
 async def main(args):
     ctx = HitmanContext(args.connect, args.password)

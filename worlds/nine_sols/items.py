@@ -3,7 +3,7 @@ from typing import NamedTuple
 
 from BaseClasses import Item, ItemClassification
 from .item_data import items_data, jade_items
-from .options import FirstRootNode, LogicDifficulty, NineSolsGameOptions
+from .options import FirstRootNode, LogicDifficulty, ShopUnlocks
 from .should_generate import should_generate
 
 if typing.TYPE_CHECKING:
@@ -145,6 +145,10 @@ def create_items(world: "NineSolsWorld") -> None:
                 prog_and_useful_items.append(create_item(world, name))
             else:
                 multiworld.push_precollected(create_item(world, name))
+        elif name == "Progressive Shop Unlock":
+            instances = 3 if options.shop_unlocks == ShopUnlocks.option_unlock_items else 0
+            for _ in range(0, instances):
+                prog_and_useful_items.append(create_item(world, name))
         elif classification == ItemClassification.filler:
             if name not in repeatable_filler_weights:
                 unique_filler.append(create_item(world, name))

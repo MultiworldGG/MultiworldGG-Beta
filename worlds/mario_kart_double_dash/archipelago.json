@@ -1,7 +1,9 @@
 {
     "game": "Mario Kart Double Dash",
-    "authors": ["aXu"],
+    "minimum_ap_version": "0.6.0",
+    "world_version": "0.2.3",
+    "authors": ["aXu_AP"],
     "igdb_id": 2344,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
+    "compatible_version": 7,
+    "version": 7
 }

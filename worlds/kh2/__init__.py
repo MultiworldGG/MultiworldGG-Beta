@@ -459,7 +459,8 @@ class KH2World(World):
                                       Goofy_Checks.keys() if Goofy_Checks[location].yml == "Keyblade"]
         # randomize the list with only
         for location in goofy_weapon_location_list:
-            random_ability = self.random.choice(self.goofy_weapon_abilities)
+            i = self.random.randrange(len(self.goofy_weapon_abilities))
+            random_ability = self.goofy_weapon_abilities.pop(i)
             location.place_locked_item(random_ability)
             self.goofy_weapon_abilities.remove(random_ability)
             if location not in starter_weapon_slot and random_ability.advancement:
@@ -482,7 +483,8 @@ class KH2World(World):
                                        Donald_Checks.keys() if Donald_Checks[location].yml == "Keyblade"]
         # randomize the list with only
         for location in donald_weapon_location_list:
-            random_ability = self.random.choice(self.donald_weapon_abilities)
+            i = self.random.randrange(len(self.donald_weapon_abilities))
+            random_ability = self.donald_weapon_abilities.pop(i)
             location.place_locked_item(random_ability)
             self.donald_weapon_abilities.remove(random_ability)
             if location not in starter_weapon_slot and random_ability.advancement:
@@ -497,7 +499,6 @@ class KH2World(World):
                 location = donald_get_bonus_location_pool[i]
                 random_ability = self.random.choice(self.donald_get_bonus_abilities)
                 location.place_locked_item(random_ability)
-                self.donald_get_bonus_abilities.remove(random_ability)
 
     def keyblade_pre_fill(self):
         """

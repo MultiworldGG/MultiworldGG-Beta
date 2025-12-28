@@ -8,7 +8,7 @@ class TestAllModes(TetrisAttackTestBase):
         "puzzle_goal": PuzzleGoal.option_puzzle_and_extra_puzzle,
         "versus_goal": VersusGoal.option_very_hard,
         "starter_pack": StarterPack.option_puzzle_level_1, # TODO: Make test able to pass with other starter packs
-        "special_stage_traps": 30,
+        "special_stage_trap_count": 30,
         "shock_panel_checks": 100,
     }
 

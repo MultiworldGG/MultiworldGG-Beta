@@ -278,6 +278,7 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
 
     async def start_room(room_id):
         with Locker(f"RoomLocker {room_id}"):
+            logger = logging.getLogger() # init logger separately to assure error logs
             try:
                 logger = set_up_logging(room_id)
                 ctx = WebHostContext(static_server_data, logger)

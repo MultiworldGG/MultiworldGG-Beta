@@ -16,8 +16,7 @@ from .Rules import set_location_rules
 from .Client import DoSClient
 from .Rom import DoSProcPatch, patch_rom
 from .static_location_data import location_ids
-from .setup_game import place_static_items, setup_game
-from .enemy_data import important_souls
+from .setup_game import place_static_items, setup_game, place_static_souls
 
 
 class DoSWeb(WebWorld):
@@ -36,6 +35,10 @@ class DoSWeb(WebWorld):
 
     option_groups = dos_option_groups
     tutorials = [setup_en]
+
+
+class CVDoSItem(Item):
+    game: str = "Castlevania: Dawn of Sorrow"
 
 
 class DoSSettings(settings.Group):
@@ -328,6 +331,22 @@ class DoSWorld(World):
             "Iron Golem Soul"
         }
 
+        self.red_soul_walls = []
+
+        self.important_souls = {
+            "Bone Ark Soul",
+            "Skeleton Ape Soul",
+            "Mandragora Soul",
+            "Rycuda Soul",
+            "Waiter Skeleton Soul"
+        }
+        # These souls are always required for movment logic
+
+        self.excluded_static_souls = {
+            "Aguni Soul",
+            "Abaddon Soul"
+        }
+
     def generate_early(self) -> None:
         if hasattr(self.multiworld, "re_gen_passthrough"):  # If UT
            if "Castlevania: Dawn of Sorrow" not in self.multiworld.re_gen_passthrough: return
@@ -338,6 +357,7 @@ class DoSWorld(World):
            self.starting_warp_room = passthrough["starting_warp"]
            self.options.open_drawbridge = passthrough["open_drawbridge"]
            self.options.boost_speed = passthrough["speed_boost"]
+           self.red_soul_walls = passthrough["soul_walls"]
         setup_game(self)
 
         self.auth_id = self.random.getrandbits(32)
@@ -345,10 +365,14 @@ class DoSWorld(World):
     def create_regions(self) -> None:
         init_areas(self, get_locations(self))
         place_static_items(self)
+        if self.options.soul_randomizer != SoulRandomizer.option_soulsanity:
+            place_static_souls(self)
+        if self.options.soul_randomizer != SoulRandomizer.option_soulsanity or self.options.soulsanity_level < SoulsanityLevel.option_medium:
+            self.get_location("Imp Soul").place_locked_item(self.create_static_soul("Imp Soul"))
 
     def create_items(self) -> None:
         pool = self.get_item_pool(self.get_excluded_items())
-        self.generate_filler(pool)
+        self.fill_pool(pool)
 
         self.multiworld.itempool += pool
 
@@ -380,7 +404,8 @@ class DoSWorld(World):
             "soul_randomizer": self.options.soul_randomizer.value,
             "soulsanity_level": self.options.soulsanity_level.value,
             "open_drawbridge": self.options.open_drawbridge.value,
-            "speed_boost": self.options.boost_speed.value
+            "speed_boost": self.options.boost_speed.value,
+            "soul_walls": self.red_soul_walls
         }
 
     def modify_multidata(self, multidata: dict) -> None:
@@ -394,18 +419,17 @@ class DoSWorld(World):
         if self.options.shuffle_starting_warp_room:
             spoiler_handle.write(f"Default Warp Room:    {self.starting_warp_room}\n")
 
-    def create_item(self, name: str) -> Item:
-        data = item_table[name]
-        
-        if self.options.soul_randomizer == SoulRandomizer.option_soulsanity:
-            if (name in important_souls) or (name in {"Soul Eater Ring", "Imp Soul"} and self.options.soulsanity_level == SoulsanityLevel.option_rare):
-                classification = ItemClassification.progression
-            else:
-                classification = data.classification
-        else:
-            classification = data.classification
+        if self.options.randomize_red_soul_walls:
+            spoiler_handle.write(f"Soul Barriers:\n")
+            spoiler_handle.write(f" Paranoia 1:  {self.red_soul_walls[1]}\n")
+            spoiler_handle.write(f" Paranoia 2:  {self.red_soul_walls[0]}\n")
+            spoiler_handle.write(f" Paranoia 3:  {self.red_soul_walls[3]}\n")
+            spoiler_handle.write(f" Dark Chapel Catacombs:  {self.red_soul_walls[2]}\n")
 
-        return Item(name, classification, data.code, self.player)
+    def create_item(self, name: str) -> CVDoSItem:
+        data = self.set_classifications(name)
+
+        return CVDoSItem(name, data.classification, data.code, self.player)
 
     def get_filler_item_name(self) -> str:
         weights = {"soul": 10, "money": 20, "weapon": 30, "armor": 40, "consumable": 60}
@@ -435,7 +459,7 @@ class DoSWorld(World):
         
         if not self.has_tried_chaos_ring:
             self.has_tried_chaos_ring = True
-            if self.random.randint(0, 100) == 0:  # Chaos ring should have a single 1/100 chance to be placed
+            if self.random.randint(0, 101) <= 10:  # Chaos ring should have a single 10/100 chance to be placed
                 filler_item = "Chaos Ring"
 
         return filler_item
@@ -446,10 +470,17 @@ class DoSWorld(World):
 
     def set_classifications(self, name: str) -> Item:
         data = item_table[name]
-        item = Item(name, data.classification, data.code, self.player)
+        item = CVDoSItem(name, data.classification, data.code, self.player)
+        if name in self.important_souls:
+            item.classification = ItemClassification.progression
+
+        if self.options.soul_randomizer == SoulRandomizer.option_soulsanity:
+            if name == "Soul Eater Ring" and self.options.soulsanity_level == SoulsanityLevel.option_rare:
+                item.classification = ItemClassification.progression
+
         return item
 
-    def generate_filler(self, pool: List[Item]) -> None:
+    def fill_pool(self, pool: List[Item]) -> None:
         for _ in range(len(self.multiworld.get_unfilled_locations(self.player)) - len(pool) - self.extra_item_count):  # Change to fix event count
             item = self.set_classifications(self.get_filler_item_name())
             pool.append(item)
@@ -464,3 +495,8 @@ class DoSWorld(World):
                     pool.append(item)
 
         return pool
+
+    def create_static_soul(self, soul):
+        data = item_table[soul]
+        item = Item(soul, ItemClassification.progression, None, self.player)  # Create an event item of the soul
+        return item

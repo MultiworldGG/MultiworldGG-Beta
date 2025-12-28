@@ -5,6 +5,10 @@ const adjustTableHeight = () => {
     const upperDistance = tablesContainer.getBoundingClientRect().top;
 
     const tableWrappers = document.getElementsByClassName('table-wrapper');
+    const availableHeight = window.innerHeight - upperDistance;
+    const locationsTableWrapper = document.getElementById('locations-table-wrapper');
+    const hasLocationsTable = locationsTableWrapper !== null;
+
     for (let i = 0; i < tableWrappers.length; i++) {
         // Ensure we are starting from maximum size prior to calculation.
         tableWrappers[i].style.height = null;
@@ -12,7 +16,17 @@ const adjustTableHeight = () => {
 
         // Set as a reasonable height, but still allows the user to resize element if they desire.
         const currentHeight = tableWrappers[i].offsetHeight;
-        const maxHeight = (window.innerHeight - upperDistance) / Math.min(tableWrappers.length, 4);
+        let maxHeight;
+
+        if (hasLocationsTable && tableWrappers[i].id === 'locations-table-wrapper') {
+            maxHeight = availableHeight * 0.6;
+        } else if (hasLocationsTable) {
+            const otherTablesCount = tableWrappers.length - 1;
+            maxHeight = (availableHeight * 0.4) / otherTablesCount;
+        } else {
+            maxHeight = availableHeight / Math.min(tableWrappers.length, 4);
+        }
+
         if (currentHeight > maxHeight) {
             tableWrappers[i].style.height = `calc(${maxHeight}px - 1rem)`;
         }
@@ -44,6 +58,18 @@ window.addEventListener('load', () => {
         },
         stateLoadCallback: function (settings) {
             return JSON.parse(localStorage.getItem(`DataTables_${settings.sInstance}_/tracker`));
+        },
+        rowCallback: function (row, data) {
+            // Add data attributes for filtering
+            if ($(row).attr('data-checked')) {
+                return;
+            }
+            const checkedCell = $(row).find('td').eq(1).text().trim();
+            if (checkedCell === '✔') {
+                $(row).attr('data-checked', 'true');
+            } else {
+                $(row).attr('data-checked', 'false');
+            }
         },
         footerCallback: function (tfoot, data, start, end, display) {
             if (tfoot) {
@@ -183,4 +209,38 @@ window.addEventListener('load', () => {
     });
 
     adjustTableHeight();
+
+    // Handle hide checked locations checkbox
+    const hideCheckedCheckbox = document.getElementById('hide-checked-locations');
+    if (hideCheckedCheckbox) {
+        // Restore checkbox state from localStorage
+        const hideCheckedState = localStorage.getItem('hideCheckedLocations') === 'true';
+        hideCheckedCheckbox.checked = hideCheckedState;
+
+        // Apply initial filter
+        const applyLocationFilter = () => {
+            const hideChecked = hideCheckedCheckbox.checked;
+            localStorage.setItem('hideCheckedLocations', hideChecked);
+
+            // Find the locations table
+            const locationsTable = tables.table('#locations-table');
+            if (locationsTable.rows().count() > 0) {
+                // Use DataTables search function to filter rows
+                $.fn.dataTable.ext.search.pop(); // Remove previous filter if any
+                if (hideChecked) {
+                    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                        if (settings.nTable.id !== 'locations-table') {
+                            return true; // Don't filter other tables
+                        }
+                        const row = $(settings.aoData[dataIndex].nTr);
+                        return row.attr('data-checked') !== 'true';
+                    });
+                }
+                locationsTable.draw();
+            }
+        };
+
+        applyLocationFilter();
+        hideCheckedCheckbox.addEventListener('change', applyLocationFilter);
+    }
 });
