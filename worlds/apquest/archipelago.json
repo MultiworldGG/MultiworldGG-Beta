@@ -2,5 +2,6 @@
 	"game": "APQuest",
 	"minimum_ap_version": "0.6.4",
 	"world_version": "1.0.1",
-	"authors": ["NewSoupVi"]
+	"authors": ["NewSoupVi"],
+	"igdb_id": 0
 }
