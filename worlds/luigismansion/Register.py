@@ -1,7 +1,7 @@
-from . import GenericWorld, GenericWeb
+from . import LMWorld, LMWeb
 
 """
-Generic World Registration
+Luigi's Mansion World Registration
 
 This file contains the metadata and class references for the luigismansion world.
 """
@@ -17,6 +17,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = GenericWorld
-WEB_WORLD_CLASS = GenericWeb
+WORLD_CLASS = LMWorld
+WEB_WORLD_CLASS = LMWeb
 CLIENT_FUNCTION = None

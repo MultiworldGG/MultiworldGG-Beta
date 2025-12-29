@@ -1,7 +1,7 @@
-from . import GenericWorld, GenericWeb
+from . import DoSWorld, DoSWeb
 
 """
-Generic World Registration
+Castlevania: Dawn of Sorrow World Registration
 
 This file contains the metadata and class references for the cv_dos world.
 """
@@ -17,6 +17,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = GenericWorld
-WEB_WORLD_CLASS = GenericWeb
+WORLD_CLASS = DoSWorld
+WEB_WORLD_CLASS = DoSWeb
 CLIENT_FUNCTION = None

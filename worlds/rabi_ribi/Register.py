@@ -1,7 +1,7 @@
-from . import GenericWorld, GenericWeb
+from . import RabiRibiWorld, RabiRibiWeb
 
 """
-Generic World Registration
+Rabi Ribi World Registration
 
 This file contains the metadata and class references for the rabi_ribi world.
 """
@@ -17,6 +17,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = GenericWorld
-WEB_WORLD_CLASS = GenericWeb
+WORLD_CLASS = RabiRibiWorld
+WEB_WORLD_CLASS = RabiRibiWeb
 CLIENT_FUNCTION = None

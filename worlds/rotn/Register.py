@@ -1,7 +1,7 @@
-from . import GenericWorld, GenericWeb
+from . import RotNWorld, RotNWeb
 
 """
-Generic World Registration
+Rogue Legacy 2 World Registration
 
 This file contains the metadata and class references for the rotn world.
 """
@@ -17,6 +17,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = GenericWorld
-WEB_WORLD_CLASS = GenericWeb
+WORLD_CLASS = RotNWorld
+WEB_WORLD_CLASS = RotNWeb
 CLIENT_FUNCTION = None

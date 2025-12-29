@@ -1,7 +1,7 @@
-from . import GenericWorld, GenericWeb
+from . import HitmanWorld, HitmanWeb
 
 """
-Generic World Registration
+Hitman World of Assassination World Registration
 
 This file contains the metadata and class references for the hitman_woa world.
 """
@@ -17,6 +17,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = GenericWorld
-WEB_WORLD_CLASS = GenericWeb
+WORLD_CLASS = HitmanWorld
+WEB_WORLD_CLASS = HitmanWeb
 CLIENT_FUNCTION = None

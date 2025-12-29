@@ -1,7 +1,7 @@
-from . import GenericWorld, GenericWeb
+from . import WaffleWorld, WaffleWeb
 
 """
-Generic World Registration
+Spicy Mycena Waffles World Registration
 
 This file contains the metadata and class references for the waffles world.
 """
@@ -17,6 +17,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = GenericWorld
-WEB_WORLD_CLASS = GenericWeb
+WORLD_CLASS = WaffleWorld
+WEB_WORLD_CLASS = WaffleWeb
 CLIENT_FUNCTION = None

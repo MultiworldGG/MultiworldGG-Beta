@@ -1,7 +1,8 @@
-from . import GenericWorld, GenericWeb
+from .world import APQuestWorld
+from .web_world import APQuestWebWorld
 
 """
-Generic World Registration
+APQuest World Registration
 
 This file contains the metadata and class references for the apquest world.
 """
@@ -17,6 +18,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = GenericWorld
-WEB_WORLD_CLASS = GenericWeb
+WORLD_CLASS = APQuestWorld
+WEB_WORLD_CLASS = APQuestWebWorld
 CLIENT_FUNCTION = None

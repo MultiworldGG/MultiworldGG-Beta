@@ -1,7 +1,7 @@
 from . import NineSolsWorld, NineSolsWebWorld
 
 """
-Generic World Registration
+Nine Sols World Registration
 
 This file contains the metadata and class references for the nine_sols world.
 """

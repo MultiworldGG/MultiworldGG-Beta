@@ -1,7 +1,7 @@
-from . import GenericWorld, GenericWeb
+from . import IntoTheBreachWorld, IntoTheBreachWeb
 
 """
-Generic World Registration
+Into The Breach World Registration
 
 This file contains the metadata and class references for the into_the_breach world.
 """
@@ -17,6 +17,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = GenericWorld
-WEB_WORLD_CLASS = GenericWeb
+WORLD_CLASS = IntoTheBreachWorld
+WEB_WORLD_CLASS = IntoTheBreachWeb
 CLIENT_FUNCTION = None

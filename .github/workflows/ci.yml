@@ -416,18 +416,13 @@ jobs:
               continue
             fi
             
-            # Package name format is worlds.{world_name}
-            package_name="worlds.${world_name}"
+            # Package name format is worlds_{world_name} (distribution name uses underscore)
+            package_name="worlds_${world_name}"
             
             # Check if package exists in PyPI by querying the simple index
             # PyPI simple index returns 200 if package exists, 404 if not
             # Use timeout to avoid hanging on network issues
             pypi_check=$(curl -s --max-time 10 -o /dev/null -w "%{http_code}" "${SIMPLE_INDEX_URL}/${package_name}/" 2>/dev/null || echo "000")
-            if [ "$pypi_check" != "200" ] && [[ "$SIMPLE_INDEX_URL" == *"/+simple" ]]; then
-              # Try standard /simple format if devpi format failed
-              ALT_URL="${PYPI_BASE%/}/simple"
-              pypi_check=$(curl -s --max-time 10 -o /dev/null -w "%{http_code}" "${ALT_URL}/${package_name}/" 2>/dev/null || echo "000")
-            fi
             
             if [ "$pypi_check" != "200" ]; then
               NEW_WORLDS="$NEW_WORLDS $world_name"

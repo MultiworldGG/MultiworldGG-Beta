@@ -1,7 +1,7 @@
-from . import GenericWorld, GenericWeb
+from . import BattleForBikiniBottom, BattleForBikiniBottomWeb
 
 """
-Generic World Registration
+Battle For Bikini Bottom World Registration
 
 This file contains the metadata and class references for the bfbb world.
 """
@@ -17,6 +17,6 @@ AUTHOR = author
 VERSION = version
 
 # Plugin entry points
-WORLD_CLASS = GenericWorld
-WEB_WORLD_CLASS = GenericWeb
+WORLD_CLASS = BattleForBikiniBottom
+WEB_WORLD_CLASS = BattleForBikiniBottomWeb
 CLIENT_FUNCTION = None
