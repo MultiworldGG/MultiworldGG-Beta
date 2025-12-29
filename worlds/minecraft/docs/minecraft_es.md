@@ -8,7 +8,6 @@
 ## Software Requerido
 
 - [Minecraft Java Edition](https://www.minecraft.net/en-us/store/minecraft-java-edition)
-- [Forge v1.20.4](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.4.html)
 
 ## Configura tu fichero YAML
 

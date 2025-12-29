@@ -3984,6 +3984,34 @@
         ],
         "release_date": 2022
     },
+    "Refunct": {
+        "igdb_id": "13542",
+        "world_name": "Refunct",
+        "igdb_name": "Refunct",
+        "us_rating": [
+            "E"
+        ],
+        "player_perspectives": [
+            "First person"
+        ],
+        "genres": [
+            "Platform",
+            "Puzzle",
+            "Adventure",
+            "Indie",
+            "Arcade"
+        ],
+        "themes": [
+        ],
+        "keywords": [
+            "parkour",
+            "abstract",
+            "relaxing",
+            "3d platformer",
+            "great soundtrack"
+        ],
+        "release_date": 2015
+    },
     "Resident Evil 2 Remake": {
         "igdb_id": "19686",
         "world_name": "Resident Evil 2 Remake",

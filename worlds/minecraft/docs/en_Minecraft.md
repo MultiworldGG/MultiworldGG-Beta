@@ -52,7 +52,6 @@ sequence either by skipping it or watching it play out.
     * Soul Campfire
 * Spyglass
 * Lead
-* Brush
 * Progressive Weapons
     * Tier I
         * Stone Sword

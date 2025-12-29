@@ -187,7 +187,6 @@ class SnesReader(Generic[_T_Enum]):
                 new_size = max((read.address + read.size) - chunk_address,
                                original_chunk_size)
                 ranges[-1] = Read(chunk_address, new_size)
-        logging.debug(f"{len(ranges)=} {max(r.size for r in ranges)=}")
         return ranges
 
     async def read(self, ctx: "SNIContext") -> SnesData[_T_Enum] | None:

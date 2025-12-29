@@ -145,6 +145,7 @@ Currently, the following games are supported:
 * Rabi-Ribi
 * Raft
 * Ratchet & Clank 2
+* Refunct
 * Resident Evil 2 Remake
 * Resident Evil 3 Remake
 * Rimworld
@@ -177,7 +178,7 @@ Currently, the following games are supported:
 * Super Mario Land 2: 6 Golden Coins
 * Super Mario Odyssey
 * Super Mario Sunshine
-* Super Mario World
+* Super Mario World (+ Spicy Mycena Waffles Fork)
 * Super Metroid
 * Super Metroid/A Link to the Past Combo
 * The Binding of Isaac: Rebirth
