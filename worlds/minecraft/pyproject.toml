@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.minecraft"
-version = "10.1.1"
+version = "0.1.6"
 description = "MultiWorld: Minecraft"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
@@ -13,7 +13,7 @@ dependencies = [ "requests >= 2.28.1",]
 name = "KonoTyran"
 
 [[project.authors]]
-name = "espeon"
+name = "JacobMIX"
 
 [tool.setuptools.packages.find]
 where = [ "src",]
