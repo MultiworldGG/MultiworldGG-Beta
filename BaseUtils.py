@@ -365,10 +365,14 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
     Returns:
         A tuple of the game name, authors, minimum AP version, and world version
     """
+    data = {}
     try:
+        from mwgg_igdb import GameIndex
         if is_frozen():
             # In frozen builds, worlds are installed as wheels in venv site-packages
-            archipelago_json_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds", world, "archipelago.json")
+            # Use "Lib" on Windows, "lib" on Linux/macOS
+            lib_dir = "Lib" if is_windows else "lib"
+            archipelago_json_path = write_path("mwgg_venv", lib_dir, "site-packages", "worlds", world, "archipelago.json")
             if not os.path.exists(archipelago_json_path):
                 # Fall back to local_path for worlds bundled with the executable
                 archipelago_json_path = local_path("lib", "worlds", world, "archipelago.json")
@@ -378,7 +382,10 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
             with open(local_path("worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
                 data = json.load(f)
     except FileNotFoundError:
-        # TODO: add a lookup here for the game name
-        return world, ["Unknown"], "0.0.0", "0.0.0"
-    return data["game"], data["authors"], data["minimum_ap_version"], data["world_version"]
+        pass
+    game_name = data.get("game", GameIndex.get_game_name_for_module(world))
+    authors = data.get("authors", ["Unknown"])
+    minimum_ap_version = data.get("minimum_ap_version", "0.5.0")
+    version = data.get("world_version", "0.0.1")
+    return game_name, authors, minimum_ap_version, version
 
