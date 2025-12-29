@@ -378,7 +378,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: src
-          fetch-depth: 2
+          fetch-depth: 1
           token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Set up Python
@@ -388,17 +388,22 @@ jobs:
       
       - name: Detect new world directories
         id: detect
+        env:
+          PYPI_URL: ${{ vars.PYPI_URL }}
         run: |
           cd src
-          # Use git to detect new world directories more reliably
+          # Query PyPI index to find missing worlds
           NEW_WORLDS=""
           HAS_NEW=false
           
-          # Find the merge base to handle merge commits correctly
-          # For regular commits, this will be HEAD~1; for merges, it's the common ancestor
-          BASE=$(git merge-base HEAD~1 HEAD 2>/dev/null || echo "HEAD~1")
+          # Normalize PyPI URL for simple index API
+          # Handle both /simple (standard PyPI) and /+simple (devpi) formats
+          SIMPLE_INDEX_URL="$PYPI_URL/+simple"
           
-          # Get all current world directories
+          echo "Checking PyPI simple index: $SIMPLE_INDEX_URL"
+          
+          # Get all world directories
+          # A world is "new" if it exists in the repo but not in PyPI
           for world_dir in worlds/*/; do
             if [ ! -d "$world_dir" ]; then
               continue
@@ -411,11 +416,25 @@ jobs:
               continue
             fi
             
-            # Check if this directory existed in the base commit
-            if ! git ls-tree "$BASE" "worlds/$world_name" >/dev/null 2>&1; then
+            # Package name format is worlds.{world_name}
+            package_name="worlds.${world_name}"
+            
+            # Check if package exists in PyPI by querying the simple index
+            # PyPI simple index returns 200 if package exists, 404 if not
+            # Use timeout to avoid hanging on network issues
+            pypi_check=$(curl -s --max-time 10 -o /dev/null -w "%{http_code}" "${SIMPLE_INDEX_URL}/${package_name}/" 2>/dev/null || echo "000")
+            if [ "$pypi_check" != "200" ] && [[ "$SIMPLE_INDEX_URL" == *"/+simple" ]]; then
+              # Try standard /simple format if devpi format failed
+              ALT_URL="${PYPI_BASE%/}/simple"
+              pypi_check=$(curl -s --max-time 10 -o /dev/null -w "%{http_code}" "${ALT_URL}/${package_name}/" 2>/dev/null || echo "000")
+            fi
+            
+            if [ "$pypi_check" != "200" ]; then
               NEW_WORLDS="$NEW_WORLDS $world_name"
               HAS_NEW=true
-              echo "Found new world directory: $world_name"
+              echo "Found new world not in PyPI: $world_name (package: $package_name, HTTP: $pypi_check)"
+            else
+              echo "World already in PyPI: $world_name"
             fi
           done
           
