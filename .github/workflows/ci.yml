@@ -397,10 +397,19 @@ jobs:
           HAS_NEW=false
           
           # Normalize PyPI URL for simple index API
-          # Handle both /simple (standard PyPI) and /+simple (devpi) formats
           SIMPLE_INDEX_URL="$PYPI_URL/+simple"
           
-          echo "Checking PyPI simple index: $SIMPLE_INDEX_URL"
+          echo "Fetching PyPI simple index: $SIMPLE_INDEX_URL"
+          
+          # Fetch the simple index (plain text list, one package per line)
+          PYPI_PACKAGES=$(curl -s --max-time 30 "$SIMPLE_INDEX_URL" | sed 's/[[:space:]]*$//' || echo "")
+          
+          if [ -z "$PYPI_PACKAGES" ]; then
+            echo "Warning: Failed to fetch PyPI simple index, skipping new world detection"
+            echo "new_worlds=" >> $GITHUB_OUTPUT
+            echo "has_new_worlds=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
           
           # Get all world directories
           # A world is "new" if it exists in the repo but not in PyPI
@@ -416,18 +425,14 @@ jobs:
               continue
             fi
             
-            # Package name format is worlds_{world_name} (distribution name uses underscore)
-            package_name="worlds_${world_name}"
+            # Package name format is worlds-{world_name}
+            package_name="worlds-${world_name}"
             
-            # Check if package exists in PyPI by querying the simple index
-            # PyPI simple index returns 200 if package exists, 404 if not
-            # Use timeout to avoid hanging on network issues
-            pypi_check=$(curl -s --max-time 10 -o /dev/null -w "%{http_code}" "${SIMPLE_INDEX_URL}/${package_name}/" 2>/dev/null || echo "000")
-            
-            if [ "$pypi_check" != "200" ]; then
+            # Check if package exists in the fetched PyPI packages list
+            if ! echo "$PYPI_PACKAGES" | grep -q "^${package_name}$"; then
               NEW_WORLDS="$NEW_WORLDS $world_name"
               HAS_NEW=true
-              echo "Found new world not in PyPI: $world_name (package: $package_name, HTTP: $pypi_check)"
+              echo "Found new world not in PyPI: $world_name (package: $package_name)"
             else
               echo "World already in PyPI: $world_name"
             fi
