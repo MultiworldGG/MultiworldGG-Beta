@@ -495,6 +495,11 @@ Root: HKCR; Subkey: "{#MyAppName}apttydpatch";                     ValueData: "M
 Root: HKCR; Subkey: "{#MyAppName}apttydpatch\DefaultIcon";         ValueData: "{app}\MultiWorldGG.exe,0";                    ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apttydpatch\shell\open\command";  ValueData: """{app}\MultiWorldGG.exe"" ""%1""";           ValueType: string;  ValueName: "";
 
+Root: HKCR; Subkey: ".apwaffle";                                        ValueData: "{#MyAppName}smwwafflespatch";        Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}smwwafflespatch";                      ValueData: "MultiworldGG SMW Waffles Patch";     Flags: uninsdeletekey; ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}smwwafflespatch\DefaultIcon";          ValueData: "{app}\MultiworldGGSNIClient.exe,0";                           ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}smwwafflespatch\shell\open\command";   ValueData: """{app}\MultiworldGGSNIClient.exe"" ""%1""";                  ValueType: string;  ValueName: "";
+
 Root: HKCR; Subkey: ".apwl";                                     ValueData: "{#MyAppName}apwlpatch";    Flags: uninsdeletevalue;         ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apwlpatch";                     ValueData: "MultiworldGG Wario Land Patch"; Flags: uninsdeletekey;      ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apwlpatch\DefaultIcon";         ValueData: "{app}\MultiWorldGG.exe,0";                     ValueType: string; ValueName: "";

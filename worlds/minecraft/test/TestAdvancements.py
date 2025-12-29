@@ -318,10 +318,9 @@ class TestAdvancements(MCTestBase):
             ["Two by Two", False, [], ['Progressive Tools']],
             ["Two by Two", False, [], ['Progressive Weapons']],
             ["Two by Two", False, [], ['Bucket']],
-            ["Two by Two", False, [], ['Brush']],
             ["Two by Two", False, ['Progressive Tools', 'Progressive Tools'], ['Bucket', 'Progressive Tools']],
             ["Two by Two", False, ['Progressive Resource Crafting', 'Progressive Tools', 'Flint and Steel', 'Progressive Tools', 'Progressive Tools', 'Progressive Weapons']],
-            ["Two by Two", True, ['Progressive Resource Crafting', 'Progressive Tools', 'Flint and Steel', 'Bucket', 'Progressive Weapons', 'Brush']],
+            ["Two by Two", True, ['Progressive Resource Crafting', 'Progressive Tools', 'Flint and Steel', 'Bucket', 'Progressive Weapons']],
             ])
 
     def test_42023(self):
@@ -653,17 +652,16 @@ class TestAdvancements(MCTestBase):
             ["Monsters Hunted", False, [], ['Progressive Tools']],
             ["Monsters Hunted", False, ['Progressive Weapons'], ['Progressive Weapons', 'Progressive Weapons']],
             ["Monsters Hunted", False, [], ['Progressive Armor']],
-            ["Monsters Hunted", False, [], ['Shield']],
             ["Monsters Hunted", False, [], ['Brewing']],
             ["Monsters Hunted", False, ['Progressive Tools', 'Progressive Tools'], ['Bucket', 'Progressive Tools']],
             ["Monsters Hunted", False, ['3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls'], ['3 Ender Pearls']],
             ["Monsters Hunted", False, [], ['Archery']],
             ["Monsters Hunted", False, [], ['Enchanting']],
-            ["Monsters Hunted", False, [], ['Lead']],
+            ["Monsters Hunted", False, [], ['Fishing Rod']],
             ["Monsters Hunted", True, ['Progressive Resource Crafting', 'Progressive Tools', 'Flint and Steel', 'Progressive Tools', 'Progressive Tools',
                                        'Progressive Weapons', 'Progressive Weapons', 'Progressive Weapons', 'Archery',
-                                       'Progressive Armor', 'Progressive Armor', 'Enchanting', 'Shield',
-                                       'Lead', 'Brewing', 'Bottles', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls']],
+                                       'Progressive Armor', 'Progressive Armor', 'Enchanting',
+                                       'Fishing Rod', 'Brewing', 'Bottles', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls']],
             ])
 
     def test_42049(self):
@@ -743,11 +741,10 @@ class TestAdvancements(MCTestBase):
             ["Serious Dedication", False, [], ['Brewing']],
             ["Serious Dedication", False, [], ['Bottles']],
             ["Serious Dedication", False, [], ['Bed']],
-            ["Serious Dedication", False, [], ['8 Netherite Scrap']],
             ["Serious Dedication", True, ['Progressive Resource Crafting', 'Progressive Tools', 'Flint and Steel', 'Progressive Tools', 'Progressive Tools',
-                                          'Progressive Weapons', 'Progressive Armor', 'Brewing', 'Bottles', 'Bed', '8 Netherite Scrap']],
+                                          'Progressive Weapons', 'Progressive Armor', 'Brewing', 'Bottles', 'Bed']],
             ["Serious Dedication", True, ['Progressive Resource Crafting', 'Progressive Tools', 'Flint and Steel', 'Progressive Tools', 'Progressive Tools',
-                                          'Progressive Weapons', 'Shield', 'Brewing', 'Bottles', 'Bed', '8 Netherite Scrap']],
+                                          'Progressive Weapons', 'Shield', 'Brewing', 'Bottles', 'Bed']],
             ])
 
     def test_42054(self):
@@ -770,10 +767,9 @@ class TestAdvancements(MCTestBase):
         self.run_location_tests([
             ["Adventuring Time", False, []],
             ["Adventuring Time", False, [], ['Progressive Weapons']],
-            ["Adventuring Time", False, [], ['Progressive Resource Crafting']],
-            ["Adventuring Time", False, [], ['Progressive Tools', 'Progressive Tools']],
-            ["Adventuring Time", True, ['Progressive Weapons', 'Progressive Resource Crafting',
-                                        'Progressive Tools', 'Progressive Tools']],
+            ["Adventuring Time", False, [], ['Campfire', 'Progressive Resource Crafting']],
+            ["Adventuring Time", True, ['Progressive Weapons', 'Campfire']],
+            ["Adventuring Time", True, ['Progressive Weapons', 'Progressive Resource Crafting']],
             ])
 
     def test_42057(self):
@@ -859,36 +855,31 @@ class TestAdvancements(MCTestBase):
     def test_42063(self):
         self.run_location_tests([
             ["A Balanced Diet", False, []],
-            ["A Balanced Diet", False, [], ['Fishing Rod']],
-            ["A Balanced Diet", False, [], ['Campfire']],
             ["A Balanced Diet", False, [], ['Bottles']],
-            ["A Balanced Diet", False, [], ['Progressive Resource Crafting']],
+            ["A Balanced Diet", False, ['Progressive Resource Crafting'], ['Progressive Resource Crafting']],
             ["A Balanced Diet", False, [], ['Flint and Steel']],
+            ["A Balanced Diet", False, [], ['Progressive Tools']],
             ["A Balanced Diet", False, [], ['Progressive Weapons']],
             ["A Balanced Diet", False, [], ['Progressive Armor', 'Shield']],
             ["A Balanced Diet", False, [], ['Brewing']],
             ["A Balanced Diet", False, ['Progressive Tools', 'Progressive Tools'], ['Bucket', 'Progressive Tools']],
             ["A Balanced Diet", False, ['3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls'], ['3 Ender Pearls']],
-            ["A Balanced Diet", True, ['Progressive Resource Crafting', 'Bottles', 'Campfire', 'Fishing Rod',
-                                       'Progressive Tools', 'Progressive Tools', 'Progressive Weapons',
-                                       'Flint and Steel', 'Brewing',
-                                       '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls',
-                                       'Progressive Tools', 'Progressive Armor']],
-            ["A Balanced Diet", True, ['Progressive Resource Crafting', 'Bottles', 'Campfire', 'Fishing Rod',
-                                       'Progressive Tools', 'Progressive Tools', 'Progressive Weapons',
-                                       'Flint and Steel', 'Brewing',
-                                       '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls',
-                                       'Bucket', 'Progressive Armor']],
-            ["A Balanced Diet", True, ['Progressive Resource Crafting', 'Bottles', 'Campfire', 'Fishing Rod',
-                                       'Progressive Tools', 'Progressive Tools', 'Progressive Weapons',
-                                       'Flint and Steel', 'Brewing',
-                                       '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls',
-                                       'Progressive Tools', 'Shield']],
-            ["A Balanced Diet", True, ['Progressive Resource Crafting', 'Bottles', 'Campfire', 'Fishing Rod',
-                                       'Progressive Tools', 'Progressive Tools', 'Progressive Weapons',
-                                       'Flint and Steel', 'Brewing',
-                                       '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls',
-                                       'Bucket', 'Shield']],
+            ["A Balanced Diet", True, ['Progressive Resource Crafting', 'Progressive Resource Crafting',
+                                       'Progressive Tools', 'Flint and Steel', 'Bucket',
+                                       'Progressive Weapons', 'Progressive Armor', 'Bottles',
+                                       'Brewing', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls']],
+            ["A Balanced Diet", True, ['Progressive Resource Crafting', 'Progressive Resource Crafting',
+                                       'Progressive Tools', 'Flint and Steel', 'Progressive Tools', 'Progressive Tools',
+                                       'Progressive Weapons', 'Progressive Armor', 'Bottles',
+                                       'Brewing', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls']],
+            ["A Balanced Diet", True, ['Progressive Resource Crafting', 'Progressive Resource Crafting',
+                                       'Progressive Tools', 'Flint and Steel', 'Bucket',
+                                       'Progressive Weapons', 'Shield', 'Bottles',
+                                       'Brewing', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls']],
+            ["A Balanced Diet", True, ['Progressive Resource Crafting', 'Progressive Resource Crafting',
+                                       'Progressive Tools', 'Flint and Steel', 'Progressive Tools', 'Progressive Tools',
+                                       'Progressive Weapons', 'Shield', 'Bottles',
+                                       'Brewing', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls', '3 Ender Pearls']],
             ])
 
     def test_42064(self):
@@ -1188,21 +1179,19 @@ class TestAdvancements(MCTestBase):
     def test_42094(self):
         self.run_location_tests([
             ["The Cutest Predator", False, []],
-            ["The Cutest Predator", False, [], ["Progressive Weapons"]],
             ["The Cutest Predator", False, [], ["Progressive Tools"]],
             ["The Cutest Predator", False, [], ["Progressive Resource Crafting"]],
             ["The Cutest Predator", False, [], ["Bucket"]],
-            ["The Cutest Predator", True, ["Progressive Weapons", "Progressive Tools", "Progressive Resource Crafting", "Bucket"]],
+            ["The Cutest Predator", True, ["Progressive Tools", "Progressive Resource Crafting", "Bucket"]],
             ])
 
     def test_42095(self):
         self.run_location_tests([
             ["The Healing Power of Friendship", False, []],
-            ["The Healing Power of Friendship", False, [], ["Progressive Weapons"]],
             ["The Healing Power of Friendship", False, [], ["Progressive Tools"]],
             ["The Healing Power of Friendship", False, [], ["Progressive Resource Crafting"]],
             ["The Healing Power of Friendship", False, [], ["Bucket"]],
-            ["The Healing Power of Friendship", True, ["Progressive Weapons", "Progressive Tools", "Progressive Resource Crafting", "Bucket"]],
+            ["The Healing Power of Friendship", True, ["Progressive Tools", "Progressive Resource Crafting", "Bucket"]],
             ])
 
     def test_42096(self):
@@ -1307,17 +1296,17 @@ class TestAdvancements(MCTestBase):
     # bucket, fishing rod, saddle, combat
     def test_42104(self):
         self.run_location_tests([
-            ["Feels Like Home", False, []],
-            ["Feels Like Home", False, [], ['Progressive Resource Crafting']],
-            ["Feels Like Home", False, [], ['Progressive Tools']],
-            ["Feels Like Home", False, [], ['Progressive Weapons']],
-            ["Feels Like Home", False, [], ['Progressive Armor', 'Shield']],
-            ["Feels Like Home", False, [], ['Fishing Rod']],
-            ["Feels Like Home", False, [], ['Saddle']],
-            ["Feels Like Home", False, [], ['Bucket']],
-            ["Feels Like Home", False, [], ['Flint and Steel']],
-            ["Feels Like Home", True, ['Saddle', 'Progressive Resource Crafting', 'Progressive Tools', 'Flint and Steel', 'Bucket', 'Progressive Weapons', 'Progressive Armor', 'Fishing Rod']],
-            ["Feels Like Home", True, ['Saddle', 'Progressive Resource Crafting', 'Progressive Tools', 'Flint and Steel', 'Bucket', 'Progressive Weapons', 'Shield', 'Fishing Rod']],
+            ["Feels like home", False, []],
+            ["Feels like home", False, [], ['Progressive Resource Crafting']],
+            ["Feels like home", False, [], ['Progressive Tools']],
+            ["Feels like home", False, [], ['Progressive Weapons']],
+            ["Feels like home", False, [], ['Progressive Armor', 'Shield']],
+            ["Feels like home", False, [], ['Fishing Rod']],
+            ["Feels like home", False, [], ['Saddle']],
+            ["Feels like home", False, [], ['Bucket']],
+            ["Feels like home", False, [], ['Flint and Steel']],
+            ["Feels like home", True, ['Saddle', 'Progressive Resource Crafting', 'Progressive Tools', 'Flint and Steel', 'Bucket', 'Progressive Weapons', 'Progressive Armor', 'Fishing Rod']],
+            ["Feels like home", True, ['Saddle', 'Progressive Resource Crafting', 'Progressive Tools', 'Flint and Steel', 'Bucket', 'Progressive Weapons', 'Shield', 'Fishing Rod']],
             ])
 
     # iron pick, combat

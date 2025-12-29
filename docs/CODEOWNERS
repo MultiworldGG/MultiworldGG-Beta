@@ -427,6 +427,9 @@
 # Ratchet & Clank 2
 /worlds/rac2/ @evilwb
 
+# Refunct
+/worlds/refunct/ @spinerak
+
 # Resident Evil 2 Remake
 /worlds/residentevil2remake/ @FuzzyGamesOn
 
@@ -521,6 +524,9 @@
 
 # Super Mario World
 /worlds/smw/ @PoryGone
+
+# Spicy Mycena Waffles (SMW Fork)
+/worlds/waffles/ @TheLX5
 
 # SMZ3
 /worlds/smz3/ @lordlou

@@ -1,7 +1,1 @@
-{
-    "game": "CrossCode",
-    "authors": ["CodeTriangle"],
-    "igdb_id": 35282,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.5.2"
-}
+{"compatible_version": 7, "version": 7, "game": "CrossCode", "authors": ["CodeTriangle"], "igdb_id": 35282, "world_version": "0.7.3"}

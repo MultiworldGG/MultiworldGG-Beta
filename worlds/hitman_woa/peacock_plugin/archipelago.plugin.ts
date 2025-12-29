@@ -19,6 +19,7 @@ import { webFeaturesRouter } from "@peacockproject/core/webFeatures"
 import { MasteryPackage } from "@peacockproject/core/types/mastery"
 import { ChallengePack } from "@peacockproject/core/candle/challengeService"
 import { getUserData, writeUserData } from "@peacockproject/core/databaseHandler"
+import { PEACOCKVERSTRING } from "@peacockproject/core/utils"
 
 const contractMap: Record<string,{name:string, contractCreationId:string, locationParent:string, completionApIds:Record<string,number>, vanillaTargets:string[] }>= {
     "ada5f2b1-8529-48bb-a596-717f75f5eacb": {name:"ICA Facility", contractCreationId:"535615f2-f8b2-492a-a9c7-150f954dd078", locationParent:"LOCATION_PARENT_ICA_FACILITY", completionApIds:{"completed":1000,"sa":1022,"so":1044,"saso":1066}, vanillaTargets:["579f2544-1970-4865-afa3-ad4566e5f98d"]},
@@ -6715,7 +6716,7 @@ const handleRecivedItems = (controller: Controller, itemIds: number[]) => {
             latestUnlockedLevel = getContractFromName(itemName.split("Level - ")[1])
                 // TODO: somehow force update the menu and campaign
         }else{
-            logArchipelago("Awarded Unlockable: "+apItemMap[id].unlockableId)
+            logArchipelago("Awarding Unlockable: "+apItemMap[id].unlockableId)
 			const lockableToUnlock = unlockablesToKeep[apItemMap[id].unlockableId]
 			const alreadyUnlockedLockable = controller.configManager.configs.allunlockables.find((element: Unlockable) => element.Id === apItemMap[id].unlockableId)
 
@@ -6735,7 +6736,7 @@ const handleRecivedItems = (controller: Controller, itemIds: number[]) => {
 				alreadyUnlockedLockable.Properties.RepositoryAssets.push(...lockableToUnlock.Properties.RepositoryAssets)
 				
 			}else{
-				if(id > 1500 && id < 1520){ // Do not copy by value everything items, they need to be managed from the other array
+				if(id >= 1500 && id < 1520){ // Do not copy by value everything items, they need to be managed from the other array
 					controller.configManager.configs.allunlockables.push(unlockablesToKeep[apItemMap[id].unlockableId])
 				}else{
 					controller.configManager.configs.allunlockables.push(JSON.parse(JSON.stringify(unlockablesToKeep[apItemMap[id].unlockableId])))
@@ -6798,7 +6799,7 @@ function printApIcon(){
 }
 
 module.exports = function archipelagoCampaign(controller: Controller) {
-    logArchipelago("Loading Archipelago Plugin (v0.7.1)")
+    logArchipelago("Loading Archipelago Plugin (v0.7.2)")
 
     removeUnusedUnlocks(controller)
 
