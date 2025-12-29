@@ -147,7 +147,7 @@ class MultiMDApp(MDApp):
     _command_history_index: int = -1
 
     _show_all_hints: BooleanProperty(False)
-    _logo_png: str = None
+    _logo_png: str = ""
     countdown_timer = NumericProperty(0)
 
     def __init__(self, ctx: context_type, **kwargs):
@@ -847,7 +847,7 @@ class MultiMDApp(MDApp):
 
     @property
     def logo_png(self):
-        if self._logo_png is None:
+        if self._logo_png == "":
             self._logo_png = os.path.join(os.getenv("KIVY_DATA_DIR"), "images", "logo_bg.png")
         return self._logo_png
 
