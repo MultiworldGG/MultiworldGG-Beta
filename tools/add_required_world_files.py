@@ -7,7 +7,7 @@ that don't have them yet.
 import argparse
 import sys
 from pathlib import Path
-from BaseUtils import get_apworld_manifest
+from world_manifest import get_apworld_manifest
 
 # Templates for generating pip-installable world packages
 PYPROJECT_TEMPLATE = """[project]
@@ -49,7 +49,7 @@ def create_world_files(module_name: str, overwrite: bool = False):
         return False
     
     manifest = get_apworld_manifest(module_name)
-    game_name = manifest.get("game_name", "Unknown")
+    game_name = manifest.get("game", "Unknown")
     authors = manifest.get("authors", ["Unknown"])
     version = manifest.get("world_version", "0.0.1")
     
