@@ -398,7 +398,7 @@ jobs:
           echo "Fetching packages from PyPI index: $INDEX_URL"
           
           # Get packages in JSON format and extract package names
-          PYPI_PACKAGES=$(pip list --format json -i "$INDEX_URL" 2>/dev/null | jq -r '.[].name' | sort -u || echo "")
+          PYPI_PACKAGES=$(curl "$INDEX_URL" -L -H "Accept: application/vnd.pypi.simple.v1+json" 2>/dev/null | jq '.projects[].name')
           
           if [ -z "$PYPI_PACKAGES" ]; then
             echo "Warning: Failed to fetch packages from PyPI, skipping new world detection"
@@ -430,7 +430,7 @@ jobs:
             package_name="worlds-${world_name}"
             
             # Check if package exists in PyPI
-            if ! echo "$PYPI_PACKAGES" | grep -q "^${package_name}$"; then
+            if ! echo "$PYPI_PACKAGES" | grep -q "$package_name"; then
               NEW_WORLDS="$NEW_WORLDS $world_name"
               HAS_NEW=true
               echo "Found new world not in PyPI: $world_name (package: $package_name)"
