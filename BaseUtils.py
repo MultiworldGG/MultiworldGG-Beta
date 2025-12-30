@@ -365,7 +365,6 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
     Returns:
         A tuple of the game name, authors, minimum AP version, and world version
     """
-    data = {}
     try:
         from mwgg_igdb import GameIndex
         if is_frozen():
@@ -388,4 +387,30 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
     minimum_ap_version = data.get("minimum_ap_version", "0.5.0")
     version = data.get("world_version", "0.0.1")
     return game_name, authors, minimum_ap_version, version
+
+def get_apworld_manifest(world: str) -> dict[str, object]:
+    '''
+    Get the manifest from archipelago.json for a given world that is not in a zipfile
+
+    TODO: Swap this out for all get_archipelago_json calls. This requires full world
+    rebuilds and removes the need for the "Register.py" file.
+    '''
+    try:
+        from mwgg_igdb import GameIndex
+        if is_frozen():
+            # In frozen builds, worlds are installed as wheels in venv site-packages
+            # Use "Lib" on Windows, "lib" on Linux/macOS
+            lib_dir = "Lib" if is_windows else "lib"
+            archipelago_json_path = write_path("mwgg_venv", lib_dir, "site-packages", "worlds", world, "archipelago.json")
+            if not os.path.exists(archipelago_json_path):
+                # Fall back to local_path for worlds bundled with the executable
+                archipelago_json_path = local_path("lib", "worlds", world, "archipelago.json")
+            with open(archipelago_json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        else:
+            with open(local_path("worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
+                data = json.load(f)
+        return data
+    except FileNotFoundError:
+        return {}
 

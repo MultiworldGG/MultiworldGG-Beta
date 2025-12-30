@@ -392,27 +392,28 @@ jobs:
           PYPI_URL: ${{ vars.PYPI_URL }}
         run: |
           cd src
-          # Query PyPI index to find missing worlds
-          NEW_WORLDS=""
-          HAS_NEW=false
+          # Get packages from PyPI using pip list
+          INDEX_URL="$PYPI_URL/+simple"
           
-          # Normalize PyPI URL for simple index API
-          SIMPLE_INDEX_URL="$PYPI_URL/+simple"
+          echo "Fetching packages from PyPI index: $INDEX_URL"
           
-          echo "Fetching PyPI simple index: $SIMPLE_INDEX_URL"
-          
-          # Fetch the simple index (plain text list, one package per line)
-          PYPI_PACKAGES=$(curl -s --max-time 30 "$SIMPLE_INDEX_URL" | sed 's/[[:space:]]*$//' || echo "")
+          # Get packages in JSON format and extract package names
+          PYPI_PACKAGES=$(pip list --format json -i "$INDEX_URL" 2>/dev/null | jq -r '.[].name' | sort -u || echo "")
           
           if [ -z "$PYPI_PACKAGES" ]; then
-            echo "Warning: Failed to fetch PyPI simple index, skipping new world detection"
+            echo "Warning: Failed to fetch packages from PyPI, skipping new world detection"
             echo "new_worlds=" >> $GITHUB_OUTPUT
             echo "has_new_worlds=false" >> $GITHUB_OUTPUT
             exit 0
           fi
           
+          PACKAGE_COUNT=$(echo "$PYPI_PACKAGES" | wc -l)
+          echo "Found $PACKAGE_COUNT packages in PyPI"
+          
           # Get all world directories
-          # A world is "new" if it exists in the repo but not in PyPI
+          NEW_WORLDS=""
+          HAS_NEW=false
+          
           for world_dir in worlds/*/; do
             if [ ! -d "$world_dir" ]; then
               continue
@@ -428,7 +429,7 @@ jobs:
             # Package name format is worlds-{world_name}
             package_name="worlds-${world_name}"
             
-            # Check if package exists in the fetched PyPI packages list
+            # Check if package exists in PyPI
             if ! echo "$PYPI_PACKAGES" | grep -q "^${package_name}$"; then
               NEW_WORLDS="$NEW_WORLDS $world_name"
               HAS_NEW=true

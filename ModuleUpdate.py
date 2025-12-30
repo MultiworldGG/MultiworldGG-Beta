@@ -408,7 +408,7 @@ def find_world_modules() -> List[str]:
     
     from mwgg_igdb import GAMES_DATA, GameIndex
     game_modules = set(GAMES_DATA.keys())
-    from BaseUtils import get_archipelago_json
+    from BaseUtils import get_apworld_manifest
     for world_module in world_modules:
         # remove pypi packages that are not in the game index - these are filtered out by rating
         if world_module not in game_modules:
@@ -429,8 +429,9 @@ def find_world_modules() -> List[str]:
                 if package_name.startswith("worlds."):
                     world_name = package_name[7:]  # Remove "worlds." prefix
                     if world_name not in world_modules_set:
-                        game_name, authors, minimum_ap_version, version = get_archipelago_json(world_name)
-                        GameIndex.add_game(world_name, {"game_name": game_name, "cover_url": "", "age_rating": "NR"})
+                        manifest = get_apworld_manifest(world_name)
+                        manifest["game_name"] = manifest.pop("game") # need to fix this in indexing
+                        GameIndex.add_game(world_name, manifest)
                         world_modules.append(world_name)
                         world_modules_set.add(world_name)
         else:

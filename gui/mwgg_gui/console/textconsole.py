@@ -72,28 +72,41 @@ class TextConsole(MarkupTextField, ThemableBehavior):
         Clock.schedule_interval(self.add_text_from_buffer, 0)
 
     def add_text_from_buffer(self, dt):
+        chunk_size = 50  # Process up to 50 items per frame
+        text_chunks = []
+        plaintext_chunks = []
+        
         try:
-            queue_item = self.text_buffer.get_nowait()
-            # Handle MarkupPair tuple and string (log record) cases
-            if isinstance(queue_item, MarkupPair):
-                text = queue_item.text
-                plaintext = queue_item.plaintext
-            elif isinstance(queue_item, str):
-                # String comes in as plaintext (no markup) - use tuple with same value for both
-                text = queue_item
-                plaintext = queue_item
-            else:
-                # Handle objects with msg attribute (log records)
-                if hasattr(queue_item, 'msg'):
-                    text = queue_item.msg
-                    plaintext = queue_item.msg
+            # Collect items from queue in chunks
+            for _ in range(chunk_size):
+                queue_item = self.text_buffer.get_nowait()
+                # Handle MarkupPair tuple and string (log record) cases
+                if isinstance(queue_item, MarkupPair):
+                    text_chunks.append(queue_item.text)
+                    plaintext_chunks.append(queue_item.plaintext)
+                elif isinstance(queue_item, str):
+                    # String comes in as plaintext (no markup) - use tuple with same value for both
+                    text_chunks.append(queue_item)
+                    plaintext_chunks.append(queue_item)
                 else:
-                    raise ValueError(f"Invalid queue item type: {type(queue_item)}")
-            self.set_texts(text, plaintext)
+                    # Handle objects with msg attribute (log records)
+                    if hasattr(queue_item, 'msg'):
+                        text_chunks.append(queue_item.msg)
+                        plaintext_chunks.append(queue_item.msg)
+                    else:
+                        raise ValueError(f"Invalid queue item type: {type(queue_item)}")
         except Empty:
-            return
+            # No more items in queue, process what we collected
+            pass
         except Exception as e:
             print(e)
+            return
+        
+        # If we collected any items, set them all at once
+        if text_chunks:
+            combined_text = "\n".join(text_chunks)
+            combined_plaintext = "\n".join(plaintext_chunks)
+            self.set_texts(combined_text, combined_plaintext)
 
 class ConsoleView(MDFloatLayout):
     text_console = ObjectProperty(None)
