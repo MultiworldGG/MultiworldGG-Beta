@@ -426,8 +426,8 @@ jobs:
               continue
             fi
             
-            # Package name format is worlds-{world_name}
-            package_name="worlds-${world_name}"
+            # Package name format is worlds-{world_name with underscores replaced with hyphens}
+            package_name="worlds-${world_name//_/-}"
             
             # Check if package exists in PyPI
             if ! echo "$PYPI_PACKAGES" | grep -q "$package_name"; then
@@ -505,6 +505,8 @@ jobs:
       
       - name: Detect changed worlds
         id: detect_changed
+        env:
+          NEW_WORLDS: ${{ needs.check-new-worlds.outputs.new_worlds }}
         run: |
           cd src
           # Get changed files in worlds directories (excluding pyproject.toml to avoid rebuild loops)
@@ -523,6 +525,24 @@ jobs:
                   CHANGED_WORLDS="$world"
                 else
                   CHANGED_WORLDS="$CHANGED_WORLDS,$world"
+                fi
+              fi
+            done
+          fi
+          
+          # Add new worlds from previous job if they exist and have pyproject.toml
+          if [ -n "$NEW_WORLDS" ]; then
+            for world in $NEW_WORLDS; do
+              # Trim whitespace and check if world is valid and has pyproject.toml
+              world=$(echo "$world" | xargs)
+              if [ -n "$world" ] && [[ "$world" != "_"* ]] && [[ "$world" != "generic" ]] && [ -f "worlds/$world/pyproject.toml" ]; then
+                # Check if world is not already in CHANGED_WORLDS
+                if [[ ",$CHANGED_WORLDS," != *",$world,"* ]]; then
+                  if [ -z "$CHANGED_WORLDS" ]; then
+                    CHANGED_WORLDS="$world"
+                  else
+                    CHANGED_WORLDS="$CHANGED_WORLDS,$world"
+                  fi
                 fi
               fi
             done
