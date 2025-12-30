@@ -17,6 +17,7 @@ from kivy.properties import ObjectProperty, StringProperty, ColorProperty, Boole
 from kivy.metrics import dp
 from kivy.utils import get_color_from_hex
 from kivy.clock import Clock
+from kivy.config import Config as MWKVConfig
 
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
@@ -206,14 +207,20 @@ class SettingsSection(MDBoxLayout):
 class LabeledSwitch(MDBoxLayout):
     """Switch with a label"""
     text = StringProperty("")
+    active = BooleanProperty(False)
     on_switch = ObjectProperty(None)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, active: bool = False, on_switch=None, *args, **kwargs):
+        self.active = active
         super().__init__(*args, **kwargs)
-        self.ids.switch.bind(active = lambda x, value: self.on_switch(self, value))
+        if on_switch:
+            self.on_switch = on_switch
+        self.ids.switch.active = self.active
+        self.ids.switch.bind(active=self._on_switch_change)
 
-    def on_switch(self, instance, value):
-        pass
+    def _on_switch_change(self, instance, value):
+        if self.on_switch:
+            self.on_switch(self, value)
 
 class LightDarkSwitch(MDBoxLayout):
     """Switch for light/dark mode"""
@@ -943,6 +950,7 @@ class InterfaceSettings(SettingsScrollBox):
         display_section.add_widget(LabeledSwitch(
             text="Fullscreen",
             theme_text_color="Secondary",
+            active=bool(MWKVConfig.get('graphics', 'fullscreen', fallback=0)),
             on_switch=self.toggle_fullscreen
         ))
         
@@ -951,13 +959,20 @@ class InterfaceSettings(SettingsScrollBox):
         layout_section.add_widget(LabeledSwitch(
             text="Compact Mode",
             theme_text_color="Secondary",
+            active=self.app.app_config.get('client', 'device_orientation', fallback="Landscape") == "Portrait",
             on_switch=self.toggle_device_orientation
+        ))
+        layout_section.add_widget(LabeledSwitch(
+            text="All Players Chat",
+            theme_text_color="Secondary",
+            active=bool(self.app.ctx.all_players_chat),
+            on_switch=self.toggle_all_players_chat
         ))
 
         scroll_section = SettingsSection(name="scroll_settings", title="Scroll")
         scroll_section.add_widget(LabeledSlider(
             text="Lines to Scroll",
-            value=int(self.app.config.get('client', 'scroll_lines', fallback="3")),
+            value=int(MWKVConfig.get('widgets', 'scroll_lines', fallback="3")),
             on_slide=self.scroll_lines_change
         ))
         scroll_section.add_widget(LabeledSlider(
@@ -984,18 +999,30 @@ class InterfaceSettings(SettingsScrollBox):
         self.layout.add_widget(age_filter_section)
     
     def toggle_fullscreen(self, instance, value):
+        def fullscreen_to_string(value: bool) -> str:
+            return "1" if value else "0"
         try:
-            self.app.config.set('graphics', 'fullscreen', str(value))
-            self.app.config.write()
+            MWKVConfig.set("graphics", "fullscreen", fullscreen_to_string(value))
+            MWKVConfig.write()
         except Exception as e:
             logger.error(f"Error in toggle_fullscreen: {e}", exc_info=True)
     
     def toggle_device_orientation(self, instance, value):
+        def orientation_to_string(value: bool) -> str:
+            return "Portrait" if value else "Landscape"
         try:
-            self.app.app_config.set('client', 'device_orientation', str(value))
+            self.app.app_config.set('client', 'device_orientation', orientation_to_string(value))
             self.app.app_config.write()
         except Exception as e:
             logger.error(f"Error in toggle_device_orientation: {e}", exc_info=True) 
+
+    def toggle_all_players_chat(self, instance, value):
+        try:
+            self.app.app_config.set('client', 'all_players_chat', str(value))
+            self.app.app_config.write()
+            self.app.ctx.all_players_chat = value
+        except Exception as e:
+            logger.error(f"Error in toggle_all_players_chat: {e}", exc_info=True)
 
     def scroll_lines_change(self, instance, value):
         """Handle scroll lines slider change"""

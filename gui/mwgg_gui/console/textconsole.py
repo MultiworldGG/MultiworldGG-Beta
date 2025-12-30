@@ -67,9 +67,13 @@ class TextConsole(MarkupTextField, ThemableBehavior):
         self.readonly = True
         self.cursor_color = self.theme_cls.primaryColor
         self.text_buffer = self.app.text_buffer
+        Clock.schedule_once(self.set_all_players_chat, 0)
         # self.lines_to_scroll = int(self.app.config.get('client', 'scroll_lines', fallback=3))
 
         Clock.schedule_interval(self.add_text_from_buffer, 0)
+
+    def set_all_players_chat(self, dt):
+        self.app.ctx.all_players_chat = self.app.app_config.get('client', 'all_players_chat', fallback=True)
 
     def add_text_from_buffer(self, dt):
         chunk_size = 50  # Process up to 50 items per frame
