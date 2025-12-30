@@ -567,20 +567,51 @@ jobs:
       
       - name: Commit updated pyproject.toml files
         if: steps.detect_changed.outputs.changed_worlds != ''
+        env:
+          CHANGED_WORLDS: ${{ steps.detect_changed.outputs.changed_worlds }}
         run: |
           cd src
-          git add worlds/*/pyproject.toml
-          if git diff --staged --quiet; then
-            echo "No pyproject.toml changes to commit"
+          # Only add pyproject.toml files for worlds that were actually built
+          CHANGED_WORLDS="$CHANGED_WORLDS"
+          FILES_TO_ADD=""
+          
+          IFS=',' read -ra WORLDS <<< "$CHANGED_WORLDS"
+          for world in "${WORLDS[@]}"; do
+            world=$(echo "$world" | xargs)  # Trim whitespace
+            if [ -n "$world" ] && [ -f "worlds/$world/pyproject.toml" ]; then
+              if [ -z "$FILES_TO_ADD" ]; then
+                FILES_TO_ADD="worlds/$world/pyproject.toml"
+              else
+                FILES_TO_ADD="$FILES_TO_ADD worlds/$world/pyproject.toml"
+              fi
+            fi
+          done
+          
+          if [ -n "$FILES_TO_ADD" ]; then
+            git add $FILES_TO_ADD
+            if git diff --staged --quiet; then
+              echo "No pyproject.toml changes to commit"
+            else
+              git commit -m "chore: update world pyproject.toml versions [skip ci]"
+              
+              # Check for any other unstaged changes (from build artifacts, failed builds, etc.)
+              if ! git diff --quiet; then
+                echo "Warning: Unstaged changes detected, discarding them before rebase"
+                git checkout -- . || true
+                git clean -fd || true
+              fi
+              
+              # Fetch latest changes and rebase before pushing
+              git fetch origin gui-changes
+              git rebase origin/gui-changes || {
+                echo "Rebase failed, trying to pull with merge strategy"
+                git pull --rebase origin gui-changes || exit 1
+              }
+              
+              git push origin gui-changes
+            fi
           else
-            git commit -m "chore: update world pyproject.toml versions [skip ci]"
-            # Fetch latest changes and rebase before pushing
-            git fetch origin gui-changes
-            git rebase origin/gui-changes || {
-              echo "Rebase failed, trying to pull with merge strategy"
-              git pull --rebase origin gui-changes || exit 1
-            }
-            git push origin gui-changes
+            echo "No valid pyproject.toml files to add"
           fi
       
       - name: Upload to private PyPI

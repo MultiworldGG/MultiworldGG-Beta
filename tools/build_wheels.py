@@ -157,15 +157,19 @@ include pyproject.toml
             if world not in default_worlds and archipelago_json_path.exists():
                 with open(archipelago_json_path, "r") as f:
                     archipelago_json = json.load(f)
-                world_version: str = archipelago_json["world_version"].strip("\"")
-                authors: list[dict[str, str]] = [{"name": author} for author in archipelago_json["authors"]]
-
+                world_version: str = archipelago_json.get("world_version")
+                authors: list[str] = archipelago_json.get("authors")
                 with open(pyproject_in_root, "r") as f:
                     pyproject = toml.load(f)
+                
+                # Update version if present
                 if world_version:
                     pyproject["project"]["version"] = world_version
+                
+                # Update authors if present
                 if authors:
-                    pyproject["project"]["authors"] = authors
+                    pyproject["project"]["authors"] = [{"name": author} for author in authors]
+                
                 with open(pyproject_in_root, "w") as f:
                     toml.dump(pyproject, f)
 
