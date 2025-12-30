@@ -4,12 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.waffles"
-version = "0.0.1"
+version = "1.2.1"
 description = "MultiWorld: Archipelago"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
 [[project.authors]]
-name = "Unknown"
+name = "lx5"
+
+[[project.authors]]
+name = "PoryGone"
 
 [tool.setuptools.packages.find]
 where = [ "src",]
