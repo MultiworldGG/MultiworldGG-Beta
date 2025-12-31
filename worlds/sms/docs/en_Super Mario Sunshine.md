@@ -1,5 +1,5 @@
 # Super Mario Sunshine
-A mod adding Archipelago Multi World support to Super Mario Sunshine
+A mod adding MultiworldGG Multi World support to Super Mario Sunshine
 
 ## Where is the options page?
 

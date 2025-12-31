@@ -336,6 +336,11 @@ Root: HKCR; Subkey: "{#MyAppName}apsmmrpatch";                     ValueData: "M
 Root: HKCR; Subkey: "{#MyAppName}apsmmrpatch\DefaultIcon";         ValueData: "{app}\MultiworldGGSNIClient.exe,0";                           ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apsmmrpatch\shell\open\command";  ValueData: """{app}\MultiworldGGSNIClient.exe"" ""%1""";                  ValueType: string;  ValueName: "";
 
+Root: HKCR; Subkey: ".apsms";                                     ValueData: "{#MyAppName}apsmspatch";    Flags: uninsdeletevalue;   ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apsmspatch";                     ValueData: "MultiworldGG Super Mario Sunshine Patch"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apsmspatch\DefaultIcon";         ValueData: "{app}\MultiworldGGLauncher.exe,0";                      ValueType: string; ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apsmspatch\shell\open\command";  ValueData: """{app}\MultiworldGGLauncher.exe"" ""%1""";             ValueType: string; ValueName: "";
+
 Root: HKCR; Subkey: ".apsotn";                                   ValueData: "{#MyAppName}apsotnpatch";      Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apsotnpatch";                     ValueData: "MultiworldGG SotN Patch"; Flags: uninsdeletekey;      ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apsotnpatch\DefaultIcon";         ValueData: "{app}\MultiworldGGBizHawkClient.exe,0";               ValueType: string; ValueName: "";

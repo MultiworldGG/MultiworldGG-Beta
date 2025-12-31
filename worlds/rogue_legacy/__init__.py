@@ -43,6 +43,28 @@ class RLWorld(World):
     item_name_to_id = {name: data.code for name, data in item_table.items() if data.code is not None}
     location_name_to_id = {name: data.code for name, data in location_table.items() if data.code is not None}
 
+    def fill_slot_data(self) -> dict:
+        return self.options.as_dict(
+            "starting_gender",
+            "starting_class",
+            "new_game_plus",
+            "chests_per_zone",
+            "fairy_chests_per_zone",
+            "universal_chests",
+            "universal_fairy_chests",
+            "architect_fee",
+            "disable_charon",
+            "require_purchasing",
+            "gold_gain_multiplier",
+            "number_of_children",
+            "free_diary_on_generation",
+            "khidr",
+            "alexander",
+            "leon",
+            "herodotus",
+            "death_link"
+        )
+
     def generate_early(self):
         # Check validation of names.
         additional_lady_names = len(self.options.additional_lady_names.value)

@@ -33,6 +33,7 @@ from randomizer.Enums.Settings import (
     HardModeSelected,
     HelmBonuses,
     ItemRandoFiller,
+    KroolInBossPool,
     LogicType,
     MinigameBarrels,
     MoveRando,
@@ -2289,7 +2290,8 @@ def Fill(spoiler: Spoiler) -> None:
         bigListOfItemsToPlace = []
         if Types.Shop in spoiler.settings.shuffled_location_types:
             bigListOfItemsToPlace.extend(ItemPool.ImportantSharedMoves.copy())
-            bigListOfItemsToPlace.extend(ItemPool.JunkSharedMoves.copy())
+            if not spoiler.settings.no_consumable_upgrades:
+                bigListOfItemsToPlace.extend(ItemPool.JunkSharedMoves.copy())
             bigListOfItemsToPlace.extend(ItemPool.DonkeyMoves)
             bigListOfItemsToPlace.extend(ItemPool.DiddyMoves)
             bigListOfItemsToPlace.extend(ItemPool.LankyMoves)
@@ -2822,19 +2824,20 @@ def ShuffleSharedMoves(spoiler: Spoiler, placedMoves: List[Items], placedTypes: 
     )
     if importantSharedUnplaced > 0:
         raise Ex.ItemPlacementException("Unable to find enough locations to place " + str(importantSharedUnplaced) + " shared important items.")
-    junkSharedToPlace = ItemPool.JunkSharedMoves.copy()
-    for item in placedMoves:
-        if item in junkSharedToPlace:
-            junkSharedToPlace.remove(item)
-    placedMoves.extend(junkSharedToPlace)
-    junkSharedUnplaced = PlaceItems(
-        spoiler,
-        FillAlgorithm.random,
-        junkSharedToPlace,
-        [x for x in ItemPool.GetItemsNeedingToBeAssumed(spoiler.settings, placedTypes) if x not in junkSharedToPlace],
-    )
-    if junkSharedUnplaced > 0:
-        raise Ex.ItemPlacementException("Unable to find enough locations to place " + str(junkSharedUnplaced) + " shared junk items.")
+    if not spoiler.settings.no_consumable_upgrades:
+        junkSharedToPlace = ItemPool.JunkSharedMoves.copy()
+        for item in placedMoves:
+            if item in junkSharedToPlace:
+                junkSharedToPlace.remove(item)
+        placedMoves.extend(junkSharedToPlace)
+        junkSharedUnplaced = PlaceItems(
+            spoiler,
+            FillAlgorithm.random,
+            junkSharedToPlace,
+            [x for x in ItemPool.GetItemsNeedingToBeAssumed(spoiler.settings, placedTypes) if x not in junkSharedToPlace],
+        )
+        if junkSharedUnplaced > 0:
+            raise Ex.ItemPlacementException("Unable to find enough locations to place " + str(junkSharedUnplaced) + " shared junk items.")
 
 
 def GeneratePlaythrough(spoiler: Spoiler) -> None:
@@ -4254,6 +4257,8 @@ def CheckForIncompatibleSettings(settings: Settings) -> None:
     if IsDDMSSelected(settings.hard_mode_selected, HardModeSelected.water_is_lava):
         if settings.no_healing:
             found_incompatibilities += "Cannot turn on 'Water is Lava' whilst disabling healing. "
+        if settings.no_consumable_upgrades and not settings.start_with_3rd_melon:
+            found_incompatibilities += "Cannot turn on 'Water is Lava' without access to 3 Melons of health. "
     if IsDDMSSelected(settings.hard_mode_selected, HardModeSelected.angry_caves):
         if settings.perma_death or settings.wipe_file_on_death:
             if settings.damage_amount == DamageAmount.quad or settings.damage_amount == DamageAmount.ohko:
@@ -4377,6 +4382,15 @@ def CheckForIncompatibleSettings(settings: Settings) -> None:
         found_incompatibilities += "Item pool is not a valid combination of items and cannot successfully fill the world. "
     if settings.krool_access and Items.HideoutHelmKey in settings.starting_keys_list_selected:
         found_incompatibilities += "Cannot start with Key 8 and guarantee Key 8 to be required at the same time. "
+    if len(settings.bosses_selected) == 0:
+        found_incompatibilities += "Cannot fill a seed with 0 bosses. "
+    if len(settings.bosses_selected) == 1 and settings.bosses_selected[0] == Maps.GalleonBoss:
+        found_incompatibilities += "Galleon Boss cannot be the only boss in the pool due to technical reasons. "
+    krool_maps = (Maps.KroolDonkeyPhase, Maps.KroolDiddyPhase, Maps.KroolLankyPhase, Maps.KroolTinyPhase, Maps.KroolChunkyPhase)
+    if settings.krool_in_boss_pool_v2 == KroolInBossPool.off and len([x for x in settings.bosses_selected if x not in krool_maps]) == 0:
+        found_incompatibilities += "No non-K Rool bosses selected with K. Rool banned from T&S. "
+    if settings.krool_in_boss_pool_v2 != KroolInBossPool.full_shuffle and len([x for x in settings.bosses_selected if x in krool_maps]) == 0:
+        found_incompatibilities += "No K Rool bosses selected with regular bosses banned from final boss sequence. "
     if found_incompatibilities != "":
         raise Ex.SettingsIncompatibleException(found_incompatibilities)
 

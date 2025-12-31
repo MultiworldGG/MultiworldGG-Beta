@@ -425,6 +425,9 @@ def store_data_package_for_checksum(game: str, data: typing.Dict[str, Any]) -> N
             logging.debug(f"Could not store data package: {e}")
 
 
+def get_adjuster_settings_no_defaults(game_name: str) -> Namespace:
+    return persistent_load().get("adjuster", {}).get(game_name, Namespace())
+
 
 @cache_argsless
 def get_unique_identifier():

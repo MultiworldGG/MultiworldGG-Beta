@@ -1,5 +1,7 @@
 """ Root Context for Luigi's Mansion. This Context attempts to load UT's TrackerGameContext, if not found CommonContext is used instead. """
 import Utils
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
+
 
 # Load Universal Tracker modules with aliases
 _tracker_loaded = False
@@ -46,7 +48,7 @@ class UniversalContext(CommonContext):
         from kvui import GameManager
         ui: GameManager = super().make_gui()
         class UniversalWrapper(ui):
-            base_title: str = " | Archipelago"
+            base_title: str = f" | {apname}"
 
             def build(self):
                 container = super().build()

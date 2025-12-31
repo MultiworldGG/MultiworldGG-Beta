@@ -12,7 +12,7 @@ from worlds.AutoSNIClient import SNIClient
 
 from . import Shops, Regions
 from .Rom import ROM_PLAYER_LIMIT
-from .utils import get_adjuster_settings, get_adjuster_settings_no_defaults
+from .utils import get_adjuster_settings
 
 snes_logger = logging.getLogger("SNES")
 
@@ -593,7 +593,7 @@ def get_alttp_settings(romfile: str):
     import Adjuster
 
     adjustedromfile = ''
-    if vars(get_adjuster_settings_no_defaults(GAME_ALTTP)):
+    if vars(Utils.get_adjuster_settings_no_defaults(GAME_ALTTP)):
         last_settings = get_adjuster_settings(GAME_ALTTP)
 
         allow_list = {"music", "menuspeed", "heartbeep", "heartcolor", "ow_palettes", "quickswap",

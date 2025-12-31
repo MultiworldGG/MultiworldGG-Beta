@@ -24,9 +24,9 @@ import ModuleUpdate
 ModuleUpdate.update()
 
 from worlds.alttp.Rom import Sprite, LocalRom, apply_rom_settings, get_base_rom_bytes
-from Utils import output_path, local_path, user_path, open_file, get_cert_none_ssl_context, persistent_store, \
-    tkinter_center_window, init_logging
-from .utils import get_adjuster_settings, get_adjuster_settings_no_defaults
+from Utils import local_path, user_path, open_file, get_cert_none_ssl_context, persistent_store, \
+    tkinter_center_window, init_logging, get_adjuster_settings_no_defaults
+from .utils import get_adjuster_settings
 try:
     from Utils import instance_name as apname
 except ImportError:
