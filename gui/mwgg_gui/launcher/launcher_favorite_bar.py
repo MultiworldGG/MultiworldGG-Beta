@@ -28,7 +28,6 @@ from typing import Any
 from kivy.app import App
 from mwgg_igdb import GameIndex
 
-game_index = GameIndex()
 logger = logging.getLogger("Client")
 
 Builder.load_string('''
@@ -137,8 +136,7 @@ class Favorite(MDSmartTile):
         if not self.game_module:
             return ""
         try:
-            game_index = GameIndex()
-            game_data = game_index.get_game(self.game_module)
+            game_data = GameIndex.get_game(self.game_module)
             return game_data.get('cover_url', "") if game_data else ""
         except:
             return ""

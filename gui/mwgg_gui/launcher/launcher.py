@@ -65,7 +65,6 @@ from Utils import (discover_and_launch_module,
 
 from FileUtils import FileUtils
 
-game_index = GameIndex()
 logger = logging.getLogger("Client")
 
 with open(os.path.join(os.path.dirname(__file__), "launcher.kv"), encoding="utf-8") as kv_file:
@@ -103,7 +102,6 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     important_appbar: MDSliverAppbar
     launcher_view: LauncherView
     game_filter: list
-    game_index: GameIndex
     available_games: list
     game_tag_filter: StringProperty
     bottom_appbar: BottomAppBar
@@ -124,17 +122,13 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.selected_game = ""
         self.highlighted_favorite = None
         self.app = MDApp.get_running_app()
-        self.available_games = get_available_worlds()
-        self.game_index = GameIndex()
+        self.available_games = []
         # Load favorite games from config
-        self.load_favorite_games()
 
         self.bottom_appbar = BottomAppBar(screen_name="launcher")
         self.important_appbar = LauncherSliverAppbar()
         self.launcher_view = LauncherView()
         Clock.schedule_once(lambda x: self.init_important())
-
-        asynckivy.start(self.set_game_list())
 
     def show_snackbar(self, message: str, is_error: bool = False):
         """Show a snackbar notification"""
@@ -175,14 +169,18 @@ class LauncherScreen(MDScreen, ThemableBehavior):
         self.launcher_view.ids.title_layout.add_widget(fave_scroll)
         fave_scroll.size = (self.launcher_view.ids.title_layout.width, dp(100))
         
+        self.available_games = get_available_worlds()
+        self.load_favorite_games()
         # Update button text based on initial context
         Clock.schedule_once(lambda dt: self.update_connect_button_text(), 0.2)
         #Clock.schedule_once(lambda dt: self.update_selected_game(), 0.2)
         Clock.schedule_once(lambda dt: self.populate_favorites(), 0.2)
+        # Start game list population after available_games is populated
+        asynckivy.start(self.set_game_list())
 
     async def set_game_list(self):
         """Set the game list based on the game tag filter"""
-        matching_games = self.game_index.search(self.game_tag_filter)
+        matching_games = GameIndex.search(self.game_tag_filter)
         not_in_available_games = [game_module for game_module in matching_games.keys() \
                                   if game_module not in self.available_games]
         for game_module in not_in_available_games:
@@ -218,7 +216,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
 
     def on_game_tag_filter_text(self, instance):
         """Set the game search filter based on the game tag filter"""
-        self.game_filter = [(self.game_tag_filter.text, tag) for tag in self.game_index.search(self.game_tag_filter.text)]
+        self.game_filter = [(self.game_tag_filter.text, tag) for tag in GameIndex.search(self.game_tag_filter.text)]
 
     def update_connect_button_text(self):
         """Update the connect button text based on current context"""
@@ -278,7 +276,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
             for name in self.favorite_games:
 
                 try:
-                    game_name = self.game_index.get_game_name_for_module(name)
+                    game_name = GameIndex.get_game_name_for_module(name)
                     if game_name:
                         favorite_tab = Favorite(game_name=game_name, game_module=name)
                         self.favorites_layout.add_widget(favorite_tab)
@@ -322,7 +320,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 return
                 
             # Find the game name for this module
-            game_name = self.game_index.get_game_name_for_module(module_name)
+            game_name = GameIndex.get_game_name_for_module(module_name)
             if game_name:
                 self.favorites_layout.switch_tab(text=game_name)
                 logger.info(f"Switched to favorite {module_name}")
@@ -335,7 +333,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     def on_favorite_clicked(self, module_name: str):
         """Handle clicking on a favorite item in the tabs"""
         try:
-            game_data = self.game_index.get_game(module_name)
+            game_data = GameIndex.get_game(module_name)
             if game_data:
                 game_name = game_data.get('game_name', module_name)
                 self.on_game_selected((module_name, game_name))
@@ -1003,7 +1001,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
                 MessageBox("No Game Selected", "Please select a game before connecting.").open()
                 return
             
-            self.app.logo_png = self.game_index.get_game(self.selected_game[0]).get("cover_url", None)
+            self.app.logo_png = GameIndex.get_game(self.selected_game[0]).get("cover_url", None)
 
             logger.info(f"Attempting to launch module: {self.selected_game[1]}")
             logger.info(f"Server: {server_address}")

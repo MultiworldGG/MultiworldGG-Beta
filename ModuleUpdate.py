@@ -26,6 +26,14 @@ from importlib import metadata, invalidate_caches
 from BaseUtils import tuplize_version, Version
 from APContainer import APWorldContainer, prepare_apworld_for_pip
 
+# Clear mwgg_igdb from import cache
+if 'mwgg_igdb' in sys.modules:
+    del sys.modules['mwgg_igdb']
+invalidate_caches()
+
+# Now import fresh
+from mwgg_igdb import GameIndex
+
 def is_frozen() -> bool:
     return getattr(sys, 'frozen', False)
 
@@ -382,32 +390,27 @@ def find_world_modules() -> List[str]:
         
         # Set up request with timeout
         req = urllib.request.Request(url)
+        req.add_header('Accept', 'application/vnd.pypi.simple.v1+json')
         req.add_header('User-Agent', 'MultiWorldGG/1.0')
         
         with urllib.request.urlopen(req, timeout=15) as response:
-            html_content = response.read().decode('utf-8')
+            json_content = response.read().decode('utf-8')
         
-        # Parse the HTML to extract package names
-        # The simple index format is: <a href="package_name/">package_name</a>
-        import re
-        package_pattern = r'<a href="([^/"]+)/">\1</a>'
-        packages = re.findall(package_pattern, html_content)
-        
-        # Filter for world packages and strip the "worlds-" prefix
-        for package in packages:
-            if package.startswith("worlds-"):
-                world_modules.append(package[7:])  # Remove "worlds-" prefix
+        # Parse the JSON to extract package names
+        packages = json.loads(json_content)
+        for package in packages['projects']:
+            if package['name'].startswith("worlds"):
+                package_name = package['name'][7:].replace("-", "_")
+                world_modules.append(package_name)
         
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
         logger.warning(f"Failed to fetch world modules from {url}: {e}")
     except Exception as e:
         logger.warning(f"Unexpected error while fetching world modules: {e}")
-    
-    # Convert to set for efficient lookup
-    world_modules_set = set(world_modules)
-    
-    from mwgg_igdb import GAMES_DATA, GameIndex
-    game_modules = set(GAMES_DATA.keys())
+
+    world_modules_set = set(sorted(world_modules))
+
+    game_modules = set(GameIndex.get_all_games().keys())
     from BaseUtils import get_apworld_manifest
     for world_module in world_modules:
         # remove pypi packages that are not in the game index - these are filtered out by rating
@@ -422,16 +425,14 @@ def find_world_modules() -> List[str]:
         
         if response.returncode == 0:
             installed_packages = json.loads(response.stdout)
-            
-            # Filter for world packages and add any that aren't already in the list
+
             for package in installed_packages:
                 package_name = package.get("name", "")
-                if package_name.startswith("worlds."):
-                    world_name = package_name[7:]  # Remove "worlds." prefix
-                    if world_name not in world_modules_set:
+                if package_name.startswith("worlds"):
+                    world_name = package_name[7:]  # Remove "worlds. or worlds-" prefix
+                    if not world_name.startswith("_") and world_name not in world_modules_set:
                         manifest = get_apworld_manifest(world_name)
-                        manifest["game_name"] = manifest.pop("game") # need to fix this in indexing
-                        GameIndex.add_game(world_name, manifest)
+                        GameIndex.add_game(world_name, {"game_name": manifest["game"], "cover_url": manifest.get("cover_url", "")})
                         world_modules.append(world_name)
                         world_modules_set.add(world_name)
         else:
@@ -441,21 +442,37 @@ def find_world_modules() -> List[str]:
     except Exception as e:
         logger.warning(f"Unexpected error while checking installed world modules: {e}")
     
+    # Also add worlds from the custom_worlds directory
+    for world_file in custom_worlds_dir.iterdir():
+        module_name = add_custom_worlds_to_index(world_file)
+        if module_name and module_name not in world_modules_set:
+            world_modules.append(module_name)
+            world_modules_set.add(module_name)
+    return sorted(world_modules)
 
-    return world_modules
-
-def _parse_package_name_version(filename: str) -> tuple[str, str]:
-    """
-    TODO: Change to pip show command
-    """
-    # Remove common suffixes
-    name = filename.replace('.dist-info', '').replace('.egg-info', '')
-    
-    # Split on last hyphen followed by a digit (version separator)
-    match = re.match(r'^(.+?)-(\d+.*)$', name)
-    if match:
-        return match.group(1), match.group(2)
-    return name, ''
+def add_custom_worlds_to_index(custom_world: Path) -> Optional[str]:
+    """Add worlds from the custom_worlds directory to the game index."""
+    if custom_world.suffix in [".whl", ".egg", ".tar", ".gz", ".zip"]:
+        with zipfile.ZipFile(custom_world, 'r') as zipf:
+            for name in zipf.infolist():
+                if name.filename.endswith("archipelago.json"):
+                    apmanifest_path = name
+                    break
+            metadata = json.loads(zipf.read(apmanifest_path))
+            module_name = apmanifest_path.filename.split("/")[1].replace("-", "_")
+            if GameIndex.get_game_name_for_module(module_name):
+                logger.warning(f"World {module_name} already exists in the game index")
+                return module_name
+            GameIndex.add_game(module_name, {"game_name": metadata.get("game", module_name), "cover_url": metadata.get("cover_url", "")})
+    elif custom_world.suffix == ".apworld":
+        with zipfile.ZipFile(custom_world, 'r') as custom_apworld:
+            manifest = APWorldContainer(custom_world).read_contents(custom_apworld)
+            module_name = custom_world.stem.replace("-", "_")
+            if GameIndex.get_game_name_for_module(module_name):
+                logger.warning(f"World {module_name} already exists in the game index")
+                return module_name
+            GameIndex.add_game(module_name, {"game_name": manifest["game"], "cover_url": manifest.get("cover_url", "")})
+    return module_name if module_name else None
 
 def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = False) -> bool:
     """
