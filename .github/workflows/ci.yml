@@ -372,7 +372,15 @@ jobs:
               echo "Rebase failed, trying to pull with merge strategy"
               git pull --rebase origin gui-changes || exit 1
             }
-            git push origin gui-changes
+            # Fetch again right before push to minimize race condition window
+            git fetch origin gui-changes
+            git rebase origin/gui-changes || {
+              echo "Rebase failed after second fetch, aborting"
+              git rebase --abort || true
+              exit 1
+            }
+            # Use --force-with-lease to safely handle concurrent pushes
+            git push --force-with-lease origin gui-changes
           fi
 
   check-new-worlds:
