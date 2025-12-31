@@ -153,9 +153,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.games_mdlist = MDList(width=260)
-        
-        # Get the pre-generated game index
-        self.game_index = GameIndex()
+
         
         # Bind search field to search function
         self.important_appbar.ids.search_bar.ids.game_tag_filter.bind(
@@ -164,7 +162,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
     
     def on_search_text(self, instance, value):
         """Handle search text changes"""
-        matching_games = self.game_index.search(value)
+        matching_games = GameIndex.search(value)
         self.update_game_list(matching_games)
     
     def update_game_list(self, games):
@@ -213,7 +211,7 @@ class LauncherScreen(MDScreen, ThemableBehavior):
    def test_search_functionality():
        """Test search returns correct results"""
        game_index = GameIndex()  # Uses pre-generated index
-       results = game_index.search("action")
+       results = GameIndex.search("action")
        assert len(results) > 0
        # Add more specific assertions based on known data
    ```

@@ -1,16 +1,17 @@
 from typing import Dict, Set, Any
 
-class GameIndex:
+class _GameIndexClass(object):
     """
     Pre-generated search index for games. This index is built during the build process
     and included in the final executable.
     """
-    def __init__(self):
-        # The search index is pre-populated during build
-        self.games: Dict[str, dict] = GAMES_DATA  # Generated during build
-        self.search_index: Dict[str, Set[str]] = SEARCH_INDEX  # Generated during build
+    def __new__(cls):
+        if getattr(cls, "_instance", None) is None:
+            cls._instance = super(_GameIndexClass, cls).__new__(cls)
+        return cls._instance
     
-    def search(self, query: str) -> dict:
+    @staticmethod
+    def search(query: str) -> dict:
         """
         Search for games matching the query.
         
@@ -28,15 +29,15 @@ class GameIndex:
         
         # First try exact matches from the search index
         for term in query_terms:
-            if term in self.search_index:
+            if term in SEARCH_INDEX:
                 if not matching_games:
-                    matching_games = set(self.search_index[term])
+                    matching_games = set(SEARCH_INDEX[term])
                 else:
-                    matching_games &= set(self.search_index[term])
+                    matching_games &= set(SEARCH_INDEX[term])
         
         # If no exact matches found, try partial matches
         if not matching_games:
-            for game_name, game_data in self.games.items():
+            for game_name, game_data in GAMES_DATA.items():
                 # First check if any query term is in the game title
                 if any(term in game_name.lower() for term in query_terms):
                     matching_games.add(game_name)
@@ -67,9 +68,10 @@ class GameIndex:
                         break
         
         # Return only matching games
-        return {name: self.games[name] for name in matching_games}
+        return {name: GAMES_DATA[name] for name in matching_games}
     
-    def get_game(self, game_module: str) -> dict:
+    @staticmethod
+    def get_game(game_module: str) -> dict:
         """
         Get full game data for a specific game.
         
@@ -79,16 +81,17 @@ class GameIndex:
         Returns:
             Dictionary containing all game data
         """
-        return self.games.get(game_module, {})
+        return GAMES_DATA.get(game_module, {})
     
-    def get_all_games(self) -> dict:
+    @staticmethod
+    def get_all_games() -> dict:
         """
         Get all game data.
         
         Returns:
             Dictionary containing all games and their data
         """
-        return self.games.copy()
+        return GAMES_DATA.copy()
 
     @staticmethod
     def get_all_game_names() -> list[str]:
@@ -131,6 +134,9 @@ class GameIndex:
         SEARCH_INDEX[game_module] = set()
         for term in game_module.lower().split():
             SEARCH_INDEX[term].add(game_module)
+
+# Export an instance
+GameIndex = _GameIndexClass()
 
 # These constants will be generated during build
 GAMES_DATA = GAMES_DATA_PLACEHOLDER  # type: ignore  # noqa: F821

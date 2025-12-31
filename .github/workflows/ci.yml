@@ -21,14 +21,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: src
-          fetch-depth: 2
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Check for splashscreen changes
         id: check_changes
         run: |
           cd src
-          if git diff --name-only HEAD~1 HEAD | grep -q '^splashscreen/'; then
+          # Find the latest commit that touched splashscreen/ folder and check what changed
+          LAST_COMMIT=$(git log -1 --format=%H -- splashscreen/ 2>/dev/null || echo "")
+          CHANGED_SPLASHSCREEN_FILES=$(git diff-tree --no-commit-id --name-only -r "$LAST_COMMIT" 2>/dev/null | grep '^splashscreen/' | grep -v '^splashscreen/pyproject.toml$' || true)
+          
+          if [ -n "$CHANGED_SPLASHSCREEN_FILES" ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT
@@ -100,14 +104,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: src
-          fetch-depth: 2
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Check for GUI changes
         id: check_changes
         run: |
           cd src
-          if git diff --name-only HEAD~1 HEAD | grep -q '^gui/'; then
+          # Find the latest commit that touched gui/ folder and check what changed
+          LAST_COMMIT=$(git log -1 --format=%H -- gui/ 2>/dev/null || echo "")
+          CHANGED_GUI_FILES=$(git diff-tree --no-commit-id --name-only -r "$LAST_COMMIT" 2>/dev/null | grep '^gui/' | grep -v '^gui/pyproject.toml$' || true)
+          
+          if [ -n "$CHANGED_GUI_FILES" ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT
