@@ -4,10 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.sms"
-version = "0.2.2"
+version = "0.4.3"
 description = "MultiWorld: Super Mario Sunshine"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
+[[project.authors]]
+name = "MrsMarinaRose"
+
 [[project.authors]]
 name = "Joshark"
 
