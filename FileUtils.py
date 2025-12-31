@@ -26,6 +26,12 @@ class FileUtils(ABC):
         """Open a directory selection dialog."""
         pass
 
+    @abstractmethod
+    def save_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") \
+        -> typing.Optional[str]:
+        """Open a file save dialog."""
+        pass
+
 
 class WinFileUtils(FileUtils):
     """Windows-specific file utilities using native dialogs."""
@@ -173,6 +179,98 @@ class WinFileUtils(FileUtils):
             logging.error(f"Windows directory dialog failed: {e}")
             return self._kivy_fallback_directory(title, suggest)
     
+    def save_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") \
+        -> typing.Optional[str]:
+        """Windows native save file dialog."""
+        try:
+            import win32gui
+            import win32con
+            from BaseUtils import user_path
+            from Utils import is_kivy_running
+            
+            # Define file filters - Windows format uses null separators: "Description\0Pattern\0Description\0Pattern\0"
+            filter_parts = []
+            for text, ext in filetypes:
+                # Convert extensions like ["*.txt", "*.log"] to "*.txt;*.log"
+                for i, e in enumerate(ext):
+                    if not "*" in e:
+                        ext[i] = "*" + e
+                ext_str = ";".join(ext)
+                filter_parts.append(text + " (" + ext_str + ")")
+                filter_parts.append(ext_str)
+            # Add "All Files" as the last option (only if not already present)
+            if not any('All Files' in part for part in filter_parts):
+                filter_parts.append('All Files (*.*)')
+                filter_parts.append('*.*')
+            filter_str = "\0".join(filter_parts) + "\0"
+            
+            # Set initial filename if provided
+            initial_file = suggest if suggest else ""
+            
+            # If Kivy is running, execute dialog in separate thread to avoid blocking Kivy's event loop
+            if is_kivy_running():
+                result_queue = queue.Queue()
+                exception_queue = queue.Queue()
+                
+                def run_dialog():
+                    try:
+                        fname, customfilter, flags = win32gui.GetSaveFileNameW(
+                            Title=title,
+                            Filter=filter_str,
+                            FilterIndex=0,
+                            Flags=win32con.OFN_EXPLORER | win32con.OFN_OVERWRITEPROMPT,
+                            InitialFile=initial_file
+                        )
+                        result_queue.put(fname)
+                    except Exception as e:
+                        exception_queue.put(e)
+                
+                thread = threading.Thread(target=run_dialog, daemon=True)
+                thread.start()
+                thread.join()  # Wait for dialog to complete
+                
+                # Check for exceptions
+                if not exception_queue.empty():
+                    dialog_error = exception_queue.get()
+                    if "No error message is available" in str(dialog_error):
+                        print("Save file dialog cancelled by user.")
+                        return None
+                    else:
+                        raise dialog_error
+                
+                # Get result
+                fname = result_queue.get() if not result_queue.empty() else None
+            else:
+                # Direct call when not running in Kivy
+                try:
+                    fname, customfilter, flags = win32gui.GetSaveFileNameW(
+                        Title=title,
+                        Filter=filter_str,
+                        FilterIndex=0,
+                        Flags=win32con.OFN_EXPLORER | win32con.OFN_OVERWRITEPROMPT,
+                        InitialFile=initial_file
+                    )
+                except Exception as dialog_error:
+                    if "No error message is available" in str(dialog_error):
+                        print("Save file dialog cancelled by user.")
+                        return None
+                    else:
+                        raise dialog_error
+            
+            if fname:
+                print(f"Selected save file: {fname}")
+                return fname
+            else:
+                print("No file selected.")
+                return None
+                
+        except ImportError:
+            logging.warning("win32gui not available, falling back to Kivy")
+            return self._kivy_fallback_save_file(title, filetypes, suggest)
+        except Exception as e:
+            logging.error(f"Windows save file dialog failed: {e}")
+            return self._kivy_fallback_save_file(title, filetypes, suggest)
+
     def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "", multiple: bool = False) -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Kivy fallback for file selection."""
         from Utils import is_kivy_running
@@ -241,6 +339,44 @@ class WinFileUtils(FileUtils):
                 return None
         except Exception as e:
             logging.error(f'Kivy directory dialog fallback failed for "{title}": {e}')
+            return None
+    
+    def _kivy_fallback_save_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Optional[str]:
+        """Kivy fallback for save file selection."""
+        from Utils import is_kivy_running
+        if not is_kivy_running():
+            return None
+            
+        try:
+            from kivymd.app import MDApp
+            from kivymd.uix.filemanager import MDFileManager
+            
+            result_queue = queue.Queue()
+            
+            def get_file_path(path: str):
+                result_queue.put(path)
+                file_manager.close()
+                
+            file_manager = MDFileManager(title=title, 
+                                        select_path=get_file_path)
+            
+            # Check if any filetype contains image extensions
+            has_images = any('png' in ext or 'jpg' in ext or 'jpeg' in ext or 'gif' in ext or 'bmp' in ext 
+                            for _, extensions in filetypes 
+                            for ext in extensions)
+            file_manager.preview = has_images
+            file_manager.selector = "file"
+            file_manager.background_color_toolbar = MDApp.get_running_app().theme_cls.primaryColor
+            file_manager.ext = [ext for (_, ext) in filetypes]
+            file_manager.show(suggest)
+            
+            # Wait for result with timeout
+            try:
+                return result_queue.get(timeout=30)  # 30 second timeout
+            except queue.Empty:
+                return None
+        except Exception as e:
+            logging.error(f'Kivy save file dialog fallback failed for "{title}": {e}')
             return None
 
 
@@ -320,6 +456,42 @@ class MacFileUtils(FileUtils):
             logging.error(f"AppleScript directory dialog failed: {e}")
             return self._kivy_fallback_directory(title, suggest)
     
+    def save_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") \
+        -> typing.Optional[str]:
+        """macOS native save file dialog using AppleScript."""
+        try:
+            # Build AppleScript for save file dialog
+            # Note: AppleScript doesn't have a direct "save file" dialog, so we use "choose file name"
+            # which opens a save dialog
+            initial_name = suggest if suggest else ""
+            applescript = f'''
+            tell application "System Events"
+                set savePath to choose file name with prompt "{title}" default name "{initial_name}"
+                return POSIX path of savePath
+            end tell
+            '''
+            
+            result = subprocess.run(['osascript', '-e', applescript], 
+                                  capture_output=True, text=True, timeout=30)
+            
+            if result.returncode == 0:
+                file_path = result.stdout.strip()
+                if file_path:
+                    print(f"Selected save file: {file_path}")
+                    return file_path
+                else:
+                    return None
+            else:
+                print("No file selected.")
+                return None
+                
+        except subprocess.TimeoutExpired:
+            logging.warning("AppleScript save file dialog timed out")
+            return None
+        except Exception as e:
+            logging.error(f"AppleScript save file dialog failed: {e}")
+            return self._kivy_fallback_save_file(title, filetypes, suggest)
+    
     def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "", multiple: bool = False) -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Kivy fallback for file selection."""
         from Utils import is_kivy_running
@@ -388,6 +560,44 @@ class MacFileUtils(FileUtils):
                 return None
         except Exception as e:
             logging.error(f'Kivy directory dialog fallback failed for "{title}": {e}')
+            return None
+    
+    def _kivy_fallback_save_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Optional[str]:
+        """Kivy fallback for save file selection."""
+        from Utils import is_kivy_running
+        if not is_kivy_running():
+            return None
+            
+        try:
+            from kivymd.app import MDApp
+            from kivymd.uix.filemanager import MDFileManager
+            
+            result_queue = queue.Queue()
+            
+            def get_file_path(path: str):
+                result_queue.put(path)
+                file_manager.close()
+                
+            file_manager = MDFileManager(title=title, 
+                                        select_path=get_file_path)
+            
+            # Check if any filetype contains image extensions
+            has_images = any('png' in ext or 'jpg' in ext or 'jpeg' in ext or 'gif' in ext or 'bmp' in ext 
+                            for _, extensions in filetypes 
+                            for ext in extensions)
+            file_manager.preview = has_images
+            file_manager.selector = "file"
+            file_manager.background_color_toolbar = MDApp.get_running_app().theme_cls.primaryColor
+            file_manager.ext = [ext for (_, ext) in filetypes]
+            file_manager.show(suggest)
+            
+            # Wait for result with timeout
+            try:
+                return result_queue.get(timeout=30)  # 30 second timeout
+            except queue.Empty:
+                return None
+        except Exception as e:
+            logging.error(f'Kivy save file dialog fallback failed for "{title}": {e}')
             return None
 
 
@@ -454,6 +664,38 @@ class LinuxFileUtils(FileUtils):
         # Fallback to Kivy
         return self._kivy_fallback_directory(title, suggest)
     
+    def save_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") \
+        -> typing.Optional[str]:
+        """Linux native save file dialog using kdialog or zenity."""
+        from shutil import which
+        from Utils import _run_for_stdout
+        import os
+        
+        # Try kdialog first
+        kdialog = which("kdialog")
+        if kdialog:
+            k_filters = '|'.join((f'{text} (*{" *".join(ext)})' for (text, ext) in filetypes))
+            result = _run_for_stdout(kdialog, f"--title={title}", "--getsavefilename", 
+                                   os.path.abspath(suggest) if suggest else ".", k_filters)
+            if result:
+                print(f"Selected save file: {result}")
+                return result
+            return None
+        
+        # Try zenity
+        zenity = which("zenity")
+        if zenity:
+            z_filters = (f'--file-filter={text} ({", ".join(ext)}) | *{" *".join(ext)}' for (text, ext) in filetypes)
+            selection = (f"--filename={os.path.abspath(suggest)}",) if suggest else ()
+            result = _run_for_stdout(zenity, f"--title={title}", "--file-selection", "--save", *z_filters, *selection)
+            if result:
+                print(f"Selected save file: {result}")
+                return result
+            return None
+        
+        # Fallback to Kivy
+        return self._kivy_fallback_save_file(title, filetypes, suggest)
+    
     def _kivy_fallback_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "", multiple: bool = False) -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """Kivy fallback for file selection."""
         from Utils import is_kivy_running
@@ -522,6 +764,44 @@ class LinuxFileUtils(FileUtils):
                 return None
         except Exception as e:
             logging.error(f'Kivy directory dialog fallback failed for "{title}": {e}')
+            return None
+    
+    def _kivy_fallback_save_file(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Optional[str]:
+        """Kivy fallback for save file selection."""
+        from Utils import is_kivy_running
+        if not is_kivy_running():
+            return None
+            
+        try:
+            from kivymd.app import MDApp
+            from kivymd.uix.filemanager import MDFileManager
+            
+            result_queue = queue.Queue()
+            
+            def get_file_path(path: str):
+                result_queue.put(path)
+                file_manager.close()
+                
+            file_manager = MDFileManager(title=title, 
+                                        select_path=get_file_path)
+            
+            # Check if any filetype contains image extensions
+            has_images = any('png' in ext or 'jpg' in ext or 'jpeg' in ext or 'gif' in ext or 'bmp' in ext 
+                            for _, extensions in filetypes 
+                            for ext in extensions)
+            file_manager.preview = has_images
+            file_manager.selector = "file"
+            file_manager.background_color_toolbar = MDApp.get_running_app().theme_cls.primaryColor
+            file_manager.ext = [ext for (_, ext) in filetypes]
+            file_manager.show(suggest)
+            
+            # Wait for result with timeout
+            try:
+                return result_queue.get(timeout=30)  # 30 second timeout
+            except queue.Empty:
+                return None
+        except Exception as e:
+            logging.error(f'Kivy save file dialog fallback failed for "{title}": {e}')
             return None
 
 
@@ -599,6 +879,49 @@ class OtherFileUtils(FileUtils):
         except Exception as e:
             logging.error(f'Kivy directory dialog failed for "{title}": {e}')
             return None
+    
+    def save_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") \
+        -> typing.Optional[str]:
+        """Kivy-based save file dialog for mobile platforms."""
+        from Utils import is_kivy_running
+        if not is_kivy_running():
+            logging.warning("Kivy not running, cannot show save file dialog")
+            return None
+            
+        try:
+            from kivymd.app import MDApp
+            from kivymd.uix.filemanager import MDFileManager
+            
+            result_queue = queue.Queue()
+            
+            def get_file_path(path: str):
+                result_queue.put(path)
+                file_manager.close()
+                
+            file_manager = MDFileManager(title=title, 
+                                        select_path=get_file_path)
+            
+            # Check if any filetype contains image extensions
+            has_images = any('png' in ext or 'jpg' in ext or 'jpeg' in ext or 'gif' in ext or 'bmp' in ext 
+                            for _, extensions in filetypes 
+                            for ext in extensions)
+            file_manager.preview = has_images
+            file_manager.selector = "file"
+            file_manager.background_color_toolbar = MDApp.get_running_app().theme_cls.primaryColor
+            file_manager.ext = [ext for (_, ext) in filetypes]
+            file_manager.show(suggest)
+            
+            # Wait for result with timeout
+            try:
+                result = result_queue.get(timeout=30)  # 30 second timeout
+                if result:
+                    print(f"Selected save file: {result}")
+                return result
+            except queue.Empty:
+                return None
+        except Exception as e:
+            logging.error(f'Kivy save file dialog failed for "{title}": {e}')
+            return None
 
 
 class FileUtilsSingleton:
@@ -634,6 +957,10 @@ class FileUtilsSingleton:
     def open_directory(self, title: str, suggest: str = "") -> typing.Optional[str]:
         """Open a directory selection dialog."""
         return self._instance.open_directory(title, suggest)
+    
+    def save_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") -> typing.Optional[str]:
+        """Open a file save dialog."""
+        return self._instance.save_file_input_dialog(title, filetypes, suggest)
 
 
 # Create the singleton instance

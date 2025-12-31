@@ -18,6 +18,7 @@ import collections
 import importlib
 import logging
 import warnings
+import zipfile
 
 import re
 
@@ -26,6 +27,7 @@ from settings import Settings, get_settings
 from time import sleep
 from typing import BinaryIO, Coroutine, Optional, Set, Dict, Any, Union, TypeGuard
 from yaml import load, load_all, dump
+from pathlib import Path
 
 logger = logging.getLogger("MultiWorld")
 
@@ -43,6 +45,7 @@ from FileUtils import FileUtils
 open_directory = FileUtils.open_directory
 open_filename = FileUtils.open_file_input_dialog
 open_file_input_dialog = FileUtils.open_file_input_dialog
+save_filename = FileUtils.save_file_input_dialog
 
 if typing.TYPE_CHECKING:
     import tkinter
@@ -126,10 +129,71 @@ def game_names() -> typing.List[str]:
 
 def get_available_worlds() -> typing.List[str]:
     """Get a list of all of the available worlds"""
-
+    from mwgg_igdb import GameIndex
     from ModuleUpdate import find_world_modules
+    from BaseUtils import get_apworld_manifest
+    
     available_worlds = find_world_modules()
-    return available_worlds
+    # Also add worlds from the custom_worlds directory
+    custom_worlds_dir = Path(local_path("custom_worlds"))
+    for world_file in custom_worlds_dir.iterdir():
+        module_name = discover_custom_world_module(world_file)
+        if module_name and module_name not in available_worlds:
+            available_worlds.add(module_name)
+    game_modules = set(GameIndex.get_all_games().keys())
+    
+    # Also check for currently installed world modules not in GameIndex
+    try:
+        for world_name in available_worlds:
+            if world_name not in game_modules:
+                manifest = get_apworld_manifest(world_name)
+                manifest["game_name"] = manifest.pop("game", world_name)
+                manifest["cover_url"] = manifest.pop("cover_url", "")
+                GameIndex.add_game(world_name, manifest)
+
+    except Exception as e:
+        update_logger.warning(f"Error checking installed world modules: {e}")
+    
+    
+    # Also add worlds from the custom_worlds directory
+    for world_file in custom_worlds_dir.iterdir():
+        module_name = discover_custom_world_module(world_file)
+        if module_name and module_name not in available_worlds:
+            available_worlds.append(module_name)
+    return list(sorted(available_worlds))
+
+def discover_custom_world_module(custom_world: Path) -> Optional[str]:
+    """Add worlds from the custom_worlds directory to the game index."""
+    from mwgg_igdb import GameIndex
+    from BaseUtils import get_apworld_manifest
+    from APContainer import APWorldContainer
+    
+    if custom_world.suffix in [".whl", ".egg", ".tar", ".gz", ".zip"]:
+        with zipfile.ZipFile(custom_world, 'r') as zipf:
+            for name in zipf.infolist():
+                if name.filename.endswith("archipelago.json"):
+                    apmanifest_path = name
+                    break
+            module_name = apmanifest_path.filename.split("/")[1].replace("-", "_")
+            metadata = json.loads(zipf.read(apmanifest_path))
+            metadata["game_name"] = metadata.pop("game", module_name)
+            metadata["cover_url"] = metadata.pop("cover_url", "")
+            if GameIndex.get_game_name_for_module(module_name):
+                logger.warning(f"World {module_name} already exists in the game index")
+                return None
+            GameIndex.add_game(module_name, metadata)
+    elif custom_world.suffix == ".apworld":
+        with zipfile.ZipFile(custom_world, 'r') as custom_apworld:
+            module_name = custom_world.stem
+            manifest = APWorldContainer(custom_world).read_contents(custom_apworld)
+            manifest["game_name"] = manifest.pop("game", module_name)
+            manifest["cover_url"] = manifest.pop("cover_url", "")
+            if GameIndex.get_game_name_for_module(module_name):
+                logger.warning(f"World {module_name} already exists in the game index")
+                return None
+            GameIndex.add_game(module_name, manifest)
+    return module_name if module_name else None
+
 
 def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]:
     """Discover and launch module via entrypoints"""
