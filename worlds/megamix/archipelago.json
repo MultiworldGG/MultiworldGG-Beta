@@ -1,7 +1,1 @@
-{
-    "game": "Hatsune Miku Project Diva Mega Mix+",
-    "minimum_ap_version": "0.6.3",
-    "world_version": "1.4.1",
-    "authors": ["Cynichill", "repodǝɹ"],
-    "igdb_id": 120278
-}
+{"game": "Hatsune Miku Project Diva Mega Mix+", "minimum_ap_version": "0.6.3", "world_version": "1.4.2", "authors": ["Cynichill", "repodǝɹ"], "igdb_id": 120278, "compatible_version": 7, "version": 7}

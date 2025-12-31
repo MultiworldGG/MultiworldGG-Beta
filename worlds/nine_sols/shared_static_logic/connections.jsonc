@@ -906,10 +906,19 @@
         { "item": "Wall Climb" },
         { "anyOf": [ { "item": "Air Dash" }, { "item": "Cloud Leap" } ] }
     ] },
-    { "from": "FU - Root Node & Lower Elevator", "to": "FU - Crystal Passage", "requires": [
-        { "item": "Wall Climb" },
-        { "anyOf": [ { "item": "Air Dash" }, { "item": "Cloud Leap" } ] }
-    ] }, // again, no enemies in RN&LE for a T-dash to help
+    {
+        "from": "FU - Root Node & Lower Elevator", "to": "FU - Crystal Passage",
+        "requires": [
+            { "item": "Wall Climb" },
+            { "anyOf": [ { "item": "Air Dash" }, { "item": "Cloud Leap" } ] }
+        ],
+        "medium_requires": [
+            { "item": "Ledge Grab" }, // grab the top of the left green wall
+            { "item": "Cloud Leap" } // need this to reach it without WC
+            // CL also lets us get to other regions with qi sources, so although CL isn't enough to jump from the
+            // ledge to the Crystal Passage platform, we can assume T-dash access in this case
+        ]
+    },
     { "from": "FU - Crystal Passage", "to": "FU - Root Node & Lower Elevator", "requires": [] }, // single jump is enough to clear the spikes
     { "from": "FU - Root Node & Lower Elevator", "to": "FU - Box After Laser", "requires": [
         { "item": "Air Dash" }, // to get past the laser
@@ -1199,7 +1208,7 @@
     // until you have what you need to reach the root node. So we end up with the whole first
     // half of Prison being a single logical region.
     { "from": "FGH - Lower Levels & Root Node", "to": "P - Up To Root Node", "requires": [
-        { "item": "Event - Jiequan 1 Fight Unlocked" }
+        { "item": "Event - Jiequan 1 Fight Unlocked" } // see event logic for how you're expected to navigate Prison
     ] },
     {
         "from": "P - Up To Root Node", "to": "P - Kanghui Level",
@@ -1434,7 +1443,8 @@
         "medium_requires": [ { "anyOf": [ // more ways of crossing the yellow water into a portal
             { "item": "Trick - Bow Hover" },
             { "item": "Cloud Leap" }, // and T-dash
-            { "item": "Air Dash" } // and T-dash
+            { "item": "Air Dash" }, // and T-dash
+            { "item": "Charged Strike" } // CS-dash and T-dash
         ] } ],
         "ls_requires": [{ "item": "Ledge Grab" }] // T-dash setup into parry hover
     },

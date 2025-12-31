@@ -429,6 +429,7 @@ class Settings:
         self.random_prices = None
         self.boss_location_rando = None
         # self.boss_kong_rando = None  # Deprecated
+        self.krool_in_boss_pool_v2 = KroolInBossPool.off
         self.kasplat_rando_setting = None
         # self.puzzle_rando = None  # Deprecated
         self.puzzle_rando_difficulty = PuzzleRando.off
@@ -741,6 +742,8 @@ class Settings:
         self.custom_music_proportion = 100
         self.smoother_camera = False
         self.fill_with_custom_music = False
+        self.pool_tracks = False
+        self.color_coded_powerups = True
         self.show_song_name = False
 
         # Custom Textures
@@ -891,6 +894,8 @@ class Settings:
         self.minigames_list_selected = []
         self.item_rando_list_selected = []
         self.misc_changes_selected = []
+        self.bosses_selected = []
+        self.allow_boss_duping = False
         self.hard_mode_selected = []
         # Item Rando
         self.item_rando_list_0 = []
@@ -949,6 +954,7 @@ class Settings:
         self.holiday_setting_offseason = False
         self.remove_wrinkly_puzzles = False
         self.smaller_shops = False
+        self.no_consumable_upgrades = False
         self.alter_switch_allocation = False
         self.prog_slam_level_1 = SlamRequirement.green
         self.prog_slam_level_2 = SlamRequirement.green
@@ -1087,6 +1093,11 @@ class Settings:
             self.climbing_status = ClimbingStatus.normal
         else:
             self.climbing_status = ClimbingStatus.shuffled
+        # If you start with two copies of Progressive Instrument Upgrade, you start with 3 melons of health
+        if guaranteed_starting_moves.count(Items.ProgressiveInstrumentUpgrade) == 2:
+            self.start_with_3rd_melon = True
+        else:
+            self.start_with_3rd_melon = False
 
         # Switchsanity handling
         ShufflableExits[Transitions.AztecMainToLlama].entryKongs = {
@@ -1151,6 +1162,7 @@ class Settings:
                         SwitchsanityKong.lanky: Kongs.lanky,
                         SwitchsanityKong.tiny: Kongs.tiny,
                         SwitchsanityKong.chunky: Kongs.chunky,
+                        SwitchsanityKong.any: Kongs.any,
                     }
                     bad_kongs = [self.switchsanity_data[x].kong for x in self.switchsanity_data[slot].tied_settings]
                     options = [
@@ -1159,18 +1171,30 @@ class Settings:
                         SwitchsanityKong.lanky,
                         SwitchsanityKong.tiny,
                         SwitchsanityKong.chunky,
+                        SwitchsanityKong.any,
                     ]
                     options = [x for x in options if kong_mapping[x] not in bad_kongs]
                     if slot == Switches.IslesMonkeyport:
                         options = [SwitchsanityKong.donkey, SwitchsanityKong.lanky, SwitchsanityKong.tiny]
                     elif slot == Switches.AztecOKONGPuzzle:
                         options = [SwitchsanityKong.diddy, SwitchsanityKong.chunky]
+                    elif slot == Switches.AztecQuicksandSwitch:
+                        options = [
+                            SwitchsanityKong.donkey,
+                            SwitchsanityKong.diddy,
+                            SwitchsanityKong.lanky,
+                            SwitchsanityKong.tiny,
+                            SwitchsanityKong.chunky,
+                        ]
                     if applied_setting == SwitchsanityKong.random:
                         applied_setting = self.random.choice(options)
                     if slot == Switches.FactoryFreeKong:
                         self.switchsanity_data[slot].kong = Kongs.lanky
                     else:
-                        self.switchsanity_data[slot].kong = Kongs.donkey + (applied_setting - SwitchsanityKong.donkey)
+                        if applied_setting == SwitchsanityKong.any:
+                            self.switchsanity_data[slot].kong = Kongs.any
+                        else:
+                            self.switchsanity_data[slot].kong = Kongs.donkey + (applied_setting - SwitchsanityKong.donkey)
             # If we've shuffled all loading zones, we need to account for some entrances changing hands
             if self.shuffle_loading_zones == ShuffleLoadingZones.all:
                 ShufflableExits[Transitions.AztecMainToLlama].entryKongs = {
@@ -1737,7 +1761,7 @@ class Settings:
             Maps.KroolTinyPhase,
             Maps.KroolChunkyPhase,
         ]
-        if self.krool_in_boss_pool:
+        if self.krool_in_boss_pool_v2 == KroolInBossPool.full_shuffle:
             phases.extend(
                 [
                     Maps.JapesBoss,
@@ -1749,6 +1773,7 @@ class Settings:
                     Maps.CastleBoss,
                 ]
             )
+        phases = [x for x in phases if x in self.bosses_selected]
         possible_phases = phases.copy()
         if self.krool_phase_order_rando:
             self.random.shuffle(phases)
@@ -1756,6 +1781,14 @@ class Settings:
             self.krool_phase_count = self.random.randint(1, 5)
         if isinstance(self.krool_phase_count, str) is True:
             self.krool_phase_count = 5
+        self.allow_boss_duping = len(self.bosses_selected) < (7 + self.krool_phase_count)
+        # Dupe phases so there's enough choice
+        if len(phases) < self.krool_phase_count:
+            dupe_count = math.ceil(self.krool_phase_count / len(phases))
+            init_phases = phases.copy()
+            for _ in range(dupe_count):
+                phases.extend(init_phases)
+        # Pick phases
         if self.krool_phase_count < len(phases):
             if self.krool_phase_order_rando:
                 phases = self.random.sample(phases, self.krool_phase_count)
@@ -1763,7 +1796,10 @@ class Settings:
                 phases = phases[: self.krool_phase_count]
         if phases[-1] == Maps.GalleonBoss:
             # Pufftoss can't be last. Pick something else
-            phases[-1] = self.random.choice([x for x in possible_phases if x not in phases])
+            if self.allow_boss_duping:
+                phases[-1] = self.random.choice([x for x in possible_phases if x != Maps.GalleonBoss])
+            else:
+                phases[-1] = self.random.choice([x for x in possible_phases if x not in phases and x != Maps.GalleonBoss])
         # Plandomized K. Rool algorithm
         if self.enable_plandomizer:
             planned_phases = []

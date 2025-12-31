@@ -1,5 +1,7 @@
 """ Root Context for Luigi's Mansion. This Context attempts to load UT's TrackerGameContext, if not found CommonContext is used instead. """
 import Utils
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
+
 
 # Load Universal Tracker modules with aliases
 _tracker_loaded = False

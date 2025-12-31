@@ -1,5 +1,5 @@
 from argparse import Namespace
-from Utils import persistent_load
+from Utils import get_adjuster_settings_no_defaults
 
 def get_default_adjuster_settings(game_name: str) -> Namespace:
     from worlds.alttp import Adjuster
@@ -8,11 +8,6 @@ def get_default_adjuster_settings(game_name: str) -> Namespace:
         return Adjuster.get_argparser().parse_known_args(args=[])[0]
 
     return adjuster_settings
-
-
-def get_adjuster_settings_no_defaults(game_name: str) -> Namespace:
-    return persistent_load().get("adjuster", {}).get(game_name, Namespace())
-
 
 def get_adjuster_settings(game_name: str) -> Namespace:
     adjuster_settings = get_adjuster_settings_no_defaults(game_name)

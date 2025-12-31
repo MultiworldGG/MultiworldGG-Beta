@@ -194,6 +194,8 @@ class MultiworldInstance():
         self.rooms_to_start = multiprocessing.Queue()
         self.rooms_shutting_down = multiprocessing.Queue()
         self.name = f"MultiHoster{id}"
+        self.process_start_time = None
+        self.restart_interval = timedelta(hours=12)
 
     def start(self):
         if self.process and self.process.is_alive():
@@ -206,19 +208,40 @@ class MultiworldInstance():
                                           name=self.name)
         process.start()
         self.process = process
+        self.process_start_time = datetime.utcnow()
+
+    def should_restart(self) -> bool:
+        """Check if process should be restarted to reload fresh APWorld data"""
+        if not self.process_start_time:
+            return False
+        
+        time_for_restart = datetime.utcnow() - self.process_start_time > self.restart_interval
+        is_idle = len(self.room_ids) == 0
+        return time_for_restart and is_idle
 
     def start_room(self, room_id):
         while not self.rooms_shutting_down.empty():
             self.room_ids.remove(self.rooms_shutting_down.get(block=True, timeout=None))
+
+        if self.should_restart():
+            logging.info(f"{self.name} restarting to load fresh APWorld data (process was idle, no rooms were interrupted")
+            self.stop(wait=True)  # Wait for old process to fully terminate before starting new one
+            self.start()
+
         if room_id in self.room_ids:
             pass  # should already be hosted currently.
         else:
             self.room_ids.add(room_id)
             self.rooms_to_start.put(room_id)
 
-    def stop(self):
+    def stop(self, wait: bool = False):
         if self.process:
             self.process.terminate()
+            if wait:
+                self.process.join(timeout=5)
+                if self.process.is_alive():
+                    self.process.kill()
+                    self.process.join(timeout=2)
             self.process = None
 
     def done(self):
