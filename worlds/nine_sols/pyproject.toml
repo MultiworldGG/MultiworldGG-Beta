@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "worlds.nine_sols"
-version = "0.4.2"
+version = "0.4.3"
 description = "MultiWorld: Nine Sols"
 classifiers = [ "Private :: Do Not Upload",]
 requires-python = ">=3.12"
