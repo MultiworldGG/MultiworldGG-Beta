@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import Dict, Set, Any
 import os
+from re import match
 
 def clean_value(value: Any) -> str:
     """
@@ -58,17 +59,17 @@ def build_search_index(games_data: dict) -> Dict[str, Set[str]]:
         
     Returns:
         Dictionary mapping search terms to sets of game names
-        Prepends the "popular" key to the index with a list of popular games
+        Prepends the "popular" key to the index with a set of popular games
     """
     search_index = {
-        "popular": [
+        "popular": {
         "alttp",
         "sc2",
         "oot",
         "kh2",
         "hk",
         "sm64ex"
-    ]}
+    }}
     
     # Fields that should be indexed
     searchable_fields = {
@@ -90,8 +91,10 @@ def build_search_index(games_data: dict) -> Dict[str, Set[str]]:
                 continue
                 
             if isinstance(value, list):
-                for item in value:
-                    if item:  # Only index non-empty values
+                # Convert to set to remove duplicates and improve iteration performance
+                value_set = set(value) if value else set()
+                for item in value_set:
+                    if item and not match(r".*[():].*", item):  # Skip items with parentheses or colons
                         # Add both the full term and individual words
                         _add_to_index(search_index, clean_value(item), world_name)
                         for word in clean_value(item).split():
@@ -156,11 +159,13 @@ def generate_index_file(rating_filter: str = "NR"):
             games_data = json.load(file)
         
         # Clean the game data
-        if rating_filter != "18plus_adult":
-            games_data = clean_game_data(games_data, rating_filter)
+        games_data = clean_game_data(games_data, rating_filter)
         
         # Build search index
         search_index = build_search_index(games_data)
+        
+        # Build the game names dictionary for fast lookups
+        game_names = {name["game_name"]: module for module, name in games_data.items()}
         
         # Validate the generated index
         if not validate_generated_index(games_data, search_index):
@@ -171,7 +176,8 @@ def generate_index_file(rating_filter: str = "NR"):
         
         # Generate Python code
         games_data_str = json.dumps(games_data, indent=4)
-        search_index_str = json.dumps(search_index_json, indent=4)
+        game_names_str = json.dumps(game_names, indent=4)
+        search_index_str = json.dumps(search_index_json, indent=4).replace("[", "{").replace("]", "}")
         
         # Read template
         template_path = Path.cwd() / 'game_index_template.py'
@@ -180,6 +186,7 @@ def generate_index_file(rating_filter: str = "NR"):
         
         # Fill template with explicit placeholder names
         code = template.replace("GAMES_DATA_PLACEHOLDER", games_data_str)
+        code = code.replace("GAMES_NAMES_PLACEHOLDER", game_names_str)
         code = code.replace("SEARCH_INDEX_PLACEHOLDER", search_index_str)
         
         if rating_filter == "12_kid":

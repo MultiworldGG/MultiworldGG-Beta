@@ -4,7 +4,6 @@ from typing import List
 from BaseClasses import Tutorial, ItemClassification
 from Utils import local_path, user_path
 from Fill import fast_fill
-from worlds.LauncherComponents import Component, components, icon_paths, Type, launch as launch_component
 from worlds.LauncherComponents import Component, components, Type, icon_paths, launch as launch_component
 from worlds.AutoWorld import World, WebWorld
 from .Items import *
@@ -462,7 +461,6 @@ class KH2World(World):
             i = self.random.randrange(len(self.goofy_weapon_abilities))
             random_ability = self.goofy_weapon_abilities.pop(i)
             location.place_locked_item(random_ability)
-            self.goofy_weapon_abilities.remove(random_ability)
             if location not in starter_weapon_slot and random_ability.advancement:
                 self.set_weapon_prog(location)
         if not self.options.DonaldGoofyStatsanity:
@@ -486,7 +484,6 @@ class KH2World(World):
             i = self.random.randrange(len(self.donald_weapon_abilities))
             random_ability = self.donald_weapon_abilities.pop(i)
             location.place_locked_item(random_ability)
-            self.donald_weapon_abilities.remove(random_ability)
             if location not in starter_weapon_slot and random_ability.advancement:
                 self.set_weapon_prog(location)
 
@@ -499,6 +496,7 @@ class KH2World(World):
                 location = donald_get_bonus_location_pool[i]
                 random_ability = self.random.choice(self.donald_get_bonus_abilities)
                 location.place_locked_item(random_ability)
+                self.donald_get_bonus_abilities.remove(random_ability)
 
     def keyblade_pre_fill(self):
         """

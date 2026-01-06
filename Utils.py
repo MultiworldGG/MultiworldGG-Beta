@@ -25,7 +25,7 @@ import re
 from argparse import Namespace
 from settings import Settings, get_settings
 from time import sleep
-from typing import BinaryIO, Coroutine, Optional, Set, Dict, Any, Union, TypeGuard
+from typing import BinaryIO, Coroutine, Optional, Any, Union, TypeGuard
 from yaml import load, load_all, dump
 from pathlib import Path
 
@@ -101,27 +101,68 @@ is_linux = sys.platform.startswith("linux")
 is_macos = sys.platform == "darwin"
 is_windows = sys.platform in ("win32", "cygwin", "msys")
 
-_worlds_to_load: typing.List[str] = []
+_worlds_to_load: typing.List[str | "APWorldContainer"] = []
 
-def set_game_names(game_names: typing.List[str]):
+def set_game_names(game_names: typing.List[str]) -> typing.List[(str, bool)]:
     """Set the game names to the list of game names"""
     from mwgg_igdb import GameIndex
-    # lazy import
+    from APContainer import APWorldContainer
+    _module_dict: dict[str, str] = {}
+    _worlds_to_install = game_names
+    _custom_world_files = []
+    custom_worlds_dir = Path(local_path("custom_worlds"))
     for game in game_names:
-        module_name = GameIndex.get_module_for_game(game_name=game, worlds=True)
-        _worlds_to_load.append(module_name) if module_name else update_logger.warning(f"Game {game} not found in game index")
-    _worlds_to_install: typing.List[str] = []
-    for module_name in _worlds_to_load:
+        try:
+            _module_dict[game] = "worlds." + GameIndex.game_names[game]
+        except KeyError:
+            # Game not found - check if it's a custom world that needs to be discovered/installed
+            update_logger.warning(f"Game {game} not found in game index, checking custom_worlds")
+            _custom_world_files.append(game)
+
+
+    for custom_world_file in custom_worlds_dir.iterdir():
+        if custom_world_file.suffix == ".apworld":
+            apworld = APWorldContainer(custom_world_file)
+            apworld.read_contents(zipfile.ZipFile(custom_world_file, 'r'))
+            if apworld.game in _custom_world_files:
+                _module_dict[apworld.game] = custom_world_file.stem
+        else:
+            try:
+                with zipfile.ZipFile(custom_world_file, 'r') as zipf:
+                    for name in zipf.infolist():
+                        if name.filename.endswith("archipelago.json"):
+                            apmanifest_path = name
+                            break
+                    with zipf.open(apmanifest_path) as apmanifest_file:
+                        apmanifest = json.load(apmanifest_file)
+                        if apmanifest["game"] == game:
+                            _module_dict[game] = custom_world_file.stem
+                            break
+            except (zipfile.BadZipFile, json.JSONDecodeError):
+                continue
+            except Exception as e:
+                update_logger.error(f"Error checking custom worlds: {e}")
+                continue
+
+    
+    for game_name, module_name in _module_dict.items():
         try:
             importlib.metadata.distribution(module_name)
+            update_logger.debug(f"Module {module_name} is already installed")
+            _worlds_to_load.append((module_name))
+            _worlds_to_install.remove(game_name)
         except importlib.metadata.PackageNotFoundError:
-            update_logger.warning(f"Module {module_name} not found, looking in worlds pypi index.")
-            _worlds_to_install.append(module_name)
+            update_logger.warning(f"Module {module_name} not found, looking elsewhere.")
+    
     if _worlds_to_install:
-        restart_needed = ModuleUpdate.install_worlds(_worlds_to_install)
-        if restart_needed:
-            # Library updates were staged, need to restart
-            exit_restart_for_update()
+        _worlds_to_install = [module for game, module in _module_dict.items() if game in _worlds_to_install]
+        custom_worlds = ModuleUpdate.install_worlds(_worlds_to_install)
+        from importlib import invalidate_caches
+        invalidate_caches() # Invalidate import caches so the newly installed module can be found
+        for world in custom_worlds:
+            world.replace("worlds.", "")
+            apworld = APWorldContainer(custom_worlds_dir / f"{world}.apworld")
+            _worlds_to_load.append(apworld)
 
 def game_names() -> typing.List[str]:
     """Get a list of only the game names that we're using"""
@@ -165,7 +206,6 @@ def get_available_worlds() -> typing.List[str]:
 def discover_custom_world_module(custom_world: Path) -> Optional[str]:
     """Add worlds from the custom_worlds directory to the game index."""
     from mwgg_igdb import GameIndex
-    from BaseUtils import get_apworld_manifest
     from APContainer import APWorldContainer
     
     if custom_world.suffix in [".whl", ".egg", ".tar", ".gz", ".zip"]:
@@ -413,7 +453,7 @@ def cache_self1(function: typing.Callable[[S, T], RetType]) -> typing.Callable[[
 
     @functools.wraps(function)
     def wrap(self: S, arg: T) -> RetType:
-        cache: Optional[Dict[T, RetType]] = getattr(self, cache_name, None)
+        cache: Optional[dict[T, RetType]] = getattr(self, cache_name, None)
         if cache is None:
             res = function(self, arg)
             setattr(self, cache_name, {arg: res})
@@ -548,8 +588,8 @@ def persistent_store(category: str, key: str, value: typing.Any):
         f.write(dump(storage, Dumper=Dumper))
 
 
-def persistent_load() -> Dict[str, Dict[str, Any]]:
-    storage: Union[Dict[str, Dict[str, Any]], None] = getattr(persistent_load, "storage", None)
+def persistent_load() -> dict[str, dict[str, Any]]:
+    storage: Union[dict[str, dict[str, Any]], None] = getattr(persistent_load, "storage", None)
     if storage:
         return storage
     path = user_path("_persistent_storage.yaml")
@@ -578,7 +618,7 @@ def get_file_safe_name(name: str) -> str:
     return "".join(c for c in name if c not in '<>:"/\\|?*')
 
 
-def load_data_package_for_checksum(game: str, checksum: typing.Optional[str]) -> Dict[str, Any]:
+def load_data_package_for_checksum(game: str, checksum: typing.Optional[str]) -> dict[str, Any]:
     if checksum and game:
         if checksum != get_file_safe_name(checksum):
             raise ValueError(f"Bad symbols in checksum: {checksum}")
@@ -913,7 +953,7 @@ def messagebox(title: str, text: str, error: bool = False) -> None:
 
 def title_sorted(data: typing.Iterable, key=None, ignore: typing.AbstractSet[str] = frozenset(("a", "the"))):
     """Sorts a sequence of text ignoring typical articles like "a" or "the" in the beginning."""
-    def sorter(element: Union[str, Dict[str, Any]]) -> str:
+    def sorter(element: Union[str, dict[str, Any]]) -> str:
         if (not isinstance(element, str)):
             element = element["title"]
 
@@ -922,7 +962,7 @@ def title_sorted(data: typing.Iterable, key=None, ignore: typing.AbstractSet[str
         return element.lower()
     return sorted(data, key=lambda i: sorter(key(i)) if key else sorter(i))
 
-def world_list_sorted(data: typing.Iterable, worlds: Dict[str, Any]):
+def world_list_sorted(data: typing.Iterable, worlds: dict[str, Any]):
     def sorter(key_or_name):
         name = key_or_name
         world = worlds[name]
@@ -941,7 +981,7 @@ def read_snes_rom(stream: BinaryIO, strip_header: bool = True) -> bytearray:
     return buffer
 
 
-_faf_tasks: "Set[asyncio.Task[typing.Any]]" = set()
+_faf_tasks: "set[asyncio.Task[typing.Any]]" = set()
 
 
 def async_start(co: Coroutine[None, None, typing.Any], name: Optional[str] = None) -> None:

@@ -1,9 +1,10 @@
 import importlib
+import importlib.util
 import logging
 import os
 import time
 import dataclasses
-from typing import Dict, List
+from typing import Optional, Union
 
 from NetUtils import DataPackage
 from BaseUtils import Version, write_path, is_frozen, get_archipelago_json, tuplize_version
@@ -22,11 +23,11 @@ __all__ = {
     "failed_world_loads",
 }
 
-failed_world_loads: List[str] = []
+failed_world_loads: list[str] = []
 
 @dataclasses.dataclass(order=True)
 class WorldSource:
-    game_module: str
+    game_module: Union[str, "APWorldContainer"]
     time_taken: float = -1.0
     version: Version = Version(0, 0, 0)
 
@@ -36,8 +37,14 @@ class WorldSource:
     def load(self) -> bool:
         try:
             start = time.perf_counter()
-            # Load the world class from the entry point
-            world_class = importlib.import_module(self.game_module)
+            if isinstance(self.game_module, str):
+                # Load the world class from the entry point
+                self.game = self.game_module
+                world_class = importlib.import_module(self.game_module)
+                
+            else: # APWorldContainer
+                self.game = self.game_module.game
+                self.game_module.sys_modules_import_apworld()
             self.time_taken = time.perf_counter()-start
             return True
 
@@ -50,16 +57,16 @@ class WorldSource:
             traceback.print_exc(file=file_like)
             file_like.seek(0)
             logging.exception(file_like.read())
-            failed_world_loads.append(os.path.basename(self.game_module).rsplit(".", 1)[0])
+            if isinstance(self.game_module):
+                failed_world_loads.append(self.game) # this may be a mix list of modules/game names
             return False
 
 from Utils import game_names
 
-world_sources: List[WorldSource] = []
-for game in game_names():
-    world_sources.append(WorldSource(game))
+world_sources: list[WorldSource] = []
+for game_module in game_names():
+    world_sources.append(WorldSource(game_module))
 
-world_sources.sort()
 for world_source in world_sources:
     world_source.load()
 
@@ -75,7 +82,7 @@ network_data_package: DataPackage = {
     "games": {world_name: world.get_data_package_data() for world_name, world in AutoWorldRegister.world_types.items()},
 }
 
-network_data_package_single_game: Dict[str, DataPackage] = {
+network_data_package_single_game: dict[str, DataPackage] = {
     game_name: {"games": {game_name: pkg_data}}
     for game_name, pkg_data in network_data_package["games"].items()
 }

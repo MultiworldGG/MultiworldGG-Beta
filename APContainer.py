@@ -7,9 +7,10 @@ import threading
 import ast
 import shutil
 import logging
+import hashlib
 from io import BytesIO
 from pathlib import Path
-from typing import Dict, Any, Optional, Union, BinaryIO, Literal, List, Tuple, TYPE_CHECKING
+from typing import Any, Optional, Union, BinaryIO, Literal, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from Utils import Version
@@ -48,9 +49,9 @@ class APContainer:
     compression_level: int = 9
     compression_method: int = zipfile.ZIP_DEFLATED
     manifest_path: str = "archipelago.json"
-    path: Optional[str]
+    path: Optional[Path]
 
-    def __init__(self, path: Optional[str] = None):
+    def __init__(self, path: Optional[Path] = None):
         self.path = path
 
     def write(self, file: Optional[Union[str, BinaryIO]] = None) -> None:
@@ -91,7 +92,7 @@ class APContainer:
                         message = f"{arg0} - "
                 raise InvalidDataError(f"{message}This might be the incorrect world version for this file") from e
 
-    def read_contents(self, opened_zipfile: zipfile.ZipFile) -> Dict[str, Any]:
+    def read_contents(self, opened_zipfile: zipfile.ZipFile) -> dict[str, Any]:
         try:
             assert self.manifest_path.endswith("archipelago.json"), "Filename should be archipelago.json"
             manifest_info = opened_zipfile.getinfo(self.manifest_path)
@@ -110,7 +111,7 @@ class APContainer:
                             f"for this handler (version: {self.version})")
         return manifest
 
-    def get_manifest(self) -> Dict[str, Any]:
+    def get_manifest(self) -> dict[str, Any]:
         return {
             # minimum version of patch system expected for patching to be successful
             "compatible_version": 5,
@@ -125,7 +126,7 @@ class APWorldContainer(APContainer):
     minimum_ap_version: "Version | None" = None
     maximum_ap_version: "Version | None" = None
 
-    def read_contents(self, opened_zipfile: zipfile.ZipFile) -> Dict[str, Any]:
+    def read_contents(self, opened_zipfile: zipfile.ZipFile) -> dict[str, Any]:
         from Utils import tuplize_version, version_tuple
         try:
             manifest = super().read_contents(opened_zipfile)
@@ -142,7 +143,7 @@ class APWorldContainer(APContainer):
                 setattr(self, version_key, tuplize_version(manifest[version_key]))
         return manifest
 
-    def get_manifest(self) -> Dict[str, Any]:
+    def get_manifest(self) -> dict[str, Any]:
         manifest = super().get_manifest()
         manifest["game"] = self.game
         manifest["compatible_version"] = 7
@@ -152,6 +153,26 @@ class APWorldContainer(APContainer):
                 manifest[version_key] = version.as_simple_string()
         return manifest
 
+    def sys_modules_import_apworld(self) -> None:
+        """
+        Import custom apworlds into the sys.modules namespace.
+
+        Pulled from worlds.__init__.py to prevent being called unless necessary.
+        """
+        from zipimport import zipimporter
+        from importlib.util import find_spec, module_from_spec
+        import warnings
+        import sys
+        importer = zipimporter(self.path.absolute())
+        spec = find_spec(self.path.stem)
+        assert spec, f"{self.path.stem} is not loading correctly, please ensure that it is up to date."
+        mod = module_from_spec(spec)
+        mod.__package__ = f"worlds.{mod.__package__}"
+        mod.__name__ = f"worlds.{mod.__name__}"
+        sys.modules[mod.__name__] = mod
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="__package__ != __spec__.parent")
+            importer.exec_module(mod)
 
 class APPlayerContainer(APContainer):
     """A zipfile containing at least archipelago.json meant for a player"""
@@ -169,14 +190,14 @@ class APPlayerContainer(APContainer):
         self.player_name = player_name
         self.server = server
 
-    def read_contents(self, opened_zipfile: zipfile.ZipFile) -> Dict[str, Any]:
+    def read_contents(self, opened_zipfile: zipfile.ZipFile) -> dict[str, Any]:
         manifest = super().read_contents(opened_zipfile)
         self.player = manifest["player"]
         self.server = manifest["server"]
         self.player_name = manifest["player_name"]
         return manifest
 
-    def get_manifest(self) -> Dict[str, Any]:
+    def get_manifest(self) -> dict[str, Any]:
         manifest = super().get_manifest()
         manifest.update({
             "server": self.server,  # allow immediate connection to server in multiworld. Empty string otherwise
@@ -196,80 +217,13 @@ class APPatch(APPlayerContainer):
     Your implementation should inherit from this if your output file
     represents a patch file, but will not be applied with AP's `Patch.py`
     """
-    procedure: Union[Literal["custom"], List[Tuple[str, List[Any]]]] = "custom"
+    procedure: Union[Literal["custom"], list[tuple[str, list[Any]]]] = "custom"
 
-    def get_manifest(self) -> Dict[str, Any]:
+    def get_manifest(self) -> dict[str, Any]:
         manifest = super(APPatch, self).get_manifest()
         manifest["procedure"] = self.procedure
         manifest["compatible_version"] = 6
         return manifest
-
-
-# Templates for generating pip-installable world packages
-PYPROJECT_TEMPLATE = """[project]
-name = "worlds.{module_name}"
-version = "{version}"
-description = "MultiWorld: {game_name}"
-classifiers = ["Private :: Do Not Upload"]
-requires-python = ">=3.12"
-{authors_section}
-{client_section}
-
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["worlds.{module_name}"]
-namespaces = true
-"""
-
-REGISTER_TEMPLATE = """from . import {world_class}, {web_class}
-{client_import}
-
-WORLD_NAME = "{module_name}"
-
-GAME_NAME = "{game_name}"
-AUTHOR = "{authors}"
-VERSION = "{version}"
-
-WORLD_CLASS = {world_class}
-WEB_WORLD_CLASS = {web_class}
-CLIENT_FUNCTION = {client_function}
-"""
-
-
-def parse_world_classes(init_py_content: str) -> tuple[Optional[str], Optional[str]]:
-    """
-    Parse __init__.py to find World and WebWorld class names.
-    
-    Returns:
-        Tuple of (world_class_name, web_class_name) or (None, None) if not found
-    """
-    try:
-        tree = ast.parse(init_py_content)
-        world_class = None
-        web_class = None
-        
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                # Check base classes
-                for base in node.bases:
-                    # Handle direct name references (e.g., World, WebWorld)
-                    if isinstance(base, ast.Name):
-                        if base.id == "World":
-                            world_class = node.name
-                        elif base.id == "WebWorld":
-                            web_class = node.name
-                    # Handle attribute references (e.g., worlds.AutoWorld.World)
-                    elif isinstance(base, ast.Attribute):
-                        if base.attr == "World":
-                            world_class = node.name
-                        elif base.attr == "WebWorld":
-                            web_class = node.name
-        
-        return world_class, web_class
-    except Exception as e:
-        logger.warning(f"Failed to parse __init__.py for class names: {e}")
-        return None, None
-
 
 def parse_client_function(init_py_content: str) -> Optional[str]:
     """
@@ -321,105 +275,3 @@ def parse_client_function(init_py_content: str) -> Optional[str]:
     except Exception as e:
         logger.warning(f"Failed to parse __init__.py for client function: {e}")
         return None
-
-
-def prepare_apworld_for_pip(apworld_path: str, temp_dir: Path, manifest: dict[str, object]) -> Optional[Path]:
-    """
-    Restructure apworld to pip-installable format and return path to installable archive.
-    
-    Args:
-        apworld_path: Path to the .apworld file
-        temp_dir: Temporary directory for processing
-        
-    Returns:
-        Path to the installable .zip file, or None on failure
-    """
-    try:
-        module_name = apworld_path.stem
-        
-        # Read apworld metadata
-        game_name = manifest.get("game", "Unknown")
-        authors = manifest.get("authors", ["Unknown"])
-        world_version = manifest.get("world_version")
-        
-        # Extract apworld to temp directory
-        extract_dir = temp_dir / f"apworld_{module_name}" / "src" / "worlds"
-        extract_dir.mkdir(parents=True, exist_ok=True)
-        
-        with zipfile.ZipFile(apworld_path, 'r') as apworld_zip:
-            apworld_zip.extractall(extract_dir)
-        
-        # Find World and WebWorld classes in __init__.py
-        init_py_path = extract_dir / module_name / "__init__.py"
-        if not init_py_path.exists():
-            logger.warning(f"__init__.py not found in {module_name}")
-            return None
-        
-        init_py_content = init_py_path.read_text(encoding='utf-8')
-        world_class, web_class = parse_world_classes(init_py_content)
-        
-        if not world_class or not web_class:
-            logger.warning(f"Could not find World/WebWorld classes in {module_name}/__init__.py")
-            return None
-        
-        # Find client function from Component with Type.CLIENT
-        client_function_name = parse_client_function(init_py_content)
-        
-        # Create pip-installable structure
-        # Package name format: worlds_{module_name}-{version}
-        package_name = f"worlds_{module_name}"
-        package_dir = temp_dir / f"apworld_{module_name}"
-        
-        # Generate pyproject.toml
-        authors_section = "\n".join([f'[[project.authors]]\nname = "{author}"' for author in authors])
-        
-        # Generate client entry point section if client function found
-        client_section = ""
-        if client_function_name:
-            client_section = f'\n[project.entry-points."mwgg.client"]\n"worlds.{module_name}.Client" = "worlds.{module_name}.Register:CLIENT_FUNCTION"'
-        
-        pyproject_content = PYPROJECT_TEMPLATE.format(
-            module_name=module_name,
-            version=world_version,
-            game_name=game_name,
-            authors_section=authors_section,
-            client_section=client_section
-        )
-        (package_dir / "pyproject.toml").write_text(pyproject_content, encoding='utf-8')
-        
-        # Generate Register.py
-        # Use client function from Component if found, otherwise None
-        client_import = ""
-        client_function = "None"
-        if client_function_name:
-            # Function is defined in __init__.py, so we can reference it directly
-            # Import it from the parent module (__init__.py)
-            client_import = f"from . import {client_function_name}"
-            client_function = client_function_name
-        
-        register_content = REGISTER_TEMPLATE.format(
-            module_name=module_name,
-            game_name=game_name,
-            authors=authors,
-            version=world_version,
-            world_class=world_class,
-            web_class=web_class,
-            client_import=client_import,
-            client_function=client_function
-        )
-        (extract_dir / "Register.py").write_text(register_content, encoding='utf-8')
-        
-        # Create installable zip
-        installable_zip = temp_dir / f"{package_name}-{world_version}.zip"
-        with zipfile.ZipFile(installable_zip, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            for root, dirs, files in os.walk(package_dir):
-                for file in files:
-                    file_path = Path(root) / file
-                    arcname = file_path.relative_to(package_dir)
-                    zip_file.write(file_path, arcname)
-        
-        return installable_zip
-    except Exception as e:
-        logger.warning(f"Failed to prepare apworld for pip: {e}")
-        return None
-

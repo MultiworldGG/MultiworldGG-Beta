@@ -2,7 +2,6 @@ import sys
 import os
 import subprocess
 import multiprocessing
-from multiprocessing import Process
 import warnings
 import json
 import urllib.request
@@ -10,7 +9,6 @@ import shutil
 import zipfile
 import re
 import shutil
-import tempfile
 import logging
 
 logger = logging.getLogger("Update")
@@ -21,9 +19,9 @@ if not logging.getLogger().hasHandlers():
 from pathlib import Path
 from typing import List, Optional
 
-from importlib import metadata, invalidate_caches
+from importlib import invalidate_caches
 from BaseUtils import tuplize_version, Version
-from APContainer import APWorldContainer, prepare_apworld_for_pip
+from APContainer import APWorldContainer
 
 def is_frozen() -> bool:
     return getattr(sys, 'frozen', False)
@@ -48,8 +46,6 @@ def install_path() -> Path:
         return Path.home() / ".local" / "share" / "MultiworldGG" / "mwgg_venv"
     else:
         raise RuntimeError("Unsupported platform")
-
-import pip
 
 # Version compatibility checks
 if (is_windows() or is_macos()) and sys.version_info < (3, 12, 0):
@@ -186,14 +182,8 @@ if is_frozen():
     else:
         raise RuntimeError("Unsupported platform")
 
-def check_pip() -> None:
-    """Verify pip is available."""
-    try:
-        import pip  # noqa: F401
-    except ImportError:
-        #TODO: Fallback here - run it. https://bootstrap.pypa.io/get-pip.py
-        raise RuntimeError("pip not available. Please install pip.")
-
+# Don't import pip directly, we can set/forget this instead.
+subprocess.run([python_cmd, "-m", "ensurepip"])
 
 def confirm(msg: str) -> None:
     """Get user confirmation for an action."""
@@ -426,7 +416,7 @@ def find_world_modules() -> set[str]:
     return world_modules_set
 
 
-def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = False) -> bool:
+def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = False) -> list[str]:
     """
     Install worlds from the multiworld repository.
     
@@ -443,8 +433,7 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
     Returns:
         True if additional updates were found, False otherwise.
     """
-    check_pip()
-
+    apworlds = []
     if update:
         logger.info(f"Uninstalling old versions of: {worlds}")
         uninstall_worlds(worlds)
@@ -493,9 +482,16 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
                 stderr = "Failed to get process result"
             
             if returncode != 0:
-                logger.warning(f"Failed to install {world} into {worlds_install_dir}")
+                logger.warning(f"World {world} failed to install")
                 if stderr:
                     logger.error(f"{stderr}")
+                # Add to custom worlds list if it exists there
+                apworld_file = custom_worlds_dir / f"{world.replace("worlds.", "")}.apworld"
+                if apworld_file.exists():
+                    logger.info(f"Found apworld file: {apworld_file}")
+                    apworlds.append(world)
+                else:
+                    logger.warning(f"Custom apworld file not found at {apworld_file}, {world} will be installed from PyPI")
             else:
                 # Before moving files, process all installed packages
                 logger.debug(f"Processing downloaded packages...")
@@ -506,14 +502,19 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
                     world, "--prefer-binary", "--upgrade", "--no-cache-dir"]
             result = subprocess.run(executable_args)
             if result.returncode != 0:
-                logger.warning(f"Failed to install {world}")
+                logger.warning(f"Failed to install {world} from pypi, checking custom worlds")
+                # Add to custom worlds list if it exists there
+                apworld_file = custom_worlds_dir / f"{world.replace("worlds.", "")}.apworld"
+                if apworld_file.exists():
+                    logger.info(f"Found apworld file: {apworld_file}")
+                    apworlds.append(world)
+                else:
+                    logger.warning(f"Custom apworld file not found at {apworld_file}, please verify that this world exists.")
             else:
                 logger.info(f"Successfully installed {world}")
     
     invalidate_caches()
-    if no_recurse:
-        # We've already run through the deps once, so restart instead and run again.
-        return True
+
     if is_frozen():
         # Check for any additional updates that might be needed
         logger.info("Checking for additional dependencies...")
@@ -524,7 +525,7 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
         no_deps = ("No broken requirements found." in stdout)
         if no_deps:
             logger.info(f"Updates complete.")
-            return False
+            return apworlds
         
         # Parse dependencies from pip check output
         # Handles: "pyramid 1.5.2 requires WebOb, which is not installed."
@@ -539,87 +540,12 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
                     version_req = match.group(2) if match.group(2) else ""
                     install_spec = f"{package}{version_req}"
                     packages_to_install.append(install_spec)
-            return install_worlds(packages_to_install, update=True, no_recurse=True)
+            update_requirements(packages_to_install)
     
-    return False
-
-def install_apworld_via_pip(apworld_path: Path, manifest: dict[str, object]) -> bool:
-    """
-    Install apworld via pip using Direct URL syntax.
-    
-    Args:
-        apworld_path: Path to the .apworld file
-        
-    Returns:
-        True if installation succeeded, False otherwise
-    """
-    module_name = apworld_path.stem
-    
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_path = Path(temp_dir)
-        
-        # Prepare apworld for pip
-        installable_zip = prepare_apworld_for_pip(apworld_path, temp_path, manifest)
-        if not installable_zip:
-            return False
-        
-        # Install via pip using Direct URL syntax
-        # Format: worlds.{module_name} @ file://{absolute_path}
-        absolute_path = installable_zip.resolve()
-        if is_windows():
-            # Windows file:// URLs need forward slashes
-            file_url = f"file:///{absolute_path.as_posix()}"
-        else:
-            file_url = f"file://{absolute_path}"
-        
-        pip_spec = f"worlds.{module_name} @ {file_url}"
-        
-        executable_args = [python_cmd, "-m", "pip", "install", pip_spec, 
-                          "--no-deps", "--upgrade", "--no-cache-dir"]
-        
-        if is_frozen():
-            # Use threading for frozen builds
-            import threading
-            import queue
-            
-            result_queue = queue.Queue()
-            
-            def _pip_install_thread():
-                try:
-                    result = subprocess.run(executable_args, capture_output=True, text=True)
-                    result_queue.put((result.returncode, result.stdout, result.stderr))
-                except Exception as e:
-                    result_queue.put((1, "", str(e)))
-            
-            install_thread = threading.Thread(target=_pip_install_thread, daemon=True)
-            install_thread.start()
-            install_thread.join()
-            
-            try:
-                returncode, stdout, stderr = result_queue.get_nowait()
-                logger.info(stdout)
-                if stderr:
-                    logger.debug(stderr)
-            except:
-                returncode = 1
-                stderr = "Failed to get process result"
-        else:
-            result = subprocess.run(executable_args, capture_output=True, text=True)
-            returncode = result.returncode
-            stdout = result.stdout
-            stderr = result.stderr
-        
-        if returncode != 0:
-            logger.warning(f"Failed to install {module_name} via pip: {stderr}")
-            return False
-        
-        logger.info(f"Successfully installed {module_name} via pip")
-        return True
-
+    return apworlds
 
 def update_world_from_package() -> None:
     """Install/update wheel files from custom_worlds directory."""
-    check_pip()
     # Use threading version if frozen, otherwise use subprocess
     if is_frozen():
         for world in worlds_files["wheels"]:
@@ -661,7 +587,7 @@ def update_world_from_package() -> None:
                 logger.info(f"Successfully installed wheel {wheel}")
 
         for world in worlds_files["apworlds"]:
-            logger.info(f"Installing APworld: {world}")
+            logger.info(f"APWorld found, checking versions: {world}")
             try:
                 # Extract module name from apworld filename (e.g., "world_name.apworld" -> "world_name")
                 world_path = Path(world)
@@ -680,71 +606,46 @@ def update_world_from_package() -> None:
                         logger.info(f"APworld {world} has version {new_version}")
                     else:
                         logger.info(f"APworld {world} has no world_version specified")
-                    logger.info(f"APworld {world} has version {new_version}")
                 except Exception as e:
                     logger.warning(f"Failed to read version from APworld {world}: {e}")
                 
-                # Check if world is already installed in worlds_install_dir
-                # All worlds are installed to lib/site-packages/worlds (lowercase on Linux/macOS, uppercase on Windows)
-                lib_dir = "Lib" if is_windows() else "lib"
-                installed_world_path = worlds_install_dir / lib_dir / "site-packages" / "worlds" / module_name
+                # Check if world is already installed using pip show
+                package_name = f"worlds.{module_name}"
                 installed_version: Optional[Version] = None
-                should_install = True
                 
-                if installed_world_path.exists():
-                    installed_json_path = installed_world_path / "archipelago.json"
-                    if installed_json_path.exists():
-                        try:
-                            with open(installed_json_path, 'r', encoding='utf-8') as f:
-                                installed_manifest = json.load(f)
-                                if "world_version" in installed_manifest:
-                                    installed_version = tuplize_version(installed_manifest["world_version"])
-                                    logger.info(f"Installed world {module_name} has version {installed_manifest['world_version']}")
-                                else:
-                                    logger.info(f"Installed world {module_name} has no world_version specified")
-                        except Exception as e:
-                            logger.warning(f"Failed to read version from installed world {module_name}: {e}")
+                try:
+                    executable_args = [python_cmd, "-m", "pip", "show", package_name]
+                    result = subprocess.run(executable_args, capture_output=True, text=True, timeout=10)
                     
-                    # Compare versions: install if new_version > installed_version
-                    # According to spec: "An APWorld without a world_version is always treated as older than one with a version"
-                    if new_version is not None and installed_version is not None:
-                        if new_version > installed_version:
-                            logger.info(f"New version {new_version.as_simple_string()} is higher than installed {installed_version.as_simple_string()}, will install")
-                            should_install = True
+                    if result.returncode == 0:
+                        # Package is installed, parse version from output
+                        for line in result.stdout.splitlines():
+                            if line.startswith("Version:"):
+                                version_str = line.split(":", 1)[1].strip()
+                                installed_version = tuplize_version(version_str)
+                                logger.info(f"Installed world {module_name} has version {version_str}")
+                                break
                         else:
-                            logger.info(f"Installed version {installed_version.as_simple_string()} is >= new version {new_version.as_simple_string()}, skipping")
-                            should_install = False
-                    elif new_version is not None and installed_version is None:
-                        # New has version, installed doesn't - install
-                        logger.info(f"New APworld has version {new_version.as_simple_string()}, installed has none, will install")
-                        should_install = True
-                    elif new_version is None and installed_version is not None:
-                        # Installed has version, new doesn't - don't install
-                        logger.info(f"Installed has version {installed_version.as_simple_string()}, new APworld has none, skipping")
-                        should_install = False
+                            logger.info(f"Installed world {module_name} found but no version in pip show output")
                     else:
-                        # Both have no version - install to update
-                        logger.info(f"Neither version specified, will install to update")
-                        should_install = True
+                        # Package not installed
+                        logger.info(f"World {module_name} is not installed")
+                except (subprocess.TimeoutExpired, Exception) as e:
+                    logger.warning(f"Failed to check installed version for {module_name} using pip show: {e}")
                 
-                if not should_install:
-                    logger.info(f"Skipping installation of APworld {world} (version check)")
-                    continue
-                
-                # Install via pip (restructures apworld and installs properly)
-                if install_apworld_via_pip(world_path, manifest):
-                    logger.info(f"Successfully installed APworld {world} via pip")
+                # Compare versions: install if new_version > installed_version
+                # According to spec: "An APWorld without a world_version is always treated as older than one with a version"
+                if new_version is None and installed_version is not None:
+                    logger.info(f"There is a custom apworld file with no world version specified, please remove it from your custom_worlds directory.")
+                elif installed_version is None or new_version > installed_version:
+                    if installed_version is not None:
+                        uninstall_worlds([package_name])
+                        logger.info(f"New version {new_version.as_simple_string()} > installed {installed_version.as_simple_string()}, uninstalling old version so new version will be picked up.")
                 else:
-                    # Fallback to direct extraction if pip fails
-                    logger.warning(f"Pip installation failed, falling back to direct extraction for {world}")
-                    lib_dir = "Lib" if is_windows() else "lib"
-                    worlds_target_dir = worlds_install_dir / lib_dir / "site-packages" / "worlds"
-                    worlds_target_dir.mkdir(parents=True, exist_ok=True)
-                    with zipfile.ZipFile(world, 'r') as unzipped_world:
-                        unzipped_world.extractall(worlds_target_dir)
-                    logger.info(f"Installed APworld {world} via direct extraction")
+                    logger.info(f"There is a custom apworld file with an older version than what is installed. Please remove it from your custom_worlds directory.")
+
             except Exception as e:
-                logger.warning(f"Failed to install APworld {world}: {e}")
+                logger.warning(f"Failed to check versions for APworld {world}: {e}")
     else:
         for wheel in worlds_files["wheels"]:
             logger.info(f"Installing wheel: {wheel}")
@@ -763,15 +664,12 @@ def update_requirements(needed_packages: List[str]) -> None:
     Args:
         needed_packages: List of packages that need updating
     """
-    if is_frozen():
-        return
-    check_pip()
     # Ensure packaging is available
     try:
         import packaging.requirements
     except ImportError:
         logger.warning("packaging module not available, installing...")
-        subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "packaging"])
+        subprocess.run([python_cmd, "-m", "pip", "install", "--upgrade", "packaging"])
         import packaging.requirements
     
     # If needed_packages is empty, update all requirements (for force mode or missing requirements)
@@ -816,12 +714,9 @@ def update_requirements(needed_packages: List[str]) -> None:
 
 def install_packaging(yes: bool = False) -> None:
     """Install packaging module if not available."""
-    if is_frozen():
-        return
     try:
         import packaging.requirements  # noqa: F401
     except ImportError:
-        check_pip()
         if not yes:
             confirm("packaging not found, press enter to install it")
         executable_args = [python_cmd, "-m", "pip", "install", "--upgrade", "packaging"]
@@ -833,8 +728,6 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
     Check if all requirements are satisfied.
     Returns True if all requirements are met, False otherwise.
     """
-    if is_frozen():
-        return True
     install_packaging(yes=yes)
     
     try:
