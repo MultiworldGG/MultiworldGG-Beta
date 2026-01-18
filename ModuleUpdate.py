@@ -10,6 +10,8 @@ import zipfile
 import re
 import shutil
 import logging
+import time
+import tempfile
 
 logger = logging.getLogger("Update")
 
@@ -353,15 +355,31 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
         logger.warning(f"Could not check for updates: {e}")
         return []
 
+_WORLD_MODULES_CACHE_TTL = 300  # 5 minutes
+_world_modules_cache_path = Path(tempfile.gettempdir()) / "MultiworldGG" / "world_modules_cache.json"
+
 def uninstall_worlds(worlds: List[str]) -> None:
     """Uninstall a list of mwgg packages from the multiworld repository."""
     for world in worlds:
         executable_args = [python_cmd, "-m", "pip", "uninstall", world, "--yes"]
         subprocess.run(executable_args)
+    try:
+        _world_modules_cache_path.unlink(missing_ok=True)
+    except Exception:
+        pass
 
 
 def find_world_modules() -> set[str]:
     """Find all world modules in the multiworld repository and currently installed packages."""
+    # Check cache
+    try:
+        with open(_world_modules_cache_path, 'r', encoding='utf-8') as f:
+            cache_data = json.load(f)
+        if time.time() - cache_data.get('timestamp', 0) < _WORLD_MODULES_CACHE_TTL:
+            return set(cache_data.get('modules', []))
+    except Exception:
+        pass
+    
     world_modules = []
     
     # First, fetch from the repository
@@ -413,6 +431,14 @@ def find_world_modules() -> set[str]:
     except Exception as e:
         logger.warning(f"Unexpected error while checking installed world modules: {e}")
 
+    # Update cache
+    try:
+        _world_modules_cache_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(_world_modules_cache_path, 'w', encoding='utf-8') as f:
+            json.dump({'timestamp': time.time(), 'modules': list(world_modules_set)}, f)
+    except Exception:
+        pass
+    
     return world_modules_set
 
 
@@ -514,6 +540,10 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
                 logger.info(f"Successfully installed {world}")
     
     invalidate_caches()
+    try:
+        _world_modules_cache_path.unlink(missing_ok=True)
+    except Exception:
+        pass
 
     if is_frozen():
         # Check for any additional updates that might be needed

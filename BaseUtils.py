@@ -382,7 +382,7 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
                 data = json.load(f)
     except FileNotFoundError:
         pass
-    game_name = data.get("game", GameIndex.get_game_name_for_module(world))
+    game_name = "Archipelago" if world == "generic" else data.get("game", GameIndex.get_game(world).get("game_name"))
     authors = data.get("authors", ["Unknown"])
     minimum_ap_version = data.get("minimum_ap_version", "0.5.0")
     version = data.get("world_version", "0.0.1")

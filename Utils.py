@@ -107,62 +107,60 @@ def set_game_names(game_names: typing.List[str]) -> typing.List[(str, bool)]:
     """Set the game names to the list of game names"""
     from mwgg_igdb import GameIndex
     from APContainer import APWorldContainer
-    _module_dict: dict[str, str] = {}
-    _worlds_to_install = game_names
-    _custom_world_files = []
+    _worlds_to_install = {game: "" for game in game_names}
+    _unknown_worlds = []
     custom_worlds_dir = Path(local_path("custom_worlds"))
-    for game in game_names:
+    _unlisted_worlds = [world for world in ModuleUpdate.find_world_modules() if world not in GameIndex.game_names.values()]
+    # We only have the module name here, not the game name, and that is buried deep in the metadata
+
+    def check_world_installed(game: str):
         try:
-            _module_dict[game] = "worlds." + GameIndex.game_names[game]
+            _worlds_to_install[game] = GameIndex.game_names[game]
+            importlib.metadata.distribution(f"worlds.{_worlds_to_install[game]}")
+            _worlds_to_load.append(f"worlds.{_worlds_to_install[game]}")
+            _worlds_to_install.pop(game)
         except KeyError:
-            # Game not found - check if it's a custom world that needs to be discovered/installed
-            update_logger.warning(f"Game {game} not found in game index, checking custom_worlds")
-            _custom_world_files.append(game)
-
-
-    for custom_world_file in custom_worlds_dir.iterdir():
-        if custom_world_file.suffix == ".apworld":
-            apworld = APWorldContainer(custom_world_file)
-            apworld.read_contents(zipfile.ZipFile(custom_world_file, 'r'))
-            if apworld.game in _custom_world_files:
-                _module_dict[apworld.game] = custom_world_file.stem
-        else:
-            try:
-                with zipfile.ZipFile(custom_world_file, 'r') as zipf:
-                    for name in zipf.infolist():
-                        if name.filename.endswith("archipelago.json"):
-                            apmanifest_path = name
-                            break
-                    with zipf.open(apmanifest_path) as apmanifest_file:
-                        apmanifest = json.load(apmanifest_file)
-                        if apmanifest["game"] == game:
-                            _module_dict[game] = custom_world_file.stem
-                            break
-            except (zipfile.BadZipFile, json.JSONDecodeError):
-                continue
-            except Exception as e:
-                update_logger.error(f"Error checking custom worlds: {e}")
-                continue
-
-    
-    for game_name, module_name in _module_dict.items():
-        try:
-            importlib.metadata.distribution(module_name)
-            update_logger.debug(f"Module {module_name} is already installed")
-            _worlds_to_load.append((module_name))
-            _worlds_to_install.remove(game_name)
+            # Game not found in index
+            update_logger.warning(f"Game {game} not found in game index, looking for unlisted world.")
+            _unknown_worlds.append(game)
+            return
         except importlib.metadata.PackageNotFoundError:
-            update_logger.warning(f"Module {module_name} not found, looking elsewhere.")
-    
+            # Package not installed
+            return
+
+    for game in game_names:
+        check_world_installed(game)
+
+    if _unknown_worlds:
+        _unlisted_worlds_names: dict[str, str] = {}
+        # If we can't find the world, start in the unlisted worlds
+        for module_name in _unlisted_worlds:
+            try:
+                dist = importlib.metadata.distribution(f"worlds.{module_name}")
+                if dist:
+                    _unlisted_worlds_names[dist.metadata.json['summary'].strip("MultiWorld: ")] = module_name
+            except importlib.metadata.PackageNotFoundError:
+                continue
+        for world in _unknown_worlds:
+            if world in _unlisted_worlds_names.keys():
+                module = _unlisted_worlds_names[world]
+                _worlds_to_load.append(f"worlds.{module}")
+                _worlds_to_install.pop(world)
+                _unknown_worlds.remove(world) # Not unknown
+
     if _worlds_to_install:
-        _worlds_to_install = [module for game, module in _module_dict.items() if game in _worlds_to_install]
-        custom_worlds = ModuleUpdate.install_worlds(_worlds_to_install)
-        from importlib import invalidate_caches
-        invalidate_caches() # Invalidate import caches so the newly installed module can be found
-        for world in custom_worlds:
-            world.replace("worlds.", "")
-            apworld = APWorldContainer(custom_worlds_dir / f"{world}.apworld")
-            _worlds_to_load.append(apworld)
+        modules_to_install = [module for module in _worlds_to_install.values() if module]
+        custom_worlds = ModuleUpdate.install_worlds(modules_to_install)
+        if _unknown_worlds:
+            for file in custom_worlds_dir.iterdir():
+                if file.suffix == ".apworld":
+                    with zipfile.ZipFile(file, 'r') as zipf:
+                        apworld = APWorldContainer(file)
+                        manifest = apworld.read_contents(zipf)
+                        if manifest["game"] in _unknown_worlds:
+                            _worlds_to_load.append(apworld)
+                        if file.stem in custom_worlds:
+                            _worlds_to_load.append(apworld)
 
 def game_names() -> typing.List[str]:
     """Get a list of only the game names that we're using"""

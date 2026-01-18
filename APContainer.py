@@ -6,11 +6,12 @@ import os
 import threading
 import ast
 import shutil
+import importlib
 import logging
 import hashlib
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Optional, Union, BinaryIO, Literal, TYPE_CHECKING
+from typing import Any, Optional, Union, BinaryIO, Literal, TYPE_CHECKING, Sequence
 
 if TYPE_CHECKING:
     from Utils import Version
@@ -125,6 +126,8 @@ class APWorldContainer(APContainer):
     world_version: "Version | None" = None
     minimum_ap_version: "Version | None" = None
     maximum_ap_version: "Version | None" = None
+    apworld_spec: importlib.machinery.ModuleSpec | None = None
+    
 
     def read_contents(self, opened_zipfile: zipfile.ZipFile) -> dict[str, Any]:
         from Utils import tuplize_version, version_tuple
@@ -160,19 +163,10 @@ class APWorldContainer(APContainer):
         Pulled from worlds.__init__.py to prevent being called unless necessary.
         """
         from zipimport import zipimporter
-        from importlib.util import find_spec, module_from_spec
-        import warnings
-        import sys
-        importer = zipimporter(self.path.absolute())
-        spec = find_spec(self.path.stem)
-        assert spec, f"{self.path.stem} is not loading correctly, please ensure that it is up to date."
-        mod = module_from_spec(spec)
-        mod.__package__ = f"worlds.{mod.__package__}"
-        mod.__name__ = f"worlds.{mod.__name__}"
-        sys.modules[mod.__name__] = mod
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", message="__package__ != __spec__.parent")
-            importer.exec_module(mod)
+        importer = zipimporter(str(self.path.absolute()))
+        spec = importer.find_spec(f"worlds.{self.path.stem}")
+        
+        self.apworld_spec = spec
 
 class APPlayerContainer(APContainer):
     """A zipfile containing at least archipelago.json meant for a player"""

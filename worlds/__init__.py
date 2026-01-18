@@ -44,7 +44,8 @@ class WorldSource:
                 
             else: # APWorldContainer
                 self.game = self.game_module.game
-                self.game_module.sys_modules_import_apworld()
+                apworld_spec = self.game_module.sys_modules_import_apworld()
+                world_class = importlib.import_module(apworld_spec)
             self.time_taken = time.perf_counter()-start
             return True
 
@@ -57,8 +58,12 @@ class WorldSource:
             traceback.print_exc(file=file_like)
             file_like.seek(0)
             logging.exception(file_like.read())
-            if isinstance(self.game_module):
-                failed_world_loads.append(self.game) # this may be a mix list of modules/game names
+            if isinstance(self.game_module, str):
+                failed_world_loads.append(self.game)
+            elif isinstance(self.game_module, "APWorldContainer"):
+                failed_world_loads.append(self.game_module.game)
+            else:
+                failed_world_loads.append(self.game_module) # this may be a mix list of modules/game names
             return False
 
 from Utils import game_names
