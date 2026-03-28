@@ -72,11 +72,9 @@ class Rac2World(World):
     orchestrated by the shadowy MegaCorp.
     """
     game = "Ratchet & Clank 2"
-    author: str = "Evilwb"
-
+    web = Rac2Web()
     options_dataclass = Rac2Options
     options: Rac2Options
-    web = Rac2Web()
     topology_present = True
     item_name_to_id = {item.name: item.item_id for item in Items.ALL}
     location_name_to_id = {location.name: location.location_id for location in Planets.ALL_LOCATIONS if location.location_id}
@@ -119,7 +117,7 @@ class Rac2World(World):
         unfilled = [i for i in self.multiworld.get_unfilled_locations(self.player) if not i.is_event]
         remain = len(unfilled) - len(items_to_add)
         assert remain >= 0, "There are more items than locations. This is not supported."
-        print(f"Not enough items to fill all locations. Adding {remain} filler items to the item pool")
+        print(f"[RAC2 Debug] Not enough items to fill all locations. Adding {remain} filler items to the item pool")
         for _ in range(remain):
             items_to_add.append(self.create_item(Items.BOLT_PACK.name, ItemClassification.filler))
 
@@ -147,6 +145,17 @@ class Rac2World(World):
             "randomize_gadgetron_vendor",
             "extend_weapon_progression",
         )
+
+    # UT Yaml-less flag
+    ut_can_gen_without_yaml = True
+
+    def generate_early(self) -> None:
+        if hasattr(self.multiworld, "re_gen_passthrough"):
+            if self.game in self.multiworld.re_gen_passthrough:
+                for key, val in self.multiworld.re_gen_passthrough[self.game].items():
+                    opt = getattr(self.options, key, None)
+                    if opt and hasattr(opt, "value"):
+                        opt.value = val
 
     def fill_slot_data(self) -> Mapping[str, Any]:
         return self.get_options_as_dict()

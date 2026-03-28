@@ -11,6 +11,7 @@ from Options import OptionError
 from .Common import *
 from .LADXR import generator
 from .LADXR.main import get_parser
+
 LADX_HASH = "07c211479386825042efb4ad31bb525f"
 
 if TYPE_CHECKING:

@@ -69,11 +69,9 @@
                                         </label>
                                     </td>
                                     <td>
-                                        <select name="max_yamls_per_player" id="max_yamls_per_player">
-                                            {% for n in range(1, 11) %}
-                                                <option {% if n == 1 %}selected{% endif %} value="{{ n }}">{{ n }}</option>
-                                            {% endfor %}
-                                        </select>
+                                        <input type="number" id="max_yamls_per_player" name="max_yamls_per_player"
+                                               min="1" max="20" value="1" style="width:80px">
+                                        <span style="font-size:0.8rem;color:#aaa">(max. 20)</span>
                                     </td>
                                 </tr>
                                 <tr>

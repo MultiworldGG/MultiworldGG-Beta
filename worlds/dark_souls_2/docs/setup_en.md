@@ -3,7 +3,7 @@
 ## Required Software
 
 - The PC version of [Dark Souls II](https://store.steampowered.com/app/236430/DARK_SOULS_II/) or [Dark Souls II: Scholar of the First Sin](https://store.steampowered.com/app/335300/DARK_SOULS_II_Scholar_of_the_First_Sin/)
-- [Dark Souls II Archipelago Mod](https://github.com/WildBunnie/DarkSoulsII-Archipelago/releases/latest)
+- [Dark Souls II Archipelago Mod](https://github.com/WildBunnie/DarkSoulsII-Archipelago/releases)
 
 ## Optional Software
 
