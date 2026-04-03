@@ -682,7 +682,7 @@ cx_Freeze.setup(
     options={
         "build_exe": {
             "packages": ["worlds", "kivy", "cymem", "websockets", "kivymd", "werkzeug"],
-            "includes": [],
+            "includes": ["rule_builder.cached_world"],
             "excludes": ["Cython", "PySide2"],
             "zip_includes": [],
             "zip_include_packages": ["*"],
