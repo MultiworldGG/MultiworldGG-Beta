@@ -222,7 +222,7 @@ def wait_seed(seed: UUID):
     elif generation.state == STATE_ERROR:
         meta = json.loads(generation.meta)
         details = json.dumps(meta, indent=4).strip()
-        return render_template("seedError.html", seed_error=meta["error"], details=details)
+        return render_template("seedError.html", seed_error=meta.get("error", "Unknown error"), details=details)
     return render_template("waitSeed.html", seed_id=seed_id)
 
 
