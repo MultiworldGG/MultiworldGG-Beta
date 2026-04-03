@@ -9,7 +9,7 @@ priority_map = []
 def gen_create_regions(world):
 	player = world.player
 	options = world.options
-	rule_map = get_rule_map(world.player)
+	rule_map = get_rule_map(player, options)
 	
 	region_map = {
 		"Menu": Region("Menu", world.player, world.multiworld),
@@ -64,11 +64,13 @@ def gen_create_regions(world):
 		make_location(world, f'Beat with {character}', region_map['Characters'], rule_map)
 	if options.enemysanity:
 		for enemy, raw_find_locs in enemy_map.items():
+			if enemy in enemy_arcana_map and not options.enemysanity_arcana_enemies:
+				continue
 			if enemy == 'Death' and ('Ode to Castlevania' not in stages or 'Richter Belmont' not in characters):
 				continue
 			if not any(loc in stages for loc in raw_find_locs):
 				continue
-			make_location(world, f'Kill {enemy}', region_map['Enemies'], rule_map)
+			make_location(world, f"Kill {enemy}", region_map['Enemies'], rule_map)
 	
 	for region in region_map.values():
 		world.multiworld.regions.append(region)

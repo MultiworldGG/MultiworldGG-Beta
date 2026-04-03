@@ -56,7 +56,7 @@ class OracleOfSeasonsRequiredEssences(Range):
     include_in_slot_data = True
 
 
-class OracleOfSeasonsPlacedEssences(Range):
+class OracleOfSeasonsPlacedEssences(NamedRange):
     """
     The amount of essences that will be placed in the world. Removed essences are replaced by filler items instead, and
     if essences are not shuffled, those filler items will be placed on the pedestal where the essence would have been.
@@ -69,6 +69,9 @@ class OracleOfSeasonsPlacedEssences(Range):
     range_end = 8
 
     default = 8
+    special_range_names = {
+        "included essences": -1
+    }
 
 
 class OracleOfSeasonsDefaultSeasons(Choice):
@@ -342,7 +345,7 @@ class OracleOfSeasonsMapCompassShuffle(Toggle):
     include_in_slot_data = True
 
 
-class OracleOfSeasonsD0AltEntrance(Toggle):
+class OracleOfSeasonsRemoveD0AltEntrance(Toggle):
     """
     If enabled, remove the hole acting as an alternate entrance to Hero’s Cave. Stairs will be added inside the dungeon to make the chest reachable.
     This is especially useful when shuffling dungeons, since only main dungeon entrances are shuffled.
@@ -354,7 +357,7 @@ class OracleOfSeasonsD0AltEntrance(Toggle):
     include_in_slot_data = True
 
 
-class OracleOfSeasonsD2AltEntrance(Toggle):
+class OracleOfSeasonsRemoveD2AltEntrance(Toggle):
     """
     If enabled, remove both stairs acting as alternate entrances to Snake’s Remains and connect them together inside the dungeon.
     This is especially useful when shuffling dungeons, since only main dungeon entrances are shuffled.
@@ -443,6 +446,16 @@ class OracleOfSeasonsGashaNutKillRequirement(NamedRange):
         "vanilla": 40
     }
     include_in_patch = True
+
+class OracleOfSeasonsRandomizePuzzles(Toggle):
+    """
+    If enabled, randomize some puzzles and mini-games.
+    Puzzles relying on owls will not have their logic affected, and puzzles will not require additional items.
+    """
+    display_name = "Randomize Puzzles"
+
+    include_in_patch = True
+    default = 1 if (datetime.now().month == 4) else 0 # Default on during april
 
 
 class OracleOfSeasonsLostWoodsItemSequence(DefaultOnToggle):
@@ -666,7 +679,7 @@ class OracleOfSeasonsRemoveItemsFromPool(ItemDict):
 
 class OracleOfSeasonsIncludeCrossItems(Toggle):
     """
-    When enabled, add the cane of somaria to the item pool
+    When enabled, adds the Cane of Somaria, the Switch Hook and the Seed Shooter to the item pool
     ⚠ Requires the Oracles of Ages US ROM on patch, you won't be able to play without
     """
     display_name = "Cross Items"
@@ -687,14 +700,17 @@ class OracleOfSeasonsLinkedHerosCave(Choice):
     """
     Sets whether and how the link version of the hero's cave is placed in the world.
     - Samasa: an entrance is placed in the Samasa desert, below the oasis
+    - Hero's cave: a warp is placed at the entrance of d0
     """
     display_name = "Linked Hero's Cave"
-    samasa = 0b01
-    no_alt_entrance = 0b10
+    samasa = 0b001
+    no_alt_entrance = 0b010
+    heros_cave = 0b100
 
-    option_disabled = 0b00
-    option_samasa = 0b01
-    option_samasa_without_alt_entrance = 0b11
+    option_disabled = 0b000
+    option_samasa = 0b001
+    option_samasa_without_alt_entrance = 0b011
+    option_heros_cave = 0b110
 
     include_in_patch = True
     include_in_slot_data = True
@@ -774,8 +790,8 @@ class OracleOfSeasonsOptions(PerGameCommonOptions):
     animal_companion: OracleOfSeasonsAnimalCompanion
     shuffle_portals: OracleOfSeasonsPortalShuffle
     shuffle_dungeons: OracleOfSeasonsDungeonShuffle
-    remove_d0_alt_entrance: OracleOfSeasonsD0AltEntrance
-    remove_d2_alt_entrance: OracleOfSeasonsD2AltEntrance
+    remove_d0_alt_entrance: OracleOfSeasonsRemoveD0AltEntrance
+    remove_d2_alt_entrance: OracleOfSeasonsRemoveD2AltEntrance
     default_seed: OracleOfSeasonsDefaultSeedType
     duplicate_seed_tree: OracleOfSeasonsDuplicateSeedTree
 
@@ -794,6 +810,7 @@ class OracleOfSeasonsOptions(PerGameCommonOptions):
     gasha_nut_kill_requirement: OracleOfSeasonsGashaNutKillRequirement
 
     # Other randomizable stuff
+    randomize_puzzles: OracleOfSeasonsRandomizePuzzles
     randomize_lost_woods_item_sequence: OracleOfSeasonsLostWoodsItemSequence
     randomize_lost_woods_main_sequence: OracleOfSeasonsLostWoodsMainSequence
     randomize_samasa_gate_code: OracleOfSeasonsSamasaGateCode
@@ -854,8 +871,8 @@ oos_option_groups = [
         OracleOfSeasonsAnimalCompanion,
         OracleOfSeasonsPortalShuffle,
         OracleOfSeasonsDungeonShuffle,
-        OracleOfSeasonsD0AltEntrance,
-        OracleOfSeasonsD2AltEntrance,
+        OracleOfSeasonsRemoveD0AltEntrance,
+        OracleOfSeasonsRemoveD2AltEntrance,
         OracleOfSeasonsDefaultSeedType,
         OracleOfSeasonsDuplicateSeedTree,
     ]),
@@ -874,6 +891,7 @@ oos_option_groups = [
         OracleOfSeasonsGashaNutKillRequirement,
     ]),
     OptionGroup("Randomizable Sequences", [
+        OracleOfSeasonsRandomizePuzzles,
         OracleOfSeasonsLostWoodsItemSequence,
         OracleOfSeasonsLostWoodsMainSequence,
         OracleOfSeasonsSamasaGateCode,

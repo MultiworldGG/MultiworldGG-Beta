@@ -28,6 +28,7 @@ Currently, the following games are supported:
 * Archipidle
 * Balatro
 * Banjo-Tooie
+* BK Simulator
 * Blasphemous
 * Bomb Rush Cyberfunk
 * Brotato

@@ -1,6 +1,8 @@
+from typing import Any
+
 from .Constants import *
 
-LOCATIONS_DATA = {
+LOCATIONS_DATA: dict[str, dict[str, Any]] = {
     "North Horon: Chest Across Bridge": {
         "region_id": "eyeglass lake, across bridge",
         "vanilla_item": "Gasha Seed",

@@ -2,9 +2,9 @@ import random
 
 from typing_extensions import TYPE_CHECKING
 
-from BaseClasses import ItemClassification, Item
-from ..patching.Util import simple_hex
-from ..patching.text import normalize_text
+from BaseClasses import Item
+from ..common.patching.Util import simple_hex
+from ..common.patching.text import normalize_text
 
 if TYPE_CHECKING:
     from . import OracleOfSeasonsWorld
@@ -248,7 +248,7 @@ def get_random_joke_text(owl_id: int) -> tuple[str, str]:
             return "Princess Zelda", "Another Castle"
         case 3:
             return "Maku Tree", "Horon Village"
-        case 4:
+        case _:
             return "Maple", "the airs"
 
 

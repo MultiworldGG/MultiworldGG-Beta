@@ -828,9 +828,7 @@ kill_enemies = [
 	["Kill Knight of Spades", "Enemies"],
 	["Kill Playing Mantis", "Enemies"],
 	["Kill Blue Venus", "Enemies"],
-	["Kill Levatee Darkasso", "Enemies"],
 	["Kill Juda R'kasso", "Enemies"],
-	["Kill Levarsee Darkasso", "Enemies"],
 	["Kill Shendi Darkasso", "Enemies"],
 	["Kill Sphon'Dato Darkasso", "Enemies"],
 	["Kill Eh'Lleve-Teh Darkasso", "Enemies"],
@@ -927,7 +925,12 @@ kill_enemies = [
 	["Kill The Manacle", "Enemies"],
 	["Kill The Wall", "Enemies"],
 	["Kill Crimson Heart", "Enemies"],
-	["Kill Kizzune", "Enemies"],
+	["Kill Kizzune", "Enemies"]
+]
+
+kill_enemies_arcana = [
+	["Kill Levatee Darkasso", "Enemies"],
+	["Kill Levarsee Darkasso", "Enemies"],
 	["Kill Skelegem", "Enemies"]
 ]
 
@@ -1063,8 +1066,7 @@ base_characters = [
 	"Scorej-Oni",
 	"Gyoruntin",
 	"Secretino",
-	"Space Dette",
-	"Genya Arikado"
+	"Space Dette"
 ]
 
 moonspell_characters = [
@@ -1222,7 +1224,8 @@ castlevania_characters = [
 	"Fishman",
 	"Fake Trevor",
 	"Fake Sypha",
-	"Fake Grant"
+	"Fake Grant",
+	"Genya Arikado"
 ]
 
 emerald_characters = [
@@ -1681,11 +1684,18 @@ enemy_map = {
 	"Skelegem": ["Mad Forest", "Eudaimonia M.", "Inlaid Library", "Dairy Plant", "Gallo Tower", "Cappella Magna", "Il Molise", "Moongolow", "Green Acres", "The Bone Zone", "Boss Rash", "Whiteout", "The Coop", "Space 54", "Carlo Cart", "Laborratory", "Westwoods", "Bat Country", "Astral Stair", "Mazerella", "Tiny Bridge", "Mt.Moonspell", "Lake Foscari", "Abyss Foscari", "Ante Chamber", "Room 1665", "Neo Galuga", "Hectic Highway", "Ode to Castlevania", "Polus Replica", "Emerald Diorama"]
 }
 
+enemy_arcana_map = [
+	"Skelegem",
+	"Levatee Darkasso",
+	"Levarsee Darkasso"
+]
+
 non_special_characters = [character for character in all_characters if character not in secret_characters and character not in megalo_characters and character not in unfair_characters]
 
 location_dict = [
 	*[items[0] for items in stages_beaten],
 	*[items[0] for items in beat_with_character],
 	*[items[0] for items in open_chests],
-	*[items[0] for items in kill_enemies]
+	*[items[0] for items in kill_enemies],
+	*[items[0] for items in kill_enemies_arcana]
 ]

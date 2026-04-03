@@ -9,7 +9,7 @@ from BaseClasses import Item, ItemClassification, Location, MultiWorld, Region, 
 from worlds.AutoWorld import WebWorld, World
 
 from .Items import RefunctItem, item_table, item_groups
-from .Locations import location_table, RefunctLocation, starting_platform, platforms_with_button_on_them, platforms_without_button_ids, block_brawl_scores
+from .Locations import location_table, RefunctLocation, starting_platform, platforms_with_button_on_them, platforms_without_button_ids, block_brawl_scores, block_blub_scores
 from .Options import RefunctOptions, FinalPlatform, Traps, Cubes, ExtraCubes, UnderwaterCubes, refunct_option_groups
 
 
@@ -45,7 +45,7 @@ class RefunctWorld(World):
     
     item_name_groups = item_groups
 
-    ap_world_version = "0.8.3"        
+    ap_world_version = "0.9.0"        
         
     def get_filler_item_name(self) -> str:
         return ":)"
@@ -53,7 +53,7 @@ class RefunctWorld(World):
     def create_items(self):
         items_to_add = []
         for name in item_table:
-            if "Trigger" in name and name != "Trigger Cluster 1":
+            if "Cluster" in name and name != "Cluster 1":
                 items_to_add.append(name)
         items_to_add.append("Ledge Grab")
         items_to_add.append("Progressive Wall Jump")
@@ -63,7 +63,7 @@ class RefunctWorld(World):
         items_to_add.append("Pipes")
         items_to_add.append("Lifts")
             
-        self.multiworld.push_precollected(self.create_item("Trigger Cluster 1"))
+        self.multiworld.push_precollected(self.create_item("Cluster 1"))
         
         self.amount_of_grass = self.options.amount_of_grass.value
         self.required_grass = (self.options.required_grass_percentage.value * self.amount_of_grass) // 100
@@ -111,35 +111,48 @@ class RefunctWorld(World):
         num_unlocks = self.options.number_of_unlocks_per_minigame.value
         if "Vanilla Minigame" in self.minigames:
             for _ in range(num_unlocks):
-                items_to_add.append("Unlock Vanilla Minigame")
+                items_to_add.append("Vanilla Minigame")
             for _ in range(37 - num_unlocks):
                 items_to_add.append("Flower")
                 
         if "Seeker Minigame" in self.minigames:
             for _ in range(num_unlocks):
-                items_to_add.append("Unlock Seeker Minigame")
+                items_to_add.append("Seeker Minigame")
             for _ in range(10 - num_unlocks):
                 items_to_add.append("Flower")
                 
         if "Button Galore Minigame" in self.minigames:
             for _ in range(num_unlocks):
-                items_to_add.append("Unlock Button Galore Minigame")
+                items_to_add.append("Button Galore Minigame")
             for _ in range(37 - num_unlocks):
                 items_to_add.append("Flower")
         
         if "OG Randomizer Minigame" in self.minigames:
             for _ in range(num_unlocks):
-                items_to_add.append("Unlock OG Randomizer Minigame")
+                items_to_add.append("OG Randomizer Minigame")
             for _ in range(37 - num_unlocks):
                 items_to_add.append("Flower")
                 
         if "Block Brawl Minigame" in self.minigames:
             for color in ["Reds", "Blues", "Greens", "Yellows"]:
                 for _ in range(num_unlocks):
-                    items_to_add.append(f"Unlock Block Brawl Minigame {color}")
+                    items_to_add.append(f"Block Brawl Minigame {color}")
                 for _ in range(20 - num_unlocks):
                     items_to_add.append("Flower")
-                
+                    
+        if "Climb Minigames" in self.minigames:
+            for style in ["Line", "Spiral", "Chaos"]:
+                for _ in range(num_unlocks):
+                    items_to_add.append(f"Climb {style} Minigame")
+                for _ in range(10 - num_unlocks):
+                    items_to_add.append("Flower")
+                    
+        if "Block Blub Minigame" in self.minigames:
+            for color in ["Reds", "Blues", "Greens", "Yellows"]:
+                for _ in range(num_unlocks):
+                    items_to_add.append(f"Block Blub Minigame {color}")
+                for _ in range(8 - num_unlocks):
+                    items_to_add.append("Flower")
                 
         if self.options.nerf_minigame_checks.value:
             if "Vanilla Minigame" in self.minigames:
@@ -179,7 +192,25 @@ class RefunctWorld(World):
                         self.get_location(loc).place_locked_item(
                             self.create_item("Flower")
                         )
-        
+            if "Climb Minigames" in self.minigames:
+                location_names = [i.name for i in self.multiworld.get_locations(self.player) if "Climb" in i.name and "Minigame" in i.name]
+                location_names_el = self.multiworld.random.sample(location_names, 20)
+                for loc in location_names_el:
+                    if "Flower" in items_to_add:
+                        items_to_add.remove("Flower")
+                        self.get_location(loc).place_locked_item(
+                            self.create_item("Flower")
+                        )
+            if "Block Blub Minigame" in self.minigames:
+                location_names = [i.name for i in self.multiworld.get_locations(self.player) if "Block Blub Minigame" in i.name]
+                location_names_el = self.multiworld.random.sample(location_names, 24)
+                for loc in location_names_el:
+                    if "Flower" in items_to_add:
+                        items_to_add.remove("Flower")
+                        self.get_location(loc).place_locked_item(
+                            self.create_item("Flower")
+                        )
+                        
         trap_items = []
         if self.options.traps == Traps.option_pretty or self.options.traps == Traps.option_all:
             trap_items = [
@@ -290,6 +321,19 @@ class RefunctWorld(World):
                     region_object = self.multiworld.get_region(f"Block Brawl Minigame {color}", self.player)
                     region_object.locations.append(RefunctLocation(self.player, loc_name, loc_data.id, region_object))
                 
+        if "Climb Minigames" in self.minigames:
+            for style in ["Line", "Spiral", "Chaos"]:
+                self.multiworld.regions.append(Region(f"Climb {style} Minigame", self.player, self.multiworld))
+                for loc_name, loc_data in [(a, b) for a, b in location_table.items() if b.minigame == f"Climb {style}"]:
+                    region_object = self.multiworld.get_region(f"Climb {style} Minigame", self.player)
+                    region_object.locations.append(RefunctLocation(self.player, loc_name, loc_data.id, region_object))
+        
+        if "Block Blub Minigame" in self.minigames:
+            for i, color in enumerate(["Reds", "Blues", "Greens", "Yellows"], start=1):
+                self.multiworld.regions.append(Region(f"Block Blub Minigame {color}", self.player, self.multiworld))
+                for loc_name, loc_data in [(a, b) for a, b in location_table.items() if b.minigame == "Block Blub" and b.main_nr == i]:
+                    region_object = self.multiworld.get_region(f"Block Blub Minigame {color}", self.player)
+                    region_object.locations.append(RefunctLocation(self.player, loc_name, loc_data.id, region_object))
         
         
         # Seeker Minigame info
@@ -407,8 +451,8 @@ class RefunctWorld(World):
             
             region_a.connect(region_b, name,
                 lambda state, c1=c1, c2=c2, abis=abis: all([
-                    state.has(f"Trigger Cluster {c1}", self.player),
-                    state.has(f"Trigger Cluster {c2}", self.player),
+                    state.has(f"Cluster {c1}", self.player),
+                    state.has(f"Cluster {c2}", self.player),
                     abis[0] is None or state.has(abis[0], self.player, abis[1]),
                     abis[2] is None or state.has(abis[2], self.player, abis[3])
                 ]))
@@ -452,38 +496,59 @@ class RefunctWorld(World):
             region_a = self.multiworld.get_region("10010102", self.player)
             region_b = self.multiworld.get_region("Vanilla Minigame", self.player)
             region_a.connect(region_b, f"Enter Vanilla Minigame", 
-                lambda state: state.has("Unlock Vanilla Minigame", self.player))
+                lambda state: state.has("Vanilla Minigame", self.player))
             
         if "Seeker Minigame" in self.minigames:
             region_a = self.multiworld.get_region("10010102", self.player)
             region_b = self.multiworld.get_region("Seeker Minigame", self.player)
             region_a.connect(region_b, f"Enter Seeker Minigame", 
-                lambda state: state.has("Unlock Seeker Minigame", self.player))
+                lambda state: state.has("Seeker Minigame", self.player))
             
         if "Button Galore Minigame" in self.minigames:
             region_a = self.multiworld.get_region("10010102", self.player)
             region_b = self.multiworld.get_region("Button Galore Minigame", self.player)
             region_a.connect(region_b, f"Enter Button Galore Minigame", 
-                lambda state: state.has("Unlock Button Galore Minigame", self.player))
+                lambda state: state.has("Button Galore Minigame", self.player))
         
         if "OG Randomizer Minigame" in self.minigames:
             region_a = self.multiworld.get_region("10010102", self.player)
             region_b = self.multiworld.get_region("OG Randomizer Minigame", self.player)
             region_a.connect(region_b, f"Enter OG Randomizer Minigame", 
-                lambda state: state.has("Unlock OG Randomizer Minigame", self.player))
+                lambda state: state.has("OG Randomizer Minigame", self.player))
             
         if "Block Brawl Minigame" in self.minigames:
             region_a = self.multiworld.get_region("10010102", self.player)
             for color in ["Reds", "Blues", "Greens", "Yellows"]:
                 region_b = self.multiworld.get_region(f"Block Brawl Minigame {color}", self.player)
                 region_a.connect(region_b, f"Enter Block Brawl Minigame {color}", 
-                    lambda state, color=color: state.has(f"Unlock Block Brawl Minigame {color}", self.player))
+                    lambda state, color=color: state.has(f"Block Brawl Minigame {color}", self.player))
                 for i, score in enumerate(block_brawl_scores):
                     loc_name = f"Block Brawl Minigame: {color} Score {score}"
                     location = self.get_location(loc_name)
                     num_colors_needed = i // 5 + 1
                     location.access_rule = lambda state, num_colors_needed=num_colors_needed: all([
                         state.has_group_unique(f"Block Brawl Cubes", self.player, num_colors_needed),
+                    ])
+                    
+        if "Climb Minigames" in self.minigames:
+            region_a = self.multiworld.get_region("10010102", self.player)
+            for style in ["Line", "Spiral", "Chaos"]:
+                region_b = self.multiworld.get_region(f"Climb {style} Minigame", self.player)
+                region_a.connect(region_b, f"Enter Climb {style} Minigame", 
+                    lambda state, style=style: state.has(f"Climb {style} Minigame", self.player))
+                    
+        if "Block Blub Minigame" in self.minigames:
+            region_a = self.multiworld.get_region("10010102", self.player)
+            for color in ["Reds", "Blues", "Greens", "Yellows"]:
+                region_b = self.multiworld.get_region(f"Block Blub Minigame {color}", self.player)
+                region_a.connect(region_b, f"Enter Block Blub Minigame {color}", 
+                    lambda state, color=color: state.has(f"Block Blub Minigame {color}", self.player))
+                for i, score in enumerate(block_blub_scores):
+                    loc_name = f"Block Blub Minigame: {color} Score {score}"
+                    location = self.get_location(loc_name)
+                    num_colors_needed = i // 2 + 1
+                    location.access_rule = lambda state, num_colors_needed=num_colors_needed: all([
+                        state.has_group_unique(f"Block Blub Cubes", self.player, num_colors_needed),
                     ])
         
 

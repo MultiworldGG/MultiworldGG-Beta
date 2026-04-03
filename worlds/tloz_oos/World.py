@@ -1,19 +1,18 @@
 import os
 from threading import Event
-from typing import List, ClassVar, Any, Optional, Type, TextIO
+from typing import ClassVar, Any, Optional, Type, TextIO
 
 from BaseClasses import Item, ItemClassification, MultiWorld, CollectionState
 from Options import Option
 from worlds.AutoWorld import World
 from .Options import *
 from .Settings import OracleOfSeasonsSettings
-from .Util import *
 from .WebWorld import OracleOfSeasonsWeb
+from .common.Util import build_location_name_to_id_dict, build_item_name_to_id_dict
 from .data import LOCATIONS_DATA
 from .data.Constants import *
 from .data.Items import ITEMS_DATA
 from .generation.Hints import create_region_hints, create_item_hints
-from .generation.LogicMixin import OracleOfSeasonsState
 
 
 class OracleOfSeasonsWorld(World):
@@ -31,11 +30,41 @@ class OracleOfSeasonsWorld(World):
     settings: ClassVar[OracleOfSeasonsSettings]
     settings_key = "tloz_oos_options"
 
-    location_name_to_id = build_location_name_to_id_dict()
-    item_name_to_id = build_item_name_to_id_dict()
+    location_name_to_id = build_location_name_to_id_dict(LOCATIONS_DATA)
+    item_name_to_id = build_item_name_to_id_dict(ITEMS_DATA)
     item_name_groups = ITEM_GROUPS
     location_name_groups = LOCATION_GROUPS
     origin_region_name = "impa's house"
+    item_mapping: ClassVar[dict[str, str]] = {
+        "Rupees (1)": "Rupees",
+        "Rupees (5)": "Rupees",
+        "Rupees (10)": "Rupees",
+        "Rupees (20)": "Rupees",
+        "Rupees (30)": "Rupees",
+        "Rupees (50)": "Rupees",
+        "Rupees (100)": "Rupees",
+        "Rupees (200)": "Rupees",
+        "_reached_d2_rupee_room": "Rupees",
+        "_reached_d6_rupee_room": "Rupees",
+        "rupees from old man in goron mountain": "Rupees",
+        "rupees from old man near blaino": "Rupees",
+        "rupees from old man near d1": "Rupees",
+        "rupees from old man near western coast house": "Rupees",
+        "rupees from old man in horon": "Rupees",
+        "rupees from old man near d6": "Rupees",
+        "rupees from old man near holly's house": "Rupees",
+        "rupees from old man near mrs. ruul": "Rupees",
+
+        "Ore Chunks (10)": "Ore Chunks",
+        "Ore Chunks (25)": "Ore Chunks",
+        "Ore Chunks (50)": "Ore Chunks",
+
+        "Bombs (10)": "Bombs",
+        "Bombs (20)": "Bombs",
+
+        "Bombchus (10)": "Bombchus",
+        "Bombchus (20)": "Bombchus",
+    }
 
     @classmethod
     def version(cls) -> str:
@@ -44,20 +73,21 @@ class OracleOfSeasonsWorld(World):
     def __init__(self, multiworld: MultiWorld, player: int):
         super().__init__(multiworld, player)
 
-        self.pre_fill_items: List[Item] = []
-        self.default_seasons: Dict[str, str] = DEFAULT_SEASONS.copy()
-        self.dungeon_entrances: Dict[str, str] = DUNGEON_CONNECTIONS.copy()
-        self.portal_connections: Dict[str, str] = PORTAL_CONNECTIONS.copy()
-        self.lost_woods_item_sequence: List[List] = LOST_WOODS_ITEM_SEQUENCE.copy()
-        self.lost_woods_main_sequence: List[List] = LOST_WOODS_MAIN_SEQUENCE.copy()
-        self.old_man_rupee_values: Dict[str, int] = OLD_MAN_RUPEE_VALUES.copy()
-        self.samasa_gate_code: List[int] = SAMASA_GATE_CODE.copy()
-        self.shop_prices: Dict[str, int] = VANILLA_SHOP_PRICES.copy()
-        self.shop_order: List[List[str]] = []
-        self.shop_rupee_requirements: Dict[str, int] = {}
-        self.essences_in_game: List[str] = ITEM_GROUPS["Essences"].copy()
-        self.random_rings_pool: List[str] = []
+        self.pre_fill_items: list[Item] = []
+        self.default_seasons: dict[str, str] = DEFAULT_SEASONS.copy()
+        self.dungeon_entrances: dict[str, str] = DUNGEON_CONNECTIONS.copy()
+        self.portal_connections: dict[str, str] = PORTAL_CONNECTIONS.copy()
+        self.lost_woods_item_sequence: list[list] = LOST_WOODS_ITEM_SEQUENCE.copy()
+        self.lost_woods_main_sequence: list[list] = LOST_WOODS_MAIN_SEQUENCE.copy()
+        self.old_man_rupee_values: dict[str, int] = OLD_MAN_RUPEE_VALUES.copy()
+        self.samasa_gate_code: list[int] = SAMASA_GATE_CODE.copy()
+        self.shop_prices: dict[str, int] = VANILLA_SHOP_PRICES.copy()
+        self.shop_order: list[list[str]] = []
+        self.shop_rupee_requirements: dict[str, int] = {}
+        self.essences_in_game: list[str] = ITEM_GROUPS["Essences"].copy()
+        self.random_rings_pool: list[str] = []
         self.remaining_progressive_gasha_seeds = 0
+        self.item_mapping_collect: dict[str, tuple[str, int]] = {}
 
         self.made_hints = Event()
         self.region_hints: list[tuple[str, str | int]] = []
@@ -70,12 +100,12 @@ class OracleOfSeasonsWorld(World):
         generate_early(self)
 
     def create_regions(self) -> None:
-        from worlds.tloz_oos.generation.CreateRegions import create_regions
+        from .generation.CreateRegions import create_regions
         create_regions(self)
 
     def set_rules(self) -> None:
-        from worlds.tloz_oos.generation.Logic import create_connections, apply_self_locking_rules
-        create_connections(self, self.player, self.origin_region_name, self.options)
+        from .generation.Logic import create_connections, apply_self_locking_rules
+        create_connections(self, self.origin_region_name, self.options)
         apply_self_locking_rules(self.multiworld, self.player)
         self.multiworld.completion_condition[self.player] = lambda state: state.has("_beaten_game", self.player)
 
@@ -138,15 +168,15 @@ class OracleOfSeasonsWorld(World):
         return Item(name, classification, ap_code, self.player)
 
     def create_items(self) -> None:
-        from worlds.tloz_oos.generation.CreateItems import create_items
+        from .generation.CreateItems import create_items
         create_items(self)
 
-    def get_pre_fill_items(self) -> None:
+    def get_pre_fill_items(self) -> list[Item]:
         return self.pre_fill_items
 
     @classmethod
     def stage_pre_fill(cls, multiworld: MultiWorld):
-        from worlds.tloz_oos.generation.PreFill import stage_pre_fill_dungeon_items
+        from .generation.PreFill import stage_pre_fill_dungeon_items
         stage_pre_fill_dungeon_items(multiworld)
 
     def get_filler_item_name(self) -> str:
@@ -176,18 +206,18 @@ class OracleOfSeasonsWorld(World):
     # noinspection PyUnusedLocal
     @classmethod
     def stage_fill_hook(cls, multiworld: MultiWorld, progitempool: list[Item], usefulitempool: list[Item], filleritempool: list[Item], fill_locations):
-        from worlds.tloz_oos.generation.OrderPool import order_pool
+        from .generation.OrderPool import order_pool
         order_pool(multiworld, progitempool)
 
-    def generate_output(self, output_directory: str):
-        from worlds.tloz_oos.generation.PatchWriter import oos_create_ap_procedure_patch
-
+    def pre_output(self) -> None:
         if self.options.bird_hint.know_it_all():
             self.region_hints = create_region_hints(self)
 
         if self.options.bird_hint.owl():
             self.item_hints = create_item_hints(self)
-        self.made_hints.set()
+
+    def generate_output(self, output_directory: str) -> None:
+        from .generation.PatchWriter import oos_create_ap_procedure_patch
         patch = oos_create_ap_procedure_patch(self)
         rom_path = os.path.join(output_directory, f"{self.multiworld.get_out_file_name_base(self.player)}"
                                                   f"{patch.patch_file_ending}")
@@ -212,7 +242,6 @@ class OracleOfSeasonsWorld(World):
             "shop_costs": self.shop_prices,
         }
 
-        self.made_hints.wait()
         # The structure is made to make it easy to call CreateHints
         slot_data_item_hints = []
         for item_hint in self.item_hints:
@@ -227,7 +256,7 @@ class OracleOfSeasonsWorld(World):
         return slot_data
 
     def write_spoiler(self, spoiler_handle: TextIO):
-        from worlds.tloz_oos.generation.CreateRegions import location_is_active
+        from .generation.CreateRegions import location_is_active
         spoiler_handle.write(f"\n\nDefault Seasons ({self.multiworld.player_name[self.player]}):\n")
         for region_name, season in self.default_seasons.items():
             spoiler_handle.write(f"\t- {region_name} --> {SEASON_NAMES[season]}\n")
@@ -255,46 +284,26 @@ class OracleOfSeasonsWorld(World):
                     spoiler_handle.write(f"\t- {loc_name}: {price} {currency}\n")
                 break
 
-    def collect(self, state: CollectionState | OracleOfSeasonsState, item: Item) -> bool:
+    def collect(self, state: CollectionState, item: Item) -> bool:
         change = super().collect(state, item)
         if not change:
             return False
 
-        if item.name == "Bombs (10)":
-            state.prog_items[self.player]["Bombs"] += 1
-        elif item.name == "Bombs (20)":
-            state.prog_items[self.player]["Bombs"] += 2
-        elif item.name == "Bombchus (10)":
-            state.prog_items[self.player]["Bombchus"] += 1
-        elif item.name == "Bombchus (20)":
-            state.prog_items[self.player]["Bombchus"] += 2
+        mapping = self.item_mapping_collect.get(item.name, None)
+        if mapping is not None:
+            state.prog_items[self.player][mapping[0]] += mapping[1]
 
-        if self.options.logic_difficulty < OracleOfSeasonsLogicDifficulty.option_hell:
-            return True
-        if item.code is None or item.code >= 0x2100 and item.code != 0x2e00:  # Not usable item nor ember nor flippers
-            return True
-        state.tloz_oos_available_cuccos[self.player] = None
         return True
 
-    def remove(self, state: CollectionState | OracleOfSeasonsState, item: Item) -> bool:
+    def remove(self, state: CollectionState, item: Item) -> bool:
         change = super().remove(state, item)
         if not change:
             return False
 
-        if item.name == "Bombs (10)":
-            state.prog_items[self.player]["Bombs"] -= 1
-        elif item.name == "Bombs (20)":
-            state.prog_items[self.player]["Bombs"] -= 2
-        elif item.name == "Bombchus (10)":
-            state.prog_items[self.player]["Bombchus"] -= 1
-        elif item.name == "Bombchus (20)":
-            state.prog_items[self.player]["Bombchus"] -= 2
+        mapping = self.item_mapping_collect.get(item.name, None)
+        if mapping is not None:
+            state.prog_items[self.player][mapping[0]] -= mapping[1]
 
-        if self.options.logic_difficulty < OracleOfSeasonsLogicDifficulty.option_hell:
-            return True
-        if item.code is None or item.code >= 0x2100 and item.code != 0x2e00:  # Not usable item nor ember nor flippers
-            return True
-        state.tloz_oos_available_cuccos[self.player] = None
         return True
 
     # UT stuff

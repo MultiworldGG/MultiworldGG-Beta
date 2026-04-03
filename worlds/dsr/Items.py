@@ -21,7 +21,8 @@ class DSRItemCategory(IntEnum):
     FOGWALL = 13,
     BOSSFOGWALL = 14,
     FILLER = 15,
-    NOTHING = 16
+    NOTHING = 16,
+    BONFIREWARP = 17
 
 class DSRWeaponType(IntEnum):
     Melee = 1,
@@ -208,6 +209,29 @@ _all_items_base = [
     ("Boss Fog Wall Key - Gwyndolin", 1249, DSRItemCategory.BOSSFOGWALL),
     ("Boss Fog Wall Key - Moonlight Butterfly", 1250, DSRItemCategory.BOSSFOGWALL),
     ("Boss Fog Wall Key - Crossbreed Priscilla", 1251, DSRItemCategory.BOSSFOGWALL),
+
+    ("Bonfire Warp Unlock - Firelink Shrine", 1300, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Sunlight Altar", 1301, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Undead Parish", 1302, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Depths", 1303, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Daughter of Chaos", 1304, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Stone Dragon", 1305, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Anor Londo", 1306, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Darkmoon Tomb", 1307, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Chamber of the Princess", 1308, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Painted World", 1309, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Duke's Archives", 1310, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Crystal Cave", 1311, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Catacombs", 1312, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Tomb of the Giants", 1313, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Altar of the Gravelord", 1314, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - The Abyss", 1315, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Sanctuary Garden", 1316, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Oolacile Sanctuary", 1317, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Oolacile Township", 1318, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Oolacile Township Dungeon", 1319, DSRItemCategory.BONFIREWARP),
+    ("Bonfire Warp Unlock - Chasm of the Abyss", 1320, DSRItemCategory.BONFIREWARP),
+
     
     ("Eye of Death", 2000, DSRItemCategory.CONSUMABLE),
     ("Cracked Red Eye Orb", 2001, DSRItemCategory.CONSUMABLE),
@@ -814,7 +838,7 @@ _all_items_base = [
     ("Caestus", 8072, DSRItemCategory.WEAPON, DSRWeaponType.Melee, DSRUpgradeType.Infusable),
     ("Claw", 8073, DSRItemCategory.WEAPON, DSRWeaponType.Melee, DSRUpgradeType.Infusable),
     ("Dragon Bone Fist", 8074, DSRItemCategory.WEAPON, DSRWeaponType.Melee, DSRUpgradeType.Unique),
-    ("Dark Hand", 8075, DSRItemCategory.WEAPON, DSRWeaponType.Melee, DSRUpgradeType.NotUpgradable),
+# Dark hand 8075 moved to shields
     ("Spear", 8076, DSRItemCategory.WEAPON, DSRWeaponType.Melee, DSRUpgradeType.Infusable),
     ("Winged Spear", 8077, DSRItemCategory.WEAPON, DSRWeaponType.Melee, DSRUpgradeType.Infusable),
     ("Partizan", 8078, DSRItemCategory.WEAPON, DSRWeaponType.Melee, DSRUpgradeType.Infusable),
@@ -906,6 +930,7 @@ _all_items_base = [
     ("Manus Catalyst", 8151, DSRItemCategory.WEAPON, DSRWeaponType.SpellTool, DSRUpgradeType.NotUpgradable),
     ("Oolacile Catalyst", 8152, DSRItemCategory.WEAPON, DSRWeaponType.SpellTool, DSRUpgradeType.NotUpgradable),
     
+    ("Dark Hand", 8075, DSRItemCategory.SHIELD, DSRWeaponType.Shield, DSRUpgradeType.NotUpgradable),
     ("Skull Lantern", 9000, DSRItemCategory.SHIELD, DSRWeaponType.Shield, DSRUpgradeType.NotUpgradable),
     ("East-West Shield", 9001, DSRItemCategory.SHIELD, DSRWeaponType.Shield, DSRUpgradeType.InfusableRestricted),
     ("Wooden Shield", 9002, DSRItemCategory.SHIELD, DSRWeaponType.Shield, DSRUpgradeType.InfusableRestricted),

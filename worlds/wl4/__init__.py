@@ -6,7 +6,7 @@ from typing import Any, ClassVar, cast
 import settings
 from BaseClasses import CollectionState, Item, Location, MultiWorld, Tutorial
 from Fill import fill_restrictive
-from Options import OptionError
+from Options import Option, OptionError
 from worlds.AutoWorld import WebWorld, World
 
 from .client import WL4Client as WL4Client  # Suppress unused import warning
@@ -140,6 +140,9 @@ class WL4World(World):
     levels: dict[str, WL4Level]
 
     def generate_early(self):
+        if self.is_universal_tracker():
+            self.set_options_from_slot_data()
+
         if self.options.goal in (Goal.option_local_golden_treasure_hunt, Goal.option_local_golden_diva_treasure_hunt):
             self.options.local_items.value.update(self.item_name_groups["Golden Treasure"])
         if self.options.required_jewels > self.options.pool_jewels:
@@ -171,6 +174,8 @@ class WL4World(World):
         self.levels = {}
 
     def create_regions(self):
+        import logging
+        logging.info(self.options)
         create_regions(self)
         connect_regions(self)
 
@@ -246,7 +251,7 @@ class WL4World(World):
                 starting_keyzers = list(keyzer_table.keys())
         assert keyzers_in_levels or starting_keyzers  # This assertion was written in blood
         for name, data in keyzers_in_levels.items():
-            self.levels[passage_levels[data.passage][data.level]].items.append(self.create_item(name))
+            self.levels[passage_levels[data.passage][data.level]].items.append(cast(WL4Item, self.create_item(name)))
         for name in starting_keyzers:
             self.multiworld.push_precollected(self.create_item(name))
         if self.options.keyzer_shuffle.value:
@@ -366,8 +371,45 @@ class WL4World(World):
         return self.random.choice(pool)
 
     def create_item(self, name: str, force_non_progression=False):
+        if name == self.glitches_item_name:
+            return WL4EventItem(name, self.player)
         return WL4Item(name, self.player, force_non_progression)
 
     def set_rules(self):
         self.multiworld.completion_condition[self.player] = (
             lambda state: state.has("Escape the Pyramid", self.player))
+
+    # UT integration
+
+    ut_can_gen_without_yaml = True
+    glitches_item_name = "SEQUENCE BREAKS"
+
+    def is_universal_tracker(self):
+        return hasattr(self.multiworld, "generation_is_fake")
+
+    @staticmethod
+    def interpret_slot_data(slot_data: dict[str, Any]):
+        # Trigger a re-gen
+        return slot_data
+
+    def set_options_from_slot_data(self):
+        re_gen_passthrough = getattr(self.multiworld, "re_gen_passthrough", {})
+        if not re_gen_passthrough or self.game not in re_gen_passthrough:
+            return
+        slot_data: dict[str, Any] = re_gen_passthrough[self.game]
+
+        def set_option(option_name: str):
+            option: Option | None = getattr(self.options, option_name, None)
+            value = slot_data.get(option_name)
+            if option is not None and value is not None:
+                setattr(self.options, option_name, option.from_any(value))
+
+        set_option("goal")
+        set_option("golden_treasure_count")
+        set_option("difficulty")
+        set_option("logic")
+        set_option("required_jewels")
+        set_option("open_doors")
+        set_option("keyzer_shuffle")
+        set_option("portal")
+        set_option("diamond_shuffle")

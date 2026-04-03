@@ -1,5 +1,7 @@
+import logging
+
 from Options import OptionError
-from ..Options import OracleOfSeasonsOldMenShuffle
+from ..Options import OracleOfSeasonsOldMenShuffle, OracleOfSeasonsLinkedHerosCave
 from ..Util import get_old_man_values_pool
 from ..World import OracleOfSeasonsWorld
 from ..data import LOCATIONS_DATA, ITEMS_DATA
@@ -53,15 +55,52 @@ def generate_early(world: OracleOfSeasonsWorld) -> None:
 
     create_random_rings_pool(world)
 
-    if world.options.linked_heros_cave.value:
+    if world.options.linked_heros_cave.value & OracleOfSeasonsLinkedHerosCave.samasa:
         world.dungeon_entrances["d11 entrance"] = "enter d11"
+
+    world.item_mapping_collect = {
+        "Rupees (1)": ("Rupees", 1),
+        "Rupees (5)": ("Rupees", 5),
+        "Rupees (10)": ("Rupees", 10),
+        "Rupees (20)": ("Rupees", 20),
+        "Rupees (30)": ("Rupees", 30),
+        "Rupees (50)": ("Rupees", 50),
+        "Rupees (100)": ("Rupees", 100),
+        "Rupees (200)": ("Rupees", 200),
+        "_reached_d2_rupee_room": ("Rupees", 150),
+        "_reached_d6_rupee_room": ("Rupees", 90),
+
+        "Ore Chunks (10)": ("Ore Chunks", 10),
+        "Ore Chunks (25)": ("Ore Chunks", 25),
+        "Ore Chunks (50)": ("Ore Chunks", 50),
+
+        "Bombs (10)": ("Bombs", 10),
+        "Bombs (20)": ("Bombs", 20),
+
+        "Bombchus (10)": ("Bombchus", 10),
+        "Bombchus (20)": ("Bombchus", 20),
+    }
+    for old_man in world.old_man_rupee_values:
+        rupees = world.old_man_rupee_values[old_man]
+        rupees = max(rupees, 0)  # We ignore negative value because they will most often do nothing
+        # If this becomes an issue, state initialisation shall account for negative values
+        world.item_mapping_collect[f"rupees from {old_man}"] = ("Rupees", rupees)
 
 
 def pick_essences_in_game(world: OracleOfSeasonsWorld) -> None:
+    # -1 is the named range to set the placed essences equal to the required essences
+    if world.options.placed_essences.value == -1:
+        world.options.placed_essences.value = world.options.placed_essences.value
+
     # If the value for "Placed Essences" is lower than "Required Essences" (which can happen when using random
     # values for both), a new random value is automatically picked in the valid range.
-    if world.options.required_essences > world.options.placed_essences:
-        world.options.placed_essences.value = world.random.randint(world.options.required_essences.value, 8)
+    elif world.options.required_essences > world.options.placed_essences:
+        new_placed_essences = world.random.randint(world.options.required_essences.value, 8)
+        logging.warn(f"Essences placed for {world.player_name} required to be {world.options.placed_essences.value} "
+                     f"but {world.options.required_essences} essences are required to beat the seed.\n"
+                     f"Increased the value to {new_placed_essences}. "
+                     f"You might want to set the range to 'included essences' or use triggers instead.")
+        world.options.placed_essences.value = new_placed_essences
 
     # If some essence pedestal locations were excluded and essences are not shuffled,
     # remove those essences in priority

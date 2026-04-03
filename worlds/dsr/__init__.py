@@ -8,7 +8,7 @@ from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import set_rule, add_rule, add_item_rule
 
 from .Items import DSRItem, DSRItemCategory, item_dictionary, key_item_names, item_descriptions, BuildRequiredItemPool, BuildGuaranteedItemPool, UpgradeEquipment
-from .Locations import DSRLocation, DSRLocationCategory, location_tables, location_dictionary, location_skip_categories
+from .Locations import DSRLocation, DSRLocationCategory, location_tables, location_dictionary, location_skip_categories, location_locked_categories
 from .Groups import location_name_groups, item_name_groups
 from .Options import DSROption, option_groups, LogicToAccessCatacombs
 
@@ -23,7 +23,7 @@ class DSRWeb(WebWorld):
         "English",
         "setup_en.md",
         "setup/en",
-        ["ArsonAssassin, dank_santa"]
+        ["noka, ArsonAssassin"]
     )
     option_groups = option_groups
 
@@ -73,8 +73,9 @@ class DSRWorld(World):
         # Trigger a regen in UT
         return slot_data
     # End UT support
-    gc = 0
-    bc = 0
+    gc = 0 # good create
+    bc = 0 # "bad" create (ignored item)
+    bw = 0 # bonfire warp
 
 
 
@@ -114,7 +115,7 @@ class DSRWorld(World):
         self.enabled_location_categories.add(DSRLocationCategory.EVENT)
         self.enabled_location_categories.add(DSRLocationCategory.BOSS)
         self.enabled_location_categories.add(DSRLocationCategory.ITEM_LOT)
-        self.enabled_location_categories.add(DSRLocationCategory.BONFIRE)
+        self.enabled_location_categories.add(DSRLocationCategory.BONFIRE_WARP)
         # self.enabled_location_categories.add(DSRLocationCategory.DOOR)
         if (self.options.fogwall_sanity.value == True):
             self.enabled_location_categories.add(DSRLocationCategory.FOG_WALL)
@@ -143,7 +144,7 @@ class DSRWorld(World):
             "Upper Undead Burg", 
             "Upper Undead Burg - Pine Resin Chest",
             "Upper Undead Burg - Taurus Demon",
-            "Upper Undead Burg - After Taurus Demon",
+            "Upper Undead Burg - Hellkite Bridge",
             "Undead Parish - Before Fog", 
             "Undead Parish - Fog", 
             "Undead Parish", 
@@ -206,9 +207,9 @@ class DSRWorld(World):
             "The Abyss - After Four Kings", 
             "The Duke's Archives", 
             "The Duke's Archives - After First Seath Encounter",
-            "The Duke's Archives - Cell Door",
-            "The Duke's Archives - Getting out of Cell",
+            "The Duke's Archives - After Archive Tower Cell Key",
             "The Duke's Archives - After Archive Prison Extra Key",
+            "The Duke's Archives - Out of Cell",
             "The Duke's Archives - After Archive Tower Giant Door Key", 
             "The Duke's Archives - Courtyard",
             "The Duke's Archives - Giant Cell", 
@@ -238,7 +239,7 @@ class DSRWorld(World):
             "Kiln of the First Flame",
             "Kiln of the First Flame - Gwyn",
             "Sanctuary Garden", 
-            "Sanctuary Garden - Santuary Guardian",
+            "Sanctuary Garden - Sanctuary Guardian",
             "Oolacile Sanctuary", 
             "Royal Wood", 
             "Royal Wood - Artorias",
@@ -287,10 +288,10 @@ class DSRWorld(World):
         
         create_connection_2way("Upper Undead Burg - Before Fog", "Upper Undead Burg - Fog")
         create_connection_2way("Upper Undead Burg - Fog", "Upper Undead Burg")
-        create_connection("Upper Undead Burg", "Undead Burg Basement Door")
+        create_connection("Upper Undead Burg - Hellkite Bridge", "Undead Burg Basement Door")
         create_connection("Upper Undead Burg", "Upper Undead Burg - Taurus Demon")
-        create_connection("Upper Undead Burg - Taurus Demon", "Upper Undead Burg - After Taurus Demon")
-        create_connection_2way("Upper Undead Burg - After Taurus Demon", "Undead Parish - Before Fog")
+        create_connection("Upper Undead Burg - Taurus Demon", "Upper Undead Burg - Hellkite Bridge")
+        create_connection_2way("Upper Undead Burg - Hellkite Bridge", "Undead Parish - Before Fog")
 
         create_connection("Upper Undead Burg", "Upper Undead Burg - Pine Resin Chest")
         
@@ -374,11 +375,12 @@ class DSRWorld(World):
         create_connection("Painted World of Ariamis - After Fog", "Painted World of Ariamis - Crossbreed Priscilla")
 
         create_connection("The Duke's Archives", "The Duke's Archives - After First Seath Encounter")
-        create_connection("The Duke's Archives - After First Seath Encounter", "The Duke's Archives - Cell Door")
-        create_connection("The Duke's Archives - Cell Door", "The Duke's Archives - Getting out of Cell")
-        create_connection("The Duke's Archives - Getting out of Cell", "The Duke's Archives - After Archive Prison Extra Key")
-        create_connection("The Duke's Archives - After Archive Prison Extra Key", "The Duke's Archives - After Archive Tower Giant Door Key")
-        create_connection("The Duke's Archives - Getting out of Cell", "The Duke's Archives - Giant Cell")
+        create_connection("The Duke's Archives - After First Seath Encounter", "The Duke's Archives - After Archive Tower Cell Key")
+        create_connection("The Duke's Archives - After First Seath Encounter", "The Duke's Archives - After Archive Prison Extra Key")
+        create_connection("The Duke's Archives - After Archive Prison Extra Key", "The Duke's Archives - Out of Cell")
+        create_connection("The Duke's Archives - After Archive Tower Cell Key", "The Duke's Archives - Out of Cell")
+        create_connection("The Duke's Archives - Out of Cell", "The Duke's Archives - After Archive Tower Giant Door Key")
+        create_connection("The Duke's Archives - Out of Cell", "The Duke's Archives - Giant Cell")
         create_connection("The Duke's Archives - After Archive Tower Giant Door Key", "The Duke's Archives - Courtyard")
         create_connection("The Duke's Archives - Courtyard", "Crystal Cave")
         create_connection("Crystal Cave", "Crystal Cave - After Seath")
@@ -412,8 +414,8 @@ class DSRWorld(World):
 
         # DLC Entrances
         create_connection("Darkroot Basin", "Sanctuary Garden")
-        create_connection("Sanctuary Garden", "Sanctuary Garden - Santuary Guardian")
-        create_connection("Sanctuary Garden - Santuary Guardian", "Oolacile Sanctuary")
+        create_connection("Sanctuary Garden", "Sanctuary Garden - Sanctuary Guardian")
+        create_connection("Sanctuary Garden - Sanctuary Guardian", "Oolacile Sanctuary")
         create_connection("Oolacile Sanctuary", "Royal Wood")
         create_connection("Royal Wood", "Royal Wood - Artorias")
         create_connection("Royal Wood", "Oolacile Township")
@@ -434,6 +436,7 @@ class DSRWorld(World):
 
             if (location.category in self.enabled_location_categories and 
                 location.category not in location_skip_categories # [DSRLocationCategory.EVENT, DSRLocationCategory.DOOR]:
+                and location.category not in location_locked_categories
                 and not (self.options.excluded_location_behavior == "do_not_randomize" and location.name in self.all_excluded_locations)): 
                 self.gc = self.gc + 1
                 default_item = location.default_item
@@ -448,6 +451,21 @@ class DSRWorld(World):
                     self.location_name_to_id[location.name],
                     new_region
                 )
+            elif (location.category in self.enabled_location_categories and
+                  location.category in location_locked_categories): # DSRLocationCategory.BONFIRE_WARP
+                self.bw = self.bw + 1
+                default_item = location.default_item
+                # Place bonfire warp locations statically
+                event_item = self.create_item(default_item)
+                new_location = DSRLocation(
+                    self.player,
+                    location.name,
+                    location.category,
+                    default_item,
+                    self.location_name_to_id[location.name],
+                    new_region
+                )
+                new_location.place_locked_item(event_item)
             else:
                 self.bc = self.bc + 1
                 default_item = location.default_item
@@ -490,7 +508,9 @@ class DSRWorld(World):
         # print("Creating items")
         for location in self.multiworld.get_locations(self.player):            
             item_data = item_dictionary[location.default_item_name]
-            if item_data.category in [DSRItemCategory.SKIP] or location.category in location_skip_categories: # [DSRLocationCategory.EVENT]:
+            if (item_data.category in [DSRItemCategory.SKIP] 
+             or location.category in location_skip_categories 
+             or location.category in location_locked_categories): # [DSRLocationCategory.EVENT]:
                 # print("Adding skip item: " + location.default_item_name + " for location: " + location.name)
                 skip_itemlocs.append((self.create_item(location.default_item_name), location))
                 skipitempool.append(self.create_item(location.default_item_name))
@@ -622,8 +642,8 @@ class DSRWorld(World):
         #set_rule(self.multiworld.get_entrance("Undead Asylum Cell Door -> Northern Undead Asylum", self.player), lambda state: state.has("Dungeon Cell Key", self.player))      
         set_rule(self.multiworld.get_entrance("Northern Undead Asylum - After Fog -> Northern Undead Asylum - F2 East Door", self.player), lambda state: state.has("Undead Asylum F2 East Key", self.player))
         set_rule(self.multiworld.get_entrance("Northern Undead Asylum - After F2 East Door -> Northern Undead Asylum - Big Pilgrim Door", self.player), lambda state: state.has("Big Pilgrim's Key", self.player))
-        set_rule(self.multiworld.get_entrance("Upper Undead Burg -> Undead Burg Basement Door", self.player), lambda state:state.has("Taurus Demon Defeated", self.player) and state.has ("Basement Key", self.player))
-        set_rule(self.multiworld.get_entrance("Upper Undead Burg - Taurus Demon -> Upper Undead Burg - After Taurus Demon", self.player), lambda state:state.has("Taurus Demon Defeated", self.player))
+        set_rule(self.multiworld.get_entrance("Upper Undead Burg - Hellkite Bridge -> Undead Burg Basement Door", self.player), lambda state: state.has ("Basement Key", self.player))
+        set_rule(self.multiworld.get_entrance("Upper Undead Burg - Taurus Demon -> Upper Undead Burg - Hellkite Bridge", self.player), lambda state: state.has("Taurus Demon Defeated", self.player))
         set_rule(self.multiworld.get_entrance("Upper Undead Burg -> Upper Undead Burg - Pine Resin Chest", self.player), lambda state: state.has("Master Key", self.player) or state.has("Residence Key", self.player))
         set_rule(self.multiworld.get_entrance("Upper Undead Burg -> Watchtower Basement", self.player), lambda state: state.has("Master Key", self.player) or state.has("Watchtower Basement Key", self.player))
         
@@ -682,10 +702,10 @@ class DSRWorld(World):
         set_rule(self.multiworld.get_entrance("Upper New Londo Ruins - After Fog -> New Londo Ruins Door to the Seal", self.player), lambda state: state.has("Key to the Seal", self.player))
         set_rule(self.multiworld.get_entrance("Valley of the Drakes -> Valley of the Drakes - After Defeating Four Kings", self.player), lambda state: state.has("Four Kings Defeated", self.player))
                 
-        set_rule(self.multiworld.get_entrance("The Duke's Archives - After First Seath Encounter -> The Duke's Archives - Cell Door", self.player), lambda state: state.has("Archive Tower Cell Key", self.player))
-        set_rule(self.multiworld.get_entrance("The Duke's Archives - Getting out of Cell -> The Duke's Archives - After Archive Prison Extra Key", self.player), lambda state: state.has("Archive Prison Extra Key", self.player))
-        set_rule(self.multiworld.get_entrance("The Duke's Archives - After Archive Prison Extra Key -> The Duke's Archives - After Archive Tower Giant Door Key", self.player), lambda state: state.has("Archive Tower Giant Door Key", self.player))
-        set_rule(self.multiworld.get_entrance("The Duke's Archives - Getting out of Cell -> The Duke's Archives - Giant Cell", self.player), lambda state: state.has("Archive Tower Giant Cell Key", self.player))
+        set_rule(self.multiworld.get_entrance("The Duke's Archives - After First Seath Encounter -> The Duke's Archives - After Archive Tower Cell Key", self.player), lambda state: state.has("Archive Tower Cell Key", self.player))
+        set_rule(self.multiworld.get_entrance("The Duke's Archives - After First Seath Encounter -> The Duke's Archives - After Archive Prison Extra Key", self.player), lambda state: state.has("Archive Prison Extra Key", self.player))
+        set_rule(self.multiworld.get_entrance("The Duke's Archives - Out of Cell -> The Duke's Archives - After Archive Tower Giant Door Key", self.player), lambda state: state.has("Archive Tower Giant Door Key", self.player))
+        set_rule(self.multiworld.get_entrance("The Duke's Archives - Out of Cell -> The Duke's Archives - Giant Cell", self.player), lambda state: state.has("Archive Tower Giant Cell Key", self.player))
         set_rule(self.multiworld.get_location("DA: Broken Pendant", self.player), lambda state: state.has("Dusk Rescued", self.player))
         set_rule(self.multiworld.get_entrance("Crystal Cave -> Crystal Cave - After Seath", self.player), lambda state: state.has("Seath the Scaleless Defeated", self.player))
         set_rule(self.multiworld.get_entrance("Crystal Cave -> The Duke's Archives - First Arena after Seath's Death", self.player), lambda state: state.has("Seath the Scaleless Defeated", self.player))
@@ -728,13 +748,13 @@ class DSRWorld(World):
         # DLC areas
         set_rule(self.multiworld.get_entrance("Darkroot Basin -> Sanctuary Garden", self.player), lambda state: state.has("Broken Pendant", self.player))
 
-        set_rule(self.multiworld.get_entrance("Sanctuary Garden - Santuary Guardian -> Oolacile Sanctuary", self.player), lambda state: state.has("Sanctuary Guardian Defeated", self.player))
+        set_rule(self.multiworld.get_entrance("Sanctuary Garden - Sanctuary Guardian -> Oolacile Sanctuary", self.player), lambda state: state.has("Sanctuary Guardian Defeated", self.player))
         set_rule(self.multiworld.get_entrance("Royal Wood -> Oolacile Township", self.player), lambda state: state.has("Artorias the Abysswalker Defeated", self.player))
         set_rule(self.multiworld.get_entrance("Oolacile Township -> Oolacile Township - After Crest Key", self.player), lambda state: state.has("Crest Key", self.player))
         set_rule(self.multiworld.get_entrance("Oolacile Township -> Oolacile Township - Behind Light-Dispelled Walls", self.player), lambda state: state.has("Skull Lantern", self.player))
     
         # artificial logic - don't require jumping around BT fog wall without a "real" way to return
-        set_rule(self.multiworld.get_entrance("Upper Blighttown Depths Side -> Lower Blighttown", self.player), lambda state: state.has("Lordvessel", self.player))
+        set_rule(self.multiworld.get_entrance("Upper Blighttown Depths Side -> Lower Blighttown", self.player), lambda state: state.has("Lordvessel", self.player) or (self.options.can_warp_without_lordvessel == True))
 
         # artificial logic
         if (self.options.fogwall_sanity == False and self.options.boss_fogwall_sanity == False):
@@ -818,7 +838,7 @@ class DSRWorld(World):
         add_boss_fog_rule("Boss Fog Wall Key - Gwyn", "Kiln of the First Flame", "Kiln of the First Flame - Gwyn")
 
         # dlc bosses
-        add_boss_fog_rule("Boss Fog Wall Key - Sanctuary Guardian", "Sanctuary Garden", "Sanctuary Garden - Santuary Guardian")
+        add_boss_fog_rule("Boss Fog Wall Key - Sanctuary Guardian", "Sanctuary Garden", "Sanctuary Garden - Sanctuary Guardian")
         add_boss_fog_rule("Boss Fog Wall Key - Artorias", "Royal Wood", "Royal Wood - Artorias")
         add_boss_fog_rule("Boss Fog Wall Key - Manus", "Chasm of the Abyss", "Chasm of the Abyss - Manus")
 
@@ -868,10 +888,22 @@ class DSRWorld(World):
 
         slot_data = {
             "options": {
+                "can_warp_without_lordvessel": self.options.can_warp_without_lordvessel.value,
                 "guaranteed_items": self.options.guaranteed_items.value,
                 "fogwall_sanity": self.options.fogwall_sanity.value,
                 "boss_fogwall_sanity": self.options.boss_fogwall_sanity.value,
                 "logic_to_access_catacombs": self.options.logic_to_access_catacombs.current_key,
+                "randomize_starting_loadouts": self.options.randomize_starting_loadouts.value,
+                "randomize_starting_gifts": self.options.randomize_starting_gifts.value,
+                "require_one_handed_starting_weapons": self.options.require_one_handed_starting_weapons.value,
+                "extra_starting_weapon_for_melee_classes": self.options.extra_starting_weapon_for_melee_classes.value,
+                "extra_starting_shield_for_all_classes": self.options.extra_starting_shield_for_all_classes.value,
+                "starting_sorcery": self.options.starting_sorcery.value,
+                "starting_miracle": self.options.starting_miracle.value,
+                "starting_pyromancy": self.options.starting_pyromancy.value,
+                "no_weapon_requirements": self.options.no_weapon_requirements.value,
+                "no_spell_stat_requirements": self.options.no_spell_stat_requirements.value,
+                "no_miracle_covenant_requirements": self.options.no_miracle_covenant_requirements.value,
                 "upgraded_weapons_percentage": self.options.upgraded_weapons_percentage.value,
                 "upgraded_weapons_allowed_infusions": self.options.upgraded_weapons_allowed_infusions.value,
                 "upgraded_weapons_adjusted_levels": self.options.upgraded_weapons_adjusted_levels.value,
@@ -885,7 +917,7 @@ class DSRWorld(World):
             "itemsId": items_id,
             "itemsUpgrades": items_upgrades,
             "itemsAddress": items_address,
-            "apworld_api_version" : "0.0.22.0" # Manually set our apworld api level, for detecting compatibility with client
+            "apworld_api_version" : "0.1.0.0" # Manually set our apworld api level, for detecting compatibility with client
         }
 
         self.items_id = items_id

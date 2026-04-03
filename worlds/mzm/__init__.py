@@ -27,7 +27,7 @@ from .options import (
     LogicDifficulty,
     HazardRuns,
 )
-from .patch import MZMProcedurePatch, write_json_data
+from .patch import DIFFICULTY_TO_CONFIG_NAME, GOAL_TO_CONFIG_NAME, MZMProcedurePatch, write_json_data
 from .patcher import MD5_US, MD5_US_VC
 from .patcher.layout_patches import LAYOUT_PATCH_MAPPING
 from .regions import create_regions_and_connections
@@ -125,15 +125,20 @@ class MZMWorld(World):
     junk_fill_cdf: list[int]
 
     def generate_early(self):
+        if self.is_universal_tracker():
+            self.set_options_from_slot_data()
+
         self.starting_items = []
         self.locked_items = []
         self.pre_fill_items = []
         self.removed_items = []
+        if not self.options.junk_fill_weights.value:
+            self.options.junk_fill_weights.value = self.options.junk_fill_weights.default
         self.junk_fill_items = list(self.options.junk_fill_weights.value.keys())
         self.junk_fill_cdf = list(itertools.accumulate(self.options.junk_fill_weights.value.values()))
 
         if self.options.metroid_dna_available.value < self.options.metroid_dna_required.value:
-            self.options.metroid_dna_available = self.options.metroid_dna_required
+            self.options.metroid_dna_available.value = self.options.metroid_dna_required.value
 
         if self.options.layout_patches.value == LayoutPatches.option_true:
             self.enabled_layout_patches = list(LAYOUT_PATCH_MAPPING.keys())
@@ -328,11 +333,12 @@ class MZMWorld(World):
         patch.write(output_path / f"{output_filename}{patch.patch_file_ending}")
 
     def fill_slot_data(self) -> Dict[str, Any]:
+        # Using names for backwards compatibility with PopTracker pack. This will be removed next major version.
         return {
-            "goal": self.options.goal.value,
+            "goal": GOAL_TO_CONFIG_NAME[self.options.goal.value],
             "metroid_dna_required": self.options.metroid_dna_required.value,
             "metroid_dna_available": self.options.metroid_dna_available.value,
-            "game_difficulty": self.options.game_difficulty.value,
+            "game_difficulty": DIFFICULTY_TO_CONFIG_NAME[self.options.game_difficulty.value],
             "unknown_items_usable": self.options.fully_powered_suit.to_slot_data(),  # Backwards compatibility
             "fully_powered_suit": self.options.fully_powered_suit.value,
             "walljumps": self.options.walljumps.value,
@@ -352,7 +358,7 @@ class MZMWorld(World):
         }
 
     def get_filler_item_name(self) -> str:
-        return self.multiworld.random.choices(self.junk_fill_items, cum_weights=self.junk_fill_cdf)[0]
+        return self.random.choices(self.junk_fill_items, cum_weights=self.junk_fill_cdf)[0]
 
     def create_item(self, name: str, force_classification: Optional[ItemClassification] = None) -> MZMItem:
         if self.is_universal_tracker() and name == self.glitches_item_name:
@@ -415,12 +421,22 @@ class MZMWorld(World):
     def is_universal_tracker(self):
         return hasattr(self.multiworld, "generation_is_fake")
 
-    def interpret_slot_data(self, slot_data: dict[str, Any]):
-        def set_option(option_name: str, slot_data_key: str | None = None):
-            if slot_data_key is None:
-                slot_data_key = option_name
+    @staticmethod
+    def interpret_slot_data(slot_data: dict[str, Any]):
+        # Trigger a re-gen instead
+        return slot_data
+
+    def set_options_from_slot_data(self):
+        re_gen_passthrough = getattr(self.multiworld, "re_gen_passthrough", {})
+        if not re_gen_passthrough or self.game not in re_gen_passthrough:
+            return
+        slot_data: dict[str, Any] = re_gen_passthrough[self.game]
+
+        def set_option(option_name: str):
+            if option_name is None:
+                option_name = option_name
             option: Option | None = getattr(self.options, option_name, None)
-            value = slot_data.get(slot_data_key)
+            value = slot_data.get(option_name)
             if option is not None and value is not None:
                 setattr(self.options, option_name, option.from_any(value))
 
@@ -431,7 +447,7 @@ class MZMWorld(World):
         set_option("walljumps")
         set_option("spring_ball")
         set_option("layout_patches")
-        set_option("enabled_layout_patches", "selected_patches")
+        set_option("selected_patches")
         set_option("logic_difficulty")
         set_option("combat_logic_difficulty")
         set_option("ibj_in_logic")

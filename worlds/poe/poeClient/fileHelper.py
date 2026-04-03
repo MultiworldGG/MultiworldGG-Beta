@@ -48,7 +48,6 @@ def load_vendor_modules():
     import atexit
     import shutil
     import pkgutil
-
     from Utils import is_frozen
 
     # In frozen builds, dependencies are already in library.zip via requirements.txt

@@ -10,7 +10,7 @@ unlock_stage_items = [f"Stage Unlock: {stage}" for stage in (all_stages + [EUDAI
 
 unlock_gamemodes = [f"Gamemode Unlock: {gamemode}" for gamemode in ["Hyper", "Hurry", "Arcanas", "Eggs"]]
 
-filler_items = ["Empty Coffins", "Floor Chickens", "Suspiciously Clean Skull", "Easter Eggs", "Progressive Nothing"]
+filler_items = ['Empty Coffins', 'Floor Chickens', 'Suspiciously Clean Skull', 'Easter Eggs', 'Progressive Nothing']
 
 item_table = {
 	**{item: ItemClassification.progression for item in unlock_character_items},

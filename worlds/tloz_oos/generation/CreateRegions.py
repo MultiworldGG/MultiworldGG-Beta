@@ -9,13 +9,13 @@ from ..data.Constants import GASHA_SPOT_REGIONS, ITEM_GROUPS, SCRUB_LOCATIONS, S
 from ..data.Regions import REGIONS, NATZU_REGIONS, GASHA_REGIONS, D11_REGIONS
 
 
-def location_is_active(world: OracleOfSeasonsWorld, location_name: str, location_data: dict[str, Any]) -> bool:
+def location_is_active(world: OracleOfSeasonsWorld, location_name: str, location_data: dict[str, Any]) -> Any:
     if not location_data.get("conditional", False):
         return True
 
     region_id = location_data["region_id"]
     if region_id == "advance shop":
-        return world.options.advance_shop.value
+        return world.options.advance_shop
     if location_name in SUBROSIA_HIDDEN_DIGGING_SPOTS_LOCATIONS:
         return world.options.shuffle_golden_ore_spots
     if location_name in RUPEE_OLD_MAN_LOCATIONS:
@@ -89,16 +89,6 @@ def create_event(world: OracleOfSeasonsWorld, region_name: str, event_item_name:
 
 
 def create_events(world: OracleOfSeasonsWorld) -> None:
-    # Events to indicate a given tree stump is reachable
-    create_event(world, "spool stump", "_reached_spool_stump")
-    create_event(world, "temple remains lower stump", "_reached_remains_stump")
-    create_event(world, "temple remains upper stump", "_reached_remains_stump")
-    create_event(world, "d1 stump", "_reached_eyeglass_stump")
-    create_event(world, "d2 stump", "_reached_d2_stump")
-    create_event(world, "d5 stump", "_reached_eyeglass_stump")
-    create_event(world, "sunken city dimitri", "_saved_dimitri_in_sunken_city")
-    create_event(world, "ghastly stump", "_reached_ghastly_stump")
-    create_event(world, "coast stump", "_reached_coast_stump")
     # Events for beating golden beasts
     create_event(world, "golden darknut", "_beat_golden_darknut")
     create_event(world, "golden lynel", "_beat_golden_lynel")
@@ -112,13 +102,10 @@ def create_events(world: OracleOfSeasonsWorld) -> None:
     create_event(world, "frypolar room wild mystery", "_wild_mystery_seeds")
     # Various events to help with logic
     create_event(world, "bomb temple remains", "_triggered_volcano")
-    create_event(world, "subrosia market sector", "_reached_rosa")
-    create_event(world, "subrosian dance hall", "_reached_subrosian_dance_hall")
     create_event(world, "subrosia pirates sector", "_met_pirates")
-    create_event(world, "tower of autumn", "_opened_tower_of_autumn")
-    create_event(world, "d5 drop ball", "_dropped_d5_magnet_ball")
-    create_event(world, "d2 rupee room", "_reached_d2_rupee_room")
-    create_event(world, "d6 rupee room", "_reached_d6_rupee_room")
+    if world.options.logic_difficulty >= OracleOfSeasonsLogicDifficulty.option_medium:
+        create_event(world, "d2 rupee room", "_reached_d2_rupee_room")
+        create_event(world, "d6 rupee room", "_reached_d6_rupee_room")
     create_event(world, "maku seed", "Maku Seed")
 
     if world.options.goal == OracleOfSeasonsGoal.option_beat_onox:

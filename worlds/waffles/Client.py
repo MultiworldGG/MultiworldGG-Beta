@@ -95,7 +95,7 @@ SMW_GOAL_LEVELS                = [0x28, 0x31, 0x32]
 SMW_INVALID_MARIO_STATES       = [0x05, 0x06, 0x0A, 0x0C, 0x0D]
 SMW_BAD_TEXT_BOX_LEVELS        = [0x00, 0x26, 0x02, 0x4B]
 SMW_BOSS_STATES                = [0x80, 0xC0, 0xC1]
-SMW_UNCOLLECTABLE_LEVELS       = []
+SMW_UNCOLLECTABLE_LEVELS       = [0x14, 0x08, 0x3F, 0x45]
 SMW_UNCOLLECTABLE_DRAGON_COINS = [0x24]
 LEVELS_WITHOUT_CHECKS          = [0x00, 0x03, 0x31, 0x32, 0x28]
 TRAPLESS_LEVELS                = [0x00, 0x03, 0x28]
@@ -295,6 +295,9 @@ class WaffleSNIClient(SNIClient):
             await snes_flush_writes(ctx)
 
     async def game_watcher(self, ctx: "SNIContext"):
+        if ctx.server is None:
+            return
+        
         from SNIClient import snes_buffered_write, snes_flush_writes
 
         snes_data = await self.snes_reader.read(ctx)
@@ -461,9 +464,12 @@ class WaffleSNIClient(SNIClient):
         tile_id = 0x100
         if shuffled_level in active_level_data:
             tile_id = active_level_data[shuffled_level]
+        #print (tile_id, game_state == 0x14, tile_id not in self.visited_levels, tile_id in level_info_dict)
+        #print (self.visited_levels)
         if game_state == 0x14 and tile_id not in self.visited_levels and tile_id in level_info_dict:
             self.visited_levels.add(tile_id)
             level_key = level_info_dict[tile_id].levelName
+            #print (f"smw_{ctx.team}_{ctx.slot}_{level_key}")
             await ctx.send_msgs([{
                 "cmd": "Set", 
                 "key": f"smw_{ctx.team}_{ctx.slot}_{level_key}",
@@ -647,6 +653,9 @@ class WaffleSNIClient(SNIClient):
             progress_byte = (level_id // 8)
             progress_bit  = 7 - (level_id % 8)
 
+            if level_id in SMW_UNCOLLECTABLE_LEVELS:
+                continue
+            
             # Exits
             if loc_type == 0x00 or loc_type == 0x01:
                 flag = 1 + (loc_type & 0x01)

@@ -72,6 +72,7 @@ class FrogmonsterWorld(World):
                 self.options.open_city.value = 1 if slot_data["open_city"] else 0  # deconverting from the bool it's stored as
                 self.options.hardcore_parkour.value = slot_data["hardcore_parkour"]
                 self.options.well_light_logic.value = slot_data["well_light_logic"]
+                self.options.death_link = slot_data["death_link"]
 
         # Handling option: Shuffle Bug-Eating Effects
         bugs = [bug.bug_id for bug in every_bug if bug.name != i.mushroom]  

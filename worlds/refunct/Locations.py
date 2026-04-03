@@ -182,6 +182,7 @@ class RefunctLocation(Location):
     game: str = "Refunct"
     
 block_brawl_scores = [1,3,6,10,15,18,21,24,27,30,36,42,48,54,60,72,84,96,108,120]
+block_blub_scores = [3,15,21,30,42,60,84,120]
 
 location_table = {
     **{f"Platform {i}-{j}": LocData(10010000 + i * 100 + j, i, j, "Platform", None)
@@ -208,6 +209,23 @@ location_table = {
        for j in block_brawl_scores},
     **{f"Block Brawl Minigame: Yellows Score {j}": LocData(10070000 + 4 * 1000 + j, 4, j, "Minigame", "Block Brawl")
        for j in block_brawl_scores},
+    
+    **{f"Climb Line Minigame: {i}0m": LocData(10091000 + i, i, None, "Minigame", "Climb Line")
+       for i in range(1, 11)},
+    **{f"Climb Spiral Minigame: {i}0m": LocData(10092000 + i, i, None, "Minigame", "Climb Spiral")
+       for i in range(1, 11)},
+    **{f"Climb Chaos Minigame: {i}0m": LocData(10093000 + i, i, None, "Minigame", "Climb Chaos")
+       for i in range(1, 11)},
+    
+    
+    **{f"Block Blub Minigame: Reds Score {j}": LocData(10100000 + 1 * 1000 + j, 1, j, "Minigame", "Block Blub")
+       for j in block_blub_scores},
+    **{f"Block Blub Minigame: Blues Score {j}": LocData(10100000 + 2 * 1000 + j, 2, j, "Minigame", "Block Blub")
+       for j in block_blub_scores},
+    **{f"Block Blub Minigame: Greens Score {j}": LocData(10100000 + 3 * 1000 + j, 3, j, "Minigame", "Block Blub")
+       for j in block_blub_scores},
+    **{f"Block Blub Minigame: Yellows Score {j}": LocData(10100000 + 4 * 1000 + j, 4, j, "Minigame", "Block Blub")
+       for j in block_blub_scores},
     
 }
     

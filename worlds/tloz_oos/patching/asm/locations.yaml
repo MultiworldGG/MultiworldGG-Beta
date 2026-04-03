@@ -153,7 +153,8 @@
     ret
 15/5b83/: call setHardOreIds
 
-# 09/66ea/: dwbe locations.greatFurnace
+# Change the drop if you leave then come back to the room
+09/66ea/: dw locations.greatFurnace
 
 ##### HARD ORE SMITHY ###############################################
 

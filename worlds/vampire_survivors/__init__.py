@@ -57,30 +57,27 @@ class VampireSurvivors(World):
 		if hasattr(self.multiworld, "re_gen_passthrough"):
 			if "Vampire Survivors" not in self.multiworld.re_gen_passthrough: return
 			passthrough = self.multiworld.re_gen_passthrough["Vampire Survivors"]
-			# UT yaml-less support
-			self.options.enemysanity.value = passthrough["enemysanity"]
-			self.options.chest_checks_per_stage.value = passthrough["chest_checks_per_stage"]
-			self.options.goal_requirement.value = passthrough["goal_requirement"]
-			self.options.egg_inclusion.value = passthrough["egg_inclusion"]
-			self.options.lock_hyper_behind_item.value = passthrough["is_hyper_locked"]
-			self.options.lock_hurry_behind_item.value = passthrough["is_hurry_locked"]
-			self.options.lock_arcanas_behind_item.value = passthrough["is_arcanas_locked"]
+			if self.starting_character in passthrough:
+				starting_character = passthrough[self.starting_character]
 			
-			# simple UT support
-			self.starting_character = passthrough["starting_character"]
-			self.starting_stage = passthrough["starting_stage"]
-			self.final_included_stages_list = passthrough["final_stages"]
-			self.final_included_characters_list = passthrough["final_chars"]
-			self.ending_stage_count = passthrough["ending_stage_count"]
+			if self.starting_stage in passthrough:
+				starting_stage = passthrough[self.starting_stage]
+			
+			if self.final_included_stages_list in passthrough:
+				final_stages = passthrough[self.final_included_stages_list]
+			
+			if self.final_included_characters_list in passthrough:
+				final_chars = passthrough[self.final_included_characters_list]
+			
+			if self.ending_stage_count in passthrough:
+				ending_stage_count = passthrough[self.ending_stage_count]
 			
 			self.multiworld.push_precollected(self.create_item(f"Stage Unlock: {self.starting_stage}"))
 			self.multiworld.push_precollected(self.create_item(f"Character Unlock: {self.starting_character}"))
-			
-			if not self.options.lock_arcanas_behind_item.value:
-			    self.multiworld.push_precollected(self.create_item(f"Gamemode Unlock: Arcanas"))
-			if not self.options.lock_hurry_behind_item.value:
-			    self.multiworld.push_precollected(self.create_item(f"Gamemode Unlock: Hurry"))
-			return
+			if self.options.lock_arcanas_behind_item.value:
+			    self.multiworld.push_precollected(self.create_item("Gamemode Unlock: Arcanas"))
+			if self.options.lock_hurry_behind_item.value:
+			    self.multiworld.push_precollected(self.create_item("Gamemode Unlock: Hurry"))
 		check_options(self)
 		stages = [stage for stage in self.final_included_stages_list if stage != EUDAI]
 		characters = self.final_included_characters_list
@@ -117,7 +114,7 @@ class VampireSurvivors(World):
 			self.starting_character = self.random.choice(characters_to_choose_from)
 		else:
 			self.starting_character = characters[0]
-		self.stage_goal_amount = len(stages) - 1
+		self.stage_goal_amount = len(stages)
 		
 		self.multiworld.push_precollected(self.create_item(f"Stage Unlock: {self.starting_stage}"))
 		self.multiworld.push_precollected(self.create_item(f"Character Unlock: {self.starting_character}"))
@@ -138,12 +135,13 @@ class VampireSurvivors(World):
 
 	def set_rules(self):
 		player = self.player
+		options = self.options
 		if self.options.goal_requirement == 0:
-			self.multiworld.completion_condition[self.player] = lambda state: has_amount(state, player, "Beat a Stage", self.stage_goal_amount)
+			self.multiworld.completion_condition[self.player] = lambda state: has_amount(state, player, options, "Beat a Stage", self.stage_goal_amount)
 		elif self.options.goal_requirement == 1:
 			if self.ending_stage_count == 0:
 				self.ending_stage_count = int(len(self.final_included_stages_list) * .75)
-			self.multiworld.completion_condition[self.player] = lambda state: has_stage(state, player, EUDAI) and has_amount(state, player, "Beat a Stage", self.ending_stage_count)
+			self.multiworld.completion_condition[self.player] = lambda state: has_stage(state, player, options, EUDAI) and has_amount(state, player, options, "Beat a Stage", self.ending_stage_count)
 
 	def fill_slot_data(self):
 		slot_data = {
@@ -154,6 +152,9 @@ class VampireSurvivors(World):
 			"lock_hurry_behind_item": bool(self.options.lock_hurry_behind_item),
 			"lock_arcanas_behind_item": bool(self.options.lock_arcanas_behind_item),
 			"enemysanity": bool(self.options.enemysanity),
+			"enemysanity_arcana_enemies": bool(self.options.enemysanity_arcana_enemies),
+			"character_pool_size": int(self.options.character_pool_size),
+			"stage_pool_size": int(self.options.stage_pool_size),
 			"allow_secret_characters": bool(self.options.allow_secret_characters),
 			"allow_megalo_characters": bool(self.options.allow_megalo_characters),
 			"allow_unfair_characters": bool(self.options.allow_unfair_characters),

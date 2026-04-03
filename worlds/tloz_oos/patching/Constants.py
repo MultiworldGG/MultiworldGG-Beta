@@ -1,9 +1,9 @@
-from .z80asm.Assembler import GameboyAddress
+from ..common.patching.z80asm.Assembler import GameboyAddress
 from ..data.Constants import *
 
 # [x, y] = everything between x and y (included) is free
 # int = end of bank
-CAVE_DATA = [
+CAVE_DATA: list[int | list[int | list[int]]] = [
     0x3ec8,  # 00
     0x3e89,  # 01
     [  # 02
@@ -27,10 +27,12 @@ CAVE_DATA = [
         0x3f4e,  # 09
     ],
     [  # 0a
+        # Some space could be gotten by blanking code on the Vasu snakes
         [0x3bba, 0x3bd0],  # Blank from removing the spin upon obtaining the sword in d0
         0x3be9,
     ],
     [  # 0b
+        [0x2717, 0x27a1],  # Rosa hiding
         [0x34ac, 0x34ee],  # Impa intro script
         [0x39b4, 0x39e9],  # Twinrova cutscene 1
         [0x39f5, 0x3a29],  # Twinrova cutscene 2
@@ -44,8 +46,15 @@ CAVE_DATA = [
     0x3eb0,  # 11
     0x3c8f,  # 12
     0x3bd2,  # 13
-    0x2fc9,  # 14 - ton of free space here
-    0x392d,  # 15
+    [
+        [0x0e3f, 0x0f51],  # Rosa hiding
+        0x2fc9,  # 14 - ton of free space here
+    ],
+    [  # 15
+        [0x1435, 0x1464],  # Trade item (0x41) data
+        [0x1e5d, 0x1edd],  # Strange bros stealing feathers, companions in swamp
+        0x392d
+    ],
     0x3a07,  # 16
     0x3f3a,  # 17
     0x3e6d,  # 18
@@ -193,6 +202,7 @@ DEFINES = {
     "wRoomEdgeY": "$cca0",
     "wRoomEdgeX": "$cca1",
     "wDisableWarpTiles": "$ccaa",
+    "wScrollMode": "$cd00",
     "wScreenTransitionDirection": "$cd02",
     "wScreenOffsetY": "$cd08",
 
@@ -320,6 +330,7 @@ DEFINES = {
     "TREASURE_MAKU_SEED": "$36",
     "TREASURE_ORE_CHUNKS": "$37",
     "TREASURE_ESSENCE": "$40",
+    "TREASURE_ARCHIPELAGO_ITEM": "$41",  # (ex trade item)
     "TREASURE_GNARLED_KEY": "$42",
     "TREASURE_FLOODGATE_KEY": "$43",
     "TREASURE_DRAGON_KEY": "$44",
@@ -357,10 +368,12 @@ DEFINES = {
     "scriptend": "$00",
     "loadscript": "$83",
     "jumptable_memoryaddress": "$87",
+    "setcoords": "$88",
     "setcollisionradii": "$8d",
     "setanimation": "$8f",
     "writememory": "$91",
     "ormemory": "$92",
+    "setangleandanimation": "$96",
     "rungenericnpc": "$97",
     "showtext": "$98",
     "checkabutton": "$9e",
@@ -424,7 +437,7 @@ RUPEE_VALUES = {
     999: 0x14,
 }
 
-DUNGEON_ENTRANCES = {
+DUNGEON_ENTRANCES: dict[str, dict[str, int]] = {
     # "addr": Address of the pointer to the warp dest aka start of the line + 2
     "d0": {
         "addr": GameboyAddress(0x04, 0x7651).address_in_rom(),
@@ -491,7 +504,7 @@ DUNGEON_ENTRANCES = {
     }
 }
 
-DUNGEON_EXITS = {
+DUNGEON_EXITS: dict[str, int] = {
     "d0": GameboyAddress(0x04, 0x7909).address_in_rom(),
     "d1": GameboyAddress(0x04, 0x790d).address_in_rom(),
     "d2": GameboyAddress(0x04, 0x7911).address_in_rom(),

@@ -1,6 +1,4 @@
 from BaseClasses import MultiWorld, Item, EntranceType
-from worlds.AutoWorld import LogicMixin
-from ..World import OracleOfSeasonsWorld
 from ..data.logic.DungeonsLogic import *
 from ..data.logic.OverworldLogic import *
 from ..data.logic.SubrosiaLogic import *
@@ -15,6 +13,7 @@ def create_randomizable_connections(world: OracleOfSeasonsWorld, prefix: str,
         entrance = region_1.create_exit(f"{prefix}{reg1}")
         entrance.randomization_group = outer_group
         entrance.randomization_type = EntranceType.TWO_WAY
+        world.set_rule(entrance, True_())
 
         entrance = region_1.create_er_target(f"{prefix}{reg1}")
         entrance.randomization_group = outer_group
@@ -23,28 +22,29 @@ def create_randomizable_connections(world: OracleOfSeasonsWorld, prefix: str,
         entrance = region_2.create_exit(f"{prefix}{reg2}")
         entrance.randomization_group = inner_group
         entrance.randomization_type = EntranceType.TWO_WAY
+        world.set_rule(entrance, True_())
 
         entrance = region_2.create_er_target(f"{prefix}{reg2}")
         entrance.randomization_group = inner_group
         entrance.randomization_type = EntranceType.TWO_WAY
 
 
-def create_connections(world: OracleOfSeasonsWorld, player: int, origin_name: str, options):
+def create_connections(world: OracleOfSeasonsWorld, origin_name: str, options):
     all_logic = [
-        make_holodrum_logic(player, origin_name, options),
-        make_subrosia_logic(player),
-        make_d0_logic(player),
-        make_d1_logic(player),
-        make_d2_logic(player),
-        make_d3_logic(player),
-        make_d4_logic(player),
-        make_d5_logic(player),
-        make_d6_logic(player),
-        make_d7_logic(player),
-        make_d8_logic(player),
+        make_holodrum_logic(origin_name, options),
+        make_subrosia_logic(),
+        make_d0_logic(),
+        make_d1_logic(),
+        make_d2_logic(),
+        make_d3_logic(),
+        make_d4_logic(),
+        make_d5_logic(),
+        make_d6_logic(),
+        make_d7_logic(),
+        make_d8_logic(),
 
-        make_samasa_d11_logic(player, options),
-        make_d11_logic(player, options)
+        make_samasa_d11_logic(options),
+        make_d11_logic(options)
     ]
 
     if world.options.shuffle_dungeons:
@@ -67,6 +67,7 @@ def create_connections(world: OracleOfSeasonsWorld, player: int, origin_name: st
             portal_connections.append([reg1, reg2, True, None])
         all_logic.append(portal_connections)
 
+    true_rule = True_()
     # Create connections
     for logic_array in all_logic:
         for entrance_desc in logic_array:
@@ -74,10 +75,14 @@ def create_connections(world: OracleOfSeasonsWorld, player: int, origin_name: st
             region_2 = world.get_region(entrance_desc[1])
             is_two_way = entrance_desc[2]
             rule = entrance_desc[3]
+            if rule is None:
+                rule = true_rule
 
-            region_1.connect(region_2, None, rule)
+            entrance = region_1.connect(region_2, None)
+            world.set_rule(entrance, rule)
             if is_two_way:
-                region_2.connect(region_1, None, rule)
+                entrance = region_2.connect(region_1, None)
+                world.set_rule(entrance, rule)
 
 
 def apply_self_locking_rules(multiworld: MultiWorld, player: int):
@@ -92,55 +97,60 @@ def apply_self_locking_rules(multiworld: MultiWorld, player: int):
         ]),
         "Gnarled Root Dungeon: Item in Basement": lambda state, item: all([
             is_small_key(item, player, 1),
-            oos_has_small_keys(state, player, 1, 1)
+            oos_has_small_keys(1, 1).resolve(multiworld.worlds[player])(state)
         ]),
         "Snake's Remains: Chest on Terrace": lambda state, item: all([
             is_small_key(item, player, 2),
-            oos_has_small_keys(state, player, 2, 2)
+            oos_has_small_keys(2, 2).resolve(multiworld.worlds[player])(state)
         ]),
         "Poison Moth's Lair (1F): Chest in Mimics Room": lambda state, item: all([
             is_small_key(item, player, 3),
-            oos_can_kill_normal_enemy(state, player)
+            oos_can_kill_normal_enemy().resolve(multiworld.worlds[player])(state)
         ]),
         "Dancing Dragon Dungeon (1F): Crumbling Room Chest": lambda state, item: all([
             is_small_key(item, player, 4),
-            oos_has_small_keys(state, player, 4, 2)
+            oos_has_small_keys(4, 2).resolve(multiworld.worlds[player])(state)
         ]),
         "Dancing Dragon Dungeon (1F): Eye Diving Spot Item": lambda state, item: all([
             is_small_key(item, player, 4),
-            oos_has_small_keys(state, player, 4, 2),
-            oos_can_swim(state, player, False),
+            (oos_has_small_keys(4, 2) & oos_can_swim(False)).resolve(multiworld.worlds[player])(state)
         ]),
         "Unicorn's Cave: Magnet Gloves Chest": lambda state, item: is_small_key(item, player, 5),
         "Unicorn's Cave: Treadmills Basement Item": lambda state, item: all([
             is_small_key(item, player, 5),
-            oos_has_small_keys(state, player, 5, 3),
-            state.has("_dropped_d5_magnet_ball", player),
-            oos_has_magnet_gloves(state, player),
-            any([
-                oos_can_kill_magunesu(state, player),
-                all([
-                    oos_option_medium_logic(state, player),
-                    oos_has_feather(state, player)
-                ])
-            ])
+            And(
+                oos_has_small_keys(5, 3),
+                CanReachRegion("d5 drop ball"),
+                oos_has_magnet_gloves(),
+                Or(
+                    oos_can_kill_magunesu(),
+                    And(
+                        oos_option_medium_logic(),
+                        oos_has_feather()
+                    )
+                )
+            ).resolve(multiworld.worlds[player])(state)
         ]),
         "Explorer's Crypt (B1F): Chest in Jumping Stalfos Room": lambda state, item: all([
             is_small_key(item, player, 7),
-            oos_has_small_keys(state, player, 7, 4),
-            any([
-                oos_can_jump_5_wide_pit(state, player),
-                all([
-                    oos_option_hard_logic(state, player),
-                    oos_can_jump_1_wide_pit(state, player, False)
-                ])
-            ]),
-            oos_can_kill_stalfos(state, player),
+            And(
+                oos_has_small_keys(7, 4),
+                Or(
+                    oos_can_jump_5_wide_pit(),
+                    And(
+                        oos_option_hard_logic(),
+                        oos_can_jump_1_wide_pit(False)
+                    )
+                ),
+                oos_can_kill_stalfos(),
+            ).resolve(multiworld.worlds[player])(state)
         ]),
         "Explorer's Crypt (1F): Chest Right of Entrance": lambda state, item: all([
             is_small_key(item, player, 7),
-            oos_can_kill_normal_enemy(state, player),
-            oos_has_small_keys(state, player, 7, 1),
+            And(
+                oos_can_kill_normal_enemy(),
+                oos_has_small_keys(7, 1),
+            ).resolve(multiworld.worlds[player])(state)
         ])
     }
 

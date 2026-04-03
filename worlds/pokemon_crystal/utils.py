@@ -1,5 +1,4 @@
 import logging
-from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 from Options import Toggle
@@ -9,8 +8,8 @@ from .options import FreeFlyLocation, Route32Condition, JohtoOnly, RandomizeBadg
     Route3Access, EliteFourRequirement, Goal, Route44AccessRequirement, BlackthornDarkCaveAccess, RedRequirement, \
     MtSilverRequirement, HMBadgeRequirements, RedGyaradosAccess, EarlyFly, RadioTowerRequirement, \
     BreedingMethodsRequired, Shopsanity, KantoTrainersanity, JohtoTrainersanity, RandomizePokemonRequests, \
-    EnhancedOptionSet, RandomizeTypes, RandomizeEvolution, RandomizeTrades, TradesRequired, MagnetTrainAccess, \
-    Dexsanity, EncounterGrouping
+    RandomizeTypes, RandomizeEvolution, RandomizeTrades, TradesRequired, MagnetTrainAccess, \
+    Dexsanity, EncounterGrouping, SouthKantoAccess, LevelScaling, LockKantoGyms
 from ..Files import APTokenTypes
 
 if TYPE_CHECKING:
@@ -18,19 +17,7 @@ if TYPE_CHECKING:
 
 
 def adjust_options(world: "PokemonCrystalWorld"):
-    __adjust_meta_options(world)
     __adjust_option_problems(world)
-
-
-def __adjust_meta_options(world: "PokemonCrystalWorld"):
-    for option_name in dir(world.options):
-        option = getattr(world.options, option_name)
-        if isinstance(option, EnhancedOptionSet):
-            if "_Random" in option.value:
-                option.value.remove("_Random")
-                for value in [opt for opt in option.valid_keys if not opt.startswith("_")]:
-                    if value not in option.value and world.random.randint(0, 1):
-                        option.value.add(value)
 
 
 def __adjust_option_problems(world: "PokemonCrystalWorld"):
@@ -49,6 +36,8 @@ def __adjust_option_problems(world: "PokemonCrystalWorld"):
     __adjust_options_tm_plando(world)
     __adjust_options_traps(world)
     __adjust_options_mischief_bounds(world)
+    __adjust_options_backwards_compat(world)
+    __adjust_options_level_scaling(world)
 
 
 def __adjust_options_radio_tower_and_route_44(world: "PokemonCrystalWorld"):
@@ -292,7 +281,7 @@ def __adjust_options_trades(world: "PokemonCrystalWorld"):
 
 
 def __adjust_options_dark_areas(world: "PokemonCrystalWorld"):
-    if (world.options.dark_areas != world.options.dark_areas.default
+    if (sorted(world.options.dark_areas.value) != world.options.dark_areas.default
             and world.options.randomize_badges != RandomizeBadges.option_completely_random):
         logging.warning(
             "Pokemon Crystal: Non-vanilla dark areas are not compatible with badges that are not completely random. "
@@ -340,6 +329,28 @@ def __adjust_options_mischief_bounds(world: "PokemonCrystalWorld"):
                         )
 
 
+def __adjust_options_backwards_compat(world: "PokemonCrystalWorld"):
+    for trap in world.options.trap_weights:
+        snake_case_trap_name = trap.replace(" ", "_").lower()
+        option_name = f"{snake_case_trap_name}_weight"
+        if hasattr(world.options, option_name):
+            option = getattr(world.options, option_name)
+            if option: world.options.trap_weights.value[trap] = option.value
+
+    if world.options.randomize_move_types:
+        world.options.randomize_moves.value.add("Type")
+
+
+def __adjust_options_level_scaling(world: "PokemonCrystalWorld"):
+    if (world.options.level_scaling != LevelScaling.option_off
+            and world.options.lock_kanto_gyms != LockKantoGyms.option_off):
+        world.options.lock_kanto_gyms.value = LockKantoGyms.option_off
+        logging.warning(
+            "Pokemon Crystal: Lock Kanto Gyms is incompatible with Level Scaling. "
+            "Disabling Lock Kanto Gyms for player %s.",
+            world.player_name)
+
+
 def should_include_region(region: RegionData, world: "PokemonCrystalWorld"):
     # check if region should be included
     return (region.johto
@@ -347,21 +358,6 @@ def should_include_region(region: RegionData, world: "PokemonCrystalWorld"):
             or (region.silver_cave and world.options.johto_only == JohtoOnly.option_include_silver_cave)) and (
             not world.options.skip_elite_four or not region.elite_4
     )
-
-
-def pokemon_convert_friendly_to_ids(world: "PokemonCrystalWorld", pokemon: Iterable[str]) -> set[str]:
-    if not pokemon: return set()
-
-    pokemon = set(pokemon)
-    if "_Legendaries" in pokemon:
-        pokemon.discard("_Legendaries")
-        pokemon.update({"Articuno", "Zapdos", "Moltres", "Mewtwo", "Mew", "Entei", "Raikou", "Suicune", "Celebi",
-                        "Lugia", "Ho-Oh"})
-
-    pokemon_ids = {pokemon_id for pokemon_id, pokemon_data in world.generated_pokemon.items() if
-                   pokemon_data.friendly_name in pokemon}
-
-    return pokemon_ids
 
 
 def randomize_starting_town(world: "PokemonCrystalWorld"):
@@ -421,8 +417,10 @@ def _starting_town_valid(world: "PokemonCrystalWorld", starting_town: StartingTo
                 or "Union Cave" not in world.options.dark_areas or immediate_dexsanity)
 
     if starting_town.name in ("Pallet Town", "Viridian City", "Pewter City"):
+        west_kanto_escapable = (world.options.randomize_pokegear or not world.options.lock_kanto_gyms
+                                or world.options.south_kanto_access != SouthKantoAccess.option_route_21)
         return (immediate_hiddens or world.options.route_3_access == Route3Access.option_vanilla or kanto_shopsanity
-                or world.options.randomize_berry_trees or immediate_dexsanity)
+                or world.options.randomize_berry_trees or immediate_dexsanity) and west_kanto_escapable
 
     if starting_town.name == "Rock Tunnel":
         return full_kanto_trainersanity or immediate_dexsanity or ("Rock Tunnel" not in world.options.dark_areas.value)
@@ -540,9 +538,20 @@ def convert_to_ingame_text(text: str, string_terminator: bool = False) -> list[i
         "Ä": 0xc0, "Ö": 0xc1, "Ü": 0xc2, "ä": 0xc3, "ö": 0xc4, "ü": 0xc5, "'": 0xe0, "-": 0xe3, "?": 0xe6, "!": 0xe7,
         ".": 0xe8, "&": 0xe9, "é": 0xea, "→": 0xeb, "▷": 0xec, "▶": 0xed, "▼": 0xee, "♂": 0xef, "¥": 0xf0, "/": 0xf3,
         ",": 0xf4, "0": 0xf6, "1": 0xf7, "2": 0xf8, "3": 0xf9, "4": 0xfa, "5": 0xfb, "6": 0xfc, "7": 0xfd, "8": 0xfe,
-        "9": 0xff, "_": 0xe3, "♀": 0xf5
+        "9": 0xff, "_": 0xe3, "♀": 0xf5, "$": 0xf0, "£": 0xf0, "€": 0xf0, "É": 0xea,
     }
-    ingame_string = [charmap.get(char, charmap["?"]) for char in text]
+    apostrophe_specials = {
+        "d": 0xd0, "l": 0xd1, "m": 0xd2, "r": 0xd3, "s": 0xd4, "t": 0xd5, "v": 0xd6
+    }
+    current_char = 0
+    ingame_string = []
+    while current_char < len(text):
+        if text[current_char] == "'" and current_char < len(text) - 1 and text[current_char + 1] in apostrophe_specials:
+            current_char += 1
+            ingame_string.append(apostrophe_specials[text[current_char]])
+        else:
+            ingame_string.append(charmap.get(text[current_char], charmap["?"]))
+        current_char += 1
     if string_terminator:
         ingame_string.append(0x50)
     return ingame_string
@@ -550,6 +559,13 @@ def convert_to_ingame_text(text: str, string_terminator: bool = False) -> list[i
 
 def bound(value: int, lower_bound: int, upper_bound: int) -> int:
     return max(min(value, upper_bound), lower_bound)
+
+
+def rom_offset_to_address(offset: int) -> tuple[int, int]:
+    if offset < 0x4000: return 0, offset
+    bank = offset // 0x4000
+    address = offset - (bank - 1) * 0x4000
+    return bank, address
 
 
 def replace_map_tiles(patch, map_name: str, x: int, y: int, tiles):

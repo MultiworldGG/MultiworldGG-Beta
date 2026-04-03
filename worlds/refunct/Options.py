@@ -90,12 +90,12 @@ class NumberOfMinigames(Range):
     Refunct allows for adding several minigames to your game, which you have to unlock first.
     This options sets how many minigames are included in the game.
     Set this to -1 if you want all minigames. Set this to 0 if you don't want any minigames.
-    The next option allows you to tweak how likely each minigame is to be included, but the default is probably OK!
+    Another option allows you to tweak how likely each minigame is to be included, but the default is probably OK!
     """
     display_name = "Number of Minigames"
     default = -1
     range_start = -1
-    range_end = 5
+    range_end = 7
     
 class NerfMinigameChecks(Toggle):
     """
@@ -145,9 +145,21 @@ class MinigamesLikeliness(OptionCounter):
     Block Brawl Minigame:
     A randomly generated arena of blocks appears, and your goal is to get the cubes within them.
     There are four colors of cubes, each has to be unlocked separately.
+    The number of checks are 5, 20, 45 and 80 in total if you have 1, 2, 3 or 4 colors unlocked respectively.
     The more blocks you pick up in one go, the more points you get. Score points to get checks!
     Hitting New Game will reshuffle the blocks and cubes but you will keep your points.
     There is no guarantee cubes are reachable so reset as needed.
+    
+    Climb Minigames:
+    There are three different Climb minigames that you can play when this option is selected; Line, Spiral and Chaos.
+    You will have to climb up 100 meters of randomly placed platforms, and you get checks for every 10 meters climbed.
+    Each minigame has a slightly different pattern of platform placements.
+    Each minigame is unlocked separately and they all have their own checks.
+    This gamemode might need some skill and patience (which is why they are off by default) :)
+    
+    Block Blub Minigame:
+    This is the underwater version of Block Brawl!
+    This is much easier and shorter than Block Brawl, it still has four color of cubes, but only 32 checks in total.
     """
    
     display_name = "Likeliness of minigames"
@@ -158,6 +170,8 @@ class MinigamesLikeliness(OptionCounter):
         "Button Galore Minigame": int,
         "OG Randomizer Minigame": int,
         "Block Brawl Minigame": int,
+        "Climb Minigames": int,
+        "Block Blub Minigame": int,
     })
     min = 0
     default = {
@@ -166,7 +180,11 @@ class MinigamesLikeliness(OptionCounter):
         "Button Galore Minigame": 1,
         "OG Randomizer Minigame": 3,
         "Block Brawl Minigame": 4,
+        "Climb Minigames": 0,
+        "Block Blub Minigame": 3,
     }
+
+
 class Traps(Choice):
     """
     This option determines which traps are added to the game. 

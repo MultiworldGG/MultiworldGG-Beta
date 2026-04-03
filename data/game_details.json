@@ -549,6 +549,22 @@
         ],
         "release_date": 2003
     },
+    "BKSimulator": {
+        "igdb_id": "396121",
+        "world_name": "BKSimulator",
+        "igdb_name": "BK Simulator",
+        "us_rating": [],
+        "player_perspectives": [
+            "Side view"
+        ],
+        "genres": [],
+        "themes": [],
+        "keywords": [
+            "idle game",
+            "joke game"
+        ],
+        "release_date": 2026
+    },
     "Blasphemous": {
         "igdb_id": "26820",
         "world_name": "Blasphemous",

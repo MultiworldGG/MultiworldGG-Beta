@@ -65,9 +65,36 @@ class LockArcanasBehindItem(Toggle):
 
 class Enemysanity(Toggle):
 	"""
-	the first kill of an enemy is a check
+	The first kill of an enemy is a check
 	"""
 	display_name = "Enemysanity"
+
+
+class EnemysanityArcanaEnemies(Toggle):
+	"""
+	Allows Arcana specific enemies to be checks for enemysanity
+	"""
+	display_name = "Enemysanity Arcana Enemies"
+
+
+class CharacterPoolSize(Range):
+	"""
+	Limit the amount of characters (select a random assortment of characters if higher)
+	"""
+	display_name = "Character Pool Size"
+	range_start = 0
+	range_end = 999
+	default = 0
+
+
+class StagePoolSize(Range):
+	"""
+	Limit the amount of stages (select a random assortment of stages if higher)
+	"""
+	display_name = "Stage Pool Size"
+	range_start = 0
+	range_end = 999
+	default = 0
 
 
 class AllowSecretCharacters(DefaultOnToggle):
@@ -98,7 +125,7 @@ class IncludedBaseCharacters(OptionSet):
 	"""
 	Base Characters to be randomized
 	possible options:
-	[Antonio Belpaese, Imelda Belpaese, Pasqualina Belpaese, Gennaro Belpaese, Arca Ladonna, Porta Ladonna, Lama Ladonna, Poe Ratcho, Suor Clerici, Dommario, Krochi Freetto, Christine Davain, Pugnala Provola, Giovanna Grana, Poppea Pecorina, Concetta Caciotta, Mortaccio, Yatta Cavallo, Bianca Ramba, O'Sole Meeo, Sir Ambrojoe, Iguana Gallo Valletto, Divano Thelma, Zi'Assunta Belpaese, Exdash Exiviiq, Toastie, Smith IV, Random, Boon Marrabbio, Avatar Infernas, Minnah Mannarah, Leda, Cosmo Pavone, Peppino, Big Trouser, missingN, Gains Boros, Gyorunton, Mask of the Red Death, Queen Sigma, Bat Robbert, Zi'Appunta Belpaese, She-Moon Eeta, Santa Ladonna, Gazebo, Chula-Reh, Space Dude, Bats Bats Bats, Rose De Infernas, Torino, Scorej-Oni, Gyoruntin, Secretino, Space Dette, Genya Arikado]
+	[Antonio Belpaese, Imelda Belpaese, Pasqualina Belpaese, Gennaro Belpaese, Arca Ladonna, Porta Ladonna, Lama Ladonna, Poe Ratcho, Suor Clerici, Dommario, Krochi Freetto, Christine Davain, Pugnala Provola, Giovanna Grana, Poppea Pecorina, Concetta Caciotta, Mortaccio, Yatta Cavallo, Bianca Ramba, O'Sole Meeo, Sir Ambrojoe, Iguana Gallo Valletto, Divano Thelma, Zi'Assunta Belpaese, Exdash Exiviiq, Toastie, Smith IV, Random, Boon Marrabbio, Avatar Infernas, Minnah Mannarah, Leda, Cosmo Pavone, Peppino, Big Trouser, missingN, Gains Boros, Gyorunton, Mask of the Red Death, Queen Sigma, Bat Robbert, Zi'Appunta Belpaese, She-Moon Eeta, Santa Ladonna, Gazebo, Chula-Reh, Space Dude, Bats Bats Bats, Rose De Infernas, Torino, Scorej-Oni, Gyoruntin, Secretino, Space Dette]
 	"All" - adds all locations above
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
@@ -117,7 +144,7 @@ class IncludedMoonspellCharacters(OptionSet):
 	"""
 	display_name = "Included Moonspell Characters"
 	valid_keys = frozenset(moonspell_characters + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedFoscariCharacters(OptionSet):
@@ -130,7 +157,7 @@ class IncludedFoscariCharacters(OptionSet):
 	"""
 	display_name = "Included Foscari Characters"
 	valid_keys = frozenset(foscari_characters + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedAmongusCharacters(OptionSet):
@@ -143,7 +170,7 @@ class IncludedAmongusCharacters(OptionSet):
 	"""
 	display_name = "Included Amongus Characters"
 	valid_keys = frozenset(amongus_characters + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedOperationGunsCharacters(OptionSet):
@@ -156,20 +183,20 @@ class IncludedOperationGunsCharacters(OptionSet):
 	"""
 	display_name = "Included Operation Guns Characters"
 	valid_keys = frozenset(operation_guns_characters + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedCastlevaniaCharacters(OptionSet):
 	"""
 	Castlevania Characters to be randomized
 	possible options:
-	[Leon Belmont, Sonia Belmont, Trevor Belmont, Christopher Belmont, Simon Belmont, Juste Belmont, Richter Belmont, Julius Belmont, Grant Danasty, Quincy Morris, John Morris, Jonathan Morris, Maxim Kischine, Henry, Soma Cruz, Vlad Tepes Dracula, Charlotte Aulin, Sypha Belnades, Julia Laforeze, Carrie Fernandez, Yoko Belnades, Rinaldo Gandolfi, Mina Hakuba, Elizabeth Bartley, Alucard, Reinhardt Schneider, Eric Lecarde, Isaac, Hector, Sara Trantoul, Vincent Dorin, Maria Renard, Shanoa, Albus, Lisa, Shaft, Saint Germain, Nathan Graves, Cornell, Barlowe, Young Maria Renard, Familiar, Innocent Devil, Blue Crescent Moon Cornell, Ferryman, Librarian, Hammer, Wind, Hugh Baldwin, Morris Baldwin, Annette, Tera, Jonathan & Charlotte, Charlotte & Jonathan, Stella & Loretta Lecarde, Loretta & Stella Lecarde, Stella Lecarde, Loretta Lecarde, Brauner, Soleil Belmont, Dario Bossi, Dmitri Blinov, Celia Fortner, Graham Jones, Joachim, Walter, Carmilla, Cave Troll, Fleaman, Axe Armor, Frozenshade, Amalaric Sniper, Stone Skull, Sword Ruler, Persephone, Keremet, Astarte, Drolta, Actrise, Atlantis Shrine Wizard, Succubus, Fake Trio, Slogra and Gaibon, Zephyr, Jiangshi, Blackmore, Count Olrox, Malphas, Death, Galamoth, Megalo Elizabeth Bartley, Megalo Olrox, Megalo Death, Megalo Dracula, Chaos, Gaibon and Slogra, Slogra, Kid Dracula, Aeon, Desmond Belmont, Dolores Belmont, Zoe Belmont, Fishman, Fake Trevor, Fake Sypha, Fake Grant]
+	[Leon Belmont, Sonia Belmont, Trevor Belmont, Christopher Belmont, Simon Belmont, Juste Belmont, Richter Belmont, Julius Belmont, Grant Danasty, Quincy Morris, John Morris, Jonathan Morris, Maxim Kischine, Henry, Soma Cruz, Vlad Tepes Dracula, Charlotte Aulin, Sypha Belnades, Julia Laforeze, Carrie Fernandez, Yoko Belnades, Rinaldo Gandolfi, Mina Hakuba, Elizabeth Bartley, Alucard, Reinhardt Schneider, Eric Lecarde, Isaac, Hector, Sara Trantoul, Vincent Dorin, Maria Renard, Shanoa, Albus, Lisa, Shaft, Saint Germain, Nathan Graves, Cornell, Barlowe, Young Maria Renard, Familiar, Innocent Devil, Blue Crescent Moon Cornell, Ferryman, Librarian, Hammer, Wind, Hugh Baldwin, Morris Baldwin, Annette, Tera, Jonathan & Charlotte, Charlotte & Jonathan, Stella & Loretta Lecarde, Loretta & Stella Lecarde, Stella Lecarde, Loretta Lecarde, Brauner, Soleil Belmont, Dario Bossi, Dmitri Blinov, Celia Fortner, Graham Jones, Joachim, Walter, Carmilla, Cave Troll, Fleaman, Axe Armor, Frozenshade, Amalaric Sniper, Stone Skull, Sword Ruler, Persephone, Keremet, Astarte, Drolta, Actrise, Atlantis Shrine Wizard, Succubus, Fake Trio, Slogra and Gaibon, Zephyr, Jiangshi, Blackmore, Count Olrox, Malphas, Death, Galamoth, Megalo Elizabeth Bartley, Megalo Olrox, Megalo Death, Megalo Dracula, Chaos, Gaibon and Slogra, Slogra, Kid Dracula, Aeon, Desmond Belmont, Dolores Belmont, Zoe Belmont, Fishman, Fake Trevor, Fake Sypha, Fake Grant, Genya Arikado]
 	"All" - adds all locations above
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Castlevania Characters"
 	valid_keys = frozenset(castlevania_characters + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedEmeraldCharacters(OptionSet):
@@ -182,7 +209,7 @@ class IncludedEmeraldCharacters(OptionSet):
 	"""
 	display_name = "Included Emerald Characters"
 	valid_keys = frozenset(emerald_characters + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedBalatroCharacters(OptionSet):
@@ -195,7 +222,7 @@ class IncludedBalatroCharacters(OptionSet):
 	"""
 	display_name = "Included Balatro Characters"
 	valid_keys = frozenset(balatro_characters + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedNormalStages(OptionSet):
@@ -221,7 +248,7 @@ class IncludedBonusStages(OptionSet):
 	"""
 	display_name = "Included Bonus Stages"
 	valid_keys = frozenset(bonus_stages + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedChallengeStages(OptionSet):
@@ -234,7 +261,7 @@ class IncludedChallengeStages(OptionSet):
 	"""
 	display_name = "Included Challenge Stages"
 	valid_keys = frozenset(challenge_stages + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedMoonspellStages(OptionSet):
@@ -247,7 +274,7 @@ class IncludedMoonspellStages(OptionSet):
 	"""
 	display_name = "Included Moonspell Stages"
 	valid_keys = frozenset(moonspell_stages + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedFoscariStages(OptionSet):
@@ -260,7 +287,7 @@ class IncludedFoscariStages(OptionSet):
 	"""
 	display_name = "Included Foscari Stages"
 	valid_keys = frozenset(foscari_stages + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedAmongusStages(OptionSet):
@@ -273,7 +300,7 @@ class IncludedAmongusStages(OptionSet):
 	"""
 	display_name = "Included Amongus Stages"
 	valid_keys = frozenset(amongus_stages + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedOperationGunsStages(OptionSet):
@@ -286,7 +313,7 @@ class IncludedOperationGunsStages(OptionSet):
 	"""
 	display_name = "Included Operation Guns Stages"
 	valid_keys = frozenset(operation_guns_stages + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedCastlevaniaStages(OptionSet):
@@ -299,7 +326,7 @@ class IncludedCastlevaniaStages(OptionSet):
 	"""
 	display_name = "Included Castlevania Stages"
 	valid_keys = frozenset(castlevania_stages + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedEmeraldStages(OptionSet):
@@ -312,7 +339,7 @@ class IncludedEmeraldStages(OptionSet):
 	"""
 	display_name = "Included Emerald Stages"
 	valid_keys = frozenset(emerald_stages + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 class IncludedBalatroStages(OptionSet):
@@ -325,7 +352,7 @@ class IncludedBalatroStages(OptionSet):
 	"""
 	display_name = "Included Balatro Stages"
 	valid_keys = frozenset(balatro_stages + ["All", "Random"])
-	default = "All"
+	default = []
 
 
 @dataclass
@@ -337,6 +364,9 @@ class VampireSurvivorsOptions(PerGameCommonOptions):
 	lock_hurry_behind_item: LockHurryBehindItem
 	lock_arcanas_behind_item: LockArcanasBehindItem
 	enemysanity: Enemysanity
+	enemysanity_arcana_enemies: EnemysanityArcanaEnemies
+	character_pool_size: CharacterPoolSize
+	stage_pool_size: StagePoolSize
 	allow_secret_characters: AllowSecretCharacters
 	allow_megalo_characters: AllowMegaloCharacters
 	allow_unfair_characters: AllowUnfairCharacters
@@ -371,6 +401,72 @@ class VampireSurvivorsOptions(PerGameCommonOptions):
 	def get_included_stages(self, world):
 		return (self.flatten_locations(world, normal_stages, self.included_normal_stages) + self.flatten_locations(world, bonus_stages, self.included_bonus_stages) + self.flatten_locations(world, challenge_stages, self.included_challenge_stages) + self.flatten_locations(world, moonspell_stages, self.included_moonspell_stages) + self.flatten_locations(world, foscari_stages, self.included_foscari_stages) + self.flatten_locations(world, amongus_stages, self.included_amongus_stages) + self.flatten_locations(world, operation_guns_stages, self.included_operation_guns_stages) + self.flatten_locations(world, castlevania_stages, self.included_castlevania_stages) + self.flatten_locations(world, emerald_stages, self.included_emerald_stages) + self.flatten_locations(world, balatro_stages, self.included_balatro_stages))
 
+	def get_options_map(self, option):
+		match option:
+			case "goal_requirement":
+				return self.goal_requirement
+			case "chest_checks_per_stage":
+				return self.chest_checks_per_stage
+			case "egg_inclusion":
+				return self.egg_inclusion
+			case "lock_hyper_behind_item":
+				return self.lock_hyper_behind_item
+			case "lock_hurry_behind_item":
+				return self.lock_hurry_behind_item
+			case "lock_arcanas_behind_item":
+				return self.lock_arcanas_behind_item
+			case "enemysanity":
+				return self.enemysanity
+			case "enemysanity_arcana_enemies":
+				return self.enemysanity_arcana_enemies
+			case "character_pool_size":
+				return self.character_pool_size
+			case "stage_pool_size":
+				return self.stage_pool_size
+			case "allow_secret_characters":
+				return self.allow_secret_characters
+			case "allow_megalo_characters":
+				return self.allow_megalo_characters
+			case "allow_unfair_characters":
+				return self.allow_unfair_characters
+			case "included_base_characters":
+				return self.included_base_characters
+			case "included_moonspell_characters":
+				return self.included_moonspell_characters
+			case "included_foscari_characters":
+				return self.included_foscari_characters
+			case "included_amongus_characters":
+				return self.included_amongus_characters
+			case "included_operation_guns_characters":
+				return self.included_operation_guns_characters
+			case "included_castlevania_characters":
+				return self.included_castlevania_characters
+			case "included_emerald_characters":
+				return self.included_emerald_characters
+			case "included_balatro_characters":
+				return self.included_balatro_characters
+			case "included_normal_stages":
+				return self.included_normal_stages
+			case "included_bonus_stages":
+				return self.included_bonus_stages
+			case "included_challenge_stages":
+				return self.included_challenge_stages
+			case "included_moonspell_stages":
+				return self.included_moonspell_stages
+			case "included_foscari_stages":
+				return self.included_foscari_stages
+			case "included_amongus_stages":
+				return self.included_amongus_stages
+			case "included_operation_guns_stages":
+				return self.included_operation_guns_stages
+			case "included_castlevania_stages":
+				return self.included_castlevania_stages
+			case "included_emerald_stages":
+				return self.included_emerald_stages
+			case "included_balatro_stages":
+				return self.included_balatro_stages
+		
+
 def check_options(world):
 	options = world.options
 	random = world.random
@@ -397,6 +493,12 @@ def check_options(world):
 	
 	if len(characters) == 0:
 	    raise_yaml_error(world.player_name, "You must have more than 0 eligible characters included")
+	
+	if len(stages) > options.stage_pool_size > 0:
+	    stages = random.sample(stages, options.stage_pool_size)
+	    
+	if len(characters) > options.character_pool_size > 0:
+	    characters = random.sample(characters, options.character_pool_size)
 	
 	if EUDAI not in stages and options.goal_requirement == 1:
 	    stages.append(EUDAI)

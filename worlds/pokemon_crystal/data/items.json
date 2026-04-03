@@ -450,7 +450,7 @@
   },
   "ITEMFINDER": {
     "name": "Itemfinder",
-    "classification": "USEFUL",
+    "classification": "PROGRESSION",
     "price": 0,
     "tags": [
       "Unique",
@@ -722,7 +722,7 @@
   },
   "RED_APRICORN": {
     "name": "Red Apricorn",
-    "classification": "FILLER",
+    "classification": "PROGRESSION",
     "price": 200,
     "tags": [
       "Apricorn",
@@ -750,7 +750,7 @@
   },
   "BLU_APRICORN": {
     "name": "Blu Apricorn",
-    "classification": "FILLER",
+    "classification": "PROGRESSION",
     "price": 200,
     "tags": [
       "Apricorn",
@@ -766,7 +766,7 @@
   },
   "YLW_APRICORN": {
     "name": "Ylw Apricorn",
-    "classification": "FILLER",
+    "classification": "PROGRESSION",
     "price": 200,
     "tags": [
       "Apricorn",
@@ -776,7 +776,7 @@
   },
   "GRN_APRICORN": {
     "name": "Grn Apricorn",
-    "classification": "FILLER",
+    "classification": "PROGRESSION",
     "price": 200,
     "tags": [
       "Apricorn",
@@ -804,7 +804,7 @@
   },
   "WHT_APRICORN": {
     "name": "Wht Apricorn",
-    "classification": "FILLER",
+    "classification": "PROGRESSION",
     "price": 200,
     "tags": [
       "Apricorn",
@@ -820,7 +820,7 @@
   },
   "BLK_APRICORN": {
     "name": "Blk Apricorn",
-    "classification": "FILLER",
+    "classification": "PROGRESSION",
     "price": 200,
     "tags": [
       "Apricorn",
@@ -830,7 +830,7 @@
   },
   "PNK_APRICORN": {
     "name": "Pnk Apricorn",
-    "classification": "FILLER",
+    "classification": "PROGRESSION",
     "price": 200,
     "tags": [
       "Apricorn",
@@ -932,7 +932,7 @@
   },
   "BLUE_CARD": {
     "name": "Blue Card",
-    "classification": "FILLER",
+    "classification": "PROGRESSION",
     "price": 0,
     "tags": [
       "Key Items",
@@ -1017,7 +1017,16 @@
       "KeyItem"
     ]
   },
-  "PROG_ROD": {
+  "EGG_TICKET": {
+    "name": "Egg Ticket",
+    "classification": "FILLER",
+    "price": 0,
+    "tags": [
+      "Key Items",
+      "KeyItem"
+    ]
+  },
+  "PROGRESSIVE_ROD": {
     "name": "Progressive Rod",
     "classification": "PROGRESSION",
     "price": 0,
@@ -1678,7 +1687,7 @@
       "KeyItem"
     ]
   },
-  "POKE_DEX": {
+  "POKEDEX": {
     "name": "Pokedex",
     "classification": "PROGRESSION",
     "price": 0,
@@ -1698,7 +1707,7 @@
       "Prankster"
     ]
   },
-  "SLEEP_TRAP": {
+  "SLP_TRAP": {
     "name": "Sleep Trap",
     "classification": "TRAP",
     "price": 0,
@@ -1746,6 +1755,74 @@
       "Trap",
       "Traps",
       "Traps - Status"
+    ]
+  },
+  "TUTORIAL_TRAP": {
+    "name": "Tutorial Trap",
+    "classification": "TRAP",
+    "price": 0,
+    "tags": [
+      "Trap",
+      "Traps"
+    ]
+  },
+  "TELEPORT_TRAP": {
+    "name": "Teleport Trap",
+    "classification": "TRAP",
+    "price": 0,
+    "tags": [
+      "Trap",
+      "Traps",
+      "Traps - Move"
+    ]
+  },
+  "WHIRLPOOL_TRAP": {
+    "name": "Whirlpool Trap",
+    "classification": "TRAP",
+    "price": 0,
+    "tags": [
+      "Trap",
+      "Traps",
+      "Traps - Move"
+    ]
+  },
+  "ICE_TRAP": {
+    "name": "Ice Trap",
+    "classification": "TRAP",
+    "price": 0,
+    "tags": [
+      "Trap",
+      "Traps"
+    ]
+  },
+  "EXPLOSION_TRAP": {
+    "name": "Explosion Trap",
+    "classification": "TRAP",
+    "price": 0,
+    "tags": [
+      "Trap",
+      "Traps",
+      "Traps - Move"
+    ]
+  },
+  "SANDSTORM_TRAP": {
+    "name": "Sandstorm Trap",
+    "classification": "TRAP",
+    "price": 0,
+    "tags": [
+      "Trap",
+      "Traps",
+      "Traps - Move"
+    ]
+  },
+  "METRONOME_TRAP": {
+    "name": "Metronome Trap",
+    "classification": "TRAP",
+    "price": 0,
+    "tags": [
+      "Trap",
+      "Traps",
+      "Trap - Move"
     ]
   },
   "BLUE_CARD_PT": {
@@ -2303,15 +2380,15 @@
       "HM07"
     ]
   },
-  "FLY_UNLOCK": {
-    "name": "Fly Unlock",
+  "FLAG_ITEM": {
+    "name": "Flag Item",
     "classification": "FILLER",
     "price": 0,
     "tags": [
       "INVALID"
     ]
   },
-  "FLY_PALLET": {
+  "FLY_UNLOCK_PALLET": {
     "name": "Fly Pallet Town",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2323,7 +2400,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_VIRIDIAN": {
+  "FLY_UNLOCK_VIRIDIAN": {
     "name": "Fly Viridian City",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2335,7 +2412,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_PEWTER": {
+  "FLY_UNLOCK_PEWTER": {
     "name": "Fly Pewter City",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2347,7 +2424,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_CERULEAN": {
+  "FLY_UNLOCK_CERULEAN": {
     "name": "Fly Cerulean City",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2359,7 +2436,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_VERMILION": {
+  "FLY_UNLOCK_VERMILION": {
     "name": "Fly Vermilion City",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2371,7 +2448,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_FUCHSIA": {
+  "FLY_UNLOCK_FUCHSIA": {
     "name": "Fly Fuchsia City",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2383,7 +2460,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_LAVENDER": {
+  "FLY_UNLOCK_LAVENDER": {
     "name": "Fly Lavender Town",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2395,7 +2472,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_CELADON": {
+  "FLY_UNLOCK_CELADON": {
     "name": "Fly Celadon City",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2407,7 +2484,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_SAFFRON": {
+  "FLY_UNLOCK_SAFFRON": {
     "name": "Fly Saffron City",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2419,7 +2496,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_CINNABAR": {
+  "FLY_UNLOCK_CINNABAR": {
     "name": "Fly Cinnabar Island",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2431,7 +2508,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_NEW_BARK": {
+  "FLY_UNLOCK_NEW_BARK": {
     "name": "Fly New Bark Town",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2443,7 +2520,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_CHERRYGROVE": {
+  "FLY_UNLOCK_CHERRYGROVE": {
     "name": "Fly Cherrygrove City",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2455,7 +2532,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_VIOLET": {
+  "FLY_UNLOCK_VIOLET": {
     "name": "Fly Violet City",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2467,7 +2544,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_AZALEA": {
+  "FLY_UNLOCK_AZALEA": {
     "name": "Fly Azalea Town",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2479,7 +2556,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_CIANWOOD": {
+  "FLY_UNLOCK_CIANWOOD": {
     "name": "Fly Cianwood City",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2491,7 +2568,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_GOLDENROD": {
+  "FLY_UNLOCK_GOLDENROD": {
     "name": "Fly Goldenrod City",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2503,7 +2580,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_OLIVINE": {
+  "FLY_UNLOCK_OLIVINE": {
     "name": "Fly Olivine City",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2515,7 +2592,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_ECRUTEAK": {
+  "FLY_UNLOCK_ECRUTEAK": {
     "name": "Fly Ecruteak City",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2527,7 +2604,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_MAHOGANY": {
+  "FLY_UNLOCK_MAHOGANY": {
     "name": "Fly Mahogany Town",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2539,7 +2616,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_LAKE_OF_RAGE": {
+  "FLY_UNLOCK_LAKE_OF_RAGE": {
     "name": "Fly Lake of Rage",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2551,7 +2628,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_BLACKTHORN": {
+  "FLY_UNLOCK_BLACKTHORN": {
     "name": "Fly Blackthorn City",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2563,7 +2640,7 @@
       "Fly Unlocks"
     ]
   },
-  "FLY_SILVER_CAVE": {
+  "FLY_UNLOCK_SILVER_CAVE": {
     "name": "Fly Silver Cave",
     "classification": "PROGRESSION",
     "price": 0,
@@ -2573,6 +2650,16 @@
       "Unique",
       "Tracker",
       "Fly Unlocks"
+    ]
+  },
+  "OAKS_PARCEL": {
+    "name": "Oak's Parcel",
+    "classification": "PROGRESSION",
+    "price": 0,
+    "tags": [
+      "Unique",
+      "Key Items",
+      "KeyItem"
     ]
   }
 }

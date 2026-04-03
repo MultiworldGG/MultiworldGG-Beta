@@ -2,8 +2,7 @@ from dataclasses import replace
 from typing import TYPE_CHECKING
 
 from .data import LogicalAccess
-from .options import RandomizeBreeding, BreedingMethodsRequired
-from .utils import pokemon_convert_friendly_to_ids
+from .options import RandomizeBreeding
 
 if TYPE_CHECKING:
     from .world import PokemonCrystalWorld
@@ -12,7 +11,7 @@ if TYPE_CHECKING:
 def randomize_breeding(world: "PokemonCrystalWorld", preevolutions: dict[str, list[str]]) -> None:
     if world.is_universal_tracker or not world.options.randomize_breeding: return
 
-    blocklist = pokemon_convert_friendly_to_ids(world, world.options.breeding_blocklist)
+    blocklist = world.options.breeding_blocklist.get_ids(world)
     global_breeding_pool = [poke for poke in world.generated_pokemon.keys() if poke not in blocklist]
 
     if "UNOWN" in global_breeding_pool: global_breeding_pool.remove("UNOWN")
@@ -65,14 +64,15 @@ def get_logically_available_breeding(world: "PokemonCrystalWorld") -> set[str]:
     logical_access = LogicalAccess.InLogic if world.options.breeding_methods_required else LogicalAccess.OutOfLogic
 
     breeding_pokemon = set()
+    for child in world.logic.breeding.keys():
+        world.logic.breeding[child] = []
 
     for pokemon_id, data in world.generated_pokemon.items():
         if pokemon_id not in world.logic.available_pokemon: continue
         if not can_breed(world, pokemon_id): continue
         requires_ditto = breeding_requires_ditto(world, pokemon_id)
         world.logic.breeding[data.produces_egg].append((pokemon_id, logical_access, requires_ditto))
-        if logical_access is LogicalAccess.InLogic:
-            breeding_pokemon.add(data.produces_egg)
+        if logical_access is LogicalAccess.InLogic: breeding_pokemon.add(data.produces_egg)
         if data.produces_egg == "NIDORAN_F":
             world.logic.breeding["NIDORAN_M"].append(
                 (pokemon_id, logical_access, breeding_requires_ditto(world, "NIDORAN_M")))

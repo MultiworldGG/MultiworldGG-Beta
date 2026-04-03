@@ -13,7 +13,7 @@ class RefunctItem(Item):
     button_nr: int
 
 
-item_table = {f"Trigger Cluster {i}": ItemData(10000000 + i, ItemClassification.progression) for i in range(1, 31)}
+item_table = {f"Cluster {i}": ItemData(10000000 + i, ItemClassification.progression) for i in range(1, 31)}
 item_table["Grass"] = ItemData(9999999, ItemClassification.progression_deprioritized_skip_balancing) 
 item_table["Starting Platform"] = ItemData(9999998, ItemClassification.filler) 
 item_table["Final Platform"] = ItemData(9999997, ItemClassification.progression)
@@ -32,15 +32,24 @@ item_table["Blue Cubes Bag"] = ItemData(9999987, ItemClassification.progression)
 
 item_table["Flower"] = ItemData(9999981, ItemClassification.filler)
 
-item_table["Unlock Vanilla Minigame"] = ItemData(9999980, ItemClassification.progression)
-item_table["Unlock Seeker Minigame"] = ItemData(9999970, ItemClassification.progression)
-item_table["Unlock Button Galore Minigame"] = ItemData(9999960, ItemClassification.progression)
-item_table["Unlock OG Randomizer Minigame"] = ItemData(9999950, ItemClassification.progression)
+item_table["Vanilla Minigame"] = ItemData(9999980, ItemClassification.progression)
+item_table["Seeker Minigame"] = ItemData(9999970, ItemClassification.progression)
+item_table["Button Galore Minigame"] = ItemData(9999960, ItemClassification.progression)
+item_table["OG Randomizer Minigame"] = ItemData(9999950, ItemClassification.progression)
 
-item_table["Unlock Block Brawl Minigame Reds"] = ItemData(9999941, ItemClassification.progression)
-item_table["Unlock Block Brawl Minigame Blues"] = ItemData(9999942, ItemClassification.progression)
-item_table["Unlock Block Brawl Minigame Greens"] = ItemData(9999943, ItemClassification.progression)
-item_table["Unlock Block Brawl Minigame Yellows"] = ItemData(9999944, ItemClassification.progression)
+item_table["Block Brawl Minigame Reds"] = ItemData(9999941, ItemClassification.progression)
+item_table["Block Brawl Minigame Blues"] = ItemData(9999942, ItemClassification.progression)
+item_table["Block Brawl Minigame Greens"] = ItemData(9999943, ItemClassification.progression)
+item_table["Block Brawl Minigame Yellows"] = ItemData(9999944, ItemClassification.progression)
+
+item_table["Climb Line Minigame"] = ItemData(9999931, ItemClassification.progression)
+item_table["Climb Spiral Minigame"] = ItemData(9999932, ItemClassification.progression)
+item_table["Climb Chaos Minigame"] = ItemData(9999933, ItemClassification.progression)
+
+item_table["Block Blub Minigame Reds"] = ItemData(9999921, ItemClassification.progression)
+item_table["Block Blub Minigame Blues"] = ItemData(9999922, ItemClassification.progression)
+item_table["Block Blub Minigame Greens"] = ItemData(9999923, ItemClassification.progression)
+item_table["Block Blub Minigame Yellows"] = ItemData(9999924, ItemClassification.progression)
 
 # for i in range(0, 101):
 #     item_table[f"DEBUGA {i}"] = ItemData(20000000 + i, ItemClassification.filler)
@@ -65,10 +74,16 @@ item_table[f"Blurrrrgh"] = ItemData(9999009, ItemClassification.trap)
 
 item_groups = {
     "Block Brawl Cubes": {
-        "Unlock Block Brawl Minigame Reds",
-        "Unlock Block Brawl Minigame Blues",
-        "Unlock Block Brawl Minigame Greens",
-        "Unlock Block Brawl Minigame Yellows",
+        "Block Brawl Minigame Reds",
+        "Block Brawl Minigame Blues",
+        "Block Brawl Minigame Greens",
+        "Block Brawl Minigame Yellows",
+    },
+    "Block Blub Cubes": {
+        "Block Blub Minigame Reds",
+        "Block Blub Minigame Blues",
+        "Block Blub Minigame Greens",
+        "Block Blub Minigame Yellows",
     },
     "Cubes Bags": {
         "Red Cubes Bag",
