@@ -24,24 +24,43 @@ __all__ = [
 
 no_gui = False
 skip_autosave = False
-_world_settings_name_cache: dict[str, str] = {}  # TODO: cache on disk and update when worlds change
+_world_settings_name_cache: dict[str, str] = {}
 _world_settings_name_cache_updated = False
 _lock = Lock()
 
 
 def _update_cache() -> None:
-    """Load all worlds and update world_settings_name_cache"""
+    """Load world settings metadata, using cache first and full world loading as fallback."""
     global _world_settings_name_cache_updated
     if _world_settings_name_cache_updated:
         return
 
+    cache_key: str | None = None
     try:
-        from worlds.AutoWorld import AutoWorldRegister
+        from worlds import (
+            AutoWorldRegister,
+            calculate_world_cache_key,
+            ensure_worlds_loaded,
+            load_world_settings_cache,
+            rebuild_world_settings_cache,
+        )
+
+        cache_key = calculate_world_cache_key()
+        cached_settings = load_world_settings_cache(cache_key)
+        if cached_settings is not None:
+            _world_settings_name_cache.clear()
+            _world_settings_name_cache.update(cached_settings)
+            return
+
+        ensure_worlds_loaded()
+        _world_settings_name_cache.clear()
         for world in AutoWorldRegister.world_types.values():
             annotation = world.__annotations__.get("settings", None)
             if annotation is None or annotation == "ClassVar[Optional['Group']]":
                 continue
             _world_settings_name_cache[world.settings_key] = f"{world.__module__}.{world.__name__}"
+
+        rebuild_world_settings_cache(cache_key)
     finally:
         _world_settings_name_cache_updated = True
 

@@ -26,6 +26,7 @@ if not os.path.exists(configpath):
 def get_app() -> "Flask":
     from WebHostLib import register, cache, app as raw_app
     from WebHostLib.models import db
+    from worlds import ensure_worlds_loaded
 
     app = raw_app
     if os.path.exists(configpath) and not app.config["TESTING"]:
@@ -47,6 +48,7 @@ def get_app() -> "Flask":
         logging.info(f"HOST_ADDRESS was set to {app.config['HOST_ADDRESS']}")
 
     os.makedirs(app.config["LOBBY_APWORLD_PATH"], exist_ok=True)
+    ensure_worlds_loaded()
     register()
     cache.init_app(app)
     db.bind(**app.config["PONY"])
@@ -61,7 +63,8 @@ def copy_tutorials_files_to_static(app=None) -> None:
 
     zfile: zipfile.ZipInfo
 
-    from worlds.AutoWorld import AutoWorldRegister
+    from worlds import AutoWorldRegister, ensure_worlds_loaded
+    ensure_worlds_loaded()
     worlds = {}
     for game, world in AutoWorldRegister.world_types.items():
         if hasattr(world.web, 'tutorials') and (not world.hidden or game == 'Archipelago'):
@@ -150,7 +153,8 @@ if __name__ == "__main__":
     except Exception as e:
         logging.warning("Could not update LttP sprites: %s", e)
     app = get_app()
-    from worlds import AutoWorldRegister
+    from worlds import AutoWorldRegister, ensure_worlds_loaded
+    ensure_worlds_loaded()
     # Update to only valid WebHost worlds
     invalid_worlds = {name for name, world in AutoWorldRegister.world_types.items()
                       if not hasattr(world.web, "tutorials")}
