@@ -397,8 +397,8 @@ def lobby_status(lobby: UUID):
         if lobby.room:
             result["room_id"] = to_url(lobby.room.id)
         session_id = session.get("_id")
-        is_member = session_id and any(p.session_id == session_id for p in player_rows)
-        if is_member:
+        is_owner = session_id == lobby.owner
+        if is_owner:
             pw = server_opts.get("server_password")
             if pw:
                 result["server_password"] = pw
