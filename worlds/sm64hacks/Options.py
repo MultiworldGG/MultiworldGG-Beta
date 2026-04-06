@@ -227,7 +227,6 @@ class TrollStars(Choice):
 
 class RandomizeMoat(Toggle):
     """Shuffles the moat as a check in logic. If off, the moat will instead be placed in the vanilla location."""
-    display_name = "Randomize Moat"
 
 class FillerUsefulWeight(Range):
     """Decides what percent chance of filler items should be somewhat useful items, compared to other filler.

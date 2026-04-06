@@ -99,10 +99,9 @@ class SM64HackWorld(World):
         self.data.import_json(json_val)
         self.progressive_keys = self.options.progressive_keys.value
         
-        if self.data.locations["Other"]["Settings"].get("Version") != "v0.5":
+        if self.data.locations["Other"]["Settings"].get("Version") != "v0.5" and self.data.locations["Other"]["Settings"].get("Version") != "v0.6":
             raise ValueError("JSON is too old. \
-                            \nPlease reimport the JSON into the website (https://dnvic.com/ArchipelagoGenerator), \
-                              and export in order to use it with the current version")
+                            \nPlease reimport the JSON into the website (https://dnvic.com/ArchipelagoGenerator), and export in order to use it with the current version")
         if self.progressive_keys == 3:
             try:
                 self.progressive_keys = self.data.locations["Other"]["Settings"]["prog_key"]
@@ -566,7 +565,6 @@ class SM64HackWorld(World):
             decadeslater = 1
             if "StartWithBlueStars" in self.options.hack_specific_options:
                 decadeslater = 2
-        logger.info(str(self.options.move_randomization.value))
         return {
             "Cannons": self.data.locations["Other"]["Settings"]["cannons"],
             "ProgressiveKeys": self.progressive_keys,

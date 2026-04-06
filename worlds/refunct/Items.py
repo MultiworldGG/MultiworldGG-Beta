@@ -13,10 +13,10 @@ class RefunctItem(Item):
     button_nr: int
 
 
-item_table = {f"Cluster {i}": ItemData(10000000 + i, ItemClassification.progression) for i in range(1, 31)}
+item_table = {f"Cluster {i}": ItemData(10000000 + i, ItemClassification.progression) for i in range(1, 32)}
 item_table["Grass"] = ItemData(9999999, ItemClassification.progression_deprioritized_skip_balancing) 
 item_table["Starting Platform"] = ItemData(9999998, ItemClassification.filler) 
-item_table["Final Platform"] = ItemData(9999997, ItemClassification.progression)
+item_table["Goal Location"] = ItemData(9999997, ItemClassification.progression)
 item_table[":)"] = ItemData(9999996, ItemClassification.filler)
 
 item_table["Ledge Grab"] = ItemData(9999990, ItemClassification.progression | ItemClassification.useful)
@@ -50,6 +50,8 @@ item_table["Block Blub Minigame Reds"] = ItemData(9999921, ItemClassification.pr
 item_table["Block Blub Minigame Blues"] = ItemData(9999922, ItemClassification.progression)
 item_table["Block Blub Minigame Greens"] = ItemData(9999923, ItemClassification.progression)
 item_table["Block Blub Minigame Yellows"] = ItemData(9999924, ItemClassification.progression)
+
+item_table["Refunct Mountain Minigame"] = ItemData(9999910, ItemClassification.progression)
 
 # for i in range(0, 101):
 #     item_table[f"DEBUGA {i}"] = ItemData(20000000 + i, ItemClassification.filler)
@@ -89,5 +91,33 @@ item_groups = {
         "Red Cubes Bag",
         "Green Cubes Bag",
         "Blue Cubes Bag",
+    },
+    "Clusters": {
+        f"Cluster {i}" for i in range(1, 31) 
+    },
+    "Minigames": {
+        "Vanilla Minigame",
+        "Seeker Minigame",
+        "Button Galore Minigame",
+        "OG Randomizer Minigame",
+        "Block Brawl Minigame Reds",
+        "Block Brawl Minigame Blues",
+        "Block Brawl Minigame Greens",
+        "Block Brawl Minigame Yellows",
+        "Climb Line Minigame",
+        "Climb Spiral Minigame",
+        "Climb Chaos Minigame",
+        "Block Blub Minigame Reds",
+        "Block Blub Minigame Blues",
+        "Block Blub Minigame Greens",
+        "Block Blub Minigame Yellows",
+    },
+    "Abilities": {
+        "Ledge Grab",
+        "Progressive Wall Jump",
+        "Swim",
+        "Jump Pads",
+        "Pipes",
+        "Lifts",
     },
 }
