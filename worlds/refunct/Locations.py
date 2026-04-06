@@ -71,45 +71,45 @@ number_platforms_per_cluster = {
     31: 5,
 }
 
-platforms_with_button_on_them = [
-    (1,1),
-    (2,3),
-    (3,2),
-    (4,4),
-    (5,1),
-    (6,1),
-    (7,1),
-    (7,2),
-    (8,11),
-    (9,6),
-    (10,1),
-    (10,3),
-    (11,8),
-    (12,1),
-    (13,1),
-    (14,3),
-    (15,2),
-    (16,1),
-    (17,2),
-    (18,2),
-    (18,1),
-    (19,5),
-    (20,7),
-    (21,8),
-    (22,2),
-    (23,3),
-    (24,1),
-    (25,5),
-    (26,12),
-    (26,7),
-    (26,9),
-    (27,8),
-    (28,18),
-    (28,8),
-    (29,4),
-    (30,12),
-    (31,2),
-]
+platforms_with_button_on_them = {
+    (1,1): (1,1),
+    (2,3): (2,1),
+    (3,2): (3,1),
+    (4,4): (4,1),
+    (5,1): (5,1),
+    (6,1): (6,1),
+    (7,1): (7,1),
+    (7,2): (7,2),
+    (8,11): (8,1),
+    (9,6): (9,1),
+    (10,1): (10,1),
+    (10,3): (10,2),
+    (11,8): (11,1),
+    (12,1): (12,1),
+    (13,1): (13,1),
+    (14,3): (14,1),
+    (15,2): (15,1),
+    (16,1): (16,1),
+    (17,2): (17,1),
+    (18,2): (18,2),
+    (18,1): (18,1),
+    (19,5): (19,1),
+    (20,7): (20,1),
+    (21,8): (21,1),
+    (22,2): (22,1),
+    (23,3): (23,1),
+    (24,1): (24,1),
+    (25,5): (25,1),
+    (26,12): (26,2),
+    (26,7): (26,3),
+    (26,9): (26,1),
+    (27,8): (27,1),
+    (28,18): (28,2),
+    (28,8): (28,1),
+    (29,4): (29,1),
+    (30,12): (30,1),
+    (31,2): (31,1),
+}
 
 starting_platform = (1,2)
 
@@ -185,12 +185,14 @@ block_brawl_scores = [1,3,6,10,15,18,21,24,27,30,36,42,48,54,60,72,84,96,108,120
 block_blub_scores = [3,15,21,30,42,60,84,120]
 
 location_table = {
+    **{f"Button {i}-{j}": LocData(10000000 + i * 100 + j, i, j, "Button", None)
+       for i in range(1, 32) for j in range(1, number_buttons_per_cluster[i] + 1)},
     **{f"Platform {i}-{j}": LocData(10010000 + i * 100 + j, i, j, "Platform", None)
-       for i in range(1, 31) for j in range(1, number_platforms_per_cluster[i] + 1)},
+       for i in range(1, 32) for j in range(1, number_platforms_per_cluster[i] + 1)},
     **{f"Vanilla Minigame: Button {i}-{j}": LocData(10020000 + i * 100 + j, i, j, "Minigame", "Vanilla")
        for i in range(1, 32) for j in range(1, number_buttons_per_cluster[i] + 1)},
-    **{f"Seeker Minigame: Platform #{i}": LocData(10030000 + i, i, None, "Minigame", "Seeker")
-       for i in range(1, 11)},
+    **{f"Seeker Minigame: Platform {i}-{j}": LocData(10030000 + i * 100 + j, i, j, "Minigame", "Seeker")
+       for i in range(1, 32) for j in range(1, number_platforms_per_cluster[i] + 1)},
     **{f"Button Galore Minigame: Button {i}-{j}": LocData(10040000 + i * 100 + j, i, j, "Minigame", "Button Galore")
        for i in range(1, 32) for j in range(1, number_buttons_per_cluster[i] + 1)},
     **{f"OG Randomizer Minigame: Button {i}-{j}": LocData(10050000 + i * 100 + j, i, j, "Minigame", "OG Randomizer")
@@ -217,7 +219,6 @@ location_table = {
     **{f"Climb Chaos Minigame: {i}0m": LocData(10093000 + i, i, None, "Minigame", "Climb Chaos")
        for i in range(1, 11)},
     
-    
     **{f"Block Blub Minigame: Reds Score {j}": LocData(10100000 + 1 * 1000 + j, 1, j, "Minigame", "Block Blub")
        for j in block_blub_scores},
     **{f"Block Blub Minigame: Blues Score {j}": LocData(10100000 + 2 * 1000 + j, 2, j, "Minigame", "Block Blub")
@@ -227,13 +228,16 @@ location_table = {
     **{f"Block Blub Minigame: Yellows Score {j}": LocData(10100000 + 4 * 1000 + j, 4, j, "Minigame", "Block Blub")
        for j in block_blub_scores},
     
+    **{f"Refunct Mountain Minigame: Button {i}-{j}": LocData(10110000 + i * 100 + j, i, j, "Minigame", "Refunct Mountain")
+       for i in range(1, 32) for j in range(1, number_buttons_per_cluster[i] + 1)},
+    
 }
     
 platforms_with_button_ids = []
 platforms_without_button_ids = []
 for cluster, num_platforms in number_platforms_per_cluster.items():
     for platform in range(1, num_platforms + 1):
-        if (cluster, platform) not in platforms_with_button_on_them:
+        if (cluster, platform) not in platforms_with_button_on_them.keys():
             platforms_without_button_ids.append(10010000 + cluster * 100 + platform)
         else:
             platforms_with_button_ids.append(10010000 + cluster * 100 + platform)
