@@ -35,13 +35,18 @@ def _update_cache() -> None:
     if _world_settings_name_cache_updated:
         return
 
+    cache_complete = False
     try:
+        import worlds
         from worlds import (
             AutoWorldRegister,
             ensure_worlds_loaded,
         )
 
-        ensure_worlds_loaded()
+        if not worlds._worlds_loading:
+            ensure_worlds_loaded()
+            cache_complete = True
+
         _world_settings_name_cache.clear()
         for world in AutoWorldRegister.world_types.values():
             annotation = world.__annotations__.get("settings", None)
@@ -49,7 +54,8 @@ def _update_cache() -> None:
                 continue
             _world_settings_name_cache[world.settings_key] = f"{world.__module__}.{world.__name__}"
     finally:
-        _world_settings_name_cache_updated = True
+        if cache_complete:
+            _world_settings_name_cache_updated = True
 
 
 def fmt_doc(cls: type, level: int) -> str:
@@ -838,7 +844,6 @@ class Settings(Group):
                         raise Exception(f"{ex.context} {ex.problem}\n{problem_line}{error_line}")
                     raise ex
                 # TODO: detect if upgrade is required
-                # TODO: once we have a cache for _world_settings_name_cache, detect if any game section is missing
                 self.update(options or {})
             self._filename = location
 

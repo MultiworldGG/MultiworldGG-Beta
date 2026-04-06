@@ -466,32 +466,29 @@ def run_gui(launch_components: list[Component], args: Any) -> None:
                 from worlds.LauncherComponents import _LAUNCHER_CACHE_PATH
                 install_cache = local_path("data", "world_launcher_cache.json.gz")
                 if not os.path.isfile(_LAUNCHER_CACHE_PATH) and os.path.isfile(install_cache):
-                    logging.debug(f"Background refresh: copying cache from {install_cache} to {_LAUNCHER_CACHE_PATH}")
                     try:
                         os.makedirs(os.path.dirname(_LAUNCHER_CACHE_PATH), exist_ok=True)
                         shutil.copy2(install_cache, _LAUNCHER_CACHE_PATH)
-                        logging.debug("Background refresh: cache copied successfully")
                     except Exception as exc:
                         logging.warning(f"Failed to copy cache from install dir: {exc}")
 
-            logging.debug("Background refresh: checking for launcher cache...")
             cache_exists = worlds.has_launcher_cache()
-            logging.debug(f"Background refresh: cache exists = {cache_exists}")
 
             if not cache_exists:
-                # Must load on main thread to avoid deadlocks - schedule it
-                logging.debug("Background refresh: scheduling world load on main thread")
-                def _load_on_main(dt):
-                    try:
-                        logging.debug("Main thread: loading worlds...")
-                        worlds.ensure_worlds_loaded()
-                        logging.debug("Main thread: worlds loaded, rebuilding components")
-                        self._rebuild_cards_from_components()
-                    except Exception as exc:
-                        logging.warning("World loading failed: %s", exc)
-                    finally:
+                # Load worlds in the worker thread so launcher UI stays responsive.
+                load_ok = False
+                try:
+                    worlds.ensure_worlds_loaded()
+                    load_ok = True
+                except Exception as exc:
+                    logging.warning("World loading failed: %s", exc)
+                finally:
+                    def _finish_on_main(dt):
+                        if load_ok:
+                            self._rebuild_cards_from_components()
                         self._dismiss_loading_overlay()
-                Clock.schedule_once(_load_on_main, 0)
+
+                    Clock.schedule_once(_finish_on_main, 0)
             else:
                 # Cache exists, just dismiss overlay
                 Clock.schedule_once(lambda dt: self._dismiss_loading_overlay(), 0)
@@ -766,18 +763,43 @@ def run_gui(launch_components: list[Component], args: Any) -> None:
             self.stop()
 
         @staticmethod
-        def _show_launch_toast(text: str = "Opening in a new window...") -> None:
-            MDSnackbar(
+        def _show_launch_toast(text: str = "Opening in a new window...", persist: bool = False):
+            snackbar = MDSnackbar(
                 MDSnackbarText(text=text),
                 y=dp(24),
                 pos_hint={"center_x": 0.5},
                 size_hint_x=0.5,
-            ).open()
+            )
+            if persist:
+                snackbar.auto_dismiss = False
+            snackbar.open()
+            return snackbar
 
         def component_action(self, button):
             button.disabled = True
             component = button.component
             is_cached_stub = getattr(component, "_mwgg_component_origin", None) == "cache_stub"
+            launch_toast = self._show_launch_toast(persist=True)
+            launch_toast_started = time.perf_counter()
+            min_toast_seconds = 0.7
+
+            def _dismiss_launch_toast() -> None:
+                if not launch_toast:
+                    return
+
+                elapsed = time.perf_counter() - launch_toast_started
+                remaining = max(0.0, min_toast_seconds - elapsed)
+
+                def _do_dismiss(dt: float) -> None:
+                    try:
+                        launch_toast.dismiss()
+                    except Exception:
+                        pass
+
+                if remaining > 0:
+                    Clock.schedule_once(_do_dismiss, remaining)
+                else:
+                    _do_dismiss(0.0)
 
             def _execute_launch() -> str | None:
                 if component.func:
@@ -789,8 +811,6 @@ def run_gui(launch_components: list[Component], args: Any) -> None:
                 return None
 
             if is_cached_stub:
-                self._show_launch_toast()
-
                 def _worker() -> None:
                     post_toast: str | None = None
                     try:
@@ -800,6 +820,7 @@ def run_gui(launch_components: list[Component], args: Any) -> None:
                         post_toast = "Failed to open component."
                     finally:
                         def _finish(dt) -> None:
+                            _dismiss_launch_toast()
                             button.disabled = False
                             if post_toast:
                                 self._show_launch_toast(post_toast)
@@ -821,12 +842,12 @@ def run_gui(launch_components: list[Component], args: Any) -> None:
                     logging.exception("Failed to launch component %s: %s", component.display_name, exc)
                     post_toast = "Failed to open component."
                 finally:
+                    _dismiss_launch_toast()
                     button.disabled = False
                 if post_toast:
                     self._show_launch_toast(post_toast)
 
             def _show_toast_and_launch(dt):
-                self._show_launch_toast()
                 Clock.schedule_once(_do_action, 0)
 
             Clock.schedule_once(_show_toast_and_launch, 0)

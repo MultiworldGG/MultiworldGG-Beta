@@ -38,7 +38,6 @@ __all__ = [
 
 
 failed_world_loads: List[str] = []
-_WORLD_IMPORT_PROGRESS = os.environ.get("MWGG_WORLD_IMPORT_PROGRESS", "").lower() in {"1", "true", "yes", "on"}
 
 
 @dataclasses.dataclass(order=True)
@@ -61,14 +60,8 @@ class WorldSource:
     def load(self) -> bool:
         try:
             start = time.perf_counter()
-            if _WORLD_IMPORT_PROGRESS:
-                source_name = self.path if self.relative else self.resolved_path
-                print(f"[precache] importing world source: {source_name}", flush=True)
             importlib.import_module(f".{Path(self.path).stem}", "worlds")
             self.time_taken = time.perf_counter()-start
-            if _WORLD_IMPORT_PROGRESS:
-                source_name = self.path if self.relative else self.resolved_path
-                print(f"[precache] imported {source_name} in {self.time_taken:.2f}s", flush=True)
             return True
 
         except Exception:
@@ -112,6 +105,7 @@ from .AutoWorld import AutoWorldRegister
 _worlds_loaded = False
 _worlds_loading = False
 _worlds_load_lock = threading.Lock()
+_worlds_load_owner_thread_id: int | None = None
 
 network_data_package: DataPackage
 network_data_package_single_game: Dict[str, DataPackage]
@@ -247,48 +241,46 @@ def _build_network_data_packages() -> None:
 def ensure_worlds_loaded() -> None:
     global _worlds_loaded
     global _worlds_loading
+    global _worlds_load_owner_thread_id
 
     if _worlds_loaded:
-        logging.debug("ensure_worlds_loaded: already loaded, returning")
         return
 
-    logging.debug("ensure_worlds_loaded: acquiring lock...")
+    current_thread_id = threading.get_ident()
+    if _worlds_loading and _worlds_load_owner_thread_id == current_thread_id:
+        # Guard re-entrant calls from the same loader thread.
+        return
+
     with _worlds_load_lock:
-        logging.debug("ensure_worlds_loaded: lock acquired")
         if _worlds_loaded:
             return
 
+        _worlds_load_owner_thread_id = current_thread_id
         _worlds_loading = True
         try:
-            logging.debug("ensure_worlds_loaded: preparing launcher components")
             try:
                 from . import LauncherComponents
                 LauncherComponents.prepare_for_worlds_load()
             except Exception as exc:
                 logging.warning(f"Failed to prepare launcher components for world loading: {exc}")
 
-            logging.debug("ensure_worlds_loaded: loading loose worlds")
             failed_world_loads.clear()
             apworlds = _load_loose_worlds()
-            logging.debug(f"ensure_worlds_loaded: found {len(apworlds)} apworlds")
             if apworlds:
                 _load_apworlds(apworlds)
-            logging.debug("ensure_worlds_loaded: building network data packages")
             _build_network_data_packages()
 
-            logging.debug("ensure_worlds_loaded: checking for launcher cache")
             if not has_launcher_cache():
-                logging.debug("ensure_worlds_loaded: writing launcher cache")
                 try:
                     from . import LauncherComponents
                     LauncherComponents.write_launcher_cache()
                 except Exception as exc:
                     logging.warning(f"Failed to write launcher cache: {exc}")
 
-            logging.debug("ensure_worlds_loaded: complete")
             _worlds_loaded = True
         finally:
             _worlds_loading = False
+            _worlds_load_owner_thread_id = None
 
 
 def __getattr__(name: str):
@@ -302,9 +294,6 @@ def __getattr__(name: str):
                 "This access during import can deadlock world initialization."
             )
 
-        logging.debug(f"__getattr__: {name} requested, triggering ensure_worlds_loaded()")
-        import traceback
-        traceback.print_stack()
         ensure_worlds_loaded()
         return globals()[name]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
