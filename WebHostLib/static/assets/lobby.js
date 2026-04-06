@@ -499,7 +499,7 @@
         if (data.room_id) {
             html += `<p><a href="/room/${escapeHtml(data.room_id)}" class="lobby-btn lobby-btn-primary">Go to Room</a></p>`;
         }
-        if (data.server_password) {
+        if (IS_OWNER && data.server_password) {
             html += `<p class="server-password-row">Server Password:
                 <span class="server-password-reveal">
                     <span class="password-placeholder">hover to reveal</span>
