@@ -1,9 +1,11 @@
 import bisect
 import gzip
+import hashlib
 import json
 import logging
 import os
 import pathlib
+import pkgutil
 import sys
 import tempfile
 import time
@@ -19,6 +21,8 @@ except ImportError:
     apname = "Archipelago"
 
 _LAUNCHER_CACHE_PATH = local_path("data", "world_launcher_cache.json.gz")
+_DEFAULT_ICON_PATH = local_path("data", "icon.png")
+_LAUNCHER_ICON_CACHE_DIR = os.path.join(tempfile.gettempdir(), "mwgg_launcher_icons")
 
 _COMPONENT_ORIGIN_ATTRIBUTE = "_mwgg_component_origin"
 _COMPONENT_ORIGIN_BUILTIN = "builtin"
@@ -377,7 +381,7 @@ def _serialize_component(component: Component) -> dict[str, Any]:
     }
 
 
-def _load_launcher_cache(expected_cache_key: str | None = None) -> dict[str, Any] | None:
+def _load_launcher_cache() -> dict[str, Any] | None:
     if not os.path.isfile(_LAUNCHER_CACHE_PATH):
         return None
 
@@ -388,17 +392,18 @@ def _load_launcher_cache(expected_cache_key: str | None = None) -> dict[str, Any
         logging.warning(f"Failed to read launcher cache from {_LAUNCHER_CACHE_PATH}: {exc}")
         return None
 
-    cache_key = payload.get("cache_key")
     serialized_components = payload.get("components")
     cached_icon_paths = payload.get("icon_paths")
-    if not isinstance(cache_key, str):
-        return None
     if not isinstance(serialized_components, list) or not isinstance(cached_icon_paths, dict):
         return None
 
+    sanitized_icon_paths: dict[str, str] = {}
     for icon_key, icon_path in cached_icon_paths.items():
         if not isinstance(icon_key, str) or not isinstance(icon_path, str):
             return None
+        sanitized_icon_paths[icon_key] = _normalize_cached_icon_path(icon_path)
+
+    payload["icon_paths"] = sanitized_icon_paths
 
     for component_data in serialized_components:
         if not isinstance(component_data, dict):
@@ -437,10 +442,6 @@ def _load_launcher_cache(expected_cache_key: str | None = None) -> dict[str, Any
             return None
         if callable_qualname is not None and not isinstance(callable_qualname, str):
             return None
-
-    if expected_cache_key is not None and cache_key != expected_cache_key:
-        logging.info("Launcher cache is stale (world files changed), rebuilding.")
-        return None
 
     logging.debug(f"Loaded launcher cache from {_LAUNCHER_CACHE_PATH}.")
     return payload
@@ -588,11 +589,7 @@ def _hydrate_launcher_components_from_cache() -> None:
         known_components.add(component_id)
 
 
-def is_launcher_cache_current(expected_cache_key: str) -> bool:
-    return _load_launcher_cache(expected_cache_key) is not None
-
-
-def write_launcher_cache(cache_key: str) -> None:
+def write_launcher_cache() -> None:
     serialized_components = [
         _serialize_component(component)
         for component in components
@@ -604,7 +601,6 @@ def write_launcher_cache(cache_key: str) -> None:
         if isinstance(icon_key, str) and isinstance(icon_path, str)
     }
     payload = {
-        "cache_key": cache_key,
         "components": serialized_components,
         "icon_paths": serialized_icon_paths,
     }
@@ -613,7 +609,6 @@ def write_launcher_cache(cache_key: str) -> None:
     if cache_dir:
         os.makedirs(cache_dir, exist_ok=True)
 
-    _launcher_cache_write_start = time.perf_counter()
     temp_file_path = ""
     try:
         file_descriptor, temp_file_path = tempfile.mkstemp(
@@ -629,7 +624,7 @@ def write_launcher_cache(cache_key: str) -> None:
                 os.fsync(temp_file.fileno())
 
         os.replace(temp_file_path, _LAUNCHER_CACHE_PATH)
-        logging.info(f"Wrote launcher cache to {_LAUNCHER_CACHE_PATH} in {time.perf_counter() - _launcher_cache_write_start:.2f}s.")
+        logging.debug(f"Wrote launcher cache to {_LAUNCHER_CACHE_PATH}.")
     except Exception as exc:
         logging.warning(f"Failed to write launcher cache to {_LAUNCHER_CACHE_PATH}: {exc}")
     finally:
@@ -638,6 +633,56 @@ def write_launcher_cache(cache_key: str) -> None:
                 os.unlink(temp_file_path)
             except OSError:
                 pass
+
+
+def _normalize_cached_icon_path(icon_path: str) -> str:
+    if icon_path.startswith("ap:"):
+        return icon_path
+    if os.path.isfile(icon_path):
+        return icon_path
+
+    icon_basename = os.path.basename(icon_path)
+    if icon_basename:
+        candidate_data_path = local_path("data", icon_basename)
+        if os.path.isfile(candidate_data_path):
+            return candidate_data_path
+
+    return _DEFAULT_ICON_PATH
+
+
+def resolve_icon_path(icon_path: str) -> str:
+    if icon_path.startswith("ap:"):
+        return _materialize_ap_icon(icon_path)
+    return _normalize_cached_icon_path(icon_path)
+
+
+def _materialize_ap_icon(icon_path: str) -> str:
+    module_resource_path = icon_path.removeprefix("ap:")
+    module_name, separator, resource_name = module_resource_path.partition("/")
+    if not separator or not module_name or not resource_name:
+        return _DEFAULT_ICON_PATH
+
+    try:
+        resource_data = pkgutil.get_data(module_name, resource_name)
+    except Exception:
+        resource_data = None
+    if not resource_data:
+        return _DEFAULT_ICON_PATH
+
+    resource_extension = os.path.splitext(resource_name)[1] or ".png"
+    icon_hash = hashlib.sha256(resource_data).hexdigest()
+    icon_path_on_disk = os.path.join(_LAUNCHER_ICON_CACHE_DIR, f"{icon_hash}{resource_extension}")
+    if os.path.isfile(icon_path_on_disk):
+        return icon_path_on_disk
+
+    try:
+        os.makedirs(_LAUNCHER_ICON_CACHE_DIR, exist_ok=True)
+        with open(icon_path_on_disk, "wb") as icon_file:
+            icon_file.write(resource_data)
+    except Exception:
+        return _DEFAULT_ICON_PATH
+
+    return icon_path_on_disk
 
 
 def has_world_components() -> bool:

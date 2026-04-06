@@ -34,17 +34,11 @@ __all__ = [
     "failed_world_loads",
     "ensure_worlds_loaded",
     "rebuild_world_caches",
-    "rebuild_world_settings_cache",
-    "calculate_world_cache_key",
-    "load_world_settings_cache",
-    "is_datapackage_cache_current",
-    "is_launcher_cache_current",
-    "is_world_settings_cache_current",
-    "are_world_caches_current",
 ]
 
 
 failed_world_loads: List[str] = []
+_WORLD_IMPORT_PROGRESS = os.environ.get("MWGG_WORLD_IMPORT_PROGRESS", "").lower() in {"1", "true", "yes", "on"}
 
 
 @dataclasses.dataclass(order=True)
@@ -67,8 +61,14 @@ class WorldSource:
     def load(self) -> bool:
         try:
             start = time.perf_counter()
+            if _WORLD_IMPORT_PROGRESS:
+                source_name = self.path if self.relative else self.resolved_path
+                print(f"[precache] importing world source: {source_name}", flush=True)
             importlib.import_module(f".{Path(self.path).stem}", "worlds")
             self.time_taken = time.perf_counter()-start
+            if _WORLD_IMPORT_PROGRESS:
+                source_name = self.path if self.relative else self.resolved_path
+                print(f"[precache] imported {source_name} in {self.time_taken:.2f}s", flush=True)
             return True
 
         except Exception:
@@ -117,19 +117,7 @@ network_data_package: DataPackage
 network_data_package_single_game: Dict[str, DataPackage]
 
 from ._world_cache import (
-    _calculate_datapackage_cache_key,
-    _load_datapackage_from_cache,
-    _write_datapackage_cache,
-    _load_world_settings_cache,
-    _write_world_settings_cache,
-    _build_world_settings_cache_data,
-    is_datapackage_cache_current,
-    is_world_settings_cache_current,
-    calculate_world_cache_key,
-    load_world_settings_cache,
-    rebuild_world_settings_cache,
-    is_launcher_cache_current,
-    are_world_caches_current,
+    has_launcher_cache,
     rebuild_world_caches,
 )
 
@@ -261,37 +249,43 @@ def ensure_worlds_loaded() -> None:
     global _worlds_loading
 
     if _worlds_loaded:
+        logging.debug("ensure_worlds_loaded: already loaded, returning")
         return
 
+    logging.debug("ensure_worlds_loaded: acquiring lock...")
     with _worlds_load_lock:
+        logging.debug("ensure_worlds_loaded: lock acquired")
         if _worlds_loaded:
             return
 
-        cache_key = _calculate_datapackage_cache_key(world_sources)
-        caches_current = are_world_caches_current(cache_key)
         _worlds_loading = True
         try:
+            logging.debug("ensure_worlds_loaded: preparing launcher components")
             try:
                 from . import LauncherComponents
                 LauncherComponents.prepare_for_worlds_load()
             except Exception as exc:
                 logging.warning(f"Failed to prepare launcher components for world loading: {exc}")
 
+            logging.debug("ensure_worlds_loaded: loading loose worlds")
             failed_world_loads.clear()
             apworlds = _load_loose_worlds()
+            logging.debug(f"ensure_worlds_loaded: found {len(apworlds)} apworlds")
             if apworlds:
                 _load_apworlds(apworlds)
+            logging.debug("ensure_worlds_loaded: building network data packages")
             _build_network_data_packages()
-            if not caches_current:
-                _write_datapackage_cache(cache_key, network_data_package["games"])
-                _write_world_settings_cache(cache_key, _build_world_settings_cache_data())
 
+            logging.debug("ensure_worlds_loaded: checking for launcher cache")
+            if not has_launcher_cache():
+                logging.debug("ensure_worlds_loaded: writing launcher cache")
                 try:
                     from . import LauncherComponents
-                    LauncherComponents.write_launcher_cache(cache_key)
+                    LauncherComponents.write_launcher_cache()
                 except Exception as exc:
                     logging.warning(f"Failed to write launcher cache: {exc}")
 
+            logging.debug("ensure_worlds_loaded: complete")
             _worlds_loaded = True
         finally:
             _worlds_loading = False
@@ -302,23 +296,15 @@ def __getattr__(name: str):
         if name in globals():
             return globals()[name]
 
-        with _worlds_load_lock:
-            if name in globals():
-                return globals()[name]
+        if _worlds_loading:
+            raise RuntimeError(
+                f"Requested worlds.{name} while worlds are loading. "
+                "This access during import can deadlock world initialization."
+            )
 
-            if not _worlds_loaded:
-                cache_key = _calculate_datapackage_cache_key(world_sources)
-                cached_games = _load_datapackage_from_cache(cache_key)
-                if cached_games is not None:
-                    global network_data_package
-                    global network_data_package_single_game
-                    network_data_package = {"games": cached_games}
-                    network_data_package_single_game = {
-                        game_name: {"games": {game_name: pkg_data}}
-                        for game_name, pkg_data in network_data_package["games"].items()
-                    }
-                    return globals()[name]
-
+        logging.debug(f"__getattr__: {name} requested, triggering ensure_worlds_loaded()")
+        import traceback
+        traceback.print_stack()
         ensure_worlds_loaded()
         return globals()[name]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

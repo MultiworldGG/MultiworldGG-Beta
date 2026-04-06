@@ -308,44 +308,12 @@ class BuildExeCommand(cx_Freeze.command.build_exe.build_exe):
                                   f"{ex}\nPlease close all AP instances and delete manually.")
 
         # Eagerly load worlds so cx_Freeze sees all dependencies during its scan.
-        print("Loading worlds...")
         from worlds import ensure_worlds_loaded
         ensure_worlds_loaded()
-        print("Worlds loaded.")
 
         # regular cx build
-        print("Running cx_Freeze build (this may take a while)...", flush=True)
-        from cx_Freeze.freezer import ModuleFinder as _MF, Freezer as _Freezer
-        _orig_include = _MF.include_file_as_module
-        _orig_init = _Freezer.__init__
-        _orig_freeze = _Freezer.freeze
-        _mod_count = [0]
-
-        def _verbose_init(self_freezer, *a, **kw):
-            print("  cx_Freeze: initializing Freezer...", flush=True)
-            _orig_init(self_freezer, *a, **kw)
-            print("  cx_Freeze: Freezer initialized.", flush=True)
-
-        def _verbose_freeze(self_freezer):
-            print("  cx_Freeze: starting freeze...", flush=True)
-            _orig_freeze(self_freezer)
-            print("  cx_Freeze: freeze complete.", flush=True)
-
-        def _verbose_include(self_finder, path, name=None):
-            _mod_count[0] += 1
-            if _mod_count[0] % 20 == 0:
-                print(f"  cx_Freeze: {_mod_count[0]} modules processed...", flush=True)
-            return _orig_include(self_finder, path, name)
-
-        _MF.include_file_as_module = _verbose_include
-        _Freezer.__init__ = _verbose_init
-        _Freezer.freeze = _verbose_freeze
         self.buildtime = datetime.datetime.now(datetime.timezone.utc)
         super().run()
-        _MF.include_file_as_module = _orig_include
-        _Freezer.__init__ = _orig_init
-        _Freezer.freeze = _orig_freeze
-        print(f"cx_Freeze build complete ({_mod_count[0]} modules).")
 
         # manually copy built modules to lib folder. cx_Freeze does not know they exist.
         for src in build_ext.get_outputs():
@@ -353,24 +321,18 @@ class BuildExeCommand(cx_Freeze.command.build_exe.build_exe):
             shutil.copy(src, self.libfolder, follow_symlinks=False)
 
         # need to finish download before copying
-        print("Waiting for SNI download to finish...")
         sni_thread.join()
-        print("SNI download ready.")
 
         # overridden buildfolders are not given as a path so below path concatenation won't work
         if not isinstance(self.buildfolder, Path):
             self.buildfolder = Path(self.buildfolder)
 
         # include_files seems to not be done automatically. implement here
-        print("Copying include files...")
         for src, dst in self.include_files:
-            print(f"  {src} -> {self.buildfolder / dst}")
             shutil.copyfile(src, self.buildfolder / dst, follow_symlinks=False)
 
         # now that include_files is completely broken, run find_libs here
-        print("Copying extra libraries...")
         for src, dst in find_libs(*self.extra_libs):
-            print(f"  {src} -> {self.buildfolder / dst}")
             shutil.copyfile(src, self.buildfolder / dst, follow_symlinks=False)
 
         # post build steps
@@ -406,12 +368,10 @@ class BuildExeCommand(cx_Freeze.command.build_exe.build_exe):
         from worlds import AutoWorldRegister, ensure_worlds_loaded
         from worlds.Files import APWorldContainer
         ensure_worlds_loaded()
-        print("Generating YAML templates...")
         assert not non_apworlds - set(AutoWorldRegister.world_types), \
             f"Unknown world {non_apworlds - set(AutoWorldRegister.world_types)} designated for .apworld"
         folders_to_remove: list[str] = []
         generate_yaml_templates(self.buildfolder / "Players" / "Templates", False)
-        print("Packing worlds into .apworld files...")
         for worldname, worldtype in AutoWorldRegister.world_types.items():
             if worldname not in non_apworlds:
                 file_name = os.path.split(os.path.dirname(worldtype.__file__))[1]
