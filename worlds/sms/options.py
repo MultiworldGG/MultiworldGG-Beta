@@ -79,6 +79,30 @@ class StartingNozzle(Choice):
     option_fluddless = 2
     default = 0
 
+class Difficulty(Choice):
+    """This enables difficulty settings. Higher difficulty settings will include checks in logic that normally
+    are not possible without doing difficult or unintended things. This includes spraying things with different
+    nozzles, doing difficult platforming, and executing glitches."""
+    display_name = "Difficulty"
+    option_normal = 0
+    option_hard = 1
+    option_advanced = 2
+    option_salty_tears = 3
+    default = 0
+
+
+class NozzleBoxes(Toggle):
+    """Enables Nozzle Boxes as a location."""
+    display_name = "Enable Nozzle Boxes"
+
+
+class AllShinesSelectable(Toggle):
+    """
+    Enables you to select every shine without having to complete each in order.
+    You will still need access to each hub (Gelato Beach, Noki Bay, Pinna Park, etc.)
+    """
+    display_name = "All Shines Selectable"
+
 
 @dataclass
 class SmsOptions(PerGameCommonOptions):
@@ -86,8 +110,11 @@ class SmsOptions(PerGameCommonOptions):
     enable_coin_shines: EnableCoinShines
     corona_mountain_shines: CoronaMountainShines
     extra_shines: ExtraShines
+    nozzle_boxes: NozzleBoxes
+    all_shines_selectable: AllShinesSelectable
     blue_coin_sanity: BlueCoinSanity
     blue_coin_maximum: BlueCoinMaximum
     trade_shine_maximum: TradeShineMaximum
     starting_nozzle: StartingNozzle
     death_link: DeathLink
+    difficulty: Difficulty

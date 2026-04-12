@@ -182,14 +182,14 @@ def calculate_starter_locations(options: SonicAdventureDXOptions,
                                 possible_characters: List[Character],
                                 world: World) -> StarterSetup:
     starter_setup = StarterSetup()
-    for character in possible_characters:
-        possible_starter_areas = get_possible_starting_areas(options)
-        if options.starting_location.value == 0 and Area.SSMain in possible_starter_areas:
-            starter_setup.area = Area.SSMain
-        else:
-            starter_setup.area = world.random.choice(possible_starter_areas)
-        starter_setup.character = character
-        break
+
+    possible_starter_areas = get_possible_starting_areas(options)
+    if options.starting_location.value == 0 and Area.SSMain in possible_starter_areas:
+        starter_setup.area = Area.SSMain
+    else:
+        starter_setup.area = world.random.choice(possible_starter_areas)
+    starter_setup.character = possible_characters[0]
+
     if not starter_setup.area:
         raise OptionError(
             "SADX Error: Couldn't define a valid starting location (Probably a problem of low settings, guaranteed level and/or fixed starting location).")

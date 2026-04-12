@@ -3367,7 +3367,7 @@
     },
     {
         "category": "fc", "logsanity": true, "address": 1085047104, "name": "DB Ship Log: Stranded Nomai 5 - Warp",
-        "region": "Menu", "requires": [ { "item": "Deep Bramble Coordinates" } ] // Regulated by DpB Coords to control your ability to warp into the Deep Bramble
+        "region": "Space", "requires": [ { "item": "Deep Bramble Coordinates" } ] // Regulated by DpB Coords to control your ability to warp into the Deep Bramble
     },
     {
         "category": "fc", "logsanity": true, "address": 1085047105, "name": "FC Ship Log: Bramble's Doorstep 1 - Visit",
@@ -3375,7 +3375,7 @@
     },
     {
         "category": "fc", "logsanity": true, "address": 1085047106, "name": "FC Ship Log: Bramble's Doorstep 2 - Nomai",
-        "region": "Menu", "requires": [ { "item": "Deep Bramble Coordinates" } ] // Regulated by DpB Coords to control your ability to warp out of the Deep Bramble
+        "region": "Deep Bramble", "requires": [ { "item": "Deep Bramble Coordinates" } ] // Regulated by DpB Coords to control your ability to warp out of the Deep Bramble
     },
     {
         "category": "fc", "logsanity": true, "address": 1085047107, "name": "FC Ship Log: Bramble's Doorstep 3 - Split",
@@ -3484,7 +3484,7 @@
     },
     {
         "category": "fc", "logsanity": true, "address": 1085047132, "name": "FC Ship Log: Pillar Town 2 - Gift",
-        "region": "Graviton's Folly", "requires": [ { "item": "Translator (Deep Bramble)" } ]
+        "region": "Graviton's Folly", "requires": [ { "item": "Translator (Deep Bramble)" }, { "item":  "Expanded Dictionary" } ]
     },
     {
         "category": "fc", "logsanity": true, "address": 1085047133, "name": "FC Ship Log: Alien Study 1 - Identify",

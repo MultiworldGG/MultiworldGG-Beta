@@ -57,20 +57,20 @@ class VampireSurvivors(World):
 		if hasattr(self.multiworld, "re_gen_passthrough"):
 			if "Vampire Survivors" not in self.multiworld.re_gen_passthrough: return
 			passthrough = self.multiworld.re_gen_passthrough["Vampire Survivors"]
-			if self.starting_character in passthrough:
-				starting_character = passthrough[self.starting_character]
+			if "starting_character" in passthrough:
+				self.starting_character = passthrough["starting_character"]
 			
-			if self.starting_stage in passthrough:
-				starting_stage = passthrough[self.starting_stage]
+			if "self.starting_stage" in passthrough:
+				self.starting_stage = passthrough["self.starting_stage"]
 			
-			if self.final_included_stages_list in passthrough:
-				final_stages = passthrough[self.final_included_stages_list]
+			if "final_stages" in passthrough:
+				self.final_included_stages_list = passthrough["final_stages"]
 			
-			if self.final_included_characters_list in passthrough:
-				final_chars = passthrough[self.final_included_characters_list]
+			if "final_chars" in passthrough:
+				self.final_included_characters_list = passthrough["final_chars"]
 			
-			if self.ending_stage_count in passthrough:
-				ending_stage_count = passthrough[self.ending_stage_count]
+			if "ending_stage_count" in passthrough:
+				self.ending_stage_count = passthrough["ending_stage_count"]
 			
 			self.multiworld.push_precollected(self.create_item(f"Stage Unlock: {self.starting_stage}"))
 			self.multiworld.push_precollected(self.create_item(f"Character Unlock: {self.starting_character}"))
@@ -139,8 +139,6 @@ class VampireSurvivors(World):
 		if self.options.goal_requirement == 0:
 			self.multiworld.completion_condition[self.player] = lambda state: has_amount(state, player, options, "Beat a Stage", self.stage_goal_amount)
 		elif self.options.goal_requirement == 1:
-			if self.ending_stage_count == 0:
-				self.ending_stage_count = int(len(self.final_included_stages_list) * .75)
 			self.multiworld.completion_condition[self.player] = lambda state: has_stage(state, player, options, EUDAI) and has_amount(state, player, options, "Beat a Stage", self.ending_stage_count)
 
 	def fill_slot_data(self):

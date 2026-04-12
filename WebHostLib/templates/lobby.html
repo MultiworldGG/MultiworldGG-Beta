@@ -192,6 +192,12 @@
                                 <button id="lock-btn" class="lobby-btn lobby-btn-warning">{% if lobby.state == 3 %}Unlock Lobby{% else %}Lock Lobby{% endif %}</button>
                                 <button id="abandon-btn" class="lobby-btn lobby-btn-danger">Abandon Lobby</button>
                             {% endif %}
+                            {% if is_owner %}
+                                <button id="reopen-btn" class="lobby-btn lobby-btn-warning"
+                                        {% if lobby.state != 2 %}style="display:none"{% endif %}>
+                                    Reopen Lobby
+                                </button>
+                            {% endif %}
                             <span id="lobby-status" class="lobby-status-{{ lobby.state }}">
                                 {% if lobby.state == 0 %}Open
                                 {% elif lobby.state == 1 %}Generating...
@@ -495,6 +501,8 @@
         </div>
     </div>
     {% endif %}
+
+    <div id="toast-container"></div>
 
     {% if player or is_viewer %}
     <script>

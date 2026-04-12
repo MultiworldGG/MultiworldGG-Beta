@@ -165,6 +165,19 @@ def _handle_removed_active_apworld(yaml_record: LobbyYaml) -> None:
     lobby = yaml_record.lobby
     game_name = active_apworld.game_name
     removed_version = active_apworld.world_version
+
+    same_game_yamls = select(
+        y for y in LobbyYaml
+        if y.lobby == lobby
+        and y.yaml_game == game_name
+        and y.id != yaml_record.id
+    ).order_by(LobbyYaml.id)[:]
+    server_world_version = _server_world_version_for_game(game_name)
+    removed_by_name = yaml_record.player.player_name if yaml_record.player else "a player"
+    remaining_players = sorted({
+        y.player.player_name for y in same_game_yamls if y.player
+    })
+
     _delete_apworld_file(active_apworld)
     active_apworld.delete()
 
@@ -174,21 +187,25 @@ def _handle_removed_active_apworld(yaml_record: LobbyYaml) -> None:
         "active APWorld changed",
     )
 
-    server_world_version = _server_world_version_for_game(game_name)
     if server_world_version is None:
-        _lobby_system_message(
-            lobby,
-            f"Custom APWorld for '{game_name}' was removed. "
-            f"Players using this game must upload a replacement APWorld.",
-        )
+        if len(remaining_players) == 1:
+            _lobby_system_message(
+                lobby,
+                f"{remaining_players[0]}: the APWorld that replaced yours was removed "
+                f"after {removed_by_name}'s YAML was deleted. You may upload another APWorld.",
+            )
+        elif remaining_players:
+            _lobby_system_message(
+                lobby,
+                f"Custom APWorld for '{game_name}' was removed after {removed_by_name}'s YAML was deleted. "
+                f"Players using this game can upload a replacement APWorld: {', '.join(remaining_players)}.",
+            )
+        else:
+            _lobby_system_message(
+                lobby,
+                f"Custom APWorld for '{game_name}' was removed after {removed_by_name}'s YAML was deleted.",
+            )
         return
-
-    same_game_yamls = select(
-        y for y in LobbyYaml
-        if y.lobby == lobby
-        and y.yaml_game == game_name
-        and y.id != yaml_record.id
-    ).order_by(LobbyYaml.id)[:]
 
     deleted_count = 0
     for y in list(same_game_yamls):
@@ -209,6 +226,12 @@ def _handle_removed_active_apworld(yaml_record: LobbyYaml) -> None:
     if deleted_count:
         summary += f" Removed {deleted_count} incompatible YAML(s)."
     _lobby_system_message(lobby, summary)
+    if len(remaining_players) == 1:
+        _lobby_system_message(
+            lobby,
+            f"{remaining_players[0]}: the APWorld that replaced yours was removed "
+            f"after {removed_by_name}'s YAML was deleted. You can upload your APWorld again.",
+        )
 
 
 def _cleanup_yaml_apworld(yaml_record: LobbyYaml) -> None:
@@ -1175,7 +1198,7 @@ def lobby_upload_yaml(lobby: UUID):
             noticed_apworld_games.add(game)
             apworld_ver, server_ver = active_apworld_games[game]
             diff = f"{apworld_ver} (server: {server_ver})" if server_ver else apworld_ver
-            active_apworld_notices.append(f"{game}: custom APWorld {diff} is active")
+            active_apworld_notices.append(f"{game}: custom APWorld {diff}")
 
         yaml_record = LobbyYaml(
             lobby=lobby,
@@ -1271,7 +1294,13 @@ def lobby_delete_yaml(lobby: UUID, yaml_id: int):
     if not player or (yaml_record.player != player and not is_owner):
         return jsonify({"error": "Permission denied"}), 403
 
-    _delete_yaml_record(yaml_record, "manually removed")
+    if yaml_record.player == player:
+        delete_reason = "manually removed"
+    else:
+        deleter_name = player.player_name if player else "Host"
+        delete_reason = f"removed by host {deleter_name}"
+
+    _delete_yaml_record(yaml_record, delete_reason)
     lobby.last_activity = utcnow()
     commit()
 
@@ -1676,6 +1705,45 @@ def lobby_close(lobby: UUID):
     commit()
 
     return jsonify({"success": True})
+
+
+@api_endpoints.route('/lobby/<suuid:lobby>/reopen', methods=['POST'])
+def lobby_reopen(lobby: UUID):
+    lobby = Lobby.get(id=lobby)
+    if not lobby:
+        return jsonify({"error": "Lobby not found"}), 404
+
+    if lobby.owner != session["_id"]:
+        return jsonify({"error": "Only the lobby owner can reopen the lobby"}), 403
+
+    if lobby.state != LOBBY_DONE:
+        return jsonify({"error": "Only finished lobbies can be reopened"}), 400
+
+    room = lobby.room
+    seed = lobby.seed
+    lobby.room = None
+    lobby.seed = None
+    lobby.generation_id = None
+    lobby.state = LOBBY_OPEN
+    lobby.last_activity = utcnow()
+
+    for player in select(p for p in LobbyPlayer if p.lobby == lobby):
+        player.is_ready = False
+
+    if room:
+        room.delete()
+    if seed and not seed.rooms and not seed.lobbies:
+        for slot in list(seed.slots):
+            slot.delete()
+        seed.delete()
+
+    LobbyMessage(
+        lobby=lobby, player=None, sender_name="System",
+        content="The lobby has been reopened by the host. Previous seed and room data were removed.",
+    )
+    commit()
+
+    return jsonify({"success": True, "state": lobby.state})
 
 
 @api_endpoints.route('/lobby/<suuid:lobby>/lock', methods=['POST'])

@@ -4,22 +4,24 @@ import traceback
 from collections.abc import Callable
 from CommonClient import CommonContext, get_base_parser, server_loop, ClientCommandProcessor, handle_url_arg
 import os
-import time
 import sys
-from typing import Union, Any, TYPE_CHECKING
+from typing import Union, TYPE_CHECKING
 
 
-from BaseClasses import CollectionState, MultiWorld, LocationProgressType, ItemClassification, Location
-from worlds.generic.Rules import exclusion_rules
-from Utils import __version__, output_path, open_filename,async_start, gui_enabled, instance_name
+from BaseClasses import CollectionState, Location
+from Utils import __version__, async_start, open_filename, persistent_load, persistent_store, instance_name
 apname = instance_name if instance_name else "Archipelago"
-
 from worlds import AutoWorld
-from . import TrackerWorld, UTMapTabData, CurrentTrackerState,UT_VERSION
+from . import TrackerWorld, UTMapTabData, CurrentTrackerState, UT_VERSION
 from .TrackerCore import TrackerCore
 from collections import Counter, defaultdict
 from MultiServer import mark_raw
 from NetUtils import NetworkItem
+
+try:
+    from Utils import gui_enabled
+except ImportError:
+    gui_enabled = not sys.stdout or "--nogui" not in sys.argv #if we fail to find, just guess it ourselves
 
 from . import TrackerCore
 
@@ -27,7 +29,6 @@ from Generate import main as GMain, mystery_argparse
 
 if TYPE_CHECKING:
     from kvui import GameManager
-    from argparse import Namespace
 
 if not sys.stdout:  # to make sure sm varia's "i'm working" dots don't break UT in frozen
     sys.stdout = open(os.devnull, 'w', encoding="utf-8")  # from https://stackoverflow.com/a/6735958
@@ -116,12 +117,14 @@ class TrackerCommandProcessor(ClientCommandProcessor):
     def _cmd_manually_collect(self, item_name: str = ""):
         """Manually adds an item name to the CollectionState to test"""
         self.ctx.tracker_core.manual_items.append(item_name)
+        self.ctx.persist_seed_data()
         self.ctx.updateTracker()
         logger.info(f"Added {item_name} to manually collect.")
 
     def _cmd_reset_manually_collect(self):
         """Resets the list of items manually collected by /manually_collect"""
         self.ctx.tracker_core.manual_items = []
+        self.ctx.persist_seed_data()
         self.ctx.updateTracker()
         logger.info("Reset manually collect.")
 
@@ -139,6 +142,7 @@ class TrackerCommandProcessor(ClientCommandProcessor):
             return
 
         self.ctx.tracker_core.ignored_locations.add(location_name_to_id[location_name])
+        self.ctx.persist_seed_data()
         self.ctx.updateTracker()
         logger.info(f"Added {location_name} to ignore list.")
 
@@ -154,6 +158,7 @@ class TrackerCommandProcessor(ClientCommandProcessor):
         for loc in updatetracker_ret.in_logic_locations:
             if loc in location_name_to_id:
                 self.ctx.tracker_core.ignored_locations.add(location_name_to_id[loc])
+        self.ctx.persist_seed_data()
         self.ctx.updateTracker()
 
     @mark_raw
@@ -175,6 +180,7 @@ class TrackerCommandProcessor(ClientCommandProcessor):
             return
 
         self.ctx.tracker_core.ignored_locations.remove(location)
+        self.ctx.persist_seed_data()
         self.ctx.updateTracker()
         logger.info(f"Removed {location_name} from ignore list.")
 
@@ -195,6 +201,7 @@ class TrackerCommandProcessor(ClientCommandProcessor):
     def _cmd_reset_ignored(self):
         """Reset the list of ignored locations"""
         self.ctx.tracker_core.ignored_locations.clear()
+        self.ctx.persist_seed_data()
         self.ctx.updateTracker()
         logger.info("Reset ignored locations.")
 
@@ -1300,7 +1307,9 @@ class TrackerGameContext(CommonContext):
 
     def on_package(self, cmd: str, args: dict):
         try:
-            if cmd == 'Connected':
+            if cmd == "RoomInfo":
+                self.seed_name = args["seed_name"]
+            elif cmd == "Connected":
                 self.game = args["slot_info"][str(args["slot"])][1]
                 slot_name = args["slot_info"][str(args["slot"])][0]
                 self.tracker_core.set_slot_params(self.game,self.slot,slot_name,self.team)
@@ -1316,6 +1325,7 @@ class TrackerGameContext(CommonContext):
                     logger.error("Internal generation failed, something has gone wrong")
                     logger.error("Run the /faris_asked command and post the results in the discord")
                     return #if this has failed we don't want to even try anything else
+                self.load_seed_data()
                 if self.ui is not None and hasattr(connected_cls, "tracker_world"):
                     self.tracker_world = UTMapTabData(self.slot, self.team, **getattr(connected_cls,"tracker_world",{}))
                 elif self.ui is not None and hasattr(self.tracker_core.get_current_world(),"tracker_world"):
@@ -1413,6 +1423,7 @@ class TrackerGameContext(CommonContext):
     async def disconnect(self, allow_autoreconnect: bool = False):
         if "Tracker" in self.tags:
             self.game = ""
+            self.seed_name = None
             if self.ui:
                 self.ui.show_map = False
             if self.tracker_world:
@@ -1428,8 +1439,6 @@ class TrackerGameContext(CommonContext):
             self.tracker_world = None
             self.defered_entrance_callback = None
             self.defered_entrance_datastorage_keys = []
-            # TODO: persist these per url+slot(+seed)?
-            self.tracker_core.ignored_locations.clear()
             self.set_page("Connect to a slot to start tracking!")
             if hasattr(self, "tracker_total_locs_label"):
                 self.tracker_total_locs_label.text = f"Locations: 0/0"
@@ -1445,6 +1454,37 @@ class TrackerGameContext(CommonContext):
         self.local_items.clear()
 
         await super().disconnect(allow_autoreconnect)
+
+    @property
+    def _persistence_enabled(self) -> bool:
+        return (
+            TrackerWorld.settings.save_entered_commands
+            and self.seed_name is not None
+            and self.slot is not None
+            and self.team is not None
+        )
+
+    @property
+    def _persistent_key(self) -> str:
+        return f"{self.seed_name}:{self.team}:{self.slot}"
+
+    def load_seed_data(self) -> None:
+        if not self._persistence_enabled:
+            return
+        data = persistent_load().get("universal_tracker", {}).get(self._persistent_key, {})
+        if ignored_locations := data.get("ignored_locations"):
+            self.tracker_core.ignored_locations = set(ignored_locations)
+        if manual_items := data.get("manual_items"):
+            self.tracker_core.manual_items = manual_items
+
+    def persist_seed_data(self) -> None:
+        if not self._persistence_enabled:
+            return
+        data = {
+            "ignored_locations": sorted(self.tracker_core.ignored_locations),
+            "manual_items": self.tracker_core.manual_items,
+        }
+        persistent_store("universal_tracker", self._persistent_key, data)
 
 
 
@@ -1491,7 +1531,8 @@ def explain(ctx: TrackerGameContext, dest_name: str):
         return
     current_world = ctx.tracker_core.get_current_world()
     assert current_world
-    state = ctx.updateTracker().state
+    tracker_struct = ctx.updateTracker()
+    state = tracker_struct.state
     if not state: return
 
     if hasattr(current_world,"explain_rule"):
@@ -1499,6 +1540,11 @@ def explain(ctx: TrackerGameContext, dest_name: str):
         if returned_json:
             ctx.ui.print_json(returned_json)
             return
+        elif tracker_struct.glitches_state is not None: #if this is None don't bother
+            returned_json = current_world.explain_rule(dest_name,tracker_struct.glitches_state)
+            if returned_json:
+                ctx.ui.print_json(returned_json)
+                return
 
     from Utils import get_intended_text
     location_names = set(ctx.tracker_core.multiworld.regions.location_cache[ctx.tracker_core.player_id])
@@ -1546,18 +1592,27 @@ def get_logical_path(ctx: TrackerGameContext, dest_name: str):
         logger.error("Player YAML not installed or Generator failed")
         ctx.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}")
         return
+    if not ctx.ui:
+        logger.error("No UI, i'm not converting this back to prints, sorry")
+        return
     relevent_region = None
     relevent_location = None
+    tracker_struct = ctx.updateTracker()
     state = None
     current_world = ctx.tracker_core.get_current_world()
     assert current_world
 
     if hasattr(current_world,"get_logical_path"):
-        state = ctx.updateTracker().state
+        state = tracker_struct.state
         returned_json = current_world.get_logical_path(dest_name,state)
         if returned_json:
             ctx.ui.print_json(returned_json)
             return
+        elif tracker_struct.glitches_state is not None: #if this is None don't bother
+            returned_json = current_world.get_logical_path(dest_name,tracker_struct.glitches_state)
+            if returned_json:
+                ctx.ui.print_json(returned_json)
+                return
 
     from Utils import get_intended_text
     location_names = set(ctx.tracker_core.multiworld.regions.location_cache[ctx.tracker_core.player_id])
@@ -1569,16 +1624,26 @@ def get_logical_path(ctx: TrackerGameContext, dest_name: str):
     dest_name = result
     if dest_name in location_names:
         location = ctx.tracker_core.multiworld.get_location(dest_name, ctx.tracker_core.player_id)
-        state = ctx.updateTracker().state
+        state = tracker_struct.state
         if not state: return
         if location.can_reach(state):
             relevent_region = location.parent_region
             relevent_location = location
+        elif tracker_struct.glitches_state and location.can_reach(tracker_struct.glitches_state):
+            relevent_region = location.parent_region
+            relevent_location = location
+            state = tracker_struct.glitches_state
+            ctx.ui.print_json([{"type":"text","text":"using "},{"type":"color","color":"yellow","text":"Glitches:"}])
     elif dest_name in region_names:
         relevent_region = ctx.tracker_core.multiworld.get_region(dest_name,ctx.tracker_core.player_id)
-        state = ctx.updateTracker().state
+        state = tracker_struct.state
         if not state: return
-        if not relevent_region.can_reach(state):
+        if relevent_region.can_reach(state):
+            pass #it's easier to write this stack like this
+        elif tracker_struct.glitches_state and relevent_region.can_reach(tracker_struct.glitches_state):
+            state = tracker_struct.glitches_state
+            ctx.ui.print_json([{"type":"text","text":"using "},{"type":"color","color":"yellow","text":"Glitches:"}])
+        else: #all else fails, we need to give up
             relevent_region = None
     else:
         logger.error(response)

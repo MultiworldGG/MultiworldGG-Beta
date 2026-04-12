@@ -90,6 +90,25 @@ class MkddCommandProcessor(ClientCommandProcessor):
         settings.dolphin_process_name = dolphin_process_name
         get_settings().save()
         logger.info(f"Dolphin process name set to {dolphin_process_name or "default"}. You must open a new client for this to take effect.")
+    
+    def _cmd_launch(self) -> None:
+        """Launch Dolphin running Mario Kart Double Dash."""
+        import os
+        if not os.path.isfile(settings.rom_path):
+            new_path = settings.rom_path.browse([("Rom file", ["*.ISO", "*.RVZ", "*.GCZ"])])
+            if new_path != None:
+                settings.rom_path = new_path
+                get_settings().save()
+        if os.path.isfile(settings.rom_path) and os.path.isfile(settings.dolphin_path):
+            os.startfile(settings.dolphin_path, arguments=f'"{settings.rom_path}"')
+        else:
+            logger.error("Dolphin or ROM path not valid.")
+    
+    def _cmd_reset_paths(self) -> None:
+        """Reset file paths to Dolphin and ROM."""
+        settings.rom_path = settings.RomPath()
+        settings.dolphin_path = settings.DolphinPath()
+        get_settings().save()
 
 
 class MkddContext(CommonContext):
@@ -230,6 +249,8 @@ class MkddContext(CommonContext):
                 self.ui.update_characters([])
                 self.ui.update_cc(0)
                 self.ui.update_cups([])
+                self.ui.update_speed_upgrades(0, 3)
+                self.ui.update_karts([])
                 
             self.cups_courses = slot_data["cups_courses"]
             self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
@@ -239,7 +260,8 @@ class MkddContext(CommonContext):
             self.character_item_total_weights = slot_data.get("character_item_total_weights")
             self.global_items_total_weights = slot_data.get("global_items_total_weights")
 
-            sync_state(self)
+            if self.dolphin_status == CONNECTION_CONNECTED_STATUS:
+                sync_state(self)
         elif cmd == "ReceivedItems":
             if args["index"] >= self.last_rcvd_index:
                 self.last_rcvd_index = args["index"]
@@ -296,17 +318,19 @@ class MkddContext(CommonContext):
             def build(self):
                 container = super().build()
                 from kivy.metrics import dp
-                from kvui import MDBoxLayout, MDGridLayout, MDLabel
+                from kvui import MDBoxLayout, MDGridLayout, MDLabel, MDDivider
+                from kivymd.uix.button import MDButton, MDButtonText
                 from kivymd.uix.fitimage import FitImage
-                
+
                 def get_image(source: str, width: int = 0, height: int = 0) -> FitImage:
+                    """Loads and image from images/ folder and returns it as a widget."""
                     from importlib import resources
                     from kivy.core.image import Image
                     from io import BytesIO
                     img = resources.files(__package__ + ".images").joinpath(source)
                     data = img.read_bytes()
                     raw_image = Image(BytesIO(data), ext=img.suffix[1:])
-                    image = FitImage(texture = raw_image.texture)
+                    image = FitImage(texture=raw_image.texture)
                     if width > 0:
                         image.size_hint_x = None
                         image.width = dp(width)
@@ -315,22 +339,24 @@ class MkddContext(CommonContext):
                         image.height = dp(height)
                     return image
                 
-                layout = MDBoxLayout(
-                    orientation = "horizontal",
+                self.status_bar = MDGridLayout(
+                    rows=2,
                     size_hint_y = None,
-                    height = dp(50),
+                    height = dp(100),
                     spacing = dp(5),
                     padding = dp(5),
                 )
+                self.grid.add_widget(self.status_bar)
                 
-                layout.add_widget(get_image("trophy_1.png", 36, 36))
+                # Trophies
+                self.status_bar.add_widget(get_image("trophy_1.png", 36, 36))
+                self.trophies_text: MDLabel = MDLabel(text="0/10", halign="left", role="large")
+                self.status_bar.add_widget(self.trophies_text)
 
-                self.trophies_text: MDLabel = MDLabel(text = "0/10", halign = "left", role = "large")
-                layout.add_widget(self.trophies_text)
-
-                layout.add_widget(MDLabel(text = "Characters", halign = "right", role = "large"))
+                # Characters
+                self.status_bar.add_widget(MDLabel(text="Characters", halign="right", role="large"))
                 char_grid = MDGridLayout(rows = 2, padding = 0, size_hint_x = None, width = dp(180))
-                layout.add_widget(char_grid)
+                self.status_bar.add_widget(char_grid)
                 self.character_icons: list[FitImage] = []
                 for i in range(20):
                     self.character_icons.append(get_image(f"character_{i + 1}.png", 18, 18))
@@ -339,15 +365,56 @@ class MkddContext(CommonContext):
                     for x in range(10):
                         char_grid.add_widget(self.character_icons[x * 2 + y])
 
-                self.cc_text: MDLabel = MDLabel(text = "50CC", halign = "right", role = "large")
-                layout.add_widget(self.cc_text)
+                # Cups
+                cup_box = MDBoxLayout(orientation="horizontal", spacing=dp(5))
+                self.status_bar.add_widget(cup_box)
+                cup_box.add_widget(MDLabel()) # For alignment...
+                self.cc_text: MDLabel = MDLabel(text="50CC", halign="right", role="large", size_hint_x=None, width=dp(50))
+                cup_box.add_widget(self.cc_text)
                 self.cup_icons: list[FitImage] = []
                 for i in range(4):
                     self.cup_icons.append(get_image(f"cup_{i + 1}.png", 36, 36))
-                    layout.add_widget(self.cup_icons[i])
+                    cup_box.add_widget(self.cup_icons[i])
 
-                self.grid.add_widget(layout)
+                # Speed
+                self.status_bar.add_widget(get_image("speed.png", 36, 36))
+                self.speed_text: MDLabel = MDLabel(text="0/3", halign="left", role="large")
+                self.status_bar.add_widget(self.speed_text)
+
+                # Karts
+                self.status_bar.add_widget(MDLabel(text="Karts", halign="right", role="large"))
+                kart_grid = MDGridLayout(rows=2, padding=0, size_hint_x=None, width=dp(18 * 11))
+                self.status_bar.add_widget(kart_grid)
+                self.kart_icons: list[FitImage] = []
+                for i in range(20):
+                    self.kart_icons.append(get_image(f"character_{i + 1}.png", 18, 18))
+                self.kart_icons.append(get_image("trophy_1.png", 18, 18))
+                # Grid is filled in row-major order, but karts are in column-major, so we need to pivot.
+                for y in range(2):
+                    for x in range(10):
+                        kart_grid.add_widget(self.kart_icons[x * 2 + y])
+                        if x == 9 and y == 0:
+                            kart_grid.add_widget(self.kart_icons[20])
+
+                self.launch_button: MDButton = MDButton(MDButtonText(text="Launch Game"), style="filled", radius=5)
+                self.status_bar.add_widget(self.launch_button)
+                # Don't ask why, but the layout screws up if there isn't a button here, so a placeholder.
+                # One would think disabling the button would do something, but for whatever reason it disables only visually.
+                self.launch_button2: MDButton = MDButton(MDButtonText(text="Launch Game"), radius=5)
                 return container
+            
+            def set_launch_func(self, f) -> None:
+                self.launch_button.bind(on_release=f)
+            
+            def show_launch_button(self, show: bool) -> None:
+                if show:
+                    if self.launch_button not in self.status_bar.children:
+                        self.status_bar.add_widget(self.launch_button)
+                        self.status_bar.remove_widget(self.launch_button2)
+                else:
+                    if self.launch_button in self.status_bar.children:
+                        self.status_bar.remove_widget(self.launch_button)
+                        self.status_bar.add_widget(self.launch_button2)
 
             def update_trophies(self, current: int, goal: int) -> None:
                 self.trophies_text.text = f"{current}/{goal}"
@@ -355,7 +422,7 @@ class MkddContext(CommonContext):
             def update_characters(self, unlocked_characters: list[int]) -> None:
                 for idx, img in enumerate(self.character_icons):
                     img.opacity = 1 if idx in unlocked_characters else .2
-            
+
             def update_cc(self, current_vehile_class: int) -> None:
                 self.cc_text.text = ["50CC", "100CC", "150CC", "Mirror"][min(3, current_vehile_class)]
 
@@ -363,6 +430,17 @@ class MkddContext(CommonContext):
                 for idx, img in enumerate(self.cup_icons):
                     img.opacity = 1 if idx in unlocked_cups else .2
         
+            def update_speed_upgrades(self, current: int, in_pool: int) -> None:
+                self.speed_text.text = f"{current}/{in_pool}"
+
+            def update_karts(self, unlocked_karts: list[int]) -> None:
+                # Kart ids are different from character ids, but they are shown in order of the characters.
+                for idx, img in enumerate(self.kart_icons):
+                    kart_no: int = 20 # Parade Kart isn't anybody's default.
+                    if idx < 20:
+                        kart_no = game_data.CHARACTERS[idx].default_kart
+                    img.opacity = 1 if kart_no in unlocked_karts else .2
+            
         return MKDDManager
 
 
@@ -446,12 +524,16 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
         kart = game_data.KARTS[item.address]
         dolphin.write_byte(ctx.memory_addresses.available_karts_bx + kart.unlock_id, 1)
         ctx.unlocked_karts.append(item.address)
+        if ctx.ui:
+            ctx.ui.update_karts(ctx.unlocked_karts)
     
     elif item.item_type == ItemType.KART_UPGRADE:
         ctx.kart_upgrades[item.address].append(item.meta)
     
     elif item.name == items.PROGRESSIVE_ENGINE:
         ctx.engine_upgrade_level += 1
+        if ctx.ui:
+            ctx.ui.update_speed_upgrades(ctx.engine_upgrade_level, 3)
     
     elif item.item_type == ItemType.CUP:
         ctx.unlocked_cups.append(item.address)
@@ -550,35 +632,13 @@ async def check_locations(ctx: MkddContext) -> None:
     ctx.last_race_timer = race_timer
 
     # Gets the current courses and its special box targets to verify the value of each boxes next to its targeted address.
-    # When one of the boxes is hit the value of 32 in hex will be in the address next to the targeted address and the check will be activated.
     course_name = ctx.current_course.name
     special_box_groups = ctx.memory_addresses.item_box_target_pointer.get(course_name, [])
-
     if in_game and special_box_groups:
-        unchecked_item_box_locations = []
-
-        for (index, signatures) in enumerate(special_box_groups):
-            location_name = locations.get_loc_name_item_box(course_name, index)
-            if locations.name_to_id.get(location_name) not in ctx.locations_checked:
-                unchecked_item_box_locations.append((signatures, location_name))
-
-        if unchecked_item_box_locations:
-            scan_start = 0x81000000
-            scan_end = 0x810F0000
-
-            data = dolphin.read_bytes(scan_start, scan_end - scan_start)
-
-            if data and len(data) > 8:
-                for offset in range(0, len(data) - 8, 4):
-                    found_signature = struct.unpack(">I", data[offset: offset + 4])[0]
-
-                    for (target_signatures, location_name) in unchecked_item_box_locations[:]:
-                        if found_signature in target_signatures:
-                            box_status_value = struct.unpack(">I", data[offset + 4: offset + 8])[0]
-
-                            if box_status_value == 0x20:
-                                new_location_names.add(location_name)
-                                unchecked_item_box_locations.remove((target_signatures, location_name))
+        item_box: int = dolphin.read_word(ctx.memory_addresses.item_box_p)
+        for (index, box_ids) in enumerate(special_box_groups):
+            if item_box in box_ids:
+                new_location_names.add(locations.get_loc_name_item_box(course_name, index))
 
     # Course finishing related locations.
     # For Time Trials check against default lap counts.
@@ -1130,6 +1190,8 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
         dolphin_name = os.getenv(DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE) or "Dolphin"
         try:
             if dolphin.is_hooked() and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
+                if ctx.ui:
+                    ctx.ui.show_launch_button(False)
                 if ctx.slot is not None:
                     if "DeathLink" in ctx.tags:
                         await check_death(ctx)
@@ -1149,6 +1211,9 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                     ctx.dolphin_status = CONNECTION_LOST_STATUS
                 await asyncio.sleep(0.1)
             else:
+                if ctx.ui:
+                    ctx.ui.set_launch_func(ctx.command_processor._cmd_launch)
+                    ctx.ui.show_launch_button(True)
                 if ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
                     logger.info(f"Connection to {dolphin_name} lost, reconnecting...")
                     ctx.dolphin_status = CONNECTION_LOST_STATUS
@@ -1170,20 +1235,18 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                 else:
                     logger.info(f"Connection to {dolphin_name} failed, attempting again in 5 seconds...")
                     ctx.dolphin_status = CONNECTION_LOST_STATUS
-                    await ctx.disconnect()
                     await asyncio.sleep(5)
                     continue
         except Exception:
             dolphin.un_hook()
             logger.info(f"Connection to {dolphin_name} failed, attempting again in 5 seconds...")
-            logger.error(traceback.format_exc())
+            logger.warning(traceback.format_exc())
             ctx.dolphin_status = CONNECTION_LOST_STATUS
-            await ctx.disconnect()
             await asyncio.sleep(5)
             continue
 
 
-def main(connect: Optional[str] = None, password: Optional[str] = None) -> None:
+def main(*args) -> None:
     """
     Run the main async loop for Mario Kart Double Dash client.
 
@@ -1217,14 +1280,22 @@ def main(connect: Optional[str] = None, password: Optional[str] = None) -> None:
             await asyncio.sleep(3)
             await ctx.dolphin_sync_task
 
+    parser = get_base_parser(description="Mario Kart Double Dash Client.")
+    parser.add_argument('--name', default=None, help="Slot Name to connect as.")
+    parser.add_argument("url", nargs="?", help="Archipelago connection url")
+    args = parser.parse_args(args)
+
+    from CommonClient import handle_url_arg
+    args = handle_url_arg(args, parser=parser)
+
     import colorama
 
     colorama.init()
-    asyncio.run(_main(connect, password))
+    asyncio.run(_main(args.connect, args.password))
     colorama.deinit()
 
 
 if __name__ == "__main__":
     parser = get_base_parser()
     args = parser.parse_args()
-    main(args.connect, args.password)
+    main(args)

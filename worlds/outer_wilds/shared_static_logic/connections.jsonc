@@ -66,7 +66,7 @@
     // land on the Interloper with your Spaceship, or
     { "from": "Space", "to": "Frozen Shuttle Log", "requires": [] },
     // use Ember Twin's Gravity Cannon to recall the shuttle
-    { "from": "Hourglass Twins", "to": "Frozen Shuttle Log", "requires": [] },
+    { "from": "Hourglass Twins", "to": "Frozen Shuttle Log", "requires": [ { "item": "Spacesuit" } ] },
 
     // if you have both the frequency and signal items, you can scan the QM signal from your ship without landing on it
     { "from": "Space", "to": "Quantum Moon Signal", "requires": [ { "item": "Quantum Moon Signal" } ] },
@@ -76,7 +76,7 @@
     // land on the Quantum Moon directly, or
     { "from": "Quantum Moon", "to": "Solanum's Shuttle Interior", "requires": [] },
     // use Brittle Hollow's Gravity Cannon to recall the shuttle
-    { "from": "Brittle Hollow", "to": "Solanum's Shuttle Interior", "requires": [] },
+    { "from": "Brittle Hollow", "to": "Solanum's Shuttle Interior", "requires": [ { "item": "Spacesuit" } ] },
 
     // Dark Bramble has the most complex logic in the base game
     { "from": "Space", "to": "Dark Bramble", "requires": [
@@ -342,6 +342,7 @@
     { "category": "fc", "from": "The Vessel", "to": "Deep Bramble", "requires": [] },
     // Space access already requires Launch Codes
     { "category": "fc", "from": "Space", "to": "Deep Bramble via Warp Drive", "requires": [ { "item":  "Deep Bramble Coordinates" } ] },
+    { "category": "fc", "from": "Deep Bramble via Warp Drive", "to": "Deep Bramble", "requires": [] },
     { "category": "fc", "from": "Deep Bramble", "to": "Lover's Rock", "requires": [
         { "item": "Signalscope" },
         { "item": "Nomai Trailmarkers Frequency" }

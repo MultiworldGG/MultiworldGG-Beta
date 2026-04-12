@@ -16,6 +16,8 @@ from WebHostLib.models import (
     LobbyMessage,
     LobbyPlayer,
     LobbyYaml,
+    Room,
+    LOBBY_DONE,
     LOBBY_GENERATING,
     LOBBY_OPEN,
     Seed,
@@ -310,6 +312,76 @@ class TestLobbyApworldQueue(TestBase):
             self.assertIsNone(LobbyApworldRequest.get(id=request_id))
         self.assertFalse(os.path.exists(pending_path))
 
+    def test_deleting_new_owner_yaml_removes_custom_apworld_and_notifies_remaining_player(self) -> None:
+        ids = self._create_open_lobby()
+        lobby_suuid = to_url(ids["lobby_id"])
+
+        # Host applies an initial custom APWorld.
+        apworld_v1 = _make_apworld_bytes("GameX", "1.0.0")
+        host_preview = self._preview(self.host_client, lobby_suuid, ids["host_yaml_id"], apworld_v1)
+        self.assertEqual(host_preview.status_code, 200, host_preview.get_data(as_text=True))
+        host_apply = self._apply(
+            self.host_client,
+            lobby_suuid,
+            ids["host_yaml_id"],
+            apworld_v1,
+            host_preview.get_json()["impact_hash"],
+            confirm=True,
+        )
+        self.assertEqual(host_apply.status_code, 201, host_apply.get_data(as_text=True))
+
+        # Other player requests and host approves a replacement APWorld.
+        apworld_v2 = _make_apworld_bytes("GameX", "2.0.0")
+        other_preview = self._preview(self.other_client, lobby_suuid, ids["other_yaml_id"], apworld_v2)
+        self.assertEqual(other_preview.status_code, 200, other_preview.get_data(as_text=True))
+        other_apply = self._apply(
+            self.other_client,
+            lobby_suuid,
+            ids["other_yaml_id"],
+            apworld_v2,
+            other_preview.get_json()["impact_hash"],
+            confirm=False,
+        )
+        self.assertEqual(other_apply.status_code, 202, other_apply.get_data(as_text=True))
+        pending_json = other_apply.get_json()
+        request_id = pending_json["request_id"]
+
+        approve = self.host_client.post(
+            f"/api/lobby/{lobby_suuid}/apworld-request/{request_id}/approve",
+            json={"impact_hash": pending_json["impact_hash"]},
+        )
+        self.assertEqual(approve.status_code, 200, approve.get_data(as_text=True))
+
+        # Deleting the YAML that currently owns the APWorld removes it for custom-only games.
+        delete_other_yaml = self.other_client.delete(f"/api/lobby/{lobby_suuid}/yaml/{ids['other_yaml_id']}")
+        self.assertEqual(delete_other_yaml.status_code, 200, delete_other_yaml.get_data(as_text=True))
+
+        with db_session:
+            lobby = Lobby.get(id=ids["lobby_id"])
+            self.assertIsNone(LobbyYaml.get(id=ids["other_yaml_id"]))
+
+            apworlds = LobbyApworld.select(lambda a: a.lobby == lobby and a.game_name == "GameX")[:]
+            self.assertEqual(len(apworlds), 0)
+
+            system_messages = [
+                m.content for m in LobbyMessage.select(lambda m: m.lobby == lobby and m.player is None)
+            ]
+            self.assertTrue(
+                any(
+                    "Host: the APWorld that replaced yours was removed" in content
+                    and "You can upload your APWorld again." in content
+                    for content in system_messages
+                )
+            )
+
+        status_response = self.host_client.get(f"/api/lobby/{lobby_suuid}/status")
+        self.assertEqual(status_response.status_code, 200, status_response.get_data(as_text=True))
+        game_apworld = next(
+            (entry for entry in status_response.get_json()["apworlds"] if entry["game_name"] == "GameX"),
+            None,
+        )
+        self.assertIsNone(game_apworld)
+
     def test_pending_requests_cleanup_on_done_transition(self) -> None:
         ids = self._create_open_lobby()
         with db_session:
@@ -346,3 +418,100 @@ class TestLobbyApworldQueue(TestBase):
         with db_session:
             self.assertIsNone(LobbyApworldRequest.get(id=request_id))
         self.assertFalse(os.path.exists(pending_path))
+
+    def test_reopen_done_lobby_preserves_players_files_and_settings(self) -> None:
+        ids = self._create_open_lobby()
+        with db_session:
+            lobby = Lobby.get(id=ids["lobby_id"])
+            lobby.meta = json.dumps({
+                "server_options": {"hint_cost": 7},
+                "generator_options": {"spoiler": 1},
+            })
+            for player in lobby.players:
+                player.is_ready = True
+
+            seed = Seed(multidata=b"done-seed", owner=self.host_session, meta='{"race": false}')
+            room = Room(seed=seed, owner=self.host_session, tracker=uuid4())
+            lobby.seed = seed
+            lobby.room = room
+            lobby.state = LOBBY_DONE
+
+            host_yaml = LobbyYaml.get(id=ids["host_yaml_id"])
+            apworld_dir = os.path.join(self.temp_apworld_dir, str(lobby.id))
+            os.makedirs(apworld_dir, exist_ok=True)
+            apworld_path = os.path.join(apworld_dir, "host.apworld")
+            apworld_bytes = _make_apworld_bytes("GameX", "2.0.0")
+            with open(apworld_path, "wb") as apworld_file:
+                apworld_file.write(apworld_bytes)
+
+            apworld = LobbyApworld(
+                lobby=lobby,
+                yaml=host_yaml,
+                game_name="GameX",
+                original_filename="host.apworld",
+                storage_path=apworld_path,
+                file_size=len(apworld_bytes),
+                world_version="2.0.0",
+            )
+            seed_id = seed.id
+            room_id = room.id
+            flush()
+            apworld_id = apworld.id
+
+        lobby_suuid = to_url(ids["lobby_id"])
+        reopen_response = self.host_client.post(f"/api/lobby/{lobby_suuid}/reopen")
+        self.assertEqual(reopen_response.status_code, 200, reopen_response.get_data(as_text=True))
+        self.assertEqual(reopen_response.get_json()["state"], LOBBY_OPEN)
+
+        status_response = self.host_client.get(f"/api/lobby/{lobby_suuid}/status")
+        self.assertEqual(status_response.status_code, 200)
+        status_json = status_response.get_json()
+        self.assertEqual(status_json["state"], LOBBY_OPEN)
+        self.assertNotIn("seed_id", status_json)
+        self.assertNotIn("room_id", status_json)
+
+        with db_session:
+            lobby = Lobby.get(id=ids["lobby_id"])
+            self.assertEqual(lobby.state, LOBBY_OPEN)
+            self.assertIsNone(lobby.seed)
+            self.assertIsNone(lobby.room)
+            self.assertEqual(len(lobby.players), 3)
+            self.assertEqual(len(lobby.yamls), 2)
+            self.assertEqual(len(lobby.apworlds), 1)
+            self.assertEqual(json.loads(lobby.meta)["server_options"]["hint_cost"], 7)
+            self.assertTrue(all(not player.is_ready for player in lobby.players))
+            self.assertIsNone(Seed.get(id=seed_id))
+            self.assertIsNone(Room.get(id=room_id))
+            self.assertIsNotNone(LobbyApworld.get(id=apworld_id))
+            self.assertTrue(os.path.exists(apworld_path))
+
+    def test_reopen_requires_owner(self) -> None:
+        ids = self._create_open_lobby()
+        with db_session:
+            lobby = Lobby.get(id=ids["lobby_id"])
+            seed = Seed(multidata=b"done-seed", owner=self.host_session, meta='{"race": false}')
+            room = Room(seed=seed, owner=self.host_session, tracker=uuid4())
+            lobby.seed = seed
+            lobby.room = room
+            lobby.state = LOBBY_DONE
+            seed_id = seed.id
+            room_id = room.id
+
+        lobby_suuid = to_url(ids["lobby_id"])
+        reopen_response = self.other_client.post(f"/api/lobby/{lobby_suuid}/reopen")
+        self.assertEqual(reopen_response.status_code, 403, reopen_response.get_data(as_text=True))
+
+        with db_session:
+            lobby = Lobby.get(id=ids["lobby_id"])
+            self.assertEqual(lobby.state, LOBBY_DONE)
+            self.assertIsNotNone(lobby.seed)
+            self.assertIsNotNone(lobby.room)
+            self.assertIsNotNone(Seed.get(id=seed_id))
+            self.assertIsNotNone(Room.get(id=room_id))
+
+    def test_reopen_rejects_non_done_state(self) -> None:
+        ids = self._create_open_lobby()
+        lobby_suuid = to_url(ids["lobby_id"])
+        reopen_response = self.host_client.post(f"/api/lobby/{lobby_suuid}/reopen")
+        self.assertEqual(reopen_response.status_code, 400, reopen_response.get_data(as_text=True))
+        self.assertIn("finished lobbies", reopen_response.get_json()["error"])
