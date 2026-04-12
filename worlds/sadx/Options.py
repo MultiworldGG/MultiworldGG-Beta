@@ -514,7 +514,7 @@ class MissableEnemies(DefaultOnToggle):
     - Enemies in the Casinopolis Sewers (Sonic and Tails)
     - Enemies in the Kart section of Sonic's Twinkle Park
     """
-    display_name = "Include Missable Capsules"
+    display_name = "Include Missable Enemies"
 
 
 class CapsuleSanity(Toggle):

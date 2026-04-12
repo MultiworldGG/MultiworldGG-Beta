@@ -121,6 +121,13 @@ class RotNCollections:
         "Drive Me Wild": SongData(136, "Drive Me Wild", "VA-11 HALL-A", 5, 11, 15, 20, False),
         "YLIAD": SongData(137, "YLIAD", "Free DLC", 4, 8, 14, 20, False),
         "Welcome to VA-11 HALL-A": SongData(138, "Welcome to VA-11 HALL-A", "VA-11 HALL-A", 2, 8, 13, 21, False),
+        #Undertale
+        "Spider Dance": SongData(139, "Spider Dance", "Free DLC", 2, 6, 13, 18, False),
+        "Hopes and Dreams": SongData(140, "Hopes and Dreams", "Undertale", 3, 9, 15, 19, False),
+        "Death by Glamour": SongData(141, "Death by Glamour", "Undertale", 5, 13, 16, 24, False),
+        "Bergentrückung / Asgore": SongData(142, "Bergentrückung / Asgore", "Undertale", 4, 10, 15, 21, False),
+        "Battle Against a True Hero": SongData(143, "Battle Against a True Hero", "Undertale", 5, 11, 17, 26, False),
+        "MEGALOVANIA": SongData(144, "MEGALOVANIA", "Undertale", 5, 11, 17, 25, False),
     }
 
     EXTRA_DATA: Dict[str, ExtraSongData] = {
@@ -149,7 +156,7 @@ class RotNCollections:
         "Local"
     ]
 
-    DLC: List[str] = [
+    DLC_PACKS: List[str] = [
         "All",
         "Celeste",
         "Pizza Tower",
@@ -160,58 +167,15 @@ class RotNCollections:
         "Shovel Knight",
         "Friday Night Funkin'",
         "VA-11 HALL-A",
-
-        "Resurrections (dannyBstyle Remix)",
-        "Scattered and Lost",
-        "Reach for the Summit",
-        "Confronting Myself",
-        "Resurrections",
-
-        "It's Pizza Time!",
-        "The Death That I Deservioli",
-        "Unexpectancy, Pt. 3",
-        "World Wide Noise",
-
-        "M@GICAL☆CURE! LOVE ♥ SHOT!",
-        "Intergalactic Bound",
-        "Just 1dB Louder",
-        "MikuFiesta",
-        "Radiant Revival",
-
-        "BIBBIDIBA",
-        "Play Dice!",
-        "Ahoy!! 我ら宝鐘海賊団☆",
-        "Carbonated Love",
-
-        "The Final Battle",
-        "Feisty Flowers",
-        "Revenge",
-        "Why Oh You Are LOVE",
-
-        "Crab Rave",
-        "Final Boss",
-        "New Game",
-        "PLAY",
-        "Waiting For You (feat. Joanna Jones)",
-
-        "Main Theme",
-        "La Danse Macabre (Lich Yard)",
-        "Strike the Earth! (Plains of Passage)",
-        "In the Halls of the Usurper (Pridemoor Keep)",
-        "High Above the Land (The Flying Machine)",
-        "An Underlying Problem (The Lost City)",
-
-        "Blammed",
-        "Stress",
-        "Darnell",
-        "Ugh",
-        "Senpai",
-
-        "Digital Drive",
-        "Every Day is Night",
-        "Drive Me Wild",
-        "Welcome to VA-11 HALL-A",
+        "Undertale",
     ]
+
+    DLC_SONGS: List[str] = []
+    for name, data in SONG_DATA.items():
+        if data.DLC not in FREE_PACKS:
+            DLC_SONGS.append(name)
+
+    DLC: List[str] = [*DLC_PACKS, *DLC_SONGS]
 
     song_locations: Dict[str, int] = {}
     song_items: Dict[str, SongData] = {}
@@ -409,6 +373,7 @@ class RotNCollections:
             "Shovel Knight": {name for name, data, in self.song_items.items() if data.DLC == "Shovel Knight" or "Main Theme" in name},
             "Friday Night Funkin'": {name for name, data, in self.song_items.items() if data.DLC == "Friday Night Funkin'" or "Dad Battle" in name},
             "VA-11 HALL-A": {name for name, data, in self.song_items.items() if data.DLC == "VA-11 HALL-A" or "YLIAD" in name},
+            "Undertale": {name for name, data, in self.song_items.items() if data.DLC == "Undertale" or "Spider Dance" in name},
         }
 
         return groups

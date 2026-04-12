@@ -192,6 +192,12 @@
                                 <button id="lock-btn" class="lobby-btn lobby-btn-warning">{% if lobby.state == 3 %}Unlock Lobby{% else %}Lock Lobby{% endif %}</button>
                                 <button id="abandon-btn" class="lobby-btn lobby-btn-danger">Abandon Lobby</button>
                             {% endif %}
+                            {% if is_owner %}
+                                <button id="reopen-btn" class="lobby-btn lobby-btn-warning"
+                                        {% if lobby.state != 2 %}style="display:none"{% endif %}>
+                                    Reopen Lobby
+                                </button>
+                            {% endif %}
                             <span id="lobby-status" class="lobby-status-{{ lobby.state }}">
                                 {% if lobby.state == 0 %}Open
                                 {% elif lobby.state == 1 %}Generating...
@@ -242,6 +248,11 @@
                     {# Generation controls #}
                     {% if lobby.state in (0, 3) and is_owner %}
                         <div id="lobby-generate">
+                            <div id="apworld-queue-panel">
+                                <h3>APWorld Requests</h3>
+                                <div id="apworld-queue-empty">No pending APWorld requests.</div>
+                                <ul id="apworld-queue-list"></ul>
+                            </div>
                             <div id="generate-standard">
                                 <button id="generate-btn" class="lobby-btn lobby-btn-primary"
                                         {% if yaml_count == 0 %}disabled{% endif %}>
@@ -490,6 +501,8 @@
         </div>
     </div>
     {% endif %}
+
+    <div id="toast-container"></div>
 
     {% if player or is_viewer %}
     <script>

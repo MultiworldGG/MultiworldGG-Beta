@@ -10,7 +10,7 @@ import settings
 import Options
 from BaseClasses import ItemClassification, MultiWorld, Tutorial, Item, Location
 from worlds.AutoWorld import WebWorld, World
-from worlds.LauncherComponents import Component, SuffixIdentifier, Type, components, launch_subprocess
+from worlds.LauncherComponents import Component, SuffixIdentifier, Type, components, launch_subprocess, icon_paths
 
 from .items import ALL_ITEMS_TABLE, REGULAR_PROGRESSION_ITEMS, ALL_PROGRESSION_ITEMS, TICKET_ITEMS, JUNK_ITEMS, SmsItem
 from .options import *
@@ -27,9 +27,10 @@ def run_client(*args):
     from .SMSClient import main
     launch_subprocess(main, name="SMS Client", args=args)
 
+icon_paths["sms_ico"] = f"ap:{__name__}/assets/sms_ap_logo.png"
 components.append(
     Component("Super Mario Sunshine Client", func=run_client, component_type=Type.CLIENT,
-        file_identifier=SuffixIdentifier(".apsms")))
+        icon="sms_ico", file_identifier=SuffixIdentifier(".apsms")))
 
 class SuperMarioSunshineSettings(settings.Group):
     class ISOFile(settings.UserFilePath):
@@ -49,6 +50,7 @@ class SmsWebWorld(WebWorld):
             options.LevelAccess,
             options.StartingNozzle,
             options.EnableCoinShines,
+            options.NozzleBoxes,
             options.CoronaMountainShines,
             options.BlueCoinSanity,
             options.BlueCoinMaximum,
@@ -76,8 +78,6 @@ class SmsWorld(World):
     game = "Super Mario Sunshine"
     web = SmsWebWorld()
 
-    data_version = 1
-
     options_dataclass = SmsOptions
     options: SmsOptions
 
@@ -90,8 +90,14 @@ class SmsWorld(World):
     large_shine_count: bool = False  # Used in rules to know if corona mountain should block tickets in their region
     # otherwise generation would fail significantly more in swap.
 
+    # Randomly picked ticket based on ticket mode being true
+    ticket_chosen: str
+
+    ut_can_gen_without_yaml = True  # class var that tells it to ignore the player yaml
+
     def __init__(self, multiworld: MultiWorld, player: int):
         super().__init__(multiworld, player)
+        self.ticket_chosen = ""
 
     def generate_early(self):
         if self.options.starting_nozzle.value == 0:
@@ -106,9 +112,25 @@ class SmsWorld(World):
                 chosen_nozzle: str = str(self.random.choice(list(REGULAR_PROGRESSION_ITEMS.keys())))
                 self.multiworld.early_items[self.player].update({chosen_nozzle: 1})
 
+        if hasattr(self.multiworld, "re_gen_passthrough"):
+            slot_data = self.multiworld.re_gen_passthrough[self.game]
+            for key, value in slot_data.items():
+                if key == "seed":
+                    continue
+
+                # If the slot data is an option value directly
+                if hasattr(self.options, key):
+                    getattr(self.options, key).value = value
+
+                # if the world has the attribute itself, add the value directly to the world
+                elif hasattr(self, key):
+                    setattr(self, key, value)
+
+            return
+
         if self.options.level_access.value == 1:
-            chosen_tick: str = str(self.random.choice(list(TICKET_ITEMS.keys())))
-            self.multiworld.push_precollected(self.create_item(chosen_tick))
+            self.ticket_chosen: str = str(self.random.choice(list(TICKET_ITEMS.keys())))
+            self.multiworld.push_precollected(self.create_item(self.ticket_chosen))
 
         # If blue coins are turned on in any way, set the max trade amount to be the max blue count required.
         if self.options.blue_coin_sanity.value == 1:
@@ -252,22 +274,31 @@ class SmsWorld(World):
         progitempool.sort(key=sort_func)
 
     def fill_slot_data(self) -> Dict[str, Any]:
-        return {
-            "corona_mountain_shines": self.options.corona_mountain_shines.value,
-            "blue_coin_sanity": self.options.blue_coin_sanity.value,
-            "starting_nozzle": self.options.starting_nozzle.value,
-            "ticket_mode": self.options.level_access.value,
-            "boathouse_maximum": self.options.trade_shine_maximum.value,
-            "coin_shine_enabled": self.options.enable_coin_shines.value,
-            "death_link": self.options.death_link.value,
-            "seed": self.multiworld.seed
-        }
+        slot_data: dict = {}
+
+        # This gets all the names of the options from both the world's option class and the inherited class as sets
+        # Since this world's options inherit from PerGameCommonOptions, there will be duplicates.
+        child_local_fields = set({f.name for f in fields(SmsOptions)})
+        parent_fields = set({f.name for f in fields(PerGameCommonOptions)})
+
+        # Subtract the elements to find the options only unique to this world, then sort them to avoid any
+        #   deterministic issues.
+        only_in_child = sorted(list(child_local_fields - parent_fields))
+
+        # Output the value of each based on the option type.
+        for child_option in only_in_child:
+            slot_data[child_option] = getattr(self.options, child_option).value
+
+        slot_data["death_link"] = self.options.death_link.value
+        slot_data["ticket_chosen"] = self.ticket_chosen
+        slot_data["seed"] = str(self.multiworld.seed_name)
+        return slot_data
 
     def generate_output(self, output_directory: str):
         from .SMSClient import CLIENT_VERSION, AP_WORLD_VERSION_NAME
 
         output_data = {
-            "Seed": self.multiworld.seed,
+            "Seed": str(self.multiworld.seed_name),
             "Slot": self.player,
             "Name": self.player_name,
             "Options": {},
@@ -275,31 +306,11 @@ class SmsWorld(World):
         }
 
         for field in fields(self.options):
+            if "plando" in field.name.lower():
+                continue
             output_data["Options"][field.name] = getattr(self.options, field.name).value
 
         patch_path = os.path.join(output_directory, f"{self.multiworld.get_out_file_name_base(self.player)}"
             f"{SMSPlayerContainer.patch_file_ending}")
         sms_container = SMSPlayerContainer(output_data, patch_path, self.multiworld.player_name[self.player], self.player)
         sms_container.write()
-
-# def launch_client():
-#     from .SMSClient import main
-#     launch_subprocess(main, name="SMS client")
-
-
-# def add_client_to_launcher() -> None:
-#     version = "0.2.0"
-#     found = False
-#     for c in components:
-#         if c.display_name == "Super Mario Sunshine Client":
-#             found = True
-#             if getattr(c, "version", 0) < version:
-#                 c.version = version
-#                 c.func = launch_client
-#                 return
-#     if not found:
-#         components.append(Component("Super Mario Sunshine Client", "SMSClient",
-#                                     func=launch_client))
-
-
-# add_client_to_launcher()

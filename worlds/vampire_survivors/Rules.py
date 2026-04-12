@@ -629,7 +629,7 @@ def has_any(state, player, options, items) -> bool:
 	return any(has(state, player, options, item) for item in items)
 
 def has_all(state, player, options, items) -> bool:
-	return any(has(state, player, options, item) for item in items)
+	return all(has(state, player, options, item) for item in items)
 
 def has_character(state, player, options, character) -> bool:
 	return has(state, player, options, f"Character Unlock: {character}")

@@ -130,8 +130,8 @@ class IncludedBaseCharacters(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Base Characters"
-	valid_keys = frozenset(base_characters + ["All", "Random"])
-	default = "All"
+	valid_keys = frozenset([*base_characters, "All", "Random"])
+	default = frozenset(["All"])
 
 
 class IncludedMoonspellCharacters(OptionSet):
@@ -143,8 +143,8 @@ class IncludedMoonspellCharacters(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Moonspell Characters"
-	valid_keys = frozenset(moonspell_characters + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*moonspell_characters, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedFoscariCharacters(OptionSet):
@@ -156,8 +156,8 @@ class IncludedFoscariCharacters(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Foscari Characters"
-	valid_keys = frozenset(foscari_characters + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*foscari_characters, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedAmongusCharacters(OptionSet):
@@ -169,8 +169,8 @@ class IncludedAmongusCharacters(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Amongus Characters"
-	valid_keys = frozenset(amongus_characters + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*amongus_characters, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedOperationGunsCharacters(OptionSet):
@@ -182,8 +182,8 @@ class IncludedOperationGunsCharacters(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Operation Guns Characters"
-	valid_keys = frozenset(operation_guns_characters + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*operation_guns_characters, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedCastlevaniaCharacters(OptionSet):
@@ -195,8 +195,8 @@ class IncludedCastlevaniaCharacters(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Castlevania Characters"
-	valid_keys = frozenset(castlevania_characters + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*castlevania_characters, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedEmeraldCharacters(OptionSet):
@@ -208,8 +208,8 @@ class IncludedEmeraldCharacters(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Emerald Characters"
-	valid_keys = frozenset(emerald_characters + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*emerald_characters, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedBalatroCharacters(OptionSet):
@@ -221,8 +221,8 @@ class IncludedBalatroCharacters(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Balatro Characters"
-	valid_keys = frozenset(balatro_characters + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*balatro_characters, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedNormalStages(OptionSet):
@@ -234,8 +234,8 @@ class IncludedNormalStages(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Normal Stages"
-	valid_keys = frozenset(normal_stages + ["All", "Random"])
-	default = "All"
+	valid_keys = frozenset([*normal_stages, "All", "Random"])
+	default = frozenset(["All"])
 
 
 class IncludedBonusStages(OptionSet):
@@ -247,8 +247,8 @@ class IncludedBonusStages(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Bonus Stages"
-	valid_keys = frozenset(bonus_stages + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*bonus_stages, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedChallengeStages(OptionSet):
@@ -260,8 +260,8 @@ class IncludedChallengeStages(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Challenge Stages"
-	valid_keys = frozenset(challenge_stages + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*challenge_stages, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedMoonspellStages(OptionSet):
@@ -273,8 +273,8 @@ class IncludedMoonspellStages(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Moonspell Stages"
-	valid_keys = frozenset(moonspell_stages + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*moonspell_stages, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedFoscariStages(OptionSet):
@@ -286,8 +286,8 @@ class IncludedFoscariStages(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Foscari Stages"
-	valid_keys = frozenset(foscari_stages + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*foscari_stages, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedAmongusStages(OptionSet):
@@ -299,8 +299,8 @@ class IncludedAmongusStages(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Amongus Stages"
-	valid_keys = frozenset(amongus_stages + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*amongus_stages, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedOperationGunsStages(OptionSet):
@@ -312,8 +312,8 @@ class IncludedOperationGunsStages(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Operation Guns Stages"
-	valid_keys = frozenset(operation_guns_stages + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*operation_guns_stages, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedCastlevaniaStages(OptionSet):
@@ -325,8 +325,8 @@ class IncludedCastlevaniaStages(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Castlevania Stages"
-	valid_keys = frozenset(castlevania_stages + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*castlevania_stages, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedEmeraldStages(OptionSet):
@@ -338,8 +338,8 @@ class IncludedEmeraldStages(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Emerald Stages"
-	valid_keys = frozenset(emerald_stages + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*emerald_stages, "All", "Random"])
+	default = frozenset([])
 
 
 class IncludedBalatroStages(OptionSet):
@@ -351,8 +351,8 @@ class IncludedBalatroStages(OptionSet):
 	"Random" - picks a random # of characters b/t list's max size / 2 and list's max size
 	"""
 	display_name = "Included Balatro Stages"
-	valid_keys = frozenset(balatro_stages + ["All", "Random"])
-	default = []
+	valid_keys = frozenset([*balatro_stages, "All", "Random"])
+	default = frozenset([])
 
 
 @dataclass
@@ -510,6 +510,10 @@ def check_options(world):
 	random.shuffle(stages)
 	world.final_included_characters_list = characters
 	world.final_included_stages_list = stages
+	
+	if world.options.goal_requirement == 1:
+	  if world.ending_stage_count == 0:
+		   world.ending_stage_count = int(len(world.final_included_stages_list) * .75)
 
 def raise_yaml_error(player_name, error):
 	raise OptionError(f'\n\n=== Vampire Survivors YAML ERROR ===\nVampire Survivors: {player_name} {error}, PLEASE FIX YOUR YAML\n\n')

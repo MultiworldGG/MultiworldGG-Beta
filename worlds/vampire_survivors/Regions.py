@@ -59,7 +59,10 @@ def gen_create_regions(world):
 		if stage != EUDAI:
 			for i in range(chest_checks):
 				make_location(world, f"Open Chest #{i + 1} on {stage}", region_map[stage], rule_map)
-		region_map["Menu"].connect(region_map[stage], rule = lambda state, stage_name=stage: state.has(f"Stage Unlock: {stage_name}", player, 1))
+		if stage == EUDAI and options.goal_requirement == 1:
+			region_map["Menu"].connect(region_map[stage], rule = lambda state, stage_name=stage: has_stage(state, player, options, EUDAI) and has_amount(state, player, options, "Beat a Stage", world.ending_stage_count))
+		else:
+			region_map["Menu"].connect(region_map[stage], rule = lambda state, stage_name=stage: has_stage(state, player, options, f"{stage_name}"))
 	for character in characters:
 		make_location(world, f'Beat with {character}', region_map['Characters'], rule_map)
 	if options.enemysanity:

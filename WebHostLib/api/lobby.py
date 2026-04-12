@@ -1,4 +1,5 @@
 import io
+import hashlib
 import json
 import os
 import re
@@ -16,7 +17,7 @@ from Utils import tuplize_version, Version, utcnow
 from WebHostLib.api import api_endpoints
 from WebHostLib.check import get_yaml_data, roll_options
 from WebHostLib.models import (
-    Lobby, LobbyPlayer, LobbyMessage, LobbyYaml, LobbyApworld, Room,
+    Lobby, LobbyPlayer, LobbyMessage, LobbyYaml, LobbyApworld, LobbyApworldRequest, Room,
     LOBBY_OPEN, LOBBY_GENERATING, LOBBY_DONE, LOBBY_CLOSED, LOBBY_LOCKED,
     Generation, Seed, uuid4,
 )
@@ -53,11 +54,191 @@ def _delete_apworld_file(apworld: LobbyApworld) -> None:
         pass  # not empty or already gone
 
 
+def _delete_pending_apworld_file(storage_path: str) -> None:
+    try:
+        os.unlink(storage_path)
+    except OSError:
+        pass
+    try:
+        os.rmdir(os.path.dirname(storage_path))
+    except OSError:
+        pass
+
+
+def _lobby_system_message(lobby: Lobby, content: str) -> None:
+    LobbyMessage(
+        lobby=lobby,
+        player=None,
+        sender_name="System",
+        content=content,
+    )
+
+
+def _cleanup_apworld_request(request_record: LobbyApworldRequest) -> None:
+    _delete_pending_apworld_file(request_record.storage_path)
+    request_record.delete()
+
+
+def _cancel_pending_requests_for_yaml(yaml_record: LobbyYaml, reason: str) -> int:
+    requests = select(r for r in LobbyApworldRequest if r.yaml == yaml_record)[:]
+    if not requests:
+        return 0
+    lobby = yaml_record.lobby
+    requester_names = sorted({r.requester.player_name for r in requests})
+    for req in requests:
+        _cleanup_apworld_request(req)
+    _lobby_system_message(
+        lobby,
+        f"Cancelled {len(requests)} pending APWorld request(s) for "
+        f"{yaml_record.player.player_name}'s YAML '{yaml_record.filename}' "
+        f"({', '.join(requester_names)}): {reason}",
+    )
+    return len(requests)
+
+
+def _cancel_pending_requests_for_game(lobby: Lobby, game_name: str, reason: str) -> int:
+    requests = select(
+        r for r in LobbyApworldRequest
+        if r.lobby == lobby and r.game_name == game_name
+    )[:]
+    if not requests:
+        return 0
+    for req in requests:
+        _cleanup_apworld_request(req)
+    _lobby_system_message(
+        lobby,
+        f"Cancelled {len(requests)} pending APWorld request(s) for {game_name}: {reason}",
+    )
+    return len(requests)
+
+
+def _cancel_all_pending_requests(lobby: Lobby, reason: str) -> int:
+    requests = select(r for r in LobbyApworldRequest if r.lobby == lobby)[:]
+    if not requests:
+        return 0
+    for req in requests:
+        _cleanup_apworld_request(req)
+    _lobby_system_message(
+        lobby,
+        f"Cancelled {len(requests)} pending APWorld request(s): {reason}",
+    )
+    return len(requests)
+
+
+def _server_world_version_for_game(game_name: str) -> Version | None:
+    from worlds.AutoWorld import AutoWorldRegister
+    if game_name in AutoWorldRegister.world_types:
+        return AutoWorldRegister.world_types[game_name].world_version
+    return None
+
+
+def _yaml_requires_newer_world(requires_json: str | None, world_version: Version) -> bool:
+    if not requires_json:
+        return False
+    return _version_mismatch_direction(requires_json, world_version) == "newer"
+
+
+def _delete_yaml_record(yaml_record: LobbyYaml, reason: str | None = None) -> None:
+    current = LobbyYaml.get(id=yaml_record.id)
+    if not current:
+        return
+    yaml_record = current
+    owner = yaml_record.player
+    lobby = yaml_record.lobby
+    filename = yaml_record.filename
+    owner_name = owner.player_name
+    _cleanup_yaml_apworld(yaml_record)
+    yaml_record.delete()
+    owner.is_ready = False
+    if reason:
+        _lobby_system_message(
+            lobby,
+            f"{owner_name}'s YAML '{filename}' was removed: {reason}",
+        )
+
+
+def _handle_removed_active_apworld(yaml_record: LobbyYaml) -> None:
+    active_apworld = yaml_record.apworld
+    if not active_apworld:
+        return
+
+    lobby = yaml_record.lobby
+    game_name = active_apworld.game_name
+    removed_version = active_apworld.world_version
+
+    same_game_yamls = select(
+        y for y in LobbyYaml
+        if y.lobby == lobby
+        and y.yaml_game == game_name
+        and y.id != yaml_record.id
+    ).order_by(LobbyYaml.id)[:]
+    server_world_version = _server_world_version_for_game(game_name)
+    removed_by_name = yaml_record.player.player_name if yaml_record.player else "a player"
+    remaining_players = sorted({
+        y.player.player_name for y in same_game_yamls if y.player
+    })
+
+    _delete_apworld_file(active_apworld)
+    active_apworld.delete()
+
+    _cancel_pending_requests_for_game(
+        lobby,
+        game_name,
+        "active APWorld changed",
+    )
+
+    if server_world_version is None:
+        if len(remaining_players) == 1:
+            _lobby_system_message(
+                lobby,
+                f"{remaining_players[0]}: the APWorld that replaced yours was removed "
+                f"after {removed_by_name}'s YAML was deleted. You may upload another APWorld.",
+            )
+        elif remaining_players:
+            _lobby_system_message(
+                lobby,
+                f"Custom APWorld for '{game_name}' was removed after {removed_by_name}'s YAML was deleted. "
+                f"Players using this game can upload a replacement APWorld: {', '.join(remaining_players)}.",
+            )
+        else:
+            _lobby_system_message(
+                lobby,
+                f"Custom APWorld for '{game_name}' was removed after {removed_by_name}'s YAML was deleted.",
+            )
+        return
+
+    deleted_count = 0
+    for y in list(same_game_yamls):
+        if _yaml_requires_newer_world(y.requires_game_version, server_world_version):
+            _delete_yaml_record(
+                y,
+                f"incompatible with server {game_name} world version "
+                f"v{server_world_version.as_simple_string()}",
+            )
+            deleted_count += 1
+
+    old_version_label = f"v{removed_version}" if removed_version else "custom"
+    new_version_label = f"v{server_world_version.as_simple_string()}"
+    summary = (
+        f"APWorld for '{game_name}' reverted from {old_version_label} "
+        f"to server {new_version_label}."
+    )
+    if deleted_count:
+        summary += f" Removed {deleted_count} incompatible YAML(s)."
+    _lobby_system_message(lobby, summary)
+    if len(remaining_players) == 1:
+        _lobby_system_message(
+            lobby,
+            f"{remaining_players[0]}: the APWorld that replaced yours was removed "
+            f"after {removed_by_name}'s YAML was deleted. You can upload your APWorld again.",
+        )
+
+
 def _cleanup_yaml_apworld(yaml_record: LobbyYaml) -> None:
-    """Delete apworld file + record for a YAML before deleting the YAML itself."""
+    """Delete dependent APWorld/APWorld-request data for a YAML before deleting the YAML itself."""
+    _cancel_pending_requests_for_yaml(yaml_record, "requester YAML was removed")
     if yaml_record.apworld:
-        _delete_apworld_file(yaml_record.apworld)
-        yaml_record.apworld.delete()
+        _handle_removed_active_apworld(yaml_record)
 
 
 def _extract_game_info(content) -> tuple[str, str, str | None]:
@@ -205,9 +386,358 @@ def _check_version_constraint(requires_json: str | None, server_version: Version
     return None
 
 
+def _parse_apworld_upload(apworld_data: bytes) -> tuple[str, str | None]:
+    if not zipfile.is_zipfile(io.BytesIO(apworld_data)):
+        raise ValueError("File is not a valid .apworld (must be a ZIP archive)")
+
+    with zipfile.ZipFile(io.BytesIO(apworld_data)) as apzip:
+        manifest_path = next(
+            (n for n in apzip.namelist() if n == "archipelago.json" or n.endswith("/archipelago.json")),
+            None,
+        )
+        if not manifest_path:
+            raise ValueError("APWorld must contain archipelago.json manifest")
+
+        try:
+            manifest = json.loads(apzip.read(manifest_path))
+        except Exception as exc:
+            raise ValueError("archipelago.json is not valid JSON") from exc
+
+    if not isinstance(manifest, dict):
+        raise ValueError("archipelago.json must contain a JSON object")
+
+    game_name = str(manifest.get("game", "")).strip()
+    if not game_name:
+        raise ValueError("archipelago.json must include a non-empty 'game' field")
+
+    world_version_value = manifest.get("world_version")
+    world_version = None if world_version_value is None else str(world_version_value).strip()
+    if world_version == "":
+        world_version = None
+
+    return game_name, world_version
+
+
+def _active_apworld_for_game(lobby: Lobby, game_name: str) -> LobbyApworld | None:
+    return select(
+        a for a in LobbyApworld
+        if a.lobby == lobby and a.game_name == game_name
+    ).order_by(lambda a: a.id).first()
+
+
+def _apworld_lobby_dir(lobby: Lobby) -> str:
+    return os.path.abspath(os.path.join(app.config["LOBBY_APWORLD_PATH"], str(lobby.id)))
+
+
+def _preview_apworld_dir(lobby: Lobby) -> str:
+    return os.path.join(_apworld_lobby_dir(lobby), "preview")
+
+
+def _safe_storage_path(base_dir: str, filename: str) -> str:
+    os.makedirs(base_dir, exist_ok=True)
+    storage_path = os.path.abspath(os.path.join(base_dir, filename))
+    if not storage_path.startswith(base_dir + os.sep):
+        raise ValueError("Invalid storage path")
+    return storage_path
+
+
+def _cleanup_preview_apworld(lobby: Lobby, preview_token: str) -> None:
+    if not re.fullmatch(r"[0-9a-f]{32}", preview_token):
+        return
+    preview_dir = _preview_apworld_dir(lobby)
+    apworld_path = _safe_storage_path(preview_dir, f"{preview_token}.apworld")
+    meta_path = _safe_storage_path(preview_dir, f"{preview_token}.json")
+    for path in (apworld_path, meta_path):
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+
+
+def _store_preview_apworld(
+    lobby: Lobby,
+    yaml_record: LobbyYaml,
+    session_id: UUID,
+    original_filename: str,
+    apworld_data: bytes,
+) -> str:
+    preview_dir = _preview_apworld_dir(lobby)
+    preview_token = uuid4().hex
+    apworld_path = _safe_storage_path(preview_dir, f"{preview_token}.apworld")
+    meta_path = _safe_storage_path(preview_dir, f"{preview_token}.json")
+    with open(apworld_path, "wb") as out:
+        out.write(apworld_data)
+    with open(meta_path, "w", encoding="utf-8") as out:
+        json.dump({
+            "yaml_id": yaml_record.id,
+            "session_id": str(session_id),
+            "filename": original_filename,
+        }, out, separators=(",", ":"))
+    return preview_token
+
+
+def _load_preview_apworld(
+    lobby: Lobby,
+    yaml_record: LobbyYaml,
+    session_id: UUID,
+    preview_token: str,
+) -> tuple[bytes, str]:
+    if not re.fullmatch(r"[0-9a-f]{32}", preview_token):
+        raise ValueError("Invalid preview_token")
+
+    preview_dir = _preview_apworld_dir(lobby)
+    apworld_path = _safe_storage_path(preview_dir, f"{preview_token}.apworld")
+    meta_path = _safe_storage_path(preview_dir, f"{preview_token}.json")
+    try:
+        with open(meta_path, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+    except OSError as exc:
+        raise ValueError("preview_token not found or expired") from exc
+    except json.JSONDecodeError as exc:
+        raise ValueError("preview_token metadata is invalid") from exc
+
+    if not isinstance(meta, dict):
+        raise ValueError("preview_token metadata is invalid")
+    if meta.get("yaml_id") != yaml_record.id:
+        raise PermissionError("preview_token does not match this YAML")
+    if str(meta.get("session_id", "")) != str(session_id):
+        raise PermissionError("preview_token does not belong to this session")
+
+    try:
+        with open(apworld_path, "rb") as f:
+            apworld_data = f.read(APWORLD_MAX_SIZE + 1)
+    except OSError as exc:
+        raise ValueError("preview_token file is missing") from exc
+    if len(apworld_data) > APWORLD_MAX_SIZE:
+        raise ValueError(f"APWorld file too large (max {APWORLD_MAX_SIZE // (1024*1024)} MB)")
+
+    original_filename = str(meta.get("filename") or f"{yaml_record.yaml_game or 'world'}.apworld")
+    return apworld_data, original_filename
+
+
+def _build_apworld_impact_preview(
+    lobby: Lobby,
+    yaml_record: LobbyYaml,
+    world_version: str | None,
+) -> tuple[dict, str, Version | None]:
+    game_name = yaml_record.yaml_game or ""
+    same_game_yamls = select(
+        y for y in LobbyYaml
+        if y.lobby == lobby and y.yaml_game == game_name
+    ).order_by(LobbyYaml.id)[:]
+
+    parsed_world_version = None
+    if world_version is not None:
+        try:
+            parsed_world_version = tuplize_version(world_version)
+        except Exception as exc:
+            raise ValueError(f"Invalid world_version '{world_version}' in archipelago.json") from exc
+
+    active_apworld = _active_apworld_for_game(lobby, game_name)
+    server_world_version = _server_world_version_for_game(game_name)
+    if active_apworld:
+        active_source = "custom"
+        active_world_version = active_apworld.world_version
+    elif server_world_version is not None:
+        active_source = "server"
+        active_world_version = server_world_version.as_simple_string()
+    else:
+        active_source = "none"
+        active_world_version = None
+
+    other_player_yaml_ids = [
+        y.id for y in same_game_yamls
+        if y.player != yaml_record.player
+    ]
+    all_impacted_players = sorted({
+        y.player.player_name
+        for y in same_game_yamls
+    })
+
+    unverifiable_yaml_ids: list[int] = []
+    would_delete_yamls: list[dict] = []
+    would_delete_yaml_ids: list[int] = []
+    if parsed_world_version is None:
+        unverifiable_yaml_ids = [y.id for y in same_game_yamls if y.requires_game_version]
+    else:
+        for y in same_game_yamls:
+            if _yaml_requires_newer_world(y.requires_game_version, parsed_world_version):
+                would_delete_yaml_ids.append(y.id)
+                would_delete_yamls.append({
+                    "yaml_id": y.id,
+                    "player_name": y.player.player_name,
+                    "filename": y.filename,
+                    "slot_name": y.yaml_player_name,
+                    "required_version": _required_version_label(y.requires_game_version)
+                    if y.requires_game_version else None,
+                })
+
+    preview = {
+        "game_name": game_name,
+        "target_yaml_id": yaml_record.id,
+        "candidate_world_version": world_version,
+        "active_source": active_source,
+        "active_world_version": active_world_version,
+        "affects_other_players": bool(other_player_yaml_ids),
+        "impacted_players": all_impacted_players,
+        "impacted_player_count": len(all_impacted_players),
+        "impacted_yaml_ids": [y.id for y in same_game_yamls],
+        "same_game_yaml_ids": [y.id for y in same_game_yamls],
+        "would_delete_yaml_ids": would_delete_yaml_ids,
+        "would_delete_yamls": would_delete_yamls,
+        "unverifiable_yaml_ids": unverifiable_yaml_ids,
+    }
+
+    hash_payload = {
+        "target_yaml_id": yaml_record.id,
+        "game_name": game_name,
+        "candidate_world_version": world_version,
+        "active_apworld_id": active_apworld.id if active_apworld else None,
+        "active_source": active_source,
+        "same_game_yamls": [
+            {
+                "id": y.id,
+                "player_id": y.player.id,
+                "requires_game_version": y.requires_game_version,
+            }
+            for y in same_game_yamls
+        ],
+    }
+    impact_hash = hashlib.sha256(
+        json.dumps(hash_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+    return preview, impact_hash, parsed_world_version
+
+
+def _replace_active_apworld(
+    lobby: Lobby,
+    yaml_record: LobbyYaml,
+    original_filename: str,
+    apworld_data: bytes,
+    world_version: str | None,
+    preview: dict,
+) -> list[int]:
+    game_name = yaml_record.yaml_game or ""
+    apworld_dir = _apworld_lobby_dir(lobby)
+    storage_path = _safe_storage_path(apworld_dir, f"{yaml_record.id}.apworld")
+
+    existing_apworlds = select(
+        a for a in LobbyApworld
+        if a.lobby == lobby and a.game_name == game_name
+    )[:]
+    for existing in existing_apworlds:
+        _delete_apworld_file(existing)
+        existing.delete()
+
+    with open(storage_path, "wb") as out:
+        out.write(apworld_data)
+
+    LobbyApworld(
+        lobby=lobby,
+        yaml=yaml_record,
+        game_name=game_name,
+        original_filename=original_filename,
+        storage_path=storage_path,
+        file_size=len(apworld_data),
+        world_version=world_version,
+    )
+
+    deleted_yaml_ids: list[int] = []
+    for victim_yaml_id in list(preview.get("would_delete_yaml_ids", [])):
+        if victim_yaml_id == yaml_record.id:
+            continue
+        victim = LobbyYaml.get(id=victim_yaml_id)
+        if victim and victim.lobby == lobby and victim.yaml_game == game_name:
+            _delete_yaml_record(
+                victim,
+                f"incompatible with APWorld v{world_version}" if world_version else
+                "incompatible with newly applied APWorld",
+            )
+            deleted_yaml_ids.append(victim_yaml_id)
+
+    return deleted_yaml_ids
+
+
+def _create_pending_apworld_request(
+    lobby: Lobby,
+    yaml_record: LobbyYaml,
+    player: LobbyPlayer,
+    original_filename: str,
+    apworld_data: bytes,
+    world_version: str | None,
+) -> LobbyApworldRequest:
+    pending_dir = os.path.join(_apworld_lobby_dir(lobby), "pending")
+    temp_path = _safe_storage_path(pending_dir, f"tmp_{uuid4().hex}.apworld")
+    with open(temp_path, "wb") as out:
+        out.write(apworld_data)
+
+    request_record = LobbyApworldRequest(
+        lobby=lobby,
+        yaml=yaml_record,
+        requester=player,
+        game_name=yaml_record.yaml_game or "",
+        original_filename=original_filename,
+        storage_path=temp_path,
+        file_size=len(apworld_data),
+        world_version=world_version,
+    )
+    flush()
+
+    final_path = _safe_storage_path(pending_dir, f"{request_record.id}.apworld")
+    if final_path != temp_path:
+        os.replace(temp_path, final_path)
+    request_record.storage_path = final_path
+    return request_record
+
+
+def _read_pending_apworld_data(request_record: LobbyApworldRequest) -> bytes:
+    with open(request_record.storage_path, "rb") as f:
+        return f.read()
+
+
+def _serialize_apworld_request(request_record: LobbyApworldRequest) -> dict:
+    has_file = os.path.exists(request_record.storage_path)
+    try:
+        preview, impact_hash, _ = _build_apworld_impact_preview(
+            request_record.lobby,
+            request_record.yaml,
+            request_record.world_version,
+        )
+    except Exception:
+        preview = {
+            "game_name": request_record.game_name,
+            "target_yaml_id": request_record.yaml.id,
+            "candidate_world_version": request_record.world_version,
+            "affects_other_players": False,
+            "impacted_players": [],
+            "impacted_player_count": 0,
+            "impacted_yaml_ids": [],
+            "would_delete_yaml_ids": [],
+            "would_delete_yamls": [],
+            "unverifiable_yaml_ids": [],
+        }
+        impact_hash = ""
+
+    return {
+        "id": request_record.id,
+        "yaml_id": request_record.yaml.id,
+        "game_name": request_record.game_name,
+        "requester_name": request_record.requester.player_name,
+        "filename": request_record.original_filename,
+        "file_size": request_record.file_size,
+        "world_version": request_record.world_version,
+        "submitted_at": request_record.submitted_at.isoformat() + "Z",
+        "impact_preview": preview,
+        "impact_hash": impact_hash,
+        "has_file": has_file,
+    }
+
+
 def _expire_lobby_if_needed(lobby: Lobby) -> None:
     if lobby.state in (LOBBY_OPEN, LOBBY_LOCKED, LOBBY_GENERATING):
         if utcnow() - lobby.last_activity > timedelta(minutes=lobby.timeout_minutes):
+            _cancel_all_pending_requests(lobby, "lobby expired")
             lobby.state = LOBBY_CLOSED
 
 
@@ -289,6 +819,10 @@ def lobby_status(lobby: UUID):
         for y in LobbyYaml if y.lobby == lobby
     ).order_by(lambda i, f, n, g, p, ic, rv: i)[:]
 
+    yaml_ids_with_pending_request = set(select(
+        r.yaml.id for r in LobbyApworldRequest if r.lobby == lobby
+    )[:])
+
     apworlds_list = select(a for a in LobbyApworld if a.lobby == lobby)[:]
     apworld_by_yaml_id = {}
     apworld_by_game: dict[str, dict] = {}
@@ -311,10 +845,14 @@ def lobby_status(lobby: UUID):
         if y_game:
             yaml_info["game"] = y_game
         # Mark apworld as present if directly linked OR if any apworld for this game exists
+        game_has_shared_apworld = y_game and y_game in apworld_by_game and y_id not in apworld_by_yaml_id
         if y_id in apworld_by_yaml_id:
             yaml_info["apworld"] = apworld_by_yaml_id[y_id]
-        elif y_is_custom and y_game and y_game in apworld_by_game:
+            yaml_info["apworld_is_own"] = True
+        elif y_game and y_game in apworld_by_game:
             yaml_info["apworld"] = apworld_by_game[y_game]
+        if y_id in yaml_ids_with_pending_request:
+            yaml_info["apworld_request_pending"] = True
         if y_requires_version:
             yaml_info["required_version"] = _required_version_label(y_requires_version)
         # For standard worlds, include server-side world version and check requires constraint
@@ -322,13 +860,15 @@ def lobby_status(lobby: UUID):
             server_wv = AutoWorldRegister.world_types[y_game].world_version
             if server_wv != Version(0, 0, 0):
                 yaml_info["server_world_version"] = server_wv.as_simple_string()
-            warning = _check_version_constraint(y_requires_version, server_wv)
-            if warning:
-                yaml_info["version_warning"] = warning
+            if not game_has_shared_apworld:
+                warning = _check_version_constraint(y_requires_version, server_wv)
+                if warning:
+                    yaml_info["version_warning"] = warning
             # Offer optional apworld upgrade if YAML needs a newer version and none uploaded yet
             if (lobby.allow_custom_apworlds and y_requires_version
                     and _version_mismatch_direction(y_requires_version, server_wv) == "newer"
-                    and y_id not in apworld_by_yaml_id):
+                    and y_id not in apworld_by_yaml_id
+                    and not game_has_shared_apworld):
                 yaml_info["version_upgrade_available"] = True
         yamls_by_player.setdefault(p_id, []).append(yaml_info)
 
@@ -363,6 +903,7 @@ def lobby_status(lobby: UUID):
     meta = json.loads(lobby.meta)
     server_opts = meta.get("server_options", {})
     gen_opts = meta.get("generator_options", {})
+    pending_request_count = count(r for r in LobbyApworldRequest if r.lobby == lobby)
 
     result = {
         "state": lobby.state,
@@ -381,6 +922,7 @@ def lobby_status(lobby: UUID):
         "race": lobby.race,
         "server_opts": server_opts,
         "gen_opts": gen_opts,
+        "pending_request_count": pending_request_count,
         "last_activity": lobby.last_activity.isoformat() + "Z",
         "apworlds": [
             {"yaml_id": a.yaml.id, "game_name": a.game_name,
@@ -413,6 +955,7 @@ def lobby_status(lobby: UUID):
                 lobby.room = room
                 lobby.state = LOBBY_DONE
                 lobby.generation_id = None
+                _cancel_all_pending_requests(lobby, "lobby finished generation")
                 LobbyMessage(
                     lobby=lobby,
                     player=None,
@@ -620,9 +1163,18 @@ def lobby_upload_yaml(lobby: UUID):
                 "error": f"Player name '{name}' (from '{filename}') is already used by another YAML in this lobby."
             }), 400
 
+    active_apworld_games: dict[str, tuple[str, str | None]] = {}
+    for a in select(a for a in LobbyApworld if a.lobby == lobby):
+        server_ver = _server_world_version_for_game(a.game_name)
+        server_label = f"v{server_ver.as_simple_string()}" if server_ver else None
+        apworld_label = f"v{a.world_version}" if a.world_version else "custom"
+        active_apworld_games[a.game_name] = (apworld_label, server_label)
+
     uploaded = []
     version_warnings: list[str] = []
     upgrades_needed: list[dict] = []
+    active_apworld_notices: list[str] = []
+    noticed_apworld_games: set[str] = set()
     for filename, content in options.items():
         if isinstance(content, str):
             content = content.encode('utf-8')
@@ -641,6 +1193,12 @@ def lobby_upload_yaml(lobby: UUID):
             warning = _check_version_constraint(requires_json, server_wv)
             if warning:
                 version_warnings.append(f"'{new_names.get(filename, filename)}' ({game}): {warning}")
+
+        if game and game in active_apworld_games and game not in noticed_apworld_games:
+            noticed_apworld_games.add(game)
+            apworld_ver, server_ver = active_apworld_games[game]
+            diff = f"{apworld_ver} (server: {server_ver})" if server_ver else apworld_ver
+            active_apworld_notices.append(f"{game}: custom APWorld {diff}")
 
         yaml_record = LobbyYaml(
             lobby=lobby,
@@ -676,6 +1234,8 @@ def lobby_upload_yaml(lobby: UUID):
         result["version_warnings"] = version_warnings
     if upgrades_needed:
         result["upgrades_needed"] = upgrades_needed
+    if active_apworld_notices:
+        result["active_apworld_notices"] = active_apworld_notices
     return jsonify(result), 201
 
 
@@ -734,19 +1294,13 @@ def lobby_delete_yaml(lobby: UUID, yaml_id: int):
     if not player or (yaml_record.player != player and not is_owner):
         return jsonify({"error": "Permission denied"}), 403
 
-    filename = yaml_record.filename
-    yaml_owner = yaml_record.player
-    owner_name = yaml_owner.player_name
-    _cleanup_yaml_apworld(yaml_record)
-    yaml_record.delete()
-    yaml_owner.is_ready = False
+    if yaml_record.player == player:
+        delete_reason = "manually removed"
+    else:
+        deleter_name = player.player_name if player else "Host"
+        delete_reason = f"removed by host {deleter_name}"
 
-    LobbyMessage(
-        lobby=lobby,
-        player=None,
-        sender_name="System",
-        content=f"{owner_name}'s YAML '{filename}' was removed.",
-    )
+    _delete_yaml_record(yaml_record, delete_reason)
     lobby.last_activity = utcnow()
     commit()
 
@@ -1081,8 +1635,7 @@ def lobby_leave(lobby: UUID):
     for m in player.messages:
         m.player = None
     for y in list(player.yamls):
-        _cleanup_yaml_apworld(y)
-        y.delete()
+        _delete_yaml_record(y, "player left the lobby")
     player.delete()
 
     LobbyMessage(
@@ -1118,8 +1671,7 @@ def lobby_kick(lobby: UUID, player_id: int):
     for m in target.messages:
         m.player = None
     for y in list(target.yamls):
-        _cleanup_yaml_apworld(y)
-        y.delete()
+        _delete_yaml_record(y, "player was kicked from the lobby")
     target.delete()
 
     LobbyMessage(
@@ -1144,6 +1696,7 @@ def lobby_close(lobby: UUID):
     if lobby.state == LOBBY_CLOSED:
         return jsonify({"error": "Lobby is already closed"}), 400
 
+    _cancel_all_pending_requests(lobby, "lobby was closed")
     lobby.state = LOBBY_CLOSED
     LobbyMessage(
         lobby=lobby, player=None, sender_name="System",
@@ -1152,6 +1705,45 @@ def lobby_close(lobby: UUID):
     commit()
 
     return jsonify({"success": True})
+
+
+@api_endpoints.route('/lobby/<suuid:lobby>/reopen', methods=['POST'])
+def lobby_reopen(lobby: UUID):
+    lobby = Lobby.get(id=lobby)
+    if not lobby:
+        return jsonify({"error": "Lobby not found"}), 404
+
+    if lobby.owner != session["_id"]:
+        return jsonify({"error": "Only the lobby owner can reopen the lobby"}), 403
+
+    if lobby.state != LOBBY_DONE:
+        return jsonify({"error": "Only finished lobbies can be reopened"}), 400
+
+    room = lobby.room
+    seed = lobby.seed
+    lobby.room = None
+    lobby.seed = None
+    lobby.generation_id = None
+    lobby.state = LOBBY_OPEN
+    lobby.last_activity = utcnow()
+
+    for player in select(p for p in LobbyPlayer if p.lobby == lobby):
+        player.is_ready = False
+
+    if room:
+        room.delete()
+    if seed and not seed.rooms and not seed.lobbies:
+        for slot in list(seed.slots):
+            slot.delete()
+        seed.delete()
+
+    LobbyMessage(
+        lobby=lobby, player=None, sender_name="System",
+        content="The lobby has been reopened by the host. Previous seed and room data were removed.",
+    )
+    commit()
+
+    return jsonify({"success": True, "state": lobby.state})
 
 
 @api_endpoints.route('/lobby/<suuid:lobby>/lock', methods=['POST'])
@@ -1209,115 +1801,362 @@ def lobby_upload_apworld(lobby: UUID, yaml_id: int):
     if yaml_record.player != player:
         return jsonify({"error": "You can only upload an APWorld for your own YAML"}), 403
 
-    if not yaml_record.is_custom:
-        # Also allow apworld uploads for standard worlds where the YAML requires a newer version
-        from worlds.AutoWorld import AutoWorldRegister as _AWR
-        is_version_upgrade = (
-            yaml_record.requires_game_version
-            and yaml_record.yaml_game
-            and yaml_record.yaml_game in _AWR.world_types
-            and _version_mismatch_direction(
-                yaml_record.requires_game_version,
-                _AWR.world_types[yaml_record.yaml_game].world_version
-            ) == "newer"
-        )
-        if not is_version_upgrade:
-            return jsonify({"error": "This YAML does not require a custom APWorld"}), 400
-
-    if not yaml_record.apworld:
-        existing = select(
-            a for a in LobbyApworld
-            if a.lobby == lobby
-            and a.game_name == yaml_record.yaml_game
-            and a.yaml != yaml_record
-        ).first()
-        if existing:
-            return jsonify({
-                "error": f"An APWorld for '{yaml_record.yaml_game}' was already uploaded "
-                         f"by another player and applies to your YAML automatically."
-            }), 400
-
     content_length = request.content_length
     if content_length and content_length > APWORLD_MAX_SIZE:
         return jsonify({"error": f"APWorld file too large (max {APWORLD_MAX_SIZE // (1024*1024)} MB)"}), 413
 
-    if 'file' not in request.files:
+    mode = (request.form.get("mode") or request.args.get("mode") or "apply").strip().lower()
+    if mode not in {"preview", "apply"}:
+        return jsonify({"error": "Invalid mode. Expected 'preview' or 'apply'."}), 400
+
+    preview_token = ""
+    used_preview_token = ""
+    if 'file' in request.files:
+        f = request.files['file']
+        if not f.filename or not f.filename.endswith('.apworld'):
+            return jsonify({"error": "File must be a .apworld file"}), 400
+
+        original_filename = f.filename
+        apworld_data = f.read(APWORLD_MAX_SIZE + 1)
+        if len(apworld_data) > APWORLD_MAX_SIZE:
+            return jsonify({"error": f"APWorld file too large (max {APWORLD_MAX_SIZE // (1024*1024)} MB)"}), 413
+    elif mode == "apply":
+        preview_token = (request.form.get("preview_token") or "").strip().lower()
+        if not preview_token:
+            return jsonify({"error": "No file provided. Apply mode requires either file or preview_token."}), 400
+        try:
+            apworld_data, original_filename = _load_preview_apworld(
+                lobby=lobby,
+                yaml_record=yaml_record,
+                session_id=session["_id"],
+                preview_token=preview_token,
+            )
+        except PermissionError as exc:
+            return jsonify({"error": str(exc)}), 403
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        used_preview_token = preview_token
+    else:
         return jsonify({"error": "No file provided"}), 400
 
-    f = request.files['file']
-    if not f.filename or not f.filename.endswith('.apworld'):
-        return jsonify({"error": "File must be a .apworld file"}), 400
-
-    apworld_data = f.read(APWORLD_MAX_SIZE + 1)
-    if len(apworld_data) > APWORLD_MAX_SIZE:
-        return jsonify({"error": f"APWorld file too large (max {APWORLD_MAX_SIZE // (1024*1024)} MB)"}), 413
-
-    if not zipfile.is_zipfile(io.BytesIO(apworld_data)):
-        return jsonify({"error": "File is not a valid .apworld (must be a ZIP archive)"}), 400
-
-    world_version = None
-    apworld_game = None
     try:
-        with zipfile.ZipFile(io.BytesIO(apworld_data)) as apzip:
-            manifest_path = next(
-                (n for n in apzip.namelist() if n == "archipelago.json" or n.endswith("/archipelago.json")),
-                None,
-            )
-            if manifest_path:
-                manifest = json.loads(apzip.read(manifest_path))
-                wv = manifest.get("world_version")
-                if wv is not None:
-                    world_version = str(wv)
-                apworld_game = manifest["game"]
-    except Exception:
-        pass
+        apworld_game, world_version = _parse_apworld_upload(apworld_data)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
 
-    if apworld_game is not None and apworld_game != yaml_record.yaml_game:
+    if apworld_game != yaml_record.yaml_game:
         return jsonify({
             "error": f"APWorld is for '{apworld_game}', but this YAML is for '{yaml_record.yaml_game}'. "
                      f"Please upload the correct APWorld."
         }), 400
 
-    # Upgrade apworlds must declare a world_version so we can display and validate the upgrade.
     if not yaml_record.is_custom and world_version is None:
         return jsonify({"error": "Upgrade APWorlds must have a world_version defined in archipelago.json"}), 400
 
-    # Check that the uploaded APWorld satisfies the YAML's version requirement
-    if yaml_record.requires_game_version and world_version is not None:
-        apworld_ver = tuplize_version(world_version)
-        if _version_mismatch_direction(yaml_record.requires_game_version, apworld_ver) == "newer":
-            req_label = _required_version_label(yaml_record.requires_game_version)
-            return jsonify({
-                "error": f"The uploaded APWorld is v{world_version}, but your YAML requires "
-                         f"{yaml_record.yaml_game} v{req_label}. Please upload a newer version."
-            }), 400
+    try:
+        preview, current_hash, parsed_world_version = _build_apworld_impact_preview(
+            lobby,
+            yaml_record,
+            world_version,
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
 
-    apworld_dir = os.path.abspath(os.path.join(app.config["LOBBY_APWORLD_PATH"], str(lobby.id)))
-    os.makedirs(apworld_dir, exist_ok=True)
-    storage_path = os.path.abspath(os.path.join(apworld_dir, f"{yaml_id}.apworld"))
-    if not storage_path.startswith(apworld_dir + os.sep):
-        return jsonify({"error": "Invalid storage path"}), 400
+    if preview["unverifiable_yaml_ids"]:
+        return jsonify({
+            "error": "APWorld must define world_version in archipelago.json to validate YAML version requirements."
+        }), 400
 
-    if yaml_record.apworld:
-        _delete_apworld_file(yaml_record.apworld)
-        yaml_record.apworld.delete()
+    if parsed_world_version is not None and _yaml_requires_newer_world(
+        yaml_record.requires_game_version,
+        parsed_world_version,
+    ):
+        req_label = _required_version_label(yaml_record.requires_game_version)
+        return jsonify({
+            "error": f"The uploaded APWorld is v{world_version}, but your YAML requires "
+                     f"{yaml_record.yaml_game} v{req_label}. Please upload a newer version."
+        }), 400
 
-    with open(storage_path, 'wb') as out:
-        out.write(apworld_data)
+    if mode == "preview":
+        try:
+            preview_token = _store_preview_apworld(
+                lobby=lobby,
+                yaml_record=yaml_record,
+                session_id=session["_id"],
+                original_filename=original_filename,
+                apworld_data=apworld_data,
+            )
+        except OSError:
+            return jsonify({"error": "Could not store preview APWorld file"}), 500
+        return jsonify({
+            "impact_preview": preview,
+            "impact_hash": current_hash,
+            "preview_token": preview_token,
+            "affects_other_players": preview["affects_other_players"],
+            "would_delete_yaml_ids": preview["would_delete_yaml_ids"],
+            "mode": "preview",
+        }), 200
 
-    LobbyApworld(
-        lobby=lobby,
-        yaml=yaml_record,
-        game_name=yaml_record.yaml_game,
-        original_filename=f.filename,
-        storage_path=storage_path,
-        file_size=len(apworld_data),
-        world_version=world_version,
+    impact_hash = (request.form.get("impact_hash") or "").strip()
+    if not impact_hash:
+        return jsonify({"error": "impact_hash is required in apply mode"}), 400
+    if impact_hash != current_hash:
+        return jsonify({
+            "error": "Impact preview changed. Please review again before applying.",
+            "impact_preview": preview,
+            "impact_hash": current_hash,
+            "affects_other_players": preview["affects_other_players"],
+            "would_delete_yaml_ids": preview["would_delete_yaml_ids"],
+            "mode": "preview",
+        }), 409
+
+    is_owner = lobby.owner == session["_id"]
+    affects_other_players = bool(preview["affects_other_players"])
+    confirm_impact = (request.form.get("confirm_impact") or "").strip().lower() in {"1", "true", "yes"}
+
+    if is_owner and affects_other_players and not confirm_impact:
+        return jsonify({
+            "error": "Host confirmation required",
+            "impact_preview": preview,
+            "impact_hash": current_hash,
+            "affects_other_players": True,
+            "would_delete_yaml_ids": preview["would_delete_yaml_ids"],
+            "mode": "preview",
+        }), 412
+
+    if not is_owner and affects_other_players:
+        try:
+            request_record = _create_pending_apworld_request(
+                lobby=lobby,
+                yaml_record=yaml_record,
+                player=player,
+                original_filename=original_filename,
+                apworld_data=apworld_data,
+                world_version=world_version,
+            )
+        except OSError:
+            return jsonify({"error": "Could not store pending APWorld request file"}), 500
+        _lobby_system_message(
+            lobby,
+            f"{player.player_name} submitted an APWorld replacement request for "
+            f"'{yaml_record.yaml_game}' (file: {original_filename}).",
+        )
+        if used_preview_token:
+            _cleanup_preview_apworld(lobby, used_preview_token)
+        lobby.last_activity = utcnow()
+        commit()
+        return jsonify({
+            "pending_approval": True,
+            "request_id": request_record.id,
+            "impact_preview": preview,
+            "impact_hash": current_hash,
+        }), 202
+
+    try:
+        deleted_yaml_ids = _replace_active_apworld(
+            lobby=lobby,
+            yaml_record=yaml_record,
+            original_filename=original_filename,
+            apworld_data=apworld_data,
+            world_version=world_version,
+            preview=preview,
+        )
+    except OSError:
+        return jsonify({"error": "Could not store APWorld file"}), 500
+    if used_preview_token:
+        _cleanup_preview_apworld(lobby, used_preview_token)
+    player.is_ready = False
+    version_label = f"v{world_version}" if world_version else "custom"
+    summary = (
+        f"{player.player_name} applied APWorld {version_label} for '{yaml_record.yaml_game}'."
     )
+    other_players = [n for n in preview.get("impacted_players", []) if n != player.player_name]
+    if other_players:
+        summary += f" Affected players: {', '.join(other_players)}."
+    if deleted_yaml_ids:
+        summary += f" Removed {len(deleted_yaml_ids)} incompatible YAML(s)."
+    _lobby_system_message(lobby, summary)
     lobby.last_activity = utcnow()
     commit()
 
-    return jsonify({"success": True, "file_size": len(apworld_data)}), 201
+    return jsonify({
+        "success": True,
+        "file_size": len(apworld_data),
+        "deleted_yaml_ids": deleted_yaml_ids,
+        "impact_preview": preview,
+    }), 201
+
+
+@api_endpoints.route('/lobby/<suuid:lobby>/apworld-requests', methods=['GET'])
+def lobby_apworld_requests(lobby: UUID):
+    lobby = Lobby.get(id=lobby)
+    if not lobby:
+        return jsonify({"error": "Lobby not found"}), 404
+
+    player = _get_player_in_lobby(lobby)
+    if not player:
+        return jsonify({"error": "You are not in this lobby"}), 403
+
+    is_owner = lobby.owner == session["_id"]
+    if is_owner:
+        rows = select(
+            r for r in LobbyApworldRequest if r.lobby == lobby
+        ).order_by(LobbyApworldRequest.submitted_at)[:]
+    else:
+        rows = select(
+            r for r in LobbyApworldRequest
+            if r.lobby == lobby and r.requester == player
+        ).order_by(LobbyApworldRequest.submitted_at)[:]
+
+    return jsonify({
+        "requests": [_serialize_apworld_request(r) for r in rows],
+        "is_owner": is_owner,
+    })
+
+
+@api_endpoints.route('/lobby/<suuid:lobby>/apworld-request/<int:request_id>/approve', methods=['POST'])
+def lobby_apworld_request_approve(lobby: UUID, request_id: int):
+    lobby = Lobby.get(id=lobby)
+    if not lobby:
+        return jsonify({"error": "Lobby not found"}), 404
+    if lobby.owner != session["_id"]:
+        return jsonify({"error": "Only the lobby owner can approve requests"}), 403
+    if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
+        return jsonify({"error": "Lobby is not accepting APWorld changes"}), 400
+
+    request_record = LobbyApworldRequest.get(id=request_id)
+    if not request_record or request_record.lobby != lobby:
+        return jsonify({"error": "Request not found"}), 404
+
+    payload = request.get_json(silent=True) or {}
+    impact_hash = str(payload.get("impact_hash", "")).strip()
+    if not impact_hash:
+        return jsonify({"error": "impact_hash is required"}), 400
+
+    try:
+        apworld_data = _read_pending_apworld_data(request_record)
+    except OSError:
+        _cleanup_apworld_request(request_record)
+        commit()
+        return jsonify({"error": "Request file is missing and was removed"}), 410
+
+    yaml_record = request_record.yaml
+    try:
+        preview, current_hash, parsed_world_version = _build_apworld_impact_preview(
+            lobby,
+            yaml_record,
+            request_record.world_version,
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    if preview["unverifiable_yaml_ids"]:
+        return jsonify({
+            "error": "APWorld request cannot be approved because version constraints cannot be verified.",
+            "impact_preview": preview,
+            "impact_hash": current_hash,
+        }), 400
+
+    if parsed_world_version is not None and _yaml_requires_newer_world(
+        yaml_record.requires_game_version,
+        parsed_world_version,
+    ):
+        return jsonify({"error": "Request APWorld no longer satisfies requester YAML requirements."}), 400
+
+    if impact_hash != current_hash:
+        return jsonify({
+            "error": "Impact preview changed. Please review and approve again.",
+            "impact_preview": preview,
+            "impact_hash": current_hash,
+        }), 409
+
+    try:
+        deleted_yaml_ids = _replace_active_apworld(
+            lobby=lobby,
+            yaml_record=yaml_record,
+            original_filename=request_record.original_filename,
+            apworld_data=apworld_data,
+            world_version=request_record.world_version,
+            preview=preview,
+        )
+    except OSError:
+        return jsonify({"error": "Could not store APWorld file"}), 500
+    requester_name = request_record.requester.player_name
+    request_world_version = request_record.world_version
+    request_game_name = yaml_record.yaml_game
+    request_record.requester.is_ready = False
+    _cleanup_apworld_request(request_record)
+
+    version_label = f"v{request_world_version}" if request_world_version else "custom"
+    summary = (
+        f"Host approved {requester_name}'s APWorld request for "
+        f"'{request_game_name}' ({version_label})."
+    )
+    other_players = [n for n in preview.get("impacted_players", []) if n != requester_name]
+    if other_players:
+        summary += f" Affected players: {', '.join(other_players)}."
+    if deleted_yaml_ids:
+        summary += f" Removed {len(deleted_yaml_ids)} incompatible YAML(s)."
+    _lobby_system_message(lobby, summary)
+    lobby.last_activity = utcnow()
+    commit()
+
+    return jsonify({"success": True, "deleted_yaml_ids": deleted_yaml_ids})
+
+
+@api_endpoints.route('/lobby/<suuid:lobby>/apworld-request/<int:request_id>/reject', methods=['POST'])
+def lobby_apworld_request_reject(lobby: UUID, request_id: int):
+    lobby = Lobby.get(id=lobby)
+    if not lobby:
+        return jsonify({"error": "Lobby not found"}), 404
+    if lobby.owner != session["_id"]:
+        return jsonify({"error": "Only the lobby owner can reject requests"}), 403
+
+    request_record = LobbyApworldRequest.get(id=request_id)
+    if not request_record or request_record.lobby != lobby:
+        return jsonify({"error": "Request not found"}), 404
+
+    requester_name = request_record.requester.player_name
+    game_name = request_record.game_name
+    _cleanup_apworld_request(request_record)
+    _lobby_system_message(
+        lobby,
+        f"Host rejected {requester_name}'s APWorld request for '{game_name}'.",
+    )
+    lobby.last_activity = utcnow()
+    commit()
+    return jsonify({"success": True})
+
+
+@api_endpoints.route('/lobby/<suuid:lobby>/apworld-request/<int:request_id>/cancel', methods=['POST'])
+def lobby_apworld_request_cancel(lobby: UUID, request_id: int):
+    lobby = Lobby.get(id=lobby)
+    if not lobby:
+        return jsonify({"error": "Lobby not found"}), 404
+
+    player = _get_player_in_lobby(lobby)
+    if not player:
+        return jsonify({"error": "You are not in this lobby"}), 403
+
+    request_record = LobbyApworldRequest.get(id=request_id)
+    if not request_record or request_record.lobby != lobby:
+        return jsonify({"error": "Request not found"}), 404
+
+    is_owner = lobby.owner == session["_id"]
+    if not is_owner and request_record.requester != player:
+        return jsonify({"error": "Permission denied"}), 403
+
+    actor = player.player_name
+    requester_name = request_record.requester.player_name
+    game_name = request_record.game_name
+    _cleanup_apworld_request(request_record)
+    _lobby_system_message(
+        lobby,
+        f"{actor} cancelled APWorld request for '{game_name}' submitted by {requester_name}.",
+    )
+    lobby.last_activity = utcnow()
+    commit()
+    return jsonify({"success": True})
 
 
 @api_endpoints.route('/lobby/<suuid:lobby>/download-package', methods=['GET'])
@@ -1445,6 +2284,7 @@ def lobby_upload_game(lobby: UUID):
     room = Room(seed=seed, owner=lobby.owner, tracker=uuid4())
     lobby.seed = seed
     lobby.room = room
+    _cancel_all_pending_requests(lobby, "lobby uploaded a finished game")
     lobby.state = LOBBY_DONE
     lobby.last_activity = utcnow()
     LobbyMessage(

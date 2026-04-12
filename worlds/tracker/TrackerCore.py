@@ -52,7 +52,7 @@ class TrackerCore():
         self.location_alias_map: dict[int, str] = {}
         self.hints = {}
         self.tracker_items_received = []
-        self.manual_items = []
+        self.manual_items: list[str] = []
         self.player_folder_override = None
         self.gen_error:str = ""
 
@@ -63,7 +63,8 @@ class TrackerCore():
         self.re_gen_passthrough = None
         self.player_id = None
         self.multiworld = None
-        self.manual_items.clear()
+        self.manual_items = []
+        self.ignored_locations = set()
         self.player_folder_override = None
         self.location_alias_map = {}
 
@@ -385,8 +386,9 @@ class TrackerCore():
         unconnected_entrances = [entrance for region in state.reachable_regions[self.player_id] for entrance in region.exits if entrance.can_reach(state) and entrance.connected_region is None]
         self.locations_available = locations
         glitches_item_name = getattr(self.multiworld.worlds[self.player_id],"glitches_item_name","")
-        glitches_state = state.copy()
+        glitches_state = None
         if glitches_item_name:
+            glitches_state = state.copy()
             try:
                 world_item = self.multiworld.create_item(glitches_item_name, self.player_id)
                 glitches_state.collect(world_item, True)

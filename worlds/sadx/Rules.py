@@ -49,8 +49,9 @@ def add_upgrade_rules(self, location_name: str, upgrade: UpgradeLocation):
 def add_sub_level_rules(self, location_name: str, sub_level: SubLevelLocation):
     location = self.multiworld.get_location(location_name, self.player)
     add_rule(location, lambda state: any(
-        state.can_reach_region(get_region_name(character, sub_level.area, self.options.egg_carrier_starts_transformed, self.options),
-                               self.player) for character in
+        state.can_reach_region(
+            get_region_name(character, sub_level.area, self.options.egg_carrier_starts_transformed, self.options),
+            self.player) for character in
         sub_level.get_logic_characters(self.options) if character in get_playable_characters(self.options)))
 
 
@@ -60,7 +61,8 @@ def add_field_emblem_rules(self, location_name: str, field_emblem: EmblemLocatio
     add_rule(location, lambda state: any(
         (state.can_reach_region(
             get_region_name(character.character if isinstance(character, CharacterUpgrade) else character,
-                            field_emblem.area, self.options.egg_carrier_starts_transformed, self.options), self.player) and
+                            field_emblem.area, self.options.egg_carrier_starts_transformed, self.options),
+            self.player) and
          (state.has(character.upgrade, self.player) if isinstance(character, CharacterUpgrade) else True))
         for character in field_emblem.get_logic_characters_upgrades(self.options) if
         character in get_playable_characters(self.options) or
@@ -78,8 +80,9 @@ def add_boss_fight_rules(self, location_name: str, boss_fight: BossFightLocation
     if not boss_fight.unified:
         return
     add_rule(location, lambda state: any(
-        state.can_reach_region(get_region_name(character, boss_fight.area, self.options.egg_carrier_starts_transformed, self.options),
-                               self.player) for character in
+        state.can_reach_region(
+            get_region_name(character, boss_fight.area, self.options.egg_carrier_starts_transformed, self.options),
+            self.player) for character in
         boss_fight.characters if character in get_playable_characters(self.options)))
 
 
@@ -108,8 +111,9 @@ def add_mission_rules(self, location_name: str, mission: MissionLocation):
 def add_egg_rules(self, location_name: str, egg: ChaoEggLocation):
     location = self.multiworld.get_location(location_name, self.player)
     add_rule(location, lambda state: any(
-        state.can_reach_region(get_region_name(character, egg.area, self.options.egg_carrier_starts_transformed, self.options),
-                               self.player) for character in
+        state.can_reach_region(
+            get_region_name(character, egg.area, self.options.egg_carrier_starts_transformed, self.options),
+            self.player) for character in
         egg.characters if character in get_playable_characters(self.options)))
     if egg.requirements:
         add_rule(location, lambda state, egg_requirements=egg.requirements: any(
@@ -269,9 +273,13 @@ def create_sadx_rules(self, needed_emblems: int, area_map) -> LocationDistributi
 
 
 def assign_area_weights(self, starter_setup) -> dict[Area, float]:
-    area_tiers = [[starter_setup.area], [], [], [], [], []]
+    starter_area = starter_setup.area
+    if starter_area == Area.ECOutside:
+        starter_area = Area.ECDeck
 
-    remaining_areas = set([area for area in Area]) - {starter_setup.area}
+    area_tiers = [[starter_area], [], [], [], [], []]
+
+    remaining_areas = set([area for area in Area]) - {starter_area}
 
     # Process connections iteratively
     for i in range(5):
@@ -305,26 +313,15 @@ def assign_area_weights(self, starter_setup) -> dict[Area, float]:
     return area_weights
 
 
-def get_connection_requirement(connection_key, area_map):
+def get_connection_requirement(connection_key, area_map, is_alternative):
     # Check direct and reverse connection values
     value = area_map.get(connection_key, -1)
     if value != -1:
         return value
-    value = area_map.get(AreaConnection.from_areas(connection_key.area2, connection_key.area1), -1)
+    value = area_map.get(AreaConnection.from_areas(connection_key.area2, connection_key.area1, is_alternative), -1)
     if value != -1:
         return value
 
-    return -1
-
-
-def check_alternative_connections(area_map, alternatives):
-    for alt_connection in alternatives:
-        value = area_map.get(AreaConnection.from_areas(alt_connection.area1, alt_connection.area2), -1)
-        if value != -1:
-            return value
-        value = area_map.get(AreaConnection.from_areas(alt_connection.area2, alt_connection.area1), -1)
-        if value != -1:
-            return value
     return -1
 
 
@@ -396,15 +393,15 @@ def connect_regions(self, needed_emblems: int, area_map=None):
             nt_region_to = self.created_regions.get((character, nt_actual_area_to, False))
 
         if self.options.logic_level.value == 4:
-            key_items = expert_plus_dx_logic_items
+            key_items = expert_plus_dx_logic_items.copy()
         elif self.options.logic_level.value == 3:
-            key_items = expert_dx_logic_items
+            key_items = expert_dx_logic_items.copy()
         elif self.options.logic_level.value == 2:
-            key_items = expert_dc_logic_items
+            key_items = expert_dc_logic_items.copy()
         elif self.options.logic_level.value == 1:
-            key_items = hard_logic_items
+            key_items = hard_logic_items.copy()
         else:
-            key_items = normal_logic_items
+            key_items = normal_logic_items.copy()
 
         t_entrance_name = get_entrance_name(character, t_region_from, t_region_to,
                                             is_alternative)
@@ -460,7 +457,8 @@ def connect_regions(self, needed_emblems: int, area_map=None):
 
                 if "EMBLEM_BLOCKED" in key_items:
                     key_items.remove("EMBLEM_BLOCKED")
-                    emblem_requirement = area_map.get(AreaConnection.from_areas(area_from, actual_area_to), 0)
+                    emblem_requirement = area_map.get(
+                        AreaConnection.from_areas(area_from, actual_area_to, is_alternative), 0)
                     if not key_items:
                         connect_pair(full_connection_data,
                                      lambda state, emblems=emblem_requirement:
@@ -501,7 +499,7 @@ def calculate_connection_requirements(area_map, needed_emblems, self):
             area_weights = assign_area_weights(self, self.starter_setup)
             for (character, area_from, area_to, is_alternative), _ in area_connections.items():
                 connection_key = AreaConnection.from_areas(area_from, area_to, is_alternative)
-                connection_requirement = get_connection_requirement(connection_key, area_map)
+                connection_requirement = get_connection_requirement(connection_key, area_map, is_alternative)
                 if connection_requirement != -1:
                     area_map[connection_key] = connection_requirement
                 else:

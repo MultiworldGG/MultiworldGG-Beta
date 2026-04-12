@@ -160,6 +160,7 @@ def create_regions(world: "OuterWildsWorld") -> None:
     elif options.spawn == Spawn.option_deep_bramble:
         menu.add_exits(["Deep Bramble"])
         mw.get_entrance("Menu -> Space", p).access_rule = lambda state: state.has_all(["Launch Codes", "Deep Bramble Coordinates"], p)
+        mw.get_region("Deep Bramble", p).add_exits(["Deep Bramble via Warp Drive"], {"Deep Bramble via Warp Drive": lambda state: state.has("Launch Codes", p)})
 
     if options.goal == Goal.option_song_of_the_universe:
         friend_list = [

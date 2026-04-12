@@ -95,6 +95,7 @@ class Lobby(db.Entity):
     messages = Set('LobbyMessage')
     yamls = Set('LobbyYaml')
     apworlds = Set('LobbyApworld')
+    apworld_requests = Set('LobbyApworldRequest')
     generation_id = Optional(UUID)  # ID of the Generation/Seed (they share the same UUID)
 
 
@@ -107,6 +108,7 @@ class LobbyPlayer(db.Entity):
     is_ready = Required(bool, default=False)
     yamls = Set('LobbyYaml')
     messages = Set('LobbyMessage')
+    apworld_requests = Set('LobbyApworldRequest')
 
 
 class LobbyYaml(db.Entity):
@@ -121,6 +123,7 @@ class LobbyYaml(db.Entity):
     content = Required(bytes, lazy=True)
     uploaded_at = Required(datetime, default=lambda: utcnow())
     apworld = Optional('LobbyApworld')
+    apworld_requests = Set('LobbyApworldRequest')
 
 
 class LobbyApworld(db.Entity):
@@ -133,6 +136,19 @@ class LobbyApworld(db.Entity):
     file_size = Required(int, default=0)
     world_version = Optional(str, nullable=True) # extracted from archipelago.json in the apworld
     uploaded_at = Required(datetime, default=lambda: utcnow())
+
+
+class LobbyApworldRequest(db.Entity):
+    id = PrimaryKey(int, auto=True)
+    lobby = Required(Lobby, index=True)
+    yaml = Required(LobbyYaml, index=True)
+    requester = Required(LobbyPlayer, index=True)
+    game_name = Required(str, index=True)
+    original_filename = Required(str)
+    storage_path = Required(str)
+    file_size = Required(int, default=0)
+    world_version = Optional(str, nullable=True)
+    submitted_at = Required(datetime, default=lambda: utcnow())
 
 
 class LobbyMessage(db.Entity):
