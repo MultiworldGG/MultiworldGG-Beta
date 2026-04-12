@@ -16,6 +16,9 @@
     const downloadPackageBtn = document.getElementById("download-package-btn");
     const uploadGameZone = document.getElementById("upload-game-zone");
     const gameFileInput = document.getElementById("game-file-input");
+    const apworldQueuePanel = document.getElementById("apworld-queue-panel");
+    const apworldQueueList = document.getElementById("apworld-queue-list");
+    const apworldQueueEmpty = document.getElementById("apworld-queue-empty");
     const isViewer = typeof IS_VIEWER !== "undefined" && IS_VIEWER;
 
     let pollTimer = null;
@@ -27,6 +30,9 @@
     let pollErrorCount = 0;
     let lastReadyCount = 0;
     let lastTotalCount = 0;
+    let lastPendingRequestCount = null;
+    let lastApworldVersions = {};  // game_name -> world_version
+    let allowCustomApworlds = false;
     const renderedMessageIds = new Set();
 
     // Returns { fast, slow, idleThreshold } based on lobby size / viewer mode.
@@ -57,10 +63,63 @@
                 knownVersion = data.version;
                 currentState = data.state;
                 hasCustomYamls = data.has_custom || false;
+                allowCustomApworlds = !!data.allow_custom_apworlds;
                 updatePlayers(data.players);
                 appendMessages(data.messages);
                 updateGenerateButton(data);
                 updateStatusDisplay(data);
+                if (MY_PLAYER_ID !== null && data.apworlds) {
+                    const currentVersions = {};
+                    const apworldOwnerYamls = new Set();
+                    (data.apworlds || []).forEach(a => {
+                        currentVersions[a.game_name] = a.world_version || "custom";
+                        apworldOwnerYamls.add(a.yaml_id);
+                    });
+
+                    const myPlayer = data.players.find(p => p.id === MY_PLAYER_ID);
+                    if (myPlayer && Object.keys(lastApworldVersions).length > 0) {
+                        const myYamls = myPlayer.yamls || [];
+                        const myYamlIds = new Set(myYamls.map(y => y.id));
+                        const myGames = new Set(myYamls.map(y => y.game).filter(Boolean));
+                        const alerts = [];
+                        myGames.forEach(game => {
+                            const oldVer = lastApworldVersions[game];
+                            const newVer = currentVersions[game];
+                            if (oldVer === newVer) return;
+                            const ownsNew = (data.apworlds || []).some(
+                                a => a.game_name === game && myYamlIds.has(a.yaml_id)
+                            );
+                            if (ownsNew) return;
+                            if (newVer && !oldVer) {
+                                alerts.push(`${game}: custom APWorld v${newVer} is now active`);
+                            } else if (!newVer && oldVer) {
+                                alerts.push(`${game}: custom APWorld was removed, reverted to server version`);
+                            } else if (newVer && oldVer) {
+                                alerts.push(`${game}: APWorld changed from v${oldVer} to v${newVer}`);
+                            }
+                        });
+                        if (alerts.length > 0) {
+                            alert("APWorld change affecting your game(s):\n" + alerts.join("\n"));
+                        }
+                    }
+                    lastApworldVersions = currentVersions;
+                }
+
+                if (IS_OWNER && !isViewer &&
+                    (data.state === LOBBY_STATE_OPEN || data.state === LOBBY_STATE_LOCKED)) {
+                    const pendingCount = Number.isInteger(data.pending_request_count)
+                        ? data.pending_request_count : 0;
+                    if (pendingCount <= 0) {
+                        if (lastPendingRequestCount !== 0) {
+                            renderApworldRequests([]);
+                        }
+                    } else if (lastPendingRequestCount !== pendingCount) {
+                        loadApworldRequests();
+                    }
+                    lastPendingRequestCount = pendingCount;
+                } else {
+                    lastPendingRequestCount = null;
+                }
 
                 if (MY_PLAYER_ID !== null &&
                     (currentState === LOBBY_STATE_OPEN || currentState === LOBBY_STATE_LOCKED || currentState === LOBBY_STATE_GENERATING)) {
@@ -214,6 +273,10 @@
                 html += serverVer;
                 html += versionWarn;
 
+                const hasOwnApworld = !!y.apworld_is_own;
+                const hasPendingRequest = !!y.apworld_request_pending;
+                const canEditApworld = p.id === MY_PLAYER_ID && allowCustomApworlds && !hasOwnApworld && !hasPendingRequest;
+
                 if (isCustom && (currentState === LOBBY_STATE_OPEN || currentState === LOBBY_STATE_LOCKED)) {
                     const apw = y.apworld;
                     if (apw) {
@@ -225,11 +288,14 @@
                             apwTip += ` — v${escapeHtml(apw.world_version)}, compatibility unverified (YAML has no version requirement)`;
                         }
                         html += `<span class="apworld-status-ok" title="${apwTip}">&#10003; ${verLabel}</span>`;
-                    } else if (p.id === MY_PLAYER_ID) {
-                        const reqVer = y.required_version ? ` (requires v${escapeHtml(y.required_version)})` : "";
-                        html += `<button class="apworld-upload-btn" data-yaml-id="${y.id}" title="Upload APWorld for this game${reqVer}">&#x2B06; APWorld</button>`;
-                    } else {
+                    } else if (!canEditApworld && !hasPendingRequest) {
                         html += `<span class="apworld-missing" title="APWorld not yet uploaded">&#9888;</span>`;
+                    }
+                    if (hasPendingRequest && p.id === MY_PLAYER_ID) {
+                        html += `<button class="apworld-upload-btn" disabled title="APWorld replacement request is pending host approval">In Review</button>`;
+                    } else if (canEditApworld) {
+                        const reqVer = y.required_version ? ` (requires v${escapeHtml(y.required_version)})` : "";
+                        html += `<button class="apworld-upload-btn" data-yaml-id="${y.id}" title="Upload APWorld for this game${reqVer}">&#x2B06; Replace APWorld</button>`;
                     }
                 }
 
@@ -247,11 +313,12 @@
                         html += `<span class="apworld-status-ok" title="${apwTip}">&#10003; ${verLabel}</span>`;
                     } else if (versionSatisfied) {
                         html += `<span class="apworld-status-ok" title="Server v${escapeHtml(y.server_world_version)} satisfies requirement v${escapeHtml(y.required_version)}">&#10003; v${escapeHtml(y.server_world_version)}</span>`;
-                    } else if (y.version_upgrade_available) {
-                        if (p.id === MY_PLAYER_ID) {
-                            const reqVer = y.required_version ? ` (requires v${escapeHtml(y.required_version)})` : "";
-                            html += `<button class="apworld-upload-btn" data-yaml-id="${y.id}" title="Upload newer APWorld to override server version${reqVer}">&#x2B06; Upgrade</button>`;
-                        }
+                    }
+                    if (hasPendingRequest && p.id === MY_PLAYER_ID) {
+                        html += `<button class="apworld-upload-btn" disabled title="APWorld replacement request is pending host approval">In Review</button>`;
+                    } else if (canEditApworld) {
+                        const reqVer = y.required_version ? ` (requires v${escapeHtml(y.required_version)})` : "";
+                        html += `<button class="apworld-upload-btn" data-yaml-id="${y.id}" title="Upload APWorld replacement${reqVer}">&#x2B06; Replace APWorld</button>`;
                     }
                 }
 
@@ -462,6 +529,9 @@
         if (genSection) {
             genSection.style.display = isActiveState ? "" : "none";
         }
+        if (apworldQueuePanel && !isActiveState) {
+            apworldQueuePanel.style.display = "none";
+        }
 
         const generatingDiv = document.getElementById("lobby-generating");
         if (generatingDiv) {
@@ -599,7 +669,7 @@
                             `Uploaded ${customUploaded.length} custom game YAML(s):\n` +
                             lines.join("\n") + "\n\n" +
                             `Please upload the corresponding .apworld file(s) using the ` +
-                            `"⬆ APWorld" button next to each custom YAML. ` +
+                            `"⬆ Replace APWorld" button next to each custom YAML. ` +
                             `You can also drag and drop an .apworld file directly onto the button.`
                         );
                     }
@@ -610,8 +680,15 @@
                         alert(
                             "Your YAML requires a newer version of the following game(s):\n" +
                             lines.join("\n") + "\n\n" +
-                            "Please upload an updated APWorld using the \"⬆ Upgrade\" button next to your YAML. " +
+                            "Please upload an updated APWorld using the \"⬆ Replace APWorld\" button next to your YAML. " +
                             "You can also drag and drop an .apworld file directly onto the button."
+                        );
+                    }
+                    if (data.active_apworld_notices && data.active_apworld_notices.length > 0) {
+                        alert(
+                            "Note: A custom APWorld is already active for the following game(s):\n" +
+                            data.active_apworld_notices.join("\n") + "\n\n" +
+                            "Your YAML will use the active custom APWorld version, not the server version."
                         );
                     }
                     if (data.version_warnings && data.version_warnings.length > 0) {
@@ -635,34 +712,268 @@
 
     const APWORLD_MAX_BYTES = 60 * 1024 * 1024; // must match server-side APWORLD_MAX_SIZE
 
-    function uploadApworld(yamlId, file) {
+    function formatImpactSummary(preview) {
+        const game = preview && preview.game_name ? preview.game_name : "Unknown game";
+        const candidateVersion = preview && preview.candidate_world_version
+            ? `v${preview.candidate_world_version}` : "custom version";
+        const impactedPlayers = (preview && preview.impacted_players) || [];
+        const impactedCount = preview && preview.impacted_player_count
+            ? preview.impacted_player_count : impactedPlayers.length;
+        const deletions = (preview && preview.would_delete_yamls) || [];
+        const lines = [
+            `Replace APWorld for '${game}' with ${candidateVersion}?`,
+            "",
+        ];
+        if (impactedCount > 0) {
+            lines.push(`Affected players (${impactedCount}): ${impactedPlayers.join(", ") || "unknown"}`);
+        } else {
+            lines.push("No players are affected.");
+        }
+        if (deletions.length > 0) {
+            lines.push("");
+            lines.push("The following YAMLs will be removed as incompatible:");
+            deletions.forEach(y => {
+                const who = y.player_name || "Unknown";
+                const file = y.filename || `YAML #${y.yaml_id}`;
+                const req = y.required_version ? ` (requires v${y.required_version})` : "";
+                lines.push(`- ${who}: ${file}${req}`);
+            });
+        }
+        lines.push("");
+        lines.push("Continue?");
+        return lines.join("\n");
+    }
+
+    async function postApworld(yamlId, file, mode, extraFields) {
+        const formData = new FormData();
+        if (file) {
+            formData.append("file", file);
+        }
+        formData.append("mode", mode);
+        Object.entries(extraFields || {}).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== "") {
+                formData.append(key, String(value));
+            }
+        });
+        const res = await fetch(`${API_BASE}/apworld/${yamlId}`, { method: "POST", body: formData });
+        let data = {};
+        try {
+            data = await res.json();
+        } catch (_e) {
+            data = {};
+        }
+        return { status: res.status, data };
+    }
+
+    async function applyApworldWithHash(yamlId, previewToken, preview, impactHash, confirmImpact, depth) {
+        const attempt = depth || 0;
+        if (attempt > 4) {
+            alert("APWorld apply failed because impact data kept changing. Please try again.");
+            return;
+        }
+
+        const { status, data } = await postApworld(yamlId, null, "apply", {
+            impact_hash: impactHash,
+            confirm_impact: confirmImpact ? 1 : 0,
+            preview_token: previewToken,
+        });
+
+        if (status === 409 || status === 412) {
+            const newPreview = data.impact_preview || preview;
+            const newHash = data.impact_hash;
+            if (!newHash) {
+                alert(data.error || "APWorld apply requires a refreshed confirmation.");
+                return;
+            }
+            if (IS_OWNER && newPreview && newPreview.affects_other_players) {
+                if (!confirm(formatImpactSummary(newPreview))) return;
+                return applyApworldWithHash(yamlId, previewToken, newPreview, newHash, true, attempt + 1);
+            }
+            alert(data.error || "Impact preview changed. Please try again.");
+            return;
+        }
+
+        if (data.error) {
+            alert("APWorld upload error: " + data.error);
+            return;
+        }
+
+        if (data.pending_approval) {
+            alert("APWorld replacement request submitted for host approval.");
+        }
+
+        resetPollRate();
+        pollStatus();
+    }
+
+    async function uploadApworld(yamlId, file) {
         if (file.size > APWORLD_MAX_BYTES) {
             alert(`APWorld file is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). The maximum allowed size is 60 MB.`);
             return;
         }
 
-        const formData = new FormData();
-        formData.append("file", file);
+        try {
+            const previewResult = await postApworld(yamlId, file, "preview");
+            if (previewResult.status === 413) {
+                alert("APWorld file is too large. The maximum allowed size is 60 MB.");
+                return;
+            }
+            if (previewResult.data.error) {
+                alert("APWorld upload error: " + previewResult.data.error);
+                return;
+            }
 
-        fetch(`${API_BASE}/apworld/${yamlId}`, { method: "POST", body: formData })
-            .then(res => {
-                if (res.status === 413) {
-                    throw new Error("APWorld file is too large. The maximum allowed size is 60 MB.");
+            const preview = previewResult.data.impact_preview || {};
+            const impactHash = previewResult.data.impact_hash;
+            const previewToken = previewResult.data.preview_token;
+            if (!impactHash) {
+                alert("APWorld preview failed: missing impact hash.");
+                return;
+            }
+            if (!previewToken) {
+                alert("APWorld preview failed: missing preview token.");
+                return;
+            }
+
+            let confirmImpact = false;
+            if (IS_OWNER && preview.affects_other_players) {
+                if (!confirm(formatImpactSummary(preview))) return;
+                confirmImpact = true;
+            }
+
+            await applyApworldWithHash(yamlId, previewToken, preview, impactHash, confirmImpact, 0);
+        } catch (err) {
+            console.error("APWorld upload error:", err);
+            alert("APWorld upload failed. Please try again.");
+        }
+    }
+
+    async function postApworldRequestAction(requestId, action, payload) {
+        const res = await fetch(`${API_BASE}/apworld-request/${requestId}/${action}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload || {}),
+        });
+        let data = {};
+        try {
+            data = await res.json();
+        } catch (_e) {
+            data = {};
+        }
+        return { status: res.status, data };
+    }
+
+    async function approveApworldRequest(requestId, impactHash, preview, depth) {
+        const attempt = depth || 0;
+        if (attempt > 4) {
+            alert("APWorld approval failed because impact data kept changing. Please try again.");
+            return;
+        }
+        if (!confirm(formatImpactSummary(preview))) return;
+        const { status, data } = await postApworldRequestAction(requestId, "approve", { impact_hash: impactHash });
+        if (status === 409) {
+            const updatedPreview = data.impact_preview || preview;
+            const updatedHash = data.impact_hash;
+            if (!updatedHash) {
+                alert(data.error || "Request approval needs refreshed preview.");
+                return;
+            }
+            if (!confirm(formatImpactSummary(updatedPreview))) return;
+            return approveApworldRequest(requestId, updatedHash, updatedPreview, attempt + 1);
+        }
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+        resetPollRate();
+        pollStatus();
+    }
+
+    async function rejectApworldRequest(requestId) {
+        if (!confirm("Reject this APWorld request?")) return;
+        const { data } = await postApworldRequestAction(requestId, "reject", {});
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+        resetPollRate();
+        pollStatus();
+    }
+
+    function bindApworldQueueButtons() {
+        document.querySelectorAll(".apworld-request-approve-btn").forEach(btn => {
+            btn.addEventListener("click", function () {
+                const requestId = this.dataset.requestId;
+                const impactHash = this.dataset.impactHash;
+                const previewRaw = this.dataset.impactPreview || "{}";
+                let preview = {};
+                try {
+                    preview = JSON.parse(previewRaw);
+                } catch (_e) {
+                    preview = {};
                 }
-                return res.json();
-            })
-            .then(data => {
-                if (data.error) {
-                    alert("APWorld upload error: " + data.error);
-                } else {
-                    resetPollRate();
-                    pollStatus();
-                }
-            })
-            .catch(err => {
-                console.error("APWorld upload error:", err);
-                alert(err.message || "APWorld upload failed. Please try again.");
+                approveApworldRequest(requestId, impactHash, preview, 0);
             });
+        });
+        document.querySelectorAll(".apworld-request-reject-btn").forEach(btn => {
+            btn.addEventListener("click", function () {
+                rejectApworldRequest(this.dataset.requestId);
+            });
+        });
+    }
+
+    function renderApworldRequests(requests) {
+        if (!apworldQueuePanel || !apworldQueueList || !apworldQueueEmpty) return;
+        const rows = requests || [];
+        if (!rows.length) {
+            apworldQueuePanel.style.display = "none";
+            apworldQueueList.innerHTML = "";
+            apworldQueueEmpty.style.display = "none";
+            return;
+        }
+
+        apworldQueuePanel.style.display = "";
+        apworldQueueEmpty.style.display = "none";
+        apworldQueueList.innerHTML = rows.map(r => {
+            const preview = r.impact_preview || {};
+            const version = r.world_version ? `v${escapeHtml(r.world_version)}` : "custom";
+            const currentVer = preview.active_world_version
+                ? `v${escapeHtml(preview.active_world_version)}` : null;
+            const currentSource = preview.active_source === "server" ? "server" : "custom";
+            const fromLabel = currentVer ? ` from ${currentSource} ${currentVer}` : "";
+            const impacted = preview.impacted_player_count || 0;
+            const deletions = (preview.would_delete_yaml_ids || []).length;
+            return `<li class="apworld-request-item">
+                <div class="apworld-request-main">
+                    <strong>${escapeHtml(r.requester_name)}</strong> wants to replace
+                    <strong>${escapeHtml(r.game_name)}</strong>${fromLabel} with ${escapeHtml(version)}.
+                    <div class="apworld-request-meta">Affected players: ${impacted} | YAML deletions: ${deletions}</div>
+                </div>
+                <div class="apworld-request-actions">
+                    <button class="lobby-btn lobby-btn-primary apworld-request-approve-btn"
+                        data-request-id="${r.id}"
+                        data-impact-hash="${escapeHtml(r.impact_hash || "")}"
+                        data-impact-preview='${JSON.stringify(preview).replace(/&/g, "&amp;").replace(/'/g, "&#39;")}'>
+                        Approve
+                    </button>
+                    <button class="lobby-btn lobby-btn-danger apworld-request-reject-btn" data-request-id="${r.id}">
+                        Reject
+                    </button>
+                </div>
+            </li>`;
+        }).join("");
+        bindApworldQueueButtons();
+    }
+
+    function loadApworldRequests() {
+        if (!IS_OWNER || !apworldQueuePanel) return;
+        fetch(`${API_BASE}/apworld-requests`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return;
+                renderApworldRequests(data.requests || []);
+            })
+            .catch(err => console.error("APWorld request poll error:", err));
     }
 
     function bindApworldUploadButtons() {

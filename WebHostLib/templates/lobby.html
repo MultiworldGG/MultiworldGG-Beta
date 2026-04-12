@@ -242,6 +242,11 @@
                     {# Generation controls #}
                     {% if lobby.state in (0, 3) and is_owner %}
                         <div id="lobby-generate">
+                            <div id="apworld-queue-panel">
+                                <h3>APWorld Requests</h3>
+                                <div id="apworld-queue-empty">No pending APWorld requests.</div>
+                                <ul id="apworld-queue-list"></ul>
+                            </div>
                             <div id="generate-standard">
                                 <button id="generate-btn" class="lobby-btn lobby-btn-primary"
                                         {% if yaml_count == 0 %}disabled{% endif %}>

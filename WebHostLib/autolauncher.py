@@ -4,6 +4,7 @@ import json
 import logging
 import multiprocessing
 import os
+import shutil
 import typing
 from datetime import timedelta, datetime
 from threading import Event, Thread
@@ -62,6 +63,51 @@ def handle_generation_failure(result: BaseException):
         raise result
     except Exception as e:
         logging.exception(e)
+
+
+def _get_lobby_apworld_root() -> str | None:
+    from . import app as web_app
+    root = web_app.config.get("LOBBY_APWORLD_PATH")
+    if not root:
+        return None
+    return os.path.abspath(str(root))
+
+
+def _cleanup_stale_preview_files(max_age: timedelta = timedelta(hours=1)) -> int:
+    root = _get_lobby_apworld_root()
+    if not root or not os.path.isdir(root):
+        return 0
+
+    cutoff = utcnow() - max_age
+    removed_files = 0
+    for lobby_entry in os.scandir(root):
+        if not lobby_entry.is_dir():
+            continue
+        preview_dir = os.path.join(lobby_entry.path, "preview")
+        if not os.path.isdir(preview_dir):
+            continue
+        for preview_file in os.scandir(preview_dir):
+            if not preview_file.is_file():
+                continue
+            try:
+                modified = datetime.utcfromtimestamp(preview_file.stat().st_mtime)
+            except OSError:
+                continue
+            if modified < cutoff:
+                try:
+                    os.unlink(preview_file.path)
+                    removed_files += 1
+                except OSError:
+                    pass
+        try:
+            if not any(os.scandir(preview_dir)):
+                os.rmdir(preview_dir)
+        except OSError:
+            pass
+
+    if removed_files:
+        logging.info(f"Removed {removed_files} stale lobby APWorld preview file(s).")
+    return removed_files
 
 
 def _mp_gen_game(
@@ -150,21 +196,28 @@ def cleanup():
             lambda l: (l.state == LOBBY_CLOSED and l.last_activity < closed_cutoff) or
                       (l.state == LOBBY_DONE and l.last_activity < done_cutoff)
         )[:]
+        lobby_apworld_root = _get_lobby_apworld_root()
         for lobby in stale_lobbies:
-            # Delete apworld files and lobby subdirectory from filesystem
-            lobby_apworld_dir = None
+            request_paths = [r.storage_path for r in lobby.apworld_requests]
+            apworld_paths = [a.storage_path for a in lobby.apworlds]
+
+            for r in list(lobby.apworld_requests):
+                r.delete()
             for a in list(lobby.apworlds):
-                try:
-                    lobby_apworld_dir = os.path.dirname(a.storage_path)
-                    os.unlink(a.storage_path)
-                except OSError:
-                    pass
                 a.delete()
+
+            lobby_apworld_dir = (
+                os.path.join(lobby_apworld_root, str(lobby.id))
+                if lobby_apworld_root else None
+            )
             if lobby_apworld_dir:
-                try:
-                    os.rmdir(lobby_apworld_dir)
-                except OSError:
-                    pass  # not empty or already gone
+                shutil.rmtree(lobby_apworld_dir, ignore_errors=True)
+            else:
+                for path in request_paths + apworld_paths:
+                    try:
+                        os.unlink(path)
+                    except OSError:
+                        pass
             # Clear player references on messages first, then delete in dependency order
             for m in lobby.messages:
                 m.player = None
@@ -177,6 +230,8 @@ def cleanup():
             lobby.delete()
         if stale_lobbies:
             logging.info(f"{len(stale_lobbies)} stale lobbies cleaned up.")
+
+    _cleanup_stale_preview_files()
 
 
 def expire_lobbies():
@@ -194,6 +249,7 @@ def expire_lobbies():
         if expired_count:
             commit()
             logging.info(f"{expired_count} lobbies expired due to inactivity.")
+    _cleanup_stale_preview_files()
 
 
 def autohost(config: dict):
