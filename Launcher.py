@@ -276,6 +276,11 @@ def launch(exe: Sequence[str], in_terminal: bool = False) -> bool:
             subprocess.Popen(["start", f"Running {apname}", *exe], shell=True)
             return True
         elif is_linux:
+            # Attempt to use xdg-terminal-exec first to allow user-defined defaults
+            xdg = which('xdg-terminal-exec')
+            if xdg:
+                subprocess.Popen([xdg, '--', *exe])
+                return True
             terminal = which('x-terminal-emulator') or which("konsole") or which('gnome-terminal') or which('xterm')
             if terminal:
                 # Clear LD_LIB_PATH during terminal startup, but set it again when running command in case it's needed
