@@ -240,3 +240,6 @@ sm64hack_jsons
 
 # lobby uploads
 uploads
+
+# launcher cache
+data/world_launcher_cache.json.gz

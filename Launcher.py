@@ -508,8 +508,13 @@ def run_gui(launch_components: list[Component], args: Any) -> None:
 
                     Clock.schedule_once(_finish_on_main, 0)
             else:
-                # Cache exists, just dismiss overlay
-                Clock.schedule_once(lambda dt: self._dismiss_loading_overlay(), 0)
+                # Valid Cache
+                def _finish_from_cache(dt):
+                    from worlds.LauncherComponents import _hydrate_launcher_components_from_cache
+                    _hydrate_launcher_components_from_cache()
+                    self._rebuild_cards_from_components()
+                    self._dismiss_loading_overlay()
+                Clock.schedule_once(_finish_from_cache, 0)
 
         def _start_background_cache_refresh(self) -> None:
             if self._cache_refresh_started:
