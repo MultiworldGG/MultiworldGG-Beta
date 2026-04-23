@@ -58,6 +58,7 @@ if __name__ == "__main__":
     import ModuleUpdate
     ModuleUpdate.update(yes="--yes" in sys.argv or "-y" in sys.argv)
 
+from worlds import ensure_worlds_loaded
 from worlds.LauncherComponents import components, icon_paths
 from Utils import version_tuple, instance_name, archipelago_guid, is_windows, is_linux
 from Cython.Build import cythonize
@@ -164,14 +165,21 @@ def resolve_icon(icon_name: str):
         return base_path
 
 
-exes = [
-    cx_Freeze.Executable(
-        script=f"{c.script_name}.py",
-        target_name=c.frozen_name + (".exe" if is_windows else ""),
-        icon=resolve_icon(c.icon),
-        base="Win32GUI" if is_windows and not c.cli else None
-    ) for c in components if c.script_name and c.frozen_name
-]
+def build_executables() -> list[cx_Freeze.Executable]:
+    # Include world-defined launch components (for example SNI Client)
+    # so cx_Freeze emits executables for them as well.
+    ensure_worlds_loaded()
+    return [
+        cx_Freeze.Executable(
+            script=f"{c.script_name}.py",
+            target_name=c.frozen_name + (".exe" if is_windows else ""),
+            icon=resolve_icon(c.icon),
+            base="Win32GUI" if is_windows and not c.cli else None
+        ) for c in components if c.script_name and c.frozen_name
+    ]
+
+
+exes = build_executables()
 
 if is_windows:
     # create a duplicate Launcher for Windows, which has a working stdout/stderr, for debugging and --help
