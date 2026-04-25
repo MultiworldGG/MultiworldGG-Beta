@@ -832,7 +832,7 @@ cx_Freeze.setup(
             "excludes": ["Cython", "PySide2"],
             "zip_includes": [],
             "zip_include_packages": ["*"],
-            "zip_exclude_packages": ["worlds", "sc2", "kivymd", "clr_loader", "pythonnet"], # clr_loader and pythonnet use absolute paths
+            "zip_exclude_packages": ["worlds", "sc2", "kivymd", "clr_loader", "pythonnet", "charset_normalizer"], # clr_loader and pythonnet use absolute paths
             "include_files": [],  # broken in cx 6.14.0, we use more special sauce now
             "include_msvcr": False,
             "replace_paths": ["*."],

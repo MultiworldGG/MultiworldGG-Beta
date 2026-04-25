@@ -136,9 +136,9 @@ def open_folder(folder_path):
         logging.warning(f"No file browser available to open {folder_path}")
 
 
-def update_settings():
+def update_settings(skip_cache: bool = False):
     from settings import get_settings
-    get_settings().save()
+    get_settings().save(write_launcher_cache=not skip_cache)
 
 
 def precache_world_data() -> None:
@@ -1012,6 +1012,7 @@ def main(args: argparse.Namespace | dict | None = None):
         args = {}
 
     args.setdefault("update_settings", False)
+    args.setdefault("skip_cache", False)
     args.setdefault("precache", False)
     args.setdefault("run_component_callable", None)
     args.setdefault("args", ())
@@ -1056,7 +1057,7 @@ def main(args: argparse.Namespace | dict | None = None):
                 logging.warning(f"Could not identify Component responsible for {path}")
 
     if args["update_settings"]:
-        update_settings()
+        update_settings(args["skip_cache"])
     if "file" in args:
         run_component(args["component"], args["file"], *args["args"])
     elif "component" in args:
@@ -1070,11 +1071,14 @@ if __name__ == '__main__':
     multiprocessing.set_start_method("spawn")  # if launched process uses kivy, fork won't work
     parser = argparse.ArgumentParser(
         description=f'{apname} Launcher',
-        usage="[-h] [--update_settings] [--precache] [Patch|Game|Component] [-- component args here]"
+        usage="[-h] [--update_settings] [--skip-cache] [--precache] "
+              "[Patch|Game|Component] [-- component args here]"
     )
     run_group = parser.add_argument_group("Run")
     run_group.add_argument("--update_settings", action="store_true",
                            help="Update host.yaml and exit.")
+    run_group.add_argument("--skip-cache", action="store_true",
+                           help="Skip launcher cache writes during host.yaml update.")
     run_group.add_argument("--precache", action="store_true",
                            help="Build launcher cache and exit.")
     run_group.add_argument("--run_component_callable", nargs=2, metavar=("MODULE", "QUALNAME"),
