@@ -1,7 +1,9 @@
 {
-    "game": "A Link Between Worlds",
+    "minimum_ap_version": "0.5.0", 
+    "world_version": "0.1.5",
     "authors": ["randomsalience"],
     "igdb_id": 2909,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.1.4"
+    "version": 7,
+    "compatible_version": 7,
+    "game": "A Link Between Worlds"
 }

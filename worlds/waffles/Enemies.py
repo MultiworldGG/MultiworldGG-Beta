@@ -248,6 +248,7 @@ tag_list = {
     "force line spin": [],
     "mega mole": [],
     "stay on ledge": [],
+    "force fish": [],
 }
 
 SPRITE_POINTERS_ADDR = 0x2EC00
@@ -274,6 +275,7 @@ enemy_list_special_cases = {
         0x00A: EnemyData(0x00A, "Red vertical flying Koopa", 20, (0,0), ["flying"], ["flying", "floating", "flying koopa"]),
         0x00B: EnemyData(0x00B, "Red horizontal flying Koopa", 20, (0,0), ["flying"], ["flying", "floating", "flying koopa"]),
         0x0A1: EnemyData(0x0A1, "Bowser's bowling ball", 20, (0,0), ["flying koopa"], ["skip"]),
+        0x0BC: EnemyData(0x0BC, "Bowser statue, normal/fire/leap (X&3)", 20, (0,0), ["skip"], ["skip"]),
     },
     0x135: {
         0x008: EnemyData(0x008, "Green Koopa, flying left", 20, (0,0), ["flying"], ["floating", "flying", "flying koopa"]),
@@ -285,6 +287,10 @@ enemy_list_special_cases = {
     },
     0x023: {
         0x006: EnemyData(0x006, "Blue Koopa", 10, (0,0), ["ground"], ["ground", "blue koopa"]),
+        0x0A1: EnemyData(0x0A1, "Bowser's bowling ball", 20, (0,0), ["blue koopa"], ["skip"]),
+    },
+    0x11F: {
+        0x009: EnemyData(0x009, "Green bouncing Koopa (Y&1)", 15, (0,0), ["ground"], ["ground", "kickable", "bounceable", "ambush small", "bouncing koopa", "blue koopa"]),
         0x0A1: EnemyData(0x0A1, "Bowser's bowling ball", 20, (0,0), ["blue koopa"], ["skip"]),
     },
     0x103: {
@@ -493,6 +499,8 @@ enemy_list_special_cases = {
     0x115: {
         0x048: EnemyData(0x048, "Diggin' Chuck's rock", 18, (0,0), ["ground"], ["skip"]),
         0x01B: EnemyData(0x01B, "Bouncing football in place", 15, (0,0), ["ground"], ["skip"]),
+        0x06E: EnemyData(0x06E, "Dino Rhino", 10, (0,0), ["ground"], ["skip"]),
+        0x06F: EnemyData(0x06F, "Dino Torch", 12, (0,0), ["ground"], ["skip"]),
     },
     0x10F: {
         0x00B: EnemyData(0x00B, "Red horizontal flying Koopa", 20, (0,0), ["flying koopa"], ["flying", "floating", "flying koopa"]),
@@ -712,17 +720,25 @@ enemy_list_special_cases = {
         0x0DE: EnemyData(0x0DE, "Group of 5 eeries, wave motion", 10, (0,0), ["skip"], ["skip"]),
         0x09F: EnemyData(0x09F, "Banzai Bill", 10, (0,0), ["skip"], ["skip"]),
         0x090: EnemyData(0x090, "Large green gas bubble", 5, (0,3), ["skip"], ["skip"]),
-        0x097: EnemyData(0x097, "Puntin' Chuck", 10, (0,0), ["skip"], ["skip"]),
-        0x098: EnemyData(0x098, "Pitchin' Chuck", 10, (0,0), ["skip"], ["skip"]),
         0x048: EnemyData(0x048, "Diggin' Chuck's rock", 18, (0,0), ["skip"], ["skip"]),
+        0x01B: EnemyData(0x01B, "Bouncing football in place", 15, (0,0), ["skip"], ["skip"]),
         0x0BC: EnemyData(0x0BC, "Bowser statue, normal/fire/leap (X&3)", 20, (0,0), ["skip"], ["skip"]),
         0x046: EnemyData(0x046, "Diggin' Chuck", 10, (0,0), ["skip"], ["skip"]),
+        0x092: EnemyData(0x092, "Splitin' Chuck", 12, (0,0), ["skip"], ["skip"]),
+        0x093: EnemyData(0x093, "Bouncin' Chuck", 15, (0,0), ["skip"], ["skip"]),
+        0x094: EnemyData(0x094, "Whistlin' Chuck, fish/Koopa (X&1)", 5, (0,0), ["skip"], ["skip"]),
+        0x095: EnemyData(0x095, "Clapin' Chuck", 15, (0,0), ["skip"], ["skip"]),
+        0x097: EnemyData(0x097, "Puntin' Chuck", 10, (0,0), ["skip"], ["skip"]),
+        0x098: EnemyData(0x098, "Pitchin' Chuck", 10, (0,0), ["skip"], ["skip"]),
+        0x099: EnemyData(0x099, "Volcano Lotus", 15, (0,0), ["skip"], ["skip"]),
+        0x03D: EnemyData(0x03D, "Rip Van Fish", 15, (0,0), ["skip"], ["skip"]),
+        0x02E: EnemyData(0x02E, "Spike Top", 20, (0,0), ["skip"], ["skip"]),
     },
-    0x1E2: {
-        0x070: EnemyData(0x070, "Pokey", 15, (0,4), ["skip"], ["skip"]),
-        0x020: EnemyData(0x020, "Magikoopa's magic, stationary", 20, (0,0), ["skip"], ["skip"]),
-        0x0DE: EnemyData(0x0DE, "Group of 5 eeries, wave motion", 10, (0,0), ["skip"], ["skip"]),
-        0x027: EnemyData(0x027, "Thwimp", 20, (0,0), ["skip"], ["skip"]),
+    0x002: {
+        0x06E: EnemyData(0x06E, "Dino Rhino", 10, (0,0), ["skip"], ["skip"]),
+        0x06F: EnemyData(0x06F, "Dino Torch", 12, (0,0), ["skip"], ["skip"]),
+        0x090: EnemyData(0x090, "Large green gas bubble", 5, (0,3), ["skip"], ["skip"]),
+        0x028: EnemyData(0x028, "Big Boo", 3, (0,3), ["skip"], ["skip"]),
     },
     0x024: {
         0x070: EnemyData(0x070, "Pokey", 15, (0,4), ["skip"], ["skip"]),
@@ -760,6 +776,39 @@ enemy_list_special_cases = {
     },
     0x0DC: {
         0x028: EnemyData(0x028, "Big Boo", 3, (0,3), ["floating"], ["floating", "flying", "ground", "water", "rotating", "buried", "shooter", "pipe", "upsidedown pipe"]),
+    },
+    0x0F7: {
+        0x000: EnemyData(0x000, "Green Koopa, no shell", 10, (0,0), ["mode 7"], ["mode 7"]),
+        0x001: EnemyData(0x001, "Red Koopa, no shell", 10, (0,0), ["mode 7"], ["mode 7"]),
+        0x002: EnemyData(0x002, "Blue Koopa, no shell", 5, (0,0), ["mode 7"], ["mode 7"]),
+        0x003: EnemyData(0x003, "Yellow Koopa, no shell", 5, (0,0), ["mode 7"], ["mode 7"]),
+        0x004: EnemyData(0x004, "Green Koopa", 20, (0,0), ["mode 7"], ["mode 7"]),
+        0x005: EnemyData(0x005, "Red Koopa", 20, (0,0), ["mode 7"], ["mode 7"]),
+        0x006: EnemyData(0x006, "Blue Koopa", 10, (0,0), ["mode 7"], ["mode 7"]),
+        0x007: EnemyData(0x007, "Yellow Koopa", 10, (0,0), ["mode 7"], ["mode 7"]),
+        0x008: EnemyData(0x008, "Green Koopa, flying left", 20, (0,0), ["mode 7"], ["mode 7"]),
+        0x009: EnemyData(0x009, "Green bouncing Koopa (Y&1)", 15, (0,0), ["mode 7"], ["mode 7"]),
+        0x00A: EnemyData(0x00A, "Red vertical flying Koopa", 20, (0,0), ["mode 7"], ["mode 7"]),
+        0x00B: EnemyData(0x00B, "Red horizontal flying Koopa", 20, (0,0), ["mode 7"], ["mode 7"]),
+        0x00C: EnemyData(0x00C, "Yellow Koopa with wings", 20, (0,0), ["mode 7"], ["mode 7"]),
+        0x00F: EnemyData(0x00F, "Goomba", 15, (0,0), ["mode 7"], ["mode 7"]),
+        0x010: EnemyData(0x010, "Bouncing Goomba with wings", 15, (0,0), ["mode 7"], ["mode 7"]),
+        0x00D: EnemyData(0x00D, "Bob-omb", 20, (0,0), ["mode 7"], ["mode 7"]),
+        0x014: EnemyData(0x014, "Spiny falling", 20, (0,0), ["mode 7"], ["mode 7"]),
+        0x013: EnemyData(0x013, "Spiny", 20, (0,0), ["mode 7"], ["mode 7"]),
+        0x011: EnemyData(0x011, "Buzzy Beetle", 15, (0,0), ["mode 7"], ["mode 7"]),
+        0x027: EnemyData(0x027, "Thwimp", 20, (0,0), ["mode 7"], ["mode 7"]),
+        0x048: EnemyData(0x048, "Diggin' Chuck's rock", 18, (0,0), ["mode 7"], ["mode 7"]),
+        0x070: EnemyData(0x070, "Pokey", 15, (0,4), ["mode 7"], ["mode 7"]),
+        0x051: EnemyData(0x051, "Ninji", 20, (0,0), ["mode 7"], ["mode 7"]),
+        0x030: EnemyData(0x030, "Dry Bones, throws bones", 18, (0,0), ["mode 7"], ["mode 7"]),
+        0x031: EnemyData(0x031, "Bony Beetle", 18, (0,0), ["mode 7"], ["mode 7"]),
+        0x01D: EnemyData(0x01D, "Hopping flame", 15, (0,0), ["mode 7"], ["mode 7"]),
+        0x0A4: EnemyData(0x0A4, "Floating Spike ball, slow/fast (X&1)", 20, (0,0), ["mode 7"], ["mode 7"]),
+    },
+    0x00A: {
+        0x0A1: EnemyData(0x0A1, "Bowser's bowling ball", 20, (0,0), ["force fish"], ["skip"]),
+        0x016: EnemyData(0x016, "Fish, vertical", 20, (0,0), ["water"], ["water", "force fish"]),
     }
 }
 
@@ -1034,6 +1083,10 @@ def modify_sprite_data(rom: bytearray, seed: int) -> bytearray:
     rom[0x03C930+2] = 0xC5
     rom[0x03C933+2] = 0xC5
 
+    # FoI4 (11F)
+    # Guarantees bouncing Koopa
+    rom[0x03D5A8+2] = 0xA1
+
     # DP4 (006)
     # Guarantees kickable and bounceable enemies
     rom[0x03C869+2] = 0xC5
@@ -1071,5 +1124,10 @@ def modify_sprite_data(rom: bytearray, seed: int) -> bytearray:
     # Funky (125)
     # Move Whistlin' chuck a bit to the left
     rom[0x03E71F+1] = 0xA9
+
+    # DS1 (00A)
+    # Guarantees fishes after exiting second room
+    rom[0x03C967+2] = 0xA1
+    rom[0x03C96A+2] = 0xA1
 
     return rom

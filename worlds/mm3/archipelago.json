@@ -1,7 +1,7 @@
 {
   "game": "Mega Man 3",
-  "authors": [ "Silvris" ],
+  "authors": ["Silvris"],
   "igdb_id": 1716,
-  "world_version": "0.1.7",
+  "world_version": "0.1.8",
   "minimum_ap_version": "0.6.4"
 }

@@ -1,6 +1,10 @@
+import math
+
 from BaseClasses import CollectionState
-from .data.RoomNames import RoomName
-from .Items import ProgressiveUpgrade, SuitUpgrade, get_progressive_upgrade_for_item
+from .Enum import ProgressiveUpgrade, RoomName, SuitUpgrade
+from .Items import get_progressive_upgrade_for_item
+from .PrimeUtils import count_ammo
+
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
@@ -21,9 +25,22 @@ def can_boost(world: "MetroidPrimeWorld", state: CollectionState) -> bool:
 
 
 def can_bomb(world: "MetroidPrimeWorld", state: CollectionState) -> bool:
-    return state.has_all(
-        [SuitUpgrade.Morph_Ball.value, SuitUpgrade.Morph_Ball_Bomb.value], world.player
+    return state.has(SuitUpgrade.Morph_Ball.value, world.player) and (
+        state.has(SuitUpgrade.Morph_Ball_Bomb.value, world.player) or
+        state.has(ProgressiveUpgrade.Progressive_Bomb.value, world.player, 2)
     )
+
+
+def can_ball_jump(world: "MetroidPrimeWorld", state: CollectionState) -> bool:
+    # We return false if it's not its own item since we either have it disabled or it's only usable with bombs
+    # which nullifies the need of Spring Ball
+    if not world.options.spring_ball.current_option_name.lower().startswith("its own"):
+        return False
+
+    return state.has(SuitUpgrade.Morph_Ball.value, world.player) and state.has_any([
+        SuitUpgrade.Spring_Ball.value,
+        ProgressiveUpgrade.Progressive_Bomb.value,
+    ], world.player)
 
 
 def can_power_beam(world: "MetroidPrimeWorld", state: CollectionState) -> bool:
@@ -33,7 +50,9 @@ def can_power_beam(world: "MetroidPrimeWorld", state: CollectionState) -> bool:
     )
 
 
-def can_power_bomb(world: "MetroidPrimeWorld", state: CollectionState) -> bool:
+def can_power_bomb(
+    world: "MetroidPrimeWorld", state: CollectionState, _num_expansions: int = 1
+) -> bool:
     if world.options.main_power_bomb:
         return state.has_all(
             [SuitUpgrade.Morph_Ball.value, SuitUpgrade.Main_Power_Bomb.value],
@@ -237,7 +256,8 @@ def can_phazon(world: "MetroidPrimeWorld", state: CollectionState) -> bool:
 def has_energy_tanks(
     world: "MetroidPrimeWorld", state: CollectionState, count: int
 ) -> bool:
-    return state.has(SuitUpgrade.Energy_Tank.value, world.player, count)
+    normalized_count = int(math.ceil((count * 100) / world.options.etank_capacity.value))
+    return state.count(SuitUpgrade.Energy_Tank.value, world.player) >= normalized_count
 
 
 def can_infinite_speed(world: "MetroidPrimeWorld", state: CollectionState) -> bool:
@@ -254,7 +274,7 @@ def can_defeat_sheegoth(world: "MetroidPrimeWorld", state: CollectionState) -> b
 
 
 def can_backwards_lower_mines(
-    world: "MetroidPrimeWorld", state: CollectionState
+    world: "MetroidPrimeWorld", _state: CollectionState
 ) -> bool:
     return bool(world.options.backwards_lower_mines.value)
 
@@ -262,9 +282,14 @@ def can_backwards_lower_mines(
 def has_power_bomb_count(
     world: "MetroidPrimeWorld", state: CollectionState, required_count: int
 ) -> bool:
-    count = state.count(SuitUpgrade.Power_Bomb_Expansion.value, world.player)
-    if state.has(SuitUpgrade.Main_Power_Bomb.value, world.player):
-        count += 4
+    count = count_ammo([
+            *[str(SuitUpgrade.Main_Power_Bomb)] * state.count(SuitUpgrade.Main_Power_Bomb.value, world.player),
+            *[str(SuitUpgrade.Power_Bomb_Expansion)] * state.count(SuitUpgrade.Power_Bomb_Expansion.value, world.player),
+        ],
+        str(SuitUpgrade.Main_Power_Bomb),
+        str(SuitUpgrade.Power_Bomb_Expansion),
+        bool(world.options.main_power_bomb),
+    )
     return count >= required_count
 
 

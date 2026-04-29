@@ -63,7 +63,7 @@ class WellLightLogic(Choice):
     option_glowbug = 1
     option_fire_fruit_juicer = 2
     option_both = 3
-    default = 2
+    default = 1
 
 @dataclass
 class FrogmonsterOptions(PerGameCommonOptions, DeathLinkMixin):

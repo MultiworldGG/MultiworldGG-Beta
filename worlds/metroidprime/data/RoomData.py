@@ -7,10 +7,13 @@ from BaseClasses import (
     LocationProgressType,
     Region,
 )
-from ..PrimeOptions import DoorColorRandomization
-from ..BlastShieldRando import BlastShieldType
-from ..DoorRando import DoorLockType
-from ..Items import ProgressiveUpgrade, SuitUpgrade
+
+from .Tricks import TrickInfo
+from .DoorData import DoorData
+from .OffworldModels import get_offworld_model
+from ..BlastShieldRando import DoorShieldFromBlastShieldType
+from ..Enum import BlastShieldType, DoorLockType, MetroidPrimeArea, ProgressiveUpgrade, RoomName, SuitUpgrade
+from ..Locations import MetroidPrimeLocation, every_location
 from ..Logic import (
     can_beam_combo,
     can_bomb,
@@ -23,11 +26,7 @@ from ..Logic import (
     can_super_missile,
     can_wave_beam,
 )
-from ..data.AreaNames import MetroidPrimeArea
-from ..Locations import MetroidPrimeLocation, every_location
-from .RoomNames import RoomName
-from .Tricks import TrickInfo
-from .DoorData import DoorData
+from ..PrimeOptions import DisplayNonLocalItems, DoorColorRandomization
 
 if typing.TYPE_CHECKING:
     from .. import MetroidPrimeWorld
@@ -51,14 +50,20 @@ def get_config_item_text(world: "MetroidPrimeWorld", location: str) -> str:
 def get_config_item_model(world: "MetroidPrimeWorld", location: str) -> str:
     loc = world.get_location(location)
     assert loc.item
-    if loc.native_item:
+    is_local_prime_item = loc.item.player == world.player and loc.item.game == world.game
+    display_nonlocal_items = world.options.display_nonlocal_items
+    if is_local_prime_item or (loc.native_item and display_nonlocal_items != DisplayNonLocalItems.option_none):
         name = loc.item.name
         if name == SuitUpgrade.Missile_Expansion.value:
             return "Missile"
         if name == SuitUpgrade.Missile_Launcher.value:
             return "Shiny Missile"
+        if name == SuitUpgrade.Unlimited_Missiles.value:
+            return "Missile Refill"
         if name == SuitUpgrade.Main_Power_Bomb.value:
             return "Power Bomb"
+        if name == SuitUpgrade.Unlimited_Power_Bombs.value:
+            return "Power Bomb Refill"
         if (
             name == ProgressiveUpgrade.Progressive_Power_Beam.value
             or name == SuitUpgrade.Power_Beam.value
@@ -70,12 +75,13 @@ def get_config_item_model(world: "MetroidPrimeWorld", location: str) -> str:
             return "Ice Beam"
         if name == ProgressiveUpgrade.Progressive_Plasma_Beam.value:
             return "Plasma Beam"
+        if name == ProgressiveUpgrade.Progressive_Bomb.value:
+            return "Morph Ball Bomb"
+        if name == SuitUpgrade.Spring_Ball.value:
+            return "Cog"
         return name
-    if loc.item.advancement:
-        return "Cog"
-    if loc.item.useful or loc.item.trap:
-        return "Zoomer"
-    return "Nothing"
+    else:
+        return get_offworld_model(loc.item, display_nonlocal_items == DisplayNonLocalItems.option_match_series)
 
 
 @dataclass
@@ -121,8 +127,8 @@ class RoomData:
                 for pickup in self.pickups
                 if not pickup.exclude_from_config
             ],
+            "doors": self.get_door_config_data(world, parent_area)
         }
-        config["doors"] = self.get_door_config_data(world, parent_area)
 
         return config
 
@@ -147,10 +153,8 @@ class RoomData:
             if door.blast_shield is not None:
                 if f"{door_id}" not in door_data:
                     door_data[f"{door_id}"] = {}
-                if door.blast_shield == BlastShieldType.Disabled:
-                    door_data[f"{door_id}"]["shieldType"] = door.blast_shield.value
-                else:
-                    door_data[f"{door_id}"]["blastShieldType"] = door.blast_shield.value
+                door_data[f"{door_id}"]["shieldType"] = DoorShieldFromBlastShieldType[door.blast_shield]
+                door_data[f"{door_id}"]["blastShieldType"] = door.blast_shield.value
 
         return door_data
 

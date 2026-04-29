@@ -55,6 +55,8 @@ from randomizer.Patching.CoinPlacer import gen_mayhem_coins
 from randomizer.Prices import CompleteVanillaPrices, RandomizePrices, VanillaPrices
 from randomizer.SettingStrings import encrypt_settings_string_enum
 from randomizer.ShuffleBosses import (
+    BossMapList,
+    KRoolMaps,
     ShuffleBosses,
     ShuffleBossKongs,
     ShuffleKKOPhaseOrder,
@@ -162,9 +164,9 @@ class Settings:
             ItemRandoListSelected.shockwave: [2, 0],
             ItemRandoListSelected.bfi_gift: [0, 1],
             ItemRandoListSelected.banana: [161, 0],
-            ItemRandoListSelected.banana_checks: [0, 134],
+            ItemRandoListSelected.banana_checks: [0, 131],
             ItemRandoListSelected.racebanana: [0, 11],
-            ItemRandoListSelected.gauntletbanana: [0, 16],
+            ItemRandoListSelected.gauntletbanana: [0, 19],
             ItemRandoListSelected.blueprintbanana: [40, 0],
             ItemRandoListSelected.sniderewards: [0, 40],
             ItemRandoListSelected.arenas: [0, 10],
@@ -289,6 +291,13 @@ class Settings:
                 # The value is a basic type, so assign it directly.
                 setattr(self, k, v)
 
+        # Sync homebrew_header values - if either is True, set both to True
+        if hasattr(self, "homebrew_header_patch") and self.homebrew_header_patch:
+            self.homebrew_header = True
+        elif hasattr(self, "homebrew_header") and self.homebrew_header:
+            if not hasattr(self, "homebrew_header_patch"):
+                self.homebrew_header_patch = False
+
     def update_progression_totals(self):
         """Update the troff and blocker totals if we're randomly setting them."""
         # Assign weights to Troff n Scoff based on level order if not shuffling loading zones
@@ -359,7 +368,7 @@ class Settings:
         }
 
         if self.blocker_selection_behavior == BLockerSetting.chaos:
-            self.blocker_text = self.blocker_text / 100.0
+            self.blocker_text = min(self.blocker_text, 100) / 100.0  # Clamp value at 100%
             locked_blocker_items = []
             for slot in range(8):
                 item = self.random.choice([key for key in self.blocker_limits.keys() if key not in locked_blocker_items])
@@ -421,7 +430,7 @@ class Settings:
         self.loading_zone_coupled = None
         self.move_rando = MoveRando.off
         self.ice_trap_frequency = IceTrapFrequency.mild  # Deprecated
-        self.ice_trap_model = IceTrapModel.simple
+        self.ice_trap_model_v2 = IceTrapModel2.simple
         self.start_with_slam = False
         self.random_patches = None
         self.random_crates = None
@@ -728,6 +737,7 @@ class Settings:
         self.disable_flavor_text = False
         self.head_balloons = False
         self.homebrew_header = False
+        self.homebrew_header_patch = False
         self.camera_is_follow = False
         self.sfx_volume = 100
         self.music_volume = 100
@@ -1035,6 +1045,7 @@ class Settings:
         # self.enable_progressive_hints = False  # Deprecated
         # self.progressive_hint_text = 0  # Deprecated
         self.progressive_hint_count = 0
+        self.progressive_hint_algorithm = ProgressiveHintAlgorithm.medium
         # Misc
         self.archipelago = False
 
@@ -1088,11 +1099,6 @@ class Settings:
             self.training_barrels = TrainingBarrels.normal
         else:
             self.training_barrels = TrainingBarrels.shuffled
-        # If Climbing is a guaranteed starting move, treat it like the others as well.
-        if Items.Climbing in guaranteed_starting_moves:
-            self.climbing_status = ClimbingStatus.normal
-        else:
-            self.climbing_status = ClimbingStatus.shuffled
         # If you start with two copies of Progressive Instrument Upgrade, you start with 3 melons of health
         if guaranteed_starting_moves.count(Items.ProgressiveInstrumentUpgrade) == 2:
             self.start_with_3rd_melon = True
@@ -1171,7 +1177,6 @@ class Settings:
                         SwitchsanityKong.lanky,
                         SwitchsanityKong.tiny,
                         SwitchsanityKong.chunky,
-                        SwitchsanityKong.any,
                     ]
                     options = [x for x in options if kong_mapping[x] not in bad_kongs]
                     if slot == Switches.IslesMonkeyport:
@@ -1433,9 +1438,11 @@ class Settings:
             "rockfall": self.trap_weight_rockfall,
             "disabletag": self.trap_weight_disabletag,
         }
-        if self.ice_trap_model == IceTrapModel.simple:
+        if self.ice_trap_model_v2 == IceTrapModel2.simple:
             models_chance = {"gb": 1}  # Only GB models
-        else:  # IceTrapModel.complex
+        elif self.ice_trap_model_v2 == IceTrapModel2.fair:
+            models_chance = {"gb": 10, "bean": 1, "fairy": 4}  # Weighted distribution
+        else:  # IceTrapModel2.complex
             models_chance = {"gb": 10, "key": 2, "bean": 1, "fairy": 4}  # Weighted distribution
         trap_data = {
             "gb": {
@@ -1515,6 +1522,8 @@ class Settings:
         trap_limit = self.ice_trap_count
         if self.archipelago:
             trap_limit = 0
+        elif trap_limit > 0 and ItemRandoFiller.icetraps not in self.filler_items_selected:
+            self.filler_items_selected.append(ItemRandoFiller.icetraps)
         for _ in range(trap_limit):
             chosen_effect = self.random.choices(list(effects.keys()), list(effects.values()), k=1)[0]
             chosen_model = self.random.choices(list(models_chance.keys()), list(models_chance.values()), k=1)[0]
@@ -1661,6 +1670,10 @@ class Settings:
                         selector_types = [sk for sk in [Types.Cranky, Types.Snide, Types.Candy, Types.Funky] if shopkeeper_type_mapping[sk] not in guaranteed_starting_moves]
                     elif selector_type == Types.TrainingBarrel:
                         selector_types = [Types.TrainingBarrel, Types.PreGivenMove]
+                        if Items.Climbing in guaranteed_starting_moves:
+                            self.climbing_status = ClimbingStatus.normal
+                        else:
+                            self.climbing_status = ClimbingStatus.shuffled
                         if self.climbing_status != ClimbingStatus.normal:
                             selector_types.append(Types.Climbing)
                     elif selector_type == Types.Medal and IsItemSelected(self.cb_rando_enabled, self.cb_rando_list_selected, Levels.DKIsles):
@@ -1672,9 +1685,18 @@ class Settings:
                         if item_type == Types.Cranky:
                             item_types = [sk for sk in [Types.Cranky, Types.Snide, Types.Candy, Types.Funky] if shopkeeper_type_mapping[sk] not in guaranteed_starting_moves]
                         elif item_type == Types.TrainingBarrel:
-                            item_types = [Types.TrainingBarrel, Types.PreGivenMove]
-                            if self.climbing_status != ClimbingStatus.normal:
-                                item_types.append(Types.Climbing)
+                            # Only include TrainingBarrel type if training moves aren't all guaranteed starting moves
+                            training_barrel_items = [Items.Vines, Items.Swim, Items.Oranges, Items.Barrels]
+                            if all(tb_item in guaranteed_starting_moves for tb_item in training_barrel_items):
+                                item_types = []
+                            else:
+                                item_types = [Types.TrainingBarrel, Types.PreGivenMove]
+                                if Items.Climbing in guaranteed_starting_moves:
+                                    self.climbing_status = ClimbingStatus.normal
+                                else:
+                                    self.climbing_status = ClimbingStatus.shuffled
+                                if self.climbing_status != ClimbingStatus.normal:
+                                    item_types.append(Types.Climbing)
                         elif item_type == Types.Medal and IsItemSelected(self.cb_rando_enabled, self.cb_rando_list_selected, Levels.DKIsles):
                             item_types = [Types.Medal, Types.IslesMedal]
                         for x in selector_types:
@@ -1707,6 +1729,15 @@ class Settings:
                 ):
                     self.item_pool_info[pool_index].is_shuffled = False
             self.shuffled_location_types = list(set(self.shuffled_location_types))
+
+            # If training moves are not in any shuffled pool, add them to guaranteed_starting_moves
+            if Types.TrainingBarrel not in self.shuffled_location_types:
+                training_barrel_items = [Items.Vines, Items.Swim, Items.Oranges, Items.Barrels, Items.Climbing]
+                for tb_item in training_barrel_items:
+                    if tb_item not in guaranteed_starting_moves:
+                        guaranteed_starting_moves.append(tb_item)
+                self.training_barrels = TrainingBarrels.normal
+
             self.enemy_drop_rando = Types.Enemies in self.shuffled_location_types
             if Types.Shop in self.shuffled_location_types:
                 self.move_rando = MoveRando.item_shuffle
@@ -1773,6 +1804,9 @@ class Settings:
                     Maps.CastleBoss,
                 ]
             )
+        # This guard is for backwards compatibility
+        if not self.bosses_selected:
+            self.bosses_selected = BossMapList.copy() + KRoolMaps.copy()
         phases = [x for x in phases if x in self.bosses_selected]
         possible_phases = phases.copy()
         if self.krool_phase_order_rando:
@@ -1784,7 +1818,10 @@ class Settings:
         self.allow_boss_duping = len(self.bosses_selected) < (7 + self.krool_phase_count)
         # Dupe phases so there's enough choice
         if len(phases) < self.krool_phase_count:
-            dupe_count = math.ceil(self.krool_phase_count / len(phases))
+            if len(phases) == 0:  # This will get caught by a SettingsIncompatibleException later, but this means we have no valid K. Rool options.
+                dupe_count = 0
+            else:
+                dupe_count = math.ceil(self.krool_phase_count / len(phases))
             init_phases = phases.copy()
             for _ in range(dupe_count):
                 phases.extend(init_phases)
@@ -1794,7 +1831,7 @@ class Settings:
                 phases = self.random.sample(phases, self.krool_phase_count)
             else:
                 phases = phases[: self.krool_phase_count]
-        if phases[-1] == Maps.GalleonBoss:
+        if len(phases) > 0 and phases[-1] == Maps.GalleonBoss:
             # Pufftoss can't be last. Pick something else
             if self.allow_boss_duping:
                 phases[-1] = self.random.choice([x for x in possible_phases if x != Maps.GalleonBoss])
@@ -1908,12 +1945,6 @@ class Settings:
 
         # Win Condition
         wincon_items = {
-            WinConditionComplex.beat_krool: HelmDoorInfo(
-                1,
-                HelmDoorRandomInfo(1, 1, 0.06),
-                HelmDoorRandomInfo(1, 1, 0.06),
-                HelmDoorRandomInfo(1, 1, 0.03),
-            ),
             WinConditionComplex.dk_rap_items: HelmDoorInfo(
                 1,
                 HelmDoorRandomInfo(1, 1, 0.04),
@@ -2641,7 +2672,7 @@ class Settings:
                 if Types.Shockwave in self.shuffled_location_types:
                     locations_excluding_kong_shops.append(Locations.CameraAndShockwave)
                     self.valid_locations[Types.Shockwave] = locations_excluding_kong_shops.copy()
-                if Types.TrainingBarrel in self.shuffled_location_types:
+                if Types.TrainingBarrel in self.shuffled_location_types or self.training_barrels != TrainingBarrels.normal:
                     self.valid_locations[Types.TrainingBarrel] = locations_excluding_kong_shops.copy()
                 if Types.Climbing in self.shuffled_location_types:
                     self.valid_locations[Types.Climbing] = locations_excluding_kong_shops.copy()

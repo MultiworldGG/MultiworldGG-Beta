@@ -1,7 +1,1 @@
-{
-    "game": "ULTRAKILL",
-    "authors": ["TRPG"],
-    "igdb_id": 124333,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
-}
+{"game": "ULTRAKILL", "world_version": "3.5.0", "authors": ["TRPG"], "igdb_id": 124333, "minimum_ap_version": "0.6.4", "compatible_version": 7, "version": 7}

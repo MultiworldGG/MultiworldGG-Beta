@@ -19,17 +19,17 @@ item_data_table: Dict[str, FrogmonsterItemData] = {
     # Items
     i.dash: FrogmonsterItemData(
         id=BASE_ID + 0,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Movement")
     ),
     i.sticky_hands: FrogmonsterItemData(
         id=BASE_ID + 1,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Movement")
     ),
     i.tongue_swing: FrogmonsterItemData(
         id=BASE_ID + 2,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Movement")
     ),
     i.runi_key: FrogmonsterItemData(
@@ -43,7 +43,7 @@ item_data_table: Dict[str, FrogmonsterItemData] = {
     ),
     i.frog: FrogmonsterItemData(
         id=BASE_ID + 5,
-        type=ItemClassification.progression_deprioritized,
+        type=ItemClassification.progression,
         category=("Bug")
     ),
     i.fly: FrogmonsterItemData(
@@ -300,37 +300,37 @@ item_data_table: Dict[str, FrogmonsterItemData] = {
 #    ),
     i.reeder: FrogmonsterItemData(
         id=BASE_ID + 56,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Gun")
     ),
     i.machine_gun: FrogmonsterItemData(
         id=BASE_ID + 57,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Gun")
     ),
     i.weepwood_bow: FrogmonsterItemData(
         id=BASE_ID + 58,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Gun")
     ),
     i.finisher: FrogmonsterItemData(
         id=BASE_ID + 59,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Gun")
     ),
     i.fire_fruit_juicer: FrogmonsterItemData(
         id=BASE_ID + 60,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Gun")
     ),
     i.gatling_gun: FrogmonsterItemData(
         id=BASE_ID + 61,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Gun")
     ),
     i.wooden_cannon: FrogmonsterItemData(
         id=BASE_ID + 62,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Gun")
     ),
     i.fireball: FrogmonsterItemData(
@@ -531,11 +531,11 @@ item_data_table: Dict[str, FrogmonsterItemData] = {
 #    ),
     i.workshop_key: FrogmonsterItemData(
         id=BASE_ID + 100,
-        type=ItemClassification.progression
+        type=ItemClassification.progression | ItemClassification.useful,
     ),
     i.orchus_key: FrogmonsterItemData(
         id=BASE_ID + 101,
-        type=ItemClassification.progression
+        type=ItemClassification.progression | ItemClassification.useful,
     ),
     i.smooth_stone: FrogmonsterItemData(
         id=BASE_ID + 102,
@@ -723,42 +723,42 @@ item_data_table: Dict[str, FrogmonsterItemData] = {
 #    ),
     i.seedling_myzand_upgrade: FrogmonsterItemData(
         id=BASE_ID + 138,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Upgrade")
     ),
     i.reeder_myzand_upgrade: FrogmonsterItemData(
         id=BASE_ID + 139,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Upgrade")
     ),
     i.machine_gun_myzand_upgrade: FrogmonsterItemData(
         id=BASE_ID + 140,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Upgrade")
     ),
     i.weepwood_bow_myzand_upgrade: FrogmonsterItemData(
         id=BASE_ID + 141,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Upgrade")
     ),
     i.finisher_myzand_upgrade: FrogmonsterItemData(
         id=BASE_ID + 142,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Upgrade")
     ),
     i.fire_fruit_juicer_myzand_upgrade: FrogmonsterItemData(
         id=BASE_ID + 143,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Upgrade")
     ),
     i.gatling_gun_myzand_upgrade: FrogmonsterItemData(
         id=BASE_ID + 144,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Upgrade")
     ),
     i.wooden_cannon_myzand_upgrade: FrogmonsterItemData(
         id=BASE_ID + 145,
-        type=ItemClassification.progression,
+        type=ItemClassification.progression | ItemClassification.useful,
         category=("Upgrade")
     ),
     i.coins: FrogmonsterItemData(

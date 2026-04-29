@@ -1,7 +1,9 @@
-{
+  {
     "game": "Sonic Adventure 2 Battle",
     "authors": [ "PoryGone", "RaspberrySpaceJam" ],
     "igdb_id": 192194,
     "minimum_ap_version": "0.6.3",
-    "world_version": "2.4.3"
+    "world_version": "2.4.3",
+    "version": 7,
+    "compatible_version": 7
 }

@@ -1,7 +1,6 @@
 {
     "game": "Bomb Rush Cyberfunk",
-    "authors": ["CookieCat45"],
-    "igdb_id": 135940,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
+    "world_version": "1.0.6",
+    "authors": ["TRPG"],
+    "igdb_id": 135940
 }

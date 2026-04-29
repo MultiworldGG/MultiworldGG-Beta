@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import Any, List
 
 from BaseClasses import Tutorial, ItemClassification
 from Utils import local_path, user_path
@@ -115,16 +115,20 @@ class KH2World(World):
                 self.goofy_ability_dict[ability] -= 1
 
         slot_data = self.options.as_dict(
-            "Goal", 
-            "FinalXemnas", 
-            "LuckyEmblemsRequired", 
-            "BountyRequired",
-            "FightLogic",
-            "FinalFormLogic",
-            "AutoFormLogic",
-            "LevelDepth",
-            "DonaldGoofyStatsanity",
-            "CorSkipToggle"
+                "Goal",
+                "FinalXemnas",
+                "LuckyEmblemsRequired",
+                "BountyRequired",
+                "FightLogic",
+                "FinalFormLogic",
+                "AutoFormLogic",
+                "LevelDepth",
+                "DonaldGoofyStatsanity",
+                "CorSkipToggle",
+                "SuperBosses",
+                "Cups",
+                "AtlanticaToggle",
+                "SummonLevelLocationToggle",
         )
         slot_data.update({
             "hitlist":                [],  # remove this after next update
@@ -269,7 +273,9 @@ class KH2World(World):
 
         # hitlist
         if self.options.Goal not in ["lucky_emblem_hunt", "three_proofs"]:
-            self.random_bounty_dict = dict(exclusion_table["Hitlist"])
+            self.random_bounty_dict = dict[Any, Any](exclusion_table["Hitlist"])
+            if self.options.CasualBounties:
+                self.random_bounty_dict.update(dict[Any, Any](exclusion_table["HitlistCasual"]))
             self.bounties_amount = self.options.BountyAmount.value
             self.bounties_required = self.options.BountyRequired.value
             self.bounties_difficulty = self.options.BountyLevel.value
@@ -560,6 +566,20 @@ class KH2World(World):
         for location in self.options.exclude_locations.value:
             if location in self.random_bounty_dict:
                 del self.random_bounty_dict[location]
+
+        if self.options.LevelDepth == "level_1":
+            if LocationName.Lvl50 in self.random_bounty_dict:
+                del self.random_bounty_dict[LocationName.Lvl50]
+            if LocationName.Lvl99 in self.random_bounty_dict:
+                del self.random_bounty_dict[LocationName.Lvl99]
+
+        # We only want the bounty corresponding to our max level, remove the other level bounty
+        if self.options.LevelDepth in ["level_50", "level_50_sanity"] and LocationName.Lvl99 in self.random_bounty_dict:
+            del self.random_bounty_dict[LocationName.Lvl99]
+
+        # We only want the bounty corresponding to our max level, remove the other level bounty
+        if self.options.LevelDepth in ["level_99", "level_99_sanity"] and LocationName.Lvl50 in self.random_bounty_dict:
+            del self.random_bounty_dict[LocationName.Lvl50]
 
         if not self.options.SummonLevelLocationToggle and LocationName.Summonlvl7 in self.random_bounty_dict:
             del self.random_bounty_dict[LocationName.Summonlvl7]

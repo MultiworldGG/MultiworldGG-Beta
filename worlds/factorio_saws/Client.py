@@ -19,10 +19,11 @@ import factorio_rcon
 from CommonClient import ClientCommandProcessor, CommonContext, logger, server_loop, gui_enabled, get_base_parser
 from MultiServer import mark_raw
 from NetUtils import ClientStatus, NetworkItem, JSONtoTextParser, JSONMessagePart
-from Utils import async_start, get_file_safe_name, is_windows, Version, format_SI_prefix, get_text_between, user_path
+from Utils import async_start, get_file_safe_name, is_windows, Version, format_SI_prefix, get_text_between, user_path, instance_name
 from .settings import FactorioSAWSSettings
 from settings import get_settings
 
+apname = instance_name if instance_name else "Archipelago"
 
 def check_stdin() -> None:
     if is_windows and sys.stdin:
@@ -143,7 +144,7 @@ class FactorioContext(CommonContext):
         return get_file_safe_name(f"AP_{self.seed_name}_{self.auth}")+"_Save.zip"
 
     def print_to_game(self, text):
-        self.rcon_client.send_command(f"/ap-print [font=default-large-bold]Archipelago:[/font] "
+        self.rcon_client.send_command(f"/ap-print [font=default-large-bold]{apname}:[/font] "
                                       f"{text}")
 
     @property
@@ -228,9 +229,9 @@ class FactorioContext(CommonContext):
     def toggle_bridge_chat_out(self) -> None:
         self.bridge_chat_out = not self.bridge_chat_out
         if self.bridge_chat_out:
-            announcement = "Chat is now bridged to Archipelago."
+            announcement = f"Chat is now bridged to {apname}."
         else:
-            announcement = "Chat is no longer bridged to Archipelago."
+            announcement = f"Chat is no longer bridged to {apname}."
         logger.info(announcement)
         self.print_to_game(announcement)
 
@@ -379,7 +380,7 @@ async def factorio_server_watcher(ctx: FactorioContext):
                                                                timeout=5)
                     if not ctx.server:
                         logger.info("Established bridge to Factorio Server. "
-                                    "Ready to connect to Archipelago via /connect")
+                                    f"Ready to connect to {apname} via /connect")
                         check_stdin()
 
                 if not ctx.awaiting_bridge and "Archipelago Bridge Data available for game tick " in msg:
@@ -605,10 +606,15 @@ def launch(*new_args: str):
             raise FileNotFoundError(f"Path {executable} is not an executable file.")
 
     config_file = user_path('factorio_saws', 'config', 'apconfig.ini')
+
     if not os.path.exists(config_file):
         os.makedirs(os.path.dirname(config_file), exist_ok=True)
-        with open(config_file, 'w') as f:
-            f.write(f"[path]\nread-data=__PATH__system-read-data__\nwrite-data={user_path('factorio_saws')}")
+
+        read_path = os.path.abspath(os.path.join(os.path.dirname(executable), "..", "..", "data"))
+        if not os.path.exists(read_path):
+            read_path = "__PATH__system-read-data__"
+        with open(config_file, "w") as f:
+            f.write(f"[path]\nread-data={read_path}\nwrite-data={user_path('factorio_saws')}")
 
 
     if is_windows:

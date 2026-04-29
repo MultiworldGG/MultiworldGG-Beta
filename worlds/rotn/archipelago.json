@@ -1,7 +1,1 @@
-{
-    "game": "Rift of the Necrodancer",
-    "authors": ["studkid"],
-    "igdb_id": 214492,
-    "world_version": "0.8.0",
-    "minimum_ap_version": "0.6.3"
-  }
+{"game": "Rift of the Necrodancer", "authors": ["studkid"], "igdb_id": 214492, "compatible_version": 7, "version": 7, "world_version": "0.12.0", "minimum_ap_version": "0.6.3"}

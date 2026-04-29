@@ -13,31 +13,8 @@ from Options import (
 )
 from dataclasses import dataclass
 
-from .Enum import StartRoomDifficulty
-from .LogicCombat import CombatLogicDifficulty
+from .Enum import CombatLogicDifficulty, HudColor, StartRoomDifficulty
 from .data.Tricks import TrickInfo, Tricks
-
-
-class HudColor(Enum):
-    DEFAULT = [102 / 255, 174 / 255, 225 / 255]
-    RED = [1.0, 0.0, 0.0]
-    GREEN = [0.0, 1.0, 0.0]
-    BLUE = [0.0, 0.0, 1.0]
-    VIOLET = [1.0, 0.0, 1.0]
-    YELLOW = [1.0, 1.0, 0.0]
-    CYAN = [0.0, 1.0, 1.0]
-    WHITE = [1.0, 1.0, 1.0]
-    ORANGE = [1.0, 0.5, 0.0]
-    PINK = [1.0, 0.5, 1.0]
-    LIME = [0.5, 1.0, 0.0]
-    TEAL = [0.5, 1.0, 1.0]
-    PURPLE = [0.5, 0.0, 1.0]
-
-
-class SpringBall(DefaultOnToggle):
-    """Enables the spring ball when you receive Morph Ball Bombs. This will allow you to jump while in morph ball form by pressing up on the c stick, reducing the complexity of double bomb jumps."""
-
-    display_name = "Add Spring Ball"
 
 
 class RequiredArtifacts(Range):
@@ -61,10 +38,16 @@ class FinalBosses(Choice):
     default = 0
 
 
-class ArtifactHints(DefaultOnToggle):
-    """If enabled, scanning the artifact stones in the temple will give a hint to their location. Additionally, hints will be pre collected in the client."""
+class ArtifactHints(Choice):
+    """If enabled, scanning the artifact stones in the temple will give a hint to their location. Additionally, hints may be pre-collected in the client."""
 
     display_name = "Artifact Hints"
+    option_disable = 0
+    option_enable_precollected = 1
+    option_enable_scanned = 2
+    default = option_enable_precollected
+    alias_false = option_disable
+    alias_true = option_enable_precollected
 
 
 class MissileLauncher(Toggle):
@@ -80,9 +63,33 @@ class MainPowerBomb(Toggle):
 
 
 class ShuffleScanVisor(Toggle):
-    """If enabled, the scan visor will be shuffled into the item pool and will need to be found in order to scan dash and open certain locks."""
+    """If enabled, the Scan Visor will be shuffled into the item pool and will need to be found in order to scan dash and open certain locks."""
 
     display_name = "Shuffle Scan Visor"
+
+
+class ShuffleUnlimitedMissiles(Toggle):
+    """If enabled, Unlimited Missiles will be shuffled into the item pool. This is similar to Unlimited Missiles found in Metroid Prime 2 Echoes Multiplayer."""
+
+    display_name = "Shuffle Unlimited Missiles"
+
+
+class ShuffleUnlimitedPowerBombs(Toggle):
+    """If enabled, the Unlimited Power Bombs will be shuffled into the item pool. This is similar to Unlimited Missiles found in Metroid Prime 2 Echoes Multiplayer, but for Power Bombs."""
+
+    display_name = "Shuffle Unlimited Power Bombs"
+
+
+class SpringBall(Choice):
+    """Enables the spring ball when you receive Morph Ball Bombs or Spring Ball. This will allow you to jump while in morph ball form by pressing up on the c stick, reducing the complexity of double bomb jumps. Progressive means you get Spring Ball then Bombs."""
+
+    display_name = "Add Spring Ball"
+    option_disabled = 0
+    option_when_bombs_acquired = 1
+    option_its_own_item = 2
+    option_its_own_progressive_item = 3
+    alias_true = 1
+    alias_false = 0
 
 
 class NonVariaHeatDamage(DefaultOnToggle):
@@ -106,7 +113,7 @@ class StaggeredSuitDamage(Choice):
 
 
 class RemoveHiveMecha(Toggle):
-    """If enabled, the trigger for the Hive Mecha boss will be removed from the game."""
+    """If enabled, the trigger for the Hive Mecha boss will be removed from the game. Can be forced on if you don't start with Power Beam and you start at Tallon Overworld - Landing Site or Chozo Ruins - Save Station 1."""
 
     display_name = "Remove Hive Mecha"
 
@@ -410,6 +417,25 @@ class HudColorOverrideBlue(Range):
     default = 0
 
 
+class DisplayNonLocalItems(Choice):
+    """How are displayed non-local items. None means only local items have matching models. Match Game means that only Metroid Prime game have matching models. Match Series means that any supported Metroid games will use Metroid Prime models that matches the item from the other world."""
+
+    display_name = "Display Non-Local Items"
+    option_none = 0
+    option_match_game = 1
+    option_match_series = 2
+    default = 0
+
+
+class EnergyTankCapacity(Range):
+    """Sets how much energy an energy tank stores. Defaults to 100 HP."""
+    display_name = "Energy Tank Capacity"
+    range_start = 100
+    range_end = 1000
+    range_step = 100
+    default = 100
+
+
 @dataclass
 class MetroidPrimeOptions(PerGameCommonOptions):
     start_inventory_from_pool: StartInventoryPool
@@ -419,6 +445,8 @@ class MetroidPrimeOptions(PerGameCommonOptions):
     missile_launcher: MissileLauncher
     main_power_bomb: MainPowerBomb
     shuffle_scan_visor: ShuffleScanVisor
+    shuffle_unlimited_missiles: ShuffleUnlimitedMissiles
+    shuffle_unlimited_power_bombs: ShuffleUnlimitedPowerBombs
     pre_scan_elevators: PreScanElevators
     elevator_randomization: ElevatorRandomization
     door_color_randomization: DoorColorRandomization
@@ -455,6 +483,8 @@ class MetroidPrimeOptions(PerGameCommonOptions):
     varia_suit_color: VariaSuitColorOverride
     gravity_suit_color: GravitySuitColorOverride
     phazon_suit_color: PhazonSuitColorOverride
+    display_nonlocal_items: DisplayNonLocalItems
+    etank_capacity: EnergyTankCapacity
 
     death_link: DeathLink
 
@@ -478,10 +508,12 @@ prime_option_groups = [
             MainPowerBomb,
             RandomizeStartingBeam,
             ShuffleScanVisor,
+            ShuffleUnlimitedMissiles,
+            ShuffleUnlimitedPowerBombs,
+            SpringBall,
             PreScanElevators,
             NonVariaHeatDamage,
             StaggeredSuitDamage,
-            SpringBall,
         ],
     ),
     OptionGroup(
@@ -523,6 +555,8 @@ prime_option_groups = [
             VariaSuitColorOverride,
             GravitySuitColorOverride,
             PhazonSuitColorOverride,
+            DisplayNonLocalItems,
+            EnergyTankCapacity,
         ],
     ),
 ]

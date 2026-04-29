@@ -1,5 +1,6 @@
 from typing import Dict
-from .data import LOCATIONS_DATA, ITEMS_DATA, DYNAMIC_FLAGS
+from .data import LOCATIONS_DATA, DYNAMIC_FLAGS
+from .data.Items import ITEMS
 from .data.Hints import HINT_DATA
 from .data.Entrances import ENTRANCES
 
@@ -33,15 +34,28 @@ def build_location_room_to_watches() -> Dict[int, dict[str, dict]]:
     return location_room_to_watches
 
 
-def build_scene_to_dynamic_flag() -> Dict[int, list[dict]]:
+def build_scene_to_dynamic_flag(ctx) -> Dict[int, list[dict]]:
     scene_to_dynamic_flag: Dict[int, list[dict]] = {}
+    def check_slot_data(d):
+        for option, value, *args in d.get("has_slot_data", []):
+            value = value if isinstance(value, list) else [value]
+            print(f"\t{d['name']}: {option} {value}")
+            if ctx.slot_data.get(option) not in value:
+                return False
+        return True
+
     for flag_name, data in DYNAMIC_FLAGS.items():
         data["name"] = flag_name
+        if not check_slot_data(data):
+            continue
+
         for scene in data.get("on_scenes", []):
             scene_to_dynamic_flag.setdefault(scene, [])
             scene_to_dynamic_flag[scene].append(data)
     return scene_to_dynamic_flag
 
+def build_scene_to_dynamic_entrance(ctx) -> dict:
+    return {}
 
 def build_location_name_to_id_dict() -> Dict[str, int]:
     location_name_to_id: Dict[str, int] = {}
@@ -53,15 +67,15 @@ def build_location_name_to_id_dict() -> Dict[str, int]:
 
 def build_item_name_to_id_dict() -> Dict[str, int]:
     item_name_to_id: Dict[str, int] = {}
-    for item_name, item in ITEMS_DATA.items():
-        item_name_to_id[item_name] = item["id"]
+    for item_name, item in ITEMS.items():
+        item_name_to_id[item_name] = item.id
     return item_name_to_id
 
 
 def build_item_id_to_name_dict() -> Dict[int, str]:
     item_id_to_name: Dict[int, str] = {}
-    for item_name, item in ITEMS_DATA.items():
-        index = item["id"]
+    for item_name, item in ITEMS.items():
+        index = item.id
         item_id_to_name[index] = item_name
     return item_id_to_name
 

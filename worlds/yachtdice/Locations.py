@@ -28,16 +28,18 @@ def all_locations_fun(max_score):
     return {f"{i} score": LocData(starting_index + i, "Board", i) for i in range(1, max_score + 1)}
 
 
-def ini_locations(goal_score, max_score, number_of_locations, dif, skip_early_locations, number_of_players, include_scores):
+def ini_locations(
+    goal_score, max_score, number_of_locations, dif, skip_early_locations, number_of_players, include_scores
+):
     """
     function that loads in all locations necessary for the game, so based on options.
     will make sure that goal_score and max_score are included locations
     """
-    scaling = 2  # parameter that determines how many low-score location there are.
+    scaling = 2.2  # parameter that determines how many low-score location there are.
     # need more low-score locations or lower difficulties:
     if dif == 1:
         scaling = 3
-    elif dif == 2:
+    else:
         scaling = 2.3
 
     scores = []
@@ -69,17 +71,20 @@ def ini_locations(goal_score, max_score, number_of_locations, dif, skip_early_lo
             scores[scores.index(closest_num)] = goal_score
 
     scores += [max_score]
-    
-    if 'Everything' in include_scores:
+
+    if include_scores == {"Everything"}:
         include_scores = [str(i) for i in range(1, max_score)]
-    
+    else:
+        include_scores = [x for x in include_scores if x != "Everything"]
+        include_scores = sorted({int(x) for x in include_scores})[:10]
+
     # Adjust scores to include the values in the "include" list
     include_scores = [int(value) for value in sorted(include_scores)]
     for value in include_scores:
         if value not in scores and value < max_score:
             # Exclude goal_score, max_score, and already included values from search
             candidate_scores = [s for s in scores if s not in (goal_score, max_score) and s not in include_scores]
-            
+
             if candidate_scores:  # If there are candidates to replace
                 closest_num = min(candidate_scores, key=lambda x: abs(x - value))
                 if abs(closest_num - value) < 100:  # only adjust score if it's close enough

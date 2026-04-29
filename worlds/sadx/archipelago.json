@@ -1,7 +1,1 @@
-{
-    "game": "Sonic Adventure DX",
-    "authors": ["Classic"],
-    "igdb_id": 192114,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
-}
+{"game": "Sonic Adventure DX", "authors": ["ClassicSpeed"], "igdb_id": 192114, "minimum_ap_version": "0.6.3", "world_version": "1.2.1", "compatible_version": 7, "version": 7}

@@ -18,13 +18,15 @@ if typing.TYPE_CHECKING:
 Utils.local_path.cached_path = os.path.dirname(__file__)
 settings.no_gui = True
 configpath = os.path.abspath("config.yaml")
-if not os.path.exists(configpath):  # fall back to config.yaml in home
+if not os.path.exists(configpath):
+    # fall back to config.yaml in user_path if config does not exist in cwd to match settings.py
     configpath = os.path.abspath(Utils.user_path('config.yaml'))
 
 
 def get_app() -> "Flask":
     from WebHostLib import register, cache, app as raw_app
     from WebHostLib.models import db
+    from worlds import ensure_worlds_loaded
 
     app = raw_app
     if os.path.exists(configpath) and not app.config["TESTING"]:
@@ -45,6 +47,8 @@ def get_app() -> "Flask":
         app.config["HOST_ADDRESS"] = Utils.get_public_ipv4()
         logging.info(f"HOST_ADDRESS was set to {app.config['HOST_ADDRESS']}")
 
+    os.makedirs(app.config["LOBBY_APWORLD_PATH"], exist_ok=True)
+    ensure_worlds_loaded()
     register()
     cache.init_app(app)
     db.bind(**app.config["PONY"])
@@ -59,7 +63,8 @@ def copy_tutorials_files_to_static(app=None) -> None:
 
     zfile: zipfile.ZipInfo
 
-    from worlds.AutoWorld import AutoWorldRegister
+    from worlds import AutoWorldRegister, ensure_worlds_loaded
+    ensure_worlds_loaded()
     worlds = {}
     for game, world in AutoWorldRegister.world_types.items():
         if hasattr(world.web, 'tutorials') and (not world.hidden or game == 'Archipelago'):
@@ -148,13 +153,14 @@ if __name__ == "__main__":
     except Exception as e:
         logging.warning("Could not update LttP sprites: %s", e)
     app = get_app()
-    from worlds import AutoWorldRegister
+    from worlds import AutoWorldRegister, network_data_package
     # Update to only valid WebHost worlds
     invalid_worlds = {name for name, world in AutoWorldRegister.world_types.items()
                       if not hasattr(world.web, "tutorials")}
     if invalid_worlds:
         logging.error(f"Following worlds not loaded as they are invalid for WebHost: {invalid_worlds}")
     AutoWorldRegister.world_types = {k: v for k, v in AutoWorldRegister.world_types.items() if k not in invalid_worlds}
+    network_data_package["games"] = {k: v for k, v in network_data_package["games"].items() if k not in invalid_worlds}
     create_options_files()
     copy_tutorials_files_to_static(app)
     if app.config["SELFLAUNCH"]:

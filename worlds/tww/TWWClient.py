@@ -741,6 +741,9 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
         if ctx.dolphin_sync_task:
             await ctx.dolphin_sync_task
 
+    parser = get_base_parser()
+    parsed_args = parser.parse_args(args)
+
     import colorama
 
     # Check if we're already in an event loop (GUI mode) first

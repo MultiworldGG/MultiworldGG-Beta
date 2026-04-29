@@ -212,7 +212,7 @@
         "from": "Main Hall 3F",
         "to": "Clock Tower",
         "condition": {
-            "items": ["Small Gear", "Large Gear", "Square Crank", "Fuse - Break Room Hallway", "Boxed Electronic Part 2"]
+            "items": ["Small Gear", "Large Gear", "Lion Medallion", "Unicorn Medallion", "Maiden Medallion"]
         }
     },
     { 
@@ -284,7 +284,7 @@
         "from": "Generator Room",
         "to": "Break Room Hallway",
         "condition": {
-            "items": ["Fuse - Break Room Hallway"]
+            "items": ["Square Crank"]
         }
     },
     { 
@@ -309,18 +309,23 @@
     },
     { 
         "from": "Side Stairs",
+        "to": "Observation Room Hallway",
+        "condition": {}
+    },
+    { 
+        "from": "Observation Room Hallway",
         "to": "Observation Room",
         "condition": {
             "items": ["Club Key"]
         }
     },
     { 
-        "from": "Side Stairs",
+        "from": "Observation Room Hallway",
         "to": "Interrogation Room",
         "condition": {
             "items": [
-                ["Spade Key", "Club Key", "Lion Medallion", "Unicorn Medallion", "Maiden Medallion", "Square Crank", "Fuse - Break Room Hallway"],
-                ["Spade Key", "Club Key", "Lion Medallion", "Unicorn Medallion", "Maiden Medallion", "Mechanic Jack Handle", "Fuse - Break Room Hallway"]
+                ["Spade Key", "Club Key", "Lion Medallion", "Unicorn Medallion", "Maiden Medallion", "Square Crank"],
+                ["Spade Key", "Club Key", "Lion Medallion", "Unicorn Medallion", "Maiden Medallion", "Mechanic Jack Handle"]
             ]
         }
     },
@@ -334,8 +339,8 @@
         "to": "Roof",
         "condition": {
             "items": [
-                ["Spade Key", "Lion Medallion", "Unicorn Medallion", "Maiden Medallion", "Fuse - Break Room Hallway", "Square Crank"],
-                ["Spade Key", "Lion Medallion", "Unicorn Medallion", "Maiden Medallion", "Fuse - Break Room Hallway", "Mechanic Jack Handle"]
+                ["Spade Key", "Lion Medallion", "Unicorn Medallion", "Maiden Medallion", "Square Crank"],
+                ["Spade Key", "Lion Medallion", "Unicorn Medallion", "Maiden Medallion", "Mechanic Jack Handle"]
             ]
         }
     },
@@ -381,9 +386,7 @@
     { 
         "from": "Water Gate",
         "to": "Upper Waterway",
-        "condition": {
-            "items": ["Rook Plug"]
-        }
+        "condition": {}
     },
     { 
         "from": "Upper Waterway",

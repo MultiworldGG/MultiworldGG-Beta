@@ -1,7 +1,9 @@
 {
     "game": "Metroid Prime",
-    "authors": ["Electro15"],
+    "authors": ["hesto2", "Electro15", "UltiNaruto"],
     "igdb_id": 1105,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
+    "world_version": "0.5.3",
+    "minimum_ap_version": "0.6.3",
+    "compatible_version": 7,
+    "version": 7
 }

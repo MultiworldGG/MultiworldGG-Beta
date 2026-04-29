@@ -812,9 +812,11 @@ class SongHints(Choice):
 class ChestDowsing(Choice):
     """
     Determines the main quest (top) dowsing option.
-    **Vanilla**: dowsing points to Trial Gates and the Sandship (after obtaining the necessary song or Sea Chart first).
+    **Vanilla**: dowsing points to Trial Gates and the Sandship
+        (after obtaining the necessary song or Sea Chart first).
     **All Chests**: dowsing points to all chests (regardless of their contents).
-    **Progress Items**: dowsing only points to chests containing progress items (doesn't work with Goddess Chests).
+    **Progress Items**: dowsing only points to chests containing progress items
+        (Goddess Chests must be activated by their respective Goddess Cube before being dowsable)).
     """
 
     display_name = "Chest Dowsing"
@@ -947,3 +949,4 @@ class SSOptions(PerGameCommonOptions):
     starting_items: StartInventoryPool
     death_link: DeathLink
     progression_balancing: SSProgressionBalancing
+

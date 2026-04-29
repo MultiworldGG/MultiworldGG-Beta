@@ -50,6 +50,7 @@ class PlayerStatus(TypedDict):
     team: int
     player: int
     status: ClientStatus
+    goal_override: bool
 
 
 class PlayerLocationsTotal(TypedDict):
@@ -148,12 +149,15 @@ def tracker_data(tracker: UUID) -> dict[str, Any]:
                 entry["time"] = datetime.fromtimestamp(timestamp, timezone.utc)
                 break
 
+    goal_overrides = tracker_data.get_room_goal_overrides()
+
     player_status: list[PlayerStatus] = []
     """The current client status for each player."""
     for team, players in all_players.items():
         for player in players:
             player_status.append(
-                {"team": team, "player": player, "status": tracker_data.get_player_client_status(team, player)})
+                {"team": team, "player": player, "status": tracker_data.get_player_client_status(team, player),
+                 "goal_override": (team, player) in goal_overrides})
 
     return {
         "aliases": player_aliases,
@@ -248,11 +252,19 @@ def tracker_slot_data(tracker: UUID) -> list[PlayerSlotData]:
 
     all_players: dict[int, list[int]] = tracker_data.get_all_players()
 
+    def stringify_keys(obj: Any) -> Any:
+        """Recursively convert all non-string dict keys to strings for JSON serialization compatibility."""
+        if isinstance(obj, dict):
+            return {str(k) if not isinstance(k, str) else k: stringify_keys(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [stringify_keys(item) for item in obj]
+        return obj
+
     slot_data: list[PlayerSlotData] = []
     """Slot data for each player."""
     for team, players in all_players.items():
         for player in players:
-            slot_data.append({"player": player, "slot_data": tracker_data.get_slot_data(player)})
+            slot_data.append({"player": player, "slot_data": stringify_keys(tracker_data.get_slot_data(player))})
         break
 
     return slot_data

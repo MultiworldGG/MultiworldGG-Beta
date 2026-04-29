@@ -1,6 +1,10 @@
 import colorama, asyncio, bsdiff4, pathlib, os, Utils, hashlib, sys, zipfile, settings, atexit, time, typing, logging, urllib.parse, io
 from CommonClient import CommonContext, ClientCommandProcessor, get_base_parser, gui_enabled, logger, server_loop
 from NetUtils import ClientStatus
+try:
+    from Utils import instance_name as apname
+except ImportError:
+    apname = "Archipelago"
 
 try:
     from Utils import instance_name as apname

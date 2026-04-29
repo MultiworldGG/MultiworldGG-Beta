@@ -2,15 +2,15 @@ from collections.abc import Iterable
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from BaseClasses import ItemClassification
-from .data import data as crystal_data, LogicalAccess, EncounterType, MiscOption
+from BaseClasses import ItemClassification, CollectionState
+from .data import data as crystal_data, LogicalAccess, EncounterType, MiscOption, EncounterMon
 from .evolution import get_random_pokemon_evolution
 from .items import get_random_filler_item
 from .moves import get_tmhm_compatibility, randomize_learnset, moves_convert_friendly_to_ids
 from .options import RandomizeTypes, RandomizePalettes, RandomizeBaseStats, RandomizeStarters, RandomizeTrades, \
     DexsanityStarters, EncounterGrouping, RandomizePokemonRequests, Goal
-from .pokemon_data import ALL_UNOWN
-from .utils import pokemon_convert_friendly_to_ids, should_include_region
+from .pokemon_data import ALL_UNOWN, LEGENDARY_POKEMON, NON_LEGENDARY_POKEMON
+from .utils import should_include_region
 
 if TYPE_CHECKING:
     from .world import PokemonCrystalWorld
@@ -54,10 +54,12 @@ def randomize_pokemon_data(world: "PokemonCrystalWorld"):
                 world.generated_palettes[pkmn_name] = get_random_colors(world.random)
 
         if world.options.randomize_base_stats.value:
+            multiple = 5 if world.options.base_stats_multiples_of_five else 1
+
             if world.options.randomize_base_stats.value == RandomizeBaseStats.option_keep_bst:
-                new_base_stats = get_random_base_stats(world.random, pkmn_data.bst)
+                new_base_stats = get_random_base_stats(world.random, multiple, pkmn_data.bst)
             else:
-                new_base_stats = get_random_base_stats(world.random)
+                new_base_stats = get_random_base_stats(world.random, multiple)
 
         if world.options.randomize_learnsets or world.options.metronome_only:
             new_learnset = randomize_learnset(world, pkmn_name, move_blocklist)
@@ -90,53 +92,22 @@ def randomize_pokemon_data(world: "PokemonCrystalWorld"):
 def randomize_starters(world: "PokemonCrystalWorld"):
     if world.is_universal_tracker or not world.options.randomize_starters: return
 
-    blocklist = pokemon_convert_friendly_to_ids(world, world.options.starter_blocklist.value)
-
-    def get_starter_rival_fights(starter_name):
-        return [(rival_name, rival) for rival_name, rival in world.generated_trainers.items() if
-                rival_name.startswith("RIVAL_" + starter_name)]
-
-    def set_rival_fight_starter(rival_name, rival, new_pokemon):
-        # starter is always the last pokemon
-        rival_pkmn = replace(rival.pokemon[-1], pokemon=new_pokemon)
-        new_party = rival.pokemon[:-1] + [rival_pkmn]
-        world.generated_trainers[rival_name] = replace(
-            world.generated_trainers[rival_name],
-            pokemon=new_party
-        )
+    blocklist = world.options.starter_blocklist.get_ids(world)
 
     base_only = world.options.randomize_starters.value == RandomizeStarters.option_unevolved_only
     for evo_line in world.generated_starters:
-        # get all rival fights where the starter is unevolved
-        rival_fights = get_starter_rival_fights(evo_line[0])
-        # randomize starter
         starter_pokemon = get_random_pokemon(world, base_only=base_only, starter=True, exclude_unown=True,
                                              blocklist=blocklist)
         blocklist.add(starter_pokemon)
         starter_data = world.generated_pokemon[starter_pokemon]
         evo_line[0] = starter_pokemon
-        # replace unevolved starter rival fights with new starter
-        for trainer_name, trainer in rival_fights:
-            set_rival_fight_starter(trainer_name, trainer, starter_pokemon)
 
-        # get all rival fights where the starter is middle evolution
-        rival_fights = get_starter_rival_fights(evo_line[1])
-        # get random evolution of randomized starter
         middle_evo_pokemon = get_random_pokemon_evolution(world.random, starter_pokemon, starter_data)
         middle_data = world.generated_pokemon[middle_evo_pokemon]
         evo_line[1] = middle_evo_pokemon
-        # replace middle evolution rival fights with new middle evolution
-        for trainer_name, trainer in rival_fights:
-            set_rival_fight_starter(trainer_name, trainer, middle_evo_pokemon)
 
-        # get all rival fights where the starter is final evolution
-        rival_fights = get_starter_rival_fights(evo_line[2])
-        # get random evolution of randomized starter
         final_evo_pokemon = get_random_pokemon_evolution(world.random, middle_evo_pokemon, middle_data)
         evo_line[2] = final_evo_pokemon
-        # replace final evolution rival fights with new final evolution
-        for trainer_name, trainer in rival_fights:
-            set_rival_fight_starter(trainer_name, trainer, final_evo_pokemon)
 
     if MiscOption.UnLuckyEgg.value in world.generated_misc.selected:
         new_helditems = ("LUCKY_EGG", "LUCKY_EGG", "LUCKY_EGG")
@@ -180,7 +151,7 @@ def get_logically_available_trade_pokemon(world: "PokemonCrystalWorld") -> set[s
 def randomize_trade_requested_pokemon(world: "PokemonCrystalWorld"):
     if world.is_universal_tracker: return
 
-    randomize_requested = world.options.randomize_trades.value not in (RandomizeTrades.option_requested,
+    randomize_requested = world.options.randomize_trades.value in (RandomizeTrades.option_requested,
                                                                        RandomizeTrades.option_both)
 
     logically_available_pokemon = sorted(world.logic.available_pokemon)
@@ -243,7 +214,8 @@ def fill_wild_encounter_locations(world: "PokemonCrystalWorld"):
     if (world.options.dexsanity_starters.value == DexsanityStarters.option_available_early
             and not world.is_universal_tracker):
 
-        locations = world.multiworld.get_reachable_locations(world.multiworld.state, world.player)
+        locations = world.multiworld.get_reachable_locations(state=CollectionState(world.multiworld),
+                                                             player=world.player)
         early_wild_regions = [loc.parent_region for loc in locations if "wild encounter" in loc.tags]
         early_wild_regions = [region for region in early_wild_regions if
                               world.logic.wild_regions[region.key] is LogicalAccess.InLogic
@@ -282,7 +254,7 @@ def fill_wild_encounter_locations(world: "PokemonCrystalWorld"):
 
                 if not source_region:  continue
                 target_region = None
-                target_encounters = None
+                target_encounters: list[EncounterMon] = []
                 while not target_encounters:
                     if not early_wild_regions: break
                     target_region = early_wild_regions.pop()
@@ -407,14 +379,25 @@ def get_random_nezumi(random):
     return random.choice(pokemon_pool)
 
 
-def _locations_to_pokemon(world: "PokemonCrystalWorld", locations: Iterable[str]):
+def _locations_to_pokemon(world: "PokemonCrystalWorld", locations: Iterable[str]) -> set[str]:
     pokemon = set()
     for location in locations:
         parts = location.split("- ")
         if len(parts) != 2: continue
         if "Catch" in parts[1]: continue
         pokemon.add(parts[1])
-    return pokemon_convert_friendly_to_ids(world, pokemon)
+
+    if "_Legendaries" in pokemon:
+        pokemon.discard("_Legendaries")
+        pokemon.update(LEGENDARY_POKEMON)
+    elif "_Non-Legendaries" in pokemon:
+        pokemon.discard("_Non-Legendaries")
+        pokemon.update(NON_LEGENDARY_POKEMON)
+
+    pokemon_ids = {pokemon_id for pokemon_id, pokemon_data in world.generated_pokemon.items() if
+                   pokemon_data.friendly_name in pokemon}
+
+    return pokemon_ids
 
 
 def get_chamber_event_for_unown(unown_letter: str) -> str:
@@ -453,16 +436,28 @@ def get_pokemon_id_by_rom_id(id: int) -> str:
     return next(poke_id for poke_id, poke_data in crystal_data.pokemon.items() if poke_data.id == id)
 
 
-def get_random_base_stats(random, bst=None):
+def get_random_base_stats(random, multiple=1, bst=None):
     if bst is None:
         # sunkern to mewtwo
-        bst = random.randint(180, 680)
+        bst = random.randrange(180, 681, multiple)
     # add 0.5 to prevent a single stat exceeding 255
     # biggest possible variance on max bst is (1.5 * 680) / 4 = 255
+    # for this reason, multiple must not be a number where half-to-even rounds ((1.5 * 680) / (4 * multiple)) upward
     randoms = [random.random() + 0.5 for _i in range(0, 6)]
     total = sum(randoms)
-    return [int((stat * bst) / total) for stat in randoms]
+    base_stats = [int(round((stat * bst) / (total * multiple)) * multiple) for stat in randoms]
+    return __place_base_stats_remainder(random, base_stats, bst - sum(base_stats), random.randint(0, 5))
 
+def __place_base_stats_remainder(random, stats: list[int], remainder: int, stat: int):
+    if remainder == 0:
+        return stats
+
+    new_base_stat = stats[stat] + remainder
+    if new_base_stat > 255 or new_base_stat < 5:
+        stats = __place_base_stats_remainder(random, stats, remainder, (stat + 1) % 6)
+    else:
+        stats[stat] = new_base_stat
+    return stats
 
 def get_random_types(world: "PokemonCrystalWorld") -> list[str]:
     all_types = list(crystal_data.types.keys())

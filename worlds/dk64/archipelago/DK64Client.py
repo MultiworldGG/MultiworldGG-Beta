@@ -17,11 +17,11 @@ try:
 except ImportError:
     apname = "Archipelago"
 
-from client.common import DK64MemoryMap, create_task_log_exception, check_version, get_ap_version
-from client.emu_loader import EmuLoaderClient
-from client.items import item_ids, item_names_to_id, trap_name_to_index, trap_index_to_name
-from client.check_flag_locations import location_flag_to_name, location_name_to_flag
-from client.ap_check_ids import check_id_to_name, check_names_to_id
+from archipelago.client.common import DK64MemoryMap, create_task_log_exception, check_version, get_ap_version
+from archipelago.client.emu_loader import EmuLoaderClient
+from archipelago.client.items import item_ids, item_names_to_id, trap_name_to_index, trap_index_to_name
+from archipelago.client.check_flag_locations import location_flag_to_name, location_name_to_flag
+from archipelago.client.ap_check_ids import check_id_to_name, check_names_to_id
 from CommonClient import CommonContext, get_base_parser, gui_enabled, logger, server_loop, ClientCommandProcessor
 from NetUtils import ClientStatus
 from randomizer.Patching.ItemRando import normalize_location_name
@@ -65,39 +65,12 @@ class MessageDisplayHandler:
 
     def should_display_item(self, item_data: dict, send_mode: int) -> bool:
         """Determine if an item should be displayed based on send mode."""
-        if send_mode == 7:
-            return False  # Send nothing
-        elif send_mode == 6:
+        if send_mode == 3:  # display_nothing
+            return False
+        elif send_mode == 2:  # display_only_progression
             return item_data.get("progression", False)
-        elif send_mode == 5:
-            return item_data.get("progression", False) or item_data.get("extended_whitelist", False)
-        else:
-            return item_data.get("progression", False) or item_data.get("extended_whitelist", False)
-
-    def calculate_speed(self, send_mode: int, item_data: dict, pending_count: int, index: int) -> int:
-        """Calculate appropriate text display speed."""
-        if send_mode in [5, 6, 7]:
-            return NORMAL_TEXT_SPEED
-
-        if send_mode == 4:
-            return FAST_TEXT_SPEED if item_data.get("extended_whitelist", False) else NORMAL_TEXT_SPEED
-
-        if send_mode == 3:
-            return FAST_TEXT_SPEED
-
-        # Modes 1 and 2: dynamic speed based on queue length
-        remaining_items = pending_count - index
-        if remaining_items <= MIN_ITEMS_FOR_SPEED_SCALING:
-            return NORMAL_TEXT_SPEED
-
-        speed = round(NORMAL_TEXT_SPEED - (80 / remaining_items))
-        return max(speed, FAST_TEXT_SPEED)
-
-    def update_speed_if_needed(self, new_speed: int):
-        """Update text speed if it has changed."""
-        if self.client.current_speed != new_speed:
-            self.client.current_speed = new_speed
-            self.client.set_speed(new_speed)
+        elif send_mode == 1:  # display_all_items
+            return True
 
 
 class IceTrapHandler:
@@ -303,9 +276,27 @@ class DK64Client:
 
     async def validate_client_connection(self):
         """Validate the client connection."""
-        if not self.memory_pointer:
-            self.memory_pointer = self.n64_client.read_u32(DK64MemoryMap.memory_pointer)
+        self.memory_pointer = self.n64_client.read_u32(DK64MemoryMap.memory_pointer)
         self.n64_client.write_u8(self.memory_pointer + DK64MemoryMap.connection, 0xFF)
+        if self.n64_client.read_u8(DK64MemoryMap.eeprom_determined) == 1:
+            if self.n64_client.read_u32(DK64MemoryMap.save_type) != 2:
+                # Map emulator IDs to their setup guides
+                emulator_setup_guides = {
+                    "Project64": "https://dev.dk64randomizer.com/wiki/index.html?title=Consoles-and-Emulators:-Project-64",
+                    "Project64_v4": "https://dev.dk64randomizer.com/wiki/index.html?title=Consoles-and-Emulators:-Project-64",
+                    "RMG": "https://dev.dk64randomizer.com/wiki/index.html?title=Consoles-and-Emulators:-Rosalies-Mupen-GUI",
+                    "ParallelLauncher": "https://dev.dk64randomizer.com/wiki/index.html?title=Consoles-and-Emulators:-Parallel-Launcher",
+                    "RetroArch": "https://dev.dk64randomizer.com/wiki/index.html?title=Consoles-and-Emulators:-RetroArch",
+                    "BizHawk": "https://dev.dk64randomizer.com/wiki/index.html?title=Consoles-and-Emulators:-BizHawk-DK64-Edition",
+                    "Simple64": "https://dev.dk64randomizer.com/wiki/index.html?title=Consoles-and-Emulators:-Simple64",
+                }
+
+                emulator_id = self.n64_client.emulator_info.id.name
+                setup_guide = emulator_setup_guides.get(emulator_id, "https://dev.dk64randomizer.com/wiki/index.html?title=Consoles-and-Emulators")
+
+                logger.error(f"{self.n64_client.emulator_info.id.name} is not set up correctly! Please follow the appropriate setup guide to ensure the game works!")
+                logger.error(f"{setup_guide}")
+                raise Exception("Bad emulator setup")
 
     # ==================== MESSAGING METHODS ====================
 
@@ -365,8 +356,7 @@ class DK64Client:
 
         should_display = self._message_handler.should_display_item(item_data, self.send_mode)
         if should_display:
-            speed = self._message_handler.calculate_speed(self.send_mode, item_data, len(self.pending_checks), index)
-            self._message_handler.update_speed_if_needed(speed)
+            self.set_speed(FAST_TEXT_SPEED)
             self.send_message(item_name, from_player, "from")
 
     async def _process_item_data(self, item_data: dict, item_name: str):
@@ -1146,8 +1136,10 @@ class DK64Context(CommonContext):
 
     async def send_checks(self):
         """Send the checks to the server."""
-        message = [{"cmd": "LocationChecks", "locations": self.found_checks}]
-        await self.send_msgs(message)
+        if self.found_checks:
+            message = [{"cmd": "LocationChecks", "locations": self.found_checks}]
+            await self.send_msgs(message)
+            self.found_checks = []
 
     had_invalid_slot_data: typing.Optional[bool] = None
 

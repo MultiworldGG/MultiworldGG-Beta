@@ -1,7 +1,7 @@
 {
     "game": "Jak and Daxter: The Precursor Legacy",
-    "authors": [ "markustulliuscicero" ],
+    "world_version": "1.1.5",
     "igdb_id": 1528,
     "minimum_ap_version": "0.6.2",
-    "world_version": "1.0.1"
+    "authors": [ "markustulliuscicero" ]
 }

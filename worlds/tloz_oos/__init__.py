@@ -10,8 +10,6 @@ from Options import Accessibility, OptionError, Option
 from worlds.AutoWorld import WebWorld, World
 from .Client import OracleOfSeasonsClient  # Unused, but required to register with BizHawkClient
 from .Hints import create_region_hints, create_item_hints
-
-
 from .Logic import create_connections, apply_self_locking_rules
 from .Options import *
 from .PatchWriter import oos_create_ap_procedure_patch
@@ -108,13 +106,8 @@ class OracleOfSeasonsWorld(World):
     The seasons in the world of Holodrum have been a mess since Onox captured Din, the Oracle of Seasons.
     Gather the Essences of Nature, confront Onox and rescue Din to give nature some rest in Holodrum.
     """
-
-    from BaseUtils import get_archipelago_json
-    GAME_NAME, AUTHOR, AP_VERSION, WORLD_VERSION = get_archipelago_json("tloz_oos")
-
-    game = GAME_NAME
-    author: str = AUTHOR
-    
+    game = "The Legend of Zelda - Oracle of Seasons"
+    author: str = "Dinopony & Ishigh"
     options_dataclass = OracleOfSeasonsOptions
     options: OracleOfSeasonsOptions
     # required_client_version = (0, 5, 1)
@@ -590,15 +583,12 @@ class OracleOfSeasonsWorld(World):
     def create_item(self, name: str) -> Item:
         # If item name has a "!PROG" suffix, force it to be progression. This is typically used to create the right
         # amount of progression rupees while keeping them a filler item as default
-        # EDIT: Changing to progression_deprioritized_skip_balancing, as that is where required currency is expected to be.
         if name.endswith("!PROG"):
             name = name.removesuffix("!PROG")
             classification = ItemClassification.progression_deprioritized_skip_balancing
         elif name.endswith("!USEFUL"):
             # Same for above but with useful. This is typically used for Required Rings,
             # as we don't want those locked in a barren dungeon
-            # EDIT: Changing to progression_deprioritized_skip_balancing
-            # 'useful' should never be required - other users will not pick it up.
             name = name.removesuffix("!USEFUL")
             classification = ITEMS_DATA[name]["classification"]
             if classification == ItemClassification.filler:

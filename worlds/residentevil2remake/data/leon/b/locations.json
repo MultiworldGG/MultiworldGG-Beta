@@ -53,7 +53,7 @@
     {
         "name": "Table",
         "region": "Guard Room",
-        "original_item": "M19",
+        "original_item": "",
         "force_item": "M19",
         "condition": {
             "items": ["Bolt Cutters"]
@@ -779,8 +779,7 @@
         "condition": {},    
         "item_object": "sm73_103",
         "parent_object": "sm73_103_SpadeKey",
-        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/3FHigher/3FW/3FWSmallRoom",
-        "randomized": 0
+        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/3FHigher/3FW/3FWSmallRoom"
     },
     {
         "name": "Furniture by Door",
@@ -1160,7 +1159,8 @@
         "condition": {},    
         "item_object": "sm70_207",
         "parent_object": "ItemPositions_NormalLocker_1FE1",
-        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/Leon_common/1F/1FE/CorriderB/Locker_sm70_207_Leonyakueki"
+        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/Leon_common/1F/1FE/CorriderB/Locker_sm70_207_Leonyakueki",
+        "forbid_item": ["Fuse - Main Hall"]
     },
     {
         "name": "Downed Zombie",
@@ -1169,7 +1169,8 @@
         "condition": {},    
         "item_object": "sm70_205",
         "parent_object": "sm70_205_gunpowder",
-        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/1F/1FE/InterrogationRoom"
+        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/1F/1FE/InterrogationRoom",
+        "forbid_item": ["Fuse - Main Hall"]
     },
     {
         "name": "Table",
@@ -1178,7 +1179,8 @@
         "condition": {},    
         "item_object": "sm77_002",
         "parent_object": "sm77_002_PortableSafe_2ndPlay",
-        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/Leon_common/1F/1FE/InterrogationRoom"
+        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/Leon_common/1F/1FE/InterrogationRoom",
+        "forbid_item": ["Fuse - Main Hall"]
     },
     {
         "name": "Table",
@@ -1187,7 +1189,8 @@
         "condition": {},    
         "item_object": "sm70_111",
         "parent_object": "sm70_111_handgunB_2nd",
-        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/1F/1FE/InterrogationRoom"
+        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/1F/1FE/InterrogationRoom",
+        "forbid_item": ["Fuse - Main Hall"]
     },
     {
         "name": "3F By Stairs",
@@ -1196,7 +1199,8 @@
         "condition": {},    
         "item_object": "sm70_202",
         "parent_object": "sm70_202_mokuzai",
-        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/3FHigher/3FE/Corridor"
+        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/3FHigher/3FE/Corridor",
+        "forbid_item": ["Fuse - Main Hall"]
     },
     {
         "name": "South Locker",
@@ -1205,7 +1209,8 @@
         "condition": {},    
         "item_object": "WP6300",
         "parent_object": "ItemPositions_NormalLocker_3FE1",
-        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/3FHigher/3FE/Corridor/Locker_WP6300_FlashBan"
+        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/3FHigher/3FE/Corridor/Locker_WP6300_FlashBan",
+        "forbid_item": ["Fuse - Main Hall"]
     },
     {
         "name": "West Locker",
@@ -1214,16 +1219,18 @@
         "condition": {},    
         "item_object": "sm70_111",
         "parent_object": "ItemPositions_NormalLocker_3FE2",
-        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/3FHigher/3FE/Corridor/Locker_sm70_100_HandgunB"
+        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/3FHigher/3FE/Corridor/Locker_sm70_100_HandgunB",
+        "forbid_item": ["Fuse - Main Hall"]
     },
     {
-        "name": "North Shelves",
+        "name": "Shelves near Large Gear",
         "region": "East Storage Room",
         "original_item": "Blue Herb",
         "condition": {},    
         "item_object": "sm70_003",
         "parent_object": "sm70_003_BlueHerb",
-        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/3FHigher/3FE/3FDepot"
+        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/3FHigher/3FE/3FDepot",
+        "forbid_item": ["Fuse - Main Hall"]
     },
     {
         "name": "Pallet",
@@ -1232,16 +1239,18 @@
         "condition": {},    
         "item_object": "sm73_152",
         "parent_object": "sm73_152_HagurumaBig",
-        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/3FHigher/3FE/3FDepot"
+        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/3FHigher/3FE/3FDepot",
+        "forbid_item": ["Fuse - Main Hall"]
     },
     {
-        "name": "Southeast Shelves",
+        "name": "Shelves near Heart Door",
         "region": "East Storage Room",
         "original_item": "Shotgun Shells",
         "condition": {},    
         "item_object": "sm70_101",
         "parent_object": "LEON_sm70_101_shotgunB",
-        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/Leon_common/3FE/ArtRoom"
+        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/Leon_common/3FE/ArtRoom",
+        "forbid_item": ["Fuse - Main Hall"]
     },
     {
         "name": "Table",
@@ -1250,7 +1259,8 @@
         "condition": {},    
         "item_object": "sm70_003",
         "parent_object": "sm70_003_BlueHerb",
-        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/OutdoorN"
+        "folder_path": "RopewayContents/World/Location_RPD/LocationLevel_RPD/Item/common/OutdoorN",
+        "forbid_item": ["Fuse - Main Hall"]
     },
     {
         "name": "Bench by Flaming Helicopter",
@@ -1309,8 +1319,8 @@
         "original_item": "Red Herb",
         "condition": {
             "items": [
-                ["Lion Medallion", "Unicorn Medallion", "Maiden Medallion", "Spade Key", "Square Crank"],
-                ["Lion Medallion", "Unicorn Medallion", "Maiden Medallion", "Spade Key", "Mechanic Jack Handle"]
+                ["Lion Medallion", "Unicorn Medallion", "Maiden Medallion", "Square Crank"],
+                ["Lion Medallion", "Unicorn Medallion", "Maiden Medallion", "Mechanic Jack Handle"]
             ]
         },
         "item_object": "sm70_002",
@@ -1788,7 +1798,9 @@
         "name": "Weapon Cage",
         "region": "Supplies Storage Room",
         "original_item": "Chemical Flamethrower",
-        "condition": {},    
+        "condition": {
+            "items": ["King Plug"]
+        }, 
         "item_object": "WP4200",
         "parent_object": "WP_FireShooter",
         "folder_path": "RopewayContents/World/Location_WasteWater/LocationLevel_WasteWater/Item/common/Leon_common"

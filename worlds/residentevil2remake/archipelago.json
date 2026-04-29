@@ -1,7 +1,1 @@
-{
-    "game": "Resident Evil 2 Remake",
-    "authors": ["Fuzzy"],
-    "igdb_id": 19686,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.2.9"
-}
+{"game": "Resident Evil 2 Remake", "authors": ["Fuzzy"], "igdb_id": 19686, "world_version": "0.3.3", "compatible_version": 7, "version": 7}

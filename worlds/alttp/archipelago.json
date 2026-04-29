@@ -1,7 +1,7 @@
 {
-    "game": "A Link to the Past",
-    "authors": ["Berserker66"],
-    "igdb_id": 1026,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.2"
+	"game": "A Link to the Past",
+	"minimum_ap_version": "0.6.6",
+	"world_version": "5.1.0",
+	"authors": ["Berserker"],
+    "igdb_id": 1026
 }

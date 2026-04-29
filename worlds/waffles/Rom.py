@@ -8,6 +8,7 @@ from .Names.TextBox import generate_goal_text, title_text_mapping, generate_text
 from .Teleports import handle_teleport_shuffle, handle_transition_shuffle, handle_silent_events
 from .SNESGraphics import copy_gfx_tiles, decompress_gfx, copy_sprite_tiles, convert_3bpp, convert_name_to_4bpp
 from BaseClasses import ItemClassification
+from argparse import Namespace
 
 USHASH = 'cdd3c8c37322978ca8669b34bc89c804'
 
@@ -32,29 +33,15 @@ ability_rom_data = {
     0xBC0020: [[0x43E2, 0x1]], # Extra Defense
     0xBC0021: [[0x43E3, 0x1]], # Midway Point
     0xBC0023: [[0x43E5, 0x1]], # Item Box
-
-    0xBC0030: [[0x43D0, 0x1]], # Golden Heart Key
-    0xBC0031: [[0x43D1, 0x1]], # Golden Mushroom Key
-    0xBC0032: [[0x43D2, 0x1]], # Golden Flower Key
-    0xBC0033: [[0x43D3, 0x1]], # Golden Star Key
-    0xBC0034: [[0x43D4, 0x1]], # Ruby Heart Key
-    0xBC0035: [[0x43D5, 0x1]], # Ruby Mushroom Key
-    0xBC0036: [[0x43D6, 0x1]], # Ruby Flower Key
-    0xBC0037: [[0x43D7, 0x1]], # Ruby Star Key
-    0xBC0038: [[0x43D8, 0x1]], # Sapphire Heart Key
-    0xBC0039: [[0x43D9, 0x1]], # Sapphire Mushroom Key
-    0xBC003A: [[0x43DA, 0x1]], # Sapphire Flower Key
-    0xBC003B: [[0x43DB, 0x1]], # Sapphire Star Key
-    0xBC003C: [[0x43DC, 0x1]], # Emerald Heart Key
-    0xBC003D: [[0x43DD, 0x1]], # Emerald Mushroom Key
-    0xBC003E: [[0x43DE, 0x1]], # Emerald Flower Key
-    0xBC003F: [[0x43DF, 0x1]], # Emerald Star Key
+    0xBC0008: [[0x43E6, 0x1], [0x43E6, 0x0]], # Yoshi
+    0xBC0003: [[0x43E7, 0x1], [0x43E7, 0x0]], # Run
+    0xBC0005: [[0x43E0, 0x1], [0x43E0, 0x0]], # Swim
 }
 
 progressive_items = {
     #0xBC0005: [0x03E0, 2], # Swim
-    0xBC0003: [0x03E7, 2], # Run
-    0xBC0008: [0x03E6, 2], # Yoshi
+    0xBC0025: [0x03E7, 2], # Run
+    0xBC0024: [0x03E6, 2], # Yoshi
     0xBC000D: [0x03E1, 9], # Super Star
     0xBC0022: [0x03E4, 3], # Better Timer
 }
@@ -323,12 +310,21 @@ class WafflePatchExtension(APPatchExtension):
         ]
         inventory_gfx = copy_sprite_tiles(raw_sprite_graphics, order, 4)
 
+        # Copy midway point
+        order = [
+            0x0104,0x0105,0x0106,0x0107,
+            0x0114,0x0115,0x0116,0x0117,
+            0x0124,0x0125,0x0126,0x0127,
+            0x0134,0x0135,0x0136,0x0137,
+        ]
+        midway_point_gfx = copy_sprite_tiles(decompressed_animated_gfx, order, 4)
+
         # Patch graphics with modified data
         patched_sprite_graphics = bsdiff4.patch(bytes(sprite_graphics), caller.get_file("sprite_graphics.bsdiff4"))
         patched_gfx_00 = bsdiff4.patch(bytes(decompressed_gfx_00), caller.get_file("sprite_page_1.bsdiff4"))
         patched_gfx_01 = bsdiff4.patch(bytes(decompressed_gfx_01), caller.get_file("sprite_page_2.bsdiff4"))
         patched_inventory_gfx = bsdiff4.patch(bytes(inventory_gfx), caller.get_file("map_sprites.bsdiff4"))
-        patched_midway_point = bsdiff4.patch(bytes(inventory_gfx), caller.get_file("midway_point.bsdiff4"))
+        patched_midway_point = bsdiff4.patch(bytes(midway_point_gfx), caller.get_file("midway_point.bsdiff4"))
 
         rom[0xE0000:0xE0000 + len(decompressed_player_gfx)] = decompressed_player_gfx
         rom[0xE8000:0xE8000 + len(decompressed_animated_gfx)] = decompressed_animated_gfx
@@ -398,26 +394,28 @@ class WafflePatchExtension(APPatchExtension):
     @staticmethod
     def replace_graphics(caller: APProcedurePatch, rom: bytes) -> bytes:
         # Get world's settings
-        world_type = AutoWorldRegister.world_types[WafflePatchExtension.game]
-        world_settings = getattr(settings.get_settings(), world_type.settings_key, None)
         options = json.loads(caller.get_file("options.json").decode("UTF-8"))
 
-        if not world_settings or "graphics_pack" in options.keys():
-            return rom
+        #if not world_settings or "graphics_pack" in options.keys():
+        #    return rom
 
         graphics_setting = ""        
         if "graphics_pack" in options.keys():
             # Load local (.apwaffle) graphics pack
             graphics_setting = options["graphics_pack"]
-        elif vars(Utils.get_adjuster_settings_no_defaults("SMW: Spicy Mycena Waffles")):
+        elif vars(Utils.persistent_load().get("graphics_pack", {}).get("SMW: Spicy Mycena Waffles", Namespace())):
             # Check persistent storage for a global graphics pack
-            persistent_settings = Utils.get_adjuster_settings_no_defaults("SMW: Spicy Mycena Waffles")
+            persistent_settings = Utils.persistent_load().get("graphics_pack", {}).get("SMW: Spicy Mycena Waffles", Namespace())
             if hasattr(persistent_settings, "selected_pack"):
                 if len(persistent_settings.selected_pack) != 0:
                     graphics_setting = persistent_settings.selected_pack
         if len(graphics_setting) == 0:
             # Check if the setting is properly set and exists in data/sprites/smw
             # This is our very last resort
+            world_type = AutoWorldRegister.world_types[WafflePatchExtension.game]
+            world_settings = getattr(settings.get_settings(), world_type.settings_key, None)
+            if not world_settings:
+                return rom
             graphics_setting = world_settings.graphics_file
             
         if not os.path.isfile(graphics_setting):
@@ -553,7 +551,7 @@ class WafflePatchExtension(APPatchExtension):
 
         return bytes(rom)
     
-
+    @staticmethod
     def process_level_tiles(caller: APProcedurePatch, rom: bytes) -> bytes:
         from .Levels import full_level_list
         level_swap = list(caller.get_file("level_swap.bin"))
@@ -598,6 +596,60 @@ class WafflePatchExtension(APPatchExtension):
                 rom[0x677DF+original_index] = new_tile
 
         return bytes(rom)
+    
+
+    @staticmethod
+    def write_global_settings(caller: APProcedurePatch, rom: bytes) -> bytes:
+        rom = bytearray(rom)
+
+        settings_value = 0
+        if vars(Utils.persistent_load().get("global_settings", {}).get("SMW: Spicy Mycena Waffles", Namespace())):
+            # Check persistent storage for a global graphics pack
+            persistent_settings = Utils.persistent_load().get("global_settings", {}).get("SMW: Spicy Mycena Waffles", Namespace())
+            if hasattr(persistent_settings, "lr_wallrun"):
+                if persistent_settings.lr_wallrun:
+                    settings_value |= 0x02 
+            if hasattr(persistent_settings, "lr_swim"):
+                if persistent_settings.lr_swim:
+                    settings_value |= 0x01
+            if hasattr(persistent_settings, "mute_music"):
+                if persistent_settings.mute_music:
+                    rom[0x000179:0x00017C] = [0x4C, 0x8F, 0x81]
+            
+        rom[0x01BFBF] = settings_value
+
+        # Get world's settings
+        options: dict[str, typing.Any] = json.loads(caller.get_file("options.json").decode("UTF-8"))
+
+        if "death_link" in options.keys() and "death_link_heart" in options.keys():
+            value = options["death_link"]
+            if options["death_link_heart"] and value != 0x00:
+                value |= 0x80
+            rom[0x01BFA5] = value
+        else:
+            rom[0x01BFA5] = 0x00
+
+        if "energy_link" in options.keys():
+            rom[0x01BFB4] = options["energy_link"]
+        else:
+            rom[0x01BFB4] = 0x00
+
+        if "trap_link" in options.keys():
+            rom[0x01BFB7] = options["trap_link"]
+        else:
+            rom[0x01BFB7] = 0x00
+
+        rom[0x01BFB8] = 0x00    # RingLink (rip)
+
+        if "luigi_physics" in options.keys():
+            rom[0x01BFBE] = options["luigi_physics"]
+        else:
+            rom[0x01BFBE] = 0x00
+
+        if options["veloz"] == 0x01:
+            rom[0x2273] = 0x00
+        
+        return bytes(rom)
 
 class WaffleProcedurePatch(APProcedurePatch, APTokenMixin):
     hash = [USHASH]
@@ -613,6 +665,7 @@ class WaffleProcedurePatch(APProcedurePatch, APTokenMixin):
         ("replace_graphics", []),
         ("shuffle_enemies", []),
         ("process_level_tiles", []),
+        ("write_global_settings", []),
     ]
 
     @classmethod
@@ -764,18 +817,22 @@ def handle_location_item_info(patch: WaffleProcedurePatch, world: "WaffleWorld")
     hidden_1up_info = bytearray([0x00 for _ in range(96)])
     midway_point_info = bytearray([0x00 for _ in range(96)])
     locations = world.multiworld.get_filled_locations(world.player)
+
     for location in locations:
+        if location.address is None:
+            continue
+
         classification = 0
         if ItemClassification.progression in location.item.classification or ItemClassification.trap in location.item.classification:
             classification = 2
         elif ItemClassification.useful in location.item.classification:
             classification = 4
-        
+
         level_id = location.address >> 24
         loc_type = (location.address >> 20 & 0x0F)
         level_data = location.address & 0x0F
 
-        if level_id in world.swapped_exits:
+        if level_id in world.swapped_exits and loc_type <= 0x01:
             loc_type = loc_type ^ 1
 
         if loc_type == 0x00 and level_data == 0x00:
@@ -936,6 +993,12 @@ def patch_rom(world: "WaffleWorld", patch: WaffleProcedurePatch, player: int, ac
         "level_palette_shuffle": 2,
         "enemy_shuffle": world.options.enemy_shuffle.value,
         "enemy_shuffle_seed": world.random.getrandbits(64),
+        "death_link": world.options.death_link.value,
+        "death_link_heart": world.options.death_link_heart.value,
+        "trap_link": world.options.trap_link.value,
+        "energy_link": world.options.energy_link.value,
+        "luigi_physics": world.options.luigi_physics.value,
+        "veloz": 0,
     }
     patch.write_file("options.json", json.dumps(options_dict).encode("UTF-8"))
 
@@ -1006,12 +1069,12 @@ def patch_rom(world: "WaffleWorld", patch: WaffleProcedurePatch, player: int, ac
     handle_location_item_info(patch, world)
 
     # Store all relevant option results in ROM
+    patch.write_byte(0x01BFBF, 0x00)        # Global settings
     patch.write_byte(0x01BFA0, world.options.goal.value)
     patch.write_byte(0x01BFA1, world.required_egg_count)
     patch.write_byte(0x01BFA2, world.required_egg_count)
     #patch.write_byte(0x01BFA3, world.options.display_sent_item_popups.value)
     patch.write_byte(0x01BFA4, world.options.display_received_item_popups.value)
-    patch.write_byte(0x01BFA5, world.options.death_link.value)
     patch.write_byte(0x01BFA6, world.options.dragon_coin_checks.value)
     patch.write_byte(0x01BFA7, world.options.swap_donut_gh_exits.value)
     patch.write_byte(0x01BFA8, world.options.moon_checks.value)
@@ -1020,6 +1083,7 @@ def patch_rom(world: "WaffleWorld", patch: WaffleProcedurePatch, player: int, ac
     patch.write_byte(0x01BFAC, world.options.midway_point_checks.value)
     patch.write_byte(0x01BFAD, world.options.room_checks.value)
     patch.write_byte(0x01BFB0, world.options.level_shuffle.value)
+
     setting_value = 0
     block_checks = world.options.block_checks.value
     if "Coin Blocks" in block_checks:
@@ -1037,17 +1101,11 @@ def patch_rom(world: "WaffleWorld", patch: WaffleProcedurePatch, player: int, ac
     if "Flying Blocks" in block_checks:
         setting_value |= 0x40
     patch.write_byte(0x01BFAB, setting_value)
-    patch.write_byte(0x01BFB4, world.options.energy_link.value)
-
-    patch.write_byte(0x01BFB7, world.options.trap_link.value)
-    patch.write_byte(0x01BFB8, world.options.ring_link.value)
 
     from Utils import __version__
     patch.name = bytearray(f'WAFFLES{__version__.replace(".", "")[0:3]}_{player}_{world.multiworld.seed:13}\0', 'utf8')[:21]
     patch.name.extend([0] * (21 - len(patch.name)))
     patch.write_bytes(0x7FC0, patch.name)
-
-    #patch.write_byte(0x2273, 0x00)
 
     patch.write_file("token_patch.bin", patch.get_token_binary())
 

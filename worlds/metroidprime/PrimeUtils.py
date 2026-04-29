@@ -1,110 +1,136 @@
+import io
 import os
 import pkgutil
 import platform
 import sys
-import shutil
-import tempfile
-import zipfile
-import glob
+
+from importlib.metadata import version, PackageNotFoundError
+from typing import List
+
+from .Enum import SuitUpgrade
 
 
-def setup_lib_path():
-    """Takes the local dependencies and moves them out of the apworld zip file to a temporary directory so the DLLs can be loaded."""
-    base_path = os.path.dirname(__file__)
-    lib_path = os.path.join(base_path, "lib")
-
-    if ".apworld" in __file__:
-        zip_file_path = __file__
-        while not zip_file_path.lower().endswith(".apworld"):
-            zip_file_path = os.path.dirname(zip_file_path)
-        lib_folder_path = get_lib_folder_path()
-        version = get_apworld_version()
-        temp_dir_name = "ap_metroidprime_temp_lib"
-        target_dir_name = f"{temp_dir_name}_{version}"
-        temp_base_dir = tempfile.gettempdir()
-        target_dir_path = os.path.join(temp_base_dir, target_dir_name)
-        create_new_temp_dir = True
-
-        # Validate existing directory
-        if os.path.exists(target_dir_path):
-            valid = _validate_temp_dir(target_dir_path)
-            create_new_temp_dir = not valid
-
-        # Create a new temp directory if the existing one is invalid or doesn't exist
-        if create_new_temp_dir:
-            _create_temp_dir(
-                temp_base_dir,
-                temp_dir_name,
-                target_dir_path,
-                zip_file_path,
-                lib_folder_path,
-            )
-
-        # Add the library path to sys.path
-        temp_lib_path = os.path.join(target_dir_path, lib_folder_path)
-        if temp_lib_path not in sys.path:
-            sys.path.append(temp_lib_path)
-
-        return temp_lib_path
-    else:
-        if lib_path not in sys.path:
-            sys.path.append(lib_path)
-        return lib_path
+LIBS: dict[str, dict[str, dict[str, str]|str]] = {
+    'py_randomprime': {
+        'links': {
+            'windows': 'https://files.pythonhosted.org/packages/fa/89/b6dd90d0bd497df20553d1e0a905ff46362eaca5fc8efd880df46c2680a0/py_randomprime-1.30.4-cp39-abi3-win_amd64.whl',
+            'linux': 'https://files.pythonhosted.org/packages/e5/c1/5cffd929774844a0ef4f045b643b69c8ff76f3b7d764d17d161fd9655a51/py_randomprime-1.30.4-cp39-abi3-manylinux_2_28_x86_64.whl',
+            'darwin-arm': 'https://files.pythonhosted.org/packages/7e/fd/5eefa606627e01bc2d9af12514aaca09fbcb4484603167ed179cc82b0e43/py_randomprime-1.30.4-cp39-abi3-macosx_11_0_arm64.whl',
+            'darwin-intel': 'https://files.pythonhosted.org/packages/86/35/405fb4faec0e4c823c8eac7371d684ea0526c4ec86f776ecfd2aa9c02ea0/py_randomprime-1.30.4-cp39-abi3-macosx_10_12_x86_64.whl',
+        },
+        'version': '1.30.4',
+    },
+    'ppc_asm': {
+        'links': {
+            ope_sys: 'https://files.pythonhosted.org/packages/cf/ae/b8b25954a14f6a6946c0004d7ee0a0089261bf1b611c991b8097a1feb670/ppc_asm-1.2.1-py3-none-any.whl'
+            for ope_sys in ['windows', 'linux', 'darwin-arm', 'darwin-intel']
+        },
+        'version': '1.2.1',
+    }
+}
 
 
-def _validate_temp_dir(target_dir_path) -> bool:
-    # Validate the directory by checking if it has the required files
-    try:
-        required_files = [
-            os.path.join("metroidprime", "lib", "py_randomprime", "version.py"),
-            os.path.join("metroidprime", "lib", "ppc_asm", "version.py"),
-        ]
-        for file in required_files:
-            file_path = os.path.join(target_dir_path, file)
-            if not os.path.exists(file_path):
-                return False
-        return True
-    except Exception as e:
-        print(f"Failed to validate temp directory: {e}")
-        return False
+def setup_libs():
+    """Downloads the libraries if they are not present."""
+    import shutil
+    import requests
+    import zipfile
+    import Utils
 
+    lib_path = Utils.home_path('lib')
+    if not Utils.is_windows and lib_path not in sys.path:
+        sys.path.append(lib_path)
 
-def _create_temp_dir(
-    temp_base_dir, temp_dir_name, target_dir_path, zip_file_path, lib_folder_path
-):
-    # Remove other version directories
-    try:
-        for dir in glob.glob(os.path.join(temp_base_dir, f"{temp_dir_name}_*")):
-            if dir != target_dir_path:
-                shutil.rmtree(dir)
-    except Exception as e:
-        print(
-            f"Failed to remove old version directories, make sure you don't have any MultiworldGG clients/generators already running if you want these removed: {e}"
-        )
+    ope_sys = '???'
+    if Utils.is_windows:
+        ope_sys = 'windows'
+    elif Utils.is_linux:
+        ope_sys = 'linux'
+    elif Utils.is_macos:
+        ope_sys = 'darwin-'
+        try:
+            match platform.machine():
+                case 'x86_64':
+                    ope_sys += 'intel'
+                case 'arm64':
+                    ope_sys += 'arm'
+                case v:
+                    raise RuntimeError(f'No idea what Mac OS version is {v} :S')
+        except RuntimeError as ex:
+            print(str(ex))
+            raise ex
 
-    # Extract files to the new version directory
-    os.makedirs(target_dir_path, exist_ok=True)
-    with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
-        for member in zip_ref.namelist():
-            if member.startswith(lib_folder_path):
-                zip_ref.extract(member, target_dir_path)
+    for lib_name, lib in LIBS.items():
+        full_lib_path = os.path.join(lib_path, lib_name)
+
+        try:
+            if version(lib_name.replace('_', '-')) != lib['version']:
+                raise RuntimeError('Wrong version')
+        except (ImportError, RuntimeError, PackageNotFoundError):
+            # delete if it already exists
+            if os.path.isdir(full_lib_path):
+                shutil.rmtree(full_lib_path)
+            if os.path.isdir(f"{full_lib_path}-*.dist-info"):
+                shutil.rmtree(f"{full_lib_path}-*.dist-info")
+
+            if not Utils.is_frozen():
+                import subprocess
+                subprocess.check_call([
+                    sys.executable,
+                    '-m',
+                    'pip',
+                    'install',
+                    '--upgrade',
+                    f'{lib_name.replace("_", "-")}=={lib["version"]}',
+                    '--target',
+                    lib_path,
+                ])
+            else:
+                print(f'Downloading {lib_name}...')
+                assert ope_sys != "???"
+                with requests.get(lib['links'][ope_sys]) as r:
+                    r.raise_for_status()
+                    z = zipfile.ZipFile(io.BytesIO(r.content))
+                    z.extractall(lib_path)
+
 
 def get_apworld_version():
     # Get version from ./version.txt
     # detect if on windows since pathing is handled differently from linux
     if platform.system() == "Windows":
-        path = os.path.join(os.path.dirname(__file__), "version.txt")
+        path = os.path.join(str(os.path.dirname(__file__)), "version.txt")
     else:
         path = "version.txt"
-    version = pkgutil.get_data(__name__, path).decode().strip()
-    return version
+    ver = pkgutil.get_data(__name__, path)
+    assert ver is not None
+    ver = ver.decode().strip()
+    return ver
 
+def count_ammo(items: List[str], main: str, expansion: str, requires_main: bool) -> int:
+    has_main: bool = main in [item for item in items if item == main]
+    ammo_with_main: int = 0
+    expansion_count: int = sum([1 for item in items if item == expansion])
+    ammo_per_expansion: int = 0
 
-def get_lib_folder_path():
-    # Get version from ./version.txt
-    # detect if on windows since pathing is handled differently from linux
-    if platform.system() == "Windows":
-        lib_folder_path = "metroidprime/lib"
+    if main == str(SuitUpgrade.Main_Power_Bomb):
+        ammo_with_main = 4
+        ammo_per_expansion = 1
+    if main == str(SuitUpgrade.Missile_Launcher):
+        ammo_with_main = 5
+        ammo_per_expansion = 5
+
+    result: int = 0
+    if requires_main:
+        if not has_main:
+            return result
+        else:
+            result += ammo_with_main + expansion_count * ammo_per_expansion
     else:
-        lib_folder_path = os.path.join("metroidprime", "lib")
-    return lib_folder_path
+        if has_main:
+            result += ammo_with_main
+        elif expansion_count > 0:
+            result += ammo_with_main
+            expansion_count -= 1
+        result += expansion_count * ammo_per_expansion
+
+    return result

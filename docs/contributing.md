@@ -14,9 +14,10 @@ game contributions:
   If you wish to contribute to the website, please take a look at [these tests](/test/webhost).
 
 * **Do not introduce unit test failures/regressions.**
-  MultiworldGG supports multiple versions of Python. You may need to download older Python versions to fully test
+  MultiworldGG technically supports multiple versions of Python. You may need to download older Python versions to fully test
   your changes. Currently, the oldest supported version
-  is [Python 3.12](https://www.python.org/downloads/release/python-31210/).
+  is [Python 3.13](https://www.python.org/downloads/release/python-31311/).
+  However, due to MWGG shipping a few libs in compiled form, by default, you will need python 3.13 for many worlds.
   It is recommended that automated github actions are turned on in your fork to have github run unit tests after
   pushing.
   You can turn them on here:  

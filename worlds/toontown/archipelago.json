@@ -1,7 +1,1 @@
-{
-    "game": "Toontown",
-    "authors": ["DevvyDont"],
-    "igdb_id": 25326,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.6.4"
-}
+{"compatible_version": 7, "version": 7, "game": "Toontown", "authors": ["DevvyDont"], "igdb_id": 25326, "minimum_ap_version": "0.6.4", "world_version": "0.6.4", "repo_url": "https://github.com/toontown-archipelago/toontown-archipelago"}

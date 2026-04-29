@@ -1,7 +1,7 @@
 {
     "game": "Final Fantasy",
-    "authors": ["jtoyoda (currently unmaintained)"],
+    "authors": ["Rosalie"],
     "igdb_id": 385,
     "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
+    "world_version": "1.0.0"
 }

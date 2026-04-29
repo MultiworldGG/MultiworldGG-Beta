@@ -1,7 +1,1 @@
-{
-    "game": "Wargroove 2",
-    "authors": ["Fly Sniper"],
-    "igdb_id": 241149,
-    "minimum_ap_version": "0.6.3",
-    "world_version": "1.0.1"
-}
+{"minimum_ap_version": "0.6.3", "world_version": "1.1.5", "game": "Wargroove 2", "authors": ["Fly Hyping", "Magnemania", "Akblabla"], "igdb_id": 27441, "compatible_version": 7, "version": 7}

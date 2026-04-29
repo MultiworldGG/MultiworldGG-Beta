@@ -1,26 +1,29 @@
 from logging import Logger
+import re
 import struct
 from typing import Any, Dict, Optional, Union
 
 from .DolphinClient import GC_GAME_ID_ADDRESS, DolphinClient, DolphinException
-from enum import Enum
-import py_randomprime  # type: ignore
+from .Enum import ConnectionState, MetroidPrimeLevel, MetroidPrimeSuit, SuitUpgrade
 from .Items import (
-    ItemData,
-    SuitUpgrade,
-    item_table,
     custom_suit_upgrade_table,
+    get_artifact_layer_from_item_index,
+    item_table,
+    ItemData,
+    misc_item_table,
+    progressive_beam_to_beam,
     suit_upgrade_table,
 )
 
 _SUPPORTED_VERSIONS = ["0-00", "0-01", "0-02", "jpn", "kor", "pal"]
-_SYMBOLS: Dict[str, Any] = {version: py_randomprime.symbols_for_version(version) for version in _SUPPORTED_VERSIONS}  # type: ignore
 GAMES: Dict[str, Any] = {
     "0-00": {
         "game_id": b"GM8E01",
         "game_rev": 0,
-        "game_state_pointer": _SYMBOLS["0-00"]["g_GameState"],
-        "cstate_manager_global": _SYMBOLS["0-00"]["g_StateManager"],
+        "game_state_pointer": 0x805A8C40,
+        "cstate_manager_global": 0x8045A1A8,
+        "aMetroidPrimeA": 0x803D47CC,
+        "aMetroidPrimeB": 0x803D47DB,
         "cplayer_vtable": 0x803D96E8,
         "HUD_MESSAGE_ADDRESS": 0x803EFB90,
         "HUD_TRIGGER_ADDRESS": 0x80572414,  # When this is 1 the game will display the message and then set it back to 0
@@ -28,8 +31,10 @@ GAMES: Dict[str, Any] = {
     "0-01": {
         "game_id": b"GM8E01",
         "game_rev": 1,
-        "game_state_pointer": _SYMBOLS["0-01"]["g_GameState"],
-        "cstate_manager_global": _SYMBOLS["0-01"]["g_StateManager"],
+        "game_state_pointer": 0x805A8E20,
+        "cstate_manager_global": 0x8045A388,
+        "aMetroidPrimeA": 0x803D49AC,
+        "aMetroidPrimeB": 0x803D49BB,
         "cplayer_vtable": 0x803D98C8,
         "HUD_MESSAGE_ADDRESS": 0x803EFD70,
         "HUD_TRIGGER_ADDRESS": 0x805724F4,  # When this is 1 the game will display the message and then set it back to 0
@@ -37,8 +42,10 @@ GAMES: Dict[str, Any] = {
     "0-02": {
         "game_id": b"GM8E01",
         "game_rev": 2,
-        "game_state_pointer": _SYMBOLS["0-02"]["g_GameState"],
-        "cstate_manager_global": _SYMBOLS["0-02"]["g_StateManager"],
+        "game_state_pointer": 0x805A9CE0,
+        "cstate_manager_global": 0x8045B208,
+        "aMetroidPrimeA": 0x803D588C,
+        "aMetroidPrimeB": 0x803D589B,
         "cplayer_vtable": 0x803DA7A8,
         "HUD_MESSAGE_ADDRESS": 0x803F0BA8,
         "HUD_TRIGGER_ADDRESS": 0x80573494,  # When this is 1 the game will display the message and then set it back to 0
@@ -46,8 +53,9 @@ GAMES: Dict[str, Any] = {
     "jpn": {
         "game_id": b"GM8J01",
         "game_rev": 0,
-        "game_state_pointer": _SYMBOLS["jpn"]["g_GameState"],
-        "cstate_manager_global": _SYMBOLS["jpn"]["g_StateManager"],
+        "game_state_pointer": 0x80591CE0,
+        "cstate_manager_global": 0x80443030,
+        "aMetroidPrime": 0x803C0D24,
         "cplayer_vtable": 0x803C5B28,
         "HUD_MESSAGE_ADDRESS": 0x803D89C8,
         "HUD_TRIGGER_ADDRESS": 0x8055B474,  # When this is 1 the game will display the message and then set it back to 0
@@ -55,8 +63,10 @@ GAMES: Dict[str, Any] = {
     "kor": {
         "game_id": b"GM8E01",
         "game_rev": 48,
-        "game_state_pointer": _SYMBOLS["kor"]["g_GameState"],
-        "cstate_manager_global": _SYMBOLS["kor"]["g_StateManager"],
+        "game_state_pointer": 0x805A8920,
+        "cstate_manager_global": 0x80459E88,
+        "aMetroidPrimeA": 0x803D48DC,
+        "aMetroidPrimeB": 0x803D48EB,
         "cplayer_vtable": 0x803D97E8,
         "HUD_MESSAGE_ADDRESS": 0x803EFC90,
         "HUD_TRIGGER_ADDRESS": 0x805720F4,  # When this is 1 the game will display the message and then set it back to 0
@@ -64,13 +74,15 @@ GAMES: Dict[str, Any] = {
     "pal": {
         "game_id": b"GM8P01",
         "game_rev": 0,
-        "game_state_pointer": _SYMBOLS["pal"]["g_GameState"],
-        "cstate_manager_global": _SYMBOLS["pal"]["g_StateManager"],
+        "game_state_pointer": 0x8046AD44,
+        "cstate_manager_global": 0x803E2088,
+        "aMetroidPrime": 0x803BF304,
         "cplayer_vtable": 0x803C4B88,
         "HUD_MESSAGE_ADDRESS": 0x803D7A28,
         "HUD_TRIGGER_ADDRESS": 0x804344B4,  # When this is 1 the game will display the message and then set it back to 0
     },
 }
+MAX_VANILLA_ITEM_ID = 40
 
 
 def calculate_item_offset(item_id: int) -> int:
@@ -86,49 +98,11 @@ HUD_MAX_MESSAGE_SIZE = 194
 WORLD_STATE_SIZE = 0x18
 
 
-class ConnectionState(Enum):
-    DISCONNECTED = 0
-    IN_GAME = 1
-    IN_MENU = 2
-    MULTIPLE_DOLPHIN_INSTANCES = 3
-
-
-class MetroidPrimeSuit(Enum):
-    Power = 0
-    Gravity = 1
-    Varia = 2
-    Phazon = 3
-    FusionPower = 4
-    FusionGravity = 5
-    FusionVaria = 6
-    FusionPhazon = 7
-
-    @staticmethod
-    def get_by_key(key: str):
-        for suit in MetroidPrimeSuit:
-            if suit.name == key:
-                return suit
+def world_by_id(mlvl: int) -> Optional[MetroidPrimeLevel]:
+    result = [w for w in MetroidPrimeLevel if w.value == mlvl]
+    if len(result) == 0:
         return None
-
-
-class MetroidPrimeLevel(Enum):
-    """Game worlds with their corresponding IDs in memory"""
-
-    Impact_Crater = 3241871825
-    Phendrana_Drifts = 2831049361
-    Frigate_Orpheon = 361692695
-    Magmoor_Caverns = 1056449404
-    Phazon_Mines = 2980859237
-    Tallon_Overworld = 972217896
-    Chozo_Ruins = 2214002543
-    End_of_Game = 332894565
-
-
-def world_by_id(id: int) -> Optional[MetroidPrimeLevel]:
-    for world in MetroidPrimeLevel:
-        if world.value == id:
-            return world
-    return None
+    return result[0]
 
 
 class Area:
@@ -172,7 +146,7 @@ ITEMS_USED_FOR_LOCATION_TRACKING = [
 
 
 class InventoryItemData(ItemData):
-    """Class used to track the player'scurrent items and their quantities"""
+    """Class used to track the player's current items and their quantities"""
 
     current_amount: int
     current_capacity: int
@@ -199,8 +173,9 @@ class MetroidPrimeInterface:
     _previous_message_size: int = 0
     game_id_error: Optional[str] = None
     game_rev_error: int
+    is_vanilla_iso_error: bool = False
     current_game: Optional[str]
-    relay_trackers: Optional[Dict[Any, Any]]
+    relay_trackers: Optional[Dict[str, dict[str, Union[str, int, list[int]]]]]
 
     def __init__(self, logger: Logger) -> None:
         self.logger = logger
@@ -218,6 +193,20 @@ class MetroidPrimeInterface:
             charge_beam = custom_charge_id_to_beam[item_id]
             self.set_progressive_beam_charge_state(charge_beam, True)
             return
+
+        # Custom items
+        if MAX_VANILLA_ITEM_ID < item_id < MAX_VANILLA_ITEM_ID + 6:
+            # TODO: find a way to handle temp items like Ice Trap and Floaty Jump Item
+            unknown_item_2 = self.get_item(item_table["UnknownItem2"])
+
+            if unknown_item_2 is not None:
+                self.dolphin_client.write_pointer(
+                    self.__get_player_state_pointer(),
+                    calculate_item_offset(unknown_item_2.id) + 4,
+                    struct.pack(">I", unknown_item_2.current_capacity | (1 << (item_id - 41))),
+                )
+                return
+
         if ignore_capacity:
             self.dolphin_client.write_pointer(
                 self.__get_player_state_pointer(),
@@ -232,7 +221,7 @@ class MetroidPrimeInterface:
             )
 
         # This will be overriden by handle_cosmetic_suit
-        if item_id > 20 and item_id <= 23:
+        if 20 < item_id <= 23:
             current_suit = self.get_current_cosmetic_suit()
             if current_suit == MetroidPrimeSuit.Phazon:
                 return
@@ -259,36 +248,61 @@ class MetroidPrimeInterface:
                 if item.id == item_data:
                     return self.get_item(item)
         if isinstance(item_data, ItemData):
-            if item_data.id in custom_charge_id_to_beam:
+            if MAX_VANILLA_ITEM_ID < item_data.id < MAX_VANILLA_ITEM_ID + 6:
                 return InventoryItemData(
                     item_data,
-                    int(
-                        self.get_progressive_beam_charge_state(
-                            custom_charge_id_to_beam[item_data.id]
-                        )
-                    ),
-                    1,
+                    0,
+                    struct.unpack(">I", self.dolphin_client.read_pointer(
+                        self.__get_player_state_pointer(),
+                        calculate_item_offset(misc_item_table["UnknownItem2"].id),
+                        4,
+                    ))[0] & (1 << (item_data.id - 41))
                 )
+            if item_data.id > MAX_VANILLA_ITEM_ID + 6:
+                if item_data.id in custom_charge_id_to_beam:
+                    return InventoryItemData(
+                        item_data,
+                        int(
+                            self.get_progressive_beam_charge_state(
+                                custom_charge_id_to_beam[item_data.id]
+                            )
+                        ),
+                        1,
+                    )
+
+
             result = self.dolphin_client.read_pointer(
                 self.__get_player_state_pointer(),
                 calculate_item_offset(item_data.id),
                 8,
             )
             if result is not None:
-                current_ammount, current_capacity = struct.unpack(">II", result)
-                return InventoryItemData(item_data, current_ammount, current_capacity)
+                current_amount, current_capacity = struct.unpack(">II", result)
+                return InventoryItemData(item_data, current_amount, current_capacity)
         return None
 
     def get_current_inventory(self) -> Dict[str, InventoryItemData]:
-        MAX_VANILLA_ITEM_ID = 40
+        unknown_item2 = self.get_item(item_table["UnknownItem2"])
+        if unknown_item2 is None:
+            unknown_item2 = InventoryItemData(item_table["UnknownItem2"], 0, 0)
+
         inventory: Dict[str, InventoryItemData] = {}
+
         for item in item_table.values():
             i = self.get_item(item)
             if i is not None:
                 if item.id <= MAX_VANILLA_ITEM_ID:
                     inventory[item.name] = i
+                elif MAX_VANILLA_ITEM_ID < item.id < MAX_VANILLA_ITEM_ID + 6:
+                    has_obtained_item = unknown_item2.current_capacity >> (item.id - (MAX_VANILLA_ITEM_ID + 1)) & 1
+                    inventory[item.name] = InventoryItemData(
+                        item_data=item,
+                        current_amount=has_obtained_item,
+                        current_capacity=has_obtained_item,
+                    )
                 elif item.id in custom_charge_id_to_beam:
                     inventory[item.name] = i
+
         return inventory
 
     def get_current_cosmetic_suit(self) -> MetroidPrimeSuit:
@@ -376,6 +390,37 @@ class MetroidPrimeInterface:
                 inventory_item.current_capacity,
             )
 
+    def get_scans(self) -> Dict[int, bool]:
+        """Gets the state of each scan by its asset ID"""
+        vector_bytes = self.dolphin_client.read_pointer(
+            self.__get_player_state_pointer(), 0x170 + MetroidPrimeInterface.__get_vector_item_offset(), struct.calcsize(">iiI")
+        )
+        length, _capacity, item_pointer = struct.unpack(">iiI", vector_bytes)
+        item_bytes = self.dolphin_client.read_address(
+            item_pointer, length * struct.calcsize(">If")
+        )
+        return {asset_id: progress >= 1.0 for asset_id, progress in struct.iter_unpack(">If", item_bytes)}
+
+    def is_vanilla_game(self) -> bool:
+        if self.current_game:
+            if self.current_game in ["pal", "jpn"]:
+                if self.dolphin_client.read_address(GAMES[self.current_game]["aMetroidPrime"], 12) == b"MetroidPrime":
+                    self.current_game = None
+                    return True
+            else:
+                _addresses = [
+                    GAMES[self.current_game]["aMetroidPrimeA"],
+                    GAMES[self.current_game]["aMetroidPrimeB"],
+                ]
+                for _address in _addresses:
+                    if self.dolphin_client.read_address(_address, 14) in [
+                        b"MetroidPrime A",
+                        b"MetroidPrime B",
+                    ]:
+                        self.current_game = None
+                        return True
+        return False
+
     def connect_to_game(self):
         """Initializes the connection to dolphin and verifies it is connected to Metroid Prime"""
         try:
@@ -385,8 +430,9 @@ class MetroidPrimeInterface:
                 game_rev: Optional[int] = self.dolphin_client.read_address(
                     GC_GAME_ID_ADDRESS + 7, 1
                 )[0]
-            except:
+            except (Exception,):
                 game_rev = None
+
             # The first read of the address will be null if the client is faster than the emulator
             self.current_game = None
             for version in _SUPPORTED_VERSIONS:
@@ -396,19 +442,38 @@ class MetroidPrimeInterface:
                 ):
                     self.current_game = version
                     break
+
+            # This is most likely a game swap, don't notify about the game swap
+            if re.match(r'[A-Z|0-9]{6}', game_id.decode()) is None:
+                self.current_game = None
+                self.game_id_error = None
+                self.game_rev_error = 0
+                self.is_vanilla_iso_error = False
+                self.dolphin_client.disconnect()
+                return
+
+            # Check if we play a randomized iso
+            is_vanilla_iso = self.is_vanilla_game()
+
             if (
                 self.current_game is None
                 and self.game_id_error != game_id
                 and game_id != b"\x00\x00\x00\x00\x00\x00"
             ):
-                self.logger.info(
-                    f"Connected to the wrong game ({game_id}, rev {game_rev}), please connect to Metroid Prime GC (Game ID starts with a GM8)"
-                )
+                if is_vanilla_iso and self.is_vanilla_iso_error != is_vanilla_iso:
+                    self.logger.info("This game is not randomized!")
+                else:
+                    self.logger.info(
+                        f"Connected to the wrong game ({game_id}, rev {game_rev}), please connect to Metroid Prime GC (Game ID starts with a GM8)"
+                    )
                 self.game_id_error = game_id
                 if game_rev:
                     self.game_rev_error = game_rev
-            if self.current_game:
-                self.logger.info("Metroid Prime Disc Version: " + self.current_game)
+                self.is_vanilla_iso_error = is_vanilla_iso
+                self.dolphin_client.disconnect()
+
+            if self.current_game and not is_vanilla_iso:
+                self.logger.info(f"Metroid Prime Disc Version: {self.current_game}")
         except DolphinException:
             pass
 
@@ -418,7 +483,7 @@ class MetroidPrimeInterface:
 
     def get_connection_state(self):
         try:
-            connected = self.dolphin_client.is_connected()
+            connected = self.dolphin_client.is_connected() and not self.is_vanilla_game()
             if not connected or self.current_game is None:
                 return ConnectionState.DISCONNECTED
             elif self.is_in_playable_state():
@@ -472,22 +537,9 @@ class MetroidPrimeInterface:
             GAMES[self.current_game]["HUD_MESSAGE_ADDRESS"], encoded_message
         )
 
-    def __progressive_beam_to_beam(
-        self, charge_beam: SuitUpgrade
-    ) -> Optional[SuitUpgrade]:
-        if charge_beam == SuitUpgrade.Power_Charge_Beam:
-            return SuitUpgrade.Power_Beam
-        if charge_beam == SuitUpgrade.Wave_Charge_Beam:
-            return SuitUpgrade.Wave_Beam
-        if charge_beam == SuitUpgrade.Ice_Charge_Beam:
-            return SuitUpgrade.Ice_Beam
-        if charge_beam == SuitUpgrade.Plasma_Charge_Beam:
-            return SuitUpgrade.Plasma_Beam
-        return None
-
-    def set_progressive_beam_charge_state(self, charge_beam: SuitUpgrade, state: bool):
+    def set_progressive_beam_charge_state(self, charge_beam: SuitUpgrade, _state: bool):
         cplayer_state = self.__get_player_state_pointer()
-        beam_upgrade = self.__progressive_beam_to_beam(charge_beam)
+        beam_upgrade = progressive_beam_to_beam(charge_beam)
 
         if beam_upgrade is not None:
             self.dolphin_client.write_pointer(
@@ -498,7 +550,7 @@ class MetroidPrimeInterface:
 
     def get_progressive_beam_charge_state(self, charge_beam: SuitUpgrade) -> bool:
         cplayer_state = self.__get_player_state_pointer()
-        beam_upgrade = self.__progressive_beam_to_beam(charge_beam)
+        beam_upgrade = progressive_beam_to_beam(charge_beam)
 
         if beam_upgrade is not None:
             _, cap = struct.unpack(
@@ -517,7 +569,9 @@ class MetroidPrimeInterface:
 
     def __is_player_table_ready(self) -> bool:
         """Check if the player table is ready to be read from memory, indicating the game is in a playable state"""
-        assert self.current_game
+        if self.current_game is None:
+            return False
+
         player_table_bytes = self.dolphin_client.read_pointer(
             GAMES[self.current_game]["cstate_manager_global"] + 0x84C, 0, 4
         )
@@ -530,7 +584,9 @@ class MetroidPrimeInterface:
             return False
 
     def __get_player_state_pointer(self):
-        assert self.current_game
+        if self.current_game is None:
+            return 0
+
         return int.from_bytes(
             self.dolphin_client.read_address(
                 GAMES[self.current_game]["cstate_manager_global"] + 0x8B8, 4
@@ -539,7 +595,9 @@ class MetroidPrimeInterface:
         )
 
     def __get_world_layer_state_pointer(self):
-        assert self.current_game
+        if self.current_game is None:
+            return 0
+
         return int.from_bytes(
             self.dolphin_client.read_address(
                 GAMES[self.current_game]["cstate_manager_global"] + 0x8C8, 4
@@ -547,7 +605,8 @@ class MetroidPrimeInterface:
             "big",
         )
 
-    def __get_vector_item_offset(self):
+    @staticmethod
+    def __get_vector_item_offset():
         # Calculate the address of the Area at index area_idx
         vector_offset = 4
         vector_item_ptr = 0x0 + vector_offset
@@ -556,7 +615,7 @@ class MetroidPrimeInterface:
     def __get_area_address(self, area_index: int):
         """Gets the address of an area from the world layer state areas vector"""
         vector_bytes = self.dolphin_client.read_pointer(
-            self.__get_world_layer_state_pointer(), self.__get_vector_item_offset(), 12
+            self.__get_world_layer_state_pointer(), MetroidPrimeInterface.__get_vector_item_offset(), 12
         )  # 0x4 is count, 0x8 is max, 0xC is start address of the items in the vector
         # Unpack the bytes into the fields of the Area
         _count, _max, start_address = struct.unpack(">iiI", vector_bytes)
@@ -591,10 +650,6 @@ class MetroidPrimeInterface:
             self.__get_area_address(area_index), new_bytes
         )
 
-    def get_artifact_layer(self, item_id: int):
-        # Artifact of truth is handled differently since it is the first thing you interact with in the room
-        return item_id - 28 if item_id > 29 else 23
-
     def get_layer_active(self, area_index: int, layer_id: int):
         area = self.__get_area(area_index)
         return area.layerBitsLo & (1 << layer_id) != 0
@@ -605,8 +660,8 @@ class MetroidPrimeInterface:
             current_inventory = self.get_current_inventory()
             # for each item in the inventory, check if it is an artifact and update the layer
             for item in current_inventory.values():
-                if item.id >= 29 and item.id <= 40:
-                    layer_id = self.get_artifact_layer(item.id)
+                if 29 <= item.id <= 40:
+                    layer_id = get_artifact_layer_from_item_index(item.id)
                     active = self.get_layer_active(ARTIFACT_TEMPLE_ROOM_INDEX, layer_id)
                     if active != (item.current_amount > 0):
                         self.set_layer_active(
@@ -622,7 +677,8 @@ class MetroidPrimeInterface:
         if self.relay_trackers is None:
             self.relay_trackers = {}
             # getting vector<g_GameState.x88_worldStates>
-            assert self.current_game
+            if self.current_game is None:
+                return
             world_state_array = struct.unpack(
                 ">I",
                 self.dolphin_client.read_pointer(
@@ -652,32 +708,34 @@ class MetroidPrimeInterface:
                     "count": 0,
                     "memory_relays": [],
                 }
-        for _, relay_tracker in self.relay_trackers.items():
-            # getting WorldState.x8_mailbox.x0_relays.size()
-            relay_tracker["count"] = struct.unpack(
-                ">I",
-                self.dolphin_client.read_address(
-                    relay_tracker["address"], struct.calcsize(">I")
-                ),
-            )[0]
-            # getting WorldState.x8_mailbox.x0_relays content
-            relay_tracker["memory_relays"] = struct.unpack(
-                ">" + ("I" * relay_tracker["count"]),
-                self.dolphin_client.read_address(
-                    relay_tracker["address"] + 4,
-                    relay_tracker["count"] * struct.calcsize(">I"),
-                ),
-            )
-            # remove layer specific stuff from object id
-            relay_tracker["memory_relays"] = [
-                mr & 0x00FFFFFF for mr in relay_tracker["memory_relays"]
-            ]
+
+        if self.relay_trackers is not None:
+            for _, relay_tracker in self.relay_trackers.items():
+                # getting WorldState.x8_mailbox.x0_relays.size()
+                relay_tracker["count"] = struct.unpack(
+                    ">I",
+                    self.dolphin_client.read_address(
+                        relay_tracker["address"], struct.calcsize(">I")
+                    ),
+                )[0]
+                # getting WorldState.x8_mailbox.x0_relays content
+                relay_tracker["memory_relays"] = list(struct.unpack(
+                    ">" + ("I" * relay_tracker["count"]),
+                    self.dolphin_client.read_address(
+                        relay_tracker["address"] + 4,
+                        relay_tracker["count"] * struct.calcsize(">I"),
+                    ),
+                ))
+                # remove layer specific stuff from object id
+                relay_tracker["memory_relays"] = [
+                    mr & 0x00FFFFFF for mr in relay_tracker["memory_relays"]
+                ]
 
     def is_memory_relay_active(self, mlvl: str, idx: int) -> bool:
         if self.relay_trackers is None:
             return False
 
-        relay_tracker = self.relay_trackers[mlvl]
+        relay_tracker = self.relay_trackers[mlvl] if mlvl in self.relay_trackers.keys() else {}
         for i in range(relay_tracker["count"]):
             if relay_tracker["memory_relays"][i] == idx:
                 return True

@@ -34,6 +34,7 @@ def get_meta(options_source: dict, race: bool = False) -> dict[str, list[str] | 
         "remaining_mode": str(options_source.get("remaining_mode", ServerOptions.remaining_mode)),
         "collect_mode": str(options_source.get("collect_mode", ServerOptions.collect_mode)),
         "countdown_mode": str(options_source.get("countdown_mode", ServerOptions.countdown_mode)),
+        "hint_mode": str(options_source.get("hint_mode", ServerOptions.hint_mode)),
         "item_cheat": bool(int(options_source.get("item_cheat", not ServerOptions.disable_item_cheat))),
         "server_password": str(options_source.get("server_password", None)),
     }
@@ -186,6 +187,7 @@ def gen_game(gen_options: dict, meta: dict[str, Any] | None = None, owner=None, 
                                      format_exception(e))
                     gen.meta = json.dumps(meta)
                     commit()
+        raise  # Re-raise so the pool callback handles this as a failure
     except (KeyboardInterrupt, SystemExit):
         # don't update db, retry next time
         raise
@@ -220,7 +222,7 @@ def wait_seed(seed: UUID):
     elif generation.state == STATE_ERROR:
         meta = json.loads(generation.meta)
         details = json.dumps(meta, indent=4).strip()
-        return render_template("seedError.html", seed_error=meta["error"], details=details)
+        return render_template("seedError.html", seed_error=meta.get("error", "Unknown error"), details=details)
     return render_template("waitSeed.html", seed_id=seed_id)
 
 

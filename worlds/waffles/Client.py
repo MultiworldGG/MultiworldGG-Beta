@@ -95,7 +95,7 @@ SMW_GOAL_LEVELS                = [0x28, 0x31, 0x32]
 SMW_INVALID_MARIO_STATES       = [0x05, 0x06, 0x0A, 0x0C, 0x0D]
 SMW_BAD_TEXT_BOX_LEVELS        = [0x00, 0x26, 0x02, 0x4B]
 SMW_BOSS_STATES                = [0x80, 0xC0, 0xC1]
-SMW_UNCOLLECTABLE_LEVELS       = []
+SMW_UNCOLLECTABLE_LEVELS       = [0x14, 0x08, 0x3F, 0x45]
 SMW_UNCOLLECTABLE_DRAGON_COINS = [0x24]
 LEVELS_WITHOUT_CHECKS          = [0x00, 0x03, 0x31, 0x32, 0x28]
 TRAPLESS_LEVELS                = [0x00, 0x03, 0x28]
@@ -163,8 +163,8 @@ class WaffleSNIClient(SNIClient):
         self.inventory_tag = ""
         self.inventory_refund = 0
         self.inventory_cost = 0
-        self.current_sublevel_value = 0
         self.visited_levels = set()
+
 
     async def deathlink_kill_player(self, ctx: "SNIContext"):
         from SNIClient import DeathState, snes_buffered_write, snes_flush_writes
@@ -188,15 +188,7 @@ class WaffleSNIClient(SNIClient):
         if state_mirror[0x09] != 0x00:
             return
 
-        snes_buffered_write(ctx, WRAM_START + 0x9D, bytes([0x30])) # Freeze Gameplay
-        snes_buffered_write(ctx, WRAM_START + 0x1DFB, bytes([0x09])) # Death Music
-        snes_buffered_write(ctx, WRAM_START + 0x0DDA, bytes([0xFF])) # Flush Music Buffer
-        snes_buffered_write(ctx, WRAM_START + 0x1407, bytes([0x00])) # Flush Cape Fly Phase
-        snes_buffered_write(ctx, WRAM_START + 0x140D, bytes([0x00])) # Flush Spin Jump Flag
-        snes_buffered_write(ctx, WRAM_START + 0x188A, bytes([0x00])) # Flush Empty Byte because the game does it
-        snes_buffered_write(ctx, WRAM_START + 0x7D, bytes([0x90])) # Mario Y Speed
-        snes_buffered_write(ctx, WRAM_START + 0x1496, bytes([0x30])) # Death Timer
-        snes_buffered_write(ctx, SMW_MARIO_STATE_ADDR, bytes([0x09])) # Mario State -> Dead
+        snes_buffered_write(ctx, SRAM_START + 0x4322, bytes([0x01]))
 
         await snes_flush_writes(ctx)
 
@@ -223,8 +215,8 @@ class WaffleSNIClient(SNIClient):
 
         ctx.allow_collect = True
 
-        #if bool(settings[0x05] & 0b1):
-        #    await ctx.update_death_link(True)
+        if bool(settings[0x05] & 0b1):
+            await ctx.update_death_link(True)
 
         if bool(settings[0x14] & 0b1) and "EnergyLink" not in ctx.tags:
             ctx.tags.add("EnergyLink")
@@ -239,7 +231,8 @@ class WaffleSNIClient(SNIClient):
             await ctx.send_msgs([{"cmd": "ConnectUpdate", "tags": ctx.tags}])
 
         if ctx.rom != rom_name:
-            self.current_sublevel_value = 0
+            ctx.current_sublevel_value = 0
+            ctx.visited_levels = []
 
         ctx.rom = rom_name
 
@@ -295,6 +288,9 @@ class WaffleSNIClient(SNIClient):
             await snes_flush_writes(ctx)
 
     async def game_watcher(self, ctx: "SNIContext"):
+        if ctx.server is None:
+            return
+        
         from SNIClient import snes_buffered_write, snes_flush_writes
 
         snes_data = await self.snes_reader.read(ctx)
@@ -318,15 +314,16 @@ class WaffleSNIClient(SNIClient):
             return
         elif game_state < 0x0B:
             # We haven't loaded a save file
-            self.current_sublevel_value = 0
+            ctx.current_sublevel_value = 0
+            ctx.visited_levels = []
             return
         elif mario_state in SMW_INVALID_MARIO_STATES:
             # Mario can't come to the phone right now
             return
 
-        #if "DeathLink" in ctx.tags and game_state == 0x14 and ctx.last_death_link + 1 < time.time():
-        #    currently_dead = mario_state == 0x09
-        #    await ctx.handle_deathlink_state(currently_dead)
+        if "DeathLink" in ctx.tags and game_state == 0x14 and ctx.last_death_link + 1 < time.time():
+            currently_dead = mario_state == 0x09
+            await ctx.handle_deathlink_state(currently_dead)
 
         # Check for Egg Hunt ending
         goal = rom_settings_data[0x00]
@@ -460,9 +457,12 @@ class WaffleSNIClient(SNIClient):
         tile_id = 0x100
         if shuffled_level in active_level_data:
             tile_id = active_level_data[shuffled_level]
+        #print (tile_id, game_state == 0x14, tile_id not in self.visited_levels, tile_id in level_info_dict)
+        #print (self.visited_levels)
         if game_state == 0x14 and tile_id not in self.visited_levels and tile_id in level_info_dict:
             self.visited_levels.add(tile_id)
             level_key = level_info_dict[tile_id].levelName
+            #print (f"smw_{ctx.team}_{ctx.slot}_{level_key}")
             await ctx.send_msgs([{
                 "cmd": "Set", 
                 "key": f"smw_{ctx.team}_{ctx.slot}_{level_key}",
@@ -476,8 +476,8 @@ class WaffleSNIClient(SNIClient):
         if game_state != 0x14:
             current_sublevel_value = 0
 
-        if self.current_sublevel_value != current_sublevel_value:
-            self.current_sublevel_value = current_sublevel_value
+        if ctx.current_sublevel_value != current_sublevel_value:
+            ctx.current_sublevel_value = current_sublevel_value
 
             # Send level id data to tracker
             await ctx.send_msgs([{
@@ -486,8 +486,18 @@ class WaffleSNIClient(SNIClient):
                 "default": 0,
                 "want_reply": False,
                 "operations":
-                    [{"operation": "replace", "value": self.current_sublevel_value}],
+                    [{"operation": "replace", "value": ctx.current_sublevel_value}],
             }])
+            if ctx.current_sublevel_value not in ctx.visited_levels:
+                ctx.visited_levels.append(ctx.current_sublevel_value)
+                await ctx.send_msgs([{
+                    "cmd": "Set",
+                    "key": f"smw_visitedlevels_{ctx.team}_{ctx.slot}",
+                    "default": [],
+                    "want_reply": False,
+                    "operations":
+                        [{"operation": "update", "value": ctx.visited_levels}],
+                }])
         
         if game_state != 0x14:
             # Don't receive items or collect locations outside of in-level mode
@@ -549,7 +559,7 @@ class WaffleSNIClient(SNIClient):
                     goal_item_count = await snes_read(ctx, SMW_GOAL_ITEM_COUNT, 1)
                     snes_buffered_write(ctx, SMW_GOAL_ITEM_COUNT, bytes([goal_item_count[0] + 1]))
 
-            elif item.item == 0xBC0005:
+            elif item.item == 0xBC0026:
                 # Handle Progressive Swim
                 data = await snes_read(ctx, SMW_BWRAM + 0x03E0, 0x01)
                 if data is None:
@@ -580,6 +590,7 @@ class WaffleSNIClient(SNIClient):
                     masked_data = data[0] | (1 << rom_data[1])
                     snes_buffered_write(ctx, SRAM_START + rom_data[0], bytes([masked_data]))
                     snes_buffered_write(ctx, SMW_SFX_ADDR, bytes([0x3E]))
+                    await snes_flush_writes(ctx)
                     
             elif item.item == 0xBC000A:
                 # Handle Progressive Powerup
@@ -635,6 +646,9 @@ class WaffleSNIClient(SNIClient):
             progress_byte = (level_id // 8)
             progress_bit  = 7 - (level_id % 8)
 
+            if level_id in SMW_UNCOLLECTABLE_LEVELS:
+                continue
+            
             # Exits
             if loc_type == 0x00 or loc_type == 0x01:
                 flag = 1 + (loc_type & 0x01)

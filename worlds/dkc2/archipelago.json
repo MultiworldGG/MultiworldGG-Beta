@@ -1,7 +1,1 @@
-{
-    "game": "Donkey Kong Country 2",
-    "authors": ["lx5"],
-    "igdb_id": 1092,
-    "minimum_ap_version": "0.6.3",
-    "world_version": "3.0.5"
-}
+{"game": "Donkey Kong Country 2", "world_version": "3.0.4", "minimum_ap_version": "0.6.3", "authors": ["lx5"], "igdb_id": 1092, "compatible_version": 7, "version": 7}

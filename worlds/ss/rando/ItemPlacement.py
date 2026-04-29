@@ -421,7 +421,6 @@ def item_classification(world: "SSWorld", name: str) -> IC | None:
     if (
         world.options.randomize_entrances == "none"
         and world.options.empty_unrequired_dungeons
-        and world.options.accessibility != "full"
     ):
         if "Earth Temple" not in world.dungeons.required_dungeons:
             if name == "Key Piece":
@@ -437,7 +436,6 @@ def item_classification(world: "SSWorld", name: str) -> IC | None:
     if (
         world.options.empty_unrequired_dungeons
         and item_type in ["Map", "Small Key", "Boss Key"]
-        and world.options.accessibility != "full"
     ):
         if item_type == "Map":
             item_dungeon = name[:-4]
@@ -489,3 +487,5 @@ def item_classification(world: "SSWorld", name: str) -> IC | None:
             adjusted_classification = IC.filler
 
     return adjusted_classification
+
+

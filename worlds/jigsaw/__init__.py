@@ -27,7 +27,7 @@ class JigsawWeb(WebWorld):
             "English",
             "setup_en.md",
             "setup/en",
-            ["Spineraks"],
+            ["Spineraks", "fariel"],
         )
     ]
     
@@ -53,14 +53,14 @@ class JigsawWorld(World):
     item_name_to_id = {name: data.code for name, data in item_table.items()}
 
     location_name_to_id = {name: data.id for name, data in location_table.items()}
-    
+
     item_name_groups = item_groups
     
     ap_world_version = WORLD_VERSION
 
     def _get_jigsaw_data(self):
         return {
-            "seed_name": self.multiworld.seed,
+            "seed_name": self.multiworld.seed_name,
         }
         
     def calculate_optimal_nx_and_ny(self, number_of_pieces, orientation):

@@ -1,7 +1,6 @@
 {
     "game": "Saving Princess",
-    "igdb_id": 358859,
-    "authors": ["LeonarthCG"],
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
+    "authors": [ "LeonarthCG" ],
+    "minimum_ap_version": "0.6.6",
+    "world_version": "1.0.0"
 }

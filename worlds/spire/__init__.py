@@ -6,6 +6,7 @@ from typing import Optional, List, Set, Any
 
 from BaseClasses import Item, ItemClassification, Location, MultiWorld, Region, Tutorial
 from Options import OptionError
+from . import Constants
 from .Characters import character_list, CharacterConfig, character_offset_map, NUM_CUSTOM
 from .Items import event_item_pairs, item_table, ItemType, chars_to_items, base_event_item_pairs, item_groups
 from .Locations import location_table, loc_ids_to_data, LocationData, LocationType, CARD_REWARD_COUNT, location_groups, \
@@ -43,7 +44,7 @@ class SpireWorld(World):
     topology_present = False
     web = SpireWeb()
     required_client_version = (0, 6, 1)
-    mod_version = WORLD_VERSION
+    mod_version = 3
     location_name_groups = location_groups
     item_name_groups = item_groups
 
@@ -69,7 +70,6 @@ class SpireWorld(World):
             self._handle_basic_chars()
         else:
             self._handle_advanced_chars()
-
         if not self.characters:
             raise OptionError("At least one character must be configured")
         names = set()
@@ -100,6 +100,7 @@ class SpireWorld(World):
         else:
             self.options.trap_chance.value = 0
 
+
     def _get_unlocked_char(self, characters: List[str]) -> Optional[str]:
         if len(characters) <= 0:
             raise OptionError("At least one character must be selected.")
@@ -127,9 +128,13 @@ class SpireWorld(World):
         selected_chars = sorted(self.options.characters.value)
         num_rand_chars = self.options.pick_num_characters.value
         unlocked_char = self._get_unlocked_char(selected_chars)
-        if self.options.lock_characters.value != 0 and num_rand_chars != 0 and num_rand_chars < len(selected_chars):
-            selected_chars.remove(unlocked_char)
-            selected_chars = [unlocked_char] + self.random.sample(selected_chars, k=num_rand_chars - 1)
+        if num_rand_chars != 0 and num_rand_chars < len(selected_chars):
+            if self.options.lock_characters.value != 0:
+                selected_chars.remove(unlocked_char)
+                selected_chars = [unlocked_char] + self.random.sample(selected_chars, k=num_rand_chars - 1)
+            else:
+                selected_chars = self.random.sample(selected_chars, k=num_rand_chars)
+
         self.logger.info("Generating with characters %s", selected_chars)
         ascension_down = self.options.ascension_down.value
         if self.options.include_floor_checks.value == 0:
@@ -152,7 +157,8 @@ class SpireWorld(World):
                                      ascension=self.options.ascension.value,
                                      final_act=self.options.final_act.value == 1,
                                      downfall=self.options.downfall.value == 1,
-                                     ascension_down=ascension_down)
+                                     ascension_down=ascension_down,
+                                     key_sanity=self.options.key_sanity == 1)
             self.characters.append(config)
 
     def _handle_advanced_chars(self) -> None:
@@ -161,19 +167,26 @@ class SpireWorld(World):
         num_rand_chars = self.options.pick_num_characters.value
         unlocked_char = self._get_unlocked_char(char_options)
         include_ascension_down = self.options.include_floor_checks.value != 0
-        if self.options.lock_characters.value != 0 and num_rand_chars != 0 and num_rand_chars < len(char_options):
+        if num_rand_chars != 0 and num_rand_chars < len(char_options):
             selected_chars = list(char_options)
-            if unlocked_char in selected_chars:
-                selected_chars.remove(unlocked_char)
-            selected_chars = [unlocked_char] + self.random.sample(selected_chars, k=num_rand_chars - 1)
+            if self.options.lock_characters.value != 0:
+                if unlocked_char in selected_chars:
+                    selected_chars.remove(unlocked_char)
+                selected_chars = [unlocked_char] + self.random.sample(selected_chars, k=num_rand_chars - 1)
+            else:
+                selected_chars = self.random.sample(selected_chars, k=num_rand_chars)
             modded_num = 0
+            modded_chars = []
             for char in selected_chars:
                 if character_offset_map.get(char.lower(), None) is None:
                     modded_num += 1
+                    modded_chars.append(char)
             if modded_num > NUM_CUSTOM:
-                supported_chars = sorted({x for x in char_options if x.lower() in character_offset_map})
+                supported_chars = sorted({x for x in char_options if x.lower() in character_offset_map and x not in selected_chars})
                 replace_num = modded_num - NUM_CUSTOM
-                remove_me = self.random.sample(selected_chars, k=replace_num)
+                if unlocked_char in modded_chars:
+                    modded_chars.remove(unlocked_char)
+                remove_me = self.random.sample(modded_chars, k=replace_num)
                 for remove in remove_me:
                     selected_chars.remove(remove)
                 selected_chars += self.random.sample(supported_chars, k=min(replace_num, len(supported_chars)))
@@ -224,21 +237,32 @@ class SpireWorld(World):
                     amount = 2
                 elif ItemType.RELIC == data.type:
                     amount = 10
-                elif ItemType.CAMPFIRE == data.type and self.options.campfire_sanity.value != 0:
-                    amount = 3
-                elif ItemType.CHAR_UNLOCK == data.type and self.options.lock_characters.value != 0 and config.locked:
-                    amount = 1
-                elif ItemType.GOLD == data.type and self.options.gold_sanity.value != 0:
-                    if '15 Gold' in name:
-                        amount = 18
-                    elif '30 Gold' in name:
-                        amount = 7
-                    elif 'Boss Gold' in name:
-                        amount = 2
-                elif ItemType.POTION == data.type and self.options.potion_sanity:
-                    amount = 9
-                elif ItemType.ASCENSION_DOWN == data.type and self.options.include_floor_checks.value != 0:
-                    amount = ascension_downs
+                elif ItemType.CAMPFIRE == data.type:
+                    if self.options.campfire_sanity.value != 0:
+                        amount = 3
+                elif ItemType.CHAR_UNLOCK == data.type:
+                    if self.options.lock_characters.value != 0:
+                        if config.locked:
+                            amount = 1
+                        else:
+                            self.push_precollected(SpireItem(name, self.player))
+                elif ItemType.KEY == data.type:
+                    if config.key_sanity != 0:
+                        amount = 1
+                elif ItemType.GOLD == data.type:
+                    if self.options.gold_sanity.value != 0:
+                        if '15 Gold' in name:
+                            amount = 18
+                        elif '30 Gold' in name:
+                            amount = 7
+                        elif 'Boss Gold' in name:
+                            amount = 2
+                elif ItemType.POTION == data.type:
+                    if self.options.potion_sanity.value != 0:
+                        amount = 9
+                elif ItemType.ASCENSION_DOWN == data.type:
+                    if self.options.include_floor_checks.value != 0:
+                        amount = ascension_downs
                 elif self.options.shop_sanity.value != 0:
                     if ItemType.SHOP_CARD == data.type:
                         amount = self.options.shop_card_slots.value
@@ -259,16 +283,31 @@ class SpireWorld(World):
 
                 if config.final_act:
                     remaining_checks += 4
-                if config.ascension >= 20:
+                if config.ascension >= 20 and config.ascension_down == 0:
                     remaining_checks += 1
 
                 traps: list[bool] = [self.random.randint(0, 100) < self.options.trap_chance for _ in range(remaining_checks)]
                 trap_num = traps.count(True)
                 filler_num = len(traps) - trap_num
-                for name in self.random.choices(list(self.options.trap_weights.keys()), weights=list(self.options.trap_weights.values()),k=trap_num):
-                    pool.append(SpireItem(name, self.player))
-                for name in self.random.choices([key for key, val in chars_to_items[char_lookup].items()
-                                                 if ItemType.GOLD == val.type and ItemClassification.filler == val.classification], weights=[40,60],k=filler_num):
+                if trap_num > 0:
+                    for name in self.random.choices(list(self.options.trap_weights.keys()), weights=list(self.options.trap_weights.values()),k=trap_num):
+                        pool.append(SpireItem(name, self.player))
+
+                # Char specific 1 Gold and 5 Gold, in that order
+                filler_pool = [key for key, val in chars_to_items[char_lookup].items()
+                                                 if ItemType.GOLD == val.type and ItemClassification.filler == val.classification]
+                filler_pool.append("CAW CAW")
+                filler_pool.append("Combat Buff")
+                filler_weights = [
+                    self.options.filler_weights.get("1 Gold", 0),
+                    self.options.filler_weights.get("5 Gold", 0),
+                    self.options.filler_weights.get("CAW CAW", 0),
+                    self.options.filler_weights.get("Combat Buff", 0),
+                ]
+                if sum(filler_weights) <= 0:
+                    filler_weights = [40,60,0,0]
+
+                for name in self.random.choices(filler_pool, weights=filler_weights, k=filler_num):
                     pool.append(SpireItem(name, self.player))
             # Pair up our event locations with our event items
             for base_event, base_item in base_event_item_pairs.items():
@@ -302,6 +341,7 @@ class SpireWorld(World):
                 "costs": self.options.shop_sanity_costs.value,
             },
             "mod_version": self.mod_version,
+            "item_window": Constants.CHAR_ITEM_OFFSET,
         }
         slot_data.update(self.options.as_dict(
             "ascension",
@@ -359,6 +399,8 @@ class SpireWorld(World):
             return False
         elif data.type == LocationType.Potion and self.options.potion_sanity.value == 0:
             return False
+        elif data.type == LocationType.Key and not config.key_sanity:
+            return False
         return True
 
     @staticmethod
@@ -366,6 +408,7 @@ class SpireWorld(World):
         return slot_data
 
     def _setup_ut(self, slot_data: dict[str, Any]) -> None:
+        self.options.shop_card_slots.value = slot_data["shop_sanity_options"]["card_slots"]
         self.options.shop_remove_slots.value = slot_data["shop_sanity_options"]["card_remove"]
         self.options.shop_neutral_card_slots.value = slot_data["shop_sanity_options"]["neutral_slots"]
         self.options.shop_relic_slots.value = slot_data["shop_sanity_options"]["relic_slots"]
@@ -382,6 +425,7 @@ class SpireWorld(World):
                 final_act=char_dict['final_act'],
                 downfall=char_dict['downfall'],
                 ascension_down=char_dict['ascension_down'],
+                key_sanity=char_dict['key_sanity'],
             )
             self.characters.append(config)
             if char_dict['mod_num'] > 0:

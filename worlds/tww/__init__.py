@@ -13,7 +13,7 @@ from Options import Toggle
 from worlds.AutoWorld import WebWorld, World
 from worlds.Files import APPlayerContainer
 from worlds.generic.Rules import add_item_rule
-from worlds.LauncherComponents import Component, SuffixIdentifier, Type, components, icon_paths, launch_subprocess
+from worlds.LauncherComponents import Component, SuffixIdentifier, Type, components, icon_paths, launch
 
 from .Items import ISLAND_NUMBER_TO_CHART_NAME, ITEM_TABLE, TWWItem, item_name_groups
 
@@ -31,14 +31,16 @@ from BaseUtils import get_archipelago_json
 GAME_NAME, AUTHOR, VERSION, WORLD_VERSION = get_archipelago_json("tww")
 
 
-def run_client() -> None:
+def run_client(*args: str) -> None:
     """
     Launch the The Wind Waker client.
+
+    :param *args: Variable length argument list passed to the client.
     """
     print("Running The Wind Waker Client")
     from .TWWClient import main
 
-    launch_subprocess(main, name="TheWindWakerClient")
+    launch(main, name="TheWindWakerClient", args=args)
 
 
 components.append(

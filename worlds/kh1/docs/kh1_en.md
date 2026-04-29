@@ -4,11 +4,11 @@
 
 - KINGDOM HEARTS -HD 1.5+2.5 ReMIX- from the [Epic Games Store](https://store.epicgames.com/en-US/discover/kingdom-hearts) or [Steam](https://store.steampowered.com/app/2552430/KINGDOM_HEARTS_HD_1525_ReMIX/)
 
-- The latest release of [OpenKH](https://github.com/OpenKH/OpenKh/releases)
+- The latest release of [OpenKH](https://github.com/OpenKH/OpenKh/releases/latest)
 
 - The latest release of the [Kingdom Hearts 1FM Randomizer Software](https://github.com/gaithern/KH1FM-RANDOMIZER/releases)
 
-- The latest release of [Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases) for the ArchipelagoKH1Client.exe
+- The latest release of [MultiworldGG](https://github.com/MultiworldGG/MultiworldGG/releases/latest)
 
 <h2 style="text-transform:none";>Setting up the required software</h2>
 
@@ -27,8 +27,9 @@
 
 <h2 style="text-transform:none";>Obtaining and using the seed zip</h2>
 
-- When you generate a game you will see a download link for a KH1 .zip seed on the room page.
-- After downloading this zip, open `mod_generator.exe` in your Kingdom Hearts 1FM Randomizer Software folder.
+- [Generate a MultiworldGG game](https://multiworld.gg/generate) using the KH1 yaml generated from the KH1 [options page](/games/Kingdom%20Hearts/player-options). 
+- When you generate a game you will see a download link for a KH1 .kh1rpatch file on the room page.
+- After downloading this kh1rpatch file, rename the file ending to .zip, and open `mod_generator.exe` in your Kingdom Hearts 1FM Randomizer Software folder.
 - Direct `mod_generator.exe` to both your seed zip and your KH1 data folder extracted during your OpenKH set up.
 - Click `start`.
 - After some time, you will find a file in your `Output` folder called `mod_YYYYMMDDHHMMSS.zip`
@@ -62,7 +63,7 @@ Check out this [troubleshooting guide](https://docs.google.com/document/d/1oAXxJ
 
 You'll need to find `Footprints` in your multiworld.
 
-<h3 style="text-transform:none";>Why won't Phil let me start the Prelims?</h3>
+<h3 style="text-transform:none";>Why won't Phil let me start the Prelims?
 
 You'll need to find `Entry Pass` in the multiworld.
 

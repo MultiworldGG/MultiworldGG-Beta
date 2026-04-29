@@ -62,18 +62,18 @@ This guide uses the following terms to refer to the software:
 - **Factorio Client** - The Factorio instance which will be used to play the game.
 - **Factorio Server** - The Factorio instance which will be used to host the Factorio world. Any number of Factorio
   Clients may connect to this server.
-- **MultiworldGG client** - The middleware software used to connect the Factorio Server to the MultiworldGG Server.
+- **MultiworldGG Client** - The middleware software used to connect the Factorio Server to the MultiworldGG Server.
 - **MultiworldGG Server** - The central MultiworldGG server, which connects all games to each other.
 
 ### What a Playable State Looks Like
 
-- a MultiworldGG Server
+- An MultiworldGG Server
 - The generated Factorio Mod, created as a result of running `MultiworldGGGenerate.exe`
-- One running instance of `MultiworldGGLauncher.exe` (the MultiworldGG client and the Factorio Client inside) per Factorio world
-- A running modded Factorio Server, which should have been started by the MultiworldGG client automatically
+- One running instance of the Factorio MultiworldGG Client per Factorio world
+- A running modded Factorio Server, which should have been started by the MultiworldGG Client automatically
 - A running modded Factorio Client
 
-#### Configure your Archipelago Installation
+#### Configure your MultiworldGG Installation
 
 :exclamation: This is different from regular AP Factorio
 
@@ -92,14 +92,15 @@ This allows you to host your own Factorio game.
 
 1. Obtain the Factorio mod for this MultiworldGG seed. It should be named `AP_*.zip`, where `*` is the seed number.
 2. Install the mod into your Factorio Server by copying the zip file into the `MultiworldGG/factorio_saws/mods` folder. If this folder does not exist, launch the SAWS client once to generate the server files.
-3. Download the latest version of https://mods.factorio.com/mod/SpaceAgeWithoutSpace and place it in the same folder.
-4. Install the mod into your Factorio Client by copying the zip file into the `mods` folder, which is likely located
+   * :exclamation: This is not the server's default mod directory.  This is a APSAWS-specific folder in your MultiworldGG directory.
+4. Download the latest version of https://mods.factorio.com/mod/SpaceAgeWithoutSpace and place it in the same folder.
+5. Install the mod into your Factorio Client by copying the zip file into the `mods` folder, which is likely located
    at `C:\Users\YourName\AppData\Roaming\Factorio\mods`.
-5. Obtain the MultiworldGG Server address from the website's host room, or from the server host.
-6. Run your MultiworldGG Launcher, and select the "Factorio: Space Age Without Space Client"
-7. Enter `/connect [server-address]` into the input box at the bottom of the MultiworldGG Client and press "Enter"
+6. Obtain the MultiworldGG Server address from the website's host room, or from the server host.
+7. Run your MultiworldGG Launcher, and select the "Factorio: Space Age Without Space Client"
+8. Enter `/connect [server-address]` into the input box at the bottom of the MultiworldGG Client and press "Enter"
 
-![Factorio Client for Archipelago Connection Command](/static/generated/docs/Factorio/connect-to-ap-server.png)
+![Factorio Client for MultiworldGG Connection Command](/static/generated/docs/Factorio/connect-to-ap-server.png)
 
 8. Launch your Factorio Client
 9. Click on "Multiplayer" in the main menu

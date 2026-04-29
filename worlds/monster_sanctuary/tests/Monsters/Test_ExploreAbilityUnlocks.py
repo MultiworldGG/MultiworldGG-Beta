@@ -15,28 +15,28 @@ class TestMonsterExploreItemValidity(TestMonsterRandomizerBase):
         for monster_data in ENCOUNTERS.monster_data.values():
             with self.subTest(f"Testing that {monster_data.name} has a valid Species explore item"):
                 self.assertTrue(monster_data.species_explore_item is not None)
-                self.assertTrue(monster_data.species_explore_item is not "")
+                self.assertTrue(monster_data.species_explore_item != "")
                 self.assertIn(monster_data.species_explore_item, ITEMS.item_data.keys())
 
     def test_all_monsters_have_ability_items(self):
         for monster_data in ENCOUNTERS.monster_data.values():
             with self.subTest(f"Testing that {monster_data.name} has valid Ability explore item"):
                 self.assertTrue(monster_data.ability_explore_item is not None)
-                self.assertTrue(monster_data.ability_explore_item is not "")
+                self.assertTrue(monster_data.ability_explore_item != "")
                 self.assertIn(monster_data.ability_explore_item, ITEMS.item_data.keys())
 
     def test_all_monsters_have_type_items(self):
         for monster_data in ENCOUNTERS.monster_data.values():
             with self.subTest(f"Testing that {monster_data.name} a valid Type explore item"):
                 self.assertTrue(monster_data.type_explore_item is not None)
-                self.assertTrue(monster_data.type_explore_item is not "")
+                self.assertTrue(monster_data.type_explore_item != "")
                 self.assertIn(monster_data.type_explore_item, ITEMS.item_data.keys())
 
     def test_all_monsters_have_progression_items(self):
         for monster_data in ENCOUNTERS.monster_data.values():
             with self.subTest(f"Testing that {monster_data.name} has a valid Progression explore item"):
                 self.assertTrue(monster_data.progressive_explore_item[0] is not None)
-                self.assertTrue(monster_data.progressive_explore_item[0] is not "")
+                self.assertTrue(monster_data.progressive_explore_item[0] != "")
                 self.assertGreaterEqual(monster_data.progressive_explore_item[1], 1)
                 self.assertIn(monster_data.progressive_explore_item[0], ITEMS.item_data.keys())
 
@@ -45,7 +45,7 @@ class TestMonsterExploreItemValidity(TestMonsterRandomizerBase):
             with self.subTest(f"Testing that {monster_data.name} has valid Combo explore items"):
                 for item_name, quantity in monster_data.combo_explore_item.items():
                     self.assertTrue(item_name is not None)
-                    self.assertTrue(item_name is not "")
+                    self.assertTrue(item_name != "")
                     self.assertGreaterEqual(quantity, 1)
                     self.assertIn(item_name, ITEMS.item_data.keys())
 

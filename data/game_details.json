@@ -9,7 +9,7 @@
         "age_rating": "NR",
         "rating": [],
         "player_perspectives": [
-            "Bird view / Isometric"
+            "Side view"
         ],
         "genres": [
             "Adventure"
@@ -61,9 +61,10 @@
         ],
         "storyline": "The rain is your ally and the greatest enemy. It cycles in three seasons requiring you to stay flexible and adapt to changing conditions. In Drizzle, the season of regrowth, natural resources replenish themselves, and it\u2019s time for construction and planting crops. The Clearance is the season of harvest, expansion, and preparations for the last, most unforgiving season of them all. A true test of your city\u2019s strength comes with the Storm when bolts of lightning tear the sky, nothing grows and resources are scarce.",
         "keywords": [
-            "roguelite"
+            "math",
+            "sliding puzzle"
         ],
-        "release_date": 2023
+        "release_date": null
     },
     "ahit": {
         "igdb_id": "6705",
@@ -2071,13 +2072,10 @@
             "Side view"
         ],
         "genres": [
-            "Platform",
-            "Adventure",
-            "Indie"
+            "Platform"
         ],
         "themes": [
-            "Action",
-            "Comedy"
+            "Action"
         ],
         "platforms": [
             "PC (Microsoft Windows)",
@@ -2091,7 +2089,7 @@
             "deliberately retro",
             "punctuation mark above head"
         ],
-        "release_date": 2011
+        "release_date": 2000
     },
     "dontstarvetogether": {
         "igdb_id": "17832",
@@ -2106,20 +2104,34 @@
             "Fantasy Violence"
         ],
         "player_perspectives": [
-            "Bird view / Isometric"
+            "Side view"
         ],
         "genres": [
-            "Simulator",
-            "Strategy",
-            "Adventure",
-            "Indie"
+            "Platform"
         ],
         "themes": [
             "Action",
-            "Horror",
-            "Survival",
-            "Sandbox",
-            "Open world"
+            "Fantasy"
+        ],
+        "keywords": [],
+        "release_date": 2004
+    },
+    "Donkey Kong Country 3": {
+        "igdb_id": "132723",
+        "world_name": "Donkey Kong Country 3",
+        "igdb_name": "Donkey Kong Country 3",
+        "us_rating": [
+            "E",
+            "3"
+        ],
+        "player_perspectives": [
+            "Side view"
+        ],
+        "genres": [
+            "Platform"
+        ],
+        "themes": [
+            "Action"
         ],
         "platforms": [
             "Linux",
@@ -2139,7 +2151,7 @@
             "digital distribution",
             "bees"
         ],
-        "release_date": 2016
+        "release_date": 2005
     },
     "doom_1993": {
         "igdb_id": "673",
@@ -4799,7 +4811,7 @@
             "Cartoon Violence"
         ],
         "player_perspectives": [
-            "Third person"
+            "Bird view / Isometric"
         ],
         "genres": [
             "Puzzle",
@@ -6565,14 +6577,19 @@
             "Violence"
         ],
         "player_perspectives": [
-            "Third person"
+            "Side view"
         ],
         "genres": [
             "Platform",
-            "Adventure"
+            "Puzzle",
+            "Role-playing (RPG)",
+            "Adventure",
+            "Indie"
         ],
         "themes": [
-            "Action"
+            "Action",
+            "Fantasy",
+            "Comedy"
         ],
         "platforms": [
             "PlayStation 3",
@@ -6692,16 +6709,16 @@
             "Violence"
         ],
         "player_perspectives": [
+            "Third person",
             "Bird view / Isometric"
         ],
         "genres": [
-            "Real Time Strategy (RTS)",
-            "Strategy"
+            "Role-playing (RPG)"
         ],
         "themes": [
             "Action",
             "Science fiction",
-            "Warfare"
+            "Historical"
         ],
         "platforms": [
             "PC (Microsoft Windows)",
@@ -6709,10 +6726,8 @@
         ],
         "storyline": "",
         "keywords": [
-            "aliens",
-            "human",
-            "side quests",
-            "mercenary"
+            "medieval",
+            "dog"
         ],
         "release_date": 2010
     },

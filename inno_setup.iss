@@ -25,6 +25,7 @@ AppCopyright=Distributed under GPLv3 License
 AppVerName={#MyAppName} {#MyAppVersionText}
 VersionInfoVersion={#MyAppVersion}
 DefaultDirName={autopf}\{#MyAppName}
+DisableDirPage=no
 DisableProgramGroupPage=yes
 DefaultGroupName=MultiworldGG-Test
 OutputDir=setups
@@ -367,8 +368,13 @@ Root: HKCR; Subkey: "{#MyAppName}yipatch\shell\open\command";  ValueData: """{ap
 
 Root: HKCR; Subkey: ".apygo06";                                   ValueData: "{#MyAppName}ygo06patch";        Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}ygo06patch";                     ValueData: "MultiworldGG Yu-Gi-Oh 2006 Patch"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}ygo06patch\DefaultIcon";         ValueData: "{app}\MultiWorldGG.exe,0";                           ValueType: string;  ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}ygo06patch\shell\open\command";  ValueData: """{app}\MultiWorldGG.exe"" ""%1""";                  ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}ygo06patch\DefaultIcon";         ValueData: "{app}\MultiworldGGBizHawkClient.exe,0";                           ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}ygo06patch\shell\open\command";  ValueData: """{app}\MultiworldGGBizHawkClient.exe"" ""%1""";                  ValueType: string;  ValueName: "";
+
+Root: HKCR; Subkey: ".apalbw";                                   ValueData: "{#MyAppName}apalbwpatch";        Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apalbwpatch";                     ValueData: "MultiworldGG A Link Between Worlds Patch"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apalbwpatch\DefaultIcon";         ValueData: "{app}\MultiworldGGLauncher.exe,0";                           ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apalbwpatch\shell\open\command";  ValueData: """{app}\MultiworldGGLauncher.exe"" ""%1""";                  ValueType: string;  ValueName: "";
 
 Root: HKCR; Subkey: ".apbfbb";                                   ValueData: "{#MyAppName}apbfbbpatch";        Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apbfbbpatch";                     ValueData: "MultiworldGG Spongebob: BFBB Patch"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
@@ -407,8 +413,13 @@ Root: HKCR; Subkey: "{#MyAppName}apeospatch\shell\open\command";  ValueData: """
 
 Root: HKCR; Subkey: ".apff4fe";                                   ValueData: "{#MyAppName}apff4fepatch";        Flags: uninsdeletevalue;      ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apff4fepatch";                     ValueData: "MultiworldGG Final Fantase IV: FE Patch"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}apff4fepatch\DefaultIcon";         ValueData: "{app}\MultiWorldGG.exe,0";                           ValueType: string;  ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}apff4fepatch\shell\open\command";  ValueData: """{app}\MultiWorldGG.exe"" ""%1""";                  ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apff4fepatch\DefaultIcon";         ValueData: "{app}\MultiworldGGSNIClient.exe,0";                           ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apff4fepatch\shell\open\command";  ValueData: """{app}\MultiworldGGSNIClient.exe"" ""%1""";                  ValueType: string;  ValueName: "";
+
+Root: HKCR; Subkey: ".apffvcd";                                     ValueData: "{#MyAppName}apffvcdpatch";        Flags: uninsdeletevalue;     ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apffvcdpatch";                     ValueData: "MultiworldGG Final Fantasy 5 CD Patch"; Flags: uninsdeletekey;        ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apffvcdpatch\DefaultIcon";         ValueData: "{app}\MultiworldGGSNIClient.exe,0";                           ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apffvcdpatch\shell\open\command";  ValueData: """{app}\MultiworldGGSNIClient.exe"" ""%1""";                  ValueType: string;  ValueName: "";
 
 Root: HKCR; Subkey: ".apfirered";                                     ValueData: "{#MyAppName}apfireredpatch";    Flags: uninsdeletevalue;       ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apfireredpatch";                     ValueData: "MultiworldGG Pkmn Firered Patch"; Flags: uninsdeletekey;       ValueType: string;  ValueName: "";
@@ -437,8 +448,13 @@ Root: HKCR; Subkey: "{#MyAppName}apleafgreenpatch\shell\open\command";  ValueDat
 
 Root: HKCR; Subkey: ".aplm";                                     ValueData: "{#MyAppName}aplmpatch";    Flags: uninsdeletevalue;   ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}aplmpatch";                     ValueData: "MultiworldGG Luigi's Mansion Patch"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}aplmpatch\DefaultIcon";         ValueData: "{app}\MultiWorldGG.exe,0";                      ValueType: string; ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}aplmpatch\shell\open\command";  ValueData: """{app}\MultiWorldGG.exe"" ""%1""";             ValueType: string; ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}aplmpatch\DefaultIcon";         ValueData: "{app}\MultiworldGGLauncher.exe,0";                      ValueType: string; ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}aplmpatch\shell\open\command";  ValueData: """{app}\MultiworldGGLauncher.exe"" ""%1""";             ValueType: string; ValueName: "";
+
+Root: HKCR; Subkey: ".apmetfus";                                     ValueData: "{#MyAppName}apmetfuspatch";    Flags: uninsdeletevalue;   ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apmetfuspatch";                     ValueData: "MultiworldGG Metroid Fusion Patch"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apmetfuspatch\DefaultIcon";         ValueData: "{app}\MultiworldGGBizHawkClient.exe,0";                      ValueType: string; ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apmetfuspatch\shell\open\command";  ValueData: """{app}\MultiworldGGBizHawkClient.exe"" ""%1""";             ValueType: string; ValueName: "";
 
 Root: HKCR; Subkey: ".apmk64";                                     ValueData: "{#MyAppName}apmk64patch";    Flags: uninsdeletevalue;        ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apmk64patch";                     ValueData: "MultiworldGG Mario Kart 64 Patch"; Flags: uninsdeletekey;    ValueType: string;  ValueName: "";
@@ -534,6 +550,11 @@ Root: HKCR; Subkey: ".multiworldgg";                              ValueData: "{#
 Root: HKCR; Subkey: "{#MyAppName}multidata";                     ValueData: "MultiworldGG Server Data";      Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}multidata\DefaultIcon";         ValueData: "{app}\MultiworldGGServer.exe,0";                         ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}multidata\shell\open\command";  ValueData: """{app}\MultiworldGGServer.exe"" ""%1""";                ValueType: string;  ValueName: "";
+
+Root: HKCR; Subkey: ".apmm3";                                   ValueData: "{#MyAppName}mm3patch";                               Flags: uninsdeletevalue; ValueType: string; ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}mm3patch";                     ValueData: "Archipelago Mega Man 3 Patch";                    Flags: uninsdeletekey;   ValueType: string; ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}mm3patch\DefaultIcon";         ValueData: "{app}\ArchipelagoBizHawkClient.exe,0";                                          ValueType: string; ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}mm3patch\shell\open\command";  ValueData: """{app}\ArchipelagoBizHawkClient.exe"" ""%1""";                                 ValueType: string; ValueName: "";
 
 Root: HKCR; Subkey: ".archipelago";                              ValueData: "{#MyAppName}multidata";        Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}multidata";                     ValueData: "MultiworldGG Server Data";      Flags: uninsdeletekey;   ValueType: string;  ValueName: "";

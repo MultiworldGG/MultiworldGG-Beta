@@ -44,12 +44,8 @@ Payload: client -> lua
 dkr_loc_name_to_id: dict[str, int] = {}
 dkr_itm_name_to_id: dict[str, int] = {}
 
-version_number: str = "v1.1.2"
+version_number: str = "v1.1.4"
 apworld_version: str = "DKR" + version_number
-patched_rom_filename: str = "Diddy-Kong-Racing-AP-" + version_number + ".z64"
-vanilla_rom_md5: str = "4f0e07f0eeac7e5d7ce3a75461888d03"
-vanilla_swapped_rom_md5: str = "e00c0e6bfb0ce740e3e1c50ba82bc01a"
-patched_rom_md5: str = "f137ca9527a7dbe93f1c30bf205f0e5a"
 
 
 class DiddyKongRacingCommandProcessor(ClientCommandProcessor):
@@ -440,7 +436,7 @@ async def parse_payload(payload: dict, ctx: DiddyKongRacingContext) -> None:
             # For Universal Tracker deferred entrances
             await ctx.send_msgs([{
                 "cmd": "Set",
-                "key": f"Diddy_Kong_Racing_{ctx.slot}_" + str(payload_current_map),
+                "key": f"Diddy_Kong_Racing_{ctx.team}_{ctx.slot}_" + str(payload_current_map),
                 "default": False,
                 "want_reply": False,
                 "operations": [{

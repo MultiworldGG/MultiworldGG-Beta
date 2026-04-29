@@ -20,7 +20,7 @@ class Celeste64WebWorld(WebWorld):
 
     setup_en = Tutorial(
         tutorial_name="Start Guide",
-        description="A guide to playing Celeste 64 in MultiworldGG.",
+        description="A guide to playing Celeste 64 in Archipelago.",
         language="English",
         file_name="guide_en.md",
         link="guide/en",

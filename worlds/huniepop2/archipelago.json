@@ -1,7 +1,1 @@
-{
-    "game": "Hunie Pop 2",
-    "authors": ["dotsofdarkness"],
-    "igdb_id": 72472,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
-}
+{"game": "Hunie Pop 2", "world_version": "3.1.0", "authors": ["Dotsofdarkness"], "igdb_id": 72472, "compatible_version": 7, "version": 7}

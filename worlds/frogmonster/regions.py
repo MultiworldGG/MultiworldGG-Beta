@@ -128,12 +128,12 @@ r.ridge: FrogmonsterRegionData(
 r.moridonos: FrogmonsterRegionData(
     connects=[(r.ridge, lambda player, dif, state: state.has(i.dash, player)),
               (r.runi_arena, lambda player, dif, state: state.has(i.dash, player)),
-              (r.moridonos_layer_worm, lambda player, dif, state: state.has(i.tongue_swing, player) and can_fight(c.moridonos_general, player, dif, state)),
+              (r.moridonos_layer_worm, lambda player, dif, state: (state.has(i.tongue_swing, player) or state.has_all([i.dash, i.cricket], player)) and can_fight(c.moridonos_general, player, dif, state)),
               (r.moridonos_layer_drill, lambda player, dif, state: can_fight(c.moridonos_general, player, dif, state)),
               (r.moridonos_layer_thumper, lambda player, dif, state: can_fight(c.moridonos_general, player, dif, state))]
 ),
 r.moridonos_layer_worm: FrogmonsterRegionData(
-    connects=[(r.moridonos, lambda player, dif, state: state.has(i.tongue_swing, player) and can_fight(c.moridonos_arena_1, player, dif, state)),
+    connects=[(r.moridonos, lambda player, dif, state: (state.has(i.tongue_swing, player) or state.has_all([i.dash, i.cricket], player)) and can_fight(c.moridonos_arena_1, player, dif, state)),
               (r.moridonos_warp, lambda player, dif, state: can_fight(c.moridonos_arena_1, player, dif, state))],
 ),
 r.moridonos_layer_drill: FrogmonsterRegionData(

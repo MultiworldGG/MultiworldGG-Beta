@@ -24,6 +24,7 @@ __all__ = ["main"]
 
 
 def main(args, seed=None, baked_server_options: dict[str, object] | None = None):
+    worlds.ensure_worlds_loaded()
     if not baked_server_options:
         baked_server_options = get_settings().server_options.as_dict()
     assert isinstance(baked_server_options, dict)
@@ -204,6 +205,9 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None)
         balance_multiworld_progression(multiworld)
     else:
         logger.info("Progression balancing skipped.")
+
+    AutoWorld.call_all(multiworld, "finalize_multiworld")
+    AutoWorld.call_all(multiworld, "pre_output")
 
     # we're about to output using multithreading, so we're removing the global random state to prevent accidental use
     multiworld.random.passthrough = False

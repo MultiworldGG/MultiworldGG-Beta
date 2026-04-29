@@ -24,26 +24,38 @@ __all__ = [
 
 no_gui = False
 skip_autosave = False
-_world_settings_name_cache: dict[str, str] = {}  # TODO: cache on disk and update when worlds change
+_world_settings_name_cache: dict[str, str] = {}
 _world_settings_name_cache_updated = False
 _lock = Lock()
 
 
-def _update_cache() -> None:
-    """Load all worlds and update world_settings_name_cache"""
+def _update_cache(write_launcher_cache: bool = True) -> None:
+    """Load world settings metadata from currently loaded worlds."""
     global _world_settings_name_cache_updated
     if _world_settings_name_cache_updated:
         return
 
+    cache_complete = False
     try:
-        from worlds.AutoWorld import AutoWorldRegister
+        import worlds
+        from worlds import (
+            AutoWorldRegister,
+            ensure_worlds_loaded,
+        )
+
+        if not worlds._worlds_loading:
+            ensure_worlds_loaded(write_launcher_cache=write_launcher_cache)
+            cache_complete = True
+
+        _world_settings_name_cache.clear()
         for world in AutoWorldRegister.world_types.values():
             annotation = world.__annotations__.get("settings", None)
             if annotation is None or annotation == "ClassVar[Optional['Group']]":
                 continue
             _world_settings_name_cache[world.settings_key] = f"{world.__module__}.{world.__name__}"
     finally:
-        _world_settings_name_cache_updated = True
+        if cache_complete:
+            _world_settings_name_cache_updated = True
 
 
 def fmt_doc(cls: type, level: int) -> str:
@@ -574,6 +586,15 @@ class ServerOptions(Group):
         "goal" -> collect is allowed after goal completion
         """
 
+    class HintMode(str):
+        """
+        Hint modes
+        Decides if hints pointing towards a player's own world display the exact location
+        "default" -> hints are shown in full no matter which world
+        "own" -> hints pointing towards the hinting player's world do not expose the exact location unless hinted and paid for again.
+        "all" -> hints do not expose the exact location unless hinted and paid for again.
+        """
+
     class RemainingMode(str):
         """
         Remaining modes
@@ -627,6 +648,7 @@ class ServerOptions(Group):
     hint_cost: HintCost = HintCost(10)
     release_mode: ReleaseMode = ReleaseMode("auto")
     collect_mode: CollectMode = CollectMode("auto")
+    hint_mode: HintMode = HintMode("default")
     remaining_mode: RemainingMode = RemainingMode("goal")
     countdown_mode: CountdownMode = CountdownMode("auto")
     auto_shutdown: AutoShutdown = AutoShutdown(0)
@@ -826,7 +848,6 @@ class Settings(Group):
                         raise Exception(f"{ex.context} {ex.problem}\n{problem_line}{error_line}")
                     raise ex
                 # TODO: detect if upgrade is required
-                # TODO: once we have a cache for _world_settings_name_cache, detect if any game section is missing
                 self.update(options or {})
             self._filename = location
 
@@ -843,7 +864,7 @@ class Settings(Group):
             import atexit
             atexit.register(autosave)
 
-    def save(self, location: str | None = None) -> None:  # as above
+    def save(self, location: str | None = None, write_launcher_cache: bool = True) -> None:  # as above
         from Utils import parse_yaml
         location = location or self._filename
         assert location, "No file specified"
@@ -853,7 +874,7 @@ class Settings(Group):
             os.unlink(temp_location)
         # can't use utf-8-sig because it breaks backward compat: pyyaml on Windows with bytes does not strip the BOM
         with open(temp_location, "w", encoding="utf-8") as f:
-            self.dump(f)
+            self.dump(f, write_launcher_cache=write_launcher_cache)
             f.flush()
             if hasattr(os, "fsync"):
                 os.fsync(f.fileno())
@@ -868,9 +889,9 @@ class Settings(Group):
             os.rename(temp_location, location)
         self._filename = location
 
-    def dump(self, f: TextIO, level: int = 0) -> None:
+    def dump(self, f: TextIO, level: int = 0, write_launcher_cache: bool = True) -> None:
         # load all world setting classes
-        _update_cache()
+        _update_cache(write_launcher_cache=write_launcher_cache)
         for key in _world_settings_name_cache:
             self.__getattribute__(key)  # load all worlds
         super().dump(f, level)

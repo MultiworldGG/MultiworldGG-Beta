@@ -1,7 +1,7 @@
 {
-    "game": "Cat Quest",
-    "authors": ["Nikkilite"],
-    "igdb_id": 36597,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
+	"game": "Cat Quest",
+	"minimum_ap_version": "0.6.4",
+	"world_version": "0.3.0",
+	"authors": ["Nikkilite"],
+	"igdb_id": 36597
 }

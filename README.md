@@ -1,4 +1,4 @@
-# [MultiworldGG](https://multiworld.gg) ![Discord Shield](https://discordapp.com/api/guilds/244939773121265664/widget.png?style=shield) | [Install](https://github.com/MultiworldGG/MultiworldGG/releases)
+# [MultiworldGG](https://multiworld.gg) ![Discord Shield](https://discordapp.com/api/guilds/1345801058609270794/widget.png?style=shield) | [Install](https://github.com/MultiworldGG/MultiworldGG/releases)
 
 MultiworldGG is a cross-game modification system which randomizes different games, then uses the result to build a single unified multi-player game, or, simpler,
 a **Multi-Game Multiworld Randomizer**.
@@ -15,9 +15,11 @@ It is a project forked from the 'Archipelago' project.
 
 Currently, the following games are supported:
 
+* 2048
 * Adventure
 * Against the Storm
 * A Hat in Time
+* AM2R
 * Animal Well
 * Ape Escape
 * APQuest
@@ -27,6 +29,7 @@ Currently, the following games are supported:
 * Archipidle
 * Balatro
 * Banjo-Tooie
+* BK Simulator
 * Blasphemous
 * Bomb Rush Cyberfunk
 * Brotato
@@ -56,7 +59,7 @@ Currently, the following games are supported:
 * Digimon World
 * Donkey Kong Country
 * Donkey Kong Country 2
-* Donkey Kong Country 3
+* Donkey Kong Country 3 (Toluca)
 * Donkey Kong 64
 * DLC Quest
 * Don't Starve Together
@@ -64,6 +67,7 @@ Currently, the following games are supported:
 * Doom II
 * Doronko Wanko
 * Dredge
+* Duke Nukem 3D
 * EarthBound
 * Ender Lilies
 * Factorio (+SAWS)
@@ -72,11 +76,11 @@ Currently, the following games are supported:
 * Final Fantasy IV: Free Enterprise
 * Final Fantasy Mystic Quest
 * Final Fantasy Tactics Advance
+* Final Fantasy V (Career Day)
 * Flipwitch
 * Frogmonster
 * Getting Over It
 * Golden Sun: The Lost Age
-* GZDoom
 * Hades
 * Hatsune Miku: Project Diva Mega Mix+
 * Here comes Niko!
@@ -132,19 +136,24 @@ Currently, the following games are supported:
 * Path of Exile
 * PEAK
 * Peaks of Yore
+* Peggle Deluxe
+* Peggle Nights
 * Phoenotopia: Awakening
+* Pinball FX3
 * Placid Plastic Duck Simulator
 * Pokémon Crystal
 * Pokémon Emerald
 * Pokémon FireRed/LeafGreen
 * Pokémon Mystery Dungeon: Explorers of Sky
 * Pokémon Red/Blue
+* Portal 2
 * Powerwash Simulator
 * Pseudoregalia
 * Quake 1
 * Rabi-Ribi
 * Raft
 * Ratchet & Clank 2
+* Ratchet & Clank 3: Up Your Arsenal
 * Refunct
 * Resident Evil 2 Remake
 * Resident Evil 3 Remake
@@ -155,8 +164,8 @@ Currently, the following games are supported:
 * Rogue Legacy
 * Satisfactory
 * Saving Princess
+* Schedule I
 * Secret of Evermore
-* Sea of Thieves
 * Shapez
 * Shivers
 * Slay the Spire
@@ -164,6 +173,7 @@ Currently, the following games are supported:
 * Sonic Adventure 2: Battle
 * Sonic Adventure DX
 * Sonic Heroes
+* Sonic Robo Blast 2
 * Spongebob Squarepants: Battle for Bikini Bottom
 * Spyro 3: Year of the Dragon
 * StarCraft II
@@ -195,6 +205,7 @@ Currently, the following games are supported:
 * The Legend of Zelda: Oracle of Seasons
 * The Legend of Zelda: Phantom Hourglass
 * The Legend of Zelda: Skyward Sword
+* The Legend of Zelda: Spirit Tracks
 * The Legend of Zelda: The Minish Cap
 * The Legend of Zelda: The Wind Waker
 * The Legend of Zelda: Twilight Princess
@@ -208,6 +219,7 @@ Currently, the following games are supported:
 * UFO 50
 * Ultrakill
 * Undertale
+* Vampire Survivors
 * VVVVVV
 * Wargroove
 * Wargroove 2
@@ -249,7 +261,7 @@ path. Just because one person's name may be in a repository title does not mean 
 happen. We can't hope to perfectly cover every single contribution that lead up to MultiworldGG, but we hope to honor
 them fairly.
 
-### Path to the MultiworldGG
+## Path to MultiworldGG
 
 MultiworldGG was directly forked from Archipelago in 2024. 
 Originally, it was just used as a quick and easy access solution for a small group of friends. Some members who were less tech savvy wanted to jump in and needed easier setup and access, so we started doing our own thing with custom APWorlds.

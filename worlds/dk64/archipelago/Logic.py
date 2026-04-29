@@ -658,7 +658,7 @@ class LogicVarHolder:
                     if corresponding_item_id >= Items.JapesDonkeyHint and corresponding_item_id <= Items.CastleChunkyHint:
                         self.Hints.append(corresponding_item_id)
                     if (corresponding_item_id >= Items.PhotoBat and corresponding_item_id <= Items.PhotoBug) or (corresponding_item_id >= Items.PhotoBFI and corresponding_item_id <= Items.PhotoSeal):
-                        self.Photos[corresponding_item_id] += 1
+                        self.Photos[corresponding_item_id] = self.Photos.get(corresponding_item_id, 0) + 1
 
     def RemoveArchipelagoItem(self, ap_item):
         """Add an Archipelago item to the owned items list."""
@@ -915,7 +915,7 @@ class LogicVarHolder:
                     if corresponding_item_id >= Items.JapesDonkeyHint and corresponding_item_id <= Items.CastleChunkyHint:
                         self.Hints.remove(corresponding_item_id)
                     if (corresponding_item_id >= Items.PhotoBat and corresponding_item_id <= Items.PhotoBug) or (corresponding_item_id >= Items.PhotoBFI and corresponding_item_id <= Items.PhotoSeal):
-                        self.Photos[corresponding_item_id] -= 1
+                        self.Photos[corresponding_item_id] = self.Photos.get(corresponding_item_id, 0) - 1
 
     def Update(self, ownedItems):
         """Update logic variables based on owned items."""
@@ -1538,7 +1538,7 @@ class LogicVarHolder:
             return self.IsKong(self.settings.chunky_freeing_kong) or self.settings.free_trade_items
         # Otherwise you need the right slam level (usually 1)
         else:
-            return self.hasMoveSwitchsanity(Switches.FactoryFreeKong, level=Levels.FranticFactory, default_slam_level=1) and (self.slope_resets or self.handstand)
+            return self.hasMoveSwitchsanity(Switches.FactoryFreeKong, level=Levels.FranticFactory, default_slam_level=1)
 
     def CanOpenForestLobbyGoneDoor(self):
         """Check if the player can open the door to the gone pad in forest lobby."""
@@ -1797,7 +1797,7 @@ class LogicVarHolder:
         elif bossFight == Maps.KroolDiddyPhase:
             hasRequiredMoves = self.jetpack and self.peanut
         elif bossFight == Maps.KroolLankyPhase:
-            hasRequiredMoves = self.barrels and self.trombone
+            hasRequiredMoves = self.CanBeatLankyPhase()
         elif bossFight == Maps.KroolTinyPhase:
             hasRequiredMoves = self.mini and self.feather and (self.climbing or self.twirl)
         elif bossFight == Maps.KroolChunkyPhase:

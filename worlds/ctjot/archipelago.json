@@ -1,7 +1,1 @@
-{
-    "game": "Chrono Trigger Jets of Time",
-    "authors": ["Anguirel"],
-    "igdb_id": 20398,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
-}
+{"compatible_version": 7, "version": 7, "game": "Chrono Trigger Jets of Time", "authors": ["Anguirel"], "igdb_id": 20398, "minimum_ap_version": "0.6.4", "world_version": "0.0.2"}

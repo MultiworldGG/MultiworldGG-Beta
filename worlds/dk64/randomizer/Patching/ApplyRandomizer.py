@@ -379,7 +379,7 @@ def patching_response(spoiler):
         ROM_COPY.write(getProgHintBarrierItem(spoiler.settings.progressive_hint_item))
         for x in range(10):
             ROM_COPY.seek(sav + 0x98 + (x * 2))
-            ROM_COPY.writeMultipleBytes(getHintRequirementBatch(x, count), 2)
+            ROM_COPY.writeMultipleBytes(getHintRequirementBatch(x, count, spoiler.settings.progressive_hint_algorithm), 2)
     ROM_COPY.seek(sav + 0x115)
     ROM_COPY.writeMultipleBytes(count, 1)
 
@@ -666,14 +666,13 @@ def patching_response(spoiler):
     randomize_bananaport(spoiler, ROM_COPY)
     randomize_kasplat_locations(spoiler, ROM_COPY)
     randomize_enemies(spoiler, ROM_COPY)
-    apply_kongrando_cosmetic(spoiler, ROM_COPY)
+    apply_kongrando_cosmetic(ROM_COPY)
     randomize_setup(spoiler, ROM_COPY)
     randomize_puzzles(spoiler, ROM_COPY)
     randomize_cbs(spoiler, ROM_COPY)
     randomize_coins(spoiler, ROM_COPY)
     place_mayhem_coins(spoiler, ROM_COPY)
     ApplyShopRandomizer(spoiler, ROM_COPY)
-    showWinCondition(spoiler.settings, ROM_COPY)
     remove5DSCameraPoint(spoiler, ROM_COPY)
     alterTextboxRequirements(spoiler)
     spoiler.arcade_item_reward = Items.NintendoCoin
@@ -729,11 +728,11 @@ def patching_response(spoiler):
         applyKongModelSwaps(spoiler.settings, ROM_COPY)
         updateHelmFaces(spoiler.settings, ROM_COPY)
         updateSnidePanel(spoiler.settings, ROM_COPY)
+        showWinCondition(spoiler.settings, ROM_COPY)
 
         patchAssembly(ROM_COPY, spoiler)
+        calculateInitFileScreen(spoiler, ROM_COPY)
         ApplyMirrorMode(spoiler.settings, ROM_COPY)
-
-    calculateInitFileScreen(spoiler, ROM_COPY)
 
     # Apply Hash
     order = 0

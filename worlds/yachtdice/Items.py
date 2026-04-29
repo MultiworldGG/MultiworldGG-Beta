@@ -10,9 +10,8 @@ class ItemData(typing.NamedTuple):
 
 class YachtDiceItem(Item):
     game: str = "Yacht Dice"
-    
-    
-    
+
+
 # A list of all possible categories.
 all_categories = {
     "Category Ones": (("", 1), 1),
@@ -47,27 +46,29 @@ all_categories = {
     "Category 2-1-2 Consecutive": (("", 1), 14.5),
     "Category Five Distinct Dice": (("", 1), 15.5),
     "Category 4&5 Full House": (("", 1), 16.5),
-    "Category Pair ∑": (("Category Pair", 1), 9.1),
-    "Category Three of a Kind ∑": (("Category Three of a Kind", 1), 10.1),
-    "Category Four of a Kind ∑": (("Category Four of a Kind", 1), 11.1),
-    "Category Tiny Straight ∑": (("Category Tiny Straight", 1), 12.1),
-    "Category Small Straight ∑": (("Category Small Straight", 1), 13.1),
-    "Category Large Straight ∑": (("Category Large Straight", 1), 14.1),
-    "Category Full House ∑": (("Category Full House", 1), 15.1),
-    "Category Yacht ∑": (("Category Yacht", 1), 16.1),
-    "Category Micro Straight ∑": (("Category Micro Straight", 1), 9.6),
-    "Category 1-2-1 Consecutive ∑": (("Category 1-2-1 Consecutive", 1), 11.6),
-    "Category Two Pair ∑": (("Category Two Pair", 1), 13.6),
-    "Category 2-1-2 Consecutive ∑": (("Category 2-1-2 Consecutive", 1), 14.6),
+    "Category Pair SUM": (("Category Pair", 1), 9.1),
+    "Category Three of a Kind SUM": (("Category Three of a Kind", 1), 10.1),
+    "Category Four of a Kind SUM": (("Category Four of a Kind", 1), 11.1),
+    "Category Tiny Straight SUM": (("Category Tiny Straight", 1), 12.1),
+    "Category Small Straight SUM": (("Category Small Straight", 1), 13.1),
+    "Category Large Straight SUM": (("Category Large Straight", 1), 14.1),
+    "Category Full House SUM": (("Category Full House", 1), 15.1),
+    "Category Yacht SUM": (("Category Yacht", 1), 16.1),
+    "Category Micro Straight SUM": (("Category Micro Straight", 1), 9.6),
+    "Category 1-2-1 Consecutive SUM": (("Category 1-2-1 Consecutive", 1), 11.6),
+    "Category Two Pair SUM": (("Category Two Pair", 1), 13.6),
+    "Category 2-1-2 Consecutive SUM": (("Category 2-1-2 Consecutive", 1), 14.6),
 }
 
 
 def find_category_index(category):
     return all_categories[category][1]
 
+
 def get_normal_categories():
     return {key: value for key, value in all_categories.items() if isinstance(value[1], int)}
-    
+
+
 def get_alt_categories():
     return {key: value for key, value in all_categories.items() if not isinstance(value[1], int)}
 
@@ -94,7 +95,6 @@ item_table = {
     "1 Point": ItemData(16871244301, ItemClassification.progression_deprioritized_skip_balancing),
     "10 Points": ItemData(16871244302, ItemClassification.progression),
     "100 Points": ItemData(16871244303, ItemClassification.progression | ItemClassification.useful),
-    
     "Key": ItemData(16871244304, ItemClassification.progression_skip_balancing),
 }
 
@@ -103,15 +103,7 @@ for ind, cat in enumerate(all_categories):
 
 # item groups for better hinting
 item_groups = {
-    "Score Multiplier": {
-        "Step Score Multiplier", 
-        "Fixed Score Multiplier"
-    },
+    "Score Multiplier": {"Step Score Multiplier", "Fixed Score Multiplier"},
     "Categories": all_categories,
-    "Points": {
-        "100 Points", 
-        "10 Points", 
-        "1 Point", 
-        "Bonus Point"
-    },
+    "Points": {"100 Points", "10 Points", "1 Point", "Bonus Point"},
 }

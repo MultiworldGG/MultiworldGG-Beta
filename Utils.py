@@ -23,10 +23,14 @@ import zipfile
 import re
 
 from argparse import Namespace
+from datetime import datetime, timezone
+
 from settings import Settings, get_settings
 from time import sleep
-from typing import BinaryIO, Coroutine, Optional, Any, Union, TypeGuard
+from typing import BinaryIO, Coroutine, Mapping, Optional, Set, Dict, Any, Union, TypeGuard
 from yaml import load, load_all, dump
+from pathspec import PathSpec, GitIgnoreSpec
+from typing_extensions import deprecated
 from pathlib import Path
 
 logger = logging.getLogger("MultiWorld")
@@ -56,46 +60,6 @@ if typing.TYPE_CHECKING:
 def normalize_tag(tag: str) -> str:
     return tag[1:] if tag and tag[0].lower() == "v" else tag
 
-def get_config_file_path() -> str:
-    if getattr(sys, 'frozen', False):
-        # When frozen, the executable's directory is the base path.
-        base_path = os.path.dirname(sys.executable)
-    else:
-        base_path = os.path.dirname(__file__)
-    return os.path.join(base_path, "application.yaml")
-
-config_file = get_config_file_path()
-
-# Check for APP_VERSION environment variable first (set by GitHub Actions build)
-env_version = os.environ.get("APP_VERSION")
-if env_version:
-    __version__ = env_version
-    version_tuple = tuplize_version(__version__)
-    version = Version(*version_tuple)
-    logger.info("Using version from APP_VERSION environment variable: %s", __version__)
-
-if os.path.exists(config_file):
-    try:
-        with open(config_file, "r", encoding="utf-8") as f:
-            config_data = load(f, Loader=SafeLoader)
-        if isinstance(config_data, dict):
-            app_options = config_data.get("application_options", {})
-            if isinstance(app_options, dict):
-                new_name = app_options.get("app_name")
-                if new_name is not None:
-                    instance_name = new_name
-                new_guid = app_options.get("app_guid")
-                if new_guid is not None:
-                    archipelago_guid = new_guid
-                # Only override version from config if not set by environment variable
-                if not env_version:
-                    new_version = app_options.get("app_version")
-                    if new_version is not None:
-                        __version__ = new_version
-                        version_tuple = tuplize_version(__version__)
-                        version = Version(*version_tuple)
-    except Exception as e:
-        logger.warning("Failed to load configuration from %s: %s", config_file, e)
 
 is_linux = sys.platform.startswith("linux")
 is_macos = sys.platform == "darwin"
@@ -467,6 +431,112 @@ def cache_self1(function: typing.Callable[[S, T], RetType]) -> typing.Callable[[
 
     return wrap
 
+
+def is_frozen() -> bool:
+    return typing.cast(bool, getattr(sys, 'frozen', False))
+
+
+def is_webhost_mode() -> bool:
+    """Detect whether this import is happening in WebHost/dedicated web runtime."""
+    if "WebHost" in sys.modules:
+        return True
+    argv0 = os.path.basename(sys.argv[0]).lower() if sys.argv else ""
+    return "webhost.py" in argv0 or "gunicorn" in argv0
+
+
+def local_path(*path: str) -> str:
+    """
+    Returns path to a file in the local MultiworldGG installation or source.
+    This might be read-only and user_path should be used instead for ROMs, configuration, etc.
+    """
+    if hasattr(local_path, 'cached_path'):
+        pass
+    elif is_frozen():
+        if hasattr(sys, "_MEIPASS"):
+            # we are running in a PyInstaller bundle
+            local_path.cached_path = sys._MEIPASS  # pylint: disable=protected-access,no-member
+        else:
+            # cx_Freeze
+            local_path.cached_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+    else:
+        import __main__
+        if globals().get("__file__") and os.path.isfile(__file__):
+            # we are running in a normal Python environment
+            local_path.cached_path = os.path.dirname(os.path.abspath(__file__))
+        elif hasattr(__main__, "__file__") and os.path.isfile(__main__.__file__):
+            # we are running in a normal Python environment, but AP was imported weirdly
+            local_path.cached_path = os.path.dirname(os.path.abspath(__main__.__file__))
+        else:
+            # pray
+            local_path.cached_path = os.path.abspath(".")
+
+    return os.path.join(local_path.cached_path, *path)
+
+
+def home_path(*path: str) -> str:
+    """Returns path to a file in the user home's MultiworldGG directory."""
+    if hasattr(home_path, 'cached_path'):
+        pass
+    elif sys.platform.startswith('linux'):
+        xdg_data_home = os.getenv('XDG_DATA_HOME', os.path.expanduser('~/.local/share'))
+        home_path.cached_path = f'{xdg_data_home}/{instance_name}'
+        if not os.path.isdir(home_path.cached_path):
+            legacy_home_path = os.path.expanduser(f'~/{instance_name}')
+            if os.path.isdir(legacy_home_path):
+                os.renames(legacy_home_path, home_path.cached_path)
+                os.symlink(home_path.cached_path, legacy_home_path)
+            else:
+                os.makedirs(home_path.cached_path, 0o700, exist_ok=True)
+    elif sys.platform == 'darwin':
+        import platformdirs
+        home_path.cached_path = platformdirs.user_data_dir("Archipelago", False)
+        os.makedirs(home_path.cached_path, 0o700, exist_ok=True)
+    else:
+        # not implemented
+        home_path.cached_path = local_path()  # this will generate the same exceptions we got previously
+
+    return os.path.join(home_path.cached_path, *path)
+
+
+def user_path(*path: str) -> str:
+    """Returns either local_path or home_path based on write permissions."""
+    if hasattr(user_path, "cached_path"):
+        pass
+    elif os.access(local_path(), os.W_OK) and not (is_macos and is_frozen()):
+        user_path.cached_path = local_path()
+    else:
+        user_path.cached_path = home_path()
+        # populate home from local
+        if user_path.cached_path != local_path():
+            import filecmp
+            if not os.path.exists(user_path("manifest.json")) or \
+                    not os.path.exists(local_path("manifest.json")) or \
+                    not filecmp.cmp(local_path("manifest.json"), user_path("manifest.json"), shallow=True):
+                import shutil
+                for dn in ("Players", "data/sprites", "data/lua"):
+                    shutil.copytree(local_path(dn), user_path(dn), dirs_exist_ok=True)
+                if not os.path.exists(local_path("manifest.json")):
+                    warnings.warn(f"Upgrading {user_path()} from something that is not a proper install")
+                else:
+                    shutil.copy2(local_path("manifest.json"), user_path("manifest.json"))
+            os.makedirs(user_path("worlds"), exist_ok=True)
+
+    return os.path.join(user_path.cached_path, *path)
+
+
+def cache_path(*path: str) -> str:
+    """Returns path to a file in the user's MultiworldGG cache directory."""
+    if hasattr(cache_path, "cached_path"):
+        pass
+    else:
+        import platformdirs
+        cache_path.cached_path = platformdirs.user_cache_dir(instance_name, False)
+        # Ensure the cache directory exists
+        os.makedirs(cache_path.cached_path, exist_ok=True)
+
+    return os.path.join(cache_path.cached_path, *path)
+
+
 def output_path(*path: str) -> str:
     if hasattr(output_path, 'cached_path'):
         return os.path.join(output_path.cached_path, *path)
@@ -484,10 +554,7 @@ def open_file(filename: typing.Union[str, "pathlib.Path"]) -> None:
         open_command = which("open") if is_macos else (which("xdg-open") or which("gnome-open") or which("kde-open"))
         assert open_command, "Didn't find program for open_file! Please report this together with system details."
 
-        env = os.environ
-        if "LD_LIBRARY_PATH" in env:
-            env = env.copy()
-            del env["LD_LIBRARY_PATH"]  # exe is a system binary, so reset LD_LIBRARY_PATH
+        env = env_cleared_lib_path()
         subprocess.call([open_command, filename], env=env)
 
 
@@ -566,6 +633,7 @@ def get_public_ipv6() -> str:
     return ip
 
 
+@deprecated("Utils.get_options() is deprecated. Use the settings API instead.")
 def get_options() -> Settings:
     deprecate("Utils.get_options() is deprecated. Use the settings API instead.")
     return get_settings()
@@ -596,6 +664,9 @@ def persistent_load() -> dict[str, dict[str, Any]]:
         try:
             with open(path, "r") as f:
                 storage = unsafe_parse_yaml(f.read())
+            if "datapackage" in storage:
+                del storage["datapackage"]
+                logging.debug("Removed old datapackage from persistent storage")
         except Exception as e:
             logger.warning(f"Could not read persistent storage (file may be corrupted): {e}")
             # Attempt to backup the corrupted file
@@ -649,6 +720,14 @@ def store_data_package_for_checksum(game: str, data: typing.Dict[str, Any]) -> N
                 json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
         except Exception as e:
             logger.debug(f"Could not store data package: {e}")
+
+
+def read_apignore(filename: str | pathlib.Path) -> PathSpec | None:
+    try:
+        with open(filename) as ignore_file:
+            return GitIgnoreSpec.from_lines(ignore_file)
+    except FileNotFoundError:
+        return None
 
 
 def get_adjuster_settings_no_defaults(game_name: str) -> Namespace:
@@ -888,6 +967,19 @@ def is_kivy_running() -> bool:
     return False
 
 
+def env_cleared_lib_path() -> Mapping[str, str]:
+    """
+    Creates a copy of the current environment vars with the LD_LIBRARY_PATH removed if set, as this can interfere when
+    launching something in a subprocess.
+    """
+    env = os.environ
+    if "LD_LIBRARY_PATH" in env:
+        env = env.copy()
+        del env["LD_LIBRARY_PATH"]
+
+    return env
+
+
 def _mp_open_filename(res: "multiprocessing.Queue[typing.Optional[str]]", *args: Any) -> None:
     if is_kivy_running():
         raise RuntimeError("kivy should not be running in multiprocess")
@@ -900,10 +992,7 @@ def _mp_save_filename(res: "multiprocessing.Queue[typing.Optional[str]]", *args:
     res.put(save_filename(*args))
     
 def _run_for_stdout(*args: str):
-    env = os.environ
-    if "LD_LIBRARY_PATH" in env:
-        env = env.copy()
-        del env["LD_LIBRARY_PATH"]  # exe is a system binary, so reset LD_LIBRARY_PATH
+    env = env_cleared_lib_path()
     return subprocess.run(args, capture_output=True, text=True, env=env).stdout.split("\n", 1)[0] or None
 
 
@@ -913,7 +1002,52 @@ def _mp_open_directory(res: "multiprocessing.Queue[typing.Optional[str]]", *args
     res.put(open_directory(*args))
 
 
+def open_directory(title: str, suggest: str = "") -> typing.Optional[str]:
+    if is_linux:
+        # prefer native dialog
+        from shutil import which
+        kdialog = which("kdialog")
+        if kdialog:
+            return _run_for_stdout(kdialog, f"--title={title}", "--getexistingdirectory",
+                       os.path.abspath(suggest) if suggest else ".")
+        zenity = which("zenity")
+        if zenity:
+            z_filters = ("--directory",)
+            selection = (f"--filename={os.path.abspath(suggest)}/",) if suggest else ()
+            return _run_for_stdout(zenity, f"--title={title}", "--file-selection", *z_filters, *selection)
+
+    # fall back to tk
+    try:
+        import tkinter
+        import tkinter.filedialog
+    except Exception as e:
+        logging.error('Could not load tkinter, which is likely not installed. '
+                      f'This attempt was made because open_directory was used for "{title}".')
+        raise e
+    else:
+        if is_macos and is_kivy_running():
+            # on macOS, mixing kivy and tk does not work, so spawn a new process
+            # FIXME: performance of this is pretty bad, and we should (also) look into alternatives
+            from multiprocessing import Process, Queue
+            res: "Queue[typing.Optional[str]]" = Queue()
+            Process(target=_mp_open_directory, args=(res, title, suggest)).start()
+            return res.get()
+        try:
+            root = tkinter.Tk()
+        except tkinter.TclError:
+            return None  # GUI not available. None is the same as a user clicking "cancel"
+        root.withdraw()
+        return tkinter.filedialog.askdirectory(title=title, mustexist=True, initialdir=suggest or None)
+
+
 def messagebox(title: str, text: str, error: bool = False) -> None:
+    if not gui_enabled:
+        if error:
+            logging.error(f"{title}: {text}")
+        else:
+            logging.info(f"{title}: {text}")
+        return
+
     if is_kivy_running():
         from Gui import MessageBox
         MessageBox(title, text, error).open()
@@ -948,6 +1082,9 @@ def messagebox(title: str, text: str, error: bool = False) -> None:
         showerror(title, text) if error else showinfo(title, text)
         root.update()
 
+
+gui_enabled = not sys.stdout or "--nogui" not in sys.argv
+"""Checks if the user wanted no GUI mode and has a terminal to use it with."""
 
 def title_sorted(data: typing.Iterable, key=None, ignore: typing.AbstractSet[str] = frozenset(("a", "the"))):
     """Sorts a sequence of text ignoring typical articles like "a" or "the" in the beginning."""
@@ -1001,6 +1138,7 @@ def async_start(co: Coroutine[None, None, typing.Any], name: Optional[str] = Non
 
 
 def deprecate(message: str, add_stacklevels: int = 0):
+    """also use typing_extensions.deprecated wherever you use this"""
     if __debug__:
         raise Exception(message)
     warnings.warn(message, stacklevel=2 + add_stacklevels)
@@ -1049,6 +1187,18 @@ def _extend_freeze_support() -> None:
 
         # Handle the second process that MP will create
         if multiprocessing.spawn.is_forking(sys.argv):
+            # In frozen builds, child processes may need to import world modules
+            # packaged as .apworld archives (for example worlds.tracker).
+            # Register zip specs before spawn_main unpickles target callables.
+            try:
+                import worlds
+                world_sources = getattr(worlds, "world_sources", ())
+                for world_source in world_sources:
+                    if getattr(world_source, "is_zip", False):
+                        worlds._register_apworld_zip_spec(world_source)  # type: ignore[attr-defined]
+            except Exception:
+                pass
+
             kwargs = {}
             for arg in sys.argv[2:]:
                 name, value = arg.split('=')
@@ -1064,11 +1214,30 @@ def _extend_freeze_support() -> None:
 
     multiprocessing.freeze_support = multiprocessing.spawn.freeze_support = _freeze_support if is_frozen() else _noop
 
+
+def freeze_support() -> None:
+    """This now only calls multiprocessing.freeze_support since we are patching freeze_support on module load."""
+    import multiprocessing
+
+    deprecate("Use multiprocessing.freeze_support() instead")
+    multiprocessing.freeze_support()
+
+
 _extend_freeze_support()
 
-def visualize_regions(root_region: Region, file_name: str, *,
-                      show_entrance_names: bool = False, show_locations: bool = True, show_other_regions: bool = True,
-                      linetype_ortho: bool = True, regions_to_highlight: set[Region] | None = None) -> None:
+
+def visualize_regions(
+        root_region: Region,
+        file_name: str,
+        *,
+        show_entrance_names: bool = False,
+        show_locations: bool = True,
+        show_other_regions: bool = True,
+        linetype_ortho: bool = True,
+        regions_to_highlight: set[Region] | None = None,
+        entrance_highlighting: dict[int, int] | None = None,
+        detail_other_regions: bool = False,
+        auto_assign_colors: bool = False) -> None:
     """Visualize the layout of a world as a PlantUML diagram.
 
     :param root_region: The region from which to start the diagram from. (Usually the "Menu" region of your world.)
@@ -1085,6 +1254,13 @@ def visualize_regions(root_region: Region, file_name: str, *,
     :param show_other_regions: (default True) If enabled, regions that can't be reached by traversing exits are shown.
     :param linetype_ortho: (default True) If enabled, orthogonal straight line parts will be used; otherwise polylines.
     :param regions_to_highlight: Regions that will be highlighted in green if they are reachable.
+    :param entrance_highlighting: a mapping from your world's entrance randomization groups to RGB values, used to color
+            your entrances
+    :param detail_other_regions: (default False) If enabled, will fully visualize regions that aren't reachable
+            from root_region.
+    :param auto_assign_colors: (default False) If enabled, will automatically assign random colors to entrances of the
+            same randomization group. Uses entrance_highlighting first, and only picks random colors for entrance groups
+            not found in the passed-in map
 
     Example usage in World code:
     from Utils import visualize_regions
@@ -1110,6 +1286,34 @@ def visualize_regions(root_region: Region, file_name: str, *,
     regions: typing.Deque[Region] = deque((root_region,))
     multiworld: MultiWorld = root_region.multiworld
 
+    colors_used: set[int] = set()
+    if entrance_highlighting:
+        for color in entrance_highlighting.values():
+            # filter the colors to their most-significant bits to avoid too similar colors
+            colors_used.add(color & 0xF0F0F0)
+    else:
+        # assign an empty dict to not crash later
+        # the parameter is optional for ease of use when you don't care about colors
+        entrance_highlighting = {}
+
+    def select_color(group: int) -> int:
+        # specifically spacing color indexes by three different prime numbers (3, 5, 7) for the RGB components to avoid
+        # obvious cyclical color patterns
+        COLOR_INDEX_SPACING: int = 0x357
+        new_color_index: int = (group * COLOR_INDEX_SPACING) % 0x1000
+        new_color = ((new_color_index & 0xF00) << 12) + \
+                    ((new_color_index & 0xF0) << 8) + \
+                    ((new_color_index & 0xF) << 4)
+        while new_color in colors_used:
+            # while this is technically unbounded, expected collisions are low. There are 4095 possible colors
+            # and worlds are unlikely to get to anywhere close to that many entrance groups
+            # intentionally not using multiworld.random to not affect output when debugging with this tool
+            new_color_index += COLOR_INDEX_SPACING
+            new_color = ((new_color_index & 0xF00) << 12) + \
+                        ((new_color_index & 0xF0) << 8) + \
+                        ((new_color_index & 0xF) << 4)
+        return new_color
+
     def fmt(obj: Union[Entrance, Item, Location, Region]) -> str:
         name = obj.name
         if isinstance(obj, Item):
@@ -1129,18 +1333,28 @@ def visualize_regions(root_region: Region, file_name: str, *,
 
     def visualize_exits(region: Region) -> None:
         for exit_ in region.exits:
+            color_code: str = ""
+            if exit_.randomization_group in entrance_highlighting:
+                color_code = f" #{entrance_highlighting[exit_.randomization_group]:0>6X}"
             if exit_.connected_region:
                 if show_entrance_names:
-                    uml.append(f"\"{fmt(region)}\" --> \"{fmt(exit_.connected_region)}\" : \"{fmt(exit_)}\"")
+                    uml.append(f"\"{fmt(region)}\" --> \"{fmt(exit_.connected_region)}\" : \"{fmt(exit_)}\"{color_code}")
                 else:
                     try:
-                        uml.remove(f"\"{fmt(exit_.connected_region)}\" --> \"{fmt(region)}\"")
-                        uml.append(f"\"{fmt(exit_.connected_region)}\" <--> \"{fmt(region)}\"")
+                        uml.remove(f"\"{fmt(exit_.connected_region)}\" --> \"{fmt(region)}\"{color_code}")
+                        uml.append(f"\"{fmt(exit_.connected_region)}\" <--> \"{fmt(region)}\"{color_code}")
                     except ValueError:
-                        uml.append(f"\"{fmt(region)}\" --> \"{fmt(exit_.connected_region)}\"")
+                        uml.append(f"\"{fmt(region)}\" --> \"{fmt(exit_.connected_region)}\"{color_code}")
             else:
-                uml.append(f"circle \"unconnected exit:\\n{fmt(exit_)}\"")
-                uml.append(f"\"{fmt(region)}\" --> \"unconnected exit:\\n{fmt(exit_)}\"")
+                uml.append(f"circle \"unconnected exit:\\n{fmt(exit_)}\" {color_code}")
+                uml.append(f"\"{fmt(region)}\" --> \"unconnected exit:\\n{fmt(exit_)}\"{color_code}")
+        for entrance in region.entrances:
+            color_code: str = ""
+            if entrance.randomization_group in entrance_highlighting:
+                color_code = f" #{entrance_highlighting[entrance.randomization_group]:0>6X}"
+            if not entrance.parent_region:
+                uml.append(f"circle \"unconnected entrance:\\n{fmt(entrance)}\"{color_code}")
+                uml.append(f"\"unconnected entrance:\\n{fmt(entrance)}\" --> \"{fmt(region)}\"{color_code}")
 
     def visualize_locations(region: Region) -> None:
         any_lock = any(location.locked for location in region.locations)
@@ -1161,8 +1375,26 @@ def visualize_regions(root_region: Region, file_name: str, *,
         if other_regions := [region for region in multiworld.get_regions(root_region.player) if region not in seen]:
             uml.append("package \"other regions\" <<Cloud>> {")
             for region in other_regions:
-                uml.append(f"class \"{fmt(region)}\"")
+                if detail_other_regions:
+                    visualize_region(region)
+                else:
+                    uml.append(f"class \"{fmt(region)}\"")
             uml.append("}")
+
+    if auto_assign_colors:
+        all_entrances: list[Entrance] = []
+        for region in multiworld.get_regions(root_region.player):
+            all_entrances.extend(region.entrances)
+            all_entrances.extend(region.exits)
+        all_groups: list[int] = sorted(set([entrance.randomization_group for entrance in all_entrances]))
+        for group in all_groups:
+            if group not in entrance_highlighting:
+                if len(colors_used) >= 0x1000:
+                    # on the off chance someone makes 4096 different entrance groups, don't cycle forever
+                    break
+                new_color: int = select_color(group)
+                entrance_highlighting[group] = new_color
+                colors_used.add(new_color)
 
     uml.append("@startuml")
     uml.append("hide circle")
@@ -1174,7 +1406,7 @@ def visualize_regions(root_region: Region, file_name: str, *,
             seen.add(current_region)
             visualize_region(current_region)
             regions.extend(exit_.connected_region for exit_ in current_region.exits if exit_.connected_region)
-    if show_other_regions:
+    if show_other_regions or detail_other_regions:
         visualize_other_regions()
     uml.append("@enduml")
 
@@ -1201,6 +1433,15 @@ def is_iterable_except_str(obj: object) -> TypeGuard[typing.Iterable[typing.Any]
     if isinstance(obj, str):
         return False
     return isinstance(obj, typing.Iterable)
+
+
+def utcnow() -> datetime:
+    """
+    Implementation of Python's datetime.utcnow() function for use after deprecation.
+    Needed for timezone-naive UTC datetimes stored in databases with PonyORM (upstream).
+    https://ponyorm.org/ponyorm-list/2014-August/000113.html
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class DaemonThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):

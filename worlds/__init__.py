@@ -1,5 +1,6 @@
 import importlib
-import importlib.util
+import importlib.abc
+import importlib.machinery
 import logging
 import os
 import time
@@ -15,13 +16,17 @@ if is_frozen():
     if os.path.exists(venv_worlds_path) and venv_worlds_path not in __path__:
         __path__.append(venv_worlds_path)
 
-__all__ = {
+__all__ = [
     "network_data_package",
     "network_data_package_single_game",
     "AutoWorldRegister",
     "world_sources",
+    "local_folder",
+    "user_folder",
     "failed_world_loads",
-}
+    "ensure_worlds_loaded",
+    "rebuild_world_caches",
+]
 
 failed_world_loads: list[str] = []
 

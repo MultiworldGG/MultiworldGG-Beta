@@ -6,16 +6,10 @@ on:
   push:
     tags:
       - 'v?[0-9]+.[0-9]+.[0-9]*'
+      - '[0-9]+.[0-9]+.[0-9]+[a-z0-9]*'
 
 env:
-  ENEMIZER_VERSION: 7.1
-  # NOTE: since appimage/appimagetool and appimage/type2-runtime does not have tags anymore,
-  #       we check the sha256 and require manual intervention if it was updated.
-  APPIMAGE_FORK: 'PopTracker'
-  APPIMAGETOOL_VERSION: 'r-2025-11-18'
-  APPIMAGETOOL_X86_64_HASH: '4577a452b30af2337123fbb383aea154b618e51ad5448c3b62085cbbbfbfd9a2'
-  APPIMAGE_RUNTIME_VERSION: 'r-2025-11-07'
-  APPIMAGE_RUNTIME_X86_64_HASH: '27ddd3f78e483fc5f7856e413d7c17092917f8c35bfe3318a0d378aa9435ad17'
+  PYTHON_VERSION: '3.12'
 
 permissions:  # permissions required for attestation
   id-token: 'write'
@@ -23,108 +17,341 @@ permissions:  # permissions required for attestation
   contents: 'write'  # additionally required for release
 
 jobs:
-  create-release:
+  determine-version:
+    name: Determine Version
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
     steps:
-      - name: Set env
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV  # tag x.y.z will become "vX.Y.Z"
-      - name: Create Release
-        uses: softprops/action-gh-release@975c1b265e11dd76618af1c374e7981f9a6ff44a
-        with:
-          draft: true  # don't publish right away, especially since windows build is added by hand
-          prerelease: false
-          name: v${{ env.RELEASE_VERSION }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-release-win:
-    runs-on: windows-latest
-    if: ${{ true }}  # change to false to skip if release is built by hand
-    needs: create-release
-    steps:
-      - name: Set env
-        shell: bash
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-      # - code below copied from build.yml -
       - uses: actions/checkout@v4
-      - name: Install python
+      
+      - name: Determine version
+        id: get-version
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            # Extract from application.yaml as fallback
+            VERSION=$(grep 'app_version:' application.yaml | sed -E 's/.*"([^"]+)".*/\1/')
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Determined version: $VERSION"
+
+  build-exe:
+    name: Build Executable - ${{ matrix.os }}
+    needs: determine-version
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    env:
+      APP_VERSION: ${{ needs.determine-version.outputs.version }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            artifact_name: windows-exe
+            exe_pattern: '*.exe'
+          - os: ubuntu-latest
+            artifact_name: linux-exe
+            exe_pattern: 'MultiworldGG'
+          - os: macos-latest
+            artifact_name: macos-exe
+            exe_pattern: 'MultiworldGG'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download Runtime executables
+        shell: bash
+        run: |
+          mkdir -p data/SNI
+          mkdir -p data/EnemizerCLI
+          
+          # Get latest release tag from GitHub API with retry logic
+          echo "Fetching latest SNI release..."
+          SNI_LATEST_RELEASE=""
+          ENEMIZER_RELEASE="7.1"
+          
+          SNI_LATEST_RELEASE=$(curl -s --connect-timeout 30 --max-time 60 https://api.github.com/repos/alttpo/sni/releases/latest | grep '"tag_name"' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
+            
+          echo "Successfully fetched release tag: ${SNI_LATEST_RELEASE}"
+          
+          # If still no release tag, use a fallback
+          if [ -z "$SNI_LATEST_RELEASE" ]; then
+            echo "Warning: Failed to fetch latest release tag from GitHub API"
+            echo "Using fallback version v0.0.101"
+            SNI_LATEST_RELEASE="v0.0.101"
+          fi
+          
+          echo "Using SNI release: ${SNI_LATEST_RELEASE}"
+          
+          # Determine platform-specific asset name and extraction method
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            SNI_ASSET_NAME="sni-${SNI_LATEST_RELEASE}-windows-amd64.zip"
+            ENEMIZER_ASSET_NAME="win-x64.zip"
+          elif [ "$RUNNER_OS" == "Linux" ]; then
+            SNI_ASSET_NAME="sni-${SNI_LATEST_RELEASE}-linux-amd64.tar.xz"
+            ENEMIZER_ASSET_NAME="ubuntu.16.04-x64.7z"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            SNI_ASSET_NAME="sni-${SNI_LATEST_RELEASE}-darwin-universal.tar.gz"
+            ENEMIZER_ASSET_NAME="osx.10.12-x64.zip"
+          else
+            echo "Unknown OS: $RUNNER_OS"
+            exit 1
+          fi
+          
+          # Download from latest release with retry logic
+          SNI_DOWNLOAD_URL="https://github.com/alttpo/sni/releases/download/${SNI_LATEST_RELEASE}/${SNI_ASSET_NAME}"
+          echo "Downloading SNI from ${SNI_DOWNLOAD_URL}"
+          ENEMIZER_DOWNLOAD_URL="https://github.com/Ijwu/Enemizer/releases/download/${ENEMIZER_RELEASE}/${ENEMIZER_ASSET_NAME}"
+          echo "Downloading Enemizer from ${ENEMIZER_DOWNLOAD_URL}"
+          
+          SNI_DOWNLOAD_SUCCESS=false
+          ENEMIZER_DOWNLOAD_SUCCESS=false
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            if curl -L --connect-timeout 15 --max-time 60 -o sni.zip "${SNI_DOWNLOAD_URL}"; then
+              if unzip -q sni.zip -d data/SNI && rm sni.zip; then
+                SNI_DOWNLOAD_SUCCESS=true
+              else
+                echo "Failed to extract SNI ZIP file"
+              fi
+            else
+              echo "Failed to download SNI ZIP file"
+            fi
+            if curl -L --connect-timeout 15 --max-time 60 -o enemizer.zip "${ENEMIZER_DOWNLOAD_URL}"; then
+              if unzip -q enemizer.zip -d data/EnemizerCLI && rm enemizer.zip; then
+                ENEMIZER_DOWNLOAD_SUCCESS=true
+              else
+                echo "Failed to extract Enemizer ZIP file"
+              fi
+            else
+              echo "Failed to download Enemizer ZIP file"
+            fi
+          elif [ "$RUNNER_OS" == "Linux" ]; then
+            # Extract SNI .tar.xz (use J flag)
+            if curl -L --connect-timeout 15 --max-time 60 "${SNI_DOWNLOAD_URL}" | tar xJ -C data/SNI; then
+              SNI_DOWNLOAD_SUCCESS=true
+            else
+              echo "Failed to download/extract SNI .tar.xz"
+            fi
+            # Download and extract Enemizer .7z (7z is pre-installed on GitHub runners)
+            if curl -L --connect-timeout 15 --max-time 60 -o enemizer.7z "${ENEMIZER_DOWNLOAD_URL}"; then
+              if 7z x enemizer.7z -o"data/EnemizerCLI/" && rm enemizer.7z; then
+                ENEMIZER_DOWNLOAD_SUCCESS=true
+              else
+                echo "Failed to extract Enemizer 7z file"
+              fi
+            else
+              echo "Failed to download Enemizer 7z file"
+            fi
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            # Extract SNI .tar.gz (use z flag)
+            if curl -L --connect-timeout 15 --max-time 60 "${SNI_DOWNLOAD_URL}" | tar xz -C data/SNI; then
+              SNI_DOWNLOAD_SUCCESS=true
+            else
+              echo "Failed to download/extract SNI .tar.gz"
+            fi
+            # Download and extract Enemizer .zip
+            if curl -L --connect-timeout 15 --max-time 60 -o enemizer.zip "${ENEMIZER_DOWNLOAD_URL}"; then
+              if unzip -q enemizer.zip -d data/EnemizerCLI && rm enemizer.zip; then
+                ENEMIZER_DOWNLOAD_SUCCESS=true
+              else
+                echo "Failed to extract Enemizer ZIP file"
+              fi
+            else
+              echo "Failed to download Enemizer ZIP file"
+            fi
+          fi
+          
+          if [ "$SNI_DOWNLOAD_SUCCESS" = false ] || [ "$ENEMIZER_DOWNLOAD_SUCCESS" = false ]; then
+            echo "Error: Failed to download external dependencies"
+            if [ "$SNI_DOWNLOAD_SUCCESS" = false ]; then
+              echo "  - SNI download failed"
+            fi
+            if [ "$ENEMIZER_DOWNLOAD_SUCCESS" = false ]; then
+              echo "  - Enemizer download failed"
+            fi
+            exit 1
+          fi
+          
+          # Make executables executable on Unix
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            chmod +x data/SNI/*
+            chmod +x data/EnemizerCLI/*
+          fi
+          
+          echo "SNI ${SNI_LATEST_RELEASE} downloaded successfully"
+          echo "Enemizer ${ENEMIZER_RELEASE} downloaded successfully"
+          ls -la data/SNI/
+          ls -la data/EnemizerCLI/
+      
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '~3.12.9'
+          python-version: ${{ env.PYTHON_VERSION }}
           check-latest: true
-      - name: Download run-time dependencies
+      
+      - name: Create fresh virtual environment
+        shell: bash
         run: |
-          Invoke-WebRequest -Uri https://github.com/Ijwu/Enemizer/releases/download/${Env:ENEMIZER_VERSION}/win-x64.zip -OutFile enemizer.zip
-          Expand-Archive -Path enemizer.zip -DestinationPath EnemizerCLI -Force
-          choco install innosetup --version=6.3.3 --allow-downgrade
-      - name: Build
+          python -m venv venv
+          
+          # Activate based on OS
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            source venv/Scripts/activate
+            python -m pip install --upgrade pip
+          else
+            source venv/bin/activate
+            python -m pip install --upgrade pip
+          fi
+      
+      - name: Install build dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
         run: |
-          python -m pip install --upgrade pip
-          python setup.py build_exe --yes
-          if ( $? -eq $false ) {
-            Write-Error "setup.py failed!"
-            exit 1
-          }
-          $NAME="$(ls build | Select-String -Pattern 'exe')".Split('.',2)[1]
-          $ZIP_NAME="MultiworldGG_$NAME.7z"
-          echo "$NAME -> $ZIP_NAME"
-          echo "ZIP_NAME=$ZIP_NAME" >> $Env:GITHUB_ENV
-          New-Item -Path dist -ItemType Directory -Force
-          cd build
-          Rename-Item "exe.$NAME" MultiworldGG
-          7z a -mx=9 -mhe=on -ms "../dist/$ZIP_NAME" MultiworldGG
-          Rename-Item MultiworldGG "exe.$NAME"  # inno_setup.iss expects the original name
-      - name: Build Setup
+          source venv/Scripts/activate
+          pip install -r requirements.txt
+          pip install -r build_requirements.txt
+      
+      - name: Install build dependencies (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
         run: |
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\iscc.exe" inno_setup.iss /DNO_SIGNTOOL
-          if ( $? -eq $false ) {
-            Write-Error "Building setup failed!"
-            exit 1
-          }
-          $contents = Get-ChildItem -Path setups/*.exe -Force -Recurse
-          $SETUP_NAME=$contents[0].Name
-          echo "SETUP_NAME=$SETUP_NAME" >> $Env:GITHUB_ENV
-      # - code above copied from build.yml -
+          source venv/bin/activate
+          # Install system dependencies for Linux
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sudo apt update
+            sudo apt -y install build-essential p7zip xz-utils wget libglib2.0-0
+            sudo apt -y install python3-gi libgirepository1.0-dev
+          fi
+          # Install Homebrew dependencies for macOS
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            brew update
+            brew install gtk+3 gobject-introspection
+            # Clean up Homebrew cache immediately after install
+            brew cleanup --prune=all
+          fi
+          pip install -r requirements.txt
+          pip install -r build_requirements.txt
+          # Install additional dependencies for Kivy
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            pip install "PyGObject<3.51.0" charset-normalizer
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            pip install --no-cache-dir PyGObject charset-normalizer
+            # Clean pip cache after install
+            pip cache purge || true
+          fi
+      
+      - name: Build executable (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          source venv/Scripts/activate
+          python build_exe.py
+      
+      - name: Build executable (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          source venv/bin/activate
+          python build_exe.py
+      
       - name: Attest Build
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: |
-            build/exe.*/MultiworldGGLauncher.exe
-            build/exe.*/MultiworldGGLauncherDebug.exe
-            build/exe.*/MultiworldGGGenerate.exe
-            build/exe.*/MultiworldGGServer.exe
-            setups/*
-      - name: Add to Release
-        uses: softprops/action-gh-release@975c1b265e11dd76618af1c374e7981f9a6ff44a
+            build/exe.*/MultiworldGGLauncher*
+            build/exe.*/MultiworldGGGenerate*
+            build/exe.*/MultiworldGGServer*
+      
+      - name: Upload executable artifact
+        uses: actions/upload-artifact@v4
         with:
-          draft: true  # see above
-          prerelease: false
-          name: v${{ env.RELEASE_VERSION }}
-          files: |
-            setups/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: ${{ matrix.artifact_name }}
+          path: |
+            build/**/*
+          retention-days: 90
 
-  build-release-ubuntu2204:
-    runs-on: ubuntu-22.04
-    needs: create-release
+  build-linux-appimage:
+    name: Build Linux AppImage
+    needs: [determine-version, build-exe]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      APP_VERSION: ${{ needs.determine-version.outputs.version }}
     steps:
-      - name: Set env
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-      # - code below copied from build.yml -
       - uses: actions/checkout@v4
-      - name: Install base dependencies
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          check-latest: true
+      
+      - name: Download Linux exe artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-exe
+          path: build/
+      
+      - name: Create virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r build_requirements.txt
+          
+          # Install mwgg_igdb_sixteen (default age-filtered variant)
+          # Users can optionally install nr (unfiltered) later
+          for wheel in default_wheels/mwgg_igdb_sixteen-*.whl; do
+            if [ -f "$wheel" ]; then
+              echo "Installing $wheel..."
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
+              break
+            fi
+          done
+          
+          # Install other default wheels (skip platform-specific and igdb variants)
+          for wheel in default_wheels/*.whl; do
+            if [ -f "$wheel" ]; then
+              # Skip igdb variants (already handled)
+              if [[ "$wheel" =~ (mwgg_igdb-|mwgg_igdb_sixteen-|mwgg_igdb_twelve-) ]]; then
+                continue
+              fi
+              # Skip Windows-specific wheels on Linux
+              if [[ "$wheel" =~ (win_amd64|win32) ]]; then
+                continue
+              fi
+              echo "Installing $wheel..."
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
+            fi
+          done
+          
+          # Install worlds wheels
+          for wheel in worlds_wheels/*.whl; do
+            if [ -f "$wheel" ]; then
+              echo "Installing $wheel..."
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
+            fi
+          done
+      
+      - name: Install AppImage build dependencies
         run: |
           sudo apt update
           sudo apt -y install build-essential p7zip xz-utils wget libglib2.0-0
-          sudo apt -y install python3-gi libgirepository1.0-dev  # should pull dependencies for gi installation below
-      - name: Get a recent python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '~3.12.7'
-          check-latest: true
-      - name: Install build-time dependencies
-        run: |
+          sudo apt -y install python3-gi libgirepository1.0-dev
+          source venv/bin/activate
+          pip install "PyGObject<3.51.0" charset-normalizer
+          
+          # NOTE: since appimage/appimagetool and appimage/type2-runtime does not have tags anymore,
+          #       we check the sha256 and require manual intervention if it was updated.
+          APPIMAGE_FORK='PopTracker'
+          APPIMAGETOOL_VERSION='r-2025-10-19'
+          APPIMAGETOOL_X86_64_HASH='9493a6b253a01f84acb9c624c38810ecfa11d99daa829b952b0bff43113080f9'
+          APPIMAGE_RUNTIME_VERSION='r-2025-08-11'
+          APPIMAGE_RUNTIME_X86_64_HASH='e70ffa9b69b211574d0917adc482dd66f25a0083427b5945783965d55b0b0a8b'
+          
           echo "PYTHON=python3.12" >> $GITHUB_ENV
           wget -nv https://github.com/$APPIMAGE_FORK/appimagetool/releases/download/$APPIMAGETOOL_VERSION/appimagetool-x86_64.AppImage
           echo "$APPIMAGETOOL_X86_64_HASH appimagetool-x86_64.AppImage" | sha256sum -c
@@ -134,54 +361,51 @@ jobs:
           ./appimagetool-x86_64.AppImage --appimage-extract
           echo -e '#/bin/sh\n./squashfs-root/AppRun --runtime-file runtime-x86_64 "$@"' > appimagetool
           chmod a+rx appimagetool
-      - name: Download run-time dependencies
+      
+      - name: Build AppImage
         run: |
-          wget -nv https://github.com/Ijwu/Enemizer/releases/download/$ENEMIZER_VERSION/ubuntu.16.04-x64.7z
-          7za x -oEnemizerCLI/ ubuntu.16.04-x64.7z
-      - name: Build
-        run: |
-          # pygobject is an optional dependency for kivy that's not in requirements
-          # charset-normalizer was somehow incomplete in the github runner
-          "${{ env.PYTHON }}" -m venv venv
           source venv/bin/activate
-          "${{ env.PYTHON }}" -m pip install --upgrade pip "PyGObject<3.51.0" charset-normalizer
-          python setup.py build_exe --yes bdist_appimage --yes
-          echo -e "setup.py build output:\n `ls build`"
-          echo -e "setup.py dist output:\n `ls dist`"
-          cd dist && export APPIMAGE_NAME="`ls *.AppImage`" && cd ..
-          export TAR_NAME="${APPIMAGE_NAME%.AppImage}.tar.gz"
-          (cd build && DIR_NAME="`ls | grep exe`" && mv "$DIR_NAME" MultiworldGG && tar -cv MultiworldGG | gzip -8 > ../dist/$TAR_NAME && mv MultiworldGG "$DIR_NAME")
-          echo "APPIMAGE_NAME=$APPIMAGE_NAME" >> $GITHUB_ENV
-          echo "TAR_NAME=$TAR_NAME" >> $GITHUB_ENV
-      # - code above copied from build.yml -
-      - name: Attest Build
-        uses: actions/attest-build-provenance@v2
+          python setup.py bdist_appimage
+      
+      - name: Rename AppImage to include version suffix
+        run: |
+          # Extract the full version from application.yaml
+          FULL_VERSION=$(grep 'app_version:' application.yaml | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "Full version from application.yaml: $FULL_VERSION"
+          
+          cd dist
+          # Find the AppImage file and rename it to include the full version
+          for file in *.AppImage; do
+            if [ -f "$file" ]; then
+              # Check if it already has the full version
+              if [[ ! "$file" =~ $FULL_VERSION ]]; then
+                # Extract base version without tag suffix (e.g., 0.7.177)
+                BASE_VERSION=$(echo "$FULL_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+                # Replace BASE_VERSION-x86_64 with FULL_VERSION-x86_64
+                newname=$(echo "$file" | sed -E "s/${BASE_VERSION}-/${FULL_VERSION}-/")
+                echo "Renaming $file to $newname"
+                mv "$file" "$newname"
+              fi
+            fi
+          done
+      
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
         with:
-          subject-path: |
-            build/exe.*/MultiworldGGLauncher
-            build/exe.*/MultiworldGGGenerate
-            build/exe.*/MultiworldGGServer
-            dist/*
-      - name: Add to Release
-        uses: softprops/action-gh-release@975c1b265e11dd76618af1c374e7981f9a6ff44a
-        with:
-          draft: true  # see above
-          prerelease: false
-          name: v${{ env.RELEASE_VERSION }}
-          files: |
-            dist/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: linux-appimage
+          path: dist/*.AppImage
+          retention-days: 90
 
-  build-release-macos:
+  build-mac-bundle:
+    name: Build macOS Bundle
+    needs: [determine-version, build-exe]
     runs-on: macos-latest
-    needs: create-release
+    continue-on-error: true
+    env:
+      APP_VERSION: ${{ needs.determine-version.outputs.version }}
     steps:
-      - name: Set RELEASE_VERSION
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-
       - uses: actions/checkout@v4
-
+      
       - name: Free disk space
         run: |
           # Remove pip cache
@@ -191,21 +415,27 @@ jobs:
           find . -type f -name "*.pyc" -delete 2>/dev/null || true
           # Show available disk space
           df -h
-
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          check-latest: true
+          cache: 'pip'  # Use pip cache to avoid re-downloading
+      
+      - name: Download macOS exe artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-exe
+          path: build/
+      
       - name: Install Homebrew dependencies
         run: |
           brew update
           brew install gtk+3 gobject-introspection
           # Clean up Homebrew cache immediately after install
           brew cleanup --prune=all
-
-      - name: Get a recent Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          check-latest: true
-          cache: 'pip'  # Use pip cache to avoid re-downloading
-
+      
       - name: Install build-time dependencies
         run: |
           # set your python command;
@@ -214,25 +444,76 @@ jobs:
           python3 -m pip install dmgbuild --no-cache-dir
           # Clean pip cache after install
           python3 -m pip cache purge || true
-
-      - name: Install run-time dependencies
+      
+      - name: Create virtual environment
         run: |
-          wget -nv https://github.com/Ijwu/Enemizer/releases/download/$ENEMIZER_VERSION/osx.10.12-x64.zip
-          unzip -d EnemizerCLI osx.10.12-x64.zip
-          rm osx.10.12-x64.zip
-
-      - name: Build
-        run: |
-          "${{ env.PYTHON }}" -m venv venv
+          python -m venv venv
           source venv/bin/activate
-          pip install --upgrade pip --no-cache-dir
-          pip install PyGObject charset-normalizer --no-cache-dir
-          python setup.py bdist_mac --yes
-
+          python -m pip install --upgrade pip --no-cache-dir
+          pip install -r requirements.txt
+          pip install -r build_requirements.txt
+          
+          # Install mwgg_igdb_sixteen (default age-filtered variant)
+          # Users can optionally install nr (unfiltered) later
+          for wheel in default_wheels/mwgg_igdb_sixteen-*.whl; do
+            if [ -f "$wheel" ]; then
+              echo "Installing $wheel..."
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
+              break
+            fi
+          done
+          
+          # Install other default wheels (skip platform-specific and igdb variants)
+          for wheel in default_wheels/*.whl; do
+            if [ -f "$wheel" ]; then
+              # Skip igdb variants (already handled)
+              if [[ "$wheel" =~ (mwgg_igdb-|mwgg_igdb_sixteen-|mwgg_igdb_twelve-) ]]; then
+                continue
+              fi
+              # Skip Windows-specific wheels on macOS
+              if [[ "$wheel" =~ (win_amd64|win32) ]]; then
+                continue
+              fi
+              # Skip Linux-specific wheels on macOS
+              if [[ "$wheel" =~ linux ]]; then
+                continue
+              fi
+              echo "Installing $wheel..."
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
+            fi
+          done
+          
+          # Install worlds wheels
+          for wheel in worlds_wheels/*.whl; do
+            if [ -f "$wheel" ]; then
+              echo "Installing $wheel..."
+              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
+            fi
+          done
+          
+          pip install --no-cache-dir PyGObject charset-normalizer
+          # Clean pip cache before build
+          pip cache purge || true
+      
+      - name: Build macOS bundle
+        run: |
+          source venv/bin/activate
+          python setup.py bdist_mac
+          
           APP_BINARY=$(ls build/ | grep ".app" | head -n 1 || echo "")
           echo "release: $APP_BINARY"
           echo "MACOS_APP=$APP_BINARY" >> $GITHUB_ENV
-
+          # Cleanup to save space for dmgbuild
+          rm -rf EnemizerCLI
+          rm -rf SNI
+          rm -rf build/exe.*
+          # Remove venv after build (dmgbuild doesn't need it)
+          deactivate || true
+          rm -rf venv
+          # Remove Python build artifacts
+          rm -rf .build
+          find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+      
       - name: Attest Build
         uses: actions/attest-build-provenance@v2
         with:
@@ -240,20 +521,111 @@ jobs:
             build/${{ env.MACOS_APP }}/Contents/MacOS/MultiworldGGLauncher
             build/${{ env.MACOS_APP }}/Contents/MacOS/MultiworldGGGenerate
             build/${{ env.MACOS_APP }}/Contents/MacOS/MultiworldGGServer
-
-      - name: Create DMG with dmgbuild
+      
+      - name: Build macOS DMG
         run: |
           dmgbuild -s .github/dmg_settings.py \
-            "MultiworldGG v${{ env.RELEASE_VERSION }}" \
-            "build/MultiworldGG_${{ env.RELEASE_VERSION }}.dmg"
-
-      - name: Add to Release
-        uses: softprops/action-gh-release@975c1b265e11dd76618af1c374e7981f9a6ff44a
+            "MultiworldGG v${{ env.APP_VERSION }}" \
+            "build/MultiworldGG_${{ env.APP_VERSION }}.dmg"
+      
+      - name: Rename DMG to include version suffix
+        run: |
+          # Extract the full version from application.yaml
+          FULL_VERSION=$(grep 'app_version:' application.yaml | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "Full version from application.yaml: $FULL_VERSION"
+          
+          # Extract just the tag suffix (e.g., a6)
+          TAG_SUFFIX=$(echo "$FULL_VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+//')
+          echo "Tag suffix: $TAG_SUFFIX"
+          
+          cd build
+          # Find the DMG file and rename it to include the version tag suffix
+          for file in *.dmg; do
+            if [ -f "$file" ]; then
+              # Extract base name without extension
+              basename="${file%.dmg}"
+              # Check if it already has the version suffix
+              if [[ ! "$basename" =~ $TAG_SUFFIX$ ]]; then
+                newname="${basename}${TAG_SUFFIX}.dmg"
+                echo "Renaming $file to $newname"
+                mv "$file" "$newname"
+              fi
+            fi
+          done
+      
+      - name: Upload macOS bundle artifact
+        uses: actions/upload-artifact@v4
         with:
-          draft: true
+          name: macos-bundle
+          path: |
+            build/*.dmg
+          retention-days: 90
+
+  create-release:
+    name: Create GitHub Release
+    needs: [determine-version, build-exe, build-linux-appimage, build-mac-bundle, build-windows-installer]
+    runs-on: ubuntu-latest
+    if: |
+      always() && 
+      (needs.build-exe.result == 'success' || needs.build-exe.result == 'failure')
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts/
+      
+      - name: Display structure of downloaded files
+        run: ls -R release-artifacts/
+      
+      - name: Create release notes
+        run: |
+          cat > release-notes.md << 'EOF'          
+          ## Downloads
+          
+          ### Windows
+          - **Installer**: `Setup MultiworldGG *.exe` (recommended)
+          - **Portable**: Extract from `windows-exe.zip`
+          
+          ### Linux
+          - **AppImage**: `*.AppImage` (recommended)
+          - **Portable**: Extract from `linux-exe.zip`
+          
+          ### macOS
+          - **Bundle**: `*.app` or `*.dmg`
+          - **Portable**: Extract from `macos-exe.zip`
+          
+          ## Installation
+          
+          ### Windows
+          Run the installer or extract the portable version.
+          
+          ### Linux
+          ```bash
+          chmod +x MultiworldGG-*.AppImage
+          ./MultiworldGG-*.AppImage
+          ```
+          
+          ### macOS
+          Mount the DMG and drag to Applications, or run the .app directly.
+          
+          ---
+          
+          **Note**: This is a release build.
+          EOF
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.determine-version.outputs.version }}
+          name: MultiworldGG ${{ needs.determine-version.outputs.version }}
+          body_path: release-notes.md
+          draft: false
           prerelease: false
-          name: v${{ env.RELEASE_VERSION }}
           files: |
-            build/MultiworldGG_${{ env.RELEASE_VERSION }}.dmg
+            release-artifacts/windows-installer/*.exe
+            release-artifacts/linux-appimage/*.AppImage
+            release-artifacts/macos-bundle/*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

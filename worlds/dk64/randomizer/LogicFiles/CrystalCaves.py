@@ -58,8 +58,8 @@ LogicRegions = {
         TransitionFront(Regions.CavesGGRoom, lambda l: (l.punch and l.chunky) or l.CanPhase() or l.CanPhaseswim() or l.checkBarrier(RemovedBarriersSelected.caves_ice_walls)),
         TransitionFront(Regions.CavesBlueprintCave, lambda l: (l.mini and l.twirl and l.istiny) or l.CanPhase() or l.CanSkew(True)),
         TransitionFront(Regions.CavesBonusCave, lambda l: (l.mini and l.istiny) or l.CanPhase() or l.CanSkew(True)),
-        TransitionFront(Regions.CavesBlueprintPillar, lambda l: (l.jetpack and l.diddy) or (l.monkey_maneuvers and ((l.balloon and l.lanky) or ((not l.settings.shuffle_shops) and l.twirl and l.tiny)))),
-        TransitionFront(Regions.CavesBananaportSpire, lambda l: (l.jetpack and l.diddy) or l.monkey_maneuvers),
+        TransitionFront(Regions.CavesBlueprintPillar, lambda l: (l.jetpack and l.isdiddy) or (l.monkey_maneuvers and ((l.balloon and l.islanky) or ((not l.settings.shuffle_shops) and l.twirl and l.istiny)))),
+        TransitionFront(Regions.CavesBananaportSpire, lambda l: (l.jetpack and l.isdiddy) or l.monkey_maneuvers),
         TransitionFront(Regions.BoulderCave, lambda l: (l.punch and l.chunky) or l.CanSkew(True) or l.checkBarrier(RemovedBarriersSelected.caves_ice_walls)),
         TransitionFront(Regions.CavesLankyRace, lambda l: (l.CanSlamSwitch(Levels.CrystalCaves, 2) and (l.balloon or l.monkey_maneuvers) and l.islanky) or l.CanPhase() or l.CanSkew(True), Transitions.CavesMainToRace),
         TransitionFront(Regions.FrozenCastle, lambda l: (l.CanSlamSwitch(Levels.CrystalCaves, 2) and l.islanky) or l.CanSkew(True), Transitions.CavesMainToCastle),
@@ -138,7 +138,7 @@ LogicRegions = {
     ),
 
     Regions.FrozenCastle: Region("Frozen Castle", HintRegion.MainCaves, Levels.CrystalCaves, False, None, [
-        LocationLogic(Locations.CavesLankyCastle, lambda l: l.Slam and (l.islanky or (l.settings.free_trade_items and (not l.isdonkey or l.superSlam)))),
+        LocationLogic(Locations.CavesLankyCastle, lambda l: l.Slam and (l.islanky or (l.settings.free_trade_items and ((l.isdiddy or l.islanky or l.istiny or l.ischunky) or l.superSlam)))),
         LocationLogic(Locations.KremKap_CavesNPC_IceTomato, lambda l: l.camera),
     ], [], [
         TransitionFront(Regions.CrystalCavesMain, lambda _: True, Transitions.CavesCastleToMain),

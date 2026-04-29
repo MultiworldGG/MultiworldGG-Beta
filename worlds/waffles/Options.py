@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
-from Options import Choice, Range, Toggle, DeathLink, DefaultOnToggle, OptionSet, OptionGroup, PerGameCommonOptions, Visibility
+from Options import Choice, Range, Toggle, DeathLink, DefaultOnToggle, OptionSet, OptionGroup, PerGameCommonOptions, Visibility, StartInventoryPool
 
+from .Tricks import logic_tricks
 
 class Goal(Choice):
     """
@@ -42,19 +43,19 @@ class LocalYoshiEggPlacement(OptionSet):
     and both of them will not exceed the 255 egg limit.
     """
     display_name = "Local Yoshi Egg Placement"
-    valid_keys = {
+    valid_keys = [
         "Every Level",
         "Castles",
         "Switch Palaces",
         "Ghost Houses",
         "Special Zone",
-    }
-    default = {
+    ]
+    default = [
         "Castles",
         "Switch Palaces",
         "Ghost Houses",
         "Special Zone",
-    }
+    ]
 
 
 class PercentageOfYoshiEggs(Range):
@@ -125,7 +126,7 @@ class BlockChecks(OptionSet):
       * Blocks that are unreachable unless you glitch your way in
     """
     display_name = "Block Checks"
-    default = {
+    default = [
         "Coin Blocks",
         "Item Blocks",
         "Yellow Switch Palace Blocks",
@@ -133,8 +134,8 @@ class BlockChecks(OptionSet):
         "Invisible Blocks",
         "P-Switch Blocks",
         "Flying Blocks",
-    }
-    valid_keys = {
+    ]
+    valid_keys = [
         "Coin Blocks",
         "Item Blocks",
         "Yellow Switch Palace Blocks",
@@ -142,7 +143,7 @@ class BlockChecks(OptionSet):
         "Invisible Blocks",
         "P-Switch Blocks",
         "Flying Blocks",
-    }
+    ]
 
 
 class BowserCastleDoors(Choice):
@@ -298,18 +299,11 @@ class CarrylessExits(Range):
     default = 0
 
 
-class SwapLevelExits(Toggle):
-    """
-    Swaps the destination of level exits in the map
-
-    Star World 5 and Donut Secret House are excluded from this feature
-    """
-    display_name = "Swap Level Exits"
-
-
 class SwapExitCount(Range):
     """
-    How many swapped exits will exist in the game
+    How many levels will have their exits swapped
+
+    Star World 5 and Donut Secret House are excluded from this feature
     """
     display_name = "Swap Exit Count"
     range_start = 0
@@ -330,7 +324,26 @@ class AbilityItemShuffle(OptionSet):
     If an ability is not present in the list they will be treated as unlocked from the start
     """
     display_name = "Ability Shuffle"
-    default = {
+    default = [
+        "Run",
+        "Carry",
+        "Swim",
+        "Spin Jump",
+        "Climb",
+        "P-Balloon",
+        "Yoshi",
+        "Powerups",
+        "Super Star",
+        "P-Switch",
+        "Item Box",
+        #"Midway Points",
+        "Yellow Switch Palace",
+        "Green Switch Palace",
+        "Red Switch Palace",
+        "Blue Switch Palace",
+        "Special World",
+    ]
+    valid_keys = [
         "Run",
         "Carry",
         "Swim",
@@ -348,26 +361,7 @@ class AbilityItemShuffle(OptionSet):
         "Red Switch Palace",
         "Blue Switch Palace",
         "Special World",
-    }
-    valid_keys = {
-        "Run",
-        "Carry",
-        "Swim",
-        "Spin Jump",
-        "Climb",
-        "P-Balloon",
-        "Yoshi",
-        "Powerups",
-        "Super Star",
-        "P-Switch",
-        "Item Box",
-        "Midway Points",
-        "Yellow Switch Palace",
-        "Green Switch Palace",
-        "Red Switch Palace",
-        "Blue Switch Palace",
-        "Special World",
-    }
+    ]
 
 
 class GameLogicDifficulty(Choice):
@@ -384,14 +378,48 @@ class GameLogicDifficulty(Choice):
     option_easy = 0
     option_medium = 1
     option_hard = 2
-    default = 0
+    default = 1
+
+
+class AlternateLogic(OptionSet):
+    """
+    Alternate logic for certain locations.
+    """
+    display_name = "Alternate Logic"
+    default = []
+    valid_keys = logic_tricks
 
 
 class InventoryYoshiLogic(Toggle):
     """
-    Whether being able to use Yoshi inventory items is considered in logic or not for Blue Yoshi logic
+    Whether being able to use Yoshi inventory items is considered in logic or not for Yoshi related logic
+    If disabled, you need to reach a level with a Yoshi block on it in order to have Yoshi related checks in logic.
     """
     display_name = "Inventory Yoshi Logic"
+
+
+class DecoupledYoshiCarry(DefaultOnToggle):
+    """
+    Whether Yoshi's Tongue requires an additional Progressive Yoshi item to be unlocked or not.
+    If disabled, Yoshi will be able to use his tongue immediately after unlocking him.
+    """
+    display_name = "Decoupled Yoshi Carry"
+
+
+class DecoupledWallRun(DefaultOnToggle):
+    """
+    Whether Wall Run Anywhere requires an additional Progressive Run item or not.
+    If disabled, Mario will gain the ability right after getting a Run item.
+    """
+    display_name = "Decoupled Wall Run Anywhere"
+
+
+class DecoupledFastSwim(DefaultOnToggle):
+    """
+    Whether Fast Swimming requires an additional Progressive Swim item or not.
+    If disabled, Mario will gain the ability right after getting a Swim item.
+    """
+    display_name = "Decoupled Fast Swimming"
 
 
 class DisplayReceivedItemPopups(Choice):
@@ -404,6 +432,16 @@ class DisplayReceivedItemPopups(Choice):
     option_progression = 2
     option_progression_minus_yoshi_eggs = 3
     default = 3
+
+
+class LuigiPhysics(Toggle):
+    """
+    Enables SMA2 Luigi physics.
+    WARNING: Logic does not account for those physics and probably never will.
+    If you're watching this you're very likely a power user or your front end is revealing a bit too much info lol.
+    """
+    display_name = "Luigi Physics"
+    visibility = Visibility.none
 
 
 class JunkFillPercentage(Range):
@@ -631,12 +669,21 @@ class TrapLink(Toggle):
     display_name = "Trap Link"
 
 
+class DeathLinkHeart(Toggle):
+    """
+    Whenever DeathLinks are received they will be nullified at the cost of a heart
+    """
+    display_name = "Death Link Heart Cover"
+
+
 class UngoldenEggs(DefaultOnToggle):
     """
     Does exactly what you're thinking of.
+    (Removes Useful Tag from eggs and nothing else)
+    If you're watching this you're very likely a power user or your front end is revealing a bit too much info lol.
     """
     display_name = "No mas huevos dorados"
-    visibility = Visibility.template | Visibility.simple_ui | Visibility.complex_ui
+    visibility = Visibility.none
 
 
 waffle_option_groups = [
@@ -649,7 +696,12 @@ waffle_option_groups = [
     OptionGroup("Logic", [
         AbilityItemShuffle,
         GameLogicDifficulty,
+        AlternateLogic,
         InventoryYoshiLogic,
+        DecoupledYoshiCarry,
+        DecoupledWallRun,
+        DecoupledFastSwim,
+        LuigiPhysics,
     ]),
     OptionGroup("Location Options", [
         DragonCoinChecks,
@@ -665,7 +717,6 @@ waffle_option_groups = [
         LevelShuffle,
         LevelEffects,
         CarrylessExits,
-        SwapLevelExits,
         SwapExitCount,
         SwapDonutGhostHouseExits,
         MapTeleportShuffle,
@@ -707,13 +758,20 @@ waffle_option_groups = [
 
 @dataclass
 class WaffleOptions(PerGameCommonOptions):
+    start_inventory_from_pool: StartInventoryPool
     death_link: DeathLink
+    death_link_heart: DeathLinkHeart
     ring_link: RingLink
     trap_link: TrapLink
     energy_link: EnergyLink
     ability_shuffle: AbilityItemShuffle
     game_logic_difficulty: GameLogicDifficulty
+    alternate_logic: AlternateLogic
     inventory_yoshi_logic: InventoryYoshiLogic
+    decoupled_yoshi_carry: DecoupledYoshiCarry
+    decoupled_wall_run_anywhere: DecoupledWallRun
+    decoupled_fast_swimming: DecoupledFastSwim
+    luigi_physics: LuigiPhysics
     goal: Goal
     yoshi_egg_count: NumberOfYoshiEggs
     percentage_of_yoshi_eggs: PercentageOfYoshiEggs
@@ -733,7 +791,6 @@ class WaffleOptions(PerGameCommonOptions):
     map_teleport_shuffle: MapTeleportShuffle
     map_transition_shuffle: MapTransitionShuffle
     carryless_exits: CarrylessExits
-    swap_level_exits: SwapLevelExits
     swap_exit_count: SwapExitCount
     swap_donut_gh_exits: SwapDonutGhostHouseExits
     #exclude_special_zone: ExcludeSpecialZone

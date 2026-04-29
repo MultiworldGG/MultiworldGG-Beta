@@ -1,7 +1,6 @@
 {
-    "game": "Balatro",
-    "authors": ["Burndi"],
-    "igdb_id": 251833,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.0.1"
+  "game": "Balatro",
+  "authors" : ["Burndi"],
+  "igdb_id": 251833,
+  "world_version": "0.0.2"
 }

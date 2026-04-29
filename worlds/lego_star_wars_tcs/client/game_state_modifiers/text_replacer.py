@@ -59,6 +59,9 @@ class TextId(IntEnum):
     # The "Paused" text displayed below the name of the player that paused the game. Goal information is appended here.
     PAUSED = 705
 
+    # Unused in the PC version. Being overwritten in locked_cantina_door_display.py.
+    WII_MOTION_CONTROL_HINT_1 = 1675
+
 
 logger = logging.getLogger("Client")
 debug_logger = logging.getLogger("TCS Debug")
@@ -178,7 +181,7 @@ class TextReplacer(ClientComponent):
             return
         self._set_custom_bytes(string_index, data.vanilla_string, len(data.vanilla_string))
 
-    # Public methods should always take TextId arguments.
+    # Public methods should always take TextId arguments if possible.
 
     def write_custom_string(self, string_index: TextId, replacement: str, minimum_allocate_size=256):
         replacement_bytes = replacement.encode("utf-8", "replace") + b"\x00"
@@ -186,6 +189,12 @@ class TextReplacer(ClientComponent):
 
     def write_vanilla_string(self, string_index: TextId):
         self._write_vanilla_string(string_index.value)
+
+    def write_raw_custom_string(self, localization_id: int, replacement: bytes, minimum_allocate_size=256):
+        self._set_custom_bytes(localization_id, replacement, minimum_allocate_size)
+
+    def write_raw_vanilla_string(self, localization_id: int):
+        self._write_vanilla_string(localization_id)
 
     def suffix_custom_string(self, string_index: TextId, to_append: str, minimum_allocate_size=256):
         """Write a suffix string onto the end of the vanilla string."""

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+import os
 import sys
 import asyncio
 import collections
@@ -11,21 +13,20 @@ import urllib.parse
 
 import ModuleUpdate
 import Utils
+apname = Utils.instance_name if Utils.instance_name else "Archipelago"
 from NetUtils import ClientStatus
 from CommonClient import gui_enabled, logger, get_base_parser, ClientCommandProcessor, \
     server_loop
 from .options import SmsOptions
 from .bit_helper import change_endian, bit_flagger, extract_bits
+from .regions import ALL_REGIONS, get_location_name_to_id
+from .items import TICKET_ITEMS
 import dolphin_memory_engine as dme
 from . import addresses
+from settings import get_settings
 import Utils
 
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
-
-''' "Comment-Dictionary"
-    #Gravi01    Preventing Crash when game is closed/disconnected before Client + Allowing client to reconnect
-
-'''
 
 CONNECTION_REFUSED_GAME_STATUS = (
     "Dolphin failed to connect. Please load a randomized ROM for Super Mario Sunshine. Trying again in 5 seconds..."
@@ -44,8 +45,10 @@ world_flags = {}
 
 DEBUG = False
 GAME_VER = 0x3a
-AP_WORLD_VERSION_NAME = "0.6.4"
-CLIENT_VERSION = "0.5.0"
+AP_WORLD_VERSION_NAME = "0.6.7"
+CLIENT_VERSION = "0.6.2"
+
+DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE = "DME_DOLPHIN_PROCESS_NAME"
 
 
 @dataclass
@@ -62,7 +65,6 @@ NOZZLES: list[NozzleItem] = [
     NozzleItem("Yoshi", 53013)
 ]
 
-
 class SmsCommandProcessor(ClientCommandProcessor):
     def _cmd_connect(self, address: str = "") -> bool:
         if isinstance(self.ctx, SmsContext):
@@ -70,9 +72,23 @@ class SmsCommandProcessor(ClientCommandProcessor):
 
     def _cmd_resync(self):
         """Manually trigger a resync."""
-        self.output(f"Syncing items.")
+        self.output("Syncing items.")
         self.ctx.syncing = True
         refresh_collection_counts(self.ctx)
+
+    def _cmd_change_dolphin_process_name(self, process_name: str):
+        """Specify the name of the Dolphin process to connect to. "" for system default."""
+        self.ctx.hook_check = False
+        self.ctx.hook_name = process_name
+        logger.info(f"Changing Dolphin process name to: {process_name if process_name else ""}")
+        from . import SuperMarioSunshineSettings
+        settings: SuperMarioSunshineSettings = get_settings().sms_options
+        settings.dolphin_process_name = SuperMarioSunshineSettings.DolphinProcessName(process_name)
+        get_settings().save()
+        log_msg: str = f"Dolphin process name set to {process_name or "default"}. You must open a new client for this to take effect."
+        logger.info(log_msg)
+        Utils.messagebox("Close SMS Client to take effect", log_msg)
+        Utils.async_start(unhook_dolphin(self.ctx))
 
 class SmsContext(SuperContext):
     command_processor = SmsCommandProcessor
@@ -81,11 +97,8 @@ class SmsContext(SuperContext):
     items_handling = 0b111  # full remote
 
     options: SmsOptions
-
-    hook_check = False
-    hook_nagged = False
-
-    believe_hooked = False
+    hook_name: str = ""
+    hook_check = True
 
     lives_given = 0
     lives_switch = False
@@ -103,6 +116,12 @@ class SmsContext(SuperContext):
 
     ap_nozzles_received = []
 
+    # Current Shine/Blue Coins and Recv Shine/Blue Coin
+    curr_shines: int = 0
+    req_shine: int = 0
+    curr_blue_coins: int = 0
+    req_blue_coins: int = 0
+
     def __init__(self, server_address, password, ready_callback=None, error_callback=None):
         super(SmsContext, self).__init__(server_address, password)
         self.ready_callback = ready_callback
@@ -118,6 +137,13 @@ class SmsContext(SuperContext):
         if self.ready_callback:
             from kivy.clock import Clock
             Clock.schedule_once(self.ready_callback, 0.1)
+
+        from . import SuperMarioSunshineSettings
+        settings: SuperMarioSunshineSettings = get_settings().sms_options
+        if settings.dolphin_process_name:
+            os.environ[DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE] = settings.dolphin_process_name
+        elif DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE in os.environ:
+            del os.environ[DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE]
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
@@ -157,12 +183,16 @@ class SmsContext(SuperContext):
             temp = slot_data.get("starting_nozzle")
             if temp:
                 self.fludd_start = temp
-            temp = slot_data.get("ticket_mode")
+            temp = slot_data.get("level_access")
             if temp:
                 self.ticket_mode = temp
 
+            self.req_shine = self.goal
+            self.req_blue_coins = slot_data.get("blue_coin_maximum", 0)
+
             if "death_link" in slot_data:
                 Utils.async_start(self.update_death_link(bool(slot_data["death_link"])))
+
 
     def on_deathlink(self, data: dict):
         super().on_deathlink(data)
@@ -178,6 +208,37 @@ class SmsContext(SuperContext):
             return self.goal
         else:
             return 50
+
+    def make_gui(self):
+        # Performing local import to prevent additional UIs to appear during the patching process.
+        # This appears to be occurring if a spawned process does not have a UI element when importing kvui/kivymd.
+        from .sms_tab import build_gui, GameManager, MDLabel
+
+        ui: type[GameManager] = super().make_gui()
+        class SMSGuiWrapper(ui):
+            shine_count: MDLabel
+            blue_coins: MDLabel
+            tickets: MDLabel
+            base_title = "Super Mario Sunshine Client"
+
+            def build(self):
+                container = super().build()
+
+                self.base_title += f" |  {apname}"
+                build_gui(self)
+
+                return container
+
+            def update_corona_shine_count(self, shine_count: int, shines_required: int):
+                self.shine_count.text = f"{shine_count} / {shines_required}"
+
+            def update_blue_coins(self, blue_coins: int, coins_req: int):
+                self.blue_coins.text = f"{blue_coins} / {coins_req}"
+
+            def update_ticket_list(self, ticket_list: set[str]):
+                self.tickets.text = "; ".join(ticket_list)
+
+        return SMSGuiWrapper
 
 
 storedShines = []
@@ -215,13 +276,6 @@ async def game_watcher(ctx: SmsContext):
     previous_lives = None
 
     while not ctx.exit_event.is_set():
-        '''
-        dme.is_hooked() returns true if just the emulation stops, as dolphin itself is still running
-        this causes the dme to write into a non existing memory, resulting in the crashes.
-        changed if to check based on connection status, and unhooking DME properly if connection is lost (Exception)
-
-        ctx.slot None means we are not connected to the AP server.
-        '''
         if not dme.is_hooked() or ctx.slot is None:
             await asyncio.sleep(5)
             continue
@@ -236,7 +290,7 @@ async def game_watcher(ctx: SmsContext):
         if "DeathLink" in ctx.tags:
             await check_death(ctx, previous_lives)
             try:
-                previous_lives = dme.read_byte(addresses.SMS_LIVES_COUNTER)
+                previous_lives = dme.read_word(dme.read_word(addresses.SMS_FLAGS_PTR) + addresses.LIVES_COUNT_OFFSET)
             except:
                 pass
 
@@ -264,9 +318,9 @@ async def check_death(ctx: SmsContext, previous_lives):
         return
 
     try:
-        current_lives = dme.read_byte(addresses.SMS_LIVES_COUNTER)
-        if current_lives < previous_lives:
-            if not ctx.has_send_death and time.time() >= ctx.last_death_link + 3:
+        current_lives = dme.read_word(dme.read_word(addresses.SMS_FLAGS_PTR) + addresses.LIVES_COUNT_OFFSET)
+        if (current_lives < previous_lives != 255) or (current_lives == 0 and previous_lives == 255):
+            if not ctx.has_send_death and time.time() >= ctx.last_death_link + 6: #prevent more double-deaths
                 ctx.has_send_death = True
                 player_name = ctx.player_names[ctx.slot] if ctx.slot in ctx.player_names else "Player"
                 await ctx.send_death(f"{player_name} died!")
@@ -279,35 +333,35 @@ async def check_death(ctx: SmsContext, previous_lives):
 
 async def location_watcher(ctx):
     for x in range(0, addresses.SMS_SHINE_BYTE_COUNT):
-        targ_location = addresses.SMS_SHINE_LOCATION_OFFSET + x
+        targ_location = dme.read_word(addresses.SMS_FLAGS_PTR) + x
         cache_byte = dme.read_byte(targ_location)
         curShines[x] = cache_byte
         if storedShines[x] != curShines[x]:
-            memory_changed(ctx, x, curShines[x])
+            memory_changed(ctx, x, curShines[x], "Shine")
             storedShines[x] = curShines[x]
 
     # If possible, check if blue coin sanity is enabled or not
     for x in range(0, addresses.SMS_BLUECOIN_BYTE_COUNT):
-        targ_location = addresses.SMS_BLUECOIN_LOCATION_OFFSET + x
+        targ_location = dme.read_word(addresses.SMS_FLAGS_PTR) + addresses.BLUECOIN_LOC_OFFSET + x
         cache_byte = dme.read_byte(targ_location)
         curBlues[x] = cache_byte
         if storedBlues[x] != curBlues[x]:
-            memory_changed(ctx, x+15, curBlues[x]) # Add 15 to 'x' to align with blue coin IDs
+            memory_changed(ctx, x+15, curBlues[x], "Blue Coin") # Add 15 to 'x' to align with blue coin IDs
             storedBlues[x] = curBlues[x]
 
     for x in range(0, addresses.NOZZLE_BOXES_BYTE_COUNT):
-        targ_location = addresses.NOZZLE_BOXES_FLAGS_OFFSET + x
+        targ_location = dme.read_word(addresses.SMS_FLAGS_PTR) + addresses.NOZZLE_BOXES_OFFSET + x
         cache_byte = dme.read_byte(targ_location)
         curNozzleBoxes[x] = cache_byte
         if storedNozzleBoxes[x] != curNozzleBoxes[x]:
-            memory_changed(ctx, x+108, curNozzleBoxes[x])
+            memory_changed(ctx, x+108, curNozzleBoxes[x], "Nozzle")
             storedNozzleBoxes[x] = curNozzleBoxes[x]
 
     # Check corresponds to Shadow Mario Yoshi Egg Chase
-    delfino_yoshi_unlock = dme.read_byte(addresses.DELFINO_YOSHI_UNLOCK)
+    delfino_yoshi_unlock = dme.read_byte(dme.read_word(addresses.SMS_FLAGS_PTR) + addresses.DELFINO_YOSHI_OFFSET)
     if (delfino_yoshi_unlock & 0x80) and not ctx.checked_yoshi_egg:
         ctx.checked_yoshi_egg = True
-        memory_changed(ctx, 113, delfino_yoshi_unlock)
+        memory_changed(ctx, 113, delfino_yoshi_unlock, "Yoshi")
     return
 
 
@@ -323,7 +377,7 @@ async def handle_stages(ctx):
             ctx.bianco_flag |= dme.read_byte(TICKETS[0].address)
             dme.write_byte(TICKETS[0].address, ctx.bianco_flag)
             open_stage(TICKETS[0])
-        # Sets plaza state to 8 if it is not and goal hasn't been reached
+        # Sets plaza state to 8 if in ticket mode and goal hasn't been reached
         if ctx.ticket_mode == 1 and next_episode != 0x8 and not ctx.corona_message_given:
             dme.write_byte(addresses.SMS_NEXT_EPISODE, 8)
     if cur_stage != next_stage:
@@ -345,6 +399,24 @@ async def dolphin_sync_task(ctx: SmsContext) -> None:
                 # else:
                 if ctx.awaiting_rom:
                     await ctx.server_auth()
+
+                # If the client's ui has loaded
+                if ctx.ui:
+                    ctx.curr_shines = len([recv_item for recv_item in ctx.items_received if
+                        ctx.item_names.lookup_in_game(recv_item.item) == "Shine Sprite"])
+                    ctx.curr_blue_coins = len([recv_item for recv_item in ctx.items_received if
+                         ctx.item_names.lookup_in_game(recv_item.item) == "Blue Coin"])
+                    ctx.ui.update_corona_shine_count(ctx.curr_shines, ctx.req_shine)
+                    ctx.ui.update_blue_coins(ctx.curr_blue_coins, ctx.req_blue_coins)
+
+                    if ctx.ticket_mode:
+                        ticket_list: set[str] = set([ctx.item_names.lookup_in_game(recv_item.item).replace(" Ticket", "")
+                            for recv_item in ctx.items_received if ctx.item_names.lookup_in_game(recv_item.item) in TICKET_ITEMS])
+                        ctx.ui.update_ticket_list(ticket_list)
+                        flag_pointer = dme.read_word(addresses.SMS_FLAGS_PTR)
+                        boat_and_yoshi_flags = dme.read_byte(flag_pointer + addresses.DELFINO_YOSHI_OFFSET)
+                        dme.write_byte(flag_pointer + addresses.DELFINO_YOSHI_OFFSET, boat_and_yoshi_flags | 0x02)
+
                 await asyncio.sleep(0.1)
             else:
                 if ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
@@ -365,20 +437,24 @@ async def dolphin_sync_task(ctx: SmsContext) -> None:
                         await asyncio.sleep(5)
                 else:
                     logger.info("Connection to Dolphin failed, attempting again in 5 seconds...")
-                    dme_status = dme.get_status()
                     ctx.dolphin_status = CONNECTION_LOST_STATUS
-                    await ctx.disconnect()
+                    await unhook_dolphin(ctx)
                     await asyncio.sleep(5)
                     continue
         except Exception:
-            dme.un_hook()
             logger.info("Connection to Dolphin failed, attempting again in 5 seconds...")
             logger.error(traceback.format_exc())
             ctx.dolphin_status = CONNECTION_LOST_STATUS
-            await ctx.disconnect()
+            await unhook_dolphin(ctx)
             await asyncio.sleep(5)
             continue
 
+async def unhook_dolphin(ctx: SmsContext):
+    dme.un_hook()
+    if ctx.hook_check:
+        await ctx.disconnect()
+    else:
+        ctx.hook_check = True
 
 async def arbitrary_ram_checks(ctx):
     while not ctx.exit_event.is_set():
@@ -396,7 +472,7 @@ async def arbitrary_ram_checks(ctx):
         await asyncio.sleep(DELAY_SECONDS)
 
 
-def memory_changed(ctx: SmsContext, bit_pos, cached_byte):
+def memory_changed(ctx: SmsContext, bit_pos, cached_byte, loc_type: str):
     if DEBUG: logger.info(f"memory_changed: {cached_byte}, bit_pos: {bit_pos}")
     bit_list = []
 
@@ -404,7 +480,7 @@ def memory_changed(ctx: SmsContext, bit_pos, cached_byte):
     bit_list.extend(bit_found)
 
     # if DEBUG: logger.info("bit_list: " + str(bit_list))
-    parse_bits(bit_list, ctx)
+    parse_bits(bit_list, ctx, loc_type)
 
 
 def send_victory(ctx: SmsContext):
@@ -443,25 +519,37 @@ def send_victory(ctx: SmsContext):
     return
 
 
-def parse_bits(all_bits, ctx: SmsContext):
-    if DEBUG: logger.info("parse_bits: " + str(all_bits))
+def parse_bits(all_bits, ctx: SmsContext, parse_type: str):
+    if DEBUG:
+        logger.info("parse_bits: %s", str(all_bits))
     if len(all_bits) == 0:
         return
 
     for x in all_bits:
         if x != 119 and x <= 911:
-            temp = x + LOCATION_OFFSET
-            ctx.locations_checked.add(temp)
-            if DEBUG: logger.info("checks to send: " + str(temp))
+            for sms_region in ALL_REGIONS.values():
+                possible_locs: list[str] = []
+                match parse_type:
+                    case "Shine":
+                        possible_locs: list[str] = [f"{sms_region.name} - {shine_loc.name}" for shine_loc in
+                            sms_region.shines if shine_loc.in_game_bit == x]
+                    case "Blue Coin":
+                        possible_locs: list[str] = [f"{sms_region.name} - {blue_loc.name}" for blue_loc in
+                            sms_region.blue_coins if blue_loc.in_game_bit == x]
+                    case "Nozzle":
+                        possible_locs: list[str] = [f"{sms_region.name} - {nozz_loc.name}" for nozz_loc in
+                            sms_region.nozzle_boxes if nozz_loc.in_game_bit == x]
+                    case _:
+                        continue
+
+                if not possible_locs:
+                    continue
+
+                ctx.locations_checked.add(get_location_name_to_id()[possible_locs[0]])
+                if DEBUG:
+                    logger.info("checks to send: %s", possible_locs[0])
         elif x == 119:
             send_victory(ctx)
-
-
-def get_shine_id(location, value):
-    temp = location + value - addresses.SMS_SHINE_LOCATION_OFFSET
-    shine_id = int(temp)
-    return shine_id
-
 
 def refresh_item_count(ctx, item_id, targ_address):
     counts = collections.Counter(received_item.item for received_item in ctx.items_received)
@@ -469,7 +557,7 @@ def refresh_item_count(ctx, item_id, targ_address):
     #Gravi01 Begin      #Stacktrace where the original Exception was thrown. Keeping the changes in this place as well, you still land here without connection, due to it being an async task
     if ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
         try:
-            dme.write_byte(targ_address, temp) 
+            dme.write_word(targ_address, temp)
         except Exception:
             logger.info("Connection to Dolphin lost, reconnecting...")
             ctx.dolphin_status = CONNECTION_LOST_STATUS
@@ -491,9 +579,9 @@ def refresh_all_items(ctx: SmsContext):
 
 def refresh_collection_counts(ctx):
     #if DEBUG: logger.info("refresh_collection_counts")
-    refresh_item_count(ctx, 523004, addresses.SMS_SHINE_COUNTER)
+    refresh_item_count(ctx, 523004, dme.read_word(addresses.SMS_FLAGS_PTR) + addresses.SHINE_COUNT_OFFSET)
     if ctx.blue_status == 1:
-        refresh_item_count(ctx, 523014, addresses.SMS_BLUECOIN_COUNTER)
+        refresh_item_count(ctx, 523014, dme.read_word(addresses.SMS_FLAGS_PTR) + addresses.BLUECOIN_COUNT_OFFSET)
     refresh_all_items(ctx)
 
 
@@ -527,12 +615,6 @@ def unpack_item(item, ctx):
     elif 523004 < item < 523012:
         activate_ticket(item)
 
-
-# def disable_shadow_mario():
-#     if dme.is_hooked():
-#         dme.write_double(addresses.SMS_SHADOW_MARIO_STATE, 0)
-
-
 @dataclass
 class Ticket:
     item_name: str
@@ -562,7 +644,6 @@ def activate_ticket(id: int):
             handle_ticket(tickets)
             if not ticket_listing.__contains__(tickets.item_name):
                 ticket_listing.append(tickets.item_name)
-                logger.info("Current Tickets: " + str(ticket_listing))
 
 
 def handle_ticket(tick: Ticket):
@@ -626,6 +707,7 @@ async def resolve_tickets(stage, ctx):
             # Byte 1 should correspond to Delfino Plaza
             dme.write_byte(addresses.SMS_NEXT_STAGE, 1)
             dme.write_byte(addresses.SMS_CURRENT_STAGE, 1)
+            await send_map_id(1, ctx)
         else:
             await send_map_id(stage, ctx)
     return

@@ -54,6 +54,7 @@ class CTJoTWorld(World):
     version: str = AP_VERSION
     options: CTJoTOptions
     options_dataclass = CTJoTOptions
+
     item_name_to_id = _item_manager.get_item_name_to_id_mapping()
     location_name_to_id = _location_manager.get_location_name_to_id_mapping()
 

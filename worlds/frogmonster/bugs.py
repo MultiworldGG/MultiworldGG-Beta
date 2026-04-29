@@ -44,7 +44,7 @@ every_bug = [  # Regions values are noncomprehensive. Regions are excluded if th
     BugType(name=i.spider,         bug_id=26, slot_cost=2, regions=[(r.old_road, lambda player, dif, state: can_fight(c.old_road_general, player, dif, state))]),
     BugType(name=i.moth,           bug_id=27, slot_cost=2, regions=[(r.old_road, nothing)]),
     BugType(name=i.ammofly,        bug_id=28, slot_cost=2, regions=[(r.treetops, lambda player, dif, state: can_fight(c.treetops_arena_1, player, dif, state)), (r.old_wood, nothing)]),  # after arena 1, before big door
-    BugType(name=i.pecker,         bug_id=29, slot_cost=3, regions=[(r.thickness, nothing), (r.moridonos, nothing)]),  # verify these
+    BugType(name=i.pecker,         bug_id=29, slot_cost=3, regions=[(r.thickness, nothing), (r.moridonos_layer_turtle, nothing)]),  # verify these
     BugType(name=i.soul_fish,      bug_id=30, slot_cost=1, regions=[(r.anywhere, nothing), (r.city, nothing)]),  # Death possible in water in Lost Swamp, so anywhere.
     BugType(name=i.fog_fly,        bug_id=31, slot_cost=3, regions=[(r.fog_garden, nothing), (r.temple, lambda player, dif, state: can_fight(c.temple_general, player, dif, state))]),
     BugType(name=i.cicada,         bug_id=32, slot_cost=2, regions=[(r.cicada_cove, nothing)]),

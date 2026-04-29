@@ -6,7 +6,7 @@ import functools
 import urllib.parse
 
 from copy import deepcopy
-from typing import List, Any, Iterable
+from typing import Any, Iterable
 from NetUtils import decode, encode, JSONtoTextParser, NetworkItem, NetworkPlayer
 from MultiServer import Endpoint
 from CommonClient import CommonContext, server_loop, gui_enabled, ClientCommandProcessor, logger, get_base_parser
@@ -54,8 +54,8 @@ class TrackmaniaContext(CommonContext):
         self.connected_msg = None
         self.game_connected = False
         self.awaiting_info = False
-        self.full_inventory: List[Any] = []
-        self.server_msgs: List[Any] = []
+        self.full_inventory: list[Any] = []
+        self.server_msgs: list[Any] = []
         if self.ready_callback:
             from kivy.clock import Clock
             Clock.schedule_once(self.ready_callback, 0.1)

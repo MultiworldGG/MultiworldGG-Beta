@@ -4,9 +4,10 @@ from typing import TYPE_CHECKING
 from .data import data as crystal_data, TrainerPokemon
 from .items import get_random_filler_item
 from .moves import get_random_move_from_learnset
-from .options import RandomizeTrainerParties, RandomizeLearnsets, BoostTrainerPokemonLevels
+from .options import RandomizeTrainerParties, RandomizeLearnsets, BoostTrainerPokemonLevels, LevelCurve, LevelScaling
+from .utils import bound
 from .pokemon import get_random_pokemon, get_random_nezumi
-from .utils import pokemon_convert_friendly_to_ids
+from .pokemon_data import VANILLA_STARTERS
 
 if TYPE_CHECKING:
     from .world import PokemonCrystalWorld
@@ -31,6 +32,30 @@ def get_last_evolution(world: "PokemonCrystalWorld", pokemon):
     return get_last_evolution(world, world.random.choice(pkmn_data.evolutions).pokemon)
 
 
+def set_rival_starter_pokemon(world: "PokemonCrystalWorld"):
+    """Update rival trainer parties to use randomized starter species and moves."""
+    if not world.options.randomize_starters:
+        return
+
+    for evo_line, vanilla_line in zip(world.generated_starters, VANILLA_STARTERS):
+        for vanilla_name, new_pokemon in zip(vanilla_line, evo_line):
+            for trainer_name, trainer_data in world.generated_trainers.items():
+                if not trainer_name.startswith("RIVAL_" + vanilla_name):
+                    continue
+
+                rival_pkmn = trainer_data.pokemon[-1]
+                new_moves = rival_pkmn.moves
+                if rival_pkmn.moves:
+                    new_moves = []
+                    for _ in rival_pkmn.moves:
+                        new_moves.append(get_random_move_from_learnset(
+                            world, new_pokemon, rival_pkmn.level, exclude=new_moves))
+
+                new_pkmn = replace(rival_pkmn, pokemon=new_pokemon, moves=new_moves)
+                new_party = trainer_data.pokemon[:-1] + [new_pkmn]
+                world.generated_trainers[trainer_name] = replace(trainer_data, pokemon=new_party)
+
+
 def randomize_trainers(world: "PokemonCrystalWorld"):
     if world.options.boost_trainers:
         boost_trainer_pokemon(world)
@@ -40,7 +65,7 @@ def randomize_trainers(world: "PokemonCrystalWorld"):
             vanilla_trainer_movesets(world)
         return
 
-    trainer_party_blocklist = pokemon_convert_friendly_to_ids(world, world.options.trainer_party_blocklist)
+    trainer_party_blocklist = world.options.trainer_party_blocklist.get_ids(world)
 
     for trainer_name, trainer_data in world.generated_trainers.items():
         new_party = []
@@ -97,7 +122,7 @@ def randomize_trainer_pokemon_moves(world: "PokemonCrystalWorld", pkmn_data: Tra
     for move in pkmn_data.moves:
         # fill out all four moves if start_with_four_moves, else append NO_MOVE
         if move != "NO_MOVE" or world.options.randomize_learnsets == RandomizeLearnsets.option_start_with_four_moves:
-            new_move = get_random_move_from_learnset(world, new_pokemon, pkmn_data.level)
+            new_move = get_random_move_from_learnset(world, new_pokemon, pkmn_data.level, exclude=new_moves)
             new_moves.append(new_move)
         else:
             new_moves.append("NO_MOVE")
@@ -122,3 +147,21 @@ def boost_trainer_pokemon(world: "PokemonCrystalWorld"):
             world.generated_trainers[trainer_name],
             pokemon=new_party
         )
+
+
+def scale_red_levels(world: "PokemonCrystalWorld"):
+    if (world.options.level_scaling == LevelScaling.option_off
+            or world.options.level_curve == LevelCurve.option_vanilla):
+        return
+    vanilla_red = crystal_data.trainers["RED_1"]
+    new_base_level = world.options.level_curve_max_level.value
+    old_base_level = min(p.level for p in vanilla_red.pokemon)
+    red_data = world.generated_trainers["RED_1"]
+    new_pokemon = [
+        replace(p, level=bound(round(min(
+            new_base_level * vanilla_p.level / old_base_level,
+            new_base_level + vanilla_p.level - old_base_level
+        )), 1, 100))
+        for p, vanilla_p in zip(red_data.pokemon, vanilla_red.pokemon)
+    ]
+    world.generated_trainers["RED_1"] = replace(red_data, pokemon=new_pokemon)

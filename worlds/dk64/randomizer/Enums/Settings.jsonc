@@ -511,10 +511,16 @@
       The Model type for Ice Traps
     - Simple: Only GB Ice Traps will appear
     - Complex: Any Ice Trap Model will appear
+    - Fair: All ice traps except keys will appear
   */
   "IceTrapModel": {
     "simple": 0,
     "complex": 1
+  },
+  "IceTrapModel2": {
+    "simple": 0,
+    "complex": 1,
+    "fair": 2
   },
 
   /*
@@ -815,6 +821,19 @@
     "req_bean": 8,
     "req_pearl": 9,
     "req_cb": 10
+  },
+
+  /*
+    ProgressiveHintAlgorithm:
+    - Determines how quickly progressive hints are unlocked.
+    - slow: Hints are granted at a slower pace.
+    - medium: Default hint pacing.
+    - fast: Hints are granted more quickly.
+  */
+  "ProgressiveHintAlgorithm": {
+    "slow": 0,
+    "medium": 1,
+    "fast": 2
   },
 
   /*
@@ -1421,7 +1440,9 @@
     "ice_trap_model": 293,
     "krool_in_boss_pool_v2": 294,
     "no_consumable_upgrades": 295,
-    "bosses_selected": 296
+    "bosses_selected": 296,
+    "ice_trap_model_v2": 297,
+    "progressive_hint_algorithm": 298
   },
   /*
     SettingsStringDataType:
@@ -1478,6 +1499,7 @@
     "helm_setting": { "obj": "HelmSetting" },
     "ice_trap_frequency": { "obj": "IceTrapFrequency" },
     "ice_trap_model": { "obj": "IceTrapModel" },
+    "ice_trap_model_v2": { "obj": "IceTrapModel2" },
     "item_rando_list_selected": { "obj": "ItemRandoListSelected" },
     "kasplat_rando_setting": { "obj": "KasplatRandoSetting" },
     "krusha_ui": { "obj": "KrushaUi" },
@@ -1530,6 +1552,7 @@
     "chunky_phase_slam_req": { "obj": "SlamRequirement" },
     "puzzle_rando_difficulty": { "obj": "PuzzleRando" },
     "progressive_hint_item": { "obj": "ProgressiveHintItem" },
+    "progressive_hint_algorithm": { "obj": "ProgressiveHintAlgorithm" },
     "starting_moves_list_1": { "obj": "Items" },
     "starting_moves_list_2": { "obj": "Items" },
     "starting_moves_list_3": { "obj": "Items" },
@@ -2049,6 +2072,7 @@
     },
     "SettingsStringEnum.ice_trap_frequency": { "obj": "IceTrapFrequency" },
     "SettingsStringEnum.ice_trap_model": { "obj": "IceTrapModel" },
+    "SettingsStringEnum.ice_trap_model_v2": { "obj": "IceTrapModel2" },
     "SettingsStringEnum.ice_traps_damage": {
       "obj": "SettingsStringDataType.bool"
     },
@@ -2062,6 +2086,7 @@
       "obj": "SettingsStringDataType.bool"
     },
     "SettingsStringEnum.progressive_hint_item": { "obj": "ProgressiveHintItem" },
+    "SettingsStringEnum.progressive_hint_algorithm": { "obj": "ProgressiveHintAlgorithm" },
     "SettingsStringEnum.starting_moves_list_1": {
       "obj": "SettingsStringDataType.list"
     },

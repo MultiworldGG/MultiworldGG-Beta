@@ -1,5 +1,7 @@
 from typing import Any, TextIO
 from functools import partial
+import orjson
+import pkgutil
 
 from BaseClasses import Region, LocationProgressType, Tutorial
 from worlds.AutoWorld import World, WebWorld
@@ -31,12 +33,9 @@ class FrogmonsterWebWorld(WebWorld):
     tutorials = [setup_en]
 
 class FrogmonsterWorld(World):
-    """
-    Frogmonster is a metroidvania FPS Adventure where you explore a lively world filled with creatures, bugs, and beasts.
-    """
+    """Frogmonster is a first-person boss rush shooter adventure game where you play as the titular Frogmonster, slaying monsters, eating bugs, and saving the world from a mad bird god."""
 
     game = "Frogmonster"
-    author: str = "RoobyRoo"
     options: FrogmonsterOptions
     options_dataclass = FrogmonsterOptions
     location_name_to_id = location_id_table
@@ -46,10 +45,12 @@ class FrogmonsterWorld(World):
     item_name_groups = item_name_groups
     web = FrogmonsterWebWorld()
 
-    apworld_version = (0, 2, 1)
     shuffled_bug_effects: dict[int, int]
     starter_gun: FrogmonsterItem
     starter_spell: FrogmonsterItem
+
+    # UT Support. 
+    ut_can_gen_without_yaml = True
 
     def create_item(self, name: str) -> FrogmonsterItem:
         return FrogmonsterItem(name, item_data_table[name].type, item_data_table[name].id, self.player)
@@ -61,6 +62,18 @@ class FrogmonsterWorld(World):
         return i.coins
 
     def generate_early(self) -> None:
+        # UT Support. Override gen-specific options according to slot data
+        if hasattr(self.multiworld, "re_gen_passthrough"):
+            if "Frogmonster" in self.multiworld.re_gen_passthrough:
+                slot_data = self.multiworld.re_gen_passthrough["Frogmonster"]
+                self.options.game_difficulty.value = slot_data["difficulty"]
+                self.options.goal.value = slot_data["goal"]
+                self.options.shuffle_puzzles.value = 1 if slot_data["shuffle_puzzles"] else 0
+                self.options.open_city.value = 1 if slot_data["open_city"] else 0  # deconverting from the bool it's stored as
+                self.options.hardcore_parkour.value = slot_data["hardcore_parkour"]
+                self.options.well_light_logic.value = slot_data["well_light_logic"]
+                self.options.death_link = slot_data["death_link"]
+
         # Handling option: Shuffle Bug-Eating Effects
         bugs = [bug.bug_id for bug in every_bug if bug.name != i.mushroom]  
         shuffled_effects = bugs.copy()
@@ -167,10 +180,7 @@ class FrogmonsterWorld(World):
         if self.options.goal == 1:
             self.multiworld.get_location(l.eye_fragment, self.player).place_locked_item(self.create_item(i.eye_fragment))
             self.multiworld.get_location(l.goal, self.player).access_rule = lambda state: state.can_reach(l.eye_fragment, "Location", self.player)
-
-        # Set events.
-        #self.multiworld.get_location(l.workshop_access, self.player).place_locked_item(self.create_event(i.workshop_key))
-        #self.multiworld.get_location(l.orchus_key, self.player).place_locked_item(self.create_event(i.orchus_key))
+            parse_access_rule_group(self, access_rule_groups["goal_eye_chest_rules"])
 
         # Exclude or prioritize locations according to locations.py. This will be overwritten by any YAML declarations.
         for location in location_data_table.items():
@@ -206,7 +216,8 @@ class FrogmonsterWorld(World):
     def fill_slot_data(self) -> dict[str, Any]:
         slot_data: dict[str, Any] = {}
 
-        slot_data["apworld_version"] = self.apworld_version
+        apworld_manifest = orjson.loads(pkgutil.get_data(__name__, "archipelago.json").decode("utf-8"))
+        slot_data["apworld_version"] = apworld_manifest["world_version"]
 
         # Handling option: Shuffle Bug-Eating Effects
         bug_effect_array: list[int] = []
@@ -215,12 +226,15 @@ class FrogmonsterWorld(World):
         slot_data["shuffled_bug_effects"] = bug_effect_array
 
         # Other Options:
-        slot_data["shop_multiplier"] = self.options.shop_multiplier.value / 100 # Convert to decimal for client
-        slot_data["shuffle_puzzles"] = bool(self.options.shuffle_puzzles.value)
+        slot_data["shop_multiplier"] = self.options.shop_multiplier.value / 100  # Convert to decimal for client
+        slot_data["shuffle_puzzles"] = bool(self.options.shuffle_puzzles.value)  # Client expects true/false for these options
         slot_data["open_city"] = bool(self.options.open_city.value)
         slot_data["death_link"] = bool(self.options.death_link.value)
         slot_data["goal"] = self.options.goal.value
-
+        # These options only matter for UT. They mean nothing to the client.
+        slot_data["difficulty"] = self.options.game_difficulty.value
+        slot_data["hardcore_parkour"] = self.options.hardcore_parkour.value
+        slot_data["well_light_logic"] = self.options.well_light_logic.value
         return slot_data
     
     def write_spoiler(self, spoiler_handle: TextIO) -> None:

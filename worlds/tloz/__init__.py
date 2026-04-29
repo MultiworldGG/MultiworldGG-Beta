@@ -21,6 +21,7 @@ from .Options import TlozOptions
 from .Rom import TLOZProcedurePatch
 from .Rules import set_rules
 from .Client import TLOZClient
+from .EntranceRandoRules import create_entrance_randomizer_set
 from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import add_rule
 

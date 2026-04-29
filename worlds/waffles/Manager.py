@@ -9,9 +9,9 @@ import textwrap
 import argparse
 import tkinter as tk
 from argparse import Namespace
-from tkinter import Tk, Frame, Label, StringVar, Entry, filedialog, messagebox, Button, LEFT, X, BOTH, TOP, LabelFrame, \
-    Checkbutton, E, W, BOTTOM, RIGHT, font as font, BooleanVar
-from tkinter.ttk import Separator
+from tkinter import Tk, StringVar, Entry, filedialog, messagebox, LEFT, X, BOTH, TOP, \
+    E, W, BOTTOM, RIGHT, font as font, BooleanVar, LabelFrame
+from tkinter.ttk import Separator, OptionMenu, Button, Frame, Label, Checkbutton
 from tkinter.constants import DISABLED, NORMAL
 from Utils import persistent_store, get_adjuster_settings_no_defaults, tkinter_center_window, open_filename
 
@@ -21,7 +21,7 @@ import ModuleUpdate
 ModuleUpdate.update()
 
 GAME_NAME = "SMW: Spicy Mycena Waffles"
-WINDOW_MIN_HEIGHT = 420
+WINDOW_MIN_HEIGHT = 520
 WINDOW_MIN_WIDTH = 380
 
 
@@ -52,15 +52,19 @@ def manager_gui():
     manager_window = Tk()
     manager_window.minsize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT)
     manager_window.resizable(True, False)
-    manager_window.wm_title(f"Spicy Mycena Waffles Adjuster")
+    manager_window.wm_title(f"Spicy Mycena Waffles Manager")
 
     gfx_pack_frame, gfx_pack_vars = create_gfx_pack_frame(manager_window)
+    linked_frame, linked_vars = create_linked_frame(manager_window)
     enemy_shuffle_frame, enemy_shuffle_vars = create_enemy_shuffle_frame(manager_window)
-    file_frame, vars_ns = create_file_frame(manager_window, (gfx_pack_vars, enemy_shuffle_vars))
+    global_settings_frame = create_global_settings_frame(manager_window)
+    file_frame, vars_ns = create_file_frame(manager_window, (gfx_pack_vars, enemy_shuffle_vars, linked_vars))
 
-    file_frame.pack(side=TOP, padx=8, pady=8, fill=BOTH)
-    enemy_shuffle_frame.pack(side=TOP, padx=8, pady=8, fill=BOTH)
-    gfx_pack_frame.pack(side=TOP, padx=8, pady=8, fill=BOTH)
+    file_frame.pack(side=TOP, padx=8, pady=4, fill=BOTH)
+    global_settings_frame.pack(side=TOP, padx=8, pady=4, fill=BOTH)
+    linked_frame.pack(side=TOP, padx=8, pady=4, fill=BOTH)
+    enemy_shuffle_frame.pack(side=TOP, padx=8, pady=4, fill=BOTH)
+    gfx_pack_frame.pack(side=TOP, padx=8, pady=4, fill=BOTH)
 
     tkinter_center_window(manager_window)
     manager_window.mainloop()
@@ -73,7 +77,7 @@ def create_file_frame(parent=None, external_vars=None):
             for key, value in vars(var_group).items():
                 setattr(vars_ns, key, value)
 
-    frame = LabelFrame(parent, text="Graphics Pack Options", padx=8, pady=8)
+    frame = LabelFrame(parent, text="Patch File", padx=8, pady=8)
 
     vars_ns.patch_path = StringVar()
     load_frame = Frame(frame)
@@ -116,6 +120,10 @@ def load_data_from_patch(patch_path, vars_ns):
 
     vars_ns.enemy_shuffle_active.set(options_file["enemy_shuffle"])
     vars_ns.enemy_shuffle_seed.set(options_file["enemy_shuffle_seed"])
+    vars_ns.death_link.set(options_file["death_link"])
+    vars_ns.death_link_heart.set(options_file["death_link_heart"])
+    vars_ns.energy_link.set(options_file["energy_link"])
+    vars_ns.trap_link.set(options_file["trap_link"])
 
     if "graphics_pack" in options_file.keys():
         vars_ns.selected_pack.set(options_file["graphics_pack"])
@@ -133,6 +141,11 @@ def save_adjusted_data(vars_ns):
     options_file["enemy_shuffle"] = vars_ns.enemy_shuffle_active.get()
     options_file["enemy_shuffle_seed"] = vars_ns.enemy_shuffle_seed.get()
     options_file["graphics_pack"] = vars_ns.selected_pack.get()
+    
+    options_file["death_link"] = vars_ns.death_link.get()
+    options_file["death_link_heart"] = vars_ns.death_link_heart.get()
+    options_file["energy_link"] = vars_ns.energy_link.get()
+    options_file["trap_link"] = vars_ns.trap_link.get()
 
     zip_files["options.json"] = json.dumps(options_file)
 
@@ -181,7 +194,8 @@ def create_gfx_pack_frame(parent=None):
     pack_selected_value = Entry(pack_selected_frame, textvariable=vars_ns.selected_pack, state="readonly")
     pack_selected_value.pack(side=RIGHT, fill=X, expand=True)
     
-    persistent_settings = get_adjuster_settings_no_defaults("SMW: Spicy Mycena Waffles")
+    from Utils import persistent_load
+    persistent_settings = persistent_load().get("graphics_pack", {}).get(GAME_NAME, Namespace())
     if hasattr(persistent_settings, "selected_pack"):
         vars_ns.selected_pack.set(persistent_settings.selected_pack)
     pack_selected_button = Button(frame, text="Load Graphics Pack file", command=select_pack_window)
@@ -190,7 +204,7 @@ def create_gfx_pack_frame(parent=None):
         nonlocal vars_ns
         save_vars = Namespace()
         save_vars.selected_pack = vars_ns.selected_pack.get()
-        persistent_store("adjuster", GAME_NAME, save_vars)
+        persistent_store("graphics_pack", GAME_NAME, save_vars)
         messagebox.showinfo(title="Success", message="Saved global Graphics Pack!")
 
     save_button = Button(frame, text="Save as Global Graphics Pack", command=save_window)
@@ -205,6 +219,99 @@ def create_gfx_pack_frame(parent=None):
     extract_graphics_button.pack(side=TOP, fill=X)
 
     return frame, vars_ns
+
+
+def create_global_settings_frame(parent=None):
+    vars_ns = Namespace()
+    frame = LabelFrame(parent, text="Global Settings", padx=8, pady=8)
+
+    vars_ns.lr_wallrun = BooleanVar()
+    lr_wallrun_frame = Frame(frame)
+    lr_wallrun_check = Checkbutton(lr_wallrun_frame, variable=vars_ns.lr_wallrun)
+    lr_wallrun_check.pack(side=LEFT, fill=X)
+    lr_wallrun_label = Label(lr_wallrun_frame, text="Wall Run Anywhere requires holding L/R")
+    lr_wallrun_label.pack(side=LEFT, fill=X)
+
+    vars_ns.lr_swim = BooleanVar()
+    lr_swim_frame = Frame(frame)
+    lr_swim_check = Checkbutton(lr_swim_frame, variable=vars_ns.lr_swim)
+    lr_swim_check.pack(side=LEFT, fill=X)
+    lr_swim_label = Label(lr_swim_frame, text="Fast Swimming requires holding L/R")
+    lr_swim_label.pack(side=LEFT, fill=X)
+
+    vars_ns.mute_music = BooleanVar()
+    mute_music_frame = Frame(frame)
+    mute_music_check = Checkbutton(mute_music_frame, variable=vars_ns.mute_music)
+    mute_music_check.pack(side=LEFT, fill=X)
+    mute_music_label = Label(mute_music_frame, text="No music")
+    mute_music_label.pack(side=LEFT, fill=X)
+
+    def save_window():
+        nonlocal vars_ns
+        save_vars = Namespace()
+        save_vars.lr_wallrun = vars_ns.lr_wallrun.get()
+        save_vars.lr_swim = vars_ns.lr_swim.get()
+        save_vars.mute_music = vars_ns.mute_music.get()
+        persistent_store("global_settings", GAME_NAME, save_vars)
+        messagebox.showinfo(title="Success", message="Saved Global Settings!")
+
+    save_button = Button(frame, text="Save Global Settings", command=save_window)
+
+    mute_music_frame.pack(side=TOP, fill=X)
+    lr_wallrun_frame.pack(side=TOP, fill=X)
+    lr_swim_frame.pack(side=TOP, fill=X)
+    save_button.pack(side=TOP, fill=X)
+
+    from Utils import persistent_load
+    persistent_settings = persistent_load().get("global_settings", {}).get(GAME_NAME, Namespace())
+    if hasattr(persistent_settings, "lr_wallrun"):
+        vars_ns.lr_wallrun.set(persistent_settings.lr_wallrun)
+    if hasattr(persistent_settings, "lr_swim"):
+        vars_ns.lr_swim.set(persistent_settings.lr_swim)
+    if hasattr(persistent_settings, "mute_music"):
+        vars_ns.mute_music.set(persistent_settings.mute_music)
+
+    return frame
+
+
+def create_linked_frame(parent=None):
+    vars = Namespace()
+    frame = LabelFrame(parent, text="Linked Options", padx=8, pady=8)
+
+    vars.energy_link = BooleanVar()
+    energy_link_frame = Frame(frame)
+    energy_link_check = Checkbutton(energy_link_frame, variable=vars.energy_link)
+    energy_link_check.pack(side=LEFT, fill=X)
+    energy_link_label = Label(energy_link_frame, text="Enable Energy Link")
+    energy_link_label.pack(side=LEFT, fill=X)
+
+    vars.trap_link = BooleanVar()
+    trap_link_frame = Frame(frame)
+    trap_link_check = Checkbutton(trap_link_frame, variable=vars.trap_link)
+    trap_link_check.pack(side=LEFT, fill=X)
+    trap_link_label = Label(trap_link_frame, text="Enable Trap Link")
+    trap_link_label.pack(side=LEFT, fill=X)
+
+    vars.death_link = BooleanVar()
+    death_link_frame = Frame(frame)
+    death_link_check = Checkbutton(death_link_frame, variable=vars.death_link)
+    death_link_check.pack(side=LEFT, fill=X)
+    death_link_label = Label(death_link_frame, text="Enable Death Link")
+    death_link_label.pack(side=LEFT, fill=X)
+
+    vars.death_link_heart = BooleanVar()
+    death_link_heart_frame = Frame(frame)
+    death_link_heart_check = Checkbutton(death_link_heart_frame, variable=vars.death_link_heart)
+    death_link_heart_check.pack(side=LEFT, fill=X)
+    death_link_heart_label = Label(death_link_heart_frame, text="Hearts can nullify incoming Death Links")
+    death_link_heart_label.pack(side=LEFT, fill=X)
+
+    energy_link_frame.pack(side=TOP, fill=X)
+    trap_link_frame.pack(side=TOP, fill=X)
+    death_link_frame.pack(side=TOP, fill=X)
+    death_link_heart_frame.pack(side=TOP, fill=X)
+
+    return frame, vars
 
 
 def create_enemy_shuffle_frame(parent=None):

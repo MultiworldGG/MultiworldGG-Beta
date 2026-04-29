@@ -229,8 +229,9 @@ def create_items(self) -> None:
                            "Axe": "Progressive Axe",
                            "Bomb": "Progressive Bomb",
                            "Cat Claw": "Progressive Claw"}[starting_weapon]
-        self.multiworld.push_precollected(self.create_item("Progressive Armor"))
-    else:
+        if not self.options.shuffle_steel_armor:
+            self.multiworld.push_precollected(self.create_item("Progressive Armor"))
+    elif not self.options.shuffle_steel_armor:
         self.multiworld.push_precollected(self.create_item("Steel Armor"))
     self.multiworld.push_precollected(self.create_item(starting_weapon))
     if self.options.sky_coin_mode == "start_with":
@@ -238,10 +239,10 @@ def create_items(self) -> None:
 
     precollected_item_names = [item.name for item in self.multiworld.precollected_items[self.player]]
 
+    skipped_one_filler_item = False
+
     def add_item(item_name):
-        if item_name in ["Steel Armor", "Sky Fragment"] or "Progressive" in item_name:
-            return
-        if item_name.lower().replace(" ", "_") == self.options.starting_weapon.current_key:
+        if item_name == "Sky Fragment" or "Progressive" in item_name:
             return
         if item_name == "Sky Coin":
             if self.options.sky_coin_mode == "shattered_sky_coin":
@@ -253,8 +254,12 @@ def create_items(self) -> None:
                 return
 
         def check_precollected():
+            nonlocal skipped_one_filler_item
             if item_name in precollected_item_names:
-                items.append(self.create_filler())
+                if skipped_one_filler_item:
+                    items.append(self.create_filler())
+                else:
+                    skipped_one_filler_item = True
                 precollected_item_names.remove(item_name)
                 return True
             return False
@@ -288,7 +293,7 @@ def create_items(self) -> None:
     if self.options.sky_coin_mode == "shattered_sky_coin":
         self.multiworld.random.shuffle(filler_items)
         filler_items = filler_items[39:]
-    items += filler_items
+    items += filler_items[1:]
 
     self.multiworld.itempool += items
 

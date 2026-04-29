@@ -1,7 +1,7 @@
-{
+  {
     "game": "Celeste 64",
     "authors": [ "PoryGone" ],
     "igdb_id": 284430,
     "minimum_ap_version": "0.6.3",
-    "world_version": "1.3.2"
+    "world_version": "1.3.3"
 }
