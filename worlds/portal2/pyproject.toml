@@ -1,0 +1,14 @@
+[project]
+name = "worlds.portal2"
+version = "0.6.0"
+description = "MultiWorld: Portal 2"
+classifiers = ["Private :: Do Not Upload"]
+requires-python = ">=3.12"
+[[project.authors]]
+name = "GlassToadstool"
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["worlds.portal2"]
+namespaces = true

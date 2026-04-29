@@ -1,0 +1,20 @@
+[project]
+name = "worlds.am2r"
+version = "1.4.4"
+description = "MultiWorld: AM2R"
+classifiers = ["Private :: Do Not Upload"]
+requires-python = ">=3.12"
+[[project.authors]]
+name = "Ehseezed"
+[[project.authors]]
+name = "DodoBirby"
+[[project.authors]]
+name = "rm_steele"
+
+[project.entry-points."mwgg.client"]
+"worlds.am2r.Client" = "worlds.am2r:launch_client"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["worlds.am2r"]
+namespaces = true

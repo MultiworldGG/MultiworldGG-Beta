@@ -1,0 +1,16 @@
+[project]
+name = "worlds.pinball_fx3"
+version = "1.3.0"
+description = "MultiWorld: Pinball FX3"
+classifiers = ["Private :: Do Not Upload"]
+requires-python = ">=3.12"
+[[project.authors]]
+name = "SerpentAI"
+
+[project.entry-points."mwgg.client"]
+"worlds.pinball_fx3.Client" = "worlds.pinball_fx3:launch_client"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["worlds.pinball_fx3"]
+namespaces = true

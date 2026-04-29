@@ -1,0 +1,22 @@
+[project]
+name = "worlds.tloz_st"
+version = "0.7.4"
+description = "MultiWorld: Spirit Tracks"
+classifiers = ["Private :: Do Not Upload"]
+requires-python = ">=3.12"
+[[project.authors]]
+name = "DayKat"
+[[project.authors]]
+name = "1313e"
+[[project.authors]]
+name = "Carrotinator"
+[[project.authors]]
+name = "TriforceDrummer"
+[[project.authors]]
+name = "Nepecute"
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["worlds.tloz_st"]
+namespaces = true

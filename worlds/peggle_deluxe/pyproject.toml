@@ -1,0 +1,16 @@
+[project]
+name = "worlds.peggle_deluxe"
+version = "1.1.2"
+description = "MultiWorld: Peggle Deluxe"
+classifiers = ["Private :: Do Not Upload"]
+requires-python = ">=3.12"
+[[project.authors]]
+name = "SerpentAI"
+
+[project.entry-points."mwgg.client"]
+"worlds.peggle_deluxe.Client" = "worlds.peggle_deluxe:launch_client"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["worlds.peggle_deluxe"]
+namespaces = true

@@ -1,0 +1,16 @@
+[project]
+name = "worlds.ffvcd"
+version = "0.0.1"
+description = "MultiWorld: Final Fantasy V Career Day"
+classifiers = ["Private :: Do Not Upload"]
+requires-python = ">=3.12"
+[[project.authors]]
+name = "Junglechief"
+[[project.authors]]
+name = "cleartonic"
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["worlds.ffvcd"]
+namespaces = true

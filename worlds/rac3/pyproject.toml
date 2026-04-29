@@ -1,0 +1,24 @@
+[project]
+name = "worlds.rac3"
+version = "0.5.3"
+description = "MultiWorld: Ratchet and Clank 3"
+classifiers = ["Private :: Do Not Upload"]
+requires-python = ">=3.12"
+[[project.authors]]
+name = "AmondoVagyok"
+[[project.authors]]
+name = "Myth197"
+[[project.authors]]
+name = "Taoshi"
+[[project.authors]]
+name = "Yuxia228"
+[[project.authors]]
+name = "1theory"
+
+[project.entry-points."mwgg.client"]
+"worlds.rac3.Client" = "worlds.rac3:launch_client"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["worlds.rac3"]
+namespaces = true

@@ -1,0 +1,14 @@
+[project]
+name = "worlds.duke3d"
+version = "0.0.1"
+description = "MultiWorld: Unknown"
+classifiers = ["Private :: Do Not Upload"]
+requires-python = ">=3.12"
+[[project.authors]]
+name = "Unknown"
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["worlds.duke3d"]
+namespaces = true
