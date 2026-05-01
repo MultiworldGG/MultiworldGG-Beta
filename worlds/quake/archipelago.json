@@ -1,7 +1,0 @@
-{
-    "game": "Quake 1",
-    "authors": ["rand(0)"],
-    "igdb_id": 333,
-    "minimum_ap_version": "0.6.4",
-    "world_version": "0.2.2"
-}
