@@ -115,16 +115,47 @@ def set_game_names(game_names: typing.List[str]) -> typing.List[(str, bool)]:
     if _worlds_to_install:
         modules_to_install = [module for module in _worlds_to_install.values() if module]
         custom_worlds = ModuleUpdate.install_worlds(modules_to_install)
-        if _unknown_worlds:
-            for file in custom_worlds_dir.iterdir():
-                if file.suffix == ".apworld":
-                    with zipfile.ZipFile(file, 'r') as zipf:
-                        apworld = APWorldContainer(file)
-                        manifest = apworld.read_contents(zipf)
-                        if manifest["game"] in _unknown_worlds:
-                            _worlds_to_load.append(apworld)
-                        if file.stem in custom_worlds:
-                            _worlds_to_load.append(apworld)
+    else:
+        custom_worlds = []
+
+    # Snapshot installed-wheel versions for slugs already on _worlds_to_load.
+    # Used to honor the precedence rule: higher world_version wins, tie -> installed wheel.
+    _installed_versions: dict[str, str] = {}
+    for entry in _worlds_to_load:
+        if isinstance(entry, str) and entry.startswith("worlds."):
+            slug = entry[len("worlds."):]
+            try:
+                _installed_versions[slug] = importlib.metadata.distribution(f"worlds.{slug}").version
+            except importlib.metadata.PackageNotFoundError:
+                pass
+
+    if not custom_worlds_dir.exists():
+        return
+    for file in custom_worlds_dir.iterdir():
+        if file.suffix != ".apworld":
+            continue
+        with zipfile.ZipFile(file, 'r') as zipf:
+            apworld = APWorldContainer(file)
+            manifest = apworld.read_contents(zipf)
+
+        if manifest.get("game") in _unknown_worlds:
+            _worlds_to_load.append(apworld)
+            continue
+        if file.stem in custom_worlds:
+            _worlds_to_load.append(apworld)
+            continue
+        if file.stem in _installed_versions:
+            apworld_version = tuplize_version(manifest.get("world_version", "0.0.0"))
+            installed_version = tuplize_version(_installed_versions[file.stem])
+            if apworld_version > installed_version:
+                # apworld wins — replace the installed-wheel entry with the apworld
+                target = f"worlds.{file.stem}"
+                try:
+                    _worlds_to_load.remove(target)
+                except ValueError:
+                    pass
+                _worlds_to_load.append(apworld)
+            # tie or apworld older -> installed wheel wins, leave _worlds_to_load alone
 
 def game_names() -> typing.List[str]:
     """Get a list of only the game names that we're using"""
