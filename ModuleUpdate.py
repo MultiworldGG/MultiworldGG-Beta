@@ -4,14 +4,11 @@ import subprocess
 import multiprocessing
 import warnings
 import json
-import urllib.request
 import shutil
 import zipfile
 import re
 import shutil
 import logging
-import time
-import tempfile
 
 logger = logging.getLogger("Update")
 
@@ -24,6 +21,15 @@ from typing import List, Optional
 from importlib import invalidate_caches
 from BaseUtils import tuplize_version, Version
 from APContainer import APWorldContainer
+
+# mwgg_igdb package source — orphan branch on the Index repo, force-pushed daily by
+# the Index repo's daily-release workflow. Same package name and import path
+# regardless of variant; variant choice only affects which games are filtered in/out.
+# See MultiworldGG-Index/scripts/build_variants.py for variant definitions.
+MWGG_IGDB_VARIANT = "sixteen"  # canonical default
+MWGG_INDEX_REPO = "lallaria/MultiworldGG-Index"
+MWGG_IGDB_BRANCH = f"game_index_{MWGG_IGDB_VARIANT}"
+MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
 
 def is_frozen() -> bool:
     return getattr(sys, 'frozen', False)
@@ -268,44 +274,129 @@ def _parse_custom_pep508_requirement(line: str) -> str:
     return result
 
 
+def install_mwgg_igdb(upgrade: bool = False) -> bool:
+    """Install or refresh the mwgg_igdb package from the Index repo orphan branch.
+
+    Called before any code path that imports `mwgg_igdb` — the package is the
+    runtime source-of-truth for which worlds exist and where to fetch them.
+    Returns True if the install succeeded.
+    """
+    args = [str(python_cmd), "-m", "pip", "install", MWGG_IGDB_GIT_URL, "--no-cache-dir"]
+    if upgrade:
+        args.append("--upgrade")
+    logger.info(f"Installing mwgg_igdb ({MWGG_IGDB_VARIANT}) from {MWGG_IGDB_BRANCH}")
+    result = subprocess.run(args, capture_output=True, text=True)
+    if result.returncode != 0:
+        logger.warning(f"Failed to install mwgg_igdb: {result.stderr}")
+        return False
+    return True
+
+
+def _get_game_index():
+    """Lazy-import GameIndex; install mwgg_igdb if missing. Returns None on failure."""
+    try:
+        from mwgg_igdb import GameIndex
+        return GameIndex
+    except ImportError:
+        if install_mwgg_igdb():
+            invalidate_caches()
+            try:
+                from mwgg_igdb import GameIndex
+                return GameIndex
+            except ImportError as e:
+                logger.warning(f"mwgg_igdb still unimportable after install: {e}")
+        return None
+
+
+def _module_location_tag(url: str) -> Optional[str]:
+    """Extract the version tag from a `git+...@module-install/<ver>` URL."""
+    if not url or "@" not in url:
+        return None
+    ref = url.rsplit("@", 1)[-1]
+    if "/" in ref:
+        return ref.rsplit("/", 1)[-1]
+    return ref
+
+
+_VARIANTS = ("nr", "ao", "twelve", "sixteen")
+
+
+def _parse_variant_token(token: str) -> Optional[str]:
+    """Return the variant name if `token` is `mwgg_igdb` or `mwgg_igdb_<variant>`, else None.
+
+    Bare `mwgg_igdb` (no suffix) maps to the canonical default `sixteen`. Inno Setup
+    passes one of these tokens in the `--worlds` list to select the parental-rating gate.
+    """
+    if token == "mwgg_igdb":
+        return "sixteen"
+    prefix = "mwgg_igdb_"
+    if token.startswith(prefix):
+        variant = token[len(prefix):]
+        if variant in _VARIANTS:
+            return variant
+    return None
+
+
+def _set_variant(variant: str) -> None:
+    """Switch the runtime mwgg_igdb variant; takes effect on next install_mwgg_igdb call."""
+    global MWGG_IGDB_VARIANT, MWGG_IGDB_BRANCH, MWGG_IGDB_GIT_URL
+    MWGG_IGDB_VARIANT = variant
+    MWGG_IGDB_BRANCH = f"game_index_{variant}"
+    MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
+
+
 def check_for_updates(worlds_only: bool = False) -> List[str]:
     """
-    Check which packages need updates by querying PyPI.
-    Returns a list of package names that need updating.
+    Return packages with newer versions available.
+
+    For worlds: re-pull mwgg_igdb (always latest), then return slugs whose
+    installed dist version doesn't match the tag in `module_location`.
+    For non-world packages: query PyPI against requirements.txt entries.
     """
     if is_frozen() and not worlds_only:
         return []
-    # Ensure packaging is available
     try:
         import packaging.requirements
     except ImportError:
         logger.warning("packaging module not available, installing...")
-        executable_args = [python_cmd, "-m", "pip", "install", "--upgrade", "packaging"]
-        subprocess.run(executable_args)
+        subprocess.run([str(python_cmd), "-m", "pip", "install", "--upgrade", "packaging"])
         import packaging.requirements
-    
+
+    if worlds_only:
+        install_mwgg_igdb(upgrade=True)
+        index = _get_game_index()
+        if index is None:
+            return []
+        import importlib.metadata
+        outdated: List[str] = []
+        for slug, entry in index.get_all_games().items():
+            loc = entry.get("module_location")
+            if not loc:
+                continue
+            tag = _module_location_tag(loc)
+            if not tag:
+                continue
+            try:
+                dist = importlib.metadata.distribution(f"worlds.{slug}")
+            except importlib.metadata.PackageNotFoundError:
+                continue
+            if dist.version != tag:
+                outdated.append(f"worlds.{slug}")
+        logger.info(f"Worlds with available updates: {outdated}")
+        return outdated
+
     try:
-        if worlds_only:
-            executable_args = [python_cmd, "-m", "pip", "list", "-o", "--format", "json", 
-                "-i", "https://pypi.multiworld.gg/mwgg/apworlds/+simple"]
-        else:
-            executable_args = [python_cmd, "-m", "pip", "list", "-o", "--format", "json", 
-                "-i", "https://pypi.org/simple", "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds/+simple"]
-        
+        executable_args = [str(python_cmd), "-m", "pip", "list", "-o", "--format", "json",
+            "-i", "https://pypi.org/simple"]
         logger.info(f"Executing subprocess command: {executable_args}")
-        logger.info(f"Working directory: {os.getcwd()}")
         response = subprocess.run(executable_args, capture_output=True, text=True, timeout=45)
         if response.returncode != 0:
             logger.warning(f"Could not check for updates: {response.stderr}")
             return []
-        
+
         outdated_packages = json.loads(response.stdout)
         logger.info(f"Newer versions of the following packages are available: {outdated_packages}")
-        
-        if worlds_only:
-            return [world["name"] for world in outdated_packages]
 
-        # Get all requirements to check version constraints
         all_requirements = {}
         for req_file in requirements_files:
             if req_file.exists():
@@ -316,113 +407,61 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
                         all_requirements[requirement.name] = requirement
                     except packaging.requirements.InvalidRequirement:
                         continue
-        
-        # Filter outdated packages based on requirements.txt constraints
+
         packages_to_update = []
         for pkg in outdated_packages:
             pkg_name = pkg["name"]
             latest_version = pkg["latest_version"]
-            
-            # If package is in requirements.txt, check if update is allowed
+
             if pkg_name in all_requirements:
                 requirement = all_requirements[pkg_name]
-                
-                # Check if the latest version satisfies the requirement constraint
                 try:
-                    # If the requirement has no version specifier, we can update
                     if not requirement.specifier:
                         packages_to_update.append(pkg_name)
                     else:
-                        # Check if the latest version satisfies the current requirement
                         from packaging.version import parse as parse_version
                         latest_ver = parse_version(latest_version)
-                        
-                        # Test if the latest version satisfies the requirement
                         if latest_ver in requirement.specifier:
                             packages_to_update.append(pkg_name)
                         else:
                             logger.debug(f"Skipping {pkg_name}: latest version {latest_version} doesn't satisfy requirement {requirement}")
                 except Exception as e:
-                    # If we can't parse the version, skip it
                     logger.debug(f"Skipping {pkg_name}: couldn't check version constraint: {e}")
             else:
-                # Package not in requirements.txt, so we can update it
                 packages_to_update.append(pkg_name)
-        
+
         return packages_to_update
-    
+
     except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError) as e:
         logger.warning(f"Could not check for updates: {e}")
         return []
 
-_WORLD_MODULES_CACHE_TTL = 300  # 5 minutes
-_world_modules_cache_path = Path(tempfile.gettempdir()) / "MultiworldGG" / "world_modules_cache.json"
 
 def uninstall_worlds(worlds: List[str]) -> None:
-    """Uninstall a list of mwgg packages from the multiworld repository."""
+    """Uninstall a list of `worlds.<slug>` packages from the venv."""
     for world in worlds:
-        executable_args = [python_cmd, "-m", "pip", "uninstall", world, "--yes"]
+        executable_args = [str(python_cmd), "-m", "pip", "uninstall", world, "--yes"]
         subprocess.run(executable_args)
-    try:
-        _world_modules_cache_path.unlink(missing_ok=True)
-    except Exception:
-        pass
 
 
 def find_world_modules() -> set[str]:
-    """Find all world modules in the multiworld repository and currently installed packages."""
-    # Check cache
-    try:
-        with open(_world_modules_cache_path, 'r', encoding='utf-8') as f:
-            cache_data = json.load(f)
-        if time.time() - cache_data.get('timestamp', 0) < _WORLD_MODULES_CACHE_TTL:
-            return set(cache_data.get('modules', []))
-    except Exception:
-        pass
-    
-    world_modules = []
-    
-    # First, fetch from the repository
-    try:
-        # Fetch the simple index page from the multiworld PyPI repository
-        url = "https://pypi.multiworld.gg/mwgg/apworlds/+simple"
-        
-        # Set up request with timeout
-        req = urllib.request.Request(url)
-        req.add_header('Accept', 'application/vnd.pypi.simple.v1+json')
-        req.add_header('User-Agent', 'MultiWorldGG/1.0')
-        
-        with urllib.request.urlopen(req, timeout=15) as response:
-            json_content = response.read().decode('utf-8')
-        
-        # Parse the JSON to extract package names
-        packages = json.loads(json_content)
-        for package in packages['projects']:
-            if package['name'].startswith("worlds"):
-                package_name = package['name'][7:].replace("-", "_")
-                world_modules.append(package_name)
-        
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
-        logger.warning(f"Failed to fetch world modules from {url}: {e}")
-    except Exception as e:
-        logger.warning(f"Unexpected error while fetching world modules: {e}")
+    """Return all known world slugs: union of mwgg_igdb entries and currently installed `worlds.<slug>` dists."""
+    world_modules_set: set[str] = set()
 
-    world_modules_set = set(world_modules)
+    index = _get_game_index()
+    if index is not None:
+        world_modules_set.update(index.get_all_games().keys())
 
-    # Also check for currently installed world modules
     try:
-        executable_args = [python_cmd, "-m", "pip", "list", "--format", "json"]
+        executable_args = [str(python_cmd), "-m", "pip", "list", "--format", "json"]
         logger.debug(f"Executing subprocess command to find installed worlds: {executable_args}")
         response = subprocess.run(executable_args, capture_output=True, text=True, timeout=45)
-        
         if response.returncode == 0:
-            installed_packages = json.loads(response.stdout)
-
-            for package in installed_packages:
+            for package in json.loads(response.stdout):
                 package_name = package.get("name", "")
                 if package_name.startswith("worlds"):
-                    world_name = package_name[7:]  # Remove "worlds. or worlds-" prefix
-                    if not world_name.startswith("_") and world_name not in world_modules_set:
+                    world_name = package_name[7:]
+                    if not world_name.startswith("_"):
                         world_modules_set.add(world_name)
         else:
             logger.warning(f"Could not list installed packages: {response.stderr}")
@@ -431,121 +470,96 @@ def find_world_modules() -> set[str]:
     except Exception as e:
         logger.warning(f"Unexpected error while checking installed world modules: {e}")
 
-    # Update cache
-    try:
-        _world_modules_cache_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(_world_modules_cache_path, 'w', encoding='utf-8') as f:
-            json.dump({'timestamp': time.time(), 'modules': list(world_modules_set)}, f)
-    except Exception:
-        pass
-    
     return world_modules_set
 
 
 def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = False) -> list[str]:
     """
-    Install worlds from the multiworld repository.
-    
-    This will install worlds from the multiworld repository. It will also check for additional
-    updates after installation completes.
+    Install worlds by resolving each slug's `module_location` from mwgg_igdb and pip-installing the URL.
 
-    If additional updates are found, the restart flag will be set to True.
-    
+    `module_location` is a `git+https://.../<repo>@module-install/<world_version>` URL set by the
+    Index repo. The build-and-publish-action force-pushes immutable tags per release.
+
+    Falls back to a custom_worlds/<slug>.apworld lookup if the slug isn't in the index or its
+    `module_location` install fails.
+
     Args:
-        worlds: List of world packages to install
-        update: If True, uninstall old versions first
-        no_recurse: If True, do not check for additional updates after installation completes.
-    
+        worlds: List of slugs (with or without `worlds.` prefix) to install.
+        update: If True, uninstall old versions first.
+        no_recurse: If True, skip the post-install dependency-check pass.
+
     Returns:
-        True if additional updates were found, False otherwise.
+        List of slugs that fell back to a custom apworld.
     """
-    apworlds = []
+    apworlds: list[str] = []
+
+    # Partition variant tokens (`mwgg_igdb` / `mwgg_igdb_<variant>`) out of the slug list.
+    # Inno Setup passes exactly one variant token in `--worlds`; honor it by switching
+    # the runtime variant and (re)installing mwgg_igdb before resolving slugs.
+    world_slugs: list[str] = []
+    selected_variant: Optional[str] = None
+    for entry in worlds:
+        variant = _parse_variant_token(entry)
+        if variant is not None:
+            selected_variant = variant
+        else:
+            world_slugs.append(entry)
+
+    if selected_variant is not None:
+        _set_variant(selected_variant)
+        install_mwgg_igdb(upgrade=True)
+
     if update:
-        logger.info(f"Uninstalling old versions of: {worlds}")
-        uninstall_worlds(worlds)
+        logger.info(f"Uninstalling old versions of: {world_slugs}")
+        uninstall_worlds(world_slugs)
 
-    for idx, world in enumerate(worlds):
-        
+    index = _get_game_index()
+    games = index.get_all_games() if index is not None else {}
+
+    for world in world_slugs:
+        slug = world.removeprefix("worlds.")
+        target = f"worlds.{slug}"
+
         if update:
-            logger.info(f"Updating world: {world}")
+            logger.info(f"Updating world: {target}")
         else:
-            logger.info(f"Installing world: {world}")
-        
-        if is_frozen():
-            # In frozen environments, we need to install to a location that's in the Python path
-            # and ensure we use the correct target directory
-            
-            executable_args = [python_cmd, "-m", "pip", "install", "--no-deps", "--index-url", "https://pypi.org/simple",
-                    "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds", 
-                    world, "--prefer-binary", "--upgrade", "--no-cache-dir"]
-            
-            logger.info(f"Executing subprocess command: {executable_args}")
-            
-            # Use threading instead of multiprocessing to avoid argument contamination
-            import threading
-            import queue
-            
-            result_queue = queue.Queue()
-            
-            def _pip_install_thread():
-                try:
-                    result = subprocess.run(executable_args, capture_output=True, text=True)
-                    result_queue.put((result.returncode, result.stdout, result.stderr))
-                except Exception as e:
-                    result_queue.put((1, "", str(e)))
-            
-            install_thread = threading.Thread(target=_pip_install_thread, daemon=True)
-            install_thread.start()
-            install_thread.join()
-            
-            # Get the return values from the worker thread
-            try:
-                returncode, stdout, stderr = result_queue.get_nowait()
-                logger.info(stdout)
-            except:
-                returncode = 1  # Assume failure if we can't get the result
-                stdout = ""
-                stderr = "Failed to get process result"
-            
-            if returncode != 0:
-                logger.warning(f"World {world} failed to install")
-                if stderr:
-                    logger.error(f"{stderr}")
-                # Add to custom worlds list if it exists there
-                apworld_file = custom_worlds_dir / f"{world.replace("worlds.", "")}.apworld"
-                if apworld_file.exists():
-                    logger.info(f"Found apworld file: {apworld_file}")
-                    apworlds.append(world)
-                else:
-                    logger.warning(f"Custom apworld file not found at {apworld_file}, {world} will be installed from PyPI")
-            else:
-                # Before moving files, process all installed packages
-                logger.debug(f"Processing downloaded packages...")
+            logger.info(f"Installing world: {target}")
 
-        else:
-            executable_args = [python_cmd, "-m", "pip", "install", 
-                    "--extra-index-url", "https://pypi.multiworld.gg/mwgg/apworlds", 
-                    world, "--prefer-binary", "--upgrade", "--no-cache-dir"]
-            result = subprocess.run(executable_args)
-            if result.returncode != 0:
-                logger.warning(f"Failed to install {world} from pypi, checking custom worlds")
-                # Add to custom worlds list if it exists there
-                apworld_file = custom_worlds_dir / f"{world.replace("worlds.", "")}.apworld"
-                if apworld_file.exists():
-                    logger.info(f"Found apworld file: {apworld_file}")
-                    apworlds.append(world)
-                else:
-                    logger.warning(f"Custom apworld file not found at {apworld_file}, please verify that this world exists.")
+        entry = games.get(slug, {})
+        module_location = entry.get("module_location")
+
+        if not module_location:
+            logger.warning(f"No module_location for {slug} in mwgg_igdb; checking custom_worlds")
+            apworld_file = custom_worlds_dir / f"{slug}.apworld"
+            if apworld_file.exists():
+                logger.info(f"Found apworld file: {apworld_file}")
+                apworlds.append(target)
             else:
-                logger.info(f"Successfully installed {world}")
-    
+                logger.warning(f"Custom apworld file not found at {apworld_file}, {slug} cannot be installed")
+            continue
+
+        executable_args = [str(python_cmd), "-m", "pip", "install", "--no-deps",
+                module_location, "--upgrade", "--no-cache-dir"]
+        logger.info(f"Executing subprocess command: {executable_args}")
+        result = subprocess.run(executable_args, capture_output=True, text=True)
+        logger.info(result.stdout)
+
+        if result.returncode != 0:
+            logger.warning(f"World {target} failed to install from {module_location}")
+            if result.stderr:
+                logger.error(result.stderr)
+            apworld_file = custom_worlds_dir / f"{slug}.apworld"
+            if apworld_file.exists():
+                logger.info(f"Found apworld file: {apworld_file}")
+                apworlds.append(target)
+            else:
+                logger.warning(f"Custom apworld file not found at {apworld_file}")
+        else:
+            logger.info(f"Successfully installed {target}")
+
     invalidate_caches()
-    try:
-        _world_modules_cache_path.unlink(missing_ok=True)
-    except Exception:
-        pass
 
-    if is_frozen():
+    if is_frozen() and not no_recurse:
         # Check for any additional updates that might be needed
         logger.info("Checking for additional dependencies...")
         additional_deps_args = [python_cmd, "-m", "pip", "check"]
@@ -804,6 +818,17 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
     Returns:
         None
     """
+    # Install/refresh mwgg_igdb upfront so any subsequent code path can rely on
+    # `from mwgg_igdb import GameIndex` working. NOTE: in the prior architecture the
+    # installer (Inno Setup on Windows, equivalent on macOS/Linux) seeded mwgg_igdb
+    # by invoking ModuleUpdate via the CLI as part of first-run setup, then runtime
+    # update() calls trusted that to already be present. Doing it here unconditionally
+    # may be redundant when the installer already ran it — accepted cost for a single
+    # consistent code path. If installer-side seeding gets re-introduced, this call
+    # can be guarded by a "first run since install" check (e.g. mwgg_igdb dist
+    # presence + age) rather than running every update().
+    install_mwgg_igdb(upgrade=True)
+
     if is_frozen():
         if (exe_dir / "custom_wheels").exists():
             logger.debug("Custom Worlds found, checking...")
@@ -818,12 +843,12 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
         else:
             logger.debug("No updates found.")
     global update_ran
-    
+
     if update_ran:
         return
-    
+
     update_ran = True
-    
+
     if force:
         logger.debug("Force update requested - skipping update checks")
         # Force mode updates all requirements and worlds

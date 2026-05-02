@@ -262,12 +262,18 @@ def main():
         if not install_requirements(build=False):
             sys.exit(1)
 
-    # Install default wheels
+    # Install default wheels (mwgg_gui, mwgg_splash, kivymd-dev, platform helpers
+    # not on PyPI).
     if not args.skip_wheels:
         if not install_wheels("default"):
             sys.exit(1)
 
-    # Install worlds wheels
+    # Install infra-world wheels (worlds.<base>, worlds._bizhawk, worlds._generic,
+    # worlds._manual, worlds._sni, worlds._tracker). These are versioned independently
+    # per the per-world release cadence and bundled into the frozen build so the base
+    # install ships ready-to-use; they can also be upgraded in-place via ModuleUpdate
+    # like any other world. Per-game worlds are NOT bundled — those are installed at
+    # first run by ModuleUpdate.install_worlds() from mwgg_igdb's module_location URLs.
     if not args.skip_wheels:
         if not install_wheels("worlds"):
             sys.exit(1)

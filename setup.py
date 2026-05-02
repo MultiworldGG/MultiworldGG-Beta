@@ -65,23 +65,6 @@ from Utils import version_tuple, instance_name, archipelago_guid, is_windows, is
 from Cython.Build import cythonize
 
 
-non_apworlds: set[str] = {
-    "A Link to the Past",
-    "Adventure",
-    "ArchipIDLE",
-    "Clique",
-    "Lufia II Ancient Cave",
-    "Meritous",
-    "Archipelago",
-    "Ocarina of Time",
-    "Overcooked! 2",
-    "Raft",
-    "Slay the Spire",
-    "Sudoku",
-    "Super Mario 64",
-    "VVVVVV",
-}
-
 def download_SNI() -> None:
     print("Updating SNI")
     machine_to_go = {
@@ -360,50 +343,14 @@ class BuildExeCommand(cx_Freeze.command.build_exe.build_exe):
                         self.buildfolder / "data",
                         dirs_exist_ok=True)
 
+        # Per-game worlds are no longer bundled into the frozen build — they're installed
+        # at first run by ModuleUpdate.install_worlds() into mwgg_venv from the Index repo's
+        # `module_location` URLs. Only infra worlds (`worlds/_*` and `worlds/{AutoWorld,Files,
+        # LauncherComponents}.py`) ship with the executable, picked up by cx_Freeze packaging
+        # the `worlds` namespace package directly.
         os.makedirs(self.buildfolder / "Players" / "Templates", exist_ok=True)
         from Options import generate_yaml_templates
-        from worlds.AutoWorld import AutoWorldRegister
-        from worlds.Files import APWorldContainer
-        assert not non_apworlds - set(AutoWorldRegister.world_types), \
-            f"Unknown world {non_apworlds - set(AutoWorldRegister.world_types)} designated for .apworld"
-        folders_to_remove: list[str] = []
         generate_yaml_templates(self.buildfolder / "Players" / "Templates", False)
-        for worldname, worldtype in AutoWorldRegister.world_types.items():
-            if worldname not in non_apworlds:
-                file_name = os.path.split(os.path.dirname(worldtype.__file__))[1]
-                world_directory = self.libfolder / "worlds" / file_name
-                if os.path.isfile(world_directory / "archipelago.json"):
-                    with open(os.path.join(world_directory, "archipelago.json"), mode="r", encoding="utf-8") as manifest_file:
-                        manifest = json.load(manifest_file)
-
-                    assert "game" in manifest, (
-                        f"World directory {world_directory} has an archipelago.json manifest file, but it "
-                        "does not define a \"game\"."
-                    )
-                    assert manifest["game"] == worldtype.game, (
-                        f"World directory {world_directory} has an archipelago.json manifest file, but value of the "
-                        f"\"game\" field ({manifest['game']} does not equal the World class's game ({worldtype.game})."
-                    )
-                else:
-                    manifest = {}
-                # this method creates an apworld that cannot be moved to a different OS or minor python version,
-                # which should be ok
-                zip_path = self.libfolder / "worlds" / (file_name + ".apworld")
-                apworld = APWorldContainer(str(zip_path))
-                apworld.minimum_ap_version = version_tuple
-                apworld.maximum_ap_version = version_tuple
-                apworld.game = worldtype.game
-                manifest.update(apworld.get_manifest())
-                apworld.manifest_path = f"{file_name}/archipelago.json"
-                with zipfile.ZipFile(zip_path, "x", zipfile.ZIP_DEFLATED,
-                                     compresslevel=9) as zf:
-                    for path in world_directory.rglob("*.*"):
-                        relative_path = os.path.join(*path.parts[path.parts.index("worlds")+1:])
-                        if not relative_path.endswith("archipelago.json"):
-                            zf.write(path, relative_path)
-                    zf.writestr(apworld.manifest_path, json.dumps(manifest))
-                    folders_to_remove.append(file_name)
-                shutil.rmtree(world_directory)
         shutil.copyfile("meta.yaml", self.buildfolder / "Players" / "Templates" / "meta.yaml")
         try:
             from maseya import z3pr  # type: ignore[import-untyped]
@@ -426,9 +373,12 @@ class BuildExeCommand(cx_Freeze.command.build_exe.build_exe):
             with open("setup.ini", "w") as f:
                 min_supported_windows = "6.2.9200"
                 f.write(f"[Data]\nsource_path={self.buildfolder}\nmin_windows={min_supported_windows}\n")
-            with open("installdelete.iss", "w") as f:
-                f.writelines("Type: filesandordirs; Name: \"{app}\\lib\\worlds\\"+world_directory+"\"\n"
-                             for world_directory in folders_to_remove)
+            # installdelete.iss used to be generated here to remove .apworld source folders
+            # left over from previous installs. With per-game worlds living in mwgg_venv,
+            # there's nothing to clean up under {app}\lib\worlds — the dir only contains
+            # infra worlds that ship with the build. Write an empty file so inno_setup.iss
+            # can still {#include} it.
+            open("installdelete.iss", "w").close()
         else:
             # make sure extra programs are executable
             enemizer_exe = self.buildfolder / 'EnemizerCLI/EnemizerCLI.Core'
