@@ -548,8 +548,6 @@ def _run_cached_component(component_id: tuple[Any, ...], callable_module: str | 
             return launched_process
 
     # Resolve through fully loaded world components so launch behavior matches the real component.
-    from worlds import ensure_worlds_loaded
-    ensure_worlds_loaded()
     component = _find_loaded_component(component_id)
     if component is None:
         logging.warning("Failed to resolve cached launcher component after world loading completed.")

@@ -24,9 +24,14 @@ if not os.path.exists(configpath):
 
 
 def get_app() -> "Flask":
+    # WebHost is the load-all exception: serve every world the index knows about.
+    # set_game_names must be called before any `import worlds` cascade, so the
+    # narrow loader populates the full slug set on first import.
+    from mwgg_igdb import GameIndex
+    Utils.set_game_names(list(GameIndex.game_names.keys()))
+
     from WebHostLib import register, cache, app as raw_app
     from WebHostLib.models import db
-    from worlds import ensure_worlds_loaded
 
     app = raw_app
     if os.path.exists(configpath) and not app.config["TESTING"]:
@@ -48,7 +53,6 @@ def get_app() -> "Flask":
         logging.info(f"HOST_ADDRESS was set to {app.config['HOST_ADDRESS']}")
 
     os.makedirs(app.config["LOBBY_APWORLD_PATH"], exist_ok=True)
-    ensure_worlds_loaded()
     register()
     cache.init_app(app)
     db.bind(**app.config["PONY"])
@@ -63,8 +67,7 @@ def copy_tutorials_files_to_static(app=None) -> None:
 
     zfile: zipfile.ZipInfo
 
-    from worlds import AutoWorldRegister, ensure_worlds_loaded
-    ensure_worlds_loaded()
+    from worlds import AutoWorldRegister
     worlds = {}
     for game, world in AutoWorldRegister.world_types.items():
         if hasattr(world.web, 'tutorials') and (not world.hidden or game == 'Archipelago'):

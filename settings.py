@@ -29,24 +29,14 @@ _world_settings_name_cache_updated = False
 _lock = Lock()
 
 
-def _update_cache(write_launcher_cache: bool = True) -> None:
+def _update_cache() -> None:
     """Load world settings metadata from currently loaded worlds."""
     global _world_settings_name_cache_updated
     if _world_settings_name_cache_updated:
         return
 
-    cache_complete = False
     try:
-        import worlds
-        from worlds import (
-            AutoWorldRegister,
-            ensure_worlds_loaded,
-        )
-
-        if not worlds._worlds_loading:
-            ensure_worlds_loaded(write_launcher_cache=write_launcher_cache)
-            cache_complete = True
-
+        from worlds import AutoWorldRegister
         _world_settings_name_cache.clear()
         for world in AutoWorldRegister.world_types.values():
             annotation = world.__annotations__.get("settings", None)
@@ -54,8 +44,7 @@ def _update_cache(write_launcher_cache: bool = True) -> None:
                 continue
             _world_settings_name_cache[world.settings_key] = f"{world.__module__}.{world.__name__}"
     finally:
-        if cache_complete:
-            _world_settings_name_cache_updated = True
+        _world_settings_name_cache_updated = True
 
 
 def fmt_doc(cls: type, level: int) -> str:
@@ -864,7 +853,7 @@ class Settings(Group):
             import atexit
             atexit.register(autosave)
 
-    def save(self, location: str | None = None, write_launcher_cache: bool = True) -> None:  # as above
+    def save(self, location: str | None = None) -> None:  # as above
         from Utils import parse_yaml
         location = location or self._filename
         assert location, "No file specified"
@@ -874,7 +863,7 @@ class Settings(Group):
             os.unlink(temp_location)
         # can't use utf-8-sig because it breaks backward compat: pyyaml on Windows with bytes does not strip the BOM
         with open(temp_location, "w", encoding="utf-8") as f:
-            self.dump(f, write_launcher_cache=write_launcher_cache)
+            self.dump(f)
             f.flush()
             if hasattr(os, "fsync"):
                 os.fsync(f.fileno())
@@ -889,9 +878,9 @@ class Settings(Group):
             os.rename(temp_location, location)
         self._filename = location
 
-    def dump(self, f: TextIO, level: int = 0, write_launcher_cache: bool = True) -> None:
+    def dump(self, f: TextIO, level: int = 0) -> None:
         # load all world setting classes
-        _update_cache(write_launcher_cache=write_launcher_cache)
+        _update_cache()
         for key in _world_settings_name_cache:
             self.__getattribute__(key)  # load all worlds
         super().dump(f, level)

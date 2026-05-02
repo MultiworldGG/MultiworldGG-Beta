@@ -453,8 +453,7 @@ def update_weights(weights: dict, new_weights: dict, update_type: str, name: str
 
 
 def roll_meta_option(option_key, game: str, category_dict: dict) -> Any:
-    from worlds import AutoWorldRegister, ensure_worlds_loaded
-    ensure_worlds_loaded()
+    from worlds import AutoWorldRegister
 
     if not game:
         return get_choice(option_key, category_dict)
@@ -550,8 +549,7 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
     This means it should never be modified without making a deepcopy first.
     """
 
-    from worlds import AutoWorldRegister, ensure_worlds_loaded
-    ensure_worlds_loaded()
+    from worlds import AutoWorldRegister
 
     if "linked_options" in weights:
         weights = roll_linked_options(weights)
