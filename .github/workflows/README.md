@@ -1,153 +1,76 @@
 # GitHub Actions Workflows
 
-This directory contains automated workflows for building, testing, and releasing MultiworldGG.
+Automated build/test/release pipelines for MultiworldGG.
+
+## Distribution model
+
+Per-game worlds **are not built or published from this repo**. Each game lives in its own upstream
+repo and publishes itself via [`MultiworldGG/build-and-publish-action`], which:
+
+1. Force-pushes a `module-install/<world_version>` tag on the upstream world repo.
+2. Opens a PR against [`lallaria/MultiworldGG-Index`] updating that game's manifest with the new
+   `module_location` URL.
+
+Greg-bot reviews each PR (schema, security checks); on merge, the daily-release cron rebuilds the
+four orphan branches (`game_index_{nr,ao,sixteen,twelve}`) as the consumable `mwgg_igdb` package.
+
+The monorepo bundles only **infra worlds** (`worlds/_*`, `worlds/generic/`) plus the namespace
+files (`worlds/{__init__,AutoWorld,Files,LauncherComponents}.py`). Per-game worlds are pip-installed
+at runtime by `ModuleUpdate.install_worlds()` from each manifest's `module_location`.
+
+[`MultiworldGG/build-and-publish-action`]: https://github.com/MultiworldGG/build-and-publish-action
+[`lallaria/MultiworldGG-Index`]: https://github.com/lallaria/MultiworldGG-Index
 
 ## Workflows
 
-### 1. CI Workflow (`ci.yml`)
+### `ci.yml` — CI (build + commit infra wheels)
 
-**Triggers:**
-- Push to `main` branch
-- Pull requests to `main` branch
+Triggers on push and PR against the development branch. Four jobs:
 
-**What it does:**
-1. **Builds core components** (only when changed):
-   - Splashscreen package (`src/splashscreen`) → commits to `default_wheels/`
-   - GUI package (`src/gui`) → commits to `default_wheels/`
-   - Base worlds package (namespace files from `src/worlds/*.py`) → copies to `src/world_build_setuptools/src/worlds/` → builds → commits to `worlds_wheels/`
+- **`build-splashscreen`** — when `splashscreen/**` changes, builds and commits the wheel to `default_wheels/`.
+- **`build-gui`** — when `gui/**` changes, builds and commits the wheel to `default_wheels/`.
+- **`build-base-worlds`** — when `worlds/*.py` changes, builds the namespace wheel from those
+  files and commits to `worlds_wheels/`.
+- **`build-default-worlds`** — when any `worlds/_*` or `worlds/generic/` changes, builds those
+  infra wheels via `tools/build_wheels.py` and commits to `worlds_wheels/`.
 
-2. **Detects new worlds:**
-   - Scans for new directories in `src/worlds/`
-   - Runs `create_world_files` script (which handles file existence checks)
-   - Commits the generated template files with a note about manual string replacement
+All jobs commit as `github-actions[bot]` and rebase before pushing.
 
-3. **Builds changed worlds:**
-   - Detects which world packages have changed
-   - Rebuilds only those worlds using `tools/build_wheels.py`
-   - Uploads to private PyPI (main branch only)
+### `release.yml` / `build-release-test.yml` — release / dry-run
 
-**Artifacts:**
-- Core component wheels committed to repo (indefinite)
-- `world-wheels` (30 days, also on PyPI)
+Triggered by tag push (`release.yml`) or manual dispatch (`build-release-test.yml`). Builds platform
+distributables (Windows installer via Inno Setup, Linux AppImage, macOS .app) by:
 
-### 2. Game Index Workflow (`game-index.yml`)
+1. Creating a fresh venv per OS.
+2. Installing `default_wheels/*.whl` and `worlds_wheels/*.whl` into the venv.
+3. Running `python build_exe.py`.
+4. Packaging via `setup.py bdist_appimage` / `bdist_mac` / Inno Setup.
+5. Uploading per-platform artifacts (90-day retention).
 
-**Triggers:**
-- Manual dispatch (can rebuild all or detect changes)
-- Push to `main` affecting `src/game_index/` or `src/tools/game_indexing/`
-- After CI workflow completes (for new worlds)
+Frozen builds ship without per-game worlds; users select and pip-install them on first run via the
+installer's `--worlds <selection>` flow (see `inno_setup.iss`).
 
-**What it does:**
-1. Runs `igdb.py` (which internally calls game index generation)
-2. Builds game index wheels
-3. Commits wheels to `default_wheels/`
+### Other workflows
 
-**Artifacts:**
-- Game index wheels committed to repo (indefinite)
+- **`build.yml`** — legacy build path (kept for fallback testing).
+- **`analyze-modified-files.yml`** — lints PR diffs.
+- **`unittests.yml`** — runs the test suite.
+- **`ctest.yml`** — runs C/Cython speedup tests.
+- **`codeql-analysis.yml`** / **`scan-build.yml`** — security and static analysis.
+- **`strict-type-check.yml`** — pyright/mypy on changed files.
+- **`docker.yml`** — webhost docker image.
 
-### 3. Release Workflow (`build-release-test.yml`)
+## Required secrets / variables
 
-**Triggers:**
-- Manual dispatch with version input
-- Git tag push (e.g., `v0.1.0`)
+None for `ci.yml` or `release.yml` — all build artifacts ship with the repo or get installed from
+the public Index repo orphan branches. (Webhost-only secrets, e.g. database creds, are documented
+in webhost deployment configs, not here.)
 
-**What it does:**
-1. **Build executables** on Windows, Linux, and macOS
-   - Creates fresh virtual environment
-   - Runs `python src/build_exe.py`
+## Common failure modes
 
-2. **Build platform packages:**
-   - Linux: AppImage (`setup.py bdist_appimage`)
-   - macOS: App bundle/DMG (`setup.py bdist_mac`)
-   - Windows: Installer (`inno_setup.iss` via InnoSetup)
-
-3. **Create GitHub Release:**
-   - Collects all artifacts
-   - Creates release as "MultiworldGG-Test" with download links
-   - Marks as pre-release (alpha)
-
-**Artifacts:**
-- `windows-exe`, `linux-exe`, `macos-exe` (90 days)
-- `linux-appimage` (90 days)
-- `macos-bundle` (90 days)
-- `windows-installer` (90 days)
-
-## Required Secrets
-
-Set these in repository settings → Secrets and variables → Actions:
-
-### Secrets
-- `PYPI_TOKEN`: Authentication token for private PyPI server
-
-### Variables
-- `PYPI_URL`: URL of your private PyPI server (e.g., `https://pypi.example.com/simple`)
-
-## Usage
-
-### For Development (CI)
-
-Push to `main` branch:
-```bash
-git add .
-git commit -m "feat: add new world or feature"
-git push origin main
-```
-
-The CI workflow will automatically:
-- Build changed components
-- Detect and setup new worlds
-- Upload to PyPI
-
-### For New Worlds
-
-1. Create a new directory in `src/worlds/your_world/`
-2. Add your world code
-3. Push to `main`
-4. CI will auto-generate template files and commit them
-5. **Manual action required**: Edit the generated files to replace placeholders:
-   - Update `pyproject.toml` with correct metadata
-   - Update `archipelago.json` with game info
-   - Update `Register.py` with world class name
-
-### For Releases
-
-#### Via Git Tag:
-```bash
-git tag 0.1.0
-git push origin 0.1.0
-```
-
-#### Via Manual Dispatch:
-1. Go to Actions → Release - Build Distributables
-2. Click "Run workflow"
-3. Enter version (e.g., `0.1.0`)
-4. Choose whether to create GitHub release
-5. Click "Run workflow"
-
-### For Game Index Rebuild
-
-#### Manual:
-1. Go to Actions → Game Index - Rebuild Indexes
-2. Click "Run workflow"
-3. Check "Rebuild all game indexes" if needed
-4. Click "Run workflow"
-
-#### Automatic:
-- Runs automatically when new worlds are added
-- Runs when game index code is modified
-
-## Error Handling
-
-All workflows use `continue-on-error: true` for non-critical jobs, so:
-- Build failures will be reported but won't block other jobs
-- Check the Actions tab for detailed logs
-- Failed builds are highlighted but don't fail the entire workflow
-
-## Notes
-
-- All workflows use Python 3.12
-- Virtual environment is created fresh for each job
-- Artifacts have retention periods (30-90 days)
-- Release artifacts are kept indefinitely when attached to releases
-- New world detection requires manual string replacement (future enhancement: automate this)
-
+- **`build-base-worlds` doesn't trigger** — only fires when `worlds/*.py` (top-level namespace
+  files) change. Per-game worlds in `worlds/<slug>/` no longer live in this repo, so changes there
+  are impossible.
+- **Frozen build fails to find a world at runtime** — expected if `module_location` for that slug
+  is not yet a valid `git+https://...@module-install/<ver>` URL. Each upstream world must publish
+  via build-and-publish-action before the monorepo can fetch it.
