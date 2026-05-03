@@ -1,7 +1,9 @@
 import type { ProbotOctokit } from "probot";
 
 export interface IndexPROpts {
-  indexOctokit: ProbotOctokit;
+  karenOctokit: ProbotOctokit;   // Contents:Write — branch + commit on the Index
+  oliverOctokit: ProbotOctokit;  // Pull requests:Write — opens or updates the PR
+  karenSlug: string;             // for the committer identity
   indexOwner: string;
   indexName: string;
   sourceOwner: string;
@@ -21,7 +23,9 @@ export interface IndexPRResult {
 
 export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRResult> {
   const {
-    indexOctokit,
+    karenOctokit,
+    oliverOctokit,
+    karenSlug,
     indexOwner,
     indexName,
     sourceOwner,
@@ -37,10 +41,10 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   const branchName = `update/${slug}-${releaseTag}`;
   const filePath = `worlds/${slug}.json`;
 
-  const repoInfo = await indexOctokit.rest.repos.get({ owner: indexOwner, repo: indexName });
+  const repoInfo = await karenOctokit.rest.repos.get({ owner: indexOwner, repo: indexName });
   const defaultBranch = repoInfo.data.default_branch;
 
-  const baseRef = await indexOctokit.rest.git.getRef({
+  const baseRef = await karenOctokit.rest.git.getRef({
     owner: indexOwner,
     repo: indexName,
     ref: `heads/${defaultBranch}`,
@@ -49,7 +53,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
 
   let branchExists = true;
   try {
-    await indexOctokit.rest.git.getRef({
+    await karenOctokit.rest.git.getRef({
       owner: indexOwner,
       repo: indexName,
       ref: `heads/${branchName}`,
@@ -58,7 +62,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     branchExists = false;
   }
   if (!branchExists) {
-    await indexOctokit.rest.git.createRef({
+    await karenOctokit.rest.git.createRef({
       owner: indexOwner,
       repo: indexName,
       ref: `refs/heads/${branchName}`,
@@ -69,7 +73,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   let currentJson: Record<string, unknown> = {};
   let currentSha: string | undefined;
   try {
-    const existing = await indexOctokit.rest.repos.getContent({
+    const existing = await karenOctokit.rest.repos.getContent({
       owner: indexOwner,
       repo: indexName,
       path: filePath,
@@ -98,12 +102,12 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   const newContent = JSON.stringify(updated, null, 2) + "\n";
   const encodedContent = Buffer.from(newContent, "utf-8").toString("base64");
 
-  const committer = {
-    name: "oliver-multiworld-squirrel[bot]",
-    email: "oliver-multiworld-squirrel[bot]@users.noreply.github.com",
+  const karenCommitter = {
+    name: `${karenSlug}[bot]`,
+    email: `${karenSlug}[bot]@users.noreply.github.com`,
   };
 
-  await indexOctokit.rest.repos.createOrUpdateFileContents({
+  await karenOctokit.rest.repos.createOrUpdateFileContents({
     owner: indexOwner,
     repo: indexName,
     path: filePath,
@@ -111,11 +115,11 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     message: `[${slug}] Update to ${releaseTag}`,
     content: encodedContent,
     sha: currentSha,
-    committer,
-    author: committer,
+    committer: karenCommitter,
+    author: karenCommitter,
   });
 
-  const existingPRs = await indexOctokit.rest.pulls.list({
+  const existingPRs = await oliverOctokit.rest.pulls.list({
     owner: indexOwner,
     repo: indexName,
     head: `${indexOwner}:${branchName}`,
@@ -129,10 +133,12 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     `**Release tag:** \`${releaseTag}\``,
     `**Pinned SHA:** \`${pinnedSha}\``,
     `**New module_location:** \`${moduleLocation}\``,
+    ``,
+    `Branch was created and committed by \`${karenSlug}[bot]\`; Karen's review workflow will run automatically.`,
   ].join("\n");
 
   if (existingPRs.data.length === 0) {
-    const created = await indexOctokit.rest.pulls.create({
+    const created = await oliverOctokit.rest.pulls.create({
       owner: indexOwner,
       repo: indexName,
       title: `[${slug}] Update to ${releaseTag}`,
@@ -143,7 +149,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     return { prNumber: created.data.number, branchName, created: true };
   } else {
     const existing = existingPRs.data[0];
-    await indexOctokit.rest.pulls.update({
+    await oliverOctokit.rest.pulls.update({
       owner: indexOwner,
       repo: indexName,
       pull_number: existing.number,

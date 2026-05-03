@@ -2,7 +2,21 @@
 
 Webhook receiver for the `Oliver-Multiworld-Squirrel` GitHub App. Watches per-world repos for the `Create and Release Python Package` workflow to finish (i.e. `MultiworldGG/build-and-publish-action` has shaped + pushed the wheel branch + tag), then opens a corresponding PR on `MultiworldGG-Index` updating `worlds/<slug>.json` to point at the new tag's pinned SHA.
 
-Oliver does NOT clone, build, or push to per-world repos. The build is done by the per-world repo's own workflow under its own `GITHUB_TOKEN`. Oliver's per-world permissions are read-only (Contents:Read, Actions:Read, Metadata:Read).
+Oliver does NOT clone, build, or push to per-world repos. The build is done by the per-world repo's own workflow under its own `GITHUB_TOKEN`.
+
+## Two Apps: Oliver + Karen
+
+GitHub Apps have one global permission set per App. To keep the per-world install prompt strictly non-scary while still letting the bot write to the Index, Oliver is split into two App identities:
+
+- **Oliver-Multiworld-Squirrel** — installed on per-world repos AND the Index. Permissions: `Contents: Read`, `Actions: Read`, `Pull requests: Read and write`, `Metadata: Read`. Subscribes to `workflow_run`. The PR-write grant on per-world repos is unused but visible at install time (acceptable trade-off).
+- **Karen** — installed on **the Index only**. Permissions: `Contents: Read and write`, `Metadata: Read`. No webhook. Does the branch-create + manifest-commit on the Index when Oliver tells her to.
+
+The Oliver service holds both Apps' PEMs. On a webhook from a per-world repo, the service:
+
+1. Authenticates as Oliver (via the webhook's installation) to read per-world repo data.
+2. Authenticates as Karen (via Karen's app-level JWT → installation token on the Index) to create the `update/<slug>-<release_tag>` branch and commit the manifest change.
+3. Authenticates as Oliver again (Oliver's installation on the Index) to open the PR.
+4. Karen's existing PR-review workflow (`MultiworldGG-Index/.github/workflows/karen-pr-review.yml`) auto-fires when Oliver opens the PR and posts review checks.
 
 ## How per-world authors use Oliver
 
@@ -49,9 +63,11 @@ Each secret can be supplied **inline** (`OLIVER_FOO=value`) **or via file path**
 
 | Var | Required | Notes |
 |---|---|---|
-| `OLIVER_APP_ID` / `OLIVER_APP_ID_FILE` | yes | Numeric App ID from the GitHub App's General settings page. |
-| `OLIVER_PRIVATE_KEY` / `OLIVER_PRIVATE_KEY_FILE` | yes | Full PEM of the App's private key. Inline form: wrap in double quotes with `\n` for newlines. File form: just point at the `.pem`. |
-| `OLIVER_WEBHOOK_SECRET` / `OLIVER_WEBHOOK_SECRET_FILE` | yes | Webhook secret configured on the App. |
+| `OLIVER_APP_ID` / `OLIVER_APP_ID_FILE` | yes | Numeric App ID from Oliver's General settings page. |
+| `OLIVER_PRIVATE_KEY` / `OLIVER_PRIVATE_KEY_FILE` | yes | Full PEM of Oliver's private key. Inline form: wrap in double quotes with `\n` for newlines. File form: just point at the `.pem`. |
+| `OLIVER_WEBHOOK_SECRET` / `OLIVER_WEBHOOK_SECRET_FILE` | yes | Webhook secret configured on Oliver. |
+| `KAREN_APP_ID` / `KAREN_APP_ID_FILE` | yes | Numeric App ID from Karen's General settings page. |
+| `KAREN_PRIVATE_KEY` / `KAREN_PRIVATE_KEY_FILE` | yes | Full PEM of Karen's private key. |
 | `OLIVER_INDEX_REPO` | no | `<owner>/<repo>` of the Index. Defaults to `lallaria/MultiworldGG-Index`. Not a secret. |
 | `OLIVER_LOG_DIR` | no | Where `events.jsonl` is written. Defaults to `/var/lib/oliver`. |
 | `PORT` | no | Bind port. Defaults to `3000`. |

@@ -1,39 +1,51 @@
 import * as fs from "fs";
 import { Probot, Server } from "probot";
-import { app } from "./app";
+import { makeApp } from "./app";
 
-function loadSecret(name: string, opts: { trim?: boolean } = {}): string {
+function loadSecret(name: string, opts: { trim?: boolean; required?: boolean } = {}): string {
   const filePath = process.env[`${name}_FILE`];
-  let value: string;
+  let value: string | undefined;
   if (filePath) {
     value = fs.readFileSync(filePath, "utf-8");
   } else {
-    const direct = process.env[name];
-    if (!direct) {
-      throw new Error(`Missing required env var: ${name} (or ${name}_FILE pointing at a file containing the value)`);
-    }
-    value = direct;
+    value = process.env[name];
+  }
+  if (value === undefined || value === "") {
+    if (opts.required === false) return "";
+    throw new Error(`Missing required env var: ${name} (or ${name}_FILE pointing at a file)`);
   }
   return opts.trim === false ? value : value.trim();
 }
 
 async function main(): Promise<void> {
-  const appId = loadSecret("OLIVER_APP_ID");
-  const privateKey = loadSecret("OLIVER_PRIVATE_KEY", { trim: false }).replace(/\\n/g, "\n");
-  const webhookSecret = loadSecret("OLIVER_WEBHOOK_SECRET");
+  const oliverAppId = loadSecret("OLIVER_APP_ID");
+  const oliverPrivateKey = loadSecret("OLIVER_PRIVATE_KEY", { trim: false }).replace(/\\n/g, "\n");
+  const oliverWebhookSecret = loadSecret("OLIVER_WEBHOOK_SECRET");
+
+  const karenAppId = loadSecret("KAREN_APP_ID");
+  const karenPrivateKey = loadSecret("KAREN_PRIVATE_KEY", { trim: false }).replace(/\\n/g, "\n");
+
   const port = parseInt(process.env.PORT ?? "3000", 10);
+
+  const karenProbot = new Probot({
+    appId: karenAppId,
+    privateKey: karenPrivateKey,
+  });
+  const karenAuth = await karenProbot.auth();
+  const karenInfo = await karenAuth.rest.apps.getAuthenticated();
+  const karenSlug = karenInfo.data?.slug ?? "karen-multiworld-bot";
 
   const server = new Server({
     Probot: Probot.defaults({
-      appId,
-      privateKey,
-      secret: webhookSecret,
+      appId: oliverAppId,
+      privateKey: oliverPrivateKey,
+      secret: oliverWebhookSecret,
     }),
     port,
     host: "0.0.0.0",
   });
 
-  await server.load(app);
+  await server.load(makeApp(karenProbot, karenSlug));
   await server.start();
 }
 

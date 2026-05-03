@@ -132,30 +132,61 @@ function readEvents(): any[] {
   return fs.readFileSync(file, "utf-8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
 }
 
+function makeMinimalProbot() {
+  return { auth: vi.fn(), log: fakeLog } as any;
+}
+
+function makeKarenProbotWithInstallId(installId: number | null) {
+  if (installId === null) {
+    const appOctokit = {
+      rest: {
+        apps: {
+          getRepoInstallation: async () => {
+            throw Object.assign(new Error("404"), { status: 404 });
+          },
+        },
+      },
+    };
+    return { auth: vi.fn().mockResolvedValue(appOctokit), log: fakeLog } as any;
+  }
+  const appOctokit = {
+    rest: {
+      apps: {
+        getRepoInstallation: async () => ({ data: { id: installId } }),
+      },
+    },
+  };
+  return { auth: vi.fn(), log: fakeLog } as any;
+  // overwritten in happy-path test directly
+}
+
 describe("handleWorkflowRun", () => {
   it("ignores workflow_run for non-target workflow name", async () => {
     const state: RepoState = { variables: {}, releases: [], wheelTags: {} };
-    const probot = { auth: vi.fn(), log: fakeLog } as any;
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
     const ctx = makeContext(state, makePayload({ name: "Some Other Workflow" }));
-    await handleWorkflowRun(probot, ctx);
+    await handleWorkflowRun(probot, karenProbot, "karen-bot", ctx);
     expect(probot.auth).not.toHaveBeenCalled();
     expect(readEvents()).toEqual([]);
   });
 
   it("ignores workflow_run not triggered by release", async () => {
     const state: RepoState = { variables: {}, releases: [], wheelTags: {} };
-    const probot = { auth: vi.fn(), log: fakeLog } as any;
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
     const ctx = makeContext(state, makePayload({ event: "push" }));
-    await handleWorkflowRun(probot, ctx);
+    await handleWorkflowRun(probot, karenProbot, "karen-bot", ctx);
     expect(probot.auth).not.toHaveBeenCalled();
     expect(readEvents()).toEqual([]);
   });
 
   it("logs skip when workflow conclusion is failure", async () => {
     const state: RepoState = { variables: {}, releases: [], wheelTags: {} };
-    const probot = { auth: vi.fn(), log: fakeLog } as any;
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
     const ctx = makeContext(state, makePayload({ conclusion: "failure" }));
-    await handleWorkflowRun(probot, ctx);
+    await handleWorkflowRun(probot, karenProbot, "karen-bot", ctx);
     const events = readEvents();
     expect(events).toHaveLength(1);
     expect(events[0].kind).toBe("skip");
@@ -164,9 +195,10 @@ describe("handleWorkflowRun", () => {
 
   it("logs skip when WORLD_FOLDER_NAME is missing", async () => {
     const state: RepoState = { variables: {}, releases: [], wheelTags: {} };
-    const probot = { auth: vi.fn(), log: fakeLog } as any;
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
     const ctx = makeContext(state, makePayload());
-    await handleWorkflowRun(probot, ctx);
+    await handleWorkflowRun(probot, karenProbot, "karen-bot", ctx);
     const events = readEvents();
     expect(events[0]).toMatchObject({ kind: "skip", reason: "no_world_folder_name" });
   });
@@ -177,9 +209,10 @@ describe("handleWorkflowRun", () => {
       releases: [{ tag_name: "v1.0.0", tagSha: "release-sha-abc" }],
       wheelTags: {},
     };
-    const probot = { auth: vi.fn(), log: fakeLog } as any;
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
     const ctx = makeContext(state, makePayload({ head_sha: "release-sha-abc" }));
-    await handleWorkflowRun(probot, ctx);
+    await handleWorkflowRun(probot, karenProbot, "karen-bot", ctx);
     const events = readEvents();
     expect(events[0]).toMatchObject({ kind: "skip", reason: "tag_missing", slug: "clique" });
   });
@@ -191,14 +224,15 @@ describe("handleWorkflowRun", () => {
       wheelTags: { "wheel/worlds/clique/v1.0.0": "wheel-sha-def" },
       indexInstallNotFound: true,
     };
-    const probot = { auth: vi.fn(), log: fakeLog } as any;
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
     const ctx = makeContext(state, makePayload({ head_sha: "release-sha-abc" }));
-    await handleWorkflowRun(probot, ctx);
+    await handleWorkflowRun(probot, karenProbot, "karen-bot", ctx);
     const events = readEvents();
     expect(events[0]).toMatchObject({ kind: "error", reason: "index_install_missing" });
   });
 
-  it("happy path: opens Index PR and logs ok", async () => {
+  it("happy path: Karen creates branch+commit, Oliver opens PR, logs ok", async () => {
     const state: RepoState = {
       variables: { WORLD_FOLDER_NAME: "clique" },
       releases: [{ tag_name: "v1.0.0", tagSha: "release-sha-abc" }],
@@ -207,14 +241,20 @@ describe("handleWorkflowRun", () => {
       indexInstall: { id: 12345 },
     };
 
-    const indexOctokit = {
+    const karenWrites: string[] = [];
+    const oliverWrites: string[] = [];
+
+    const karenIndexOctokit = {
       rest: {
         repos: {
           get: async () => ({ data: { default_branch: "main" } }),
           getContent: async () => {
             throw Object.assign(new Error("404"), { status: 404 });
           },
-          createOrUpdateFileContents: async () => ({ data: {} }),
+          createOrUpdateFileContents: async () => {
+            karenWrites.push("commit");
+            return { data: {} };
+          },
         },
         git: {
           getRef: async ({ ref }: { ref: string }) => {
@@ -223,22 +263,54 @@ describe("handleWorkflowRun", () => {
             }
             throw Object.assign(new Error("404"), { status: 404 });
           },
-          createRef: async () => ({ data: {} }),
+          createRef: async () => {
+            karenWrites.push("createRef");
+            return { data: {} };
+          },
         },
+      },
+    };
+
+    const oliverIndexOctokit = {
+      rest: {
         pulls: {
           list: async () => ({ data: [] }),
-          create: async () => ({ data: { number: 99 } }),
+          create: async () => {
+            oliverWrites.push("pulls.create");
+            return { data: { number: 99 } };
+          },
         },
       },
     };
 
     const probot = {
-      auth: vi.fn().mockResolvedValue(indexOctokit),
+      auth: vi.fn().mockResolvedValue(oliverIndexOctokit),
       log: fakeLog,
     } as any;
+
+    const karenAppOctokit = {
+      rest: {
+        apps: {
+          getRepoInstallation: async () => ({ data: { id: 67890 } }),
+        },
+      },
+    };
+    const karenProbot = {
+      auth: vi.fn().mockImplementation((id?: number) => {
+        if (id === undefined) return Promise.resolve(karenAppOctokit);
+        if (id === 67890) return Promise.resolve(karenIndexOctokit);
+        throw new Error(`unexpected karen auth id: ${id}`);
+      }),
+      log: fakeLog,
+    } as any;
+
     const ctx = makeContext(state, makePayload({ head_sha: "release-sha-abc" }));
-    await handleWorkflowRun(probot, ctx);
+    await handleWorkflowRun(probot, karenProbot, "karen-bot", ctx);
     expect(probot.auth).toHaveBeenCalledWith(12345);
+    expect(karenProbot.auth).toHaveBeenCalledWith(67890);
+    expect(karenWrites).toContain("createRef");
+    expect(karenWrites).toContain("commit");
+    expect(oliverWrites).toContain("pulls.create");
     const events = readEvents();
     expect(events[0]).toMatchObject({
       kind: "ok",

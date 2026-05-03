@@ -10,6 +10,8 @@ const SLUG_VARIABLE = "WORLD_FOLDER_NAME";
 
 export async function handleWorkflowRun(
   probot: Probot,
+  karenProbot: Probot,
+  karenSlug: string,
   context: Context<"workflow_run.completed">,
 ): Promise<void> {
   const log = new EventLog(probot.log);
@@ -117,13 +119,13 @@ export async function handleWorkflowRun(
     throw new Error(`Invalid OLIVER_INDEX_REPO: ${indexRepoSpec}`);
   }
 
-  let indexInstallId: number;
+  let oliverIndexInstallId: number;
   try {
     const indexInstall = await context.octokit.rest.apps.getRepoInstallation({
       owner: indexOwner,
       repo: indexName,
     });
-    indexInstallId = indexInstall.data.id;
+    oliverIndexInstallId = indexInstall.data.id;
   } catch (err: unknown) {
     const status = (err as { status?: number }).status;
     if (status === 404) {
@@ -142,10 +144,39 @@ export async function handleWorkflowRun(
     throw err;
   }
 
+  let karenIndexInstallId: number;
   try {
-    const indexOctokit = await probot.auth(indexInstallId);
+    const karenAppOctokit = await karenProbot.auth();
+    const karenInstall = await karenAppOctokit.rest.apps.getRepoInstallation({
+      owner: indexOwner,
+      repo: indexName,
+    });
+    karenIndexInstallId = karenInstall.data.id;
+  } catch (err: unknown) {
+    const status = (err as { status?: number }).status;
+    if (status === 404) {
+      log.emit({
+        kind: "error",
+        source_repo: sourceRepo,
+        slug,
+        release_tag: releaseTag,
+        release_sha: run.head_sha,
+        wheel_sha: pinnedSha,
+        reason: "index_install_missing",
+        message: `Karen is not installed on ${indexRepoSpec}; cannot create Index branch.`,
+      });
+      return;
+    }
+    throw err;
+  }
+
+  try {
+    const oliverOctokit = await probot.auth(oliverIndexInstallId);
+    const karenOctokit = await karenProbot.auth(karenIndexInstallId);
     const result = await openOrUpdateIndexPR({
-      indexOctokit,
+      karenOctokit,
+      oliverOctokit,
+      karenSlug,
       indexOwner,
       indexName,
       sourceOwner: owner,
