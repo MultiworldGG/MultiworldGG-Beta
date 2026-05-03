@@ -61,7 +61,18 @@ Operator setup on the production host:
    docker compose logs oliver  # verify Probot startup banner
    ```
 
-3. Drop the host-nginx snippet into place (or your distro's equivalent):
+3. Install the njs module + drop the validation script + webhook secret into place:
+   ```
+   sudo apt install libnginx-mod-http-js
+   sudo mkdir -p /etc/nginx/njs /etc/oliver
+   sudo cp oliver-nginx-njs/oliver_hmac.js /etc/nginx/njs/
+   sudo cp oliver-secrets/oliver_webhook_secret /etc/oliver/webhook_secret
+   sudo chgrp www-data /etc/oliver/webhook_secret
+   sudo chmod 0640 /etc/oliver/webhook_secret
+   sudo chmod 0750 /etc/oliver
+   ```
+
+4. Drop the host-nginx snippet into place (or your distro's equivalent):
    ```
    sudo cp example_oliver_nginx.conf /etc/nginx/sites-available/oliver.multiworld.gg.conf
    sudo ln -s /etc/nginx/sites-available/oliver.multiworld.gg.conf /etc/nginx/sites-enabled/oliver.multiworld.gg.conf
@@ -69,9 +80,11 @@ Operator setup on the production host:
    sudo systemctl reload nginx
    ```
 
-4. Add the DNS A record for `oliver.multiworld.gg`.
+   This nginx config validates HMAC at the edge using njs — bad signatures get a 401 *before* nginx ever proxies to the container. Probot inside the container also validates, so it's defense-in-depth (two layers).
 
-5. (Optional) If TLS terminates on this host (vs. upstream Cloudflare), run:
+5. Add the DNS A record for `oliver.multiworld.gg`.
+
+6. (Optional) If TLS terminates on this host (vs. upstream Cloudflare), run:
    ```
    sudo certbot --nginx -d oliver.multiworld.gg
    ```
