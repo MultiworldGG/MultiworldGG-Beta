@@ -54,6 +54,27 @@ services:
       - 8080:80
     depends_on:
       - web
+      - oliver
+
+  # Oliver-Multiworld-Squirrel: GitHub App webhook receiver. Listens on :3000 internal.
+  # nginx proxies oliver.multiworld.gg → oliver:3000.
+  oliver:
+    build:
+      context: ../GitHubLib
+    image: multiworldgg-oliver
+    pull_policy: never
+    env_file:
+      # Operator must copy example_oliver.env to oliver.env (chmod 0600) and fill in
+      # OLIVER_APP_ID, OLIVER_PRIVATE_KEY, OLIVER_WEBHOOK_SECRET before bringing this up.
+      - ./oliver.env
+    expose:
+      - "3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:3000/probot"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 volumes:
   # Share application directory amongst multiworld and web services
