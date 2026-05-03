@@ -53,6 +53,11 @@ async function main(): Promise<void> {
     }),
     port,
     host: "0.0.0.0",
+    // Listen on / so GitHub's webhook POSTs (which the nginx edge passes
+    // through after HMAC validation) hit Probot's webhook handler. Default
+    // would be /api/github/webhooks, but the design pins the canonical
+    // webhook URL to /.
+    webhookPath: "/",
   });
 
   await server.load(makeApp(karenProbot, oliverSlug, karenSlug));
