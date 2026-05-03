@@ -55,14 +55,15 @@ services:
     depends_on:
       - web
 
-  # Oliver-Multiworld-Squirrel: GitHub App webhook receiver.
-  # Publishes port 3000 to the host's loopback only — host nginx (running on the
-  # Ubuntu host, NOT in this compose stack) proxies oliver.multiworld.gg to
-  # 127.0.0.1:3000. See deploy/example_oliver_nginx.conf for the host-side snippet.
-  oliver:
+  # MWGG GitHub-bot: webhook receiver running both the Oliver and Karen GitHub
+  # App identities. Publishes port 3000 to the host's loopback only — host
+  # nginx (on the Ubuntu host, NOT in this compose stack) proxies
+  # oliver.multiworld.gg to 127.0.0.1:3000. See deploy/example_github-bot_nginx.conf
+  # for the host-side snippet.
+  mwgg-github-bot:
     build:
       context: ../GitHubLib
-    image: multiworldgg-oliver
+    image: mwgg-github-bot
     pull_policy: never
     env_file:
       # Operator must copy example_github-bot.env to github-bot.env (chmod 0600)
@@ -82,9 +83,9 @@ services:
       # Then in github-bot.env set the corresponding *_FILE vars to
       # /run/secrets/<filename>.
       - ./github-bot-secrets:/run/secrets:ro
-      # Persistent JSONL log of Oliver events (success/skip/error). Survives
+      # Persistent JSONL log of bot events (success/skip/error). Survives
       # container restarts; surfaced at https://oliver.multiworld.gg/status.
-      - oliver_state:/var/lib/oliver
+      - mwgg_github_bot_state:/var/lib/oliver
     ports:
       # Loopback-only — only host nginx (or other host-side processes) can reach this.
       # NOT exposed to the public internet directly; TLS terminates at host nginx (or upstream).
@@ -100,5 +101,5 @@ volumes:
   # Share application directory amongst multiworld and web services
   # (for access to log files and the like), and nginx (for static files)
   app_volume:
-  # Oliver's events.jsonl log
-  oliver_state:
+  # GitHub-bot's events.jsonl log
+  mwgg_github_bot_state:

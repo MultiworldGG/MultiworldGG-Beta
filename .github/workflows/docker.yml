@@ -156,10 +156,10 @@ jobs:
           done
 
   # ---------------------------------------------------------------------------
-  # Oliver-Multiworld-Squirrel image: parallel pipeline targeting GitHubLib/.
-  # Same multi-arch + nightly + semver tag scheme; image suffix `-oliver`.
+  # MWGG GitHub-bot image: parallel pipeline targeting GitHubLib/.
+  # Same multi-arch + nightly + semver tag scheme; image name `mwgg-github-bot`.
   # ---------------------------------------------------------------------------
-  prepare-oliver:
+  prepare-bot:
     runs-on: ubuntu-latest
     outputs:
       tags: ${{ steps.meta.outputs.tags }}
@@ -172,15 +172,15 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6.0.0
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/multiworldgg-oliver
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/mwgg-github-bot
           tags: |
             type=ref,event=branch,enable={{is_not_default_branch}}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=nightly,enable={{is_default_branch}}
 
-  build-oliver:
-    needs: prepare-oliver
+  build-bot:
+    needs: prepare-bot
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
@@ -191,11 +191,11 @@ jobs:
           - platform: amd64
             runner: ubuntu-latest
             suffix: amd64
-            cache-scope: oliver-amd64
+            cache-scope: bot-amd64
           - platform: arm64
             runner: ubuntu-24.04-arm
             suffix: arm64
-            cache-scope: oliver-arm64
+            cache-scope: bot-arm64
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
@@ -213,7 +213,7 @@ jobs:
       - name: Compute suffixed tags
         id: tags
         run: |
-          readarray -t tags <<< "${{ needs.prepare-oliver.outputs.tags }}"
+          readarray -t tags <<< "${{ needs.prepare-bot.outputs.tags }}"
           suffixed=()
           for t in "${tags[@]}"; do
             suffixed+=("$t-${{ matrix.suffix }}")
@@ -228,13 +228,13 @@ jobs:
           platforms: linux/${{ matrix.platform }}
           push: true
           tags: ${{ steps.tags.outputs.tags }}
-          labels: ${{ needs.prepare-oliver.outputs.labels }}
+          labels: ${{ needs.prepare-bot.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.cache-scope }}
           cache-to: type=gha,mode=max,scope=${{ matrix.cache-scope }}
           provenance: false
 
-  manifest-oliver:
-    needs: [prepare-oliver, build-oliver]
+  manifest-bot:
+    needs: [prepare-bot, build-bot]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -249,7 +249,7 @@ jobs:
 
       - name: Create and push multi-arch manifest
         run: |
-          readarray -t tag_array <<< "${{ needs.prepare-oliver.outputs.tags }}"
+          readarray -t tag_array <<< "${{ needs.prepare-bot.outputs.tags }}"
 
           for tag in "${tag_array[@]}"; do
             docker manifest create "$tag" \

@@ -83,7 +83,7 @@ Two surfaces:
 
 Both pass through the nginx-edge HMAC validation as unauthenticated GET requests; POST traffic still requires a valid GitHub webhook signature.
 
-In-process runtime logs go to stdout via Probot's bundled pino logger — `docker compose logs oliver` for live tailing.
+In-process runtime logs go to stdout via Probot's bundled pino logger — `docker compose logs mwgg-github-bot` for live tailing.
 
 ## Local development
 
@@ -128,8 +128,8 @@ Operator setup on the production host:
 
 3. Build + start the container (publishes 127.0.0.1:3000 only — not internet-reachable):
    ```
-   docker compose -f docker-compose.yml up -d --build oliver
-   docker compose logs oliver  # verify "Oliver listening for workflow_run.completed events"
+   docker compose -f docker-compose.yml up -d --build mwgg-github-bot
+   docker compose logs mwgg-github-bot  # verify "Oliver listening for workflow_run.completed events"
    ```
 
 4. Install the njs module + drop the validation script + webhook secret into place for nginx-edge HMAC validation:
@@ -159,7 +159,7 @@ Operator setup on the production host:
    ```
 
 Verify end-to-end:
-- `docker compose logs oliver` shows "Oliver listening for workflow_run.completed events".
+- `docker compose logs mwgg-github-bot` shows "Oliver listening for workflow_run.completed events".
 - `curl https://oliver.multiworld.gg/probot` returns Probot's stock info page.
 - `curl https://oliver.multiworld.gg/status` returns the HTML status page (initially empty: "0 events in last 24h").
 - The GitHub App's "Recent Deliveries" panel shows 200 responses for test webhooks.

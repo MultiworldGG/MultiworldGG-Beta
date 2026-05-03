@@ -1,5 +1,5 @@
 {
-  "name": "multiworldgg-oliver",
+  "name": "mwgg-github-bot",
   "version": "0.1.0",
   "private": true,
   "description": "Oliver-Multiworld-Squirrel: GitHub App webhook receiver that publishes per-world releases into MultiworldGG-Index",
