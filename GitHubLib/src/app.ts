@@ -14,7 +14,7 @@ export function makeApp(karenProbot: Probot, karenSlug: string): ApplicationFunc
     });
 
     if (options.getRouter) {
-      mountStatusRoutes(options.getRouter("/status"), probot);
+      mountStatusRoutes(options.getRouter("/status"), probot, karenSlug);
     } else {
       probot.log.warn("No getRouter available; /status route not mounted");
     }

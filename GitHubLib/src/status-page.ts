@@ -4,14 +4,14 @@ import { EventLog, StoredEvent } from "./event-log";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-export function mountStatusRoutes(router: Router, probot: Probot): void {
+export function mountStatusRoutes(router: Router, probot: Probot, karenSlug: string): void {
   const log = new EventLog(probot.log);
 
   router.get("/", (_req: Request, res: Response) => {
     const counts = log.countSince(ONE_DAY_MS);
     const failures = log.read(50, ["skip", "error"]);
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.send(renderHtml(counts, failures));
+    res.send(renderHtml(counts, failures, karenSlug));
   });
 
   router.get("/.json", (_req: Request, res: Response) => {
@@ -25,6 +25,7 @@ export function mountStatusRoutes(router: Router, probot: Probot): void {
 function renderHtml(
   counts: { ok: number; skip: number; error: number },
   failures: StoredEvent[],
+  karenSlug: string,
 ): string {
   const rows = failures.length
     ? failures.map(failureRow).join("\n")
@@ -33,11 +34,12 @@ function renderHtml(
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Oliver status</title>
+<title>MWGG GitHub-bot status</title>
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2em; color: #222; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2em; color: #222; max-width: 900px; }
   h1 { margin-bottom: 0.2em; }
-  .summary { display: flex; gap: 1em; margin-bottom: 2em; }
+  h2 { margin-top: 2em; }
+  .summary { display: flex; gap: 1em; margin-bottom: 1em; }
   .badge { padding: 0.5em 1em; border-radius: 6px; font-weight: 600; }
   .ok { background: #d4edda; color: #155724; }
   .skip { background: #fff3cd; color: #856404; }
@@ -48,11 +50,18 @@ function renderHtml(
   tr.skip td:first-child { border-left: 4px solid #ffc107; }
   tr.error td:first-child { border-left: 4px solid #dc3545; }
   code { background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.85em; }
+  ul { line-height: 1.7; }
 </style>
 </head>
 <body>
-<h1>Oliver status</h1>
-<p style="color:#666;margin-top:0">Webhook receiver for the Oliver-Multiworld-Squirrel GitHub App.</p>
+<h1>MWGG GitHub-bot</h1>
+<p style="color:#666;margin-top:0">Webhook receiver running two GitHub App identities.</p>
+
+<h2>Identities</h2>
+<ul>
+  <li><strong>Oliver-Multiworld-Squirrel</strong> — public-facing. Installed on per-world repos. Receives <code>workflow_run.completed</code> webhooks and opens PRs on the Index.</li>
+  <li><strong>${esc(karenSlug)}</strong> — Index-only writer. Creates branches and commits manifest updates on <code>MultiworldGG-Index</code>.</li>
+</ul>
 
 <h2>Last 24 hours</h2>
 <div class="summary">
@@ -72,7 +81,7 @@ ${rows}
 </table>
 
 <p style="color:#888;font-size:0.8em;margin-top:2em">
-  Live tail: <code>docker compose logs -f oliver</code>.
+  Live tail: <code>docker compose logs -f mwgg-github-bot</code>.
   JSON: <a href="/status/.json">/status/.json</a>.
 </p>
 </body>

@@ -76,12 +76,11 @@ The compose service at `deploy/docker-compose.yml` bind-mounts `deploy/github-bo
 
 ## Status / monitoring
 
-Two surfaces:
+One surface: **`GET /status`**.
 
-- **`GET /probot`** — Probot's built-in App info page (untouched by Oliver). Reports the App's name and live installation count. Useful as a healthcheck endpoint.
-- **`GET /status`** — Oliver's failure-log page. Shows a 24h ok/skip/error count summary at the top and a table of the last 50 skip/error entries from `events.jsonl`. JSON form at `/status/.json`.
+Top of the page shows the bot's two App identities (Oliver + Karen). Below that, a 24h ok/skip/error count summary, then a table of the last 50 skip/error entries from `events.jsonl`. JSON form at `/status/.json` returns the same data plus the last 200 events of all kinds.
 
-Both pass through the nginx-edge HMAC validation as unauthenticated GET requests; POST traffic still requires a valid GitHub webhook signature.
+`/status` and `/status/*` pass through the nginx-edge HMAC validation as unauthenticated GET requests; POST traffic still requires a valid GitHub webhook signature.
 
 In-process runtime logs go to stdout via Probot's bundled pino logger — `docker compose logs mwgg-github-bot` for live tailing.
 

@@ -52,11 +52,8 @@ function constantTimeEqual(a, b) {
 
 function validate(r) {
     // Allow these GET path prefixes through unauthenticated:
-    //   /probot, /probot/, /probot/static/*  — Probot's built-in info page + assets
-    //   /status, /status/, /status/.json     — bot's failure-log status page
+    //   /status, /status/, /status/.json — bot's identity + failure-log page
     if (r.method === "GET" && (
-        r.uri === "/probot" ||
-        r.uri.startsWith("/probot/") ||
         r.uri === "/status" ||
         r.uri.startsWith("/status/")
     )) {
