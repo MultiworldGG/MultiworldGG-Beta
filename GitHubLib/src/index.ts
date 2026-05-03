@@ -27,6 +27,16 @@ async function main(): Promise<void> {
 
   const port = parseInt(process.env.PORT ?? "3000", 10);
 
+  // Fetch each App's slug at startup so both identities are dynamic in the
+  // status page and any commit/author identity lines.
+  const oliverProbotForAuth = new Probot({
+    appId: oliverAppId,
+    privateKey: oliverPrivateKey,
+  });
+  const oliverAuth = await oliverProbotForAuth.auth();
+  const oliverInfo = await oliverAuth.rest.apps.getAuthenticated();
+  const oliverSlug = oliverInfo.data?.slug ?? "oliver-multiworld-squirrel";
+
   const karenProbot = new Probot({
     appId: karenAppId,
     privateKey: karenPrivateKey,
@@ -45,7 +55,7 @@ async function main(): Promise<void> {
     host: "0.0.0.0",
   });
 
-  await server.load(makeApp(karenProbot, karenSlug));
+  await server.load(makeApp(karenProbot, oliverSlug, karenSlug));
   await server.start();
 }
 

@@ -4,14 +4,14 @@ import { EventLog, StoredEvent } from "./event-log";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-export function mountStatusRoutes(router: Router, probot: Probot, karenSlug: string): void {
+export function mountStatusRoutes(router: Router, probot: Probot, oliverSlug: string, karenSlug: string): void {
   const log = new EventLog(probot.log);
 
   router.get("/", (_req: Request, res: Response) => {
     const counts = log.countSince(ONE_DAY_MS);
     const failures = log.read(50, ["skip", "error"]);
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.send(renderHtml(counts, failures, karenSlug));
+    res.send(renderHtml(counts, failures, oliverSlug, karenSlug));
   });
 
   router.get("/.json", (_req: Request, res: Response) => {
@@ -25,6 +25,7 @@ export function mountStatusRoutes(router: Router, probot: Probot, karenSlug: str
 function renderHtml(
   counts: { ok: number; skip: number; error: number },
   failures: StoredEvent[],
+  oliverSlug: string,
   karenSlug: string,
 ): string {
   const rows = failures.length
@@ -59,7 +60,7 @@ function renderHtml(
 
 <h2>Identities</h2>
 <ul>
-  <li><strong>Oliver-Multiworld-Squirrel</strong> — public-facing. Installed on per-world repos. Receives <code>workflow_run.completed</code> webhooks and opens PRs on the Index.</li>
+  <li><strong>${esc(oliverSlug)}</strong> — public-facing. Installed on per-world repos. Receives <code>workflow_run.completed</code> webhooks and opens PRs on the Index.</li>
   <li><strong>${esc(karenSlug)}</strong> — Index-only writer. Creates branches and commits manifest updates on <code>MultiworldGG-Index</code>.</li>
 </ul>
 

@@ -2,7 +2,7 @@ import { ApplicationFunction, Probot } from "probot";
 import { handleWorkflowRun } from "./handlers/workflow_run";
 import { mountStatusRoutes } from "./status-page";
 
-export function makeApp(karenProbot: Probot, karenSlug: string): ApplicationFunction {
+export function makeApp(karenProbot: Probot, oliverSlug: string, karenSlug: string): ApplicationFunction {
   return (probot, options) => {
     probot.on("workflow_run.completed", async (context) => {
       try {
@@ -14,11 +14,11 @@ export function makeApp(karenProbot: Probot, karenSlug: string): ApplicationFunc
     });
 
     if (options.getRouter) {
-      mountStatusRoutes(options.getRouter("/status"), probot, karenSlug);
+      mountStatusRoutes(options.getRouter("/status"), probot, oliverSlug, karenSlug);
     } else {
       probot.log.warn("No getRouter available; /status route not mounted");
     }
 
-    probot.log.info(`Oliver listening for workflow_run.completed events; Karen identity: ${karenSlug}`);
+    probot.log.info(`${oliverSlug} listening for workflow_run.completed events; Karen identity: ${karenSlug}`);
   };
 }
