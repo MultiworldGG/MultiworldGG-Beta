@@ -8,8 +8,13 @@ Oliver does NOT clone, build, or push to per-world repos. The build is done by t
 
 GitHub Apps have one global permission set per App. To keep the per-world install prompt strictly non-scary while still letting the bot write to the Index, Oliver is split into two App identities:
 
-- **Oliver-Multiworld-Squirrel** — installed on per-world repos AND the Index. Permissions: `Contents: Read`, `Actions: Read`, `Pull requests: Read and write`, `Metadata: Read`. Subscribes to `workflow_run`. The PR-write grant on per-world repos is unused but visible at install time (acceptable trade-off).
-- **Karen** — installed on **the Index only**. Permissions: `Contents: Read and write`, `Metadata: Read`. No webhook. Does the branch-create + manifest-commit on the Index when Oliver tells her to.
+- **Oliver-Multiworld-Squirrel** — installed on per-world repos AND the Index.
+  - Permissions: `Contents: Read`, `Actions: Read`, `Pull requests: Read and write`, `Metadata: Read`.
+  - **Subscribe to events:** **Workflow run** *only* (NOT "Release" — Oliver doesn't act on `release.*` payloads, only on `workflow_run.completed`).
+  - The PR-write grant on per-world repos is unused but visible at install time (acceptable trade-off).
+- **Karen** — installed on **the Index only**.
+  - Permissions: `Contents: Read and write`, `Metadata: Read`.
+  - **Subscribe to events:** none (no webhook). Does the branch-create + manifest-commit on the Index when Oliver tells her to.
 
 The Oliver service holds both Apps' PEMs. On a webhook from a per-world repo, the service:
 
