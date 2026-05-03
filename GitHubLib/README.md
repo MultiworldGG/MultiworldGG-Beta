@@ -13,13 +13,17 @@ If Oliver can't determine the slug (e.g. the release touched multiple `worlds/<s
 
 ## Env vars
 
+Each secret can be supplied **inline** (`OLIVER_FOO=value`) **or via file path** (`OLIVER_FOO_FILE=/path/inside/container`). Pick whichever you prefer per-secret; if both are set, the file wins. The file pattern is recommended for the PEM (multi-line, awkward to inline) and for any operator who prefers Docker-secrets-style file mounts.
+
 | Var | Required | Notes |
 |---|---|---|
-| `OLIVER_APP_ID` | yes | Numeric App ID from the GitHub App's General settings page. |
-| `OLIVER_PRIVATE_KEY` | yes | Full PEM of the App's private key. Newlines may be escaped as `\n`. |
-| `OLIVER_WEBHOOK_SECRET` | yes | Webhook secret configured on the App. |
-| `OLIVER_INDEX_REPO` | no | `<owner>/<repo>` of the Index. Defaults to `lallaria/MultiworldGG-Index`. |
+| `OLIVER_APP_ID` / `OLIVER_APP_ID_FILE` | yes | Numeric App ID from the GitHub App's General settings page. |
+| `OLIVER_PRIVATE_KEY` / `OLIVER_PRIVATE_KEY_FILE` | yes | Full PEM of the App's private key. Inline form: wrap in double quotes with `\n` for newlines. File form: just point at the `.pem` and forget about escaping. |
+| `OLIVER_WEBHOOK_SECRET` / `OLIVER_WEBHOOK_SECRET_FILE` | yes | Webhook secret configured on the App. |
+| `OLIVER_INDEX_REPO` | no | `<owner>/<repo>` of the Index. Defaults to `lallaria/MultiworldGG-Index`. Not a secret. |
 | `PORT` | no | Bind port. Defaults to `3000`. |
+
+The compose service at `deploy/docker-compose.yml` bind-mounts `deploy/oliver-secrets/` to `/run/secrets:ro` inside the container, so `OLIVER_PRIVATE_KEY_FILE=/run/secrets/oliver_private_key.pem` resolves cleanly. Keep this directory at mode 0700 on the host; the contents are gitignored except for the `.gitkeep` placeholder.
 
 ## Local development
 

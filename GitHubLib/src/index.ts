@@ -1,18 +1,26 @@
+import * as fs from "fs";
 import { Probot, Server } from "probot";
 import { app } from "./app";
 
-function requireEnv(name: string): string {
-  const v = process.env[name];
-  if (!v) {
-    throw new Error(`Missing required env var: ${name}`);
+function loadSecret(name: string, opts: { trim?: boolean } = {}): string {
+  const filePath = process.env[`${name}_FILE`];
+  let value: string;
+  if (filePath) {
+    value = fs.readFileSync(filePath, "utf-8");
+  } else {
+    const direct = process.env[name];
+    if (!direct) {
+      throw new Error(`Missing required env var: ${name} (or ${name}_FILE pointing at a file containing the value)`);
+    }
+    value = direct;
   }
-  return v;
+  return opts.trim === false ? value : value.trim();
 }
 
 async function main(): Promise<void> {
-  const appId = requireEnv("OLIVER_APP_ID");
-  const privateKey = requireEnv("OLIVER_PRIVATE_KEY").replace(/\\n/g, "\n");
-  const webhookSecret = requireEnv("OLIVER_WEBHOOK_SECRET");
+  const appId = loadSecret("OLIVER_APP_ID");
+  const privateKey = loadSecret("OLIVER_PRIVATE_KEY", { trim: false }).replace(/\\n/g, "\n");
+  const webhookSecret = loadSecret("OLIVER_WEBHOOK_SECRET");
   const port = parseInt(process.env.PORT ?? "3000", 10);
 
   const server = new Server({

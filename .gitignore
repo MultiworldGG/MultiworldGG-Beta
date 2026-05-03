@@ -239,3 +239,8 @@ lib/poe_client_vendor/*
 Minecraft Forge server/*
 jdk*/*
 
+# Oliver — operator-filled secrets (never commit)
+deploy/oliver.env
+deploy/oliver-secrets/*
+!deploy/oliver-secrets/.gitkeep
+

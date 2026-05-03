@@ -66,8 +66,22 @@ services:
     pull_policy: never
     env_file:
       # Operator must copy example_oliver.env to oliver.env (chmod 0600) and fill in
-      # OLIVER_APP_ID, OLIVER_PRIVATE_KEY, OLIVER_WEBHOOK_SECRET before bringing this up.
+      # OLIVER_APP_ID, OLIVER_PRIVATE_KEY (or _FILE), OLIVER_WEBHOOK_SECRET before
+      # bringing this up.
       - ./oliver.env
+    volumes:
+      # Recommended: mount a host directory of secret files at /run/secrets so
+      # OLIVER_*_FILE env vars (in oliver.env) can point at them. Create the
+      # directory at <repo>/deploy/oliver-secrets/ on the host (mode 0700, owner
+      # root or the docker daemon user) and place files there:
+      #   oliver-secrets/oliver_app_id            # one-line numeric App ID
+      #   oliver-secrets/oliver_private_key.pem   # full PEM
+      #   oliver-secrets/oliver_webhook_secret    # one-line hex string
+      # Then in oliver.env set:
+      #   OLIVER_APP_ID_FILE=/run/secrets/oliver_app_id
+      #   OLIVER_PRIVATE_KEY_FILE=/run/secrets/oliver_private_key.pem
+      #   OLIVER_WEBHOOK_SECRET_FILE=/run/secrets/oliver_webhook_secret
+      - ./oliver-secrets:/run/secrets:ro
     ports:
       # Loopback-only — only host nginx (or other host-side processes) can reach this.
       # NOT exposed to the public internet directly; TLS terminates at host nginx (or upstream).
