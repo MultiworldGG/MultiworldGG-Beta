@@ -1,0 +1,14 @@
+# Operator: place the GitHub-bot's secret files here on the production host.
+# This directory is bind-mounted into the bot container at /run/secrets:ro
+# (see deploy/docker-compose.yml).
+#
+# Recommended files (any subset — only those referenced by *_FILE vars in
+# github-bot.env need to exist):
+#   oliver_app_id            # one-line numeric App ID for Oliver
+#   oliver_private_key.pem   # full PEM for Oliver, including BEGIN/END lines
+#   oliver_webhook_secret    # one-line hex string from `openssl rand -hex 32`
+#   karen_app_id             # one-line numeric App ID for Karen
+#   karen_private_key.pem    # full PEM for Karen
+#
+# Set the directory to mode 0700 and own it appropriately on the host.
+# Everything in this directory other than this .gitkeep is gitignored.

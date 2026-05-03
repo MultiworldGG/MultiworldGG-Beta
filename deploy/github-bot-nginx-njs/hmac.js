@@ -1,18 +1,17 @@
-// Oliver-Multiworld-Squirrel — nginx-edge HMAC validation for GitHub webhooks.
+// GitHub-bot — nginx-edge HMAC validation for GitHub webhooks.
 //
-// Loaded by deploy/example_oliver_nginx.conf via:
+// Loaded by deploy/example_github-bot_nginx.conf via:
 //   js_path "/etc/nginx/njs/";
-//   js_import oliver_hmac.js;
-// then invoked from the request location with `js_content oliver_hmac.validate`.
+//   js_import hmac.js;
+// then invoked from the request location with `js_content hmac.validate`.
 //
 // What this does:
 //   - On POST / (the GitHub webhook URL), reads the request body, computes
 //     HMAC-SHA256 with the secret loaded from SECRET_FILE, compares to
 //     X-Hub-Signature-256 in constant time. On mismatch, returns 401 *before*
-//     nginx ever proxies to the Oliver container.
-//   - On GET /probot, lets the request through unmodified — Probot's built-in
-//     health endpoint, useful for `curl https://oliver.multiworld.gg/probot`
-//     after first deploy.
+//     nginx ever proxies to the bot container.
+//   - On GET /probot or /status, lets the request through unauthenticated —
+//     Probot's built-in info page and the bot's failure-log status page.
 //   - All other methods → 405; missing/malformed signatures → 401.
 //
 // Probot inside the container ALSO validates HMAC. This nginx layer is
@@ -24,11 +23,11 @@ import fs from "fs";
 
 // Operator: place the webhook secret here, mode 0640, owner root, group
 // www-data (or whichever user nginx runs as on this host).
-//   sudo mkdir -p /etc/oliver
-//   sudo cp deploy/oliver-secrets/oliver_webhook_secret /etc/oliver/webhook_secret
-//   sudo chgrp www-data /etc/oliver/webhook_secret
-//   sudo chmod 0640 /etc/oliver/webhook_secret
-const SECRET_FILE = "/etc/oliver/webhook_secret";
+//   sudo mkdir -p /etc/github-bot
+//   sudo cp deploy/github-bot-secrets/oliver_webhook_secret /etc/github-bot/webhook_secret
+//   sudo chgrp www-data /etc/github-bot/webhook_secret
+//   sudo chmod 0640 /etc/github-bot/webhook_secret
+const SECRET_FILE = "/etc/github-bot/webhook_secret";
 
 let cachedSecret = null;
 
@@ -63,7 +62,7 @@ function validate(r) {
         r.uri === "/status/" ||
         r.uri === "/status/.json"
     )) {
-        r.internalRedirect("@oliver_backend");
+        r.internalRedirect("@bot_backend");
         return;
     }
 
@@ -105,7 +104,7 @@ function validate(r) {
         return;
     }
 
-    r.internalRedirect("@oliver_backend");
+    r.internalRedirect("@bot_backend");
 }
 
 export default { validate };

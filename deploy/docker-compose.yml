@@ -65,23 +65,23 @@ services:
     image: multiworldgg-oliver
     pull_policy: never
     env_file:
-      # Operator must copy example_oliver.env to oliver.env (chmod 0600) and fill in
-      # OLIVER_APP_ID, OLIVER_PRIVATE_KEY (or _FILE), OLIVER_WEBHOOK_SECRET before
-      # bringing this up.
-      - ./oliver.env
+      # Operator must copy example_github-bot.env to github-bot.env (chmod 0600)
+      # and fill in OLIVER_APP_ID + KAREN_APP_ID + the private keys + webhook
+      # secret before bringing this up.
+      - ./github-bot.env
     volumes:
-      # Recommended: mount a host directory of secret files at /run/secrets so
-      # OLIVER_*_FILE env vars (in oliver.env) can point at them. Create the
-      # directory at <repo>/deploy/oliver-secrets/ on the host (mode 0700, owner
-      # root or the docker daemon user) and place files there:
-      #   oliver-secrets/oliver_app_id            # one-line numeric App ID
-      #   oliver-secrets/oliver_private_key.pem   # full PEM
-      #   oliver-secrets/oliver_webhook_secret    # one-line hex string
-      # Then in oliver.env set:
-      #   OLIVER_APP_ID_FILE=/run/secrets/oliver_app_id
-      #   OLIVER_PRIVATE_KEY_FILE=/run/secrets/oliver_private_key.pem
-      #   OLIVER_WEBHOOK_SECRET_FILE=/run/secrets/oliver_webhook_secret
-      - ./oliver-secrets:/run/secrets:ro
+      # Bind-mount a host directory of secret files at /run/secrets so the
+      # OLIVER_*_FILE / KAREN_*_FILE env vars (in github-bot.env) can point
+      # at them. Create the directory at <repo>/deploy/github-bot-secrets/ on
+      # the host (mode 0700) and place files there:
+      #   github-bot-secrets/oliver_app_id            # one-line numeric App ID
+      #   github-bot-secrets/oliver_private_key.pem   # full PEM
+      #   github-bot-secrets/oliver_webhook_secret    # one-line hex string
+      #   github-bot-secrets/karen_app_id
+      #   github-bot-secrets/karen_private_key.pem
+      # Then in github-bot.env set the corresponding *_FILE vars to
+      # /run/secrets/<filename>.
+      - ./github-bot-secrets:/run/secrets:ro
       # Persistent JSONL log of Oliver events (success/skip/error). Survives
       # container restarts; surfaced at https://oliver.multiworld.gg/status.
       - oliver_state:/var/lib/oliver

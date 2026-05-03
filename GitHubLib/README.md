@@ -72,7 +72,7 @@ Each secret can be supplied **inline** (`OLIVER_FOO=value`) **or via file path**
 | `OLIVER_LOG_DIR` | no | Where `events.jsonl` is written. Defaults to `/var/lib/oliver`. |
 | `PORT` | no | Bind port. Defaults to `3000`. |
 
-The compose service at `deploy/docker-compose.yml` bind-mounts `deploy/oliver-secrets/` to `/run/secrets:ro` inside the container, so `OLIVER_PRIVATE_KEY_FILE=/run/secrets/oliver_private_key.pem` resolves cleanly. Keep that directory at mode 0700 on the host; the contents are gitignored except for the `.gitkeep` placeholder.
+The compose service at `deploy/docker-compose.yml` bind-mounts `deploy/github-bot-secrets/` to `/run/secrets:ro` inside the container, so `OLIVER_PRIVATE_KEY_FILE=/run/secrets/oliver_private_key.pem` resolves cleanly. Keep that directory at mode 0700 on the host; the contents are gitignored except for the `.gitkeep` placeholder.
 
 ## Status / monitoring
 
@@ -110,18 +110,20 @@ Operator setup on the production host:
 1. Copy + populate the env file:
    ```
    cd <repo>/deploy
-   cp example_oliver.env oliver.env
-   chmod 600 oliver.env
-   $EDITOR oliver.env  # fill in OLIVER_APP_ID + either inline or _FILE for PRIVATE_KEY/WEBHOOK_SECRET
+   cp example_github-bot.env github-bot.env
+   chmod 600 github-bot.env
+   $EDITOR github-bot.env  # fill in OLIVER_* + KAREN_* (inline or _FILE form)
    ```
 
 2. Drop secret files into the bind-mount dir (if using `_FILE` form):
    ```
-   mkdir -m 700 oliver-secrets
-   cp ~/protected/oliver_private_key.pem oliver-secrets/oliver_private_key.pem
-   echo "12345" > oliver-secrets/oliver_app_id
-   openssl rand -hex 32 > oliver-secrets/oliver_webhook_secret
-   chmod 600 oliver-secrets/*
+   mkdir -m 700 github-bot-secrets
+   cp ~/protected/oliver_private_key.pem github-bot-secrets/oliver_private_key.pem
+   cp ~/protected/karen_private_key.pem  github-bot-secrets/karen_private_key.pem
+   echo "12345" > github-bot-secrets/oliver_app_id
+   echo "67890" > github-bot-secrets/karen_app_id
+   openssl rand -hex 32 > github-bot-secrets/oliver_webhook_secret
+   chmod 600 github-bot-secrets/*
    ```
 
 3. Build + start the container (publishes 127.0.0.1:3000 only — not internet-reachable):
@@ -133,17 +135,17 @@ Operator setup on the production host:
 4. Install the njs module + drop the validation script + webhook secret into place for nginx-edge HMAC validation:
    ```
    sudo apt install libnginx-mod-http-js
-   sudo mkdir -p /etc/nginx/njs /etc/oliver
-   sudo cp oliver-nginx-njs/oliver_hmac.js /etc/nginx/njs/
-   sudo cp oliver-secrets/oliver_webhook_secret /etc/oliver/webhook_secret
-   sudo chgrp www-data /etc/oliver/webhook_secret
-   sudo chmod 0640 /etc/oliver/webhook_secret
-   sudo chmod 0750 /etc/oliver
+   sudo mkdir -p /etc/nginx/njs /etc/github-bot
+   sudo cp github-bot-nginx-njs/hmac.js /etc/nginx/njs/
+   sudo cp github-bot-secrets/oliver_webhook_secret /etc/github-bot/webhook_secret
+   sudo chgrp www-data /etc/github-bot/webhook_secret
+   sudo chmod 0640 /etc/github-bot/webhook_secret
+   sudo chmod 0750 /etc/github-bot
    ```
 
 5. Drop the host-nginx snippet into place:
    ```
-   sudo cp example_oliver_nginx.conf /etc/nginx/sites-available/oliver.multiworld.gg.conf
+   sudo cp example_github-bot_nginx.conf /etc/nginx/sites-available/oliver.multiworld.gg.conf
    sudo ln -s /etc/nginx/sites-available/oliver.multiworld.gg.conf /etc/nginx/sites-enabled/oliver.multiworld.gg.conf
    sudo nginx -t
    sudo systemctl reload nginx
