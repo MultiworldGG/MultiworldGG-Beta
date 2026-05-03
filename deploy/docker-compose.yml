@@ -89,7 +89,10 @@ services:
     ports:
       # Loopback-only — only host nginx (or other host-side processes) can reach this.
       # NOT exposed to the public internet directly; TLS terminates at host nginx (or upstream).
+      # Bind both IPv4 and IPv6 loopback so nginx upstreams resolving `localhost`
+      # (which on Ubuntu hits ::1 first) don't get connection-refused on retry.
       - "127.0.0.1:3000:3000"
+      - "[::1]:3000:3000"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:3000/probot"]
