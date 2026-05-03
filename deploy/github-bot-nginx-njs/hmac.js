@@ -51,16 +51,14 @@ function constantTimeEqual(a, b) {
 }
 
 function validate(r) {
-    // Allow these GET paths through unauthenticated:
-    //   /probot         — Probot's built-in healthcheck/info page
-    //   /status         — Oliver's failure-log status page (HTML)
-    //   /status/        — same, with trailing slash
-    //   /status/.json   — same data in JSON form, for scripted consumption
+    // Allow these GET path prefixes through unauthenticated:
+    //   /probot, /probot/, /probot/static/*  — Probot's built-in info page + assets
+    //   /status, /status/, /status/.json     — bot's failure-log status page
     if (r.method === "GET" && (
         r.uri === "/probot" ||
+        r.uri.startsWith("/probot/") ||
         r.uri === "/status" ||
-        r.uri === "/status/" ||
-        r.uri === "/status/.json"
+        r.uri.startsWith("/status/")
     )) {
         r.internalRedirect("@bot_backend");
         return;
