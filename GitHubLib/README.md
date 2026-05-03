@@ -31,23 +31,52 @@ npm test
 
 To run locally against real webhooks during development, use `smee.io` to forward webhooks to `localhost:3000`. The App's webhook URL during development should be the smee channel URL.
 
-## Production deployment
+## Production deployment (Ubuntu host)
 
-Oliver runs as the `oliver` service in `deploy/docker-compose.yml`. The image is built by `.github/workflows/docker.yml` and published to `ghcr.io/multiworldgg/multiworldgg-oliver`. nginx routes `oliver.multiworld.gg` → `oliver:3000`.
+The production host is bare Ubuntu with Docker installed. The public-facing TCP listener is **system nginx** (`/etc/nginx/`, started via `systemctl`), **not** an in-Docker nginx. Oliver runs as a Docker container; system nginx proxies `oliver.multiworld.gg` to the container's loopback-published port.
+
+Topology:
+
+```
+internet ──TLS── system nginx (Ubuntu host, /etc/nginx/) ──127.0.0.1:3000── oliver container (docker compose)
+```
 
 Operator setup on the production host:
 
-```
-cp deploy/example_oliver.env deploy/oliver.env
-chmod 600 deploy/oliver.env
-$EDITOR deploy/oliver.env  # fill in OLIVER_APP_ID, OLIVER_PRIVATE_KEY, OLIVER_WEBHOOK_SECRET
-docker compose -f deploy/docker-compose.yml up -d oliver
-```
+1. Copy + populate the env file:
+   ```
+   cd <repo>/deploy
+   cp example_oliver.env oliver.env
+   chmod 600 oliver.env
+   $EDITOR oliver.env  # fill in OLIVER_APP_ID, OLIVER_PRIVATE_KEY, OLIVER_WEBHOOK_SECRET
+   ```
 
-Verify:
-- `docker compose logs oliver` shows the Probot startup banner and "Oliver listening for release.published events".
-- `curl https://oliver.multiworld.gg/probot` returns Probot's health page.
-- The App's "Recent Deliveries" panel shows 200 responses for test webhooks.
+2. Build + start the container (publishes 127.0.0.1:3000 only — not internet-reachable):
+   ```
+   docker compose -f docker-compose.yml up -d --build oliver
+   docker compose logs oliver  # verify Probot startup banner
+   ```
+
+3. Drop the host-nginx snippet into place (or your distro's equivalent):
+   ```
+   sudo cp example_oliver_nginx.conf /etc/nginx/sites-available/oliver.multiworld.gg.conf
+   sudo ln -s /etc/nginx/sites-available/oliver.multiworld.gg.conf /etc/nginx/sites-enabled/oliver.multiworld.gg.conf
+   sudo nginx -t
+   sudo systemctl reload nginx
+   ```
+
+4. Add the DNS A record for `oliver.multiworld.gg`.
+
+5. (Optional) If TLS terminates on this host (vs. upstream Cloudflare), run:
+   ```
+   sudo certbot --nginx -d oliver.multiworld.gg
+   ```
+
+Verify end-to-end:
+- `docker compose logs oliver` shows "Oliver listening for release.published events".
+- `curl http://127.0.0.1:3000/probot` from the host returns Probot's health page.
+- `curl https://oliver.multiworld.gg/probot` from anywhere returns the same.
+- The GitHub App's "Recent Deliveries" panel shows 200 responses for test webhooks.
 
 ## Layout
 

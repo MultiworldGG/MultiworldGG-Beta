@@ -54,10 +54,11 @@ services:
       - 8080:80
     depends_on:
       - web
-      - oliver
 
-  # Oliver-Multiworld-Squirrel: GitHub App webhook receiver. Listens on :3000 internal.
-  # nginx proxies oliver.multiworld.gg → oliver:3000.
+  # Oliver-Multiworld-Squirrel: GitHub App webhook receiver.
+  # Publishes port 3000 to the host's loopback only — host nginx (running on the
+  # Ubuntu host, NOT in this compose stack) proxies oliver.multiworld.gg to
+  # 127.0.0.1:3000. See deploy/example_oliver_nginx.conf for the host-side snippet.
   oliver:
     build:
       context: ../GitHubLib
@@ -67,8 +68,10 @@ services:
       # Operator must copy example_oliver.env to oliver.env (chmod 0600) and fill in
       # OLIVER_APP_ID, OLIVER_PRIVATE_KEY, OLIVER_WEBHOOK_SECRET before bringing this up.
       - ./oliver.env
-    expose:
-      - "3000"
+    ports:
+      # Loopback-only — only host nginx (or other host-side processes) can reach this.
+      # NOT exposed to the public internet directly; TLS terminates at host nginx (or upstream).
+      - "127.0.0.1:3000:3000"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:3000/probot"]
