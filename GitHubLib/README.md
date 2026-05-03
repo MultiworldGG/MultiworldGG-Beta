@@ -97,12 +97,12 @@ To run locally against real webhooks during development, use `smee.io` to forwar
 
 ## Production deployment (Ubuntu host)
 
-The production host is bare Ubuntu with Docker installed. The public-facing TCP listener is **system nginx** (`/etc/nginx/`), **not** an in-Docker nginx. Oliver runs as a Docker container; system nginx proxies `oliver.multiworld.gg` to the container's loopback-published port.
+The production host is bare Ubuntu with Docker installed. The public-facing TCP listener is **system nginx** (`/etc/nginx/`), **not** an in-Docker nginx. nginx terminates TLS using a Let's Encrypt cert and proxies `oliver.multiworld.gg` to the container's loopback-published port.
 
 Topology:
 
 ```
-internet ──TLS── system nginx (Ubuntu host) ──127.0.0.1:3000── oliver container (docker compose)
+internet ─HTTPS:443─ system nginx (Ubuntu host, TLS terminates here) ─HTTP─127.0.0.1:3000─▶ container
 ```
 
 Operator setup on the production host:
@@ -143,20 +143,22 @@ Operator setup on the production host:
    sudo chmod 0750 /etc/github-bot
    ```
 
-5. Drop the host-nginx snippet into place:
+5. Add a DNS A record for `oliver.multiworld.gg` pointing at this host.
+
+6. Provision the Let's Encrypt cert:
+   ```
+   sudo certbot certonly --nginx -d oliver.multiworld.gg
+   ```
+
+7. Drop the host-nginx snippet into place:
    ```
    sudo cp example_github-bot_nginx.conf /etc/nginx/sites-available/oliver.multiworld.gg.conf
-   sudo ln -s /etc/nginx/sites-available/oliver.multiworld.gg.conf /etc/nginx/sites-enabled/oliver.multiworld.gg.conf
+   sudo ln -s /etc/nginx/sites-available/oliver.multiworld.gg.conf /etc/nginx/sites-enabled/
    sudo nginx -t
    sudo systemctl reload nginx
    ```
 
-6. Add the DNS A record for `oliver.multiworld.gg`.
-
-7. (Optional) If TLS terminates on this host (vs. upstream Cloudflare), run:
-   ```
-   sudo certbot --nginx -d oliver.multiworld.gg
-   ```
+   The snippet listens on 443 with TLS, redirects 80→443, validates HMAC at the edge via njs, and proxies to `127.0.0.1:3000`.
 
 Verify end-to-end:
 - `docker compose logs mwgg-github-bot` shows "Oliver listening for workflow_run.completed events".
