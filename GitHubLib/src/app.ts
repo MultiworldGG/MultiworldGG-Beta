@@ -1,15 +1,22 @@
-import { Probot } from "probot";
-import { handleRelease } from "./handlers/release";
+import { ApplicationFunction } from "probot";
+import { handleWorkflowRun } from "./handlers/workflow_run";
+import { mountStatusRoutes } from "./status-page";
 
-export function app(probot: Probot): void {
-  probot.on("release.published", async (context) => {
+export const app: ApplicationFunction = (probot, options) => {
+  probot.on("workflow_run.completed", async (context) => {
     try {
-      await handleRelease(probot, context);
+      await handleWorkflowRun(probot, context);
     } catch (err) {
-      context.log.error({ err }, "release.published handler failed");
+      context.log.error({ err }, "workflow_run.completed handler failed");
       throw err;
     }
   });
 
-  probot.log.info("Oliver listening for release.published events");
-}
+  if (options.getRouter) {
+    mountStatusRoutes(options.getRouter("/status"), probot);
+  } else {
+    probot.log.warn("No getRouter available; /status route not mounted");
+  }
+
+  probot.log.info("Oliver listening for workflow_run.completed events");
+};

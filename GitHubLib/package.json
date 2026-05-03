@@ -11,9 +11,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "handlebars": "^4.7.8",
-    "probot": "^13.4.5",
-    "simple-git": "^3.27.0"
+    "probot": "^13.4.5"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",

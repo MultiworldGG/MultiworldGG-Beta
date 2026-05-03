@@ -82,6 +82,9 @@ services:
       #   OLIVER_PRIVATE_KEY_FILE=/run/secrets/oliver_private_key.pem
       #   OLIVER_WEBHOOK_SECRET_FILE=/run/secrets/oliver_webhook_secret
       - ./oliver-secrets:/run/secrets:ro
+      # Persistent JSONL log of Oliver events (success/skip/error). Survives
+      # container restarts; surfaced at https://oliver.multiworld.gg/status.
+      - oliver_state:/var/lib/oliver
     ports:
       # Loopback-only — only host nginx (or other host-side processes) can reach this.
       # NOT exposed to the public internet directly; TLS terminates at host nginx (or upstream).
@@ -97,3 +100,5 @@ volumes:
   # Share application directory amongst multiworld and web services
   # (for access to log files and the like), and nginx (for static files)
   app_volume:
+  # Oliver's events.jsonl log
+  oliver_state:

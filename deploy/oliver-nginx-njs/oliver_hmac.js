@@ -52,8 +52,17 @@ function constantTimeEqual(a, b) {
 }
 
 function validate(r) {
-    // Allow GET /probot through unauthenticated for external healthchecks.
-    if (r.method === "GET" && r.uri === "/probot") {
+    // Allow these GET paths through unauthenticated:
+    //   /probot         — Probot's built-in healthcheck/info page
+    //   /status         — Oliver's failure-log status page (HTML)
+    //   /status/        — same, with trailing slash
+    //   /status/.json   — same data in JSON form, for scripted consumption
+    if (r.method === "GET" && (
+        r.uri === "/probot" ||
+        r.uri === "/status" ||
+        r.uri === "/status/" ||
+        r.uri === "/status/.json"
+    )) {
         r.internalRedirect("@oliver_backend");
         return;
     }

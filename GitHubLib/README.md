@@ -1,29 +1,73 @@
 # Oliver-Multiworld-Squirrel
 
-Webhook receiver for the `Oliver-Multiworld-Squirrel` GitHub App. Listens for `release.published` events on per-world repos, builds the orphan-branch tree in-process, pushes it back to the per-world repo as `module-install/<slug>` + tag `module-install/<slug>/<world_version>`, and opens a corresponding PR on `MultiworldGG-Index`.
+Webhook receiver for the `Oliver-Multiworld-Squirrel` GitHub App. Watches per-world repos for the `Create and Release Python Package` workflow to finish (i.e. `MultiworldGG/build-and-publish-action` has shaped + pushed the wheel branch + tag), then opens a corresponding PR on `MultiworldGG-Index` updating `worlds/<slug>.json` to point at the new tag's pinned SHA.
+
+Oliver does NOT clone, build, or push to per-world repos. The build is done by the per-world repo's own workflow under its own `GITHUB_TOKEN`. Oliver's per-world permissions are read-only (Contents:Read, Actions:Read, Metadata:Read).
 
 ## How per-world authors use Oliver
 
-1. Install the **Oliver-Multiworld-Squirrel** GitHub App on the per-world repo (one click, public install page).
-2. Cut a GitHub Release. Done.
+1. Install the **Oliver-Multiworld-Squirrel** GitHub App on the per-world repo (one click; only requests read permissions on the repo).
+2. Set a repository variable: Settings → Secrets and variables → Actions → Variables → New: `WORLD_FOLDER_NAME=<slug>` (e.g. `WORLD_FOLDER_NAME=clique`).
+3. Add `.github/workflows/make_pyproject.yml`:
 
-That's it. No workflow file, no secrets, no PEM. Oliver receives the webhook, figures out which world the release is for via diff-based slug discovery (see `src/slug-discovery.ts`), builds + pushes + opens the Index PR.
+   ```yaml
+   name: Create and Release Python Package
+   on:
+     release:
+       types: [published]
+     workflow_dispatch: {}
 
-If Oliver can't determine the slug (e.g. the release touched multiple `worlds/<slug>/`), it posts a comment on the release **and** opens an Issue on `MultiworldGG-Index` asking maintainers to PR by hand.
+   permissions:
+     contents: write   # for the wheel branch + tag push to this repo
+
+   jobs:
+     publish:
+       uses: MultiworldGG/build-and-publish-action/.github/workflows/build.yml@v3
+       # No `with:` — slug comes from vars.WORLD_FOLDER_NAME
+       # No `secrets:` — no Oliver secrets needed
+   ```
+
+4. Cut a GitHub Release.
+
+That's it. Within ~30s of the workflow finishing, Oliver opens a PR on the Index.
+
+## What Oliver does on each event
+
+1. Receives `workflow_run.completed` webhook from the per-world repo.
+2. Filters on workflow name (`Create and Release Python Package`), event (`release`), and conclusion (`success`).
+3. Reads the `WORLD_FOLDER_NAME` repo variable to find the slug.
+4. Resolves `workflow_run.head_sha` to the matching release tag name.
+5. Resolves the `wheel/worlds/<slug>/<release_tag>` tag (created by build-and-publish-action) to a commit SHA.
+6. Authenticates as the App for `lallaria/MultiworldGG-Index`, opens or updates a PR on `update/<slug>-<release_tag>` with `module_location = git+https://github.com/<owner>/<repo>.git@<sha>`.
+7. Logs the outcome (success / skip / error) to `/var/lib/oliver/events.jsonl`.
+
+If any step 2–6 fails (no `WORLD_FOLDER_NAME` set, workflow concluded `failure`, wheel tag missing, Oliver not installed on Index, etc.), Oliver writes a `skip` or `error` record to the JSONL log and returns 200 to GitHub. No issues are opened on the per-world repo or the Index — failures surface only on the `/status` page.
 
 ## Env vars
 
-Each secret can be supplied **inline** (`OLIVER_FOO=value`) **or via file path** (`OLIVER_FOO_FILE=/path/inside/container`). Pick whichever you prefer per-secret; if both are set, the file wins. The file pattern is recommended for the PEM (multi-line, awkward to inline) and for any operator who prefers Docker-secrets-style file mounts.
+Each secret can be supplied **inline** (`OLIVER_FOO=value`) **or via file path** (`OLIVER_FOO_FILE=/path/inside/container`). Pick whichever you prefer per-secret; if both are set, the file wins. The file pattern is recommended for the PEM (multi-line, awkward to inline).
 
 | Var | Required | Notes |
 |---|---|---|
 | `OLIVER_APP_ID` / `OLIVER_APP_ID_FILE` | yes | Numeric App ID from the GitHub App's General settings page. |
-| `OLIVER_PRIVATE_KEY` / `OLIVER_PRIVATE_KEY_FILE` | yes | Full PEM of the App's private key. Inline form: wrap in double quotes with `\n` for newlines. File form: just point at the `.pem` and forget about escaping. |
+| `OLIVER_PRIVATE_KEY` / `OLIVER_PRIVATE_KEY_FILE` | yes | Full PEM of the App's private key. Inline form: wrap in double quotes with `\n` for newlines. File form: just point at the `.pem`. |
 | `OLIVER_WEBHOOK_SECRET` / `OLIVER_WEBHOOK_SECRET_FILE` | yes | Webhook secret configured on the App. |
 | `OLIVER_INDEX_REPO` | no | `<owner>/<repo>` of the Index. Defaults to `lallaria/MultiworldGG-Index`. Not a secret. |
+| `OLIVER_LOG_DIR` | no | Where `events.jsonl` is written. Defaults to `/var/lib/oliver`. |
 | `PORT` | no | Bind port. Defaults to `3000`. |
 
-The compose service at `deploy/docker-compose.yml` bind-mounts `deploy/oliver-secrets/` to `/run/secrets:ro` inside the container, so `OLIVER_PRIVATE_KEY_FILE=/run/secrets/oliver_private_key.pem` resolves cleanly. Keep this directory at mode 0700 on the host; the contents are gitignored except for the `.gitkeep` placeholder.
+The compose service at `deploy/docker-compose.yml` bind-mounts `deploy/oliver-secrets/` to `/run/secrets:ro` inside the container, so `OLIVER_PRIVATE_KEY_FILE=/run/secrets/oliver_private_key.pem` resolves cleanly. Keep that directory at mode 0700 on the host; the contents are gitignored except for the `.gitkeep` placeholder.
+
+## Status / monitoring
+
+Two surfaces:
+
+- **`GET /probot`** — Probot's built-in App info page (untouched by Oliver). Reports the App's name and live installation count. Useful as a healthcheck endpoint.
+- **`GET /status`** — Oliver's failure-log page. Shows a 24h ok/skip/error count summary at the top and a table of the last 50 skip/error entries from `events.jsonl`. JSON form at `/status/.json`.
+
+Both pass through the nginx-edge HMAC validation as unauthenticated GET requests; POST traffic still requires a valid GitHub webhook signature.
+
+In-process runtime logs go to stdout via Probot's bundled pino logger — `docker compose logs oliver` for live tailing.
 
 ## Local development
 
@@ -37,12 +81,12 @@ To run locally against real webhooks during development, use `smee.io` to forwar
 
 ## Production deployment (Ubuntu host)
 
-The production host is bare Ubuntu with Docker installed. The public-facing TCP listener is **system nginx** (`/etc/nginx/`, started via `systemctl`), **not** an in-Docker nginx. Oliver runs as a Docker container; system nginx proxies `oliver.multiworld.gg` to the container's loopback-published port.
+The production host is bare Ubuntu with Docker installed. The public-facing TCP listener is **system nginx** (`/etc/nginx/`), **not** an in-Docker nginx. Oliver runs as a Docker container; system nginx proxies `oliver.multiworld.gg` to the container's loopback-published port.
 
 Topology:
 
 ```
-internet ──TLS── system nginx (Ubuntu host, /etc/nginx/) ──127.0.0.1:3000── oliver container (docker compose)
+internet ──TLS── system nginx (Ubuntu host) ──127.0.0.1:3000── oliver container (docker compose)
 ```
 
 Operator setup on the production host:
@@ -52,16 +96,25 @@ Operator setup on the production host:
    cd <repo>/deploy
    cp example_oliver.env oliver.env
    chmod 600 oliver.env
-   $EDITOR oliver.env  # fill in OLIVER_APP_ID, OLIVER_PRIVATE_KEY, OLIVER_WEBHOOK_SECRET
+   $EDITOR oliver.env  # fill in OLIVER_APP_ID + either inline or _FILE for PRIVATE_KEY/WEBHOOK_SECRET
    ```
 
-2. Build + start the container (publishes 127.0.0.1:3000 only — not internet-reachable):
+2. Drop secret files into the bind-mount dir (if using `_FILE` form):
+   ```
+   mkdir -m 700 oliver-secrets
+   cp ~/protected/oliver_private_key.pem oliver-secrets/oliver_private_key.pem
+   echo "12345" > oliver-secrets/oliver_app_id
+   openssl rand -hex 32 > oliver-secrets/oliver_webhook_secret
+   chmod 600 oliver-secrets/*
+   ```
+
+3. Build + start the container (publishes 127.0.0.1:3000 only — not internet-reachable):
    ```
    docker compose -f docker-compose.yml up -d --build oliver
-   docker compose logs oliver  # verify Probot startup banner
+   docker compose logs oliver  # verify "Oliver listening for workflow_run.completed events"
    ```
 
-3. Install the njs module + drop the validation script + webhook secret into place:
+4. Install the njs module + drop the validation script + webhook secret into place for nginx-edge HMAC validation:
    ```
    sudo apt install libnginx-mod-http-js
    sudo mkdir -p /etc/nginx/njs /etc/oliver
@@ -72,7 +125,7 @@ Operator setup on the production host:
    sudo chmod 0750 /etc/oliver
    ```
 
-4. Drop the host-nginx snippet into place (or your distro's equivalent):
+5. Drop the host-nginx snippet into place:
    ```
    sudo cp example_oliver_nginx.conf /etc/nginx/sites-available/oliver.multiworld.gg.conf
    sudo ln -s /etc/nginx/sites-available/oliver.multiworld.gg.conf /etc/nginx/sites-enabled/oliver.multiworld.gg.conf
@@ -80,19 +133,17 @@ Operator setup on the production host:
    sudo systemctl reload nginx
    ```
 
-   This nginx config validates HMAC at the edge using njs — bad signatures get a 401 *before* nginx ever proxies to the container. Probot inside the container also validates, so it's defense-in-depth (two layers).
+6. Add the DNS A record for `oliver.multiworld.gg`.
 
-5. Add the DNS A record for `oliver.multiworld.gg`.
-
-6. (Optional) If TLS terminates on this host (vs. upstream Cloudflare), run:
+7. (Optional) If TLS terminates on this host (vs. upstream Cloudflare), run:
    ```
    sudo certbot --nginx -d oliver.multiworld.gg
    ```
 
 Verify end-to-end:
-- `docker compose logs oliver` shows "Oliver listening for release.published events".
-- `curl http://127.0.0.1:3000/probot` from the host returns Probot's health page.
-- `curl https://oliver.multiworld.gg/probot` from anywhere returns the same.
+- `docker compose logs oliver` shows "Oliver listening for workflow_run.completed events".
+- `curl https://oliver.multiworld.gg/probot` returns Probot's stock info page.
+- `curl https://oliver.multiworld.gg/status` returns the HTML status page (initially empty: "0 events in last 24h").
 - The GitHub App's "Recent Deliveries" panel shows 200 responses for test webhooks.
 
 ## Layout
@@ -100,22 +151,15 @@ Verify end-to-end:
 ```
 GitHubLib/
 ├── src/
-│   ├── index.ts              Probot Server bootstrap
-│   ├── app.ts                Event registration
-│   ├── handlers/release.ts   release.published orchestrator
-│   ├── slug-discovery.ts     diff-based slug detection (the critical-correctness module)
-│   ├── shape-orphan.ts       port of build-and-publish-action's shape_orphan.py
-│   ├── git-ops.ts            simple-git wrapper: clone, push orphan branch + tag
-│   └── templates/            Handlebars templates for pyproject.toml + README.md
-├── test/                     Jest tests
-├── Dockerfile                multi-stage Node 20 alpine
+│   ├── index.ts                Probot Server bootstrap (env loading, port binding)
+│   ├── app.ts                  Event registration; mounts /status route
+│   ├── handlers/workflow_run.ts  workflow_run.completed orchestrator (the main flow)
+│   ├── release-resolver.ts     resolves head_sha → release tag name
+│   ├── repo-vars.ts            reads `WORLD_FOLDER_NAME` repo variable
+│   ├── index-pr.ts             opens or updates the Index PR
+│   ├── event-log.ts            JSONL append-only logger + pino fan-out
+│   └── status-page.ts          GET /status HTML + JSON renderer
+├── test/                       Vitest tests
+├── Dockerfile                  multi-stage Node 20 alpine
 └── package.json
 ```
-
-## Slug discovery (the design choice)
-
-Per-world repos almost always start as forks of the MultiworldGG monorepo (which contains all 250+ worlds). Directory enumeration would publish every world. Oliver instead uses the **diff** between this release and the previous release (or the parent default branch on first-release-of-fork, or a whole-tree scan for from-scratch repos) and accepts the slug only when exactly one candidate emerges.
-
-Multi-world repos (think Pokémon Red and Pokémon Blue from one repo) are supported by cutting **separate releases per world**. Oliver fires once per release.
-
-Skip path: if 0 or >1 candidates, Oliver posts a release comment AND opens an Issue on the Index for human review. No silent failures.
