@@ -11,7 +11,6 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev --no-audit --no-fund || npm install --omit=dev --no-audit --no-fund
 COPY --from=build /app/dist ./dist
-COPY src/templates ./dist/templates
 ENV NODE_ENV=production
 ENV PORT=3000
 EXPOSE 3000
