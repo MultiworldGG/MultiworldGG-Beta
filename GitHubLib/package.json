@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "jest"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "handlebars": "^4.7.8",
@@ -15,11 +16,9 @@
     "simple-git": "^3.27.0"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.12",
     "@types/node": "^20.14.10",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.2.4",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^3.1.4"
   },
   "engines": {
     "node": ">=20"
