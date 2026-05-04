@@ -11,8 +11,13 @@ export interface IndexPROpts {
   slug: string;
   releaseTag: string;
   pinnedSha: string;
-  game: string | null;
-  authors: string[] | null;
+  // Full parsed `worlds/<slug>/archipelago.json` from the per-world repo at the
+  // release SHA. The author's archipelago.json is the canonical source of
+  // truth for everything except module_location (Oliver overrides) and igdb_id
+  // (preserved from the existing Index manifest unless the author explicitly
+  // sets their own). Use {} when the file is missing/unreadable — Karen's
+  // schema check will surface the resulting bad PR.
+  sourceManifest: Record<string, unknown>;
 }
 
 export interface IndexPRResult {
@@ -39,8 +44,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     slug,
     releaseTag,
     pinnedSha,
-    game,
-    authors,
+    sourceManifest,
   } = opts;
 
   const moduleLocation = `git+https://github.com/${sourceOwner}/${sourceRepo}.git@${pinnedSha}`;
@@ -99,13 +103,22 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     // file doesn't exist on this branch yet
   }
 
+  // Merge order:
+  //   1. The per-world author's archipelago.json is canonical for every field
+  //      they declare (game, authors, world_version, _comment, tracker, flags,
+  //      anything they put there). If they remove a field from their next
+  //      release, it disappears from the Index manifest too.
+  //   2. Oliver overrides module_location with the pinned-wheel-SHA URL.
+  //   3. igdb_id is preserved from the existing Index manifest if and only if
+  //      the author did not include one themselves. If they did, theirs wins
+  //      (explicit override).
   const updated: Record<string, unknown> = {
-    ...currentJson,
+    ...sourceManifest,
     module_location: moduleLocation,
-    world_version: releaseTag,
   };
-  if (game) updated.game = game;
-  if (authors) updated.authors = authors;
+  if (!("igdb_id" in sourceManifest) && "igdb_id" in currentJson) {
+    updated.igdb_id = currentJson.igdb_id;
+  }
 
   const newContent = JSON.stringify(updated, null, 2) + "\n";
   const encodedContent = Buffer.from(newContent, "utf-8").toString("base64");

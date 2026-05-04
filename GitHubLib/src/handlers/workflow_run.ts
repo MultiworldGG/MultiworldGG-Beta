@@ -111,7 +111,7 @@ export async function handleWorkflowRun(
     throw err;
   }
 
-  const manifest = await fetchManifestFields(context, owner, repo, slug, run.head_sha);
+  const sourceManifest = await fetchSourceManifest(context, owner, repo, slug, run.head_sha);
 
   const indexRepoSpec = process.env.OLIVER_INDEX_REPO ?? INDEX_REPO_DEFAULT;
   const [indexOwner, indexName] = indexRepoSpec.split("/", 2);
@@ -184,8 +184,7 @@ export async function handleWorkflowRun(
       slug,
       releaseTag,
       pinnedSha,
-      game: manifest.game,
-      authors: manifest.authors,
+      sourceManifest: sourceManifest ?? {},
     });
     log.emit({
       kind: "ok",
@@ -227,13 +226,22 @@ export async function handleWorkflowRun(
   }
 }
 
-async function fetchManifestFields(
+// The per-world repo's archipelago.json is the canonical source of truth for
+// every manifest field except module_location (Oliver-controlled, pinned to a
+// wheel SHA) and igdb_id (Index-controlled, set by the IGDB-lookup workflow
+// unless the author explicitly opts in by including it themselves).
+//
+// Returns the full parsed object so the merge in index-pr.ts can spread it.
+// Returns null if the file is missing, unreadable, or unparseable — the caller
+// then writes a manifest with only Oliver-controlled fields, and Karen's schema
+// check will surface the missing required `game` field on the resulting PR.
+async function fetchSourceManifest(
   context: Context<"workflow_run.completed">,
   owner: string,
   repo: string,
   slug: string,
   ref: string,
-): Promise<{ game: string | null; authors: string[] | null }> {
+): Promise<Record<string, unknown> | null> {
   try {
     const res = await context.octokit.rest.repos.getContent({
       owner,
@@ -241,13 +249,12 @@ async function fetchManifestFields(
       path: `worlds/${slug}/archipelago.json`,
       ref,
     });
-    if (Array.isArray(res.data) || res.data.type !== "file") return { game: null, authors: null };
+    if (Array.isArray(res.data) || res.data.type !== "file") return null;
     const decoded = Buffer.from(res.data.content, res.data.encoding as BufferEncoding).toString("utf-8");
-    const parsed = JSON.parse(decoded) as { game?: unknown; authors?: unknown };
-    const game = typeof parsed.game === "string" ? parsed.game : null;
-    const authors = Array.isArray(parsed.authors) ? parsed.authors.filter((a): a is string => typeof a === "string") : null;
-    return { game, authors };
+    const parsed = JSON.parse(decoded);
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    return parsed as Record<string, unknown>;
   } catch {
-    return { game: null, authors: null };
+    return null;
   }
 }

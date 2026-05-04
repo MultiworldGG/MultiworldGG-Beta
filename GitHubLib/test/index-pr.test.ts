@@ -125,8 +125,12 @@ const baseOpts = (overrides: Partial<IndexPROpts> = {}): Omit<IndexPROpts, "kare
   slug: "clique",
   releaseTag: "v1.0.0",
   pinnedSha: "wheel-sha-aaa",
-  game: "Clique",
-  authors: ["Alice"],
+  sourceManifest: {
+    game: "Clique",
+    authors: ["Alice"],
+    world_version: "v1.0.0",
+    minimum_ap_version: "0.6.3",
+  },
   ...overrides,
 });
 
@@ -301,5 +305,148 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
     expect(coWrite).toBeDefined();
     expect(coWrite!.payload.content).toContain("worlds/clique.json @MWGGTESTING-alice");
     expect(coWrite!.payload.content).not.toMatch(/@alice\b(?!-|TEST)/);
+  });
+});
+
+describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinned)", () => {
+  function readManifest(state: FakeIndex): Record<string, unknown> {
+    const write = state.writes.find(
+      (w) => w.kind === "file" && w.payload.path === "worlds/clique.json",
+    );
+    if (!write) throw new Error("manifest was not written");
+    return JSON.parse(write.payload.content);
+  }
+
+  it("preserves igdb_id from main when the author did not set their own", async () => {
+    const state = makeFakeIndex({
+      files: {
+        main: {
+          "worlds/clique.json": {
+            content: JSON.stringify({
+              game: "Clique",
+              authors: ["Alice"],
+              module_location: "git+old",
+              world_version: "v0.9.0",
+              igdb_id: 117525,
+            }),
+            sha: "old",
+          },
+        },
+      },
+    });
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
+
+    const m = readManifest(state);
+    expect(m.igdb_id).toBe(117525);
+    expect(m.module_location).toMatch(/^git\+https:\/\/github\.com\/alice\/alice-clique\.git@/);
+  });
+
+  it("lets the author override igdb_id by setting it in their archipelago.json", async () => {
+    const state = makeFakeIndex({
+      files: {
+        main: {
+          "worlds/clique.json": {
+            content: JSON.stringify({ game: "Clique", igdb_id: 999 }),
+            sha: "old",
+          },
+        },
+      },
+    });
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({
+      ...baseOpts({
+        sourceManifest: {
+          game: "Clique",
+          authors: ["Alice"],
+          world_version: "v1.0.0",
+          igdb_id: 117525,
+        },
+      }),
+      ...octokits,
+    });
+
+    const m = readManifest(state);
+    expect(m.igdb_id).toBe(117525);
+  });
+
+  it("passes arbitrary author-declared fields (tracker, _comment) through unchanged", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({
+      ...baseOpts({
+        sourceManifest: {
+          game: "Clique",
+          authors: ["Alice"],
+          world_version: "v1.0.0",
+          tracker: "https://tracker.example/clique",
+          flags: ["ROM"],
+          _comment: "PR-time IGDB lookup happens after this commit",
+        },
+      }),
+      ...octokits,
+    });
+
+    const m = readManifest(state);
+    expect(m.tracker).toBe("https://tracker.example/clique");
+    expect(m.flags).toEqual(["ROM"]);
+    expect(m._comment).toBe("PR-time IGDB lookup happens after this commit");
+  });
+
+  it("drops fields the author removed from their archipelago.json (their file is canonical)", async () => {
+    const state = makeFakeIndex({
+      files: {
+        main: {
+          "worlds/clique.json": {
+            content: JSON.stringify({
+              game: "Clique",
+              authors: ["Alice"],
+              tracker: "https://tracker.example/clique",
+              flags: ["ROM"],
+            }),
+            sha: "old",
+          },
+        },
+      },
+    });
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({
+      ...baseOpts({
+        sourceManifest: {
+          game: "Clique",
+          authors: ["Alice"],
+          world_version: "v1.0.0",
+          // tracker and flags intentionally absent
+        },
+      }),
+      ...octokits,
+    });
+
+    const m = readManifest(state);
+    expect(m).not.toHaveProperty("tracker");
+    expect(m).not.toHaveProperty("flags");
+  });
+
+  it("always pins module_location to the wheel SHA, ignoring whatever the author's archipelago.json says", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({
+      ...baseOpts({
+        sourceManifest: {
+          game: "Clique",
+          authors: ["Alice"],
+          world_version: "v1.0.0",
+          // Author tries to set a non-pinned location; Oliver must override.
+          module_location: "https://github.com/alice/alice-clique/tree/main/worlds/clique",
+        },
+        pinnedSha: "wheel-sha-zzz",
+      }),
+      ...octokits,
+    });
+
+    const m = readManifest(state);
+    expect(m.module_location).toBe(
+      "git+https://github.com/alice/alice-clique.git@wheel-sha-zzz",
+    );
   });
 });
