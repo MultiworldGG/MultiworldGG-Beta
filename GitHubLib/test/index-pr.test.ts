@@ -143,10 +143,22 @@ afterEach(() => {
 });
 
 describe("openOrUpdateIndexPR — labels (Phase C)", () => {
+  // Fixtures here include igdb_id so these tests stay focused on the
+  // New/Update label rule. The Needs-IGDB-id label rule is covered separately.
+  const optsWithIgdb = {
+    sourceManifest: {
+      game: "Clique",
+      authors: ["Alice"],
+      world_version: "v1.0.0",
+      minimum_ap_version: "0.6.3",
+      igdb_id: 117525,
+    },
+  };
+
   it("applies 'New APWorld' label when worlds/<slug>.json is brand-new", async () => {
     const state = makeFakeIndex();
     const octokits = makeOctokits(state);
-    const result = await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
+    const result = await openOrUpdateIndexPR({ ...baseOpts(optsWithIgdb), ...octokits });
 
     expect(result.worldIsNew).toBe(true);
     const label = state.writes.find((w) => w.kind === "labels");
@@ -159,14 +171,18 @@ describe("openOrUpdateIndexPR — labels (Phase C)", () => {
       files: {
         main: {
           "worlds/clique.json": {
-            content: JSON.stringify({ module_location: "git+old", world_version: "v0.9.0" }),
+            content: JSON.stringify({
+              module_location: "git+old",
+              world_version: "v0.9.0",
+              igdb_id: 117525,
+            }),
             sha: "old-manifest-sha",
           },
         },
       },
     });
     const octokits = makeOctokits(state);
-    const result = await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
+    const result = await openOrUpdateIndexPR({ ...baseOpts(optsWithIgdb), ...octokits });
 
     expect(result.worldIsNew).toBe(false);
     const label = state.writes.find((w) => w.kind === "labels");
@@ -191,8 +207,103 @@ describe("openOrUpdateIndexPR — labels (Phase C)", () => {
     expect(result.created).toBe(false);
     expect(result.prNumber).toBe(42);
     const label = state.writes.find((w) => w.kind === "labels");
-    expect(label?.payload.labels).toEqual(["New APWorld"]);
+    expect(label?.payload.labels).toEqual(["New APWorld", "Needs IGDB id"]);
     expect(label?.payload.issue_number).toBe(42);
+  });
+});
+
+describe("openOrUpdateIndexPR — Needs IGDB id label", () => {
+  it("applies 'Needs IGDB id' when source manifest lacks igdb_id and main has none either", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
+
+    const label = state.writes.find((w) => w.kind === "labels");
+    expect(label?.payload.labels).toEqual(["New APWorld", "Needs IGDB id"]);
+    expect(label?.payload.issue_number).toBe(result.prNumber);
+  });
+
+  it("does NOT apply 'Needs IGDB id' when source manifest already has igdb_id", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({
+      ...baseOpts({
+        sourceManifest: {
+          game: "Clique",
+          authors: ["Alice"],
+          world_version: "v1.0.0",
+          igdb_id: 117525,
+        },
+      }),
+      ...octokits,
+    });
+
+    const label = state.writes.find((w) => w.kind === "labels");
+    expect(label?.payload.labels).toEqual(["New APWorld"]);
+  });
+
+  it("does NOT apply 'Needs IGDB id' when source omits igdb_id but main preserves one (update flow)", async () => {
+    const state = makeFakeIndex({
+      files: {
+        main: {
+          "worlds/clique.json": {
+            content: JSON.stringify({
+              game: "Clique",
+              authors: ["Alice"],
+              world_version: "v0.9.0",
+              igdb_id: 117525,
+            }),
+            sha: "old",
+          },
+        },
+      },
+    });
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
+
+    const label = state.writes.find((w) => w.kind === "labels");
+    expect(label?.payload.labels).toEqual(["APWorld Update"]);
+  });
+
+  it("applies 'Needs IGDB id' on an update flow when neither source nor existing main has igdb_id", async () => {
+    const state = makeFakeIndex({
+      files: {
+        main: {
+          "worlds/clique.json": {
+            content: JSON.stringify({
+              game: "Clique",
+              authors: ["Alice"],
+              world_version: "v0.9.0",
+            }),
+            sha: "old",
+          },
+        },
+      },
+    });
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
+
+    const label = state.writes.find((w) => w.kind === "labels");
+    expect(label?.payload.labels).toEqual(["APWorld Update", "Needs IGDB id"]);
+  });
+
+  it("treats igdb_id: null as 'present' (does not relabel)", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({
+      ...baseOpts({
+        sourceManifest: {
+          game: "Clique",
+          authors: ["Alice"],
+          world_version: "v1.0.0",
+          igdb_id: null,
+        },
+      }),
+      ...octokits,
+    });
+
+    const label = state.writes.find((w) => w.kind === "labels");
+    expect(label?.payload.labels).toEqual(["New APWorld"]);
   });
 });
 

@@ -30,6 +30,7 @@ export interface IndexPRResult {
 
 const NEW_WORLD_LABEL = "New APWorld";
 const UPDATE_WORLD_LABEL = "APWorld Update";
+const NEEDS_IGDB_ID_LABEL = "Needs IGDB id";
 const CODEOWNERS_PATH = ".github/CODEOWNERS";
 
 export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRResult> {
@@ -196,11 +197,15 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     created = false;
   }
 
+  const labels = [worldIsNew ? NEW_WORLD_LABEL : UPDATE_WORLD_LABEL];
+  if (!("igdb_id" in updated)) {
+    labels.push(NEEDS_IGDB_ID_LABEL);
+  }
   await oliverOctokit.rest.issues.addLabels({
     owner: indexOwner,
     repo: indexName,
     issue_number: prNumber,
-    labels: [worldIsNew ? NEW_WORLD_LABEL : UPDATE_WORLD_LABEL],
+    labels,
   });
 
   return { prNumber, branchName, created, worldIsNew, codeownersConflictWith };
