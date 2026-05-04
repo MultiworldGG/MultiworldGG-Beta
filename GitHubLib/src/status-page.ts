@@ -35,7 +35,7 @@ function renderHtml(
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>MWGG GitHub-bot status</title>
+<title>Karen & Oliver MWGG Status</title>
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2em; color: #222; max-width: 900px; }
   h1 { margin-bottom: 0.2em; }
@@ -55,13 +55,12 @@ function renderHtml(
 </style>
 </head>
 <body>
-<h1>MWGG GitHub-bot</h1>
-<p style="color:#666;margin-top:0">Webhook receiver running two GitHub App identities.</p>
+<h1>Karen & Oliver MWGG Status</h1>
 
 <h2>Identities</h2>
 <ul>
-  <li><strong>${esc(oliverSlug)}</strong> — public-facing. Installed on per-world repos. Receives <code>workflow_run.completed</code> webhooks and opens PRs on the Index.</li>
-  <li><strong>${esc(karenSlug)}</strong> — Index-only writer. Creates branches and commits manifest updates on <code>MultiworldGG-Index</code>.</li>
+  <li><strong>${esc(oliverSlug)}</strong></li>
+  <li><strong>${esc(karenSlug)}</strong></li>
 </ul>
 
 <h2>Last 24 hours</h2>
@@ -82,7 +81,6 @@ ${rows}
 </table>
 
 <p style="color:#888;font-size:0.8em;margin-top:2em">
-  Live tail: <code>docker compose logs -f mwgg-github-bot</code>.
   JSON: <a href="/status/.json">/status/.json</a>.
 </p>
 </body>

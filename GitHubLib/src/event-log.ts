@@ -20,7 +20,8 @@ export type EventReason =
   | "tag_missing"
   | "release_not_found"
   | "index_install_missing"
-  | "github_api_error";
+  | "github_api_error"
+  | "codeowners_conflict";
 
 export interface OliverEvent {
   kind: EventKind;

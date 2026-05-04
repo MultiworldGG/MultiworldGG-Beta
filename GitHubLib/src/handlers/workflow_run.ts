@@ -119,31 +119,6 @@ export async function handleWorkflowRun(
     throw new Error(`Invalid OLIVER_INDEX_REPO: ${indexRepoSpec}`);
   }
 
-  let oliverIndexInstallId: number;
-  try {
-    const indexInstall = await context.octokit.rest.apps.getRepoInstallation({
-      owner: indexOwner,
-      repo: indexName,
-    });
-    oliverIndexInstallId = indexInstall.data.id;
-  } catch (err: unknown) {
-    const status = (err as { status?: number }).status;
-    if (status === 404) {
-      log.emit({
-        kind: "error",
-        source_repo: sourceRepo,
-        slug,
-        release_tag: releaseTag,
-        release_sha: run.head_sha,
-        wheel_sha: pinnedSha,
-        reason: "index_install_missing",
-        message: `Oliver is not installed on ${indexRepoSpec}; cannot open Index PR.`,
-      });
-      return;
-    }
-    throw err;
-  }
-
   let karenIndexInstallId: number;
   try {
     const karenAppOctokit = await karenProbot.auth();
@@ -171,11 +146,9 @@ export async function handleWorkflowRun(
   }
 
   try {
-    const oliverOctokit = await probot.auth(oliverIndexInstallId);
     const karenOctokit = await karenProbot.auth(karenIndexInstallId);
     const result = await openOrUpdateIndexPR({
       karenOctokit,
-      oliverOctokit,
       karenSlug,
       indexOwner,
       indexName,
@@ -199,6 +172,18 @@ export async function handleWorkflowRun(
         ? `Opened Index PR #${result.prNumber} for ${slug}@${releaseTag}.`
         : `Updated Index PR #${result.prNumber} for ${slug}@${releaseTag}.`,
     });
+    if (result.codeownersConflictWith) {
+      log.emit({
+        kind: "skip",
+        source_repo: sourceRepo,
+        slug,
+        release_tag: releaseTag,
+        release_sha: run.head_sha,
+        index_pr: result.prNumber,
+        reason: "codeowners_conflict",
+        message: `New-world PR opened, but CODEOWNERS already lists @${result.codeownersConflictWith} for worlds/${slug}.json; left untouched.`,
+      });
+    }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     log.emit({
