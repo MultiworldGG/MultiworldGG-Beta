@@ -54,7 +54,7 @@ Swanky now has trivia from both the original game and the games present in the s
 ## What is EnergyLink?
 EnergyLink is an energy storage supported by certain games that is shared across all worlds in a multiworld. In Donkey Kong Country 2, when enabled, deposits a certain amount of energy labeled "Banana" to the EnergyLink pool. Only 10% of a banana is successfully sent to the EnergyLink pool, this can be enhanced up to 15% after receiving `Banana Extractinator` items.
 
-Energy from the EnergyLink pool can be transmuted into Instant DK Barrels for 25 EnergyLink bananas. This can be only achieved via SNIClient with the `/barrel` command.
+Energy from the EnergyLink pool can be transmuted into Instant DK Barrels for 25 EnergyLink bananas. This can be only achieved via SNIClient with the `/request` command.
 
 ## Unique Local Commands
-- `/barrel` Invokes a DK Barrel at the player's position. Can be queued multiple times.
+- `/request` Invokes a DK Barrel at the player's position. Can be queued multiple times.
