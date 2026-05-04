@@ -1,8 +1,9 @@
 import type { ProbotOctokit } from "probot";
 
 export interface IndexPROpts {
-  karenOctokit: ProbotOctokit;   // Contents:Write + Pull requests:Write + Issues:Write — does branch, commit, PR, label, CODEOWNERS on the Index
-  karenSlug: string;             // for the committer identity
+  karenOctokit: ProbotOctokit;   // Contents:Write — Karen creates the branch, commits the manifest, and appends CODEOWNERS on the Index.
+  oliverOctokit: ProbotOctokit;  // Pull requests:Write + Issues:Write — Oliver opens/updates the PR and applies labels (review handoff line — see memory: feedback_oliver_opens_karen_approves).
+  karenSlug: string;             // for the committer identity on Karen's commits
   indexOwner: string;
   indexName: string;
   sourceOwner: string;
@@ -29,6 +30,7 @@ const CODEOWNERS_PATH = ".github/CODEOWNERS";
 export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRResult> {
   const {
     karenOctokit,
+    oliverOctokit,
     karenSlug,
     indexOwner,
     indexName,
@@ -138,7 +140,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     });
   }
 
-  const existingPRs = await karenOctokit.rest.pulls.list({
+  const existingPRs = await oliverOctokit.rest.pulls.list({
     owner: indexOwner,
     repo: indexName,
     head: `${indexOwner}:${branchName}`,
@@ -159,7 +161,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   let prNumber: number;
   let created: boolean;
   if (existingPRs.data.length === 0) {
-    const createdPR = await karenOctokit.rest.pulls.create({
+    const createdPR = await oliverOctokit.rest.pulls.create({
       owner: indexOwner,
       repo: indexName,
       title: `[${slug}] Update to ${releaseTag}`,
@@ -171,7 +173,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     created = true;
   } else {
     const existing = existingPRs.data[0];
-    await karenOctokit.rest.pulls.update({
+    await oliverOctokit.rest.pulls.update({
       owner: indexOwner,
       repo: indexName,
       pull_number: existing.number,
@@ -181,7 +183,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     created = false;
   }
 
-  await karenOctokit.rest.issues.addLabels({
+  await oliverOctokit.rest.issues.addLabels({
     owner: indexOwner,
     repo: indexName,
     issue_number: prNumber,

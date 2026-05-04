@@ -24,8 +24,8 @@ function makeFakeIndex(init: Partial<FakeIndex> = {}): FakeIndex {
   };
 }
 
-function makeKarenOctokit(state: FakeIndex, indexOwner: string, indexName: string): any {
-  let prCounter = 100;
+// Karen has Contents:Write only — branch + commit operations on the Index.
+function makeKarenOctokit(state: FakeIndex): any {
   return {
     rest: {
       repos: {
@@ -70,6 +70,15 @@ function makeKarenOctokit(state: FakeIndex, indexOwner: string, indexName: strin
           return { data: {} };
         },
       },
+    },
+  };
+}
+
+// Oliver has Pull requests:Write + Issues:Write — opens the PR and applies labels.
+function makeOliverOctokit(state: FakeIndex, indexOwner: string): any {
+  let prCounter = 100;
+  return {
+    rest: {
       pulls: {
         list: async ({ head }: { head: string }) => {
           const branchHead = head.replace(`${indexOwner}:`, "");
@@ -97,10 +106,20 @@ function makeKarenOctokit(state: FakeIndex, indexOwner: string, indexName: strin
   };
 }
 
-const baseOpts = (overrides: Partial<IndexPROpts> = {}): Omit<IndexPROpts, "karenOctokit"> => ({
+const INDEX_OWNER = "lallaria";
+const INDEX_NAME = "MultiworldGG-Index";
+
+function makeOctokits(state: FakeIndex) {
+  return {
+    karenOctokit: makeKarenOctokit(state),
+    oliverOctokit: makeOliverOctokit(state, INDEX_OWNER),
+  };
+}
+
+const baseOpts = (overrides: Partial<IndexPROpts> = {}): Omit<IndexPROpts, "karenOctokit" | "oliverOctokit"> => ({
   karenSlug: "karen-multiworld-bot",
-  indexOwner: "lallaria",
-  indexName: "MultiworldGG-Index",
+  indexOwner: INDEX_OWNER,
+  indexName: INDEX_NAME,
   sourceOwner: "alice",
   sourceRepo: "alice-clique",
   slug: "clique",
@@ -122,8 +141,8 @@ afterEach(() => {
 describe("openOrUpdateIndexPR — labels (Phase C)", () => {
   it("applies 'New APWorld' label when worlds/<slug>.json is brand-new", async () => {
     const state = makeFakeIndex();
-    const octokit = makeKarenOctokit(state, "lallaria", "MultiworldGG-Index");
-    const result = await openOrUpdateIndexPR({ ...baseOpts(), karenOctokit: octokit });
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
 
     expect(result.worldIsNew).toBe(true);
     const label = state.writes.find((w) => w.kind === "labels");
@@ -142,8 +161,8 @@ describe("openOrUpdateIndexPR — labels (Phase C)", () => {
         },
       },
     });
-    const octokit = makeKarenOctokit(state, "lallaria", "MultiworldGG-Index");
-    const result = await openOrUpdateIndexPR({ ...baseOpts(), karenOctokit: octokit });
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
 
     expect(result.worldIsNew).toBe(false);
     const label = state.writes.find((w) => w.kind === "labels");
@@ -162,8 +181,8 @@ describe("openOrUpdateIndexPR — labels (Phase C)", () => {
       },
       openPRs: [{ number: 42, head: "update/clique-v1.0.0" }],
     });
-    const octokit = makeKarenOctokit(state, "lallaria", "MultiworldGG-Index");
-    const result = await openOrUpdateIndexPR({ ...baseOpts(), karenOctokit: octokit });
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
 
     expect(result.created).toBe(false);
     expect(result.prNumber).toBe(42);
@@ -176,8 +195,8 @@ describe("openOrUpdateIndexPR — labels (Phase C)", () => {
 describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
   it("creates CODEOWNERS with header when file does not exist", async () => {
     const state = makeFakeIndex();
-    const octokit = makeKarenOctokit(state, "lallaria", "MultiworldGG-Index");
-    const result = await openOrUpdateIndexPR({ ...baseOpts(), karenOctokit: octokit });
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
 
     expect(result.codeownersConflictWith).toBeNull();
     const co = state.writes.find(
@@ -197,8 +216,8 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
         },
       },
     });
-    const octokit = makeKarenOctokit(state, "lallaria", "MultiworldGG-Index");
-    await openOrUpdateIndexPR({ ...baseOpts(), karenOctokit: octokit });
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
 
     const coWrite = state.writes.find(
       (w) => w.kind === "file" && w.payload.path === ".github/CODEOWNERS",
@@ -218,8 +237,8 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
         },
       },
     });
-    const octokit = makeKarenOctokit(state, "lallaria", "MultiworldGG-Index");
-    const result = await openOrUpdateIndexPR({ ...baseOpts(), karenOctokit: octokit });
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
 
     expect(result.worldIsNew).toBe(false);
     const coWrite = state.writes.find(
@@ -239,8 +258,8 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
         },
       },
     });
-    const octokit = makeKarenOctokit(state, "lallaria", "MultiworldGG-Index");
-    const result = await openOrUpdateIndexPR({ ...baseOpts(), karenOctokit: octokit });
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
 
     expect(result.codeownersConflictWith).toBe("someone-else");
     const coWrite = state.writes.find(
@@ -260,8 +279,8 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
       },
       openPRs: [{ number: 42, head: "update/clique-v1.0.0" }],
     });
-    const octokit = makeKarenOctokit(state, "lallaria", "MultiworldGG-Index");
-    const result = await openOrUpdateIndexPR({ ...baseOpts(), karenOctokit: octokit });
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
 
     expect(result.codeownersConflictWith).toBeNull();
     const coWrite = state.writes.find(
@@ -273,8 +292,8 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
   it("honors OLIVER_CODEOWNER_PREFIX and writes the prefixed handle", async () => {
     process.env.OLIVER_CODEOWNER_PREFIX = "MWGGTESTING-";
     const state = makeFakeIndex();
-    const octokit = makeKarenOctokit(state, "lallaria", "MultiworldGG-Index");
-    await openOrUpdateIndexPR({ ...baseOpts(), karenOctokit: octokit });
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
 
     const coWrite = state.writes.find(
       (w) => w.kind === "file" && w.payload.path === ".github/CODEOWNERS",

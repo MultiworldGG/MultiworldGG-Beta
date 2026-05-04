@@ -9,14 +9,16 @@ Oliver does NOT clone, build, or push to per-world repos. The build is done by t
 GitHub Apps have one global permission set per App. To keep the per-world install prompt strictly non-scary while still letting the bot write to the Index, Oliver is split into two App identities:
 
 - **Oliver-Multiworld-Squirrel** — installed on per-world repos AND the Index.
-  - Permissions: `Contents: Read`, `Actions: Read`, `Variables: Read`, `Pull requests: Read and write`, `Metadata: Read`.
+  - Permissions: `Contents: Read`, `Actions: Read`, `Variables: Read`, `Pull requests: Read and write`, `Issues: Write`, `Metadata: Read`.
   - **Subscribe to events:** **Workflow run** *only* (NOT "Release" — Oliver doesn't act on `release.*` payloads, only on `workflow_run.completed`).
-  - The PR-write grant on per-world repos is unused but visible at install time (acceptable trade-off).
+  - On per-world repos: only the read-shaped permissions are exercised. `Pull requests: Read and write` and `Issues: Write` are unused there but visible at install time (acceptable trade-off — they're the bits Oliver uses on its Index installation).
+  - On the Index installation: `Pull requests: Read and write` lets Oliver open and update the manifest PR; `Issues: Write` lets Oliver apply the `New APWorld` / `APWorld Update` labels via the Issues API (PR labels are managed through Issues endpoints).
   - `Variables: Read` is required so Oliver can fetch `WORLD_FOLDER_NAME` from the per-world repo on each event. Without it, GitHub returns 403 "Resource not accessible by integration" and the event is recorded as `error`.
 - **Karen** — installed on **the Index only**.
-  - Permissions: `Contents: Read and write`, `Pull requests: Read and write`, `Issues: Write`, `Metadata: Read`.
-  - `Pull requests: Read and write` lets Karen open and update the Index PR. `Issues: Write` lets Karen apply the `New APWorld` / `APWorld Update` labels (PR labels are managed via the Issues API). The original spec had Oliver-on-Index doing the PR open with Karen only writing files; the code currently routes both through Karen, so Karen's permissions cover the full set. If the architecture is later re-split so Oliver opens PRs, drop `Pull requests: Read and write` + `Issues: Write` from Karen and add them to Oliver-on-Index.
-  - **Subscribe to events:** none (no webhook). Does the branch-create, manifest-commit, CODEOWNERS append, PR open/update, and label apply on the Index when Oliver tells her to.
+  - Permissions: `Contents: Read and write`, `Metadata: Read`.
+  - **Subscribe to events:** none (no webhook). Does the branch-create, manifest-commit, and CODEOWNERS append on the Index when Oliver tells her to. Also runs the Index's PR-review workflow under her installation token (Phase D — the APPROVE / REQUEST_CHANGES posting), but that is workflow-side, not Probot-handler-side.
+
+The split exists so the source side and the review side are different identities even though both PEMs live in the same container. Oliver opens (and labels) the PR; Karen commits the files and reviews. Don't collapse the responsibilities.
 
 The Oliver service holds both Apps' PEMs. On a webhook from a per-world repo, the service:
 

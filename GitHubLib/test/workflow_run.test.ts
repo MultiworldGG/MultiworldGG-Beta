@@ -280,6 +280,12 @@ describe("handleWorkflowRun", () => {
             return { data: { number: 99 } };
           },
         },
+        issues: {
+          addLabels: async ({ labels }: { labels: string[] }) => {
+            oliverWrites.push(`labels:${labels.join(",")}`);
+            return { data: [] };
+          },
+        },
       },
     };
 
