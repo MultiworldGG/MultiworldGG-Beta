@@ -35,8 +35,7 @@ async function main(): Promise<void> {
   });
   const oliverAuth = await oliverProbotForAuth.auth();
   const oliverInfo = await oliverAuth.rest.apps.getAuthenticated();
-  oliverProbotForAuth.log.info({message: JSON.stringify(oliverInfo.data, null, 2)});
-  const oliverSlug = oliverInfo.data?.slug ?? "oliver-multiworld-squirrel";
+  const oliverData = oliverInfo.data;
 
   const karenProbot = new Probot({
     appId: karenAppId,
@@ -44,8 +43,7 @@ async function main(): Promise<void> {
   });
   const karenAuth = await karenProbot.auth();
   const karenInfo = await karenAuth.rest.apps.getAuthenticated();
-  karenProbot.log.info({message: JSON.stringify(karenInfo.data, null, 2)});
-  const karenSlug = karenInfo.data?.slug ?? "karen-multiworld-bot";
+  const karenData = karenInfo.data;
 
   const server = new Server({
     Probot: Probot.defaults({
@@ -62,7 +60,7 @@ async function main(): Promise<void> {
     webhookPath: "/",
   });
 
-  await server.load(makeApp(karenProbot, oliverSlug, karenSlug));
+  await server.load(makeApp(karenProbot, oliverData, karenData));
   await server.start();
 }
 

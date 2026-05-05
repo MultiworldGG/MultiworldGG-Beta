@@ -2,7 +2,7 @@ import type { Context, Probot } from "probot";
 import { EventLog } from "../event-log";
 import { readRepoVariable } from "../repo-vars";
 import { resolveReleaseTagForSha, ReleaseNotFoundError } from "../release-resolver";
-import { openOrUpdateIndexPR } from "../index-pr";
+import { IndexBotData, openOrUpdateIndexPR } from "../index-pr";
 
 const INDEX_REPO_DEFAULT = "lallaria/MultiworldGG-Index";
 const TARGET_WORKFLOW_NAME = "Create and Release Python Package";
@@ -11,6 +11,8 @@ const SLUG_VARIABLE = "WORLD_FOLDER_NAME";
 export async function handleWorkflowRun(
   oliverProbot: Probot,
   karenProbot: Probot,
+  oliverData: IndexBotData,
+  karenData: IndexBotData,
   context: Context<"workflow_run.completed">,
 ): Promise<void> {
   const oliverLog = new EventLog(oliverProbot.log);
@@ -151,7 +153,6 @@ export async function handleWorkflowRun(
       owner: indexOwner,
       repo: indexName,
     });
-    karenLog.emit({kind: "ok", source_repo: sourceRepo, message: JSON.stringify(karenInstall.data, null, 2)});
     karenIndexInstallId = karenInstall.data.id;
   } catch (err: unknown) {
     const status = (err as { status?: number }).status;
@@ -174,11 +175,12 @@ export async function handleWorkflowRun(
   try {
     const oliverOctokit = await oliverProbot.auth(oliverIndexInstallId);
     const karenOctokit = await karenProbot.auth(karenIndexInstallId);
-    const karenUserName = "Karen the Multiworld Knight [bot]";
+
     const result = await openOrUpdateIndexPR({
       karenOctokit,
       oliverOctokit,
-      karenUserName,
+      karenData,
+      oliverData,
       indexOwner,
       indexName,
       sourceOwner: owner,

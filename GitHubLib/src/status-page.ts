@@ -1,17 +1,18 @@
 import type { Request, Response, Router } from "express";
 import type { Probot } from "probot";
 import { EventLog, StoredEvent } from "./event-log";
+import { IndexBotData } from "./index-pr";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-export function mountStatusRoutes(router: Router, probot: Probot, oliverSlug: string, karenSlug: string): void {
+export function mountStatusRoutes(router: Router, probot: Probot, oliverData: IndexBotData, karenData: IndexBotData): void {
   const log = new EventLog(probot.log);
 
   router.get("/", (_req: Request, res: Response) => {
     const counts = log.countSince(ONE_DAY_MS);
     const failures = log.read(50, ["skip", "error"]);
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.send(renderHtml(counts, failures, oliverSlug, karenSlug));
+    res.send(renderHtml(counts, failures, oliverData, karenData));
   });
 
   router.get("/.json", (_req: Request, res: Response) => {
@@ -25,8 +26,8 @@ export function mountStatusRoutes(router: Router, probot: Probot, oliverSlug: st
 function renderHtml(
   counts: { ok: number; skip: number; error: number },
   failures: StoredEvent[],
-  oliverSlug: string,
-  karenSlug: string,
+  oliverData: IndexBotData,
+  karenData: IndexBotData,
 ): string {
   const rows = failures.length
     ? failures.map(failureRow).join("\n")
@@ -59,8 +60,8 @@ function renderHtml(
 
 <h2>Identities</h2>
 <ul>
-  <li><strong>${esc(oliverSlug)}</strong></li>
-  <li><strong>${esc(karenSlug)}</strong></li>
+  <li><strong>${esc(oliverData.name)}</strong> Installations: ${oliverData.installations_count}</li>
+  <li><strong>${esc(karenData.name)}</strong> Installations: ${karenData.installations_count}</li>
 </ul>
 
 <h2>Last 24 hours</h2>

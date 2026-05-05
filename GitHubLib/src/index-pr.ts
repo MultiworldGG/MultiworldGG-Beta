@@ -1,9 +1,26 @@
 import type { ProbotOctokit } from "probot";
 
+export interface IndexBotData {
+  id: number;
+  client_id: string;
+  slug: string;
+  owner: object;
+  name: string;
+  description: string;
+  external_url: string;
+  html_url: string;
+  created_at: string;
+  updated_at: string;
+  permissions: object;
+  events: string[];
+  installations_count: number;
+}
+
 export interface IndexPROpts {
   karenOctokit: ProbotOctokit;   // Contents:Write — Karen creates the branch, commits the manifest, and appends CODEOWNERS on the Index.
   oliverOctokit: ProbotOctokit;  // Pull requests:Write + Issues:Write — Oliver opens/updates the PR and applies labels (review handoff line — see memory: feedback_oliver_opens_karen_approves).
-  karenUserName: string;
+  karenData: IndexBotData;
+  oliverData: IndexBotData;
   indexOwner: string;
   indexName: string;
   sourceOwner: string;
@@ -37,7 +54,8 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   const {
     karenOctokit,
     oliverOctokit,
-    karenUserName,
+    karenData,
+    oliverData,
     indexOwner,
     indexName,
     sourceOwner,
@@ -161,7 +179,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     `**Pinned SHA:** \`${pinnedSha}\``,
     `**New module_location:** \`${moduleLocation}\``,
     ``,
-    `Branch was created and committed by \`${karenUserName}\`; Karen's review workflow will run automatically.`,
+    `Branch was created and committed by \`${karenData.name}[bot](${karenData.html_url})\`; Karen's review workflow will run automatically.`,
   ].join("\n");
 
   let prNumber: number;
