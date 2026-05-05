@@ -3,7 +3,6 @@ import type { ProbotOctokit } from "probot";
 export interface IndexPROpts {
   karenOctokit: ProbotOctokit;   // Contents:Write — Karen creates the branch, commits the manifest, and appends CODEOWNERS on the Index.
   oliverOctokit: ProbotOctokit;  // Pull requests:Write + Issues:Write — Oliver opens/updates the PR and applies labels (review handoff line — see memory: feedback_oliver_opens_karen_approves).
-  karenSlug: string;             // for the committer identity on Karen's commits
   indexOwner: string;
   indexName: string;
   sourceOwner: string;
@@ -37,7 +36,6 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   const {
     karenOctokit,
     oliverOctokit,
-    karenSlug,
     indexOwner,
     indexName,
     sourceOwner,
@@ -53,6 +51,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   const filePath = `worlds/${slug}.json`;
 
   const repoInfo = await karenOctokit.rest.repos.get({ owner: indexOwner, repo: indexName });
+  const karenUserName = (await karenOctokit.rest.users.getAuthenticated()).data.name ?? "";
   const defaultBranch = repoInfo.data.default_branch;
 
   const worldIsNew = !(await fileExistsOnRef(karenOctokit, indexOwner, indexName, filePath, defaultBranch));
@@ -124,11 +123,6 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   const newContent = JSON.stringify(updated, null, 2) + "\n";
   const encodedContent = Buffer.from(newContent, "utf-8").toString("base64");
 
-  const karenCommitter = {
-    name: `${karenSlug}[bot]`,
-    email: `${karenSlug}[bot]@users.noreply.github.com`,
-  };
-
   await karenOctokit.rest.repos.createOrUpdateFileContents({
     owner: indexOwner,
     repo: indexName,
@@ -137,8 +131,6 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     message: `[${slug}] Update to ${releaseTag}`,
     content: encodedContent,
     sha: currentSha,
-    committer: karenCommitter,
-    author: karenCommitter,
   });
 
   let codeownersConflictWith: string | null = null;
@@ -150,7 +142,6 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
       branchName,
       slug,
       sourceOwner,
-      karenCommitter,
     });
   }
 
@@ -169,7 +160,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     `**Pinned SHA:** \`${pinnedSha}\``,
     `**New module_location:** \`${moduleLocation}\``,
     ``,
-    `Branch was created and committed by \`${karenSlug}[bot]\`; Karen's review workflow will run automatically.`,
+    `Branch was created and committed by \`${karenUserName}\`; Karen's review workflow will run automatically.`,
   ].join("\n");
 
   let prNumber: number;
@@ -235,11 +226,10 @@ interface AppendCodeownersOpts {
   branchName: string;
   slug: string;
   sourceOwner: string;
-  karenCommitter: { name: string; email: string };
 }
 
 async function appendCodeownersForNewWorld(opts: AppendCodeownersOpts): Promise<string | null> {
-  const { karenOctokit, indexOwner, indexName, branchName, slug, sourceOwner, karenCommitter } = opts;
+  const { karenOctokit, indexOwner, indexName, branchName, slug, sourceOwner } = opts;
 
   const codeowner = deriveCodeownerHandle(sourceOwner);
   const targetPath = `worlds/${slug}.json`;
@@ -291,8 +281,6 @@ async function appendCodeownersForNewWorld(opts: AppendCodeownersOpts): Promise<
     message: `[${slug}] Add @${codeowner} as codeowner`,
     content: encoded,
     sha: existingSha,
-    committer: karenCommitter,
-    author: karenCommitter,
   });
 
   return null;

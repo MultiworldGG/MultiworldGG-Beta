@@ -6,7 +6,7 @@ export function makeApp(karenProbot: Probot, oliverSlug: string, karenSlug: stri
   return (probot, options) => {
     probot.on("workflow_run.completed", async (context) => {
       try {
-        await handleWorkflowRun(probot, karenProbot, karenSlug, context);
+        await handleWorkflowRun(probot, karenProbot, context);
       } catch (err) {
         context.log.error({ err }, "workflow_run.completed handler failed");
         throw err;

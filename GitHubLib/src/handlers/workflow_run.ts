@@ -9,12 +9,12 @@ const TARGET_WORKFLOW_NAME = "Create and Release Python Package";
 const SLUG_VARIABLE = "WORLD_FOLDER_NAME";
 
 export async function handleWorkflowRun(
-  probot: Probot,
+  oliverProbot: Probot,
   karenProbot: Probot,
-  karenSlug: string,
   context: Context<"workflow_run.completed">,
 ): Promise<void> {
-  const log = new EventLog(probot.log);
+  const oliverLog = new EventLog(oliverProbot.log);
+  const karenLog = new EventLog(karenProbot.log);
   const { owner, repo } = context.repo();
   const sourceRepo = `${owner}/${repo}`;
   const run = context.payload.workflow_run;
@@ -36,7 +36,7 @@ export async function handleWorkflowRun(
   }
 
   if (run.conclusion !== "success") {
-    log.emit({
+    oliverLog.emit({
       kind: "skip",
       source_repo: sourceRepo,
       release_sha: run.head_sha,
@@ -48,7 +48,7 @@ export async function handleWorkflowRun(
 
   const slug = await readRepoVariable(context.octokit, owner, repo, SLUG_VARIABLE);
   if (!slug) {
-    log.emit({
+    oliverLog.emit({
       kind: "skip",
       source_repo: sourceRepo,
       release_sha: run.head_sha,
@@ -63,7 +63,7 @@ export async function handleWorkflowRun(
     releaseTag = await resolveReleaseTagForSha(context.octokit, owner, repo, run.head_sha);
   } catch (err) {
     if (err instanceof ReleaseNotFoundError) {
-      log.emit({
+      oliverLog.emit({
         kind: "skip",
         source_repo: sourceRepo,
         slug,
@@ -97,7 +97,7 @@ export async function handleWorkflowRun(
   } catch (err: unknown) {
     const status = (err as { status?: number }).status;
     if (status === 404) {
-      log.emit({
+      oliverLog.emit({
         kind: "skip",
         source_repo: sourceRepo,
         slug,
@@ -129,7 +129,7 @@ export async function handleWorkflowRun(
   } catch (err: unknown) {
     const status = (err as { status?: number }).status;
     if (status === 404) {
-      log.emit({
+      oliverLog.emit({
         kind: "error",
         source_repo: sourceRepo,
         slug,
@@ -155,7 +155,7 @@ export async function handleWorkflowRun(
   } catch (err: unknown) {
     const status = (err as { status?: number }).status;
     if (status === 404) {
-      log.emit({
+      karenLog.emit({
         kind: "error",
         source_repo: sourceRepo,
         slug,
@@ -171,12 +171,11 @@ export async function handleWorkflowRun(
   }
 
   try {
-    const oliverOctokit = await probot.auth(oliverIndexInstallId);
+    const oliverOctokit = await oliverProbot.auth(oliverIndexInstallId);
     const karenOctokit = await karenProbot.auth(karenIndexInstallId);
     const result = await openOrUpdateIndexPR({
       karenOctokit,
       oliverOctokit,
-      karenSlug,
       indexOwner,
       indexName,
       sourceOwner: owner,
@@ -186,7 +185,7 @@ export async function handleWorkflowRun(
       pinnedSha,
       sourceManifest: sourceManifest ?? {},
     });
-    log.emit({
+    oliverLog.emit({
       kind: "ok",
       source_repo: sourceRepo,
       slug,
@@ -199,7 +198,7 @@ export async function handleWorkflowRun(
         : `Updated Index PR #${result.prNumber} for ${slug}@${releaseTag}.`,
     });
     if (result.codeownersConflictWith) {
-      log.emit({
+      oliverLog.emit({
         kind: "skip",
         source_repo: sourceRepo,
         slug,
@@ -212,7 +211,7 @@ export async function handleWorkflowRun(
     }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    log.emit({
+    oliverLog.emit({
       kind: "error",
       source_repo: sourceRepo,
       slug,
