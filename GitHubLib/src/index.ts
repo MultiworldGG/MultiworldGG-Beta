@@ -35,6 +35,7 @@ async function main(): Promise<void> {
   });
   const oliverAuth = await oliverProbotForAuth.auth();
   const oliverInfo = await oliverAuth.rest.apps.getAuthenticated();
+  oliverProbotForAuth.log.info({message: JSON.stringify(oliverInfo.data, null, 2)});
   const oliverSlug = oliverInfo.data?.slug ?? "oliver-multiworld-squirrel";
 
   const karenProbot = new Probot({
@@ -43,6 +44,7 @@ async function main(): Promise<void> {
   });
   const karenAuth = await karenProbot.auth();
   const karenInfo = await karenAuth.rest.apps.getAuthenticated();
+  karenProbot.log.info({message: JSON.stringify(karenInfo.data, null, 2)});
   const karenSlug = karenInfo.data?.slug ?? "karen-multiworld-bot";
 
   const server = new Server({

@@ -151,6 +151,7 @@ export async function handleWorkflowRun(
       owner: indexOwner,
       repo: indexName,
     });
+    karenLog.emit({kind: "ok", source_repo: sourceRepo, message: JSON.stringify(karenInstall.data, null, 2)});
     karenIndexInstallId = karenInstall.data.id;
   } catch (err: unknown) {
     const status = (err as { status?: number }).status;
@@ -173,7 +174,7 @@ export async function handleWorkflowRun(
   try {
     const oliverOctokit = await oliverProbot.auth(oliverIndexInstallId);
     const karenOctokit = await karenProbot.auth(karenIndexInstallId);
-    const karenUserName = (await karenOctokit.users.getAuthenticated()).data.name ?? "Karen the Multiworld Knight [bot]";
+    const karenUserName = "Karen the Multiworld Knight [bot]";
     const result = await openOrUpdateIndexPR({
       karenOctokit,
       oliverOctokit,
