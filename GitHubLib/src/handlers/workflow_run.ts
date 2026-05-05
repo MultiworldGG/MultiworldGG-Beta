@@ -173,9 +173,11 @@ export async function handleWorkflowRun(
   try {
     const oliverOctokit = await oliverProbot.auth(oliverIndexInstallId);
     const karenOctokit = await karenProbot.auth(karenIndexInstallId);
+    const karenUserName = (await karenOctokit.users.getAuthenticated()).data.name ?? "Karen the Multiworld Knight [bot]";
     const result = await openOrUpdateIndexPR({
       karenOctokit,
       oliverOctokit,
+      karenUserName,
       indexOwner,
       indexName,
       sourceOwner: owner,

@@ -3,6 +3,7 @@ import type { ProbotOctokit } from "probot";
 export interface IndexPROpts {
   karenOctokit: ProbotOctokit;   // Contents:Write — Karen creates the branch, commits the manifest, and appends CODEOWNERS on the Index.
   oliverOctokit: ProbotOctokit;  // Pull requests:Write + Issues:Write — Oliver opens/updates the PR and applies labels (review handoff line — see memory: feedback_oliver_opens_karen_approves).
+  karenUserName: string;
   indexOwner: string;
   indexName: string;
   sourceOwner: string;
@@ -36,6 +37,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   const {
     karenOctokit,
     oliverOctokit,
+    karenUserName,
     indexOwner,
     indexName,
     sourceOwner,
@@ -51,7 +53,6 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   const filePath = `worlds/${slug}.json`;
 
   const repoInfo = await karenOctokit.rest.repos.get({ owner: indexOwner, repo: indexName });
-  const karenUserName = (await karenOctokit.rest.users.getAuthenticated()).data.name ?? "";
   const defaultBranch = repoInfo.data.default_branch;
 
   const worldIsNew = !(await fileExistsOnRef(karenOctokit, indexOwner, indexName, filePath, defaultBranch));
