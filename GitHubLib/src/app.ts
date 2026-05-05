@@ -2,7 +2,7 @@ import { ApplicationFunction, Probot } from "probot";
 import { handleWorkflowRun } from "./handlers/workflow_run";
 import { mountStatusRoutes } from "./status-page";
 
-export function makeApp(karenProbot: Probot, oliverData: Oktokitresponse, karenData: any): ApplicationFunction {
+export function makeApp(karenProbot: Probot, oliverData: any, karenData: any): ApplicationFunction {
   return (probot, options) => {
     probot.on("workflow_run.completed", async (context) => {
       try {
