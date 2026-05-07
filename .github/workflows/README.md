@@ -11,7 +11,7 @@ repo and publishes itself via [`MultiworldGG/build-and-publish-action`], which:
 2. Opens a PR against [`lallaria/MultiworldGG-Index`] updating that game's manifest with the new
    `module_location` URL.
 
-Greg-bot reviews each PR (schema, security checks); on merge, the daily-release cron rebuilds the
+Karen-bot reviews each PR (schema, security checks); on merge, the daily-release cron rebuilds the
 four orphan branches (`game_index_{nr,ao,sixteen,twelve}`) as the consumable `mwgg_igdb` package.
 
 The monorepo bundles only **infra worlds** (`worlds/_*`, `worlds/generic/`) plus the namespace

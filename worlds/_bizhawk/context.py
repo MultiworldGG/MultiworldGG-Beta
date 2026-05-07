@@ -366,7 +366,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
             return
 
         ctx.ui.base_title = apname + " | BizHawk Client"
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        ctx.mwserver_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
         await ctx.server_auth()
 
         if patch_file:

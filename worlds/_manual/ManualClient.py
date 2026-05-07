@@ -5,34 +5,18 @@ import os
 import re
 import sys
 import time
-
-from kivy.metrics import dp
-from kivy.uix.button import Button
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.dropdown import DropDown
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.label import Label
-from kivy.uix.layout import Layout
-from kivy.uix.scrollview import ScrollView
-from kivy.uix.spinner import Spinner, SpinnerOption
-from kivy.uix.textinput import TextInput
-from kivy.uix.treeview import TreeView, TreeViewNode, TreeViewLabel
-from kivy.core.window import Window
-from kivy.lang import Builder
-from kivy.properties import ColorProperty
-from kivy.clock import Clock
-from kivymd.uix.screen import MDScreen
-
 import typing
 from typing import Any, Dict, List, Optional
 from enum import IntEnum
 
 import requests
+from worlds import AutoWorldRegister, network_data_package
 from worlds.LauncherComponents import icon_paths
-from worlds import AutoWorldRegister
 import json
 import traceback
-import urllib.parse
+
+import ModuleUpdate
+ModuleUpdate.update()
 
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
@@ -43,7 +27,7 @@ from MultiServer import mark_raw
 
 tracker_loaded = False
 try:
-    from worlds.tracker.TrackerClient import TrackerGameContext as SuperContext, TrackerCommandProcessor
+    from worlds._tracker.TrackerClient import TrackerGameContext as SuperContext, TrackerCommandProcessor
     ClientCommandProcessor = TrackerCommandProcessor
     tracker_loaded = True
 except ModuleNotFoundError:
@@ -165,11 +149,8 @@ class ManualContext(SuperContext):
         'header_background': [15/255, 80/255, 112/255, 1]
     }
 
-    def __init__(self, server_address, password, game, ready_callback=None, error_callback=None) -> None:
+    def __init__(self, server_address, password, game, player_name) -> None:
         super(ManualContext, self).__init__(server_address, password)
-        self.ready_callback = ready_callback
-        self.error_callback = error_callback
-        self.username = urllib.parse.urlparse(server_address).username
 
         if tracker_loaded:
             super().set_callback(self.on_tracker_updated) # Universal Tracker takes this func and calls it when updateTracker is called
@@ -179,17 +160,14 @@ class ManualContext(SuperContext):
         self.send_index: int = 0
         self.syncing = False
         self.game = game
-
-        if self.ready_callback:
-            Clock.schedule_once(self.ready_callback, 0.1)
+        self.username = player_name
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
             await super(ManualContext, self).server_auth(password_requested)
 
-        # Assume self.game is correct as set up by the launcher
-        if not self.game:
-            raise Exception("No game specified for Manual client.")
+        if "Manual_" not in self.ui.game_bar_text.text:
+            raise Exception("The Manual client can only be used for Manual games.")
 
         self.game = self.ui.game_bar_text.text
 
@@ -201,9 +179,12 @@ class ManualContext(SuperContext):
 
         self.update_ids(data_package)
 
-        # Default victory condition for manual games
-        self.victory_names = ["__Manual Game Complete__"]
-        self.goal_location = self.get_location_by_name("__Manual Game Complete__")
+        if world is not None and hasattr(world, "victory_names"):
+            self.victory_names = world.victory_names
+            self.goal_location = self.get_location_by_name(world.victory_names[0])
+        else:
+            self.victory_names = ["__Manual Game Complete__"]
+            self.goal_location = self.get_location_by_name("__Manual Game Complete__")
 
         await self.get_username()
         await self.send_connect()
@@ -221,7 +202,8 @@ class ManualContext(SuperContext):
     def get_location_by_name(self, name) -> dict[str, Any]:
         location = self.location_table.get(name)
         if not location:
-            location = {"name": name}
+            # It is absolutely possible to pull categories from the data_package via self.update_game. I have not done this yet.
+            location = AutoWorldRegister.world_types[self.game].location_name_to_location.get(name, {"name": name})
         return location
 
     def get_location_by_id(self, id) -> dict[str, Any]:
@@ -231,7 +213,7 @@ class ManualContext(SuperContext):
     def get_item_by_name(self, name):
         item = self.item_table.get(name)
         if not item:
-            item = {"name": name}
+            item = AutoWorldRegister.world_types[self.game].item_name_to_item.get(name, {"name": name})
         return item
 
     def get_item_by_id(self, id):
@@ -329,23 +311,41 @@ class ManualContext(SuperContext):
         else:
             self._messagebox_connection_loss = self.gui_error(msg, formatted_tb)
 
-    # def run_gui(self):
-    #     """Import kivy UI system from make_gui() and start running it as self.ui_task."""
-    #     if hasattr(SuperContext, "make_gui"):
-    #         # Call the real one if it exists
-    #         return super().run_gui()
-
-    #     # This is a copy of 0.5.1's run_gui, because backporting is easier than the alternative.
-    #     # This entire function can be removed once 0.5.1 is the old enough.
-    #     ui_class = self.make_gui()
-    #     self.ui = ui_class(self)
-    #     self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
-
-    def make_gui(self) -> MDScreen:
+    def run_gui(self):
+        """Import kivy UI system from make_gui() and start running it as self.ui_task."""
         if hasattr(SuperContext, "make_gui"):
-            manual_screen = super().make_gui()
+            # Call the real one if it exists
+            return super().run_gui()
+
+        # This is a copy of 0.5.1's run_gui, because backporting is easier than the alternative.
+        # This entire function can be removed once 0.5.1 is the old enough.
+        ui_class = self.make_gui()
+        self.ui = ui_class(self)
+        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+
+    def make_gui(self) -> typing.Type["kvui.GameManager"]:
+        if hasattr(SuperContext, "make_gui"):
+            ui = super().make_gui()  # before the kivy imports so kvui gets loaded first
         else:
-            manual_screen = MDScreen(name="Manual")
+            from kvui import GameManager
+            ui = GameManager
+
+        from kivy.core.window import Window
+        from kivy.lang import Builder
+        from kivy.metrics import dp
+        from kivy.properties import ColorProperty
+        from kivy.uix.boxlayout import BoxLayout
+        from kivy.uix.button import Button
+        from kivy.uix.dropdown import DropDown
+        from kivy.uix.gridlayout import GridLayout
+        from kivy.uix.label import Label
+        from kivy.uix.layout import Layout
+        from kivy.uix.scrollview import ScrollView
+        from kivy.uix.settings import Settings
+        from kivy.uix.spinner import Spinner, SpinnerOption
+        from kivy.uix.textinput import TextInput
+        from kivy.uix.treeview import TreeView, TreeViewLabel, TreeViewNode
+        from kivy.config import ConfigParser
 
         class ManualTabLayout(BoxLayout):
             pass
@@ -392,11 +392,12 @@ class ManualContext(SuperContext):
         class ManualControlsStyledLayout(BoxLayout):
             background_color = ColorProperty()
 
-        class ManualScreen(manual_screen):
-            listed_items = {"(No Category)": [], "(Hinted)": []}
+        class ManualManager(ui):
+            base_title = f"{apname} Manual Client"
+            listed_items = {"(No Category)": []}
             item_categories = ["(No Category)"]
-            listed_locations = {"(No Category)": [], "(Hinted)": []}
-            location_categories = ["(No Category)", "(Hinted)"]
+            listed_locations = {"(No Category)": []}
+            location_categories = ["(No Category)"]
 
             active_item_accordion = 0
             active_location_accordion = 0
@@ -411,6 +412,9 @@ class ManualContext(SuperContext):
             def __init__(self, ctx):
                 super().__init__(ctx)
 
+            def build(self) -> Layout:
+                super().build()
+
                 self.ctx.items_sorting = self.config.get('manual', 'items_sorting_order')
                 self.ctx.locations_sorting = self.config.get('manual', 'locations_sorting_order')
                 self.ctx.block_unreachable_location_press = True if self.config.get('universal-tracker', 'block_unreachable_location_press') == "Yes" else False
@@ -418,13 +422,16 @@ class ManualContext(SuperContext):
                 self.manual_game_layout = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(30))
 
                 game_bar_label = Label(text="Manual Game ID", size=(dp(150), dp(30)), size_hint_y=None, size_hint_x=None)
+                manuals = [w for w in AutoWorldRegister.world_types.keys() if "Manual_" in w]
+                manuals.sort()  # Sort by alphabetical order, not load order
                 self.manual_game_layout.add_widget(game_bar_label)
-                self.game_bar_text = Label(text=self.ctx.game or "No game selected", size_hint_y=None, height=dp(30))
+                self.game_bar_text = Spinner(text=self.ctx.suggested_game, size_hint_y=None, height=dp(30), sync_height=True,
+                                             values=manuals, option_cls=GameSelectOption, dropdown_cls=GameSelectDropDown)
                 self.manual_game_layout.add_widget(self.game_bar_text)
 
                 self.grid.add_widget(self.manual_game_layout, 3)
 
-                panel = self.add_widget(ManualTabLayout(orientation="vertical"))
+                panel = self.add_client_tab("Manual", ManualTabLayout(orientation="vertical"))
 
                 self.controls_panel = ManualControlsLayout(orientation="horizontal", size_hint_y=None, height=dp(40))
                 self.tracker_and_locations_panel = TrackerAndLocationsLayout(cols = 2)
@@ -641,10 +648,10 @@ class ManualContext(SuperContext):
                 self.controls_panel.add_widget(controls_styled_layout)
 
                 # seed all category names to start
-                for item in self.ctx.item_table.values():
+                for item in self.ctx.item_table.values() or AutoWorldRegister.world_types[self.ctx.game].item_name_to_item.values():
                     if "category" in item and len(item["category"]) > 0:
                         for category in item["category"]:
-                            category_settings = self.ctx.category_table.get(category, {})
+                            category_settings = self.ctx.category_table.get(category) or getattr(AutoWorldRegister.world_types[self.ctx.game], "category_table", {}).get(category, {})
                             if "hidden" in category_settings and category_settings["hidden"]:
                                 continue
                             if category not in self.item_categories:
@@ -1122,12 +1129,12 @@ class ManualContext(SuperContext):
                 self.ctx.items_received.append("__Victory__")
                 self.ctx.syncing = True
 
-        return manual_screen
+        return ManualManager
 
 async def game_watcher_manual(ctx: ManualContext):
     while not ctx.exit_event.is_set():
-        if ctx.ui.custom_screens["Manual"]:
-            ctx.ui.custom_screens["Manual"].request_update_tracker_and_locations_table()
+        if ctx.ui:
+            ctx.ui.check_for_requested_update()
 
         if ctx.syncing == True:
             sync_msg = [{'cmd': 'Sync'}]
@@ -1169,66 +1176,53 @@ def read_apmanual_file(apmanual_file) -> dict[str, Any]:
         return json.loads(b64decode(f.read()))
 
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, apmanual_file: str = None):
-    """
-    Launch the client
-    """
-    import logging
-    logging.getLogger("ManualClient")
+async def main(args):
+    config_file = {}
+    if args.apmanual_file:
+        config_file = read_apmanual_file(args.apmanual_file)
+    ctx = ManualContext(args.connect, args.password, config_file.get("game"), config_file.get("player_name"))
+    ctx.mwserver_task = asyncio.create_task(server_loop(ctx), name="server loop")
 
-    async def main():
-        config_file = {}
-        if apmanual_file:
-            config_file = read_apmanual_file(apmanual_file)
-        
-        ctx = ManualContext(server_address, config_file.get("player_name"), password, config_file.get("game"), ready_callback, error_callback)
-        if ctx._can_takeover_existing_gui():
-            await ctx._takeover_existing_gui() 
-        else:
-            logger.critical("Client did not launch properly, exiting.")
-            if error_callback:
-                error_callback()
-            return
+    ctx.item_table = config_file.get("items", {})
+    ctx.location_table = config_file.get("locations", {})
+    ctx.region_table = config_file.get("regions", {})
+    ctx.category_table = config_file.get("categories", {})
 
-        ctx.ui.base_title = apname + " | Manual"
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+    if tracker_loaded:
+        ctx.run_generator()
+    if gui_enabled:
+        ctx.run_gui()
+    ctx.run_cli()
+    progression_watcher = asyncio.create_task(
+        game_watcher_manual(ctx), name="ManualProgressionWatcher")
 
-        ctx.item_table = config_file.get("items", {})
-        ctx.location_table = config_file.get("locations", {})
-        ctx.region_table = config_file.get("regions", {})
-        ctx.category_table = config_file.get("categories", {})
-        ctx.category_name_to_id = {}
-        if ctx.game:
-            await ctx.server_auth()
+    await ctx.exit_event.wait()
+    ctx.server_address = None
 
-        if tracker_loaded:
-            ctx.run_generator()
+    await progression_watcher
 
-        if gui_enabled:
-            manual_screen = ctx.make_gui()
-            Clock.schedule_once(lambda dt: ctx.ui.create_custom_screen(manual_screen), .1)
-        #ctx.run_cli()
+    await ctx.shutdown()
 
-        if "tags" in config_file:
-            ctx.tags = ctx.tags | config_file["tags"]
-
-        progression_watcher = asyncio.create_task(
-            game_watcher_manual(ctx), name="ManualProgressionWatcher")
-
-        await progression_watcher
-
-        await ctx.exit_event.wait()
-        ctx.server_address = None
-
-        await ctx.shutdown()
-
+def launch() -> None:
     import colorama
 
     parser = get_base_parser(description="Manual Client, for operating a Manual game in Archipelago.")
     parser.add_argument('apmanual_file', default="", type=str, nargs="?",
                         help='Path to an APMANUAL file')
 
+    args = sys.argv[1:]
+    if "Manual Client" in args:
+        args.remove("Manual Client")
+    args, rest = parser.parse_known_args(args=args)
+    colorama.init()
+    asyncio.run(main(args))
+    colorama.deinit()
 
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, apmanual_file: str = None):
-    """Main entry point for integration with MultiWorld system"""
-    launch(server_address, password, ready_callback, error_callback, apmanual_file)
+    if not os.path.exists(icon_paths["manual"]):
+        # Download the icon for next time
+        icon_url = "https://manualforarchipelago.github.io/ManualBuilder/images/ap-manual-discord-logo-square-96x96.png"
+        with open(icon_paths["manual"], 'wb') as f:
+            f.write(requests.get(icon_url).content)
+
+if __name__ == '__main__':
+    launch()

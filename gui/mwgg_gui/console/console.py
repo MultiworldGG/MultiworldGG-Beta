@@ -1,7 +1,7 @@
 from __future__ import annotations
 """
 CONSOLE SCREEN
-ConsoleSliverAppbar - Left side has the players, with expansion for hints
+ConsoleSliverAppbar - Left side has the players, with expansion for hints TODO: rename and move to components (profile/hintlist)
 ConsoleLayout - Right contains the console
 """
 __all__ = ("ConsoleScreen", "ConsoleSliverAppbar", "ConsoleLayout")

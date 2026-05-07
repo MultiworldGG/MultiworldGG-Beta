@@ -847,6 +847,14 @@ class MultiMDApp(MDApp):
                     if hasattr(self.ui_player_data[slot], item):
                         setattr(self.ui_player_data[slot], item, data)
 
+    def enable_energy_link(self):
+        if not hasattr(self, "energy_link_label"):
+            self.energy_link_label = self.top_appbar_layout.top_appbar.energy_link_label
+
+    def set_new_energy_link_value(self):
+        if hasattr(self.top_appbar_layout.top_appbar, "energy_link_label"):
+            self.top_appbar_layout.top_appbar.set_energy_link_value(self.ctx.current_energy_link_value)
+
     @property
     def logo_png(self):
         if self._logo_png == "":

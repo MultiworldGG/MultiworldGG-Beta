@@ -33,7 +33,7 @@ import re
 import asyncio
 import urllib.parse
 import asynckivy
-from Utils import persistent_store, persistent_load
+from Utils import persistent_store, persistent_load, format_SI_prefix
 
 
 logger = logging.getLogger("MultiWorld")
@@ -50,6 +50,10 @@ Builder.load_string('''
 
 <ServerLabel>:
 
+<EnergyLinkLabel>:
+
+<ClockLabel>:
+
 <ServerTooltip>:
 
 <TopAppBarLayout>:
@@ -60,8 +64,12 @@ Builder.load_string('''
             icon: "menu"
             id: menu_button
             on_release: app.open_top_appbar_menu(self)
+    EnergyLinkLabel:
+        size_hint_x: .10
+        id: energy_link_label
+        text: ""
     ServerLabel:
-        size_hint_x: .7
+        size_hint_x: .6
         id: server_info_label
         text: "Not Connected"
     ClockLabel:
@@ -81,6 +89,18 @@ Builder.load_string('''
             icon: "account-circle-outline"
             on_release: root.open_profile()
 ''')
+
+class EnergyLinkLabel(MDTopAppBarTitle):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.theme_font_style = "Custom"
+        self.font_style = "Monospace"
+        self.role = "large"
+        self.text = "Energy Link: Standby"
+        self.bind(current_energy_link_value=self.set_new_energy_link_value)
+
+    def set_new_energy_link_value(self, instance, value):
+        self.text = f"EL: {format_SI_prefix(value)}J"
 
 class ClockLabel(MDTopAppBarTitle):
     def __init__(self, **kwargs):
@@ -479,6 +499,7 @@ class TopAppBar(MDTopAppBar):
         self.app = MDApp.get_running_app()
         self.timer = self.ids.timer
         self.server_info_label = self.ids.server_info_label
+        self.energy_link_label = self.ids.energy_link_label
         self.theme_bg_color = "Custom"
         self.md_bg_color = self.theme_cls.transparentColor
         self.theme_shadow_color = "Custom"
@@ -534,6 +555,12 @@ class TopAppBar(MDTopAppBar):
     def open_profile(self):
         """Open user profile interface (placeholder implementation)."""
         show_profile()
+
+    def enable_energy_link(self):
+        self.energy_link_label.text = "Energy Link: Standby"
+
+    def set_new_energy_link_value(self):
+        self.energy_link_label.set_new_energy_link_value(self.ctx.current_energy_link_value)
 
 class TopAppBarLayout(AnchorLayout):
     """

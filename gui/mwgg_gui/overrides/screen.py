@@ -9,7 +9,7 @@ from kivy.core.window import Window
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.card.card import MDRelativeLayout
-from .textconsole import ConsoleView
+from ..console.textconsole import ConsoleView
 
 from kivy.clock import Clock
 from kivy.lang import Builder

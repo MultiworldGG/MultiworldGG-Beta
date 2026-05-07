@@ -265,6 +265,7 @@ class InitContext:
     def __init__(self):
         self.loop = asyncio.get_event_loop()
         self.exit_event = asyncio.Event()
+        self.takeover_complete = asyncio.Event()
         self.server_address = None
         self.all_players_chat = True
         self._state = ClientState.INITIAL
@@ -631,6 +632,7 @@ class CommonContext(InitContext):
         finally:
             existing_ctx._is_transitioning = False
             self._is_transitioning = False
+            self.takeover_complete.set()
 
     def run_gui(self):
         """Modified to support takeover of existing GUI"""
@@ -1207,6 +1209,7 @@ async def keep_alive(ctx: CommonContext, seconds_between_checks=100):
 
 
 async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) -> None:
+    await ctx.takeover_complete.wait()
     if ctx.server and ctx.server.socket:
         logger.error('Already connected')
         return
@@ -1657,7 +1660,8 @@ def launch_textclient(server_address: str = None, ready_callback=None, error_cal
 
     async def main(args):
         ctx = TextContext(server_address, ready_callback, error_callback)
-        
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+
         # Try to takeover existing GUI like KH2
         if ctx._can_takeover_existing_gui():
             await ctx._takeover_existing_gui()
@@ -1665,12 +1669,12 @@ def launch_textclient(server_address: str = None, ready_callback=None, error_cal
             logger.critical("Text client did not launch properly, exiting.")
             if error_callback:
                 error_callback()
+            ctx.takeover_complete.set()  # unblock the pending server_loop so it can take its no-address early return
             return
 
         ctx.ui.base_title = apname + " | Text Client"
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
         await ctx.server_auth()
-        
+
         # Wait for exit instead of running a watcher
         await ctx.exit_event.wait()
         await ctx.shutdown()
