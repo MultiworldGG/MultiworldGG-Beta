@@ -12,7 +12,7 @@ requires-python = ">=3.12"
 name = "Unknown"
 
 [project.entry-points."mwgg.client"]
-"worlds._manual.Client" = "worlds._manual.Register:CLIENT_FUNCTION"
+"worlds._manual.Client" = "worlds._manual._whl_bld_iface:CLIENT_FUNCTION"
 
 [tool.setuptools.packages.find]
 where = [ "src",]
