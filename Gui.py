@@ -87,7 +87,8 @@ from mwgg_gui.settings.settings_screen import SettingsScreen
 from mwgg_gui.components.topappbar import TopAppBarLayout
 from mwgg_gui.launcher.launcher import LauncherScreen
 from mwgg_gui.loadanimlayout import MWGGLoadingLayout
-from mwgg_gui.components.bottomappbar import BottomAppBar, BottomBarTextInput
+from gui.mwgg_gui.components.bottomappbar import BottomAppBar, BottomBarTextInput
+from gui.mwgg_gui.overrides.screen import CustomScreen
 from mwgg_gui.components.guidataclasses import UIPlayerData, UIHint, MarkupPair
 
 if typing.TYPE_CHECKING:
@@ -483,13 +484,14 @@ class MultiMDApp(MDApp):
         elif item == "launcher":
             self.launcher_screen = LauncherScreen()
             self.screen_manager.add_widget(self.launcher_screen)
-            self.launcher_text_input = self.launcher_screen.bottom_appbar.text_input  
+            self.launcher_text_input = self.launcher_screen.bottom_appbar.text_input
+        else:
+            self.create_custom_screen(item)
 
-    def create_custom_screen(self, screen: MDScreen):
+    def create_custom_screen(self, item: str):
         # Check if screen already exists before creating
-        if screen.name not in self.screen_manager.screen_names:
-            self.custom_screens[screen.name] = screen
-            self.screen_manager.add_widget(screen)
+        screen = MDScreen(name=item)
+        self.screen_manager.add_widget(screen)
 
     def console_init(self):
         '''

@@ -195,6 +195,27 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     });
     prNumber = createdPR.data.number;
     created = true;
+
+    // Enable auto-merge so the PR squash-merges automatically once the
+    // org-rulesets gates clear (3 approvals incl. Karen + required status checks).
+    // Best-effort: a disabled repo toggle, an empty branch, or any transient
+    // error here must not crash the workflow_run handler — the PR still exists
+    // and Karen's review + manual merge still work.
+    try {
+      await oliverOctokit.graphql(
+        `mutation($prId: ID!) {
+           enablePullRequestAutoMerge(input: { pullRequestId: $prId, mergeMethod: SQUASH }) {
+             pullRequest { id }
+           }
+         }`,
+        { prId: createdPR.data.node_id },
+      );
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[oliver] enablePullRequestAutoMerge failed for #${prNumber}: ${(err as Error).message}`,
+      );
+    }
   } else {
     const existing = existingPRs.data[0];
     await oliverOctokit.rest.pulls.update({

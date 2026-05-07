@@ -75,7 +75,11 @@ function makeKarenOctokit(state: FakeIndex): any {
 }
 
 // Oliver has Pull requests:Write + Issues:Write — opens the PR and applies labels.
-function makeOliverOctokit(state: FakeIndex, indexOwner: string): any {
+function makeOliverOctokit(
+  state: FakeIndex,
+  indexOwner: string,
+  opts: { graphqlThrows?: Error } = {},
+): any {
   let prCounter = 100;
   return {
     rest: {
@@ -87,9 +91,10 @@ function makeOliverOctokit(state: FakeIndex, indexOwner: string): any {
         },
         create: async ({ head, title }: any) => {
           const number = prCounter++;
+          const nodeId = `PR_node_${number}`;
           state.openPRs.push({ number, head });
-          state.writes.push({ kind: "pulls.create", payload: { number, head, title } });
-          return { data: { number } };
+          state.writes.push({ kind: "pulls.create", payload: { number, head, title, node_id: nodeId } });
+          return { data: { number, node_id: nodeId } };
         },
         update: async ({ pull_number, body }: any) => {
           state.writes.push({ kind: "pulls.update", payload: { pull_number, body } });
@@ -102,6 +107,13 @@ function makeOliverOctokit(state: FakeIndex, indexOwner: string): any {
           return { data: [] };
         },
       },
+    },
+    graphql: async (query: string, vars: Record<string, unknown>) => {
+      state.writes.push({ kind: "graphql", payload: { query, vars } });
+      if (opts.graphqlThrows) {
+        throw opts.graphqlThrows;
+      }
+      return { enablePullRequestAutoMerge: { pullRequest: { id: vars.prId } } };
     },
   };
 }
@@ -116,8 +128,18 @@ function makeOctokits(state: FakeIndex) {
   };
 }
 
+const KAREN_DATA: any = {
+  name: "Karen-Multiworld-Bot",
+  html_url: "https://github.com/apps/karen-multiworld-bot",
+};
+const OLIVER_DATA: any = {
+  name: "Oliver-Multiworld-Squirrel",
+  html_url: "https://github.com/apps/oliver-multiworld-squirrel",
+};
+
 const baseOpts = (overrides: Partial<IndexPROpts> = {}): Omit<IndexPROpts, "karenOctokit" | "oliverOctokit"> => ({
-  karenSlug: "karen-multiworld-bot",
+  karenData: KAREN_DATA,
+  oliverData: OLIVER_DATA,
   indexOwner: INDEX_OWNER,
   indexName: INDEX_NAME,
   sourceOwner: "alice",
@@ -559,5 +581,61 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
     expect(m.module_location).toBe(
       "git+https://github.com/alice/alice-clique.git@wheel-sha-zzz",
     );
+  });
+});
+
+describe("openOrUpdateIndexPR — auto-merge enable on create", () => {
+  it("calls enablePullRequestAutoMerge with the new PR's node_id and SQUASH method", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
+
+    const gql = state.writes.find((w) => w.kind === "graphql");
+    expect(gql).toBeDefined();
+    expect(gql!.payload.query).toContain("enablePullRequestAutoMerge");
+    expect(gql!.payload.query).toContain("mergeMethod: SQUASH");
+    expect(gql!.payload.vars.prId).toBe(`PR_node_${result.prNumber}`);
+  });
+
+  it("does NOT call graphql on the update path (PR already exists)", async () => {
+    const state = makeFakeIndex({
+      branches: { main: "main-sha", "update/clique-v1.0.0": "branch-sha" },
+      files: {
+        main: {},
+        "update/clique-v1.0.0": {
+          "worlds/clique.json": { content: "{}", sha: "existing" },
+          ".github/CODEOWNERS": { content: "worlds/clique.json @alice\n", sha: "co-sha" },
+        },
+      },
+      openPRs: [{ number: 42, head: "update/clique-v1.0.0" }],
+    });
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
+
+    const gql = state.writes.find((w) => w.kind === "graphql");
+    expect(gql).toBeUndefined();
+  });
+
+  it("swallows graphql errors so the PR-open flow still completes", async () => {
+    const state = makeFakeIndex();
+    const oliverOctokit = makeOliverOctokit(state, INDEX_OWNER, {
+      graphqlThrows: new Error("auto_merge disabled on this repository"),
+    });
+    const karenOctokit = makeKarenOctokit(state);
+
+    const result = await openOrUpdateIndexPR({
+      ...baseOpts(),
+      karenOctokit,
+      oliverOctokit,
+    });
+
+    expect(result.created).toBe(true);
+    expect(result.prNumber).toBeGreaterThanOrEqual(100);
+
+    const gql = state.writes.find((w) => w.kind === "graphql");
+    expect(gql).toBeDefined();
+
+    const label = state.writes.find((w) => w.kind === "labels");
+    expect(label).toBeDefined();
   });
 });
