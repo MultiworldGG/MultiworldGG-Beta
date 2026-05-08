@@ -5,7 +5,7 @@ Automated build/test/release pipelines for MultiworldGG.
 ## Distribution model
 
 Per-game worlds **are not built or published from this repo**. Each game lives in its own upstream
-repo and publishes itself via [`MultiworldGG/build-and-publish-action`], which:
+repo and publishes itself via [`MultiworldGG/gen-pymod-release`], which:
 
 1. Force-pushes a `module-install/<world_version>` tag on the upstream world repo.
 2. Opens a PR against [`lallaria/MultiworldGG-Index`] updating that game's manifest with the new
@@ -18,7 +18,7 @@ The monorepo bundles only **infra worlds** (`worlds/_*`, `worlds/generic/`) plus
 files (`worlds/{__init__,AutoWorld,Files,LauncherComponents}.py`). Per-game worlds are pip-installed
 at runtime by `ModuleUpdate.install_worlds()` from each manifest's `module_location`.
 
-[`MultiworldGG/build-and-publish-action`]: https://github.com/MultiworldGG/build-and-publish-action
+[`MultiworldGG/gen-pymod-release`]: https://github.com/MultiworldGG/gen-pymod-release
 [`lallaria/MultiworldGG-Index`]: https://github.com/lallaria/MultiworldGG-Index
 
 ## Workflows
@@ -73,4 +73,4 @@ in webhost deployment configs, not here.)
   are impossible.
 - **Frozen build fails to find a world at runtime** — expected if `module_location` for that slug
   is not yet a valid `git+https://...@module-install/<ver>` URL. Each upstream world must publish
-  via build-and-publish-action before the monorepo can fetch it.
+  via gen-pymod-release before the monorepo can fetch it.

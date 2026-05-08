@@ -27,7 +27,7 @@ from APContainer import APWorldContainer
 # regardless of variant; variant choice only affects which games are filtered in/out.
 # See MultiworldGG-Index/scripts/build_variants.py for variant definitions.
 MWGG_IGDB_VARIANT = "sixteen"  # canonical default
-MWGG_INDEX_REPO = "lallaria/MultiworldGG-Index"
+MWGG_INDEX_REPO = "MultiworldGG/MultiworldGG-Index"
 MWGG_IGDB_BRANCH = f"game_index_{MWGG_IGDB_VARIANT}"
 MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
 
@@ -478,7 +478,7 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
     Install worlds by resolving each slug's `module_location` from mwgg_igdb and pip-installing the URL.
 
     `module_location` is a `git+https://.../<repo>@module-install/<world_version>` URL set by the
-    Index repo. The build-and-publish-action force-pushes immutable tags per release.
+    Index repo. The gen-pymod-release force-pushes immutable tags per release.
 
     Falls back to a custom_worlds/<slug>.apworld lookup if the slug isn't in the index or its
     `module_location` install fails.

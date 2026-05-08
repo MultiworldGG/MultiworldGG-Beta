@@ -1,6 +1,6 @@
 # Oliver-Multiworld-Squirrel
 
-Webhook receiver for the `Oliver-Multiworld-Squirrel` GitHub App. Watches per-world repos for the `Create and Release Python Package` workflow to finish (i.e. `MultiworldGG/build-and-publish-action` has shaped + pushed the wheel branch + tag), then opens a corresponding PR on `MultiworldGG-Index` updating `worlds/<slug>.json` to point at the new tag's pinned SHA.
+Webhook receiver for the `Oliver-Multiworld-Squirrel` GitHub App. Watches per-world repos for the `Create and Release Python Package` workflow to finish (i.e. `MultiworldGG/gen-pymod-release` has shaped + pushed the wheel branch + tag), then opens a corresponding PR on `MultiworldGG-Index` updating `worlds/<slug>.json` to point at the new tag's pinned SHA.
 
 Oliver does NOT clone, build, or push to per-world repos. The build is done by the per-world repo's own workflow under its own `GITHUB_TOKEN`.
 
@@ -45,7 +45,7 @@ The Oliver service holds both Apps' PEMs. On a webhook from a per-world repo, th
 
    jobs:
      publish:
-       uses: MultiworldGG/build-and-publish-action/.github/workflows/build.yml@v3
+       uses: MultiworldGG/gen-pymod-release/.github/workflows/build.yml@v3
        # No `with:` — slug comes from vars.WORLD_FOLDER_NAME
        # No `secrets:` — no Oliver secrets needed
    ```
@@ -60,7 +60,7 @@ That's it. Within ~30s of the workflow finishing, Oliver opens a PR on the Index
 2. Filters on workflow name (`Create and Release Python Package`), event (`release`), and conclusion (`success`).
 3. Reads the `WORLD_FOLDER_NAME` repo variable to find the slug.
 4. Resolves `workflow_run.head_sha` to the matching release tag name.
-5. Resolves the `wheel/worlds/<slug>/<release_tag>` tag (created by build-and-publish-action) to a commit SHA.
+5. Resolves the `wheel/worlds/<slug>/<release_tag>` tag (created by gen-pymod-release) to a commit SHA.
 6. Authenticates as the App for `lallaria/MultiworldGG-Index`, opens or updates a PR on `update/<slug>-<release_tag>` with `module_location = git+https://github.com/<owner>/<repo>.git@<sha>`.
 7. Logs the outcome (success / skip / error) to `/var/lib/oliver/events.jsonl`.
 
