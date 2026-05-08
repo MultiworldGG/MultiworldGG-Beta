@@ -9,4 +9,7 @@ setuptools>=70.0.0
 build>=1.0.0
 
 # cx_Freeze for building executables (if not already installed)
-cx_Freeze>=7.0.0
+# Pinned to 8.4.0 because cx_custom_hooks/_kivy_.py reaches into private
+# cx_Freeze internals (cx_Freeze.module.Module, cx_Freeze._compat.IS_*) that
+# are not API-stable across major versions.
+cx_Freeze==8.4.0

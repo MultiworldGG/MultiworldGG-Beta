@@ -28,12 +28,16 @@ python build_exe.py --verify
 ```
 
 The build script will:
-1. Install cx_Freeze if needed
-2. Install requirements from requirements.txt
-3. Install wheels from ../default_wheels
-4. Update modules using ModuleUpdate
-5. Run the cx_Freeze build
-6. Verify the build output
+1. Install build_requirements.txt (includes cx_Freeze)
+2. Install requirements.txt
+3. Install wheels from default_wheels/ (mwgg_gui, mwgg_splash, kivymd-dev, etc.)
+4. Install wheels from worlds_wheels/ (infra worlds)
+5. Generate setup.ini (Windows only, for Inno Setup)
+6. Run the cx_Freeze build via setup.py build_exe
+7. Verify the build output (with --verify)
+
+Per-game worlds and the mwgg_igdb game index are NOT installed at build time —
+they're git-pulled at first run by ModuleUpdate.update().
 
 ### Option 2: Manual build using setup.py
 
@@ -52,10 +56,7 @@ for wheel in ../default_wheels/*.whl; do
     pip install "$wheel" --no-deps --force-reinstall
 done
 
-# Update modules
-python -c "import ModuleUpdate; ModuleUpdate.update(yes=True)"
-
-# Run the build
+# Run the build (mwgg_igdb is git-pulled at first run, not at build time)
 python setup.py build_exe
 ```
 
@@ -66,7 +67,7 @@ python setup.py build_exe
 cd src
 
 # Install build dependencies
-pip install cx-Freeze>=6.15.0 setuptools>=68.0.0
+pip install cx-Freeze==8.4.0 setuptools>=70.0.0
 
 # Run build using pyproject.toml
 python -m cx_Freeze.build_exe
@@ -237,7 +238,7 @@ Modify package includes/excludes in `setup.py`:
 ### Required Python Packages
 
 See `requirements.txt` for the complete list. Key dependencies include:
-- cx-Freeze>=6.15.0
+- cx-Freeze==8.4.0
 - kivy>=2.3.1
 - kivymd>=2.0.1.dev0
 - websockets>=13.0.1,<14
