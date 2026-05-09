@@ -1781,9 +1781,6 @@ class ClientMessageProcessor(CommonCommandProcessor):
             old_hints = list(set(hints) - new_hints)
             hidden_old_hints = [hint for hint in old_hints if hint.hidden]
             truly_old_hints = [hint for hint in old_hints if not hint.hidden]
-            if truly_old_hints and not new_hints and not hidden_old_hints:
-                self.ctx.notify_hints(self.client.team, truly_old_hints)
-                self.output("Hint was previously used, no points deducted.")
             if new_hints or hidden_old_hints:
                 # Remove hidden old hints from store so they can be re-added as fully revealed
                 for hint in hidden_old_hints:
@@ -1829,7 +1826,7 @@ class ClientMessageProcessor(CommonCommandProcessor):
                         f" You have {points_available} and need at least {cost}.")
                 self.ctx.save()
                 return True
-            elif old_hints:
+            else:
                 self.ctx.notify_hints(self.client.team, old_hints)
                 if cost and points_available // cost <= 0:
                     self.output(
@@ -1840,6 +1837,7 @@ class ClientMessageProcessor(CommonCommandProcessor):
                 else:
                     self.output(
                         "There may be more hintables, you can rerun the command with a non-zero amount to find more.")
+                return False
         else:
             if points_available >= cost:
                 if for_location:
