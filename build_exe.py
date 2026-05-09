@@ -280,7 +280,7 @@ def main():
     # if not args.skip_modules:
     #     if not update_modules():
     #         sys.exit(1)
-    
+
     # Generate setup.ini for Inno Setup (Windows installer)
     if is_windows():
         if not generate_setup_ini():

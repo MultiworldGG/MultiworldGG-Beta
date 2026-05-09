@@ -107,6 +107,9 @@ build_exe_options = {
         ("data/EnemizerCLI", "EnemizerCLI") if os.path.exists("data/EnemizerCLI") else None,
         ("kivy/data", "lib/kivy/data"),
         ("kivy/include", "lib/kivy/include"),
+        # Mac/Linux only: ship astral's install.sh so first launch can install uv if it's not on PATH.
+        # Windows installs uv via Inno Setup (winget, with PowerShell installer fallback) at install time.
+        ("uv_runtime/install-uv.sh", "install-uv.sh") if not is_windows else None,
     ],
     "include_msvcr": True,
     "replace_paths": ["*."],

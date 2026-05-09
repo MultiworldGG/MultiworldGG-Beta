@@ -50,6 +50,12 @@ if is_frozen():
     if os.path.exists(venv_worlds_path) and venv_worlds_path not in sys.path:
         sys.path.append(venv_worlds_path)
 
+# Hard-require mwgg_igdb: BaseUtils.get_archipelago_constants and the worlds
+# loader cascade can lazy-import GameIndex; if it's missing the ImportError is
+# uncaught and the server crashes. Mirrors WebHost.py's pattern.
+import ModuleUpdate
+ModuleUpdate.update()
+
 from NetUtils import Endpoint, ClientStatus, NetworkItem, decode, encode, NetworkPlayer, Permission, NetworkSlot, \
     SlotType, LocationStore, MultiData, Hint, HintStatus
 from BaseClasses import ItemClassification

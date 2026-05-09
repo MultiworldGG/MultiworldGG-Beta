@@ -25,6 +25,10 @@ if Utils.is_frozen():
     if os.path.exists(venv_worlds_path) and venv_worlds_path not in sys.path:
         sys.path.append(venv_worlds_path)
 
+# Hard-require mwgg_igdb: subsequent imports (and BaseUtils.get_archipelago_constants)
+# crash with ImportError if the index isn't installed. Mirrors WebHost.py's pattern.
+ModuleUpdate.update()
+
 import Options
 from BaseClasses import seeddigits, get_seed, PlandoOptions
 from Utils import parse_yamls, version_tuple, __version__, tuplize_version, set_game_names

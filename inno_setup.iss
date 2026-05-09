@@ -206,7 +206,6 @@ NAME: "{app}"; Flags: setntfscompression; Permissions: everyone-modify users-mod
 
 [Files]
 Source: "{#source_path}\*"; Excludes: "*.sfc, *.log, SNI, EnemizerCLI"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "python_installers\python-3.13.7-amd64.exe"; DestDir: {tmp}; Flags: deleteafterinstall; Check: IsPythonNeeded
 
 [Icons]
 Name: "{group}\{#MyAppName} Folder"; Filename: "{app}";
@@ -217,7 +216,12 @@ Name: "{commondesktop}\{#MyAppName} Launcher"; Filename: "{app}\MultiworldGG.exe
 
 [Run]
 
-Filename: "{tmp}\python-3.13.7-amd64.exe"; Parameters: "/passive InstallAllUsers=1 PrependPath=1 Include_test=0"; Check: IsPythonNeeded; StatusMsg: "Installing Python 3.13.7..."
+; Install uv if not already on PATH. Order matters: winget first (preferred, integrates with
+; user's package manager so they can `winget upgrade astral-sh.uv` later); fall back to astral's
+; PowerShell installer on systems without winget (older Win10, some corporate images).
+Filename: "winget"; Parameters: "install --id=astral-sh.uv -e --accept-source-agreements --accept-package-agreements"; Check: IsUvNeededViaWinget; StatusMsg: "Installing uv via winget..."; Flags: runhidden
+Filename: "powershell.exe"; Parameters: "-ExecutionPolicy ByPass -Command ""irm https://astral.sh/uv/install.ps1 | iex"""; Check: IsUvNeededViaPwsh; StatusMsg: "Installing uv via astral installer..."; Flags: runhidden
+
 Filename: "{app}\MultiworldGG"; Parameters: "--update-modules --worlds {code:GetSelectedWorld}"; StatusMsg: "Updating modules..."; Flags: runasoriginaluser runhidden
 ; Filename: "{app}\MultiworldGG"; Description: "{cm:LaunchProgram,{#StringChange('Launcher', '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 ; Silent install from updater auto starts the launcher again
@@ -786,94 +790,43 @@ begin
   Result := DirExists(ExpandConstant('{app}\lib'));
 end;
 
-function IsPythonInstalled: Boolean;
+function IsUvInstalled: Boolean;
 var
   ResultCode: Integer;
-  Output: TExecOutput;
 begin
   Result := False;
-  
-  Log('Checking for Python installation...');
-  
-  // Method 1: Check if 'python' command works and has pip
-  if Exec('python', '--version', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
+  // `where uv` exits 0 if uv.exe is on PATH (or on a known winget shim path).
+  if Exec(ExpandConstant('{cmd}'), '/c where uv', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
   begin
-    Log('Python found in PATH via python command');
-    // Check if pip is available
-    if Exec('python', '-m pip --version', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
-    begin
-      Log('Python and pip are ready via python command');
-      Result := True;
-      Exit;
-    end
-    else
-      Log('Python found but pip not available via python command');
-  end;
-  
-  // Method 2: Use Windows Python Launcher
-  if Exec('py', '--version', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
-  begin
-    Log('Python found via Windows Python Launcher (py)');
-    // Check if pip is available
-    if Exec('py', '-m pip --version', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
-    begin
-      Log('Python and pip are ready via py command');
-      Result := True;
-      Exit;
-    end
-    else
-      Log('Python found but pip not available via py command');
-  end;
-  
-  // Method 3: Use 'where python' to find all python executables
-  if ExecAndCaptureOutput('cmd.exe', '/c where python', '', SW_HIDE, ewWaitUntilTerminated, ResultCode, Output) then
-  begin
-    if GetArrayLength(Output.StdOut) > 0 then
-      Log('where python output: ' + Output.StdOut[0]);
-    // Check if output contains actual python paths (not just Windows Store aliases)
-    if (GetArrayLength(Output.StdOut) > 0) and (Pos('python.exe', Output.StdOut[0]) > 0) and (Pos('WindowsApps', Output.StdOut[0]) = 0) then
-    begin
-      Log('Real Python executables found via where command');
-      // Try to use the first python found
-      if Exec('python', '-m pip --version', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
-      begin
-        Log('Python and pip are ready via where-found python');
-        Result := True;
-        Exit;
-      end;
-    end
-    else
-      Log('Only Windows Store Python aliases found via where command');
-  end;
-  
-  // Method 4: Use 'py -0p' to list installed Python executables
-  if ExecAndCaptureOutput('py', '-0p', '', SW_HIDE, ewWaitUntilTerminated, ResultCode, Output) then
-  begin
-    if GetArrayLength(Output.StdOut) > 0 then
-      Log('py -0p output: ' + Output.StdOut[0]);
-    // Check if output contains actual python paths
-    if (GetArrayLength(Output.StdOut) > 0) and (Pos('python.exe', Output.StdOut[0]) > 0) then
-    begin
-      Log('Python installations found via py -0p');
-      // Try to use py launcher with pip
-      if Exec('py', '-m pip --version', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
-      begin
-        Log('Python and pip are ready via py launcher');
-        Result := True;
-        Exit;
-      end;
-    end
-    else
-      Log('No Python installations found via py -0p');
-  end;
-  
-  if not Result then
-    Log('No suitable Python installation (3.13+ with pip) found');
+    Log('uv found on PATH');
+    Result := True;
+  end
+  else
+    Log('uv not found on PATH; will install');
 end;
 
-function IsPythonNeeded: Boolean;
+function IsWingetAvailable: Boolean;
+var
+  ResultCode: Integer;
 begin
-  Result := not IsPythonInstalled;
+  Result := False;
+  if Exec(ExpandConstant('{cmd}'), '/c where winget', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
+  begin
+    Log('winget available');
+    Result := True;
+  end
+  else
+    Log('winget not available; will fall back to astral PowerShell installer');
+end;
+
+function IsUvNeededViaWinget: Boolean;
+begin
+  Result := (not IsUvInstalled) and IsWingetAvailable;
+end;
+
+function IsUvNeededViaPwsh: Boolean;
+begin
+  Result := (not IsUvInstalled) and (not IsWingetAvailable);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);

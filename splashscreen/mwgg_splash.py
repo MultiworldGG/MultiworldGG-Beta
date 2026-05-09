@@ -25,6 +25,7 @@ from pathlib import Path
 from ModuleUpdate import check_for_updates, install_worlds
 
 logger = logging.getLogger("MultiWorld")
+logging.getLogger("PIL").setLevel(logging.INFO)
 
 class SplashScreen:
     def __init__(self, png_path, queue: Queue):
@@ -105,8 +106,7 @@ class SplashScreen:
             
         except Exception as e:
             logging.error(f"Failed to initialize splash screen: {e}")
-            if hasattr(self, 'root') and self.root:
-                self.root.destroy()
+            self._close_root()
             raise
     
     def _check_and_apply_updates(self):

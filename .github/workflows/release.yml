@@ -184,7 +184,19 @@ jobs:
           echo "Enemizer ${ENEMIZER_RELEASE} downloaded successfully"
           ls -la data/SNI/
           ls -la data/EnemizerCLI/
-      
+
+          # uv install strategy is platform-specific:
+          #   - Windows: Inno Setup installs uv via winget (PowerShell installer fallback) at install time.
+          #   - Mac/Linux: bundle astral's install.sh; first launch runs it if uv isn't on PATH.
+          # The script's MIT license header is the attribution we ship.
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            mkdir -p uv_runtime
+            curl -LsSf https://astral.sh/uv/install.sh -o uv_runtime/install-uv.sh
+            chmod +x uv_runtime/install-uv.sh
+            echo "Bundled uv installer staged at uv_runtime/install-uv.sh"
+            ls -la uv_runtime/
+          fi
+
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
         with:

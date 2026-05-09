@@ -5,6 +5,7 @@ import multiprocessing
 import warnings
 import json
 import shutil
+import time
 import zipfile
 import re
 import shutil
@@ -30,6 +31,7 @@ MWGG_IGDB_VARIANT = "sixteen"  # canonical default
 MWGG_INDEX_REPO = "MultiworldGG/MultiworldGG-Index"
 MWGG_IGDB_BRANCH = f"game_index_{MWGG_IGDB_VARIANT}"
 MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
+MWGG_IGDB_UPGRADE_INTERVAL_SECONDS = 86400  # once-daily throttle for upgrade pulls
 
 def is_frozen() -> bool:
     return getattr(sys, 'frozen', False)
@@ -100,8 +102,86 @@ if not update_ran:
         for world_file in custom_worlds_dir.glob("*.apworld"):
             worlds_files["apworlds"].add(str(world_file))
 
-# Only for unfrozen builds, overriding for frozen            
+# Default for dev mode (not frozen): use the running interpreter and let uv install into its venv.
 python_cmd = sys.executable
+uv_cmd: str = ""
+
+
+def find_uv() -> str:
+    """Locate the uv binary. uv is user-installed, not bundled — see inno_setup.iss for the
+    Windows install path (winget/PowerShell installer) and uv_runtime/install-uv.sh for Mac/Linux
+    first-launch install. We probe `shutil.which` first, then platform-specific known locations,
+    then (Mac/Linux frozen only) run the bundled installer as a last resort.
+    """
+    found = shutil.which("uv")
+    if found:
+        return found
+
+    if is_windows():
+        # The Inno installer just ran `winget install astral-sh.uv` (or astral's PowerShell installer)
+        # but the user's PATH won't reflect the new entry until their explorer session refreshes.
+        # Probe the known shim locations directly so the post-install --update-modules call works.
+        local_appdata = os.environ.get("LOCALAPPDATA", "")
+        candidates = [
+            Path(local_appdata) / "Microsoft" / "WinGet" / "Links" / "uv.exe",
+            Path.home() / ".local" / "bin" / "uv.exe",
+        ]
+        for candidate in candidates:
+            if candidate.exists():
+                return str(candidate)
+    elif is_frozen():
+        # First launch on Mac/Linux: bundled installer hasn't run yet. Run it once,
+        # then check the default install location (~/.local/bin/uv).
+        installer = Path(sys.executable).parent / "install-uv.sh"
+        if installer.exists():
+            logger.info(f"uv not found on PATH; running bundled installer {installer}")
+            try:
+                subprocess.run(["sh", str(installer)], check=True)
+            except subprocess.CalledProcessError as e:
+                logger.warning(f"Bundled uv installer failed: {e}")
+            else:
+                local_uv = Path.home() / ".local" / "bin" / "uv"
+                if local_uv.exists():
+                    return str(local_uv)
+                # Re-probe PATH in case the installer modified it via shell rc files
+                # that aren't visible to this already-running process.
+                found = shutil.which("uv")
+                if found:
+                    return found
+
+    raise RuntimeError(
+        "uv not found on PATH and no fallback succeeded. Install uv manually: "
+        "`winget install astral-sh.uv` (Windows) or "
+        "`curl -LsSf https://astral.sh/uv/install.sh | sh` (macOS/Linux). "
+        "See https://docs.astral.sh/uv/getting-started/installation/."
+    )
+
+
+def venv_is_healthy(venv_path: Path) -> bool:
+    """True if the venv at venv_path is still usable (creator interpreter dir exists, python runs)."""
+    cfg = venv_path / "pyvenv.cfg"
+    if not cfg.exists():
+        return False
+    home_dir: Optional[Path] = None
+    for line in cfg.read_text().splitlines():
+        if line.startswith("home"):
+            _, _, val = line.partition("=")
+            home_dir = Path(val.strip())
+            break
+    # If pyvenv.cfg's `home = ` points at a directory that no longer exists (e.g. user
+    # uninstalled the Python that originally created the venv), the venv is dead.
+    if home_dir is None or not home_dir.exists():
+        return False
+    venv_python = venv_path / ("Scripts" if is_windows() else "bin") / ("python.exe" if is_windows() else "python")
+    if not venv_python.exists():
+        return False
+    try:
+        return subprocess.run([str(venv_python), "--version"], capture_output=True, timeout=10).returncode == 0
+    except (subprocess.TimeoutExpired, OSError):
+        return False
+
+
+uv_cmd = find_uv()
 
 if is_frozen():
     # For frozen builds, install in a home directory to prevent readonly issues
@@ -109,87 +189,26 @@ if is_frozen():
     default_libs_dir = Path(exe_dir, "lib")
     worlds_install_dir = install_path()
     if str(worlds_install_dir) not in sys.path:
-        sys.path.append(worlds_install_dir)
+        sys.path.append(str(worlds_install_dir))
     if str(default_libs_dir) not in sys.path:
-        sys.path.append(default_libs_dir)
-        
-    # set up frozen pip command
-    if is_windows():
-        # Try to use system Python first, fall back to local if not available
-        if (install_path() / "Scripts" / "python.exe").exists():
-            python_cmd = install_path() / "Scripts" / "python.exe"
-        else:
-            system_python = shutil.which("python")
-            if system_python and "WindowsApps" not in system_python:
-                pass
-            else:
-                system_py = shutil.which("py")
-                py_output = subprocess.run([system_py, "-0p"], capture_output=True, text=True)
-                system_python = py_output.stdout.strip()
+        sys.path.append(str(default_libs_dir))
 
-                # Priority order: 3.13 → 3.14 → 3.12 → 3.11 → ...
-                # Exclude venv paths and test versions (like python3.13t.exe)
-                python_versions = []
-                for line in py_output.stdout.splitlines():
-                    if "venv" in line:
-                        continue
-                    if "python.exe" in line:
-                        # Extract version and path - handle both formats:
-                        # Format 1: "-V:3.13          C:\Program Files\Python313\python.exe"
-                        # Format 2: "-V:3.13 *        C:\Users\Lindsay\AppData\Local\Programs\Python\Python313\python.exe"
-                        parts = line.split()
-                        if len(parts) >= 2:
-                            version_part = parts[0]
-                            # Handle the * marker in format 2
-                            path = parts[-1] if parts[-1].endswith('.exe') else parts[1]
-                            # Extract version number (e.g., "3.13" from "-V:3.13")
-                            version_match = re.search(r'3\.(\d+)', version_part)
-                            if version_match:
-                                version_num = int(version_match.group(1))
-                                if 13 <= version_num <= 14:  # Valid range: 3.13 or 3.14 only
-                                    python_versions.append((version_num, path))
+    venv_path = install_path()
+    if venv_path.exists() and not venv_is_healthy(venv_path):
+        logger.info(f"Existing venv at {venv_path} is broken or stale; recreating.")
+        shutil.rmtree(venv_path, ignore_errors=True)
+    if not venv_path.exists():
+        venv_path.parent.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Creating venv at {venv_path} via uv.")
+        # uv reuses an existing system Python 3.13 if one is present; otherwise it
+        # downloads python-build-standalone into %APPDATA%\uv\data\python\ (no UAC).
+        subprocess.run([uv_cmd, "venv", str(venv_path), "--python", "3.13"], check=True)
+    python_cmd = venv_path / ("Scripts" if is_windows() else "bin") / ("python.exe" if is_windows() else "python")
 
-                # Sort by priority: 3.13 first, then 3.14
-                def version_priority(item):
-                    version_num = item[0]
-                    if version_num == 13:
-                        return 0  # Highest priority
-                    else:
-                        return 1  # 3.14 fallback
-                
-                python_versions.sort(key=version_priority)
-                if python_versions:
-                    system_python = python_versions[0][1]
-                if system_python and "WindowsApps" not in system_python:
-                    pass
-                else:
-                    raise RuntimeError("No Python found")
 
-            # Install windows venv
-            venv_path = install_path()
-            venv_path.mkdir(parents=True, exist_ok=True)
-            subprocess.run([system_python, "-m", "venv", str(venv_path)], check=True)
-            python_cmd = venv_path / "Scripts" / "python.exe"
-
-    elif is_macos() or is_linux():
-        # Create a venv in cache_path that uses the AppImage's python as base
-        venv_path = install_path()
-        if (venv_path / "bin" / "python").exists():
-            python_cmd = venv_path / "bin" / "python"
-        else:
-            logger.info(f"Creating venv in {str(venv_path)}")
-            system_python = shutil.which("python")
-            if not system_python:
-                system_python = shutil.which("python3")
-            else:
-                raise RuntimeError("No Python found")
-            subprocess.run([system_python, "-m", "venv", str(venv_path)], check=True)
-            python_cmd = venv_path / "bin" / "python"
-    else:
-        raise RuntimeError("Unsupported platform")
-
-# Don't import pip directly, we can set/forget this instead.
-subprocess.run([python_cmd, "-m", "ensurepip"])
+def _uv_pip(*args: str) -> list[str]:
+    """Build a `uv pip ...` command targeting the active venv (python_cmd)."""
+    return [uv_cmd, "pip", *args, "--python", str(python_cmd)]
 
 def confirm(msg: str) -> None:
     """Get user confirmation for an action."""
@@ -272,14 +291,54 @@ def _parse_custom_pep508_requirement(line: str) -> str:
     return result
 
 
-def install_mwgg_igdb(upgrade: bool = False) -> bool:
+def _igdb_stamp_path() -> Path:
+    return install_path().parent / ".mwgg_igdb_last_upgrade"
+
+
+def _igdb_upgraded_recently() -> bool:
+    try:
+        path = _igdb_stamp_path()
+        if not path.exists():
+            return False
+        last = float(path.read_text().strip())
+    except (OSError, ValueError, RuntimeError):
+        return False
+    elapsed = time.time() - last
+    return 0 <= elapsed < MWGG_IGDB_UPGRADE_INTERVAL_SECONDS
+
+
+def _record_igdb_upgrade() -> None:
+    try:
+        path = _igdb_stamp_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(str(time.time()))
+    except (OSError, RuntimeError) as e:
+        logger.debug(f"Could not write mwgg_igdb upgrade stamp: {e}")
+
+
+def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
     """Install or refresh the mwgg_igdb package from the Index repo orphan branch.
 
     Called before any code path that imports `mwgg_igdb` — the package is the
     runtime source-of-truth for which worlds exist and where to fetch them.
-    Returns True if the install succeeded.
+
+    Args:
+        upgrade: Run pip with --upgrade.
+        force: With upgrade=True, bypass the once-daily throttle. Use for variant
+               switches and standalone CLI invocation where a fresh pull is required.
+
+    Concurrency: two processes that race on a stale stamp can both run pip into the
+    same venv. uv pip writes to a temp location before rename, so the worst outcome
+    is two pulls instead of one — not corruption.
+
+    Returns True if the install succeeded (or was throttled).
     """
-    args = [str(python_cmd), "-m", "pip", "install", MWGG_IGDB_GIT_URL, "--no-cache-dir"]
+    if upgrade and not force and _igdb_upgraded_recently():
+        logger.debug(
+            f"mwgg_igdb upgrade attempted within {MWGG_IGDB_UPGRADE_INTERVAL_SECONDS}s; skipping"
+        )
+        return True
+    args = _uv_pip("install", MWGG_IGDB_GIT_URL, "--no-cache")
     if upgrade:
         args.append("--upgrade")
     logger.info(f"Installing mwgg_igdb ({MWGG_IGDB_VARIANT}) from {MWGG_IGDB_BRANCH}")
@@ -287,6 +346,8 @@ def install_mwgg_igdb(upgrade: bool = False) -> bool:
     if result.returncode != 0:
         logger.warning(f"Failed to install mwgg_igdb: {result.stderr}")
         return False
+    if upgrade:
+        _record_igdb_upgrade()
     return True
 
 
@@ -353,12 +414,6 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
     """
     if is_frozen() and not worlds_only:
         return []
-    try:
-        import packaging.requirements
-    except ImportError:
-        logger.warning("packaging module not available, installing...")
-        subprocess.run([str(python_cmd), "-m", "pip", "install", "--upgrade", "packaging"])
-        import packaging.requirements
 
     if worlds_only:
         install_mwgg_igdb(upgrade=True)
@@ -383,9 +438,10 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
         logger.info(f"Worlds with available updates: {outdated}")
         return outdated
 
+    # Dev-only path: ask uv for outdated dists. uv's resolver enforces requirements.txt
+    # specifiers at install time, so we don't need to pre-filter here.
     try:
-        executable_args = [str(python_cmd), "-m", "pip", "list", "-o", "--format", "json",
-            "-i", "https://pypi.org/simple"]
+        executable_args = _uv_pip("list", "--outdated", "--format", "json")
         logger.info(f"Executing subprocess command: {executable_args}")
         response = subprocess.run(executable_args, capture_output=True, text=True, timeout=45)
         if response.returncode != 0:
@@ -394,41 +450,7 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
 
         outdated_packages = json.loads(response.stdout)
         logger.info(f"Newer versions of the following packages are available: {outdated_packages}")
-
-        all_requirements = {}
-        for req_file in requirements_files:
-            if req_file.exists():
-                requirements = parse_requirements_file(req_file)
-                for req_line in requirements:
-                    try:
-                        requirement = packaging.requirements.Requirement(req_line)
-                        all_requirements[requirement.name] = requirement
-                    except packaging.requirements.InvalidRequirement:
-                        continue
-
-        packages_to_update = []
-        for pkg in outdated_packages:
-            pkg_name = pkg["name"]
-            latest_version = pkg["latest_version"]
-
-            if pkg_name in all_requirements:
-                requirement = all_requirements[pkg_name]
-                try:
-                    if not requirement.specifier:
-                        packages_to_update.append(pkg_name)
-                    else:
-                        from packaging.version import parse as parse_version
-                        latest_ver = parse_version(latest_version)
-                        if latest_ver in requirement.specifier:
-                            packages_to_update.append(pkg_name)
-                        else:
-                            logger.debug(f"Skipping {pkg_name}: latest version {latest_version} doesn't satisfy requirement {requirement}")
-                except Exception as e:
-                    logger.debug(f"Skipping {pkg_name}: couldn't check version constraint: {e}")
-            else:
-                packages_to_update.append(pkg_name)
-
-        return packages_to_update
+        return [pkg["name"] for pkg in outdated_packages]
 
     except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError) as e:
         logger.warning(f"Could not check for updates: {e}")
@@ -438,8 +460,8 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
 def uninstall_worlds(worlds: List[str]) -> None:
     """Uninstall a list of `worlds.<slug>` packages from the venv."""
     for world in worlds:
-        executable_args = [str(python_cmd), "-m", "pip", "uninstall", world, "--yes"]
-        subprocess.run(executable_args)
+        # uv pip uninstall is non-interactive by default; no --yes equivalent needed.
+        subprocess.run(_uv_pip("uninstall", world))
 
 
 def find_world_modules() -> set[str]:
@@ -451,7 +473,7 @@ def find_world_modules() -> set[str]:
         world_modules_set.update(index.get_all_games().keys())
 
     try:
-        executable_args = [str(python_cmd), "-m", "pip", "list", "--format", "json"]
+        executable_args = _uv_pip("list", "--format", "json")
         logger.debug(f"Executing subprocess command to find installed worlds: {executable_args}")
         response = subprocess.run(executable_args, capture_output=True, text=True, timeout=45)
         if response.returncode == 0:
@@ -505,7 +527,7 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
 
     if selected_variant is not None:
         _set_variant(selected_variant)
-        install_mwgg_igdb(upgrade=True)
+        install_mwgg_igdb(upgrade=True, force=True)
 
     if update:
         logger.info(f"Uninstalling old versions of: {world_slugs}")
@@ -536,8 +558,7 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
                 logger.warning(f"Custom apworld file not found at {apworld_file}, {slug} cannot be installed")
             continue
 
-        executable_args = [str(python_cmd), "-m", "pip", "install", "--no-deps",
-                module_location, "--upgrade", "--no-cache-dir"]
+        executable_args = _uv_pip("install", "--no-deps", module_location, "--upgrade", "--no-cache")
         logger.info(f"Executing subprocess command: {executable_args}")
         result = subprocess.run(executable_args, capture_output=True, text=True)
         logger.info(result.stdout)
@@ -560,7 +581,7 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
     if is_frozen() and not no_recurse:
         # Check for any additional updates that might be needed
         logger.info("Checking for additional dependencies...")
-        additional_deps_args = [python_cmd, "-m", "pip", "check"]
+        additional_deps_args = _uv_pip("check")
         additional_deps_result = subprocess.run(additional_deps_args, capture_output=True, text=True)
         stdout = additional_deps_result.stdout
         
@@ -592,8 +613,8 @@ def update_world_from_package() -> None:
     if is_frozen():
         for world in worlds_files["wheels"]:
             logger.info(f"Installing wheel: {world}")
-            executable_args = [python_cmd, "-m", "pip", "install", world, "--upgrade", 
-                    "--prefer-binary", "--no-cache-dir"]
+            # uv prefers wheels by default, no --prefer-binary equivalent needed.
+            executable_args = _uv_pip("install", world, "--upgrade", "--no-cache")
             
             # Use threading instead of multiprocessing to avoid argument contamination
             import threading
@@ -656,7 +677,7 @@ def update_world_from_package() -> None:
                 installed_version: Optional[Version] = None
                 
                 try:
-                    executable_args = [python_cmd, "-m", "pip", "show", package_name]
+                    executable_args = _uv_pip("show", package_name)
                     result = subprocess.run(executable_args, capture_output=True, text=True, timeout=10)
                     
                     if result.returncode == 0:
@@ -691,7 +712,7 @@ def update_world_from_package() -> None:
     else:
         for wheel in worlds_files["wheels"]:
             logger.info(f"Installing wheel: {wheel}")
-            executable_args = [python_cmd, "-m", "pip", "install", wheel, "--upgrade"]
+            executable_args = _uv_pip("install", wheel, "--upgrade")
             result = subprocess.run(executable_args)
             if result.returncode != 0:
                 logger.warning(f"Failed to install wheel {wheel}")
@@ -702,51 +723,34 @@ def update_world_from_package() -> None:
 def update_requirements(needed_packages: List[str]) -> None:
     """
     Update packages from requirements.txt files and install worlds.
-    
-    Args:
-        needed_packages: List of packages that need updating
+
+    uv's resolver respects each requirement's version specifier on its own; we don't
+    pre-parse with `packaging`. When `needed_packages` is empty, upgrade everything in
+    each requirements file. Otherwise, upgrade only the named entries.
     """
-    # Ensure packaging is available
-    try:
-        import packaging.requirements
-    except ImportError:
-        logger.warning("packaging module not available, installing...")
-        subprocess.run([python_cmd, "-m", "pip", "install", "--upgrade", "packaging"])
-        import packaging.requirements
-    
-    # If needed_packages is empty, update all requirements (for force mode or missing requirements)
     update_all = len(needed_packages) == 0
-    
-    # Handle regular requirements from files
+
     for req_file in requirements_files:
         if not req_file.exists():
             logger.warning(f"Requirements file not found: {req_file}")
             continue
-            
+
         logger.debug(f"Processing requirements from: {req_file}")
-        requirements = parse_requirements_file(req_file)
-        
-        packages_to_update = []
-        for req_line in requirements:
-            try:
-                requirement = packaging.requirements.Requirement(req_line)
-                # Update if: force mode, package needs update, or package is missing
-                if update_all or requirement.name in needed_packages:
-                    packages_to_update.append(req_line)
-            except packaging.requirements.InvalidRequirement:
-                logger.warning(f"Invalid requirement line: {req_line}")
-                continue
-        
-        if packages_to_update:
-            logger.info(f"Installing/updating packages: {[req.split('==')[0] if '==' in req else req.split('>=')[0] if '>=' in req else req for req in packages_to_update]}")
-            for package in packages_to_update:
-                executable_args = [python_cmd, "-m", "pip", "install", "--upgrade", package]
-                result = subprocess.run(executable_args)
-                if result.returncode != 0:
-                    logger.warning(f"Failed to install/update {package}")
+        if update_all:
+            executable_args = _uv_pip("install", "--upgrade", "-r", str(req_file))
+            result = subprocess.run(executable_args)
+            if result.returncode != 0:
+                logger.warning(f"Failed to install/update from {req_file.name}")
         else:
-            logger.info("No packages from this requirements file need updating.")
-    
+            requirements = parse_requirements_file(req_file)
+            for req_line in requirements:
+                # Extract the bare package name (everything up to the first version op or marker).
+                pkg_name = re.split(r'[<>=!~;@\s]', req_line, 1)[0].strip()
+                if pkg_name in needed_packages:
+                    result = subprocess.run(_uv_pip("install", "--upgrade", req_line))
+                    if result.returncode != 0:
+                        logger.warning(f"Failed to install/update {req_line}")
+
     # Handle worlds (these are not in requirements.txt files)
     worlds_to_install = [pkg for pkg in needed_packages if pkg.startswith("worlds") or pkg.startswith("mwgg")]
     if worlds_to_install:
@@ -754,54 +758,26 @@ def update_requirements(needed_packages: List[str]) -> None:
         install_worlds(worlds_to_install)
 
 
-def install_packaging(yes: bool = False) -> None:
-    """Install packaging module if not available."""
-    try:
-        import packaging.requirements  # noqa: F401
-    except ImportError:
-        if not yes:
-            confirm("packaging not found, press enter to install it")
-        executable_args = [python_cmd, "-m", "pip", "install", "--upgrade", "packaging"]
-        subprocess.run(executable_args)
-
-
 def check_requirements_satisfied(yes: bool = False) -> bool:
     """
-    Check if all requirements are satisfied.
-    Returns True if all requirements are met, False otherwise.
+    Ensure all requirements files are satisfied. Returns True on success.
+
+    With uv this is fast and idempotent — install runs unconditionally; if everything
+    is already present, uv reports "Audited N packages" and exits in milliseconds.
     """
-    install_packaging(yes=yes)
-    
-    try:
-        import packaging.requirements
-        import importlib.metadata
-    except ImportError:
-        return False
-    
-    all_satisfied = True
-    
     for req_file in requirements_files:
         if not req_file.exists():
             logger.warning(f"Requirements file not found: {req_file}")
             continue
-        
-        requirements = parse_requirements_file(req_file)
-        
-        for req_line in requirements:
-            try:
-                requirement = packaging.requirements.Requirement(req_line)
-                try:
-                    importlib.metadata.distribution(requirement.name)
-                except importlib.metadata.PackageNotFoundError:
-                    logger.warning(f"Missing requirement: {requirement.name}")
-                    all_satisfied = False
-                    if not yes:
-                        confirm(f"Requirement {requirement.name} is not satisfied, press enter to install it")
-            except packaging.requirements.InvalidRequirement:
-                logger.warning(f"Invalid requirement line: {req_line}")
-                continue
-    
-    return all_satisfied
+        logger.info(f"Ensuring requirements from {req_file.name} are satisfied")
+        result = subprocess.run(
+            _uv_pip("install", "-r", str(req_file)),
+            capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            logger.warning(f"Failed to install requirements from {req_file.name}: {result.stderr}")
+            return False
+    return True
 
 
 def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = None) -> None:
@@ -817,14 +793,11 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
         None
     """
     # Install/refresh mwgg_igdb upfront so any subsequent code path can rely on
-    # `from mwgg_igdb import GameIndex` working. NOTE: in the prior architecture the
-    # installer (Inno Setup on Windows, equivalent on macOS/Linux) seeded mwgg_igdb
-    # by invoking ModuleUpdate via the CLI as part of first-run setup, then runtime
-    # update() calls trusted that to already be present. Doing it here unconditionally
-    # may be redundant when the installer already ran it — accepted cost for a single
-    # consistent code path. If installer-side seeding gets re-introduced, this call
-    # can be guarded by a "first run since install" check (e.g. mwgg_igdb dist
-    # presence + age) rather than running every update().
+    # `from mwgg_igdb import GameIndex` working. Throttled to once per
+    # MWGG_IGDB_UPGRADE_INTERVAL_SECONDS via a stamp file so every entry-point
+    # start-up doesn't fire a network round-trip. Standalone CLI invocations of
+    # ModuleUpdate.py write a fresh stamp before calling update(), so the throttle
+    # naturally suppresses this call on the same-process re-entry — see __main__.
     install_mwgg_igdb(upgrade=True)
 
     if is_frozen():
@@ -895,10 +868,14 @@ if __name__ == "__main__":
                        help='List of worlds to update.')
     
     args = parser.parse_args()
-    
+
+    # Standalone always pulls fresh; the stamp written here suppresses the
+    # throttled install_mwgg_igdb(upgrade=True) calls inside the subsequent update().
+    install_mwgg_igdb(upgrade=True, force=True)
+
     if args.additional_requirements:
         requirements_files.update([Path(req) for req in args.additional_requirements])
-    
+
     if args.worlds:
         update(args.yes, args.force, args.worlds)
     else:
