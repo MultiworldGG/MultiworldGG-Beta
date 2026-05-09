@@ -9,7 +9,7 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+[a-z0-9]*'
 
 env:
-  PYTHON_VERSION: '3.12'
+  PYTHON_VERSION: '3.13'
 
 permissions:  # permissions required for attestation
   id-token: 'write'
@@ -23,7 +23,7 @@ jobs:
     outputs:
       version: ${{ steps.get-version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       
       - name: Determine version
         id: get-version
@@ -59,7 +59,7 @@ jobs:
             exe_pattern: 'MultiworldGG'
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       
       - name: Download Runtime executables
         shell: bash
@@ -186,7 +186,7 @@ jobs:
           ls -la data/EnemizerCLI/
       
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6.2.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           check-latest: true
@@ -257,7 +257,7 @@ jobs:
           python build_exe.py
       
       - name: Attest Build
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4.1.0
         with:
           subject-path: |
             build/exe.*/MultiworldGGLauncher*
@@ -265,7 +265,7 @@ jobs:
             build/exe.*/MultiworldGGServer*
       
       - name: Upload executable artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: ${{ matrix.artifact_name }}
           path: |
@@ -280,16 +280,16 @@ jobs:
     env:
       APP_VERSION: ${{ needs.determine-version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6.2.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           check-latest: true
       
       - name: Download Linux exe artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7.0.0
         with:
           name: linux-exe
           path: build/
@@ -341,7 +341,7 @@ jobs:
           APPIMAGE_RUNTIME_VERSION='r-2025-08-11'
           APPIMAGE_RUNTIME_X86_64_HASH='e70ffa9b69b211574d0917adc482dd66f25a0083427b5945783965d55b0b0a8b'
           
-          echo "PYTHON=python3.12" >> $GITHUB_ENV
+          echo "PYTHON=python3.13" >> $GITHUB_ENV
           wget -nv https://github.com/$APPIMAGE_FORK/appimagetool/releases/download/$APPIMAGETOOL_VERSION/appimagetool-x86_64.AppImage
           echo "$APPIMAGETOOL_X86_64_HASH appimagetool-x86_64.AppImage" | sha256sum -c
           wget -nv https://github.com/$APPIMAGE_FORK/type2-runtime/releases/download/$APPIMAGE_RUNTIME_VERSION/runtime-x86_64
@@ -379,7 +379,7 @@ jobs:
           done
       
       - name: Upload AppImage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: linux-appimage
           path: dist/*.AppImage
@@ -393,7 +393,7 @@ jobs:
     env:
       APP_VERSION: ${{ needs.determine-version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       
       - name: Free disk space
         run: |
@@ -406,14 +406,14 @@ jobs:
           df -h
       
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6.2.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           check-latest: true
           cache: 'pip'  # Use pip cache to avoid re-downloading
       
       - name: Download macOS exe artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7.0.0
         with:
           name: macos-exe
           path: build/
@@ -493,7 +493,7 @@ jobs:
           find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
       
       - name: Attest Build
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4.1.0
         with:
           subject-path: |
             build/${{ env.MACOS_APP }}/Contents/MacOS/MultiworldGGLauncher
@@ -532,11 +532,74 @@ jobs:
           done
       
       - name: Upload macOS bundle artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: macos-bundle
           path: |
             build/*.dmg
+          retention-days: 90
+
+  build-windows-installer:
+    name: Build Windows Installer
+    needs: [determine-version, build-exe]
+    runs-on: windows-latest
+    continue-on-error: true
+    env:
+      APP_VERSION: ${{ needs.determine-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Write version to setup.ini
+        shell: pwsh
+        run: |
+          $version = "$env:APP_VERSION"
+          Write-Host "Writing version $version to setup.ini"
+
+          # Create setup.ini content
+          "[Data]" | Out-File -FilePath setup.ini -Encoding utf8
+          "source_path=build\exe.win-amd64-3.13" | Out-File -FilePath setup.ini -Append -Encoding utf8
+          "app_version=$version" | Out-File -FilePath setup.ini -Append -Encoding utf8
+          "min_windows=" | Out-File -FilePath setup.ini -Append -Encoding utf8
+
+          Write-Host "setup.ini contents:"
+          Get-Content setup.ini
+
+      - name: Download Windows exe artifact
+        uses: actions/download-artifact@v7.0.0
+        with:
+          name: windows-exe
+          path: build/
+
+      - name: Download Python installers
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path python_installers
+
+          $PYTHON_VERSION = "3.13.7"
+          Write-Host "Downloading Python $PYTHON_VERSION installers for Windows..."
+
+          # Download x64 installer
+          $url_amd64 = "https://www.python.org/ftp/python/$PYTHON_VERSION/python-$PYTHON_VERSION-amd64.exe"
+          Write-Host "Downloading from $url_amd64"
+          Invoke-WebRequest -Uri $url_amd64 -OutFile "python_installers\python-$PYTHON_VERSION-amd64.exe"
+          Write-Host "Downloaded x64 installer"
+
+          Get-ChildItem python_installers
+
+      - name: Install Inno Setup
+        run: |
+          choco install innosetup -y
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" inno_setup.iss
+
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: windows-installer
+          path: setups/*.exe
           retention-days: 90
 
   create-release:
@@ -547,10 +610,10 @@ jobs:
       always() && 
       (needs.build-exe.result == 'success' || needs.build-exe.result == 'failure')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7.0.0
         with:
           path: release-artifacts/
       

@@ -11,7 +11,7 @@ This directory contains the build system for creating standalone executables of 
 
 ## Prerequisites
 
-- Python 3.12 or higher
+- Python 3.13 or higher
 - pip
 - Virtual environment (recommended)
 
@@ -123,7 +123,7 @@ build/exe.{platform}-{python_version}/
 
 For example:
 ```
-build/exe.win-amd64-3.12/
+build/exe.win-amd64-3.13/
 ```
 
 ### Contents
@@ -149,11 +149,12 @@ The build directory contains:
 
 3. **Module update failures**
    - Check network connectivity
-   - Try running ModuleUpdate manually: `python -c "import ModuleUpdate; ModuleUpdate.update(yes=True)"`
+   - mwgg_igdb is git-pulled at first run; verify the venv at the platform-specific
+     install path (`%LOCALAPPDATA%\MultiworldGG\mwgg_venv` on Windows) has internet access
 
 4. **Build failures**
-   - Check Python version (requires 3.12+)
-   - Ensure cx_Freeze is installed: `pip install cx-Freeze>=6.15.0`
+   - Check Python version (requires 3.13+)
+   - Ensure cx_Freeze is installed: `pip install cx-Freeze==8.4.0`
    - Check for conflicting packages
 
 ### Debug Mode

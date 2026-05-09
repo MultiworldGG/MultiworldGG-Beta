@@ -27,7 +27,19 @@ export interface IndexPROpts {
   sourceRepo: string;
   slug: string;
   releaseTag: string;
-  pinnedSha: string;
+  // The fully-formed module_location URL Oliver will pin into the Index
+  // manifest. Today this is the release-asset wheel URL
+  // (`https://github.com/<owner>/<repo>/releases/download/<release_tag>/<dist>-<v>-py3-none-any.whl`)
+  // produced by the build-and-publish-action. Computed by the caller
+  // (workflow_run handler) so this module doesn't need to know the action's
+  // output shape.
+  moduleLocation: string;
+  // Wheel asset filename (e.g. `clique-1.0.0-py3-none-any.whl`) and size in
+  // bytes, both surfaced in the PR body so reviewers see what's being pinned
+  // without clicking through. Read from the GitHub release-asset object by
+  // the workflow_run handler.
+  wheelAssetName: string;
+  wheelAssetSize: number;
   // Full parsed `worlds/<slug>/archipelago.json` from the per-world repo at the
   // release SHA. The author's archipelago.json is the canonical source of
   // truth for everything except module_location (Oliver overrides) and igdb_id
@@ -62,11 +74,12 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     sourceRepo,
     slug,
     releaseTag,
-    pinnedSha,
+    moduleLocation,
+    wheelAssetName,
+    wheelAssetSize,
     sourceManifest,
   } = opts;
 
-  const moduleLocation = `git+https://github.com/${sourceOwner}/${sourceRepo}.git@${pinnedSha}`;
   const branchName = `update/${slug}-${releaseTag}`;
   const filePath = `worlds/${slug}.json`;
 
@@ -127,7 +140,8 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   //      they declare (game, authors, world_version, _comment, tracker, flags,
   //      anything they put there). If they remove a field from their next
   //      release, it disappears from the Index manifest too.
-  //   2. Oliver overrides module_location with the pinned-wheel-SHA URL.
+  //   2. Oliver overrides module_location with the release-asset wheel URL
+  //      computed by the workflow_run handler.
   //   3. igdb_id is preserved from the existing Index manifest if and only if
   //      the author did not include one themselves. If they did, theirs wins
   //      (explicit override).
@@ -176,7 +190,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     ``,
     `**Slug:** \`${slug}\``,
     `**Release tag:** \`${releaseTag}\``,
-    `**Pinned SHA:** \`${pinnedSha}\``,
+    `**Wheel:** \`${wheelAssetName}\` (${formatWheelSize(wheelAssetSize)})`,
     `**New module_location:** \`${moduleLocation}\``,
     ``,
     `Branch was created and committed by \`${karenData.name}[bot](${karenData.html_url})\`; Karen's review workflow will run automatically.`,
@@ -240,6 +254,15 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   });
 
   return { prNumber, branchName, created, worldIsNew, codeownersConflictWith };
+}
+
+function formatWheelSize(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return `${bytes} bytes`;
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(kb < 10 ? 1 : 0)} KB`;
+  const mb = kb / 1024;
+  return `${mb.toFixed(mb < 10 ? 2 : 1)} MB`;
 }
 
 async function fileExistsOnRef(

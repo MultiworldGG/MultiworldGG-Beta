@@ -19,7 +19,7 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
     else touch EnemizerCLI; fi
 
 # Cython builder stage
-FROM python:3.12 AS cython-builder
+FROM python:3.13 AS cython-builder
 
 WORKDIR /build
 
@@ -36,7 +36,7 @@ COPY intset.h .
 RUN cythonize -b -i _speedups.pyx
 
 # MultiworldGG
-FROM python:3.12-slim-bookworm AS multiworldgg
+FROM python:3.13-slim-bookworm AS multiworldgg
 ARG TARGETARCH
 ENV VIRTUAL_ENV=/opt/venv
 ENV PYTHONUNBUFFERED=1

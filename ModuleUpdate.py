@@ -56,12 +56,10 @@ def install_path() -> Path:
         raise RuntimeError("Unsupported platform")
 
 # Version compatibility checks
-if (is_windows() or is_macos()) and sys.version_info < (3, 12, 0):
-    raise RuntimeError(f"Incompatible Python Version found: {sys.version_info}. Official 3.12.+ is supported.")
-elif (is_windows() or is_macos()) and sys.version_info < (3, 12, 7):
-    warnings.warn(f"Python Version {sys.version_info} has security issues. Don't use in production.")
-elif sys.version_info < (3, 12, 0):
-    raise RuntimeError(f"Incompatible Python Version found: {sys.version_info}. 3.12.+ is supported.")
+if (is_windows() or is_macos()) and sys.version_info < (3, 13, 0):
+    raise RuntimeError(f"Incompatible Python Version found: {sys.version_info}. Official 3.13.+ is supported.")
+elif sys.version_info < (3, 13, 0):
+    raise RuntimeError(f"Incompatible Python Version found: {sys.version_info}. 3.13.+ is supported.")
 
 # Skip update if running in splash screen process
 # Allow updates in main process and main client process
@@ -129,7 +127,7 @@ if is_frozen():
                 py_output = subprocess.run([system_py, "-0p"], capture_output=True, text=True)
                 system_python = py_output.stdout.strip()
 
-                # Priority order: 3.12 → 3.13 → 3.11 → 3.10 → 3.9 → 3.8
+                # Priority order: 3.13 → 3.14 → 3.12 → 3.11 → ...
                 # Exclude venv paths and test versions (like python3.13t.exe)
                 python_versions = []
                 for line in py_output.stdout.splitlines():
@@ -137,27 +135,27 @@ if is_frozen():
                         continue
                     if "python.exe" in line:
                         # Extract version and path - handle both formats:
-                        # Format 1: "-V:3.12          C:\Program Files\Python312\python.exe"
+                        # Format 1: "-V:3.13          C:\Program Files\Python313\python.exe"
                         # Format 2: "-V:3.13 *        C:\Users\Lindsay\AppData\Local\Programs\Python\Python313\python.exe"
                         parts = line.split()
                         if len(parts) >= 2:
                             version_part = parts[0]
                             # Handle the * marker in format 2
                             path = parts[-1] if parts[-1].endswith('.exe') else parts[1]
-                            # Extract version number (e.g., "3.12" from "-V:3.12")
+                            # Extract version number (e.g., "3.13" from "-V:3.13")
                             version_match = re.search(r'3\.(\d+)', version_part)
                             if version_match:
                                 version_num = int(version_match.group(1))
-                                if 10 <= version_num <= 14:  # Valid range
+                                if 13 <= version_num <= 14:  # Valid range: 3.13 or 3.14 only
                                     python_versions.append((version_num, path))
-                
-                # Sort by priority: 3.12 first, then descending order
+
+                # Sort by priority: 3.13 first, then 3.14
                 def version_priority(item):
                     version_num = item[0]
-                    if version_num == 12:
+                    if version_num == 13:
                         return 0  # Highest priority
                     else:
-                        return 20 - version_num  # 3.13=7, 3.11=9, 3.10=10, 3.9=11, 3.8=12
+                        return 1  # 3.14 fallback
                 
                 python_versions.sort(key=version_priority)
                 if python_versions:

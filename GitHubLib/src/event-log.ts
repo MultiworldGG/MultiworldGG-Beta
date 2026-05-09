@@ -15,9 +15,13 @@ export type EventKind = "ok" | "skip" | "error";
 
 export type EventReason =
   | "no_world_folder_name"
+  | "no_slug_resolved"
   | "workflow_failure"
   | "branch_missing"
   | "tag_missing"
+  | "wheel_asset_missing"
+  | "wheel_asset_ambiguous"
+  | "release_lookup_404"
   | "release_not_found"
   | "index_install_missing"
   | "github_api_error"
@@ -30,6 +34,9 @@ export interface OliverEvent {
   slug?: string;
   release_sha?: string;
   wheel_sha?: string;
+  wheel_asset?: string;
+  wheel_size_bytes?: number;
+  module_location?: string;
   index_pr?: number;
   reason?: EventReason;
   message: string;

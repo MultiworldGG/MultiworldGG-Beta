@@ -48,7 +48,7 @@ description = "{game_description}"
 authors = [
     {name = "{author_name}"}
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 
 [project.entry-points."mwgg.plugins"]
 "{world_name}.WorldClass" = "{world_name}.Register:WORLD_CLASS"
@@ -126,7 +126,7 @@ CLIENT_FUNCTION = None
 - **Package Name**: Use lowercase, underscore-separated world name
 - **Entry Points**: Follow consistent naming pattern (exclude client functions)
 - **Dependencies**: Include any world-specific requirements
-- **Python Version**: Require >=3.12 for consistency
+- **Python Version**: Require >=3.13 for consistency
 
 #### Register.py:
 - **Imports**: Import actual classes from `__init__.py`
@@ -173,7 +173,7 @@ description = "Metroid Prime is a first-person action-adventure game originally 
 authors = [
     {name = "Electro15"}
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 
 [project.entry-points."mwgg.plugins"]
 "metroidprime.WorldClass" = "metroidprime.Register:WORLD_CLASS"

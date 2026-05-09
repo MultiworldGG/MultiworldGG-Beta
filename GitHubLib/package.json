@@ -14,11 +14,11 @@
     "probot": "^13.4.5"
   },
   "devDependencies": {
-    "@types/node": "^20.14.10",
+    "@types/node": "^22.0.0",
     "typescript": "^5.5.4",
     "vitest": "^3.1.4"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   }
 }

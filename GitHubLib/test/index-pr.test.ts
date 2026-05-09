@@ -89,11 +89,14 @@ function makeOliverOctokit(
           const matches = state.openPRs.filter((p) => p.head === branchHead);
           return { data: matches };
         },
-        create: async ({ head, title }: any) => {
+        create: async ({ head, title, body }: any) => {
           const number = prCounter++;
           const nodeId = `PR_node_${number}`;
           state.openPRs.push({ number, head });
-          state.writes.push({ kind: "pulls.create", payload: { number, head, title, node_id: nodeId } });
+          state.writes.push({
+            kind: "pulls.create",
+            payload: { number, head, title, body, node_id: nodeId },
+          });
           return { data: { number, node_id: nodeId } };
         },
         update: async ({ pull_number, body }: any) => {
@@ -146,7 +149,10 @@ const baseOpts = (overrides: Partial<IndexPROpts> = {}): Omit<IndexPROpts, "kare
   sourceRepo: "alice-clique",
   slug: "clique",
   releaseTag: "v1.0.0",
-  pinnedSha: "wheel-sha-aaa",
+  moduleLocation:
+    "https://github.com/alice/alice-clique/releases/download/v1.0.0/alice_clique-1.0.0-py3-none-any.whl",
+  wheelAssetName: "alice_clique-1.0.0-py3-none-any.whl",
+  wheelAssetSize: 158_720,
   sourceManifest: {
     game: "Clique",
     authors: ["Alice"],
@@ -472,7 +478,9 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
 
     const m = readManifest(state);
     expect(m.igdb_id).toBe(117525);
-    expect(m.module_location).toMatch(/^git\+https:\/\/github\.com\/alice\/alice-clique\.git@/);
+    expect(m.module_location).toBe(
+      "https://github.com/alice/alice-clique/releases/download/v1.0.0/alice_clique-1.0.0-py3-none-any.whl",
+    );
   });
 
   it("lets the author override igdb_id by setting it in their archipelago.json", async () => {
@@ -560,9 +568,11 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
     expect(m).not.toHaveProperty("flags");
   });
 
-  it("always pins module_location to the wheel SHA, ignoring whatever the author's archipelago.json says", async () => {
+  it("always pins module_location to the Oliver-provided URL, ignoring whatever the author's archipelago.json says", async () => {
     const state = makeFakeIndex();
     const octokits = makeOctokits(state);
+    const overrideUrl =
+      "https://github.com/alice/alice-clique/releases/download/v1.0.0/alice_clique-1.0.0-py3-none-any.whl";
     await openOrUpdateIndexPR({
       ...baseOpts({
         sourceManifest: {
@@ -572,15 +582,49 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
           // Author tries to set a non-pinned location; Oliver must override.
           module_location: "https://github.com/alice/alice-clique/tree/main/worlds/clique",
         },
-        pinnedSha: "wheel-sha-zzz",
+        moduleLocation: overrideUrl,
       }),
       ...octokits,
     });
 
     const m = readManifest(state);
-    expect(m.module_location).toBe(
-      "git+https://github.com/alice/alice-clique.git@wheel-sha-zzz",
-    );
+    expect(m.module_location).toBe(overrideUrl);
+  });
+});
+
+describe("openOrUpdateIndexPR — PR body wheel info", () => {
+  it("includes the wheel filename and a human-readable size", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({
+      ...baseOpts({
+        wheelAssetName: "alice_clique-1.0.0-py3-none-any.whl",
+        wheelAssetSize: 158_720, // 155.0 KB
+      }),
+      ...octokits,
+    });
+
+    const create = state.writes.find((w) => w.kind === "pulls.create");
+    expect(create).toBeDefined();
+    expect(create!.payload.body).toContain("**Wheel:**");
+    expect(create!.payload.body).toContain("alice_clique-1.0.0-py3-none-any.whl");
+    expect(create!.payload.body).toContain("KB");
+  });
+
+  it("formats megabyte-scale wheels with MB suffix", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({
+      ...baseOpts({
+        wheelAssetName: "big_world-1.0.0-py3-none-any.whl",
+        wheelAssetSize: 5 * 1024 * 1024, // 5.00 MB
+      }),
+      ...octokits,
+    });
+
+    const create = state.writes.find((w) => w.kind === "pulls.create");
+    expect(create!.payload.body).toContain("MB");
+    expect(create!.payload.body).not.toContain("KB)");
   });
 });
 

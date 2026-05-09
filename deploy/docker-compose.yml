@@ -1,12 +1,12 @@
 services:
   multiworld:
-    # Build only once. Web service uses the same image build
+    # Default: pull the published image from GHCR. Operator can override the
+    # image ref via $MULTIWORLD_IMAGE (set in a .env file or shell env).
+    # For local dev, run `docker compose build` to rebuild from source — that
+    # produces a local image tagged with the same name and `up` will use it.
+    image: ${MULTIWORLD_IMAGE:-ghcr.io/lallaria/multiworldgg:latest}
     build:
       context: ..
-    # Name image for use in web service
-    image: archipelago-base
-    # Use locally-built image
-    pull_policy: never
     # Launch main process without website hosting (config override)
     entrypoint: python WebHost.py --config_override selflaunch.yaml
     volumes:
@@ -24,10 +24,10 @@ services:
     healthcheck:
       test: ["NONE"]
   web:
-    # Use image build by multiworld service
-    image: archipelago-base
-    # Use locally-built image
-    pull_policy: never
+    # Same image as multiworld service — both pull from GHCR by default, both
+    # honor $MULTIWORLD_IMAGE override. Only the multiworld service has the
+    # `build:` block so `docker compose build` only rebuilds once.
+    image: ${MULTIWORLD_IMAGE:-ghcr.io/lallaria/multiworldgg:latest}
     # Launch gunicorn targeting WebHost application
     entrypoint: gunicorn -c gunicorn.conf.py
     volumes:
@@ -61,10 +61,12 @@ services:
   # oliver.multiworld.gg to 127.0.0.1:3000. See deploy/example_github-bot_nginx.conf
   # for the host-side snippet.
   mwgg-github-bot:
+    # Default: pull the published image from GHCR. Override via
+    # $MWGG_GITHUB_BOT_IMAGE for forks / non-`lallaria` registries.
+    # For local dev, run `docker compose build mwgg-github-bot` to rebuild.
+    image: ${MWGG_GITHUB_BOT_IMAGE:-ghcr.io/lallaria/mwgg-github-bot:latest}
     build:
       context: ../GitHubLib
-    image: mwgg-github-bot
-    pull_policy: never
     env_file:
       # Operator must copy example_github-bot.env to github-bot.env (chmod 0600)
       # and fill in OLIVER_APP_ID + KAREN_APP_ID + the private keys + webhook

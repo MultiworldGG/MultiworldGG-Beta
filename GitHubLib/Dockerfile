@@ -1,11 +1,11 @@
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json* tsconfig.json ./
 RUN npm ci --no-audit --no-fund || npm install --no-audit --no-fund
 COPY src/ src/
 RUN npx tsc
 
-FROM node:20-alpine AS prod
+FROM node:22-alpine AS prod
 RUN apk add --no-cache git ca-certificates
 WORKDIR /app
 COPY package.json package-lock.json* ./

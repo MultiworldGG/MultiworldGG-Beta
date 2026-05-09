@@ -3,11 +3,19 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { handleWorkflowRun } from "../src/handlers/workflow_run";
+import { IndexBotData } from "../src/index-pr";
+
+interface ReleaseFixture {
+  tag_name: string;
+  draft?: boolean;
+  tagSha: string;
+  // Assets attached to the release.
+  assets?: Array<{ name: string; browser_download_url: string; size: number }>;
+}
 
 interface RepoState {
   variables: Record<string, string>;
-  releases: Array<{ tag_name: string; draft?: boolean; tagSha: string }>;
-  wheelTags: Record<string, string>;
+  releases: ReleaseFixture[];
   manifestAtRef?: { game?: string; authors?: string[] };
   indexInstall?: { id: number };
   indexInstallNotFound?: boolean;
@@ -30,6 +38,20 @@ function makeContextOctokit(state: RepoState): any {
         listReleases: async () => ({
           data: state.releases.map((r) => ({ tag_name: r.tag_name, draft: r.draft ?? false })),
         }),
+        getReleaseByTag: async ({ tag }: { tag: string }) => {
+          const r = state.releases.find((x) => x.tag_name === tag);
+          if (!r) throw Object.assign(new Error("404"), { status: 404 });
+          return {
+            data: {
+              tag_name: r.tag_name,
+              assets: (r.assets ?? []).map((a) => ({
+                name: a.name,
+                browser_download_url: a.browser_download_url,
+                size: a.size,
+              })),
+            },
+          };
+        },
         getContent: async ({ path: p }: { path: string }) => {
           if (p.endsWith("archipelago.json") && state.manifestAtRef) {
             const json = JSON.stringify(state.manifestAtRef);
@@ -51,10 +73,6 @@ function makeContextOctokit(state: RepoState): any {
             const release = state.releases.find((r) => r.tag_name === tag);
             if (release) {
               return { data: { object: { type: "commit", sha: release.tagSha } } };
-            }
-            const wheelSha = state.wheelTags[tag];
-            if (wheelSha) {
-              return { data: { object: { type: "commit", sha: wheelSha } } };
             }
             throw Object.assign(new Error("404"), { status: 404 });
           }
@@ -136,170 +154,127 @@ function makeMinimalProbot() {
   return { auth: vi.fn(), log: fakeLog } as any;
 }
 
-function makeKarenProbotWithInstallId(installId: number | null) {
-  if (installId === null) {
-    const appOctokit = {
-      rest: {
-        apps: {
-          getRepoInstallation: async () => {
-            throw Object.assign(new Error("404"), { status: 404 });
-          },
-        },
-      },
-    };
-    return { auth: vi.fn().mockResolvedValue(appOctokit), log: fakeLog } as any;
-  }
-  const appOctokit = {
-    rest: {
-      apps: {
-        getRepoInstallation: async () => ({ data: { id: installId } }),
-      },
-    },
+const KAREN_DATA: IndexBotData = {
+  id: 0,
+  client_id: "k",
+  slug: "karen-multiworld-bot",
+  owner: {},
+  name: "Karen-Multiworld-Bot",
+  description: "",
+  external_url: "",
+  html_url: "https://github.com/apps/karen-multiworld-bot",
+  created_at: "",
+  updated_at: "",
+  permissions: {},
+  events: [],
+  installations_count: 0,
+};
+const OLIVER_DATA: IndexBotData = {
+  id: 0,
+  client_id: "o",
+  slug: "oliver-multiworld-squirrel",
+  owner: {},
+  name: "Oliver-Multiworld-Squirrel",
+  description: "",
+  external_url: "",
+  html_url: "https://github.com/apps/oliver-multiworld-squirrel",
+  created_at: "",
+  updated_at: "",
+  permissions: {},
+  events: [],
+  installations_count: 0,
+};
+
+function wheelAsset(opts: {
+  slug: string;
+  version: string;
+  tag: string;
+  repo?: string;
+  size?: number;
+}) {
+  const repo = opts.repo ?? "lallaria/clique-test";
+  const distName = opts.slug.replace(/-/g, "_");
+  const name = `${distName}-${opts.version}-py3-none-any.whl`;
+  return {
+    name,
+    browser_download_url: `https://github.com/${repo}/releases/download/${opts.tag}/${name}`,
+    size: opts.size ?? 158_720,
   };
-  return { auth: vi.fn(), log: fakeLog } as any;
-  // overwritten in happy-path test directly
 }
 
 describe("handleWorkflowRun", () => {
   it("ignores workflow_run for non-target workflow name", async () => {
-    const state: RepoState = { variables: {}, releases: [], wheelTags: {} };
+    const state: RepoState = { variables: {}, releases: [] };
     const probot = makeMinimalProbot();
     const karenProbot = makeMinimalProbot();
     const ctx = makeContext(state, makePayload({ name: "Some Other Workflow" }));
-    await handleWorkflowRun(probot, karenProbot, "karen-bot", ctx);
+    await handleWorkflowRun(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
     expect(probot.auth).not.toHaveBeenCalled();
     expect(readEvents()).toEqual([]);
   });
 
   it("ignores workflow_run not triggered by release", async () => {
-    const state: RepoState = { variables: {}, releases: [], wheelTags: {} };
+    const state: RepoState = { variables: {}, releases: [] };
     const probot = makeMinimalProbot();
     const karenProbot = makeMinimalProbot();
     const ctx = makeContext(state, makePayload({ event: "push" }));
-    await handleWorkflowRun(probot, karenProbot, "karen-bot", ctx);
+    await handleWorkflowRun(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
     expect(probot.auth).not.toHaveBeenCalled();
     expect(readEvents()).toEqual([]);
   });
 
   it("logs skip when workflow conclusion is failure", async () => {
-    const state: RepoState = { variables: {}, releases: [], wheelTags: {} };
+    const state: RepoState = { variables: {}, releases: [] };
     const probot = makeMinimalProbot();
     const karenProbot = makeMinimalProbot();
     const ctx = makeContext(state, makePayload({ conclusion: "failure" }));
-    await handleWorkflowRun(probot, karenProbot, "karen-bot", ctx);
+    await handleWorkflowRun(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
     const events = readEvents();
     expect(events).toHaveLength(1);
     expect(events[0].kind).toBe("skip");
     expect(events[0].reason).toBe("workflow_failure");
   });
 
-  it("logs skip when WORLD_FOLDER_NAME is missing", async () => {
-    const state: RepoState = { variables: {}, releases: [], wheelTags: {} };
-    const probot = makeMinimalProbot();
-    const karenProbot = makeMinimalProbot();
-    const ctx = makeContext(state, makePayload());
-    await handleWorkflowRun(probot, karenProbot, "karen-bot", ctx);
-    const events = readEvents();
-    expect(events[0]).toMatchObject({ kind: "skip", reason: "no_world_folder_name" });
-  });
-
-  it("logs skip when wheel tag is missing", async () => {
+  it("logs skip when WORLD_FOLDER_NAME is unset and release tag has no slug prefix", async () => {
+    // Tag `v1.0.0` has no `-`, so neither the WORLD_FOLDER_NAME path nor the
+    // tag-prefix fallback can resolve a slug.
     const state: RepoState = {
-      variables: { WORLD_FOLDER_NAME: "clique" },
+      variables: {},
       releases: [{ tag_name: "v1.0.0", tagSha: "release-sha-abc" }],
-      wheelTags: {},
     };
     const probot = makeMinimalProbot();
     const karenProbot = makeMinimalProbot();
     const ctx = makeContext(state, makePayload({ head_sha: "release-sha-abc" }));
-    await handleWorkflowRun(probot, karenProbot, "karen-bot", ctx);
+    await handleWorkflowRun(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
     const events = readEvents();
-    expect(events[0]).toMatchObject({ kind: "skip", reason: "tag_missing", slug: "clique" });
+    expect(events[0]).toMatchObject({ kind: "skip", reason: "no_slug_resolved" });
   });
 
-  it("logs error when Oliver is not installed on the Index", async () => {
+  it("resolves slug from `<slug>-<v>` release tag prefix when WORLD_FOLDER_NAME is unset", async () => {
+    // Multi-world repo path: tag `mariolands-1.2.3` → slug `mariolands`.
     const state: RepoState = {
-      variables: { WORLD_FOLDER_NAME: "clique" },
-      releases: [{ tag_name: "v1.0.0", tagSha: "release-sha-abc" }],
-      wheelTags: { "wheel/worlds/clique/v1.0.0": "wheel-sha-def" },
-      indexInstallNotFound: true,
-    };
-    const probot = makeMinimalProbot();
-    const karenProbot = makeMinimalProbot();
-    const ctx = makeContext(state, makePayload({ head_sha: "release-sha-abc" }));
-    await handleWorkflowRun(probot, karenProbot, "karen-bot", ctx);
-    const events = readEvents();
-    expect(events[0]).toMatchObject({ kind: "error", reason: "index_install_missing" });
-  });
-
-  it("happy path: Karen creates branch+commit, Oliver opens PR, logs ok", async () => {
-    const state: RepoState = {
-      variables: { WORLD_FOLDER_NAME: "clique" },
-      releases: [{ tag_name: "v1.0.0", tagSha: "release-sha-abc" }],
-      wheelTags: { "wheel/worlds/clique/v1.0.0": "wheel-sha-def" },
-      manifestAtRef: { game: "Clique", authors: ["Berserker"] },
+      variables: {},
+      releases: [
+        {
+          tag_name: "mariolands-1.2.3",
+          tagSha: "release-sha-abc",
+          assets: [wheelAsset({ slug: "mariolands", version: "1.2.3", tag: "mariolands-1.2.3" })],
+        },
+      ],
+      manifestAtRef: { game: "Mariolands", authors: ["TheLX5"] },
       indexInstall: { id: 12345 },
     };
 
     const karenWrites: string[] = [];
     const oliverWrites: string[] = [];
-
-    const karenIndexOctokit = {
-      rest: {
-        repos: {
-          get: async () => ({ data: { default_branch: "main" } }),
-          getContent: async () => {
-            throw Object.assign(new Error("404"), { status: 404 });
-          },
-          createOrUpdateFileContents: async () => {
-            karenWrites.push("commit");
-            return { data: {} };
-          },
-        },
-        git: {
-          getRef: async ({ ref }: { ref: string }) => {
-            if (ref.endsWith("/main")) {
-              return { data: { object: { sha: "main-sha" } } };
-            }
-            throw Object.assign(new Error("404"), { status: 404 });
-          },
-          createRef: async () => {
-            karenWrites.push("createRef");
-            return { data: {} };
-          },
-        },
-      },
-    };
-
-    const oliverIndexOctokit = {
-      rest: {
-        pulls: {
-          list: async () => ({ data: [] }),
-          create: async () => {
-            oliverWrites.push("pulls.create");
-            return { data: { number: 99 } };
-          },
-        },
-        issues: {
-          addLabels: async ({ labels }: { labels: string[] }) => {
-            oliverWrites.push(`labels:${labels.join(",")}`);
-            return { data: [] };
-          },
-        },
-      },
-    };
-
+    const oliverIndexOctokit = makeOliverIndexOctokit(oliverWrites);
+    const karenIndexOctokit = makeKarenIndexOctokit(karenWrites);
     const probot = {
       auth: vi.fn().mockResolvedValue(oliverIndexOctokit),
       log: fakeLog,
     } as any;
-
     const karenAppOctokit = {
-      rest: {
-        apps: {
-          getRepoInstallation: async () => ({ data: { id: 67890 } }),
-        },
-      },
+      rest: { apps: { getRepoInstallation: async () => ({ data: { id: 67890 } }) } },
     };
     const karenProbot = {
       auth: vi.fn().mockImplementation((id?: number) => {
@@ -311,7 +286,118 @@ describe("handleWorkflowRun", () => {
     } as any;
 
     const ctx = makeContext(state, makePayload({ head_sha: "release-sha-abc" }));
-    await handleWorkflowRun(probot, karenProbot, "karen-bot", ctx);
+    await handleWorkflowRun(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
+    const events = readEvents();
+    expect(events[0]).toMatchObject({
+      kind: "ok",
+      slug: "mariolands",
+      release_tag: "mariolands-1.2.3",
+      module_location:
+        "https://github.com/lallaria/clique-test/releases/download/mariolands-1.2.3/mariolands-1.2.3-py3-none-any.whl",
+    });
+  });
+
+  it("logs skip when the release has no .whl asset", async () => {
+    const state: RepoState = {
+      variables: { WORLD_FOLDER_NAME: "clique" },
+      releases: [{ tag_name: "v1.0.0", tagSha: "release-sha-abc", assets: [] }],
+    };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    const ctx = makeContext(state, makePayload({ head_sha: "release-sha-abc" }));
+    await handleWorkflowRun(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
+    const events = readEvents();
+    expect(events[0]).toMatchObject({
+      kind: "skip",
+      reason: "wheel_asset_missing",
+      slug: "clique",
+    });
+  });
+
+  it("logs skip when the release has multiple .whl assets (ambiguous)", async () => {
+    const state: RepoState = {
+      variables: { WORLD_FOLDER_NAME: "clique" },
+      releases: [
+        {
+          tag_name: "v1.0.0",
+          tagSha: "release-sha-abc",
+          assets: [
+            wheelAsset({ slug: "clique", version: "1.0.0", tag: "v1.0.0" }),
+            wheelAsset({ slug: "clique-extra", version: "1.0.0", tag: "v1.0.0" }),
+          ],
+        },
+      ],
+    };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    const ctx = makeContext(state, makePayload({ head_sha: "release-sha-abc" }));
+    await handleWorkflowRun(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
+    const events = readEvents();
+    expect(events[0]).toMatchObject({
+      kind: "skip",
+      reason: "wheel_asset_ambiguous",
+      slug: "clique",
+    });
+  });
+
+  it("logs error when Oliver is not installed on the Index", async () => {
+    const state: RepoState = {
+      variables: { WORLD_FOLDER_NAME: "clique" },
+      releases: [
+        {
+          tag_name: "v1.0.0",
+          tagSha: "release-sha-abc",
+          assets: [wheelAsset({ slug: "clique", version: "1.0.0", tag: "v1.0.0" })],
+        },
+      ],
+      indexInstallNotFound: true,
+    };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    const ctx = makeContext(state, makePayload({ head_sha: "release-sha-abc" }));
+    await handleWorkflowRun(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
+    const events = readEvents();
+    expect(events[0]).toMatchObject({ kind: "error", reason: "index_install_missing" });
+  });
+
+  it("happy path: Karen creates branch+commit, Oliver opens PR with release-asset module_location", async () => {
+    const state: RepoState = {
+      variables: { WORLD_FOLDER_NAME: "clique" },
+      releases: [
+        {
+          tag_name: "v1.0.0",
+          tagSha: "release-sha-abc",
+          assets: [wheelAsset({ slug: "clique", version: "1.0.0", tag: "v1.0.0" })],
+        },
+      ],
+      manifestAtRef: { game: "Clique", authors: ["Berserker"] },
+      indexInstall: { id: 12345 },
+    };
+
+    const karenWrites: string[] = [];
+    const oliverWrites: string[] = [];
+    const oliverIndexOctokit = makeOliverIndexOctokit(oliverWrites);
+    const karenIndexOctokit = makeKarenIndexOctokit(karenWrites);
+
+    const probot = {
+      auth: vi.fn().mockResolvedValue(oliverIndexOctokit),
+      log: fakeLog,
+    } as any;
+
+    const karenAppOctokit = {
+      rest: { apps: { getRepoInstallation: async () => ({ data: { id: 67890 } }) } },
+    };
+    const karenProbot = {
+      auth: vi.fn().mockImplementation((id?: number) => {
+        if (id === undefined) return Promise.resolve(karenAppOctokit);
+        if (id === 67890) return Promise.resolve(karenIndexOctokit);
+        throw new Error(`unexpected karen auth id: ${id}`);
+      }),
+      log: fakeLog,
+    } as any;
+
+    const ctx = makeContext(state, makePayload({ head_sha: "release-sha-abc" }));
+    await handleWorkflowRun(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
     expect(probot.auth).toHaveBeenCalledWith(12345);
     expect(karenProbot.auth).toHaveBeenCalledWith(67890);
     expect(karenWrites).toContain("createRef");
@@ -322,8 +408,61 @@ describe("handleWorkflowRun", () => {
       kind: "ok",
       slug: "clique",
       release_tag: "v1.0.0",
-      wheel_sha: "wheel-sha-def",
-      index_pr: 99,
+      wheel_asset: "clique-1.0.0-py3-none-any.whl",
+      wheel_size_bytes: 158_720,
+      module_location:
+        "https://github.com/lallaria/clique-test/releases/download/v1.0.0/clique-1.0.0-py3-none-any.whl",
     });
   });
 });
+
+function makeKarenIndexOctokit(writes: string[]): any {
+  return {
+    rest: {
+      repos: {
+        get: async () => ({ data: { default_branch: "main" } }),
+        getContent: async () => {
+          throw Object.assign(new Error("404"), { status: 404 });
+        },
+        createOrUpdateFileContents: async () => {
+          writes.push("commit");
+          return { data: {} };
+        },
+      },
+      git: {
+        getRef: async ({ ref }: { ref: string }) => {
+          if (ref.endsWith("/main")) return { data: { object: { sha: "main-sha" } } };
+          throw Object.assign(new Error("404"), { status: 404 });
+        },
+        createRef: async () => {
+          writes.push("createRef");
+          return { data: {} };
+        },
+      },
+    },
+  };
+}
+
+function makeOliverIndexOctokit(writes: string[]): any {
+  return {
+    rest: {
+      pulls: {
+        list: async () => ({ data: [] }),
+        create: async () => {
+          writes.push("pulls.create");
+          return { data: { number: 99, node_id: "PR_node_99" } };
+        },
+      },
+      issues: {
+        addLabels: async ({ labels }: { labels: string[] }) => {
+          writes.push(`labels:${labels.join(",")}`);
+          return { data: [] };
+        },
+      },
+    },
+    graphql: async () => {
+      writes.push("graphql");
+      return { enablePullRequestAutoMerge: { pullRequest: { id: "PR_node_99" } } };
+    },
+  };
+}

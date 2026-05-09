@@ -40,11 +40,11 @@ jobs:
     runs-on: windows-latest
     steps:
       # - copy code below to release.yml -
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       - name: Install python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6.2.0
         with:
-          python-version: '~3.12.10'
+          python-version: '~3.13.7'
           check-latest: true
       - name: Download run-time dependencies
         run: |
@@ -81,7 +81,7 @@ jobs:
       # - copy code above to release.yml -
       - name: Attest Build
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4.1.0
         with:
           subject-path: |
             build/exe.*/MultiworldGGLauncher.exe
@@ -109,7 +109,7 @@ jobs:
           cp Players/Templates/VVVVVV.yaml Players/
           timeout 30 ./MultiworldGGGenerate
       - name: Store 7z
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: ${{ env.ZIP_NAME }}
           path: dist/${{ env.ZIP_NAME }}
@@ -117,7 +117,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7  # keep for 7 days, should be enough
       - name: Store Setup
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: ${{ env.SETUP_NAME }}
           path: setups/${{ env.SETUP_NAME }}
@@ -128,20 +128,20 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       # - copy code below to release.yml -
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       - name: Install base dependencies
         run: |
           sudo apt update
           sudo apt -y install build-essential p7zip xz-utils wget libglib2.0-0
           sudo apt -y install python3-gi libgirepository1.0-dev  # should pull dependencies for gi installation below
       - name: Get a recent python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6.2.0
         with:
-          python-version: '~3.12.10'
+          python-version: '~3.13.7'
           check-latest: true
       - name: Install build-time dependencies
         run: |
-          echo "PYTHON=python3.12" >> $GITHUB_ENV
+          echo "PYTHON=python3.13" >> $GITHUB_ENV
           wget -nv https://github.com/$APPIMAGE_FORK/appimagetool/releases/download/$APPIMAGETOOL_VERSION/appimagetool-x86_64.AppImage
           echo "$APPIMAGETOOL_X86_64_HASH appimagetool-x86_64.AppImage" | sha256sum -c
           wget -nv https://github.com/$APPIMAGE_FORK/type2-runtime/releases/download/$APPIMAGE_RUNTIME_VERSION/runtime-x86_64
@@ -172,7 +172,7 @@ jobs:
       # - copy code above to release.yml -
       - name: Attest Build
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4.1.0
         with:
           subject-path: |
             build/exe.*/MultiworldGGLauncher
@@ -203,14 +203,14 @@ jobs:
           cp Players/Templates/VVVVVV.yaml Players/
           timeout 30 ./MultiworldGGGenerate
       - name: Store AppImage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: ${{ env.APPIMAGE_NAME }}
           path: dist/${{ env.APPIMAGE_NAME }}
           if-no-files-found: error
           retention-days: 7
       - name: Store .tar.gz
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: ${{ env.TAR_NAME }}
           path: dist/${{ env.TAR_NAME }}
@@ -221,7 +221,7 @@ jobs:
   build-macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       - name: Install Homebrew dependencies
         run: |
           brew update
@@ -233,9 +233,9 @@ jobs:
           echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Get a recent Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6.2.0
         with:
-          python-version: '3.12.10'
+          python-version: '3.13.7'
           check-latest: true
 
       - name: Install build-time dependencies
@@ -261,7 +261,7 @@ jobs:
           echo "MACOS_APP=$APP_BINARY" >> $GITHUB_ENV
 
       - name: Attest Build
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4.1.0
         with:
           subject-path: |
             build/${{ env.MACOS_APP }}/Contents/MacOS/MultiworldGGLauncher
@@ -300,7 +300,7 @@ jobs:
             "build/MultiworldGG_v${{ env.APP_VERSION }}.dmg"
 
       - name: Store DMG file
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: MultiworldGG_v${{ env.APP_VERSION }}.dmg
           path: build/MultiworldGG_v${{ env.APP_VERSION }}.dmg

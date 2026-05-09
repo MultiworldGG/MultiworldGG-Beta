@@ -48,18 +48,6 @@ export async function handleWorkflowRun(
     return;
   }
 
-  const slug = await readRepoVariable(context.octokit, owner, repo, SLUG_VARIABLE);
-  if (!slug) {
-    oliverLog.emit({
-      kind: "skip",
-      source_repo: sourceRepo,
-      release_sha: run.head_sha,
-      reason: "no_world_folder_name",
-      message: `Repo variable ${SLUG_VARIABLE} is not set on ${sourceRepo}; cannot determine slug.`,
-    });
-    return;
-  }
-
   let releaseTag: string;
   try {
     releaseTag = await resolveReleaseTagForSha(context.octokit, owner, repo, run.head_sha);
@@ -68,7 +56,6 @@ export async function handleWorkflowRun(
       oliverLog.emit({
         kind: "skip",
         source_repo: sourceRepo,
-        slug,
         release_sha: run.head_sha,
         reason: "release_not_found",
         message: `Could not find a release whose tag points to ${run.head_sha}.`,
@@ -78,24 +65,74 @@ export async function handleWorkflowRun(
     throw err;
   }
 
-  const wheelTag = `wheel/worlds/${slug}/${releaseTag}`;
-  let pinnedSha: string;
+  // Slug resolution mirrors the action's logic in build.yml:
+  //   1. WORLD_FOLDER_NAME repo variable wins (single-world repos).
+  //   2. Else parse from `<slug>-<world_version>` release tag prefix
+  //      (multi-world repos like TheLX5/Archipelago).
+  const declaredSlug = await readRepoVariable(context.octokit, owner, repo, SLUG_VARIABLE);
+  let slug: string | null = declaredSlug ?? null;
+  if (!slug) {
+    const dashIdx = releaseTag.indexOf("-");
+    if (dashIdx > 0 && dashIdx < releaseTag.length - 1) {
+      slug = releaseTag.slice(0, dashIdx);
+    }
+  }
+  if (!slug) {
+    oliverLog.emit({
+      kind: "skip",
+      source_repo: sourceRepo,
+      release_sha: run.head_sha,
+      release_tag: releaseTag,
+      reason: "no_slug_resolved",
+      message:
+        `Cannot resolve slug for ${sourceRepo}: ${SLUG_VARIABLE} is unset and ` +
+        `release tag '${releaseTag}' does not match '<slug>-<world_version>'.`,
+    });
+    return;
+  }
+
+  // Look up the wheel asset on the release. Replaces the v2 wheel-branch tag
+  // lookup; module_location now pins to the asset's browser_download_url.
+  let moduleLocation: string;
+  let wheelAssetName: string;
+  let wheelAssetSize: number;
   try {
-    const tagRef = await context.octokit.rest.git.getRef({
+    const release = await context.octokit.rest.repos.getReleaseByTag({
       owner,
       repo,
-      ref: `tags/${wheelTag}`,
+      tag: releaseTag,
     });
-    if (tagRef.data.object.type === "tag") {
-      const annotated = await context.octokit.rest.git.getTag({
-        owner,
-        repo,
-        tag_sha: tagRef.data.object.sha,
+    const wheelAssets = release.data.assets.filter((a) => a.name.endsWith(".whl"));
+    if (wheelAssets.length === 0) {
+      oliverLog.emit({
+        kind: "skip",
+        source_repo: sourceRepo,
+        slug,
+        release_tag: releaseTag,
+        release_sha: run.head_sha,
+        reason: "wheel_asset_missing",
+        message: `Release ${releaseTag} on ${sourceRepo} has no .whl asset attached.`,
       });
-      pinnedSha = annotated.data.object.sha;
-    } else {
-      pinnedSha = tagRef.data.object.sha;
+      return;
     }
+    if (wheelAssets.length > 1) {
+      oliverLog.emit({
+        kind: "skip",
+        source_repo: sourceRepo,
+        slug,
+        release_tag: releaseTag,
+        release_sha: run.head_sha,
+        reason: "wheel_asset_ambiguous",
+        message:
+          `Release ${releaseTag} on ${sourceRepo} has ${wheelAssets.length} .whl assets; ` +
+          `expected exactly one.`,
+      });
+      return;
+    }
+    const wheelAsset = wheelAssets[0];
+    moduleLocation = wheelAsset.browser_download_url;
+    wheelAssetName = wheelAsset.name;
+    wheelAssetSize = wheelAsset.size;
   } catch (err: unknown) {
     const status = (err as { status?: number }).status;
     if (status === 404) {
@@ -105,8 +142,8 @@ export async function handleWorkflowRun(
         slug,
         release_tag: releaseTag,
         release_sha: run.head_sha,
-        reason: "tag_missing",
-        message: `Expected wheel tag ${wheelTag} not found on ${sourceRepo}.`,
+        reason: "release_lookup_404",
+        message: `Release ${releaseTag} not found on ${sourceRepo} when fetching assets.`,
       });
       return;
     }
@@ -137,7 +174,7 @@ export async function handleWorkflowRun(
         slug,
         release_tag: releaseTag,
         release_sha: run.head_sha,
-        wheel_sha: pinnedSha,
+        wheel_asset: wheelAssetName,
         reason: "index_install_missing",
         message: `Oliver is not installed on ${indexRepoSpec}; cannot open Index PR.`,
       });
@@ -163,7 +200,7 @@ export async function handleWorkflowRun(
         slug,
         release_tag: releaseTag,
         release_sha: run.head_sha,
-        wheel_sha: pinnedSha,
+        wheel_asset: wheelAssetName,
         reason: "index_install_missing",
         message: `Karen is not installed on ${indexRepoSpec}; cannot create Index branch.`,
       });
@@ -187,7 +224,9 @@ export async function handleWorkflowRun(
       sourceRepo: repo,
       slug,
       releaseTag,
-      pinnedSha,
+      moduleLocation,
+      wheelAssetName,
+      wheelAssetSize,
       sourceManifest: sourceManifest ?? {},
     });
     oliverLog.emit({
@@ -196,7 +235,9 @@ export async function handleWorkflowRun(
       slug,
       release_tag: releaseTag,
       release_sha: run.head_sha,
-      wheel_sha: pinnedSha,
+      wheel_asset: wheelAssetName,
+      wheel_size_bytes: wheelAssetSize,
+      module_location: moduleLocation,
       index_pr: result.prNumber,
       message: result.created
         ? `Opened Index PR #${result.prNumber} for ${slug}@${releaseTag}.`
@@ -222,7 +263,7 @@ export async function handleWorkflowRun(
       slug,
       release_tag: releaseTag,
       release_sha: run.head_sha,
-      wheel_sha: pinnedSha,
+      wheel_asset: wheelAssetName,
       reason: "github_api_error",
       message: `Failed to open/update Index PR: ${message}`,
     });
@@ -232,8 +273,8 @@ export async function handleWorkflowRun(
 
 // The per-world repo's archipelago.json is the canonical source of truth for
 // every manifest field except module_location (Oliver-controlled, pinned to a
-// wheel SHA) and igdb_id (Index-controlled, set by the IGDB-lookup workflow
-// unless the author explicitly opts in by including it themselves).
+// release-asset URL) and igdb_id (Index-controlled, set by the IGDB-lookup
+// workflow unless the author explicitly opts in by including it themselves).
 //
 // Returns the full parsed object so the merge in index-pr.ts can spread it.
 // Returns null if the file is missing, unreadable, or unparseable — the caller
