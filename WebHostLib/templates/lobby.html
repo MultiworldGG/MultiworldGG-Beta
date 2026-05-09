@@ -260,11 +260,16 @@
                                 </button>
                             </div>
                             <div id="generate-custom">
-                                <div class="custom-disclaimer">
+                                <div id="package-generation-notice" class="custom-disclaimer{% if not force_local_generation %} package-alternative{% endif %}">
                                     <span id="local-generation-required" {% if not force_local_generation %}style="display:none"{% endif %}>
                                         &#9888; This lobby must be generated locally.
                                     </span>
-                                    Download the package, generate locally with the {{ instance_name }} launcher, then upload the result (AP_12345.zip) here.
+                                    <span id="local-generation-required-text" {% if not force_local_generation %}style="display:none"{% endif %}>
+                                        Download the package, generate locally with the {{ instance_name }} launcher, then upload the result (AP_12345.zip) here.
+                                    </span>
+                                    <span id="local-generation-alternative-text" {% if force_local_generation %}style="display:none"{% endif %}>
+                                        Alternatively, download a package of all yamls and generate locally
+                                    </span>
                                     <span id="large-lobby-local-notice" {% if yaml_count <= 25 %}style="display:none"{% endif %}>
                                         Lobbies with more than 25 YAMLs cannot use server generation.
                                     </span>

@@ -458,13 +458,19 @@
         if (generateCustom) generateCustom.style.display = isActiveGenerationState ? "" : "none";
 
         const localRequiredNotice = document.getElementById("local-generation-required");
+        const packageNotice = document.getElementById("package-generation-notice");
+        const localRequiredText = document.getElementById("local-generation-required-text");
+        const localAlternativeText = document.getElementById("local-generation-alternative-text");
         const largeLobbyNotice = document.getElementById("large-lobby-local-notice");
         const incompleteNotice = document.getElementById("package-incomplete-notice");
         const missingNotice = document.getElementById("missing-apworlds-notice");
         const missingList = document.getElementById("missing-apworlds-list");
         const upgradeNotice = document.getElementById("upgrade-apworlds-notice");
         const upgradeList = document.getElementById("upgrade-apworlds-list");
+        if (packageNotice) packageNotice.classList.toggle("package-alternative", !forceLocalGeneration);
         if (localRequiredNotice) localRequiredNotice.style.display = forceLocalGeneration ? "" : "none";
+        if (localRequiredText) localRequiredText.style.display = forceLocalGeneration ? "" : "none";
+        if (localAlternativeText) localAlternativeText.style.display = forceLocalGeneration ? "none" : "";
         if (largeLobbyNotice) largeLobbyNotice.style.display = data.total_yamls > 25 ? "" : "none";
         if (hasCustomYamls) {
             const missingGames = new Set();
