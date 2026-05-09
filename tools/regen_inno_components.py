@@ -53,8 +53,19 @@ COMPONENT_LINE = re.compile(
 )
 
 
+def _slug_from_component_name(name: str) -> str:
+    """Inverse of _component_name: strip the leading `_` from `_<digits>...`."""
+    if len(name) >= 2 and name[0] == "_" and name[1].isdigit():
+        return name[1:]
+    return name
+
+
 def parse_existing_components(iss_text: str) -> dict[str, dict[str, Any]]:
     """Parse the current `[Components]` autogen body to build a fallback table.
+
+    Keyed by world slug (not by mangled Inno component Name), so callers can
+    look up by slug regardless of whether the existing iss line was emitted
+    with the mangled `_2048` form or the raw form.
 
     Returns: { slug: { "description": ..., "disk_space_kb": int } }
     """
@@ -63,7 +74,8 @@ def parse_existing_components(iss_text: str) -> dict[str, dict[str, Any]]:
     if region is None:
         return out
     for m in COMPONENT_LINE.finditer(region):
-        out[m["slug"]] = {
+        slug = _slug_from_component_name(m["slug"])
+        out[slug] = {
             "description": m["desc"],
             "disk_space_kb": int(m["size"].replace("_", "")),
         }
@@ -135,6 +147,19 @@ def _format_kb(value: int) -> str:
     return "_".join(reversed(out))
 
 
+def _component_name(slug: str) -> str:
+    """Transform a world slug into a valid Inno Setup component Name.
+
+    Inno requires Name: to be alphanumeric/underscore/slash and not start with
+    a digit. Any slug that starts with a digit is prefixed with '_' so e.g.
+    '2048' becomes '_2048'. The python module reference (worlds.<slug>) is
+    unchanged — only the installer-side identifier is mangled.
+    """
+    if slug and slug[0].isdigit():
+        return f"_{slug}"
+    return slug
+
+
 def render_components(
     games: dict[str, dict[str, Any]],
     fallback: dict[str, dict[str, Any]],
@@ -159,7 +184,8 @@ def render_components(
         # Escape any embedded quotes in the description, defensively.
         desc = description.replace('"', '""')
         lines.append(
-            f'Name: "{slug}"; Description: "{desc}"; ExtraDiskSpaceRequired: {size_text}'
+            f'Name: "{_component_name(slug)}"; Description: "{desc}"; '
+            f'ExtraDiskSpaceRequired: {size_text}'
         )
     return "\n".join(lines) + "\n"
 
@@ -168,7 +194,7 @@ def render_dispatch(games: dict[str, dict[str, Any]]) -> str:
     lines: list[str] = []
     for slug in sorted(games.keys()):
         lines.append(
-            f"  if WizardIsComponentSelected('worlds\\{slug}') then "
+            f"  if WizardIsComponentSelected('worlds\\{_component_name(slug)}') then "
             f"WorldList := WorldList + ' worlds.{slug}';"
         )
     return "\n".join(lines) + "\n"
