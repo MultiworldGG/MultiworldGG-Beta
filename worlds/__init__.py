@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 from types import ModuleType
 from typing import List, Sequence, Dict
-from zipfile import BadZipFile
+from zipfile import ZipFile, BadZipFile
 import threading
 
 from NetUtils import DataPackage
@@ -37,7 +37,7 @@ __all__ = [
 ]
 
 
-failed_world_loads: List[str] = []
+failed_world_loads: dict[str, str] = {}
 
 
 @dataclasses.dataclass(order=True)
@@ -72,8 +72,9 @@ class WorldSource:
             print(f"Could not load world {self}:", file=file_like)
             traceback.print_exc(file=file_like)
             file_like.seek(0)
-            logging.exception(file_like.read())
-            failed_world_loads.append(os.path.basename(self.path).rsplit(".", 1)[0])
+            reason = file_like.read()
+            logging.exception(reason)
+            failed_world_loads[os.path.basename(self.path).rsplit(".", 1)[0]] = reason
             return False
 
 
@@ -143,6 +144,7 @@ def _load_loose_worlds() -> list[WorldSource]:
         game = manifest.get("game")
         if game in AutoWorldRegister.world_types:
             AutoWorldRegister.world_types[game].world_version = tuplize_version(manifest.get("world_version", "0.0.0"))
+            AutoWorldRegister.world_types[game].manifest = manifest
     return apworlds
 
 
@@ -180,7 +182,7 @@ def _load_apworlds(apworlds: list[WorldSource]) -> None:
 
     def fail_world(game_name: str, reason: str, add_as_failed_to_load: bool = True) -> None:
         if add_as_failed_to_load:
-            failed_world_loads.append(game_name)
+            failed_world_loads[game_name] = reason
         logging.warning(reason)
 
     for apworld_source in apworlds:
@@ -237,6 +239,14 @@ def _load_apworlds(apworlds: list[WorldSource]) -> None:
                 # world could fail to load at this point
                 if apworld.world_version:
                     AutoWorldRegister.world_types[apworld.game].world_version = apworld.world_version
+
+                assert apworld.path
+                with ZipFile(apworld.path, "r") as zf:
+                    manifest = apworld.read_contents(zf)
+                # version/compatible_version shouldn't be needed by world, makes it consistent with folder world
+                manifest.pop("version", None)
+                manifest.pop("compatible_version", None)
+                AutoWorldRegister.world_types[apworld.game].manifest = manifest
 
 def _build_network_data_packages() -> None:
     global network_data_package
