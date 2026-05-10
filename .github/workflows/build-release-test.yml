@@ -403,7 +403,7 @@ jobs:
         shell: pwsh
         run: |
           cd src
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" inno_setup.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" inno_setup.iss /DNO_SIGNTOOL
       
       - name: Upload Windows installer artifact
         uses: actions/upload-artifact@v7.0.0
