@@ -9,6 +9,7 @@ import platform
 import logging
 
 from cx_Freeze import setup, Executable, build_exe
+from cx_Freeze.command.bdist_mac import bdist_mac
 
 from Utils import version_tuple, instance_name, is_windows
 
@@ -109,7 +110,7 @@ build_exe_options = {
         ("kivy/include", "lib/kivy/include"),
         # Mac/Linux only: ship astral's install.sh so first launch can install uv if it's not on PATH.
         # Windows installs uv via Inno Setup (winget, with PowerShell installer fallback) at install time.
-        ("uv_runtime/install-uv.sh", "install-uv.sh") if not is_windows else None,
+        ("uv_runtime/install-uv.sh", "install-uv.sh") if not is_windows and os.path.exists("uv_runtime/install-uv.sh") else None,
     ],
     "include_msvcr": True,
     "replace_paths": ["*."],
@@ -185,13 +186,49 @@ def post_build_setup(build_exe_dir):
     logger.debug("Running post-build setup...")
     os.mkdir(os.path.join(build_exe_dir, "Players"))
 
+
+def _register_custom_hooks():
+    """Monkey-patch cx_Freeze.hooks to include our custom kivy hook.
+
+    bdist_mac runs build_exe internally without going through CustomBuildExe,
+    so this needs to be callable from both build paths.
+
+    Info is here:
+    https://github.com/marcelotduarte/cx_Freeze/blob/8.4.0/cx_Freeze/module.py#L412
+    """
+    try:
+        import cx_custom_hooks._kivy_ as kivy
+        import cx_Freeze.hooks
+
+        if hasattr(kivy.Hook, 'kivy'):
+            def load_kivy(finder, module):
+                hook = kivy.Hook(module)
+                hook.kivy(finder, module)
+                hook.kivy_binaries(finder, module)
+
+            def load_kivy_binaries(finder, module):
+                hook = kivy.Hook(module)
+                hook.kivy_binaries(finder, module)
+
+            cx_Freeze.hooks.load_kivy = load_kivy
+            cx_Freeze.hooks.load_kivy_binaries = load_kivy_binaries
+
+            logger.debug("Custom kivy hook registered with cx_Freeze")
+        else:
+            logger.debug("Warning: Custom kivy hook does not have required methods")
+    except ImportError as e:
+        logger.debug(f"Warning: Could not register custom kivy hook: {e}")
+    except Exception as e:
+        logger.debug(f"Error registering custom kivy hook: {e}")
+
+
 class CustomBuildExe(build_exe):
     """Custom build command that includes post-build setup and custom hooks"""
 
     def run(self):
         # Register our custom hooks before building
-        self._register_custom_hooks()
-        
+        _register_custom_hooks()
+
         # Run the normal build
         super().run()
         # Get the build directory
@@ -206,50 +243,30 @@ class CustomBuildExe(build_exe):
             # Run post-build setup
             post_build_setup(build_dir)
 
-    def _register_custom_hooks(self):
-        """Register our custom hooks with cx_Freeze
 
-        This is not quite set up correctly but my brain is
-        done fighting Claude.
+class CustomBdistMac(bdist_mac):
+    """bdist_mac that registers the custom kivy hook before building."""
 
-        Info is here:
-        https://github.com/marcelotduarte/cx_Freeze/blob/8.4.0/cx_Freeze/module.py#L412
-        """
-        try:
-            # Import our custom hook
-            import cx_custom_hooks._kivy_ as kivy
+    def run(self):
+        _register_custom_hooks()
+        super().run()
 
-            # Monkey-patch cx_Freeze.hooks to include our hook
-            import cx_Freeze.hooks
 
-            # Add our hook functions to cx_Freeze.hooks
-            if hasattr(kivy.Hook, 'kivy'):
-                # Create function-based hooks from our class-based hook
-                def load_kivy(finder, module):
-                    hook = kivy.Hook(module)
-                    hook.kivy(finder, module)
-                    hook.kivy_binaries(finder, module)
-
-                def load_kivy_binaries(finder, module):
-                    hook = kivy.Hook(module)
-                    hook.kivy_binaries(finder, module)
-
-                # Add the functions to cx_Freeze.hooks
-                cx_Freeze.hooks.load_kivy = load_kivy
-                cx_Freeze.hooks.load_kivy_binaries = load_kivy_binaries
-
-                logger.debug("Custom kivy hook registered with cx_Freeze")
-            else:
-                logger.debug("Warning: Custom kivy hook does not have required methods")
-
-        except ImportError as e:
-            logger.debug(f"Warning: Could not register custom kivy hook: {e}")
-        except Exception as e:
-            logger.debug(f"Error registering custom kivy hook: {e}")
-
-if __name__ == "__main__": 
+if __name__ == "__main__":
     # Run pre-build setup
     pre_build_setup()
+
+    options = {"build_exe": build_exe_options}
+
+    bdist_mac_options = {
+        "bundle_name": instance_name,
+        "iconfile": "data/icon.icns" if os.path.exists("data/icon.icns") else None,
+    }
+    options["bdist_mac"] = {k: v for k, v in bdist_mac_options.items() if v is not None}
+
+    cmdclass = {"build_exe": CustomBuildExe}
+    if sys.platform == "darwin":
+        cmdclass["bdist_mac"] = CustomBdistMac
 
     # Setup configuration
     setup(
@@ -257,7 +274,7 @@ if __name__ == "__main__":
         version=version_tuple.as_pep440_string(),
         description=f"{instance_name} - MultiWorld.GG - More, and Faster",
         author="DelilahIsDidi, TreZc0",
-        options={"build_exe": build_exe_options},
+        options=options,
         executables=executables,
-        cmdclass={"build_exe": CustomBuildExe}
+        cmdclass=cmdclass,
     )

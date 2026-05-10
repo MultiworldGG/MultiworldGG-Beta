@@ -70,149 +70,12 @@ jobs:
       - uses: actions/checkout@v6.0.2
         with:
           path: src
-      
+
       - name: Download Runtime executables
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cd src
-          mkdir -p data/SNI
-          mkdir -p data/EnemizerCLI
-
-          # Get latest release tag from GitHub API with retry logic
-          echo "Fetching latest SNI release..."
-          SNI_LATEST_RELEASE=""
-          ENEMIZER_RELEASE="7.1"
-
-          # Auth header bumps the rate limit from 60/hr (per IP) to 1000/hr (per repo).
-          # Trailing `|| true` keeps grep failure non-fatal under `set -o pipefail` so
-          # the empty-result fallback below actually runs.
-          SNI_RESPONSE=$(curl -s -H "Authorization: Bearer ${GITHUB_TOKEN}" --connect-timeout 30 --max-time 60 https://api.github.com/repos/alttpo/sni/releases/latest)
-          SNI_LATEST_RELEASE=$(echo "$SNI_RESPONSE" | grep '"tag_name"' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/' || true)
-
-          echo "Successfully fetched release tag: ${SNI_LATEST_RELEASE}"
-          
-          # If still no release tag, use a fallback
-          if [ -z "$SNI_LATEST_RELEASE" ]; then
-            echo "Warning: Failed to fetch latest release tag from GitHub API"
-            echo "Using fallback version v0.0.101"
-            SNI_LATEST_RELEASE="v0.0.101"
-          fi
-          
-          echo "Using SNI release: ${SNI_LATEST_RELEASE}"
-          
-          # Determine platform-specific asset name and extraction method
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            SNI_ASSET_NAME="sni-${SNI_LATEST_RELEASE}-windows-amd64.zip"
-            ENEMIZER_ASSET_NAME="win-x64.zip"
-          elif [ "$RUNNER_OS" == "Linux" ]; then
-            SNI_ASSET_NAME="sni-${SNI_LATEST_RELEASE}-linux-amd64.tar.xz"
-            ENEMIZER_ASSET_NAME="ubuntu.16.04-x64.7z"
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-            SNI_ASSET_NAME="sni-${SNI_LATEST_RELEASE}-darwin-universal.tar.gz"
-            ENEMIZER_ASSET_NAME="osx.10.12-x64.zip"
-          else
-            echo "Unknown OS: $RUNNER_OS"
-            exit 1
-          fi
-          
-          # Download from latest release with retry logic
-          SNI_DOWNLOAD_URL="https://github.com/alttpo/sni/releases/download/${SNI_LATEST_RELEASE}/${SNI_ASSET_NAME}"
-          echo "Downloading SNI from ${SNI_DOWNLOAD_URL}"
-          ENEMIZER_DOWNLOAD_URL="https://github.com/Ijwu/Enemizer/releases/download/${ENEMIZER_RELEASE}/${ENEMIZER_ASSET_NAME}"
-          echo "Downloading Enemizer from ${ENEMIZER_DOWNLOAD_URL}"
-          
-          SNI_DOWNLOAD_SUCCESS=false
-          ENEMIZER_DOWNLOAD_SUCCESS=false
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            if curl -L --connect-timeout 15 --max-time 60 -o sni.zip "${SNI_DOWNLOAD_URL}"; then
-              if unzip -q sni.zip -d data/SNI && rm sni.zip; then
-                SNI_DOWNLOAD_SUCCESS=true
-              else
-                echo "Failed to extract SNI ZIP file"
-              fi
-            else
-              echo "Failed to download SNI ZIP file"
-            fi
-            if curl -L --connect-timeout 15 --max-time 60 -o enemizer.zip "${ENEMIZER_DOWNLOAD_URL}"; then
-              if unzip -q enemizer.zip -d data/EnemizerCLI && rm enemizer.zip; then
-                ENEMIZER_DOWNLOAD_SUCCESS=true
-              else
-                echo "Failed to extract Enemizer ZIP file"
-              fi
-            else
-              echo "Failed to download Enemizer ZIP file"
-            fi
-          elif [ "$RUNNER_OS" == "Linux" ]; then
-            # Extract SNI .tar.xz (use J flag)
-            if curl -L --connect-timeout 15 --max-time 60 "${SNI_DOWNLOAD_URL}" | tar xJ -C data/SNI; then
-              SNI_DOWNLOAD_SUCCESS=true
-            else
-              echo "Failed to download/extract SNI .tar.xz"
-            fi
-            # Download and extract Enemizer .7z (7z is pre-installed on GitHub runners)
-            if curl -L --connect-timeout 15 --max-time 60 -o enemizer.7z "${ENEMIZER_DOWNLOAD_URL}"; then
-              if 7z x enemizer.7z -o"data/EnemizerCLI/" && rm enemizer.7z; then
-                ENEMIZER_DOWNLOAD_SUCCESS=true
-              else
-                echo "Failed to extract Enemizer 7z file"
-              fi
-            else
-              echo "Failed to download Enemizer 7z file"
-            fi
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-            # Extract SNI .tar.gz (use z flag)
-            if curl -L --connect-timeout 15 --max-time 60 "${SNI_DOWNLOAD_URL}" | tar xz -C data/SNI; then
-              SNI_DOWNLOAD_SUCCESS=true
-            else
-              echo "Failed to download/extract SNI .tar.gz"
-            fi
-            # Download and extract Enemizer .zip
-            if curl -L --connect-timeout 15 --max-time 60 -o enemizer.zip "${ENEMIZER_DOWNLOAD_URL}"; then
-              if unzip -q enemizer.zip -d data/EnemizerCLI && rm enemizer.zip; then
-                ENEMIZER_DOWNLOAD_SUCCESS=true
-              else
-                echo "Failed to extract Enemizer ZIP file"
-              fi
-            else
-              echo "Failed to download Enemizer ZIP file"
-            fi
-          fi
-          
-          if [ "$SNI_DOWNLOAD_SUCCESS" = false ] || [ "$ENEMIZER_DOWNLOAD_SUCCESS" = false ]; then
-            echo "Error: Failed to download external dependencies"
-            if [ "$SNI_DOWNLOAD_SUCCESS" = false ]; then
-              echo "  - SNI download failed"
-            fi
-            if [ "$ENEMIZER_DOWNLOAD_SUCCESS" = false ]; then
-              echo "  - Enemizer download failed"
-            fi
-            exit 1
-          fi
-          
-          # Make executables executable on Unix
-          if [ "$RUNNER_OS" != "Windows" ]; then
-            chmod +x data/SNI/*
-            chmod +x data/EnemizerCLI/*
-          fi
-          
-          echo "SNI ${SNI_LATEST_RELEASE} downloaded successfully"
-          echo "Enemizer ${ENEMIZER_RELEASE} downloaded successfully"
-          ls -la data/SNI/
-          ls -la data/EnemizerCLI/
-
-          # uv install strategy is platform-specific:
-          #   - Windows: Inno Setup installs uv via winget (PowerShell installer fallback) at install time.
-          #   - Mac/Linux: bundle astral's install.sh; first launch runs it if uv isn't on PATH.
-          # The script's MIT license header is the attribution we ship.
-          if [ "$RUNNER_OS" != "Windows" ]; then
-            mkdir -p uv_runtime
-            curl -LsSf https://astral.sh/uv/install.sh -o uv_runtime/install-uv.sh
-            chmod +x uv_runtime/install-uv.sh
-            echo "Bundled uv installer staged at uv_runtime/install-uv.sh"
-            ls -la uv_runtime/
-          fi
+        uses: ./src/.github/actions/download-runtime-execs
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: src
 
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
@@ -286,12 +149,18 @@ jobs:
       - uses: actions/checkout@v6.0.2
         with:
           path: src
-      
+
+      - name: Download Runtime executables
+        uses: ./src/.github/actions/download-runtime-execs
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: src
+
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: Download Linux exe artifact
         uses: actions/download-artifact@v7.0.0
         with:
@@ -376,12 +245,18 @@ jobs:
       - uses: actions/checkout@v6.0.2
         with:
           path: src
-      
+
+      - name: Download Runtime executables
+        uses: ./src/.github/actions/download-runtime-execs
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: src
+
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: Download macOS exe artifact
         uses: actions/download-artifact@v7.0.0
         with:
