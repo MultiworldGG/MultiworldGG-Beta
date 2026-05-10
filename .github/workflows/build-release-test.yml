@@ -73,18 +73,24 @@ jobs:
       
       - name: Download Runtime executables
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd src
           mkdir -p data/SNI
           mkdir -p data/EnemizerCLI
-          
+
           # Get latest release tag from GitHub API with retry logic
           echo "Fetching latest SNI release..."
           SNI_LATEST_RELEASE=""
           ENEMIZER_RELEASE="7.1"
-          
-          SNI_LATEST_RELEASE=$(curl -s --connect-timeout 30 --max-time 60 https://api.github.com/repos/alttpo/sni/releases/latest | grep '"tag_name"' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
-            
+
+          # Auth header bumps the rate limit from 60/hr (per IP) to 1000/hr (per repo).
+          # Trailing `|| true` keeps grep failure non-fatal under `set -o pipefail` so
+          # the empty-result fallback below actually runs.
+          SNI_RESPONSE=$(curl -s -H "Authorization: Bearer ${GITHUB_TOKEN}" --connect-timeout 30 --max-time 60 https://api.github.com/repos/alttpo/sni/releases/latest)
+          SNI_LATEST_RELEASE=$(echo "$SNI_RESPONSE" | grep '"tag_name"' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/' || true)
+
           echo "Successfully fetched release tag: ${SNI_LATEST_RELEASE}"
           
           # If still no release tag, use a fallback

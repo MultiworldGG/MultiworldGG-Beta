@@ -750,6 +750,16 @@ def update_requirements(needed_packages: List[str]) -> None:
     pre-parse with `packaging`. When `needed_packages` is empty, upgrade everything in
     each requirements file. Otherwise, upgrade only the named entries.
     """
+    if is_frozen():
+        # Base requirements are baked into the frozen bundle at build time; the runtime
+        # venv only carries additional packages (worlds, mwgg_igdb). Worlds in
+        # `needed_packages` are still handled below.
+        worlds_to_install = [pkg for pkg in needed_packages if pkg.startswith("worlds") or pkg.startswith("mwgg")]
+        if worlds_to_install:
+            logger.info(f"Installing/updating worlds: {worlds_to_install}")
+            install_worlds(worlds_to_install)
+        return
+
     update_all = len(needed_packages) == 0
 
     for req_file in requirements_files:
@@ -787,6 +797,9 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
     With uv this is fast and idempotent — install runs unconditionally; if everything
     is already present, uv reports "Audited N packages" and exits in milliseconds.
     """
+    if is_frozen():
+        # Base requirements are baked into the frozen bundle at build time.
+        return True
     for req_file in requirements_files:
         if not req_file.exists():
             logger.warning(f"Requirements file not found: {req_file}")
