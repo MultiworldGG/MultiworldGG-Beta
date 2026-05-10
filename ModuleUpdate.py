@@ -104,17 +104,7 @@ if not update_ran:
 
 # Default for dev mode (not frozen): use the running interpreter and let uv install into its venv.
 python_cmd = sys.executable
-uv_cmd: Optional[str] = None  # Resolved lazily by _get_uv_cmd() — see comment at module bottom.
-
-
-def _get_uv_cmd() -> str:
-    """Cached, lazy resolver for the uv binary. Importing ModuleUpdate must not require uv:
-    a healthy pre-existing venv lets the frozen build boot without invoking uv at all, so we
-    only call find_uv() the first time something actually needs to run uv."""
-    global uv_cmd
-    if not uv_cmd:
-        uv_cmd = find_uv()
-    return uv_cmd
+uv_cmd: str = ""
 
 
 def find_uv() -> str:
@@ -136,13 +126,9 @@ def find_uv() -> str:
         # that, so swallow OSError per-candidate and keep probing.
         local_appdata = os.environ.get("LOCALAPPDATA", "")
         candidates = [
-            Path(local_appdata) / "Microsoft" / "WinGet" / "Links" / "uv.exe" if local_appdata else None,
-            # USERPROFILE-derived fallback in case LOCALAPPDATA isn't set in the launching context
-            # (some GUI/launcher contexts strip it).
-            Path.home() / "AppData" / "Local" / "Microsoft" / "WinGet" / "Links" / "uv.exe",
+            Path(local_appdata) / "Microsoft" / "WinGet" / "Links" / "uv.exe",
             Path.home() / ".local" / "bin" / "uv.exe",
         ]
-        candidates = [c for c in candidates if c is not None]
         for candidate in candidates:
             try:
                 if candidate.exists():
@@ -202,6 +188,8 @@ def venv_is_healthy(venv_path: Path) -> bool:
         return False
 
 
+uv_cmd = find_uv()
+
 if is_frozen():
     # For frozen builds, install in a home directory to prevent readonly issues
     exe_dir = Path(sys.exec_prefix)
@@ -221,13 +209,13 @@ if is_frozen():
         logger.info(f"Creating venv at {venv_path} via uv.")
         # uv reuses an existing system Python 3.13 if one is present; otherwise it
         # downloads python-build-standalone into %APPDATA%\uv\data\python\ (no UAC).
-        subprocess.run([_get_uv_cmd(), "venv", str(venv_path), "--python", "3.13"], check=True)
+        subprocess.run([uv_cmd, "venv", str(venv_path), "--python", "3.13"], check=True)
     python_cmd = venv_path / ("Scripts" if is_windows() else "bin") / ("python.exe" if is_windows() else "python")
 
 
 def _uv_pip(*args: str) -> list[str]:
     """Build a `uv pip ...` command targeting the active venv (python_cmd)."""
-    return [_get_uv_cmd(), "pip", *args, "--python", str(python_cmd)]
+    return [uv_cmd, "pip", *args, "--python", str(python_cmd)]
 
 def confirm(msg: str) -> None:
     """Get user confirmation for an action."""

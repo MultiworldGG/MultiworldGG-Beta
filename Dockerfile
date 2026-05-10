@@ -1,5 +1,6 @@
 # hadolint global ignore=SC1090,SC1091
 
+# TODO: this is fuckin broken. It doesn't have any worlds, but we don't want a monolith of worlds. External venv?
 # Source
 FROM scratch AS release
 WORKDIR /release
@@ -71,7 +72,7 @@ COPY . .
 COPY --from=cython-builder /build/*.so ./
 
 # Run ModuleUpdate
-RUN python ModuleUpdate.py -y
+#RUN python ModuleUpdate.py -y WHY WHY WHY?
 
 # Purge unneeded packages
 RUN apt-get purge -y \

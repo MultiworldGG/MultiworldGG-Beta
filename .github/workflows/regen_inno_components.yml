@@ -1,6 +1,6 @@
 name: Regenerate inno_setup.iss components
 
-# Regenerates the autogen regions of src/inno_setup.iss from the published
+# Regenerates the autogen regions of inno_setup.iss from the published
 # mwgg_igdb_<variant> game-index package, then opens (or updates) a PR with
 # the diff. Drives both the [Components] block and the InClientDescriptions
 # preprocessor define.
@@ -50,18 +50,17 @@ jobs:
           python -m pip install --no-cache-dir "${URL}"
 
       - name: Regenerate inno_setup.iss
-        working-directory: src
         run: python tools/regen_inno_components.py --variant "${VARIANT}"
 
       - name: Check for changes
         id: changes
         run: |
-          if git diff --quiet src/inno_setup.iss; then
+          if git diff --quiet inno_setup.iss; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "No changes to inno_setup.iss; nothing to PR."
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            git diff --stat src/inno_setup.iss
+            git diff --stat inno_setup.iss
           fi
 
       - name: Push branch and open/update PR
@@ -72,7 +71,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "${BRANCH}"
-          git add src/inno_setup.iss
+          git add inno_setup.iss
           git commit -m "inno_setup.iss: regenerate from mwgg_igdb_${VARIANT}"
           git push --force-with-lease origin "${BRANCH}"
 
@@ -83,5 +82,5 @@ jobs:
               --base main \
               --head "${BRANCH}" \
               --title "inno_setup.iss: regenerate from index (${VARIANT})" \
-              --body "Automated regeneration from \`mwgg_igdb_${VARIANT}\`. Review the diff (added/removed/renamed worlds, updated disk-space values, in-client flags) and merge if it looks right. Generator: \`src/tools/regen_inno_components.py\`."
+              --body "Automated regeneration from \`mwgg_igdb_${VARIANT}\`. Review the diff (added/removed/renamed worlds, updated disk-space values, in-client flags) and merge if it looks right. Generator: \`tools/regen_inno_components.py\`."
           fi

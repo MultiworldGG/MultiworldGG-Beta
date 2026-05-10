@@ -49,7 +49,6 @@ build_exe_options = {
         "websockets",
         "cymem",
         "cffi",
-        "numpy",
         "PIL",
 
         # Platform-specific memory access (conditional imports)
@@ -98,7 +97,7 @@ build_exe_options = {
         "kivy_deps.angle"
     ],
     "zip_include_packages": ["*"],
-    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "PIL", "numpy"],
+    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "PIL"],
     "include_files": [
         ("data", "data"),
         ("LICENSE", "LICENSE"),
