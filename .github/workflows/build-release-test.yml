@@ -21,37 +21,23 @@ env:
   PYTHON_VERSION: '3.13'
 
 jobs:
-  determine-version:
-    name: Determine Version
+  version-input:
+    name: Version Input
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.get-version.outputs.version }}
+      version: ${{ inputs.version }}
     steps:
-      - uses: actions/checkout@v6.0.2
-        with:
-          path: src
-      
-      - name: Determine version
-        id: get-version
-        run: |
-          if [ "${{ github.event_name }}" == "push" ]; then
-            VERSION=${GITHUB_REF#refs/tags/}
-          elif [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
-            VERSION="${{ inputs.version }}"
-          else
-            # Extract from application.yaml as fallback
-            VERSION=$(grep 'app_version:' src/application.yaml | sed -E 's/.*"([^"]+)".*/\1/')
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Determined version: $VERSION"
+      - name: Input version
+        id: input-version
+        run: echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
 
   build-exe:
     name: Build Executable - ${{ matrix.os }}
-    needs: determine-version
+    needs: version-input
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     env:
-      APP_VERSION: ${{ needs.determine-version.outputs.version }}
+      APP_VERSION: ${{ needs.version-input.outputs.version }}
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
@@ -81,6 +67,10 @@ jobs:
         uses: actions/setup-python@v6.2.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Sync release version files
+        shell: bash
+        run: python src/tools/set_release_version.py "$APP_VERSION" --root src
       
       - name: Create fresh virtual environment
         shell: bash
@@ -140,11 +130,11 @@ jobs:
 
   build-linux-appimage:
     name: Build Linux AppImage
-    needs: [determine-version, build-exe]
+    needs: [version-input, build-exe]
     runs-on: ubuntu-latest
     continue-on-error: true
     env:
-      APP_VERSION: ${{ needs.determine-version.outputs.version }}
+      APP_VERSION: ${{ needs.version-input.outputs.version }}
     steps:
       - uses: actions/checkout@v6.0.2
         with:
@@ -160,6 +150,9 @@ jobs:
         uses: actions/setup-python@v6.2.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Sync release version files
+        run: python src/tools/set_release_version.py "$APP_VERSION" --root src
 
       - name: Download Linux exe artifact
         uses: actions/download-artifact@v7.0.0
@@ -236,11 +229,11 @@ jobs:
 
   build-mac-bundle:
     name: Build macOS Bundle
-    needs: [determine-version, build-exe]
+    needs: [version-input, build-exe]
     runs-on: macos-latest
     continue-on-error: true
     env:
-      APP_VERSION: ${{ needs.determine-version.outputs.version }}
+      APP_VERSION: ${{ needs.version-input.outputs.version }}
     steps:
       - uses: actions/checkout@v6.0.2
         with:
@@ -256,6 +249,9 @@ jobs:
         uses: actions/setup-python@v6.2.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Sync release version files
+        run: python src/tools/set_release_version.py "$APP_VERSION" --root src
 
       - name: Download macOS exe artifact
         uses: actions/download-artifact@v7.0.0
@@ -346,15 +342,24 @@ jobs:
 
   build-windows-installer:
     name: Build Windows Installer
-    needs: [determine-version, build-exe]
+    needs: [version-input, build-exe]
     runs-on: windows-latest
     continue-on-error: true
     env:
-      APP_VERSION: ${{ needs.determine-version.outputs.version }}
+      APP_VERSION: ${{ needs.version-input.outputs.version }}
     steps:
       - uses: actions/checkout@v6.0.2
         with:
           path: src
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Sync release version files
+        shell: bash
+        run: python src/tools/set_release_version.py "$APP_VERSION" --root src
       
       - name: Write version to setup.ini
         shell: pwsh
@@ -414,7 +419,7 @@ jobs:
 
   create-release:
     name: Create GitHub Release
-    needs: [determine-version, build-exe, build-linux-appimage, build-mac-bundle, build-windows-installer]
+    needs: [version-input, build-exe, build-linux-appimage, build-mac-bundle, build-windows-installer]
     runs-on: ubuntu-latest
     if: |
       always() && 
@@ -474,8 +479,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ needs.determine-version.outputs.version }}
-          name: MultiworldGG-Test ${{ needs.determine-version.outputs.version }}
+          tag_name: ${{ needs.version-input.outputs.version }}
+          name: MultiworldGG-Test ${{ needs.version-input.outputs.version }}
           body_path: release-notes.md
           draft: false
           prerelease: true
