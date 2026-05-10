@@ -368,13 +368,26 @@ def _get_game_index():
 
 
 def _module_location_tag(url: str) -> Optional[str]:
-    """Extract the version tag from a `git+...@module-install/<ver>` URL."""
-    if not url or "@" not in url:
+    """Extract the version from a release-asset wheel URL.
+
+    Expects URLs like
+    ``https://github.com/<owner>/<repo>/releases/download/<release_tag>/<dist>-<ver>-py3-none-any.whl``,
+    optionally with a ``#sha256=<hex>`` fragment. Returns None for anything
+    that isn't a recognizable wheel URL (legacy ``git+...@<ref>`` URLs from
+    the v2 publish flow degrade to None — the caller then skips the
+    comparison rather than crashing).
+    """
+    if not url:
         return None
-    ref = url.rsplit("@", 1)[-1]
-    if "/" in ref:
-        return ref.rsplit("/", 1)[-1]
-    return ref
+    name = url.rsplit("/", 1)[-1]
+    name = name.split("#", 1)[0].split("?", 1)[0]
+    if not name.endswith(".whl"):
+        return None
+    parts = name[:-len(".whl")].split("-")
+    # PEP 427: dist, version, [build,] python, abi, platform — version is index 1.
+    if len(parts) < 5:
+        return None
+    return parts[1]
 
 
 _VARIANTS = ("nr", "ao", "twelve", "sixteen")
@@ -497,8 +510,10 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
     """
     Install worlds by resolving each slug's `module_location` from mwgg_igdb and pip-installing the URL.
 
-    `module_location` is a `git+https://.../<repo>@module-install/<world_version>` URL set by the
-    Index repo. The gen-pymod-release force-pushes immutable tags per release.
+    `module_location` is a `https://.../<dist>-<world_version>-py3-none-any.whl#sha256=<hex>`
+    release-asset URL set by the Index repo. `gen-pymod-release` uploads the wheel to the
+    GitHub release on each per-world publish; the SHA256 fragment is pinned at PR-open time and
+    verified by pip on install (PEP 503).
 
     Falls back to a custom_worlds/<slug>.apworld lookup if the slug isn't in the index or its
     `module_location` install fails.

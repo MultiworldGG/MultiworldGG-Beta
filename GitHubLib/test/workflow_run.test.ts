@@ -9,8 +9,15 @@ interface ReleaseFixture {
   tag_name: string;
   draft?: boolean;
   tagSha: string;
-  // Assets attached to the release.
-  assets?: Array<{ name: string; browser_download_url: string; size: number }>;
+  // Assets attached to the release. `digest` is the GitHub-supplied SHA256 in
+  // the form `sha256:<hex>`; null/undefined simulates an old release for which
+  // the API does not expose a digest.
+  assets?: Array<{
+    name: string;
+    browser_download_url: string;
+    size: number;
+    digest?: string | null;
+  }>;
 }
 
 interface RepoState {
@@ -48,6 +55,7 @@ function makeContextOctokit(state: RepoState): any {
                 name: a.name,
                 browser_download_url: a.browser_download_url,
                 size: a.size,
+                digest: a.digest === undefined ? `sha256:${"a".repeat(64)}` : a.digest,
               })),
             },
           };
@@ -126,7 +134,7 @@ function makeContext(state: RepoState, payload: any): any {
     octokit: makeContextOctokit(state),
     payload,
     log: fakeLog,
-    repo: () => ({ owner: "lallaria", repo: "clique-test" }),
+    repo: () => ({ owner: "MultiworldGG", repo: "clique-test" }),
   };
 }
 
@@ -135,7 +143,7 @@ let tmpDir: string;
 beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "oliver-handler-test-"));
   process.env.OLIVER_LOG_DIR = tmpDir;
-  process.env.OLIVER_INDEX_REPO = "lallaria/MultiworldGG-Index";
+  process.env.OLIVER_INDEX_REPO = "MultiworldGG/MultiworldGG-Index";
 });
 
 afterEach(() => {
@@ -191,14 +199,16 @@ function wheelAsset(opts: {
   tag: string;
   repo?: string;
   size?: number;
+  digest?: string | null;
 }) {
-  const repo = opts.repo ?? "lallaria/clique-test";
+  const repo = opts.repo ?? "MultiworldGG/clique-test";
   const distName = opts.slug.replace(/-/g, "_");
   const name = `${distName}-${opts.version}-py3-none-any.whl`;
   return {
     name,
     browser_download_url: `https://github.com/${repo}/releases/download/${opts.tag}/${name}`,
     size: opts.size ?? 158_720,
+    digest: opts.digest === undefined ? `sha256:${"a".repeat(64)}` : opts.digest,
   };
 }
 
@@ -293,7 +303,8 @@ describe("handleWorkflowRun", () => {
       slug: "mariolands",
       release_tag: "mariolands-1.2.3",
       module_location:
-        "https://github.com/lallaria/clique-test/releases/download/mariolands-1.2.3/mariolands-1.2.3-py3-none-any.whl",
+        "https://github.com/MultiworldGG/clique-test/releases/download/mariolands-1.2.3/mariolands-1.2.3-py3-none-any.whl" +
+        `#sha256=${"a".repeat(64)}`,
     });
   });
 
@@ -411,7 +422,38 @@ describe("handleWorkflowRun", () => {
       wheel_asset: "clique-1.0.0-py3-none-any.whl",
       wheel_size_bytes: 158_720,
       module_location:
-        "https://github.com/lallaria/clique-test/releases/download/v1.0.0/clique-1.0.0-py3-none-any.whl",
+        "https://github.com/MultiworldGG/clique-test/releases/download/v1.0.0/clique-1.0.0-py3-none-any.whl" +
+        `#sha256=${"a".repeat(64)}`,
+    });
+  });
+
+  it("logs skip when the wheel asset has no SHA256 digest from the GitHub API", async () => {
+    // GitHub returns digest:null on releases predating the digest-exposure
+    // rollout, or potentially on assets uploaded via certain API paths.
+    // Oliver bails rather than open an Index PR pointing at unverifiable
+    // bytes (the URL is otherwise mutable via gh release upload).
+    const state: RepoState = {
+      variables: { WORLD_FOLDER_NAME: "clique" },
+      releases: [
+        {
+          tag_name: "v1.0.0",
+          tagSha: "release-sha-abc",
+          assets: [
+            wheelAsset({ slug: "clique", version: "1.0.0", tag: "v1.0.0", digest: null }),
+          ],
+        },
+      ],
+    };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    const ctx = makeContext(state, makePayload({ head_sha: "release-sha-abc" }));
+    await handleWorkflowRun(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
+    expect(probot.auth).not.toHaveBeenCalled();
+    const events = readEvents();
+    expect(events[0]).toMatchObject({
+      kind: "skip",
+      reason: "asset_digest_missing",
+      slug: "clique",
     });
   });
 });

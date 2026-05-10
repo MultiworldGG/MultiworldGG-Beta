@@ -121,7 +121,7 @@ function makeOliverOctokit(
   };
 }
 
-const INDEX_OWNER = "lallaria";
+const INDEX_OWNER = "MultiworldGG";
 const INDEX_NAME = "MultiworldGG-Index";
 
 function makeOctokits(state: FakeIndex) {
@@ -351,7 +351,7 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
   });
 
   it("appends a new line to existing CODEOWNERS without overwriting", async () => {
-    const existing = "* @lallaria\nworlds/khddd.json @bob\n";
+    const existing = "* @MultiworldGG\nworlds/khddd.json @bob\n";
     const state = makeFakeIndex({
       files: {
         main: {
@@ -366,7 +366,7 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
       (w) => w.kind === "file" && w.payload.path === ".github/CODEOWNERS",
     );
     expect(coWrite).toBeDefined();
-    expect(coWrite!.payload.content).toContain("* @lallaria");
+    expect(coWrite!.payload.content).toContain("* @MultiworldGG");
     expect(coWrite!.payload.content).toContain("worlds/khddd.json @bob");
     expect(coWrite!.payload.content).toContain("worlds/clique.json @alice");
   });

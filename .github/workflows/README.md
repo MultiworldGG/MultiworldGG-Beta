@@ -7,19 +7,22 @@ Automated build/test/release pipelines for MultiworldGG.
 Per-game worlds **are not built or published from this repo**. Each game lives in its own upstream
 repo and publishes itself via [`MultiworldGG/gen-pymod-release`], which:
 
-1. Force-pushes a `module-install/<world_version>` tag on the upstream world repo.
-2. Opens a PR against [`lallaria/MultiworldGG-Index`] updating that game's manifest with the new
-   `module_location` URL.
+1. Builds a `.whl` from `worlds/<slug>/` at the release tag's source.
+2. Uploads the wheel as an asset on the GitHub release (no orphan branch is pushed).
 
-Karen-bot reviews each PR (schema, security checks); on merge, the daily-release cron rebuilds the
-four orphan branches (`game_index_{nr,ao,sixteen,twelve}`) as the consumable `mwgg_igdb` package.
+The Oliver-Multiworld-Squirrel GitHub App then opens a PR against
+[`MultiworldGG/MultiworldGG-Index`] updating that game's manifest with
+`module_location = <browser_download_url>#sha256=<hex>`. Karen-bot reviews each PR (schema, security
+checks); on merge, the daily-release cron rebuilds the four orphan branches
+(`game_index_{nr,ao,sixteen,twelve}`) as the consumable `mwgg_igdb` package.
 
 The monorepo bundles only **infra worlds** (`worlds/_*`, `worlds/generic/`) plus the namespace
 files (`worlds/{__init__,AutoWorld,Files,LauncherComponents}.py`). Per-game worlds are pip-installed
-at runtime by `ModuleUpdate.install_worlds()` from each manifest's `module_location`.
+at runtime by `ModuleUpdate.install_worlds()` from each manifest's `module_location`; pip verifies
+the SHA256 in the URL fragment before unpacking.
 
 [`MultiworldGG/gen-pymod-release`]: https://github.com/MultiworldGG/gen-pymod-release
-[`lallaria/MultiworldGG-Index`]: https://github.com/lallaria/MultiworldGG-Index
+[`MultiworldGG/MultiworldGG-Index`]: https://github.com/MultiworldGG/MultiworldGG-Index
 
 ## Workflows
 
@@ -72,5 +75,9 @@ in webhost deployment configs, not here.)
   files) change. Per-game worlds in `worlds/<slug>/` no longer live in this repo, so changes there
   are impossible.
 - **Frozen build fails to find a world at runtime** — expected if `module_location` for that slug
-  is not yet a valid `git+https://...@module-install/<ver>` URL. Each upstream world must publish
-  via gen-pymod-release before the monorepo can fetch it.
+  is not yet a valid release-asset wheel URL with a `#sha256=<hex>` fragment. Each upstream world
+  must publish via `gen-pymod-release` before the monorepo can fetch it.
+- **`pip install` of a world fails with a hash mismatch** — the asset bytes at the URL no longer
+  match the `#sha256=` fragment baked into the manifest. Either the asset was replaced after
+  Karen approved the manifest (tampering — escalate), or the manifest was hand-edited with a stale
+  URL (re-run the publish action on a fresh release).

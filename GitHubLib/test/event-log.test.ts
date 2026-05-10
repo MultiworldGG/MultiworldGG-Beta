@@ -31,7 +31,7 @@ describe("EventLog", () => {
     const log = new EventLog(fakeLogger);
     log.emit({
       kind: "ok",
-      source_repo: "lallaria/clique",
+      source_repo: "MultiworldGG/clique",
       release_tag: "v1.0.0",
       slug: "clique",
       message: "Opened Index PR #42",

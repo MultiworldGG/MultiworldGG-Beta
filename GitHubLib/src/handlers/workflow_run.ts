@@ -4,7 +4,7 @@ import { readRepoVariable } from "../repo-vars";
 import { resolveReleaseTagForSha, ReleaseNotFoundError } from "../release-resolver";
 import { IndexBotData, openOrUpdateIndexPR } from "../index-pr";
 
-const INDEX_REPO_DEFAULT = "lallaria/MultiworldGG-Index";
+const INDEX_REPO_DEFAULT = "MultiworldGG/MultiworldGG-Index";
 const TARGET_WORKFLOW_NAME = "Create and Release Python Package";
 const SLUG_VARIABLE = "WORLD_FOLDER_NAME";
 
@@ -130,7 +130,32 @@ export async function handleWorkflowRun(
       return;
     }
     const wheelAsset = wheelAssets[0];
-    moduleLocation = wheelAsset.browser_download_url;
+    // GitHub release-asset API exposes a `digest` field ("sha256:<hex>"). The
+    // openapi-types schema bundled with this Probot/octokit pin predates the
+    // field, so cast at the access site rather than bumping the dep.
+    const digest = (wheelAsset as { digest?: string | null }).digest;
+    if (!digest || !digest.startsWith("sha256:")) {
+      // Without a SHA256, the URL would point at mutable bytes — a release-write
+      // compromise on the per-world repo could swap the wheel after Karen has
+      // already approved the manifest. Bail rather than open an Index PR with
+      // an unverifiable module_location. The runtime relies on pip's PEP 503
+      // #sha256= fragment verification.
+      oliverLog.emit({
+        kind: "skip",
+        source_repo: sourceRepo,
+        slug,
+        release_tag: releaseTag,
+        release_sha: run.head_sha,
+        reason: "asset_digest_missing",
+        message:
+          `Release ${releaseTag} on ${sourceRepo} wheel asset ${wheelAsset.name} ` +
+          `has no SHA256 digest from the GitHub API; refusing to open an Index PR ` +
+          `with an unverifiable module_location.`,
+      });
+      return;
+    }
+    const sha256 = digest.slice("sha256:".length);
+    moduleLocation = `${wheelAsset.browser_download_url}#sha256=${sha256}`;
     wheelAssetName = wheelAsset.name;
     wheelAssetSize = wheelAsset.size;
   } catch (err: unknown) {

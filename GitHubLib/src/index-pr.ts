@@ -30,7 +30,7 @@ export interface IndexPROpts {
   // The fully-formed module_location URL Oliver will pin into the Index
   // manifest. Today this is the release-asset wheel URL
   // (`https://github.com/<owner>/<repo>/releases/download/<release_tag>/<dist>-<v>-py3-none-any.whl`)
-  // produced by the build-and-publish-action. Computed by the caller
+  // produced by the gen-pymod-release. Computed by the caller
   // (workflow_run handler) so this module doesn't need to know the action's
   // output shape.
   moduleLocation: string;
@@ -142,12 +142,18 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   //      release, it disappears from the Index manifest too.
   //   2. Oliver overrides module_location with the release-asset wheel URL
   //      computed by the workflow_run handler.
-  //   3. igdb_id is preserved from the existing Index manifest if and only if
+  //   3. Oliver overrides disk_space_mb with ceil(wheel_size_bytes / 1MiB).
+  //      The author can't compute the wheel size before the build runs, so
+  //      Oliver stamps it from the GitHub release-asset metadata. Downstream
+  //      consumers (e.g. tools/regen_inno_components.py) convert MB->KB
+  //      themselves; the manifest stays in MB for human-readability.
+  //   4. igdb_id is preserved from the existing Index manifest if and only if
   //      the author did not include one themselves. If they did, theirs wins
   //      (explicit override).
   const updated: Record<string, unknown> = {
     ...sourceManifest,
     module_location: moduleLocation,
+    disk_space_mb: Math.ceil(wheelAssetSize / (1024 * 1024)),
   };
   if (!("igdb_id" in sourceManifest) && "igdb_id" in currentJson) {
     updated.igdb_id = currentJson.igdb_id;

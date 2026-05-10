@@ -1,6 +1,6 @@
 # Oliver-Multiworld-Squirrel
 
-Webhook receiver for the `Oliver-Multiworld-Squirrel` GitHub App. Watches per-world repos for the `Create and Release Python Package` workflow to finish (i.e. `MultiworldGG/gen-pymod-release` has shaped + pushed the wheel branch + tag), then opens a corresponding PR on `MultiworldGG-Index` updating `worlds/<slug>.json` to point at the new tag's pinned SHA.
+Webhook receiver for the `Oliver-Multiworld-Squirrel` GitHub App. Watches per-world repos for the `Create and Release Python Package` workflow to finish (i.e. `MultiworldGG/gen-pymod-release` has built the per-world wheel and uploaded it as an asset on the GitHub release), then opens a corresponding PR on `MultiworldGG-Index` updating `worlds/<slug>.json` to point at the wheel asset's `https://...whl#sha256=<hex>` URL.
 
 Oliver does NOT clone, build, or push to per-world repos. The build is done by the per-world repo's own workflow under its own `GITHUB_TOKEN`.
 
@@ -41,7 +41,7 @@ The Oliver service holds both Apps' PEMs. On a webhook from a per-world repo, th
      workflow_dispatch: {}
 
    permissions:
-     contents: write   # for the wheel branch + tag push to this repo
+     contents: write   # for `gh release upload` of the wheel asset on this repo
 
    jobs:
      publish:
@@ -60,11 +60,11 @@ That's it. Within ~30s of the workflow finishing, Oliver opens a PR on the Index
 2. Filters on workflow name (`Create and Release Python Package`), event (`release`), and conclusion (`success`).
 3. Reads the `WORLD_FOLDER_NAME` repo variable to find the slug.
 4. Resolves `workflow_run.head_sha` to the matching release tag name.
-5. Resolves the `wheel/worlds/<slug>/<release_tag>` tag (created by gen-pymod-release) to a commit SHA.
-6. Authenticates as the App for `lallaria/MultiworldGG-Index`, opens or updates a PR on `update/<slug>-<release_tag>` with `module_location = git+https://github.com/<owner>/<repo>.git@<sha>`.
+5. Looks up the release by tag and selects the single `.whl` asset, reading its `browser_download_url` and SHA256 `digest`. Bails (skip event `asset_digest_missing`) if the asset has no digest exposed.
+6. Authenticates as the App for `MultiworldGG/MultiworldGG-Index`, opens or updates a PR on `update/<slug>-<release_tag>` with `module_location = <browser_download_url>#sha256=<hex>` so pip verifies the bytes at install time (PEP 503).
 7. Logs the outcome (success / skip / error) to `/var/lib/oliver/events.jsonl`.
 
-If any step 2–6 fails (no `WORLD_FOLDER_NAME` set, workflow concluded `failure`, wheel tag missing, Oliver not installed on Index, etc.), Oliver writes a `skip` or `error` record to the JSONL log and returns 200 to GitHub. No issues are opened on the per-world repo or the Index — failures surface only on the `/status` page.
+If any step 2–6 fails (no `WORLD_FOLDER_NAME` set, workflow concluded `failure`, wheel asset missing or has no digest, Oliver not installed on Index, etc.), Oliver writes a `skip` or `error` record to the JSONL log and returns 200 to GitHub. No issues are opened on the per-world repo or the Index — failures surface only on the `/status` page.
 
 ## Env vars
 
@@ -77,7 +77,7 @@ Each secret can be supplied **inline** (`OLIVER_FOO=value`) **or via file path**
 | `OLIVER_WEBHOOK_SECRET` / `OLIVER_WEBHOOK_SECRET_FILE` | yes | Webhook secret configured on Oliver. |
 | `KAREN_APP_ID` / `KAREN_APP_ID_FILE` | yes | Numeric App ID from Karen's General settings page. |
 | `KAREN_PRIVATE_KEY` / `KAREN_PRIVATE_KEY_FILE` | yes | Full PEM of Karen's private key. |
-| `OLIVER_INDEX_REPO` | no | `<owner>/<repo>` of the Index. Defaults to `lallaria/MultiworldGG-Index`. Not a secret. |
+| `OLIVER_INDEX_REPO` | no | `<owner>/<repo>` of the Index. Defaults to `MultiworldGG/MultiworldGG-Index`. Not a secret. |
 | `OLIVER_LOG_DIR` | no | Where `events.jsonl` is written. Defaults to `/var/lib/oliver`. |
 | `OLIVER_CODEOWNER_PREFIX` | no | **Testing only.** Prefix prepended to the per-world author handle when Oliver appends a line to the Index's `.github/CODEOWNERS`. Set to `MWGGTESTING-` in sandbox so the appended handle becomes `@MWGGTESTING-<author>` and real users aren't pinged on test PRs. **Leave unset in production.** |
 | `PORT` | no | Bind port. Defaults to `3000`. |
@@ -91,7 +91,7 @@ Each Index PR Oliver opens gets exactly one of two labels, applied by Karen via 
 - **`New APWorld`** — applied when `worlds/<slug>.json` did not exist on the Index's default branch before this commit.
 - **`APWorld Update`** — applied when `worlds/<slug>.json` already existed.
 
-Both labels must exist on the Index repo for the call to succeed. They are already present on `lallaria/MultiworldGG-Index`; **do not delete or rename them**. If you need new labels, add them alongside — don't repurpose the existing two.
+Both labels must exist on the Index repo for the call to succeed. They are already present on `MultiworldGG/MultiworldGG-Index`; **do not delete or rename them**. If you need new labels, add them alongside — don't repurpose the existing two.
 
 The "new vs update" decision is independent of whether the PR itself is newly opened or being re-pushed for a later release of the same world: a re-push of `clique` after the world is already on `main` is always `APWorld Update`, even if Oliver is updating an existing PR rather than opening one.
 
