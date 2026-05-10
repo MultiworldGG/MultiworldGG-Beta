@@ -121,14 +121,21 @@ def find_uv() -> str:
         # The Inno installer just ran `winget install astral-sh.uv` (or astral's PowerShell installer)
         # but the user's PATH won't reflect the new entry until their explorer session refreshes.
         # Probe the known shim locations directly so the post-install --update-modules call works.
+        # WinGet/Links shims are reparse points; Windows can refuse to traverse them with
+        # WinError 448 ("untrusted mount point") — Python 3.13 Path.exists() does not suppress
+        # that, so swallow OSError per-candidate and keep probing.
         local_appdata = os.environ.get("LOCALAPPDATA", "")
         candidates = [
             Path(local_appdata) / "Microsoft" / "WinGet" / "Links" / "uv.exe",
             Path.home() / ".local" / "bin" / "uv.exe",
         ]
         for candidate in candidates:
-            if candidate.exists():
-                return str(candidate)
+            try:
+                if candidate.exists():
+                    return str(candidate)
+            except OSError as e:
+                logger.warning(f"Could not probe uv candidate {candidate}: {e}")
+                continue
     elif is_frozen():
         # First launch on Mac/Linux: bundled installer hasn't run yet. Run it once,
         # then check the default install location (~/.local/bin/uv).
