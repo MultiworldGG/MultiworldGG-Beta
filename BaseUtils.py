@@ -292,9 +292,63 @@ class ByValue:
 
 loglevel_mapping = {'error': logging.ERROR, 'info': logging.INFO, 'warning': logging.WARNING, 'debug': logging.DEBUG}
 
+_startup_logo_printed = False
+
+
+def _supports_truecolor() -> bool:
+    """Heuristic check for 24-bit color support across common terminals.
+
+    Why not just COLORTERM: Windows Terminal, VS Code, and most Windows
+    truecolor terminals don't set it. Each terminal advertises itself
+    differently, so we cover the common identifiers explicitly.
+    """
+    if os.environ.get("COLORTERM", "").strip().lower() in ("truecolor", "24bit"):
+        return True
+    if os.environ.get("WT_SESSION"):  # Windows Terminal
+        return True
+    if os.environ.get("TERM_PROGRAM") in ("vscode", "iTerm.app", "WezTerm", "Hyper"):
+        return True
+    term = os.environ.get("TERM", "")
+    if term.startswith("alacritty") or term == "xterm-kitty" or term.endswith("-direct"):
+        return True
+    return False
+
+
+def _print_startup_logo() -> None:
+    global _startup_logo_printed
+    if _startup_logo_printed:
+        return
+    try:
+        if not sys.stdout or not hasattr(sys.stdout, "isatty") or not sys.stdout.isatty():
+            _startup_logo_printed = True
+            return
+        if is_windows:
+            try:
+                import colorama
+                colorama.just_fix_windows_console()
+            except ImportError:
+                pass
+        name = "logo_ascii_true" if _supports_truecolor() else "logo_ascii_256"
+        path = local_path("data", "icon", name)
+        with open(path, "rb") as f:
+            data = f.read()
+        buf = getattr(sys.stdout, "buffer", None)
+        if buf is not None:
+            buf.write(data)
+            buf.flush()
+        else:
+            sys.stdout.write(data.decode("utf-8", errors="replace"))
+            sys.stdout.flush()
+    except Exception:
+        pass
+    finally:
+        _startup_logo_printed = True
+
+
 def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
                  write_mode: str = "w", log_format: str = "[%(name)s at %(asctime)s]: %(message)s",
-                 add_timestamp: bool = False, exception_logger: typing.Optional[str] = None):
+                 add_timestamp: bool = False, exception_logger: typing.Optional[str] = None,
+                 show_logo: bool = False):
     import datetime
     loglevel: int = loglevel_mapping.get(loglevel, loglevel)
     log_folder = user_path("logs")
@@ -364,6 +418,9 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
         root_logger.addHandler(stream_handler)
         if hasattr(sys.stdout, "reconfigure"):
             sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+    if show_logo:
+        _print_startup_logo()
 
     # Relay unhandled exceptions to logger.
     if not getattr(sys.excepthook, "_wrapped", False):  # skip if already modified

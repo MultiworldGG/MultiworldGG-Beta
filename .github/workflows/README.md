@@ -28,14 +28,17 @@ the SHA256 in the URL fragment before unpacking.
 
 ### `ci.yml` — CI (build + commit infra wheels)
 
-Triggers on push and PR against the development branch. Four jobs:
+Triggers on push and PR against the development branch. Two jobs:
 
-- **`build-splashscreen`** — when `splashscreen/**` changes, builds and commits the wheel to `default_wheels/`.
-- **`build-gui`** — when `gui/**` changes, builds and commits the wheel to `default_wheels/`.
 - **`build-base-worlds`** — when `worlds/*.py` changes, builds the namespace wheel from those
   files and commits to `worlds_wheels/`.
 - **`build-default-worlds`** — when any `worlds/_*` or `worlds/generic/` changes, builds those
   infra wheels via `tools/build_wheels.py` and commits to `worlds_wheels/`.
+
+The previous `build-splashscreen` and `build-gui` jobs were removed when those packages moved
+into sibling repos (`lallaria/mwgg-splash`, `lallaria/mwgg-gui`). Wheel builds for them now
+belong in those repos' own CI, with the resulting wheels copied into `default_wheels/` by a
+separate sync mechanism (TBD).
 
 All jobs commit as `github-actions[bot]` and rebase before pushing.
 

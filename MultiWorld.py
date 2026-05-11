@@ -12,6 +12,10 @@ from argparse import ArgumentParser
 os.environ["KIVY_NO_CONSOLELOG"] = "0"
 os.environ["KIVY_NO_FILELOG"] = "0"
 os.environ["KIVY_LOG_ENABLE"] = "1"
+# Disable Kivy's own CLI argument parsing so our argparse (and --frontend in
+# particular) doesn't get intercepted on dev runs. Frozen builds already set
+# this below; doing it unconditionally is safe since we never use Kivy's CLI args.
+os.environ["KIVY_NO_ARGS"] = "1"
 
 from BaseUtils import local_path, write_path, is_frozen, init_logging, is_windows
 from mwgg_splash import main as splash_main
@@ -33,30 +37,6 @@ else:
 os.environ["KIVY_HOME"] = write_path("data")
 os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
 
-
-def terminate_splash_screen(queue: "Queue" ):
-    """Terminate the splash screen process by name"""
-    try:
-        # Try queue-based termination first if queue is provided
-        queue.put_nowait({"type": "terminate"})
-        
-        # Search for processes by name using multiprocessing
-        import multiprocessing
-        active_processes = multiprocessing.active_children()
-        
-        for proc in active_processes:
-            if proc.name == "SplashScreen" and proc.is_alive():
-                # Try process termination
-                proc.terminate()
-                proc.join(timeout=2)
-                # Final fallback - force kill
-                if proc.is_alive():
-                    proc.kill()
-                    proc.join()
-                return
-        
-    except Exception as e:
-        logging.error(f"Failed to terminate splash screen: {e}")
 
 def run_client(*args, queue=None):
     """Start the MWGG client"""
@@ -140,10 +120,12 @@ if __name__ == "__main__":
     parser.add_argument("--loglevel", default="debug",
                         choices=['debug', 'info', 'warning', 'error', 'critical'],
                         help="Set the logging level")
-    
+    parser.add_argument("--frontend", default="gui", choices=["gui", "tui"],
+                        help="Which frontend to launch: 'gui' (Kivy desktop, default) or 'tui' (Textual terminal)")
+
     if sys.argv[1:]:
         args = parser.parse_args(sys.argv[1:])
-        
+
         if args.update_modules:
             import ModuleUpdate
             ModuleUpdate.install_worlds(worlds=args.worlds if args.worlds else [])
@@ -151,7 +133,16 @@ if __name__ == "__main__":
     else:
         args = parser.parse_args([])
 
-    init_logging("MultiWorld", args.loglevel.lower())
+    # Guard: tracker and manual clients use Kivy-only UI affordances. They cannot run under TUI.
+    KIVY_ONLY_GAMES = {"tracker", "manual"}
+    if args.frontend == "tui" and args.game and args.game.lower() in KIVY_ONLY_GAMES:
+        print(f"Error: --game={args.game} requires --frontend=gui (uses Kivy-only UI features).", file=sys.stderr)
+        sys.exit(2)
+
+    # Propagate the frontend selection to the lazy importer in frontend_protocol.resolve_frontend_class()
+    os.environ["MWGG_FRONTEND"] = args.frontend
+
+    init_logging("MultiWorld", args.loglevel.lower(), show_logo=True)
     logger = logging.getLogger("MultiWorld")
 
     if not is_windows:
@@ -162,10 +153,11 @@ if __name__ == "__main__":
             import ModuleUpdate
             ModuleUpdate.install_worlds(worlds=["mwgg_igdb_sixteen"])
 
-    # Start the splash screen process
+    # Start the splash screen process — only for the Kivy GUI frontend (TUI doesn't have
+    # the ~30s Kivy load that the splash exists to mask).
     splash_queue = None
 
-    if is_windows:
+    if is_windows and args.frontend == "gui":
         set_start_method("spawn")
         splash_queue = Queue()
         Process(target=splash_main, name="SplashScreen", args=(splash_queue,)).start()

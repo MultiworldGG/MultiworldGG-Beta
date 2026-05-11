@@ -249,12 +249,6 @@ TEXT_COLORS = {
 }
 
 class JSONtoTextParser(metaclass=HandlerMeta):
-    # add *all* of the colors, to prevent crashes where colors are expected.
-    from kivy.utils import hex_colormap as color_codes
-    # then add the custom ones
-    for key,value in TEXT_COLORS.items():
-        color_codes[key] = value
-
     def __init__(self, ctx):
         self.ctx = ctx
 
@@ -380,10 +374,17 @@ class RawJSONtoTextParser(JSONtoTextParser):
 
 class KivyMarkupJSONtoTextParser(JSONtoTextParser):
     """JSON parser that converts to Kivy markup format with hex colors"""
+    color_codes: typing.ClassVar[typing.Optional[dict]] = None
+
     def __init__(self, ctx):
         super().__init__(ctx)
-        for key,value in TEXT_COLORS.items():
-            self.color_codes[key] = value
+        cls = type(self)
+        if cls.color_codes is None:
+            from kivy.utils import hex_colormap
+            colors = dict(hex_colormap)
+            for key, value in TEXT_COLORS.items():
+                colors[key] = value
+            cls.color_codes = colors
 
     def _handle_color(self, node: JSONMessagePart):
         codes = node["color"].split(";")

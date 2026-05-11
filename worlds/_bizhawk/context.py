@@ -357,8 +357,8 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
 
     async def main():
         ctx = BizHawkClientContext(server_address, password, ready_callback)
-        if ctx._can_takeover_existing_gui():
-            await ctx._takeover_existing_gui() 
+        if ctx._can_takeover_existing_ui():
+            await ctx._takeover_existing_ui()
         else:
             logger.critical("Client did not launch properly, exiting.")
             if error_callback:

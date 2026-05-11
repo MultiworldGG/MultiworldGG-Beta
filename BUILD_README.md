@@ -242,7 +242,7 @@ See `requirements.txt` for the complete list. Key dependencies include:
 - cx-Freeze==8.4.0
 - kivy>=2.3.1
 - kivymd>=2.0.1.dev0
-- websockets>=13.0.1,<14
+- websockets>=13.0.1
 - PyYAML>=6.0.2
 - numpy>=1.26.1
 - Pillow>=11.2.1

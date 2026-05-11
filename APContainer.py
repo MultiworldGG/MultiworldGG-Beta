@@ -156,17 +156,21 @@ class APWorldContainer(APContainer):
                 manifest[version_key] = version.as_simple_string()
         return manifest
 
-    def sys_modules_import_apworld(self) -> None:
-        """
-        Import custom apworlds into the sys.modules namespace.
-
-        Pulled from worlds.__init__.py to prevent being called unless necessary.
-        """
+    def sys_modules_import_apworld(self):
+        """Locate, register, and execute the apworld zipfile's `worlds.<stem>` module."""
+        import sys
+        import importlib.util
         from zipimport import zipimporter
+        name = f"worlds.{self.path.stem}"
         importer = zipimporter(str(self.path.absolute()))
-        spec = importer.find_spec(f"worlds.{self.path.stem}")
-        
+        spec = importer.find_spec(name)
+        if spec is None:
+            raise ImportError(f"apworld {self.path} does not contain module {name}")
         self.apworld_spec = spec
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        spec.loader.exec_module(module)
+        return module
 
 class APPlayerContainer(APContainer):
     """A zipfile containing at least archipelago.json meant for a player"""

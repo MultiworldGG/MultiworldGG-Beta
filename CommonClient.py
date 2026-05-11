@@ -25,11 +25,8 @@ from ClientState import ClientState
 from ClientBuilder import GameClient
 from multiprocessing import Queue
 
-# Import MDApp for GUI access
-from kivymd.app import MDApp
-from Gui import MultiMDApp
-# Import GUI components
-from mwgg_gui.components.dialog import MessageBox, ConsoleBox
+# GUI-only dialog components are imported lazily at their call sites so
+# importing CommonClient does not drag the full Kivy stack into the TUI process.
 
 from Utils import Version, stream_input, async_start, init_logging
 import os
@@ -37,7 +34,7 @@ import ssl
 
 if typing.TYPE_CHECKING:
     import argparse
-    import Gui
+    from frontend_protocol import FrontendProtocol
     from typing import Optional
 
 logger = logging.getLogger("Client")
@@ -256,11 +253,11 @@ class InitContext:
     all_players_chat: bool = True
     """If False only your own server chatter (items, locations, hints) will be shown in the console."""
     # internals
-    _messagebox: typing.Optional["Gui.MessageBox"] = None
+    _messagebox: typing.Optional["MessageBox"] = None
     """Current message box through Gui"""
-    _messagebox_connection_loss: typing.Optional["Gui.MessageBox"] = None
+    _messagebox_connection_loss: typing.Optional["MessageBox"] = None
     """Message box reporting a loss of connection"""
-    _consolebox: typing.Optional["Gui.ConsoleBox"] = None
+    _consolebox: typing.Optional["ConsoleBox"] = None
     """Launcher window "console" box"""
     def __init__(self):
         self.loop = asyncio.get_event_loop()
@@ -297,12 +294,21 @@ class InitContext:
         netloc = lambda: f"{last_username}@{last_server_hostname}:{last_server_port}" if last_username else f"{last_server_hostname}:{last_server_port}"
         self.server_address = f"ws://{netloc()}" if netloc() else None
 
+    def make_gui(self) -> "type[FrontendProtocol]":
+        """Return the frontend `App` class selected by `MWGG_FRONTEND` (gui/tui).
+
+        Mirrored on `CommonContext` so launcher-stage InitContext and game-stage
+        CommonContext share a dispatch path.
+        """
+        from frontend_protocol import resolve_frontend_class
+        return resolve_frontend_class()
+
     def run_gui(self, splash_queue: Optional[Queue] = None):
         """Run the GUI as self.ui_task."""
         if splash_queue:
             self._splash_queue = splash_queue
         self._set_saved_properties()
-        self.ui = MultiMDApp(self)
+        self.ui = self.make_gui()(self)
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     async def shutdown(self):
@@ -429,7 +435,7 @@ class CommonContext(InitContext):
     starting_reconnect_delay: int = 5
     current_reconnect_delay: int = starting_reconnect_delay
     command_processor: typing.Type[CommandProcessor] = ClientCommandProcessor
-    ui: typing.Optional["Gui.MultiMDApp"] = None
+    ui: typing.Optional["FrontendProtocol"] = None
     ui_task: typing.Optional["asyncio.Task[None]"] = None
     input_task: typing.Optional["asyncio.Task[None]"] = None
     keep_alive_task: typing.Optional["asyncio.Task[None]"] = None
@@ -514,11 +520,11 @@ class CommonContext(InitContext):
     """Time of last activity, used to track elapsed time"""
     _shared_activity_time: float | None
     """Time of all players' last activity, used to track elapsed time"""
-    _messagebox: typing.Optional["Gui.MessageBox"] = None
+    _messagebox: typing.Optional["MessageBox"] = None
     """Current message box through Gui"""
-    _messagebox_connection_loss: typing.Optional["Gui.MessageBox"] = None
+    _messagebox_connection_loss: typing.Optional["MessageBox"] = None
     """Message box reporting a loss of connection"""
-    _consolebox: typing.Optional["Gui.ConsoleBox"] = None
+    _consolebox: typing.Optional["ConsoleBox"] = None
     """Current console error box through Gui"""
 
     def __init__(self, server_address: typing.Optional[str] = None, password: typing.Optional[str] = None) -> None:
@@ -526,7 +532,7 @@ class CommonContext(InitContext):
         self._current_client: Optional[GameClient] = None
         self._state = ClientState.INITIAL
         self._is_transitioning = False
-        self._initial_ctx: dict[Gui.MultiMDApp, asyncio.Task] = {}
+        self._initial_ctx: dict["FrontendProtocol", asyncio.Task] = {}
         self._main_task: Optional[asyncio.Task] = None
         self._shared_activity_time = None
         self._last_activity_time = None
@@ -579,24 +585,32 @@ class CommonContext(InitContext):
         # execution
         self.keep_alive_task = asyncio.create_task(keep_alive(self), name="Bouncy")
 
-    def _can_takeover_existing_gui(self) -> bool:
-        """Check if existing GUI can be taken over"""
+    def _can_takeover_existing_ui(self) -> bool:
+        """Check if an existing frontend UI (Kivy GUI or Textual TUI) can be taken over.
+
+        Both frontends register their running instance on `cls._active_instance` in
+        __init__ and clear it in on_stop/on_unmount. We inspect whichever class
+        `MWGG_FRONTEND` selected.
+        """
         try:
-            app = MDApp.get_running_app()
-            return (app is not None and 
-                   hasattr(app, 'ctx') and 
-                   isinstance(app.ctx, InitContext) and
-                   app.ctx._state == ClientState.INITIAL and
-                   not app.ctx._is_transitioning)
-        except:
+            from frontend_protocol import resolve_frontend_class
+            cls = resolve_frontend_class()
+            app = getattr(cls, "_active_instance", None)
+            return (app is not None and
+                    hasattr(app, 'ctx') and
+                    isinstance(app.ctx, InitContext) and
+                    app.ctx._state == ClientState.INITIAL and
+                    not app.ctx._is_transitioning)
+        except Exception:
             return False
 
-    async def _takeover_existing_gui(self) -> None:
-        """Take over existing GUI instance"""
+    async def _takeover_existing_ui(self) -> None:
+        """Take over existing frontend UI instance (Kivy GUI or Textual TUI)"""
         # Import locally to avoid circular import
         from ClientBuilder import GameClient
-        
-        app = MDApp.get_running_app()
+        from frontend_protocol import resolve_frontend_class
+
+        app = getattr(resolve_frontend_class(), "_active_instance", None)
         existing_ctx = app.ctx
         
         # Mark transition state
@@ -635,17 +649,15 @@ class CommonContext(InitContext):
             self.takeover_complete.set()
 
     def run_gui(self):
-        """Modified to support takeover of existing GUI"""
-        if self._can_takeover_existing_gui():
-            return asyncio.create_task(self._takeover_existing_gui())
+        """Modified to support takeover of existing frontend UI (Kivy or TUI)."""
+        if self._can_takeover_existing_ui():
+            return asyncio.create_task(self._takeover_existing_ui())
         else:
             return self._create_new_gui()
 
     def _create_new_gui(self):
         """Create new GUI instance (existing behavior)"""
-        # Original run_gui implementation
-        from Gui import MultiMDApp
-        self.ui = MultiMDApp(self)
+        self.ui = self.make_gui()(self)
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     @functools.cached_property
@@ -752,11 +764,12 @@ class CommonContext(InitContext):
         return locations
 
     async def console_input(self, prompt: Optional[str] = "") -> str:
-        if self.ui and self.ui.screen_manager.current == "console":
+        if self.ui and self.ui.is_on_console_screen():
             self.ui.focus_textinput()
         elif self.ui:
             if self._consolebox:
                 self._consolebox = None
+            from mwgg_gui.components.dialog import ConsoleBox
             self._consolebox = ConsoleBox(title="Response from " + self.hostname + ":" + self.port, prompt=prompt)
         self.input_requests += 1
         return await self.input_queue.get()
@@ -1122,7 +1135,7 @@ class CommonContext(InitContext):
         if old_tags != self.tags and self.server and not self.server.socket.closed:
             await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
 
-    def gui_error(self, title: str, text: typing.Union[Exception, str]) -> typing.Optional["Gui.MessageBox"]:
+    def gui_error(self, title: str, text: typing.Union[Exception, str]) -> typing.Optional["MessageBox"]:
         """Displays an error messagebox in the loaded Kivy UI. Override if using a different UI framework"""
         if not self.ui:
             return None
@@ -1139,6 +1152,7 @@ class CommonContext(InitContext):
             text = f"{parts[1]}\n\n{text}" if text else parts[1]
             title = parts[0]
         # display error
+        from mwgg_gui.components.dialog import MessageBox
         self._messagebox = MessageBox(title=title, message=text, is_error=True)
         self._messagebox.open()
         return self._messagebox
@@ -1149,8 +1163,8 @@ class CommonContext(InitContext):
         logger.exception(msg, exc_info=exc_info, extra={'compact_gui': True})
         
         # Hide loading screen if it exists
-        if self.ui and hasattr(self.ui, 'loading_layout'):
-            self.ui.loading_layout.hide_loading()
+        if self.ui:
+            self.ui.hide_loading()
      
         error_msg = ""
         # Provide helpful guidance for retrying connection
@@ -1167,9 +1181,12 @@ class CommonContext(InitContext):
             # Fallback to old method if no UI
             self.error(msg, exc_info[1])
 
-    def make_gui(self) -> "type[Gui.MultiMDApp]":
+    def make_gui(self) -> "type[FrontendProtocol]":
         """
-        To return the Kivy `App` class needed for `run_gui` so it can be overridden before being built
+        Return the frontend `App` class needed for `run_gui` so it can be overridden before being built.
+
+        Dispatches on the `MWGG_FRONTEND` environment variable (set by `MultiWorld.py` from
+        `--frontend={gui,tui}`). Defaults to the Kivy GUI.
 
         Common changes are changing `base_title` to update the window title of the client and
         updating `logging_pairs` to automatically make new tabs that can be filled with their respective logger.
@@ -1177,8 +1194,8 @@ class CommonContext(InitContext):
         ex. `logging_pairs.append(("Foo", "Bar"))`
         will add a "Bar" tab which follows the logger returned from `logging.getLogger("Foo")`
         """
-        from Gui import MultiMDApp
-        return MultiMDApp
+        from frontend_protocol import resolve_frontend_class
+        return resolve_frontend_class()
 
     def run_cli(self):
         if sys.stdin:
@@ -1662,9 +1679,9 @@ def launch_textclient(server_address: str = None, ready_callback=None, error_cal
         ctx = TextContext(server_address, ready_callback, error_callback)
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
 
-        # Try to takeover existing GUI like KH2
-        if ctx._can_takeover_existing_gui():
-            await ctx._takeover_existing_gui()
+        # Try to takeover existing frontend UI (Kivy or TUI)
+        if ctx._can_takeover_existing_ui():
+            await ctx._takeover_existing_ui()
         else:
             logger.critical("Text client did not launch properly, exiting.")
             if error_callback:

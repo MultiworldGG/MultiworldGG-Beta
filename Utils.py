@@ -115,6 +115,20 @@ def set_game_names(game_names: typing.List[str]) -> typing.List[(str, bool)]:
     if _worlds_to_install:
         modules_to_install = [module for module in _worlds_to_install.values() if module]
         custom_worlds = ModuleUpdate.install_worlds(modules_to_install)
+        # install_worlds returns slugs that fell back to a custom apworld; pick up the
+        # ones that actually pip-installed by checking importlib.metadata directly so
+        # the loader sees them.
+        for slug in modules_to_install:
+            target = f"worlds.{slug}"
+            if target in _worlds_to_load:
+                continue
+            if target in custom_worlds:
+                continue
+            try:
+                importlib.metadata.distribution(target)
+                _worlds_to_load.append(target)
+            except importlib.metadata.PackageNotFoundError:
+                pass
     else:
         custom_worlds = []
 
@@ -129,33 +143,62 @@ def set_game_names(game_names: typing.List[str]) -> typing.List[(str, bool)]:
             except importlib.metadata.PackageNotFoundError:
                 pass
 
-    if not custom_worlds_dir.exists():
-        return
-    for file in custom_worlds_dir.iterdir():
-        if file.suffix != ".apworld":
-            continue
-        with zipfile.ZipFile(file, 'r') as zipf:
-            apworld = APWorldContainer(file)
-            manifest = apworld.read_contents(zipf)
+    if custom_worlds_dir.exists():
+        for file in custom_worlds_dir.iterdir():
+            if file.suffix != ".apworld":
+                continue
+            with zipfile.ZipFile(file, 'r') as zipf:
+                apworld = APWorldContainer(file)
+                manifest = apworld.read_contents(zipf)
 
-        if manifest.get("game") in _unknown_worlds:
-            _worlds_to_load.append(apworld)
-            continue
-        if file.stem in custom_worlds:
-            _worlds_to_load.append(apworld)
-            continue
-        if file.stem in _installed_versions:
-            apworld_version = tuplize_version(manifest.get("world_version", "0.0.0"))
-            installed_version = tuplize_version(_installed_versions[file.stem])
-            if apworld_version > installed_version:
-                # apworld wins — replace the installed-wheel entry with the apworld
-                target = f"worlds.{file.stem}"
-                try:
-                    _worlds_to_load.remove(target)
-                except ValueError:
-                    pass
+            if manifest.get("game") in _unknown_worlds:
                 _worlds_to_load.append(apworld)
-            # tie or apworld older -> installed wheel wins, leave _worlds_to_load alone
+                continue
+            if file.stem in custom_worlds:
+                _worlds_to_load.append(apworld)
+                continue
+            if file.stem in _installed_versions:
+                apworld_version = tuplize_version(manifest.get("world_version", "0.0.0"))
+                installed_version = tuplize_version(_installed_versions[file.stem])
+                if apworld_version > installed_version:
+                    # apworld wins — replace the installed-wheel entry with the apworld
+                    target = f"worlds.{file.stem}"
+                    try:
+                        _worlds_to_load.remove(target)
+                    except ValueError:
+                        pass
+                    _worlds_to_load.append(apworld)
+                # tie or apworld older -> installed wheel wins, leave _worlds_to_load alone
+
+    # Compute the set of game names that _worlds_to_load can actually serve. Mirrors
+    # what the loader will see: a `worlds.<slug>` entry serves whatever game the
+    # installed wheel's summary advertises, and an APWorldContainer serves its
+    # manifest .game.
+    index_slug_to_name = {slug: name for name, slug in GameIndex.game_names.items()}
+    served_games: set[str] = set()
+    for entry in _worlds_to_load:
+        if isinstance(entry, APWorldContainer):
+            if entry.game:
+                served_games.add(entry.game)
+        elif isinstance(entry, str) and entry.startswith("worlds."):
+            slug = entry[len("worlds."):]
+            name = index_slug_to_name.get(slug)
+            if name:
+                served_games.add(name)
+                continue
+            try:
+                dist = importlib.metadata.distribution(f"worlds.{slug}")
+                summary = dist.metadata.json.get('summary', '') if dist else ''
+                if summary:
+                    served_games.add(summary.strip("MultiWorld: "))
+            except importlib.metadata.PackageNotFoundError:
+                pass
+    missing = [g for g in game_names if g not in served_games]
+    if missing:
+        raise RuntimeError(
+            "Cannot generate: the following games could not be installed and have no apworld fallback: "
+            + ", ".join(repr(g) for g in missing)
+        )
 
 def game_names() -> typing.List[str]:
     """Get a list of only the game names that we're using"""
@@ -229,15 +272,27 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
 
 
 def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]:
-    """Discover and launch module via entrypoints"""
+    """Discover and launch module via entrypoints.
+
+    Frontend-neutral: worker-thread callbacks marshal back to the asyncio loop
+    via loop.call_soon_threadsafe, which works for both the Kivy GUI and the
+    Textual TUI (both run inside the same asyncio loop driven by MultiWorld.py).
+    """
     import threading
     import asyncio
-    from kivy.clock import Clock
-    
+
+    # No game selected -> fall straight through to Text Client (CommonClient).
+    # _perform_module_launch("") skips the specialized-client gate and lands at
+    # the main_textclient fallback below.
+    if not module_name:
+        return _perform_module_launch("", **kwargs)
+
     # First, try to import the module to see if it exists
     if not module_name.startswith("worlds."):
         module_name = f"worlds.{module_name}"
-    
+
+    loop = asyncio.get_event_loop()
+
     def _install_module_threaded():
         """Install module in a separate thread"""
         try:
@@ -247,16 +302,16 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
                 raise ModuleUpdate.RestartException
             else:
                 # No restart needed - proceed with launch
-                Clock.schedule_once(lambda dt: _launch_module_after_install(), 0)
+                loop.call_soon_threadsafe(_launch_module_after_install)
         except ModuleUpdate.RestartException as re:
             # Restart needed - schedule callback on main thread
-            Clock.schedule_once(lambda dt: _handle_install_error("Restart required for world updates."), 0)
+            loop.call_soon_threadsafe(_handle_install_error, "Restart required for world updates.")
 
         except Exception as e:
             update_logger.error(f"Failed to update module {module_name}: {str(e)}")
             # Schedule error handling on main thread
-            Clock.schedule_once(lambda dt: _handle_install_error(str(e)), 0)
-    
+            loop.call_soon_threadsafe(_handle_install_error, str(e))
+
     def _launch_module_after_install():
         """Launch the module after successful installation"""
         try:
@@ -264,14 +319,13 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
         except Exception as e:
             logging.error(f"Failed to launch module {module_name} after install: {e}")
             _handle_install_error(e)
-    
+
     def _handle_install_error(error):
         """Handle installation errors on the main thread"""
         # Get error callback from kwargs if provided
         error_callback = kwargs.get('error_callback')
         if error_callback:
             error_callback()
-        # Log the error but don't raise it since we're in a Clock callback
         update_logger.error(f"Module installation failed: {error}")
     
     if not is_windows:
@@ -1080,7 +1134,7 @@ def messagebox(title: str, text: str, error: bool = False) -> None:
         return
 
     if is_kivy_running():
-        from Gui import MessageBox
+        from mwgg_gui.components.dialog import MessageBox
         MessageBox(title, text, error).open()
         return
 

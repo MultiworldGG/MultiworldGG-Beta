@@ -5,11 +5,9 @@ from mwgg_gui.console.console import ConsoleSliverAppbar as HintLog
 from mwgg_gui.overrides.expansionlist import HintListItem as HintLabel, HintListItemLabel as TooltipLabel, HintListDropdown as MarkupDropdown
 from mwgg_gui.overrides.markuptextfield import MarkupTextField as ResizableTextField
 
-from Gui import (MultiMDApp as ThemedApp,
-                KivyMarkupJSONtoTextParser as KivyJSONtoTextParser,
-                MainScreenMgr as MDScreenManagerBase,
-                logging
-                )
+import logging
+from mwgg_gui.app import MultiMDApp as ThemedApp, MainScreenMgr as MDScreenManagerBase
+from NetUtils import KivyMarkupJSONtoTextParser as KivyJSONtoTextParser
 from kivymd.uix.scrollview import MDScrollView as ScrollBox
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.properties import ObjectProperty, NumericProperty, StringProperty, BooleanProperty
@@ -34,8 +32,8 @@ class GameManager(ThemedApp):
 
     async def async_run(self):
         ''' Changing this 'run' to instead do the client takeover loop '''
-        if self.ctx._can_takeover_existing_gui():
-            await self.ctx._takeover_existing_gui() 
+        if self.ctx._can_takeover_existing_ui():
+            await self.ctx._takeover_existing_ui()
         else:
             logging.critical("Client did not launch properly, exiting.")
             return

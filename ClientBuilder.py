@@ -5,10 +5,11 @@ import asyncio
 import weakref
 from ClientState import ClientState
 
-import Gui
+from frontend_protocol import resolve_frontend_class
 
 if TYPE_CHECKING:
     from CommonClient import CommonContext, InitContext
+    from frontend_protocol import FrontendProtocol
     from multiprocessing import Queue
 
 class ClientBuilder(ABC):
@@ -57,13 +58,13 @@ class InitialClient(ClientBuilder):
     def __init__(self, ctx: InitContext):
         super().__init__(ctx=ctx)
         self._ui_task: Optional[asyncio.Task] = None
-        self._kivy_ui: Optional[Gui.MultiMDApp] = None
+        self._kivy_ui: Optional[FrontendProtocol] = None
 
     async def build(self) -> Dict[str, Any]:
         self._is_running = True
-        
+
         try:
-            self._kivy_ui = Gui.MultiMDApp(self.ctx)
+            self._kivy_ui = resolve_frontend_class()(self.ctx)
             self._ui_task = asyncio.create_task(self._run_gui(splash_queue=self.ctx._splash_queue))
 
             return {

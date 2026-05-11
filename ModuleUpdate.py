@@ -586,9 +586,11 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
         logger.info(result.stdout)
 
         if result.returncode != 0:
-            logger.warning(f"World {target} failed to install from {module_location}")
+            stderr_lines = (result.stderr or "").strip().splitlines()
+            first = stderr_lines[0] if stderr_lines else "uv returned non-zero with no stderr"
+            logger.warning(f"World {target} failed to install from {module_location}: {first}")
             if result.stderr:
-                logger.error(result.stderr)
+                logger.debug(result.stderr)
             apworld_file = custom_worlds_dir / f"{slug}.apworld"
             if apworld_file.exists():
                 logger.info(f"Found apworld file: {apworld_file}")

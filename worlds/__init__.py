@@ -9,6 +9,7 @@ from typing import Optional, Union
 
 from NetUtils import DataPackage
 from BaseUtils import Version, write_path, is_frozen, get_archipelago_json, tuplize_version
+from APContainer import APWorldContainer
 
 # Extend __path__ to include venv site-packages for namespace package behavior
 if is_frozen():
@@ -28,7 +29,7 @@ failed_world_loads: list[str] = []
 
 @dataclasses.dataclass(order=True)
 class WorldSource:
-    game_module: Union[str, "APWorldContainer"]
+    game_module: Union[str, APWorldContainer]
     time_taken: float = -1.0
     version: Version = Version(0, 0, 0)
 
@@ -45,8 +46,7 @@ class WorldSource:
                 
             else: # APWorldContainer
                 self.game = self.game_module.game
-                apworld_spec = self.game_module.sys_modules_import_apworld()
-                world_class = importlib.import_module(apworld_spec)
+                world_class = self.game_module.sys_modules_import_apworld()
             self.time_taken = time.perf_counter()-start
             return True
 
@@ -61,7 +61,7 @@ class WorldSource:
             logging.exception(file_like.read())
             if isinstance(self.game_module, str):
                 failed_world_loads.append(self.game)
-            elif isinstance(self.game_module, "APWorldContainer"):
+            elif isinstance(self.game_module, APWorldContainer):
                 failed_world_loads.append(self.game_module.game)
             else:
                 failed_world_loads.append(self.game_module) # this may be a mix list of modules/game names
