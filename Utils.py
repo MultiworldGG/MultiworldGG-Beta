@@ -355,6 +355,14 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
 def _perform_module_launch(module_id: str, **kwargs):
     """Perform the actual module launch logic"""
     try:
+        # Stash launcher-provided ready/error callbacks centrally. CommonContext
+        # picks them up in __init__ so world clients don't need to forward them
+        # through their launch() signatures.
+        import CommonClient
+        ready_callback = kwargs.pop("ready_callback", None)
+        error_callback = kwargs.pop("error_callback", None)
+        CommonClient._set_pending_launch_callbacks(ready_callback, error_callback)
+
         if module_id:
             while True:
                 # Wait until the module is installed before trying to import it
@@ -431,10 +439,14 @@ def _perform_module_launch(module_id: str, **kwargs):
 
     except Exception as e:
         logging.error(f"Failed to launch module {module_id}: {e}")
-        # Call error callback if provided
-        if 'error_callback' in kwargs and kwargs['error_callback']:
+        # Fallback for the case where the world's launch() raised before any
+        # CommonContext was constructed. If a context was built, it consumed
+        # the pending dict and the context's own one-shot fired the callback
+        # from _takeover_existing_ui's except arm — we don't double-fire here.
+        _, pending_error_callback = CommonClient._consume_pending_launch_callbacks()
+        if pending_error_callback is not None:
             try:
-                kwargs['error_callback']()
+                pending_error_callback()
             except Exception as callback_error:
                 logging.error(f"Error in error callback: {callback_error}")
         raise

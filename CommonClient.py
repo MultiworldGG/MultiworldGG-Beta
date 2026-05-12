@@ -40,6 +40,58 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger("Client")
 
 
+_pending_launch_callbacks: "typing.Optional[typing.Dict[str, typing.Callable[[], None]]]" = None
+
+
+def _set_pending_launch_callbacks(ready_callback: "typing.Optional[typing.Callable[[], None]]",
+                                  error_callback: "typing.Optional[typing.Callable[[], None]]") -> None:
+    """Stash the launcher-provided callbacks so the next CommonContext that is built picks them up.
+
+    Called by Utils._perform_module_launch immediately before invoking the world's
+    launch function. World clients don't need to forward these kwargs themselves.
+    """
+    global _pending_launch_callbacks
+    _pending_launch_callbacks = {
+        "ready_callback": ready_callback,
+        "error_callback": error_callback,
+    }
+
+
+def _consume_pending_launch_callbacks() -> "typing.Tuple[typing.Optional[typing.Callable[[], None]], typing.Optional[typing.Callable[[], None]]]":
+    """Pop the pending callbacks. After consume, the dict is cleared so a second
+    context construction in the same flow won't re-bind the same closures."""
+    global _pending_launch_callbacks
+    pending = _pending_launch_callbacks
+    _pending_launch_callbacks = None
+    if pending is None:
+        return None, None
+    return pending.get("ready_callback"), pending.get("error_callback")
+
+
+def _make_one_shot(callback: "typing.Optional[typing.Callable[[], None]]") -> "typing.Callable[[], None]":
+    """Wrap a callback so it fires at most once. Subsequent calls are no-ops.
+
+    A no-op stub is returned when the underlying callback is None, so callers
+    can invoke it unconditionally without None-checks.
+    """
+    state = {"fired": False, "fn": callback}
+
+    def _invoke() -> None:
+        if state["fired"]:
+            return
+        state["fired"] = True
+        fn = state["fn"]
+        state["fn"] = None
+        if fn is None:
+            return
+        try:
+            fn()
+        except Exception as exc:
+            logger.error(f"Error in client launch callback: {exc}")
+
+    return _invoke
+
+
 @Utils.cache_argsless
 def get_ssl_context():
     import certifi
@@ -582,6 +634,14 @@ class CommonContext(InitContext):
         self.jsontotextparser = JSONtoTextParser(self)
         self.rawjsontotextparser = RawJSONtoTextParser(self)
 
+        # Launcher-provided callbacks, stashed by Utils._perform_module_launch.
+        # One-shot wrappers so the same callback can't fire twice across the
+        # takeover-completion path, the kvui async_run failure path, and the
+        # outer Utils._perform_module_launch exception handler.
+        ready_cb, error_cb = _consume_pending_launch_callbacks()
+        self._ready_callback = _make_one_shot(ready_cb)
+        self._error_callback = _make_one_shot(error_cb)
+
         # execution
         self.keep_alive_task = asyncio.create_task(keep_alive(self), name="Bouncy")
 
@@ -612,37 +672,43 @@ class CommonContext(InitContext):
 
         app = getattr(resolve_frontend_class(), "_active_instance", None)
         existing_ctx = app.ctx
-        
+
         # Mark transition state
         existing_ctx._is_transitioning = True
         self._is_transitioning = True
-        
+
         try:
             # Preserve exit_event from existing context
             self.exit_event = existing_ctx.exit_event
-            
+
             # Preserve UI references from existing context
             if hasattr(existing_ctx, 'ui'):
                 self.ui = existing_ctx.ui
             if hasattr(existing_ctx, 'ui_task'):
                 self.ui_task = existing_ctx.ui_task
-            
+
             # Create game client builder with existing context
             game_client = GameClient(self, {
                 "ui_task": self.ui_task,
                 "ui": self.ui
             })
-            
+
             # Update app reference to new context
             app.ctx = self
-            
+
             # Update state
             self._state = ClientState.GAME
             self._current_client = game_client
-            
+
             # Build new client features
             await game_client.build()
-            
+
+            # The world's UI is now in front of the user. Signal the launcher.
+            self._ready_callback()
+
+        except Exception:
+            self._error_callback()
+            raise
         finally:
             existing_ctx._is_transitioning = False
             self._is_transitioning = False
@@ -1623,9 +1689,13 @@ def handle_url_arg(args: "argparse.Namespace",
     return args
 
 
-def launch_textclient(server_address: str = None, ready_callback=None, error_callback=None):
-    """Launch text client in GUI integration mode like KH2"""
-    
+def launch_textclient(server_address: str = None):
+    """Launch text client in GUI integration mode like KH2.
+
+    ready_callback and error_callback are wired centrally in CommonContext via
+    Utils._perform_module_launch; no need for this function to accept or forward them.
+    """
+
     class TextContext(CommonContext):
         # Text Mode to use !hint and such with games that have no text entry
         tags = CommonContext.tags | {"TextOnly"}
@@ -1633,12 +1703,9 @@ def launch_textclient(server_address: str = None, ready_callback=None, error_cal
         items_handling = 0b111  # receive all items for /received
         want_slot_data = False  # Can't use game specific slot_data
 
-        def __init__(self, server_address: str = None, ready_callback=None, error_callback=None):
+        def __init__(self, server_address: str = None):
             super(TextContext, self).__init__(server_address=server_address)
 
-            self.ready_callback = ready_callback
-            self.error_callback = error_callback
-            
             if self.username is not None:
                 self.auth = self.username
             else:
@@ -1647,7 +1714,7 @@ def launch_textclient(server_address: str = None, ready_callback=None, error_cal
         async def server_auth(self, password_requested: bool = False):
             if password_requested and not self.password:
                 await super(TextContext, self).server_auth(password_requested)
-            
+
             if not self.auth:
                 await self.get_username()
             await self.send_connect(game="")
@@ -1655,28 +1722,13 @@ def launch_textclient(server_address: str = None, ready_callback=None, error_cal
         def on_package(self, cmd: str, args: dict):
             if cmd == "Connected":
                 self.game = self.slot_info[self.slot].game
-                # Call ready_callback after successful connection
-                if self.ready_callback:
-                    try:
-                        self.ready_callback()
-                    except Exception as e:
-                        logger.error(f"Error in ready callback: {e}")
 
         async def disconnect(self, allow_autoreconnect: bool = False):
             self.game = ""
             await super().disconnect(allow_autoreconnect)
 
-        def handle_connection_loss(self, msg: str) -> None:
-            """Override to handle connection loss with error callback"""
-            super().handle_connection_loss(msg)
-            if self.error_callback:
-                try:
-                    self.error_callback()
-                except Exception as e:
-                    logger.error(f"Error in error callback: {e}")
-
     async def main(args):
-        ctx = TextContext(server_address, ready_callback, error_callback)
+        ctx = TextContext(server_address)
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
 
         # Try to takeover existing frontend UI (Kivy or TUI)
@@ -1684,8 +1736,7 @@ def launch_textclient(server_address: str = None, ready_callback=None, error_cal
             await ctx._takeover_existing_ui()
         else:
             logger.critical("Text client did not launch properly, exiting.")
-            if error_callback:
-                error_callback()
+            ctx._error_callback()
             ctx.takeover_complete.set()  # unblock the pending server_loop so it can take its no-address early return
             return
 
@@ -1702,20 +1753,21 @@ def launch_textclient(server_address: str = None, ready_callback=None, error_cal
     try:
         loop = asyncio.get_running_loop()
         logger.info("Running text client in existing event loop (GUI mode)")
-        
+
         # Create a simple namespace object to mimic argparse.Namespace
         class Args:
             def __init__(self, server_address):
                 self.server_address = server_address
-        
+
         args = Args(server_address)
         task = asyncio.create_task(main(args), name="TextClientMain")
         return task
     except RuntimeError:
         logger.critical("This is not a standalone text client. Please run the MultiWorld GUI.")
-        if error_callback:
-            error_callback()
+        # No CommonContext was constructed in this branch, so no _error_callback
+        # is reachable here; Utils._perform_module_launch will fire its pending
+        # callback fallback if this raises out.
 
-def main_textclient(server_address: str, ready_callback=None, error_callback=None):
+def main_textclient(server_address: str):
     """Main entry point for integration with MultiWorld system"""
-    return launch_textclient(server_address, ready_callback, error_callback)
+    return launch_textclient(server_address)

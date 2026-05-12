@@ -36,6 +36,9 @@ class GameManager(ThemedApp):
             await self.ctx._takeover_existing_ui()
         else:
             logging.critical("Client did not launch properly, exiting.")
+            error_callback = getattr(self.ctx, "_error_callback", None)
+            if error_callback is not None:
+                error_callback()
             return
 
     def run(self):
