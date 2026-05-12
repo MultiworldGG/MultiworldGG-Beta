@@ -8,7 +8,7 @@ schema>=0.7.8
 kivy>=2.3.1
 kivymd@ git+https://github.com/kivymd/KivyMD@d2f7740
 kivymd>=2.0.1.dev0
-asynckivy>=0.6.4
+asynckivy>=0.6.4,<0.7
 numpy>=2.3.2
 bsdiff4>=1.2.6
 platformdirs==4.9.4
@@ -37,7 +37,6 @@ xxtea>=3.0.0
 openpyxl>=3.1.2
 
 # needed for ff4fe
-chardet>=5.0.0
 cherrypy>=18.8.0
 lark>=1.1.7
 markdown>=3.5.0

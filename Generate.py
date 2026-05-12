@@ -666,8 +666,13 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
 
 if __name__ == '__main__':
     import atexit
+    import sys
     confirmation = atexit.register(input, "Press enter to close.")
-    erargs, seed = main()
+    try:
+        erargs, seed = main()
+    except RuntimeError as e:
+        logging.error(str(e))
+        sys.exit(1)
     from Main import main as ERmain
     multiworld = ERmain(erargs, seed)
     # if __debug__:

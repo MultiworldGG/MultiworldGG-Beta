@@ -14,8 +14,13 @@ from APContainer import APWorldContainer
 # Extend __path__ to include venv site-packages for namespace package behavior
 if is_frozen():
     venv_worlds_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds")
-    if os.path.exists(venv_worlds_path) and venv_worlds_path not in __path__:
-        __path__.append(venv_worlds_path)
+else:
+    # Dev: pick up wheels that install_worlds() put in src/venv.
+    venv_worlds_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "venv", "Lib", "site-packages", "worlds"
+    )
+if os.path.exists(venv_worlds_path) and venv_worlds_path not in __path__:
+    __path__.append(venv_worlds_path)
 
 __all__ = [
     "network_data_package",
@@ -50,15 +55,10 @@ class WorldSource:
             self.time_taken = time.perf_counter()-start
             return True
 
-        except Exception:
+        except Exception as e:
             # A single world failing can still mean enough is working for the user, log and carry on
-            import traceback
-            import io
-            file_like = io.StringIO()
-            print(f"Could not load world {self}:", file=file_like)
-            traceback.print_exc(file=file_like)
-            file_like.seek(0)
-            logging.exception(file_like.read())
+            logging.warning(f"Could not load world {self}: {type(e).__name__}: {e}")
+            logging.debug("Full traceback for %s:", self, exc_info=True)
             if isinstance(self.game_module, str):
                 failed_world_loads.append(self.game)
             elif isinstance(self.game_module, APWorldContainer):

@@ -56,11 +56,13 @@ if ($pythonExe -notmatch "venv") {
 try {
     Write-Host "Processing world: $World" -ForegroundColor Yellow
     
-    # Create MANIFEST.in
+    # Create MANIFEST.in.
+    # Exclude pattern is *.py[co] (not *.py[cod]) — [cod] would also match
+    # `.pyd`, i.e. Windows native extensions, which we want to ship.
     $manifestContent = @"
 global-exclude *
 graft src/worlds/$World
-global-exclude *~ *.py[cod]
+global-exclude *~ *.py[co]
 include pyproject.toml
 "@
     Set-Content -Path $manifestPath -Value $manifestContent

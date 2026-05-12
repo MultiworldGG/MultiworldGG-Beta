@@ -153,8 +153,16 @@ def set_game_names(game_names: typing.List[str]) -> typing.List[(str, bool)]:
 
             if manifest.get("game") in _unknown_worlds:
                 _worlds_to_load.append(apworld)
+                # Seed the in-memory GameIndex so subsequent get_module_for_game()
+                # lookups (notably in Generate.roll_settings) can resolve this game
+                # to its custom apworld module without waiting for
+                # get_available_worlds() to scan custom_worlds_dir again.
+                if not GameIndex.get_game_name_for_module(file.stem):
+                    index_entry = dict(manifest)
+                    index_entry["game_name"] = manifest["game"]
+                    GameIndex.add_game(file.stem, index_entry)
                 continue
-            if file.stem in custom_worlds:
+            if f"worlds.{file.stem}" in custom_worlds:
                 _worlds_to_load.append(apworld)
                 continue
             if file.stem in _installed_versions:
@@ -218,7 +226,7 @@ def get_available_worlds() -> typing.List[str]:
         if module_name and module_name not in available_worlds:
             available_worlds.add(module_name)
     game_modules = set(GameIndex.get_all_games().keys())
-    
+
     # Also check for currently installed world modules not in GameIndex
     try:
         for world_name in available_worlds:
@@ -230,13 +238,7 @@ def get_available_worlds() -> typing.List[str]:
 
     except Exception as e:
         update_logger.warning(f"Error checking installed world modules: {e}")
-    
-    
-    # Also add worlds from the custom_worlds directory
-    for world_file in custom_worlds_dir.iterdir():
-        module_name = discover_custom_world_module(world_file)
-        if module_name and module_name not in available_worlds:
-            available_worlds.append(module_name)
+
     return list(sorted(available_worlds))
 
 def discover_custom_world_module(custom_world: Path) -> Optional[str]:
@@ -255,8 +257,10 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
             metadata["game_name"] = metadata.pop("game", module_name)
             metadata["cover_url"] = metadata.pop("cover_url", "")
             if GameIndex.get_game_name_for_module(module_name):
-                logger.warning(f"World {module_name} already exists in the game index")
-                return None
+                # Already known to the in-memory index (e.g. registered by a previous
+                # call this run). Idempotent no-op; return the module name so callers
+                # still see it as a discovered world.
+                return module_name
             GameIndex.add_game(module_name, metadata)
     elif custom_world.suffix == ".apworld":
         with zipfile.ZipFile(custom_world, 'r') as custom_apworld:
@@ -265,8 +269,10 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
             manifest["game_name"] = manifest.pop("game", module_name)
             manifest["cover_url"] = manifest.pop("cover_url", "")
             if GameIndex.get_game_name_for_module(module_name):
-                logger.warning(f"World {module_name} already exists in the game index")
-                return None
+                # Already known to the in-memory index (e.g. registered by a previous
+                # call this run). Idempotent no-op; return the module name so callers
+                # still see it as a discovered world.
+                return module_name
             GameIndex.add_game(module_name, manifest)
     return module_name if module_name else None
 

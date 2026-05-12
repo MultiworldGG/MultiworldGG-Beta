@@ -531,7 +531,7 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
         no_recurse: If True, skip the post-install dependency-check pass.
 
     Returns:
-        List of slugs that fell back to a custom apworld.
+        List of `worlds.<slug>` module names that fell back to a custom apworld.
     """
     apworlds: list[str] = []
 
@@ -772,18 +772,25 @@ def update_requirements(needed_packages: List[str]) -> None:
         logger.debug(f"Processing requirements from: {req_file}")
         if update_all:
             executable_args = _uv_pip("install", "--upgrade", "-r", str(req_file))
-            result = subprocess.run(executable_args)
-            if result.returncode != 0:
-                logger.warning(f"Failed to install/update from {req_file.name}")
         else:
-            requirements = parse_requirements_file(req_file)
-            for req_line in requirements:
-                # Extract the bare package name (everything up to the first version op or marker).
-                pkg_name = re.split(r'[<>=!~;@\s]', req_line, 1)[0].strip()
-                if pkg_name in needed_packages:
-                    result = subprocess.run(_uv_pip("install", "--upgrade", req_line))
-                    if result.returncode != 0:
-                        logger.warning(f"Failed to install/update {req_line}")
+            # Resolve the whole file so transitive caps and sibling constraints are
+            # respected; --upgrade-package targets only the dists check_for_updates
+            # flagged. The previous per-spec-line `pip install --upgrade <req_line>`
+            # ignored sibling constraints and oscillated against check_requirements_satisfied.
+            req_pkg_names = {
+                re.split(r'[<>=!~;@\s]', line, 1)[0].strip()
+                for line in parse_requirements_file(req_file)
+            }
+            relevant = [p for p in needed_packages if p in req_pkg_names]
+            if not relevant:
+                continue
+            executable_args = _uv_pip("install", "-r", str(req_file))
+            for pkg in relevant:
+                executable_args.extend(["--upgrade-package", pkg])
+
+        result = subprocess.run(executable_args)
+        if result.returncode != 0:
+            logger.warning(f"Failed to install/update from {req_file.name}")
 
     # Handle worlds (these are not in requirements.txt files)
     worlds_to_install = [pkg for pkg in needed_packages if pkg.startswith("worlds") or pkg.startswith("mwgg")]

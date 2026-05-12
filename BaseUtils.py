@@ -469,8 +469,9 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
     Returns:
         A tuple of the game name, authors, minimum AP version, and world version
     """
+    from mwgg_igdb import GameIndex
+    data: dict = {}
     try:
-        from mwgg_igdb import GameIndex
         if is_frozen():
             # In frozen builds, worlds are installed as wheels in venv site-packages
             # Use "Lib" on Windows, "lib" on Linux/macOS
