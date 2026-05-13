@@ -163,7 +163,12 @@ def _latest_release_wheel_asset(owner: str, repo: str) -> dict | None:
 
 
 def _download_release_asset(owner: str, repo: str, asset: dict) -> str | None:
-    """Download a release asset by id; return the temp-file path. Works for private repos.
+    """Download a release asset by id; return the path to a file with the asset's
+    original filename (inside a fresh temp dir). Works for private repos.
+
+    The filename must match PEP 427 — pip parses dist/version/tags from it — so we
+    can't use mkstemp's randomized name. We create a temp dir and write the asset
+    into it with `asset["name"]`. Caller is responsible for cleaning up the dir.
 
     Uses the `/releases/assets/{id}` endpoint with `Accept: application/octet-stream`,
     which serves the binary directly (or 302-redirects to a signed URL that needs no
@@ -171,9 +176,9 @@ def _download_release_asset(owner: str, repo: str, asset: dict) -> str | None:
     foreign host so the signed URL isn't double-authed and rejected.
     """
     asset_id = asset.get("id")
-    name = asset.get("name", "wheel.whl")
-    if asset_id is None:
-        logger.warning(f"Asset {name} from {owner}/{repo} has no id; cannot download")
+    name = asset.get("name") or ""
+    if asset_id is None or not name:
+        logger.warning(f"Asset from {owner}/{repo} has no id/name; cannot download")
         return None
 
     asset_url = f"https://api.github.com/repos/{owner}/{repo}/releases/assets/{asset_id}"
@@ -194,17 +199,14 @@ def _download_release_asset(owner: str, repo: str, asset: dict) -> str | None:
     opener = urllib.request.build_opener(_StripAuthRedirect())
     req = urllib.request.Request(asset_url, headers=headers)
 
-    suffix = ".whl" if name.endswith(".whl") else ""
-    fd, path = tempfile.mkstemp(prefix="mwgg_wheel_", suffix=suffix)
+    tmp_dir = tempfile.mkdtemp(prefix="mwgg_wheel_")
+    path = os.path.join(tmp_dir, name)
     try:
-        with opener.open(req, timeout=120) as resp, os.fdopen(fd, "wb") as out:
+        with opener.open(req, timeout=120) as resp, open(path, "wb") as out:
             shutil.copyfileobj(resp, out)
     except (urllib.error.URLError, TimeoutError) as e:
         logger.warning(f"Failed to download asset {name} from {owner}/{repo}: {e}")
-        try:
-            os.unlink(path)
-        except OSError:
-            pass
+        shutil.rmtree(tmp_dir, ignore_errors=True)
         return None
     return path
 
@@ -241,10 +243,7 @@ def install_wheels() -> bool:
             logger.warning(f"pip install failed for {owner}/{repo}: {e}")
             return False
         finally:
-            try:
-                os.unlink(wheel_path)
-            except OSError:
-                pass
+            shutil.rmtree(os.path.dirname(wheel_path), ignore_errors=True)
     return True
 
 def update_modules() -> bool:
