@@ -13,6 +13,7 @@ import logging
 import urllib.request
 import urllib.error
 import json
+import tempfile
 
 logger = logging.getLogger("MultiWorld")
 if not logging.getLogger().hasHandlers():
@@ -75,6 +76,21 @@ SIBLING_WHEEL_REPOS: list[tuple[str, str]] = [
 ]
 
 
+# Token for fetching from private sibling repos during beta. Set
+# MWGG_BUILD_GITHUB_TOKEN (locally or via the workflow's `env:` block) to a PAT or
+# GitHub App installation token with `contents: read` on the SIBLING_WHEEL_REPOS.
+# When the repos go public this can be unset and anonymous requests will work.
+_BUILD_GH_TOKEN_ENV = "MWGG_BUILD_GITHUB_TOKEN"
+
+
+def _gh_headers() -> dict:
+    headers = {"Accept": "application/vnd.github.v3+json"}
+    token = os.environ.get(_BUILD_GH_TOKEN_ENV, "").strip()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
+
+
 def _pick_wheel_asset(assets: list[dict]) -> dict | None:
     """Return the best wheel asset for the current platform, or None.
 
@@ -118,16 +134,23 @@ def _pick_wheel_asset(assets: list[dict]) -> dict | None:
     return None
 
 
-def _latest_release_wheel_url(owner: str, repo: str) -> str | None:
-    """Fetch the latest release for a sibling repo and return its wheel URL."""
+def _latest_release_wheel_asset(owner: str, repo: str) -> dict | None:
+    """Fetch the latest release for a sibling repo and return the chosen wheel asset dict."""
     api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
-    req = urllib.request.Request(
-        api_url,
-        headers={"Accept": "application/vnd.github.v3+json"},
-    )
+    req = urllib.request.Request(api_url, headers=_gh_headers())
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        # 404 on a private repo means the token isn't set or doesn't grant read access.
+        if e.code == 404 and not os.environ.get(_BUILD_GH_TOKEN_ENV, "").strip():
+            logger.warning(
+                f"GET {api_url} returned 404; if {owner}/{repo} is private, set "
+                f"{_BUILD_GH_TOKEN_ENV} to a PAT with `contents: read` on it"
+            )
+        else:
+            logger.warning(f"GET {api_url} failed: {e}")
+        return None
     except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as e:
         logger.warning(f"Could not fetch latest release for {owner}/{repo}: {e}")
         return None
@@ -136,29 +159,92 @@ def _latest_release_wheel_url(owner: str, repo: str) -> str | None:
     if asset is None:
         logger.warning(f"No suitable wheel asset on latest release of {owner}/{repo}")
         return None
-    return asset["browser_download_url"]
+    return asset
+
+
+def _download_release_asset(owner: str, repo: str, asset: dict) -> str | None:
+    """Download a release asset by id; return the temp-file path. Works for private repos.
+
+    Uses the `/releases/assets/{id}` endpoint with `Accept: application/octet-stream`,
+    which serves the binary directly (or 302-redirects to a signed URL that needs no
+    further auth). urllib follows the redirect; we strip Authorization on hop to a
+    foreign host so the signed URL isn't double-authed and rejected.
+    """
+    asset_id = asset.get("id")
+    name = asset.get("name", "wheel.whl")
+    if asset_id is None:
+        logger.warning(f"Asset {name} from {owner}/{repo} has no id; cannot download")
+        return None
+
+    asset_url = f"https://api.github.com/repos/{owner}/{repo}/releases/assets/{asset_id}"
+    headers = _gh_headers()
+    headers["Accept"] = "application/octet-stream"
+
+    # Custom handler: when GitHub returns 302 to AWS S3, drop our Authorization header
+    # before following — the redirect target has signed credentials baked into the URL,
+    # and S3 will reject a stray Bearer token.
+    class _StripAuthRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            new_req = super().redirect_request(req, fp, code, msg, headers, newurl)
+            if new_req is not None:
+                new_req.headers.pop("Authorization", None)
+                new_req.unredirected_hdrs.pop("Authorization", None)
+            return new_req
+
+    opener = urllib.request.build_opener(_StripAuthRedirect())
+    req = urllib.request.Request(asset_url, headers=headers)
+
+    suffix = ".whl" if name.endswith(".whl") else ""
+    fd, path = tempfile.mkstemp(prefix="mwgg_wheel_", suffix=suffix)
+    try:
+        with opener.open(req, timeout=120) as resp, os.fdopen(fd, "wb") as out:
+            shutil.copyfileobj(resp, out)
+    except (urllib.error.URLError, TimeoutError) as e:
+        logger.warning(f"Failed to download asset {name} from {owner}/{repo}: {e}")
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+        return None
+    return path
 
 
 def install_wheels() -> bool:
     """Install sibling-repo wheels from their latest GitHub releases.
 
     For each repo in SIBLING_WHEEL_REPOS, GET the latest release, pick a wheel
-    asset compatible with the current platform, and pip-install it into the
-    build venv. cx_Freeze then bundles the installed package into the frozen
-    build via setup.py's `packages` list.
+    asset compatible with the current platform, download it (authenticated when
+    MWGG_BUILD_GITHUB_TOKEN is set, anonymous otherwise), and pip-install it
+    into the build venv. cx_Freeze then bundles the installed package into the
+    frozen build via setup.py's `packages` list.
     """
+    if not os.environ.get(_BUILD_GH_TOKEN_ENV, "").strip():
+        logger.info(
+            f"{_BUILD_GH_TOKEN_ENV} not set; fetching anonymously. "
+            "If a sibling repo is private the fetch will 404."
+        )
+
     for owner, repo in SIBLING_WHEEL_REPOS:
-        url = _latest_release_wheel_url(owner, repo)
-        if url is None:
+        asset = _latest_release_wheel_asset(owner, repo)
+        if asset is None:
             return False
-        logger.info(f"Installing {owner}/{repo} wheel from {url}")
+        wheel_path = _download_release_asset(owner, repo, asset)
+        if wheel_path is None:
+            return False
+        logger.info(f"Installing {owner}/{repo} wheel {asset.get('name')}")
         try:
             subprocess.check_call([
-                sys.executable, "-m", "pip", "install", url, "--force-reinstall", "--no-cache-dir",
+                sys.executable, "-m", "pip", "install", wheel_path,
+                "--force-reinstall", "--no-cache-dir",
             ])
         except subprocess.CalledProcessError as e:
             logger.warning(f"pip install failed for {owner}/{repo}: {e}")
             return False
+        finally:
+            try:
+                os.unlink(wheel_path)
+            except OSError:
+                pass
     return True
 
 def update_modules() -> bool:

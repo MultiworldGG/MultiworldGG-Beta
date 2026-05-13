@@ -107,14 +107,18 @@ jobs:
       - name: Build executable (Windows)
         if: runner.os == 'Windows'
         shell: bash
+        env:
+          MWGG_BUILD_GITHUB_TOKEN: ${{ secrets.MWGG_BUILD_GITHUB_TOKEN }}
         run: |
           source venv/Scripts/activate
           cd src
           python build_exe.py
-      
+
       - name: Build executable (Unix)
         if: runner.os != 'Windows'
         shell: bash
+        env:
+          MWGG_BUILD_GITHUB_TOKEN: ${{ secrets.MWGG_BUILD_GITHUB_TOKEN }}
         run: |
           source venv/bin/activate
           cd src
