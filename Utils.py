@@ -355,6 +355,16 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
 def _perform_module_launch(module_id: str, **kwargs):
     """Perform the actual module launch logic"""
     try:
+        # Per-world launch() bodies are CLI-style and call asyncio.run(main()).
+        # Without nest_asyncio that raises "cannot be called from a running
+        # event loop" because the launcher's asyncio loop is already running
+        # on this thread. nest_asyncio.apply() patches asyncio to allow the
+        # nested run() call to re-enter the running loop; the launcher's loop
+        # continues to service other tasks while it's re-entered, so the UI
+        # stays responsive during the game session. apply() is idempotent.
+        import nest_asyncio
+        nest_asyncio.apply()
+
         # Stash launcher-provided ready/error callbacks centrally. CommonContext
         # picks them up in __init__ so world clients don't need to forward them
         # through their launch() signatures.
@@ -390,16 +400,47 @@ def _perform_module_launch(module_id: str, **kwargs):
             if module_entry_point:
                 # Load and execute the client entrypoint
                 launch_function = module_entry_point.load()
-                result = launch_function(**kwargs)
-                
-                # Check if the launch function returned a task (GUI mode)
-                if hasattr(result, '_coro'):
-                    logging.info(f"Launch function returned a task for {module_id}, running in GUI mode")
-                    # The task is already scheduled in the event loop
-                    return result
-                else:
-                    logging.info(f"Launch function completed synchronously for {module_id}")
-                    return result
+                # Per-world launch() bodies are CLI-style: they parse sys.argv
+                # and then call asyncio.run(main()). Two constraints stack:
+                #   1. asyncio.run() inside a running loop normally raises;
+                #      nest_asyncio.apply() (called at the top of this function)
+                #      patches asyncio to allow re-entry.
+                #   2. We're invoked from a Kivy event handler. If we call
+                #      launch_function() synchronously here, the handler never
+                #      returns while the game session is alive, and Kivy --
+                #      being single-threaded -- can't dispatch any other UI
+                #      events (the GUI freezes even though asyncio keeps
+                #      pumping). To unblock Kivy, defer launch_function() to
+                #      the next loop iteration via call_soon. By the time it
+                #      runs, the Kivy event handler has returned and Kivy is
+                #      back in its idle dispatch state.
+                loop = asyncio.get_event_loop()
+                server_address = kwargs.get("server_address")
+
+                def _deferred_launch():
+                    saved_argv = sys.argv[:]
+                    try:
+                        if isinstance(server_address, str) and server_address:
+                            sys.argv = [sys.argv[0], f"--connect={server_address}"]
+                        launch_function()
+                    except Exception as launch_error:
+                        logging.error(
+                            f"Deferred world launch failed for {module_id}: {launch_error}",
+                            exc_info=True,
+                        )
+                        import CommonClient as _CC
+                        _, pending_error_cb = _CC._consume_pending_launch_callbacks()
+                        if pending_error_cb is not None:
+                            try:
+                                pending_error_cb()
+                            except Exception as cb_err:
+                                logging.error(f"Error in error callback: {cb_err}")
+                    finally:
+                        sys.argv[:] = saved_argv
+
+                loop.call_soon(_deferred_launch)
+                logging.info(f"Scheduled deferred launch for {module_id} on next asyncio iteration")
+                return None
                             
             # 2. Check SNI registry
             from mwgg_igdb import GameIndex

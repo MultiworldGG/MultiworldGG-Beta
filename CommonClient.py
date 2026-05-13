@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import collections
 import copy
 import logging
@@ -11,6 +12,7 @@ import time
 import functools
 
 import websockets
+from websockets.protocol import State
 
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
@@ -33,7 +35,6 @@ import os
 import ssl
 
 if typing.TYPE_CHECKING:
-    import argparse
     from frontend_protocol import FrontendProtocol
     from typing import Optional
 
@@ -696,6 +697,14 @@ class CommonContext(InitContext):
             # Update app reference to new context
             app.ctx = self
 
+            # Notify the frontend that its `ctx` has been reassigned, so it can rebuild
+            # anything cached against the previous ctx (commandprocessor, JSON parser,
+            # etc.). The TUI implements this; mwgg-gui's Kivy app rebuilds those at
+            # console_init() time so it does not need a hook here. Optional by design.
+            ctx_swap_hook = getattr(app, "_on_ctx_swapped", None)
+            if ctx_swap_hook is not None:
+                ctx_swap_hook()
+
             # Update state
             self._state = ClientState.GAME
             self._current_client = game_client
@@ -765,7 +774,7 @@ class CommonContext(InitContext):
             self.disconnected_intentionally = True
             if self.cancel_autoreconnect():
                 logger.info("Cancelled auto-reconnect.")
-        if self.server and not self.server.socket.closed:
+        if self.server and self.server.socket and self.server.socket.state is not State.CLOSED:
             await self.server.socket.close()
         if self.server_task is not None:
             await self.server_task
@@ -774,7 +783,7 @@ class CommonContext(InitContext):
 
     async def send_msgs(self, msgs: typing.List[typing.Any]) -> None:
         """ `msgs` JSON serializable """
-        if not self.server or not self.server.socket.open or self.server.socket.closed:
+        if not self.server or not self.server.socket or self.server.socket.state is not State.OPEN:
             return
         if msgs[0]["cmd"] == "LocationChecks":
             self.update_timer()
@@ -951,7 +960,7 @@ class CommonContext(InitContext):
         self.username = None
         self.password = None
         self.cancel_autoreconnect()
-        if self.server and not self.server.socket.closed:
+        if self.server and self.server.socket and self.server.socket.state is not State.CLOSED:
             await self.server.socket.close()
         if self.server_task:
             await self.server_task
@@ -1191,14 +1200,14 @@ class CommonContext(InitContext):
             else:
                 if "DeathLink" in self.tags:
                     self.tags.remove("DeathLink")
-        if old_tags != self.tags and self.server and not self.server.socket.closed:
+        if old_tags != self.tags and self.server and self.server.socket and self.server.socket.state is not State.CLOSED:
             await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
 
     async def update_tags(self, tags: typing.Set[str]):
         """Helper function to update the tags of the client."""
         old_tags = self.tags.copy()
         self.tags = tags
-        if old_tags != self.tags and self.server and not self.server.socket.closed:
+        if old_tags != self.tags and self.server and self.server.socket and self.server.socket.state is not State.CLOSED:
             await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
 
     def gui_error(self, title: str, text: typing.Union[Exception, str]) -> typing.Optional["MessageBox"]:
@@ -1227,7 +1236,7 @@ class CommonContext(InitContext):
         """Helper for logging and displaying a loss of connection. Must be called from an except block."""
         exc_info = sys.exc_info()
         logger.exception(msg, exc_info=exc_info, extra={'compact_gui': True})
-        
+
         # Hide loading screen if it exists
         if self.ui:
             self.ui.hide_loading()
@@ -1264,6 +1273,13 @@ class CommonContext(InitContext):
         return resolve_frontend_class()
 
     def run_cli(self):
+        # Under the Textual TUI, the TUI owns stdin (raw mode) and already routes typed
+        # commands through ctx.command_processor via mwgg_tui.app.MultiTUIApp. Starting our
+        # own console_loop would duplicate that routing AND deadlock the asyncio loop,
+        # because rich.Console.input() is a synchronous blocking read on stdin.
+        if os.environ.get("MWGG_FRONTEND", "gui") == "tui":
+            return
+
         if sys.stdin:
             if sys.stdin.fileno() != 0:
                 from multiprocessing import parent_process
@@ -1628,7 +1644,14 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
     else:
         logger.debug(f"unknown command {cmd}")
 
-    ctx.on_package(cmd, args)
+    try:
+        ctx.on_package(cmd, args)
+    except Exception:
+        # Per-world on_package overrides can raise (e.g. KeyError on a ctx attribute
+        # the framework hasn't populated yet). Outer server_loop catches it but logs at
+        # WARNING via a chain that a child logger with propagate=False could hide.
+        # Log here so the world-specific failure is always visible in the console.
+        logger.exception(f"on_package failed for cmd={cmd!r}")
 
 
 async def console_loop(ctx: CommonContext):

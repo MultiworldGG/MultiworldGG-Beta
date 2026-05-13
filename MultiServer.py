@@ -31,6 +31,7 @@ if typing.TYPE_CHECKING:
 import colorama
 import websockets
 from websockets.extensions.permessage_deflate import PerMessageDeflate, ServerPerMessageDeflateFactory
+from websockets.protocol import State
 try:
     # ponyorm is a requirement for webhost, not default server, so may not be importable
     from pony.orm.dbapiprovider import OperationalError # type: ignore
@@ -391,7 +392,7 @@ class Context:
 
     # General networking
     async def send_msgs(self, endpoint: Endpoint, msgs: typing.Iterable[dict]) -> bool:
-        if not endpoint.socket or not endpoint.socket.open:
+        if not endpoint.socket or endpoint.socket.state is not State.OPEN:
             return False
         msg = self.dumper(msgs)
         try:
@@ -406,7 +407,7 @@ class Context:
             return True
 
     async def send_encoded_msgs(self, endpoint: Endpoint, msg: str) -> bool:
-        if not endpoint.socket or not endpoint.socket.open:
+        if not endpoint.socket or endpoint.socket.state is not State.OPEN:
             return False
         try:
             await endpoint.socket.send(msg)
@@ -422,7 +423,7 @@ class Context:
     async def broadcast_send_encoded_msgs(self, endpoints: typing.Iterable[Endpoint], msg: str) -> bool:
         sockets = []
         for endpoint in endpoints:
-            if endpoint.socket and endpoint.socket.open:
+            if endpoint.socket and endpoint.socket.state is State.OPEN:
                 sockets.append(endpoint.socket)
         try:
             websockets.broadcast(sockets, msg)
@@ -999,7 +1000,7 @@ async def on_client_joined(ctx: Context, client: Client):
                               "If your client supports it, "
                               "you may have additional local commands you can list with /help.",
                       {"type": "Tutorial"})
-    if not any(isinstance(extension, PerMessageDeflate) for extension in client.socket.extensions):
+    if not any(isinstance(extension, PerMessageDeflate) for extension in client.socket.protocol.extensions):
         ctx.notify_client(client, "Warning: your client does not support compressed websocket connections! "
                                   "It may stop working in the future. If you are a player, please report this to the "
                                   "client's developer.")
@@ -2886,25 +2887,6 @@ async def main(args: argparse.Namespace):
     console_task = asyncio.create_task(console(ctx))
     if ctx.auto_shutdown:
         ctx.shutdown_task = asyncio.create_task(auto_shutdown(ctx, [console_task]))
-
-    def stop():
-        try:
-            for remove_signal in [SIGINT, SIGTERM]:
-                asyncio.get_event_loop().remove_signal_handler(remove_signal)
-        except NotImplementedError:
-            pass
-        ctx.commandprocessor._cmd_exit()
-
-    def shutdown(signum, frame):
-        stop()
-
-    try:
-        for sig in [SIGINT, SIGTERM]:
-            asyncio.get_event_loop().add_signal_handler(sig, stop)
-    except NotImplementedError:
-        # add_signal_handler is only implemented for UNIX platforms
-        for sig in [SIGINT, SIGTERM]:
-            signal(sig, shutdown)
 
     await ctx.exit_event.wait()
     console_task.cancel()

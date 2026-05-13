@@ -48,3 +48,54 @@ class FrontendProtocol(Protocol):
     def focus_textinput(self) -> None: ...
     def hide_loading(self) -> None: ...
     def is_on_console_screen(self) -> bool: ...
+
+    # --- NOT-YET-IMPLEMENTED: per-world custom UI surface ---
+    #
+    # Reserved for future work to fully deprecate `kvui`. The methods below are the
+    # Kivy-only hooks that per-world client wrappers (kh2, albw, ...) currently reach for
+    # when they subclass `kvui.GameManager` -- they pass a `kivy.uix.widget.Widget` as
+    # `content`, which is exactly what locks those worlds to Kivy. A frontend-neutral
+    # rewrite would have to:
+    #
+    #   1. Define a frontend-neutral "content" type (probably a small dataclass: title,
+    #      logging-source name, optional structured data, and a renderer callback the
+    #      frontend invokes with its own widget toolkit). Right now `content` is just
+    #      `Any` so each frontend can decide what it accepts; do NOT take `Widget` here.
+    #   2. Implement the methods on both `MultiMDApp` (Kivy) and `MultiTUIApp` (Textual).
+    #      Kivy already has working bodies in `kvui.GameManager`; the TUI side needs new
+    #      Screen/Tab widgets and a registry that survives takeover.
+    #   3. Update per-world client wrappers to call `ctx.ui.add_client_tab(...)` instead
+    #      of subclassing `kvui.GameManager`, then drop the `from kvui import GameManager`
+    #      import. Once every world is migrated, `kvui.py` (and the stub it contains for
+    #      the TUI path) can be deleted.
+    #
+    # Until that work happens, these are *protocol stubs only* -- `FrontendProtocol` is a
+    # `runtime_checkable` Protocol, so adding them here is harmless: frontends that don't
+    # implement them simply fail `isinstance(app, FrontendProtocol)`, which nothing in the
+    # codebase currently relies on at runtime. Worlds that need custom UI must still go
+    # through `kvui.GameManager` for now.
+
+    def add_client_tab(self, title: str, content: Any, index: int = -1) -> Any:
+        """Add a per-world tab/panel to the running frontend.
+
+        `content` is frontend-defined (Kivy passes a `Widget`; the TUI would accept a
+        Textual `Widget` or a renderable spec). Returns a handle the caller can later
+        pass back to `remove_client_tab`.
+        """
+        ...
+
+    def remove_client_tab(self, tab: Any) -> None:
+        """Remove a tab previously returned by `add_client_tab`."""
+        ...
+
+    def create_custom_screen(self, title: str, content: Any, index: int = -1) -> Any:
+        """Add a full-screen per-world view (one level above `add_client_tab`).
+
+        Used by worlds that want their own top-level screen rather than a tab inside the
+        main client view. Returns a handle suitable for `remove_custom_screen`.
+        """
+        ...
+
+    def remove_custom_screen(self, handle: Any) -> None:
+        """Remove a screen previously returned by `create_custom_screen`."""
+        ...

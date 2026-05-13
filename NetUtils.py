@@ -7,7 +7,7 @@ import warnings
 from json import JSONEncoder, JSONDecoder
 
 if typing.TYPE_CHECKING:
-    from websockets import WebSocketServerProtocol as ServerConnection
+    from websockets.asyncio.server import ServerConnection
 
 from BaseUtils import ByValue, Version
 
