@@ -1,5 +1,8 @@
 name: Release - Build Distributables
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
@@ -16,6 +19,9 @@ on:
   push:
     tags:
       - '[0-9]*'
+
+permissions:
+  contents: read
 
 env:
   PYTHON_VERSION: '3.13'
@@ -385,6 +391,8 @@ jobs:
     name: Create GitHub Release
     needs: [version-input, build-exe, build-linux-appimage, build-mac-bundle, build-windows-installer]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     if: |
       always() && 
       (github.event_name == 'push' || inputs.create_release) &&
