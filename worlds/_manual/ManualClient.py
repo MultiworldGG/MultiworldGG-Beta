@@ -27,7 +27,7 @@ from MultiServer import mark_raw
 
 tracker_loaded = False
 try:
-    from worlds._tracker.TrackerClient import TrackerGameContext as SuperContext, TrackerCommandProcessor
+    from worlds.tracker.TrackerClient import TrackerGameContext as SuperContext, TrackerCommandProcessor
     ClientCommandProcessor = TrackerCommandProcessor
     tracker_loaded = True
 except ModuleNotFoundError:
@@ -1181,7 +1181,7 @@ async def main(args):
     if args.apmanual_file:
         config_file = read_apmanual_file(args.apmanual_file)
     ctx = ManualContext(args.connect, args.password, config_file.get("game"), config_file.get("player_name"))
-    ctx.mwserver_task = asyncio.create_task(server_loop(ctx), name="server loop")
+    ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
 
     ctx.item_table = config_file.get("items", {})
     ctx.location_table = config_file.get("locations", {})

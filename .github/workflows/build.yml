@@ -40,7 +40,7 @@ jobs:
     runs-on: windows-latest
     steps:
       # - copy code below to release.yml -
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6
       - name: Install python
         uses: actions/setup-python@v6.2.0
         with:
@@ -130,7 +130,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       # - copy code below to release.yml -
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6
       - name: Install base dependencies
         run: |
           sudo apt update
@@ -228,7 +228,7 @@ jobs:
   build-macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6
       - name: Install Homebrew dependencies
         run: |
           brew update

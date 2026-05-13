@@ -23,7 +23,7 @@ jobs:
     outputs:
       version: ${{ steps.get-version.outputs.version }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6
       
       - name: Determine version
         id: get-version
@@ -59,7 +59,7 @@ jobs:
             exe_pattern: 'MultiworldGG'
     
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6
 
       - name: Download Runtime executables
         uses: ./.github/actions/download-runtime-execs
@@ -161,7 +161,7 @@ jobs:
     env:
       APP_VERSION: ${{ needs.determine-version.outputs.version }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6
 
       - name: Download Runtime executables
         uses: ./.github/actions/download-runtime-execs
@@ -188,29 +188,11 @@ jobs:
           pip install -r requirements.txt
           pip install -r build_requirements.txt
 
-          # mwgg_igdb is git-pulled at first run by ModuleUpdate.install_mwgg_igdb()
-          # — not bundled into default_wheels/ anymore.
+          # mwgg_gui / mwgg_tui / mwgg_splash are pulled from their GitHub
+          # releases at build time by build_exe.install_wheels(). mwgg_igdb is
+          # git-pulled at first run by ModuleUpdate.install_mwgg_igdb(). Worlds
+          # bundle directly from src/worlds/ source — no wheel install here.
 
-          # Install default wheels (mwgg_gui, mwgg_splash, kivymd-dev, platform helpers)
-          for wheel in default_wheels/*.whl; do
-            if [ -f "$wheel" ]; then
-              # Skip Windows-specific wheels on Linux
-              if [[ "$wheel" =~ (win_amd64|win32) ]]; then
-                continue
-              fi
-              echo "Installing $wheel..."
-              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
-            fi
-          done
-          
-          # Install worlds wheels
-          for wheel in worlds_wheels/*.whl; do
-            if [ -f "$wheel" ]; then
-              echo "Installing $wheel..."
-              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
-            fi
-          done
-      
       - name: Install AppImage build dependencies
         run: |
           sudo apt update
@@ -279,7 +261,7 @@ jobs:
     env:
       APP_VERSION: ${{ needs.determine-version.outputs.version }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6
 
       - name: Free disk space
         run: |
@@ -333,33 +315,11 @@ jobs:
           pip install -r requirements.txt
           pip install -r build_requirements.txt
 
-          # mwgg_igdb is git-pulled at first run by ModuleUpdate.install_mwgg_igdb()
-          # — not bundled into default_wheels/ anymore.
+          # mwgg_gui / mwgg_tui / mwgg_splash are pulled from their GitHub
+          # releases at build time by build_exe.install_wheels(). mwgg_igdb is
+          # git-pulled at first run by ModuleUpdate.install_mwgg_igdb(). Worlds
+          # bundle directly from src/worlds/ source — no wheel install here.
 
-          # Install default wheels (mwgg_gui, mwgg_splash, kivymd-dev, platform helpers)
-          for wheel in default_wheels/*.whl; do
-            if [ -f "$wheel" ]; then
-              # Skip Windows-specific wheels on macOS
-              if [[ "$wheel" =~ (win_amd64|win32) ]]; then
-                continue
-              fi
-              # Skip Linux-specific wheels on macOS
-              if [[ "$wheel" =~ linux ]]; then
-                continue
-              fi
-              echo "Installing $wheel..."
-              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
-            fi
-          done
-          
-          # Install worlds wheels
-          for wheel in worlds_wheels/*.whl; do
-            if [ -f "$wheel" ]; then
-              echo "Installing $wheel..."
-              pip install "$wheel" --force-reinstall || pip install "$wheel" --no-deps --force-reinstall || echo "Failed to install $wheel"
-            fi
-          done
-          
           pip install --no-cache-dir PyGObject charset-normalizer
           # Clean pip cache before build
           pip cache purge || true
@@ -438,7 +398,7 @@ jobs:
     env:
       APP_VERSION: ${{ needs.determine-version.outputs.version }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6
 
       - name: Write version to setup.ini
         shell: pwsh
@@ -501,7 +461,7 @@ jobs:
       always() && 
       (needs.build-exe.result == 'success' || needs.build-exe.result == 'failure')
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6
       
       - name: Download all artifacts
         uses: actions/download-artifact@v7.0.0

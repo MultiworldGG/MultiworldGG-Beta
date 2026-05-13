@@ -44,11 +44,6 @@ class SyncError(Exception):
 
 
 class BizHawkContext:
-    """
-    BizHawkContext is a class that provides a context for interacting with BizHawk.
-    This is not a CommonContext MWGG client, it is the interface to BizHawk.
-    """
-
     streams: tuple[asyncio.StreamReader, asyncio.StreamWriter] | None
     connection_status: ConnectionStatus
     _lock: asyncio.Lock

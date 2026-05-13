@@ -7,9 +7,11 @@ import asyncio
 import copy
 import enum
 import subprocess
-from typing import Any, Callable
+from typing import Any
+import urllib
 
 import settings
+
 from CommonClient import CommonContext, ClientCommandProcessor, get_base_parser, server_loop, logger, gui_enabled
 import Patch
 import Utils
@@ -132,7 +134,7 @@ class BizHawkClientContext(CommonContext):
     watcher_timeout: float
     """The maximum amount of time the game watcher loop will wait for an update from the server before executing"""
 
-    def __init__(self, server_address: str | None, password: str | None, ready_callback: Callable[[], None] | None = None):
+    def __init__(self, server_address: str | None, password: str | None):
         super().__init__(server_address, password)
         self.text_passthrough_categories = set()
         self.auth_status = AuthStatus.NOT_AUTHENTICATED
@@ -140,11 +142,6 @@ class BizHawkClientContext(CommonContext):
         self.client_handler = None
         self.bizhawk_ctx = BizHawkContext()
         self.watcher_timeout = 0.5
-        self.ready_callback = ready_callback
-
-        if self.ready_callback:
-            from kivy.clock import Clock
-            Clock.schedule_once(self.ready_callback, 0.1)
 
     def _categorize_text(self, args: dict) -> TextCategory:
         if "type" not in args or args["type"] in {"Hint", "Join", "Part", "TagsChanged", "Goal", "Release", "Collect",
@@ -352,28 +349,30 @@ def _patch_and_run_game(patch_file: str):
         return {}
 
 
-def launch(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None) -> None:
-    logger.info("BizHawkClient")
-
+def launch(*launch_args: str) -> None:
     async def main():
-        ctx = BizHawkClientContext(server_address, password, ready_callback)
-        if ctx._can_takeover_existing_ui():
-            await ctx._takeover_existing_ui()
-        else:
-            logger.critical("Client did not launch properly, exiting.")
-            if error_callback:
-                error_callback()
-            return
+        parser = get_base_parser()
+        parser.add_argument("patch_file", default="", type=str, nargs="?", help="Path to a MultiworldGG patch file")
+        args = parser.parse_args(launch_args)
 
-        ctx.ui.base_title = apname + " | BizHawk Client"
-        ctx.mwserver_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
-        await ctx.server_auth()
+        if args.patch_file.startswith("archipelago://"):
+            url = urllib.parse.urlparse(args.patch_file)
+            args.connect = url.netloc
+            if url.username:
+                args.name = urllib.parse.unquote(url.username)
+            if url.password:
+                args.password = urllib.parse.unquote(url.password)
+        elif args.patch_file != "":
+            metadata = _patch_and_run_game(args.patch_file)
+            if "server" in metadata:
+                args.connect = metadata["server"]
 
-        if patch_file:
-            metadata = _patch_and_run_game(patch_file)
-            if "server" in metadata and not server_address:
-                # Only use metadata server if no server_address was provided
-                ctx.server_address = metadata["server"]
+        ctx = BizHawkClientContext(args.connect, args.password)
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+
+        if gui_enabled:
+            ctx.run_gui()
+        ctx.run_cli()
 
         watcher_task = asyncio.create_task(_game_watcher(ctx), name="GameWatcher")
 
@@ -385,29 +384,8 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
         await ctx.exit_event.wait()
         await ctx.shutdown()
 
+    Utils.init_logging("BizHawkClient", exception_logger="Client")
     import colorama
-
-    # Check if we're already in an event loop (GUI mode) first
-    try:
-        loop = asyncio.get_running_loop()
-        # We're in an existing event loop, create a task
-        logger.info("Running in existing event loop (GUI mode)")
-        
-        # Create a simple namespace object to mimic argparse.Namespace
-        class Args:
-            def __init__(self, server_address, password, patch_file):
-                self.server_address = server_address
-                self.password = password
-                self.patch_file = patch_file
-        
-        args = Args(server_address, password, patch_file)
-        task = asyncio.create_task(main(), name="BizHawkMain")
-        return task
-    except RuntimeError:
-        logger.critical("This is not a standalone client. Please run the MultiWorld GUI to start the BizHawk client.")
-        if error_callback:
-            error_callback()
-
-
-def main(server_address: str = None, password: str = None, ready_callback=None, error_callback=None, patch_file: str = None):
-    launch(server_address, password, ready_callback, error_callback, patch_file)
+    colorama.just_fix_windows_console()
+    asyncio.run(main())
+    colorama.deinit()

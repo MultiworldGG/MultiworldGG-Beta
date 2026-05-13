@@ -25,13 +25,6 @@ if not logging.getLogger("MultiWorld").hasHandlers():
 # Does not respect root logger level.
 logging.getLogger("cx_Freeze").setLevel(logging.getLogger().level)
 logging.getLogger("kivy").setLevel(logging.getLogger().level)
-# Because worlds is a namespace, it wants to include the entire folder, and there's no
-# way to exclude it but also include the wheels worlds packages.
-# Rename the folder, and we'll put it back afterwards.
-if os.path.exists("worlds"):
-    logger.debug("Renaming worlds folder to build_is_running_worlds to avoid cx_Freeze including it")
-    os.rename("worlds", "build_is_running_worlds")
-    os.environ["MWGG_BUILD_IS_RUNNING"] = "1"
 
 # Import project utilities
 sys.path.insert(0, os.path.dirname(__file__))
@@ -68,7 +61,9 @@ build_exe_options = {
 
         # Custom packages
         "mwgg_gui",
-        "worlds",
+        "mwgg_tui",
+        "mwgg_splash",
+        "worlds"
     ],
     "includes": [
         "ModuleUpdate",
@@ -97,7 +92,7 @@ build_exe_options = {
         "kivy_deps.angle"
     ],
     "zip_include_packages": ["*"],
-    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "PIL"],
+    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "PIL", "mwgg_tui", "mwgg_splash"],
     "include_files": [
         ("data", "data"),
         ("LICENSE", "LICENSE"),
@@ -233,11 +228,6 @@ class CustomBuildExe(build_exe):
         # Get the build directory
         build_dir = self.build_exe
         if build_dir:
-            if os.environ.get("MWGG_BUILD_IS_RUNNING") or os.path.exists("build_is_running_worlds"):
-                logger.debug("Renaming worlds folder back to worlds")
-                os.rename("build_is_running_worlds", "worlds")
-                if "MWGG_BUILD_IS_RUNNING" in os.environ:
-                    del os.environ["MWGG_BUILD_IS_RUNNING"]
             logger.info(f"Build completed in: {build_dir}")
             # Run post-build setup
             post_build_setup(build_dir)

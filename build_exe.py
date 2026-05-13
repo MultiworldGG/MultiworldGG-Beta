@@ -10,6 +10,9 @@ import shutil
 from pathlib import Path
 import argparse
 import logging
+import urllib.request
+import urllib.error
+import json
 
 logger = logging.getLogger("MultiWorld")
 if not logging.getLogger().hasHandlers():
@@ -58,51 +61,105 @@ def install_requirements(build: bool = False) -> bool:
         logger.info(f"{req_file.name} not found, skipping requirements installation")
         return True
 
-def install_wheels(type="default") -> bool:
-    """Install wheels from default_wheels directory"""
-    wheels_dir = Path(f"{type}_wheels")
-    if wheels_dir.exists():
-        logger.info(f"Installing wheels from {type}_wheels...")
+# Sibling repos under the MultiworldGG GitHub org that publish wheel releases.
+# build_exe pip-installs the latest wheel asset from each into the build venv so
+# cx_Freeze can bundle them. Per-game worlds are NOT here — those are pulled at
+# first run by ModuleUpdate.install_worlds() from mwgg_igdb module_location URLs.
+# TODO: add the platform-helpers repo (pyfastbti, pyfastyaz0yay0) here once it
+# exists. The current frozen build doesn't need those — every world that did has
+# been pulled out of the monorepo.
+SIBLING_WHEEL_REPOS: list[tuple[str, str]] = [
+    ("MultiworldGG", "mwgg-gui"),
+    ("MultiworldGG", "mwgg-tui"),
+    ("MultiworldGG", "mwgg-splash"),
+]
 
-        for wheel_file in wheels_dir.glob("*.whl"):
-            
-            # Skip platform-specific wheels that don't match current platform
-            wheel_name = wheel_file.name.lower()
-            if "win_amd64" in wheel_name or "win32" in wheel_name:
-                if not is_windows():
-                    logger.debug(f"Skipping {wheel_file.name} (Windows-only)")
-                    continue
-            if "macosx" in wheel_name:
-                if not is_macos():
-                    logger.debug(f"Skipping {wheel_file.name} (macOS-only)")
-                    continue
-            if "linux" in wheel_name:
-                if not is_linux():
-                    logger.debug(f"Skipping {wheel_file.name} (Linux-only)")
-                    continue
-            
-            try:
-                # First try with dependencies to ensure all required packages are installed
-                subprocess.check_call([
-                    sys.executable, "-m", "pip", "install", 
-                    str(wheel_file), "--force-reinstall"
-                ])
-                logger.info(f"[OK] Installed {wheel_file.name}")
-            except subprocess.CalledProcessError as e:
-                logger.debug(f"Failed to install {wheel_file.name} with dependencies: {e}")
-                # Fallback to no-deps if dependency installation fails
-                try:
-                    subprocess.check_call([
-                        sys.executable, "-m", "pip", "install", 
-                        str(wheel_file), "--no-deps", "--force-reinstall"
-                    ])
-                    logger.info(f"[OK] Installed {wheel_file.name} (no-deps)")
-                except subprocess.CalledProcessError as e2:
-                    logger.warning(f"[FAILED] Failed to install {wheel_file.name}: {e2}")
-        return True
-    else:
-        logger.info(f"{type}_wheels directory not found, skipping wheel installation")
+
+def _pick_wheel_asset(assets: list[dict]) -> dict | None:
+    """Return the best wheel asset for the current platform, or None.
+
+    Prefer pure-Python (`py3-none-any`) wheels; fall back to a platform-tagged
+    wheel matching the current OS. Skip wheels tagged for other platforms.
+    """
+    wheels = [a for a in assets if a.get("name", "").endswith(".whl")]
+    if not wheels:
+        return None
+
+    def matches_platform(name: str) -> bool:
+        if "py3-none-any" in name:
+            return True
+        if is_windows() and ("win_amd64" in name or "win32" in name):
+            return True
+        if is_linux() and "linux" in name:
+            return True
+        if is_macos() and "macosx" in name:
+            return True
         return False
+
+    def is_foreign(name: str) -> bool:
+        # A platform-tagged wheel for someone else's platform.
+        foreign_tags = []
+        if not is_windows():
+            foreign_tags += ["win_amd64", "win32"]
+        if not is_linux():
+            foreign_tags += ["linux"]
+        if not is_macos():
+            foreign_tags += ["macosx"]
+        return any(tag in name for tag in foreign_tags)
+
+    # Pure-Python first.
+    for a in wheels:
+        if "py3-none-any" in a["name"]:
+            return a
+    # Then native-platform.
+    for a in wheels:
+        if matches_platform(a["name"]) and not is_foreign(a["name"]):
+            return a
+    return None
+
+
+def _latest_release_wheel_url(owner: str, repo: str) -> str | None:
+    """Fetch the latest release for a sibling repo and return its wheel URL."""
+    api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
+    req = urllib.request.Request(
+        api_url,
+        headers={"Accept": "application/vnd.github.v3+json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as e:
+        logger.warning(f"Could not fetch latest release for {owner}/{repo}: {e}")
+        return None
+
+    asset = _pick_wheel_asset(data.get("assets", []))
+    if asset is None:
+        logger.warning(f"No suitable wheel asset on latest release of {owner}/{repo}")
+        return None
+    return asset["browser_download_url"]
+
+
+def install_wheels() -> bool:
+    """Install sibling-repo wheels from their latest GitHub releases.
+
+    For each repo in SIBLING_WHEEL_REPOS, GET the latest release, pick a wheel
+    asset compatible with the current platform, and pip-install it into the
+    build venv. cx_Freeze then bundles the installed package into the frozen
+    build via setup.py's `packages` list.
+    """
+    for owner, repo in SIBLING_WHEEL_REPOS:
+        url = _latest_release_wheel_url(owner, repo)
+        if url is None:
+            return False
+        logger.info(f"Installing {owner}/{repo} wheel from {url}")
+        try:
+            subprocess.check_call([
+                sys.executable, "-m", "pip", "install", url, "--force-reinstall", "--no-cache-dir",
+            ])
+        except subprocess.CalledProcessError as e:
+            logger.warning(f"pip install failed for {owner}/{repo}: {e}")
+            return False
+    return True
 
 def update_modules() -> bool:
     """Update modules using ModuleUpdate"""
@@ -260,20 +317,13 @@ def main():
         if not install_requirements(build=False):
             sys.exit(1)
 
-    # Install default wheels (mwgg_gui, mwgg_splash, kivymd-dev, platform helpers
-    # not on PyPI).
+    # Install sibling-repo wheels (mwgg_gui, mwgg_tui, mwgg_splash) from their
+    # latest GitHub releases. cx_Freeze bundles them once they're in the build
+    # venv. Worlds bundle directly from src/worlds/ source — no wheel fetch
+    # there. Per-game worlds are installed at first run by
+    # ModuleUpdate.install_worlds() from mwgg_igdb's module_location URLs.
     if not args.skip_wheels:
-        if not install_wheels("default"):
-            sys.exit(1)
-
-    # Install infra-world wheels (worlds.<base>, worlds._bizhawk, worlds._generic,
-    # worlds._manual, worlds._sni, worlds._tracker). These are versioned independently
-    # per the per-world release cadence and bundled into the frozen build so the base
-    # install ships ready-to-use; they can also be upgraded in-place via ModuleUpdate
-    # like any other world. Per-game worlds are NOT bundled — those are installed at
-    # first run by ModuleUpdate.install_worlds() from mwgg_igdb's module_location URLs.
-    if not args.skip_wheels:
-        if not install_wheels("worlds"):
+        if not install_wheels():
             sys.exit(1)
 
     # Update modules

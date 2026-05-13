@@ -49,7 +49,7 @@ jobs:
             os: macos-latest
 
     steps:
-    - uses: actions/checkout@v6.0.2
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python.version }}
       uses: actions/setup-python@v6.2.0
       with:
@@ -76,7 +76,7 @@ jobs:
           - {version: '3.13'}  # current
 
     steps:
-    - uses: actions/checkout@v6.0.2
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python.version }}
       uses: actions/setup-python@v6.2.0
       with:

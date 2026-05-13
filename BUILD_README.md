@@ -30,14 +30,16 @@ python build_exe.py --verify
 The build script will:
 1. Install build_requirements.txt (includes cx_Freeze)
 2. Install requirements.txt
-3. Install wheels from default_wheels/ (mwgg_gui, mwgg_splash, kivymd-dev, etc.)
-4. Install wheels from worlds_wheels/ (infra worlds)
-5. Generate setup.ini (Windows only, for Inno Setup)
-6. Run the cx_Freeze build via setup.py build_exe
-7. Verify the build output (with --verify)
+3. Fetch the latest mwgg_gui / mwgg_tui / mwgg_splash wheel from each sibling repo's
+   GitHub releases (via `install_wheels()`) and pip-install them into the build venv
+4. Generate setup.ini (Windows only, for Inno Setup)
+5. Run the cx_Freeze build via setup.py build_exe
+6. Verify the build output (with --verify)
 
-Per-game worlds and the mwgg_igdb game index are NOT installed at build time —
-they're git-pulled at first run by ModuleUpdate.update().
+Worlds (infra `_bizhawk`, `_debug`, `_manual`, `_sni`, `_tracker`, `generic`) are bundled
+directly from `src/worlds/` source — there is no separate worlds wheel build. Per-game
+worlds and the mwgg_igdb game index are NOT installed at build time; they're git-pulled
+at first run by ModuleUpdate.update() and ModuleUpdate.install_worlds().
 
 ### Option 2: Manual build using setup.py
 
@@ -51,10 +53,10 @@ pip install -r build_requirements.txt
 # Install requirements
 pip install -r requirements.txt
 
-# Install wheels from default_wheels
-for wheel in ../default_wheels/*.whl; do
-    pip install "$wheel" --no-deps --force-reinstall
-done
+# Fetch sibling-repo wheels (mwgg_gui, mwgg_tui, mwgg_splash) from their latest
+# GitHub releases. This is what build_exe.install_wheels() does; you can also
+# invoke it directly:
+python -c "import build_exe; build_exe.install_wheels()"
 
 # Run the build (mwgg_igdb is git-pulled at first run, not at build time)
 python setup.py build_exe
@@ -144,8 +146,10 @@ The build directory contains:
    - Check that all requirements are installed: `pip list`
 
 2. **Wheel installation failures**
-   - Ensure wheels are compatible with your Python version
-   - Try installing wheels manually: `pip install ../default_wheels/*.whl`
+   - Ensure network access to api.github.com and github.com
+   - Confirm the sibling repos (`MultiworldGG/mwgg-gui`, `mwgg-tui`, `mwgg-splash`) have a
+     published release with a wheel asset attached
+   - Try invoking the fetch directly: `python -c "import build_exe; build_exe.install_wheels()"`
 
 3. **Module update failures**
    - Check network connectivity

@@ -836,17 +836,13 @@ class TrackerGameContext(CommonContext):
 
     def build_gui(self, manager: "GameManager"):
         from kivy.uix.boxlayout import BoxLayout
-        from kivymd.uix.recycleview import MDRecycleView
-        from kivymd.uix.behaviors import HoverBehavior
-        from kivymd.uix.label import MDLabel
-        from kivymd.uix.divider import MDDivider
+        from kvui import MDRecycleView, HoverBehavior, MDLabel, MDDivider
         from kivymd.uix.tooltip import MDTooltip
         from kivy.uix.widget import Widget
         from kivy.properties import StringProperty, NumericProperty, BooleanProperty
         from kivy.metrics import dp
-        from kivy.uix.image import AsyncImage as ApAsyncImage
+        from kivy.core.image import AsyncImage as ApAsyncImage
         from kvui import ToolTip
-        from .TrackerKivy import SomethingNeatJustToMakePythonHappy
 
         class CheckItem(BoxLayout):
             text = StringProperty()
@@ -1155,7 +1151,7 @@ class TrackerGameContext(CommonContext):
         from kivymd.uix.menu import MDDropdownMenu
         from kivy.metrics import dp
         from kivy.animation import Animation
-        from kivy.core.image import ImageLoader
+        from kvui import ImageLoader
 
         class TrackerManager(ui):
             source = StringProperty("")
@@ -1750,7 +1746,7 @@ async def wait_for_items(ctx: TrackerGameContext)-> None:
 async def main(args):
     ctx = TrackerGameContext(args.connect, args.password, print_count=args.count, print_list=args.list)
     ctx.auth = args.name
-    ctx.mwserver_task = asyncio.create_task(server_loop(ctx), name="server loop")
+    ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
     ctx.run_generator()
 
     if gui_enabled:
