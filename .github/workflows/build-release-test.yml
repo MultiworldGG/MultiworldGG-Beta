@@ -1,0 +1,465 @@
+name: Release - Build Distributables
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v0.1.0)'
+        required: true
+        type: string
+      create_release:
+        description: 'Create GitHub release'
+        required: false
+        type: boolean
+        default: true
+  
+  push:
+    tags:
+      - '[0-9]*'
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.13'
+
+jobs:
+  version-input:
+    name: Version Input
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ inputs.version }}
+    steps:
+      - name: Input version
+        id: input-version
+        run: echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+
+  build-exe:
+    name: Build Executable - ${{ matrix.os }}
+    needs: version-input
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    env:
+      APP_VERSION: ${{ needs.version-input.outputs.version }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            artifact_name: windows-exe
+            exe_pattern: '*.exe'
+          - os: ubuntu-latest
+            artifact_name: linux-exe
+            exe_pattern: 'MultiworldGG'
+          - os: macos-latest
+            artifact_name: macos-exe
+            exe_pattern: 'MultiworldGG'
+    
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: src
+
+      - name: Download Runtime executables
+        uses: ./src/.github/actions/download-runtime-execs
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: src
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Sync release version files
+        shell: bash
+        run: python src/tools/set_release_version.py "$APP_VERSION" --root src
+      
+      - name: Create fresh virtual environment
+        shell: bash
+        run: |
+          python -m venv venv
+          
+          # Activate based on OS
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            source venv/Scripts/activate
+            python -m pip install --upgrade pip
+          else
+            source venv/bin/activate
+            python -m pip install --upgrade pip
+          fi
+      
+      - name: Install build dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          source venv/Scripts/activate
+          cd src
+          pip install -r requirements.txt
+          pip install -r build_requirements.txt
+      
+      - name: Install build dependencies (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          source venv/bin/activate
+          cd src
+          pip install -r requirements.txt
+          pip install -r build_requirements.txt
+      
+      - name: Build executable (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        env:
+          MWGG_BUILD_GITHUB_TOKEN: ${{ secrets.MWGG_BUILD_GITHUB_TOKEN }}
+        run: |
+          source venv/Scripts/activate
+          cd src
+          python build_exe.py
+
+      - name: Build executable (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          MWGG_BUILD_GITHUB_TOKEN: ${{ secrets.MWGG_BUILD_GITHUB_TOKEN }}
+        run: |
+          source venv/bin/activate
+          cd src
+          python build_exe.py
+      
+      - name: Upload executable artifact
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            src/build/**/*
+          retention-days: 90
+
+  build-linux-appimage:
+    name: Build Linux AppImage
+    needs: [version-input, build-exe]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      APP_VERSION: ${{ needs.version-input.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: src
+
+      - name: Download Runtime executables
+        uses: ./src/.github/actions/download-runtime-execs
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: src
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Sync release version files
+        run: python src/tools/set_release_version.py "$APP_VERSION" --root src
+
+      - name: Download Linux exe artifact
+        uses: actions/download-artifact@v7.0.0
+        with:
+          name: linux-exe
+          path: src/build/
+      
+      - name: Create virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          cd src
+          pip install -r requirements.txt
+          pip install -r build_requirements.txt
+
+          # mwgg_gui / mwgg_tui / mwgg_splash are pulled from their GitHub
+          # releases at build time by build_exe.install_wheels(). mwgg_igdb is
+          # git-pulled at first run by ModuleUpdate.install_mwgg_igdb(). Worlds
+          # bundle directly from src/worlds/ source — no wheel install here.
+
+      - name: Build AppImage
+        run: |
+          source venv/bin/activate
+          cd src
+          python setup.py bdist_appimage
+      
+      - name: Rename AppImage to include version suffix
+        run: |
+          # Extract the full version from application.yaml
+          FULL_VERSION=$(grep 'app_version:' src/application.yaml | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "Full version from application.yaml: $FULL_VERSION"
+          
+          cd src/dist
+          # Find the AppImage file and rename it to include the full version
+          for file in *.AppImage; do
+            if [ -f "$file" ]; then
+              # Check if it already has the full version
+              if [[ ! "$file" =~ $FULL_VERSION ]]; then
+                # Extract base version without tag suffix (e.g., 0.7.177)
+                BASE_VERSION=$(echo "$FULL_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+                # Replace BASE_VERSION-x86_64 with FULL_VERSION-x86_64
+                newname=$(echo "$file" | sed -E "s/${BASE_VERSION}-/${FULL_VERSION}-/")
+                echo "Renaming $file to $newname"
+                mv "$file" "$newname"
+              fi
+            fi
+          done
+      
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: linux-appimage
+          path: src/dist/*.AppImage
+          retention-days: 90
+
+  build-mac-bundle:
+    name: Build macOS Bundle
+    needs: [version-input, build-exe]
+    runs-on: macos-latest
+    continue-on-error: true
+    env:
+      APP_VERSION: ${{ needs.version-input.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: src
+
+      - name: Download Runtime executables
+        uses: ./src/.github/actions/download-runtime-execs
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: src
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Sync release version files
+        run: python src/tools/set_release_version.py "$APP_VERSION" --root src
+
+      - name: Download macOS exe artifact
+        uses: actions/download-artifact@v7.0.0
+        with:
+          name: macos-exe
+          path: src/build/
+      
+      - name: Create virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          cd src
+          pip install -r requirements.txt
+          pip install -r build_requirements.txt
+
+          # mwgg_gui / mwgg_tui / mwgg_splash are pulled from their GitHub
+          # releases at build time by build_exe.install_wheels(). mwgg_igdb is
+          # git-pulled at first run by ModuleUpdate.install_mwgg_igdb(). Worlds
+          # bundle directly from src/worlds/ source — no wheel install here.
+
+      - name: Build macOS bundle
+        run: |
+          source venv/bin/activate
+          cd src
+          python setup.py bdist_mac
+      
+      - name: Build macOS DMG
+        run: |
+          source venv/bin/activate
+          cd src
+          python setup.py bdist_dmg
+      
+      - name: Rename DMG to include version suffix
+        run: |
+          # Extract the full version from application.yaml
+          FULL_VERSION=$(grep 'app_version:' src/application.yaml | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "Full version from application.yaml: $FULL_VERSION"
+          
+          # Extract just the tag suffix (e.g., a6)
+          TAG_SUFFIX=$(echo "$FULL_VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+//')
+          echo "Tag suffix: $TAG_SUFFIX"
+          
+          cd src/build
+          # Find the DMG file and rename it to include the version tag suffix
+          for file in *.dmg; do
+            if [ -f "$file" ]; then
+              # Extract base name without extension
+              basename="${file%.dmg}"
+              # Check if it already has the version suffix
+              if [[ ! "$basename" =~ $TAG_SUFFIX$ ]]; then
+                newname="${basename}${TAG_SUFFIX}.dmg"
+                echo "Renaming $file to $newname"
+                mv "$file" "$newname"
+              fi
+            fi
+          done
+      
+      - name: Upload macOS bundle artifact
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: macos-bundle
+          path: |
+            src/build/*.dmg
+          retention-days: 90
+
+  build-windows-installer:
+    name: Build Windows Installer
+    needs: [version-input, build-exe]
+    runs-on: windows-latest
+    continue-on-error: true
+    env:
+      APP_VERSION: ${{ needs.version-input.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: src
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Sync release version files
+        shell: bash
+        run: python src/tools/set_release_version.py "$APP_VERSION" --root src
+      
+      - name: Write version to setup.ini
+        shell: pwsh
+        run: |
+          cd src
+          $version = "$env:APP_VERSION"
+          Write-Host "Writing version $version to setup.ini"
+          
+          # Create setup.ini content
+          "[Data]" | Out-File -FilePath setup.ini -Encoding utf8
+          "source_path=build\exe.win-amd64-3.13" | Out-File -FilePath setup.ini -Append -Encoding utf8
+          "app_version=$version" | Out-File -FilePath setup.ini -Append -Encoding utf8
+          "min_windows=" | Out-File -FilePath setup.ini -Append -Encoding utf8
+          
+          Write-Host "setup.ini contents:"
+          Get-Content setup.ini
+      
+      - name: Download Windows exe artifact
+        uses: actions/download-artifact@v7.0.0
+        with:
+          name: windows-exe
+          path: src/build/
+      
+      - name: Download Python installers
+        shell: pwsh
+        run: |
+          cd src
+          New-Item -ItemType Directory -Force -Path python_installers
+          
+          $PYTHON_VERSION = "3.13.7"
+          Write-Host "Downloading Python $PYTHON_VERSION installers for Windows..."
+          
+          # Download x64 installer
+          $url_amd64 = "https://www.python.org/ftp/python/$PYTHON_VERSION/python-$PYTHON_VERSION-amd64.exe"
+          Write-Host "Downloading from $url_amd64"
+          Invoke-WebRequest -Uri $url_amd64 -OutFile "python_installers\python-$PYTHON_VERSION-amd64.exe"
+          Write-Host "Downloaded x64 installer"
+          
+          Get-ChildItem python_installers
+      
+      - name: Install Inno Setup
+        run: |
+          choco install innosetup -y
+      
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          cd src
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" inno_setup.iss /DNO_SIGNTOOL
+      
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: windows-installer
+          path: src/setups/*.exe
+          retention-days: 90
+
+  create-release:
+    name: Create GitHub Release
+    needs: [version-input, build-exe, build-linux-appimage, build-mac-bundle, build-windows-installer]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: |
+      always() && 
+      (github.event_name == 'push' || inputs.create_release) &&
+      (needs.build-exe.result == 'success' || needs.build-exe.result == 'failure')
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: src
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v7.0.0
+        with:
+          path: release-artifacts/
+      
+      - name: Display structure of downloaded files
+        run: ls -R release-artifacts/
+      
+      - name: Create release notes
+        run: |
+          cat > release-notes.md << 'EOF'          
+          ## Downloads
+          
+          ### Windows
+          - **Installer**: `Setup MultiworldGG-Test *.exe` (recommended)
+          - **Portable**: Extract from `windows-exe.zip`
+          
+          ### Linux
+          - **AppImage**: `*.AppImage` (recommended)
+          - **Portable**: Extract from `linux-exe.zip`
+          
+          ### macOS
+          - **Bundle**: `*.app` or `*.dmg`
+          - **Portable**: Extract from `macos-exe.zip`
+          
+          ## Installation
+          
+          ### Windows
+          Run the installer or extract the portable version.
+          
+          ### Linux
+          ```bash
+          chmod +x MultiworldGG-*.AppImage
+          ./MultiworldGG-*.AppImage
+          ```
+          
+          ### macOS
+          Mount the DMG and drag to Applications, or run the .app directly.
+          
+          ---
+          
+          **Note**: This is an alpha release. Expect bugs and breaking changes.
+          
+          **Manual action required**: If you've added new worlds, you may need to replace placeholder strings in template files.
+          EOF
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ needs.version-input.outputs.version }}
+          name: MultiworldGG-Test ${{ needs.version-input.outputs.version }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: true
+          files: |
+            release-artifacts/windows-installer/*.exe
+            release-artifacts/linux-appimage/*.AppImage
+            release-artifacts/macos-bundle/*.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

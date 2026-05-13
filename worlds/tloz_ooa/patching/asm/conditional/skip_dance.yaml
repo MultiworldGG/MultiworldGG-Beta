@@ -1,8 +1,0 @@
-
-# skip tokkey's dance.
-15/7674/: |
-  db jumpalways
-  dw c360
-15/76d5/: |
-  db jumpalways
-  dw c36e

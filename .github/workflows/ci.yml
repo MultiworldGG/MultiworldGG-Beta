@@ -1,0 +1,35 @@
+name: CI - Build and Test
+
+on:
+  push:
+    branches: [gui-changes]
+    paths:
+      - '**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [gui-changes]
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.13'
+
+jobs:
+  # NOTE: The `build-splashscreen` and `build-gui` jobs used to live here; they built
+  # wheels from `src/splashscreen/` and `src/gui/` and committed them to `default_wheels/`.
+  # Both packages now live in sibling repos (`MultiworldGG/mwgg-splash`,
+  # `MultiworldGG/mwgg-gui`, `MultiworldGG/mwgg-tui`); their wheel builds run in those
+  # repos' own CI and are pulled by `build_exe.install_wheels()` at monorepo build time.
+  #
+  # The `build-base-worlds` and `build-default-worlds` jobs also used to live here; they
+  # built a namespace stub + infra-world wheels (`_bizhawk`, `_manual`, `_sni`, `_tracker`,
+  # `generic`) into `worlds_wheels/`. Worlds are now bundled directly from source by
+  # cx_Freeze — there's no separate wheel cycle. Per-game worlds are git-pulled at first
+  # run by `ModuleUpdate.install_worlds()` from mwgg_igdb's `module_location` URLs.
+  noop:
+    name: Placeholder
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - run: echo "ci.yml currently has no jobs; add them back here as needed."

@@ -1,5 +1,6 @@
 # hadolint global ignore=SC1090,SC1091
 
+# TODO: this is fuckin broken. It doesn't have any worlds, but we don't want a monolith of worlds. External venv?
 # Source
 FROM scratch AS release
 WORKDIR /release
@@ -19,7 +20,7 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
     else touch EnemizerCLI; fi
 
 # Cython builder stage
-FROM python:3.12 AS cython-builder
+FROM python:3.13 AS cython-builder
 
 WORKDIR /build
 
@@ -36,7 +37,7 @@ COPY intset.h .
 RUN cythonize -b -i _speedups.pyx
 
 # MultiworldGG
-FROM python:3.12-slim-bookworm AS multiworldgg
+FROM python:3.13-slim-bookworm AS multiworldgg
 ARG TARGETARCH
 ENV VIRTUAL_ENV=/opt/venv
 ENV PYTHONUNBUFFERED=1
@@ -71,7 +72,7 @@ COPY . .
 COPY --from=cython-builder /build/*.so ./
 
 # Run ModuleUpdate
-RUN python ModuleUpdate.py -y
+#RUN python ModuleUpdate.py -y WHY WHY WHY?
 
 # Purge unneeded packages
 RUN apt-get purge -y \

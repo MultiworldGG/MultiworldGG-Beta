@@ -1,10 +1,16 @@
+# Core runtime dependencies
 colorama>=0.4.6
-websockets==13.1 # ,<14
+websockets>=13.1
 PyYAML>=6.0.3
 jellyfish>=1.2.1
 jinja2>=3.1.6
 schema>=0.7.8
 kivy>=2.3.1
+kivymd@ git+https://github.com/kivymd/KivyMD@d2f7740
+kivymd>=2.0.1.dev0
+asynckivy>=0.6.4,<0.7
+nest_asyncio>=1.6.0
+numpy>=2.3.2
 bsdiff4>=1.2.6
 platformdirs==4.9.4
 certifi==2026.2.25
@@ -17,10 +23,39 @@ orjson>=3.11.7
 typing_extensions>=4.15.0
 pyshortcuts>=1.9.7
 pathspec>=1.0.4
-kivymd @ git+https://github.com/kivymd/KivyMD@5ff9d0d
-kivymd>=2.0.1.dev0
 tqdm>=4.67.1
-werkzeug==3.1.6
+Pillow>=11.2.1
+pywin32>=306; sys_platform == 'win32'
+pip>=25.0.1
 
-# Legacy world dependencies that custom worlds rely on
-Pymem==1.14.0
+# world specific dependencies
+# these are included by default because they're small and common
+
+# needed for alttp
+xxtea>=3.0.0
+
+# needed for celeste
+openpyxl>=3.1.2
+
+# needed for ff4fe
+cherrypy>=18.8.0
+lark>=1.1.7
+markdown>=3.5.0
+pymongo>=4.5.0
+python-dotenv>=1.0.0
+
+# needed for kh2, animal_well, jakanddaxter
+pymem>=1.10.0; sys_platform == 'win32'
+
+# needed for minecraft, gstlas
+requests>=2.28.1
+
+# needed for sc2
+aiohttp>=3.8.4
+loguru>=0.7.0
+mpyq>=0.2.5
+portpicker>=1.5.2
+protobuf==3.20.3
+
+# needed for sms, tww
+dolphin_memory_engine>=1.2.0; sys_platform == 'win32'

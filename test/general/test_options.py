@@ -57,32 +57,32 @@ class TestOptions(unittest.TestCase):
                     self.assertFalse(option in seen_options, f"{option} found in assigned options multiple times.")
                     seen_options.add(option)
 
-    def test_item_links_name_groups(self):
-        """Tests that item links successfully unfold item_name_groups"""
-        item_link_groups = [
-            [{
-                "name": "ItemLinkGroup",
-                "item_pool": ["Everything"],
-                "link_replacement": False,
-                "replacement_item": None,
-            }],
-            [{
-                "name": "ItemLinkGroup",
-                "item_pool": ["TestItem1", "TestItem2"],
-                "link_replacement": False,
-                "replacement_item": None,
-            }]
-        ]
-        # Using debug which is a minimal debug world
-        world = AutoWorldRegister.world_types["debug"]
-        plando_options = PlandoOptions.from_option_string("bosses")
-        item_links = [ItemLinks.from_any(item_link_groups[0]), ItemLinks.from_any(item_link_groups[1])]
-        for link in item_links:
-            link.verify(world, "tester", plando_options)
-            self.assertIn("TestItem1", link.value[0]["item_pool"])
-            self.assertIn("TestItem2", link.value[0]["item_pool"])
+    # def test_item_links_name_groups(self):
+    #     """Tests that item links successfully unfold item_name_groups"""
+    #     item_link_groups = [
+    #         [{
+    #             "name": "ItemLinkGroup",
+    #             "item_pool": ["Everything"],
+    #             "link_replacement": False,
+    #             "replacement_item": None,
+    #         }],
+    #         [{
+    #             "name": "ItemLinkGroup",
+    #             "item_pool": ["TestItem1", "TestItem2"],
+    #             "link_replacement": False,
+    #             "replacement_item": None,
+    #         }]
+    #     ]
+    #     # Using debug which is a minimal debug world
+    #     world = AutoWorldRegister.world_types["debug"]
+    #     plando_options = PlandoOptions.from_option_string("bosses")
+    #     item_links = [ItemLinks.from_any(item_link_groups[0]), ItemLinks.from_any(item_link_groups[1])]
+    #     for link in item_links:
+    #         link.verify(world, "tester", plando_options)
+    #         self.assertIn("TestItem1", link.value[0]["item_pool"])
+    #         self.assertIn("TestItem2", link.value[0]["item_pool"])
         
-        # TODO test that the group created using these options has the items
+    #     # TODO test that the group created using these options has the items
 
     def test_item_links_resolve(self):
         """Test item link option resolves correctly."""

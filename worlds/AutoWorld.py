@@ -299,6 +299,9 @@ class World(metaclass=AutoWorldRegister):
     author: ClassVar[str]
     """author of apworld"""
 
+    igdb_id: ClassVar[int] = 0
+    """IGDB ID of the game"""
+    
     topology_present: bool = False
     """indicate if this world has any meaningful layout/pathing"""
 
@@ -633,12 +636,15 @@ class World(metaclass=AutoWorldRegister):
         sorted_location_name_groups = {
             name: sorted(cls.location_name_groups[name]) for name in sorted(cls.location_name_groups)
         }
+        # Sort the main dictionaries to ensure consistent serialization
+        sorted_item_name_to_id = dict(sorted(cls.item_name_to_id.items()))
+        sorted_location_name_to_id = dict(sorted(cls.location_name_to_id.items()))
         res: "GamesPackage" = {
             # sorted alphabetically
             "item_name_groups": sorted_item_name_groups,
-            "item_name_to_id": cls.item_name_to_id,
+            "item_name_to_id": sorted_item_name_to_id,
             "location_name_groups": sorted_location_name_groups,
-            "location_name_to_id": cls.location_name_to_id,
+            "location_name_to_id": sorted_location_name_to_id,
         }
         res["checksum"] = data_package_checksum(res)
         return res

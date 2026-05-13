@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from BaseUtils import *
+
 import asyncio
 import concurrent.futures
 import json
@@ -16,6 +18,9 @@ import collections
 import importlib
 import logging
 import warnings
+import zipfile
+
+import re
 
 from argparse import Namespace
 from datetime import datetime, timezone
@@ -26,11 +31,25 @@ from typing import BinaryIO, Coroutine, Mapping, Optional, Set, Dict, Any, Union
 from yaml import load, load_all, dump
 from pathspec import PathSpec, GitIgnoreSpec
 from typing_extensions import deprecated
+from pathlib import Path
+
+logger = logging.getLogger("MultiWorld")
+
+init_logging("Update")
+update_logger = logging.getLogger("Update")
+
+import ModuleUpdate
 
 try:
     from yaml import CLoader as UnsafeLoader, CSafeLoader as SafeLoader, CDumper as Dumper
 except ImportError:
     from yaml import Loader as UnsafeLoader, SafeLoader, Dumper
+
+from FileUtils import FileUtils
+open_directory = FileUtils.open_directory
+open_filename = FileUtils.open_file_input_dialog
+open_file_input_dialog = FileUtils.open_file_input_dialog
+save_filename = FileUtils.save_file_input_dialog
 
 if typing.TYPE_CHECKING:
     import tkinter
@@ -38,79 +57,460 @@ if typing.TYPE_CHECKING:
     from BaseClasses import Region
     import multiprocessing
 
-
 def normalize_tag(tag: str) -> str:
     return tag[1:] if tag and tag[0].lower() == "v" else tag
 
-def tuplize_version(version: str) -> Version:
-    return Version(*(int(piece) for piece in version.split(".")))
-
-
-class Version(typing.NamedTuple):
-    major: int
-    minor: int
-    build: int
-
-    def as_simple_string(self) -> str:
-        return ".".join(str(item) for item in self)
-
-
-__version__ = "0.6.7"
-version_tuple = tuplize_version(__version__)
-
-instance_name = "MultiworldGG"
-archipelago_guid = "{{918BA46A-FAB8-460C-9DFF-AE691E1C865D}}"
-
-_default_version = __version__
-_default_instance_name = instance_name
-_default_archipelago_guid = archipelago_guid
-
-def get_config_file_path() -> str:
-    if getattr(sys, 'frozen', False):
-        # When frozen, the executable's directory is the base path.
-        base_path = os.path.dirname(sys.executable)
-    else:
-        base_path = os.path.dirname(__file__)
-    return os.path.join(base_path, "application.yaml")
-
-config_file = get_config_file_path()
-
-def reload_application_options() -> None:
-    global __version__, version_tuple, instance_name, archipelago_guid
-
-    __version__ = _default_version
-    version_tuple = tuplize_version(__version__)
-    instance_name = _default_instance_name
-    archipelago_guid = _default_archipelago_guid
-
-    if os.path.exists(config_file):
-        try:
-            from yaml import safe_load
-            with open(config_file, "r", encoding="utf-8") as f:
-                config_data = safe_load(f)
-            if isinstance(config_data, dict):
-                app_options = config_data.get("application_options", {})
-                if isinstance(app_options, dict):
-                    new_name = app_options.get("app_name")
-                    if new_name is not None:
-                        instance_name = new_name
-                    new_guid = app_options.get("app_guid")
-                    if new_guid is not None:
-                        archipelago_guid = new_guid
-                    new_version = app_options.get("app_version")
-                    if new_version is not None:
-                        __version__ = new_version
-                        version_tuple = tuplize_version(__version__)
-        except Exception as e:
-            logging.warning("Failed to load configuration from %s: %s", config_file, e)
-
-
-reload_application_options()
 
 is_linux = sys.platform.startswith("linux")
 is_macos = sys.platform == "darwin"
 is_windows = sys.platform in ("win32", "cygwin", "msys")
 
+_worlds_to_load: typing.List[str | "APWorldContainer"] = []
+
+def set_game_names(game_names: typing.List[str]) -> typing.List[(str, bool)]:
+    """Set the game names to the list of game names"""
+    from mwgg_igdb import GameIndex
+    from APContainer import APWorldContainer
+    _worlds_to_install = {game: "" for game in game_names}
+    _unknown_worlds = []
+    custom_worlds_dir = Path(local_path("custom_worlds"))
+    _unlisted_worlds = [world for world in ModuleUpdate.find_world_modules() if world not in GameIndex.game_names.values()]
+    # We only have the module name here, not the game name, and that is buried deep in the metadata
+
+    def check_world_installed(game: str):
+        try:
+            _worlds_to_install[game] = GameIndex.game_names[game]
+            importlib.metadata.distribution(f"worlds.{_worlds_to_install[game]}")
+            _worlds_to_load.append(f"worlds.{_worlds_to_install[game]}")
+            _worlds_to_install.pop(game)
+        except KeyError:
+            # Game not found in index
+            update_logger.warning(f"Game {game} not found in game index, looking for unlisted world.")
+            _unknown_worlds.append(game)
+            return
+        except importlib.metadata.PackageNotFoundError:
+            # Package not installed
+            return
+
+    for game in game_names:
+        check_world_installed(game)
+
+    if _unknown_worlds:
+        _unlisted_worlds_names: dict[str, str] = {}
+        # If we can't find the world, start in the unlisted worlds
+        for module_name in _unlisted_worlds:
+            try:
+                dist = importlib.metadata.distribution(f"worlds.{module_name}")
+                if dist:
+                    _unlisted_worlds_names[dist.metadata.json['summary'].strip("MultiWorld: ")] = module_name
+            except importlib.metadata.PackageNotFoundError:
+                continue
+        for world in _unknown_worlds:
+            if world in _unlisted_worlds_names.keys():
+                module = _unlisted_worlds_names[world]
+                _worlds_to_load.append(f"worlds.{module}")
+                _worlds_to_install.pop(world)
+                _unknown_worlds.remove(world) # Not unknown
+
+    if _worlds_to_install:
+        modules_to_install = [module for module in _worlds_to_install.values() if module]
+        custom_worlds = ModuleUpdate.install_worlds(modules_to_install)
+        # install_worlds returns slugs that fell back to a custom apworld; pick up the
+        # ones that actually pip-installed by checking importlib.metadata directly so
+        # the loader sees them.
+        for slug in modules_to_install:
+            target = f"worlds.{slug}"
+            if target in _worlds_to_load:
+                continue
+            if target in custom_worlds:
+                continue
+            try:
+                importlib.metadata.distribution(target)
+                _worlds_to_load.append(target)
+            except importlib.metadata.PackageNotFoundError:
+                pass
+    else:
+        custom_worlds = []
+
+    # Snapshot installed-wheel versions for slugs already on _worlds_to_load.
+    # Used to honor the precedence rule: higher world_version wins, tie -> installed wheel.
+    _installed_versions: dict[str, str] = {}
+    for entry in _worlds_to_load:
+        if isinstance(entry, str) and entry.startswith("worlds."):
+            slug = entry[len("worlds."):]
+            try:
+                _installed_versions[slug] = importlib.metadata.distribution(f"worlds.{slug}").version
+            except importlib.metadata.PackageNotFoundError:
+                pass
+
+    if custom_worlds_dir.exists():
+        for file in custom_worlds_dir.iterdir():
+            if file.suffix != ".apworld":
+                continue
+            with zipfile.ZipFile(file, 'r') as zipf:
+                apworld = APWorldContainer(file)
+                manifest = apworld.read_contents(zipf)
+
+            if manifest.get("game") in _unknown_worlds:
+                _worlds_to_load.append(apworld)
+                # Seed the in-memory GameIndex so subsequent get_module_for_game()
+                # lookups (notably in Generate.roll_settings) can resolve this game
+                # to its custom apworld module without waiting for
+                # get_available_worlds() to scan custom_worlds_dir again.
+                if not GameIndex.get_game_name_for_module(file.stem):
+                    index_entry = dict(manifest)
+                    index_entry["game_name"] = manifest["game"]
+                    GameIndex.add_game(file.stem, index_entry)
+                continue
+            if f"worlds.{file.stem}" in custom_worlds:
+                _worlds_to_load.append(apworld)
+                continue
+            if file.stem in _installed_versions:
+                apworld_version = tuplize_version(manifest.get("world_version", "0.0.0"))
+                installed_version = tuplize_version(_installed_versions[file.stem])
+                if apworld_version > installed_version:
+                    # apworld wins — replace the installed-wheel entry with the apworld
+                    target = f"worlds.{file.stem}"
+                    try:
+                        _worlds_to_load.remove(target)
+                    except ValueError:
+                        pass
+                    _worlds_to_load.append(apworld)
+                # tie or apworld older -> installed wheel wins, leave _worlds_to_load alone
+
+    # Compute the set of game names that _worlds_to_load can actually serve. Mirrors
+    # what the loader will see: a `worlds.<slug>` entry serves whatever game the
+    # installed wheel's summary advertises, and an APWorldContainer serves its
+    # manifest .game.
+    index_slug_to_name = {slug: name for name, slug in GameIndex.game_names.items()}
+    served_games: set[str] = set()
+    for entry in _worlds_to_load:
+        if isinstance(entry, APWorldContainer):
+            if entry.game:
+                served_games.add(entry.game)
+        elif isinstance(entry, str) and entry.startswith("worlds."):
+            slug = entry[len("worlds."):]
+            name = index_slug_to_name.get(slug)
+            if name:
+                served_games.add(name)
+                continue
+            try:
+                dist = importlib.metadata.distribution(f"worlds.{slug}")
+                summary = dist.metadata.json.get('summary', '') if dist else ''
+                if summary:
+                    served_games.add(summary.strip("MultiWorld: "))
+            except importlib.metadata.PackageNotFoundError:
+                pass
+    missing = [g for g in game_names if g not in served_games]
+    if missing:
+        raise RuntimeError(
+            "Cannot generate: the following games could not be installed and have no apworld fallback: "
+            + ", ".join(repr(g) for g in missing)
+        )
+
+def game_names() -> typing.List[str]:
+    """Get a list of only the game names that we're using"""
+    return _worlds_to_load
+
+def get_available_worlds() -> typing.List[str]:
+    """Get a list of all of the available worlds"""
+    from mwgg_igdb import GameIndex
+    from ModuleUpdate import find_world_modules
+    from BaseUtils import get_apworld_manifest
+    
+    available_worlds = find_world_modules()
+    # Also add worlds from the custom_worlds directory
+    custom_worlds_dir = Path(local_path("custom_worlds"))
+    for world_file in custom_worlds_dir.iterdir():
+        module_name = discover_custom_world_module(world_file)
+        if module_name and module_name not in available_worlds:
+            available_worlds.add(module_name)
+    game_modules = set(GameIndex.get_all_games().keys())
+
+    # Also check for currently installed world modules not in GameIndex
+    try:
+        for world_name in available_worlds:
+            if world_name not in game_modules:
+                manifest = get_apworld_manifest(world_name)
+                manifest["game_name"] = manifest.pop("game", world_name)
+                manifest["cover_url"] = manifest.pop("cover_url", "")
+                GameIndex.add_game(world_name, manifest)
+
+    except Exception as e:
+        update_logger.warning(f"Error checking installed world modules: {e}")
+
+    return list(sorted(available_worlds))
+
+def discover_custom_world_module(custom_world: Path) -> Optional[str]:
+    """Add worlds from the custom_worlds directory to the game index."""
+    from mwgg_igdb import GameIndex
+    from APContainer import APWorldContainer
+    
+    if custom_world.suffix in [".whl", ".egg", ".tar", ".gz", ".zip"]:
+        with zipfile.ZipFile(custom_world, 'r') as zipf:
+            for name in zipf.infolist():
+                if name.filename.endswith("archipelago.json"):
+                    apmanifest_path = name
+                    break
+            module_name = apmanifest_path.filename.split("/")[1].replace("-", "_")
+            metadata = json.loads(zipf.read(apmanifest_path))
+            metadata["game_name"] = metadata.pop("game", module_name)
+            metadata["cover_url"] = metadata.pop("cover_url", "")
+            if GameIndex.get_game_name_for_module(module_name):
+                # Already known to the in-memory index (e.g. registered by a previous
+                # call this run). Idempotent no-op; return the module name so callers
+                # still see it as a discovered world.
+                return module_name
+            GameIndex.add_game(module_name, metadata)
+    elif custom_world.suffix == ".apworld":
+        with zipfile.ZipFile(custom_world, 'r') as custom_apworld:
+            module_name = custom_world.stem
+            manifest = APWorldContainer(custom_world).read_contents(custom_apworld)
+            manifest["game_name"] = manifest.pop("game", module_name)
+            manifest["cover_url"] = manifest.pop("cover_url", "")
+            if GameIndex.get_game_name_for_module(module_name):
+                # Already known to the in-memory index (e.g. registered by a previous
+                # call this run). Idempotent no-op; return the module name so callers
+                # still see it as a discovered world.
+                return module_name
+            GameIndex.add_game(module_name, manifest)
+    return module_name if module_name else None
+
+
+def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]:
+    """Discover and launch module via entrypoints.
+
+    Frontend-neutral: worker-thread callbacks marshal back to the asyncio loop
+    via loop.call_soon_threadsafe, which works for both the Kivy GUI and the
+    Textual TUI (both run inside the same asyncio loop driven by MultiWorld.py).
+    """
+    import threading
+    import asyncio
+
+    # No game selected -> fall straight through to Text Client (CommonClient).
+    # _perform_module_launch("") skips the specialized-client gate and lands at
+    # the main_textclient fallback below.
+    if not module_name:
+        return _perform_module_launch("", **kwargs)
+
+    # First, try to import the module to see if it exists
+    if not module_name.startswith("worlds."):
+        module_name = f"worlds.{module_name}"
+
+    loop = asyncio.get_event_loop()
+
+    def _install_module_threaded():
+        """Install module in a separate thread"""
+        try:
+            restart = ModuleUpdate.install_worlds([module_name])
+            if restart:
+                # Restart needed - schedule callback on main thread
+                raise ModuleUpdate.RestartException
+            else:
+                # No restart needed - proceed with launch
+                loop.call_soon_threadsafe(_launch_module_after_install)
+        except ModuleUpdate.RestartException as re:
+            # Restart needed - schedule callback on main thread
+            loop.call_soon_threadsafe(_handle_install_error, "Restart required for world updates.")
+
+        except Exception as e:
+            update_logger.error(f"Failed to update module {module_name}: {str(e)}")
+            # Schedule error handling on main thread
+            loop.call_soon_threadsafe(_handle_install_error, str(e))
+
+    def _launch_module_after_install():
+        """Launch the module after successful installation"""
+        try:
+            _perform_module_launch(module_name, **kwargs)
+        except Exception as e:
+            logging.error(f"Failed to launch module {module_name} after install: {e}")
+            _handle_install_error(e)
+
+    def _handle_install_error(error):
+        """Handle installation errors on the main thread"""
+        # Get error callback from kwargs if provided
+        error_callback = kwargs.get('error_callback')
+        if error_callback:
+            error_callback()
+        update_logger.error(f"Module installation failed: {error}")
+    
+    if not is_windows:
+        _perform_module_launch("", **kwargs)
+        return
+
+    try:
+        importlib.import_module(module_name)
+        # Module exists, launch directly
+        _perform_module_launch(module_name, **kwargs)
+    except ModuleNotFoundError:
+        # Module doesn't exist, install it in a separate thread
+        update_logger.info(f"Module {module_name} not found, installing in background...")
+        install_thread = threading.Thread(target=_install_module_threaded, daemon=True)
+        install_thread.start()
+        return  # Return early, launch will be scheduled after installation
+    except Exception as e:
+        update_logger.error(f"Failed to import module {module_name}: {e}")
+        raise e
+
+def _perform_module_launch(module_id: str, **kwargs):
+    """Perform the actual module launch logic"""
+    try:
+        # Per-world launch() bodies are CLI-style and call asyncio.run(main()).
+        # Without nest_asyncio that raises "cannot be called from a running
+        # event loop" because the launcher's asyncio loop is already running
+        # on this thread. nest_asyncio.apply() patches asyncio to allow the
+        # nested run() call to re-enter the running loop; the launcher's loop
+        # continues to service other tasks while it's re-entered, so the UI
+        # stays responsive during the game session. apply() is idempotent.
+        import nest_asyncio
+        nest_asyncio.apply()
+
+        # Stash launcher-provided ready/error callbacks centrally. CommonContext
+        # picks them up in __init__ so world clients don't need to forward them
+        # through their launch() signatures.
+        import CommonClient
+        ready_callback = kwargs.pop("ready_callback", None)
+        error_callback = kwargs.pop("error_callback", None)
+        CommonClient._set_pending_launch_callbacks(ready_callback, error_callback)
+
+        if module_id:
+            while True:
+                # Wait until the module is installed before trying to import it
+                try:
+                    # Invalidate import caches to pick up freshly installed modules
+                    importlib.invalidate_caches()
+                    importlib.import_module(module_id)
+                    break
+                except ModuleNotFoundError:
+                    sleep(1)
+                except Exception as e:
+                    update_logger.error(f"Failed to import module {module_id}: {e}")
+                    raise e
+
+            entry_points = importlib.metadata.entry_points(group="mwgg.client")
+            entry_point_name = "{}.Client".format(module_id)
+            
+            # Check if the entry point exists by looking through the entry points
+            module_entry_point = None
+            for entry_point in entry_points:
+                if entry_point.name == entry_point_name:
+                    module_entry_point = entry_point
+                    break
+            
+            if module_entry_point:
+                # Load and execute the client entrypoint
+                launch_function = module_entry_point.load()
+                # Per-world launch() bodies are CLI-style: they parse sys.argv
+                # and then call asyncio.run(main()). Two constraints stack:
+                #   1. asyncio.run() inside a running loop normally raises;
+                #      nest_asyncio.apply() (called at the top of this function)
+                #      patches asyncio to allow re-entry.
+                #   2. We're invoked from a Kivy event handler. If we call
+                #      launch_function() synchronously here, the handler never
+                #      returns while the game session is alive, and Kivy --
+                #      being single-threaded -- can't dispatch any other UI
+                #      events (the GUI freezes even though asyncio keeps
+                #      pumping). To unblock Kivy, defer launch_function() to
+                #      the next loop iteration via call_soon. By the time it
+                #      runs, the Kivy event handler has returned and Kivy is
+                #      back in its idle dispatch state.
+                loop = asyncio.get_event_loop()
+                server_address = kwargs.get("server_address")
+
+                def _deferred_launch():
+                    saved_argv = sys.argv[:]
+                    try:
+                        if isinstance(server_address, str) and server_address:
+                            sys.argv = [sys.argv[0], f"--connect={server_address}"]
+                        launch_function()
+                    except Exception as launch_error:
+                        logging.error(
+                            f"Deferred world launch failed for {module_id}: {launch_error}",
+                            exc_info=True,
+                        )
+                        import CommonClient as _CC
+                        _, pending_error_cb = _CC._consume_pending_launch_callbacks()
+                        if pending_error_cb is not None:
+                            try:
+                                pending_error_cb()
+                            except Exception as cb_err:
+                                logging.error(f"Error in error callback: {cb_err}")
+                    finally:
+                        sys.argv[:] = saved_argv
+
+                loop.call_soon(_deferred_launch)
+                logging.info(f"Scheduled deferred launch for {module_id} on next asyncio iteration")
+                return None
+                            
+            # 2. Check SNI registry
+            from mwgg_igdb import GameIndex
+            game_name = GameIndex.get_game_name_for_module(module_name=module_id.strip("worlds."))
+            try:
+                from worlds._sni.client import AutoSNIClientRegister
+                if AutoSNIClientRegister.is_sni_world(module_name=game_name):
+                    logging.info(f"Detected SNI client for {game_name}")
+                    from worlds._sni.context import launch
+                    return launch(**kwargs)
+            except ImportError:
+                logging.debug("SNI client not available")
+                
+            # 3. Check BizHawk registry
+            try:
+                from worlds._bizhawk.client import AutoBizHawkClientRegister
+                if AutoBizHawkClientRegister.is_bizhawk_world(module_name=game_name):
+                    logging.info(f"Detected BizHawk client for {game_name}")
+                    from worlds._bizhawk.context import launch
+                    return launch(**kwargs)
+            except ImportError:
+                logging.debug("BizHawk client not available")
+
+        # 4. Fallback to text client
+        logging.info(f"No specialized client, using text client")
+        from CommonClient import main_textclient
+        result = main_textclient(**kwargs)
+
+        # Check if the launch function returned a task (GUI mode)
+        if hasattr(result, '_coro'):
+            logging.info(f"Launch function returned a task for text client, running in GUI mode")
+            # The task is already scheduled in the event loop
+            return result
+        else:
+            logging.info(f"Launch function completed synchronously for text client")
+            return result
+
+    except Exception as e:
+        logging.error(f"Failed to launch module {module_id}: {e}")
+        # Fallback for the case where the world's launch() raised before any
+        # CommonContext was constructed. If a context was built, it consumed
+        # the pending dict and the context's own one-shot fired the callback
+        # from _takeover_existing_ui's except arm — we don't double-fire here.
+        _, pending_error_callback = CommonClient._consume_pending_launch_callbacks()
+        if pending_error_callback is not None:
+            try:
+                pending_error_callback()
+            except Exception as callback_error:
+                logging.error(f"Error in error callback: {callback_error}")
+        raise
+
+def exit_restart_for_update():
+    """
+    Spawn a new process with the same arguments, then exit.
+    The new process will have its splashscreen apply the updates.
+    """
+    # Spawn new process with same executable and arguments
+    subprocess.Popen([sys.executable] + sys.argv, 
+                     cwd=os.getcwd(),
+                     creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows() else 0)
+    
+    logger.info("Exiting current process...")
+    
+    # Flush all logging handlers to ensure messages are displayed
+    for handler in logging.root.handlers:
+        handler.flush()
+    
+    # Use sys.exit with code 10 to signal "bad environment" - needs restart
+    # This allows the calling process to handle the restart properly
+    sys.exit(10)
 
 def int16_as_bytes(value: int) -> typing.List[int]:
     value = value & 0xFFFF
@@ -159,7 +559,7 @@ def cache_self1(function: typing.Callable[[S, T], RetType]) -> typing.Callable[[
 
     @functools.wraps(function)
     def wrap(self: S, arg: T) -> RetType:
-        cache: Optional[Dict[T, RetType]] = getattr(self, cache_name, None)
+        cache: Optional[dict[T, RetType]] = getattr(self, cache_name, None)
         if cache is None:
             res = function(self, arg)
             setattr(self, cache_name, {arg: res})
@@ -383,19 +783,23 @@ def get_options() -> Settings:
     return get_settings()
 
 
-def persistent_store(category: str, key: str, value: typing.Any, force_store: bool = False):
-    storage = persistent_load()
-    if not force_store and category in storage and key in storage[category] and storage[category][key] == value:
-        return  # no changes necessary
-    category_dict = storage.setdefault(category, {})
-    category_dict[key] = value
+def persistent_store(category: str, key: str, value: typing.Any):
     path = user_path("_persistent_storage.yaml")
+    storage = persistent_load()
+    category_dict = storage.setdefault(category, {})
+    
+    # Remove key if value is None or empty string to prevent malformed YAML
+    if value is None or value == "":
+        category_dict.pop(key, None)
+    else:
+        category_dict[key] = value
+        
     with open(path, "wt") as f:
         f.write(dump(storage, Dumper=Dumper))
 
 
-def persistent_load() -> Dict[str, Dict[str, Any]]:
-    storage: Union[Dict[str, Dict[str, Any]], None] = getattr(persistent_load, "storage", None)
+def persistent_load() -> dict[str, dict[str, Any]]:
+    storage: Union[dict[str, dict[str, Any]], None] = getattr(persistent_load, "storage", None)
     if storage:
         return storage
     path = user_path("_persistent_storage.yaml")
@@ -408,7 +812,15 @@ def persistent_load() -> Dict[str, Dict[str, Any]]:
                 del storage["datapackage"]
                 logging.debug("Removed old datapackage from persistent storage")
         except Exception as e:
-            logging.debug(f"Could not read store: {e}")
+            logger.warning(f"Could not read persistent storage (file may be corrupted): {e}")
+            # Attempt to backup the corrupted file
+            try:
+                import shutil
+                backup_path = path + ".corrupted"
+                shutil.copy2(path, backup_path)
+                logger.info(f"Corrupted storage backed up to: {backup_path}")
+            except Exception as backup_error:
+                logger.debug(f"Could not backup corrupted storage: {backup_error}")
     if storage is None:
         storage = {}
     setattr(persistent_load, "storage", storage)
@@ -419,7 +831,7 @@ def get_file_safe_name(name: str) -> str:
     return "".join(c for c in name if c not in '<>:"/\\|?*')
 
 
-def load_data_package_for_checksum(game: str, checksum: typing.Optional[str]) -> Dict[str, Any]:
+def load_data_package_for_checksum(game: str, checksum: typing.Optional[str]) -> dict[str, Any]:
     if checksum and game:
         if checksum != get_file_safe_name(checksum):
             raise ValueError(f"Bad symbols in checksum: {checksum}")
@@ -429,7 +841,12 @@ def load_data_package_for_checksum(game: str, checksum: typing.Optional[str]) ->
                 with open(path, "r", encoding="utf-8-sig") as f:
                     return json.load(f)
             except Exception as e:
-                logging.debug(f"Could not load data package: {e}")
+                logger.debug(f"Could not load data package: {e}")
+
+    # fall back to old cache
+    cache = persistent_load().get("datapackage", {}).get("games", {}).get(game, {})
+    if cache.get("checksum") == checksum:
+        return cache
 
     # cache does not match
     return {}
@@ -446,7 +863,7 @@ def store_data_package_for_checksum(game: str, data: typing.Dict[str, Any]) -> N
             with open(os.path.join(game_folder, f"{checksum}.json"), "w", encoding="utf-8-sig") as f:
                 json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
         except Exception as e:
-            logging.debug(f"Could not store data package: {e}")
+            logger.debug(f"Could not store data package: {e}")
 
 
 def read_apignore(filename: str | pathlib.Path) -> PathSpec | None:
@@ -464,11 +881,11 @@ def get_adjuster_settings_no_defaults(game_name: str) -> Namespace:
 @cache_argsless
 def get_unique_identifier():
     common_path = cache_path("common.json")
-    try:
+    if os.path.exists(common_path):
         with open(common_path) as f:
             common_file = json.load(f)
             uuid = common_file.get("uuid", None)
-    except FileNotFoundError:
+    else:
         common_file = {}
         uuid = None
 
@@ -478,9 +895,6 @@ def get_unique_identifier():
     from uuid import uuid4
     uuid = str(uuid4())
     common_file["uuid"] = uuid
-
-    cache_folder = os.path.dirname(common_path)
-    os.makedirs(cache_folder, exist_ok=True)
     with open(common_path, "w") as f:
         json.dump(common_file, f, separators=(",", ":"))
     return uuid
@@ -575,90 +989,6 @@ def get_text_between(text: str, start: str, end: str) -> str:
 
 def get_text_after(text: str, start: str) -> str:
     return text[text.index(start) + len(start):]
-
-
-loglevel_mapping = {'error': logging.ERROR, 'info': logging.INFO, 'warning': logging.WARNING, 'debug': logging.DEBUG}
-
-
-def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
-                 write_mode: str = "w", log_format: str = "[%(name)s at %(asctime)s]: %(message)s",
-                 add_timestamp: bool = False, exception_logger: typing.Optional[str] = None):
-    import datetime
-    loglevel: int = loglevel_mapping.get(loglevel, loglevel)
-    log_folder = user_path("logs")
-    os.makedirs(log_folder, exist_ok=True)
-    root_logger = logging.getLogger()
-    for handler in root_logger.handlers[:]:
-        root_logger.removeHandler(handler)
-        handler.close()
-    root_logger.setLevel(loglevel)
-    logging.getLogger("websockets").setLevel(loglevel)  # make sure level is applied for websockets
-    if "a" not in write_mode:
-        name += f"_{datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}"
-    file_handler = logging.FileHandler(
-        os.path.join(log_folder, f"{name}.txt"),
-        write_mode,
-        encoding="utf-8-sig")
-    file_handler.setFormatter(logging.Formatter(log_format))
-
-    class Filter(logging.Filter):
-        def __init__(self, filter_name: str, condition: typing.Callable[[logging.LogRecord], bool]) -> None:
-            super().__init__(filter_name)
-            self.condition = condition
-
-        def filter(self, record: logging.LogRecord) -> bool:
-            return self.condition(record)
-
-    file_handler.addFilter(Filter("NoStream", lambda record: not getattr(record, "NoFile", False)))
-    file_handler.addFilter(Filter("NoCarriageReturn", lambda record: '\r' not in record.getMessage()))
-    root_logger.addHandler(file_handler)
-    if sys.stdout:
-        formatter = logging.Formatter(fmt='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-        stream_handler = logging.StreamHandler(sys.stdout)
-        stream_handler.addFilter(Filter("NoFile", lambda record: not getattr(record, "NoStream", False)))
-        if add_timestamp:
-            stream_handler.setFormatter(formatter)
-        root_logger.addHandler(stream_handler)
-        if hasattr(sys.stdout, "reconfigure"):
-            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
-    # Relay unhandled exceptions to logger.
-    if not getattr(sys.excepthook, "_wrapped", False):  # skip if already modified
-        orig_hook = sys.excepthook
-
-        def handle_exception(exc_type, exc_value, exc_traceback):
-            if issubclass(exc_type, KeyboardInterrupt):
-                sys.__excepthook__(exc_type, exc_value, exc_traceback)
-                return
-            logging.getLogger(exception_logger).exception("Uncaught exception",
-                                                          exc_info=(exc_type, exc_value, exc_traceback),
-                                                          extra={"NoStream": exception_logger is None})
-            return orig_hook(exc_type, exc_value, exc_traceback)
-
-        handle_exception._wrapped = True
-
-        sys.excepthook = handle_exception
-
-    def _cleanup():
-        for file in os.scandir(log_folder):
-            if file.name.endswith(".txt"):
-                last_change = datetime.datetime.fromtimestamp(file.stat().st_mtime)
-                if datetime.datetime.now() - last_change > datetime.timedelta(days=7):
-                    try:
-                        os.unlink(file.path)
-                    except Exception as e:
-                        logging.exception(e)
-                    else:
-                        logging.debug(f"Deleted old logfile {file.path}")
-    import threading
-    threading.Thread(target=_cleanup, name="LogCleaner").start()
-    import platform
-    logging.info(
-        f"{instance_name} ({__version__}) logging initialized"
-        f" on {platform.platform()} process {os.getpid()}"
-        f" running Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-        f"{' (frozen)' if is_frozen() else ''}"
-    )
 
 
 def stream_input(stream: typing.TextIO, queue: "asyncio.Queue[str]"):
@@ -762,22 +1092,13 @@ def get_intended_text(input_text: str, possible_answers) -> typing.Tuple[str, bo
 
 
 def get_input_text_from_response(text: str, command: str) -> typing.Optional[str]:
-    """
-    Parses the response text from `get_intended_text` to find the suggested input and autocomplete the command in
-    arguments with it.
-
-    :param text: The response text from `get_intended_text`.
-    :param command: The command to which the input text should be added. Must contain the prefix used by the command
-                    (`!` or `/`).
-    :return: The command with the suggested input text appended, or None if no suggestion was found.
-    """
     if "did you mean " in text:
         for question in ("Didn't find something that closely matches",
                          "Too many close matches"):
             if text.startswith(question):
                 name = get_text_between(text, "did you mean '",
                                         "'? (")
-                return f"{command} {name}"
+                return f"!{command} {name}"
     elif text.startswith("Missing: "):
         return text.replace("Missing: ", "!hint_location ")
     return None
@@ -806,7 +1127,7 @@ def env_cleared_lib_path() -> Mapping[str, str]:
 def _mp_open_filename(res: "multiprocessing.Queue[typing.Optional[str]]", *args: Any) -> None:
     if is_kivy_running():
         raise RuntimeError("kivy should not be running in multiprocess")
-    res.put(open_filename(*args))
+    res.put(open_file_input_dialog(*args))
 
 
 def _mp_save_filename(res: "multiprocessing.Queue[typing.Optional[str]]", *args: Any) -> None:
@@ -817,102 +1138,6 @@ def _mp_save_filename(res: "multiprocessing.Queue[typing.Optional[str]]", *args:
 def _run_for_stdout(*args: str):
     env = env_cleared_lib_path()
     return subprocess.run(args, capture_output=True, text=True, env=env).stdout.split("\n", 1)[0] or None
-
-
-def open_filename(title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") \
-        -> typing.Optional[str]:
-    logging.info(f"Opening file input dialog for {title}.")
-
-    if is_linux:
-        # prefer native dialog
-        from shutil import which
-        kdialog = which("kdialog")
-        if kdialog:
-            k_filters = '|'.join((f'{text} (*{" *".join(ext)})' for (text, ext) in filetypes))
-            return _run_for_stdout(kdialog, f"--title={title}", "--getopenfilename", suggest or ".", k_filters)
-        zenity = which("zenity")
-        if zenity:
-            z_filters = (f'--file-filter={text} ({", ".join(ext)}) | *{" *".join(ext)}' for (text, ext) in filetypes)
-            selection = (f"--filename={suggest}",) if suggest else ()
-            return _run_for_stdout(zenity, f"--title={title}", "--file-selection", *z_filters, *selection)
-
-    # fall back to tk
-    try:
-        import tkinter
-        import tkinter.filedialog
-    except Exception as e:
-        logging.error('Could not load tkinter, which is likely not installed. '
-                      f'This attempt was made because open_filename was used for "{title}".')
-        raise e
-    else:
-        if is_macos and is_kivy_running():
-            # on macOS, mixing kivy and tk does not work, so spawn a new process
-            # FIXME: performance of this is pretty bad, and we should (also) look into alternatives
-            from multiprocessing import Process, Queue
-            res: "Queue[typing.Optional[str]]" = Queue()
-            Process(target=_mp_open_filename, args=(res, title, filetypes, suggest)).start()
-            return res.get()
-        try:
-            root = tkinter.Tk()
-        except tkinter.TclError:
-            return None  # GUI not available. None is the same as a user clicking "cancel"
-        root.withdraw()
-        try:
-            return tkinter.filedialog.askopenfilename(
-                title=title,
-                filetypes=((t[0], ' '.join(t[1])) for t in filetypes),
-                initialfile=suggest or None,
-            )
-        finally:
-            root.destroy()
-
-
-def save_filename(title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") \
-        -> typing.Optional[str]:
-    logging.info(f"Opening file save dialog for {title}.")
-
-    if is_linux:
-        # prefer native dialog
-        from shutil import which
-        kdialog = which("kdialog")
-        if kdialog:
-            k_filters = '|'.join((f'{text} (*{" *".join(ext)})' for (text, ext) in filetypes))
-            return _run_for_stdout(kdialog, f"--title={title}", "--getsavefilename", suggest or ".", k_filters)
-        zenity = which("zenity")
-        if zenity:
-            z_filters = (f'--file-filter={text} ({", ".join(ext)}) | *{" *".join(ext)}' for (text, ext) in filetypes)
-            selection = (f"--filename={suggest}",) if suggest else ()
-            return _run_for_stdout(zenity, f"--title={title}", "--file-selection", "--save", *z_filters, *selection)
-
-    # fall back to tk
-    try:
-        import tkinter
-        import tkinter.filedialog
-    except Exception as e:
-        logging.error('Could not load tkinter, which is likely not installed. '
-                      f'This attempt was made because save_filename was used for "{title}".')
-        raise e
-    else:
-        if is_macos and is_kivy_running():
-            # on macOS, mixing kivy and tk does not work, so spawn a new process
-            # FIXME: performance of this is pretty bad, and we should (also) look into alternatives
-            from multiprocessing import Process, Queue
-            res: "Queue[typing.Optional[str]]" = Queue()
-            Process(target=_mp_save_filename, args=(res, title, filetypes, suggest)).start()
-            return res.get()
-        try:
-            root = tkinter.Tk()
-        except tkinter.TclError:
-            return None  # GUI not available. None is the same as a user clicking "cancel"
-        root.withdraw()
-        try:
-            return tkinter.filedialog.asksaveasfilename(
-                title=title,
-                filetypes=((t[0], ' '.join(t[1])) for t in filetypes),
-                initialfile=suggest or None,
-            )
-        finally:
-            root.destroy()
 
 
 def _mp_open_directory(res: "multiprocessing.Queue[typing.Optional[str]]", *args: Any) -> None:
@@ -968,7 +1193,7 @@ def messagebox(title: str, text: str, error: bool = False) -> None:
         return
 
     if is_kivy_running():
-        from kvui import MessageBox
+        from mwgg_gui.components.dialog import MessageBox
         MessageBox(title, text, error).open()
         return
 
@@ -1007,7 +1232,7 @@ gui_enabled = not sys.stdout or "--nogui" not in sys.argv
 
 def title_sorted(data: typing.Iterable, key=None, ignore: typing.AbstractSet[str] = frozenset(("a", "the"))):
     """Sorts a sequence of text ignoring typical articles like "a" or "the" in the beginning."""
-    def sorter(element: Union[str, Dict[str, Any]]) -> str:
+    def sorter(element: Union[str, dict[str, Any]]) -> str:
         if (not isinstance(element, str)):
             element = element["title"]
 
@@ -1016,7 +1241,7 @@ def title_sorted(data: typing.Iterable, key=None, ignore: typing.AbstractSet[str
         return element.lower()
     return sorted(data, key=lambda i: sorter(key(i)) if key else sorter(i))
 
-def world_list_sorted(data: typing.Iterable, worlds: Dict[str, Any]):
+def world_list_sorted(data: typing.Iterable, worlds: dict[str, Any]):
     def sorter(key_or_name):
         name = key_or_name
         world = worlds[name]
@@ -1035,7 +1260,7 @@ def read_snes_rom(stream: BinaryIO, strip_header: bool = True) -> bytearray:
     return buffer
 
 
-_faf_tasks: "Set[asyncio.Task[typing.Any]]" = set()
+_faf_tasks: "set[asyncio.Task[typing.Any]]" = set()
 
 
 def async_start(co: Coroutine[None, None, typing.Any], name: Optional[str] = None) -> None:
@@ -1134,7 +1359,6 @@ def _extend_freeze_support() -> None:
     multiprocessing.freeze_support = multiprocessing.spawn.freeze_support = _freeze_support if is_frozen() else _noop
 
 
-@deprecated("Use multiprocessing.freeze_support() instead")
 def freeze_support() -> None:
     """This now only calls multiprocessing.freeze_support since we are patching freeze_support on module load."""
     import multiprocessing

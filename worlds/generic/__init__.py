@@ -2,12 +2,16 @@ from typing import NamedTuple, Union
 from typing_extensions import deprecated
 import logging
 from Utils import instance_name
+from BaseUtils import get_archipelago_json
+GAME_NAME, AUTHOR, VERSION, AP_VERSION = get_archipelago_json("generic")
 
 from BaseClasses import Item, Tutorial, ItemClassification
 
 from ..AutoWorld import InvalidItemError, World, WebWorld
 from NetUtils import SlotType
 
+
+__all__ = ['WORLD_CLASS', 'WEB_WORLD_CLASS']
 
 class GenericWeb(WebWorld):
     display_name = instance_name
@@ -33,7 +37,10 @@ class GenericWeb(WebWorld):
 
 
 class GenericWorld(World):
-    game = "Archipelago"
+    game = GAME_NAME
+    author = AUTHOR
+    
+    version = VERSION
     topology_present = False
     item_name_to_id = {
         "Nothing": -1

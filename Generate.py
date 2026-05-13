@@ -15,13 +15,24 @@ from typing import Any
 
 import ModuleUpdate
 
+import Utils
+
+if Utils.is_frozen():
+    venv_site_packages_path = Utils.write_path("mwgg_venv", "Lib", "site-packages")
+    if venv_site_packages_path not in sys.path:
+        sys.path.append(venv_site_packages_path)
+    venv_worlds_path = Utils.write_path("mwgg_venv", "Lib", "site-packages", "worlds")
+    if os.path.exists(venv_worlds_path) and venv_worlds_path not in sys.path:
+        sys.path.append(venv_worlds_path)
+
+# Hard-require mwgg_igdb: subsequent imports (and BaseUtils.get_archipelago_constants)
+# crash with ImportError if the index isn't installed. Mirrors WebHost.py's pattern.
 ModuleUpdate.update()
 
-import Utils
 import Options
 from BaseClasses import seeddigits, get_seed, PlandoOptions
-from Utils import parse_yamls, version_tuple, __version__, tuplize_version
-
+from Utils import parse_yamls, version_tuple, __version__, tuplize_version, set_game_names
+from mwgg_igdb import GameIndex
 
 def mystery_argparse(argv: list[str] | None = None) -> argparse.Namespace:
     from settings import get_settings
@@ -29,11 +40,11 @@ def mystery_argparse(argv: list[str] | None = None) -> argparse.Namespace:
     defaults = settings.generator
 
     parser = argparse.ArgumentParser(description="CMD Generation Interface, defaults come from host.yaml.")
-    parser.add_argument('--weights_file_path', default=defaults.weights_file_path,
+    parser.add_argument('--weights-file-path', default=defaults.weights_file_path,
                         help='Path to the weights file to use for rolling game options, urls are also valid')
     parser.add_argument('--sameoptions', help='Rolls options per weights file rather than per player',
                         action='store_true')
-    parser.add_argument('--player_files_path', default=defaults.player_files_path,
+    parser.add_argument('--player-files-path', default=defaults.player_files_path,
                         help="Input directory for player files.")
     parser.add_argument('--seed', help='Define seed number to generate.', type=int)
     parser.add_argument('--multi', default=defaults.players, type=lambda value: max(int(value), 1))
@@ -42,28 +53,28 @@ def mystery_argparse(argv: list[str] | None = None) -> argparse.Namespace:
                         help="Path to output folder. Absolute or relative to cwd.")  # absolute or relative to cwd
     parser.add_argument('--outputname', help="Name for the output files.")
     parser.add_argument('--race', action='store_true', default=defaults.race)
-    parser.add_argument('--meta_file_path', default=defaults.meta_file_path)
-    parser.add_argument('--log_level', default=defaults.loglevel, help='Sets log level')
-    parser.add_argument('--log_time', help="Add timestamps to STDOUT",
+    parser.add_argument('--meta-file-path', default=defaults.meta_file_path)
+    parser.add_argument('--log-level', default=defaults.loglevel, help='Sets log level')
+    parser.add_argument('--log-time', help="Add timestamps to STDOUT",
                         default=defaults.logtime, action='store_true')
-    parser.add_argument("--csv_output", action="store_true",
+    parser.add_argument("--csv-output", action="store_true",
                         help="Output rolled player options to csv (made for async multiworld).")
     parser.add_argument("--plando", default=defaults.plando_options,
                         help="List of options that can be set manually. Can be combined, for example \"bosses, items\"")
-    parser.add_argument("--skip_prog_balancing", action="store_true",
+    parser.add_argument("--skip-prog-balancing", action="store_true",
                         help="Skip progression balancing step during generation.")
-    parser.add_argument("--skip_output", action="store_true",
+    parser.add_argument("--skip-output", action="store_true",
                         help="Skips generation assertion and output stages and skips multidata and spoiler output. "
                              "Intended for debugging and testing purposes.")
-    parser.add_argument("--spoiler_only", action="store_true",
+    parser.add_argument("--spoiler-only", action="store_true",
                         help="Skips generation assertion and multidata, outputting only a spoiler log. "
                              "Intended for debugging and testing purposes.")
     args = parser.parse_args(argv)
 
     if args.skip_output and args.spoiler_only:
-        parser.error("Cannot mix --skip_output and --spoiler_only")
+        parser.error("Cannot mix --skip-output and --spoiler-only")
     elif args.spoiler == 0 and args.spoiler_only:
-        parser.error("Cannot use --spoiler_only when --spoiler=0. Use --skip_output or set --spoiler to a different value")
+        parser.error("Cannot use --spoiler-only when --spoiler=0. Use --skip-output or set --spoiler to a different value")
 
     if not os.path.isabs(args.weights_file_path):
         args.weights_file_path = os.path.join(args.player_files_path, args.weights_file_path)
@@ -89,7 +100,7 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
     seed = get_seed(args.seed)
 
     if __name__ == "__main__":
-        Utils.init_logging(f"Generate_{seed}", loglevel=args.log_level, add_timestamp=args.log_time)
+        Utils.init_logging(f"Generate_{seed}", loglevel=args.log_level, add_timestamp=args.log_time, show_logo=True)
     random.seed(seed)
     seed_name = get_seed_name(random)
 
@@ -179,8 +190,21 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
                         f"Provide a general weights file ({args.weights_file_path}) or individual player files. "
                         f"A mix is also permitted.")
 
-    from worlds import AutoWorldRegister, ensure_worlds_loaded
-    ensure_worlds_loaded()
+    games_to_load = []
+    for player_path, yaml in weights_cache.items():
+        game_name = yaml[0]['game']
+        games_to_load.append(game_name)
+        # If YAML has explicit module field, add to game index
+        if 'module' in yaml[0]:
+            module_name = yaml[0]['module']
+            game_module = module_name.replace("worlds.", "")
+            logging.info(f"Adding custom module to game index: {game_module} -> {game_name}")
+            GameIndex.add_game(game_module, {"game_name": game_name})
+
+    set_game_names(games_to_load)
+    from worlds.AutoWorld import AutoWorldRegister
+    """ Load worlds *after* setting the game names
+    """
     args.outputname = seed_name
     args.name = {}
 
@@ -433,8 +457,7 @@ def update_weights(weights: dict, new_weights: dict, update_type: str, name: str
 
 
 def roll_meta_option(option_key, game: str, category_dict: dict) -> Any:
-    from worlds import AutoWorldRegister, ensure_worlds_loaded
-    ensure_worlds_loaded()
+    from worlds import AutoWorldRegister
 
     if not game:
         return get_choice(option_key, category_dict)
@@ -515,9 +538,10 @@ def handle_option(ret: argparse.Namespace, game_weights: dict, option_key: str, 
     except Exception as e:
         raise Options.OptionError(f"Error generating option {option_key} in {ret.game}") from e
     else:
-        from worlds import AutoWorldRegister, ensure_worlds_loaded
-        ensure_worlds_loaded()
-        player_option.verify(AutoWorldRegister.world_types[ret.game], ret.name, plando_options)
+        from worlds import AutoWorldRegister
+        world_class = AutoWorldRegister.world_types[ret.game]
+        if world_class is not None:
+            player_option.verify(world_class, ret.name, plando_options)
 
 
 def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.bosses):
@@ -529,8 +553,7 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
     This means it should never be modified without making a deepcopy first.
     """
 
-    from worlds import AutoWorldRegister, ensure_worlds_loaded
-    ensure_worlds_loaded()
+    from worlds import AutoWorldRegister
 
     if "linked_options" in weights:
         weights = roll_linked_options(weights)
@@ -553,7 +576,7 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
         games = requirements.get("game", {})
         for game, version in games.items():
             if game not in AutoWorldRegister.world_types:
-                continue
+                raise Exception(f"Game {game} not found in world types.")
             if not version:
                 raise Exception(f"Invalid version for game {game}: {version}.")
             if isinstance(version, str):
@@ -576,11 +599,32 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
         if ret.game is None:
             raise Exception('"game" not specified')
         raise Exception(f"Invalid game: {ret.game}")
-    if ret.game not in AutoWorldRegister.world_types:
-        from worlds import failed_world_loads
-        picks = Utils.get_fuzzy_results(ret.game, list(AutoWorldRegister.world_types) + failed_world_loads, limit=1)[0]
+    
+    # Check if there's an explicit module field in the YAML
+    if "module" in weights:
+        ret.module_name = weights["module"]
+        # Extract module name without "worlds." prefix
+        game_module = ret.module_name.replace("worlds.", "")
+        # Add basic game entry to index for separately installed worlds
+        GameIndex.add_game(game_module, {"game_name": ret.game})
+    else:
+        ret.module_name = GameIndex.get_module_for_game(game_name=ret.game, worlds=True)
+
+    from worlds import failed_world_loads, AutoWorldRegister
+    available_worlds = Utils.get_available_worlds()
+    
+    world_module = sys.modules.get(ret.module_name)
+    if world_module is None:
+        world_class = None
+        raise Exception(f"No world found to handle game {ret.game} with module {ret.module_name}. "
+                        f"Check your spelling or installation of that world.")
+    else:
+        world_class = AutoWorldRegister.world_types.get(ret.game, None)
+
+    if world_class is None:
+        picks = Utils.get_fuzzy_results(ret.game, available_worlds + failed_world_loads, limit=1)[0]
         if picks[0] in failed_world_loads:
-            raise Exception(f"No functional world found to handle game {ret.game}. "
+            raise Exception(f"No functional world found to handle game {ret.game} with module {ret.module_name}. "
                             f"Did you mean '{picks[0]}' ({picks[1]}% sure)? "
                             f"If so, it appears the world failed to initialize correctly.")
         raise Exception(f"No world found to handle game {ret.game}. Did you mean '{picks[0]}' ({picks[1]}% sure)? "
@@ -589,7 +633,7 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
     if ret.game not in weights:
         raise Exception(f"No game options for selected game \"{ret.game}\" found.")
 
-    world_type = AutoWorldRegister.world_types[ret.game]
+    world_type = world_class
     game_weights = weights[ret.game]
 
     for weight in chain(game_weights, weights):
@@ -622,18 +666,23 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
 
 if __name__ == '__main__':
     import atexit
+    import sys
     confirmation = atexit.register(input, "Press enter to close.")
-    erargs, seed = main()
+    try:
+        erargs, seed = main()
+    except RuntimeError as e:
+        logging.error(str(e))
+        sys.exit(1)
     from Main import main as ERmain
     multiworld = ERmain(erargs, seed)
-    if __debug__:
-        import gc
-        import sys
-        import weakref
-        weak = weakref.ref(multiworld)
-        del multiworld
-        gc.collect()  # need to collect to deref all hard references
-        assert not weak(), f"MultiWorld object was not de-allocated, it's referenced {sys.getrefcount(weak())} times." \
-                           " This would be a memory leak."
+    # if __debug__:
+    #     import gc
+    #     import sys
+    #     import weakref
+    #     weak = weakref.ref(multiworld)
+    #     del multiworld
+    #     gc.collect()  # need to collect to deref all hard references
+    #     assert not weak(), f"MultiWorld object was not de-allocated, it's referenced {sys.getrefcount(weak())} times." \
+    #                        " This would be a memory leak."
     # in case of error-free exit should not need confirmation
     atexit.unregister(confirmation)

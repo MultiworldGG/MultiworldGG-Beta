@@ -7,9 +7,9 @@ import warnings
 from json import JSONEncoder, JSONDecoder
 
 if typing.TYPE_CHECKING:
-    from websockets import WebSocketServerProtocol as ServerConnection
+    from websockets.asyncio.server import ServerConnection
 
-from Utils import ByValue, Version
+from BaseUtils import ByValue, Version
 
 class HintStatus(ByValue, enum.IntEnum):
     HINT_UNSPECIFIED = 0
@@ -17,6 +17,16 @@ class HintStatus(ByValue, enum.IntEnum):
     HINT_AVOID = 20
     HINT_PRIORITY = 30
     HINT_FOUND = 40
+
+class MWGGUIHintStatus(ByValue, enum.IntFlag):
+    """
+    Shop Item, Goal-required item, and 'this item is what is keeping me in BK_MODE'
+    BK_MODE items will be shown as the highest priority.
+    """
+    HINT_UNSPECIFIED = 0b000
+    HINT_SHOP = 0b001
+    HINT_GOAL = 0b010
+    HINT_BK_MODE = 0b100
 
 
 class JSONMessagePart(typing.TypedDict, total=False):
@@ -93,6 +103,8 @@ class NetworkItem(typing.NamedTuple):
     """ Sending player, except in LocationInfo (from LocationScouts), where it is the receiving player. """
     flags: int = 0
 
+def escape_markup(text: str) -> str:
+    return text.replace('&', '&amp;').replace('[', '&bl;').replace(']', '&br;')
 
 def _scan_for_TypedTuples(obj: typing.Any) -> typing.Any:
     if isinstance(obj, tuple) and hasattr(obj, "_fields"):  # NamedTuple is not actually a parent class
@@ -219,35 +231,24 @@ class JSONTypes(str, enum.Enum):
     location_id = "location_id"
     entrance_name = "entrance_name"
 
+# Default color definitions - these should be imported by GUI themes
+# [Dark, Light]
+TEXT_COLORS = {
+    "default_color": "cdcdcd",
+    "command_echo_color": "ff9334",
+    "player1_color": "ff87d7",
+    "player2_color": "5fafff",
+    "progression_goal_item_color": "ffa700",
+    "progression_item_color": "ffbe00",
+    "progression_deprioritized_item_color": "d2ff49",
+    "useful_item_color": "6EC471",
+    "regular_item_color": "b2b2b2",
+    "trap_item_color": "d75f5f",
+    "location_color": "00c51b",
+    "entrance_color": "60b7e8",
+}
 
 class JSONtoTextParser(metaclass=HandlerMeta):
-    color_codes = {
-        # Changed these so that the color name isn't directly linked to the action. Probably should use a  color library for it long-term
-        "black": "000000",
-        "red": "FF0000", #red
-        "green": "00FF00", #green
-        "yellow": "FAFAD2",
-        "blue": "6495ED",
-        "magenta": "EE00EE",
-        "cyan": "00EEEE",
-        "slateblue": "6D8BE8",
-        "plum": "AF99EF",
-        "salmon": "FA8072",
-        "white": "FFFFFF",
-        "orange": "FF7700", #added individually to assure compat with Jak&Dexter
-        "notfoundcolor": "EE0000", #red
-        "foundcolor": "00c51b", #green
-        "friendcolor": "5fafff", #ltblue
-        "entrancecolor": "6495ED", #blue
-        "playercolor": "ff87d7", #atzpink
-        "junkcolor": "b2b2b2", #gray
-        "usefulcolor": "afd75f", #lime
-        "wothcolor": "FFC500", #gold
-        "trapcolor": "d75f5f", #salmon
-        "default": "FFFFFF", #white
-        "bcastcolor": "FF7700", #orange
-    }
-
     def __init__(self, ctx):
         self.ctx = ctx
 
@@ -256,7 +257,7 @@ class JSONtoTextParser(metaclass=HandlerMeta):
 
     def handle_node(self, node: JSONMessagePart):
         node_type = node.get("type", None)
-        handler = self.handlers.get(node_type, self.handlers["text"])
+        handler = self.handlers.get(node_type, self.handlers["plaintext"])
         return handler(node)
 
     def _handle_color(self, node: JSONMessagePart):
@@ -269,27 +270,35 @@ class JSONtoTextParser(metaclass=HandlerMeta):
 
     def _handle_player_id(self, node: JSONMessagePart):
         player = int(node["text"])
-        node["color"] = 'playercolor' if self.ctx.slot_concerns_self(player) else 'friendcolor'
+        node["color"] = 'player1_color' if self.ctx.slot_concerns_self(player) else 'player2_color'
         node["text"] = self.ctx.player_names[player]
         return self._handle_color(node)
 
     # for other teams, spectators etc.? Only useful if player isn't in the clientside mapping
     def _handle_player_name(self, node: JSONMessagePart):
-        node["color"] = 'friendcolor'
+        node["color"] = 'player2_color'
         return self._handle_color(node)
 
     def _handle_item_name(self, node: JSONMessagePart):
         flags = node.get("flags", 0)
         if flags == 0:
-            node["color"] = 'junkcolor'
-        elif flags & 0b001:  # advancement
-            node["color"] = 'wothcolor'
-        elif flags & 0b010:  # useful
-            node["color"] = 'usefulcolor'
-        elif flags & 0b100:  # trap
-            node["color"] = 'trapcolor'
-        else:
-            node["color"] = 'junkcolor'
+            node["color"] = 'regular_item_color' # filler
+        elif flags & 0b00010:  # useful
+            node["color"] = 'useful_item_color'  # lime for useful items
+        if flags & 0b00100:  # "useful trap" gets marked trap
+            node["color"] = 'trap_item_color'  # salmon for traps
+        elif flags & 0b00001:  # progression is the third flag checked, so it can overwrite. 
+            # "useful progression" gets marked progression
+            node["color"] = 'progression_item_color'  # "dulled" gold for regular progression
+            if flags & 0b10000:  # deprioritized, but still progression (skulls etc)
+                node["color"] = 'progression_deprioritized_item_color'  # Citron for progression deprioritized
+            else:
+                if flags & 0b01000:  # skip_balancing bit set
+                    node["color"] = 'progression_goal_item_color'  # Gold for progression skip items/macguffins
+        if not node["color"]:
+            # if we can't find the flag set, use the command echo color to indicate it doesn't know what kind of item it is
+            node["color"] = 'command_echo_color'
+        node["text"] = escape_markup(node["text"])
         return self._handle_color(node)
 
     def _handle_item_id(self, node: JSONMessagePart):
@@ -298,7 +307,8 @@ class JSONtoTextParser(metaclass=HandlerMeta):
         return self._handle_item_name(node)
 
     def _handle_location_name(self, node: JSONMessagePart):
-        node["color"] = 'foundcolor'
+        node["color"] = 'location_color'
+        node["text"] = escape_markup(node["text"])
         return self._handle_color(node)
 
     def _handle_location_id(self, node: JSONMessagePart):
@@ -307,11 +317,53 @@ class JSONtoTextParser(metaclass=HandlerMeta):
         return self._handle_location_name(node)
 
     def _handle_entrance_name(self, node: JSONMessagePart):
-        node["color"] = 'entrancecolor'
+        node["color"] = 'entrance_color'
+        node["text"] = escape_markup(node["text"])
         return self._handle_color(node)
 
     def _handle_hint_status(self, node: JSONMessagePart):
         node["color"] = status_colors.get(node["hint_status"], "red")
+        node["text"] = escape_markup(node["text"])
+        return self._handle_color(node)
+
+    def _handle_plaintext(self, node: JSONMessagePart):
+        if "[color=" in node["text"]:
+            import re
+            node_list = []
+            text = node["text"]
+            
+            # Use regex to find all [color=value]text[/color] patterns
+            pattern = r'\[color=([^\]]+)\](.*?)\[/color\]'
+            # pattern = r'\[i\](.*?)\[/i\]'
+            # pattern = r'\[b\](.*?)\[/b\]'
+            last_end = 0
+            
+            for match in re.finditer(pattern, text):
+                # Add text before the color tag
+                if match.start() > last_end:
+                    before_text = text[last_end:match.start()]
+                    if before_text:
+                        node_list.append({"color": 'default_color', "text": escape_markup(before_text)})
+                
+                # Add the color tag content
+                color_value = match.group(1)
+                tag_text = match.group(2)
+                node_list.append({"color": color_value, "text": escape_markup(tag_text)})
+                last_end = match.end()
+            
+            # Add any remaining text after the last color tag
+            if last_end < len(text):
+                remaining_text = text[last_end:]
+                if remaining_text:
+                    node_list.append({"color": 'default_color', "text": escape_markup(remaining_text)})
+            
+            return_text = ""
+            for node_part in node_list:
+                return_text += self._handle_color(node_part)
+            return return_text
+        
+        node["text"] = escape_markup(node["text"])
+        node["color"] = 'default_color'
         return self._handle_color(node)
 
 
@@ -319,22 +371,56 @@ class RawJSONtoTextParser(JSONtoTextParser):
     def _handle_color(self, node: JSONMessagePart):
         return self._handle_text(node)
 
+
+class KivyMarkupJSONtoTextParser(JSONtoTextParser):
+    """JSON parser that converts to Kivy markup format with hex colors"""
+    color_codes: typing.ClassVar[typing.Optional[dict]] = None
+
+    def __init__(self, ctx):
+        super().__init__(ctx)
+        cls = type(self)
+        if cls.color_codes is None:
+            from kivy.utils import hex_colormap
+            colors = dict(hex_colormap)
+            for key, value in TEXT_COLORS.items():
+                colors[key] = value
+            cls.color_codes = colors
+
+    def _handle_color(self, node: JSONMessagePart):
+        codes = node["color"].split(";")
+        # Find the first valid color code
+        color_hex = None
+        for code in codes:
+            if code in self.color_codes:
+                color_hex = self.color_codes[code]
+                break
+        
+        if color_hex:
+            # Get the plain text without wrapping it in default color
+            text = node.get("text", "")
+            return f'[color={color_hex}]{text}[/color]'
+        else:
+            return self._handle_text(node)
+    
+    def _handle_text(self, node: JSONMessagePart):
+        return node.get("text", "")
+
 # setting ansi colors - Added many 8 bit to go with the 4 bit.
 color_codes = {'reset': 0, 'bold': 1, 'underline': 4, 'black': 30, 'red': 31, 'green': 32, 'yellow': 33, 'blue': 34,
                 'magenta': 35, 'cyan': 36, 'white': 37, 'black_bg': 40, 'red_bg': 41, 'green_bg': 42, 'yellow_bg': 43,
                 'blue_bg': 44, 'magenta_bg': 45, 'cyan_bg': 46, 'white_bg': 47,
                 'plum': 33, 'slateblue': 32, 'salmon': 31, 'limegreen': 32, 'lightgray': 37, 'gold': 33,
-                'notfoundcolor': '38;5;196', #red
-                'foundcolor': '38;5;34', #green
-                'friendcolor': '38;5;75', #ltblue
-                'entrancecolor': '38;5;27', #blue
-                'playercolor': '38;5;212', #atzpink
-                'junkcolor': '38;5;249', #gray
-                'usefulcolor': '38;5;149', #lime
-                'wothcolor': '38;5;220', #gold
-                'trapcolor': '38;5;167', #salmon
-                'default': 37, #white
-                'bcastcolor': '38;5;208' #orange
+                'default_color': 37, #white
+                'location_color': '38;5;34', #green
+                'player1_color': '38;5;212', #atzpink
+                'player2_color': '38;5;75', #ltblue
+                'entrance_color': '38;5;27', #blue
+                'trap_item_color': '38;5;167', #salmon
+                'regular_item_color': '38;5;249', #gray
+                'useful_item_color': '38;5;149', #lime
+                'progression_skip_item_color': '38;5;220', #gold
+                'progression_item_color': '38;5;220', #gold
+                'command_echo_color': '38;5;208' #orange
 }
 
 def color_code(*args):
@@ -371,7 +457,17 @@ status_colors: typing.Dict[HintStatus, str] = {
     HintStatus.HINT_AVOID: "salmon",
     HintStatus.HINT_PRIORITY: "gold",
 }
-
+## HintStatus map is the location identifier/colors
+mwggui_status_names: typing.Dict[MWGGUIHintStatus, str] = {
+    MWGGUIHintStatus.HINT_SHOP: "(shop)",
+    MWGGUIHintStatus.HINT_GOAL: "(goal)",
+    MWGGUIHintStatus.HINT_BK_MODE: "(bk_mode)",
+}
+mwggui_status_colors: typing.Dict[MWGGUIHintStatus, str] = {
+    MWGGUIHintStatus.HINT_SHOP: "grey",
+    MWGGUIHintStatus.HINT_GOAL: "gold",
+    MWGGUIHintStatus.HINT_BK_MODE: "salmon",
+}
 
 def add_json_hint_status(parts: list, hint_status: HintStatus, text: typing.Optional[str] = None, **kwargs):
     parts.append({"text": text if text != None else status_names.get(hint_status, "(unknown)"),

@@ -1,0 +1,22 @@
+# Build-only requirements - these are only needed during the build process
+# and should not be included in the final package distribution
+
+# Python-to-C compiler for building extensions
+cython>=3.0.12
+
+# Package building tools
+setuptools>=70.0.0
+build>=1.0.0
+
+# cx_Freeze for building executables (if not already installed)
+# Pinned to 8.4.0 because cx_custom_hooks/_kivy_.py reaches into private
+# cx_Freeze internals (cx_Freeze.module.Module, cx_Freeze._compat.IS_*) that
+# are not API-stable across major versions.
+cx_Freeze==8.4.0
+
+# uv is needed at build time: ModuleUpdate.py calls find_uv() at module-load,
+# and build_exe.py imports Utils → ModuleUpdate before cx_Freeze runs. The
+# pip-installed wheel drops a `uv` binary into the venv's Scripts/bin dir,
+# which is enough for shutil.which() to find it. End users of the frozen
+# launcher get uv separately via winget / install-uv.sh on first launch.
+uv>=0.5.0

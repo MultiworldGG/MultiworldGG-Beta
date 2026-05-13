@@ -67,6 +67,7 @@ Output Logs/
 /Archipelago.zip
 /MultiworldGG.zip
 /setup.ini
+/uv_runtime/
 /installdelete.iss
 /data/user.kv
 /datapackage
@@ -76,6 +77,7 @@ Output Logs/
 /temp
 # stubgen output
 /out/
+/tools/access_token
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -219,6 +221,9 @@ gunicorn.conf.py
 selflaunch.yaml
 local_build_win.ps1
 
+#tools
+tools/access_token
+
 # Sprites
 data/sprites/remote/*.zspr
 
@@ -235,17 +240,8 @@ lib/poe_client_vendor/*
 Minecraft Forge server/*
 jdk*/*
 
-# SM64Hacks
-sm64hack_jsons
+# GitHub-bot — operator-filled secrets (never commit)
+deploy/github-bot.env
+deploy/github-bot-secrets/*
+!deploy/github-bot-secrets/.gitkeep
 
-# lobby uploads
-uploads
-
-# launcher cache
-data/world_launcher_cache.json.gz
-
-# OoT
-worlds/oot/ASM/tools/armips
-worlds/oot/data/Compress/ARCHIVE.bin
-data/sprites/oot/adult/*.zobj
-data/sprites/oot/child/*.zobj

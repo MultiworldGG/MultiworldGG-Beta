@@ -13,6 +13,7 @@ on:
       - '**.pyx'
       - 'setup.py'
       - 'requirements.txt'
+      - 'build_requirements.txt'
       - '.github/workflows/scan-build.yml'
   pull_request:
     paths:
@@ -26,6 +27,7 @@ on:
       - '**.pyx'
       - 'setup.py'
       - 'requirements.txt'
+      - 'build_requirements.txt'
       - '.github/workflows/scan-build.yml'
 
 permissions: {}
@@ -35,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v6.0.2
+    - uses: actions/checkout@v6
       with:
         submodules: recursive
     - name: Install newer Clang
@@ -54,11 +56,11 @@ jobs:
       run: |
         python -m venv venv
         source venv/bin/activate
-        python -m pip install --upgrade pip -r requirements.txt
+        python -m pip install --upgrade pip -r requirements.txt -r build_requirements.txt
     - name: scan-build
       run: |
         source venv/bin/activate
-        scan-build-19 --status-bugs -o scan-build-reports -disable-checker deadcode.DeadStores python setup.py build -y
+        scan-build-19 --status-bugs -o scan-build-reports -disable-checker deadcode.DeadStores python setup.py build_exe
     - name: Store report
       if: failure()
       uses: actions/upload-artifact@v7.0.0

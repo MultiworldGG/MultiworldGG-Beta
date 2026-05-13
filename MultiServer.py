@@ -16,16 +16,13 @@ import operator
 import pickle
 import random
 import shlex
+import signal
+import sys
 import threading
 import time
 import typing
 import weakref
 import zlib
-from signal import SIGINT, SIGTERM, signal
-
-import ModuleUpdate
-
-ModuleUpdate.update()
 
 if typing.TYPE_CHECKING:
     import ssl
@@ -34,19 +31,35 @@ if typing.TYPE_CHECKING:
 import colorama
 import websockets
 from websockets.extensions.permessage_deflate import PerMessageDeflate, ServerPerMessageDeflateFactory
+from websockets.protocol import State
 try:
     # ponyorm is a requirement for webhost, not default server, so may not be importable
-    from pony.orm.dbapiprovider import OperationalError
+    from pony.orm.dbapiprovider import OperationalError # type: ignore
 except ImportError:
     OperationalError = ConnectionError
 
 import NetUtils
 import Utils
-from Utils import version_tuple, restricted_loads, Version, async_start, get_intended_text
+from Utils import version_tuple, restricted_loads, Version, async_start, write_path, get_intended_text, is_frozen
+import os
+
+if is_frozen():
+    venv_site_packages_path = write_path("mwgg_venv", "Lib", "site-packages")
+    if venv_site_packages_path not in sys.path:
+        sys.path.append(venv_site_packages_path)
+    venv_worlds_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds")
+    if os.path.exists(venv_worlds_path) and venv_worlds_path not in sys.path:
+        sys.path.append(venv_worlds_path)
+
+# Hard-require mwgg_igdb: BaseUtils.get_archipelago_constants and the worlds
+# loader cascade can lazy-import GameIndex; if it's missing the ImportError is
+# uncaught and the server crashes. Mirrors WebHost.py's pattern.
+import ModuleUpdate
+ModuleUpdate.update()
+
 from NetUtils import Endpoint, ClientStatus, NetworkItem, decode, encode, NetworkPlayer, Permission, NetworkSlot, \
     SlotType, LocationStore, MultiData, Hint, HintStatus
 from BaseClasses import ItemClassification
-
 
 min_client_version = Version(0, 1, 6)
 colorama.just_fix_windows_console()
@@ -337,7 +350,6 @@ class Context:
     # Data package retrieval
     def _load_game_data(self):
         import worlds
-        worlds.ensure_worlds_loaded()
         self.gamespackage = worlds.network_data_package["games"]
 
         self.item_name_groups = {world_name: world.item_name_groups for world_name, world in
@@ -380,7 +392,7 @@ class Context:
 
     # General networking
     async def send_msgs(self, endpoint: Endpoint, msgs: typing.Iterable[dict]) -> bool:
-        if not endpoint.socket or not endpoint.socket.open:
+        if not endpoint.socket or endpoint.socket.state is not State.OPEN:
             return False
         msg = self.dumper(msgs)
         try:
@@ -395,7 +407,7 @@ class Context:
             return True
 
     async def send_encoded_msgs(self, endpoint: Endpoint, msg: str) -> bool:
-        if not endpoint.socket or not endpoint.socket.open:
+        if not endpoint.socket or endpoint.socket.state is not State.OPEN:
             return False
         try:
             await endpoint.socket.send(msg)
@@ -411,7 +423,7 @@ class Context:
     async def broadcast_send_encoded_msgs(self, endpoints: typing.Iterable[Endpoint], msg: str) -> bool:
         sockets = []
         for endpoint in endpoints:
-            if endpoint.socket and endpoint.socket.open:
+            if endpoint.socket and endpoint.socket.state is State.OPEN:
                 sockets.append(endpoint.socket)
         try:
             websockets.broadcast(sockets, msg)
@@ -988,7 +1000,7 @@ async def on_client_joined(ctx: Context, client: Client):
                               "If your client supports it, "
                               "you may have additional local commands you can list with /help.",
                       {"type": "Tutorial"})
-    if not any(isinstance(extension, PerMessageDeflate) for extension in client.socket.extensions):
+    if not any(isinstance(extension, PerMessageDeflate) for extension in client.socket.protocol.extensions):
         ctx.notify_client(client, "Warning: your client does not support compressed websocket connections! "
                                   "It may stop working in the future. If you are a player, please report this to the "
                                   "client's developer.")
@@ -2686,20 +2698,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('multidata', nargs="?", default=defaults["multidata"])
     parser.add_argument('--host', default=defaults["host"])
     parser.add_argument('--port', default=defaults["port"], type=int)
-    parser.add_argument('--server_password', default=defaults["server_password"])
+    parser.add_argument('--server-password', default=defaults["server_password"])
     parser.add_argument('--password', default=defaults["password"])
     parser.add_argument('--savefile', default=defaults["savefile"])
-    parser.add_argument('--disable_save', default=defaults["disable_save"], action='store_true')
+    parser.add_argument('--disable-save', default=defaults["disable_save"], action='store_true')
     parser.add_argument('--cert', help="Path to a SSL Certificate for encryption.")
     parser.add_argument('--cert_key', help="Path to SSL Certificate Key file")
     parser.add_argument('--loglevel', default=defaults["loglevel"],
                         choices=['debug', 'info', 'warning', 'error', 'critical'])
     parser.add_argument('--logtime', help="Add timestamps to STDOUT",
                         default=defaults["logtime"], action='store_true')
-    parser.add_argument('--location_check_points', default=defaults["location_check_points"], type=int)
+    parser.add_argument('--location-check-points', default=defaults["location_check_points"], type=int)
     parser.add_argument('--hint_cost', default=defaults["hint_cost"], type=int)
-    parser.add_argument('--disable_item_cheat', default=defaults["disable_item_cheat"], action='store_true')
-    parser.add_argument('--release_mode', default=defaults["release_mode"], nargs='?',
+    parser.add_argument('--disable-item-cheat', default=defaults["disable_item_cheat"], action='store_true')
+    parser.add_argument('--release-mode', default=defaults["release_mode"], nargs='?',
                         choices=['auto', 'enabled', 'disabled', "goal", "auto-enabled"], help='''\
                              Select !release Accessibility. (default: %(default)s)
                              auto:     Automatic "release" on goal completion
@@ -2708,7 +2720,7 @@ def parse_args() -> argparse.Namespace:
                              goal:     !release can be used after goal completion
                              auto-enabled: !release is available and automatically triggered on goal completion
                              ''')
-    parser.add_argument('--collect_mode', default=defaults["collect_mode"], nargs='?',
+    parser.add_argument('--collect-mode', default=defaults["collect_mode"], nargs='?',
                         choices=['auto', 'enabled', 'disabled', "goal", "auto-enabled"], help='''\
                              Select !collect Accessibility. (default: %(default)s)
                              auto:     Automatic "collect" on goal completion
@@ -2717,14 +2729,14 @@ def parse_args() -> argparse.Namespace:
                              goal:     !collect can be used after goal completion
                              auto-enabled: !collect is available and automatically triggered on goal completion
                              ''')
-    parser.add_argument('--countdown_mode', default=defaults["countdown_mode"], nargs='?',
+    parser.add_argument('--countdown-mode', default=defaults["countdown_mode"], nargs='?',
                         choices=['enabled', 'disabled', "auto"], help='''\
                                 Select !countdown Accessibility. (default: %(default)s)
                                 enabled:  !countdown is always available
                                 disabled: !countdown is never available
                                 auto:     !countdown is available for rooms with less than 30 players
                                 ''')
-    parser.add_argument('--remaining_mode', default=defaults["remaining_mode"], nargs='?',
+    parser.add_argument('--remaining-mode', default=defaults["remaining_mode"], nargs='?',
                         choices=['enabled', 'disabled', "goal"], help='''\
                              Select !remaining Accessibility. (default: %(default)s)
                              enabled:  !remaining is always available
@@ -2741,7 +2753,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--auto_shutdown', default=defaults["auto_shutdown"], type=int,
                         help="automatically shut down the server after this many minutes without new location checks. "
                              "0 to keep running. Not yet implemented.")
-    parser.add_argument('--use_embedded_options', action="store_true",
+    parser.add_argument('--use-embedded-options', action="store_true",
                         help='retrieve release, remaining and hint options from the multidata file,'
                              ' instead of host.yaml')
     parser.add_argument('--compatibility', default=defaults["compatibility"], type=int,
@@ -2792,7 +2804,8 @@ def load_server_cert(path: str, cert_key: typing.Optional[str]) -> "ssl.SSLConte
 async def main(args: argparse.Namespace):
     Utils.init_logging(name="Server",
                        loglevel=args.loglevel.lower(),
-                       add_timestamp=args.logtime)
+                       add_timestamp=args.logtime,
+                       show_logo=True)
 
     ctx = Context(args.host, args.port, args.server_password, args.password, args.location_check_points,
                   args.hint_cost, not args.disable_item_cheat, args.release_mode, args.collect_mode,
@@ -2802,9 +2815,14 @@ async def main(args: argparse.Namespace):
 
     if not data_filename:
         try:
-            filetypes = (("Multiworld data", (".archipelago", ".zip")),)
-            data_filename = Utils.open_filename("Select multiworld data", filetypes)
-
+            filetypes = [("Multiworld data", [".archipelago", ".zip"]), ("All Files", ["*.*"])]
+            data_filename = Utils.open_filename(
+                title="Select multiworld data", 
+                filetypes=filetypes,
+                multiple=False,
+                suggest=""
+        )
+        
         except Exception as e:
             if isinstance(e, ImportError) or (e.__class__.__name__ == "TclError" and "no display" in str(e)):
                 if not isinstance(e, ImportError):
@@ -2829,6 +2847,29 @@ async def main(args: argparse.Namespace):
 
     ctx.init_save(not args.disable_save)
 
+    # Set up signal handler for Ctrl+C (SIGINT) - cross-platform compatible
+    def shutdown_handler():
+        logging.info("Received interrupt signal (Ctrl+C), shutting down...")
+        try:
+            if ctx.server and hasattr(ctx.server, 'ws_server'):
+                ctx.server.ws_server.close()
+        except Exception:
+            pass  # Server may not be initialized yet
+        finally:
+            ctx.exit_event.set()
+
+    loop = asyncio.get_running_loop()
+    # Use asyncio's signal handler on Unix (more reliable), fallback to signal.signal() on Windows
+    if hasattr(loop, 'add_signal_handler'):
+        try:
+            loop.add_signal_handler(signal.SIGINT, shutdown_handler)
+        except NotImplementedError:
+            # Windows doesn't support add_signal_handler, fall back to signal.signal()
+            signal.signal(signal.SIGINT, lambda s, f: shutdown_handler())
+    else:
+        # Fallback for older Python versions or Windows
+        signal.signal(signal.SIGINT, lambda s, f: shutdown_handler())
+
     ssl_context = load_server_cert(args.cert, args.cert_key) if args.cert else None
 
     ctx.server = websockets.serve(
@@ -2846,25 +2887,6 @@ async def main(args: argparse.Namespace):
     console_task = asyncio.create_task(console(ctx))
     if ctx.auto_shutdown:
         ctx.shutdown_task = asyncio.create_task(auto_shutdown(ctx, [console_task]))
-
-    def stop():
-        try:
-            for remove_signal in [SIGINT, SIGTERM]:
-                asyncio.get_event_loop().remove_signal_handler(remove_signal)
-        except NotImplementedError:
-            pass
-        ctx.commandprocessor._cmd_exit()
-
-    def shutdown(signum, frame):
-        stop()
-
-    try:
-        for sig in [SIGINT, SIGTERM]:
-            asyncio.get_event_loop().add_signal_handler(sig, stop)
-    except NotImplementedError:
-        # add_signal_handler is only implemented for UNIX platforms
-        for sig in [SIGINT, SIGTERM]:
-            signal(sig, shutdown)
 
     await ctx.exit_event.wait()
     console_task.cancel()

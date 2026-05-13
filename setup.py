@@ -1,855 +1,269 @@
-import base64
-import datetime
-import io
-import json
+#!/usr/bin/env python3
+"""
+cx_Freeze setup script for MultiWorldGG
+"""
+
 import os
-import platform
-import shutil
-import subprocess
 import sys
-import sysconfig
-import threading
-import urllib.error
-import urllib.request
-import warnings
-import zipfile
-from collections.abc import Callable, Iterable, Sequence
-from hashlib import sha3_512
-from pathlib import Path
+import platform
+import logging
 
-
-SNI_VERSION = "v0.0.100"  # change back to "latest" once tray icon issues are fixed
-
-
-# This is a bit jank. We need cx-Freeze to be able to run anything from this script, so install it
-requirement = 'cx-Freeze==8.4.0'
-try:
-    import pkg_resources
-    try:
-        pkg_resources.require(requirement)
-        install_cx_freeze = False
-    except pkg_resources.ResolutionError:
-        install_cx_freeze = True
-except (AttributeError, ImportError):
-    install_cx_freeze = True
-    pkg_resources = None  # type: ignore[assignment]
-
-if install_cx_freeze:
-    # check if pip is available
-    try:
-        import pip  # noqa: F401
-    except ImportError:
-        raise RuntimeError("pip not available. Please install pip.")
-    # install and import cx_freeze
-    if '--yes' not in sys.argv and '-y' not in sys.argv:
-        input(f'Requirement {requirement} is not satisfied, press enter to install it')
-    subprocess.call([sys.executable, '-m', 'pip', 'install', requirement, '--upgrade'])
-    import pkg_resources
-
-import cx_Freeze
+from cx_Freeze import setup, Executable, build_exe
 from cx_Freeze.command.bdist_mac import bdist_mac
 
-# .build only exists if cx-Freeze is the right version, so we have to update/install that first before this line
-import setuptools.command.build
+from Utils import version_tuple, instance_name, is_windows
 
-if __name__ == "__main__":
-    # need to run this early to import from Utils and Launcher
-    # TODO: move stuff to not require this
-    import ModuleUpdate
-    ModuleUpdate.update(yes="--yes" in sys.argv or "-y" in sys.argv)
+logger = logging.getLogger("MultiWorld")
 
-import worlds as worlds_module
-from worlds import ensure_worlds_loaded
-from worlds.LauncherComponents import components, icon_paths
-from Utils import version_tuple, instance_name, archipelago_guid, is_windows, is_linux
-from Cython.Build import cythonize
+if not logging.getLogger().hasHandlers():
+    logging.basicConfig(level=logging.WARNING, format='%(name)s: %(message)s', stream=sys.stdout)
+if not logging.getLogger("MultiWorld").hasHandlers():
+    logger.addHandler(logging.StreamHandler(sys.stdout))
+    logger.setFormatter(logging.Formatter('%(message)s'))
+    logger.setLevel(logging.INFO)
 
-def _install_cxfreeze_world_progress_logging() -> Callable[[], None]:
-    try:
-        from cx_Freeze import finder as cxfinder
-    except Exception:
-        return lambda: None
+# Does not respect root logger level.
+logging.getLogger("cx_Freeze").setLevel(logging.getLogger().level)
+logging.getLogger("kivy").setLevel(logging.getLogger().level)
 
-    finder_cls = getattr(cxfinder, "ModuleFinder", None)
-    if finder_cls is None:
-        return lambda: None
+# Import project utilities
+sys.path.insert(0, os.path.dirname(__file__))
 
-    world_module_names = sorted({
-        f"worlds.{Path(world_source.path).stem}"
-        for world_source in worlds_module.world_sources
-    })
-    world_module_set = set(world_module_names)
-    seen_world_modules: set[str] = set()
-    progress = {"count": 0, "total": len(world_module_names)}
-    wrapped_methods: dict[str, Callable[..., object]] = {}
+# Build configuration
+build_exe_options = {
+    "packages": [
+        # GUI/Graphics frameworks (complex packages with data files)
+        "kivy",
+        "kivy_deps" if is_windows else None,
+        "kivymd",
+        "asynckivy",
 
-    def _extract_module_name(args: tuple[object, ...], kwargs: dict[str, object]) -> str | None:
-        candidate = kwargs.get("name")
-        if isinstance(candidate, str):
-            return candidate
-        candidate = kwargs.get("module_name")
-        if isinstance(candidate, str):
-            return candidate
-        for arg in args:
-            if isinstance(arg, str):
-                return arg
-        return None
+        # Core utilities (might be dynamically loaded or conditional)
+        "websockets",
+        "cymem",
+        "cffi",
+        "PIL",
 
-    def _log_module_if_relevant(module_name: str | None) -> None:
-        if isinstance(module_name, str) and module_name in world_module_set and module_name not in seen_world_modules:
-            seen_world_modules.add(module_name)
-            progress["count"] += 1
-            print(
-                f"cx_Freeze processing world module "
-                f"[{progress['count']}/{progress['total']}]: {module_name}"
-                , flush=True
-            )
+        # Platform-specific memory access (conditional imports)
+        "pymem" if is_windows else None,
+        "dolphin_memory_engine" if is_windows else None,
 
-    def _wrap_method(method_name: str) -> None:
-        original_method = getattr(finder_cls, method_name, None)
-        if not callable(original_method):
-            return
+        # System utilities (might be conditionally imported)
+        "pyshortcuts",
 
-        def _wrapped(self, *args, __method=original_method, **kwargs):
-            _log_module_if_relevant(_extract_module_name(args, kwargs))
-            return __method(self, *args, **kwargs)
+        # World-specific packages
+        "orjson",
+        "aiohttp",          # sc2 world
+        "requests",         # multiple worlds
+        "google.protobuf",  # sc2 world
+        "pymongo",          # ff4fe world
+        "loguru",           # sc2 world
 
-        setattr(finder_cls, method_name, _wrapped)
-        wrapped_methods[method_name] = original_method
-
-    for method_name in ("include_module", "_import_module", "_internal_import_module", "import_module"):
-        _wrap_method(method_name)
-
-    def _restore() -> None:
-        for method_name, original_method in wrapped_methods.items():
-            setattr(finder_cls, method_name, original_method)
-
-    return _restore
-
-
-def _start_cxfreeze_world_output_monitor(worlds_output_dir: Path) -> Callable[[], None]:
-    expected_worlds = {
-        Path(world_source.path).stem
-        for world_source in worlds_module.world_sources
-    }
-    seen_worlds: set[str] = set()
-    stop_event = threading.Event()
-
-    def _scan_once() -> None:
-        if not worlds_output_dir.is_dir():
-            return
-
-        produced_worlds: set[str] = set()
-        for entry in worlds_output_dir.iterdir():
-            if entry.is_dir():
-                produced_worlds.add(entry.name)
-            elif entry.is_file() and entry.suffix == ".apworld":
-                produced_worlds.add(entry.stem)
-
-        new_worlds = sorted((produced_worlds & expected_worlds) - seen_worlds)
-        for world_name in new_worlds:
-            seen_worlds.add(world_name)
-
-    def _monitor() -> None:
-        while not stop_event.wait(0.25):
-            _scan_once()
-        _scan_once()
-
-    threading.Thread(target=_monitor, name="CxFreezeWorldOutputMonitor", daemon=True).start()
-
-    def _stop() -> None:
-        stop_event.set()
-
-    return _stop
-
-
-non_apworlds: set[str] = {
-    "A Link to the Past",
-    "Adventure",
-    "ArchipIDLE",
-    "Clique",
-    "Lufia II Ancient Cave",
-    "Meritous",
-    "Archipelago",
-    "Ocarina of Time",
-    "Overcooked! 2",
-    "Raft",
-    "Slay the Spire",
-    "Super Mario 64",
-    "VVVVVV",
+        # Custom packages
+        "mwgg_gui",
+        "mwgg_tui",
+        "mwgg_splash",
+        "worlds"
+    ],
+    "includes": [
+        "ModuleUpdate",
+        "BaseUtils",
+        "CommonClient",
+        "Gui",
+        "ClientBuilder",
+        "BaseClasses",
+        "Options"
+    ],
+    "excludes": [
+        "Cython",
+        "PySide2",
+        "pygments",
+        "pandas",
+        "matplotlib",
+        "scipy",
+        "pytest",
+        "unittest",
+        "test",
+        "tests",
+        "__pycache__",
+        ".pytest_cache",
+        "kivy_deps.sdl2",
+        "kivy_deps.glew",
+        "kivy_deps.angle"
+    ],
+    "zip_include_packages": ["*"],
+    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "PIL", "mwgg_tui", "mwgg_splash"],
+    "include_files": [
+        ("data", "data"),
+        ("LICENSE", "LICENSE"),
+        ("README.md", "README.md"),
+        ("application.yaml", "application.yaml"),
+        ("data/SNI", "SNI") if os.path.exists("data/SNI") else None,
+        ("data/EnemizerCLI", "EnemizerCLI") if os.path.exists("data/EnemizerCLI") else None,
+        ("kivy/data", "lib/kivy/data"),
+        ("kivy/include", "lib/kivy/include"),
+        # Mac/Linux only: ship astral's install.sh so first launch can install uv if it's not on PATH.
+        # Windows installs uv via Inno Setup (winget, with PowerShell installer fallback) at install time.
+        ("uv_runtime/install-uv.sh", "install-uv.sh") if not is_windows and os.path.exists("uv_runtime/install-uv.sh") else None,
+    ],
+    "include_msvcr": True,
+    "replace_paths": ["*."],
+    "optimize": 1,
+    "bin_includes": ["libffi.so", "libcrypt.so"] if platform.system() == "Linux" else []
 }
 
-def download_SNI() -> None:
-    print("Updating SNI")
-    machine_to_go = {
-        "x86_64": "amd64",
-        "aarch64": "arm64",
-        "armv7l": "arm"
-    }
-    platform_name = platform.system().lower()
-    machine_name = platform.machine().lower()
-    # force amd64 on macos until we have universal2 sni, otherwise resolve to GOARCH
-    machine_name = "universal" if platform_name == "darwin" else machine_to_go.get(machine_name, machine_name)
-    sni_version_ref = "latest" if SNI_VERSION == "latest" else f"tags/{SNI_VERSION}"
-    with urllib.request.urlopen(f"https://api.github.com/repos/alttpo/SNI/releases/{sni_version_ref}") as request:
-        data = json.load(request)
-    files = data["assets"]
+# Remove None entries from include_files and packages
+build_exe_options["include_files"] = [item for item in build_exe_options["include_files"] if item is not None]
+build_exe_options["packages"] = [item for item in build_exe_options["packages"] if item is not None]
 
-    source_url = None
+# Executable configurations
+executables = [
+    Executable(
+        script="MultiWorld.py",
+        target_name="MultiWorldGG.exe" if is_windows else "MultiWorldGG",
+        icon="data/icon.ico" if is_windows else "data/icon.png",
+        base="Win32GUI" if is_windows else None,
+        shortcut_name="MultiWorldGG",
+        shortcut_dir="DesktopFolder"
+    ),
+    Executable(
+        script="MultiServer.py", 
+        target_name="MultiWorldGGServer.exe" if is_windows else "MultiWorldGGServer",
+        icon="data/icon.ico" if is_windows else "data/icon.png",
+        base=None,
+        shortcut_name="MultiWorldGGServer",
+        shortcut_dir="DesktopFolder"
+    ),
+    Executable(
+        script="Generate.py",
+        target_name="MultiWorldGGGenerate.exe" if is_windows else "MultiWorldGGGenerate", 
+        icon="data/icon.ico" if is_windows else "data/icon.png",
+        base=None,
+        shortcut_name="MultiWorldGGGenerate",
+        shortcut_dir="DesktopFolder"
+    ),
+    Executable(
+        script="Patch.py",
+        target_name="MultiWorldGGPatch.exe" if is_windows else "MultiWorldGGPatch",
+        icon="data/icon.ico" if is_windows else "data/icon.png", 
+        base=None,
+        shortcut_name="MultiWorldGGPatch",
+        shortcut_dir="DesktopFolder"
+    )
+]
 
-    for file in files:
-        download_url: str = file["browser_download_url"]
-        machine_match = download_url.rsplit("-", 1)[1].split(".", 1)[0] == machine_name
-        if platform_name in download_url and machine_match:
-            source_url = download_url
-            # prefer "many" builds
-            if "many" in download_url:
-                break
-            # prefer non-windows7 builds to get up-to-date dependencies
-            if platform_name == "windows" and "windows7" not in download_url:
-                break
-
-    if source_url and source_url.endswith(".zip"):
-        with urllib.request.urlopen(source_url) as download:
-            with zipfile.ZipFile(io.BytesIO(download.read()), "r") as zf:
-                for zf_member in zf.infolist():
-                    zf.extract(zf_member, path="SNI")
-        print(f"Downloaded SNI from {source_url}")
-
-    elif source_url and (source_url.endswith(".tar.xz") or source_url.endswith(".tar.gz")):
-        import tarfile
-        mode = "r:xz" if source_url.endswith(".tar.xz") else "r:gz"
-        with urllib.request.urlopen(source_url) as download:
-            sni_dir = None
-            with tarfile.open(fileobj=io.BytesIO(download.read()), mode=mode) as tf:
-                for member in tf.getmembers():
-                    if member.name.startswith("/") or "../" in member.name:
-                        raise ValueError(f"Unexpected file '{member.name}' in {source_url}")
-                    elif member.isdir() and not sni_dir:
-                        sni_dir = member.name
-                    elif member.isfile() and not sni_dir or sni_dir and not member.name.startswith(sni_dir):
-                        raise ValueError(f"Expected folder before '{member.name}' in {source_url}")
-                    elif member.isfile() and sni_dir:
-                        tf.extract(member)
-            # sadly SNI is in its own folder on non-windows, so we need to rename
-            if not sni_dir:
-                raise ValueError("Did not find SNI in archive")
-            shutil.rmtree("SNI", True)
-            os.rename(sni_dir, "SNI")
-        print(f"Downloaded SNI from {source_url}")
-
-    elif source_url:
-        print(f"Don't know how to extract SNI from {source_url}")
-
-    else:
-        print(f"No SNI found for system spec {platform_name} {machine_name}")
-
-
-build_platform = sysconfig.get_platform()
-arch_folder = "exe.{platform}-{version}".format(platform=build_platform,
-                                                version=sysconfig.get_python_version())
-buildfolder = Path("build", arch_folder)
-build_arch = build_platform.split('-')[-1] if '-' in build_platform else platform.machine()
-
-
-# see Launcher.py on how to add scripts to setup.py
-def resolve_icon(icon_name: str):
-    base_path = icon_paths[icon_name]
-    if is_windows:
-        path, extension = os.path.splitext(base_path)
-        ico_file = path + ".ico"
-        assert os.path.exists(ico_file), f"ico counterpart of {base_path} should exist."
-        return ico_file
-    else:
-        return base_path
-
-
-def build_executables() -> list[cx_Freeze.Executable]:
-    # Include world-defined launch components (for example SNI Client)
-    # so cx_Freeze emits executables for them as well.
-    ensure_worlds_loaded(write_launcher_cache=False)
-    return [
-        cx_Freeze.Executable(
-            script=f"{c.script_name}.py",
-            target_name=c.frozen_name + (".exe" if is_windows else ""),
-            icon=resolve_icon(c.icon),
-            base="Win32GUI" if is_windows and not c.cli else None
-        ) for c in components if c.script_name and c.frozen_name
-    ]
-
-
-exes = build_executables()
-
+# Windows-specific: Add debug version of MultiWorld
 if is_windows:
-    # create a duplicate Launcher for Windows, which has a working stdout/stderr, for debugging and --help
-    c = next(component for component in components if component.script_name == "Launcher")
-    exes.append(cx_Freeze.Executable(
-        script=f"{c.script_name}.py",
-        target_name=f"{c.frozen_name}Debug.exe",
-        icon=resolve_icon(c.icon),
-    ))
+    executables.append(
+        Executable(
+            script="MultiWorld.py",
+            target_name="MultiWorldGGClientDebug.exe",
+            icon="data/icon.ico",
+            base=None,  # Console version for debugging
+            shortcut_name="MultiWorldGGClient Debug",
+            shortcut_dir="DesktopFolder"
+        )
+    )
 
-extra_data = ["LICENSE", "LICENSE-original.md", "data", "EnemizerCLI", "SNI", "application.yaml"]
-extra_libs = ["libssl.so", "libcrypto.so"] if is_linux else []
-excluded_extra_data_files = {
-    Path("data", "world_launcher_cache.json.gz"),
-}
+def pre_build_setup():
+    """Run pre-build setup tasks"""
+    logger.debug("Running pre-build setup...")
+    # Build requirements are in the wrapper build script
+    # Import our custom kivy hook to ensure it's loaded
+    try:
+        import cx_custom_hooks._kivy_ as kivy # type: ignore
+    except ImportError as e:
+        logger.warning(f"Warning: Could not load custom kivy hook: {e}")
 
-
-def remove_sprites_from_folder(folder: Path) -> None:
-    if os.path.isdir(folder):
-        for file in os.listdir(folder):
-            if file != ".gitignore":
-                os.remove(folder / file)
-
-
-def _threaded_hash(filepath: str | Path) -> str:
-    hasher = sha3_512()
-    hasher.update(open(filepath, "rb").read())
-    return base64.b85encode(hasher.digest()).decode()
-
-
-# cx_Freeze's build command runs other commands. Override to accept --yes and store that.
-class BuildCommand(setuptools.command.build.build):
-    user_options = [
-        ('yes', 'y', 'Answer "yes" to all questions.'),
-    ]
-    yes: bool
-    last_yes: bool = False  # used by sub commands of build
-
-    def initialize_options(self) -> None:
-        super().initialize_options()
-        type(self).last_yes = self.yes = False
-
-    def finalize_options(self) -> None:
-        super().finalize_options()
-        type(self).last_yes = self.yes
+def post_build_setup(build_exe_dir):
+    """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
+    logger.debug("Running post-build setup...")
+    os.mkdir(os.path.join(build_exe_dir, "Players"))
 
 
-# Override cx_Freeze's build_exe command for pre and post build steps
-class BuildExeCommand(cx_Freeze.command.build_exe.build_exe):
-    user_options = cx_Freeze.command.build_exe.build_exe.user_options + [
-        ('yes', 'y', 'Answer "yes" to all questions.'),
-        ('extra-data=', None, 'Additional files to add.'),
-    ]
-    yes: bool
-    extra_data: Iterable[str]
-    extra_libs: Iterable[str]  # work around broken include_files
+def _register_custom_hooks():
+    """Monkey-patch cx_Freeze.hooks to include our custom kivy hook.
 
-    buildfolder: Path
-    libfolder: Path
-    library: Path
-    buildtime: datetime.datetime
+    bdist_mac runs build_exe internally without going through CustomBuildExe,
+    so this needs to be callable from both build paths.
 
-    def initialize_options(self) -> None:
-        super().initialize_options()
-        self.yes = BuildCommand.last_yes
-        self.extra_data = []
-        self.extra_libs = []
+    Info is here:
+    https://github.com/marcelotduarte/cx_Freeze/blob/8.4.0/cx_Freeze/module.py#L412
+    """
+    try:
+        import cx_custom_hooks._kivy_ as kivy
+        import cx_Freeze.hooks
 
-    def finalize_options(self) -> None:
-        super().finalize_options()
-        self.buildfolder = self.build_exe
-        self.libfolder = Path(self.buildfolder, "lib")
-        self.library = Path(self.libfolder, "library.zip")
+        if hasattr(kivy.Hook, 'kivy'):
+            def load_kivy(finder, module):
+                hook = kivy.Hook(module)
+                hook.kivy(finder, module)
+                hook.kivy_binaries(finder, module)
 
-    def _ignore_excluded_extra_data_files(self, directory: str, names: list[str]) -> set[str]:
-        ignored: set[str] = set()
-        for name in names:
-            candidate = Path(directory, name)
-            try:
-                relative_path = candidate.relative_to(Path.cwd()) if candidate.is_absolute() else candidate
-            except ValueError:
-                continue
-            if relative_path in excluded_extra_data_files:
-                ignored.add(name)
-        return ignored
+            def load_kivy_binaries(finder, module):
+                hook = kivy.Hook(module)
+                hook.kivy_binaries(finder, module)
 
-    def remove_excluded_extra_data_files(self) -> None:
-        for relative_path in excluded_extra_data_files:
-            target = self.buildfolder / relative_path
-            if target.is_file():
-                target.unlink()
-                print(f"Removed excluded build data file {target}")
+            cx_Freeze.hooks.load_kivy = load_kivy
+            cx_Freeze.hooks.load_kivy_binaries = load_kivy_binaries
 
-    def installfile(self, path: Path, subpath: str | Path | None = None, keep_content: bool = False) -> None:
-        folder = self.buildfolder
-        if subpath:
-            folder /= subpath
-        print('copying', path, '->', folder)
-        if path.is_dir():
-            folder /= path.name
-            if folder.is_dir() and not keep_content:
-                shutil.rmtree(folder)
-            shutil.copytree(path, folder, dirs_exist_ok=True, ignore=self._ignore_excluded_extra_data_files)
-        elif path.is_file():
-            try:
-                relative_path = path.relative_to(Path.cwd())
-            except ValueError:
-                relative_path = path
-            if relative_path not in excluded_extra_data_files:
-                shutil.copy(path, folder)
+            logger.debug("Custom kivy hook registered with cx_Freeze")
         else:
-            print('Warning,', path, 'not found')
-
-    def create_manifest(self, create_hashes: bool = False) -> None:
-        # Since the setup is now split into components and the manifest is not,
-        # it makes most sense to just remove the hashes for now. Not aware of anyone using them.
-        hashes = {}
-        manifestpath = os.path.join(self.buildfolder, "manifest.json")
-        if create_hashes:
-            from concurrent.futures import ThreadPoolExecutor
-            pool = ThreadPoolExecutor()
-            for dirpath, dirnames, filenames in os.walk(self.buildfolder):
-                for filename in filenames:
-                    path = os.path.join(dirpath, filename)
-                    hashes[os.path.relpath(path, start=self.buildfolder)] = pool.submit(_threaded_hash, path)
-
-        import json
-        manifest = {
-            "buildtime": self.buildtime.isoformat(sep=" ", timespec="seconds"),
-            "hashes": {path: hash.result() for path, hash in hashes.items()},
-            "version": version_tuple}
-
-        json.dump(manifest, open(manifestpath, "wt"), indent=4)
-        print("Created Manifest")
-
-    def run(self) -> None:
-        # start downloading sni asap
-        sni_thread = threading.Thread(target=download_SNI, name="SNI Downloader")
-        sni_thread.start()
-
-        # pre-build steps
-        print(f"Outputting to: {self.buildfolder}")
-        os.makedirs(self.buildfolder, exist_ok=True)
-        import ModuleUpdate
-        ModuleUpdate.update(yes=self.yes)
-
-        # auto-build cython modules
-        build_ext = self.distribution.get_command_obj("build_ext")
-        build_ext.inplace = False
-        self.run_command("build_ext")
-        # find remains of previous in-place builds, try to delete and warn otherwise
-        for path in build_ext.get_outputs():
-            parts = os.path.split(path)[-1].split(".")
-            pattern = parts[0] + ".*." + parts[-1]
-            for match in Path().glob(pattern):
-                try:
-                    match.unlink()
-                    print(f"Removed {match}")
-                except Exception as ex:
-                    warnings.warn(f"Could not delete old build output: {match}\n"
-                                  f"{ex}\nPlease close all AP instances and delete manually.")
-
-        # Eagerly load worlds so cx_Freeze sees all dependencies during its scan.
-        from worlds import ensure_worlds_loaded
-        ensure_worlds_loaded(write_launcher_cache=False)
-
-        # regular cx build
-        self.buildtime = datetime.datetime.now(datetime.timezone.utc)
-        restore_finder_logging = _install_cxfreeze_world_progress_logging()
-        stop_world_output_monitor = _start_cxfreeze_world_output_monitor(self.libfolder / "worlds")
-        try:
-            super().run()
-        finally:
-            stop_world_output_monitor()
-            restore_finder_logging()
-
-        # manually copy built modules to lib folder. cx_Freeze does not know they exist.
-        for src in build_ext.get_outputs():
-            print(f"copying {src} -> {self.libfolder}")
-            shutil.copy(src, self.libfolder, follow_symlinks=False)
-
-        # need to finish download before copying
-        sni_thread.join()
-
-        # overridden buildfolders are not given as a path so below path concatenation won't work
-        if not isinstance(self.buildfolder, Path):
-            self.buildfolder = Path(self.buildfolder)
-
-        # include_files seems to not be done automatically. implement here
-        for src, dst in self.include_files:
-            shutil.copyfile(src, self.buildfolder / dst, follow_symlinks=False)
-
-        # now that include_files is completely broken, run find_libs here
-        for src, dst in find_libs(*self.extra_libs):
-            shutil.copyfile(src, self.buildfolder / dst, follow_symlinks=False)
-
-        # post build steps
-        if is_windows:  # kivy_deps is win32 only, linux picks them up automatically
-            from kivy_deps import sdl2, glew  # type: ignore
-            for folder in sdl2.dep_bins + glew.dep_bins:
-                shutil.copytree(folder, self.libfolder, dirs_exist_ok=True)
-                print(f"copying {folder} -> {self.libfolder}")
-            # windows needs Visual Studio C++ Redistributable
-            # Installer works for x64 and arm64
-            print("Downloading VC Redist")
-            import certifi
-            import ssl
-            context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=certifi.where())
-            with urllib.request.urlopen(r"https://aka.ms/vs/17/release/vc_redist.x64.exe",
-                                        context=context) as download:
-                vc_redist = download.read()
-            print(f"Download complete, {len(vc_redist) / 1024 / 1024:.2f} MBytes downloaded.", )
-            with open("VC_redist.x64.exe", "wb") as vc_file:
-                vc_file.write(vc_redist)
-
-        for data in self.extra_data:
-            self.installfile(Path(data))
-
-        # kivi data files
-        import kivy  # type: ignore[import-untyped]
-        shutil.copytree(os.path.join(os.path.dirname(kivy.__file__), "data"),
-                        self.buildfolder / "data",
-                        dirs_exist_ok=True)
-
-        os.makedirs(self.buildfolder / "Players" / "Templates", exist_ok=True)
-        from Options import generate_yaml_templates
-        from worlds import AutoWorldRegister, ensure_worlds_loaded
-        from worlds.Files import APWorldContainer
-        ensure_worlds_loaded(write_launcher_cache=False)
-        assert not non_apworlds - set(AutoWorldRegister.world_types), \
-            f"Unknown world {non_apworlds - set(AutoWorldRegister.world_types)} designated for .apworld"
-        folders_to_remove: list[str] = []
-        generate_yaml_templates(self.buildfolder / "Players" / "Templates", False)
-        for worldname, worldtype in AutoWorldRegister.world_types.items():
-            if worldname not in non_apworlds:
-                file_name = os.path.split(os.path.dirname(worldtype.__file__))[1]
-                if file_name.startswith("_"):
-                    continue # skip internal worlds like manual
-                world_directory = self.libfolder / "worlds" / file_name
-                if os.path.isfile(world_directory / "archipelago.json"):
-                    with open(os.path.join(world_directory, "archipelago.json"), mode="r", encoding="utf-8") as manifest_file:
-                        manifest = json.load(manifest_file)
-
-                    assert "game" in manifest, (
-                        f"World directory {world_directory} has an archipelago.json manifest file, but it "
-                        "does not define a \"game\"."
-                    )
-                    assert manifest["game"] == worldtype.game, (
-                        f"World directory {world_directory} has an archipelago.json manifest file, but value of the "
-                        f"\"game\" field ({manifest['game']} does not equal the World class's game ({worldtype.game})."
-                    )
-                else:
-                    manifest = {}
-                # this method creates an apworld that cannot be moved to a different OS or minor python version,
-                # which should be ok
-                zip_path = self.libfolder / "worlds" / (file_name + ".apworld")
-                apworld = APWorldContainer(str(zip_path))
-                apworld.minimum_ap_version = version_tuple
-                apworld.maximum_ap_version = version_tuple
-                apworld.game = worldtype.game
-                manifest.update(apworld.get_manifest())
-                apworld.manifest_path = f"{file_name}/archipelago.json"
-                with zipfile.ZipFile(zip_path, "x", zipfile.ZIP_DEFLATED,
-                                     compresslevel=9) as zf:
-                    for path in world_directory.rglob("*"):
-                        if not path.is_file():
-                            continue
-                        relative_path = os.path.join(*path.parts[path.parts.index("worlds")+1:])
-                        if not relative_path.endswith("archipelago.json"):
-                            zf.write(path, relative_path)
-                    zf.writestr(apworld.manifest_path, json.dumps(manifest))
-                    folders_to_remove.append(file_name)
-                shutil.rmtree(world_directory)
-        shutil.copyfile("meta.yaml", self.buildfolder / "Players" / "Templates" / "meta.yaml")
-        try:
-            from maseya import z3pr  # type: ignore[import-untyped]
-        except ImportError:
-            print("Maseya Palette Shuffle not found, skipping data files.")
-        else:
-            # maseya Palette Shuffle exists and needs its data files
-            print("Maseya Palette Shuffle found, including data files...")
-            file = z3pr.__file__
-            self.installfile(Path(os.path.dirname(file)) / "data", keep_content=True)
+            logger.debug("Warning: Custom kivy hook does not have required methods")
+    except ImportError as e:
+        logger.debug(f"Warning: Could not register custom kivy hook: {e}")
+    except Exception as e:
+        logger.debug(f"Error registering custom kivy hook: {e}")
 
 
-        remove_sprites_from_folder(self.buildfolder / "data" / "sprites" / "alttpr")
-        remove_sprites_from_folder(self.buildfolder / "data" / "sprites" / "alttp" / "remote")
-        self.remove_excluded_extra_data_files()
-
-        self.create_manifest()
-
-        if is_windows:
-            # Inno setup stuff
-            with open("setup.ini", "w") as f:
-                min_supported_windows = "6.2.9200"
-                f.write(f"[Data]\nsource_path={self.buildfolder}\nmin_windows={min_supported_windows}\n")
-            with open("installdelete.iss", "w") as f:
-                f.writelines("Type: filesandordirs; Name: \"{app}\\lib\\worlds\\"+world_directory+"\"\n"
-                             for world_directory in folders_to_remove)
-        else:
-            # make sure extra programs are executable
-            enemizer_exe = self.buildfolder / 'EnemizerCLI/EnemizerCLI.Core'
-            sni_exe = self.buildfolder / 'SNI/sni'
-            extra_exes = (enemizer_exe, sni_exe)
-            for extra_exe in extra_exes:
-                if extra_exe.is_file():
-                    extra_exe.chmod(0o755)
-
-
-class AppImageCommand(setuptools.Command):
-    description = "build an app image from build output"
-    user_options = [
-        ("build-folder=", None, "Folder to convert to AppImage."),
-        ("dist-file=", None, "AppImage output file."),
-        ("app-dir=", None, "Folder to use for packaging."),
-        ("app-icon=", None, "The icon to use for the AppImage."),
-        ("app-exec=", None, "The application to run inside the image."),
-        ("yes", "y", 'Answer "yes" to all questions.'),
-    ]
-    build_folder: Path | None
-    dist_file: Path | None
-    app_dir: Path | None
-    app_name: str
-    app_exec: Path | None
-    app_icon: Path | None  # source file
-    app_id: str  # lower case name, used for icon and .desktop
-    yes: bool
-
-    def write_desktop(self) -> None:
-        assert self.app_dir, "Invalid app_dir"
-        desktop_filename = self.app_dir / f"{self.app_id}.desktop"
-        with open(desktop_filename, 'w', encoding="utf-8") as f:
-            f.write("\n".join((
-                "[Desktop Entry]",
-                f'Name={self.app_name}',
-                f'Exec={self.app_exec}',
-                "Type=Application",
-                "Categories=Game",
-                f'Icon={self.app_id}',
-                ''
-            )))
-        desktop_filename.chmod(0o755)
-
-    def write_launcher(self, default_exe: Path) -> None:
-        assert self.app_dir, "Invalid app_dir"
-        launcher_filename = self.app_dir / "AppRun"
-        with open(launcher_filename, 'w', encoding="utf-8") as f:
-            f.write(f"""#!/bin/sh
-exe="{default_exe}"
-match="${{1#--executable=}}"
-if [ "${{#match}}" -lt "${{#1}}" ]; then
-    exe="$match"
-    shift
-elif [ "$1" = "-executable" ] || [ "$1" = "--executable" ]; then
-    exe="$2"
-    shift; shift
-fi
-tmp="${{exe#*/}}"
-if [ ! "${{#tmp}}" -lt "${{#exe}}" ]; then
-    exe="{default_exe.parent}/$exe"
-fi
-export LD_LIBRARY_PATH="${{LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}}$APPDIR/{default_exe.parent}/lib"
-$APPDIR/$exe "$@"
-""")
-        launcher_filename.chmod(0o755)
-
-    def install_icon(self, src: Path, name: str | None = None, symlink: Path | None = None) -> None:
-        assert self.app_dir, "Invalid app_dir"
-        try:
-            from PIL import Image
-        except ModuleNotFoundError:
-            if not self.yes:
-                input("Requirement PIL is not satisfied, press enter to install it")
-            subprocess.call([sys.executable, '-m', 'pip', 'install', 'Pillow', '--upgrade'])
-            from PIL import Image
-        im = Image.open(src)
-        res, _ = im.size
-
-        if not name:
-            name = src.stem
-        ext = src.suffix
-        dest_dir = Path(self.app_dir / f'usr/share/icons/hicolor/{res}x{res}/apps')
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        dest_file = dest_dir / f'{name}{ext}'
-        shutil.copy(src, dest_file)
-        if symlink:
-            symlink.symlink_to(dest_file.relative_to(symlink.parent))
-
-    def initialize_options(self) -> None:
-        assert self.distribution.metadata.name
-        self.build_folder = None
-        self.app_dir = None
-        self.app_name = self.distribution.metadata.name
-        self.app_icon = self.distribution.executables[0].icon
-        self.app_exec = Path('opt/{app_name}/{exe}'.format(
-            app_name=self.distribution.metadata.name, exe=self.distribution.executables[0].target_name
-        ))
-        self.dist_file = Path("dist", "{app_name}_{app_version}_{platform}.AppImage".format(
-            app_name=self.distribution.metadata.name, app_version=self.distribution.metadata.version,
-            platform=sysconfig.get_platform()
-        ))
-        self.yes = False
-
-    def finalize_options(self) -> None:
-        assert self.build_folder
-        if not self.app_dir:
-            self.app_dir = self.build_folder.parent / "AppDir"
-        self.app_id = self.app_name.lower()
-
-    def run(self) -> None:
-        assert self.build_folder and self.dist_file, "Command not properly set up"
-        assert (
-            self.app_icon and self.app_id and self.app_dir and self.app_exec and self.app_name
-        ), "AppImageCommand not properly set up"
-        self.dist_file.parent.mkdir(parents=True, exist_ok=True)
-        if self.app_dir.is_dir():
-            shutil.rmtree(self.app_dir)
-        self.app_dir.mkdir(parents=True)
-        opt_dir = self.app_dir / "opt" / self.app_name
-        shutil.copytree(self.build_folder, opt_dir)
-        root_icon = self.app_dir / f'{self.app_id}{self.app_icon.suffix}'
-        self.install_icon(self.app_icon, self.app_id, symlink=root_icon)
-        shutil.copy(root_icon, self.app_dir / '.DirIcon')
-        self.write_desktop()
-        self.write_launcher(self.app_exec)
-        print(f'{self.app_dir} -> {self.dist_file}')
-        subprocess.call(f'ARCH={build_arch} ./appimagetool -n "{self.app_dir}" "{self.dist_file}"', shell=True)
-
-class OSXAppCommand(bdist_mac):
-    description = "macOS .app bundle with extra_data symlinked into Contents/MacOS"
-    user_options = bdist_mac.user_options + [
-            ("yes", "y", "Answer 'yes' to all questions"),
-    ]
-    def initialize_options(self):
-        super().initialize_options()
-        self.yes = False
-        self.extra_data = None
-
-    def finalize_options(self):
-        super().finalize_options()
-        build_exe = self.get_finalized_command("build_exe")
-        self.extra_data = getattr(build_exe, "extra_data", [])
+class CustomBuildExe(build_exe):
+    """Custom build command that includes post-build setup and custom hooks"""
 
     def run(self):
+        # Register our custom hooks before building
+        _register_custom_hooks()
+
+        # Run the normal build
         super().run()
-        bundle = self.bundle_dir
-        macos_dir = os.path.join(bundle, "Contents", "MacOS")
-        os.makedirs(macos_dir, exist_ok=True)
+        # Get the build directory
+        build_dir = self.build_exe
+        if build_dir:
+            logger.info(f"Build completed in: {build_dir}")
+            # Run post-build setup
+            post_build_setup(build_dir)
 
-        for item in self.extra_data:
-            name = os.path.basename(item)
-            link_path = os.path.join(macos_dir, name)
-            target = os.path.join("..", "Resources", name)
 
-            if os.path.lexists(link_path):
-                os.remove(link_path)
+class CustomBdistMac(bdist_mac):
+    """bdist_mac that registers the custom kivy hook before building."""
 
-            os.symlink(target, link_path)
+    def run(self):
+        _register_custom_hooks()
+        super().run()
 
-def find_libs(*args: str) -> Sequence[tuple[str, str]]:
-    """Try to find system libraries to be included."""
-    if not args:
-        return []
 
-    arch = build_arch.replace('_', '-')
-    libc = 'libc6'  # we currently don't support musl
+if __name__ == "__main__":
+    # Run pre-build setup
+    pre_build_setup()
 
-    def parse(line: str) -> tuple[tuple[str, str, str], str]:
-        lib, path = line.strip().split(' => ')
-        lib, typ = lib.split(' ', 1)
-        for test_arch in ('x86-64', 'i386', 'aarch64'):
-            if test_arch in typ:
-                lib_arch = test_arch
-                break
-        else:
-            lib_arch = ''
-        for test_libc in ('libc6',):
-            if test_libc in typ:
-                lib_libc = test_libc
-                break
-        else:
-            lib_libc = ''
-        return (lib, lib_arch, lib_libc), path
+    options = {"build_exe": build_exe_options}
 
-    if not hasattr(find_libs, "cache"):
-        ldconfig = shutil.which("ldconfig")
-        assert ldconfig, "Make sure ldconfig is in PATH"
-        data = subprocess.run([ldconfig, "-p"], capture_output=True, text=True).stdout.split("\n")[1:]
-        find_libs.cache = {  # type: ignore[attr-defined]
-            k: v for k, v in (parse(line) for line in data if "=>" in line)
-        }
+    bdist_mac_options = {
+        "bundle_name": instance_name,
+        "iconfile": "data/icon.icns" if os.path.exists("data/icon.icns") else None,
+    }
+    options["bdist_mac"] = {k: v for k, v in bdist_mac_options.items() if v is not None}
 
-    def find_lib(lib: str, arch: str, libc: str) -> str | None:
-        cache: dict[tuple[str, str, str], str] = getattr(find_libs, "cache")
-        for k, v in cache.items():
-            if k == (lib, arch, libc):
-                return v
-        for k, v, in cache.items():
-            if k[0].startswith(lib) and k[1] == arch and k[2] == libc:
-                return v
-        return None
+    cmdclass = {"build_exe": CustomBuildExe}
+    if sys.platform == "darwin":
+        cmdclass["bdist_mac"] = CustomBdistMac
 
-    res: list[tuple[str, str]] = []
-    for arg in args:
-        # try exact match, empty libc, empty arch, empty arch and libc
-        file = find_lib(arg, arch, libc)
-        file = file or find_lib(arg, arch, '')
-        file = file or find_lib(arg, '', libc)
-        file = file or find_lib(arg, '', '')
-        if not file:
-            raise ValueError(f"Could not find lib {arg}")
-        # resolve symlinks
-        for n in range(0, 5):
-            res.append((file, os.path.join('lib', os.path.basename(file))))
-            if not os.path.islink(file):
-                break
-            dirname = os.path.dirname(file)
-            file = os.readlink(file)
-            if not os.path.isabs(file):
-                file = os.path.join(dirname, file)
-    return res
-
-inno_lines = "" # Need to save unmodified inno to revert after build
-with open("inno_setup.iss", "r") as f:
-    inno_lines = f.read()
-inno_replace_lines = inno_lines
-inno_replace_lines = inno_replace_lines.replace("MultiworldGG", instance_name)
-inno_replace_lines = inno_replace_lines.replace("{{918BA46A-FAB8-460C-9DFF-AE691E1C865B}}",archipelago_guid)
-with open("inno_setup.iss", "w") as f:
-    f.write(inno_replace_lines)
-
-cmdclass={
-        "build": BuildCommand,
-        "build_exe": BuildExeCommand,
-        "bdist_appimage": AppImageCommand
-}
-
-if sys.platform == "darwin":
-    cmdclass["bdist_mac"] = OSXAppCommand
-
-cx_Freeze.setup(
-    name=instance_name,
-    version=f"{version_tuple.major}.{version_tuple.minor}.{version_tuple.build}",
-    description=instance_name,
-    executables=exes,
-    ext_modules=cythonize("_speedups.pyx"),
-    options={
-        "build_exe": {
-            "packages": ["worlds", "kivy", "cymem", "websockets", "kivymd", "werkzeug"],
-            "includes": ["rule_builder.cached_world"],
-            "excludes": ["Cython", "PySide2"],
-            "zip_includes": [],
-            "zip_include_packages": ["*"],
-            "zip_exclude_packages": ["worlds", "sc2", "kivymd", "clr_loader", "pythonnet", "charset_normalizer"], # clr_loader and pythonnet use absolute paths
-            "include_files": [],  # broken in cx 6.14.0, we use more special sauce now
-            "include_msvcr": False,
-            "replace_paths": ["*."],
-            "optimize": 1,
-            "build_exe": buildfolder,
-            "extra_data": extra_data,
-            "extra_libs": extra_libs,
-            "bin_includes": ["libffi.so", "libcrypt.so"] if is_linux else []
-        },
-        "bdist_appimage": {
-           "build_folder": buildfolder,
-        },
-        "bdist_mac": {
-            "bundle_name": f"{instance_name}"
-        }
-    },
-    cmdclass=cmdclass,
-)
-with open("inno_setup.iss", "w") as f: # revert inno_setup.iss
-    f.write(inno_lines)
+    # Setup configuration
+    setup(
+        name=instance_name,
+        version=version_tuple.as_pep440_string(),
+        description=f"{instance_name} - MultiWorld.GG - More, and Faster",
+        author="DelilahIsDidi, TreZc0",
+        options=options,
+        executables=executables,
+        cmdclass=cmdclass,
+    )

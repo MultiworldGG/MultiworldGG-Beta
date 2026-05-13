@@ -1,3 +1,0 @@
-custom_content = {
-    "name": ""
-}

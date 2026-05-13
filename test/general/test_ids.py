@@ -1,3 +1,4 @@
+#TODO: FIX THIS TEST - it's dependent on having all worlds loaded and we now only load the worlds we need (so here it's none)
 import unittest
 
 from Fill import distribute_items_restrictive

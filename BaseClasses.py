@@ -1541,11 +1541,12 @@ class Location:
 
 class ItemClassification(IntFlag):
     filler = 0b00000
-    """ aka trash, as in filler items like ammo, currency etc """
+    """ aka trash, as in filler items like ammo, non-logical currency etc """
 
     progression = 0b00001
     """ Item that is logically relevant.
-    Protects this item from being placed on excluded or unreachable locations. """
+    Protects this item from being placed on excluded or unreachable locations. 
+    Most world items that lock other items or lock locations should be set to this."""
 
     useful = 0b00010
     """ Item that is especially useful.
@@ -1556,15 +1557,13 @@ class ItemClassification(IntFlag):
     """ Item that is detrimental in some way. """
 
     skip_balancing = 0b01000
-    """ should technically never occur on its own
-    Item that is logically relevant, but progression balancing should not touch.
-
-    Possible reasons for why an item should not be pulled ahead by progression balancing:
-    1. This item is quite insignificant, so pulling it earlier doesn't help (currency/etc.)
-    2. It is important for the player experience that this item is evenly distributed in the seed (e.g. goal items) """
+    """ should never occur on its own, should be combined with progression for macguffin items
+    and progression & deprioritized for currency, ammo, armor, etc.
+    Item that is logically relevant, but progression balancing should not touch."""
 
     deprioritized = 0b10000
-    """ Should technically never occur on its own.
+    """ Should technically never occur on its own, should be combined with progression for logically
+    required items that feel useless: Skulltulla Tokens, Grubs
     Will not be considered for priority locations,
     unless Priority Locations Fill runs out of regular progression items before filling all priority locations.
 
@@ -1572,11 +1571,28 @@ class ItemClassification(IntFlag):
     Usually, these are items that are plentiful or insignificant. """
 
     progression_deprioritized_skip_balancing = 0b11001
-    """ Since a common case of both skip_balancing and deprioritized is "insignificant progression",
-    these items often want both flags. """
+    """ Since a common case of both skip_balancing and deprioritized is "insignificant progression", 
+    these items often want both flags. 
+    Items that are logically required to unlock other checks, but any specific one may not be needed.
+    Usually very plentiful.
+    Examples: Currency, Weapons, etc """
 
-    progression_skip_balancing = 0b01001  # only progression gets balanced
-    progression_deprioritized = 0b10001  # only progression can be placed during priority fill
+    progression_skip_balancing = 0b01001
+    """
+    Item that is logically required to beat the game, but is otherwise useless.  A Macguffin.
+    Items placed here should be reasonably expected to be found at the very end of the game,
+    and have no effect on other players' progression.
+
+    Protects this item from being placed on excluded or unreachable locations.
+    Examples: Triforce, Artifact, Proof, etc.
+    """
+    progression_deprioritized = 0b10001
+    """
+    Any progression item that you don't especially want to find on a priority location.
+    These items are necessary for logic and to prevent other players' progression, but
+    are not especially useful.
+    Examples: Skulltula Tokens, Grubs
+    """
 
     def as_flag(self) -> int:
         """As Network API flag int."""

@@ -1,0 +1,86 @@
+name: Regenerate inno_setup.iss components
+
+# Regenerates the autogen regions of inno_setup.iss from the published
+# mwgg_igdb_<variant> game-index package, then opens (or updates) a PR with
+# the diff. Drives both the [Components] block and the InClientDescriptions
+# preprocessor define.
+
+on:
+  schedule:
+    # 13:00 UTC, ~1h after the Index repo's daily variant rebuild at 12:00 UTC
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: "mwgg_igdb variant to read from"
+        default: "sixteen"
+        required: false
+        type: choice
+        options: [sixteen, twelve, ao, nr]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  VARIANT: ${{ github.event.inputs.variant || 'sixteen' }}
+  BRANCH: autogen/inno-components
+
+jobs:
+  regen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install mwgg_igdb (variant=${{ env.VARIANT }})
+        env:
+          MWGG_INDEX_TOKEN: ${{ secrets.MWGG_INDEX_TOKEN }}
+        run: |
+          BRANCH_PKG="game_index_${VARIANT}"
+          if [ -n "${MWGG_INDEX_TOKEN}" ]; then
+            URL="git+https://${MWGG_INDEX_TOKEN}@github.com/MultiworldGG/MultiworldGG-Index@${BRANCH_PKG}"
+          else
+            URL="git+https://github.com/MultiworldGG/MultiworldGG-Index@${BRANCH_PKG}"
+          fi
+          python -m pip install --upgrade pip
+          python -m pip install --no-cache-dir "${URL}"
+
+      - name: Regenerate inno_setup.iss
+        run: python tools/regen_inno_components.py --variant "${VARIANT}"
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet inno_setup.iss; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes to inno_setup.iss; nothing to PR."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --stat inno_setup.iss
+          fi
+
+      - name: Push branch and open/update PR
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "${BRANCH}"
+          git add inno_setup.iss
+          git commit -m "inno_setup.iss: regenerate from mwgg_igdb_${VARIANT}"
+          git push --force-with-lease origin "${BRANCH}"
+
+          if gh pr list --head "${BRANCH}" --state open --json number --jq '.[].number' | grep -q .; then
+            echo "PR already open for ${BRANCH}; force-pushed an update."
+          else
+            gh pr create \
+              --base main \
+              --head "${BRANCH}" \
+              --title "inno_setup.iss: regenerate from index (${VARIANT})" \
+              --body "Automated regeneration from \`mwgg_igdb_${VARIANT}\`. Review the diff (added/removed/renamed worlds, updated disk-space values, in-client flags) and merge if it looks right. Generator: \`tools/regen_inno_components.py\`."
+          fi

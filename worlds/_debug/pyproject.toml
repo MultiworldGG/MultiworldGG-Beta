@@ -1,0 +1,17 @@
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds._debug"
+version = "0.0.3"
+description = "MultiWorld: debug"
+classifiers = [ "Private :: Do Not Upload",]
+requires-python = ">=3.13"
+[[project.authors]]
+name = "TreZc0"
+
+[tool.setuptools.packages.find]
+where = [ "src",]
+include = [ "worlds._debug",]
+namespaces = true
