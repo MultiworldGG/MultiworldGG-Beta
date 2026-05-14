@@ -41,7 +41,6 @@ build_exe_options = {
         # Core utilities (might be dynamically loaded or conditional)
         "websockets",
         "cymem",
-        "cffi",
         "PIL",
 
         # Platform-specific memory access (conditional imports)
