@@ -69,10 +69,11 @@ build_exe_options = {
         "ModuleUpdate",
         "BaseUtils",
         "CommonClient",
-        "Gui",
         "ClientBuilder",
         "BaseClasses",
-        "Options"
+        "Options",
+        "frontend_protocol",
+        "kvui",
     ],
     "excludes": [
         "Cython",

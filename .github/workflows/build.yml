@@ -37,7 +37,7 @@ jobs:
   # build-release-macos: # LF volunteer
 
   build-win: # RCs and releases may still be built and signed by hand
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     steps:
       # - copy code below to release.yml -
       - uses: actions/checkout@v6
