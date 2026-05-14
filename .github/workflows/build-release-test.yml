@@ -107,11 +107,20 @@ jobs:
           pip install -r requirements.txt
           pip install -r build_requirements.txt
       
+      - name: Mint mwgg-build-fetch App installation token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.MWGG_BUILD_APP_ID }}
+          private-key: ${{ secrets.MWGG_BUILD_APP_PRIVATE_KEY }}
+          owner: MultiworldGG
+          repositories: mwgg-gui,mwgg-tui,mwgg-splash
+
       - name: Build executable (Windows)
         if: runner.os == 'Windows'
         shell: bash
         env:
-          MWGG_BUILD_GITHUB_TOKEN: ${{ secrets.MWGG_BUILD_GITHUB_TOKEN }}
+          MWGG_BUILD_GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           source venv/Scripts/activate
           cd src
@@ -121,7 +130,7 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         env:
-          MWGG_BUILD_GITHUB_TOKEN: ${{ secrets.MWGG_BUILD_GITHUB_TOKEN }}
+          MWGG_BUILD_GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           source venv/bin/activate
           cd src
@@ -180,6 +189,23 @@ jobs:
           # releases at build time by build_exe.install_wheels(). mwgg_igdb is
           # git-pulled at first run by ModuleUpdate.install_mwgg_igdb(). Worlds
           # bundle directly from src/worlds/ source — no wheel install here.
+
+      - name: Mint mwgg-build-fetch App installation token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.MWGG_BUILD_APP_ID }}
+          private-key: ${{ secrets.MWGG_BUILD_APP_PRIVATE_KEY }}
+          owner: MultiworldGG
+          repositories: mwgg-gui,mwgg-tui,mwgg-splash
+
+      - name: Install sibling-repo wheels
+        env:
+          MWGG_BUILD_GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          source venv/bin/activate
+          cd src
+          python -c "import build_exe; import sys; sys.exit(0 if build_exe.install_wheels() else 1)"
 
       - name: Build AppImage
         run: |
@@ -261,6 +287,23 @@ jobs:
           # releases at build time by build_exe.install_wheels(). mwgg_igdb is
           # git-pulled at first run by ModuleUpdate.install_mwgg_igdb(). Worlds
           # bundle directly from src/worlds/ source — no wheel install here.
+
+      - name: Mint mwgg-build-fetch App installation token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.MWGG_BUILD_APP_ID }}
+          private-key: ${{ secrets.MWGG_BUILD_APP_PRIVATE_KEY }}
+          owner: MultiworldGG
+          repositories: mwgg-gui,mwgg-tui,mwgg-splash
+
+      - name: Install sibling-repo wheels
+        env:
+          MWGG_BUILD_GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          source venv/bin/activate
+          cd src
+          python -c "import build_exe; import sys; sys.exit(0 if build_exe.install_wheels() else 1)"
 
       - name: Build macOS bundle
         run: |
