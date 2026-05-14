@@ -23,9 +23,7 @@ from importlib import invalidate_caches
 from BaseUtils import tuplize_version, Version
 from APContainer import APWorldContainer
 
-# mwgg_igdb package source — orphan branch on the Index repo, force-pushed daily by
-# the Index repo's daily-release workflow. Same package name and import path
-# regardless of variant; variant choice only affects which games are filtered in/out.
+# mwgg_igdb package source — orphan branch on the Index repo
 # See MultiworldGG-Index/scripts/build_variants.py for variant definitions.
 MWGG_IGDB_VARIANT = "sixteen"  # canonical default
 MWGG_INDEX_REPO = "MultiworldGG/MultiworldGG-Index"
@@ -694,11 +692,11 @@ def update_world_from_package() -> None:
                 stderr = "Failed to get process result"
             
             if returncode != 0:
-                logger.warning(f"Failed to install wheel {wheel}")
+                logger.warning(f"Failed to install wheel {world}")
                 if stderr:
                     logger.error(f"{stderr}")
             else:
-                logger.info(f"Successfully installed wheel {wheel}")
+                logger.info(f"Successfully installed wheel {world}")
 
         for world in worlds_files["apworlds"]:
             logger.info(f"APWorld found, checking versions: {world}")

@@ -305,12 +305,14 @@ class InitContext:
     command_processor: typing.Type[CommandProcessor] = ClientCommandProcessor
     all_players_chat: bool = True
     """If False only your own server chatter (items, locations, hints) will be shown in the console."""
-    # internals
-    _messagebox: typing.Optional["MessageBox"] = None
+    # Frontend-neutral handles: Kivy MessageBox, Textual ModalScreen, or None.
+    # Kind of hate python typechecking sometimes.
+    # typing.Union[MessageBox, ModalScreen, None] would be better but they're still not defined here.
+    _messagebox: typing.Any = None
     """Current message box through Gui"""
-    _messagebox_connection_loss: typing.Optional["MessageBox"] = None
+    _messagebox_connection_loss: typing.Any = None
     """Message box reporting a loss of connection"""
-    _consolebox: typing.Optional["ConsoleBox"] = None
+    _consolebox: typing.Any = None
     """Launcher window "console" box"""
     def __init__(self):
         self.loop = asyncio.get_event_loop()
@@ -573,12 +575,15 @@ class CommonContext(InitContext):
     """Time of last activity, used to track elapsed time"""
     _shared_activity_time: float | None
     """Time of all players' last activity, used to track elapsed time"""
-    _messagebox: typing.Optional["MessageBox"] = None
-    """Current message box through Gui"""
-    _messagebox_connection_loss: typing.Optional["MessageBox"] = None
+    # Frontend-neutral handles: Kivy MessageBox, Textual ModalScreen, or None.
+    # Kind of hate python typechecking sometimes.
+    # typing.Union[MessageBox, ModalScreen, None] would be better but they're still not defined here.
+    _messagebox: typing.Any = None
+    """Current message box through UI"""
+    _messagebox_connection_loss: typing.Any = None
     """Message box reporting a loss of connection"""
-    _consolebox: typing.Optional["ConsoleBox"] = None
-    """Current console error box through Gui"""
+    _consolebox: typing.Any = None
+    """Current console error box through UI"""
 
     def __init__(self, server_address: typing.Optional[str] = None, password: typing.Optional[str] = None) -> None:
         super().__init__()  # Initialize InitContext
