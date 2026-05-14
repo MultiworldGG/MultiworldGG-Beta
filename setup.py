@@ -11,6 +11,14 @@ import logging
 from cx_Freeze import setup, Executable, build_exe
 from cx_Freeze.command.bdist_mac import bdist_mac
 
+# cx_Freeze's bundled numpy hook (cx_Freeze/hooks/_numpy_.py) is for numpy < 2.0, 
+# so the workaround is not needed; stub the hook to prevent frozen exe errors.
+import cx_Freeze.hooks._numpy_ as _cxf_numpy_hook
+def _no_overrides_patch(self, finder, module):
+    return None
+_cxf_numpy_hook.Hook.numpy__core_overrides = _no_overrides_patch
+_cxf_numpy_hook.Hook.numpy_core_overrides = _no_overrides_patch
+
 from Utils import version_tuple, instance_name, is_windows
 
 logger = logging.getLogger("MultiWorld")
