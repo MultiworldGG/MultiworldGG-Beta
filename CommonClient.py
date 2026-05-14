@@ -1210,13 +1210,21 @@ class CommonContext(InitContext):
         if old_tags != self.tags and self.server and self.server.socket and self.server.socket.state is not State.CLOSED:
             await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
 
-    def gui_error(self, title: str, text: typing.Union[Exception, str]) -> typing.Optional["MessageBox"]:
-        """Displays an error messagebox in the loaded Kivy UI. Override if using a different UI framework"""
-        if not self.ui:
-            return None
+    def gui_error(self, title: str, text: typing.Union[Exception, str]) -> typing.Any:
+        """Display a modal error via the active frontend (Kivy MDDialog or
+        Textual ModalScreen). Returns an opaque handle the caller can pass to
+        `self.ui.dismiss_error_dialog(handle)` later.
+
+        Falls through to `logger.error` if no UI is attached or the frontend
+        doesn't implement `show_error_dialog`.
+        """
         title = title or "Error"
-        if self._messagebox:
-            self._messagebox.dismiss()
+        if self._messagebox and self.ui and hasattr(self.ui, "dismiss_error_dialog"):
+            try:
+                self.ui.dismiss_error_dialog(self._messagebox)
+            except Exception:
+                pass
+            self._messagebox = None
         # make "Multiple exceptions" look nice
         text = str(text).replace('[Errno', '\n[Errno').strip()
         # split long messages into title and text
@@ -1226,11 +1234,11 @@ class CommonContext(InitContext):
         if len(parts) > 1:
             text = f"{parts[1]}\n\n{text}" if text else parts[1]
             title = parts[0]
-        # display error
-        from mwgg_gui.components.dialog import MessageBox
-        self._messagebox = MessageBox(title=title, message=text, is_error=True)
-        self._messagebox.open()
-        return self._messagebox
+        if self.ui and hasattr(self.ui, "show_error_dialog"):
+            self._messagebox = self.ui.show_error_dialog(title, text)
+            return self._messagebox
+        logger.error(f"{title}: {text}")
+        return None
 
     def handle_connection_loss(self, msg: str) -> None:
         """Helper for logging and displaying a loss of connection. Must be called from an except block."""
@@ -1323,7 +1331,11 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
 
     ctx.cancel_autoreconnect()
     if ctx._messagebox_connection_loss:
-        ctx._messagebox_connection_loss.dismiss()
+        if ctx.ui and hasattr(ctx.ui, "dismiss_error_dialog"):
+            try:
+                ctx.ui.dismiss_error_dialog(ctx._messagebox_connection_loss)
+            except Exception:
+                pass
         ctx._messagebox_connection_loss = None
 
     address = f"ws://{address}" if "://" not in address \

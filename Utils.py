@@ -374,18 +374,25 @@ def _perform_module_launch(module_id: str, **kwargs):
         CommonClient._set_pending_launch_callbacks(ready_callback, error_callback)
 
         if module_id:
-            while True:
-                # Wait until the module is installed before trying to import it
-                try:
-                    # Invalidate import caches to pick up freshly installed modules
-                    importlib.invalidate_caches()
-                    importlib.import_module(module_id)
-                    break
-                except ModuleNotFoundError:
-                    sleep(1)
-                except Exception as e:
-                    update_logger.error(f"Failed to import module {module_id}: {e}")
-                    raise e
+            # Single attempt: by the time we get here, _install_module_threaded
+            # has already returned successfully and the wheel is on disk. A
+            # synchronous retry loop here used to block the asyncio loop and
+            # freeze the UI. If the import fails now, it almost always means a
+            # transitive dep is missing (the install used --no-deps), so we
+            # hand off to _restart_with_deps below.
+            try:
+                importlib.invalidate_caches()
+                importlib.import_module(module_id)
+            except (ModuleNotFoundError, ImportError) as e:
+                if kwargs.get("_restarted"):
+                    update_logger.error(f"Module {module_id} still failed after dep reinstall: {e}")
+                    raise
+                update_logger.warning(
+                    f"Launch import failed ({e}); reinstalling {module_id} with deps and restarting."
+                )
+                ModuleUpdate.install_worlds([module_id], with_deps=True)
+                _restart_client_with_args()
+                return None
 
             entry_points = importlib.metadata.entry_points(group="mwgg.client")
             entry_point_name = "{}.Client".format(module_id)
@@ -417,12 +424,37 @@ def _perform_module_launch(module_id: str, **kwargs):
                 loop = asyncio.get_event_loop()
                 server_address = kwargs.get("server_address")
 
+                already_restarted = kwargs.get("_restarted", False)
+
                 def _deferred_launch():
                     saved_argv = sys.argv[:]
                     try:
                         if isinstance(server_address, str) and server_address:
                             sys.argv = [sys.argv[0], f"--connect={server_address}"]
                         launch_function()
+                    except (ModuleNotFoundError, ImportError) as dep_error:
+                        if already_restarted:
+                            logging.error(
+                                f"Deferred world launch for {module_id} still missing deps after restart: {dep_error}",
+                                exc_info=True,
+                            )
+                            import CommonClient as _CC
+                            _, pending_error_cb = _CC._consume_pending_launch_callbacks()
+                            if pending_error_cb is not None:
+                                try:
+                                    pending_error_cb()
+                                except Exception as cb_err:
+                                    logging.error(f"Error in error callback: {cb_err}")
+                        else:
+                            update_logger.warning(
+                                f"Deferred launch import failed ({dep_error}); reinstalling {module_id} with deps and restarting."
+                            )
+                            try:
+                                ModuleUpdate.install_worlds([module_id], with_deps=True)
+                            except Exception as install_error:
+                                logging.error(f"Failed to reinstall {module_id} with deps: {install_error}", exc_info=True)
+                                return
+                            _restart_client_with_args()
                     except Exception as launch_error:
                         logging.error(
                             f"Deferred world launch failed for {module_id}: {launch_error}",
@@ -498,19 +530,35 @@ def exit_restart_for_update():
     The new process will have its splashscreen apply the updates.
     """
     # Spawn new process with same executable and arguments
-    subprocess.Popen([sys.executable] + sys.argv, 
+    subprocess.Popen([sys.executable] + sys.argv,
                      cwd=os.getcwd(),
                      creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows() else 0)
-    
+
     logger.info("Exiting current process...")
-    
+
     # Flush all logging handlers to ensure messages are displayed
     for handler in logging.root.handlers:
         handler.flush()
-    
+
     # Use sys.exit with code 10 to signal "bad environment" - needs restart
     # This allows the calling process to handle the restart properly
     sys.exit(10)
+
+
+def _restart_client_with_args():
+    """Re-exec the client with the same argv plus --no-restart so a second
+    launch failure surfaces an error instead of looping. Used when a world's
+    transitive deps were missing and we just reinstalled them."""
+    new_argv = list(sys.argv)
+    if "--no-restart" not in new_argv:
+        new_argv.append("--no-restart")
+    subprocess.Popen([sys.executable, *new_argv],
+                     cwd=os.getcwd(),
+                     creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows() else 0)
+    logger.info("Restarting client to pick up freshly installed dependencies...")
+    for handler in logging.root.handlers:
+        handler.flush()
+    sys.exit(0)
 
 def int16_as_bytes(value: int) -> typing.List[int]:
     value = value & 0xFFFF

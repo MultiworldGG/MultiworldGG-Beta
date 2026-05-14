@@ -257,7 +257,9 @@ def _log_installation_repositories() -> None:
         return
     repos = data.get("repositories", []) or []
     full_names = [r.get("full_name", "?") for r in repos]
-    logger.info(
+    # logger.warning, not logger.info — basicConfig at module top sets level=WARNING
+    # for the root logger, so info-level messages are filtered out in CI logs.
+    logger.warning(
         f"  diag: platform={sys.platform} installation_token sees "
         f"{data.get('total_count', len(repos))} repo(s): {full_names}"
     )

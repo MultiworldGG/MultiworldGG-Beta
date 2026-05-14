@@ -1,4 +1,5 @@
 from multiprocessing import freeze_support, Process, Queue, set_start_method
+import argparse
 import asyncio
 import sys
 import logging
@@ -58,8 +59,9 @@ def run_client(*args, queue=None):
 
                 # Try to launch the module via entrypoints
                 try:
-                    discover_and_launch_module(module_name=args.game, 
-                                            server_address=args.server_address)
+                    discover_and_launch_module(module_name=args.game,
+                                            server_address=args.server_address,
+                                            _restarted=getattr(args, "no_restart", False))
                     return  # Module takeover successful, exit initial client
                 except Exception as e:
                     logger.error(f"Module launch failed: {e}")
@@ -122,6 +124,10 @@ if __name__ == "__main__":
                         help="Set the logging level")
     parser.add_argument("--frontend", default="gui", choices=["gui", "tui"],
                         help="Which frontend to launch: 'gui' (Kivy desktop, default) or 'tui' (Textual terminal)")
+    # Internal: set by Utils._restart_client_with_args() so a second launch
+    # failure surfaces an error dialog instead of looping forever.
+    parser.add_argument("--no-restart", action="store_true", default=False,
+                        help=argparse.SUPPRESS)
 
     if sys.argv[1:]:
         args = parser.parse_args(sys.argv[1:])

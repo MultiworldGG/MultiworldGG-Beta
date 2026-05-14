@@ -49,6 +49,22 @@ class FrontendProtocol(Protocol):
     def hide_loading(self) -> None: ...
     def is_on_console_screen(self) -> bool: ...
 
+    def show_error_dialog(self, title: str, message: str) -> Any:
+        """Display a modal error to the user. Returns an opaque handle that
+        can later be passed to `dismiss_error_dialog` to close the dialog
+        (e.g. when a connection retry succeeds).
+
+        Each frontend chooses its own widget: Kivy uses an MDDialog-based
+        MessageBox, Textual uses a ModalScreen. Callers must never assume a
+        specific widget type — only the handle round-trip is portable.
+        """
+        ...
+
+    def dismiss_error_dialog(self, handle: Any) -> None:
+        """Dismiss an error dialog previously returned by `show_error_dialog`.
+        No-op if the handle has already been dismissed."""
+        ...
+
     # --- NOT-YET-IMPLEMENTED: per-world custom UI surface ---
     #
     # Reserved for future work to fully deprecate `kvui`. The methods below are the
