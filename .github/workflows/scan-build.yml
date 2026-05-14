@@ -63,7 +63,7 @@ jobs:
         scan-build-19 --status-bugs -o scan-build-reports -disable-checker deadcode.DeadStores python setup.py build_exe
     - name: Store report
       if: failure()
-      uses: actions/upload-artifact@v7.0.0
+      uses: actions/upload-artifact@v7
       with:
         name: scan-build-reports
         path: scan-build-reports

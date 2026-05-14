@@ -92,7 +92,7 @@ build_exe_options = {
         "kivy_deps.angle"
     ],
     "zip_include_packages": ["*"],
-    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "PIL", "mwgg_tui", "mwgg_splash"],
+    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "PIL", "mwgg_tui", "mwgg_splash", "numpy"],
     "include_files": [
         ("data", "data"),
         ("LICENSE", "LICENSE"),

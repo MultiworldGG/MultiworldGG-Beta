@@ -111,7 +111,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ secrets.MWGG_BUILD_APP_ID }}
+          client-id: ${{ vars.MWGG_BUILD_APP_ID }}
           private-key: ${{ secrets.MWGG_BUILD_APP_PRIVATE_KEY }}
           owner: MultiworldGG
           repositories: mwgg-gui,mwgg-tui,mwgg-splash
@@ -137,7 +137,7 @@ jobs:
           python build_exe.py
       
       - name: Upload executable artifact
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact_name }}
           path: |
@@ -194,7 +194,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ secrets.MWGG_BUILD_APP_ID }}
+          client-id: ${{ vars.MWGG_BUILD_APP_ID }}
           private-key: ${{ secrets.MWGG_BUILD_APP_PRIVATE_KEY }}
           owner: MultiworldGG
           repositories: mwgg-gui,mwgg-tui,mwgg-splash
@@ -236,7 +236,7 @@ jobs:
           done
       
       - name: Upload AppImage artifact
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7
         with:
           name: linux-appimage
           path: src/dist/*.AppImage
@@ -292,7 +292,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ secrets.MWGG_BUILD_APP_ID }}
+          client-id: ${{ vars.MWGG_BUILD_APP_ID }}
           private-key: ${{ secrets.MWGG_BUILD_APP_PRIVATE_KEY }}
           owner: MultiworldGG
           repositories: mwgg-gui,mwgg-tui,mwgg-splash
@@ -343,7 +343,7 @@ jobs:
           done
       
       - name: Upload macOS bundle artifact
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7
         with:
           name: macos-bundle
           path: |
@@ -421,7 +421,7 @@ jobs:
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" inno_setup.iss /DNO_SIGNTOOL
       
       - name: Upload Windows installer artifact
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7
         with:
           name: windows-installer
           path: src/setups/*.exe
@@ -431,6 +431,8 @@ jobs:
     name: Create GitHub Release
     needs: [version-input, build-exe, build-linux-appimage, build-mac-bundle, build-windows-installer]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     if: |
       always() && 
       (github.event_name == 'push' || inputs.create_release) &&
