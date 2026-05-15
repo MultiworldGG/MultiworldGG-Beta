@@ -158,3 +158,21 @@ class LobbyMessage(db.Entity):
     sender_name = Required(str)
     content = Required(str)
     sent_at = Required(datetime, default=lambda: utcnow())
+
+
+class AvatarToken(db.Entity):
+    token = PrimaryKey(UUID, default=uuid4)
+    created_at = Required(datetime, default=lambda: utcnow(), index=True)
+    last_used_at = Optional(datetime)
+    revoked = Required(bool, default=False)
+    note = Optional(str)
+    avatars = Set('Avatar')
+
+
+class Avatar(db.Entity):
+    id = PrimaryKey(UUID, default=uuid4)
+    owner_token = Required(AvatarToken, index=True)
+    mime_type = Required(str)
+    file_size = Required(int)
+    original_sha256 = Required(str, index=True)
+    created_at = Required(datetime, default=lambda: utcnow(), index=True)
