@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from importlib import invalidate_caches
-from BaseUtils import tuplize_version, Version
+from BaseUtils import tuplize_version, Version, local_path, write_path
 from APContainer import APWorldContainer
 
 # mwgg_igdb package source — orphan branch on the Index repo
@@ -67,8 +67,6 @@ _skip_update = bool(
     multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiWorldGG"
 )
 
-local_dir = Path(__file__).parent
-
 update_ran = _skip_update
 need_update: List[str] = []
 
@@ -88,12 +86,14 @@ class RequirementsSet(set):
 
 # Initialize file sets
 
-requirements_files = RequirementsSet({local_dir / "requirements.txt"})
+requirements_files = RequirementsSet({Path(local_path("requirements.txt"))})
 worlds_files = {"wheels": RequirementsSet(), "apworlds": RequirementsSet()}
+
+# Resolved via local_path so it points next to the executable in frozen builds
+custom_worlds_dir = Path(local_path("custom_worlds"))
 
 # Add wheel files if update hasn't run
 if not update_ran:
-    custom_worlds_dir = local_dir / "custom_worlds"
     if custom_worlds_dir.exists():
         for world_file in custom_worlds_dir.glob("*.whl"):
             worlds_files["wheels"].add(str(world_file))
@@ -106,22 +106,13 @@ uv_cmd: str = ""
 
 
 def find_uv() -> str:
-    """Locate the uv binary. uv is user-installed, not bundled — see inno_setup.iss for the
-    Windows install path (winget/PowerShell installer) and uv_runtime/install-uv.sh for Mac/Linux
-    first-launch install. We probe `shutil.which` first, then platform-specific known locations,
-    then (Mac/Linux frozen only) run the bundled installer as a last resort.
+    """Locate the uv binary. uv is user-installed, not bundled — see inno_setup.iss
     """
     found = shutil.which("uv")
     if found:
         return found
 
     if is_windows():
-        # The Inno installer just ran `winget install astral-sh.uv` (or astral's PowerShell installer)
-        # but the user's PATH won't reflect the new entry until their explorer session refreshes.
-        # Probe the known shim locations directly so the post-install --update-modules call works.
-        # WinGet/Links shims are AppExecutionAlias reparse points; Windows can refuse to
-        # traverse them with WinError 448 ("untrusted mount point") — Path.exists() raises
-        # OSError rather than returning False. See the OSError handler below for the recovery.
         local_appdata = os.environ.get("LOCALAPPDATA", "")
         candidates = [
             Path(local_appdata) / "Microsoft" / "WinGet" / "Links" / "uv.exe",
@@ -132,15 +123,6 @@ def find_uv() -> str:
                 if candidate.exists():
                     return str(candidate)
             except OSError as e:
-                # WinError 448 ("untrusted mount point") fires when the calling token
-                # cannot traverse an AppExecutionAlias reparse point for stat() — but
-                # CreateProcess against the same path succeeds. WinGet's uv.exe shim is
-                # exactly such a reparse point, and Inno's runasoriginaluser child runs
-                # under a basic-user token that lacks the alias-traversal capability.
-                # Trust the path; subprocess will validate it on exec.
-                if getattr(e, "winerror", None) == 448:
-                    logger.info(f"uv candidate {candidate} is a reparse point (WinError 448); trusting it")
-                    return str(candidate)
                 logger.warning(f"Could not probe uv candidate {candidate}: {e}")
                 continue
     elif is_frozen():
@@ -551,6 +533,89 @@ def find_world_modules() -> set[str]:
     return world_modules_set
 
 
+def _venv_worlds_dir() -> Path:
+    """Return the venv worlds dir from which worlds/__init__.py extends __path__.
+    Apworlds get extracted here so they're importable via the normal file loader
+    (multiprocessing.spawn in child processes needs disk-based modules; zipimport-
+    only modules can't be re-imported in the spawned child).
+    """
+    if is_frozen():
+        lib_dir = "Lib" if is_windows() else "lib"
+        return Path(write_path("mwgg_venv", lib_dir, "site-packages", "worlds"))
+    # Dev: matches the hardcoded path in src/worlds/__init__.py
+    return Path(local_path("venv", "Lib", "site-packages", "worlds"))
+
+
+def _install_apworld_to_venv(apworld_file: Path, slug: str) -> bool:
+    """Extract the `<slug>/` directory from apworld_file into the venv worlds dir.
+    Returns True on success. Overwrites existing files in place rather than
+    rmtree'ing (rmtree fails on Windows if the module is currently loaded).
+    """
+    venv_worlds = _venv_worlds_dir()
+    try:
+        venv_worlds.mkdir(parents=True, exist_ok=True)
+        prefix = f"{slug}/"
+        with zipfile.ZipFile(apworld_file, "r") as zf:
+            members = [m for m in zf.namelist() if m == prefix or m.startswith(prefix)]
+            if not members:
+                logger.warning(f"Apworld {apworld_file} contains no '{slug}/' directory")
+                return False
+            for member in members:
+                zf.extract(member, str(venv_worlds))
+        # Refresh the target dir's mtime so the stale-extraction pruner uses
+        # the most recent extraction as the "last used" signal, even if zipfile
+        # restored historical timestamps from the archive members.
+        target_dir = venv_worlds / slug
+        try:
+            os.utime(target_dir, None)
+        except OSError:
+            pass
+        logger.info(f"Extracted apworld {apworld_file} to {target_dir}")
+        # If the worlds package is already imported, extend its __path__ so the
+        # newly-extracted module is discoverable without a restart. (At startup,
+        # worlds/__init__.py does this itself when it first runs.)
+        worlds_pkg = sys.modules.get("worlds")
+        if worlds_pkg is not None and hasattr(worlds_pkg, "__path__"):
+            venv_str = str(venv_worlds)
+            if venv_str not in worlds_pkg.__path__:
+                worlds_pkg.__path__.append(venv_str)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to extract apworld {apworld_file} to {venv_worlds}: {e}")
+        return False
+
+
+def _prune_stale_apworld_extractions(max_age_days: int = 30) -> None:
+    """Remove extracted-apworld dirs in the venv worlds dir whose mtime is older
+    than max_age_days. Skips any dir backed by a real importlib.metadata
+    Distribution (pip-installed wheels), so this only ever touches our own
+    extraction output.
+    """
+    import importlib.metadata
+    venv_worlds = _venv_worlds_dir()
+    if not venv_worlds.exists():
+        return
+    cutoff = time.time() - max_age_days * 86400
+    for entry in venv_worlds.iterdir():
+        if not entry.is_dir() or entry.name.startswith("_"):
+            continue
+        try:
+            importlib.metadata.distribution(f"worlds.{entry.name}")
+            continue  # pip-installed; leave alone
+        except importlib.metadata.PackageNotFoundError:
+            pass
+        try:
+            if entry.stat().st_mtime >= cutoff:
+                continue
+        except OSError:
+            continue
+        try:
+            shutil.rmtree(entry)
+            logger.info(f"Pruned stale extracted apworld {entry} (mtime > {max_age_days}d)")
+        except OSError as e:
+            logger.warning(f"Could not prune stale apworld {entry}: {e}")
+
+
 def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = False) -> list[str]:
     """
     Install worlds by resolving each slug's `module_location` from mwgg_igdb and pip-installing the URL.
@@ -616,7 +681,8 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             apworld_file = custom_worlds_dir / f"{slug}.apworld"
             if apworld_file.exists():
                 logger.info(f"Found apworld file: {apworld_file}")
-                apworlds.append(target)
+                if _install_apworld_to_venv(apworld_file, slug):
+                    apworlds.append(target)
             else:
                 logger.warning(f"Custom apworld file not found at {apworld_file}, {slug} cannot be installed")
             continue
@@ -634,7 +700,8 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             apworld_file = custom_worlds_dir / f"{slug}.apworld"
             if apworld_file.exists():
                 logger.info(f"Found apworld file: {apworld_file}")
-                apworlds.append(target)
+                if _install_apworld_to_venv(apworld_file, slug):
+                    apworlds.append(target)
             continue
         logger.info(result.stdout)
 
@@ -647,12 +714,14 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             apworld_file = custom_worlds_dir / f"{slug}.apworld"
             if apworld_file.exists():
                 logger.info(f"Found apworld file: {apworld_file}")
-                apworlds.append(target)
+                if _install_apworld_to_venv(apworld_file, slug):
+                    apworlds.append(target)
             else:
                 logger.warning(f"Custom apworld file not found at {apworld_file}")
         else:
             logger.info(f"Successfully installed {target}")
 
+    _prune_stale_apworld_extractions()
     invalidate_caches()
     return apworlds
 

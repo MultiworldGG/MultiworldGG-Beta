@@ -277,6 +277,55 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
     return module_name if module_name else None
 
 
+def _resolve_launch_from_custom_world(wrapper_func: callable, module_id: str) -> Optional[callable]:
+    """
+    Returns the inner callable for custom worlds, or None if the wrapper doesn't match the
+    standard `launch_component(<X>, ...)` shape so that the client canh be launched in the same UI.
+    """
+    import ast
+    import inspect
+    import textwrap
+    try:
+        source = textwrap.dedent(inspect.getsource(wrapper_func))
+        tree = ast.parse(source)
+    except (OSError, TypeError, SyntaxError):
+        return None
+    if not tree.body or not isinstance(tree.body[0], ast.FunctionDef):
+        return None
+
+    local_imports: dict[str, tuple[str, str]] = {}
+    launch_arg: Optional[str] = None
+    for stmt in tree.body[0].body:
+        if isinstance(stmt, ast.ImportFrom):
+            for alias in stmt.names:
+                local_imports[alias.asname or alias.name] = (stmt.module or "", alias.name)
+        elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
+            call = stmt.value
+            callee_name = (
+                call.func.id if isinstance(call.func, ast.Name)
+                else call.func.attr if isinstance(call.func, ast.Attribute)
+                else None
+            )
+            if callee_name in ("launch_component", "launch") and call.args:
+                if isinstance(call.args[0], ast.Name):
+                    launch_arg = call.args[0].id
+                    break
+
+    if launch_arg is None:
+        return None
+
+    if launch_arg in local_imports:
+        rel_module, attr = local_imports[launch_arg]
+        full_module = f"{module_id}.{rel_module}" if rel_module else module_id
+        try:
+            return getattr(importlib.import_module(full_module), attr, None)
+        except ImportError:
+            return None
+
+    candidate = wrapper_func.__globals__.get(launch_arg)
+    return candidate if callable(candidate) else None
+
+
 def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]:
     """Discover and launch module via entrypoints.
 
@@ -302,16 +351,23 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
     def _install_module_threaded():
         """Install module in a separate thread"""
         try:
-            restart = ModuleUpdate.install_worlds([module_name])
-            if restart:
-                # Restart needed - schedule callback on main thread
-                raise ModuleUpdate.RestartException
-            else:
-                # No restart needed - proceed with launch
-                loop.call_soon_threadsafe(_launch_module_after_install)
-        except ModuleUpdate.RestartException as re:
-            # Restart needed - schedule callback on main thread
-            loop.call_soon_threadsafe(_handle_install_error, "Restart required for world updates.")
+            custom_fallbacks = ModuleUpdate.install_worlds([module_name])
+            if custom_fallbacks:
+                # install_worlds() extracted these apworlds into the venv worlds
+                # dir, so importlib.import_module(worlds.<slug>) now works via the
+                # normal file loader. Just register them with the live GameIndex
+                # so launcher lookups (game_name -> module) resolve cleanly.
+                custom_worlds_dir = Path(local_path("custom_worlds"))
+                for target in custom_fallbacks:
+                    slug = target.removeprefix("worlds.")
+                    apworld_file = custom_worlds_dir / f"{slug}.apworld"
+                    try:
+                        discover_custom_world_module(apworld_file)
+                    except Exception as ie:
+                        update_logger.warning(
+                            f"Could not register {apworld_file} in GameIndex: {ie}"
+                        )
+            loop.call_soon_threadsafe(_launch_module_after_install)
 
         except Exception as e:
             update_logger.error(f"Failed to update module {module_name}: {str(e)}")
@@ -394,19 +450,44 @@ def _perform_module_launch(module_id: str, **kwargs):
                 _restart_client_with_args()
                 return None
 
+            # Resolve a client launch function from two sources:
+            #   1. importlib.metadata entry_points (group="mwgg.client") -- this
+            #      is what pip-installed world wheels register via
+            #      [project.entry-points."mwgg.client"] in their pyproject.toml.
+            #   2. worlds.LauncherComponents.components -- this is what worlds
+            #      register at import time via components.append(Component(...)).
+            #      Apworlds loaded via zipimport have no dist-info, so they only
+            #      ever show up in (2). Match by func.__module__ so we pick the
+            #      Component that lives in the just-imported module.
+            launch_function = None
             entry_points = importlib.metadata.entry_points(group="mwgg.client")
             entry_point_name = "{}.Client".format(module_id)
-            
-            # Check if the entry point exists by looking through the entry points
-            module_entry_point = None
             for entry_point in entry_points:
                 if entry_point.name == entry_point_name:
-                    module_entry_point = entry_point
+                    launch_function = entry_point.load()
                     break
-            
-            if module_entry_point:
-                # Load and execute the client entrypoint
-                launch_function = module_entry_point.load()
+            if launch_function is None:
+                try:
+                    from worlds.LauncherComponents import (
+                        components as _components,
+                        Type as _ComponentType,
+                    )
+                    for component in _components:
+                        if component.type != _ComponentType.CLIENT:
+                            continue
+                        if component.func is None:
+                            continue
+                        func_module = getattr(component.func, "__module__", "") or ""
+                        if func_module == module_id or func_module.startswith(module_id + "."):
+                            # Unwrap launch_client -> Client.launch so the call
+                            # runs in-process (subprocess can't reuse this Kivy app).
+                            inner = _resolve_launch_from_custom_world(component.func, module_id)
+                            launch_function = inner if inner is not None else component.func
+                            break
+                except ImportError:
+                    pass
+
+            if launch_function is not None:
                 # Per-world launch() bodies are CLI-style: they parse sys.argv
                 # and then call asyncio.run(main()). Two constraints stack:
                 #   1. asyncio.run() inside a running loop normally raises;
@@ -532,7 +613,7 @@ def exit_restart_for_update():
     # Spawn new process with same executable and arguments
     subprocess.Popen([sys.executable] + sys.argv,
                      cwd=os.getcwd(),
-                     creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows() else 0)
+                     creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows else 0)
 
     logger.info("Exiting current process...")
 
@@ -554,7 +635,7 @@ def _restart_client_with_args():
         new_argv.append("--no-restart")
     subprocess.Popen([sys.executable, *new_argv],
                      cwd=os.getcwd(),
-                     creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows() else 0)
+                     creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows else 0)
     logger.info("Restarting client to pick up freshly installed dependencies...")
     for handler in logging.root.handlers:
         handler.flush()
@@ -1159,6 +1240,23 @@ def is_kivy_running() -> bool:
     return False
 
 
+def _get_running_textual_app() -> typing.Optional[Any]:
+    app_module = sys.modules.get("mwgg_tui.app")
+    if app_module is None:
+        return None
+    app_cls = getattr(app_module, "MultiTUIApp", None)
+    app = getattr(app_cls, "_active_instance", None) if app_cls else None
+    return app if app is not None and getattr(app, "_tui_started", False) else None
+
+
+def is_textual_running() -> bool:
+    return _get_running_textual_app() is not None
+
+
+def is_frontend_running() -> bool:
+    return is_kivy_running() or is_textual_running()
+
+
 def env_cleared_lib_path() -> Mapping[str, str]:
     """
     Creates a copy of the current environment vars with the LD_LIBRARY_PATH removed if set, as this can interfere when
@@ -1173,14 +1271,14 @@ def env_cleared_lib_path() -> Mapping[str, str]:
 
 
 def _mp_open_filename(res: "multiprocessing.Queue[typing.Optional[str]]", *args: Any) -> None:
-    if is_kivy_running():
-        raise RuntimeError("kivy should not be running in multiprocess")
+    if is_frontend_running():
+        raise RuntimeError("frontend should not be running in multiprocess")
     res.put(open_file_input_dialog(*args))
 
 
 def _mp_save_filename(res: "multiprocessing.Queue[typing.Optional[str]]", *args: Any) -> None:
-    if is_kivy_running():
-        raise RuntimeError("kivy should not be running in multiprocess")
+    if is_frontend_running():
+        raise RuntimeError("frontend should not be running in multiprocess")
     res.put(save_filename(*args))
     
 def _run_for_stdout(*args: str):
@@ -1189,8 +1287,8 @@ def _run_for_stdout(*args: str):
 
 
 def _mp_open_directory(res: "multiprocessing.Queue[typing.Optional[str]]", *args: Any) -> None:
-    if is_kivy_running():
-        raise RuntimeError("kivy should not be running in multiprocess")
+    if is_frontend_running():
+        raise RuntimeError("frontend should not be running in multiprocess")
     res.put(open_directory(*args))
 
 
@@ -1217,8 +1315,8 @@ def open_directory(title: str, suggest: str = "") -> typing.Optional[str]:
                       f'This attempt was made because open_directory was used for "{title}".')
         raise e
     else:
-        if is_macos and is_kivy_running():
-            # on macOS, mixing kivy and tk does not work, so spawn a new process
+        if is_macos and is_frontend_running():
+            # on macOS, mixing the active frontend and tk does not work, so spawn a new process
             # FIXME: performance of this is pretty bad, and we should (also) look into alternatives
             from multiprocessing import Process, Queue
             res: "Queue[typing.Optional[str]]" = Queue()
@@ -1243,6 +1341,11 @@ def messagebox(title: str, text: str, error: bool = False) -> None:
     if is_kivy_running():
         from mwgg_gui.components.dialog import MessageBox
         MessageBox(title, text, error).open()
+        return
+
+    textual_app = _get_running_textual_app()
+    if textual_app:
+        textual_app.show_error_dialog(title, text)
         return
 
     if is_linux and "tkinter" not in sys.modules:

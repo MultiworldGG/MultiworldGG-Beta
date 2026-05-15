@@ -222,7 +222,7 @@ Name: "{commondesktop}\{#MyAppName} Launcher"; Filename: "{app}\MultiworldGG.exe
 Filename: "winget"; Parameters: "install --id=astral-sh.uv -e --accept-source-agreements --accept-package-agreements"; Check: IsUvNeededViaWinget; StatusMsg: "Installing uv via winget..."; Flags: runhidden
 Filename: "powershell.exe"; Parameters: "-ExecutionPolicy ByPass -Command ""irm https://astral.sh/uv/install.ps1 | iex"""; Check: IsUvNeededViaPwsh; StatusMsg: "Installing uv via astral installer..."; Flags: runhidden
 
-Filename: "{app}\MultiworldGG"; Parameters: "--update-modules --worlds {code:GetSelectedWorld}"; StatusMsg: "Updating modules..."; Flags: runasoriginaluser runhidden
+Filename: "{app}\MultiworldGG"; Parameters: "--update-modules --worlds {code:GetSelectedWorld}"; StatusMsg: "Updating modules..."; BeforeInstall: PrependUvToPath; Flags: runasoriginaluser runhidden
 ; Filename: "{app}\MultiworldGG"; Description: "{cm:LaunchProgram,{#StringChange('Launcher', '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 ; Silent install from updater auto starts the launcher again
 ; Filename: "{app}\MultiworldGG"; StatusMsg: "MultiworldGG ... done"; Flags: nowait skipifnotsilent
@@ -827,6 +827,60 @@ end;
 function IsUvNeededViaPwsh: Boolean;
 begin
   Result := (not IsUvInstalled) and (not IsWingetAvailable);
+end;
+
+// SetEnvironmentVariable for the current (installer) process. The runasoriginaluser
+// child of the MultiworldGG [Run] line inherits this updated PATH.
+function SetEnvironmentVariable(lpName, lpValue: String): Integer;
+  external 'SetEnvironmentVariableW@kernel32.dll stdcall';
+
+// Glob %LOCALAPPDATA%\Microsoft\WinGet\Packages\astral-sh.uv_*\**\uv.exe for the real binary.
+// The Links\uv.exe shim is an AppExecLink reparse point that some tokens (notably Inno's
+// runasoriginaluser child) cannot stat OR exec — WinError 448. The binary inside Packages\
+// is a plain file and works in any token.
+function ResolveRealUvPath: String;
+var
+  PackagesDir, TmpFile, Line: String;
+  Lines: TArrayOfString;
+  ResultCode, I: Integer;
+begin
+  Result := '';
+  PackagesDir := ExpandConstant('{localappdata}') + '\Microsoft\WinGet\Packages';
+  TmpFile := ExpandConstant('{tmp}\uv_glob.txt');
+  if not Exec(ExpandConstant('{cmd}'),
+              '/c dir /s /b "' + PackagesDir + '\astral-sh.uv_*\uv.exe" > "' + TmpFile + '" 2>&1',
+              '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    Exit;
+  if not FileExists(TmpFile) then
+    Exit;
+  LoadStringsFromFile(TmpFile, Lines);
+  for I := 0 to GetArrayLength(Lines) - 1 do
+  begin
+    Line := Trim(Lines[I]);
+    if (Length(Line) > 0) and FileExists(Line) then
+    begin
+      Result := Line;
+      Exit;
+    end;
+  end;
+end;
+
+// Called via BeforeInstall: on the MultiworldGG [Run] entry. Prepends uv's real binary
+// directory to the installer's PATH so the child's shutil.which("uv") resolves cleanly
+// without traversing the WinGet AppExecLink shim.
+procedure PrependUvToPath;
+var
+  RealUvPath, RealUvDir: String;
+begin
+  RealUvPath := ResolveRealUvPath;
+  if RealUvPath = '' then
+  begin
+    Log('PrependUvToPath: no WinGet uv binary found under Packages\; PATH unchanged');
+    Exit;
+  end;
+  RealUvDir := ExtractFileDir(RealUvPath);
+  SetEnvironmentVariable('PATH', RealUvDir + ';' + GetEnv('PATH'));
+  Log('PrependUvToPath: prepended ' + RealUvDir + ' to PATH');
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);

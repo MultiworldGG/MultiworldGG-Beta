@@ -53,6 +53,7 @@ else:
     from NetUtils import KivyMarkupJSONtoTextParser as KivyJSONtoTextParser
     from kivymd.uix.scrollview import MDScrollView as ScrollBox
     from kivymd.uix.boxlayout import MDBoxLayout
+    from kivy.event import EventDispatcher
     from kivy.properties import ObjectProperty, NumericProperty, StringProperty, BooleanProperty
     from kivy.metrics import dp
     from kivy.uix.widget import Widget
@@ -71,7 +72,28 @@ else:
     from kivy.uix.image import AsyncImage as ApAsyncImage
     from kivymd.uix.tooltip import MDTooltipPlain as ToolTip
 
-    class GameManager(ThemedApp):
+    class GameManager(EventDispatcher):
+        logging_pairs: list = []
+        base_title: str = ""
+
+        def __init__(self, ctx, **kwargs):
+            self.ctx = ctx
+            super().__init__(**kwargs)
+
+        @property
+        def _frontend_app(self) -> ThemedApp:
+            app = getattr(ThemedApp, "_active_instance", None)
+            if app is None:
+                app = getattr(self.ctx, "ui", None)
+            if app is None or app is self:
+                raise RuntimeError("No active Kivy frontend is available for GameManager delegation.")
+            return app
+
+        def __getattr__(self, name):
+            try:
+                return getattr(self._frontend_app, name)
+            except RuntimeError as e:
+                raise AttributeError(name) from e
 
         async def async_run(self):
             ''' Changing this 'run' to instead do the client takeover loop '''
@@ -87,6 +109,10 @@ else:
         def run(self):
             ''' Stubbing this to catch a 'rerun' of the app (which is already running) '''
             pass
+
+        def build(self):
+            '''Return the already-running frontend root instead of building a second MDApp.'''
+            return self._frontend_app.root
 
         def add_client_tab(self, title: str, content: Widget, index: int = -1) -> MDNavigationItemBase:
             '''Stub function for client hook'''
@@ -108,14 +134,17 @@ else:
 
             :return: The new navigation item button.
             """
+            app = self._frontend_app
             new_button = MDNavigationItemBase(text=title)
+            new_button.content = content
             new_screen = CustomScreen(name=title)
             new_screen.custom_layout.add_widget(content)
             new_screen.bottom_appbar.add_widget(new_button)
-            new_button.bind(on_release=lambda *_: setattr(self.screen_manager, "current", title))
-            self.screen_manager.add_widget(new_screen, index=index)
+            new_button.bind(on_release=lambda *_: setattr(app.screen_manager, "current", title))
+            app.screen_manager.add_widget(new_screen, index=index)
             return new_button
 
         def remove_custom_screen(self, button: MDNavigationItemBase):
-            screen = self.screen_manager.get_screen(button.text)
-            self.screen_manager.remove_widget(screen)
+            app = self._frontend_app
+            screen = app.screen_manager.get_screen(button.text)
+            app.screen_manager.remove_widget(screen)
