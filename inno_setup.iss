@@ -836,11 +836,6 @@ begin
   Result := (not IsUvInstalled) and (not IsWingetAvailable);
 end;
 
-// SetEnvironmentVariable for the current (installer) process. The runasoriginaluser
-// child of the MultiworldGG [Run] line inherits this updated PATH.
-function SetEnvironmentVariable(lpName, lpValue: String): Integer;
-  external 'SetEnvironmentVariableW@kernel32.dll stdcall';
-
 // Glob %LOCALAPPDATA%\Microsoft\WinGet\Packages\astral-sh.uv_*\**\uv.exe for the real binary.
 // The Links\uv.exe shim is an AppExecLink reparse point that some tokens (notably Inno's
 // runasoriginaluser child) cannot stat OR exec — WinError 448. The binary inside Packages\
@@ -870,24 +865,6 @@ begin
       Exit;
     end;
   end;
-end;
-
-// Called via BeforeInstall: on the MultiworldGG [Run] entry. Prepends uv's real binary
-// directory to the installer's PATH so the child's shutil.which("uv") resolves cleanly
-// without traversing the WinGet AppExecLink shim.
-procedure PrependUvToPath;
-var
-  RealUvPath, RealUvDir: String;
-begin
-  RealUvPath := ResolveRealUvPath;
-  if RealUvPath = '' then
-  begin
-    Log('PrependUvToPath: no WinGet uv binary found under Packages\; PATH unchanged');
-    Exit;
-  end;
-  RealUvDir := ExtractFileDir(RealUvPath);
-  SetEnvironmentVariable('PATH', RealUvDir + ';' + GetEnv('PATH'));
-  Log('PrependUvToPath: prepended ' + RealUvDir + ' to PATH');
 end;
 
 // Returns the directory containing the real winget-installed uv.exe (under

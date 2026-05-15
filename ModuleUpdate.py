@@ -448,7 +448,7 @@ def _parse_variant_token(token: str) -> Optional[str]:
     return None
 
 
-def _set_variant(variant: str) -> None:
+def set_variant(variant: str) -> None:
     """Switch the runtime mwgg_igdb variant; takes effect on next install_mwgg_igdb call."""
     global MWGG_IGDB_VARIANT, MWGG_IGDB_BRANCH, MWGG_IGDB_GIT_URL
     MWGG_IGDB_VARIANT = variant
@@ -664,7 +664,7 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             world_slugs.append(entry)
 
     if selected_variant is not None:
-        _set_variant(selected_variant)
+        set_variant(selected_variant)
         install_mwgg_igdb(upgrade=True, force=True)
 
     if update:
