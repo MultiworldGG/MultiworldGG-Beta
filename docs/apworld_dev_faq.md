@@ -236,3 +236,23 @@ So to recap:
 - Local items enable solo offline play.
 - If you want to support both solo offline play and same slot co-op,
   you might need to expose local vs remote items as an option to the player.
+
+---
+
+### How do I release my APWorld so users can find and install it through MultiworldGG?
+
+Releases are handled by the **`gen-pymod-release`** GitHub Actions workflow. When you cut a GitHub
+Release on your world's repo, the workflow builds a pip-installable wheel from your
+`worlds/<slug>/` source and attaches it as a release asset. The **Oliver-Multiworld-Squirrel**
+GitHub App watches for that workflow to finish and opens a PR on **`MultiworldGG-Index`** to
+register your release. Karen's automated review checks run on that PR (schema validation,
+dependency audit, security smells) — these run *for* you to protect end-users, not as preflight
+homework you have to satisfy.
+
+For the step-by-step author guide, see the
+**[MultiworldGG-Index docs site](https://lallaria.github.io/MultiworldGG-Index/)**. Pick the
+*"I want the easiest setup"* branch for the standard path, or the
+*"I want to write my own `pyproject.toml`"* branch if you need custom Python packaging.
+
+Once your PR merges, a daily cron rebuilds the four orphan `game_index_*` branches with your world
+included; users get it via `pip install git+https://github.com/MultiworldGG/MultiworldGG-Index@<branch>`.

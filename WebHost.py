@@ -3,9 +3,12 @@ import os
 import multiprocessing
 import logging
 import typing
-import ModuleUpdate
+from pathlib import Path
 
-ModuleUpdate.requirements_files.add(os.path.join("WebHostLib", "requirements.txt"))
+import ModuleUpdate
+from BaseUtils import local_path
+
+ModuleUpdate.requirements_files.add(Path(local_path("WebHostLib", "requirements.txt")))
 
 # mwgg_igdb variant: "nr" | "ao" | "twelve" | "sixteen".
 INDEX_VARIANT = "ao"

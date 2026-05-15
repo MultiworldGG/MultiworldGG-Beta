@@ -78,8 +78,9 @@ COPY --from=cython-builder /build/*.so ./
 #RUN python ModuleUpdate.py -y WHY WHY WHY?
 
 # Purge unneeded packages
+# Keep `git` — install_mwgg_igdb shells out to `uv pip install git+https://...`
+# at every container boot to refresh the game index from the Index repo branch.
 RUN apt-get purge -y \
-    git \
     gcc \
     libc6-dev \
     g++ && \
