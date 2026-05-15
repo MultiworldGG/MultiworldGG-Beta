@@ -6,6 +6,10 @@ import typing
 import ModuleUpdate
 
 ModuleUpdate.requirements_files.add(os.path.join("WebHostLib", "requirements.txt"))
+
+# mwgg_igdb variant: "nr" | "ao" | "twelve" | "sixteen".
+INDEX_VARIANT = "ao"
+ModuleUpdate.set_variant(INDEX_VARIANT)
 ModuleUpdate.update()
 
 # in case app gets imported by something like gunicorn

@@ -40,6 +40,7 @@ RUN cythonize -b -i _speedups.pyx
 FROM python:3.13-slim-bookworm AS multiworldgg
 ARG TARGETARCH
 ENV VIRTUAL_ENV=/opt/venv
+ENV PATH=$VIRTUAL_ENV/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
@@ -56,9 +57,11 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Create and activate venv
-RUN python -m venv $VIRTUAL_ENV; \
-    . $VIRTUAL_ENV/bin/activate
+# Create venv (activated via PATH above)
+RUN python -m venv $VIRTUAL_ENV
+
+# uv is required at runtime by ModuleUpdate.find_uv() (called at import time)
+RUN pip install --no-cache-dir uv
 
 # Copy and install requirements first (better caching)
 COPY WebHostLib/requirements.txt WebHostLib/requirements.txt

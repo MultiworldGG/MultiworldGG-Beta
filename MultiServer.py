@@ -55,6 +55,10 @@ if is_frozen():
 # loader cascade can lazy-import GameIndex; if it's missing the ImportError is
 # uncaught and the server crashes. Mirrors WebHost.py's pattern.
 import ModuleUpdate
+
+# mwgg_igdb variant: "nr" | "ao" | "twelve" | "sixteen".
+INDEX_VARIANT = "ao"
+ModuleUpdate.set_variant(INDEX_VARIANT)
 ModuleUpdate.update()
 
 from NetUtils import Endpoint, ClientStatus, NetworkItem, decode, encode, NetworkPlayer, Permission, NetworkSlot, \

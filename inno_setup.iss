@@ -39,6 +39,7 @@ SolidCompression=yes
 LZMANumBlockThreads=8
 ArchitecturesInstallIn64BitMode=x64compatible arm64
 ChangesAssociations=yes
+ChangesEnvironment=yes
 ArchitecturesAllowed=x64compatible arm64
 AllowNoIcons=yes
 SetupIconFile={#MyAppIcon}
@@ -222,7 +223,6 @@ Name: "{commondesktop}\{#MyAppName} Launcher"; Filename: "{app}\MultiworldGG.exe
 Filename: "winget"; Parameters: "install --id=astral-sh.uv -e --accept-source-agreements --accept-package-agreements"; Check: IsUvNeededViaWinget; StatusMsg: "Installing uv via winget..."; Flags: runhidden
 Filename: "powershell.exe"; Parameters: "-ExecutionPolicy ByPass -Command ""irm https://astral.sh/uv/install.ps1 | iex"""; Check: IsUvNeededViaPwsh; StatusMsg: "Installing uv via astral installer..."; Flags: runhidden
 
-Filename: "{app}\MultiworldGG"; Parameters: "--update-modules --worlds {code:GetSelectedWorld}"; StatusMsg: "Updating modules..."; BeforeInstall: PrependUvToPath; Flags: runasoriginaluser runhidden
 ; Filename: "{app}\MultiworldGG"; Description: "{cm:LaunchProgram,{#StringChange('Launcher', '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 ; Silent install from updater auto starts the launcher again
 ; Filename: "{app}\MultiworldGG"; StatusMsg: "MultiworldGG ... done"; Flags: nowait skipifnotsilent
@@ -883,12 +883,141 @@ begin
   Log('PrependUvToPath: prepended ' + RealUvDir + ' to PATH');
 end;
 
+// ---------------------------------------------------------------------------
+// ShellExecAsInteractiveUser
+//
+// Launches ExePath+Args via IShellDispatch2.ShellExecute, which runs in the
+// Explorer process (interactive user's full token).  This sidesteps the
+// WinError 448 that occurs when Inno's runasoriginaluser child tries to
+// CreateProcess an AppExecLink reparse point (e.g. winget-installed uv.exe).
+//
+// GUIDs / constants used:
+//   CLSID_ShellWindows  = {9BA05972-F6A8-11CF-A442-00A0C90A8F39}
+//   SWC_DESKTOP         = 8
+//   SWFO_NEEDDISPATCH   = 1
+//   SW_SHOWNORMAL       = 1
+//
+// Returns True if ShellExecute was dispatched; False on any COM failure so
+// the caller can fall back to [Run] machinery.
+// ---------------------------------------------------------------------------
+function ShellExecAsInteractiveUser(const ExePath, Args: String): Boolean;
+var
+  ShellApp: Variant;
+begin
+  Result := False;
+  try
+    // CreateOleObject('Shell.Application') activates the running Shell
+    // (Explorer) COM server.  Because Explorer is registered as a local
+    // server (not an in-proc DLL), the call marshals into the Explorer
+    // process, which carries the interactive user's full token — not the
+    // installer's elevated token.  ShellExecute therefore inherits that
+    // full token and can CreateProcess AppExecLink reparse points such as
+    // the winget-installed uv.exe shim.
+    ShellApp := CreateOleObject('Shell.Application');
+    ShellApp.ShellExecute(ExePath, Args, '', '', 1);
+    Result := True;
+    Log('ShellExecAsInteractiveUser: dispatched ' + ExePath + ' ' + Args);
+  except
+    Log('ShellExecAsInteractiveUser: COM exception — ' + GetExceptionMessage);
+    Result := False;
+  end;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
+var
+  Worlds: String;
+  SentinelPath: String;
+  StatusJson: AnsiString;
+  I: Integer;
+  Launched: Boolean;
+  ErrStart, ErrEnd: Integer;
 begin
   if CurStep = ssInstall then
   begin
     if WizardIsTaskSelected('deletelib') then
       DelTree(ExpandConstant('{app}\lib'), True, True, True);
+  end;
+
+  if CurStep = ssPostInstall then
+  begin
+    // Build the world-list argument string from the wizard selections.
+    Worlds := GetSelectedWorld('');
+
+    // Sentinel file that MultiworldGG.exe writes on completion.
+    SentinelPath := ExpandConstant('{app}\.mwgg_update_status');
+
+    // Remove any stale sentinel from a previous run so the poller starts clean.
+    if FileExists(SentinelPath) then
+      DeleteFile(SentinelPath);
+
+    // Launch MultiworldGG.exe as the interactive user via Explorer COM hand-off.
+    Launched := ShellExecAsInteractiveUser(
+      ExpandConstant('{app}\MultiworldGG.exe'),
+      '--update-modules --worlds ' + Worlds);
+
+    if not Launched then
+    begin
+      // COM hand-off failed — fall back to a best-effort ShellExec.
+      Log('CurStepChanged/ssPostInstall: COM hand-off failed; falling back to ShellExec');
+      ShellExec('open',
+        ExpandConstant('{app}\MultiworldGG.exe'),
+        '--update-modules --worlds ' + Worlds,
+        ExpandConstant('{app}'),
+        SW_HIDE,
+        ewNoWait,
+        I);
+    end;
+
+    // Poll for sentinel with a 10-minute timeout (600 x 1-second sleeps).
+    WizardForm.StatusLabel.Caption := 'Updating modules...';
+    for I := 1 to 600 do
+    begin
+      if FileExists(SentinelPath) then
+        Break;
+      Sleep(1000);
+    end;
+
+    if not FileExists(SentinelPath) then
+    begin
+      MsgBox(
+        'Module update timed out after 10 minutes.' + #13#10 +
+        'Please run MultiworldGG manually to retry.',
+        mbInformation, MB_OK);
+      Exit;
+    end;
+
+    // Sentinel appeared — read and minimally parse JSON.
+    StatusJson := '';
+    if LoadStringFromFile(SentinelPath, StatusJson) then
+    begin
+      if Pos('"ok": false', StatusJson) > 0 then
+      begin
+        // Extract the error field.  The schema is:
+        //   {"ok": false, "error": "<text>", "ts": ...}
+        // We do simple substring surgery rather than a real parser.
+        ErrStart := Pos('"error": "', StatusJson);
+        if ErrStart > 0 then
+        begin
+          ErrStart := ErrStart + Length('"error": "');
+          // Scan forward from ErrStart for the closing quote.
+          ErrEnd := ErrStart;
+          while (ErrEnd <= Length(StatusJson)) and (StatusJson[ErrEnd] <> '"') do
+            ErrEnd := ErrEnd + 1;
+          if (ErrEnd > ErrStart) and (ErrEnd <= Length(StatusJson)) then
+            MsgBox(
+              'Module update failed:' + #13#10 +
+              Copy(StatusJson, ErrStart, ErrEnd - ErrStart),
+              mbError, MB_OK)
+          else
+            MsgBox('Module update failed (could not parse error text).', mbError, MB_OK);
+        end
+        else
+          MsgBox('Module update reported failure (no error detail).', mbError, MB_OK);
+      end;
+      // "ok": true — nothing to show; installation continues normally.
+    end
+    else
+      MsgBox('Module update: could not read status file.', mbInformation, MB_OK);
   end;
 end;
 
