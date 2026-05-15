@@ -108,6 +108,21 @@ uv_cmd: str = ""
 def find_uv() -> str:
     """Locate the uv binary. uv is user-installed, not bundled — see inno_setup.iss
     """
+    if is_windows():
+        # Installer trick: the Inno [Run] entry for --update-modules sets
+        # WorkingDir to the directory containing the real winget-installed
+        # uv.exe (under %LOCALAPPDATA%\Microsoft\WinGet\Packages\astral-sh.uv_*\),
+        # so cwd-based lookup hits the real PE.  This MUST come before
+        # shutil.which("uv") — otherwise PATH resolves to WinGet\Links\uv.exe,
+        # an AppExecLink shim that the runasoriginaluser child token can't
+        # CreateProcess (WinError 448).
+        cwd_uv = Path.cwd() / "uv.exe"
+        try:
+            if cwd_uv.exists():
+                return str(cwd_uv)
+        except OSError as e:
+            logger.warning(f"Could not probe cwd uv candidate {cwd_uv}: {e}")
+
     found = shutil.which("uv")
     if found:
         return found
@@ -433,7 +448,7 @@ def _parse_variant_token(token: str) -> Optional[str]:
     return None
 
 
-def set_variant(variant: str) -> None:
+def _set_variant(variant: str) -> None:
     """Switch the runtime mwgg_igdb variant; takes effect on next install_mwgg_igdb call."""
     global MWGG_IGDB_VARIANT, MWGG_IGDB_BRANCH, MWGG_IGDB_GIT_URL
     MWGG_IGDB_VARIANT = variant
@@ -618,18 +633,16 @@ def _prune_stale_apworld_extractions(max_age_days: int = 30) -> None:
 
 def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = False) -> list[str]:
     """
-    Install worlds by resolving each slug's `module_location` from mwgg_igdb and pip-installing the URL.
+    Install worlds by resolving each apworld's `module_location` from mwgg_igdb and pip-installing the URL.
 
     `module_location` is a `https://.../<dist>-<world_version>-py3-none-any.whl#sha256=<hex>`
-    release-asset URL set by the Index repo. `gen-pymod-release` uploads the wheel to the
-    GitHub release on each per-world publish; the SHA256 fragment is pinned at PR-open time and
-    verified by pip on install (PEP 503).
+    release-asset URL set by the Index repo.
 
-    Falls back to a custom_worlds/<slug>.apworld lookup if the slug isn't in the index or its
+    Falls back to a custom_worlds/<slug>.apworld lookup if the apworld isn't in the index or its
     `module_location` install fails.
 
     Args:
-        worlds: List of slugs (with or without `worlds.` prefix) to install.
+        worlds: List of apworlds to install.
         update: If True, uninstall old versions first.
         with_deps: If True, install the wheel *with* its transitive dependencies
             (omit ``--no-deps``). Used by the launch-time fallback in
@@ -637,13 +650,10 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             launch() body fails because a required dep is missing.
 
     Returns:
-        List of `worlds.<slug>` module names that fell back to a custom apworld.
+        List of apworlds that fell back to a custom apworld.
     """
     apworlds: list[str] = []
 
-    # Partition variant tokens (`mwgg_igdb` / `mwgg_igdb_<variant>`) out of the slug list.
-    # Inno Setup passes exactly one variant token in `--worlds`; honor it by switching
-    # the runtime variant and (re)installing mwgg_igdb before resolving slugs.
     world_slugs: list[str] = []
     selected_variant: Optional[str] = None
     for entry in worlds:
@@ -654,7 +664,7 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             world_slugs.append(entry)
 
     if selected_variant is not None:
-        set_variant(selected_variant)
+        _set_variant(selected_variant)
         install_mwgg_igdb(upgrade=True, force=True)
 
     if update:
@@ -918,115 +928,69 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
     return True
 
 
-def _write_update_sentinel(ok: bool, error: Optional[str]) -> None:
-    """Write the installer-poll sentinel file atomically.
-
-    Path: local_path(".mwgg_update_status") — same directory as the executable
-    in frozen builds.  Written as a temp file first, then os.replace() so the
-    Inno-Setup poller never sees a partial write.
-
-    Only called when is_frozen() is True; skipped silently in dev mode.
-    """
-    sentinel_path = Path(local_path(".mwgg_update_status"))
-    tmp_path = sentinel_path.with_suffix(".tmp")
-    payload = json.dumps({"ok": ok, "error": error, "ts": int(time.time())})
-    try:
-        tmp_path.write_text(payload, encoding="utf-8")
-        os.replace(str(tmp_path), str(sentinel_path))
-        logger.debug(f"Wrote update sentinel: ok={ok}")
-    except OSError as e:
-        logger.warning(f"Could not write update sentinel to {sentinel_path}: {e}")
-
-
 def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = None) -> None:
     """
     Main update function.
-
+    
     Args:
         yes: Answer yes to all prompts
         force: Force update without checking
         worlds: List of specific worlds to update
-
+    
     Returns:
         None
     """
-    # In frozen builds only: delete any stale sentinel from a previous run so the
-    # Inno-Setup poller doesn't mistake it for a fresh completion signal.
+    # Install/refresh mwgg_igdb upfront 
+    install_mwgg_igdb(upgrade=True)
+
     if is_frozen():
-        try:
-            Path(local_path(".mwgg_update_status")).unlink(missing_ok=True)
-        except OSError:
-            pass
-
-    # Install/refresh mwgg_igdb upfront so any subsequent code path can rely on
-    # `from mwgg_igdb import GameIndex` working. Throttled to once per
-    # MWGG_IGDB_UPGRADE_INTERVAL_SECONDS via a stamp file so every entry-point
-    # start-up doesn't fire a network round-trip. Standalone CLI invocations of
-    # ModuleUpdate.py write a fresh stamp before calling update(), so the throttle
-    # naturally suppresses this call on the same-process re-entry — see __main__.
-    try:
-        install_mwgg_igdb(upgrade=True)
-
-        if is_frozen():
-            if (exe_dir / "custom_wheels").exists():
-                logger.debug("Custom Worlds found, checking...")
-                update_world_from_package()
-            updates = check_for_updates(worlds_only=True)
-            if updates:
-                restart_needed = install_worlds(updates)
-                if restart_needed:
-                    # Library updates were staged, need to restart.
-                    # Write the sentinel before exec-replacing this process so the
-                    # Inno-Setup poller sees completion even though the PID changes.
-                    _write_update_sentinel(ok=True, error=None)
-                    from Utils import exit_restart_for_update
-                    exit_restart_for_update()
-            else:
-                logger.debug("No updates found.")
-        global update_ran
-
-        if update_ran:
-            if is_frozen():
-                _write_update_sentinel(ok=True, error=None)
-            return
-
-        update_ran = True
-
-        if force:
-            logger.debug("Force update requested - skipping update checks")
-            # Force mode updates all requirements and worlds
-            update_requirements([])  # Empty list means update all
-
-        # Check for available updates
-        logger.debug("Checking for available updates...")
-        available_updates = check_for_updates()
-
-        if available_updates:
-            logger.debug(f"Found updates for: {available_updates}")
-            if not yes:
-                confirm("Updates available. Press enter to continue with updates.")
+        if (exe_dir / "custom_wheels").exists():
+            logger.debug("Custom Worlds found, checking...")
+            update_world_from_package()
+        updates = check_for_updates(worlds_only=True)
+        if updates:
+            restart_needed = install_worlds(updates)
+            if restart_needed:
+                # Library updates were staged, need to restart
+                from Utils import exit_restart_for_update
+                exit_restart_for_update()
         else:
             logger.debug("No updates found.")
+    global update_ran
 
-        # Check if requirements are satisfied
-        logger.debug("Checking if all requirements are satisfied...")
-        if not check_requirements_satisfied(yes=yes):
-            logger.debug("Installing missing requirements...")
-            update_requirements([])  # Empty list means update all missing requirements
+    if update_ran:
+        return
 
-        # Update packages that need updates (including worlds)
-        if available_updates:
-            logger.debug("Updating packages that need updates...")
-            update_requirements(available_updates)
+    update_ran = True
 
-        logger.debug("Update process completed.")
-        if is_frozen():
-            _write_update_sentinel(ok=True, error=None)
-
-    except Exception as e:
-        if is_frozen():
-            _write_update_sentinel(ok=False, error=f"{type(e).__name__}: {e}")
-        raise
+    if force:
+        logger.debug("Force update requested - skipping update checks")
+        # Force mode updates all requirements and worlds
+        update_requirements([])  # Empty list means update all
+    
+    # Check for available updates
+    logger.debug("Checking for available updates...")
+    available_updates = check_for_updates()
+    
+    if available_updates:
+        logger.debug(f"Found updates for: {available_updates}")
+        if not yes:
+            confirm("Updates available. Press enter to continue with updates.")
+    else:
+        logger.debug("No updates found.")
+    
+    # Check if requirements are satisfied
+    logger.debug("Checking if all requirements are satisfied...")
+    if not check_requirements_satisfied(yes=yes):
+        logger.debug("Installing missing requirements...")
+        update_requirements([])  # Empty list means update all missing requirements
+    
+    # Update packages that need updates (including worlds)
+    if available_updates:
+        logger.debug("Updating packages that need updates...")
+        update_requirements(available_updates)
+    
+    logger.debug("Update process completed.")
 
 
 class RestartException(Exception):
