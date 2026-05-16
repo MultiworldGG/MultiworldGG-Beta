@@ -5,6 +5,7 @@ import logging
 import io
 import warnings
 import json
+from enum import IntFlag
 from pathlib import Path
 
 __all__ = ("Version", 
@@ -26,6 +27,7 @@ __all__ = ("Version",
            "mwgg_venv_site_packages",
            "init_logging",
            "loglevel_mapping",
+           "WORLDS_EXIST",
            "ByValue")
 
 class Version(typing.NamedTuple):
@@ -295,6 +297,12 @@ def mwgg_venv_site_packages(*path: str) -> str:
     else:
         lib_segments = ("lib", f"python{sys.version_info.major}.{sys.version_info.minor}")
     return write_path("mwgg_venv", *lib_segments, "site-packages", *path)
+
+class WORLDS_EXIST(IntFlag):
+    NOT_INSTALLED = 0b00
+    HAS_WORLDS = 0b01
+    UPDATED = 0b10
+    INSTALLED = HAS_WORLDS | UPDATED
 
 class ByValue:
     """

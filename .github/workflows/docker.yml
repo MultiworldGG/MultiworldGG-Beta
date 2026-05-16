@@ -157,7 +157,6 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # MWGG GitHub-bot image: parallel pipeline targeting GitHubLib/.
-  # Same multi-arch + nightly + semver tag scheme; image name `mwgg-github-bot`.
   # ---------------------------------------------------------------------------
   prepare-bot:
     runs-on: ubuntu-latest
@@ -168,11 +167,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Set lowercase image name
+        id: image-bot
+        run: |
+          echo "name=${GITHUB_REPOSITORY,,}-bots" >> $GITHUB_OUTPUT
+
+      - name: Set package name
+        id: package-bot
+        run: |
+          echo "name=$(basename ${GITHUB_REPOSITORY,,}-bots)" >> $GITHUB_OUTPUT
+
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v6.0.0
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/mwgg-github-bot
+          images: ${{ env.REGISTRY }}/${{ steps.image-bot.outputs.name }}
           tags: |
             type=ref,event=branch,enable={{is_not_default_branch}}
             type=semver,pattern={{version}}
@@ -220,7 +230,7 @@ jobs:
           done
           echo "tags=$(IFS=','; echo "${suffixed[*]}")" >> $GITHUB_OUTPUT
 
-      - name: Build and push Oliver image
+      - name: Build and push GitHub-Bots image
         uses: docker/build-push-action@v7.0.0
         with:
           context: ./GitHubLib

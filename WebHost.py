@@ -163,8 +163,11 @@ if __name__ == "__main__":
     except Exception as e:
         logging.warning("Could not update LttP sprites: %s", e)
     app = get_app()
+
     from worlds import AutoWorldRegister, network_data_package
     # Update to only valid WebHost worlds
+    ModuleUpdate.record_worlds_update()
+
     invalid_worlds = {name for name, world in AutoWorldRegister.world_types.items()
                       if not hasattr(world.web, "tutorials")}
     if invalid_worlds:

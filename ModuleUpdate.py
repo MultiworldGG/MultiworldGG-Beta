@@ -13,6 +13,7 @@ import logging
 import tempfile
 import contextlib
 import errno
+import importlib.metadata
 
 logger = logging.getLogger("Update")
 
@@ -23,7 +24,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from importlib import invalidate_caches
-from BaseUtils import tuplize_version, Version, local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen
+from BaseUtils import tuplize_version, Version, local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen, WORLDS_EXIST
 from APContainer import APWorldContainer
 
 # mwgg_igdb package source — orphan branch on the Index repo
@@ -337,25 +338,80 @@ def _igdb_stamp_path() -> Path:
     return install_path().parent / ".mwgg_igdb_last_upgrade"
 
 
-def _igdb_upgraded_recently() -> bool:
+def _read_igdb_stamp() -> dict[str, object] | None:
     try:
         path = _igdb_stamp_path()
         if not path.exists():
-            return False
-        last = float(path.read_text().strip())
-    except (OSError, ValueError, RuntimeError):
+            return None
+        igdb_stamp = json.loads(path.read_text())
+        if isinstance(igdb_stamp, dict):
+            return igdb_stamp
+    except (OSError, TypeError, ValueError, RuntimeError):
+        pass
+    return None
+
+def _igdb_stamp_is_recent(igdb_stamp: dict[str, object]) -> bool:
+    try:
+        last = float(igdb_stamp["last_upgrade"])
+        variant = str(igdb_stamp["variant"])
+    except (KeyError, TypeError, ValueError):
         return False
-    elapsed = time.time() - last
-    return 0 <= elapsed < MWGG_IGDB_UPGRADE_INTERVAL_SECONDS
+    return variant == MWGG_IGDB_VARIANT and last >= time.time() - MWGG_IGDB_UPGRADE_INTERVAL_SECONDS
 
 
-def _record_igdb_upgrade() -> None:
+def _igdb_upgraded_recently() -> bool:
+    igdb_stamp = _read_igdb_stamp()
+    return bool(igdb_stamp and _igdb_stamp_is_recent(igdb_stamp))
+
+
+def _venv_has_worlds() -> bool:
+    try:
+        worlds_dir = _venv_worlds_dir()
+        return worlds_dir.exists() and any(worlds_dir.iterdir())
+    except OSError:
+        return False
+
+
+def _stored_worlds_state() -> WORLDS_EXIST:
+    igdb_stamp = _read_igdb_stamp()
+    if not igdb_stamp or not _igdb_stamp_is_recent(igdb_stamp):
+        return WORLDS_EXIST.NOT_INSTALLED
+    try:
+        return WORLDS_EXIST(int(igdb_stamp.get("worlds_updated", 0))) & WORLDS_EXIST.INSTALLED
+    except (TypeError, ValueError):
+        return WORLDS_EXIST.NOT_INSTALLED
+
+
+def _write_igdb_stamp(last_upgrade: float | None, worlds_updated: WORLDS_EXIST) -> None:
     try:
         path = _igdb_stamp_path()
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(str(time.time()))
+        igdb_stamp = json.dumps(
+            {
+                "last_upgrade": time.time() if last_upgrade is None else last_upgrade,
+                "worlds_updated": int(worlds_updated),
+                "variant": MWGG_IGDB_VARIANT,
+            }
+        )
+        path.write_text(igdb_stamp)
     except (OSError, RuntimeError) as e:
         logger.debug(f"Could not write mwgg_igdb upgrade stamp: {e}")
+
+
+def record_worlds_update() -> WORLDS_EXIST:
+    state = WORLDS_EXIST.INSTALLED if _venv_has_worlds() else WORLDS_EXIST.NOT_INSTALLED
+    igdb_stamp = _read_igdb_stamp()
+    try:
+        last_upgrade = float(igdb_stamp["last_upgrade"]) if igdb_stamp else None
+    except (KeyError, TypeError, ValueError):
+        last_upgrade = None
+    _write_igdb_stamp(last_upgrade, state)
+    return state
+
+
+def _record_igdb_upgrade() -> None:
+    state = WORLDS_EXIST.UPDATED if _venv_has_worlds() else WORLDS_EXIST.NOT_INSTALLED
+    _write_igdb_stamp(time.time(), state)
 
 
 def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
@@ -463,6 +519,34 @@ def set_variant(variant: str) -> None:
     MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
 
 
+def _world_slug(world: str) -> str:
+    return world.removeprefix("worlds.")
+
+
+def _world_requires_install(slug: str, games: dict[str, dict[str, object]]) -> bool:
+    try:
+        dist = importlib.metadata.distribution(f"worlds.{slug}")
+    except importlib.metadata.PackageNotFoundError:
+        return True
+
+    module_location = games.get(slug, {}).get("module_location")
+    if not isinstance(module_location, str):
+        return False
+
+    tag = _module_location_tag(module_location)
+    return bool(tag and dist.version != tag)
+
+
+def _worlds_requiring_install(worlds: list[str], games: dict[str, dict[str, object]]) -> list[str]:
+    state = _stored_worlds_state()
+    if state == WORLDS_EXIST.INSTALLED:
+        logger.debug("Selected worlds were already checked against the current mwgg_igdb stamp.")
+    elif state == WORLDS_EXIST.UPDATED:
+        logger.debug("mwgg_igdb was refreshed after worlds were installed; checking for missing worlds.")
+
+    return [world for world in worlds if _world_requires_install(_world_slug(world), games)]
+
+
 def check_for_updates(worlds_only: bool = False) -> List[str]:
     """
     Return packages with newer versions available.
@@ -479,7 +563,6 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
         index = _get_game_index()
         if index is None:
             return []
-        import importlib.metadata
         outdated: List[str] = []
         for slug, entry in index.get_all_games().items():
             loc = entry.get("module_location")
@@ -565,7 +648,7 @@ def _venv_worlds_dir() -> Path:
         return Path(mwgg_venv_site_packages("worlds"))
     # Dev: matches the hardcoded path in src/worlds/__init__.py
     from sysconfig import get_path
-    return get_path("purelib") / "worlds"
+    return Path(get_path("purelib")) / "worlds"
 
 
 def _install_apworld_to_venv(apworld_file: Path, slug: str) -> bool:
@@ -669,6 +752,7 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             selected_variant = variant
         else:
             world_slugs.append(entry)
+    had_world_selection = bool(world_slugs)
 
     if selected_variant is not None:
         set_variant(selected_variant)
@@ -680,6 +764,17 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
 
     index = _get_game_index()
     games = index.get_all_games() if index is not None else {}
+    if not update and not with_deps and world_slugs:
+        worlds_to_install = _worlds_requiring_install(world_slugs, games)
+        skipped_worlds = sorted(set(world_slugs) - set(worlds_to_install))
+        if skipped_worlds:
+            logger.debug(f"Skipping already-installed worlds: {skipped_worlds}")
+        if not worlds_to_install:
+            record_worlds_update()
+            _prune_stale_apworld_extractions()
+            invalidate_caches()
+            return apworlds
+        world_slugs = worlds_to_install
 
     for world in world_slugs:
         slug = world.removeprefix("worlds.")
@@ -737,6 +832,8 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
 
     _prune_stale_apworld_extractions()
     invalidate_caches()
+    if had_world_selection:
+        record_worlds_update()
     return apworlds
 
 def update_world_from_package() -> None:
@@ -995,6 +1092,10 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
 def _update_locked(yes: bool, force: bool, worlds: Optional[List[str]]) -> None:
     # Install/refresh mwgg_igdb upfront
     install_mwgg_igdb(upgrade=True)
+
+    if worlds:
+        install_worlds(worlds, update=force)
+        return
 
     if is_frozen():
         if (exe_dir / "custom_wheels").exists():

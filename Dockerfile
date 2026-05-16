@@ -56,6 +56,7 @@ RUN apt-get update && \
     libc6-dev \
     libtk8.6=8.6.13-2 \
     g++=4:12.2.0-3 \
+    jq \
     curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
