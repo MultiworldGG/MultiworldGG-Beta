@@ -17,9 +17,12 @@ services:
       - ./example_config.yaml:/app/config.yaml
       - ./example_selflaunch.yaml:/app/selflaunch.yaml
 
-      # Persistent worlds venv. Host bind mount so it survives `docker compose 
-      # down -v`. 
+      # Mount worlds venv
       - /var/lib/mwgg/mwgg_venv:/root/.local/share/MultiworldGG/mwgg_venv
+
+    environment:
+      # The image is pre-built 
+      - SKIP_REQUIREMENTS_UPDATE=1
 
     # Expose on host network for access to dynamically mapped ports
     network_mode: host
@@ -42,11 +45,13 @@ services:
       - ./example_config.yaml:/app/config.yaml
       - ./example_gunicorn.conf.py:/app/gunicorn.conf.py
 
+      # Mount worlds venv
       - /var/lib/mwgg/mwgg_venv:/root/.local/share/MultiworldGG/mwgg_venv
 
     environment:
       # Bind gunicorn on 8000
       - PORT=8000
+      - SKIP_REQUIREMENTS_UPDATE=1
 
   nginx:
     image: nginx:stable-alpine
