@@ -19,7 +19,6 @@ os.environ["KIVY_LOG_ENABLE"] = "1"
 os.environ["KIVY_NO_ARGS"] = "1"
 
 from BaseUtils import local_path, write_path, is_frozen, init_logging, is_windows
-from mwgg_splash import main as splash_main
 
 # Ensure ctypes is imported early (fixes WinDLL issues in frozen builds)
 import ctypes
@@ -164,6 +163,7 @@ if __name__ == "__main__":
     splash_queue = None
 
     if is_windows and args.frontend == "gui":
+        from mwgg_splash import main as splash_main
         set_start_method("spawn")
         splash_queue = Queue()
         Process(target=splash_main, name="SplashScreen", args=(splash_queue,)).start()

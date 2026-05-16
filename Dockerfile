@@ -63,11 +63,18 @@ RUN python -m venv $VIRTUAL_ENV
 # uv is required at runtime by ModuleUpdate.find_uv() (called at import time)
 RUN pip install --no-cache-dir uv
 
-# Copy and install requirements first (better caching)
+# Copy and install requirements first (better caching).
+# Root requirements.txt: base + world-runtime deps (pathspec, PyYAML, xxtea,
+# aiohttp, etc.) — imported at module load or needed by world generation.
+# WebHostLib/requirements.txt: Flask/web-specific deps.
+# Note: Kivy GUI deps (kivy/kivymd/asynckivy) live in the mwgg_gui sibling
+# repo's pyproject.toml, not here — headless containers must not pull SDL2.
+COPY requirements.txt requirements.txt
 COPY WebHostLib/requirements.txt WebHostLib/requirements.txt
 
-RUN pip install --no-cache-dir -r \
-    WebHostLib/requirements.txt \
+RUN pip install --no-cache-dir \
+    -r requirements.txt \
+    -r WebHostLib/requirements.txt \
     gunicorn==23.0.0
 
 COPY . .
