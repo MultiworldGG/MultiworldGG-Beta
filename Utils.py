@@ -67,8 +67,13 @@ is_windows = sys.platform in ("win32", "cygwin", "msys")
 
 _worlds_to_load: typing.List[str | "APWorldContainer"] = []
 
-def set_game_names(game_names: typing.List[str]) -> typing.List[(str, bool)]:
-    """Set the game names to the list of game names"""
+def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.List[(str, bool)]:
+    """Set the game names to the list of game names.
+
+    strict=True (default) raises RuntimeError if any requested game can't be
+    served. strict=False logs a warning and returns; used by WebHost where a
+    few broken worlds shouldn't bring down the host.
+    """
     from mwgg_igdb import GameIndex
     from APContainer import APWorldContainer
     _worlds_to_install = {game: "" for game in game_names}
@@ -203,8 +208,13 @@ def set_game_names(game_names: typing.List[str]) -> typing.List[(str, bool)]:
                 pass
     missing = [g for g in game_names if g not in served_games]
     if missing:
-        raise RuntimeError(
-            "Cannot generate: the following games could not be installed and have no apworld fallback: "
+        if strict:
+            raise RuntimeError(
+                "Cannot generate: the following games could not be installed and have no apworld fallback: "
+                + ", ".join(repr(g) for g in missing)
+            )
+        update_logger.warning(
+            "set_game_names: skipping games that could not be installed and have no apworld fallback: "
             + ", ".join(repr(g) for g in missing)
         )
 
