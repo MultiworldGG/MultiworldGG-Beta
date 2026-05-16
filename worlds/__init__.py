@@ -8,19 +8,19 @@ import dataclasses
 from typing import Optional, Union
 
 from NetUtils import DataPackage
-from BaseUtils import Version, write_path, is_frozen, get_archipelago_json, tuplize_version
+from BaseUtils import Version, get_archipelago_json, tuplize_version, mwgg_venv_site_packages, use_worlds_venv
 from APContainer import APWorldContainer
 
-# Extend __path__ to include venv site-packages for namespace package behavior
-if is_frozen():
-    venv_worlds_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds")
+# Extend __path__ to include python installed worlds for namespace package behavior.
+if use_worlds_venv():
+    venv_worlds_path = mwgg_venv_site_packages("worlds")
+    if venv_worlds_path not in __path__:
+        __path__.append(venv_worlds_path)
 else:
-    # Dev: pick up wheels that install_worlds() put in src/venv.
-    venv_worlds_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "venv", "Lib", "site-packages", "worlds"
-    )
-if os.path.exists(venv_worlds_path) and venv_worlds_path not in __path__:
-    __path__.append(venv_worlds_path)
+    from sysconfig import get_path
+    worlds_path = os.path.join(get_path("purelib"), "worlds")
+    if worlds_path not in __path__:
+        __path__.append(worlds_path)
 
 __all__ = [
     "network_data_package",

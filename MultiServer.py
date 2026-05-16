@@ -40,14 +40,14 @@ except ImportError:
 
 import NetUtils
 import Utils
-from Utils import version_tuple, restricted_loads, Version, async_start, write_path, get_intended_text, is_frozen
+from Utils import version_tuple, restricted_loads, Version, async_start, get_intended_text, use_worlds_venv, mwgg_venv_site_packages
 import os
 
-if is_frozen():
-    venv_site_packages_path = write_path("mwgg_venv", "Lib", "site-packages")
+if use_worlds_venv():
+    venv_site_packages_path = mwgg_venv_site_packages()
     if venv_site_packages_path not in sys.path:
         sys.path.append(venv_site_packages_path)
-    venv_worlds_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds")
+    venv_worlds_path = mwgg_venv_site_packages("worlds")
     if os.path.exists(venv_worlds_path) and venv_worlds_path not in sys.path:
         sys.path.append(venv_worlds_path)
 

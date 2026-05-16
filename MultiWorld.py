@@ -18,18 +18,19 @@ os.environ["KIVY_LOG_ENABLE"] = "1"
 # this below; doing it unconditionally is safe since we never use Kivy's CLI args.
 os.environ["KIVY_NO_ARGS"] = "1"
 
-from BaseUtils import local_path, write_path, is_frozen, init_logging, is_windows
+from BaseUtils import local_path, write_path, use_worlds_venv, init_logging, is_windows, mwgg_venv_site_packages
 
 # Ensure ctypes is imported early (fixes WinDLL issues in frozen builds)
 import ctypes
 
-if is_frozen():
+# TODO: Move kivy settings out of here and into the kivy module.
+if use_worlds_venv():
     os.environ["KIVY_NO_ARGS"] = "1"
     os.environ["KIVY_DATA_DIR"] = local_path("lib", "kivy", "data")
     default_libs_dir = os.path.join(sys.exec_prefix, "lib")
     if str(default_libs_dir) not in sys.path:
         sys.path.append(default_libs_dir)
-    venv_site_packages_path = write_path("mwgg_venv", "Lib", "site-packages")
+    venv_site_packages_path = mwgg_venv_site_packages()
     if venv_site_packages_path not in sys.path:
         sys.path.append(venv_site_packages_path)
 else:

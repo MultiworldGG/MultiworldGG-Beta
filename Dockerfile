@@ -42,6 +42,9 @@ ARG TARGETARCH
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH=$VIRTUAL_ENV/bin:$PATH
 ENV PYTHONUNBUFFERED=1
+# Opt this image into the mwgg_venv worlds-venv pathway in ModuleUpdate.
+ENV MWGG_USE_WORLDS_VENV=1
+RUN mkdir -p /root/.local/share/MultiworldGG
 WORKDIR /app
 
 # Install requirements
@@ -67,8 +70,6 @@ RUN pip install --no-cache-dir uv
 # Root requirements.txt: base + world-runtime deps (pathspec, PyYAML, xxtea,
 # aiohttp, etc.) — imported at module load or needed by world generation.
 # WebHostLib/requirements.txt: Flask/web-specific deps.
-# Note: Kivy GUI deps (kivy/kivymd/asynckivy) live in the mwgg_gui sibling
-# repo's pyproject.toml, not here — headless containers must not pull SDL2.
 COPY requirements.txt requirements.txt
 COPY WebHostLib/requirements.txt WebHostLib/requirements.txt
 
@@ -81,12 +82,8 @@ COPY . .
 
 COPY --from=cython-builder /build/*.so ./
 
-# Run ModuleUpdate
-#RUN python ModuleUpdate.py -y WHY WHY WHY?
-
 # Purge unneeded packages
-# Keep `git` — install_mwgg_igdb shells out to `uv pip install git+https://...`
-# at every container boot to refresh the game index from the Index repo branch.
+
 RUN apt-get purge -y \
     gcc \
     libc6-dev \

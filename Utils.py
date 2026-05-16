@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from BaseUtils import *
+from BaseUtils import use_worlds_venv
 
 import asyncio
 import concurrent.futures
@@ -713,11 +714,6 @@ def cache_self1(function: typing.Callable[[S, T], RetType]) -> typing.Callable[[
     wrap.__defaults__ = function.__defaults__
 
     return wrap
-
-
-def is_frozen() -> bool:
-    return typing.cast(bool, getattr(sys, 'frozen', False))
-
 
 def is_webhost_mode() -> bool:
     """Detect whether this import is happening in WebHost/dedicated web runtime."""

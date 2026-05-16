@@ -10,6 +10,9 @@ import zipfile
 import re
 import shutil
 import logging
+import tempfile
+import contextlib
+import errno
 
 logger = logging.getLogger("Update")
 
@@ -20,7 +23,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from importlib import invalidate_caches
-from BaseUtils import tuplize_version, Version, local_path, write_path
+from BaseUtils import tuplize_version, Version, local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen
 from APContainer import APWorldContainer
 
 # mwgg_igdb package source — orphan branch on the Index repo
@@ -64,8 +67,8 @@ elif sys.version_info < (3, 13, 0):
 # Skip update if running in splash screen process
 # Allow updates in main process and main client process
 _skip_update = bool(
-    multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiWorldGG"
-) or os.environ.get("SKIP_REQUIREMENTS_UPDATE", "").strip().lower() in ("1", "true", "yes", "on")
+    multiprocessing.parent_process() and multiprocessing.current_process().name != \
+        "MultiWorldGG") or os.environ.get("SKIP_REQUIREMENTS_UPDATE", "")
 
 update_ran = _skip_update
 need_update: List[str] = []
@@ -109,13 +112,7 @@ def find_uv() -> str:
     """Locate the uv binary. uv is user-installed, not bundled — see inno_setup.iss
     """
     if is_windows():
-        # Installer trick: the Inno [Run] entry for --update-modules sets
-        # WorkingDir to the directory containing the real winget-installed
-        # uv.exe (under %LOCALAPPDATA%\Microsoft\WinGet\Packages\astral-sh.uv_*\),
-        # so cwd-based lookup hits the real PE.  This MUST come before
-        # shutil.which("uv") — otherwise PATH resolves to WinGet\Links\uv.exe,
-        # an AppExecLink shim that the runasoriginaluser child token can't
-        # CreateProcess (WinError 448).
+        # Installer trick to find uv.exe in the working directory. Can probably refactor this...
         cwd_uv = Path.cwd() / "uv.exe"
         try:
             if cwd_uv.exists():
@@ -194,15 +191,13 @@ def venv_is_healthy(venv_path: Path) -> bool:
 
 uv_cmd = find_uv()
 
-if is_frozen():
-    # For frozen builds, install in a home directory to prevent readonly issues
-    exe_dir = Path(sys.exec_prefix)
-    default_libs_dir = Path(exe_dir, "lib")
-    worlds_install_dir = install_path()
-    if str(worlds_install_dir) not in sys.path:
-        sys.path.append(str(worlds_install_dir))
-    if str(default_libs_dir) not in sys.path:
-        sys.path.append(str(default_libs_dir))
+if use_worlds_venv():
+    # Route worlds + mwgg_igdb into a dedicated venv under user data
+    if is_frozen():
+        exe_dir = Path(sys.exec_prefix)
+        default_libs_dir = Path(exe_dir, "lib")
+        if str(default_libs_dir) not in sys.path:
+            sys.path.append(str(default_libs_dir))
 
     venv_path = install_path()
     if venv_path.exists() and not venv_is_healthy(venv_path):
@@ -218,6 +213,13 @@ if is_frozen():
             _venv_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
         subprocess.run([uv_cmd, "venv", str(venv_path), "--python", "3.13"], **_venv_kwargs)
     python_cmd = venv_path / ("Scripts" if is_windows() else "bin") / ("python.exe" if is_windows() else "python")
+
+    # Make packages installed into the worlds venv (mwgg_igdb, plus any
+    # top-level helpers shipped alongside worlds) importable from the
+    # running process.
+    site_packages = mwgg_venv_site_packages()
+    if site_packages not in sys.path:
+        sys.path.insert(0, site_packages)
 
 
 def _uv_pip(*args: str) -> list[str]:
@@ -555,10 +557,10 @@ def _venv_worlds_dir() -> Path:
     only modules can't be re-imported in the spawned child).
     """
     if is_frozen():
-        lib_dir = "Lib" if is_windows() else "lib"
-        return Path(write_path("mwgg_venv", lib_dir, "site-packages", "worlds"))
+        return Path(mwgg_venv_site_packages("worlds"))
     # Dev: matches the hardcoded path in src/worlds/__init__.py
-    return Path(local_path("venv", "Lib", "site-packages", "worlds"))
+    from sysconfig import get_path
+    return get_path("purelib") / "worlds"
 
 
 def _install_apworld_to_venv(apworld_file: Path, slug: str) -> bool:
@@ -716,11 +718,8 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
         logger.info(result.stdout)
 
         if result.returncode != 0:
-            stderr_lines = (result.stderr or "").strip().splitlines()
-            first = stderr_lines[0] if stderr_lines else "uv returned non-zero with no stderr"
-            logger.warning(f"World {target} failed to install from {module_location}: {first}")
-            if result.stderr:
-                logger.debug(result.stderr)
+            stderr_text = (result.stderr or "").strip() or "uv returned non-zero with no stderr"
+            logger.warning(f"World {target} failed to install from {module_location}:\n{stderr_text}")
             apworld_file = custom_worlds_dir / f"{slug}.apworld"
             if apworld_file.exists():
                 logger.info(f"Found apworld file: {apworld_file}")
@@ -928,19 +927,68 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
     return True
 
 
+@contextlib.contextmanager
+def _install_lock():
+    """Serialize the top-level update pipeline across processes.
+
+    Frozen clients and webhost workers share the runtime worlds venv. Direct
+    install_worlds() callers remain unlocked unless contention shows up there.
+    """
+    lock_dir = install_path().parent if use_worlds_venv() else Path(tempfile.gettempdir())
+    lock_dir.mkdir(parents=True, exist_ok=True)
+    lock_path = lock_dir / ".mwgg-install.lock"
+    with open(lock_path, "a+b") as lock_file:
+        lock_file.seek(0, os.SEEK_END)
+        if lock_file.tell() == 0:
+            lock_file.write(b"\0")
+            lock_file.flush()
+
+        if is_windows():
+            import msvcrt
+            lock_file.seek(0)
+            while True:
+                try:
+                    msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError as e:
+                    if (
+                        e.errno not in (errno.EACCES, errno.EDEADLK)
+                        and getattr(e, "winerror", None) not in (32, 33)
+                    ):
+                        raise
+                    time.sleep(0.25)
+            try:
+                yield
+            finally:
+                lock_file.seek(0)
+                msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+
 def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = None) -> None:
     """
     Main update function.
-    
+
     Args:
         yes: Answer yes to all prompts
         force: Force update without checking
         worlds: List of specific worlds to update
-    
+
     Returns:
         None
     """
-    # Install/refresh mwgg_igdb upfront 
+    with _install_lock():
+        _update_locked(yes=yes, force=force, worlds=worlds)
+
+
+def _update_locked(yes: bool, force: bool, worlds: Optional[List[str]]) -> None:
+    # Install/refresh mwgg_igdb upfront
     install_mwgg_igdb(upgrade=True)
 
     if is_frozen():
