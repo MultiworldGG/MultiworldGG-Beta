@@ -167,7 +167,8 @@ def find_uv() -> str:
 
 
 def venv_is_healthy(venv_path: Path) -> bool:
-    """True if the venv at venv_path is still usable (creator interpreter dir exists, python runs)."""
+    """True if the venv at venv_path is still usable
+    TODO: rewrite this, it's overengineered."""
     cfg = venv_path / "pyvenv.cfg"
     if not cfg.exists():
         return False
@@ -201,18 +202,21 @@ if use_worlds_venv():
             sys.path.append(str(default_libs_dir))
 
     venv_path = install_path()
-    if venv_path.exists() and not venv_is_healthy(venv_path):
-        logger.info(f"Existing venv at {venv_path} is broken or stale; recreating.")
-        shutil.rmtree(venv_path, ignore_errors=True)
-    if not venv_path.exists():
-        venv_path.parent.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Creating venv at {venv_path} via uv.")
+    if not venv_is_healthy(venv_path):
+        venv_path.mkdir(parents=True, exist_ok=True)
+        if any(venv_path.iterdir()):
+            logger.info(f"Repairing stale venv at {venv_path} via uv (site-packages preserved).")
+        else:
+            logger.info(f"Creating venv at {venv_path} via uv.")
         # uv reuses an existing system Python 3.13 if one is present; otherwise it
-        # downloads python-build-standalone into %APPDATA%\uv\data\python\ (no UAC).
+        # downloads python-build-standalone
         _venv_kwargs = {"check": True, "stdin": subprocess.DEVNULL, "timeout": 600}
         if is_windows():
             _venv_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
-        subprocess.run([uv_cmd, "venv", str(venv_path), "--python", "3.13"], **_venv_kwargs)
+        subprocess.run(
+            [uv_cmd, "venv", str(venv_path), "--allow-existing", "--python", "3.13"],
+            **_venv_kwargs,
+        )
     python_cmd = venv_path / ("Scripts" if is_windows() else "bin") / ("python.exe" if is_windows() else "python")
 
     # Make packages installed into the worlds venv (mwgg_igdb, plus any
