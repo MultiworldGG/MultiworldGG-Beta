@@ -34,6 +34,7 @@ MWGG_INDEX_REPO = "MultiworldGG/MultiworldGG-Index"
 MWGG_IGDB_BRANCH = f"game_index_{MWGG_IGDB_VARIANT}"
 MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
 MWGG_IGDB_UPGRADE_INTERVAL_SECONDS = 86400  # once-daily throttle for upgrade pulls
+_worlds_updated_state = WORLDS_EXIST.NOT_INSTALLED
 
 def is_frozen() -> bool:
     return getattr(sys, 'frozen', False)
@@ -338,6 +339,15 @@ def _igdb_stamp_path() -> Path:
     return install_path().parent / ".mwgg_igdb_last_upgrade"
 
 
+def _record_worlds_state(state: object) -> WORLDS_EXIST:
+    global _worlds_updated_state
+    try:
+        _worlds_updated_state |= WORLDS_EXIST(int(state))
+    except (TypeError, ValueError):
+        pass
+    return _worlds_updated_state
+
+
 def _read_igdb_stamp() -> dict[str, object] | None:
     try:
         path = _igdb_stamp_path()
@@ -345,6 +355,7 @@ def _read_igdb_stamp() -> dict[str, object] | None:
             return None
         igdb_stamp = json.loads(path.read_text())
         if isinstance(igdb_stamp, dict):
+            _record_worlds_state(igdb_stamp.get("worlds_updated", WORLDS_EXIST.NOT_INSTALLED))
             return igdb_stamp
     except (OSError, TypeError, ValueError, RuntimeError):
         pass
@@ -376,10 +387,7 @@ def _stored_worlds_state() -> WORLDS_EXIST:
     igdb_stamp = _read_igdb_stamp()
     if not igdb_stamp or not _igdb_stamp_is_recent(igdb_stamp):
         return WORLDS_EXIST.NOT_INSTALLED
-    try:
-        return WORLDS_EXIST(int(igdb_stamp.get("worlds_updated", 0))) & WORLDS_EXIST.INSTALLED
-    except (TypeError, ValueError):
-        return WORLDS_EXIST.NOT_INSTALLED
+    return _worlds_updated_state & WORLDS_EXIST.UPDATED
 
 
 def _write_igdb_stamp(last_upgrade: float | None, worlds_updated: WORLDS_EXIST) -> None:
@@ -399,18 +407,18 @@ def _write_igdb_stamp(last_upgrade: float | None, worlds_updated: WORLDS_EXIST) 
 
 
 def record_worlds_update() -> WORLDS_EXIST:
-    state = WORLDS_EXIST.INSTALLED if _venv_has_worlds() else WORLDS_EXIST.NOT_INSTALLED
     igdb_stamp = _read_igdb_stamp()
     try:
         last_upgrade = float(igdb_stamp["last_upgrade"]) if igdb_stamp else None
     except (KeyError, TypeError, ValueError):
         last_upgrade = None
+    state = _record_worlds_state(WORLDS_EXIST.HAS_WORLDS if _venv_has_worlds() else WORLDS_EXIST.NOT_INSTALLED)
     _write_igdb_stamp(last_upgrade, state)
     return state
 
 
 def _record_igdb_upgrade() -> None:
-    state = WORLDS_EXIST.UPDATED if _venv_has_worlds() else WORLDS_EXIST.NOT_INSTALLED
+    state = _record_worlds_state(WORLDS_EXIST.UPDATED if _venv_has_worlds() else WORLDS_EXIST.NOT_INSTALLED)
     _write_igdb_stamp(time.time(), state)
 
 
@@ -521,6 +529,13 @@ def set_variant(variant: str) -> None:
 
 def _world_slug(world: str) -> str:
     return world.removeprefix("worlds.")
+
+
+def _world_is_installed(slug: str) -> bool:
+    try:
+        return any(entry.name == slug for entry in _venv_worlds_dir().iterdir())
+    except OSError:
+        return False
 
 
 def _world_requires_install(slug: str, games: dict[str, dict[str, object]]) -> bool:
@@ -734,10 +749,9 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
     Args:
         worlds: List of apworlds to install.
         update: If True, uninstall old versions first.
-        with_deps: If True, install the wheel *with* its transitive dependencies
-            (omit ``--no-deps``). Used by the launch-time fallback in
-            Utils._perform_module_launch when a world imports cleanly but its
-            launch() body fails because a required dep is missing.
+        with_deps: If True, install the wheel *with* its transitive dependencies.
+            Otherwise, dependencies are still installed for new worlds and skipped
+            for worlds that were already present.
 
     Returns:
         List of apworlds that fell back to a custom apworld.
@@ -753,6 +767,7 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
         else:
             world_slugs.append(entry)
     had_world_selection = bool(world_slugs)
+    installed_world_slugs = {_world_slug(world) for world in world_slugs if _world_is_installed(_world_slug(world))}
 
     if selected_variant is not None:
         set_variant(selected_variant)
@@ -800,7 +815,7 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             continue
 
         install_args = ["install"]
-        if not with_deps:
+        if not with_deps and slug in installed_world_slugs:
             install_args.append("--no-deps")
         install_args += [module_location, "--upgrade", "--no-cache"]
         executable_args = _uv_pip(*install_args)
