@@ -83,6 +83,8 @@ COPY . .
 
 COPY --from=cython-builder /build/*.so ./
 
+RUN rm -f _speedups.pyx _speedups.pyxbld intset.h
+
 # Purge unneeded packages
 
 RUN apt-get purge -y \

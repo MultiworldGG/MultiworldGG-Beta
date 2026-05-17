@@ -55,8 +55,12 @@ class WorldSource:
             self.time_taken = time.perf_counter()-start
             return True
 
-        except Exception as e:
-            # A single world failing can still mean enough is working for the user, log and carry on
+        except BaseException as e:
+            if isinstance(e, (KeyboardInterrupt, SystemExit)):
+                raise
+            # A single world failing can still mean enough is working for the user, log and carry on.
+            # Catches BaseException so C-extension panics (e.g. pyo3_runtime.PanicException) don't
+            # bring the whole process down.
             logging.warning(f"Could not load world {self}: {type(e).__name__}: {e}")
             logging.debug("Full traceback for %s:", self, exc_info=True)
             if isinstance(self.game_module, str):
