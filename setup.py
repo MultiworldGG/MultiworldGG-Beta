@@ -187,6 +187,7 @@ def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
     logger.debug("Running post-build setup...")
     os.mkdir(os.path.join(build_exe_dir, "Players"))
+    os.mkdir(os.path.join(build_exe_dir, "custom_worlds"))
 
 
 def _register_custom_hooks():

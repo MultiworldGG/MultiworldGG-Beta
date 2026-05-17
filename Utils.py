@@ -232,10 +232,13 @@ def get_available_worlds() -> typing.List[str]:
     available_worlds = find_world_modules()
     # Also add worlds from the custom_worlds directory
     custom_worlds_dir = Path(local_path("custom_worlds"))
-    for world_file in custom_worlds_dir.iterdir():
-        module_name = discover_custom_world_module(world_file)
-        if module_name and module_name not in available_worlds:
-            available_worlds.add(module_name)
+    try:
+        for world_file in custom_worlds_dir.iterdir():
+            module_name = discover_custom_world_module(world_file)
+            if module_name and module_name not in available_worlds:
+                available_worlds.add(module_name)
+    except Exception as e:
+        update_logger.warning(f"Error checking custom worlds location: {e}")
     game_modules = set(GameIndex.get_all_games().keys())
 
     # Also check for currently installed world modules not in GameIndex

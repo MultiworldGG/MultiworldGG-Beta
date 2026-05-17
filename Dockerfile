@@ -81,6 +81,8 @@ RUN pip install --no-cache-dir \
 
 COPY . .
 
+RUN mkdir -p custom_worlds
+
 COPY --from=cython-builder /build/*.so ./
 
 RUN rm -f _speedups.pyx _speedups.pyxbld intset.h

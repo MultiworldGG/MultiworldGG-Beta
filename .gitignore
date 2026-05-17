@@ -1,5 +1,4 @@
 .idea
-.claude
 .vscode
 
 *_Spoiler.txt
@@ -165,6 +164,9 @@ env.bak/
 venv.bak/
 *.code-workspace
 shell.nix
+*.pyproj
+*.pyproj.user
+*.sln
 
 # Spyder project settings
 .spyderproject
@@ -193,6 +195,7 @@ cython_debug/
 # Cython intermediates
 _speedups.c
 _speedups.cpp
+_speedups.cp*
 _speedups.html
 
 # pyenv
