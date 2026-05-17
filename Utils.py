@@ -425,10 +425,7 @@ def _perform_module_launch(module_id: str, **kwargs):
         # Per-world launch() bodies are CLI-style and call asyncio.run(main()).
         # Without nest_asyncio that raises "cannot be called from a running
         # event loop" because the launcher's asyncio loop is already running
-        # on this thread. nest_asyncio.apply() patches asyncio to allow the
-        # nested run() call to re-enter the running loop; the launcher's loop
-        # continues to service other tasks while it's re-entered, so the UI
-        # stays responsive during the game session. apply() is idempotent.
+        # on this thread.
         import nest_asyncio
         nest_asyncio.apply()
 
@@ -438,15 +435,10 @@ def _perform_module_launch(module_id: str, **kwargs):
         import CommonClient
         ready_callback = kwargs.pop("ready_callback", None)
         error_callback = kwargs.pop("error_callback", None)
+        client_type = kwargs.pop("client_type", "text")
         CommonClient._set_pending_launch_callbacks(ready_callback, error_callback)
 
         if module_id:
-            # Single attempt: by the time we get here, _install_module_threaded
-            # has already returned successfully and the wheel is on disk. A
-            # synchronous retry loop here used to block the asyncio loop and
-            # freeze the UI. If the import fails now, it almost always means a
-            # transitive dep is missing (the install used --no-deps), so we
-            # hand off to _restart_with_deps below.
             try:
                 importlib.invalidate_caches()
                 importlib.import_module(module_id)
@@ -566,7 +558,7 @@ def _perform_module_launch(module_id: str, **kwargs):
                 logging.info(f"Scheduled deferred launch for {module_id} on next asyncio iteration")
                 return None
                             
-            # 2. Check SNI registry
+            # Check SNI registry
             from mwgg_igdb import GameIndex
             game_name = GameIndex.get_game_name_for_module(module_name=module_id.strip("worlds."))
             try:
@@ -578,7 +570,7 @@ def _perform_module_launch(module_id: str, **kwargs):
             except ImportError:
                 logging.debug("SNI client not available")
                 
-            # 3. Check BizHawk registry
+            # Check BizHawk registry
             try:
                 from worlds._bizhawk.client import AutoBizHawkClientRegister
                 if AutoBizHawkClientRegister.is_bizhawk_world(module_name=game_name):
@@ -588,7 +580,14 @@ def _perform_module_launch(module_id: str, **kwargs):
             except ImportError:
                 logging.debug("BizHawk client not available")
 
-        # 4. Fallback to text client
+        if client_type == "manual":
+            from worlds._manual.ManualClient import main
+            return main(**kwargs)
+        elif client_type == "universal_tracker":
+            from worlds.tracker.TrackerClient import launch
+            return launch(**kwargs)
+        
+        # Fallback to text client
         logging.info(f"No specialized client, using text client")
         from CommonClient import main_textclient
         result = main_textclient(**kwargs)
