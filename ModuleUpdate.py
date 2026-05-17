@@ -263,6 +263,20 @@ def confirm(msg: str) -> None:
         sys.exit(1)
 
 
+def _format_manual_install_hint(module_location: str) -> str:
+    """Render a copy-pasteable `uv pip install` command for the host shell.
+    """
+    return (
+        "To install manually on the host (where build tools are available), run:\n"
+        f"    bash:      source {mwgg_venv_site_packages()}/bin/activate\n"
+        f"    win PS:    & {mwgg_venv_site_packages()}/Scripts/Activate.ps1\n"
+        f"    docker:    source ~/<your-local-venv>/bin/activate\n"
+        f"    then run:\n"
+        f"               uv pip install '{module_location}' --upgrade --no-cache\n"
+        f"    docker admins will need to copy the site packages to /var/lib/mwgg/mwgg_venv"
+    )
+
+
 def parse_requirements_file(file_path: Path) -> List[str]:
     """
     Parse a requirements.txt file and return a list of requirement strings.
@@ -766,7 +780,6 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             selected_variant = variant
         else:
             world_slugs.append(entry)
-    had_world_selection = bool(world_slugs)
     installed_world_slugs = {_world_slug(world) for world in world_slugs if _world_is_installed(_world_slug(world))}
 
     if selected_variant is not None:
@@ -824,6 +837,7 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             result = _uv_run(executable_args, timeout=300)
         except subprocess.TimeoutExpired:
             logger.warning(f"uv install of {target} timed out; treating as failure.")
+            logger.warning(_format_manual_install_hint(module_location))
             apworld_file = custom_worlds_dir / f"{slug}.apworld"
             if apworld_file.exists():
                 logger.info(f"Found apworld file: {apworld_file}")
@@ -835,6 +849,7 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
         if result.returncode != 0:
             stderr_text = (result.stderr or "").strip() or "uv returned non-zero with no stderr"
             logger.warning(f"World {target} failed to install from {module_location}:\n{stderr_text}")
+            logger.warning(_format_manual_install_hint(module_location))
             apworld_file = custom_worlds_dir / f"{slug}.apworld"
             if apworld_file.exists():
                 logger.info(f"Found apworld file: {apworld_file}")
@@ -847,8 +862,7 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
 
     _prune_stale_apworld_extractions()
     invalidate_caches()
-    if had_world_selection:
-        record_worlds_update()
+    record_worlds_update()
     return apworlds
 
 def update_world_from_package() -> None:

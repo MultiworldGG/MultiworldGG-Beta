@@ -1,12 +1,10 @@
 import type { Context, Probot } from "probot";
 import { EventLog } from "../event-log";
-import { readRepoVariable } from "../repo-vars";
 import { resolveReleaseTagForSha, ReleaseNotFoundError } from "../release-resolver";
 import { IndexBotData, openOrUpdateIndexPR } from "../index-pr";
 
 const INDEX_REPO_DEFAULT = "MultiworldGG/MultiworldGG-Index";
 const TARGET_WORKFLOW_NAME = "Create and Release Python Package";
-const SLUG_VARIABLE = "WORLD_FOLDER_NAME";
 
 export async function handleWorkflowRun(
   oliverProbot: Probot,
@@ -65,17 +63,13 @@ export async function handleWorkflowRun(
     throw err;
   }
 
-  // Slug resolution mirrors the action's logic in build.yml:
-  //   1. WORLD_FOLDER_NAME repo variable wins (single-world repos).
-  //   2. Else parse from `<slug>-<world_version>` release tag prefix
-  //      (multi-world repos like TheLX5/Archipelago).
-  const declaredSlug = await readRepoVariable(context.octokit, owner, repo, SLUG_VARIABLE);
-  let slug: string | null = declaredSlug ?? null;
-  if (!slug) {
-    const dashIdx = releaseTag.indexOf("-");
-    if (dashIdx > 0 && dashIdx < releaseTag.length - 1) {
-      slug = releaseTag.slice(0, dashIdx);
-    }
+  // Slug resolution mirrors build.yml release behavior: published releases must
+  // use `<slug>-<world_version>` tags. Manual dry-runs can pass workflow inputs,
+  // but Oliver only handles release-triggered workflow runs.
+  const dashIdx = releaseTag.indexOf("-");
+  let slug: string | null = null;
+  if (dashIdx > 0 && dashIdx < releaseTag.length - 1) {
+    slug = releaseTag.slice(0, dashIdx);
   }
   if (!slug) {
     oliverLog.emit({
@@ -85,8 +79,8 @@ export async function handleWorkflowRun(
       release_tag: releaseTag,
       reason: "no_slug_resolved",
       message:
-        `Cannot resolve slug for ${sourceRepo}: ${SLUG_VARIABLE} is unset and ` +
-        `release tag '${releaseTag}' does not match '<slug>-<world_version>'.`,
+        `Cannot resolve slug for ${sourceRepo}: release tag '${releaseTag}' ` +
+        `does not match '<slug>-<world_version>'.`,
     });
     return;
   }

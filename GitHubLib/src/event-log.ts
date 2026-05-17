@@ -14,7 +14,6 @@ function logFile(): string {
 export type EventKind = "ok" | "skip" | "error";
 
 export type EventReason =
-  | "no_world_folder_name"
   | "no_slug_resolved"
   | "workflow_failure"
   | "branch_missing"
