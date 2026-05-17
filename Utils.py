@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from BaseUtils import *
-from BaseUtils import use_worlds_venv
+from BaseUtils import use_worlds_venv, reload_application_options
 
 import asyncio
 import concurrent.futures
