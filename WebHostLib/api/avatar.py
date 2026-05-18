@@ -155,9 +155,9 @@ def avatar_serve(avatar_url_id: str):
     if not HEX_ID_RE.match(hex_id):
         abort(404)
     filename = f"{hex_id}{PNG_EXTENSION}"
-    upload_dir = os.path.abspath(app.config["AVATAR_UPLOAD_FOLDER"])
-    full_path = os.path.abspath(os.path.join(upload_dir, filename))
-    if not full_path.startswith(upload_dir + os.sep):
+    upload_dir = os.path.realpath(app.config["AVATAR_UPLOAD_FOLDER"])
+    full_path = os.path.realpath(os.path.join(upload_dir, filename))
+    if os.path.commonpath([upload_dir, full_path]) != upload_dir:
         abort(404)
     if not os.path.isfile(full_path):
         abort(404)
