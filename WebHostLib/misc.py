@@ -1,23 +1,24 @@
+from __future__ import annotations
+
 import datetime
 import os
 import warnings
 from enum import StrEnum
-from typing import Any, IO, Dict, Iterator, List, Tuple, Union
+from typing import Any, IO, Dict, Iterator, List, Tuple, Union, TYPE_CHECKING
 
 import jinja2.exceptions
 from flask import request, redirect, url_for, render_template, Response, session, abort, send_from_directory
 from pony.orm import count, commit, db_session
 from werkzeug.utils import secure_filename
-from Utils import __version__, set_game_names
-from mwgg_igdb import GameIndex
-set_game_names(list(GameIndex.game_names.keys()), strict=False)
+from Utils import __version__
 
-
-from worlds.AutoWorld import AutoWorldRegister, World
 from . import app, cache
 from .markdown import render_markdown
 from .models import Seed, Room, Command, UUID, uuid4
 from Utils import title_sorted, utcnow
+
+if TYPE_CHECKING:
+    from worlds.AutoWorld import World
 
 class WebWorldTheme(StrEnum):
     DIRT = "dirt"
@@ -30,6 +31,7 @@ class WebWorldTheme(StrEnum):
     STONE = "stone"
 
 def get_world_theme(game_name: str) -> str:
+    from worlds.AutoWorld import AutoWorldRegister
     if game_name not in AutoWorldRegister.world_types:
         return "grass"
     chosen_theme = AutoWorldRegister.world_types[game_name].web.theme
@@ -113,6 +115,7 @@ def get_world_authors(world: type(World)) -> str:
 
 
 def get_visible_worlds() -> dict[str, type(World)]:
+    from worlds.AutoWorld import AutoWorldRegister
     worlds = {}
     for game, world in AutoWorldRegister.world_types.items():
         if not world.hidden and game not in app.config["HIDDEN_WEBWORLDS"]:
@@ -193,6 +196,7 @@ def tutorial_redirect(game: str, file: str, lang: str):
 @app.route('/tutorial/')
 @cache.cached()
 def tutorial_landing():
+    from worlds.AutoWorld import AutoWorldRegister
     tutorials = {}
     worlds = AutoWorldRegister.world_types
     
@@ -411,6 +415,7 @@ def get_datapackage_single(game_name):
 @app.route('/sitemap')
 @cache.cached()
 def get_sitemap():
+    from worlds.AutoWorld import AutoWorldRegister
     available_games: List[Dict[str, Union[str, bool]]] = []
     for game, world in AutoWorldRegister.world_types.items():
         if not world.hidden and not game in app.config["HIDDEN_WEBWORLDS"]:

@@ -1,6 +1,7 @@
 import base64
 import os
 import socket
+import threading
 import typing
 import uuid
 
@@ -16,6 +17,7 @@ from mwgg_igdb import GameIndex
 # Must be done before worlds is imported
 set_game_names(list(GameIndex.game_names.keys()), strict=False)
 
+from APContainer import is_ap_player_container
 from .cli import CLI
 
 UPLOAD_FOLDER = os.path.relpath('uploads')
@@ -29,9 +31,13 @@ os.makedirs(AVATAR_UPLOAD_FOLDER, exist_ok=True)
 app = Flask(__name__)
 Pony(app)
 
+_dynamic_tracker_lock = threading.Lock()
+_dynamic_tracker_registered = False
+
 app.jinja_env.filters['any'] = any
 app.jinja_env.filters['all'] = all
 app.jinja_env.filters['get_file_safe_name'] = get_file_safe_name
+app.jinja_env.filters['is_applayercontainer'] = is_ap_player_container
 
 # overwrites of flask default config
 app.config["DEBUG"] = False
@@ -134,9 +140,6 @@ def register() -> None:
     import importlib
 
     from werkzeug.utils import find_modules
-    # has automatic patch integration
-    import worlds.Files
-    app.jinja_env.filters['is_applayercontainer'] = worlds.Files.is_ap_player_container
 
     from WebHostLib.customserver import run_server_process
 
@@ -145,3 +148,15 @@ def register() -> None:
 
     from . import api
     app.register_blueprint(api.api_endpoints)
+
+    @app.before_request
+    def _ensure_dynamic_tracker_routes():
+        global _dynamic_tracker_registered
+        if _dynamic_tracker_registered:
+            return
+        with _dynamic_tracker_lock:
+            if _dynamic_tracker_registered:
+                return
+            from .tracker import _register_dynamic_tracker_routes
+            _register_dynamic_tracker_routes()
+            _dynamic_tracker_registered = True

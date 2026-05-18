@@ -5,17 +5,13 @@ from io import BytesIO
 from flask import send_file, Response, render_template
 from pony.orm import select
 
-from Utils import set_game_names
-from mwgg_igdb import GameIndex
-set_game_names(list(GameIndex.game_names.keys()), strict=False)
-
-from worlds.Files import AutoPatchRegister
 from . import app, cache
 from .models import Slot, Room, Seed
 
 
 @app.route("/dl_patch/<suuid:room_id>/<int:patch_id>")
 def download_patch(room_id, patch_id):
+    from worlds.Files import AutoPatchRegister
     patch = Slot.get(id=patch_id)
     if not patch:
         return "Patch not found"

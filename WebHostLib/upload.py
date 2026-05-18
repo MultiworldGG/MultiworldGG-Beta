@@ -16,8 +16,6 @@ import schema
 import MultiServer
 from NetUtils import GamesPackage, SlotType
 from Utils import VersionException, __version__
-from worlds.Files import AutoPatchRegister
-from worlds.AutoWorld import data_package_checksum
 from . import app
 from .models import Seed, Room, Slot, GameDataPackage, Lobby
 
@@ -48,6 +46,7 @@ def banned_file(filename: str) -> bool:
 
 
 def process_multidata(compressed_multidata, files={}):
+    from worlds.AutoWorld import data_package_checksum
     game_data: GamesPackage
 
     decompressed_multidata = MultiServer.Context.decompress(compressed_multidata)
@@ -95,6 +94,7 @@ def process_multidata(compressed_multidata, files={}):
 
 
 def upload_zip_to_db(zfile: zipfile.ZipFile, owner=None, meta={"race": False}, sid=None):
+    from worlds.Files import AutoPatchRegister
     if not owner:
         owner = session["_id"]
     infolist = zfile.infolist()

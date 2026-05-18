@@ -12,8 +12,6 @@ from flask import flash, redirect, render_template, request, session, url_for
 from pony.orm import commit, db_session
 
 from BaseClasses import get_seed, seeddigits
-from Generate import PlandoOptions, handle_name, mystery_argparse
-from Main import main as ERmain
 from Utils import __version__, restricted_dumps, DaemonThreadPoolExecutor
 from WebHostLib import app
 from settings import ServerOptions, GeneratorOptions
@@ -125,6 +123,8 @@ def gen_game(gen_options: dict, meta: dict[str, Any] | None = None, owner=None, 
     race = meta.setdefault("generator_options", {}).setdefault("race", False)
 
     def task():
+        from Generate import PlandoOptions, handle_name, mystery_argparse
+        from Main import main as ERmain
         target = tempfile.TemporaryDirectory()
         playercount = len(gen_options)
         seed = get_seed()

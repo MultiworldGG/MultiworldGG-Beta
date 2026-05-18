@@ -108,64 +108,75 @@ if not update_ran:
 
 # Default for dev mode (not frozen): use the running interpreter and let uv install into its venv.
 python_cmd = sys.executable
-uv_cmd: str = ""
+
+_uv_resolved_path: Optional[Path] = None
+_uv_unavailable: bool = False
 
 
-def find_uv() -> str:
-    """Locate the uv binary. uv is user-installed, not bundled — see inno_setup.iss
+def _uv_candidate_paths() -> list[Path]:
+    """uv lookup order; don't hunt for it
     """
+    candidates: list[Path] = []
+    on_path = Path("uv")
+    if on_path:
+        candidates.append(on_path)
     if is_windows():
-        # Installer trick to find uv.exe in the working directory. Can probably refactor this...
-        cwd_uv = Path.cwd() / "uv.exe"
-        try:
-            if cwd_uv.exists():
-                return str(cwd_uv)
-        except OSError as e:
-            logger.warning(f"Could not probe cwd uv candidate {cwd_uv}: {e}")
-
-    found = shutil.which("uv")
-    if found:
-        return found
-
-    if is_windows():
-        local_appdata = os.environ.get("LOCALAPPDATA", "")
-        candidates = [
-            Path(local_appdata) / "Microsoft" / "WinGet" / "Links" / "uv.exe",
-            Path.home() / ".local" / "bin" / "uv.exe",
+        candidates += [
+            Path.home() / "AppData" / "Local" / "Microsoft" / "WinGet" / "Links" / "uv.exe",  # winget shim
+            Path.home() / ".local" / "bin" / "uv.exe",                          # astral PS installer
         ]
-        for candidate in candidates:
-            try:
-                if candidate.exists():
-                    return str(candidate)
-            except OSError as e:
-                logger.warning(f"Could not probe uv candidate {candidate}: {e}")
-                continue
-    elif is_frozen():
-        # First launch on Mac/Linux: bundled installer hasn't run yet. Run it once,
-        # then check the default install location (~/.local/bin/uv).
-        installer = Path(sys.executable).parent / "install-uv.sh"
-        if installer.exists():
-            logger.info(f"uv not found on PATH; running bundled installer {installer}")
-            try:
-                subprocess.run(["sh", str(installer)], check=True)
-            except subprocess.CalledProcessError as e:
-                logger.warning(f"Bundled uv installer failed: {e}")
-            else:
-                local_uv = Path.home() / ".local" / "bin" / "uv"
-                if local_uv.exists():
-                    return str(local_uv)
-                # Re-probe PATH in case the installer modified it via shell rc files
-                # that aren't visible to this already-running process.
-                found = shutil.which("uv")
-                if found:
-                    return found
+    else:
+        candidates += [
+            Path.home() / ".local" / "bin" / "uv",     # astral installer / pipx / install-uv.sh
+            Path("/opt/homebrew/bin/uv"),              # Homebrew (Apple Silicon)
+            Path("/usr/local/bin/uv"),                 # Homebrew (Intel) / generic
+        ]
+    return candidates
 
-    raise RuntimeError(
-        "uv not found on PATH and no fallback succeeded. Install uv manually: "
-        "`winget install astral-sh.uv` (Windows) or "
-        "`curl -LsSf https://astral.sh/uv/install.sh | sh` (macOS/Linux). "
-        "See https://docs.astral.sh/uv/getting-started/installation/."
+
+def _uv_pip(*args: str) -> list[str]:
+    return ["pip", *args, "--python", str(python_cmd)]
+
+
+def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subprocess.CompletedProcess:
+    """Run `uv <args>` against the first reachable uv binary."""
+    global _uv_resolved_path, _uv_unavailable
+
+    kwargs = {
+        "capture_output": True,
+        "text": True,
+        "stdin": subprocess.DEVNULL,
+        "timeout": timeout,
+    }
+    if is_windows():
+        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
+
+    if _uv_unavailable:
+        return subprocess.CompletedProcess(args, 127, "", "uv not found at any known path")
+
+    candidates = [_uv_resolved_path] if _uv_resolved_path else _uv_candidate_paths()
+
+    for cand in candidates:
+        cmd = [cand] + args
+        try:
+            result = subprocess.run(cmd, check=check, **kwargs)
+        except OSError as e:
+            # The candidate is unusable — try next.
+            logger.debug(f"uv not usable at {cand} ({e!r}); trying next candidate")
+            continue
+        if _uv_resolved_path is None:
+            _uv_resolved_path = cand
+            logger.debug(f"Using uv at {cand}")
+        return result
+
+    _uv_unavailable = True
+    logger.warning(
+        "uv not found at any known install path. Worlds cannot be pre-installed; "
+        "they will be installed on demand when needed. To pre-install, install uv via "
+        "`winget install astral-sh.uv`, `irm https://astral.sh/uv/install.ps1 | iex`, "
+        "or `choco install uv`."
     )
+    return subprocess.CompletedProcess(args, 127, "", "uv not found at any known path")
 
 
 def venv_is_healthy(venv_path: Path) -> bool:
@@ -193,8 +204,6 @@ def venv_is_healthy(venv_path: Path) -> bool:
         return False
 
 
-uv_cmd = find_uv()
-
 if use_worlds_venv():
     # Route worlds + mwgg_igdb into a dedicated venv under user data
     if is_frozen():
@@ -204,6 +213,7 @@ if use_worlds_venv():
             sys.path.append(str(default_libs_dir))
 
     venv_path = install_path()
+    venv_ready = True
     if not venv_is_healthy(venv_path):
         venv_path.mkdir(parents=True, exist_ok=True)
         if any(venv_path.iterdir()):
@@ -211,48 +221,28 @@ if use_worlds_venv():
         else:
             logger.info(f"Creating venv at {venv_path} via uv.")
         # uv reuses an existing system Python 3.13 if one is present; otherwise it
-        # downloads python-build-standalone
-        _venv_kwargs = {"check": True, "stdin": subprocess.DEVNULL, "timeout": 600}
-        if is_windows():
-            _venv_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
-        subprocess.run(
-            [uv_cmd, "venv", str(venv_path), "--allow-existing", "--python", "3.13"],
-            **_venv_kwargs,
+        # downloads python-build-standalone.
+        venv_result = _uv_run(
+            ["venv", str(venv_path), "--allow-existing", "--python", "3.13"],
+            timeout=600,
         )
-    python_cmd = venv_path / ("Scripts" if is_windows() else "bin") / ("python.exe" if is_windows() else "python")
+        if venv_result.returncode != 0:
+            venv_ready = False
+            logger.warning(
+                "Could not create the worlds venv. Worlds will be installed on demand "
+                "the next time uv is available."
+            )
 
-    # Make packages installed into the worlds venv (mwgg_igdb, plus any
-    # top-level helpers shipped alongside worlds) importable from the
-    # running process.
-    site_packages = mwgg_venv_site_packages()
-    if site_packages not in sys.path:
-        sys.path.insert(0, site_packages)
+    if venv_ready:
+        python_cmd = venv_path / ("Scripts" if is_windows() else "bin") / ("python.exe" if is_windows() else "python")
 
+        # Make packages installed into the worlds venv (mwgg_igdb, plus any
+        # top-level helpers shipped alongside worlds) importable from the
+        # running process.
+        site_packages = mwgg_venv_site_packages()
+        if site_packages not in sys.path:
+            sys.path.insert(0, site_packages)
 
-def _uv_pip(*args: str) -> list[str]:
-    """Build a `uv pip ...` command targeting the active venv (python_cmd)."""
-    return [uv_cmd, "pip", *args, "--python", str(python_cmd)]
-
-
-def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subprocess.CompletedProcess:
-    """Run a uv subprocess with hardened defaults.
-
-    - Captures stdout/stderr in text mode.
-    - stdin=DEVNULL so the child never blocks waiting on a tty.
-    - On Windows, passes CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW so a
-      console control event (Ctrl+C / Ctrl+Break) generated by, or delivered
-      to, the child can't propagate back into the parent's console group and
-      tear down the asyncio loop.
-    """
-    kwargs = {
-        "capture_output": True,
-        "text": True,
-        "stdin": subprocess.DEVNULL,
-        "timeout": timeout,
-    }
-    if is_windows():
-        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
-    return subprocess.run(args, check=check, **kwargs)
 
 def confirm(msg: str) -> None:
     """Get user confirmation for an action."""
@@ -545,13 +535,6 @@ def _world_slug(world: str) -> str:
     return world.removeprefix("worlds.")
 
 
-def _world_is_installed(slug: str) -> bool:
-    try:
-        return any(entry.name == slug for entry in _venv_worlds_dir().iterdir())
-    except OSError:
-        return False
-
-
 def _world_requires_install(slug: str, games: dict[str, dict[str, object]]) -> bool:
     try:
         dist = importlib.metadata.distribution(f"worlds.{slug}")
@@ -780,18 +763,23 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             selected_variant = variant
         else:
             world_slugs.append(entry)
-    installed_world_slugs = {_world_slug(world) for world in world_slugs if _world_is_installed(_world_slug(world))}
-
     if selected_variant is not None:
         set_variant(selected_variant)
         install_mwgg_igdb(upgrade=True, force=True)
+
+    index = _get_game_index()
+    games = index.get_all_games() if index is not None else {}
+    # Snapshot BEFORE uninstall_worlds: a world properly installed at the current
+    # mwgg_igdb tag stays in the set so update=True reinstalls can skip deps.
+    installed_world_slugs = {
+        _world_slug(world) for world in world_slugs
+        if not _world_requires_install(_world_slug(world), games)
+    }
 
     if update:
         logger.info(f"Uninstalling old versions of: {world_slugs}")
         uninstall_worlds(world_slugs)
 
-    index = _get_game_index()
-    games = index.get_all_games() if index is not None else {}
     if not update and not with_deps and world_slugs:
         worlds_to_install = _worlds_requiring_install(world_slugs, games)
         skipped_worlds = sorted(set(world_slugs) - set(worlds_to_install))
@@ -873,16 +861,16 @@ def update_world_from_package() -> None:
             logger.info(f"Installing wheel: {world}")
             # uv prefers wheels by default, no --prefer-binary equivalent needed.
             executable_args = _uv_pip("install", world, "--upgrade", "--no-cache")
-            
+
             # Use threading instead of multiprocessing to avoid argument contamination
             import threading
             import queue
-            
+
             result_queue = queue.Queue()
-            
+
             def _pip_install_thread():
                 try:
-                    result = subprocess.run(executable_args, capture_output=True, text=True)
+                    result = _uv_run(executable_args, timeout=30)
                     result_queue.put((result.returncode, result.stdout, result.stderr))
                 except Exception as e:
                     result_queue.put((1, "", str(e)))
@@ -971,7 +959,7 @@ def update_world_from_package() -> None:
         for wheel in worlds_files["wheels"]:
             logger.info(f"Installing wheel: {wheel}")
             executable_args = _uv_pip("install", wheel, "--upgrade")
-            result = subprocess.run(executable_args)
+            result = _uv_run(executable_args, timeout=30)
             if result.returncode != 0:
                 logger.warning(f"Failed to install wheel {wheel}")
             else:
@@ -1022,7 +1010,7 @@ def update_requirements(needed_packages: List[str]) -> None:
             for pkg in relevant:
                 executable_args.extend(["--upgrade-package", pkg])
 
-        result = subprocess.run(executable_args)
+        result = _uv_run(executable_args, timeout=30)
         if result.returncode != 0:
             logger.warning(f"Failed to install/update from {req_file.name}")
 
@@ -1048,10 +1036,7 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
             logger.warning(f"Requirements file not found: {req_file}")
             continue
         logger.info(f"Ensuring requirements from {req_file.name} are satisfied")
-        result = subprocess.run(
-            _uv_pip("install", "-r", str(req_file)),
-            capture_output=True, text=True,
-        )
+        result = _uv_run(_uv_pip("install", "-r", str(req_file)), timeout=30)
         if result.returncode != 0:
             logger.warning(f"Failed to install requirements from {req_file.name}: {result.stderr}")
             return False

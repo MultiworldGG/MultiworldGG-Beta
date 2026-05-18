@@ -12,7 +12,6 @@ from pony.orm import commit, select
 
 import Options
 from Utils import local_path, utcnow
-from worlds.AutoWorld import AutoWorldRegister
 from . import app, cache, limiter
 from .generate import get_meta
 from .misc import get_world_theme
@@ -26,6 +25,7 @@ def create() -> None:
 
 
 def render_options_page(template: str, world_name: str, is_complex: bool = False) -> Union[Response, str]:
+    from worlds.AutoWorld import AutoWorldRegister
     world = AutoWorldRegister.world_types[world_name]
     if world.hidden or world.web.options_page is False or world_name in app.config["HIDDEN_WEBWORLDS"]:
         return redirect("games")
@@ -91,6 +91,7 @@ def test_ordered(obj):
 @app.route("/games/<string:game>/option-presets", methods=["GET"])
 @cache.cached()
 def option_presets(game: str) -> Response:
+    from worlds.AutoWorld import AutoWorldRegister
     world = AutoWorldRegister.world_types[game]
 
     presets = {}

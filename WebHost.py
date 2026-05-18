@@ -31,11 +31,6 @@ if not os.path.exists(configpath):
 
 
 def get_app() -> "Flask":
-    # WebHost is the load-all exception: serve every world the index knows about.
-    # set_game_names must be called before any `import worlds` cascade, so the
-    # narrow loader populates the full slug set on first import.
-    from mwgg_igdb import GameIndex
-    Utils.set_game_names(list(GameIndex.game_names.keys()), strict=False)
 
     from WebHostLib import register, cache, app as raw_app
     from WebHostLib.models import db
