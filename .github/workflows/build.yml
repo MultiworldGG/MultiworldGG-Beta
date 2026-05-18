@@ -302,7 +302,7 @@ jobs:
         shell: bash
         run: |
           cd build/exe*
-          cp Players/Templates/Clique.yaml Players/
+          cp Players/Templates/MyCoolGame.yaml Players/
           gtimeout 30 ./MultiworldGGGenerate
 
       - name: Create DMG with dmgbuild

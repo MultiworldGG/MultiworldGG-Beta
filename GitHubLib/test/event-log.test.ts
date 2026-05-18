@@ -31,15 +31,15 @@ describe("EventLog", () => {
     const log = new EventLog(fakeLogger);
     log.emit({
       kind: "ok",
-      source_repo: "MultiworldGG/clique",
+      source_repo: "MultiworldGG/myclgm",
       release_tag: "v1.0.0",
-      slug: "clique",
+      slug: "myclgm",
       message: "Opened Index PR #42",
     });
     const raw = fs.readFileSync(path.join(tmpDir, "events.jsonl"), "utf-8");
     const ev = JSON.parse(raw.trim());
     expect(ev.kind).toBe("ok");
-    expect(ev.slug).toBe("clique");
+    expect(ev.slug).toBe("myclgm");
     expect(ev.ts).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 

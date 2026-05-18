@@ -119,9 +119,10 @@ gives the architectural overview.
   repos; **Karen** does branch + manifest writes on the Index. Both authenticate via app-level JWT
   → installation token inside `GitHubLib/src/index.ts`. The split exists so per-world repos see a
   read-shaped install prompt; Oliver has no write permissions on the Index, only Karen does.
-- **Trigger contract.** Oliver only acts on workflows named `Create and Release Python Package`
-  with `event=release` and `conclusion=success`. The per-world repo must set the
-  `WORLD_FOLDER_NAME` repository variable; the bot uses it as the slug for `worlds/<slug>.json`.
+- **Trigger contract.** Oliver only acts on successful `release` workflow runs whose
+  `referenced_workflows` include `MultiworldGG/gen-pymod-release/.github/workflows/build.yml`.
+  The release tag must be `<slug>-<world_version>`; the bot uses the tag prefix
+  as the slug for `worlds/<slug>.json`.
 - **PR shape.** Branch `update/<slug>-<release_tag>`, manifest sets
   `module_location = https://github.com/<owner>/<repo>/releases/download/<release_tag>/<dist>-<world_version>-py3-none-any.whl#sha256=<hex>`,
   label `New APWorld` or `APWorld Update`. The SHA256 fragment is sourced from the GitHub
@@ -162,7 +163,7 @@ The frozen exe ships with an empty `worlds/` directory under `lib/` apart from i
 | Variant install fails | `MultiworldGG/MultiworldGG-Index` orphan branch unreachable (private repo + no auth) | Make repo public or add PAT-based auth in `MWGG_IGDB_GIT_URL`. |
 | Frozen build's `lib/worlds/` missing namespace files | `worlds/*.py` not packaged by cx_Freeze | Verify `setup.py` has `"packages": ["worlds", ...]`. |
 | `AutoWorldRegister.world_types` empty | `set_game_names()` not called before first `import worlds` | Audit the entry-point script; add `set_game_names()` before any `from worlds import` cascade. |
-| `workflow_run.completed` arrives but no PR on Index | Per-world repo missing `WORLD_FOLDER_NAME` repo variable, or workflow name not `Create and Release Python Package` | Check `/status` on the bot host; set the variable per `GitHubLib/README.md`. |
+| `workflow_run.completed` arrives but no PR on Index | Release tag does not match `<slug>-<world_version>`, or the completed release workflow did not call `MultiworldGG/gen-pymod-release/.github/workflows/build.yml` | Check `/status` on the bot host; fix the tag or caller workflow per `GitHubLib/README.md`. |
 | Bot rejects webhook with 401 at edge | `X-Hub-Signature-256` mismatch — webhook secret on GitHub App side ≠ `/etc/github-bot/webhook_secret` | Re-sync the secret; both njs and Probot read the same value. |
 | PR opens but Karen never lands the manifest | Karen App not installed on the Index, or `KAREN_PRIVATE_KEY` mounted wrong | Verify Index install + secrets bind-mount in `deploy/docker-compose.yml`. |
 

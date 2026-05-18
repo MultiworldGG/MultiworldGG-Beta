@@ -25,7 +25,8 @@ export type EventReason =
   | "release_not_found"
   | "index_install_missing"
   | "github_api_error"
-  | "codeowners_conflict";
+  | "codeowners_conflict"
+  | "tag_sha_lookup_failed";
 
 export interface OliverEvent {
   kind: EventKind;
