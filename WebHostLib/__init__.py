@@ -11,7 +11,10 @@ from flask_limiter import Limiter
 from pony.flask import Pony
 from werkzeug.routing import BaseConverter
 
-from Utils import title_sorted, get_file_safe_name,world_list_sorted
+from Utils import title_sorted, get_file_safe_name,world_list_sorted, set_game_names
+from mwgg_igdb import GameIndex
+# Must be done before worlds is imported
+set_game_names(list(GameIndex.game_names.keys()), strict=False)
 from .cli import CLI
 
 UPLOAD_FOLDER = os.path.relpath('uploads')

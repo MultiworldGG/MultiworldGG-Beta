@@ -13,11 +13,8 @@ from uuid import UUID
 
 from pony.orm import db_session, select, commit, PrimaryKey, desc
 
-from Utils import restricted_loads, utcnow, set_game_names
+from Utils import restricted_loads, utcnow
 from .locker import Locker, AlreadyRunningException
-
-from mwgg_igdb import GameIndex
-set_game_names(list(GameIndex.game_names.keys()), strict=False)
 
 _stop_event = Event()
 

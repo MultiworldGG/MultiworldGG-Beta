@@ -11,7 +11,12 @@ from urllib.parse import quote
 from pony.orm import commit, select
 
 import Options
-from Utils import local_path, utcnow
+from Utils import local_path, utcnow, set_game_names
+
+# Must be done before worlds is imported
+from mwgg_igdb import GameIndex
+set_game_names(list(GameIndex.game_names.keys()), strict=False)
+
 from worlds.AutoWorld import AutoWorldRegister
 from . import app, cache, limiter
 from .generate import get_meta
