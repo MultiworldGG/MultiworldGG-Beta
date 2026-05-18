@@ -8,7 +8,9 @@ import jinja2.exceptions
 from flask import request, redirect, url_for, render_template, Response, session, abort, send_from_directory
 from pony.orm import count, commit, db_session
 from werkzeug.utils import secure_filename
-from Utils import __version__
+from Utils import __version__, set_game_names
+from mwgg_igdb import GameIndex
+set_game_names(list(GameIndex.game_names.keys()), strict=False)
 
 
 from worlds.AutoWorld import AutoWorldRegister, World

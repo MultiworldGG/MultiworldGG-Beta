@@ -5,6 +5,10 @@ from io import BytesIO
 from flask import send_file, Response, render_template
 from pony.orm import select
 
+from Utils import set_game_names
+from mwgg_igdb import GameIndex
+set_game_names(list(GameIndex.game_names.keys()), strict=False)
+
 from worlds.Files import AutoPatchRegister
 from . import app, cache
 from .models import Slot, Room, Seed
