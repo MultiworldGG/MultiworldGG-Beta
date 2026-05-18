@@ -66,51 +66,74 @@ Name: "against_the_storm"; Description: "Against the Storm"; ExtraDiskSpaceRequi
 Name: "ahit"; Description: "A Hat in Time"; ExtraDiskSpaceRequired: 610_238
 Name: "albw"; Description: "A Link Between Worlds"; ExtraDiskSpaceRequired: 310_433
 Name: "alttp"; Description: "A Link to the Past"; ExtraDiskSpaceRequired: 4_013_629
+Name: "am2r"; Description: "am2r"; ExtraDiskSpaceRequired: 0
 Name: "animal_well"; Description: "Animal Well"; ExtraDiskSpaceRequired: 644_488
 Name: "apeescape"; Description: "Ape Escape"; ExtraDiskSpaceRequired: 2_262_141
+Name: "apgo"; Description: "apgo"; ExtraDiskSpaceRequired: 0
+Name: "apquest"; Description: "apquest"; ExtraDiskSpaceRequired: 0
+Name: "archipidle"; Description: "archipidle"; ExtraDiskSpaceRequired: 0
 Name: "balatro"; Description: "Balatro"; ExtraDiskSpaceRequired: 175_457
 Name: "banjo_tooie"; Description: "Banjo Tooie"; ExtraDiskSpaceRequired: 4_345_321
+Name: "bfbb"; Description: "bfbb"; ExtraDiskSpaceRequired: 0
+Name: "bksim"; Description: "bksim"; ExtraDiskSpaceRequired: 0
+Name: "blasphemous"; Description: "blasphemous"; ExtraDiskSpaceRequired: 0
 Name: "bomb_rush_cyberfunk"; Description: "Bomb Rush Cyberfunk"; ExtraDiskSpaceRequired: 357_946
 Name: "brotato"; Description: "Brotato"; ExtraDiskSpaceRequired: 241_712
 Name: "cat_quest"; Description: "Cat Quest"; ExtraDiskSpaceRequired: 59_720
+Name: "cccharles"; Description: "cccharles"; ExtraDiskSpaceRequired: 0
 Name: "celeste"; Description: "Celeste"; ExtraDiskSpaceRequired: 193_688
 Name: "celeste_open_world"; Description: "Celeste Open World"; ExtraDiskSpaceRequired: 4_928_448
+Name: "chainedechoes"; Description: "chainedechoes"; ExtraDiskSpaceRequired: 0
+Name: "chatipelago"; Description: "chatipelago"; ExtraDiskSpaceRequired: 0
+Name: "checksfinder"; Description: "checksfinder"; ExtraDiskSpaceRequired: 0
 Name: "civ_6"; Description: "Civilization VI"; ExtraDiskSpaceRequired: 446_986
+Name: "clique"; Description: "clique"; ExtraDiskSpaceRequired: 0
 Name: "crosscode"; Description: "CrossCode"; ExtraDiskSpaceRequired: 2_160_529
 Name: "crystal_project"; Description: "Crystal Project"; ExtraDiskSpaceRequired: 1_409_535
 Name: "ctjot"; Description: "CT Journey of Time"; ExtraDiskSpaceRequired: 167_345
 Name: "cuphead"; Description: "Cuphead"; ExtraDiskSpaceRequired: 1_048_162
 Name: "cv64"; Description: "Castlevania 64"; ExtraDiskSpaceRequired: 913_776
+Name: "cv_dos"; Description: "cv_dos"; ExtraDiskSpaceRequired: 0
 Name: "cvcotm"; Description: "Castlevania Circle of the Moon"; ExtraDiskSpaceRequired: 794_243
+Name: "dark_souls_2"; Description: "dark_souls_2"; ExtraDiskSpaceRequired: 0
+Name: "dark_souls_3"; Description: "dark_souls_3"; ExtraDiskSpaceRequired: 0
 Name: "diddy_kong_racing"; Description: "Diddy Kong Racing"; ExtraDiskSpaceRequired: 261_037
 Name: "dk64"; Description: "Donkey Kong 64"; ExtraDiskSpaceRequired: 38_933_451
 Name: "dkc"; Description: "Donkey Kong Country"; ExtraDiskSpaceRequired: 1_008_054
 Name: "dkc2"; Description: "Donkey Kong Country 2"; ExtraDiskSpaceRequired: 2_293_435
-Name: "dkc3"; Description: "Donkey Kong Country 3"; ExtraDiskSpaceRequired: 306_259
+Name: "dkc2_trivia"; Description: "dkc2_trivia"; ExtraDiskSpaceRequired: 0
+Name: "dktoluca"; Description: "dktoluca"; ExtraDiskSpaceRequired: 0
 Name: "dontstarvetogether"; Description: "Don't Starve Together"; ExtraDiskSpaceRequired: 759_437
+Name: "doom_1993"; Description: "doom_1993"; ExtraDiskSpaceRequired: 0
+Name: "doom_ii"; Description: "doom_ii"; ExtraDiskSpaceRequired: 0
 Name: "doronko_wanko"; Description: "Doronko Wanko"; ExtraDiskSpaceRequired: 54_471
 Name: "dredge"; Description: "Dredge"; ExtraDiskSpaceRequired: 124_668
+Name: "dsr"; Description: "dsr"; ExtraDiskSpaceRequired: 0
 Name: "dw1"; Description: "Dragon Warrior"; ExtraDiskSpaceRequired: 190_139
 Name: "earthbound"; Description: "Earthbound"; ExtraDiskSpaceRequired: 2_587_999
 Name: "enderlilies"; Description: "Ender Lilies"; ExtraDiskSpaceRequired: 1_483_829
 Name: "factorio"; Description: "Factorio"; ExtraDiskSpaceRequired: 1_044_588
+Name: "factorio_saws"; Description: "factorio_saws"; ExtraDiskSpaceRequired: 0
 Name: "faxanadu"; Description: "Faxanadu"; ExtraDiskSpaceRequired: 98_209
 Name: "ff1"; Description: "Final Fantasy I"; ExtraDiskSpaceRequired: 93_036
 Name: "ff4fe"; Description: "Final Fantasy IV Free Enterprise"; ExtraDiskSpaceRequired: 1_484_278
 Name: "ffmq"; Description: "Final Fantasy Mystic Quest"; ExtraDiskSpaceRequired: 513_688
 Name: "ffta"; Description: "Final Fantasy Tactics Advance"; ExtraDiskSpaceRequired: 1_056_544
+Name: "ffvcd"; Description: "ffvcd"; ExtraDiskSpaceRequired: 0
 Name: "fm"; Description: "Yu-Gi-Oh! Forbidden Memories"; ExtraDiskSpaceRequired: 1_399_547
 Name: "getting_over_it"; Description: "Getting Over It"; ExtraDiskSpaceRequired: 29_455
 Name: "gstla"; Description: "Golden Sun: The Lost Age"; ExtraDiskSpaceRequired: 2_493_105
 Name: "hades"; Description: "Hades"; ExtraDiskSpaceRequired: 274_213
 Name: "hcniko"; Description: "HC Niko"; ExtraDiskSpaceRequired: 1_156_820
 Name: "hk"; Description: "Hollow Knight"; ExtraDiskSpaceRequired: 2_190_871
+Name: "into_the_breach"; Description: "into_the_breach"; ExtraDiskSpaceRequired: 0
 Name: "jakanddaxter"; Description: "Jak and Daxter"; ExtraDiskSpaceRequired: 668_917
+Name: "jigsaw"; Description: "jigsaw"; ExtraDiskSpaceRequired: 0
 Name: "k64"; Description: "Kirby 64"; ExtraDiskSpaceRequired: 296_419
 Name: "kdl3"; Description: "Kirby's Dream Land 3"; ExtraDiskSpaceRequired: 1_088_257
 Name: "kh1"; Description: "Kingdom Hearts"; ExtraDiskSpaceRequired: 945_036
 Name: "kh2"; Description: "Kingdom Hearts II"; ExtraDiskSpaceRequired: 1_488_039
-Name: "ladx"; Description: "Link's Awakening DX"; ExtraDiskSpaceRequired: 2_301_796
+Name: "ladx_beta"; Description: "ladx_beta"; ExtraDiskSpaceRequired: 0
 Name: "landstalker"; Description: "Landstalker"; ExtraDiskSpaceRequired: 406_358
 Name: "lego_star_wars_tcs"; Description: "LEGO Star Wars: The Complete Saga"; ExtraDiskSpaceRequired: 850_576
 Name: "lufia2ac"; Description: "Lufia II Ancient Cave"; ExtraDiskSpaceRequired: 413_492
@@ -133,29 +156,43 @@ Name: "momodoramoonlitfarewell"; Description: "Momodora: Moonlit Farewell"; Extr
 Name: "monster_sanctuary"; Description: "Monster Sanctuary"; ExtraDiskSpaceRequired: 2_403_887
 Name: "musedash"; Description: "Muse Dash"; ExtraDiskSpaceRequired: 290_905
 Name: "mzm"; Description: "Metroid Zero Mission"; ExtraDiskSpaceRequired: 685_806
+Name: "nine_sols"; Description: "nine_sols"; ExtraDiskSpaceRequired: 0
 Name: "oot"; Description: "Ocarina of Time"; ExtraDiskSpaceRequired: 5_047_802
+Name: "ori_wotw"; Description: "ori_wotw"; ExtraDiskSpaceRequired: 0
 Name: "oribf"; Description: "Ori and the Blind Forest"; ExtraDiskSpaceRequired: 413_242
+Name: "osrs"; Description: "osrs"; ExtraDiskSpaceRequired: 0
 Name: "outer_wilds"; Description: "Outer Wilds"; ExtraDiskSpaceRequired: 649_509
 Name: "overcooked2"; Description: "Overcooked 2"; ExtraDiskSpaceRequired: 300_159
+Name: "paint"; Description: "paint"; ExtraDiskSpaceRequired: 0
 Name: "papermario"; Description: "Paper Mario 64"; ExtraDiskSpaceRequired: 3_424_893
+Name: "phoa"; Description: "phoa"; ExtraDiskSpaceRequired: 0
 Name: "placidplasticducksim"; Description: "Placid Plastic Duck Simulator"; ExtraDiskSpaceRequired: 19_149
 Name: "pmd_eos"; Description: "Pokemon Mystery Dungeon: Explorers of Sky"; ExtraDiskSpaceRequired: 1_377_055
 Name: "pokemon_crystal"; Description: "Pokemon Crystal"; ExtraDiskSpaceRequired: 2_872_323
 Name: "pokemon_emerald"; Description: "Pokemon Emerald"; ExtraDiskSpaceRequired: 2_556_819
 Name: "pokemon_frlg"; Description: "Pokemon FireRed/LeafGreen"; ExtraDiskSpaceRequired: 4_742_792
 Name: "pokemon_rb"; Description: "Pokemon Red/Blue"; ExtraDiskSpaceRequired: 1_936_425
+Name: "portal2"; Description: "portal2"; ExtraDiskSpaceRequired: 0
 Name: "powerwashsimulator"; Description: "PowerWash Simulator"; ExtraDiskSpaceRequired: 619_444
+Name: "quake"; Description: "quake"; ExtraDiskSpaceRequired: 0
+Name: "rabi_ribi"; Description: "rabi_ribi"; ExtraDiskSpaceRequired: 0
 Name: "rac2"; Description: "Ratchet & Clank 2"; ExtraDiskSpaceRequired: 531_970
+Name: "rac3"; Description: "rac3"; ExtraDiskSpaceRequired: 0
 Name: "raft"; Description: "Raft"; ExtraDiskSpaceRequired: 130_517
+Name: "refunct"; Description: "refunct"; ExtraDiskSpaceRequired: 0
+Name: "rimworld"; Description: "rimworld"; ExtraDiskSpaceRequired: 0
 Name: "rogue_legacy"; Description: "Rogue Legacy"; ExtraDiskSpaceRequired: 130_942
 Name: "ror1"; Description: "Risk of Rain"; ExtraDiskSpaceRequired: 88_077
 Name: "ror2"; Description: "Risk of Rain 2"; ExtraDiskSpaceRequired: 196_735
+Name: "rotn"; Description: "rotn"; ExtraDiskSpaceRequired: 0
 Name: "sa2b"; Description: "Sonic Adventure 2: Battle"; ExtraDiskSpaceRequired: 2_003_849
 Name: "sadx"; Description: "Sonic Adventure DX"; ExtraDiskSpaceRequired: 4_225_799
 Name: "satisfactory"; Description: "Satisfactory"; ExtraDiskSpaceRequired: 555_598
-Name: "seaofthieves"; Description: "Sea of Thieves"; ExtraDiskSpaceRequired: 10_213_401
+Name: "sc2"; Description: "sc2"; ExtraDiskSpaceRequired: 0
+Name: "schedule_i"; Description: "schedule_i"; ExtraDiskSpaceRequired: 0
 Name: "shivers"; Description: "Shivers"; ExtraDiskSpaceRequired: 164_889
 Name: "shorthike"; Description: "A Short Hike"; ExtraDiskSpaceRequired: 110_942
+Name: "simpsonshitnrun"; Description: "simpsonshitnrun"; ExtraDiskSpaceRequired: 0
 Name: "sims4"; Description: "The Sims 4"; ExtraDiskSpaceRequired: 771_131
 Name: "sly1"; Description: "Sly Cooper"; ExtraDiskSpaceRequired: 191_602
 Name: "sm"; Description: "Super Metroid"; ExtraDiskSpaceRequired: 2_046_122
@@ -169,11 +206,13 @@ Name: "soe"; Description: "Secret of Evermore"; ExtraDiskSpaceRequired: 243_401
 Name: "sonic_heroes"; Description: "Sonic Heroes"; ExtraDiskSpaceRequired: 1_175_567
 Name: "sotn"; Description: "Castlevania: Symphony of the Night"; ExtraDiskSpaceRequired: 1_591_279
 Name: "spyro3"; Description: "Spyro 3"; ExtraDiskSpaceRequired: 561_700
+Name: "srb2"; Description: "srb2"; ExtraDiskSpaceRequired: 0
 Name: "ss"; Description: "Skyward Sword"; ExtraDiskSpaceRequired: 1_306_049
 Name: "star_fox_64"; Description: "Star Fox 64"; ExtraDiskSpaceRequired: 220_672
 Name: "stardew_valley"; Description: "Stardew Valley"; ExtraDiskSpaceRequired: 6_087_576
 Name: "subnautica"; Description: "Subnautica"; ExtraDiskSpaceRequired: 157_606
 Name: "swr"; Description: "Star Wars: Racer"; ExtraDiskSpaceRequired: 120_281
+Name: "tboir"; Description: "tboir"; ExtraDiskSpaceRequired: 0
 Name: "terraria"; Description: "Terraria"; ExtraDiskSpaceRequired: 163_951
 Name: "tetrisattack"; Description: "Tetris Attack"; ExtraDiskSpaceRequired: 387_967
 Name: "timespinner"; Description: "Timespinner"; ExtraDiskSpaceRequired: 509_798
@@ -181,25 +220,33 @@ Name: "tloz"; Description: "The Legend of Zelda"; ExtraDiskSpaceRequired: 252_54
 Name: "tloz_ooa"; Description: "Oracle of Ages"; ExtraDiskSpaceRequired: 809_597
 Name: "tloz_oos"; Description: "Oracle of Seasons"; ExtraDiskSpaceRequired: 1_301_906
 Name: "tloz_ph"; Description: "Phantom Hourglass"; ExtraDiskSpaceRequired: 1_263_666
+Name: "tloz_st"; Description: "tloz_st"; ExtraDiskSpaceRequired: 0
 Name: "tmc"; Description: "The Minish Cap"; ExtraDiskSpaceRequired: 994_122
 Name: "toontown"; Description: "Toontown"; ExtraDiskSpaceRequired: 905_891
 Name: "tp"; Description: "Twilight Princess"; ExtraDiskSpaceRequired: 1_985_086
+Name: "tracker"; Description: "tracker"; ExtraDiskSpaceRequired: 0
 Name: "trackmania"; Description: "Trackmania"; ExtraDiskSpaceRequired: 105_190
 Name: "tunic"; Description: "TUNIC"; ExtraDiskSpaceRequired: 2_861_231
 Name: "tww"; Description: "The Wind Waker"; ExtraDiskSpaceRequired: 1_003_684
 Name: "tyrian"; Description: "Tyrian"; ExtraDiskSpaceRequired: 813_836
+Name: "ufo50"; Description: "ufo50"; ExtraDiskSpaceRequired: 0
 Name: "undertale"; Description: "Undertale"; ExtraDiskSpaceRequired: 705_555
 Name: "v6"; Description: "V6"; ExtraDiskSpaceRequired: 34_013
+Name: "vampire_survivors"; Description: "vampire_survivors"; ExtraDiskSpaceRequired: 0
+Name: "waffles"; Description: "waffles"; ExtraDiskSpaceRequired: 0
 Name: "wargroove"; Description: "Wargroove"; ExtraDiskSpaceRequired: 807_667
 Name: "wargroove2"; Description: "Wargroove 2"; ExtraDiskSpaceRequired: 5_966_418
 Name: "witness"; Description: "The Witness"; ExtraDiskSpaceRequired: 1_035_025
 Name: "wl"; Description: "Wario Land"; ExtraDiskSpaceRequired: 718_704
 Name: "wl4"; Description: "Wario Land 4"; ExtraDiskSpaceRequired: 390_328
+Name: "wordipelago"; Description: "wordipelago"; ExtraDiskSpaceRequired: 0
 Name: "xenobladex"; Description: "Xenoblade Chronicles X"; ExtraDiskSpaceRequired: 3_105_011
+Name: "yachtdice"; Description: "yachtdice"; ExtraDiskSpaceRequired: 0
 Name: "yoshisisland"; Description: "Yoshi's Island"; ExtraDiskSpaceRequired: 725_033
 Name: "yugioh06"; Description: "Yu-Gi-Oh! 2006"; ExtraDiskSpaceRequired: 344_344
 Name: "yugiohddm"; Description: "Yu-Gi-Oh! Dungeon Dice Monsters"; ExtraDiskSpaceRequired: 130_587
 Name: "zelda2"; Description: "Zelda II"; ExtraDiskSpaceRequired: 242_982
+Name: "zork_grand_inquisitor"; Description: "zork_grand_inquisitor"; ExtraDiskSpaceRequired: 0
 ; END AUTOGEN: components
 
 [Dirs]
@@ -653,51 +700,74 @@ begin
   if WizardIsComponentSelected('worlds\ahit') then WorldList := WorldList + ' worlds.ahit';
   if WizardIsComponentSelected('worlds\albw') then WorldList := WorldList + ' worlds.albw';
   if WizardIsComponentSelected('worlds\alttp') then WorldList := WorldList + ' worlds.alttp';
+  if WizardIsComponentSelected('worlds\am2r') then WorldList := WorldList + ' worlds.am2r';
   if WizardIsComponentSelected('worlds\animal_well') then WorldList := WorldList + ' worlds.animal_well';
   if WizardIsComponentSelected('worlds\apeescape') then WorldList := WorldList + ' worlds.apeescape';
+  if WizardIsComponentSelected('worlds\apgo') then WorldList := WorldList + ' worlds.apgo';
+  if WizardIsComponentSelected('worlds\apquest') then WorldList := WorldList + ' worlds.apquest';
+  if WizardIsComponentSelected('worlds\archipidle') then WorldList := WorldList + ' worlds.archipidle';
   if WizardIsComponentSelected('worlds\balatro') then WorldList := WorldList + ' worlds.balatro';
   if WizardIsComponentSelected('worlds\banjo_tooie') then WorldList := WorldList + ' worlds.banjo_tooie';
+  if WizardIsComponentSelected('worlds\bfbb') then WorldList := WorldList + ' worlds.bfbb';
+  if WizardIsComponentSelected('worlds\bksim') then WorldList := WorldList + ' worlds.bksim';
+  if WizardIsComponentSelected('worlds\blasphemous') then WorldList := WorldList + ' worlds.blasphemous';
   if WizardIsComponentSelected('worlds\bomb_rush_cyberfunk') then WorldList := WorldList + ' worlds.bomb_rush_cyberfunk';
   if WizardIsComponentSelected('worlds\brotato') then WorldList := WorldList + ' worlds.brotato';
   if WizardIsComponentSelected('worlds\cat_quest') then WorldList := WorldList + ' worlds.cat_quest';
+  if WizardIsComponentSelected('worlds\cccharles') then WorldList := WorldList + ' worlds.cccharles';
   if WizardIsComponentSelected('worlds\celeste') then WorldList := WorldList + ' worlds.celeste';
   if WizardIsComponentSelected('worlds\celeste_open_world') then WorldList := WorldList + ' worlds.celeste_open_world';
+  if WizardIsComponentSelected('worlds\chainedechoes') then WorldList := WorldList + ' worlds.chainedechoes';
+  if WizardIsComponentSelected('worlds\chatipelago') then WorldList := WorldList + ' worlds.chatipelago';
+  if WizardIsComponentSelected('worlds\checksfinder') then WorldList := WorldList + ' worlds.checksfinder';
   if WizardIsComponentSelected('worlds\civ_6') then WorldList := WorldList + ' worlds.civ_6';
+  if WizardIsComponentSelected('worlds\clique') then WorldList := WorldList + ' worlds.clique';
   if WizardIsComponentSelected('worlds\crosscode') then WorldList := WorldList + ' worlds.crosscode';
   if WizardIsComponentSelected('worlds\crystal_project') then WorldList := WorldList + ' worlds.crystal_project';
   if WizardIsComponentSelected('worlds\ctjot') then WorldList := WorldList + ' worlds.ctjot';
   if WizardIsComponentSelected('worlds\cuphead') then WorldList := WorldList + ' worlds.cuphead';
   if WizardIsComponentSelected('worlds\cv64') then WorldList := WorldList + ' worlds.cv64';
+  if WizardIsComponentSelected('worlds\cv_dos') then WorldList := WorldList + ' worlds.cv_dos';
   if WizardIsComponentSelected('worlds\cvcotm') then WorldList := WorldList + ' worlds.cvcotm';
+  if WizardIsComponentSelected('worlds\dark_souls_2') then WorldList := WorldList + ' worlds.dark_souls_2';
+  if WizardIsComponentSelected('worlds\dark_souls_3') then WorldList := WorldList + ' worlds.dark_souls_3';
   if WizardIsComponentSelected('worlds\diddy_kong_racing') then WorldList := WorldList + ' worlds.diddy_kong_racing';
   if WizardIsComponentSelected('worlds\dk64') then WorldList := WorldList + ' worlds.dk64';
   if WizardIsComponentSelected('worlds\dkc') then WorldList := WorldList + ' worlds.dkc';
   if WizardIsComponentSelected('worlds\dkc2') then WorldList := WorldList + ' worlds.dkc2';
-  if WizardIsComponentSelected('worlds\dkc3') then WorldList := WorldList + ' worlds.dkc3';
+  if WizardIsComponentSelected('worlds\dkc2_trivia') then WorldList := WorldList + ' worlds.dkc2_trivia';
+  if WizardIsComponentSelected('worlds\dktoluca') then WorldList := WorldList + ' worlds.dktoluca';
   if WizardIsComponentSelected('worlds\dontstarvetogether') then WorldList := WorldList + ' worlds.dontstarvetogether';
+  if WizardIsComponentSelected('worlds\doom_1993') then WorldList := WorldList + ' worlds.doom_1993';
+  if WizardIsComponentSelected('worlds\doom_ii') then WorldList := WorldList + ' worlds.doom_ii';
   if WizardIsComponentSelected('worlds\doronko_wanko') then WorldList := WorldList + ' worlds.doronko_wanko';
   if WizardIsComponentSelected('worlds\dredge') then WorldList := WorldList + ' worlds.dredge';
+  if WizardIsComponentSelected('worlds\dsr') then WorldList := WorldList + ' worlds.dsr';
   if WizardIsComponentSelected('worlds\dw1') then WorldList := WorldList + ' worlds.dw1';
   if WizardIsComponentSelected('worlds\earthbound') then WorldList := WorldList + ' worlds.earthbound';
   if WizardIsComponentSelected('worlds\enderlilies') then WorldList := WorldList + ' worlds.enderlilies';
   if WizardIsComponentSelected('worlds\factorio') then WorldList := WorldList + ' worlds.factorio';
+  if WizardIsComponentSelected('worlds\factorio_saws') then WorldList := WorldList + ' worlds.factorio_saws';
   if WizardIsComponentSelected('worlds\faxanadu') then WorldList := WorldList + ' worlds.faxanadu';
   if WizardIsComponentSelected('worlds\ff1') then WorldList := WorldList + ' worlds.ff1';
   if WizardIsComponentSelected('worlds\ff4fe') then WorldList := WorldList + ' worlds.ff4fe';
   if WizardIsComponentSelected('worlds\ffmq') then WorldList := WorldList + ' worlds.ffmq';
   if WizardIsComponentSelected('worlds\ffta') then WorldList := WorldList + ' worlds.ffta';
+  if WizardIsComponentSelected('worlds\ffvcd') then WorldList := WorldList + ' worlds.ffvcd';
   if WizardIsComponentSelected('worlds\fm') then WorldList := WorldList + ' worlds.fm';
   if WizardIsComponentSelected('worlds\getting_over_it') then WorldList := WorldList + ' worlds.getting_over_it';
   if WizardIsComponentSelected('worlds\gstla') then WorldList := WorldList + ' worlds.gstla';
   if WizardIsComponentSelected('worlds\hades') then WorldList := WorldList + ' worlds.hades';
   if WizardIsComponentSelected('worlds\hcniko') then WorldList := WorldList + ' worlds.hcniko';
   if WizardIsComponentSelected('worlds\hk') then WorldList := WorldList + ' worlds.hk';
+  if WizardIsComponentSelected('worlds\into_the_breach') then WorldList := WorldList + ' worlds.into_the_breach';
   if WizardIsComponentSelected('worlds\jakanddaxter') then WorldList := WorldList + ' worlds.jakanddaxter';
+  if WizardIsComponentSelected('worlds\jigsaw') then WorldList := WorldList + ' worlds.jigsaw';
   if WizardIsComponentSelected('worlds\k64') then WorldList := WorldList + ' worlds.k64';
   if WizardIsComponentSelected('worlds\kdl3') then WorldList := WorldList + ' worlds.kdl3';
   if WizardIsComponentSelected('worlds\kh1') then WorldList := WorldList + ' worlds.kh1';
   if WizardIsComponentSelected('worlds\kh2') then WorldList := WorldList + ' worlds.kh2';
-  if WizardIsComponentSelected('worlds\ladx') then WorldList := WorldList + ' worlds.ladx';
+  if WizardIsComponentSelected('worlds\ladx_beta') then WorldList := WorldList + ' worlds.ladx_beta';
   if WizardIsComponentSelected('worlds\landstalker') then WorldList := WorldList + ' worlds.landstalker';
   if WizardIsComponentSelected('worlds\lego_star_wars_tcs') then WorldList := WorldList + ' worlds.lego_star_wars_tcs';
   if WizardIsComponentSelected('worlds\lufia2ac') then WorldList := WorldList + ' worlds.lufia2ac';
@@ -720,29 +790,43 @@ begin
   if WizardIsComponentSelected('worlds\monster_sanctuary') then WorldList := WorldList + ' worlds.monster_sanctuary';
   if WizardIsComponentSelected('worlds\musedash') then WorldList := WorldList + ' worlds.musedash';
   if WizardIsComponentSelected('worlds\mzm') then WorldList := WorldList + ' worlds.mzm';
+  if WizardIsComponentSelected('worlds\nine_sols') then WorldList := WorldList + ' worlds.nine_sols';
   if WizardIsComponentSelected('worlds\oot') then WorldList := WorldList + ' worlds.oot';
+  if WizardIsComponentSelected('worlds\ori_wotw') then WorldList := WorldList + ' worlds.ori_wotw';
   if WizardIsComponentSelected('worlds\oribf') then WorldList := WorldList + ' worlds.oribf';
+  if WizardIsComponentSelected('worlds\osrs') then WorldList := WorldList + ' worlds.osrs';
   if WizardIsComponentSelected('worlds\outer_wilds') then WorldList := WorldList + ' worlds.outer_wilds';
   if WizardIsComponentSelected('worlds\overcooked2') then WorldList := WorldList + ' worlds.overcooked2';
+  if WizardIsComponentSelected('worlds\paint') then WorldList := WorldList + ' worlds.paint';
   if WizardIsComponentSelected('worlds\papermario') then WorldList := WorldList + ' worlds.papermario';
+  if WizardIsComponentSelected('worlds\phoa') then WorldList := WorldList + ' worlds.phoa';
   if WizardIsComponentSelected('worlds\placidplasticducksim') then WorldList := WorldList + ' worlds.placidplasticducksim';
   if WizardIsComponentSelected('worlds\pmd_eos') then WorldList := WorldList + ' worlds.pmd_eos';
   if WizardIsComponentSelected('worlds\pokemon_crystal') then WorldList := WorldList + ' worlds.pokemon_crystal';
   if WizardIsComponentSelected('worlds\pokemon_emerald') then WorldList := WorldList + ' worlds.pokemon_emerald';
   if WizardIsComponentSelected('worlds\pokemon_frlg') then WorldList := WorldList + ' worlds.pokemon_frlg';
   if WizardIsComponentSelected('worlds\pokemon_rb') then WorldList := WorldList + ' worlds.pokemon_rb';
+  if WizardIsComponentSelected('worlds\portal2') then WorldList := WorldList + ' worlds.portal2';
   if WizardIsComponentSelected('worlds\powerwashsimulator') then WorldList := WorldList + ' worlds.powerwashsimulator';
+  if WizardIsComponentSelected('worlds\quake') then WorldList := WorldList + ' worlds.quake';
+  if WizardIsComponentSelected('worlds\rabi_ribi') then WorldList := WorldList + ' worlds.rabi_ribi';
   if WizardIsComponentSelected('worlds\rac2') then WorldList := WorldList + ' worlds.rac2';
+  if WizardIsComponentSelected('worlds\rac3') then WorldList := WorldList + ' worlds.rac3';
   if WizardIsComponentSelected('worlds\raft') then WorldList := WorldList + ' worlds.raft';
+  if WizardIsComponentSelected('worlds\refunct') then WorldList := WorldList + ' worlds.refunct';
+  if WizardIsComponentSelected('worlds\rimworld') then WorldList := WorldList + ' worlds.rimworld';
   if WizardIsComponentSelected('worlds\rogue_legacy') then WorldList := WorldList + ' worlds.rogue_legacy';
   if WizardIsComponentSelected('worlds\ror1') then WorldList := WorldList + ' worlds.ror1';
   if WizardIsComponentSelected('worlds\ror2') then WorldList := WorldList + ' worlds.ror2';
+  if WizardIsComponentSelected('worlds\rotn') then WorldList := WorldList + ' worlds.rotn';
   if WizardIsComponentSelected('worlds\sa2b') then WorldList := WorldList + ' worlds.sa2b';
   if WizardIsComponentSelected('worlds\sadx') then WorldList := WorldList + ' worlds.sadx';
   if WizardIsComponentSelected('worlds\satisfactory') then WorldList := WorldList + ' worlds.satisfactory';
-  if WizardIsComponentSelected('worlds\seaofthieves') then WorldList := WorldList + ' worlds.seaofthieves';
+  if WizardIsComponentSelected('worlds\sc2') then WorldList := WorldList + ' worlds.sc2';
+  if WizardIsComponentSelected('worlds\schedule_i') then WorldList := WorldList + ' worlds.schedule_i';
   if WizardIsComponentSelected('worlds\shivers') then WorldList := WorldList + ' worlds.shivers';
   if WizardIsComponentSelected('worlds\shorthike') then WorldList := WorldList + ' worlds.shorthike';
+  if WizardIsComponentSelected('worlds\simpsonshitnrun') then WorldList := WorldList + ' worlds.simpsonshitnrun';
   if WizardIsComponentSelected('worlds\sims4') then WorldList := WorldList + ' worlds.sims4';
   if WizardIsComponentSelected('worlds\sly1') then WorldList := WorldList + ' worlds.sly1';
   if WizardIsComponentSelected('worlds\sm') then WorldList := WorldList + ' worlds.sm';
@@ -756,11 +840,13 @@ begin
   if WizardIsComponentSelected('worlds\sonic_heroes') then WorldList := WorldList + ' worlds.sonic_heroes';
   if WizardIsComponentSelected('worlds\sotn') then WorldList := WorldList + ' worlds.sotn';
   if WizardIsComponentSelected('worlds\spyro3') then WorldList := WorldList + ' worlds.spyro3';
+  if WizardIsComponentSelected('worlds\srb2') then WorldList := WorldList + ' worlds.srb2';
   if WizardIsComponentSelected('worlds\ss') then WorldList := WorldList + ' worlds.ss';
   if WizardIsComponentSelected('worlds\star_fox_64') then WorldList := WorldList + ' worlds.star_fox_64';
   if WizardIsComponentSelected('worlds\stardew_valley') then WorldList := WorldList + ' worlds.stardew_valley';
   if WizardIsComponentSelected('worlds\subnautica') then WorldList := WorldList + ' worlds.subnautica';
   if WizardIsComponentSelected('worlds\swr') then WorldList := WorldList + ' worlds.swr';
+  if WizardIsComponentSelected('worlds\tboir') then WorldList := WorldList + ' worlds.tboir';
   if WizardIsComponentSelected('worlds\terraria') then WorldList := WorldList + ' worlds.terraria';
   if WizardIsComponentSelected('worlds\tetrisattack') then WorldList := WorldList + ' worlds.tetrisattack';
   if WizardIsComponentSelected('worlds\timespinner') then WorldList := WorldList + ' worlds.timespinner';
@@ -768,25 +854,33 @@ begin
   if WizardIsComponentSelected('worlds\tloz_ooa') then WorldList := WorldList + ' worlds.tloz_ooa';
   if WizardIsComponentSelected('worlds\tloz_oos') then WorldList := WorldList + ' worlds.tloz_oos';
   if WizardIsComponentSelected('worlds\tloz_ph') then WorldList := WorldList + ' worlds.tloz_ph';
+  if WizardIsComponentSelected('worlds\tloz_st') then WorldList := WorldList + ' worlds.tloz_st';
   if WizardIsComponentSelected('worlds\tmc') then WorldList := WorldList + ' worlds.tmc';
   if WizardIsComponentSelected('worlds\toontown') then WorldList := WorldList + ' worlds.toontown';
   if WizardIsComponentSelected('worlds\tp') then WorldList := WorldList + ' worlds.tp';
+  if WizardIsComponentSelected('worlds\tracker') then WorldList := WorldList + ' worlds.tracker';
   if WizardIsComponentSelected('worlds\trackmania') then WorldList := WorldList + ' worlds.trackmania';
   if WizardIsComponentSelected('worlds\tunic') then WorldList := WorldList + ' worlds.tunic';
   if WizardIsComponentSelected('worlds\tww') then WorldList := WorldList + ' worlds.tww';
   if WizardIsComponentSelected('worlds\tyrian') then WorldList := WorldList + ' worlds.tyrian';
+  if WizardIsComponentSelected('worlds\ufo50') then WorldList := WorldList + ' worlds.ufo50';
   if WizardIsComponentSelected('worlds\undertale') then WorldList := WorldList + ' worlds.undertale';
   if WizardIsComponentSelected('worlds\v6') then WorldList := WorldList + ' worlds.v6';
+  if WizardIsComponentSelected('worlds\vampire_survivors') then WorldList := WorldList + ' worlds.vampire_survivors';
+  if WizardIsComponentSelected('worlds\waffles') then WorldList := WorldList + ' worlds.waffles';
   if WizardIsComponentSelected('worlds\wargroove') then WorldList := WorldList + ' worlds.wargroove';
   if WizardIsComponentSelected('worlds\wargroove2') then WorldList := WorldList + ' worlds.wargroove2';
   if WizardIsComponentSelected('worlds\witness') then WorldList := WorldList + ' worlds.witness';
   if WizardIsComponentSelected('worlds\wl') then WorldList := WorldList + ' worlds.wl';
   if WizardIsComponentSelected('worlds\wl4') then WorldList := WorldList + ' worlds.wl4';
+  if WizardIsComponentSelected('worlds\wordipelago') then WorldList := WorldList + ' worlds.wordipelago';
   if WizardIsComponentSelected('worlds\xenobladex') then WorldList := WorldList + ' worlds.xenobladex';
+  if WizardIsComponentSelected('worlds\yachtdice') then WorldList := WorldList + ' worlds.yachtdice';
   if WizardIsComponentSelected('worlds\yoshisisland') then WorldList := WorldList + ' worlds.yoshisisland';
   if WizardIsComponentSelected('worlds\yugioh06') then WorldList := WorldList + ' worlds.yugioh06';
   if WizardIsComponentSelected('worlds\yugiohddm') then WorldList := WorldList + ' worlds.yugiohddm';
   if WizardIsComponentSelected('worlds\zelda2') then WorldList := WorldList + ' worlds.zelda2';
+  if WizardIsComponentSelected('worlds\zork_grand_inquisitor') then WorldList := WorldList + ' worlds.zork_grand_inquisitor';
   // END AUTOGEN: dispatch
 
   Result := WorldList;
