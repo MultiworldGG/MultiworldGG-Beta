@@ -34,7 +34,7 @@ export interface IndexPROpts {
   // (workflow_run handler) so this module doesn't need to know the action's
   // output shape.
   moduleLocation: string;
-  // Wheel asset filename (e.g. `clique-1.0.0-py3-none-any.whl`) and size in
+  // Wheel asset filename (e.g. `myclgm-1.0.0-py3-none-any.whl`) and size in
   // bytes, both surfaced in the PR body so reviewers see what's being pinned
   // without clicking through. Read from the GitHub release-asset object by
   // the workflow_run handler.

@@ -39,6 +39,7 @@ SolidCompression=yes
 LZMANumBlockThreads=8
 ArchitecturesInstallIn64BitMode=x64compatible arm64
 ChangesAssociations=yes
+ChangesEnvironment=yes
 ArchitecturesAllowed=x64compatible arm64
 AllowNoIcons=yes
 SetupIconFile={#MyAppIcon}
@@ -222,7 +223,13 @@ Name: "{commondesktop}\{#MyAppName} Launcher"; Filename: "{app}\MultiworldGG.exe
 Filename: "winget"; Parameters: "install --id=astral-sh.uv -e --accept-source-agreements --accept-package-agreements"; Check: IsUvNeededViaWinget; StatusMsg: "Installing uv via winget..."; Flags: runhidden
 Filename: "powershell.exe"; Parameters: "-ExecutionPolicy ByPass -Command ""irm https://astral.sh/uv/install.ps1 | iex"""; Check: IsUvNeededViaPwsh; StatusMsg: "Installing uv via astral installer..."; Flags: runhidden
 
-Filename: "{app}\MultiworldGG"; Parameters: "--update-modules --worlds {code:GetSelectedWorld}"; StatusMsg: "Updating modules..."; Flags: runasoriginaluser runhidden
+; Set WorkingDir to the directory containing the real winget-installed uv.exe.
+; The runasoriginaluser child inherits cwd from this directive (lpCurrentDirectory
+; in CreateProcessAsUser, independent of the token's env block).  Python-side
+; find_uv() prefers Path.cwd() / "uv.exe", which resolves to the real PE and
+; avoids the AppExecLink WinError 448 from WinGet\Links\uv.exe.
+Filename: "{app}\MultiworldGG"; Parameters: "--update-modules --worlds {code:GetSelectedWorld}"; WorkingDir: "{code:GetUvDir}"; StatusMsg: "Updating modules..."; Flags: runasoriginaluser
+
 ; Filename: "{app}\MultiworldGG"; Description: "{cm:LaunchProgram,{#StringChange('Launcher', '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 ; Silent install from updater auto starts the launcher again
 ; Filename: "{app}\MultiworldGG"; StatusMsg: "MultiworldGG ... done"; Flags: nowait skipifnotsilent
@@ -827,6 +834,56 @@ end;
 function IsUvNeededViaPwsh: Boolean;
 begin
   Result := (not IsUvInstalled) and (not IsWingetAvailable);
+end;
+
+// Glob %LOCALAPPDATA%\Microsoft\WinGet\Packages\astral-sh.uv_*\**\uv.exe for the real binary.
+// The Links\uv.exe shim is an AppExecLink reparse point that some tokens (notably Inno's
+// runasoriginaluser child) cannot stat OR exec — WinError 448. The binary inside Packages\
+// is a plain file and works in any token.
+function ResolveRealUvPath: String;
+var
+  PackagesDir, TmpFile, Line: String;
+  Lines: TArrayOfString;
+  ResultCode, I: Integer;
+begin
+  Result := '';
+  PackagesDir := ExpandConstant('{localappdata}') + '\Microsoft\WinGet\Packages';
+  TmpFile := ExpandConstant('{tmp}\uv_glob.txt');
+  if not Exec(ExpandConstant('{cmd}'),
+              '/c dir /s /b "' + PackagesDir + '\astral-sh.uv_*\uv.exe" > "' + TmpFile + '" 2>&1',
+              '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    Exit;
+  if not FileExists(TmpFile) then
+    Exit;
+  LoadStringsFromFile(TmpFile, Lines);
+  for I := 0 to GetArrayLength(Lines) - 1 do
+  begin
+    Line := Trim(Lines[I]);
+    if (Length(Line) > 0) and FileExists(Line) then
+    begin
+      Result := Line;
+      Exit;
+    end;
+  end;
+end;
+
+// Returns the directory containing the real winget-installed uv.exe (under
+// %LOCALAPPDATA%\Microsoft\WinGet\Packages\astral-sh.uv_*\uv-...\), or {app}
+// as a harmless default if ResolveRealUvPath finds nothing.  Used as the
+// WorkingDir: of the updater [Run] entry so that the runasoriginaluser child
+// inherits cwd = <real-uv-dir>; Python-side find_uv() then prefers
+// Path.cwd() / "uv.exe" over the AppExecLink shim at WinGet\Links\uv.exe.
+// That sidesteps WinError 448 in the cripple-token child without any PATH
+// or env manipulation.
+function GetUvDir(Param: String): String;
+var
+  UvPath: String;
+begin
+  UvPath := ResolveRealUvPath;
+  if UvPath <> '' then
+    Result := ExtractFileDir(UvPath)
+  else
+    Result := ExpandConstant('{app}');
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);

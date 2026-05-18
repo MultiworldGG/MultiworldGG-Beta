@@ -40,7 +40,11 @@ RUN cythonize -b -i _speedups.pyx
 FROM python:3.13-slim-bookworm AS multiworldgg
 ARG TARGETARCH
 ENV VIRTUAL_ENV=/opt/venv
+ENV PATH=$VIRTUAL_ENV/bin:$PATH
 ENV PYTHONUNBUFFERED=1
+# Opt this image into the mwgg_venv worlds-venv pathway in ModuleUpdate.
+ENV MWGG_USE_WORLDS_VENV=1
+RUN mkdir -p /root/.local/share/MultiworldGG
 WORKDIR /app
 
 # Install requirements
@@ -52,31 +56,40 @@ RUN apt-get update && \
     libc6-dev \
     libtk8.6=8.6.13-2 \
     g++=4:12.2.0-3 \
+    jq \
     curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Create and activate venv
-RUN python -m venv $VIRTUAL_ENV; \
-    . $VIRTUAL_ENV/bin/activate
+# Create venv (activated via PATH above)
+RUN python -m venv $VIRTUAL_ENV
 
-# Copy and install requirements first (better caching)
+# uv is required at runtime by ModuleUpdate.find_uv() (called at import time)
+RUN pip install --no-cache-dir uv
+
+# Copy and install requirements first (better caching).
+# Root requirements.txt: base + world-runtime deps (pathspec, PyYAML, xxtea,
+# aiohttp, etc.) — imported at module load or needed by world generation.
+# WebHostLib/requirements.txt: Flask/web-specific deps.
+COPY requirements.txt requirements.txt
 COPY WebHostLib/requirements.txt WebHostLib/requirements.txt
 
-RUN pip install --no-cache-dir -r \
-    WebHostLib/requirements.txt \
+RUN pip install --no-cache-dir \
+    -r requirements.txt \
+    -r WebHostLib/requirements.txt \
     gunicorn==23.0.0
 
 COPY . .
 
+RUN mkdir -p custom_worlds
+
 COPY --from=cython-builder /build/*.so ./
 
-# Run ModuleUpdate
-#RUN python ModuleUpdate.py -y WHY WHY WHY?
+RUN rm -f _speedups.pyx _speedups.pyxbld intset.h
 
 # Purge unneeded packages
+
 RUN apt-get purge -y \
-    git \
     gcc \
     libc6-dev \
     g++ && \

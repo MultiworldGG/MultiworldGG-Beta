@@ -4,7 +4,7 @@ services:
     # image ref via $MULTIWORLD_IMAGE (set in a .env file or shell env).
     # For local dev, run `docker compose build` to rebuild from source — that
     # produces a local image tagged with the same name and `up` will use it.
-    image: ${MULTIWORLD_IMAGE:-ghcr.io/MultiworldGG/multiworldgg:latest}
+    image: ${MULTIWORLD_IMAGE:-ghcr.io/multiworldgg/multiworldgg:latest}
     build:
       context: ..
     # Launch main process without website hosting (config override)
@@ -17,17 +17,33 @@ services:
       - ./example_config.yaml:/app/config.yaml
       - ./example_selflaunch.yaml:/app/selflaunch.yaml
 
+      # Mount multiworld cache directory
+      - /var/lib/mwgg:/root/.local/share/MultiworldGG/
+
+
     # Expose on host network for access to dynamically mapped ports
     network_mode: host
 
-    # No Healthcheck in place yet for multiworld
+    # Becomes healthy after WebHost.py finishes installing the worlds into the
+    # shared MultiworldGG user-data bind mount.
     healthcheck:
-      test: ["NONE"]
+      test:
+        - CMD-SHELL
+        - jq -e '(.worlds_updated // 0 | tonumber) == 3' /root/.local/share/MultiworldGG/.mwgg_igdb_last_upgrade
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      # Generous start window in the event we're downloading *everything*
+      start_period: 600s
   web:
     # Same image as multiworld service — both pull from GHCR by default, both
     # honor $MULTIWORLD_IMAGE override. Only the multiworld service has the
     # `build:` block so `docker compose build` only rebuilds once.
-    image: ${MULTIWORLD_IMAGE:-ghcr.io/MultiworldGG/multiworldgg:latest}
+    image: ${MULTIWORLD_IMAGE:-ghcr.io/multiworldgg/multiworldgg:latest}
+    # Wait for multiworld to finish installing all worlds to prevent a race condition
+    depends_on:
+      multiworld:
+        condition: service_healthy
     # Launch gunicorn targeting WebHost application
     entrypoint: gunicorn -c gunicorn.conf.py
     volumes:
@@ -37,6 +53,10 @@ services:
       # Mount configs
       - ./example_config.yaml:/app/config.yaml
       - ./example_gunicorn.conf.py:/app/gunicorn.conf.py
+
+      # Mount multiworld cache directory
+      - /var/lib/mwgg:/root/.local/share/MultiworldGG/
+
     environment:
       # Bind gunicorn on 8000
       - PORT=8000
@@ -56,15 +76,12 @@ services:
       - web
 
   # MWGG GitHub-bot: webhook receiver running both the Oliver and Karen GitHub
-  # App identities. Publishes port 3000 to the host's loopback only — host
-  # nginx (on the Ubuntu host, NOT in this compose stack) proxies
-  # oliver.multiworld.gg to 127.0.0.1:3000. See deploy/example_github-bot_nginx.conf
-  # for the host-side snippet.
-  mwgg-github-bot:
+  # App identities. Publishes port 3000 to the host's loopback only
+  github-bots:
     # Default: pull the published image from GHCR. Override via
     # $MWGG_GITHUB_BOT_IMAGE for forks / non-`MultiworldGG` registries.
     # For local dev, run `docker compose build mwgg-github-bot` to rebuild.
-    image: ${MWGG_GITHUB_BOT_IMAGE:-ghcr.io/MultiworldGG/mwgg-github-bot:latest}
+    image: ${MWGG_GITHUB_BOT_IMAGE:-ghcr.io/multiworldgg/multiworldgg-bots:latest}
     build:
       context: ../GitHubLib
     env_file:
@@ -75,24 +92,18 @@ services:
     volumes:
       # Bind-mount a host directory of secret files at /run/secrets so the
       # OLIVER_*_FILE / KAREN_*_FILE env vars (in github-bot.env) can point
-      # at them. Create the directory at <repo>/deploy/github-bot-secrets/ on
-      # the host (mode 0700) and place files there:
+      # at them. Directory must be chmod 0700
       #   github-bot-secrets/oliver_app_id            # one-line numeric App ID
       #   github-bot-secrets/oliver_private_key.pem   # full PEM
       #   github-bot-secrets/oliver_webhook_secret    # one-line hex string
       #   github-bot-secrets/karen_app_id
       #   github-bot-secrets/karen_private_key.pem
-      # Then in github-bot.env set the corresponding *_FILE vars to
-      # /run/secrets/<filename>.
       - ./github-bot-secrets:/run/secrets:ro
       # Persistent JSONL log of bot events (success/skip/error). Survives
       # container restarts; surfaced at https://oliver.multiworld.gg/status.
-      - mwgg_github_bot_state:/var/lib/oliver
+      - github_bots_state:/var/lib/oliver
     ports:
-      # Loopback-only — only host nginx (or other host-side processes) can reach this.
-      # NOT exposed to the public internet directly; TLS terminates at host nginx (or upstream).
-      # Bind both IPv4 and IPv6 loopback so nginx upstreams resolving `localhost`
-      # (which on Ubuntu hits ::1 first) don't get connection-refused on retry.
+      # Loopback-only
       - "127.0.0.1:3000:3000"
       - "[::1]:3000:3000"
     restart: unless-stopped
@@ -107,4 +118,4 @@ volumes:
   # (for access to log files and the like), and nginx (for static files)
   app_volume:
   # GitHub-bot's events.jsonl log
-  mwgg_github_bot_state:
+  github_bots_state:

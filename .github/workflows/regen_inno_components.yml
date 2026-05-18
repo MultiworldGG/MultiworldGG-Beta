@@ -5,10 +5,12 @@ name: Regenerate inno_setup.iss components
 # the diff. Drives both the [Components] block and the InClientDescriptions
 # preprocessor define.
 
+# TODO: make this a trigger off of indexes acutally being updated.
+
 on:
-  schedule:
-    # 13:00 UTC, ~1h after the Index repo's daily variant rebuild at 12:00 UTC
-    - cron: "0 13 * * *"
+  # schedule:
+  #   # 13:00 UTC, ~1h after the Index repo's daily variant rebuild at 12:00 UTC
+  #   - cron: "0 13 * * *"
   workflow_dispatch:
     inputs:
       variant:

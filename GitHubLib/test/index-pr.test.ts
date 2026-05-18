@@ -146,15 +146,15 @@ const baseOpts = (overrides: Partial<IndexPROpts> = {}): Omit<IndexPROpts, "kare
   indexOwner: INDEX_OWNER,
   indexName: INDEX_NAME,
   sourceOwner: "alice",
-  sourceRepo: "alice-clique",
-  slug: "clique",
+  sourceRepo: "alice-myclgm",
+  slug: "myclgm",
   releaseTag: "v1.0.0",
   moduleLocation:
-    "https://github.com/alice/alice-clique/releases/download/v1.0.0/alice_clique-1.0.0-py3-none-any.whl",
+    "https://github.com/alice/alice-myclgm/releases/download/v1.0.0/alice_clique-1.0.0-py3-none-any.whl",
   wheelAssetName: "alice_clique-1.0.0-py3-none-any.whl",
   wheelAssetSize: 158_720,
   sourceManifest: {
-    game: "Clique",
+    game: "My Cool Game",
     authors: ["Alice"],
     world_version: "v1.0.0",
     minimum_ap_version: "0.6.3",
@@ -175,7 +175,7 @@ describe("openOrUpdateIndexPR — labels (Phase C)", () => {
   // New/Update label rule. The Needs-IGDB-id label rule is covered separately.
   const optsWithIgdb = {
     sourceManifest: {
-      game: "Clique",
+      game: "My Cool Game",
       authors: ["Alice"],
       world_version: "v1.0.0",
       minimum_ap_version: "0.6.3",
@@ -198,7 +198,7 @@ describe("openOrUpdateIndexPR — labels (Phase C)", () => {
     const state = makeFakeIndex({
       files: {
         main: {
-          "worlds/clique.json": {
+          "worlds/myclgm.json": {
             content: JSON.stringify({
               module_location: "git+old",
               world_version: "v0.9.0",
@@ -219,15 +219,15 @@ describe("openOrUpdateIndexPR — labels (Phase C)", () => {
 
   it("labels both on PR create and on subsequent PR update", async () => {
     const state = makeFakeIndex({
-      branches: { main: "main-sha", "update/clique-v1.0.0": "branch-sha" },
+      branches: { main: "main-sha", "update/myclgm-v1.0.0": "branch-sha" },
       files: {
         main: {},
-        "update/clique-v1.0.0": {
-          "worlds/clique.json": { content: "{}", sha: "existing" },
-          ".github/CODEOWNERS": { content: "worlds/clique.json @alice\n", sha: "co-sha" },
+        "update/myclgm-v1.0.0": {
+          "worlds/myclgm.json": { content: "{}", sha: "existing" },
+          ".github/CODEOWNERS": { content: "worlds/myclgm.json @alice\n", sha: "co-sha" },
         },
       },
-      openPRs: [{ number: 42, head: "update/clique-v1.0.0" }],
+      openPRs: [{ number: 42, head: "update/myclgm-v1.0.0" }],
     });
     const octokits = makeOctokits(state);
     const result = await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
@@ -257,7 +257,7 @@ describe("openOrUpdateIndexPR — Needs IGDB id label", () => {
     await openOrUpdateIndexPR({
       ...baseOpts({
         sourceManifest: {
-          game: "Clique",
+          game: "My Cool Game",
           authors: ["Alice"],
           world_version: "v1.0.0",
           igdb_id: 117525,
@@ -274,9 +274,9 @@ describe("openOrUpdateIndexPR — Needs IGDB id label", () => {
     const state = makeFakeIndex({
       files: {
         main: {
-          "worlds/clique.json": {
+          "worlds/myclgm.json": {
             content: JSON.stringify({
-              game: "Clique",
+              game: "My Cool Game",
               authors: ["Alice"],
               world_version: "v0.9.0",
               igdb_id: 117525,
@@ -297,9 +297,9 @@ describe("openOrUpdateIndexPR — Needs IGDB id label", () => {
     const state = makeFakeIndex({
       files: {
         main: {
-          "worlds/clique.json": {
+          "worlds/myclgm.json": {
             content: JSON.stringify({
-              game: "Clique",
+              game: "My Cool Game",
               authors: ["Alice"],
               world_version: "v0.9.0",
             }),
@@ -321,7 +321,7 @@ describe("openOrUpdateIndexPR — Needs IGDB id label", () => {
     await openOrUpdateIndexPR({
       ...baseOpts({
         sourceManifest: {
-          game: "Clique",
+          game: "My Cool Game",
           authors: ["Alice"],
           world_version: "v1.0.0",
           igdb_id: null,
@@ -347,7 +347,7 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
     );
     expect(co).toBeDefined();
     expect(co!.payload.content).toContain("# CODEOWNERS");
-    expect(co!.payload.content).toContain("worlds/clique.json @alice");
+    expect(co!.payload.content).toContain("worlds/myclgm.json @alice");
   });
 
   it("appends a new line to existing CODEOWNERS without overwriting", async () => {
@@ -368,15 +368,15 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
     expect(coWrite).toBeDefined();
     expect(coWrite!.payload.content).toContain("* @MultiworldGG");
     expect(coWrite!.payload.content).toContain("worlds/khddd.json @bob");
-    expect(coWrite!.payload.content).toContain("worlds/clique.json @alice");
+    expect(coWrite!.payload.content).toContain("worlds/myclgm.json @alice");
   });
 
   it("does NOT touch CODEOWNERS when world already exists on main (update flow)", async () => {
     const state = makeFakeIndex({
       files: {
         main: {
-          "worlds/clique.json": { content: "{}", sha: "old" },
-          ".github/CODEOWNERS": { content: "worlds/clique.json @alice\n", sha: "co" },
+          "worlds/myclgm.json": { content: "{}", sha: "old" },
+          ".github/CODEOWNERS": { content: "worlds/myclgm.json @alice\n", sha: "co" },
         },
       },
     });
@@ -395,7 +395,7 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
       files: {
         main: {
           ".github/CODEOWNERS": {
-            content: "worlds/clique.json @someone-else\n",
+            content: "worlds/myclgm.json @someone-else\n",
             sha: "co-sha",
           },
         },
@@ -413,14 +413,14 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
 
   it("does not write CODEOWNERS when the desired line is already present (idempotent on PR update)", async () => {
     const state = makeFakeIndex({
-      branches: { main: "main-sha", "update/clique-v1.0.0": "branch-sha" },
+      branches: { main: "main-sha", "update/myclgm-v1.0.0": "branch-sha" },
       files: {
         main: {},
-        "update/clique-v1.0.0": {
-          ".github/CODEOWNERS": { content: "worlds/clique.json @alice\n", sha: "co-sha" },
+        "update/myclgm-v1.0.0": {
+          ".github/CODEOWNERS": { content: "worlds/myclgm.json @alice\n", sha: "co-sha" },
         },
       },
-      openPRs: [{ number: 42, head: "update/clique-v1.0.0" }],
+      openPRs: [{ number: 42, head: "update/myclgm-v1.0.0" }],
     });
     const octokits = makeOctokits(state);
     const result = await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
@@ -442,7 +442,7 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
       (w) => w.kind === "file" && w.payload.path === ".github/CODEOWNERS",
     );
     expect(coWrite).toBeDefined();
-    expect(coWrite!.payload.content).toContain("worlds/clique.json @MWGGTESTING-alice");
+    expect(coWrite!.payload.content).toContain("worlds/myclgm.json @MWGGTESTING-alice");
     expect(coWrite!.payload.content).not.toMatch(/@alice\b(?!-|TEST)/);
   });
 });
@@ -450,7 +450,7 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
 describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinned)", () => {
   function readManifest(state: FakeIndex): Record<string, unknown> {
     const write = state.writes.find(
-      (w) => w.kind === "file" && w.payload.path === "worlds/clique.json",
+      (w) => w.kind === "file" && w.payload.path === "worlds/myclgm.json",
     );
     if (!write) throw new Error("manifest was not written");
     return JSON.parse(write.payload.content);
@@ -460,9 +460,9 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
     const state = makeFakeIndex({
       files: {
         main: {
-          "worlds/clique.json": {
+          "worlds/myclgm.json": {
             content: JSON.stringify({
-              game: "Clique",
+              game: "My Cool Game",
               authors: ["Alice"],
               module_location: "git+old",
               world_version: "v0.9.0",
@@ -479,7 +479,7 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
     const m = readManifest(state);
     expect(m.igdb_id).toBe(117525);
     expect(m.module_location).toBe(
-      "https://github.com/alice/alice-clique/releases/download/v1.0.0/alice_clique-1.0.0-py3-none-any.whl",
+      "https://github.com/alice/alice-myclgm/releases/download/v1.0.0/alice_clique-1.0.0-py3-none-any.whl",
     );
   });
 
@@ -487,8 +487,8 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
     const state = makeFakeIndex({
       files: {
         main: {
-          "worlds/clique.json": {
-            content: JSON.stringify({ game: "Clique", igdb_id: 999 }),
+          "worlds/myclgm.json": {
+            content: JSON.stringify({ game: "My Cool Game", igdb_id: 999 }),
             sha: "old",
           },
         },
@@ -498,7 +498,7 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
     await openOrUpdateIndexPR({
       ...baseOpts({
         sourceManifest: {
-          game: "Clique",
+          game: "My Cool Game",
           authors: ["Alice"],
           world_version: "v1.0.0",
           igdb_id: 117525,
@@ -517,10 +517,10 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
     await openOrUpdateIndexPR({
       ...baseOpts({
         sourceManifest: {
-          game: "Clique",
+          game: "My Cool Game",
           authors: ["Alice"],
           world_version: "v1.0.0",
-          tracker: "https://tracker.example/clique",
+          tracker: "https://tracker.example/myclgm",
           flags: ["ROM"],
           _comment: "PR-time IGDB lookup happens after this commit",
         },
@@ -529,7 +529,7 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
     });
 
     const m = readManifest(state);
-    expect(m.tracker).toBe("https://tracker.example/clique");
+    expect(m.tracker).toBe("https://tracker.example/myclgm");
     expect(m.flags).toEqual(["ROM"]);
     expect(m._comment).toBe("PR-time IGDB lookup happens after this commit");
   });
@@ -538,11 +538,11 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
     const state = makeFakeIndex({
       files: {
         main: {
-          "worlds/clique.json": {
+          "worlds/myclgm.json": {
             content: JSON.stringify({
-              game: "Clique",
+              game: "My Cool Game",
               authors: ["Alice"],
-              tracker: "https://tracker.example/clique",
+              tracker: "https://tracker.example/myclgm",
               flags: ["ROM"],
             }),
             sha: "old",
@@ -554,7 +554,7 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
     await openOrUpdateIndexPR({
       ...baseOpts({
         sourceManifest: {
-          game: "Clique",
+          game: "My Cool Game",
           authors: ["Alice"],
           world_version: "v1.0.0",
           // tracker and flags intentionally absent
@@ -572,15 +572,15 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
     const state = makeFakeIndex();
     const octokits = makeOctokits(state);
     const overrideUrl =
-      "https://github.com/alice/alice-clique/releases/download/v1.0.0/alice_clique-1.0.0-py3-none-any.whl";
+      "https://github.com/alice/alice-myclgm/releases/download/v1.0.0/alice_clique-1.0.0-py3-none-any.whl";
     await openOrUpdateIndexPR({
       ...baseOpts({
         sourceManifest: {
-          game: "Clique",
+          game: "My Cool Game",
           authors: ["Alice"],
           world_version: "v1.0.0",
           // Author tries to set a non-pinned location; Oliver must override.
-          module_location: "https://github.com/alice/alice-clique/tree/main/worlds/clique",
+          module_location: "https://github.com/alice/alice-myclgm/tree/main/worlds/myclgm",
         },
         moduleLocation: overrideUrl,
       }),
@@ -643,15 +643,15 @@ describe("openOrUpdateIndexPR — auto-merge enable on create", () => {
 
   it("does NOT call graphql on the update path (PR already exists)", async () => {
     const state = makeFakeIndex({
-      branches: { main: "main-sha", "update/clique-v1.0.0": "branch-sha" },
+      branches: { main: "main-sha", "update/myclgm-v1.0.0": "branch-sha" },
       files: {
         main: {},
-        "update/clique-v1.0.0": {
-          "worlds/clique.json": { content: "{}", sha: "existing" },
-          ".github/CODEOWNERS": { content: "worlds/clique.json @alice\n", sha: "co-sha" },
+        "update/myclgm-v1.0.0": {
+          "worlds/myclgm.json": { content: "{}", sha: "existing" },
+          ".github/CODEOWNERS": { content: "worlds/myclgm.json @alice\n", sha: "co-sha" },
         },
       },
-      openPRs: [{ number: 42, head: "update/clique-v1.0.0" }],
+      openPRs: [{ number: 42, head: "update/myclgm-v1.0.0" }],
     });
     const octokits = makeOctokits(state);
     await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });

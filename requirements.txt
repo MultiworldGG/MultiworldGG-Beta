@@ -5,12 +5,7 @@ PyYAML>=6.0.3
 jellyfish>=1.2.1
 jinja2>=3.1.6
 schema>=0.7.8
-kivy>=2.3.1
-kivymd@ git+https://github.com/kivymd/KivyMD@d2f7740
-kivymd>=2.0.1.dev0
-asynckivy>=0.6.4,<0.7
 nest_asyncio>=1.6.0
-numpy>=2.3.2
 bsdiff4>=1.2.6
 platformdirs==4.9.4
 certifi==2026.2.25

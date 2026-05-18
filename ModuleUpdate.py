@@ -10,6 +10,10 @@ import zipfile
 import re
 import shutil
 import logging
+import tempfile
+import contextlib
+import errno
+import importlib.metadata
 
 logger = logging.getLogger("Update")
 
@@ -20,18 +24,17 @@ from pathlib import Path
 from typing import List, Optional
 
 from importlib import invalidate_caches
-from BaseUtils import tuplize_version, Version
+from BaseUtils import tuplize_version, Version, local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen, WORLDS_EXIST
 from APContainer import APWorldContainer
 
-# mwgg_igdb package source — orphan branch on the Index repo, force-pushed daily by
-# the Index repo's daily-release workflow. Same package name and import path
-# regardless of variant; variant choice only affects which games are filtered in/out.
+# mwgg_igdb package source — orphan branch on the Index repo
 # See MultiworldGG-Index/scripts/build_variants.py for variant definitions.
 MWGG_IGDB_VARIANT = "sixteen"  # canonical default
 MWGG_INDEX_REPO = "MultiworldGG/MultiworldGG-Index"
 MWGG_IGDB_BRANCH = f"game_index_{MWGG_IGDB_VARIANT}"
 MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
 MWGG_IGDB_UPGRADE_INTERVAL_SECONDS = 86400  # once-daily throttle for upgrade pulls
+_worlds_updated_state = WORLDS_EXIST.NOT_INSTALLED
 
 def is_frozen() -> bool:
     return getattr(sys, 'frozen', False)
@@ -66,10 +69,9 @@ elif sys.version_info < (3, 13, 0):
 # Skip update if running in splash screen process
 # Allow updates in main process and main client process
 _skip_update = bool(
-    multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiWorldGG"
+    (multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiWorldGG")
+    or os.environ.get("SKIP_REQUIREMENTS_UPDATE", "")
 )
-
-local_dir = Path(__file__).parent
 
 update_ran = _skip_update
 need_update: List[str] = []
@@ -90,12 +92,14 @@ class RequirementsSet(set):
 
 # Initialize file sets
 
-requirements_files = RequirementsSet({local_dir / "requirements.txt"})
+requirements_files = RequirementsSet({Path(local_path("requirements.txt"))})
 worlds_files = {"wheels": RequirementsSet(), "apworlds": RequirementsSet()}
+
+# Resolved via local_path so it points next to the executable in frozen builds
+custom_worlds_dir = Path(local_path("custom_worlds"))
 
 # Add wheel files if update hasn't run
 if not update_ran:
-    custom_worlds_dir = local_dir / "custom_worlds"
     if custom_worlds_dir.exists():
         for world_file in custom_worlds_dir.glob("*.whl"):
             worlds_files["wheels"].add(str(world_file))
@@ -108,22 +112,22 @@ uv_cmd: str = ""
 
 
 def find_uv() -> str:
-    """Locate the uv binary. uv is user-installed, not bundled — see inno_setup.iss for the
-    Windows install path (winget/PowerShell installer) and uv_runtime/install-uv.sh for Mac/Linux
-    first-launch install. We probe `shutil.which` first, then platform-specific known locations,
-    then (Mac/Linux frozen only) run the bundled installer as a last resort.
+    """Locate the uv binary. uv is user-installed, not bundled — see inno_setup.iss
     """
+    if is_windows():
+        # Installer trick to find uv.exe in the working directory. Can probably refactor this...
+        cwd_uv = Path.cwd() / "uv.exe"
+        try:
+            if cwd_uv.exists():
+                return str(cwd_uv)
+        except OSError as e:
+            logger.warning(f"Could not probe cwd uv candidate {cwd_uv}: {e}")
+
     found = shutil.which("uv")
     if found:
         return found
 
     if is_windows():
-        # The Inno installer just ran `winget install astral-sh.uv` (or astral's PowerShell installer)
-        # but the user's PATH won't reflect the new entry until their explorer session refreshes.
-        # Probe the known shim locations directly so the post-install --update-modules call works.
-        # WinGet/Links shims are reparse points; Windows can refuse to traverse them with
-        # WinError 448 ("untrusted mount point") — Python 3.13 Path.exists() does not suppress
-        # that, so swallow OSError per-candidate and keep probing.
         local_appdata = os.environ.get("LOCALAPPDATA", "")
         candidates = [
             Path(local_appdata) / "Microsoft" / "WinGet" / "Links" / "uv.exe",
@@ -165,7 +169,8 @@ def find_uv() -> str:
 
 
 def venv_is_healthy(venv_path: Path) -> bool:
-    """True if the venv at venv_path is still usable (creator interpreter dir exists, python runs)."""
+    """True if the venv at venv_path is still usable
+    TODO: rewrite this, it's overengineered."""
     cfg = venv_path / "pyvenv.cfg"
     if not cfg.exists():
         return False
@@ -190,32 +195,64 @@ def venv_is_healthy(venv_path: Path) -> bool:
 
 uv_cmd = find_uv()
 
-if is_frozen():
-    # For frozen builds, install in a home directory to prevent readonly issues
-    exe_dir = Path(sys.exec_prefix)
-    default_libs_dir = Path(exe_dir, "lib")
-    worlds_install_dir = install_path()
-    if str(worlds_install_dir) not in sys.path:
-        sys.path.append(str(worlds_install_dir))
-    if str(default_libs_dir) not in sys.path:
-        sys.path.append(str(default_libs_dir))
+if use_worlds_venv():
+    # Route worlds + mwgg_igdb into a dedicated venv under user data
+    if is_frozen():
+        exe_dir = Path(sys.exec_prefix)
+        default_libs_dir = Path(exe_dir, "lib")
+        if str(default_libs_dir) not in sys.path:
+            sys.path.append(str(default_libs_dir))
 
     venv_path = install_path()
-    if venv_path.exists() and not venv_is_healthy(venv_path):
-        logger.info(f"Existing venv at {venv_path} is broken or stale; recreating.")
-        shutil.rmtree(venv_path, ignore_errors=True)
-    if not venv_path.exists():
-        venv_path.parent.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Creating venv at {venv_path} via uv.")
+    if not venv_is_healthy(venv_path):
+        venv_path.mkdir(parents=True, exist_ok=True)
+        if any(venv_path.iterdir()):
+            logger.info(f"Repairing stale venv at {venv_path} via uv (site-packages preserved).")
+        else:
+            logger.info(f"Creating venv at {venv_path} via uv.")
         # uv reuses an existing system Python 3.13 if one is present; otherwise it
-        # downloads python-build-standalone into %APPDATA%\uv\data\python\ (no UAC).
-        subprocess.run([uv_cmd, "venv", str(venv_path), "--python", "3.13"], check=True)
+        # downloads python-build-standalone
+        _venv_kwargs = {"check": True, "stdin": subprocess.DEVNULL, "timeout": 600}
+        if is_windows():
+            _venv_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
+        subprocess.run(
+            [uv_cmd, "venv", str(venv_path), "--allow-existing", "--python", "3.13"],
+            **_venv_kwargs,
+        )
     python_cmd = venv_path / ("Scripts" if is_windows() else "bin") / ("python.exe" if is_windows() else "python")
+
+    # Make packages installed into the worlds venv (mwgg_igdb, plus any
+    # top-level helpers shipped alongside worlds) importable from the
+    # running process.
+    site_packages = mwgg_venv_site_packages()
+    if site_packages not in sys.path:
+        sys.path.insert(0, site_packages)
 
 
 def _uv_pip(*args: str) -> list[str]:
     """Build a `uv pip ...` command targeting the active venv (python_cmd)."""
     return [uv_cmd, "pip", *args, "--python", str(python_cmd)]
+
+
+def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subprocess.CompletedProcess:
+    """Run a uv subprocess with hardened defaults.
+
+    - Captures stdout/stderr in text mode.
+    - stdin=DEVNULL so the child never blocks waiting on a tty.
+    - On Windows, passes CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW so a
+      console control event (Ctrl+C / Ctrl+Break) generated by, or delivered
+      to, the child can't propagate back into the parent's console group and
+      tear down the asyncio loop.
+    """
+    kwargs = {
+        "capture_output": True,
+        "text": True,
+        "stdin": subprocess.DEVNULL,
+        "timeout": timeout,
+    }
+    if is_windows():
+        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
+    return subprocess.run(args, check=check, **kwargs)
 
 def confirm(msg: str) -> None:
     """Get user confirmation for an action."""
@@ -224,6 +261,20 @@ def confirm(msg: str) -> None:
     except KeyboardInterrupt:
         logger.info("\nAborting")
         sys.exit(1)
+
+
+def _format_manual_install_hint(module_location: str) -> str:
+    """Render a copy-pasteable `uv pip install` command for the host shell.
+    """
+    return (
+        "To install manually on the host (where build tools are available), run:\n"
+        f"    bash:      source {mwgg_venv_site_packages()}/bin/activate\n"
+        f"    win PS:    & {mwgg_venv_site_packages()}/Scripts/Activate.ps1\n"
+        f"    docker:    source ~/<your-local-venv>/bin/activate\n"
+        f"    then run:\n"
+        f"               uv pip install '{module_location}' --upgrade --no-cache\n"
+        f"    docker admins will need to copy the site packages to /var/lib/mwgg/mwgg_venv"
+    )
 
 
 def parse_requirements_file(file_path: Path) -> List[str]:
@@ -302,25 +353,87 @@ def _igdb_stamp_path() -> Path:
     return install_path().parent / ".mwgg_igdb_last_upgrade"
 
 
-def _igdb_upgraded_recently() -> bool:
+def _record_worlds_state(state: object) -> WORLDS_EXIST:
+    global _worlds_updated_state
+    try:
+        _worlds_updated_state |= WORLDS_EXIST(int(state))
+    except (TypeError, ValueError):
+        pass
+    return _worlds_updated_state
+
+
+def _read_igdb_stamp() -> dict[str, object] | None:
     try:
         path = _igdb_stamp_path()
         if not path.exists():
-            return False
-        last = float(path.read_text().strip())
-    except (OSError, ValueError, RuntimeError):
+            return None
+        igdb_stamp = json.loads(path.read_text())
+        if isinstance(igdb_stamp, dict):
+            _record_worlds_state(igdb_stamp.get("worlds_updated", WORLDS_EXIST.NOT_INSTALLED))
+            return igdb_stamp
+    except (OSError, TypeError, ValueError, RuntimeError):
+        pass
+    return None
+
+def _igdb_stamp_is_recent(igdb_stamp: dict[str, object]) -> bool:
+    try:
+        last = float(igdb_stamp["last_upgrade"])
+        variant = str(igdb_stamp["variant"])
+    except (KeyError, TypeError, ValueError):
         return False
-    elapsed = time.time() - last
-    return 0 <= elapsed < MWGG_IGDB_UPGRADE_INTERVAL_SECONDS
+    return variant == MWGG_IGDB_VARIANT and last >= time.time() - MWGG_IGDB_UPGRADE_INTERVAL_SECONDS
 
 
-def _record_igdb_upgrade() -> None:
+def _igdb_upgraded_recently() -> bool:
+    igdb_stamp = _read_igdb_stamp()
+    return bool(igdb_stamp and _igdb_stamp_is_recent(igdb_stamp))
+
+
+def _venv_has_worlds() -> bool:
+    try:
+        worlds_dir = _venv_worlds_dir()
+        return worlds_dir.exists() and any(worlds_dir.iterdir())
+    except OSError:
+        return False
+
+
+def _stored_worlds_state() -> WORLDS_EXIST:
+    igdb_stamp = _read_igdb_stamp()
+    if not igdb_stamp or not _igdb_stamp_is_recent(igdb_stamp):
+        return WORLDS_EXIST.NOT_INSTALLED
+    return _worlds_updated_state & WORLDS_EXIST.UPDATED
+
+
+def _write_igdb_stamp(last_upgrade: float | None, worlds_updated: WORLDS_EXIST) -> None:
     try:
         path = _igdb_stamp_path()
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(str(time.time()))
+        igdb_stamp = json.dumps(
+            {
+                "last_upgrade": time.time() if last_upgrade is None else last_upgrade,
+                "worlds_updated": int(worlds_updated),
+                "variant": MWGG_IGDB_VARIANT,
+            }
+        )
+        path.write_text(igdb_stamp)
     except (OSError, RuntimeError) as e:
         logger.debug(f"Could not write mwgg_igdb upgrade stamp: {e}")
+
+
+def record_worlds_update() -> WORLDS_EXIST:
+    igdb_stamp = _read_igdb_stamp()
+    try:
+        last_upgrade = float(igdb_stamp["last_upgrade"]) if igdb_stamp else None
+    except (KeyError, TypeError, ValueError):
+        last_upgrade = None
+    state = _record_worlds_state(WORLDS_EXIST.HAS_WORLDS if _venv_has_worlds() else WORLDS_EXIST.NOT_INSTALLED)
+    _write_igdb_stamp(last_upgrade, state)
+    return state
+
+
+def _record_igdb_upgrade() -> None:
+    state = _record_worlds_state(WORLDS_EXIST.UPDATED if _venv_has_worlds() else WORLDS_EXIST.NOT_INSTALLED)
+    _write_igdb_stamp(time.time(), state)
 
 
 def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
@@ -349,7 +462,11 @@ def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
     if upgrade:
         args.append("--upgrade")
     logger.info(f"Installing mwgg_igdb ({MWGG_IGDB_VARIANT}) from {MWGG_IGDB_BRANCH}")
-    result = subprocess.run(args, capture_output=True, text=True)
+    try:
+        result = _uv_run(args, timeout=300)
+    except subprocess.TimeoutExpired:
+        logger.warning("uv install of mwgg_igdb timed out.")
+        return False
     if result.returncode != 0:
         logger.warning(f"Failed to install mwgg_igdb: {result.stderr}")
         return False
@@ -416,12 +533,47 @@ def _parse_variant_token(token: str) -> Optional[str]:
     return None
 
 
-def _set_variant(variant: str) -> None:
+def set_variant(variant: str) -> None:
     """Switch the runtime mwgg_igdb variant; takes effect on next install_mwgg_igdb call."""
     global MWGG_IGDB_VARIANT, MWGG_IGDB_BRANCH, MWGG_IGDB_GIT_URL
     MWGG_IGDB_VARIANT = variant
     MWGG_IGDB_BRANCH = f"game_index_{variant}"
     MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
+
+
+def _world_slug(world: str) -> str:
+    return world.removeprefix("worlds.")
+
+
+def _world_is_installed(slug: str) -> bool:
+    try:
+        return any(entry.name == slug for entry in _venv_worlds_dir().iterdir())
+    except OSError:
+        return False
+
+
+def _world_requires_install(slug: str, games: dict[str, dict[str, object]]) -> bool:
+    try:
+        dist = importlib.metadata.distribution(f"worlds.{slug}")
+    except importlib.metadata.PackageNotFoundError:
+        return True
+
+    module_location = games.get(slug, {}).get("module_location")
+    if not isinstance(module_location, str):
+        return False
+
+    tag = _module_location_tag(module_location)
+    return bool(tag and dist.version != tag)
+
+
+def _worlds_requiring_install(worlds: list[str], games: dict[str, dict[str, object]]) -> list[str]:
+    state = _stored_worlds_state()
+    if state == WORLDS_EXIST.INSTALLED:
+        logger.debug("Selected worlds were already checked against the current mwgg_igdb stamp.")
+    elif state == WORLDS_EXIST.UPDATED:
+        logger.debug("mwgg_igdb was refreshed after worlds were installed; checking for missing worlds.")
+
+    return [world for world in worlds if _world_requires_install(_world_slug(world), games)]
 
 
 def check_for_updates(worlds_only: bool = False) -> List[str]:
@@ -440,7 +592,6 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
         index = _get_game_index()
         if index is None:
             return []
-        import importlib.metadata
         outdated: List[str] = []
         for slug, entry in index.get_all_games().items():
             loc = entry.get("module_location")
@@ -463,7 +614,7 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
     try:
         executable_args = _uv_pip("list", "--outdated", "--format", "json")
         logger.info(f"Executing subprocess command: {executable_args}")
-        response = subprocess.run(executable_args, capture_output=True, text=True, timeout=45)
+        response = _uv_run(executable_args, timeout=45)
         if response.returncode != 0:
             logger.warning(f"Could not check for updates: {response.stderr}")
             return []
@@ -481,7 +632,10 @@ def uninstall_worlds(worlds: List[str]) -> None:
     """Uninstall a list of `worlds.<slug>` packages from the venv."""
     for world in worlds:
         # uv pip uninstall is non-interactive by default; no --yes equivalent needed.
-        subprocess.run(_uv_pip("uninstall", world))
+        try:
+            _uv_run(_uv_pip("uninstall", world), timeout=60)
+        except subprocess.TimeoutExpired:
+            logger.warning(f"uv uninstall of {world} timed out.")
 
 
 def find_world_modules() -> set[str]:
@@ -495,7 +649,7 @@ def find_world_modules() -> set[str]:
     try:
         executable_args = _uv_pip("list", "--format", "json")
         logger.debug(f"Executing subprocess command to find installed worlds: {executable_args}")
-        response = subprocess.run(executable_args, capture_output=True, text=True, timeout=45)
+        response = _uv_run(executable_args, timeout=45)
         if response.returncode == 0:
             for package in json.loads(response.stdout):
                 package_name = package.get("name", "")
@@ -513,31 +667,111 @@ def find_world_modules() -> set[str]:
     return world_modules_set
 
 
-def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = False) -> list[str]:
+def _venv_worlds_dir() -> Path:
+    """Return the venv worlds dir from which worlds/__init__.py extends __path__.
+    Apworlds get extracted here so they're importable via the normal file loader
+    (multiprocessing.spawn in child processes needs disk-based modules; zipimport-
+    only modules can't be re-imported in the spawned child).
     """
-    Install worlds by resolving each slug's `module_location` from mwgg_igdb and pip-installing the URL.
+    if is_frozen():
+        return Path(mwgg_venv_site_packages("worlds"))
+    # Dev: matches the hardcoded path in src/worlds/__init__.py
+    from sysconfig import get_path
+    return Path(get_path("purelib")) / "worlds"
+
+
+def _install_apworld_to_venv(apworld_file: Path, slug: str) -> bool:
+    """Extract the `<slug>/` directory from apworld_file into the venv worlds dir.
+    Returns True on success. Overwrites existing files in place rather than
+    rmtree'ing (rmtree fails on Windows if the module is currently loaded).
+    """
+    venv_worlds = _venv_worlds_dir()
+    try:
+        venv_worlds.mkdir(parents=True, exist_ok=True)
+        prefix = f"{slug}/"
+        with zipfile.ZipFile(apworld_file, "r") as zf:
+            members = [m for m in zf.namelist() if m == prefix or m.startswith(prefix)]
+            if not members:
+                logger.warning(f"Apworld {apworld_file} contains no '{slug}/' directory")
+                return False
+            for member in members:
+                zf.extract(member, str(venv_worlds))
+        # Refresh the target dir's mtime so the stale-extraction pruner uses
+        # the most recent extraction as the "last used" signal, even if zipfile
+        # restored historical timestamps from the archive members.
+        target_dir = venv_worlds / slug
+        try:
+            os.utime(target_dir, None)
+        except OSError:
+            pass
+        logger.info(f"Extracted apworld {apworld_file} to {target_dir}")
+        # If the worlds package is already imported, extend its __path__ so the
+        # newly-extracted module is discoverable without a restart. (At startup,
+        # worlds/__init__.py does this itself when it first runs.)
+        worlds_pkg = sys.modules.get("worlds")
+        if worlds_pkg is not None and hasattr(worlds_pkg, "__path__"):
+            venv_str = str(venv_worlds)
+            if venv_str not in worlds_pkg.__path__:
+                worlds_pkg.__path__.append(venv_str)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to extract apworld {apworld_file} to {venv_worlds}: {e}")
+        return False
+
+
+def _prune_stale_apworld_extractions(max_age_days: int = 30) -> None:
+    """Remove extracted-apworld dirs in the venv worlds dir whose mtime is older
+    than max_age_days. Skips any dir backed by a real importlib.metadata
+    Distribution (pip-installed wheels), so this only ever touches our own
+    extraction output.
+    """
+    import importlib.metadata
+    venv_worlds = _venv_worlds_dir()
+    if not venv_worlds.exists():
+        return
+    cutoff = time.time() - max_age_days * 86400
+    for entry in venv_worlds.iterdir():
+        if not entry.is_dir() or entry.name.startswith("_"):
+            continue
+        try:
+            importlib.metadata.distribution(f"worlds.{entry.name}")
+            continue  # pip-installed; leave alone
+        except importlib.metadata.PackageNotFoundError:
+            pass
+        try:
+            if entry.stat().st_mtime >= cutoff:
+                continue
+        except OSError:
+            continue
+        try:
+            shutil.rmtree(entry)
+            logger.info(f"Pruned stale extracted apworld {entry} (mtime > {max_age_days}d)")
+        except OSError as e:
+            logger.warning(f"Could not prune stale apworld {entry}: {e}")
+
+
+def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = False) -> list[str]:
+    """
+    Install worlds by resolving each apworld's `module_location` from mwgg_igdb and pip-installing the URL.
 
     `module_location` is a `https://.../<dist>-<world_version>-py3-none-any.whl#sha256=<hex>`
-    release-asset URL set by the Index repo. `gen-pymod-release` uploads the wheel to the
-    GitHub release on each per-world publish; the SHA256 fragment is pinned at PR-open time and
-    verified by pip on install (PEP 503).
+    release-asset URL set by the Index repo.
 
-    Falls back to a custom_worlds/<slug>.apworld lookup if the slug isn't in the index or its
+    Falls back to a custom_worlds/<slug>.apworld lookup if the apworld isn't in the index or its
     `module_location` install fails.
 
     Args:
-        worlds: List of slugs (with or without `worlds.` prefix) to install.
+        worlds: List of apworlds to install.
         update: If True, uninstall old versions first.
-        no_recurse: If True, skip the post-install dependency-check pass.
+        with_deps: If True, install the wheel *with* its transitive dependencies.
+            Otherwise, dependencies are still installed for new worlds and skipped
+            for worlds that were already present.
 
     Returns:
-        List of `worlds.<slug>` module names that fell back to a custom apworld.
+        List of apworlds that fell back to a custom apworld.
     """
     apworlds: list[str] = []
 
-    # Partition variant tokens (`mwgg_igdb` / `mwgg_igdb_<variant>`) out of the slug list.
-    # Inno Setup passes exactly one variant token in `--worlds`; honor it by switching
-    # the runtime variant and (re)installing mwgg_igdb before resolving slugs.
     world_slugs: list[str] = []
     selected_variant: Optional[str] = None
     for entry in worlds:
@@ -546,9 +780,10 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
             selected_variant = variant
         else:
             world_slugs.append(entry)
+    installed_world_slugs = {_world_slug(world) for world in world_slugs if _world_is_installed(_world_slug(world))}
 
     if selected_variant is not None:
-        _set_variant(selected_variant)
+        set_variant(selected_variant)
         install_mwgg_igdb(upgrade=True, force=True)
 
     if update:
@@ -557,6 +792,17 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
 
     index = _get_game_index()
     games = index.get_all_games() if index is not None else {}
+    if not update and not with_deps and world_slugs:
+        worlds_to_install = _worlds_requiring_install(world_slugs, games)
+        skipped_worlds = sorted(set(world_slugs) - set(worlds_to_install))
+        if skipped_worlds:
+            logger.debug(f"Skipping already-installed worlds: {skipped_worlds}")
+        if not worlds_to_install:
+            record_worlds_update()
+            _prune_stale_apworld_extractions()
+            invalidate_caches()
+            return apworlds
+        world_slugs = worlds_to_install
 
     for world in world_slugs:
         slug = world.removeprefix("worlds.")
@@ -575,60 +821,48 @@ def install_worlds(worlds: List[str], update: bool = False, no_recurse: bool = F
             apworld_file = custom_worlds_dir / f"{slug}.apworld"
             if apworld_file.exists():
                 logger.info(f"Found apworld file: {apworld_file}")
-                apworlds.append(target)
+                if _install_apworld_to_venv(apworld_file, slug):
+                    apworlds.append(target)
             else:
                 logger.warning(f"Custom apworld file not found at {apworld_file}, {slug} cannot be installed")
             continue
 
-        executable_args = _uv_pip("install", "--no-deps", module_location, "--upgrade", "--no-cache")
+        install_args = ["install"]
+        if not with_deps and slug in installed_world_slugs:
+            install_args.append("--no-deps")
+        install_args += [module_location, "--upgrade", "--no-cache"]
+        executable_args = _uv_pip(*install_args)
         logger.info(f"Executing subprocess command: {executable_args}")
-        result = subprocess.run(executable_args, capture_output=True, text=True)
-        logger.info(result.stdout)
-
-        if result.returncode != 0:
-            stderr_lines = (result.stderr or "").strip().splitlines()
-            first = stderr_lines[0] if stderr_lines else "uv returned non-zero with no stderr"
-            logger.warning(f"World {target} failed to install from {module_location}: {first}")
-            if result.stderr:
-                logger.debug(result.stderr)
+        try:
+            result = _uv_run(executable_args, timeout=300)
+        except subprocess.TimeoutExpired:
+            logger.warning(f"uv install of {target} timed out; treating as failure.")
+            logger.warning(_format_manual_install_hint(module_location))
             apworld_file = custom_worlds_dir / f"{slug}.apworld"
             if apworld_file.exists():
                 logger.info(f"Found apworld file: {apworld_file}")
-                apworlds.append(target)
+                if _install_apworld_to_venv(apworld_file, slug):
+                    apworlds.append(target)
+            continue
+        logger.info(result.stdout)
+
+        if result.returncode != 0:
+            stderr_text = (result.stderr or "").strip() or "uv returned non-zero with no stderr"
+            logger.warning(f"World {target} failed to install from {module_location}:\n{stderr_text}")
+            logger.warning(_format_manual_install_hint(module_location))
+            apworld_file = custom_worlds_dir / f"{slug}.apworld"
+            if apworld_file.exists():
+                logger.info(f"Found apworld file: {apworld_file}")
+                if _install_apworld_to_venv(apworld_file, slug):
+                    apworlds.append(target)
             else:
                 logger.warning(f"Custom apworld file not found at {apworld_file}")
         else:
             logger.info(f"Successfully installed {target}")
 
+    _prune_stale_apworld_extractions()
     invalidate_caches()
-
-    if is_frozen() and not no_recurse:
-        # Check for any additional updates that might be needed
-        logger.info("Checking for additional dependencies...")
-        additional_deps_args = _uv_pip("check")
-        additional_deps_result = subprocess.run(additional_deps_args, capture_output=True, text=True)
-        stdout = additional_deps_result.stdout
-        
-        no_deps = ("No broken requirements found." in stdout)
-        if no_deps:
-            logger.info(f"Updates complete.")
-            return apworlds
-        
-        # Parse dependencies from pip check output
-        # Handles: "pyramid 1.5.2 requires WebOb, which is not installed."
-        # Handles: "pyramid 1.5.2 has requirement WebOb>=1.3.1, but you have WebOb 0.8."
-
-        else:
-            packages_to_install = []
-            for line in stdout.splitlines():
-                match = re.search(r'(?:requires|has requirement)\s+([a-zA-Z0-9_-]+)([><=!.0-9]+)?', line)
-                if match:
-                    package = match.group(1)
-                    version_req = match.group(2) if match.group(2) else ""
-                    install_spec = f"{package}{version_req}"
-                    packages_to_install.append(install_spec)
-            update_requirements(packages_to_install)
-    
+    record_worlds_update()
     return apworlds
 
 def update_world_from_package() -> None:
@@ -667,11 +901,11 @@ def update_world_from_package() -> None:
                 stderr = "Failed to get process result"
             
             if returncode != 0:
-                logger.warning(f"Failed to install wheel {wheel}")
+                logger.warning(f"Failed to install wheel {world}")
                 if stderr:
                     logger.error(f"{stderr}")
             else:
-                logger.info(f"Successfully installed wheel {wheel}")
+                logger.info(f"Successfully installed wheel {world}")
 
         for world in worlds_files["apworlds"]:
             logger.info(f"APWorld found, checking versions: {world}")
@@ -702,8 +936,8 @@ def update_world_from_package() -> None:
                 
                 try:
                     executable_args = _uv_pip("show", package_name)
-                    result = subprocess.run(executable_args, capture_output=True, text=True, timeout=10)
-                    
+                    result = _uv_run(executable_args, timeout=10)
+
                     if result.returncode == 0:
                         # Package is installed, parse version from output
                         for line in result.stdout.splitlines():
@@ -824,25 +1058,73 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
     return True
 
 
+@contextlib.contextmanager
+def _install_lock():
+    """Serialize the top-level update pipeline across processes.
+
+    Frozen clients and webhost workers share the runtime worlds venv. Direct
+    install_worlds() callers remain unlocked unless contention shows up there.
+    """
+    lock_dir = install_path().parent if use_worlds_venv() else Path(tempfile.gettempdir())
+    lock_dir.mkdir(parents=True, exist_ok=True)
+    lock_path = lock_dir / ".mwgg-install.lock"
+    with open(lock_path, "a+b") as lock_file:
+        lock_file.seek(0, os.SEEK_END)
+        if lock_file.tell() == 0:
+            lock_file.write(b"\0")
+            lock_file.flush()
+
+        if is_windows():
+            import msvcrt
+            lock_file.seek(0)
+            while True:
+                try:
+                    msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError as e:
+                    if (
+                        e.errno not in (errno.EACCES, errno.EDEADLK)
+                        and getattr(e, "winerror", None) not in (32, 33)
+                    ):
+                        raise
+                    time.sleep(0.25)
+            try:
+                yield
+            finally:
+                lock_file.seek(0)
+                msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+
 def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = None) -> None:
     """
     Main update function.
-    
+
     Args:
         yes: Answer yes to all prompts
         force: Force update without checking
         worlds: List of specific worlds to update
-    
+
     Returns:
         None
     """
-    # Install/refresh mwgg_igdb upfront so any subsequent code path can rely on
-    # `from mwgg_igdb import GameIndex` working. Throttled to once per
-    # MWGG_IGDB_UPGRADE_INTERVAL_SECONDS via a stamp file so every entry-point
-    # start-up doesn't fire a network round-trip. Standalone CLI invocations of
-    # ModuleUpdate.py write a fresh stamp before calling update(), so the throttle
-    # naturally suppresses this call on the same-process re-entry — see __main__.
+    with _install_lock():
+        _update_locked(yes=yes, force=force, worlds=worlds)
+
+
+def _update_locked(yes: bool, force: bool, worlds: Optional[List[str]]) -> None:
+    # Install/refresh mwgg_igdb upfront
     install_mwgg_igdb(upgrade=True)
+
+    if worlds:
+        install_worlds(worlds, update=force)
+        return
 
     if is_frozen():
         if (exe_dir / "custom_wheels").exists():

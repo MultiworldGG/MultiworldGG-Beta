@@ -11,6 +11,14 @@ import logging
 from cx_Freeze import setup, Executable, build_exe
 from cx_Freeze.command.bdist_mac import bdist_mac
 
+# cx_Freeze's bundled numpy hook (cx_Freeze/hooks/_numpy_.py) is for numpy < 2.0, 
+# so the workaround is not needed; stub the hook to prevent frozen exe errors.
+import cx_Freeze.hooks._numpy_ as _cxf_numpy_hook
+def _no_overrides_patch(self, finder, module):
+    return None
+_cxf_numpy_hook.Hook.numpy__core_overrides = _no_overrides_patch
+_cxf_numpy_hook.Hook.numpy_core_overrides = _no_overrides_patch
+
 from Utils import version_tuple, instance_name, is_windows
 
 logger = logging.getLogger("MultiWorld")
@@ -41,7 +49,6 @@ build_exe_options = {
         # Core utilities (might be dynamically loaded or conditional)
         "websockets",
         "cymem",
-        "cffi",
         "PIL",
 
         # Platform-specific memory access (conditional imports)
@@ -69,10 +76,11 @@ build_exe_options = {
         "ModuleUpdate",
         "BaseUtils",
         "CommonClient",
-        "Gui",
         "ClientBuilder",
         "BaseClasses",
-        "Options"
+        "Options",
+        "frontend_protocol",
+        "kvui",
     ],
     "excludes": [
         "Cython",
@@ -92,7 +100,7 @@ build_exe_options = {
         "kivy_deps.angle"
     ],
     "zip_include_packages": ["*"],
-    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "PIL", "mwgg_tui", "mwgg_splash"],
+    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "PIL", "mwgg_tui", "mwgg_splash", "numpy"],
     "include_files": [
         ("data", "data"),
         ("LICENSE", "LICENSE"),
@@ -179,6 +187,7 @@ def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
     logger.debug("Running post-build setup...")
     os.mkdir(os.path.join(build_exe_dir, "Players"))
+    os.mkdir(os.path.join(build_exe_dir, "custom_worlds"))
 
 
 def _register_custom_hooks():

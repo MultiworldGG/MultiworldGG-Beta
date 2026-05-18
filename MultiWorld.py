@@ -1,4 +1,5 @@
 from multiprocessing import freeze_support, Process, Queue, set_start_method
+import argparse
 import asyncio
 import sys
 import logging
@@ -17,19 +18,19 @@ os.environ["KIVY_LOG_ENABLE"] = "1"
 # this below; doing it unconditionally is safe since we never use Kivy's CLI args.
 os.environ["KIVY_NO_ARGS"] = "1"
 
-from BaseUtils import local_path, write_path, is_frozen, init_logging, is_windows
-from mwgg_splash import main as splash_main
+from BaseUtils import local_path, write_path, use_worlds_venv, init_logging, is_windows, mwgg_venv_site_packages
 
 # Ensure ctypes is imported early (fixes WinDLL issues in frozen builds)
 import ctypes
 
-if is_frozen():
+# TODO: Move kivy settings out of here and into the kivy module.
+if use_worlds_venv():
     os.environ["KIVY_NO_ARGS"] = "1"
     os.environ["KIVY_DATA_DIR"] = local_path("lib", "kivy", "data")
     default_libs_dir = os.path.join(sys.exec_prefix, "lib")
     if str(default_libs_dir) not in sys.path:
         sys.path.append(default_libs_dir)
-    venv_site_packages_path = write_path("mwgg_venv", "Lib", "site-packages")
+    venv_site_packages_path = mwgg_venv_site_packages()
     if venv_site_packages_path not in sys.path:
         sys.path.append(venv_site_packages_path)
 else:
@@ -58,8 +59,9 @@ def run_client(*args, queue=None):
 
                 # Try to launch the module via entrypoints
                 try:
-                    discover_and_launch_module(module_name=args.game, 
-                                            server_address=args.server_address)
+                    discover_and_launch_module(module_name=args.game,
+                                            server_address=args.server_address,
+                                            _restarted=getattr(args, "no_restart", False))
                     return  # Module takeover successful, exit initial client
                 except Exception as e:
                     logger.error(f"Module launch failed: {e}")
@@ -122,6 +124,10 @@ if __name__ == "__main__":
                         help="Set the logging level")
     parser.add_argument("--frontend", default="gui", choices=["gui", "tui"],
                         help="Which frontend to launch: 'gui' (Kivy desktop, default) or 'tui' (Textual terminal)")
+    # Internal: set by Utils._restart_client_with_args() so a second launch
+    # failure surfaces an error dialog instead of looping forever.
+    parser.add_argument("--no-restart", action="store_true", default=False,
+                        help=argparse.SUPPRESS)
 
     if sys.argv[1:]:
         args = parser.parse_args(sys.argv[1:])
@@ -158,6 +164,7 @@ if __name__ == "__main__":
     splash_queue = None
 
     if is_windows and args.frontend == "gui":
+        from mwgg_splash import main as splash_main
         set_start_method("spawn")
         splash_queue = Queue()
         Process(target=splash_main, name="SplashScreen", args=(splash_queue,)).start()

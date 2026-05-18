@@ -1,5 +1,6 @@
 import { ApplicationFunction, Probot } from "probot";
 import { handleWorkflowRun } from "./handlers/workflow_run";
+import { handleReleasePublished } from "./handlers/release_published";
 import { mountStatusRoutes } from "./status-page";
 
 export function makeApp(karenProbot: Probot, oliverData: any, karenData: any): ApplicationFunction {
@@ -13,12 +14,24 @@ export function makeApp(karenProbot: Probot, oliverData: any, karenData: any): A
       }
     });
 
+    probot.on("release.published", async (context) => {
+      try {
+        await handleReleasePublished(probot, karenProbot, oliverData, karenData, context);
+      } catch (err) {
+        context.log.error({ err }, "release.published handler failed");
+        throw err;
+      }
+    });
+
     if (options.getRouter) {
       mountStatusRoutes(options.getRouter("/status"), probot, oliverData, karenData);
     } else {
       probot.log.warn("No getRouter available; /status route not mounted");
     }
 
-    probot.log.info(`${oliverData.name} is listening for workflow_run.completed events; ${karenData.name} is running automations on the Index`);
+    probot.log.info(
+      `${oliverData.name} is listening for workflow_run.completed and release.published events; ` +
+      `${karenData.name} is running automations on the Index`,
+    );
   };
 }

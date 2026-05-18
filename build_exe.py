@@ -150,6 +150,26 @@ def _latest_release_wheel_asset(owner: str, repo: str) -> dict | None:
             )
         else:
             logger.warning(f"GET {api_url} failed: {e}")
+        # Diagnostic: dump headers + body + platform so we can tell apart token-scope,
+        # missing-permission, rate-limit, and proxy-tamper. Safe — these are response
+        # metadata, not the token itself.
+        try:
+            req_id = e.headers.get("X-GitHub-Request-Id") if e.headers else None
+            rate_remaining = e.headers.get("X-RateLimit-Remaining") if e.headers else None
+            accepted_perms = e.headers.get("X-Accepted-GitHub-Permissions") if e.headers else None
+            server = e.headers.get("Server") if e.headers else None
+            try:
+                body_bytes = e.read() or b""
+                body_text = body_bytes.decode("utf-8", errors="replace")
+            except Exception:
+                body_text = "<unreadable>"
+            logger.warning(
+                f"  diag: platform={sys.platform} code={e.code} request_id={req_id} "
+                f"rate_remaining={rate_remaining} accepted_perms={accepted_perms} server={server}"
+            )
+            logger.warning(f"  diag: response_body={body_text[:1000]}")
+        except Exception as diag_err:
+            logger.warning(f"  diag: failed to read response metadata: {diag_err}")
         return None
     except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as e:
         logger.warning(f"Could not fetch latest release for {owner}/{repo}: {e}")
@@ -211,6 +231,40 @@ def _download_release_asset(owner: str, repo: str, asset: dict) -> str | None:
     return path
 
 
+def _log_installation_repositories() -> None:
+    """Diagnostic: dump the repos the current installation token can actually see.
+
+    For App-installation tokens, GitHub exposes `/installation/repositories` —
+    the authoritative list of what the token grants access to. If a repo we
+    later try to GET isn't in this list, that's the smoking-gun explanation
+    for a 403/404. No-op when no token is set.
+    """
+    if not os.environ.get(_BUILD_GH_TOKEN_ENV, "").strip():
+        return
+    api_url = "https://api.github.com/installation/repositories?per_page=100"
+    req = urllib.request.Request(api_url, headers=_gh_headers())
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        logger.warning(
+            f"  diag: GET {api_url} failed: {e} platform={sys.platform} "
+            f"(token may be a PAT rather than an App installation token)"
+        )
+        return
+    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as e:
+        logger.warning(f"  diag: could not enumerate installation repos: {e}")
+        return
+    repos = data.get("repositories", []) or []
+    full_names = [r.get("full_name", "?") for r in repos]
+    # logger.warning, not logger.info — basicConfig at module top sets level=WARNING
+    # for the root logger, so info-level messages are filtered out in CI logs.
+    logger.warning(
+        f"  diag: platform={sys.platform} installation_token sees "
+        f"{data.get('total_count', len(repos))} repo(s): {full_names}"
+    )
+
+
 def install_wheels() -> bool:
     """Install sibling-repo wheels from their latest GitHub releases.
 
@@ -225,6 +279,8 @@ def install_wheels() -> bool:
             f"{_BUILD_GH_TOKEN_ENV} not set; fetching anonymously. "
             "If a sibling repo is private the fetch will 404."
         )
+
+    _log_installation_repositories()
 
     for owner, repo in SIBLING_WHEEL_REPOS:
         asset = _latest_release_wheel_asset(owner, repo)

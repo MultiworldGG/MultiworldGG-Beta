@@ -14,7 +14,6 @@ function logFile(): string {
 export type EventKind = "ok" | "skip" | "error";
 
 export type EventReason =
-  | "no_world_folder_name"
   | "no_slug_resolved"
   | "workflow_failure"
   | "branch_missing"
@@ -26,7 +25,8 @@ export type EventReason =
   | "release_not_found"
   | "index_install_missing"
   | "github_api_error"
-  | "codeowners_conflict";
+  | "codeowners_conflict"
+  | "tag_sha_lookup_failed";
 
 export interface OliverEvent {
   kind: EventKind;

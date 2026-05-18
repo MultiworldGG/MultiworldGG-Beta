@@ -107,6 +107,7 @@ function makePayload(overrides: Partial<{
   event: string;
   conclusion: string;
   head_sha: string;
+  referenced_workflows: Array<{ path: string; sha: string; ref: string }>;
 }> = {}) {
   return {
     workflow_run: {
@@ -115,6 +116,13 @@ function makePayload(overrides: Partial<{
       event: overrides.event ?? "release",
       conclusion: overrides.conclusion ?? "success",
       head_sha: overrides.head_sha ?? "release-sha-abc",
+      referenced_workflows: overrides.referenced_workflows ?? [
+        {
+          path: "MultiworldGG/gen-pymod-release/.github/workflows/build.yml@refs/tags/v3",
+          sha: "build-workflow-sha",
+          ref: "refs/tags/v3",
+        },
+      ],
     },
   };
 }
@@ -134,7 +142,7 @@ function makeContext(state: RepoState, payload: any): any {
     octokit: makeContextOctokit(state),
     payload,
     log: fakeLog,
-    repo: () => ({ owner: "MultiworldGG", repo: "clique-test" }),
+    repo: () => ({ owner: "MultiworldGG", repo: "myclgm-test" }),
   };
 }
 
@@ -201,7 +209,7 @@ function wheelAsset(opts: {
   size?: number;
   digest?: string | null;
 }) {
-  const repo = opts.repo ?? "MultiworldGG/clique-test";
+  const repo = opts.repo ?? "MultiworldGG/myclgm-test";
   const distName = opts.slug.replace(/-/g, "_");
   const name = `${distName}-${opts.version}-py3-none-any.whl`;
   return {
@@ -213,11 +221,22 @@ function wheelAsset(opts: {
 }
 
 describe("handleWorkflowRun", () => {
-  it("ignores workflow_run for non-target workflow name", async () => {
+  it("ignores workflow_run that did not call the wheel-builder reusable workflow", async () => {
     const state: RepoState = { variables: {}, releases: [] };
     const probot = makeMinimalProbot();
     const karenProbot = makeMinimalProbot();
-    const ctx = makeContext(state, makePayload({ name: "Some Other Workflow" }));
+    const ctx = makeContext(
+      state,
+      makePayload({
+        referenced_workflows: [
+          {
+            path: "MultiworldGG/gen-pymod-release/.github/workflows/build-apworld.yml@refs/tags/v3",
+            sha: "apworld-workflow-sha",
+            ref: "refs/tags/v3",
+          },
+        ],
+      }),
+    );
     await handleWorkflowRun(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
     expect(probot.auth).not.toHaveBeenCalled();
     expect(readEvents()).toEqual([]);
@@ -245,22 +264,24 @@ describe("handleWorkflowRun", () => {
     expect(events[0].reason).toBe("workflow_failure");
   });
 
-  it("logs skip when WORLD_FOLDER_NAME is unset and release tag has no slug prefix", async () => {
-    // Tag `v1.0.0` has no `-`, so neither the WORLD_FOLDER_NAME path nor the
-    // tag-prefix fallback can resolve a slug.
+  it("logs skip when release tag has no slug prefix", async () => {
+    // Tag `v1.0.0` has no `-`, so Oliver cannot resolve a slug.
     const state: RepoState = {
       variables: {},
       releases: [{ tag_name: "v1.0.0", tagSha: "release-sha-abc" }],
     };
     const probot = makeMinimalProbot();
     const karenProbot = makeMinimalProbot();
-    const ctx = makeContext(state, makePayload({ head_sha: "release-sha-abc" }));
+    const ctx = makeContext(
+      state,
+      makePayload({ name: "Custom Release Workflow", head_sha: "release-sha-abc" }),
+    );
     await handleWorkflowRun(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
     const events = readEvents();
     expect(events[0]).toMatchObject({ kind: "skip", reason: "no_slug_resolved" });
   });
 
-  it("resolves slug from `<slug>-<v>` release tag prefix when WORLD_FOLDER_NAME is unset", async () => {
+  it("resolves slug from `<slug>-<v>` release tag prefix", async () => {
     // Multi-world repo path: tag `mariolands-1.2.3` → slug `mariolands`.
     const state: RepoState = {
       variables: {},
@@ -303,15 +324,15 @@ describe("handleWorkflowRun", () => {
       slug: "mariolands",
       release_tag: "mariolands-1.2.3",
       module_location:
-        "https://github.com/MultiworldGG/clique-test/releases/download/mariolands-1.2.3/mariolands-1.2.3-py3-none-any.whl" +
+        "https://github.com/MultiworldGG/myclgm-test/releases/download/mariolands-1.2.3/mariolands-1.2.3-py3-none-any.whl" +
         `#sha256=${"a".repeat(64)}`,
     });
   });
 
   it("logs skip when the release has no .whl asset", async () => {
     const state: RepoState = {
-      variables: { WORLD_FOLDER_NAME: "clique" },
-      releases: [{ tag_name: "v1.0.0", tagSha: "release-sha-abc", assets: [] }],
+      variables: {},
+      releases: [{ tag_name: "myclgm-1.0.0", tagSha: "release-sha-abc", assets: [] }],
     };
     const probot = makeMinimalProbot();
     const karenProbot = makeMinimalProbot();
@@ -321,20 +342,20 @@ describe("handleWorkflowRun", () => {
     expect(events[0]).toMatchObject({
       kind: "skip",
       reason: "wheel_asset_missing",
-      slug: "clique",
+      slug: "myclgm",
     });
   });
 
   it("logs skip when the release has multiple .whl assets (ambiguous)", async () => {
     const state: RepoState = {
-      variables: { WORLD_FOLDER_NAME: "clique" },
+      variables: {},
       releases: [
         {
-          tag_name: "v1.0.0",
+          tag_name: "myclgm-1.0.0",
           tagSha: "release-sha-abc",
           assets: [
-            wheelAsset({ slug: "clique", version: "1.0.0", tag: "v1.0.0" }),
-            wheelAsset({ slug: "clique-extra", version: "1.0.0", tag: "v1.0.0" }),
+            wheelAsset({ slug: "myclgm", version: "1.0.0", tag: "myclgm-1.0.0" }),
+            wheelAsset({ slug: "myclgm-extra", version: "1.0.0", tag: "myclgm-1.0.0" }),
           ],
         },
       ],
@@ -347,18 +368,18 @@ describe("handleWorkflowRun", () => {
     expect(events[0]).toMatchObject({
       kind: "skip",
       reason: "wheel_asset_ambiguous",
-      slug: "clique",
+      slug: "myclgm",
     });
   });
 
   it("logs error when Oliver is not installed on the Index", async () => {
     const state: RepoState = {
-      variables: { WORLD_FOLDER_NAME: "clique" },
+      variables: {},
       releases: [
         {
-          tag_name: "v1.0.0",
+          tag_name: "myclgm-1.0.0",
           tagSha: "release-sha-abc",
-          assets: [wheelAsset({ slug: "clique", version: "1.0.0", tag: "v1.0.0" })],
+          assets: [wheelAsset({ slug: "myclgm", version: "1.0.0", tag: "myclgm-1.0.0" })],
         },
       ],
       indexInstallNotFound: true,
@@ -373,15 +394,15 @@ describe("handleWorkflowRun", () => {
 
   it("happy path: Karen creates branch+commit, Oliver opens PR with release-asset module_location", async () => {
     const state: RepoState = {
-      variables: { WORLD_FOLDER_NAME: "clique" },
+      variables: {},
       releases: [
         {
-          tag_name: "v1.0.0",
+          tag_name: "myclgm-1.0.0",
           tagSha: "release-sha-abc",
-          assets: [wheelAsset({ slug: "clique", version: "1.0.0", tag: "v1.0.0" })],
+          assets: [wheelAsset({ slug: "myclgm", version: "1.0.0", tag: "myclgm-1.0.0" })],
         },
       ],
-      manifestAtRef: { game: "Clique", authors: ["Berserker"] },
+      manifestAtRef: { game: "My Cool Game", authors: ["Berserker"] },
       indexInstall: { id: 12345 },
     };
 
@@ -417,12 +438,12 @@ describe("handleWorkflowRun", () => {
     const events = readEvents();
     expect(events[0]).toMatchObject({
       kind: "ok",
-      slug: "clique",
-      release_tag: "v1.0.0",
-      wheel_asset: "clique-1.0.0-py3-none-any.whl",
+      slug: "myclgm",
+      release_tag: "myclgm-1.0.0",
+      wheel_asset: "myclgm-1.0.0-py3-none-any.whl",
       wheel_size_bytes: 158_720,
       module_location:
-        "https://github.com/MultiworldGG/clique-test/releases/download/v1.0.0/clique-1.0.0-py3-none-any.whl" +
+        "https://github.com/MultiworldGG/myclgm-test/releases/download/myclgm-1.0.0/myclgm-1.0.0-py3-none-any.whl" +
         `#sha256=${"a".repeat(64)}`,
     });
   });
@@ -433,13 +454,13 @@ describe("handleWorkflowRun", () => {
     // Oliver bails rather than open an Index PR pointing at unverifiable
     // bytes (the URL is otherwise mutable via gh release upload).
     const state: RepoState = {
-      variables: { WORLD_FOLDER_NAME: "clique" },
+      variables: {},
       releases: [
         {
-          tag_name: "v1.0.0",
+          tag_name: "myclgm-1.0.0",
           tagSha: "release-sha-abc",
           assets: [
-            wheelAsset({ slug: "clique", version: "1.0.0", tag: "v1.0.0", digest: null }),
+            wheelAsset({ slug: "myclgm", version: "1.0.0", tag: "myclgm-1.0.0", digest: null }),
           ],
         },
       ],
@@ -453,7 +474,7 @@ describe("handleWorkflowRun", () => {
     expect(events[0]).toMatchObject({
       kind: "skip",
       reason: "asset_digest_missing",
-      slug: "clique",
+      slug: "myclgm",
     });
   });
 });

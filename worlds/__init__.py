@@ -8,25 +8,34 @@ import dataclasses
 from typing import Optional, Union
 
 from NetUtils import DataPackage
-from BaseUtils import Version, write_path, is_frozen, get_archipelago_json, tuplize_version
+from BaseUtils import (local_path, user_path, Version, version_tuple, tuplize_version,
+                       get_archipelago_json, mwgg_venv_site_packages, use_worlds_venv)
 from APContainer import APWorldContainer
+from pathlib import Path
 
-# Extend __path__ to include venv site-packages for namespace package behavior
-if is_frozen():
-    venv_worlds_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds")
+# Some imports are "unnecessary", but they may be imported by random world modules.
+
+# Extend __path__ to include python installed worlds for namespace package behavior.
+local_folder = Path(__file__).parent
+user_folder = None
+
+if use_worlds_venv():
+    user_folder = mwgg_venv_site_packages("worlds")
+    if user_folder not in __path__:
+        __path__.append(user_folder)
 else:
-    # Dev: pick up wheels that install_worlds() put in src/venv.
-    venv_worlds_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "venv", "Lib", "site-packages", "worlds"
-    )
-if os.path.exists(venv_worlds_path) and venv_worlds_path not in __path__:
-    __path__.append(venv_worlds_path)
+    from sysconfig import get_path
+    user_folder = os.path.join(get_path("purelib"), "worlds")
+    if user_folder not in __path__:
+        __path__.append(user_folder)
 
 __all__ = [
     "network_data_package",
     "network_data_package_single_game",
     "AutoWorldRegister",
     "world_sources",
+    "local_folder",
+    "user_folder",
     "failed_world_loads",
 ]
 
@@ -55,8 +64,12 @@ class WorldSource:
             self.time_taken = time.perf_counter()-start
             return True
 
-        except Exception as e:
-            # A single world failing can still mean enough is working for the user, log and carry on
+        except BaseException as e:
+            if isinstance(e, (KeyboardInterrupt, SystemExit)):
+                raise
+            # A single world failing can still mean enough is working for the user, log and carry on.
+            # Catches BaseException so C-extension panics (e.g. pyo3_runtime.PanicException) don't
+            # bring the whole process down.
             logging.warning(f"Could not load world {self}: {type(e).__name__}: {e}")
             logging.debug("Full traceback for %s:", self, exc_info=True)
             if isinstance(self.game_module, str):

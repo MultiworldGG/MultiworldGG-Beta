@@ -43,9 +43,9 @@ jobs:
       APP_VERSION: ${{ needs.version-input.outputs.version }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [windows-2025-vs2026, ubuntu-latest, macos-latest]
         include:
-          - os: windows-latest
+          - os: windows-2025-vs2026
             artifact_name: windows-exe
             exe_pattern: '*.exe'
           - os: ubuntu-latest
@@ -107,11 +107,20 @@ jobs:
           pip install -r requirements.txt
           pip install -r build_requirements.txt
       
+      - name: Mint mwgg-build-fetch App installation token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.MWGG_BUILD_APP_ID }}
+          private-key: ${{ secrets.MWGG_BUILD_APP_PRIVATE_KEY }}
+          owner: MultiworldGG
+          repositories: mwgg-gui,mwgg-tui,mwgg-splash
+
       - name: Build executable (Windows)
         if: runner.os == 'Windows'
         shell: bash
         env:
-          MWGG_BUILD_GITHUB_TOKEN: ${{ secrets.MWGG_BUILD_GITHUB_TOKEN }}
+          MWGG_BUILD_GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           source venv/Scripts/activate
           cd src
@@ -121,14 +130,14 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         env:
-          MWGG_BUILD_GITHUB_TOKEN: ${{ secrets.MWGG_BUILD_GITHUB_TOKEN }}
+          MWGG_BUILD_GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           source venv/bin/activate
           cd src
           python build_exe.py
       
       - name: Upload executable artifact
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact_name }}
           path: |
@@ -181,6 +190,23 @@ jobs:
           # git-pulled at first run by ModuleUpdate.install_mwgg_igdb(). Worlds
           # bundle directly from src/worlds/ source — no wheel install here.
 
+      - name: Mint mwgg-build-fetch App installation token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.MWGG_BUILD_APP_ID }}
+          private-key: ${{ secrets.MWGG_BUILD_APP_PRIVATE_KEY }}
+          owner: MultiworldGG
+          repositories: mwgg-gui,mwgg-tui,mwgg-splash
+
+      - name: Install sibling-repo wheels
+        env:
+          MWGG_BUILD_GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          source venv/bin/activate
+          cd src
+          python -c "import build_exe; import sys; sys.exit(0 if build_exe.install_wheels() else 1)"
+
       - name: Build AppImage
         run: |
           source venv/bin/activate
@@ -210,7 +236,7 @@ jobs:
           done
       
       - name: Upload AppImage artifact
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7
         with:
           name: linux-appimage
           path: src/dist/*.AppImage
@@ -262,6 +288,23 @@ jobs:
           # git-pulled at first run by ModuleUpdate.install_mwgg_igdb(). Worlds
           # bundle directly from src/worlds/ source — no wheel install here.
 
+      - name: Mint mwgg-build-fetch App installation token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.MWGG_BUILD_APP_ID }}
+          private-key: ${{ secrets.MWGG_BUILD_APP_PRIVATE_KEY }}
+          owner: MultiworldGG
+          repositories: mwgg-gui,mwgg-tui,mwgg-splash
+
+      - name: Install sibling-repo wheels
+        env:
+          MWGG_BUILD_GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          source venv/bin/activate
+          cd src
+          python -c "import build_exe; import sys; sys.exit(0 if build_exe.install_wheels() else 1)"
+
       - name: Build macOS bundle
         run: |
           source venv/bin/activate
@@ -300,7 +343,7 @@ jobs:
           done
       
       - name: Upload macOS bundle artifact
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7
         with:
           name: macos-bundle
           path: |
@@ -310,7 +353,7 @@ jobs:
   build-windows-installer:
     name: Build Windows Installer
     needs: [version-input, build-exe]
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     continue-on-error: true
     env:
       APP_VERSION: ${{ needs.version-input.outputs.version }}
@@ -378,7 +421,7 @@ jobs:
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" inno_setup.iss /DNO_SIGNTOOL
       
       - name: Upload Windows installer artifact
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7
         with:
           name: windows-installer
           path: src/setups/*.exe
@@ -388,6 +431,8 @@ jobs:
     name: Create GitHub Release
     needs: [version-input, build-exe, build-linux-appimage, build-mac-bundle, build-windows-installer]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     if: |
       always() && 
       (github.event_name == 'push' || inputs.create_release) &&

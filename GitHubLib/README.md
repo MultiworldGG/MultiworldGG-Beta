@@ -1,6 +1,6 @@
 # Oliver-Multiworld-Squirrel
 
-Webhook receiver for the `Oliver-Multiworld-Squirrel` GitHub App. Watches per-world repos for the `Create and Release Python Package` workflow to finish (i.e. `MultiworldGG/gen-pymod-release` has built the per-world wheel and uploaded it as an asset on the GitHub release), then opens a corresponding PR on `MultiworldGG-Index` updating `worlds/<slug>.json` to point at the wheel asset's `https://...whl#sha256=<hex>` URL.
+Webhook receiver for the `Oliver-Multiworld-Squirrel` GitHub App. Watches per-world repos for successful release workflows that call `MultiworldGG/gen-pymod-release/.github/workflows/build.yml` (i.e. `gen-pymod-release` has built the per-world wheel and uploaded it as an asset on the GitHub release), then opens a corresponding PR on `MultiworldGG-Index` updating `worlds/<slug>.json` to point at the wheel asset's `https://...whl#sha256=<hex>` URL.
 
 Oliver does NOT clone, build, or push to per-world repos. The build is done by the per-world repo's own workflow under its own `GITHUB_TOKEN`.
 
@@ -9,11 +9,10 @@ Oliver does NOT clone, build, or push to per-world repos. The build is done by t
 GitHub Apps have one global permission set per App. To keep the per-world install prompt strictly non-scary while still letting the bot write to the Index, Oliver is split into two App identities:
 
 - **Oliver-Multiworld-Squirrel** — installed on per-world repos AND the Index.
-  - Permissions: `Contents: Read`, `Actions: Read`, `Variables: Read`, `Pull requests: Read and write`, `Issues: Write`, `Metadata: Read`.
-  - **Subscribe to events:** **Workflow run** *only* (NOT "Release" — Oliver doesn't act on `release.*` payloads, only on `workflow_run.completed`).
+  - Permissions: `Contents: Read`, `Actions: Read`, `Pull requests: Read and write`, `Issues: Write`, `Metadata: Read`.
+  - **Subscribe to events:** **Workflow run** and **Release** (both `workflow_run.completed` and `release.published`).
   - On per-world repos: only the read-shaped permissions are exercised. `Pull requests: Read and write` and `Issues: Write` are unused there but visible at install time (acceptable trade-off — they're the bits Oliver uses on its Index installation).
   - On the Index installation: `Pull requests: Read and write` lets Oliver open and update the manifest PR; `Issues: Write` lets Oliver apply the `New APWorld` / `APWorld Update` labels via the Issues API (PR labels are managed through Issues endpoints).
-  - `Variables: Read` is required so Oliver can fetch `WORLD_FOLDER_NAME` from the per-world repo on each event. Without it, GitHub returns 403 "Resource not accessible by integration" and the event is recorded as `error`.
 - **Karen** — installed on **the Index only**.
   - Permissions: `Contents: Read and write`, `Metadata: Read`.
   - **Subscribe to events:** none (no webhook). Does the branch-create, manifest-commit, and CODEOWNERS append on the Index when Oliver tells her to. Also runs the Index's PR-review workflow under her installation token (Phase D — the APPROVE / REQUEST_CHANGES posting), but that is workflow-side, not Probot-handler-side.
@@ -30,8 +29,8 @@ The Oliver service holds both Apps' PEMs. On a webhook from a per-world repo, th
 ## How per-world authors use Oliver
 
 1. Install the **Oliver-Multiworld-Squirrel** GitHub App on the per-world repo (one click; only requests read permissions on the repo).
-2. Set a repository variable: Settings → Secrets and variables → Actions → Variables → New: `WORLD_FOLDER_NAME=<slug>` (e.g. `WORLD_FOLDER_NAME=clique`).
-3. Add `.github/workflows/make_pyproject.yml`:
+2. Add `.github/workflows/make_pyproject.yml` (the workflow name below is just
+   the easy-template default; custom release workflow names are fine):
 
    ```yaml
    name: Create and Release Python Package
@@ -46,25 +45,36 @@ The Oliver service holds both Apps' PEMs. On a webhook from a per-world repo, th
    jobs:
      publish:
        uses: MultiworldGG/gen-pymod-release/.github/workflows/build.yml@v3
-       # No `with:` — slug comes from vars.WORLD_FOLDER_NAME
+       # No `with:` needed on release events — slug comes from the release tag.
        # No `secrets:` — no Oliver secrets needed
    ```
 
-4. Cut a GitHub Release.
+3. Cut a GitHub Release tagged `<slug>-<world_version>`, for example `myclgm-1.0.0`.
 
 That's it. Within ~30s of the workflow finishing, Oliver opens a PR on the Index.
 
 ## What Oliver does on each event
 
-1. Receives `workflow_run.completed` webhook from the per-world repo.
-2. Filters on workflow name (`Create and Release Python Package`), event (`release`), and conclusion (`success`).
-3. Reads the `WORLD_FOLDER_NAME` repo variable to find the slug.
-4. Resolves `workflow_run.head_sha` to the matching release tag name.
-5. Looks up the release by tag and selects the single `.whl` asset, reading its `browser_download_url` and SHA256 `digest`. Bails (skip event `asset_digest_missing`) if the asset has no digest exposed.
-6. Authenticates as the App for `MultiworldGG/MultiworldGG-Index`, opens or updates a PR on `update/<slug>-<release_tag>` with `module_location = <browser_download_url>#sha256=<hex>` so pip verifies the bytes at install time (PEP 503).
-7. Logs the outcome (success / skip / error) to `/var/lib/oliver/events.jsonl`.
+Oliver handles two event paths that produce the same outcome (an Index PR). Both paths share the slug-parse → wheel-lookup → manifest-fetch → Index-PR logic in `src/handlers/shared.ts`.
 
-If any step 2–6 fails (no `WORLD_FOLDER_NAME` set, workflow concluded `failure`, wheel asset missing or has no digest, Oliver not installed on Index, etc.), Oliver writes a `skip` or `error` record to the JSONL log and returns 200 to GitHub. No issues are opened on the per-world repo or the Index — failures surface only on the `/status` page.
+### `release.published` (recommended for new repos)
+
+The author publishes a release whose assets are already attached (e.g. after dispatching the packaging workflow against a draft release). Oliver acts directly on the published release event:
+
+1. Receives `release.published` webhook from the per-world repo.
+2. Skips drafts (defensive; GitHub should not send `release.published` for drafts).
+3. Resolves the tag's commit SHA via the Git refs API.
+4. Parses the slug from the release tag prefix (`<slug>-<world_version>`).
+5. Fetches the release by tag; selects the single `.whl` asset and reads its `browser_download_url` + SHA256 `digest`. Bails if the digest is missing (`asset_digest_missing`).
+6. Fetches `worlds/<slug>/archipelago.json` at the tag's commit SHA.
+7. Opens or updates a PR on `MultiworldGG/MultiworldGG-Index` via `update/<slug>-<release_tag>` with `module_location = <browser_download_url>#sha256=<hex>`.
+8. Logs the outcome to `/var/lib/oliver/events.jsonl`.
+
+### `workflow_run.completed` (legacy / retained for compatibility)
+
+Fires after the per-world repo's packaging workflow finishes. Oliver only acts if the run references `MultiworldGG/gen-pymod-release/.github/workflows/build.yml`, was triggered by a `release` event, and concluded `success`. It then resolves the head SHA to a release tag and runs the same shared processing logic.
+
+If any step fails (bad release tag, no digest, Oliver not installed on the Index, etc.), Oliver writes a `skip` or `error` record to the JSONL log and returns 200 to GitHub. No issues are opened on the per-world repo or the Index — failures surface only on the `/status` page.
 
 ## Env vars
 
@@ -93,7 +103,7 @@ Each Index PR Oliver opens gets exactly one of two labels, applied by Karen via 
 
 Both labels must exist on the Index repo for the call to succeed. They are already present on `MultiworldGG/MultiworldGG-Index`; **do not delete or rename them**. If you need new labels, add them alongside — don't repurpose the existing two.
 
-The "new vs update" decision is independent of whether the PR itself is newly opened or being re-pushed for a later release of the same world: a re-push of `clique` after the world is already on `main` is always `APWorld Update`, even if Oliver is updating an existing PR rather than opening one.
+The "new vs update" decision is independent of whether the PR itself is newly opened or being re-pushed for a later release of the same world: a re-push of `myclgm` after the world is already on `main` is always `APWorld Update`, even if Oliver is updating an existing PR rather than opening one.
 
 ## CODEOWNERS auto-append (new worlds only)
 
@@ -187,7 +197,7 @@ Operator setup on the production host:
 3. Build + start the container (publishes 127.0.0.1:3000 only — not internet-reachable):
    ```
    docker compose -f docker-compose.yml up -d --build mwgg-github-bot
-   docker compose logs mwgg-github-bot  # verify "Oliver listening for workflow_run.completed events"
+   docker compose logs mwgg-github-bot  # verify "Oliver listening for workflow_run.completed and release.published events"
    ```
 
 4. Install the njs module + drop the validation script + webhook secret into place for nginx-edge HMAC validation:
@@ -219,7 +229,7 @@ Operator setup on the production host:
    The snippet listens on 443 with TLS, redirects 80→443, validates HMAC at the edge via njs, and proxies to `127.0.0.1:3000`.
 
 Verify end-to-end:
-- `docker compose logs mwgg-github-bot` shows "Oliver listening for workflow_run.completed events".
+- `docker compose logs mwgg-github-bot` shows "Oliver listening for workflow_run.completed and release.published events".
 - `curl https://oliver.multiworld.gg/probot` returns Probot's stock info page.
 - `curl https://oliver.multiworld.gg/status` returns the HTML status page (initially empty: "0 events in last 24h").
 - The GitHub App's "Recent Deliveries" panel shows 200 responses for test webhooks.
@@ -229,15 +239,17 @@ Verify end-to-end:
 ```
 GitHubLib/
 ├── src/
-│   ├── index.ts                Probot Server bootstrap (env loading, port binding)
-│   ├── app.ts                  Event registration; mounts /status route
-│   ├── handlers/workflow_run.ts  workflow_run.completed orchestrator (the main flow)
-│   ├── release-resolver.ts     resolves head_sha → release tag name
-│   ├── repo-vars.ts            reads `WORLD_FOLDER_NAME` repo variable
-│   ├── index-pr.ts             opens or updates the Index PR
-│   ├── event-log.ts            JSONL append-only logger + pino fan-out
-│   └── status-page.ts          GET /status HTML + JSON renderer
-├── test/                       Vitest tests
-├── Dockerfile                  multi-stage Node 20 alpine
+│   ├── index.ts                       Probot Server bootstrap (env loading, port binding)
+│   ├── app.ts                         Event registration; mounts /status route
+│   ├── handlers/
+│   │   ├── shared.ts                  Shared slug→wheel→manifest→Index-PR logic
+│   │   ├── workflow_run.ts            workflow_run.completed orchestrator (legacy path)
+│   │   └── release_published.ts      release.published orchestrator (recommended path)
+│   ├── release-resolver.ts            resolves head_sha → release tag; tag → commit SHA
+│   ├── index-pr.ts                    opens or updates the Index PR
+│   ├── event-log.ts                   JSONL append-only logger + pino fan-out
+│   └── status-page.ts                 GET /status HTML + JSON renderer
+├── test/                              Vitest tests
+├── Dockerfile                         multi-stage Node 20 alpine
 └── package.json
 ```

@@ -108,3 +108,17 @@ Imports from other files inside the APWorld have to use relative imports. e.g. `
 
 Imports from AP base have to use absolute imports, e.g. `from Options import Toggle` or
 `from worlds.AutoWorld import World`
+
+## Releasing your APWorld
+
+To publish your APWorld so users can pick it up automatically through MultiworldGG, see the
+**[MultiworldGG-Index docs site](https://lallaria.github.io/MultiworldGG-Index/)** for a step-by-step
+author guide. Pick the *"I want the easiest setup"* branch for the standard path, or the
+*"I want to write my own `pyproject.toml`"* branch if you need custom Python packaging.
+
+The **"Build APWorlds" Launcher Component** described above is the correct tool for **local builds
+and development**. **Release builds** run in GitHub Actions via the
+[`gen-pymod-release`](https://github.com/MultiworldGG/gen-pymod-release) reusable workflow, which
+produces both a `.whl` (consumed by the `MultiworldGG-Index` for automatic distribution) and
+optionally a `.apworld` (for users who prefer to install `.apworld` files directly into
+`custom_worlds/`).

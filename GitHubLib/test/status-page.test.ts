@@ -18,6 +18,13 @@ const fakeProbot = { log: fakeLogger } as any;
 
 type Handler = (req: any, res: any) => void;
 
+function botData(name: string) {
+  return {
+    name,
+    installations_count: 1,
+  } as any;
+}
+
 function makeRouter() {
   const handlers: Record<string, Handler> = {};
   return {
@@ -62,7 +69,7 @@ afterEach(() => {
 describe("status page (TODO #1 hardening)", () => {
   it("renders the new title and h1 and does not leak service-internal strings", () => {
     const router = makeRouter();
-    mountStatusRoutes(router as any, fakeProbot, "oliver-multiworld-squirrel", "karen-multiworld-bot");
+    mountStatusRoutes(router as any, fakeProbot, botData("oliver-multiworld-squirrel"), botData("karen-multiworld-bot"));
     const { body, headers } = captureHtml(router.handlers["/"]);
 
     expect(headers["Content-Type"]).toMatch(/text\/html/);
@@ -77,7 +84,7 @@ describe("status page (TODO #1 hardening)", () => {
 
   it("still renders the dynamic Oliver and Karen slugs", () => {
     const router = makeRouter();
-    mountStatusRoutes(router as any, fakeProbot, "some-oliver-slug", "some-karen-slug");
+    mountStatusRoutes(router as any, fakeProbot, botData("some-oliver-slug"), botData("some-karen-slug"));
     const { body } = captureHtml(router.handlers["/"]);
     expect(body).toContain("some-oliver-slug");
     expect(body).toContain("some-karen-slug");
@@ -85,7 +92,7 @@ describe("status page (TODO #1 hardening)", () => {
 
   it("still exposes the JSON endpoint with counts and events", () => {
     const router = makeRouter();
-    mountStatusRoutes(router as any, fakeProbot, "o", "k");
+    mountStatusRoutes(router as any, fakeProbot, botData("o"), botData("k"));
     const { body, headers } = captureHtml(router.handlers["/.json"]);
     expect(headers["Content-Type"]).toBe("application/json");
     const parsed = JSON.parse(body);

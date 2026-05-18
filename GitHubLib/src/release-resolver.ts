@@ -9,6 +9,34 @@ export class ReleaseNotFoundError extends Error {
   }
 }
 
+export class TagLookupError extends Error {
+  constructor(public readonly tagName: string) {
+    super(`Could not resolve commit SHA for tag '${tagName}'`);
+    this.name = "TagLookupError";
+  }
+}
+
+export async function resolveTagSha(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  tagName: string,
+): Promise<string> {
+  try {
+    const ref = await octokit.rest.git.getRef({ owner, repo, ref: `tags/${tagName}` });
+    const sha = ref.data.object.sha;
+    if (ref.data.object.type === "tag") {
+      const annotated = await octokit.rest.git.getTag({ owner, repo, tag_sha: sha });
+      return annotated.data.object.sha;
+    }
+    return sha;
+  } catch (err: unknown) {
+    const status = (err as { status?: number }).status;
+    if (status === 404) throw new TagLookupError(tagName);
+    throw err;
+  }
+}
+
 export async function resolveReleaseTagForSha(
   octokit: Octokit,
   owner: string,

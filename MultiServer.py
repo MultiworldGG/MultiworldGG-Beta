@@ -40,14 +40,14 @@ except ImportError:
 
 import NetUtils
 import Utils
-from Utils import version_tuple, restricted_loads, Version, async_start, write_path, get_intended_text, is_frozen
+from Utils import version_tuple, restricted_loads, Version, async_start, get_intended_text, use_worlds_venv, mwgg_venv_site_packages
 import os
 
-if is_frozen():
-    venv_site_packages_path = write_path("mwgg_venv", "Lib", "site-packages")
+if use_worlds_venv():
+    venv_site_packages_path = mwgg_venv_site_packages()
     if venv_site_packages_path not in sys.path:
         sys.path.append(venv_site_packages_path)
-    venv_worlds_path = write_path("mwgg_venv", "Lib", "site-packages", "worlds")
+    venv_worlds_path = mwgg_venv_site_packages("worlds")
     if os.path.exists(venv_worlds_path) and venv_worlds_path not in sys.path:
         sys.path.append(venv_worlds_path)
 
@@ -55,6 +55,10 @@ if is_frozen():
 # loader cascade can lazy-import GameIndex; if it's missing the ImportError is
 # uncaught and the server crashes. Mirrors WebHost.py's pattern.
 import ModuleUpdate
+
+# mwgg_igdb variant: "nr" | "ao" | "twelve" | "sixteen".
+INDEX_VARIANT = "ao"
+ModuleUpdate.set_variant(INDEX_VARIANT)
 ModuleUpdate.update()
 
 from NetUtils import Endpoint, ClientStatus, NetworkItem, decode, encode, NetworkPlayer, Permission, NetworkSlot, \

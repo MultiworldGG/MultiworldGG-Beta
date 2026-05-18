@@ -1,6 +1,8 @@
 workers = 2
 threads = 2
 wsgi_app = "WebHost:get_app()"
+# Import WSGI app once in the master before forking workers to download worlds.
+preload_app = True
 accesslog = "-"
 access_log_format = (
     '%({x-forwarded-for}i)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'

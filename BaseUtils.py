@@ -5,6 +5,7 @@ import logging
 import io
 import warnings
 import json
+from enum import IntFlag
 from pathlib import Path
 
 __all__ = ("Version", 
@@ -22,8 +23,12 @@ __all__ = ("Version",
            "output_path",
            "cache_path",
            "write_path",
+           "use_worlds_venv",
+           "mwgg_venv_site_packages",
+           "reload_application_options",
            "init_logging",
            "loglevel_mapping",
+           "WORLDS_EXIST",
            "ByValue")
 
 class Version(typing.NamedTuple):
@@ -134,6 +139,9 @@ reload_application_options()
 
 def is_frozen() -> bool:
     return typing.cast(bool, getattr(sys, 'frozen', False))
+
+def use_worlds_venv() -> bool:
+    return os.environ.get("MWGG_USE_WORLDS_VENV", "") or is_frozen()
 
 def local_path(*path: str) -> str:
     """
@@ -281,6 +289,21 @@ def write_path(*path: str) -> str:
         return os.path.join((Path.home() / ".local" / "share" / "MultiworldGG"), *path)
     else:
         raise RuntimeError("Unsupported platform")
+
+def mwgg_venv_site_packages(*path: str) -> str:
+    """Path under <write_path('mwgg_venv')>/<lib>/site-packages, where <lib> is
+    'Lib' on Windows and 'lib/python<X>.<Y>' on Linux/macOS"""
+    if is_windows:
+        lib_segments = ("Lib",)
+    else:
+        lib_segments = ("lib", f"python{sys.version_info.major}.{sys.version_info.minor}")
+    return write_path("mwgg_venv", *lib_segments, "site-packages", *path)
+
+class WORLDS_EXIST(IntFlag):
+    NOT_INSTALLED = 0b00
+    HAS_WORLDS = 0b01
+    UPDATED = 0b10
+    INSTALLED = HAS_WORLDS | UPDATED
 
 class ByValue:
     """
@@ -474,9 +497,7 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
     try:
         if is_frozen():
             # In frozen builds, worlds are installed as wheels in venv site-packages
-            # Use "Lib" on Windows, "lib" on Linux/macOS
-            lib_dir = "Lib" if is_windows else "lib"
-            archipelago_json_path = write_path("mwgg_venv", lib_dir, "site-packages", "worlds", world, "archipelago.json")
+            archipelago_json_path = mwgg_venv_site_packages("worlds", world, "archipelago.json")
             if not os.path.exists(archipelago_json_path):
                 # Fall back to local_path for worlds bundled with the executable
                 archipelago_json_path = local_path("lib", "worlds", world, "archipelago.json")
@@ -503,9 +524,7 @@ def get_apworld_manifest(world: str) -> dict[str, object]:
     try:
         if is_frozen():
             # In frozen builds, worlds are installed as wheels in venv site-packages
-            # Use "Lib" on Windows, "lib" on Linux/macOS
-            lib_dir = "Lib" if is_windows else "lib"
-            archipelago_json_path = write_path("mwgg_venv", lib_dir, "site-packages", "worlds", world, "archipelago.json")
+            archipelago_json_path = mwgg_venv_site_packages("worlds", world, "archipelago.json")
             if not os.path.exists(archipelago_json_path):
                 # Fall back to local_path for worlds bundled with the executable
                 archipelago_json_path = local_path("lib", "worlds", world, "archipelago.json")

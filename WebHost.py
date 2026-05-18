@@ -3,9 +3,16 @@ import os
 import multiprocessing
 import logging
 import typing
-import ModuleUpdate
+from pathlib import Path
 
-ModuleUpdate.requirements_files.add(os.path.join("WebHostLib", "requirements.txt"))
+import ModuleUpdate
+from BaseUtils import local_path
+
+ModuleUpdate.requirements_files.add(Path(local_path("WebHostLib", "requirements.txt")))
+
+# mwgg_igdb variant: "nr" | "ao" | "twelve" | "sixteen".
+INDEX_VARIANT = "ao"
+ModuleUpdate.set_variant(INDEX_VARIANT)
 ModuleUpdate.update()
 
 # in case app gets imported by something like gunicorn
@@ -28,7 +35,7 @@ def get_app() -> "Flask":
     # set_game_names must be called before any `import worlds` cascade, so the
     # narrow loader populates the full slug set on first import.
     from mwgg_igdb import GameIndex
-    Utils.set_game_names(list(GameIndex.game_names.keys()))
+    Utils.set_game_names(list(GameIndex.game_names.keys()), strict=False)
 
     from WebHostLib import register, cache, app as raw_app
     from WebHostLib.models import db
@@ -156,8 +163,11 @@ if __name__ == "__main__":
     except Exception as e:
         logging.warning("Could not update LttP sprites: %s", e)
     app = get_app()
+
     from worlds import AutoWorldRegister, network_data_package
     # Update to only valid WebHost worlds
+    ModuleUpdate.record_worlds_update()
+
     invalid_worlds = {name for name, world in AutoWorldRegister.world_types.items()
                       if not hasattr(world.web, "tutorials")}
     if invalid_worlds:

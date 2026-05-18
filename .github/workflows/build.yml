@@ -3,20 +3,20 @@
 name: Build
 
 on:
-  push:
-    paths:
-      - '.github/workflows/build.yml'
-      - 'setup.py'
-      - 'requirements.txt'
-      - '*.iss'
-      - 'worlds/*/archipelago.json'
-  pull_request:
-    paths:
-      - '.github/workflows/build.yml'
-      - 'setup.py'
-      - 'requirements.txt'
-      - '*.iss'
-      - 'worlds/*/archipelago.json'
+  # push:
+  #   paths:
+  #     - '.github/workflows/build.yml'
+  #     - 'setup.py'
+  #     - 'requirements.txt'
+  #     - '*.iss'
+  #     - 'worlds/*/archipelago.json'
+  # pull_request:
+  #   paths:
+  #     - '.github/workflows/build.yml'
+  #     - 'setup.py'
+  #     - 'requirements.txt'
+  #     - '*.iss'
+  #     - 'worlds/*/archipelago.json'
   workflow_dispatch:
 
 env:
@@ -37,7 +37,7 @@ jobs:
   # build-release-macos: # LF volunteer
 
   build-win: # RCs and releases may still be built and signed by hand
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     steps:
       # - copy code below to release.yml -
       - uses: actions/checkout@v6
@@ -111,7 +111,7 @@ jobs:
           cp Players/Templates/VVVVVV.yaml Players/
           timeout 30 ./MultiworldGGGenerate
       - name: Store 7z
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.ZIP_NAME }}
           path: dist/${{ env.ZIP_NAME }}
@@ -119,7 +119,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7  # keep for 7 days, should be enough
       - name: Store Setup
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.SETUP_NAME }}
           path: setups/${{ env.SETUP_NAME }}
@@ -210,14 +210,14 @@ jobs:
           cp Players/Templates/VVVVVV.yaml Players/
           timeout 30 ./MultiworldGGGenerate
       - name: Store AppImage
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.APPIMAGE_NAME }}
           path: dist/${{ env.APPIMAGE_NAME }}
           if-no-files-found: error
           retention-days: 7
       - name: Store .tar.gz
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.TAR_NAME }}
           path: dist/${{ env.TAR_NAME }}
@@ -302,7 +302,7 @@ jobs:
         shell: bash
         run: |
           cd build/exe*
-          cp Players/Templates/Clique.yaml Players/
+          cp Players/Templates/MyCoolGame.yaml Players/
           gtimeout 30 ./MultiworldGGGenerate
 
       - name: Create DMG with dmgbuild
@@ -312,7 +312,7 @@ jobs:
             "build/MultiworldGG_v${{ env.APP_VERSION }}.dmg"
 
       - name: Store DMG file
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7
         with:
           name: MultiworldGG_v${{ env.APP_VERSION }}.dmg
           path: build/MultiworldGG_v${{ env.APP_VERSION }}.dmg

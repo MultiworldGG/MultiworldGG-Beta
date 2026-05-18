@@ -17,8 +17,10 @@ from .cli import CLI
 UPLOAD_FOLDER = os.path.relpath('uploads')
 LOGS_FOLDER = os.path.relpath('logs')
 os.makedirs(LOGS_FOLDER, exist_ok=True)
-LOBBY_APWORLD_FOLDER = os.path.join(UPLOAD_FOLDER, "lobby_apworlds")                                                   
+LOBBY_APWORLD_FOLDER = os.path.join(UPLOAD_FOLDER, "lobby_apworlds")
 os.makedirs(LOBBY_APWORLD_FOLDER, exist_ok=True)
+AVATAR_UPLOAD_FOLDER = os.path.join(UPLOAD_FOLDER, "avatars")
+os.makedirs(AVATAR_UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
 Pony(app)
@@ -75,6 +77,13 @@ app.config["CACHE_KEY_PREFIX"] = "multiworld_"
 app.config["HOST_ADDRESS"] = ""
 app.config["ASSET_RIGHTS"] = False
 app.config["MONITORING_ADMIN_TOKEN"] = None  # Admin token for monitoring API endpoints
+
+# Profile-picture uploader (see WebHostLib/api/avatar.py)
+app.config["AVATAR_UPLOAD_FOLDER"] = os.path.abspath(AVATAR_UPLOAD_FOLDER)
+app.config["AVATAR_PUBLIC_BASE_URL"] = ""        # empty -> derive from request.host_url
+app.config["AVATAR_MAX_UPLOAD_BYTES"] = 5 * 1024 * 1024
+app.config["AVATAR_MAX_PIXELS"] = 4_000_000
+app.config["AVATAR_OUTPUT_DIM"] = 512
 
 cache = Cache()
 Compress(app)
