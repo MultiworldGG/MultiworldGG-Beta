@@ -175,7 +175,21 @@ jobs:
         with:
           name: linux-exe
           path: src/build/
-      
+
+      - name: Create Linux tarball
+        run: |
+          cd src/build
+          tar -czvf "MultiworldGG-${APP_VERSION}-linux-x86_64.tar.gz" *
+          mkdir -p ../dist
+          mv *.tar.gz ../dist/
+
+      - name: Upload Linux tarball artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-tarball
+          path: src/dist/*.tar.gz
+          retention-days: 90
+
       - name: Create virtual environment
         run: |
           python -m venv venv
@@ -461,6 +475,7 @@ jobs:
           
           ### Linux
           - **AppImage**: `*.AppImage` (recommended)
+          - **Tarball**: `*.tar.gz` (portable, no fuse required)
           - **Portable**: Extract from `linux-exe.zip`
           
           ### macOS
@@ -499,6 +514,7 @@ jobs:
           files: |
             release-artifacts/windows-installer/*.exe
             release-artifacts/linux-appimage/*.AppImage
+            release-artifacts/linux-tarball/*.tar.gz
             release-artifacts/macos-bundle/*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
