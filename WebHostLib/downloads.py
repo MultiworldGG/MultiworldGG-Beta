@@ -3,10 +3,10 @@ import zipfile
 from io import BytesIO
 
 from flask import send_file, Response, render_template
-from pony.orm import select
+from sqlalchemy import select
 
 from . import app, cache
-from .models import Slot, Room, Seed
+from .models import Slot, Room, Seed, db
 
 
 @app.route("/dl_patch/<suuid:room_id>/<int:patch_id>")
@@ -17,6 +17,8 @@ def download_patch(room_id, patch_id):
         return "Patch not found"
     else:
         room = Room.get(id=room_id)
+        if not room:
+            return "Room not found"
         last_port = room.last_port
         filelike = BytesIO(patch.data)
         greater_than_version_3 = zipfile.is_zipfile(filelike)
@@ -53,8 +55,11 @@ def download_spoiler(seed_id):
 @app.route("/slot_file/<suuid:room_id>/<int:player_id>")
 def download_slot_file(room_id, player_id: int):
     room = Room.get(id=room_id)
-    slot_data: Slot = select(patch for patch in room.seed.slots if
-                             patch.player_id == player_id).first()
+    if not room:
+        return "Room not found"
+    slot_data: Slot = db.session.scalars(
+        select(Slot).where(Slot.seed_id == room.seed_id, Slot.player_id == player_id).limit(1)
+    ).first()
 
     if not slot_data:
         return "Slot Data not found"

@@ -9,7 +9,6 @@ from flask import Flask, session
 from flask_caching import Cache
 from flask_compress import Compress
 from flask_limiter import Limiter
-from pony.flask import Pony
 from werkzeug.routing import BaseConverter
 
 from Utils import title_sorted, get_file_safe_name,world_list_sorted, set_game_names
@@ -29,7 +28,6 @@ AVATAR_UPLOAD_FOLDER = os.path.join(UPLOAD_FOLDER, "avatars")
 os.makedirs(AVATAR_UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
-Pony(app)
 
 _dynamic_tracker_lock = threading.Lock()
 _dynamic_tracker_registered = False
@@ -74,12 +72,17 @@ app.config['HIDDEN_WEBWORLDS'] = ["Super Mario World", "Sonic Adventure 2 Battle
 # waitress uses one thread for I/O, these are for processing of views that then get sent
 # multiworld.gg uses gunicorn + nginx; ignoring this option
 app.config["WAITRESS_THREADS"] = 10
-# a default that just works. multiworld.gg runs on postgresql
+# a default that just works. multiworld.gg runs on postgresql.
+# PONY key kept for backward-compatibility with config.yaml files;
+# get_app() in WebHost.py converts it to SQLALCHEMY_DATABASE_URI.
 app.config["PONY"] = {
     'provider': 'sqlite',
     'filename': os.path.abspath('ap.db3'),
     'create_db': True
 }
+# flask-sqlalchemy configuration — populated by get_app() from the PONY dict
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.abspath('ap.db3')}"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["MAX_ROLL"] = 20
 app.config["CACHE_TYPE"] = "SimpleCache"
 app.config["CACHE_DEFAULT_TIMEOUT"] = 300  # 5 minutes default

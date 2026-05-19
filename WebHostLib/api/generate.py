@@ -3,13 +3,12 @@ from uuid import UUID
 
 from flask import request, session, url_for
 from markupsafe import Markup
-from pony.orm import commit
 
 from Utils import restricted_dumps
 from WebHostLib import app
 from WebHostLib.check import get_yaml_data, roll_options
 from WebHostLib.generate import get_meta
-from WebHostLib.models import Generation, STATE_QUEUED, Seed, STATE_ERROR
+from WebHostLib.models import Generation, STATE_QUEUED, Seed, STATE_ERROR, commit
 from . import api_endpoints
 
 

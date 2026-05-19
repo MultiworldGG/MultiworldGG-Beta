@@ -8,13 +8,13 @@ from typing import Any, IO, Dict, Iterator, List, Tuple, Union, TYPE_CHECKING
 
 import jinja2.exceptions
 from flask import request, redirect, url_for, render_template, Response, session, abort, send_from_directory
-from pony.orm import count, commit, db_session
+from sqlalchemy import select, func
 from werkzeug.utils import secure_filename
 from Utils import __version__
 
 from . import app, cache
 from .markdown import render_markdown
-from .models import Seed, Room, Command, UUID, uuid4
+from .models import Seed, Room, Command, UUID, uuid4, db, commit
 from Utils import title_sorted, utcnow
 
 if TYPE_CHECKING:
@@ -266,7 +266,11 @@ def view_seed(seed: UUID):
     seed = Seed.get(id=seed)
     if not seed:
         abort(404)
-    return render_template("viewSeed.html", seed=seed, slot_count=count(seed.slots))
+    from .models import Slot
+    slot_count = db.session.scalar(
+        select(func.count()).select_from(Slot).where(Slot.seed_id == seed.id)
+    ) or 0
+    return render_template("viewSeed.html", seed=seed, slot_count=slot_count)
 
 
 @app.route('/new_room/<suuid:seed>')
@@ -274,7 +278,7 @@ def new_room(seed: UUID):
     seed = Seed.get(id=seed)
     if not seed:
         abort(404)
-    room = Room(seed=seed, owner=session["_id"], tracker=uuid4())
+    room = Room(seed_id=seed.id, owner=session["_id"], tracker=uuid4())
     commit()
     return redirect(url_for("host_room", room=room.id))
 
@@ -334,7 +338,7 @@ def host_room_command(room: UUID):
     if room.owner == session["_id"]:
         cmd = request.form["cmd"]
         if cmd:
-            Command(room=room, commandtext=cmd)
+            Command(room_id=room.id, commandtext=cmd)
             commit()
     return redirect(url_for("host_room", room=room.id))
 
@@ -352,9 +356,9 @@ def host_room(room: UUID):
         or room.last_activity < now - datetime.timedelta(seconds=room.timeout)
     )
     if now - room.last_activity > datetime.timedelta(minutes=1):
-        # we only set last_activity if needed, otherwise parallel access on /room will cause an internal server error
-        # due to "pony.orm.core.OptimisticCheckError: Object Room was updated outside of current transaction"
+        # we only set last_activity if needed to avoid concurrent-write conflicts
         room.last_activity = now  # will trigger a spinup, if it's not already running
+        commit()
 
     browser_tokens = "Mozilla", "Chrome", "Safari"
     automated = ("update" in request.args

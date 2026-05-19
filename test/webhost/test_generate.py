@@ -14,8 +14,8 @@ class TestGenerate(TestBase):
         with self.app.app_context(), self.app.test_request_context():
             yaml_data = """
             name: Player1
-            game: MultiworldGG
-            MultiworldGG: {}
+            game: Archipelago
+            Archipelago: {}
             """
             response = self.client.post(url_for("generate"),
                                         data={"file": (BytesIO(yaml_data.encode("utf-8")), "test.yaml")},
@@ -40,7 +40,7 @@ class TestGenerate(TestBase):
                                         follow_redirects=True)
             self.assertIn("user-message", response.text,
                           "Request did not call flash()")
-            self.assertIn("not find any valid files", response.text,
+            self.assertIn("not find any valid YAML files", response.text,
                           "Response shows unexpected error")
             self.assertIn("generate-game-form", response.text,
                           "Response did not get user back to the form")
@@ -58,8 +58,8 @@ class TestGenerate(TestBase):
         with self.app.app_context(), self.app.test_request_context():
             yaml_data = "---\n".join([
                 f"name: Player{n}\n"
-                "game: MultiworldGG\n"
-                "MultiworldGG: {}\n"
+                "game: Archipelago\n"
+                "Archipelago: {}\n"
                 for n in range(1, max_roll + 2)
             ])
             response = self.client.post(url_for("generate"),

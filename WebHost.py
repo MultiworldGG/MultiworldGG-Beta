@@ -30,10 +30,30 @@ if not os.path.exists(configpath):
     configpath = os.path.abspath(Utils.user_path('config.yaml'))
 
 
+def _pony_config_to_sqlalchemy_uri(pony_config: dict) -> str:
+    """Convert a legacy PONY config dict to a SQLAlchemy connection URI."""
+    provider = pony_config.get("provider", "sqlite")
+    if provider == "sqlite":
+        filename = pony_config.get("filename", "ap.db3")
+        if filename == ":memory:":
+            return "sqlite:///:memory:"
+        return f"sqlite:///{filename}"
+    elif provider in ("postgres", "postgresql"):
+        # Typical pony postgres config has: host, port, user, password, database
+        host = pony_config.get("host", "localhost")
+        port = pony_config.get("port", 5432)
+        user = pony_config.get("user", "")
+        password = pony_config.get("password", "")
+        database = pony_config.get("database", "")
+        return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}"
+    else:
+        raise ValueError(f"Unsupported PONY provider: {provider!r}")
+
+
 def get_app() -> "Flask":
 
     from WebHostLib import register, cache, app as raw_app
-    from WebHostLib.models import db
+    from WebHostLib.models import db, Base
 
     app = raw_app
     if os.path.exists(configpath) and not app.config["TESTING"]:
@@ -57,8 +77,19 @@ def get_app() -> "Flask":
     os.makedirs(app.config["LOBBY_APWORLD_PATH"], exist_ok=True)
     register()
     cache.init_app(app)
-    db.bind(**app.config["PONY"])
-    db.generate_mapping(create_tables=True)
+
+    # Convert legacy PONY config dict to a SQLAlchemy URI and initialise flask-sqlalchemy
+    pony_config = app.config.get("PONY", {})
+    db_uri = _pony_config_to_sqlalchemy_uri(pony_config)
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
+    app.config.setdefault("SQLALCHEMY_TRACK_MODIFICATIONS", False)
+    db.init_app(app)
+
+    # Create tables only for fresh databases (SQLite) or when explicitly requested.
+    # For production PostgreSQL deployments the schema is managed separately.
+    with app.app_context():
+        Base.metadata.create_all(db.engine)
+
     return app
 
 

@@ -11,7 +11,8 @@ from threading import Event, Thread
 from typing import Any
 from uuid import UUID
 
-from pony.orm import db_session, select, commit, PrimaryKey, desc
+from sqlalchemy import create_engine, select, desc
+from sqlalchemy.orm import Session
 
 from Utils import restricted_loads, utcnow
 from .locker import Locker, AlreadyRunningException
@@ -30,6 +31,14 @@ def stop() -> None:
 # Track in-flight generations with their start time for stuck detection
 _in_flight_generations: dict[UUID, datetime] = {}
 _in_flight_lock = __import__('threading').Lock()
+
+# Engine shared within this process (set by init_generator or _get_engine)
+_engine = None
+
+
+def _get_engine():
+    global _engine
+    return _engine
 
 
 def _mark_generation_complete(gen_id: UUID) -> None:
@@ -116,7 +125,7 @@ def _mp_gen_game(
     owner=None,
     sid=None,
     timeout: int|None = None,
-) -> PrimaryKey | None:
+) -> Any:
     from setproctitle import setproctitle
     from .generate import gen_game
 
@@ -146,7 +155,6 @@ def launch_generator(pool: multiprocessing.pool.Pool, generation: Generation, ti
         )
     except Exception as e:
         generation.state = STATE_ERROR
-        commit()
         logging.exception(e)
     else:
         generation.state = STATE_STARTED
@@ -154,6 +162,7 @@ def launch_generator(pool: multiprocessing.pool.Pool, generation: Generation, ti
 
 
 def init_generator(config: dict[str, Any]) -> None:
+    global _engine
     from setproctitle import setproctitle
 
     setproctitle("Generator (idle)")
@@ -172,40 +181,68 @@ def init_generator(config: dict[str, Any]) -> None:
         del resource, soft_limit, hard_limit
 
     pony_config = config["PONY"]
-    db.bind(**pony_config)
-    db.generate_mapping()
+    from WebHost import _pony_config_to_sqlalchemy_uri
+    db_uri = _pony_config_to_sqlalchemy_uri(pony_config)
+    _engine = create_engine(db_uri)
 
 
 def cleanup():
     """delete unowned user-content and expired lobbies"""
-    with db_session:
+    engine = _get_engine()
+    with Session(engine) as session:
         # >>> bool(uuid.UUID(int=0))
         # True
-        rooms = Room.select(lambda room: room.owner == UUID(int=0)).delete(bulk=True)
-        seeds = Seed.select(lambda seed: seed.owner == UUID(int=0) and not seed.rooms).delete(bulk=True)
-        slots = Slot.select(lambda slot: not slot.seed).delete(bulk=True)
-        # Command gets deleted by ponyorm Cascade Delete, as Room is Required
-    if rooms or seeds or slots:
-        logging.info(f"{rooms} Rooms, {seeds} Seeds and {slots} Slots have been deleted.")
+        null_owner = UUID(int=0)
+        rooms_to_delete = session.scalars(
+            select(Room).where(Room.owner == null_owner)
+        ).all()
+        rooms_count = len(rooms_to_delete)
+        for room in rooms_to_delete:
+            session.delete(room)
+
+        seeds_to_delete = session.scalars(
+            select(Seed).where(Seed.owner == null_owner)
+        ).all()
+        seeds_count = 0
+        for seed in seeds_to_delete:
+            # Only delete if no rooms reference this seed
+            if not session.scalars(select(Room).where(Room.seed_id == seed.id).limit(1)).first():
+                session.delete(seed)
+                seeds_count += 1
+
+        slots_to_delete = session.scalars(
+            select(Slot).where(Slot.seed_id == None)
+        ).all()
+        slots_count = len(slots_to_delete)
+        for slot in slots_to_delete:
+            session.delete(slot)
+        # Command gets cascade-deleted when Room is deleted
+        session.commit()
+
+    if rooms_count or seeds_count or slots_count:
+        logging.info(f"{rooms_count} Rooms, {seeds_count} Seeds and {slots_count} Slots have been deleted.")
 
     # Clean up expired lobbies (closed for > 1 hour) and done lobbies (> 3 days old)
-    with db_session:
+    engine = _get_engine()
+    with Session(engine) as session:
         now = utcnow()
         closed_cutoff = now - timedelta(hours=1)
         done_cutoff = now - timedelta(days=3)
-        stale_lobbies = Lobby.select(
-            lambda l: (l.state == LOBBY_CLOSED and l.last_activity < closed_cutoff) or
-                      (l.state == LOBBY_DONE and l.last_activity < done_cutoff)
-        )[:]
+        stale_lobbies = session.scalars(
+            select(Lobby).where(
+                ((Lobby.state == LOBBY_CLOSED) & (Lobby.last_activity < closed_cutoff)) |
+                ((Lobby.state == LOBBY_DONE) & (Lobby.last_activity < done_cutoff))
+            )
+        ).all()
         lobby_apworld_root = _get_lobby_apworld_root()
         for lobby in stale_lobbies:
             request_paths = [r.storage_path for r in lobby.apworld_requests]
             apworld_paths = [a.storage_path for a in lobby.apworlds]
 
             for r in list(lobby.apworld_requests):
-                r.delete()
+                session.delete(r)
             for a in list(lobby.apworlds):
-                a.delete()
+                session.delete(a)
 
             lobby_apworld_dir = (
                 os.path.join(lobby_apworld_root, str(lobby.id))
@@ -219,17 +256,12 @@ def cleanup():
                         os.unlink(path)
                     except OSError:
                         pass
-            # Clear player references on messages first, then delete in dependency order
+            # Clear player references on messages first (messages are cascade-deleted by lobby)
             for m in lobby.messages:
-                m.player = None
-            for y in lobby.yamls:
-                y.delete()
-            for m in lobby.messages:
-                m.delete()
-            for p in lobby.players:
-                p.delete()
-            lobby.delete()
+                m.player_id = None
+            session.delete(lobby)
         if stale_lobbies:
+            session.commit()
             logging.info(f"{len(stale_lobbies)} stale lobbies cleaned up.")
 
     _cleanup_stale_preview_files()
@@ -237,27 +269,35 @@ def cleanup():
 
 def expire_lobbies():
     """Expire lobbies that have been inactive beyond their timeout."""
-    with db_session:
+    engine = _get_engine()
+    with Session(engine) as session:
         now = utcnow()
-        stale_lobbies = Lobby.select(
-            lambda l: l.state in (LOBBY_OPEN, LOBBY_LOCKED, LOBBY_GENERATING)
-        )[:]
+        stale_lobbies = session.scalars(
+            select(Lobby).where(Lobby.state.in_([LOBBY_OPEN, LOBBY_LOCKED, LOBBY_GENERATING]))
+        ).all()
         expired_count = 0
         for lobby in stale_lobbies:
             if now - lobby.last_activity > timedelta(minutes=lobby.timeout_minutes):
                 lobby.state = LOBBY_CLOSED
                 expired_count += 1
         if expired_count:
-            commit()
+            session.commit()
             logging.info(f"{expired_count} lobbies expired due to inactivity.")
     _cleanup_stale_preview_files()
 
 
 def autohost(config: dict):
     def keep_running():
+        global _engine
         stop_event = _stop_event
         try:
             with Locker("autohost"):
+                # Set up engine for this thread
+                pony_config = config["PONY"]
+                from WebHost import _pony_config_to_sqlalchemy_uri
+                db_uri = _pony_config_to_sqlalchemy_uri(pony_config)
+                _engine = create_engine(db_uri)
+
                 cleanup()
                 hosters = []
                 for x in range(config["HOSTERS"]):
@@ -268,13 +308,15 @@ def autohost(config: dict):
                 last_lobby_check = utcnow()
 
                 while not stop_event.wait(0.1):
-                    with db_session:
-                        rooms = select(
-                            room for room in Room if
-                            room.last_activity >= utcnow() - timedelta(
-                                seconds=config["MAX_ROOM_TIMEOUT"])).order_by(desc(Room.last_port))
+                    with Session(_engine) as session:
+                        max_timeout = config["MAX_ROOM_TIMEOUT"]
+                        rooms = session.scalars(
+                            select(Room)
+                            .where(Room.last_activity >= utcnow() - timedelta(seconds=max_timeout))
+                            .order_by(desc(Room.last_port))
+                        ).all()
                         for room in rooms:
-                            # we have to filter twice, as the per-room timeout can't currently be PonyORM transpiled.
+                            # we have to filter twice, as per-room timeout can't be expressed in one query
                             if room.last_activity >= utcnow() - timedelta(seconds=room.timeout + 5):
                                 hosters[room.id.int % len(hosters)].start_room(room.id)
 
@@ -295,9 +337,15 @@ def autohost(config: dict):
 
 def autogen(config: dict):
     def keep_running():
+        global _engine
         stop_event = _stop_event
         try:
             with Locker("autogen"):
+                # Set up engine for this thread
+                pony_config = config["PONY"]
+                from WebHost import _pony_config_to_sqlalchemy_uri
+                db_uri = _pony_config_to_sqlalchemy_uri(pony_config)
+                _engine = create_engine(db_uri)
 
                 with multiprocessing.Pool(config["GENERATORS"], initializer=init_generator,
                                           initargs=(config,), maxtasksperchild=10) as generator_pool:
@@ -307,20 +355,27 @@ def autogen(config: dict):
                     stuck_threshold = timedelta(seconds=(job_time * 3))
                     last_stuck_check = utcnow()
 
-                    with db_session:
-                        to_start = select(generation for generation in Generation if generation.state == STATE_STARTED)
+                    with Session(_engine) as session:
+                        to_start = session.scalars(
+                            select(Generation).where(Generation.state == STATE_STARTED)
+                        ).all()
 
                         if to_start:
                             logging.info("Resuming generation")
                             for generation in to_start:
-                                sid = Seed.get(id=generation.id)
+                                sid = session.get(Seed, generation.id)
                                 if sid:
-                                    generation.delete()
+                                    session.delete(generation)
                                 else:
                                     launch_generator(generator_pool, generation, timeout=job_time)
 
-                            commit()
-                        select(generation for generation in Generation if generation.state == STATE_ERROR).delete()
+                            # Delete error-state generations
+                            error_gens = session.scalars(
+                                select(Generation).where(Generation.state == STATE_ERROR)
+                            ).all()
+                            for g in error_gens:
+                                session.delete(g)
+                            session.commit()
 
                     while not stop_event.wait(0.1):
                         try:
@@ -331,9 +386,9 @@ def autogen(config: dict):
                                 last_stuck_check = now
                                 stuck_ids = _get_stuck_generations(stuck_threshold)
                                 if stuck_ids:
-                                    with db_session:
+                                    with Session(_engine) as session:
                                         for gid in stuck_ids:
-                                            gen = Generation.get(id=gid)
+                                            gen = session.get(Generation, gid)
                                             if gen is not None and gen.state == STATE_STARTED:
                                                 # Worker died without completing - mark as error
                                                 logging.warning(f"Generation {gid} appears stuck (worker may have died), marking as error")
@@ -342,15 +397,19 @@ def autogen(config: dict):
                                                 meta["error"] = "Generation worker died unexpectedly. Please try again."
                                                 gen.meta = json.dumps(meta)
                                             _mark_generation_complete(gid)
-                                        commit()
+                                        session.commit()
 
-                            with db_session:
-                                # for update locks the database row(s) during transaction, preventing writes from elsewhere
-                                to_start = select(
-                                    generation for generation in Generation
-                                    if generation.state == STATE_QUEUED).for_update()
+                            with Session(_engine) as session:
+                                # for_update locks the database row(s) during transaction
+                                to_start = session.scalars(
+                                    select(Generation)
+                                    .where(Generation.state == STATE_QUEUED)
+                                    .with_for_update()
+                                ).all()
                                 for generation in to_start:
                                     launch_generator(generator_pool, generation, timeout=job_time)
+                                if to_start:
+                                    session.commit()
                         except Exception as e:
                             logging.exception(e)
                             stop_event.wait(5)
@@ -391,7 +450,7 @@ class MultiworldInstance():
         """Check if process should be restarted to reload fresh APWorld data"""
         if not self.process_start_time:
             return False
-        
+
         time_for_restart = utcnow() - self.process_start_time > self.restart_interval
         is_idle = len(self.room_ids) == 0
         return time_for_restart and is_idle
@@ -432,5 +491,5 @@ class MultiworldInstance():
         self.process = None
 
 
-from .models import Room, Generation, STATE_QUEUED, STATE_STARTED, STATE_ERROR, db, Seed, Slot, Lobby, LobbyApworld, LOBBY_OPEN, LOBBY_GENERATING, LOBBY_CLOSED, LOBBY_DONE, LOBBY_LOCKED
+from .models import Room, Generation, STATE_QUEUED, STATE_STARTED, STATE_ERROR, Seed, Slot, Lobby, LobbyApworld, LOBBY_OPEN, LOBBY_GENERATING, LOBBY_CLOSED, LOBBY_DONE, LOBBY_LOCKED
 from .customserver import run_server_process, get_static_server_data

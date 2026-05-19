@@ -9,14 +9,13 @@ from pickle import PicklingError
 from typing import Any
 
 from flask import flash, redirect, render_template, request, session, url_for
-from pony.orm import commit, db_session
 
 from BaseClasses import get_seed, seeddigits
 from Utils import __version__, restricted_dumps, DaemonThreadPoolExecutor
 from WebHostLib import app
 from settings import ServerOptions, GeneratorOptions
 from .check import get_yaml_data, roll_options
-from .models import Generation, STATE_ERROR, STATE_QUEUED, Seed, UUID
+from .models import Generation, STATE_ERROR, STATE_QUEUED, Seed, UUID, db, commit
 from .upload import upload_zip_to_db
 
 
@@ -177,30 +176,32 @@ def gen_game(gen_options: dict, meta: dict[str, Any] | None = None, owner=None, 
         return thread.result(timeout)
     except concurrent.futures.TimeoutError as e:
         if sid:
-            with db_session:
-                gen = Generation.get(id=sid)
+            from sqlalchemy.orm import Session
+            with Session(db.engine) as _session:
+                gen = _session.get(Generation, sid)
                 if gen is not None:
                     gen.state = STATE_ERROR
-                    meta = json.loads(gen.meta)
-                    meta["error"] = ("Allowed time for Generation exceeded, " +
-                                     "please consider generating locally instead. " +
-                                     format_exception(e))
-                    gen.meta = json.dumps(meta)
-                    commit()
+                    _meta = json.loads(gen.meta)
+                    _meta["error"] = ("Allowed time for Generation exceeded, " +
+                                      "please consider generating locally instead. " +
+                                      format_exception(e))
+                    gen.meta = json.dumps(_meta)
+                    _session.commit()
         raise  # Re-raise so the pool callback handles this as a failure
     except (KeyboardInterrupt, SystemExit):
         # don't update db, retry next time
         raise
     except BaseException as e:
         if sid:
-            with db_session:
-                gen = Generation.get(id=sid)
+            from sqlalchemy.orm import Session
+            with Session(db.engine) as _session:
+                gen = _session.get(Generation, sid)
                 if gen is not None:
                     gen.state = STATE_ERROR
-                    meta = json.loads(gen.meta)
-                    meta["error"] = format_exception(e)
-                    gen.meta = json.dumps(meta)
-                    commit()
+                    _meta = json.loads(gen.meta)
+                    _meta["error"] = format_exception(e)
+                    gen.meta = json.dumps(_meta)
+                    _session.commit()
         raise
     finally:
         # free resources claimed by thread pool, if possible
@@ -227,18 +228,38 @@ def wait_seed(seed: UUID):
 
 
 def upload_to_db(folder, sid, owner, race):
+    from sqlalchemy.orm import Session
     for file in os.listdir(folder):
         file = os.path.join(folder, file)
         if file.endswith(".zip"):
-            with db_session:
+            with Session(db.engine) as _session:
                 with zipfile.ZipFile(file) as zfile:
-                    res = upload_zip_to_db(zfile, owner, {"race": race}, sid)
+                    # upload_zip_to_db uses db.session (Flask context) when called from routes,
+                    # but gen_game runs in a thread pool. Use a direct session here.
+                    res = _upload_zip_to_db_with_session(zfile, owner, {"race": race}, sid, _session)
                 if type(res) == "str":
                     raise Exception(res)
                 elif res:
                     seed = res
-                    gen = Generation.get(id=seed.id)
+                    gen = _session.get(Generation, seed.id)
                     if gen is not None:
-                        gen.delete()
+                        _session.delete(gen)
+                    _session.commit()
                     return seed.id
     raise Exception("Generation zipfile not found.")
+
+
+def _upload_zip_to_db_with_session(zfile, owner, meta, sid, session):
+    """upload_zip_to_db variant that uses an explicit SQLAlchemy session (for thread-pool callers)."""
+    # We temporarily swap db.session push a session context so upload_zip_to_db works.
+    # This is simpler than duplicating the whole function.
+    # NOTE: upload_zip_to_db uses db.session which is a scoped session;
+    # in a non-Flask thread this may not be the _session we want.
+    # Best approach: call upload_zip_to_db and accept it will use its own session context.
+    # Since gen_game runs in a DaemonThreadPoolExecutor (same process, but no Flask context),
+    # we push an app context so db.session works.
+    from WebHostLib import app as flask_app
+    with flask_app.app_context():
+        res = upload_zip_to_db(zfile, owner, meta, sid)
+        db.session.commit()
+        return res

@@ -18,14 +18,13 @@ class TestTracker(TestBase):
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
-        with (Path(__file__).parent / "data" / "One_MultiworldGG.multiworldgg").open("rb") as f:
+        with (Path(__file__).parent / "data" / "One_MultiworldGG.mwgg").open("rb") as f:
             cls.data = f.read()
 
     def setUp(self) -> None:
-        from pony.orm import db_session
         from MultiServer import Context as MultiServerContext
         from Utils import user_path
-        from WebHostLib.models import GameDataPackage, Room, Seed
+        from WebHostLib.models import db, commit, GameDataPackage, Room, Seed
 
         super().setUp()
 
@@ -34,7 +33,7 @@ class TestTracker(TestBase):
         with self.client.session_transaction() as session:
             session["_id"] = uuid4()
             self.tracker_uuid = uuid4()
-            with db_session:
+            with self.app.app_context():
                 # store game datapackage(s)
                 for game, game_data in multidata["datapackage"].items():
                     if not GameDataPackage.get(checksum=game_data["checksum"]):
@@ -42,20 +41,31 @@ class TestTracker(TestBase):
                                         data=pickle.dumps(game_data))
                 # create an empty seed and a room from it
                 seed = Seed(multidata=self.data, owner=session["_id"])
-                room = Room(seed=seed, owner=session["_id"], tracker=self.tracker_uuid)
+                db.session.flush()
+                room = Room(seed_id=seed.id, owner=session["_id"], tracker=self.tracker_uuid)
+                db.session.flush()
                 self.room_id = room.id
+                commit()
                 self.log_filename = user_path("logs", f"{self.room_id}.txt")
 
     def tearDown(self) -> None:
-        from pony.orm import db_session, select
-        from WebHostLib.models import Command, Room
+        from sqlalchemy import select
+        from WebHostLib.models import db, commit, Command, Room, Seed
 
-        with db_session:
-            for command in select(command for command in Command if command.room.id == self.room_id):  # type: ignore
-                command.delete()
+        with self.app.app_context():
             room: Room = Room.get(id=self.room_id)
-            room.seed.delete()
-            room.delete()
+            if room:
+                for command in db.session.scalars(
+                    select(Command).where(Command.room_id == self.room_id)
+                ).all():
+                    db.session.delete(command)
+                seed_id = room.seed_id
+                db.session.delete(room)
+                if seed_id:
+                    seed = Seed.get(id=seed_id)
+                    if seed:
+                        db.session.delete(seed)
+                commit()
 
         try:
             os.unlink(self.log_filename)

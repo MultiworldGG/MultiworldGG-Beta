@@ -9,15 +9,15 @@ import zlib
 from io import BytesIO
 from flask import request, flash, redirect, url_for, session, render_template, abort
 from markupsafe import Markup
-from pony.orm import commit, flush, select, rollback
-from pony.orm.core import TransactionIntegrityError
+from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
 import schema
 
 import MultiServer
 from NetUtils import GamesPackage, SlotType
 from Utils import VersionException, __version__
 from . import app
-from .models import Seed, Room, Slot, GameDataPackage, Lobby
+from .models import Seed, Room, Slot, GameDataPackage, Lobby, db, commit, flush, rollback
 
 banned_extensions = (".sfc", ".z64", ".n64", ".nes", ".smc", ".sms", ".gb", ".gbc", ".gba")
 allowed_options_extensions = (".yaml", ".json", ".yml", ".txt", ".zip")
@@ -73,10 +73,11 @@ def process_multidata(compressed_multidata, files={}):
                     game_data_package = GameDataPackage(checksum=game_data["checksum"],
                                                         data=pickle.dumps(game_data))
                     try:
-                        commit()  # commit game data package
-                    except TransactionIntegrityError:
-                        del game_data_package
+                        flush()  # flush game data package (may raise on duplicate checksum)
+                        commit()
+                    except IntegrityError:
                         rollback()
+                        db.session.expunge(game_data_package)
 
     if "slot_info" in decompressed_multidata:
         for slot, slot_info in decompressed_multidata["slot_info"].items():
@@ -87,7 +88,7 @@ def process_multidata(compressed_multidata, files={}):
                            player_name=slot_info.name,
                            player_id=slot,
                            game=slot_info.game))
-        flush()  # commit slots
+        flush()  # flush slots so they get IDs
 
     compressed_multidata = compressed_multidata[0:1] + zlib.compress(pickle.dumps(decompressed_multidata), 9)
     return slots, compressed_multidata
@@ -157,11 +158,11 @@ def upload_zip_to_db(zfile: zipfile.ZipFile, owner=None, meta={"race": False}, s
     if multidata:
         slots, multidata = process_multidata(multidata, files)
 
-        seed = Seed(multidata=multidata, spoiler=spoiler, slots=slots, owner=owner, meta=json.dumps(meta),
+        seed = Seed(multidata=multidata, spoiler=spoiler, owner=owner, meta=json.dumps(meta),
                     id=sid if sid else uuid.uuid4())
-        flush()  # create seed
+        flush()  # create seed so it gets an ID
         for slot in slots:
-            slot.seed = seed
+            slot.seed_id = seed.id
         return seed
     else:
         flash("No multidata was found in the zip file, which is required.")
@@ -201,8 +202,10 @@ def uploads():
                     except Exception as e:
                         flash(f"Could not load multidata. File may be corrupted or incompatible. ({e})")
                     else:
-                        seed = Seed(multidata=multidata, slots=slots, owner=session["_id"])
-                        flush()  # place into DB and generate ids
+                        seed = Seed(multidata=multidata, owner=session["_id"])
+                        flush()  # place into DB and generate IDs
+                        for slot in slots:
+                            slot.seed_id = seed.id
                         return redirect(url_for("view_seed", seed=seed.id))
             else:
                 flash("Not recognized file format. Awaiting a .archipelago/.mwgg file or .zip containing one.")
@@ -211,9 +214,16 @@ def uploads():
 
 @app.route('/user-content', methods=['GET'])
 def user_content():
-    rooms = select(room for room in Room if room.owner == session["_id"])
-    seeds = select(seed for seed in Seed if seed.owner == session["_id"])
-    lobbies = select(l for l in Lobby if l.owner == session["_id"] and l.state >= 0).order_by(lambda l: l.last_activity)[::]
+    rooms = db.session.scalars(
+        select(Room).where(Room.owner == session["_id"])
+    ).all()
+    seeds = db.session.scalars(
+        select(Seed).where(Seed.owner == session["_id"])
+    ).all()
+    lobbies = db.session.scalars(
+        select(Lobby).where(Lobby.owner == session["_id"], Lobby.state >= 0)
+        .order_by(Lobby.last_activity)
+    ).all()
     return render_template("userContent.html", rooms=rooms, seeds=seeds, lobbies=lobbies)
 
 
@@ -222,11 +232,11 @@ def disown_seed(seed):
     seed = Seed.get(id=seed)
     if not seed:
         return abort(404)
-    if seed.owner !=  session["_id"]:
+    if seed.owner != session["_id"]:
         return abort(403)
-    
-    seed.owner = 0
 
+    seed.owner = uuid.UUID(int=0)
+    commit()
     return redirect(url_for("user_content"))
 
 
@@ -238,6 +248,6 @@ def disown_room(room):
     if room.owner != session["_id"]:
         return abort(403)
 
-    room.owner = 0
-
+    room.owner = uuid.UUID(int=0)
+    commit()
     return redirect(url_for("user_content"))

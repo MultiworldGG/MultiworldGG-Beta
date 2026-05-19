@@ -8,13 +8,14 @@ from docutils.core import publish_parts
 import yaml
 from flask import redirect, render_template, request, Response, abort, session, jsonify
 from urllib.parse import quote
-from pony.orm import commit, select
+from sqlalchemy import select
 
 import Options
 from Utils import local_path, utcnow
 from . import app, cache, limiter
 from .generate import get_meta
 from .misc import get_world_theme
+from .models import db, commit
 
 
 def create() -> None:
@@ -363,18 +364,18 @@ def add_to_lobby(game: str):
 
     # Check for duplicate player names
     if not _has_name_template(yaml_player_name):
-        existing_names = set(select(
-            y.yaml_player_name for y in LobbyYaml
-            if y.lobby == lobby and y.yaml_player_name is not None
-        )[:])
+        existing_names = set(db.session.scalars(
+            select(LobbyYaml.yaml_player_name)
+            .where(LobbyYaml.lobby_id == lobby.id, LobbyYaml.yaml_player_name.is_not(None))
+        ).all())
         if yaml_player_name in existing_names:
             return jsonify({
                 "error": f"Player name '{yaml_player_name}' is already used by another YAML in this lobby."
             }), 400
 
     LobbyYaml(
-        lobby=lobby,
-        player=player,
+        lobby_id=lobby.id,
+        player_id=player.id,
         filename=filename,
         yaml_player_name=yaml_player_name,
         yaml_game=yaml_game,
@@ -386,8 +387,8 @@ def add_to_lobby(game: str):
 
     player.is_ready = False
     LobbyMessage(
-        lobby=lobby,
-        player=None,
+        lobby_id=lobby.id,
+        player_id=None,
         sender_name="System",
         content=f"{player.player_name} uploaded YAML: {yaml_player_name} ({yaml_game}).",
     )

@@ -17,7 +17,8 @@ from json import dumps, loads
 
 import Utils
 from settings import Settings
-from websockets.client import connect as websockets_connect, WebSocketClientProtocol
+from websockets.asyncio.client import connect as websockets_connect, ClientConnection
+from websockets.protocol import State
 from websockets.exceptions import ConnectionClosed, WebSocketException
 
 if typing.TYPE_CHECKING:
@@ -77,7 +78,7 @@ def launch_sni() -> None:
             f"please start it yourself if it is not running")
 
 
-async def _snes_connect(ctx: "SNIContext", address: str, retry: bool = True) -> WebSocketClientProtocol:
+async def _snes_connect(ctx: "SNIContext", address: str, retry: bool = True) -> ClientConnection:
     address = f"ws://{address}" if "://" not in address else address
     snes_logger.info("Connecting to SNI at %s ..." % address)
     seen_problems: typing.Set[str] = set()
@@ -127,7 +128,7 @@ async def get_snes_devices(ctx: "SNIContext") -> typing.List[str]:
     return sorted(devices)
 
 
-async def verify_snes_app(socket: WebSocketClientProtocol) -> None:
+async def verify_snes_app(socket: ClientConnection) -> None:
     AppVersion_Request = {
         "Opcode": "AppVersion",
     }
@@ -202,11 +203,11 @@ async def snes_connect(ctx: "SNIContext", address: str, deviceIndex: int = -1) -
     except Exception as e:
         ctx.snes_state = SNESState.SNES_DISCONNECTED
         if task_alive(recv_task):
-            if not ctx.snes_socket.closed:
+            if ctx.snes_socket.state is not State.CLOSED:
                 await ctx.snes_socket.close()
         else:
             if ctx.snes_socket is not None:
-                if not ctx.snes_socket.closed:
+                if ctx.snes_socket.state is not State.CLOSED:
                     await ctx.snes_socket.close()
                 ctx.snes_socket = None
         snes_logger.error(f"Error connecting to snes ({e}), retrying in {_global_snes_reconnect_delay} seconds")
@@ -219,7 +220,7 @@ async def snes_connect(ctx: "SNIContext", address: str, deviceIndex: int = -1) -
 
 async def snes_disconnect(ctx: "SNIContext") -> None:
     if ctx.snes_socket:
-        if not ctx.snes_socket.closed:
+        if ctx.snes_socket.state is not State.CLOSED:
             await ctx.snes_socket.close()
         ctx.snes_socket = None
 
@@ -250,7 +251,7 @@ async def snes_recv_loop(ctx: "SNIContext") -> None:
         snes_logger.error("Lost connection to the snes, type /snes to reconnect")
     finally:
         socket, ctx.snes_socket = ctx.snes_socket, None
-        if socket is not None and not socket.closed:
+        if socket is not None and socket.state is not State.CLOSED:
             await socket.close()
 
         ctx.snes_state = SNESState.SNES_DISCONNECTED
@@ -272,8 +273,7 @@ async def snes_read(ctx: "SNIContext", address: int, size: int) -> typing.Option
         if (
             ctx.snes_state != SNESState.SNES_ATTACHED or
             ctx.snes_socket is None or
-            not ctx.snes_socket.open or
-            ctx.snes_socket.closed
+            ctx.snes_socket.state is not State.OPEN
         ):
             return None
 
@@ -299,7 +299,7 @@ async def snes_read(ctx: "SNIContext", address: int, size: int) -> typing.Option
             if len(data):
                 snes_logger.error(str(data))
                 snes_logger.warning('Communication Failure with SNI')
-            if ctx.snes_socket is not None and not ctx.snes_socket.closed:
+            if ctx.snes_socket is not None and ctx.snes_socket.state is not State.CLOSED:
                 await ctx.snes_socket.close()
             return None
 
@@ -313,7 +313,7 @@ async def snes_write(ctx: "SNIContext", write_list: typing.List[typing.Tuple[int
         await ctx.snes_request_lock.acquire()
 
         if ctx.snes_state != SNESState.SNES_ATTACHED or ctx.snes_socket is None or \
-                not ctx.snes_socket.open or ctx.snes_socket.closed:
+                ctx.snes_socket.state is not State.OPEN:
             return False
 
         PutAddress_Request: SNESRequest = {"Opcode": "PutAddress", "Operands": [], 'Space': 'SNES'}

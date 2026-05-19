@@ -1,6 +1,6 @@
 import click
 from flask.cli import AppGroup
-from pony.orm import raw_sql
+from sqlalchemy import select, func
 
 from Utils import format_SI_prefix
 
@@ -9,25 +9,23 @@ stats_cli = AppGroup("stats")
 
 @stats_cli.command("show")
 def show() -> None:
-    from pony.orm import db_session, select
-
-    from WebHostLib.models import GameDataPackage
+    from WebHostLib.models import GameDataPackage, db
 
     total_games_package_count: int = 0
-    total_games_package_size: int
+    total_games_package_size: int = 0
     top_10_package_sizes: list[tuple[int, str]] = []
 
-    with db_session:
-        data_length = raw_sql("LENGTH(data)")
-        data_length_desc = raw_sql("LENGTH(data) DESC")
-        data_length_sum = raw_sql("SUM(LENGTH(data))")
-        total_games_package_count = GameDataPackage.select().count()
-        total_games_package_size = select(data_length_sum for _ in GameDataPackage).first()  # type: ignore
-        top_10_package_sizes = list(
-            select((data_length, dp.checksum) for dp in GameDataPackage)  # type: ignore
-            .order_by(lambda _, _2: data_length_desc)
-            .limit(10)
-        )
+    total_games_package_count = db.session.scalar(
+        select(func.count()).select_from(GameDataPackage)
+    ) or 0
+    total_games_package_size = db.session.scalar(
+        select(func.sum(func.length(GameDataPackage.data)))
+    ) or 0
+    top_10_package_sizes = list(db.session.execute(
+        select(func.length(GameDataPackage.data), GameDataPackage.checksum)
+        .order_by(func.length(GameDataPackage.data).desc())
+        .limit(10)
+    ).all())
 
     click.echo(f"Total number of games packages: {total_games_package_count}")
     click.echo(f"Total size of games packages:   {format_SI_prefix(total_games_package_size, power=1024)}B")

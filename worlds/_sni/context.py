@@ -29,7 +29,8 @@ if __name__ == "__main__":
     Utils.init_logging("SNIClient", exception_logger="Client")
 
 import colorama
-from websockets.client import connect as websockets_connect, WebSocketClientProtocol
+from websockets.asyncio.client import connect as websockets_connect, ClientConnection
+from websockets.protocol import State
 from websockets.exceptions import WebSocketException, ConnectionClosed
 
 # Import SNI communication functions from __init__.py
@@ -94,7 +95,7 @@ class SNIClientCommandProcessor(ClientCommandProcessor):
         self.ctx.snes_reconnect_address = None
         self.ctx.cancel_snes_autoreconnect()
         self.ctx.snes_state = SNESState.SNES_DISCONNECTED
-        if self.ctx.snes_socket and not self.ctx.snes_socket.closed:
+        if self.ctx.snes_socket and self.ctx.snes_socket.state is not State.CLOSED:
             async_start(self.ctx.snes_socket.close())
             return True
         else:
@@ -129,7 +130,7 @@ class SNIContext(CommonContext):
     snes_autoreconnect_task: typing.Optional["asyncio.Task[None]"] = None
 
     snes_address: str
-    snes_socket: typing.Optional[WebSocketClientProtocol]
+    snes_socket: typing.Optional[ClientConnection]
     snes_state: SNESState
     snes_attached_device: typing.Optional[typing.Tuple[int, str]]
     snes_reconnect_address: typing.Optional[str]
@@ -183,7 +184,7 @@ class SNIContext(CommonContext):
         self.awaiting_rom = False
 
     def event_invalid_slot(self) -> typing.NoReturn:
-        if self.snes_socket is not None and not self.snes_socket.closed:
+        if self.snes_socket is not None and self.snes_socket.state is not State.CLOSED:
             async_start(self.snes_socket.close())
         raise Exception("Invalid ROM detected, "
                         "please verify that you have loaded the correct rom and reconnect your snes (/snes)")
@@ -420,7 +421,7 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
 
         ctx.server_address = None
         ctx.snes_reconnect_address = None
-        if ctx.snes_socket is not None and not ctx.snes_socket.closed:
+        if ctx.snes_socket is not None and ctx.snes_socket.state is not State.CLOSED:
             await ctx.snes_socket.close()
         await watcher_task
         await ctx.shutdown()
