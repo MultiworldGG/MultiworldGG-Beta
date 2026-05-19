@@ -1248,7 +1248,23 @@ class CommonContext(InitContext):
     def handle_connection_loss(self, msg: str) -> None:
         """Helper for logging and displaying a loss of connection. Must be called from an except block."""
         exc_info = sys.exc_info()
-        logger.exception(msg, exc_info=exc_info, extra={'compact_gui': True})
+        exc = exc_info[1]
+        # Expected disconnect/connect-failure types: log a clean message without the traceback.
+        # Anything else gets the full traceback because it's an unexpected bug.
+        if isinstance(exc, (
+            ConnectionRefusedError,
+            ConnectionResetError,
+            ConnectionAbortedError,
+            asyncio.TimeoutError,
+            websockets.InvalidURI,
+            websockets.InvalidMessage,
+            websockets.ConnectionClosed,
+            OSError,
+        )):
+            detail = f"{msg} ({exc.__class__.__name__}: {exc})" if str(exc) else msg
+            logger.info(detail, extra={'compact_gui': True})
+        else:
+            logger.exception(msg, exc_info=exc_info, extra={'compact_gui': True})
 
         # Hide loading screen if it exists
         if self.ui:
@@ -1370,8 +1386,14 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
             # Expected when the task is cancelled during shutdown
             logger.info("Server loop cancelled during shutdown")
             raise
+        except websockets.ConnectionClosed as e:
+            # Server went away mid-session (closed cleanly or dropped). Not a bug — no traceback.
+            logger.info(f"Server closed the connection: {e.__class__.__name__}: {e}")
+        except (ConnectionResetError, ConnectionAbortedError, asyncio.TimeoutError, OSError) as e:
+            # Transport-level disconnects. Not a bug — no traceback.
+            logger.info(f"Connection lost to multiworld server: {e.__class__.__name__}: {e}")
         except Exception as e:
-            # Log unexpected errors but don't let them crash the loop
+            # Genuinely unexpected — keep the traceback so we can debug.
             logger.warning(f"Error in server loop: {e}", exc_info=True)
         finally:
             logger.warning(f"Disconnected from multiworld server{reconnect_hint()}")
@@ -1671,25 +1693,27 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
 
 
 async def console_loop(ctx: CommonContext):
-    from rich import Console
-    console = Console(force_terminal=True, force_interactive=True)
+    import logging
+    logger = logging.getLogger(__name__)
+    
     commandprocessor = ctx.command_processor(ctx)
     queue = asyncio.Queue()
-    stream_input(console.input(prompt=f"{ctx.server_address}: "), queue)
+    stream_input(sys.stdin, queue)
+    
     while not ctx.exit_event.is_set():
         try:
-            input_text = await queue.get()
+            input_text = await asyncio.wait_for(queue.get(), timeout=0.1)
             queue.task_done()
-
             if ctx.input_requests > 0:
                 ctx.input_requests -= 1
                 ctx.input_queue.put_nowait(input_text)
                 continue
-
             if input_text:
                 commandprocessor(input_text)
-        except Exception as e:
-            logger.exception(e)
+        except asyncio.TimeoutError:
+            continue  # Loop back to check exit_event
+        except Exception:
+            logger.exception("Error in console_loop")
 
 
 def get_base_parser(description: typing.Optional[str] = None):

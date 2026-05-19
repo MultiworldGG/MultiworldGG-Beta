@@ -422,6 +422,81 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
         update_logger.error(f"Failed to import module {module_name}: {e}")
         raise e
 
+def _fire_pending_error_callback() -> None:
+    """Fire the launcher-stashed error callback if a deferred launch fails.
+
+    CommonContext consumes the pending dict in __init__, so this only fires
+    when launch() raised before any context was constructed."""
+    import CommonClient as _CC
+    _, pending_error_cb = _CC._consume_pending_launch_callbacks()
+    if pending_error_cb is not None:
+        try:
+            pending_error_cb()
+        except Exception as cb_err:
+            logging.error(f"Error in error callback: {cb_err}")
+
+
+def _defer_cli_launch(launch_function, label: str, server_address,
+                      already_restarted: bool,
+                      dep_install_module: typing.Optional[str] = None) -> None:
+    """Defer a CLI-style world launch() to the next asyncio iteration with
+    sys.argv translated from the launcher-provided server_address.
+
+    Per-world launch() bodies are CLI-style: they parse sys.argv and call
+    asyncio.run(main()). Two constraints stack:
+      1. asyncio.run() inside a running loop normally raises; nest_asyncio
+         (applied by the caller) patches asyncio to allow re-entry.
+      2. We're invoked from a Kivy event handler. Calling launch_function()
+         synchronously here freezes the GUI because the handler never
+         returns. loop.call_soon defers until after the handler unwinds.
+
+    When dep_install_module is set (entry-point launches of pip-installed
+    worlds), an ImportError during the deferred launch reinstalls deps and
+    re-execs. Built-in clients (manual, tracker, bizhawk) leave it None --
+    an ImportError there is fatal.
+    """
+    loop = asyncio.get_event_loop()
+
+    def _deferred_launch():
+        saved_argv = sys.argv[:]
+        try:
+            if isinstance(server_address, str) and server_address:
+                sys.argv = [sys.argv[0], f"--connect={server_address}"]
+            launch_function()
+        except (ModuleNotFoundError, ImportError) as dep_error:
+            if dep_install_module and not already_restarted:
+                update_logger.warning(
+                    f"Deferred launch import failed ({dep_error}); reinstalling {dep_install_module} with deps and restarting."
+                )
+                try:
+                    ModuleUpdate.install_worlds([dep_install_module], with_deps=True)
+                except Exception as install_error:
+                    logging.error(
+                        f"Failed to reinstall {dep_install_module} with deps: {install_error}",
+                        exc_info=True,
+                    )
+                    _fire_pending_error_callback()
+                    return
+                _restart_client_with_args()
+            else:
+                logging.error(
+                    f"Deferred world launch for {label} still missing deps after restart: {dep_error}",
+                    exc_info=True,
+                )
+                _fire_pending_error_callback()
+        except Exception as launch_error:
+            logging.error(
+                f"Deferred world launch failed for {label}: {launch_error}",
+                exc_info=True,
+            )
+            _fire_pending_error_callback()
+        finally:
+            sys.argv[:] = saved_argv
+
+    loop.call_soon(_deferred_launch)
+    logging.info(f"Scheduled deferred launch for {label} on next asyncio iteration")
+
+
 def _perform_module_launch(module_id: str, **kwargs):
     """Perform the actual module launch logic"""
     try:
@@ -439,6 +514,8 @@ def _perform_module_launch(module_id: str, **kwargs):
         ready_callback = kwargs.pop("ready_callback", None)
         error_callback = kwargs.pop("error_callback", None)
         client_type = kwargs.pop("client_type", "text")
+        server_address = kwargs.pop("server_address", None)
+        already_restarted = kwargs.pop("_restarted", False)
         CommonClient._set_pending_launch_callbacks(ready_callback, error_callback)
 
         if module_id:
@@ -446,7 +523,7 @@ def _perform_module_launch(module_id: str, **kwargs):
                 importlib.invalidate_caches()
                 importlib.import_module(module_id)
             except (ModuleNotFoundError, ImportError) as e:
-                if kwargs.get("_restarted"):
+                if already_restarted:
                     update_logger.error(f"Module {module_id} still failed after dep reinstall: {e}")
                     raise
                 update_logger.warning(
@@ -494,73 +571,12 @@ def _perform_module_launch(module_id: str, **kwargs):
                     pass
 
             if launch_function is not None:
-                # Per-world launch() bodies are CLI-style: they parse sys.argv
-                # and then call asyncio.run(main()). Two constraints stack:
-                #   1. asyncio.run() inside a running loop normally raises;
-                #      nest_asyncio.apply() (called at the top of this function)
-                #      patches asyncio to allow re-entry.
-                #   2. We're invoked from a Kivy event handler. If we call
-                #      launch_function() synchronously here, the handler never
-                #      returns while the game session is alive, and Kivy --
-                #      being single-threaded -- can't dispatch any other UI
-                #      events (the GUI freezes even though asyncio keeps
-                #      pumping). To unblock Kivy, defer launch_function() to
-                #      the next loop iteration via call_soon. By the time it
-                #      runs, the Kivy event handler has returned and Kivy is
-                #      back in its idle dispatch state.
-                loop = asyncio.get_event_loop()
-                server_address = kwargs.get("server_address")
-
-                already_restarted = kwargs.get("_restarted", False)
-
-                def _deferred_launch():
-                    saved_argv = sys.argv[:]
-                    try:
-                        if isinstance(server_address, str) and server_address:
-                            sys.argv = [sys.argv[0], f"--connect={server_address}"]
-                        launch_function()
-                    except (ModuleNotFoundError, ImportError) as dep_error:
-                        if already_restarted:
-                            logging.error(
-                                f"Deferred world launch for {module_id} still missing deps after restart: {dep_error}",
-                                exc_info=True,
-                            )
-                            import CommonClient as _CC
-                            _, pending_error_cb = _CC._consume_pending_launch_callbacks()
-                            if pending_error_cb is not None:
-                                try:
-                                    pending_error_cb()
-                                except Exception as cb_err:
-                                    logging.error(f"Error in error callback: {cb_err}")
-                        else:
-                            update_logger.warning(
-                                f"Deferred launch import failed ({dep_error}); reinstalling {module_id} with deps and restarting."
-                            )
-                            try:
-                                ModuleUpdate.install_worlds([module_id], with_deps=True)
-                            except Exception as install_error:
-                                logging.error(f"Failed to reinstall {module_id} with deps: {install_error}", exc_info=True)
-                                return
-                            _restart_client_with_args()
-                    except Exception as launch_error:
-                        logging.error(
-                            f"Deferred world launch failed for {module_id}: {launch_error}",
-                            exc_info=True,
-                        )
-                        import CommonClient as _CC
-                        _, pending_error_cb = _CC._consume_pending_launch_callbacks()
-                        if pending_error_cb is not None:
-                            try:
-                                pending_error_cb()
-                            except Exception as cb_err:
-                                logging.error(f"Error in error callback: {cb_err}")
-                    finally:
-                        sys.argv[:] = saved_argv
-
-                loop.call_soon(_deferred_launch)
-                logging.info(f"Scheduled deferred launch for {module_id} on next asyncio iteration")
+                _defer_cli_launch(
+                    launch_function, module_id, server_address, already_restarted,
+                    dep_install_module=module_id,
+                )
                 return None
-                            
+
             # Check SNI registry
             from mwgg_igdb import GameIndex
             game_name = GameIndex.get_game_name_for_module(module_name=module_id.strip("worlds."))
@@ -568,32 +584,35 @@ def _perform_module_launch(module_id: str, **kwargs):
                 from worlds._sni.client import AutoSNIClientRegister
                 if AutoSNIClientRegister.is_sni_world(module_name=game_name):
                     logging.info(f"Detected SNI client for {game_name}")
-                    from worlds._sni.context import launch
-                    return launch(**kwargs)
+                    from worlds._sni.context import launch as _sni_launch
+                    return _sni_launch(server_address=server_address)
             except ImportError:
                 logging.debug("SNI client not available")
-                
+
             # Check BizHawk registry
             try:
                 from worlds._bizhawk.client import AutoBizHawkClientRegister
                 if AutoBizHawkClientRegister.is_bizhawk_world(module_name=game_name):
                     logging.info(f"Detected BizHawk client for {game_name}")
-                    from worlds._bizhawk.context import launch
-                    return launch(**kwargs)
+                    from worlds._bizhawk.context import launch as _bizhawk_launch
+                    _defer_cli_launch(_bizhawk_launch, "bizhawk", server_address, already_restarted)
+                    return None
             except ImportError:
                 logging.debug("BizHawk client not available")
 
         if client_type == "manual":
-            from worlds._manual.ManualClient import main
-            return main(**kwargs)
+            from worlds._manual.ManualClient import launch as _manual_launch
+            _defer_cli_launch(_manual_launch, "manual", server_address, already_restarted)
+            return None
         elif client_type == "universal_tracker":
-            from worlds.tracker.TrackerClient import launch
-            return launch(**kwargs)
-        
+            from worlds.tracker.TrackerClient import launch as _tracker_launch
+            _defer_cli_launch(_tracker_launch, "universal_tracker", server_address, already_restarted)
+            return None
+
         # Fallback to text client
         logging.info(f"No specialized client, using text client")
         from CommonClient import main_textclient
-        result = main_textclient(**kwargs)
+        result = main_textclient(server_address)
 
         # Check if the launch function returned a task (GUI mode)
         if hasattr(result, '_coro'):
