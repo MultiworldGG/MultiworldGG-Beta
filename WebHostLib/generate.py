@@ -167,7 +167,11 @@ def gen_game(gen_options: dict, meta: dict[str, Any] | None = None, owner=None, 
             raise Exception(f"Names have to be unique. Names: {Counter(args.name.values())}")
         ERmain(args, seed, baked_server_options=meta["server_options"])
 
-        return upload_to_db(target.name, sid, owner, race)
+        # task() runs in a DaemonThreadPoolExecutor sub-thread; Flask app contexts are
+        # contextvar/thread-local and don't propagate from the calling thread, so push
+        # one here for upload_to_db's Session(db.engine).
+        with app.app_context():
+            return upload_to_db(target.name, sid, owner, race)
 
     thread_pool = DaemonThreadPoolExecutor(max_workers=1)
     thread = thread_pool.submit(task)

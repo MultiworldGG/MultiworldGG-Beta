@@ -127,11 +127,15 @@ def _mp_gen_game(
     timeout: int|None = None,
 ) -> Any:
     from setproctitle import setproctitle
+    from . import app as flask_app
     from .generate import gen_game
 
     setproctitle(f"Generator ({sid})")
     try:
-        return gen_game(gen_options, meta=meta, owner=owner, sid=sid, timeout=timeout)
+        # gen_game uses db.engine (Flask-SQLAlchemy proxy) which needs an app context.
+        # Pool workers don't run inside a Flask request, so push one here.
+        with flask_app.app_context():
+            return gen_game(gen_options, meta=meta, owner=owner, sid=sid, timeout=timeout)
     finally:
         setproctitle(f"Generator (idle)")
 
