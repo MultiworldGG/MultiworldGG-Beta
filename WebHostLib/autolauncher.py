@@ -189,6 +189,16 @@ def init_generator(config: dict[str, Any]) -> None:
     db_uri = _pony_config_to_sqlalchemy_uri(pony_config)
     _engine = create_engine(db_uri)
 
+    # The worker is started via 'spawn', so get_app() never ran here and
+    # Flask-SQLAlchemy's db is not registered with the worker's app. Wire it
+    # up so gen_game/upload_to_db can use db.engine under an app_context.
+    from . import app as flask_app
+    from .models import db
+    flask_app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
+    flask_app.config.setdefault("SQLALCHEMY_TRACK_MODIFICATIONS", False)
+    if "sqlalchemy" not in flask_app.extensions:
+        db.init_app(flask_app)
+
 
 def cleanup():
     """delete unowned user-content and expired lobbies"""
