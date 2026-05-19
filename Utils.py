@@ -17,6 +17,7 @@ import functools
 import io
 import collections
 import importlib
+import importlib.util
 import logging
 import warnings
 import zipfile
@@ -77,6 +78,7 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
     """
     from mwgg_igdb import GameIndex
     from APContainer import APWorldContainer
+    from BaseUtils import get_apworld_manifest
     _worlds_to_install = {game: "" for game in game_names}
     _unknown_worlds = []
     custom_worlds_dir = Path(local_path("custom_worlds"))
@@ -95,7 +97,10 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
             _unknown_worlds.append(game)
             return
         except importlib.metadata.PackageNotFoundError:
-            # Package not installed
+            # No pip distribution metadata. Bundled monorepo worlds still need to load.
+            if importlib.util.find_spec(f"worlds.{_worlds_to_install[game]}") is not None:
+                _worlds_to_load.append(f"worlds.{_worlds_to_install[game]}")
+                _worlds_to_install.pop(game)
             return
 
     for game in game_names:
@@ -110,6 +115,12 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
                 if dist:
                     _unlisted_worlds_names[dist.metadata.json['summary'].strip("MultiWorld: ")] = module_name
             except importlib.metadata.PackageNotFoundError:
+                # Bundled world with no pip metadata; try the archipelago.json
+                if importlib.util.find_spec(f"worlds.{module_name}") is not None:
+                    manifest = get_apworld_manifest(module_name)
+                    game_name = manifest.get("game") if manifest else None
+                    if game_name:
+                        _unlisted_worlds_names[game_name] = module_name
                 continue
         for world in _unknown_worlds:
             if world in _unlisted_worlds_names.keys():
@@ -206,7 +217,11 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
                 if summary:
                     served_games.add(summary.strip("MultiWorld: "))
             except importlib.metadata.PackageNotFoundError:
-                pass
+                # Bundled monorepo world; read game name from archipelago.json.
+                manifest = get_apworld_manifest(slug)
+                game_name = manifest.get("game") if manifest else None
+                if game_name:
+                    served_games.add(game_name)
     missing = [g for g in game_names if g not in served_games]
     if missing:
         if strict:
@@ -222,6 +237,20 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
 def game_names() -> typing.List[str]:
     """Get a list of only the game names that we're using"""
     return _worlds_to_load
+
+def add_bundled_worlds(slugs: typing.Iterable[str]) -> typing.List[str]:
+    """Register bundled monorepo worlds (no pip distribution) for loading."""
+    queued: list[str] = []
+    for slug in slugs:
+        target = f"worlds.{slug}"
+        if target in _worlds_to_load:
+            continue
+        if importlib.util.find_spec(target) is None:
+            update_logger.warning(f"add_bundled_worlds: {target} is not importable, skipping")
+            continue
+        _worlds_to_load.append(target)
+        queued.append(slug)
+    return queued
 
 def get_available_worlds() -> typing.List[str]:
     """Get a list of all of the available worlds"""
@@ -438,30 +467,20 @@ def _fire_pending_error_callback() -> None:
 
 def _defer_cli_launch(launch_function, label: str, server_address,
                       already_restarted: bool,
-                      dep_install_module: typing.Optional[str] = None) -> None:
+                      dep_install_module: typing.Optional[str] = None,
+                      slot_name: typing.Optional[str] = None) -> None:
     """Defer a CLI-style world launch() to the next asyncio iteration with
-    sys.argv translated from the launcher-provided server_address.
-
-    Per-world launch() bodies are CLI-style: they parse sys.argv and call
-    asyncio.run(main()). Two constraints stack:
-      1. asyncio.run() inside a running loop normally raises; nest_asyncio
-         (applied by the caller) patches asyncio to allow re-entry.
-      2. We're invoked from a Kivy event handler. Calling launch_function()
-         synchronously here freezes the GUI because the handler never
-         returns. loop.call_soon defers until after the handler unwinds.
-
-    When dep_install_module is set (entry-point launches of pip-installed
-    worlds), an ImportError during the deferred launch reinstalls deps and
-    re-execs. Built-in clients (manual, tracker, bizhawk) leave it None --
-    an ImportError there is fatal.
-    """
+    sys.argv translated from the launcher-provided server_address."""
     loop = asyncio.get_event_loop()
 
     def _deferred_launch():
         saved_argv = sys.argv[:]
         try:
             if isinstance(server_address, str) and server_address:
-                sys.argv = [sys.argv[0], f"--connect={server_address}"]
+                argv = [sys.argv[0], f"--connect={server_address}"]
+                if slot_name and label == "universal_tracker":
+                    argv.append(f"--name={slot_name}")
+                sys.argv = argv
             launch_function()
         except (ModuleNotFoundError, ImportError) as dep_error:
             if dep_install_module and not already_restarted:
@@ -507,14 +526,13 @@ def _perform_module_launch(module_id: str, **kwargs):
         import nest_asyncio
         nest_asyncio.apply()
 
-        # Stash launcher-provided ready/error callbacks centrally. CommonContext
-        # picks them up in __init__ so world clients don't need to forward them
-        # through their launch() signatures.
+        # Stash launcher-provided ready/error callbacks centrally.
         import CommonClient
         ready_callback = kwargs.pop("ready_callback", None)
         error_callback = kwargs.pop("error_callback", None)
         client_type = kwargs.pop("client_type", "text")
         server_address = kwargs.pop("server_address", None)
+        slot_name = kwargs.pop("slot_name", None)
         already_restarted = kwargs.pop("_restarted", False)
         CommonClient._set_pending_launch_callbacks(ready_callback, error_callback)
 
@@ -574,6 +592,7 @@ def _perform_module_launch(module_id: str, **kwargs):
                 _defer_cli_launch(
                     launch_function, module_id, server_address, already_restarted,
                     dep_install_module=module_id,
+                    slot_name=slot_name,
                 )
                 return None
 
@@ -606,7 +625,7 @@ def _perform_module_launch(module_id: str, **kwargs):
             return None
         elif client_type == "universal_tracker":
             from worlds.tracker.TrackerClient import launch as _tracker_launch
-            _defer_cli_launch(_tracker_launch, "universal_tracker", server_address, already_restarted)
+            _defer_cli_launch(_tracker_launch, "universal_tracker", server_address, already_restarted, slot_name=slot_name)
             return None
 
         # Fallback to text client

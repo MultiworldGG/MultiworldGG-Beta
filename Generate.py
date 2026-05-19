@@ -203,6 +203,8 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
 
     set_game_names(games_to_load)
     from worlds.AutoWorld import AutoWorldRegister
+    from worlds import load_missing_worlds
+    load_missing_worlds()
     """ Load worlds *after* setting the game names
     """
     args.outputname = seed_name

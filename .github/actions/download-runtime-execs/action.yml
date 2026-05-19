@@ -1,5 +1,5 @@
 name: 'Download Runtime Executables'
-description: 'Download SNI, Enemizer, and the bundled uv installer for the host OS into the project working directory.'
+description: 'Download SNI, Enemizer, and the bundled uv binary for the host OS into the project working directory.'
 inputs:
   github-token:
     description: 'GitHub token used to authenticate the SNI release lookup against the higher-rate-limit authenticated quota.'
@@ -8,6 +8,10 @@ inputs:
     description: 'Project root directory where data/SNI, data/EnemizerCLI, and uv_runtime should live (relative to GITHUB_WORKSPACE).'
     required: false
     default: '.'
+  uv-version:
+    description: 'Pinned uv version to download for the bundled binary on Linux/macOS. Keep in sync with build.yml UV_VERSION.'
+    required: false
+    default: '0.11.15'
 runs:
   using: 'composite'
   steps:
@@ -16,6 +20,7 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
+        UV_VERSION: ${{ inputs.uv-version }}
       run: |
         mkdir -p data/SNI
         mkdir -p data/EnemizerCLI
@@ -144,12 +149,26 @@ runs:
 
         # uv install strategy is platform-specific:
         #   - Windows: Inno Setup installs uv via winget (PowerShell installer fallback) at install time.
-        #   - Mac/Linux: bundle astral's install.sh; first launch runs it if uv isn't on PATH.
-        # The script's MIT license header is the attribution we ship.
-        if [ "$RUNNER_OS" != "Windows" ]; then
+        #   - Linux: bundle the prebuilt uv binary at uv_runtime/uv.
+        #   - macOS: bundle both arches (uv-arm64, uv-x86_64); runtime picks via platform.machine().
+        if [ "$RUNNER_OS" == "Linux" ]; then
           mkdir -p uv_runtime
-          curl -LsSf https://astral.sh/uv/install.sh -o uv_runtime/install-uv.sh
-          chmod +x uv_runtime/install-uv.sh
-          echo "Bundled uv installer staged at uv_runtime/install-uv.sh"
+          curl -fsSL "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-x86_64-unknown-linux-gnu.tar.gz" \
+            | tar -xz -C uv_runtime --strip-components=1 uv-x86_64-unknown-linux-gnu/uv
+          chmod +x uv_runtime/uv
+          echo "Bundled uv ${UV_VERSION} staged at uv_runtime/uv"
+          ls -la uv_runtime/
+        elif [ "$RUNNER_OS" == "macOS" ]; then
+          mkdir -p uv_runtime
+          for triple in aarch64-apple-darwin x86_64-apple-darwin; do
+            curl -fsSL "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${triple}.tar.gz" \
+              | tar -xz -C uv_runtime --strip-components=1 "uv-${triple}/uv"
+            case "$triple" in
+              aarch64-apple-darwin) mv uv_runtime/uv uv_runtime/uv-arm64 ;;
+              x86_64-apple-darwin)  mv uv_runtime/uv uv_runtime/uv-x86_64 ;;
+            esac
+          done
+          chmod +x uv_runtime/uv-arm64 uv_runtime/uv-x86_64
+          echo "Bundled uv ${UV_VERSION} staged at uv_runtime/uv-{arm64,x86_64}"
           ls -la uv_runtime/
         fi

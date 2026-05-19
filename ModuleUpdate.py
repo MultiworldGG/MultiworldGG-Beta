@@ -117,9 +117,16 @@ def _uv_candidate_paths() -> list[Path]:
     """uv lookup order; don't hunt for it
     """
     candidates: list[Path] = []
-    on_path = Path("uv")
-    if on_path:
-        candidates.append(on_path)
+    # Frozen builds on Linux/macOS ship uv next to the executable 
+    if is_frozen():
+        exe_dir = Path(sys.executable).parent
+        if is_macos():
+            import platform
+            arch = platform.machine()  # "arm64" on Apple Silicon, "x86_64" on Intel
+            candidates.append(exe_dir / f"uv-{arch}")
+        elif not is_windows():
+            candidates.append(exe_dir / "uv")
+    candidates.append(Path("uv"))  # PATH lookup
     if is_windows():
         candidates += [
             Path.home() / "AppData" / "Local" / "Microsoft" / "WinGet" / "Links" / "uv.exe",  # winget shim
@@ -127,7 +134,7 @@ def _uv_candidate_paths() -> list[Path]:
         ]
     else:
         candidates += [
-            Path.home() / ".local" / "bin" / "uv",     # astral installer / pipx / install-uv.sh
+            Path.home() / ".local" / "bin" / "uv",     # astral installer / pipx
             Path("/opt/homebrew/bin/uv"),              # Homebrew (Apple Silicon)
             Path("/usr/local/bin/uv"),                 # Homebrew (Intel) / generic
         ]
@@ -170,11 +177,16 @@ def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subpr
         return result
 
     _uv_unavailable = True
+    if is_windows():
+        install_hint = (
+            "install uv via `winget install astral-sh.uv`, "
+            "`irm https://astral.sh/uv/install.ps1 | iex`, or `choco install uv`"
+        )
+    else:
+        install_hint = "install uv via `curl -LsSf https://astral.sh/uv/install.sh | sh`"
     logger.warning(
         "uv not found at any known install path. Worlds cannot be pre-installed; "
-        "they will be installed on demand when needed. To pre-install, install uv via "
-        "`winget install astral-sh.uv`, `irm https://astral.sh/uv/install.ps1 | iex`, "
-        "or `choco install uv`."
+        f"they will be installed on demand when needed. To pre-install, {install_hint}."
     )
     return subprocess.CompletedProcess(args, 127, "", "uv not found at any known path")
 

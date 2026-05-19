@@ -11,10 +11,12 @@ from flask_compress import Compress
 from flask_limiter import Limiter
 from werkzeug.routing import BaseConverter
 
-from Utils import title_sorted, get_file_safe_name,world_list_sorted, set_game_names
+from Utils import title_sorted, get_file_safe_name,world_list_sorted, set_game_names, add_bundled_worlds
 from mwgg_igdb import GameIndex
 # Must be done before worlds is imported
 set_game_names(list(GameIndex.game_names.keys()), strict=False)
+
+add_bundled_worlds(("tracker", "_manual", "_bizhawk", "_sni", "_debug", "generic"))
 
 from APContainer import is_ap_player_container
 from .cli import CLI

@@ -19,7 +19,7 @@ def _no_overrides_patch(self, finder, module):
 _cxf_numpy_hook.Hook.numpy__core_overrides = _no_overrides_patch
 _cxf_numpy_hook.Hook.numpy_core_overrides = _no_overrides_patch
 
-from Utils import version_tuple, instance_name, is_windows
+from Utils import version_tuple, instance_name, is_windows, is_macos
 
 logger = logging.getLogger("MultiWorld")
 
@@ -110,9 +110,11 @@ build_exe_options = {
         ("data/EnemizerCLI", "EnemizerCLI") if os.path.exists("data/EnemizerCLI") else None,
         ("kivy/data", "lib/kivy/data"),
         ("kivy/include", "lib/kivy/include"),
-        # Mac/Linux only: ship astral's install.sh so first launch can install uv if it's not on PATH.
+        # Mac/Linux only: ship the uv binary next to the frozen exe so the runtime can exec it
         # Windows installs uv via Inno Setup (winget, with PowerShell installer fallback) at install time.
-        ("uv_runtime/install-uv.sh", "install-uv.sh") if not is_windows and os.path.exists("uv_runtime/install-uv.sh") else None,
+        ("uv_runtime/uv", "uv") if (not is_windows and not is_macos and os.path.exists("uv_runtime/uv")) else None,
+        ("uv_runtime/uv-arm64", "uv-arm64") if (is_macos and os.path.exists("uv_runtime/uv-arm64")) else None,
+        ("uv_runtime/uv-x86_64", "uv-x86_64") if (is_macos and os.path.exists("uv_runtime/uv-x86_64")) else None,
     ],
     "include_msvcr": True,
     "replace_paths": ["*."],

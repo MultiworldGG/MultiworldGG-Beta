@@ -1,6 +1,8 @@
 
 import logging
 import inspect
+import os
+import shutil
 import tempfile
 from typing import Union, Any, TYPE_CHECKING, NamedTuple
 from enum import StrEnum
@@ -72,6 +74,7 @@ class TrackerCore():
         self.manual_items: list[str] = []
         self.player_folder_override = None
         self.gen_error:str = ""
+        self.connect_mode: bool = False
 
         self.ignored_locations: set[int] = set()
         self.missing_locations: set[int] = set()
@@ -319,8 +322,22 @@ class TrackerCore():
                 args.player_files_path = override_yaml_path
             elif self.player_folder_override:
                 args.player_files_path = self.player_folder_override
-            elif yaml_path:
-                args.player_files_path = yaml_path
+            else:
+                # No explicit YAML path supplied. Prompt the user to pick 
+                picked = open_filename(
+                    "Select your YAML for tracking",
+                    [("YAML", ["*.yaml", "*.yml"])],
+                )
+                if not picked:
+                    self.add_log_line(TrackerLogLine(
+                        "No YAML selected; tracking cannot start without one.",
+                        "",
+                        TrackerLogLineGroup.UT_STATUS,
+                    ))
+                    return
+                picker_tempdir = tempfile.mkdtemp(prefix="ut_picked_yaml_")
+                shutil.copy2(picked, os.path.join(picker_tempdir, os.path.basename(picked)))
+                args.player_files_path = picker_tempdir
             self.player_folder_override = args.player_files_path
             args.skip_output = True
             args.multi = 0
@@ -594,8 +611,12 @@ class TrackerCore():
 
         else:
             if self.launch_multiworld is None:
-                self.add_log_line(TrackerLogLine("Internal world was not able to be generated, check your yamls and relaunch", "", TrackerLogLineGroup.UT_STATUS), False)
-                self.add_log_line(TrackerLogLine("If this issue persists, reproduce with the debug launcher and post the error message to the discord channel", "", TrackerLogLineGroup.UT_STATUS), False)
+                if self.connect_mode:
+                    self.add_log_line(TrackerLogLine(f"World '{self.game}' does not support yaml-less tracking.", "", TrackerLogLineGroup.UT_STATUS), False)
+                    self.add_log_line(TrackerLogLine("To track this world, launch UT from a generation where you have the yaml in Players/.", "", TrackerLogLineGroup.UT_STATUS), False)
+                else:
+                    self.add_log_line(TrackerLogLine("Internal world was not able to be generated, check your yamls and relaunch", "", TrackerLogLineGroup.UT_STATUS), False)
+                    self.add_log_line(TrackerLogLine("If this issue persists, reproduce with the debug launcher and post the error message to the discord channel", "", TrackerLogLineGroup.UT_STATUS), False)
                 return
 
             if self.slot_name in self.launch_multiworld.world_name_lookup:

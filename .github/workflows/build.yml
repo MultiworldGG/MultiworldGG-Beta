@@ -28,6 +28,8 @@ env:
   APPIMAGETOOL_X86_64_HASH: '4577a452b30af2337123fbb383aea154b618e51ad5448c3b62085cbbbfbfd9a2'
   APPIMAGE_RUNTIME_VERSION: 'r-2025-11-07'
   APPIMAGE_RUNTIME_X86_64_HASH: '27ddd3f78e483fc5f7856e413d7c17092917f8c35bfe3318a0d378aa9435ad17'
+  # Pinned uv version for the bundled binary on Linux/macOS. Bump explicitly when needed.
+  UV_VERSION: '0.11.15'
 
 permissions:  # permissions required for attestation
   id-token: 'write'
@@ -156,11 +158,14 @@ jobs:
         run: |
           wget -nv https://github.com/Ijwu/Enemizer/releases/download/$ENEMIZER_VERSION/ubuntu.16.04-x64.7z
           7za x -oEnemizerCLI/ ubuntu.16.04-x64.7z
-          # uv: bundle astral's install.sh; first launch of the AppImage runs it if uv isn't on PATH.
-          # The script's MIT license header (lines 1-10 of install.sh) is the attribution we ship.
+          # uv: bundle the prebuilt binary so the runtime can exec it directly.
+          # setup.py picks it up via include_files; ModuleUpdate._uv_candidate_paths() looks
+          # for it next to the frozen exe before falling back to PATH.
           mkdir -p uv_runtime
-          curl -LsSf https://astral.sh/uv/install.sh -o uv_runtime/install-uv.sh
-          chmod +x uv_runtime/install-uv.sh
+          curl -fsSL "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-x86_64-unknown-linux-gnu.tar.gz" \
+            | tar -xz -C uv_runtime --strip-components=1 uv-x86_64-unknown-linux-gnu/uv
+          chmod +x uv_runtime/uv
+          ls -la uv_runtime/
       - name: Build
         run: |
           # pygobject is an optional dependency for kivy that's not in requirements
@@ -256,11 +261,19 @@ jobs:
         run: |
           wget -nv https://github.com/Ijwu/Enemizer/releases/download/$ENEMIZER_VERSION/osx.10.12-x64.zip
           unzip -d EnemizerCLI osx.10.12-x64.zip
-          # uv: bundle astral's install.sh; first launch of the .app runs it if uv isn't on PATH.
-          # The script's MIT license header (lines 1-10 of install.sh) is the attribution we ship.
+          # uv: bundle both arches of the prebuilt binary so a single .app/.dmg works on both
+          # Apple Silicon and Intel. ModuleUpdate._uv_candidate_paths() picks uv-${platform.machine()}.
           mkdir -p uv_runtime
-          curl -LsSf https://astral.sh/uv/install.sh -o uv_runtime/install-uv.sh
-          chmod +x uv_runtime/install-uv.sh
+          for triple in aarch64-apple-darwin x86_64-apple-darwin; do
+            curl -fsSL "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${triple}.tar.gz" \
+              | tar -xz -C uv_runtime --strip-components=1 "uv-${triple}/uv"
+            case "$triple" in
+              aarch64-apple-darwin) mv uv_runtime/uv uv_runtime/uv-arm64 ;;
+              x86_64-apple-darwin)  mv uv_runtime/uv uv_runtime/uv-x86_64 ;;
+            esac
+          done
+          chmod +x uv_runtime/uv-arm64 uv_runtime/uv-x86_64
+          ls -la uv_runtime/
 
       - name: Build
         run: |
