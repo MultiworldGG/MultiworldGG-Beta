@@ -155,7 +155,7 @@ def _cleanup_stale_preview_files(max_age: timedelta = timedelta(hours=1)) -> int
 
 
 def _mp_gen_game(
-    gen_options: dict,
+    options_bytes: bytes,
     meta: dict[str, Any] | None = None,
     owner=None,
     sid=None,
@@ -164,21 +164,22 @@ def _mp_gen_game(
     from setproctitle import setproctitle
     setproctitle(f"Generator ({sid})")
 
-    # Workers skip the eager full-IGDB load in WebHostLib/__init__.py; seed
-    # _worlds_to_load with just the games this gen needs before anything
-    # downstream triggers `import worlds`. On a worker's 2nd+ task, the
-    # `worlds` module body has already executed, so set_game_names only
-    # updates the registry — load_missing_worlds() actually imports any
-    # game module new to this worker.
+    # Workers skip the eager full-IGDB load in WebHostLib/__init__.py. 
+
+    # Order matters: populate `_worlds_to_load` first, then trigger the
+    # `worlds` body via `from worlds import load_missing_worlds`, THEN do
+    # restricted_loads — by which time the option module imports are no-ops.
     from Utils import set_game_names, add_bundled_worlds
-    needed_games = {opts["game"] for opts in gen_options.values() if opts.get("game")}
-    set_game_names(list(needed_games), strict=False)
+    needed_games = list((meta or {}).get("games", []))
+    set_game_names(needed_games, strict=False)
     add_bundled_worlds(("tracker", "_manual", "_bizhawk", "_sni", "_debug", "generic"))
 
     from . import app as flask_app
     from .generate import gen_game
     from worlds import load_missing_worlds
     load_missing_worlds()
+
+    gen_options = restricted_loads(options_bytes)
 
     try:
         # gen_game uses db.engine (Flask-SQLAlchemy proxy) which needs an app context.
@@ -192,11 +193,14 @@ def _mp_gen_game(
 def launch_generator(pool: multiprocessing.pool.Pool, generation: Generation, timeout: int|None) -> None:
     try:
         meta = json.loads(generation.meta)
-        options = restricted_loads(generation.options)
-        logging.info(f"Generating {generation.id} for {len(options)} players")
+        # Pass the options as raw bytes; The game list
+        # for set_game_names lives in meta["games"]
+        options_bytes = generation.options
+        player_count = len(meta["games"])
+        logging.info(f"Generating {generation.id} for {player_count} players")
         pool.apply_async(
             _mp_gen_game,
-            (options,),
+            (options_bytes,),
             {
                 "meta": meta,
                 "sid": generation.id,

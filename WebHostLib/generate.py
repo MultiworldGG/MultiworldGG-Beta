@@ -84,6 +84,11 @@ def start_generation(options: dict[str, dict | str], meta: dict[str, Any]):
         return redirect(url_for(request.endpoint, **(request.view_args or {})))
     elif len(gen_options) >= app.config["JOB_THRESHOLD"]:
         try:
+            # Stash the per-player game list in meta so the worker can call
+            # set_game_names BEFORE restricted_loads imports any world option
+            # modules. 
+            gen_games = [vars(p).get("game") for p in gen_options.values()]
+            meta = {**meta, "games": [g for g in gen_games if g]}
             gen = Generation(
                 options=restricted_dumps({name: vars(options) for name, options in gen_options.items()}),
                 # convert to json compatible
