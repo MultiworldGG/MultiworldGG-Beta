@@ -74,6 +74,41 @@ def handle_generation_failure(result: BaseException):
         logging.exception(e)
 
 
+def _make_failure_callback(sid: UUID):
+    """Build a Pool error_callback that records the failure against `sid`.
+
+    The plain `handle_generation_failure` only logs the exception, so if a
+    worker is killed by the kernel (OOM, SIGKILL) the Pool eventually fires
+    error_callback but the Generation row stays STATE_STARTED and the
+    watchdog entry leaks until the JOB_TIME*3 reaper fires. Capturing `sid`
+    in a closure lets us update the DB and clear the watchdog immediately.
+    """
+    def _callback(result: BaseException) -> None:
+        from .models import Generation, STATE_ERROR, STATE_STARTED
+        try:
+            with Session(_engine) as session:
+                gen = session.get(Generation, sid)
+                if gen is not None and gen.state == STATE_STARTED:
+                    gen.state = STATE_ERROR
+                    try:
+                        meta = json.loads(gen.meta)
+                    except (TypeError, ValueError):
+                        meta = {}
+                    meta.setdefault(
+                        "error",
+                        f"Generation worker died unexpectedly "
+                        f"(likely kernel OOM): {type(result).__name__}: {result}",
+                    )
+                    gen.meta = json.dumps(meta)
+                    session.commit()
+        except Exception:
+            logging.exception("Failed to mark generation %s as STATE_ERROR after worker death", sid)
+        finally:
+            _mark_generation_complete(sid)
+        handle_generation_failure(result)
+    return _callback
+
+
 def _get_lobby_apworld_root() -> str | None:
     from . import app as web_app
     root = web_app.config.get("LOBBY_APWORLD_PATH")
@@ -127,10 +162,24 @@ def _mp_gen_game(
     timeout: int|None = None,
 ) -> Any:
     from setproctitle import setproctitle
+    setproctitle(f"Generator ({sid})")
+
+    # Workers skip the eager full-IGDB load in WebHostLib/__init__.py; seed
+    # _worlds_to_load with just the games this gen needs before anything
+    # downstream triggers `import worlds`. On a worker's 2nd+ task, the
+    # `worlds` module body has already executed, so set_game_names only
+    # updates the registry — load_missing_worlds() actually imports any
+    # game module new to this worker.
+    from Utils import set_game_names, add_bundled_worlds
+    needed_games = {opts["game"] for opts in gen_options.values() if opts.get("game")}
+    set_game_names(list(needed_games), strict=False)
+    add_bundled_worlds(("tracker", "_manual", "_bizhawk", "_sni", "_debug", "generic"))
+
     from . import app as flask_app
     from .generate import gen_game
+    from worlds import load_missing_worlds
+    load_missing_worlds()
 
-    setproctitle(f"Generator ({sid})")
     try:
         # gen_game uses db.engine (Flask-SQLAlchemy proxy) which needs an app context.
         # Pool workers don't run inside a Flask request, so push one here.
@@ -155,7 +204,7 @@ def launch_generator(pool: multiprocessing.pool.Pool, generation: Generation, ti
                 "timeout": timeout,
             },
             handle_generation_success,
-            handle_generation_failure,
+            _make_failure_callback(generation.id),
         )
     except Exception as e:
         generation.state = STATE_ERROR
@@ -361,8 +410,14 @@ def autogen(config: dict):
                 db_uri = _pony_config_to_sqlalchemy_uri(pony_config)
                 _engine = create_engine(db_uri)
 
+                # maxtasksperchild=1: workers run one gen then exit, so the
+                # OS reclaims any worlds they imported. Combined with the
+                # per-job world narrowing in _mp_gen_game, this keeps each
+                # worker's footprint to ~one gen's worth of worlds instead
+                # of accumulating toward the full IGDB across maxtasksperchild
+                # gens (which is what OOM-killed the host).
                 with multiprocessing.Pool(config["GENERATORS"], initializer=init_generator,
-                                          initargs=(config,), maxtasksperchild=10) as generator_pool:
+                                          initargs=(config,), maxtasksperchild=1) as generator_pool:
                     job_time = config["JOB_TIME"]
                     # Grace period: JOB_TIME * 3
                     # When worker is killed and neither the success nor error callback fires.

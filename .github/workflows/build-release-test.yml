@@ -179,6 +179,7 @@ jobs:
       - name: Create Linux tarball
         run: |
           cd src/build
+          chmod -c 755 MultiworldGG uv* 2>/dev/null || true
           tar -czvf "MultiworldGG-${APP_VERSION}-linux-x86_64.tar.gz" *
           mkdir -p ../dist
           mv *.tar.gz ../dist/
