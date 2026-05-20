@@ -54,6 +54,10 @@ def generate_api():
             return {"text": str(results),
                     "detail": results}, 400
         else:
+            # Stash the per-player game list in meta so the autogen worker can
+            # call set_game_names BEFORE restricted_loads imports worlds
+            gen_games = [vars(p).get("game") for p in gen_options.values()]
+            meta = {**meta, "games": [g for g in gen_games if g]}
             gen = Generation(
                 options=restricted_dumps({name: vars(options) for name, options in gen_options.items()}),
                 # convert to json compatible

@@ -1618,6 +1618,10 @@ def lobby_generate(lobby: UUID):
     from pickle import PicklingError
     from Utils import restricted_dumps
     try:
+        # Stash the per-player game list in meta so the autogen worker can
+        # call set_game_names BEFORE restricted_loads imports worlds
+        gen_games = [vars(opts).get("game") for opts in gen_options.values()]
+        meta = {**meta, "games": [g for g in gen_games if g]}
         gen = Generation(
             options=restricted_dumps({name: vars(opts) for name, opts in gen_options.items()}),
             meta=json.dumps(meta),
