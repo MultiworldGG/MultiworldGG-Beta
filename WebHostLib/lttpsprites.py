@@ -5,8 +5,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 from Utils import local_path, user_path
-from worlds.alttp.Rom import Sprite
-from worlds.alttp.Adjuster import get_image_for_sprite, update_sprites
 
 class NullTask:
     def update_status(self, text: str):
@@ -28,6 +26,8 @@ def update_sprites_lttp(
     skip_remote_update: bool = False,
     remote_timeout: int = 8
 ):
+    from worlds.alttp.Rom import Sprite
+    from worlds.alttp.Adjuster import get_image_for_sprite, update_sprites
 
     if not skip_remote_update:
         print(f"Fetching sprite index (timeout {remote_timeout}s)…")

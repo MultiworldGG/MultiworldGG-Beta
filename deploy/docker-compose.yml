@@ -61,6 +61,17 @@ services:
       # Bind gunicorn on 8000
       - PORT=8000
 
+  web-warmup:
+    image: alpine/curl:latest
+    depends_on:
+      web:
+        condition: service_started
+    restart: "no"
+    network_mode: host
+    command: >-
+      sh -c "until curl -sf http://localhost:8000/datapackage > /dev/null; do
+        sleep 2; done; echo 'web warmup complete'"
+
   nginx:
     image: nginx:stable-alpine
     volumes:

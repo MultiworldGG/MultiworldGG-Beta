@@ -1859,24 +1859,28 @@ def generate_yaml_templates(target_folder: typing.Union[str, "pathlib.Path"], ge
             presets = world.web.options_presets.copy()
             presets.update({"": {}})
 
-            option_groups = get_option_groups(world)
-            for name, preset in presets.items():
-                res = template.render(
-                    option_groups=option_groups,
-                    __version__=__version__,
-                    game=game_name, 
-                    world_version=world.world_version.as_simple_string(),
-                    yaml_dump=yaml_dump_scalar,
-                    dictify_range=dictify_range,
-                    cleandoc=cleandoc,
-                    preset_name=name,
-                    preset=preset,
-                )
-                preset_name = f" - {name}" if name else ""
-                with open(os.path.join(preset_folder if name else target_folder,
-                                       get_file_safe_name(game_name + preset_name) + ".yaml"),
-                          "w", encoding="utf-8-sig") as f:
-                    f.write(res)
+            try:
+                option_groups = get_option_groups(world)
+                for name, preset in presets.items():
+                    res = template.render(
+                        option_groups=option_groups,
+                        __version__=__version__,
+                        game=game_name,
+                        world_version=world.world_version.as_simple_string(),
+                        yaml_dump=yaml_dump_scalar,
+                        dictify_range=dictify_range,
+                        cleandoc=cleandoc,
+                        preset_name=name,
+                        preset=preset,
+                    )
+                    preset_name = f" - {name}" if name else ""
+                    with open(os.path.join(preset_folder if name else target_folder,
+                                           get_file_safe_name(game_name + preset_name) + ".yaml"),
+                              "w", encoding="utf-8-sig") as f:
+                        f.write(res)
+            except Exception as e:
+                logging.warning("Could not generate options YAML for %s: %s: %s",
+                                game_name, type(e).__name__, e)
 
 
 def dump_player_options(multiworld: MultiWorld) -> None:

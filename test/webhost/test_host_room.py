@@ -22,31 +22,41 @@ class TestHostFakeRoom(TestBase):
     log_filename: str
 
     def setUp(self) -> None:
-        from pony.orm import db_session
         from Utils import user_path
-        from WebHostLib.models import Room, Seed
+        from WebHostLib.models import db, commit, Room, Seed
 
         super().setUp()
 
         with self.client.session_transaction() as session:
             session["_id"] = uuid4()
-            with db_session:
+            with self.app.app_context():
                 # create an empty seed and a room from it
                 seed = Seed(multidata=b"", owner=session["_id"])
-                room = Room(seed=seed, owner=session["_id"], tracker=uuid4())
+                db.session.flush()
+                room = Room(seed_id=seed.id, owner=session["_id"], tracker=uuid4())
+                db.session.flush()
                 self.room_id = room.id
+                commit()
                 self.log_filename = user_path("logs", f"{self.room_id}.txt")
 
     def tearDown(self) -> None:
-        from pony.orm import db_session, select
-        from WebHostLib.models import Command, Room
+        from sqlalchemy import select
+        from WebHostLib.models import db, commit, Command, Room, Seed
 
-        with db_session:
-            for command in select(command for command in Command if command.room.id == self.room_id):  # type: ignore
-                command.delete()
+        with self.app.app_context():
             room: Room = Room.get(id=self.room_id)
-            room.seed.delete()
-            room.delete()
+            if room:
+                for command in db.session.scalars(
+                    select(Command).where(Command.room_id == self.room_id)
+                ).all():
+                    db.session.delete(command)
+                seed_id = room.seed_id
+                db.session.delete(room)
+                if seed_id:
+                    seed = Seed.get(id=seed_id)
+                    if seed:
+                        db.session.delete(seed)
+                commit()
 
         try:
             os.unlink(self.log_filename)
@@ -151,12 +161,12 @@ class TestHostFakeRoom(TestBase):
 
     def test_host_room_other(self) -> None:
         """Verify that non-own room gives the reduced output."""
-        from pony.orm import db_session
-        from WebHostLib.models import Room
+        from WebHostLib.models import db, commit, Room
 
-        with db_session:
+        with self.app.app_context():
             room: Room = Room.get(id=self.room_id)
             room.last_port = 12345
+            commit()
 
         with open(self.log_filename, "w", encoding="utf-8-sig") as f:
             text = "* should not be visible *"
@@ -174,23 +184,25 @@ class TestHostFakeRoom(TestBase):
 
     def test_host_room_own_post(self) -> None:
         """Verify command from owner gets queued for the server and response is redirect."""
-        from pony.orm import db_session, select
-        from WebHostLib.models import Command
+        from sqlalchemy import select
+        from WebHostLib.models import db, Command
 
         with self.app.app_context(), self.app.test_request_context():
             response = self.client.post(url_for("host_room", room=self.room_id), data={
                 "cmd": "/help"
             })
-            self.assertEqual(response.status_code, 302, response.text)\
+            self.assertEqual(response.status_code, 302, response.text)
 
-        with db_session:
-            commands = select(command for command in Command if command.room.id == self.room_id)  # type: ignore
+        with self.app.app_context():
+            commands = db.session.scalars(
+                select(Command).where(Command.room_id == self.room_id)
+            ).all()
             self.assertIn("/help", (command.commandtext for command in commands))
 
     def test_host_room_other_post(self) -> None:
         """Verify command from non-owner does not get queued for the server."""
-        from pony.orm import db_session, select
-        from WebHostLib.models import Command
+        from sqlalchemy import select
+        from WebHostLib.models import db, Command
 
         other_client = self.app.test_client()
         with self.app.app_context(), self.app.test_request_context():
@@ -199,8 +211,10 @@ class TestHostFakeRoom(TestBase):
             })
             self.assertLess(response.status_code, 500)
 
-        with db_session:
-            commands = select(command for command in Command if command.room.id == self.room_id)  # type: ignore
+        with self.app.app_context():
+            commands = db.session.scalars(
+                select(Command).where(Command.room_id == self.room_id)
+            ).all()
             self.assertNotIn("/help", (command.commandtext for command in commands))
 
     def test_logger_teardown(self) -> None:

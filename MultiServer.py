@@ -33,8 +33,8 @@ import websockets
 from websockets.extensions.permessage_deflate import PerMessageDeflate, ServerPerMessageDeflateFactory
 from websockets.protocol import State
 try:
-    # ponyorm is a requirement for webhost, not default server, so may not be importable
-    from pony.orm.dbapiprovider import OperationalError # type: ignore
+    # sqlalchemy is a requirement for webhost, not default server, so may not be importable
+    from sqlalchemy.exc import OperationalError  # type: ignore
 except ImportError:
     OperationalError = ConnectionError
 
@@ -2323,7 +2323,8 @@ class ServerCommandProcessor(CommonCommandProcessor):
     def _cmd_exit(self) -> bool:
         """Shutdown the server"""
         try:
-            self.ctx.server.ws_server.close()
+            if self.ctx.server:
+                self.ctx.server.close()
         finally:
             self.ctx.exit_event.set()
         return True
@@ -2776,7 +2777,8 @@ async def auto_shutdown(ctx, to_cancel=None):
         await asyncio.wait_for(ctx.exit_event.wait(), ctx.auto_shutdown)
 
     def inactivity_shutdown():
-        ctx.server.ws_server.close()
+        if ctx.server:
+            ctx.server.close()
         ctx.exit_event.set()
         if to_cancel:
             for task in to_cancel:
@@ -2855,8 +2857,8 @@ async def main(args: argparse.Namespace):
     def shutdown_handler():
         logging.info("Received interrupt signal (Ctrl+C), shutting down...")
         try:
-            if ctx.server and hasattr(ctx.server, 'ws_server'):
-                ctx.server.ws_server.close()
+            if ctx.server:
+                ctx.server.close()
         except Exception:
             pass  # Server may not be initialized yet
         finally:
@@ -2876,7 +2878,7 @@ async def main(args: argparse.Namespace):
 
     ssl_context = load_server_cert(args.cert, args.cert_key) if args.cert else None
 
-    ctx.server = websockets.serve(
+    ctx.server = await websockets.serve(
         functools.partial(server, ctx=ctx),
         host=ctx.host,
         port=ctx.port,
@@ -2887,7 +2889,6 @@ async def main(args: argparse.Namespace):
     logging.info('Hosting game at %s:%d (%s)' % (ip, ctx.port,
                                                  'No password' if not ctx.password else 'Password: %s' % ctx.password))
 
-    await ctx.server
     console_task = asyncio.create_task(console(ctx))
     if ctx.auto_shutdown:
         ctx.shutdown_task = asyncio.create_task(auto_shutdown(ctx, [console_task]))

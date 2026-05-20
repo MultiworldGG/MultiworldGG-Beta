@@ -1,18 +1,18 @@
 from flask import session, jsonify
-from pony.orm import select
+from sqlalchemy import select
 
 from WebHostLib import to_url
-from WebHostLib.models import Room, Seed
+from WebHostLib.models import Room, Seed, db
 from . import api_endpoints, get_players
 
 
 @api_endpoints.route('/get_rooms')
 def get_rooms():
     response = []
-    for room in select(room for room in Room if room.owner == session["_id"]):
+    for room in db.session.scalars(select(Room).where(Room.owner == session["_id"])).all():
         response.append({
             "room_id": to_url(room.id),
-            "seed_id": to_url(room.seed.id),
+            "seed_id": to_url(room.seed_id),
             "creation_time": room.creation_time,
             "last_activity": room.last_activity,
             "last_port": room.last_port,
@@ -25,7 +25,7 @@ def get_rooms():
 @api_endpoints.route('/get_seeds')
 def get_seeds():
     response = []
-    for seed in select(seed for seed in Seed if seed.owner == session["_id"]):
+    for seed in db.session.scalars(select(Seed).where(Seed.owner == session["_id"])).all():
         response.append({
             "seed_id": to_url(seed.id),
             "creation_time": seed.creation_time,

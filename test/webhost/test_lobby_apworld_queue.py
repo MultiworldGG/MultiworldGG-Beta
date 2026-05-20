@@ -6,10 +6,11 @@ import tempfile
 import zipfile
 from uuid import uuid4
 
-from pony.orm import db_session, flush
+from sqlalchemy import select, func
 
 from WebHostLib import to_url
 from WebHostLib.models import (
+    db, commit, flush,
     Lobby,
     LobbyApworld,
     LobbyApworldRequest,
@@ -63,7 +64,7 @@ class TestLobbyApworldQueue(TestBase):
         shutil.rmtree(self.temp_apworld_dir, ignore_errors=True)
 
     def _create_open_lobby(self, include_third_yaml: bool = False) -> dict:
-        with db_session:
+        with self.app.app_context():
             lobby = Lobby(
                 title="Queue Test Lobby",
                 owner=self.host_session,
@@ -76,13 +77,15 @@ class TestLobbyApworldQueue(TestBase):
                 max_players=0,
                 allow_custom_apworlds=True,
             )
-            host_player = LobbyPlayer(lobby=lobby, session_id=self.host_session, player_name="Host")
-            other_player = LobbyPlayer(lobby=lobby, session_id=self.other_session, player_name="Other")
-            third_player = LobbyPlayer(lobby=lobby, session_id=self.third_session, player_name="Third")
+            db.session.flush()
+            host_player = LobbyPlayer(lobby_id=lobby.id, session_id=self.host_session, player_name="Host")
+            other_player = LobbyPlayer(lobby_id=lobby.id, session_id=self.other_session, player_name="Other")
+            third_player = LobbyPlayer(lobby_id=lobby.id, session_id=self.third_session, player_name="Third")
+            db.session.flush()
 
             host_yaml = LobbyYaml(
-                lobby=lobby,
-                player=host_player,
+                lobby_id=lobby.id,
+                player_id=host_player.id,
                 filename="host.yaml",
                 yaml_player_name="HostSlot",
                 yaml_game="GameX",
@@ -91,8 +94,8 @@ class TestLobbyApworldQueue(TestBase):
                 content=b"game: GameX\nname: HostSlot\n",
             )
             other_yaml = LobbyYaml(
-                lobby=lobby,
-                player=other_player,
+                lobby_id=lobby.id,
+                player_id=other_player.id,
                 filename="other.yaml",
                 yaml_player_name="OtherSlot",
                 yaml_game="GameX",
@@ -103,8 +106,8 @@ class TestLobbyApworldQueue(TestBase):
             third_yaml = None
             if include_third_yaml:
                 third_yaml = LobbyYaml(
-                    lobby=lobby,
-                    player=third_player,
+                    lobby_id=lobby.id,
+                    player_id=third_player.id,
                     filename="third.yaml",
                     yaml_player_name="ThirdSlot",
                     yaml_game="GameX",
@@ -114,13 +117,15 @@ class TestLobbyApworldQueue(TestBase):
                 )
 
             flush()
-            return {
+            result = {
                 "lobby_id": lobby.id,
                 "host_yaml_id": host_yaml.id,
                 "other_yaml_id": other_yaml.id,
                 "third_player_id": third_player.id,
                 "third_yaml_id": third_yaml.id if third_yaml else None,
             }
+            commit()
+            return result
 
     def _preview(self, client, lobby_suuid: str, yaml_id: int, apworld_bytes: bytes):
         return client.post(
@@ -174,9 +179,12 @@ class TestLobbyApworldQueue(TestBase):
         preview_data = preview.get_json()
         self.assertTrue(preview_data["affects_other_players"])
 
-        with db_session:
+        with self.app.app_context():
             lobby = Lobby.get(id=ids["lobby_id"])
-            self.assertEqual(LobbyApworld.select(lambda a: a.lobby == lobby).count(), 0)
+            count = db.session.scalar(
+                select(func.count()).select_from(LobbyApworld).where(LobbyApworld.lobby_id == lobby.id)
+            ) or 0
+            self.assertEqual(count, 0)
 
         apply_without_confirm = self._apply(
             self.host_client,
@@ -187,17 +195,25 @@ class TestLobbyApworldQueue(TestBase):
             confirm=False,
         )
         self.assertEqual(apply_without_confirm.status_code, 412, apply_without_confirm.get_data(as_text=True))
-        with db_session:
+        with self.app.app_context():
             lobby = Lobby.get(id=ids["lobby_id"])
             confirmation_msgs = [
-                m for m in LobbyMessage.select(lambda m: m.lobby == lobby and m.player is None)
+                m for m in db.session.scalars(
+                    select(LobbyMessage).where(
+                        LobbyMessage.lobby_id == lobby.id,
+                        LobbyMessage.player_id.is_(None),
+                    )
+                ).all()
                 if "Host confirmation is required before applying" in m.content
             ]
             self.assertEqual(len(confirmation_msgs), 0)
 
-        with db_session:
+        with self.app.app_context():
             lobby = Lobby.get(id=ids["lobby_id"])
-            self.assertEqual(LobbyApworld.select(lambda a: a.lobby == lobby).count(), 0)
+            count = db.session.scalar(
+                select(func.count()).select_from(LobbyApworld).where(LobbyApworld.lobby_id == lobby.id)
+            ) or 0
+            self.assertEqual(count, 0)
 
         apply_with_confirm = self._apply(
             self.host_client,
@@ -208,9 +224,12 @@ class TestLobbyApworldQueue(TestBase):
             confirm=True,
         )
         self.assertEqual(apply_with_confirm.status_code, 201, apply_with_confirm.get_data(as_text=True))
-        with db_session:
+        with self.app.app_context():
             lobby = Lobby.get(id=ids["lobby_id"])
-            self.assertEqual(LobbyApworld.select(lambda a: a.lobby == lobby).count(), 1)
+            count = db.session.scalar(
+                select(func.count()).select_from(LobbyApworld).where(LobbyApworld.lobby_id == lobby.id)
+            ) or 0
+            self.assertEqual(count, 1)
 
     def test_apply_mode_accepts_preview_token_without_second_file_upload(self) -> None:
         ids = self._create_open_lobby()
@@ -232,9 +251,12 @@ class TestLobbyApworldQueue(TestBase):
             confirm=True,
         )
         self.assertEqual(apply_with_token.status_code, 201, apply_with_token.get_data(as_text=True))
-        with db_session:
+        with self.app.app_context():
             lobby = Lobby.get(id=ids["lobby_id"])
-            self.assertEqual(LobbyApworld.select(lambda a: a.lobby == lobby).count(), 1)
+            count = db.session.scalar(
+                select(func.count()).select_from(LobbyApworld).where(LobbyApworld.lobby_id == lobby.id)
+            ) or 0
+            self.assertEqual(count, 1)
 
     def test_hash_drift_returns_409_with_refreshed_preview(self) -> None:
         ids = self._create_open_lobby()
@@ -245,12 +267,17 @@ class TestLobbyApworldQueue(TestBase):
         self.assertEqual(preview.status_code, 200)
         old_hash = preview.get_json()["impact_hash"]
 
-        with db_session:
+        with self.app.app_context():
             lobby = Lobby.get(id=ids["lobby_id"])
-            third_player = LobbyPlayer.get(session_id=self.third_session, lobby=lobby)
+            third_player = db.session.scalars(
+                select(LobbyPlayer).where(
+                    LobbyPlayer.session_id == self.third_session,
+                    LobbyPlayer.lobby_id == lobby.id,
+                ).limit(1)
+            ).first()
             LobbyYaml(
-                lobby=lobby,
-                player=third_player,
+                lobby_id=lobby.id,
+                player_id=third_player.id,
                 filename="late.yaml",
                 yaml_player_name="LateSlot",
                 yaml_game="GameX",
@@ -258,6 +285,7 @@ class TestLobbyApworldQueue(TestBase):
                 requires_game_version=None,
                 content=b"game: GameX\nname: LateSlot\n",
             )
+            commit()
 
         stale_apply = self._apply(
             self.host_client,
@@ -299,7 +327,7 @@ class TestLobbyApworldQueue(TestBase):
         self.assertEqual(status_response.status_code, 200)
         self.assertEqual(status_response.get_json().get("pending_request_count"), 1)
 
-        with db_session:
+        with self.app.app_context():
             req = LobbyApworldRequest.get(id=request_id)
             self.assertIsNotNone(req)
             self.assertTrue(os.path.exists(req.storage_path))
@@ -308,7 +336,7 @@ class TestLobbyApworldQueue(TestBase):
         close_response = self.host_client.post(f"/api/lobby/{lobby_suuid}/close")
         self.assertEqual(close_response.status_code, 200, close_response.get_data(as_text=True))
 
-        with db_session:
+        with self.app.app_context():
             self.assertIsNone(LobbyApworldRequest.get(id=request_id))
         self.assertFalse(os.path.exists(pending_path))
 
@@ -356,15 +384,25 @@ class TestLobbyApworldQueue(TestBase):
         delete_other_yaml = self.other_client.delete(f"/api/lobby/{lobby_suuid}/yaml/{ids['other_yaml_id']}")
         self.assertEqual(delete_other_yaml.status_code, 200, delete_other_yaml.get_data(as_text=True))
 
-        with db_session:
+        with self.app.app_context():
             lobby = Lobby.get(id=ids["lobby_id"])
             self.assertIsNone(LobbyYaml.get(id=ids["other_yaml_id"]))
 
-            apworlds = LobbyApworld.select(lambda a: a.lobby == lobby and a.game_name == "GameX")[:]
+            apworlds = db.session.scalars(
+                select(LobbyApworld).where(
+                    LobbyApworld.lobby_id == lobby.id,
+                    LobbyApworld.game_name == "GameX",
+                )
+            ).all()
             self.assertEqual(len(apworlds), 0)
 
             system_messages = [
-                m.content for m in LobbyMessage.select(lambda m: m.lobby == lobby and m.player is None)
+                m.content for m in db.session.scalars(
+                    select(LobbyMessage).where(
+                        LobbyMessage.lobby_id == lobby.id,
+                        LobbyMessage.player_id.is_(None),
+                    )
+                ).all()
             ]
             self.assertTrue(
                 any(
@@ -384,11 +422,17 @@ class TestLobbyApworldQueue(TestBase):
 
     def test_pending_requests_cleanup_on_done_transition(self) -> None:
         ids = self._create_open_lobby()
-        with db_session:
+        with self.app.app_context():
             lobby = Lobby.get(id=ids["lobby_id"])
-            host_player = LobbyPlayer.get(session_id=self.host_session, lobby=lobby)
+            host_player = db.session.scalars(
+                select(LobbyPlayer).where(
+                    LobbyPlayer.session_id == self.host_session,
+                    LobbyPlayer.lobby_id == lobby.id,
+                ).limit(1)
+            ).first()
             host_yaml = LobbyYaml.get(id=ids["host_yaml_id"])
             seed = Seed(multidata=b"", owner=self.host_session, meta='{"race": false}')
+            db.session.flush()
             lobby.state = LOBBY_GENERATING
             lobby.generation_id = seed.id
 
@@ -399,29 +443,31 @@ class TestLobbyApworldQueue(TestBase):
                 f.write(_make_apworld_bytes("GameX", "2.0.0"))
 
             req = LobbyApworldRequest(
-                lobby=lobby,
-                yaml=host_yaml,
-                requester=host_player,
+                lobby_id=lobby.id,
+                yaml_id=host_yaml.id,
+                requester_id=host_player.id,
                 game_name="GameX",
                 original_filename="manual.apworld",
                 storage_path=pending_path,
                 file_size=os.path.getsize(pending_path),
                 world_version="2.0.0",
             )
+            flush()
             request_id = req.id
+            commit()
 
         lobby_suuid = to_url(ids["lobby_id"])
         status_response = self.host_client.get(f"/api/lobby/{lobby_suuid}/status")
         self.assertEqual(status_response.status_code, 200)
         self.assertEqual(status_response.get_json()["state"], 2)
 
-        with db_session:
+        with self.app.app_context():
             self.assertIsNone(LobbyApworldRequest.get(id=request_id))
         self.assertFalse(os.path.exists(pending_path))
 
     def test_reopen_done_lobby_preserves_players_files_and_settings(self) -> None:
         ids = self._create_open_lobby()
-        with db_session:
+        with self.app.app_context():
             lobby = Lobby.get(id=ids["lobby_id"])
             lobby.meta = json.dumps({
                 "server_options": {"hint_cost": 7},
@@ -431,9 +477,11 @@ class TestLobbyApworldQueue(TestBase):
                 player.is_ready = True
 
             seed = Seed(multidata=b"done-seed", owner=self.host_session, meta='{"race": false}')
-            room = Room(seed=seed, owner=self.host_session, tracker=uuid4())
-            lobby.seed = seed
-            lobby.room = room
+            db.session.flush()
+            room = Room(seed_id=seed.id, owner=self.host_session, tracker=uuid4())
+            db.session.flush()
+            lobby.seed_id = seed.id
+            lobby.room_id = room.id
             lobby.state = LOBBY_DONE
 
             host_yaml = LobbyYaml.get(id=ids["host_yaml_id"])
@@ -445,18 +493,19 @@ class TestLobbyApworldQueue(TestBase):
                 apworld_file.write(apworld_bytes)
 
             apworld = LobbyApworld(
-                lobby=lobby,
-                yaml=host_yaml,
+                lobby_id=lobby.id,
+                yaml_id=host_yaml.id,
                 game_name="GameX",
                 original_filename="host.apworld",
                 storage_path=apworld_path,
                 file_size=len(apworld_bytes),
                 world_version="2.0.0",
             )
+            flush()
             seed_id = seed.id
             room_id = room.id
-            flush()
             apworld_id = apworld.id
+            commit()
 
         lobby_suuid = to_url(ids["lobby_id"])
         reopen_response = self.host_client.post(f"/api/lobby/{lobby_suuid}/reopen")
@@ -470,11 +519,11 @@ class TestLobbyApworldQueue(TestBase):
         self.assertNotIn("seed_id", status_json)
         self.assertNotIn("room_id", status_json)
 
-        with db_session:
+        with self.app.app_context():
             lobby = Lobby.get(id=ids["lobby_id"])
             self.assertEqual(lobby.state, LOBBY_OPEN)
-            self.assertIsNone(lobby.seed)
-            self.assertIsNone(lobby.room)
+            self.assertIsNone(lobby.seed_id)
+            self.assertIsNone(lobby.room_id)
             self.assertEqual(len(lobby.players), 3)
             self.assertEqual(len(lobby.yamls), 2)
             self.assertEqual(len(lobby.apworlds), 1)
@@ -487,25 +536,28 @@ class TestLobbyApworldQueue(TestBase):
 
     def test_reopen_requires_owner(self) -> None:
         ids = self._create_open_lobby()
-        with db_session:
+        with self.app.app_context():
             lobby = Lobby.get(id=ids["lobby_id"])
             seed = Seed(multidata=b"done-seed", owner=self.host_session, meta='{"race": false}')
-            room = Room(seed=seed, owner=self.host_session, tracker=uuid4())
-            lobby.seed = seed
-            lobby.room = room
+            db.session.flush()
+            room = Room(seed_id=seed.id, owner=self.host_session, tracker=uuid4())
+            db.session.flush()
+            lobby.seed_id = seed.id
+            lobby.room_id = room.id
             lobby.state = LOBBY_DONE
             seed_id = seed.id
             room_id = room.id
+            commit()
 
         lobby_suuid = to_url(ids["lobby_id"])
         reopen_response = self.other_client.post(f"/api/lobby/{lobby_suuid}/reopen")
         self.assertEqual(reopen_response.status_code, 403, reopen_response.get_data(as_text=True))
 
-        with db_session:
+        with self.app.app_context():
             lobby = Lobby.get(id=ids["lobby_id"])
             self.assertEqual(lobby.state, LOBBY_DONE)
-            self.assertIsNotNone(lobby.seed)
-            self.assertIsNotNone(lobby.room)
+            self.assertIsNotNone(lobby.seed_id)
+            self.assertIsNotNone(lobby.room_id)
             self.assertIsNotNone(Seed.get(id=seed_id))
             self.assertIsNotNone(Room.get(id=room_id))
 

@@ -9,16 +9,13 @@ from pickle import PicklingError
 from typing import Any
 
 from flask import flash, redirect, render_template, request, session, url_for
-from pony.orm import commit, db_session
 
 from BaseClasses import get_seed, seeddigits
-from Generate import PlandoOptions, handle_name, mystery_argparse
-from Main import main as ERmain
 from Utils import __version__, restricted_dumps, DaemonThreadPoolExecutor
 from WebHostLib import app
 from settings import ServerOptions, GeneratorOptions
 from .check import get_yaml_data, roll_options
-from .models import Generation, STATE_ERROR, STATE_QUEUED, Seed, UUID
+from .models import Generation, STATE_ERROR, STATE_QUEUED, Seed, UUID, db, commit
 from .upload import upload_zip_to_db
 
 
@@ -87,6 +84,11 @@ def start_generation(options: dict[str, dict | str], meta: dict[str, Any]):
         return redirect(url_for(request.endpoint, **(request.view_args or {})))
     elif len(gen_options) >= app.config["JOB_THRESHOLD"]:
         try:
+            # Stash the per-player game list in meta so the worker can call
+            # set_game_names BEFORE restricted_loads imports any world option
+            # modules. 
+            gen_games = [vars(p).get("game") for p in gen_options.values()]
+            meta = {**meta, "games": [g for g in gen_games if g]}
             gen = Generation(
                 options=restricted_dumps({name: vars(options) for name, options in gen_options.items()}),
                 # convert to json compatible
@@ -125,6 +127,8 @@ def gen_game(gen_options: dict, meta: dict[str, Any] | None = None, owner=None, 
     race = meta.setdefault("generator_options", {}).setdefault("race", False)
 
     def task():
+        from Generate import PlandoOptions, handle_name, mystery_argparse
+        from Main import main as ERmain
         target = tempfile.TemporaryDirectory()
         playercount = len(gen_options)
         seed = get_seed()
@@ -168,7 +172,11 @@ def gen_game(gen_options: dict, meta: dict[str, Any] | None = None, owner=None, 
             raise Exception(f"Names have to be unique. Names: {Counter(args.name.values())}")
         ERmain(args, seed, baked_server_options=meta["server_options"])
 
-        return upload_to_db(target.name, sid, owner, race)
+        # task() runs in a DaemonThreadPoolExecutor sub-thread; Flask app contexts are
+        # contextvar/thread-local and don't propagate from the calling thread, so push
+        # one here for upload_to_db's Session(db.engine).
+        with app.app_context():
+            return upload_to_db(target.name, sid, owner, race)
 
     thread_pool = DaemonThreadPoolExecutor(max_workers=1)
     thread = thread_pool.submit(task)
@@ -177,30 +185,32 @@ def gen_game(gen_options: dict, meta: dict[str, Any] | None = None, owner=None, 
         return thread.result(timeout)
     except concurrent.futures.TimeoutError as e:
         if sid:
-            with db_session:
-                gen = Generation.get(id=sid)
+            from sqlalchemy.orm import Session
+            with Session(db.engine) as _session:
+                gen = _session.get(Generation, sid)
                 if gen is not None:
                     gen.state = STATE_ERROR
-                    meta = json.loads(gen.meta)
-                    meta["error"] = ("Allowed time for Generation exceeded, " +
-                                     "please consider generating locally instead. " +
-                                     format_exception(e))
-                    gen.meta = json.dumps(meta)
-                    commit()
+                    _meta = json.loads(gen.meta)
+                    _meta["error"] = ("Allowed time for Generation exceeded, " +
+                                      "please consider generating locally instead. " +
+                                      format_exception(e))
+                    gen.meta = json.dumps(_meta)
+                    _session.commit()
         raise  # Re-raise so the pool callback handles this as a failure
     except (KeyboardInterrupt, SystemExit):
         # don't update db, retry next time
         raise
     except BaseException as e:
         if sid:
-            with db_session:
-                gen = Generation.get(id=sid)
+            from sqlalchemy.orm import Session
+            with Session(db.engine) as _session:
+                gen = _session.get(Generation, sid)
                 if gen is not None:
                     gen.state = STATE_ERROR
-                    meta = json.loads(gen.meta)
-                    meta["error"] = format_exception(e)
-                    gen.meta = json.dumps(meta)
-                    commit()
+                    _meta = json.loads(gen.meta)
+                    _meta["error"] = format_exception(e)
+                    gen.meta = json.dumps(_meta)
+                    _session.commit()
         raise
     finally:
         # free resources claimed by thread pool, if possible
@@ -227,18 +237,20 @@ def wait_seed(seed: UUID):
 
 
 def upload_to_db(folder, sid, owner, race):
+    # Callers (Flask routes, or task() in this module) push an app_context before
+    # calling, so upload_zip_to_db / db.session work uniformly here.
     for file in os.listdir(folder):
         file = os.path.join(folder, file)
         if file.endswith(".zip"):
-            with db_session:
-                with zipfile.ZipFile(file) as zfile:
-                    res = upload_zip_to_db(zfile, owner, {"race": race}, sid)
-                if type(res) == "str":
-                    raise Exception(res)
-                elif res:
-                    seed = res
-                    gen = Generation.get(id=seed.id)
-                    if gen is not None:
-                        gen.delete()
-                    return seed.id
+            with zipfile.ZipFile(file) as zfile:
+                res = upload_zip_to_db(zfile, owner, {"race": race}, sid)
+            if isinstance(res, str):
+                raise Exception(res)
+            elif res:
+                seed = res
+                gen = db.session.get(Generation, seed.id)
+                if gen is not None:
+                    db.session.delete(gen)
+                db.session.commit()
+                return seed.id
     raise Exception("Generation zipfile not found.")

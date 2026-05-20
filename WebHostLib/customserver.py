@@ -15,7 +15,8 @@ import typing
 import sys
 
 import websockets
-from pony.orm import commit, db_session, select
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session
 
 import Utils
 
@@ -25,7 +26,7 @@ from MultiServer import (
 )
 from Utils import restricted_loads, cache_argsless
 from .locker import Locker
-from .models import Command, GameDataPackage, Room, db
+from .models import Command, GameDataPackage, Room
 
 
 class CustomClientMessageProcessor(ClientMessageProcessor):
@@ -62,6 +63,7 @@ class DBCommandProcessor(ServerCommandProcessor):
 
 class WebHostContext(Context):
     room_id: int
+    _db_engine = None  # set by run_server_process
 
     def __init__(self, static_server_data: dict, logger: logging.Logger):
         # static server data is used during _load_game_data to load required data,
@@ -93,31 +95,38 @@ class WebHostContext(Context):
         cmdprocessor = DBCommandProcessor(self)
 
         while not self.exit_event.is_set():
-            await self.main_loop.run_in_executor(None, self._process_db_commands, cmdprocessor)
+            self._process_db_commands(cmdprocessor)
             try:
                 await asyncio.wait_for(self.exit_event.wait(), 5)
             except asyncio.TimeoutError:
                 pass
 
     def _process_db_commands(self, cmdprocessor):
-        with db_session:
-            commands = select(command for command in Command if command.room.id == self.room_id)
+        engine = WebHostContext._db_engine
+        if engine is None:
+            return
+        with Session(engine) as session:
+            commands = session.scalars(
+                select(Command).where(Command.room_id == self.room_id)
+            ).all()
             if commands:
                 for command in commands:
                     self.main_loop.call_soon_threadsafe(cmdprocessor, command.commandtext)
-                    command.delete()
-                commit()
+                    session.delete(command)
+                session.commit()
 
-    @db_session
     def load(self, room_id: int):
         self.room_id = room_id
-        room = Room.get(id=room_id)
-        if room.last_port:
-            self.port = room.last_port
-        else:
-            self.port = get_random_port()
+        engine = WebHostContext._db_engine
+        with Session(engine) as session:
+            room = session.get(Room, room_id)
+            if room.last_port:
+                self.port = room.last_port
+            else:
+                self.port = get_random_port()
 
-        multidata = self.decompress(room.seed.multidata)
+            multidata = self.decompress(room.seed.multidata)
+
         game_data_packages = {}
 
         static_gamespackage = self.gamespackage  # this is shared across all rooms
@@ -128,25 +137,25 @@ class WebHostContext(Context):
         self.location_name_groups = {"Archipelago": static_location_name_groups.get("Archipelago", {})}
         missing_checksum = False
 
-        for game in list(multidata.get("datapackage", {})):
-            game_data = multidata["datapackage"][game]
-            if "checksum" in game_data:
-                if static_gamespackage.get(game, {}).get("checksum") == game_data["checksum"]:
-                    # non-custom. remove from multidata and use static data
-                    # games package could be dropped from static data once all rooms embed data package
-                    del multidata["datapackage"][game]
-                else:
-                    row = GameDataPackage.get(checksum=game_data["checksum"])
-                    if row:  # None if rolled on >= 0.3.9 but uploaded to <= 0.3.8. multidata should be complete
-                        game_data_packages[game] = restricted_loads(row.data)
-                        continue
+        with Session(engine) as session:
+            for game in list(multidata.get("datapackage", {})):
+                game_data = multidata["datapackage"][game]
+                if "checksum" in game_data:
+                    if static_gamespackage.get(game, {}).get("checksum") == game_data["checksum"]:
+                        # non-custom. remove from multidata and use static data
+                        del multidata["datapackage"][game]
                     else:
-                        self.logger.warning(f"Did not find game_data_package for {game}: {game_data['checksum']}")
-            else:
-                missing_checksum = True  # Game rolled on old AP and will load data package from multidata
-            self.gamespackage[game] = static_gamespackage.get(game, {})
-            self.item_name_groups[game] = static_item_name_groups.get(game, {})
-            self.location_name_groups[game] = static_location_name_groups.get(game, {})
+                        row = session.get(GameDataPackage, game_data["checksum"])
+                        if row:  # None if rolled on >= 0.3.9 but uploaded to <= 0.3.8
+                            game_data_packages[game] = restricted_loads(row.data)
+                            continue
+                        else:
+                            self.logger.warning(f"Did not find game_data_package for {game}: {game_data['checksum']}")
+                else:
+                    missing_checksum = True  # Game rolled on old AP and will load data package from multidata
+                self.gamespackage[game] = static_gamespackage.get(game, {})
+                self.item_name_groups[game] = static_item_name_groups.get(game, {})
+                self.location_name_groups[game] = static_location_name_groups.get(game, {})
 
         if not game_data_packages and not missing_checksum:
             # all static -> use the static dicts directly
@@ -158,21 +167,25 @@ class WebHostContext(Context):
     def init_save(self, enabled: bool = True):
         self.saving = enabled
         if self.saving:
-            with db_session:
-                savegame_data = Room.get(id=self.room_id).multisave
+            engine = WebHostContext._db_engine
+            with Session(engine) as session:
+                room = session.get(Room, self.room_id)
+                savegame_data = room.multisave
                 if savegame_data:
                     self.set_save(restricted_loads(savegame_data))
             self._start_async_saving(atexit_save=False)
         asyncio.create_task(self.listen_to_db_commands())
 
-    @db_session
     def _save(self, exit_save: bool = False) -> bool:
-        room = Room.get(id=self.room_id)
-        # Does not use Utils.restricted_dumps because we'd rather make a save than not make one
-        room.multisave = pickle.dumps(self.get_save())
-        # saving only occurs on activity, so we can "abuse" this information to mark this as last_activity
-        if not exit_save:  # we don't want to count a shutdown as activity, which would restart the server again
-            room.last_activity = Utils.utcnow()
+        engine = WebHostContext._db_engine
+        with Session(engine) as session:
+            room = session.get(Room, self.room_id)
+            # Does not use Utils.restricted_dumps because we'd rather make a save than not make one
+            room.multisave = pickle.dumps(self.get_save())
+            # saving only occurs on activity, so we can "abuse" this information to mark this as last_activity
+            if not exit_save:  # we don't want to count a shutdown as activity, which would restart the server again
+                room.last_activity = Utils.utcnow()
+            session.commit()
         return True
 
     def get_save(self) -> dict:
@@ -268,8 +281,10 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
         del resource, file_limit
 
     # establish DB connection for multidata and multisave
-    db.bind(**ponyconfig)
-    db.generate_mapping(check_tables=False)
+    from WebHost import _pony_config_to_sqlalchemy_uri
+    db_uri = _pony_config_to_sqlalchemy_uri(ponyconfig)
+    engine = create_engine(db_uri)
+    WebHostContext._db_engine = engine
 
     if "worlds" in sys.modules:
         raise Exception("Worlds system should not be loaded in the custom server.")
@@ -298,7 +313,7 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
 
     async def start_room(room_id):
         with Locker(f"RoomLocker {room_id}"):
-            logger = logging.getLogger() # init logger separately to assure error logs
+            logger = logging.getLogger()  # init logger separately to assure error logs
             try:
                 logger = set_up_logging(room_id)
                 ctx = WebHostContext(static_server_data, logger)
@@ -306,21 +321,18 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
                 ctx.init_save()
                 assert ctx.server is None
                 try:
-                    ctx.server = websockets.serve(
+                    ctx.server = await websockets.serve(
                         functools.partial(server, ctx=ctx),
                         ctx.host,
                         ctx.port,
                         ssl=get_ssl_context(),
                         extensions=[server_per_message_deflate_factory],
                     )
-                    await ctx.server
                 except OSError:  # likely port in use
-                    ctx.server = websockets.serve(
+                    ctx.server = await websockets.serve(
                         functools.partial(server, ctx=ctx), ctx.host, 0, ssl=get_ssl_context())
-
-                    await ctx.server
                 port = 0
-                for wssocket in ctx.server.ws_server.sockets:
+                for wssocket in ctx.server.sockets:
                     socketname = wssocket.getsockname()
                     if wssocket.family == socket.AF_INET6:
                         # Prefer IPv4, as most users seem to not have working ipv6 support
@@ -330,14 +342,15 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
                         port = socketname[1]
                 if port:
                     ctx.logger.info(f'Hosting game at {host}:{port}')
-                    with db_session:
-                        room = Room.get(id=ctx.room_id)
+                    with Session(engine) as session:
+                        room = session.get(Room, ctx.room_id)
                         room.last_port = port
+                        session.commit()
                     del room
                 else:
                     ctx.logger.exception("Could not determine port. Likely hosting failure.")
-                with db_session:
-                    ctx.auto_shutdown = Room.get(id=room_id).timeout
+                with Session(engine) as session:
+                    ctx.auto_shutdown = session.get(Room, room_id).timeout
                 if ctx.saving:
                     setattr(asyncio.current_task(), "save", lambda: ctx._save(True))
                 assert ctx.shutdown_task is None
@@ -349,9 +362,10 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
                     ctx._save(True)
                     setattr(asyncio.current_task(), "save", None)
             except Exception as e:
-                with db_session:
-                    room = Room.get(id=room_id)
+                with Session(engine) as session:
+                    room = session.get(Room, room_id)
                     room.last_port = -1
+                    session.commit()
                 del room
                 logger.exception(e)
                 raise
@@ -365,14 +379,15 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
                     ctx.exit_event.set()  # make sure the saving thread stops at some point
                     # NOTE: async saving should probably be an async task and could be merged with shutdown_task
 
-                    if ctx.server and hasattr(ctx.server, "ws_server"):
-                        ctx.server.ws_server.close()
-                        await ctx.server.ws_server.wait_closed()
+                    if ctx.server:
+                        ctx.server.close()
+                        await ctx.server.wait_closed()
 
-                    with db_session:
+                    with Session(engine) as session:
                         # ensure the Room does not spin up again on its own, minute of safety buffer
-                        room = Room.get(id=room_id)
+                        room = session.get(Room, room_id)
                         room.last_activity = Utils.utcnow() - datetime.timedelta(minutes=1, seconds=room.timeout)
+                        session.commit()
                     del room
                     tear_down_logging(room_id)
                     logging.info(f"Shutting down room {room_id} on {name}.")
@@ -393,7 +408,7 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
 
         def run(self):
             while 1:
-                next_room = rooms_to_run.get(block=True,  timeout=None)
+                next_room = rooms_to_run.get(block=True, timeout=None)
                 gc.collect()
                 task = asyncio.run_coroutine_threadsafe(start_room(next_room), loop)
                 self._tasks.append(task)

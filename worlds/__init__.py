@@ -89,6 +89,17 @@ for game_module in game_names():
 for world_source in world_sources:
     world_source.load()
 
+
+def load_missing_worlds() -> None:
+    """Load worlds added to game_names() after this module's first import."""
+    loaded_ids = {id(ws.game_module) for ws in world_sources}
+    for game_module in game_names():
+        if id(game_module) in loaded_ids:
+            continue
+        ws = WorldSource(game_module)
+        world_sources.append(ws)
+        ws.load()
+
 from .AutoWorld import AutoWorldRegister
 # Add version for each world.
 for world in AutoWorldRegister.world_types.values():

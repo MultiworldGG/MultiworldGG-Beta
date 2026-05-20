@@ -9,7 +9,6 @@ from markupsafe import Markup
 from WebHostLib import app
 from WebHostLib.upload import allowed_options, banned_file
 
-from Generate import roll_settings, PlandoOptions
 from Utils import parse_yamls
 
 
@@ -121,6 +120,7 @@ def get_yaml_data(files) -> dict[str, str] | str | Markup:
 def roll_options(options: dict[str, dict | str],
                  plando_options: Set[str] = frozenset({"bosses", "items", "connections", "texts"})) -> \
         tuple[dict[str, str | bool], dict[str, dict]]:
+    from Generate import roll_settings, PlandoOptions
     plando_options = PlandoOptions.from_set(set(plando_options))
     results: dict[str, str | bool] = {}
     rolled_results: dict[str, dict] = {}

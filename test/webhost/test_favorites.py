@@ -8,25 +8,38 @@ from . import TestBase
 
 
 class TestFavoritesFeature(TestBase):
+    def _visible_worlds_stub(self):
+        # The test env only loads infra worlds (generic, tracker, _debug), all of which
+        # have hidden=True, so get_visible_worlds() returns {}. Reuse the generic world
+        # as a stand-in visible world so the /games template's per-world loop renders.
+        from worlds.AutoWorld import AutoWorldRegister
+        return {"Archipelago": AutoWorldRegister.world_types["Archipelago"]}
+
+    def _get_games_with_visible_world(self):
+        from WebHostLib import cache as wh_cache
+        wh_cache.clear()
+        with patch("WebHostLib.misc.get_visible_worlds", side_effect=self._visible_worlds_stub):
+            return self.client.get('/games')
+
     def test_supported_games_page_loads_with_favorites_section(self):
         """Test that the supported games page includes the favorites section HTML"""
-        response = self.client.get('/games')
+        response = self._get_games_with_visible_world()
         self.assertEqual(response.status_code, 200)
-        
+
         # Check that the favorites section is present
         self.assertIn(b'favorites-section', response.data)
         self.assertIn(b'favorites-list', response.data)
         self.assertIn(b'Favorite Games', response.data)
-        
+
         # Check that star icons are present
         self.assertIn(b'star-icon', response.data)
         self.assertIn(b'Add to favorites', response.data)
 
     def test_star_icons_have_correct_attributes(self):
         """Test that star icons have the correct data attributes"""
-        response = self.client.get('/games')
+        response = self._get_games_with_visible_world()
         self.assertEqual(response.status_code, 200)
-        
+
         # Check that star icons have data-game attribute
         self.assertIn(b'data-game', response.data)
         self.assertIn(b'star-icon', response.data)

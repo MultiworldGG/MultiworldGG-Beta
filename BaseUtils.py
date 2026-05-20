@@ -96,6 +96,8 @@ is_linux = sys.platform.startswith("linux")
 is_macos = sys.platform == "darwin"
 is_windows = sys.platform in ("win32", "cygwin", "msys")
 
+_stdio_wrapped_for_logging = False
+
 def get_config_file_path() -> str:
     if getattr(sys, 'frozen', False):
         # When frozen, the executable's directory is the base path.
@@ -422,10 +424,15 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
     file_handler.addFilter(UnescapeMarkupFilter())
     root_logger.addHandler(file_handler)
     # TODO: Make console better, use rich/blessed/something else
-    # Force UTF-8 stream wrapper for stdout/stderr (fixes UnicodeEncodeError in macOS .app bundles)
-    if hasattr(sys.stdout, "buffer") and hasattr(sys.stderr, "buffer") and (is_macos or is_linux) and is_frozen():
+    # Force UTF-8 stream wrapper for stdout/stderr (fixes UnicodeEncodeError in macOS .app bundles).
+    # Only wrap once per process — see _stdio_wrapped_for_logging above.
+    global _stdio_wrapped_for_logging
+    if (not _stdio_wrapped_for_logging
+            and hasattr(sys.stdout, "buffer") and hasattr(sys.stderr, "buffer")
+            and (is_macos or is_linux) and is_frozen()):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+        _stdio_wrapped_for_logging = True
     # TODO: Fix here to use rich/blessed
     if sys.stdout:
         stream_handler = logging.StreamHandler(sys.stdout)

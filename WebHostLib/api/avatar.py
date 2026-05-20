@@ -20,7 +20,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from Utils import utcnow
 from WebHostLib import app, limiter
-from WebHostLib.models import Avatar, AvatarToken
+from WebHostLib.models import Avatar, AvatarToken, commit
 from . import api_endpoints
 
 
@@ -70,6 +70,7 @@ def _avatar_base_url() -> str:
 def avatar_mint_token():
     token_uuid = uuid.uuid4()
     AvatarToken(token=token_uuid)
+    commit()
     return jsonify({
         "token": str(token_uuid),
         "upload_url": f"{_avatar_base_url()}/api/avatar/upload",
@@ -142,6 +143,7 @@ def avatar_upload():
         original_sha256=original_sha256,
     )
     token.last_used_at = utcnow()
+    commit()
 
     return jsonify({"url": f"{_avatar_base_url()}/avatar/{avatar_id.hex}{PNG_EXTENSION}"})
 

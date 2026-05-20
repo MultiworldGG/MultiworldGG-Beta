@@ -1,6 +1,8 @@
 import base64
+import multiprocessing
 import os
 import socket
+import threading
 import typing
 import uuid
 
@@ -8,10 +10,20 @@ from flask import Flask, session
 from flask_caching import Cache
 from flask_compress import Compress
 from flask_limiter import Limiter
-from pony.flask import Pony
 from werkzeug.routing import BaseConverter
 
-from Utils import title_sorted, get_file_safe_name,world_list_sorted
+from Utils import title_sorted, get_file_safe_name,world_list_sorted, set_game_names, add_bundled_worlds
+from mwgg_igdb import GameIndex
+# Must be done before worlds is imported.
+# Workers re-execute this module on spawn; if they also seed the full IGDB
+# list, each worker eagerly loads every installed world (hundreds of MB) and
+# the host OOMs once a few gens run in parallel. Workers narrow the list
+# per-job in autolauncher._mp_gen_game.
+if multiprocessing.current_process().name == "MainProcess":
+    set_game_names(list(GameIndex.game_names.keys()), strict=False)
+    add_bundled_worlds(("tracker", "_manual", "_bizhawk", "_sni", "_debug", "generic"))
+
+from APContainer import is_ap_player_container
 from .cli import CLI
 
 UPLOAD_FOLDER = os.path.relpath('uploads')
@@ -23,11 +35,14 @@ AVATAR_UPLOAD_FOLDER = os.path.join(UPLOAD_FOLDER, "avatars")
 os.makedirs(AVATAR_UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
-Pony(app)
+
+_dynamic_tracker_lock = threading.Lock()
+_dynamic_tracker_registered = False
 
 app.jinja_env.filters['any'] = any
 app.jinja_env.filters['all'] = all
 app.jinja_env.filters['get_file_safe_name'] = get_file_safe_name
+app.jinja_env.filters['is_applayercontainer'] = is_ap_player_container
 
 # overwrites of flask default config
 app.config["DEBUG"] = False
@@ -64,12 +79,17 @@ app.config['HIDDEN_WEBWORLDS'] = ["Super Mario World", "Sonic Adventure 2 Battle
 # waitress uses one thread for I/O, these are for processing of views that then get sent
 # multiworld.gg uses gunicorn + nginx; ignoring this option
 app.config["WAITRESS_THREADS"] = 10
-# a default that just works. multiworld.gg runs on postgresql
+# a default that just works. multiworld.gg runs on postgresql.
+# PONY key kept for backward-compatibility with config.yaml files;
+# get_app() in WebHost.py converts it to SQLALCHEMY_DATABASE_URI.
 app.config["PONY"] = {
     'provider': 'sqlite',
     'filename': os.path.abspath('ap.db3'),
     'create_db': True
 }
+# flask-sqlalchemy configuration — populated by get_app() from the PONY dict
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.abspath('ap.db3')}"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["MAX_ROLL"] = 20
 app.config["CACHE_TYPE"] = "SimpleCache"
 app.config["CACHE_DEFAULT_TIMEOUT"] = 300  # 5 minutes default
@@ -130,9 +150,6 @@ def register() -> None:
     import importlib
 
     from werkzeug.utils import find_modules
-    # has automatic patch integration
-    import worlds.Files
-    app.jinja_env.filters['is_applayercontainer'] = worlds.Files.is_ap_player_container
 
     from WebHostLib.customserver import run_server_process
 
@@ -141,3 +158,15 @@ def register() -> None:
 
     from . import api
     app.register_blueprint(api.api_endpoints)
+
+    @app.before_request
+    def _ensure_dynamic_tracker_routes():
+        global _dynamic_tracker_registered
+        if _dynamic_tracker_registered:
+            return
+        with _dynamic_tracker_lock:
+            if _dynamic_tracker_registered:
+                return
+            from .tracker import _register_dynamic_tracker_routes
+            _register_dynamic_tracker_routes()
+            _dynamic_tracker_registered = True

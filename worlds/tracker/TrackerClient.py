@@ -1746,8 +1746,10 @@ async def wait_for_items(ctx: TrackerGameContext)-> None:
 async def main(args):
     ctx = TrackerGameContext(args.connect, args.password, print_count=args.count, print_list=args.list)
     ctx.auth = args.name
+    ctx.tracker_core.connect_mode = bool(args.connect)
     ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
-    ctx.run_generator()
+    if not args.connect:
+        ctx.run_generator()
 
     if gui_enabled:
         ctx.run_gui()
@@ -1764,7 +1766,7 @@ def launch(*args):
         parser.add_argument('--count', default=False, action='store_true', help="just return a count of in logic checks")
         parser.add_argument('--list', default=False, action='store_true', help="just return a list of in logic checks")
     parser.add_argument("url", nargs="?", help=f"{apname} connection url")
-    args = handle_url_arg(parser.parse_args(args))
+    args = handle_url_arg(parser.parse_args(args if args else None))
 
     if args.nogui and (args.count or args.list):
         if not args.name or not args.connect:

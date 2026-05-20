@@ -1,18 +1,18 @@
 # Core runtime dependencies
 colorama>=0.4.6
-websockets>=13.1
+websockets>=14.0,<17.0
 PyYAML>=6.0.3
 jellyfish>=1.2.1
 jinja2>=3.1.6
 schema>=0.7.8
 nest_asyncio>=1.6.0
 bsdiff4>=1.2.6
-platformdirs==4.9.4
-certifi==2026.2.25
+platformdirs>=4.9.4,<5
+certifi>=2026.2.25
 requests>=2.32.5
 chardet>=5,<6
-charset_normalizer==3.4.4
-cython==3.2.4
+charset_normalizer>=3.4.4,<4
+cython>=3.2.4,<4
 cymem>=2.0.13
 orjson>=3.11.7
 typing_extensions>=4.15.0
@@ -50,7 +50,7 @@ aiohttp>=3.8.4
 loguru>=0.7.0
 mpyq>=0.2.5
 portpicker>=1.5.2
-protobuf==3.20.3
+protobuf>=3.20.3,<4
 
 # needed for sms, tww
 dolphin_memory_engine>=1.2.0; sys_platform == 'win32'

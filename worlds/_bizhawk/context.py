@@ -353,7 +353,7 @@ def launch(*launch_args: str) -> None:
     async def main():
         parser = get_base_parser()
         parser.add_argument("patch_file", default="", type=str, nargs="?", help="Path to a MultiworldGG patch file")
-        args = parser.parse_args(launch_args)
+        args = parser.parse_args(launch_args if launch_args else None)
 
         if args.patch_file.startswith("archipelago://"):
             url = urllib.parse.urlparse(args.patch_file)
