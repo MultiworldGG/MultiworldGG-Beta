@@ -125,17 +125,12 @@ def test_legacy_game_info(client):
 # ---------------------------------------------------------------------------
 
 class TestLegacyTutorial:
-    """
-    Old tutorial URLs encoded language as a filename suffix: setup_en.
+    """Old tutorial URLs encoded language as a filename suffix: ``setup_en``.
+
     The redirect peels off the suffix and surfaces the language as a path
-    segment under /learn/<lang>/tutorial/<game>/<file>.
-
-    Skipped in Phase 1: the tutorial endpoint stays at /tutorial/<game>/<file>
-    until Phase 3 (filename language extraction). The redirect rule for this
-    is commented out in route_redirects.py for the same reason.
+    segment under ``/learn/<lang>/tutorial/<game>/<file>``.
     """
 
-    @pytest.mark.skip(reason="Phase 3 — tutorial filename language extraction")
     def test_extracts_language_suffix(self, client):
         response = client.get(
             "/tutorial/Archipelago/setup_en", follow_redirects=False
@@ -145,7 +140,6 @@ class TestLegacyTutorial:
             "/learn/en/tutorial/Archipelago/setup"
         )
 
-    @pytest.mark.skip(reason="Phase 3 — tutorial filename language extraction")
     def test_defaults_to_en_when_no_suffix(self, client):
         response = client.get(
             "/tutorial/Archipelago/commands", follow_redirects=False
@@ -155,8 +149,11 @@ class TestLegacyTutorial:
             "/learn/en/tutorial/Archipelago/commands"
         )
 
-    @pytest.mark.skip(reason="Phase 3 — tutorial filename language extraction")
     def test_handles_non_language_underscore(self, client):
+        """``advanced_settings_en`` should split on the rightmost ``_``
+        (rpartition), peel ``en`` as lang, and keep ``advanced_settings``
+        as the file base.
+        """
         response = client.get(
             "/tutorial/Archipelago/advanced_settings_en",
             follow_redirects=False,
@@ -164,6 +161,28 @@ class TestLegacyTutorial:
         assert response.status_code == 301
         assert response.headers["Location"].endswith(
             "/learn/en/tutorial/Archipelago/advanced_settings"
+        )
+
+    def test_trailing_lang_redirects_directly_to_canonical(self, client):
+        """``/tutorial/<game>/<file>/<lang>`` 301s straight to the new
+        canonical URL — no double-hop through the suffix form.
+        """
+        response = client.get(
+            "/tutorial/Archipelago/setup/en", follow_redirects=False,
+        )
+        assert response.status_code == 301
+        assert response.headers["Location"].endswith(
+            "/learn/en/tutorial/Archipelago/setup"
+        )
+
+    def test_trailing_lang_preserves_lang_segment(self, client):
+        """Non-default lang in the trailing form survives the redirect."""
+        response = client.get(
+            "/tutorial/Archipelago/setup/fr", follow_redirects=False,
+        )
+        assert response.status_code == 301
+        assert response.headers["Location"].endswith(
+            "/learn/fr/tutorial/Archipelago/setup"
         )
 
 

@@ -98,14 +98,10 @@ def legacy_glossary(lang):
     return redirect(url_for("glossary", lang=lang), code=301)
 
 
-# Tutorial path redirect deferred to Phase 3 (filename language extraction).
-# The tutorial endpoint still lives at /tutorial/<game>/<file>; moving it under
-# /learn/<lang>/tutorial/... requires Phase 3 work the prompt explicitly
-# excludes from Phase 1. See ROUTE_MIGRATION.md "Phasing".
-#
-# @legacy_routes.route("/tutorial/<game>/<file>")
-# def legacy_tutorial(game, file):
-#     ...
+# Tutorial path redirects live on the ``tutorial_legacy_*`` view functions in
+# WebHostLib/misc.py (not in this blueprint) because they share the
+# ``/tutorial/...`` URL prefix with the canonical tutorial endpoint and the
+# split-suffix logic is easier to keep colocated with it.
 
 
 @legacy_routes.route("/games/info/<game>")

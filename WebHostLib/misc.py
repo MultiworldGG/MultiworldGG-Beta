@@ -218,16 +218,39 @@ def games():
     return render_template("supportedGames.html", worlds=get_visible_worlds(), get_world_authors=get_world_authors, get_world_version=get_world_version)
 
 
-@app.route('/tutorial/<string:game>/<string:file>')
+def _split_tutorial_file(file: str, default_lang: str = "en") -> tuple[str, str]:
+    """Split a tutorial file slug into ``(base, lang)``.
+
+    ``"setup_en"`` -> ``("setup", "en")``;
+    ``"advanced_settings_en"`` -> ``("advanced_settings", "en")``;
+    ``"intro"`` -> ``("intro", "en")`` (no suffix, default).
+
+    Uses ``rpartition`` so only the rightmost ``_`` is considered, and
+    only treats the suffix as a language if it's a 2-letter alpha token.
+    """
+    base, sep, maybe_lang = file.rpartition('_')
+    if sep and base and len(maybe_lang) == 2 and maybe_lang.isalpha():
+        return base, maybe_lang
+    return file, default_lang
+
+
+@app.route('/learn/<string:lang>/tutorial/<string:game>/<string:file>')
 @cache.cached()
-def tutorial(game: str, file: str):
+def tutorial(lang: str, game: str, file: str):
+    """Render a tutorial markdown file for the given language.
+
+    Reads ``static/generated/docs/<game>/<file>_<lang>.md`` — the on-disk
+    layout still uses the suffix form (the rename is not being applied in
+    this monorepo). The URL exposes the language as a clean path segment.
+    """
     try:
         theme = get_world_theme(game)
         secure_game_name = secure_filename(game)
-        file = secure_filename(file)
+        secure_file = secure_filename(file)
+        secure_lang = secure_filename(lang)
         file_dir = os.path.join(app.static_folder, "generated", "docs", secure_game_name)
         file_dir_url = url_for("static", filename=f"generated/docs/{secure_game_name}")
-        document = render_markdown(os.path.join(file_dir, f"{file}.md"), file_dir_url)
+        document = render_markdown(os.path.join(file_dir, f"{secure_file}_{secure_lang}.md"), file_dir_url)
         return render_template(
             "markdown_document.html",
             title=f"{game} Guide",
@@ -244,13 +267,23 @@ def tutorial(game: str, file: str):
         return abort(404)
 
 
+@app.route('/tutorial/<string:game>/<string:file>')
+def tutorial_legacy_no_lang(game: str, file: str):
+    """301-redirect ``/tutorial/<game>/<file>`` to the new canonical URL.
+
+    If ``file`` ends in ``_<2-letter-lang>``, the suffix is peeled off and
+    surfaced as the ``lang`` path segment. Otherwise defaults to ``en``.
+    """
+    base, lang = _split_tutorial_file(file)
+    return redirect(url_for("tutorial", lang=lang, game=game, file=base), code=301)
+
+
 @app.route('/tutorial/<string:game>/<string:file>/<string:lang>')
-def tutorial_redirect(game: str, file: str, lang: str):
+def tutorial_legacy_trailing_lang(game: str, file: str, lang: str):
+    """301-redirect ``/tutorial/<game>/<file>/<lang>`` straight to the new
+    canonical URL — no double-hop through the suffix form.
     """
-    Permanent redirect old tutorial URLs to new ones to keep search engines happy.
-    e.g. /tutorial/Archipelago/setup/en -> /tutorial/Archipelago/setup_en
-    """
-    return redirect(url_for("tutorial", game=game, file=f"{file}_{lang}"), code=301)
+    return redirect(url_for("tutorial", lang=lang, game=game, file=file), code=301)
 
 
 # Learn hub — landing page for /learn, three top-level guides
@@ -286,11 +319,17 @@ def tutorial_landing():
                 # Get the file name without extension for the new format
                 file_key = secure_filename(tutorial.file_name).rsplit(".", 1)[0]
 
-                # Create file data with both old and new link formats
+                # Split into (base, lang) for the new URL form. With metadata
+                # like file_name="setup_en.md", file_key="setup_en" splits to
+                # ("setup", "en") so the template can build /learn/en/tutorial/<game>/setup.
+                file_base, file_lang = _split_tutorial_file(file_key)
+
                 file_data = {
                     "authors": tutorial.authors,
                     "language": tutorial.language,
                     "file_name": file_key,
+                    "file_base": file_base,
+                    "lang": file_lang,
                     "legacy_link": tutorial.link if tutorial.link != "unused" else None
                 }
 
