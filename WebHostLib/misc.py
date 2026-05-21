@@ -130,20 +130,20 @@ def page_not_found(err):
 
 
 # Start Playing Page
-@app.route('/start-playing')
+@app.route('/play')
 @cache.cached()
-def start_playing():
+def play_hub():
     return render_template(f"startPlaying.html")
 
 
-@app.route('/games/<string:game>/info/<string:lang>')
+@app.route('/games/<string:game>')
 @cache.cached()
-def game_info(game, lang):
+def game_info(game):
     """Game Info Pages"""
     try:
         theme = get_world_theme(game)
         secure_game_name = secure_filename(game)
-        lang = secure_filename(lang)
+        lang = "en"
         file_dir = os.path.join(app.static_folder, "generated", "docs", secure_game_name)
         file_dir_url = url_for("static", filename=f"generated/docs/{secure_game_name}")
         document = render_markdown(os.path.join(file_dir, f"{lang}_{secure_game_name}.md"), file_dir_url)
@@ -193,9 +193,9 @@ def tutorial_redirect(game: str, file: str, lang: str):
     return redirect(url_for("tutorial", game=game, file=f"{file}_{lang}"), code=301)
 
 
-@app.route('/tutorial/')
+@app.route('/learn')
 @cache.cached()
-def tutorial_landing():
+def learn_hub():
     from worlds.AutoWorld import AutoWorldRegister
     tutorials = {}
     worlds = AutoWorldRegister.world_types
@@ -239,7 +239,7 @@ def tutorial_landing():
     return render_template("tutorialLanding.html", worlds=sorted_worlds, tutorials=tutorials)
 
 
-@app.route('/faq/<string:lang>/')
+@app.route('/learn/<string:lang>/faq')
 @cache.cached()
 def faq(lang: str):
     document = render_markdown(os.path.join(app.static_folder, "assets", "faq", secure_filename(lang)+".md"))
@@ -250,7 +250,7 @@ def faq(lang: str):
     )
 
 
-@app.route('/glossary/<string:lang>/')
+@app.route('/learn/<string:lang>/glossary')
 @cache.cached()
 def glossary(lang: str):
     document = render_markdown(os.path.join(app.static_folder, "assets", "glossary", secure_filename(lang)+".md"))
@@ -261,7 +261,7 @@ def glossary(lang: str):
     )
 
 
-@app.route('/seed/<suuid:seed>')
+@app.route('/play/seed/<suuid:seed>')
 def view_seed(seed: UUID):
     seed = Seed.get(id=seed)
     if not seed:
@@ -280,7 +280,7 @@ def new_room(seed: UUID):
         abort(404)
     room = Room(seed_id=seed.id, owner=session["_id"], tracker=uuid4())
     commit()
-    return redirect(url_for("host_room", room=room.id))
+    return redirect(url_for("host_room", seed=room.seed_id, room=room.id))
 
 @app.route('/downloads/')
 @cache.cached()
@@ -329,10 +329,10 @@ def display_log(room: UUID) -> Union[str, Response, Tuple[str, int]]:
     return "Access Denied", 403
 
 
-@app.post("/room/<suuid:room>")
-def host_room_command(room: UUID):
+@app.post("/play/seed/<suuid:seed>/room/<suuid:room>")
+def host_room_command(seed: UUID, room: UUID):
     room: Room = Room.get(id=room)
-    if room is None:
+    if room is None or room.seed_id != seed:
         return abort(404)
 
     if room.owner == session["_id"]:
@@ -340,13 +340,13 @@ def host_room_command(room: UUID):
         if cmd:
             Command(room_id=room.id, commandtext=cmd)
             commit()
-    return redirect(url_for("host_room", room=room.id))
+    return redirect(url_for("host_room", seed=room.seed_id, room=room.id))
 
 
-@app.get("/room/<suuid:room>")
-def host_room(room: UUID):
+@app.get("/play/seed/<suuid:seed>/room/<suuid:room>")
+def host_room(seed: UUID, room: UUID):
     room: Room = Room.get(id=room)
-    if room is None:
+    if room is None or room.seed_id != seed:
         return abort(404)
 
     now = utcnow()

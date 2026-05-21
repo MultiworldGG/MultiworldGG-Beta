@@ -48,7 +48,7 @@ def _is_lobby_viewer(lobby_id) -> bool:
     return bool(session.get(f"lobby_{lobby_id}_viewer"))
 
 
-@app.route('/lobbies')
+@app.route('/play/lobbies')
 def lobby_list():
     lobbies = db.session.scalars(
         select(Lobby).where(Lobby.state == LOBBY_OPEN)
@@ -247,7 +247,7 @@ def lobby_create():
     return render_template("lobbyCreate.html", race=False, version=__version__)
 
 
-@app.route('/lobby/<suuid:lobby>')
+@app.route('/play/lobby/<suuid:lobby>')
 def lobby_view(lobby: UUID):
     lobby = Lobby.get(id=lobby)
     if not lobby:
