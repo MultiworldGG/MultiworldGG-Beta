@@ -12,7 +12,7 @@ from WebHostLib.upload import allowed_options, banned_file
 from Utils import parse_yamls
 
 
-@app.route('/check', methods=['GET', 'POST'])
+@app.route('/play/validate', methods=['GET', 'POST'])
 def check():
     if request.method == 'POST':
         # check if the post request has the file part

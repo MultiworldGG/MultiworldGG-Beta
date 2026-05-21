@@ -298,7 +298,7 @@
                                 <p><a href="{{ url_for('view_seed', seed=lobby.seed.id) }}">View Seed</a></p>
                             {% endif %}
                             {% if lobby.room %}
-                                <p><a href="{{ url_for('host_room', room=lobby.room.id) }}" class="lobby-btn lobby-btn-primary">Go to Room</a></p>
+                                <p><a href="{{ url_for('host_room', seed=lobby.room.seed_id, room=lobby.room.id) }}" class="lobby-btn lobby-btn-primary">Go to Room</a></p>
                             {% endif %}
                         {% endif %}
                     </div>

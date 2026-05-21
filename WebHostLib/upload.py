@@ -168,7 +168,7 @@ def upload_zip_to_db(zfile: zipfile.ZipFile, owner=None, meta={"race": False}, s
         flash("No multidata was found in the zip file, which is required.")
 
 
-@app.route("/uploads", methods=["GET", "POST"])
+@app.route("/play/host", methods=["GET", "POST"])
 def uploads():
     if request.method == "POST":
         # check if the POST request has a file part.
@@ -212,8 +212,8 @@ def uploads():
     return render_template("hostGame.html", version=__version__)
 
 
-@app.route('/user-content', methods=['GET'])
-def user_content():
+@app.route('/me', methods=['GET'])
+def me():
     rooms = db.session.scalars(
         select(Room).where(Room.owner == session["_id"])
     ).all()
@@ -237,7 +237,7 @@ def disown_seed(seed):
 
     seed.owner = uuid.UUID(int=0)
     commit()
-    return redirect(url_for("user_content"))
+    return redirect(url_for("me"))
 
 
 @app.route("/disown_room/<suuid:room>", methods=["GET"])
@@ -250,4 +250,4 @@ def disown_room(room):
 
     room.owner = uuid.UUID(int=0)
     commit()
-    return redirect(url_for("user_content"))
+    return redirect(url_for("me"))
