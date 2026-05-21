@@ -12,7 +12,7 @@ from flask_compress import Compress
 from flask_limiter import Limiter
 from werkzeug.routing import BaseConverter
 
-from Utils import title_sorted, get_file_safe_name,world_list_sorted, set_game_names, add_bundled_worlds
+from Utils import title_sorted, get_file_safe_name,world_list_sorted, set_game_names
 from mwgg_igdb import GameIndex
 # Must be done before worlds is imported.
 # Workers re-execute this module on spawn; if they also seed the full IGDB
@@ -21,7 +21,6 @@ from mwgg_igdb import GameIndex
 # per-job in autolauncher._mp_gen_game.
 if multiprocessing.current_process().name == "MainProcess":
     set_game_names(list(GameIndex.game_names.keys()), strict=False)
-    add_bundled_worlds(("tracker", "_manual", "_bizhawk", "_sni", "_debug", "generic"))
 
 from APContainer import is_ap_player_container
 from .cli import CLI
