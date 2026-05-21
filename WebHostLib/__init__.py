@@ -21,6 +21,7 @@ from mwgg_igdb import GameIndex
 # per-job in autolauncher._mp_gen_game.
 if multiprocessing.current_process().name == "MainProcess":
     set_game_names(list(GameIndex.game_names.keys()), strict=False)
+    from worlds.AutoWorld import AutoWorldRegister
 
 from APContainer import is_ap_player_container
 from .cli import CLI
