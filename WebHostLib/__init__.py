@@ -199,6 +199,9 @@ def register() -> None:
     passkeys_bp.credential_store = SQLAlchemyCredentialStore(lambda: _db.session)
     app.register_blueprint(passkeys_bp)
 
+    from .scripts.backfill_short_ids import register_cli
+    register_cli(app)
+
     @app.before_request
     def _ensure_dynamic_tracker_routes():
         global _dynamic_tracker_registered

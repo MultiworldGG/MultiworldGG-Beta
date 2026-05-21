@@ -95,3 +95,82 @@
         margin-right: 45px !important;
     }
 }
+
+/* Phase 2b: shareable room URL row. Brand colors match the route-migration nav palette. */
+
+.share-row {
+    background: #2a1232;
+    border: 1px solid #ea166c;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.share-row-label {
+    color: #a87890;
+    font-size: 13px;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.share-row-url {
+    color: #ffdd5a;
+    font-family: "SF Mono", Menlo, Monaco, "Cascadia Mono", "Courier New", monospace;
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    user-select: all;
+}
+
+.share-row-copy-btn {
+    background: #ea166c;
+    color: #ffffff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    transition: background 0.15s ease;
+}
+
+.share-row-copy-btn:hover {
+    background: #b80f54;
+}
+
+.share-row-copy-btn:active {
+    transform: translateY(1px);
+}
+
+.share-row-copy-btn--copied {
+    background: #1d5e44;
+}
+
+.share-row-copy-icon {
+    font-size: 14px;
+}
+
+@media (max-width: 480px) {
+    .share-row {
+        flex-wrap: wrap;
+    }
+    .share-row-url {
+        flex-basis: 100%;
+        order: 2;
+    }
+    .share-row-copy-btn {
+        order: 3;
+        margin-left: auto;
+    }
+}

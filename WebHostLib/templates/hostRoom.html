@@ -32,6 +32,19 @@
     ], context=(room.seed.slots|length) ~ ' slots · Port <strong>' ~ (room.last_port if room.last_port and room.last_port > 0 else '—') ~ '</strong>') }}
     <div id="host-room">
       <span id="host-room-info">
+        {% if room.short_id %}
+        <div class="share-row" role="region" aria-label="Shareable room URL">
+            <span class="share-row-label">Share:</span>
+            <span class="share-row-url" id="share-url-text">{{ request.host }}/r/{{ room.short_id }}</span>
+            <button type="button"
+                    class="share-row-copy-btn"
+                    data-share-url="{{ request.scheme }}://{{ request.host }}/r/{{ room.short_id }}"
+                    aria-label="Copy share URL to clipboard">
+                <span class="share-row-copy-icon" aria-hidden="true">📋</span>
+                <span class="share-row-copy-label">Copy</span>
+            </button>
+        </div>
+        {% endif %}
         {% if is_primary_owner_room %}
             Room created from <a href="{{ url_for("view_seed", seed=room.seed.id) }}">Seed #{{ room.seed.id|suuid }}</a>
             <br />
@@ -215,6 +228,32 @@
               window.stop(); // cancel meta refresh
             })
           }
+
+          document.addEventListener("click", async function (event) {
+            const btn = event.target.closest(".share-row-copy-btn");
+            if (!btn) return;
+            const url = btn.dataset.shareUrl;
+            const labelEl = btn.querySelector(".share-row-copy-label");
+            const originalLabel = labelEl ? labelEl.textContent : null;
+            const restore = () => {
+              if (labelEl) labelEl.textContent = originalLabel;
+              btn.classList.remove("share-row-copy-btn--copied");
+            };
+            try {
+              await navigator.clipboard.writeText(url);
+            } catch (err) {
+              const textarea = document.createElement("textarea");
+              textarea.value = url;
+              textarea.style.position = "fixed";
+              textarea.style.opacity = "0";
+              document.body.appendChild(textarea);
+              textarea.select();
+              try { document.execCommand("copy"); } finally { document.body.removeChild(textarea); }
+            }
+            if (labelEl) labelEl.textContent = "Copied!";
+            btn.classList.add("share-row-copy-btn--copied");
+            setTimeout(restore, 1500);
+          });
         </script>
     </div>
     <div id="snackbar">Copied to clipboard!</div>
