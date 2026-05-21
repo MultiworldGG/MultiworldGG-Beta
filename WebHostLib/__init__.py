@@ -159,6 +159,9 @@ def register() -> None:
     from . import api
     app.register_blueprint(api.api_endpoints)
 
+    from .route_redirects import legacy_routes
+    app.register_blueprint(legacy_routes)
+
     @app.before_request
     def _ensure_dynamic_tracker_routes():
         global _dynamic_tracker_registered

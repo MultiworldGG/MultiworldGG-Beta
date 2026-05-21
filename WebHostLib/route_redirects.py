@@ -1,0 +1,113 @@
+"""
+Legacy URL redirects for MultiWorldGG.
+
+Every URL the site exposed before the route migration continues to work via a
+301 redirect to the new canonical location. The destinations are computed
+through ``url_for(...)`` so this module never needs editing if route paths
+change again later.
+
+Register on the app once::
+
+    from WebHostLib.route_redirects import legacy_routes
+    app.register_blueprint(legacy_routes)
+
+After Phase 1 of the migration ships, all entries here should hit 301s in
+production and the test suite should keep them all green.
+"""
+
+from flask import Blueprint, abort, redirect, url_for
+
+legacy_routes = Blueprint("legacy_routes", __name__)
+
+
+# ---------------------------------------------------------------------------
+# Static one-to-one renames
+# ---------------------------------------------------------------------------
+
+_RENAMES = {
+    # old path             # endpoint to redirect to
+    "/start-playing":     "play_hub",
+    "/generate":          "generate",
+    "/uploads":           "uploads",
+    "/check":             "check",
+    "/lobbies":           "lobby_list",
+    "/user-content":      "me",
+    "/tutorial":          "learn_hub",
+}
+
+
+def _make_static_redirect(endpoint):
+    def view():
+        return redirect(url_for(endpoint), code=301)
+    return view
+
+
+for old_path, target_endpoint in _RENAMES.items():
+    # Use a stable per-path endpoint name to avoid Flask's "view function name
+    # collision" errors when this module is reloaded in dev.
+    endpoint_name = f"legacy__{old_path.strip('/').replace('-', '_').replace('/', '__') or 'root'}"
+    legacy_routes.add_url_rule(
+        old_path,
+        endpoint=endpoint_name,
+        view_func=_make_static_redirect(target_endpoint),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Parameterized redirects
+# ---------------------------------------------------------------------------
+
+@legacy_routes.route("/lobby/<suuid:lobby>")
+def legacy_lobby(lobby):
+    return redirect(url_for("lobby_view", lobby=lobby), code=301)
+
+
+@legacy_routes.route("/seed/<suuid:seed>")
+def legacy_seed(seed):
+    return redirect(url_for("view_seed", seed=seed), code=301)
+
+
+@legacy_routes.route("/room/<suuid:room>")
+def legacy_room(room):
+    """
+    The canonical room URL is now ``/play/seed/<seed_id>/room/<room_id>``.
+    The seed ID isn't in the old URL, so we look it up. If the room doesn't
+    exist anymore, 404 — the redirect chain shouldn't fabricate a destination.
+    """
+    # Import locally to avoid a circular import at module load time. Tests
+    # patch this with a fixture, so production callers get the real model.
+    from WebHostLib.models import Room  # noqa: WPS433
+
+    room_obj = Room.get(id=room)
+    if not room_obj:
+        abort(404)
+    return redirect(
+        url_for("host_room", seed=room_obj.seed_id, room=room_obj.id),
+        code=301,
+    )
+
+
+@legacy_routes.route("/faq/<lang>/")
+@legacy_routes.route("/faq/<lang>")
+def legacy_faq(lang):
+    return redirect(url_for("faq", lang=lang), code=301)
+
+
+@legacy_routes.route("/glossary/<lang>")
+def legacy_glossary(lang):
+    return redirect(url_for("glossary", lang=lang), code=301)
+
+
+# Tutorial path redirect deferred to Phase 3 (filename language extraction).
+# The tutorial endpoint still lives at /tutorial/<game>/<file>; moving it under
+# /learn/<lang>/tutorial/... requires Phase 3 work the prompt explicitly
+# excludes from Phase 1. See ROUTE_MIGRATION.md "Phasing".
+#
+# @legacy_routes.route("/tutorial/<game>/<file>")
+# def legacy_tutorial(game, file):
+#     ...
+
+
+@legacy_routes.route("/games/info/<game>")
+def legacy_game_info(game):
+    return redirect(url_for("game_info", game=game), code=301)
