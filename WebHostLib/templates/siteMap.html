@@ -20,10 +20,10 @@
             <li><a href="{{ url_for('get_datapackage') }}">Raw Data Package</a></li>
             <li><a href="{{ url_for('check') }}">Settings Validator</a></li>
             <li><a href="{{ url_for('get_sitemap') }}">Site Map</a></li>
-            <li><a href="{{ url_for('start_playing') }}">Start Playing</a></li>
+            <li><a href="{{ url_for('play_hub') }}">Start Playing</a></li>
             <li><a href="{{ url_for('games') }}">Supported Games Page</a></li>
-            <li><a href="{{ url_for('tutorial_landing') }}">Tutorials Page</a></li>
-            <li><a href="{{ url_for('user_content') }}">User Content</a></li>
+            <li><a href="{{ url_for('learn_hub') }}">Tutorials Page</a></li>
+            <li><a href="{{ url_for('me') }}">User Content</a></li>
             <li><a href="{{ url_for('stats') }}">Game Statistics</a></li>
             <li><a href="{{ url_for('glossary', lang='en') }}">Glossary</a></li>
             <li><a href="{{ url_for('show_session') }}">Session / Login</a></li>
@@ -41,7 +41,7 @@
         <h2>Game Info Pages</h2>
         <ul>
             {% for game in games | title_sorted %}
-                <li><a href="{{ url_for('game_info', game=game['title'], lang='en') }}">{{ game['title'] }}</a></li>
+                <li><a href="{{ url_for('game_info', game=game['title']) }}">{{ game['title'] }}</a></li>
             {% endfor %}
         </ul>
 

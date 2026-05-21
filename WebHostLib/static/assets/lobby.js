@@ -163,7 +163,7 @@
                         clearInterval(pollTimer);
                         document.getElementById("lobby-container").innerHTML =
                             '<h2>You have been removed from this lobby.</h2>' +
-                            '<a href="/lobbies" class="lobby-back-link">&larr; Back to lobby list</a>';
+                            '<a href="/play/lobbies" class="lobby-back-link">&larr; Back to lobby list</a>';
                         return;
                     }
                 }
@@ -173,7 +173,7 @@
                 } else if (data.state === LOBBY_STATE_CLOSED) {
                     document.getElementById("lobby-container").innerHTML =
                         '<h1>Lobby Expired</h1><p>This lobby has been closed due to inactivity.</p>' +
-                        '<p><a href="/lobbies">Back to Lobbies</a></p>';
+                        '<p><a href="/play/lobbies">Back to Lobbies</a></p>';
                     clearInterval(pollTimer);
                     return;
                 }
@@ -631,10 +631,11 @@
 
         let html = '<h2>Seed Ready!</h2>';
         if (IS_OWNER && data.seed_id) {
-            html += `<p><a href="/seed/${escapeHtml(data.seed_id)}">View Seed</a></p>`;
+            html += `<p><a href="/play/seed/${escapeHtml(data.seed_id)}">View Seed</a></p>`;
         }
         if (data.room_id) {
-            html += `<p><a href="/room/${escapeHtml(data.room_id)}" class="lobby-btn lobby-btn-primary">Go to Room</a></p>`;
+            const seedForRoom = data.seed_id ? escapeHtml(data.seed_id) : "_";
+            html += `<p><a href="/play/seed/${seedForRoom}/room/${escapeHtml(data.room_id)}" class="lobby-btn lobby-btn-primary">Go to Room</a></p>`;
         }
         if (IS_OWNER && data.server_password) {
             html += `<p class="server-password-row">Server Password:
@@ -1315,7 +1316,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) showToast(data.error);
-                    else window.location.href = "/lobbies";
+                    else window.location.href = "/play/lobbies";
                 })
                 .catch(err => console.error("Leave error:", err));
         });
@@ -1329,7 +1330,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) showToast(data.error);
-                    else window.location.href = "/lobbies";
+                    else window.location.href = "/play/lobbies";
                 })
                 .catch(err => console.error("Abandon error:", err));
         });

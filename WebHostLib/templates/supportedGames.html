@@ -74,10 +74,10 @@
             </div>
             {% endif %}
             {{ world.__doc__ | default("No description provided.", true) }}<br />
-            <a href="{{ url_for("game_info", game=game_name, lang="en") }}">Game Page</a>
+            <a href="{{ url_for("game_info", game=game_name) }}">Game Page</a>
             {% if world.web.tutorials %}
             <span class="link-spacer">|</span>
-            <a href="{{ url_for("tutorial_landing", _anchor=(world.web.display_name | default(game_name) | encodeURIComponent)) }}">Setup Guides</a>
+            <a href="{{ url_for("learn_hub", _anchor=(world.web.display_name | default(game_name) | encodeURIComponent)) }}">Setup Guides</a>
             {% endif %}
             {% if game_name != 'Archipelago' and not world.web.disable_wiki_link %}
             <span class="link-spacer">|</span>
