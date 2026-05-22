@@ -67,7 +67,7 @@ is_linux = sys.platform.startswith("linux")
 is_macos = sys.platform == "darwin"
 is_windows = sys.platform in ("win32", "cygwin", "msys")
 
-_worlds_to_load: typing.List[str | "APWorldContainer"] = []
+_worlds_to_load: typing.List[str | "APWorldContainer"] = ["worlds.generic", "worlds.tracker", "worlds._manual"]
 
 def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.List[(str, bool)]:
     """Set the game names to the list of game names.
@@ -237,20 +237,6 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
 def game_names() -> typing.List[str]:
     """Get a list of only the game names that we're using"""
     return _worlds_to_load
-
-def add_bundled_worlds(slugs: typing.Iterable[str]) -> typing.List[str]:
-    """Register bundled monorepo worlds (no pip distribution) for loading."""
-    queued: list[str] = []
-    for slug in slugs:
-        target = f"worlds.{slug}"
-        if target in _worlds_to_load:
-            continue
-        if importlib.util.find_spec(target) is None:
-            update_logger.warning(f"add_bundled_worlds: {target} is not importable, skipping")
-            continue
-        _worlds_to_load.append(target)
-        queued.append(slug)
-    return queued
 
 def get_available_worlds() -> typing.List[str]:
     """Get a list of all of the available worlds"""
