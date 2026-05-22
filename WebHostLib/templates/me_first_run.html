@@ -1,0 +1,55 @@
+{% extends 'pageWrapper.html' %}
+{% from 'header/breadcrumb.html' import breadcrumb %}
+
+{% block head %}
+    <title>Your MultiworldGG</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/me.css') }}" />
+{% endblock %}
+
+{% block body %}
+    {% include 'header/grassHeader.html' %}
+    {{ breadcrumb([('Your MultiworldGG', none)]) }}
+
+    <div class="mw-me-empty">
+        <div class="mw-empty-hero">
+            {# 64px × 64px (within an 80px circle with 8px padding) — round controller-icon hero #}
+            <img alt="MultiworldGG controller avatar" />
+        </div>
+        <h1>This browser is fresh</h1>
+        <p class="mw-empty-lead">
+            Nothing's been saved here yet. Bring your stuff over from another device,
+            or jump in with a new game.
+        </p>
+
+        <div class="mw-empty-choice-grid">
+            <a href="{{ url_for('show_session') }}" class="mw-empty-choice" data-modal-trigger="restore-session">
+                <div class="mw-empty-choice-icon"><i class="mdi mdi-key"></i></div>
+                <h3>I've played before</h3>
+                <p>Paste a session key from another device, or scan its QR code.</p>
+                <span class="mw-empty-choice-cta">Restore session <i class="mdi mdi-arrow-right"></i></span>
+            </a>
+            <a href="{{ url_for('play_hub') }}" class="mw-empty-choice primary">
+                <div class="mw-empty-choice-icon"><i class="mdi mdi-dice-6"></i></div>
+                <h3>First time here</h3>
+                <p>Generate a new game, join an open lobby, or host a pre-generated one.</p>
+                <span class="mw-empty-choice-cta">Start playing <i class="mdi mdi-arrow-right"></i></span>
+            </a>
+        </div>
+
+        <p class="mw-empty-tertiary">
+            Just looking? <a href="{{ url_for('tutorial_landing') }}">Read the setup guide</a> first.
+        </p>
+
+        <div class="mw-empty-explainer">
+            <i class="mdi mdi-information"></i>
+            <span>
+                MultiworldGG doesn't use accounts. Your seeds and rooms live in this browser.
+                If you clear cookies or switch devices, save your session key first — that's
+                the only way to bring your dashboard with you.
+            </span>
+        </div>
+    </div>
+
+    {# Phase 8 will add the restore-session modal; ignore missing keeps this safe today #}
+    {% include 'partials/restore_session_modal.html' ignore missing %}
+{% endblock %}

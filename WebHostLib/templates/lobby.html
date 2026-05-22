@@ -1,4 +1,5 @@
 {% extends 'pageWrapper.html' %}
+{% from 'header/breadcrumb.html' import breadcrumb %}
 
 {% block head %}
     <title>Lobby: {{ lobby.title }}</title>
@@ -10,6 +11,12 @@
 {%- if m < 60 -%}{{ m }} min{%- elif m < 1440 -%}{{ (m // 60) }} hr{%- else -%}{{ (m // 1440) }} day{%- if (m // 1440) != 1 -%}s{%- endif -%}{%- endif -%}
 {%- endmacro -%}
     {% include 'header/grassHeader.html' %}
+    {% set state_label = ({0: 'Open', 1: 'Generating', 2: 'Seed ready', 3: 'Locked', -1: 'Closed'}).get(lobby.state, 'Unknown') %}
+    {{ breadcrumb([
+        ('Play', url_for('play_hub')),
+        ('Lobbies', url_for('lobby_list')),
+        (lobby.title or 'Lobby', none),
+    ], context='Host: <strong>' ~ (owner_name or 'Anonymous') ~ '</strong> · ' ~ player_count ~ ' players · ' ~ state_label) }}
     <div id="lobby-wrapper">
         <div id="lobby-container" class="grass-island">
             <h2 id="lobby-title">{{ lobby.title }}</h1>

@@ -74,6 +74,20 @@ def get_app() -> "Flask":
         app.config["HOST_ADDRESS"] = Utils.get_public_ipv4()
         logging.info(f"HOST_ADDRESS was set to {app.config['HOST_ADDRESS']}")
 
+    # Refuse to boot a production server that's still on the hostname-derived
+    # SECRET_KEY default — that key signs the session cookie and is trivially
+    # guessable. Operators set MWGG_SECRET_KEY (env, preferred for Docker) or
+    # SECRET_KEY in config.yaml.
+    import socket as _socket
+    hostname_default = bytes(_socket.gethostname(), encoding="utf-8")
+    if app.config["SECRET_KEY"] == hostname_default and not app.config["TESTING"]:
+        raise RuntimeError(
+            "Refusing to start: SECRET_KEY is still the hostname-derived default. "
+            "Anyone who can guess the host name can forge session cookies. Set "
+            "MWGG_SECRET_KEY (env var, e.g. from a docker env_file) or SECRET_KEY "
+            "in config.yaml to a random ≥32-byte value (try `openssl rand -hex 32`)."
+        )
+
     os.makedirs(app.config["LOBBY_APWORLD_PATH"], exist_ok=True)
     register()
     cache.init_app(app)

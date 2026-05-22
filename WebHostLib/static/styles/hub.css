@@ -1,0 +1,102 @@
+/* ===========================================================
+   Hub pages (/play, /learn) — Phase 7
+   ===========================================================
+   Icons (.mdi, .mdi-NAME) are declared in themes/base.css.
+   =========================================================== */
+
+.mw-hub {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 40px 22px;
+    font-family: var(--mw-font-sans);
+    color: var(--mw-text-body);
+}
+
+.mw-hub h1 {
+    font-size: 32px;
+    margin: 0 0 8px;
+    color: var(--mw-text-primary);
+    font-weight: 500;
+    text-align: center;
+}
+
+.mw-hub-lead {
+    text-align: center;
+    color: var(--mw-text-muted);
+    font-size: 15px;
+    margin: 0 auto 36px;
+    max-width: 520px;
+}
+
+.mw-hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.mw-hub-card {
+    background: var(--mw-bg-elevated);
+    border: 1px solid var(--mw-border-subtle);
+    border-radius: var(--mw-radius-lg);
+    padding: 22px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.mw-hub-card:hover {
+    border-color: var(--mw-pink-primary);
+    transform: translateY(-2px);
+}
+
+.mw-hub-card.primary {
+    border-color: var(--mw-pink-primary);
+    border-width: 2px;
+    padding: 21px;
+}
+
+.mw-hub-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--mw-radius-lg);
+    background: var(--mw-bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.mw-hub-card.primary .mw-hub-icon {
+    background: var(--mw-pink-primary);
+}
+
+.mw-hub-icon .mdi {
+    font-size: 24px;
+    color: var(--mw-yellow-accent);
+}
+
+.mw-hub-card.primary .mw-hub-icon .mdi {
+    color: white;
+}
+
+.mw-hub-card h3 {
+    font-size: 17px;
+    margin: 0 0 6px;
+    color: var(--mw-text-primary);
+    font-weight: 500;
+}
+
+.mw-hub-card p {
+    font-size: 13.5px;
+    color: var(--mw-text-muted);
+    margin: 0;
+    line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+    .mw-hub { padding: 24px 14px; }
+    .mw-hub h1 { font-size: 24px; }
+    .mw-hub-grid { grid-template-columns: 1fr; }
+}

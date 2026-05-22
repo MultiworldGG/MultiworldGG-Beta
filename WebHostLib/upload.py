@@ -214,17 +214,44 @@ def uploads():
 
 @app.route('/me', methods=['GET'])
 def me():
-    rooms = db.session.scalars(
-        select(Room).where(Room.owner == session["_id"])
-    ).all()
+    """Dashboard overview for the current browser session."""
+    from .dashboard import get_dashboard_data
+    data = get_dashboard_data(session["_id"])
+    if data.is_empty:
+        return render_template("me_first_run.html")
+    return render_template("me.html", data=data, session_key=session["_id"])
+
+
+@app.route('/me/rooms', methods=['GET'])
+def my_rooms():
+    """Full list of all rooms owned (or co-owned) by this browser."""
+    from .dashboard import classify_room
+    from .ownership import list_authorized_rooms
+    rooms = list_authorized_rooms(session["_id"])
+    return render_template(
+        "me_rooms.html",
+        rooms=rooms,
+        classify_room=classify_room,
+        session_key=session["_id"],
+    )
+
+
+@app.route('/me/lobbies', methods=['GET'])
+def my_lobbies():
+    """Full list of all (non-closed) lobbies owned (or co-owned) by this browser."""
+    from .ownership import list_authorized_lobbies
+    lobbies = list_authorized_lobbies(session["_id"])
+    return render_template("me_lobbies.html", lobbies=lobbies, session_key=session["_id"])
+
+
+@app.route('/me/seeds', methods=['GET'])
+def my_seeds():
+    """Full list of all seeds owned by this browser."""
     seeds = db.session.scalars(
         select(Seed).where(Seed.owner == session["_id"])
+        .order_by(Seed.creation_time.desc())
     ).all()
-    lobbies = db.session.scalars(
-        select(Lobby).where(Lobby.owner == session["_id"], Lobby.state >= 0)
-        .order_by(Lobby.last_activity)
-    ).all()
-    return render_template("userContent.html", rooms=rooms, seeds=seeds, lobbies=lobbies)
+    return render_template("me_seeds.html", seeds=seeds)
 
 
 @app.route("/disown_seed/<suuid:seed>", methods=["GET"])

@@ -1,0 +1,83 @@
+{# Sign-in-with-passkey modal — shown on the empty-state /me page so a
+   user who lost their cookie can recover the session their passkey is
+   anchored to.
+
+   Trigger: any element with data-modal-trigger="restore-session".
+   Included by /me/me_first_run.html. #}
+<div class="mw-modal" id="restore-session-modal" hidden>
+    <div class="mw-modal-backdrop" data-modal-close></div>
+    <div class="mw-modal-panel" role="dialog" aria-label="Sign in with passkey">
+        <button class="mw-modal-close" data-modal-close aria-label="Close">
+            <i class="mdi mdi-close"></i>
+        </button>
+        <h2>Sign in with a passkey</h2>
+        <p class="mw-modal-lead">
+            If you added a passkey on this device before, your device will
+            prompt you to unlock with fingerprint, face, PIN, or security
+            key.
+        </p>
+
+        <button id="passkey-signin-btn" type="button" class="mw-modal-submit">
+            <i class="mdi mdi-key"></i> Sign in with passkey
+        </button>
+        <p id="passkey-signin-status" class="mw-modal-status" role="status" aria-live="polite"></p>
+
+        <div class="mw-modal-warning">
+            <i class="mdi mdi-information"></i>
+            <span>
+                Signing in overwrites this browser's current session.
+                Any data only saved here will be hidden.
+            </span>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const triggers = document.querySelectorAll('[data-modal-trigger="restore-session"]');
+    const modal = document.getElementById('restore-session-modal');
+    if (!modal) return;
+    const closers = modal.querySelectorAll('[data-modal-close]');
+    const statusEl = document.getElementById('passkey-signin-status');
+    const signInBtn = document.getElementById('passkey-signin-btn');
+
+    function setStatus(msg, isError) {
+        statusEl.textContent = msg || '';
+        statusEl.classList.toggle('mw-modal-status-error', !!isError);
+    }
+
+    function close() { modal.hidden = true; setStatus(''); }
+
+    triggers.forEach(t => t.addEventListener('click', e => { e.preventDefault(); modal.hidden = false; }));
+    closers.forEach(c => c.addEventListener('click', close));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) close(); });
+
+    if (!window.PublicKeyCredential) {
+        setStatus('This browser does not support passkeys.', true);
+        signInBtn.disabled = true;
+        return;
+    }
+
+    signInBtn.addEventListener('click', async () => {
+        setStatus('Waiting for device confirmation…');
+        try {
+            const optsRes = await fetch('/session/passkey/auth/start', { method: 'POST' });
+            if (!optsRes.ok) throw new Error('Server rejected the request.');
+            const opts = await optsRes.json();
+            const assertion = await navigator.credentials.get({
+                publicKey: PublicKeyCredential.parseRequestOptionsFromJSON(opts),
+            });
+            const finishRes = await fetch('/session/passkey/auth/finish', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(assertion.toJSON()),
+            });
+            if (!finishRes.ok) throw new Error('Could not recover session.');
+            setStatus('Recovered. Reloading…');
+            window.location.href = '/me';
+        } catch (err) {
+            setStatus(err.message || 'Sign-in failed.', true);
+        }
+    });
+})();
+</script>

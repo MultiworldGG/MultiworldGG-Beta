@@ -1,0 +1,149 @@
+{% extends 'pageWrapper.html' %}
+{% from 'header/breadcrumb.html' import breadcrumb %}
+
+{% block head %}
+    <title>Share access · {{ display_name }} · MultiworldGG</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/me.css') }}" />
+{% endblock %}
+
+{% block body %}
+    {% include 'header/grassHeader.html' %}
+    {{ breadcrumb([
+        ('Your MultiworldGG', url_for('me')),
+        (kind|capitalize + 's', url_for('my_rooms') if kind == 'room' else url_for('my_lobbies')),
+        ('Share access — ' ~ display_name, none),
+    ]) }}
+
+    <div class="mw-me-page" id="share-page" data-kind="{{ kind }}" data-target-id="{{ target.id|suuid }}">
+        <h1>Share access</h1>
+        <p class="mw-me-subtitle">
+            {{ display_name }}
+            <span class="mw-me-sep">·</span>
+            You're the primary owner.
+        </p>
+
+        <section class="mw-me-section">
+            <div class="mw-me-section-head">
+                <h2>Generate an invite link</h2>
+            </div>
+            <div class="mw-card">
+                <div class="mw-card-body">
+                    <p class="mw-card-meta" style="margin-bottom: 8px;">
+                        Each link is single-use and valid for 7 days. Share it out of band
+                        (Discord, SMS, etc.) — anyone who clicks it while signed in to
+                        their own browser will get access.
+                    </p>
+                    <div class="mw-modal-key-row">
+                        <select id="invite-mode" class="mw-modal-key-row-input">
+                            <option value="co_owner">Add as co-owner (you keep primary)</option>
+                            <option value="transfer">Hand off primary ownership (you stay as co-owner)</option>
+                        </select>
+                        <button type="button" id="invite-generate" class="mw-modal-submit"
+                                style="width: auto; margin-top: 0;">
+                            <i class="mdi mdi-plus"></i> Generate link
+                        </button>
+                    </div>
+                    <div id="invite-result" hidden style="margin-top: 12px;">
+                        <label>Invite URL</label>
+                        <div class="mw-modal-key-row">
+                            <input type="text" id="invite-url" readonly />
+                            <button type="button" id="invite-copy" class="mw-modal-copy-btn">
+                                <i class="mdi mdi-content-copy"></i> Copy
+                            </button>
+                        </div>
+                        <p class="mw-card-meta" id="invite-expires" style="margin-top: 6px;"></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mw-me-section">
+            <div class="mw-me-section-head">
+                <h2>Current co-owners</h2>
+            </div>
+            {% if co_owners %}
+                <div class="mw-modal-list">
+                    {% for co in co_owners %}
+                        <li data-co-owner="{{ co }}" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px;">
+                            <code>{{ co[:12] }}…</code>
+                            <button type="button" class="mw-modal-list-remove" data-revoke="{{ co }}">Remove</button>
+                        </li>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="mw-empty-list">No co-owners yet. Generate an invite link above.</p>
+            {% endif %}
+        </section>
+
+        <p class="mw-empty-tertiary">
+            <a href="{{ url_for('my_rooms') if kind == 'room' else url_for('my_lobbies') }}">
+                ← Back to your {{ kind }}s
+            </a>
+        </p>
+    </div>
+
+<script>
+(function () {
+    const page = document.getElementById('share-page');
+    const kind = page.dataset.kind;
+    const targetId = page.dataset.targetId;
+    const inviteApi = `/api/${kind}/${targetId}/invite`;
+    const revokeApi = (coOwner) => `/api/${kind}/${targetId}/co_owner/${coOwner}`;
+
+    const generateBtn = document.getElementById('invite-generate');
+    const modeSelect = document.getElementById('invite-mode');
+    const resultBox = document.getElementById('invite-result');
+    const urlInput = document.getElementById('invite-url');
+    const expiresEl = document.getElementById('invite-expires');
+    const copyBtn = document.getElementById('invite-copy');
+
+    generateBtn.addEventListener('click', async () => {
+        generateBtn.disabled = true;
+        try {
+            const res = await fetch(inviteApi, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: modeSelect.value }),
+            });
+            if (!res.ok) throw new Error('Could not create invite.');
+            const body = await res.json();
+            urlInput.value = body.url;
+            expiresEl.textContent = 'Expires ' + new Date(body.expires_at).toLocaleString();
+            resultBox.hidden = false;
+            urlInput.focus();
+            urlInput.select();
+        } catch (e) {
+            alert(e.message || 'Failed to generate invite.');
+        } finally {
+            generateBtn.disabled = false;
+        }
+    });
+
+    copyBtn.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(urlInput.value);
+        } catch (e) {
+            urlInput.select();
+            document.execCommand('copy');
+        }
+        const original = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<i class="mdi mdi-check"></i> Copied!';
+        setTimeout(() => { copyBtn.innerHTML = original; }, 1500);
+    });
+
+    document.querySelectorAll('[data-revoke]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const coOwner = btn.dataset.revoke;
+            if (!confirm('Remove this co-owner? They will lose access immediately.')) return;
+            const res = await fetch(revokeApi(coOwner), { method: 'DELETE' });
+            if (res.ok) {
+                const li = btn.closest('[data-co-owner]');
+                if (li) li.remove();
+            } else {
+                alert('Could not remove co-owner.');
+            }
+        });
+    });
+})();
+</script>
+{% endblock %}

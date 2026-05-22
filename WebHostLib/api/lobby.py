@@ -24,6 +24,7 @@ from WebHostLib.models import (
     uuid4,
 )
 from WebHostLib.short_id import assign_short_id
+from WebHostLib.ownership import is_authorized
 from WebHostLib import app, limiter
 
 APWORLD_MAX_SIZE = 60 * 1024 * 1024  # 60 MB — leaves headroom under 64 MB global limit
@@ -1029,7 +1030,7 @@ def lobby_status(lobby: UUID):
         if lobby.room_id:
             result["room_id"] = to_url(lobby.room_id)
         session_id = session.get("_id")
-        is_owner = session_id == lobby.owner
+        is_owner = is_authorized(lobby, session_id) if session_id else False
         if is_owner:
             pw = server_opts.get("server_password")
             if pw:
@@ -1414,7 +1415,7 @@ def lobby_delete_yaml(lobby: UUID, yaml_id: int):
         return jsonify({"error": "YAML not found"}), 404
 
     player = _get_player_in_lobby(lobby)
-    is_owner = lobby.owner == session["_id"]
+    is_owner = is_authorized(lobby, session["_id"])
 
     # Only the YAML owner or lobby owner can delete
     if not player or (yaml_record.player_id != player.id and not is_owner):
@@ -1440,7 +1441,7 @@ def lobby_delete_message(lobby: UUID, message_id: int):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can delete messages"}), 403
 
     msg = LobbyMessage.get(id=message_id)
@@ -1549,7 +1550,7 @@ def lobby_generate(lobby: UUID):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can generate"}), 403
 
     if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
@@ -1652,7 +1653,7 @@ def lobby_update_settings(lobby: UUID):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can update settings"}), 403
 
     if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
@@ -1811,7 +1812,7 @@ def lobby_kick(lobby: UUID, player_id: int):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can kick players"}), 403
 
     if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
@@ -1847,7 +1848,7 @@ def lobby_close(lobby: UUID):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can close the lobby"}), 403
 
     if lobby.state == LOBBY_CLOSED:
@@ -1870,7 +1871,7 @@ def lobby_reopen(lobby: UUID):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can reopen the lobby"}), 403
 
     if lobby.state != LOBBY_DONE:
@@ -1911,7 +1912,7 @@ def lobby_lock(lobby: UUID):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can lock/unlock the lobby"}), 403
 
     if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
@@ -2075,7 +2076,7 @@ def lobby_upload_apworld(lobby: UUID, yaml_id: int):
             "mode": "preview",
         }), 409
 
-    is_owner = lobby.owner == session["_id"]
+    is_owner = is_authorized(lobby, session["_id"])
     affects_other_players = bool(preview["affects_other_players"])
     confirm_impact = (request.form.get("confirm_impact") or "").strip().lower() in {"1", "true", "yes"}
 
@@ -2162,7 +2163,7 @@ def lobby_apworld_requests(lobby: UUID):
     if not player:
         return jsonify({"error": "You are not in this lobby"}), 403
 
-    is_owner = lobby.owner == session["_id"]
+    is_owner = is_authorized(lobby, session["_id"])
     if is_owner:
         rows = db.session.scalars(
             select(LobbyApworldRequest).where(
@@ -2188,7 +2189,7 @@ def lobby_apworld_request_approve(lobby: UUID, request_id: int):
     lobby = Lobby.get(id=lobby)
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can approve requests"}), 403
     if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
         return jsonify({"error": "Lobby is not accepting APWorld changes"}), 400
@@ -2278,7 +2279,7 @@ def lobby_apworld_request_reject(lobby: UUID, request_id: int):
     lobby = Lobby.get(id=lobby)
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can reject requests"}), 403
 
     request_record = LobbyApworldRequest.get(id=request_id)
@@ -2311,7 +2312,7 @@ def lobby_apworld_request_cancel(lobby: UUID, request_id: int):
     if not request_record or request_record.lobby_id != lobby.id:
         return jsonify({"error": "Request not found"}), 404
 
-    is_owner = lobby.owner == session["_id"]
+    is_owner = is_authorized(lobby, session["_id"])
     if not is_owner and request_record.requester_id != player.id:
         return jsonify({"error": "Permission denied"}), 403
 
@@ -2424,7 +2425,7 @@ def lobby_upload_game(lobby: UUID):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can upload the game"}), 403
 
     if lobby.state != LOBBY_OPEN:

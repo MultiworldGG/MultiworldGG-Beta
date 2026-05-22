@@ -29,3 +29,10 @@ def set_session(_id: str):
         "session.html",
         old_id=old_id,
     )
+
+
+@app.route('/session/recover')
+def session_recover():
+    """Standalone passkey sign-in page — for users whose browser dropped its
+    session cookie and can't reach the /me empty-state modal."""
+    return render_template("passkey_recover.html")

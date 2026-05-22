@@ -67,7 +67,7 @@ is_linux = sys.platform.startswith("linux")
 is_macos = sys.platform == "darwin"
 is_windows = sys.platform in ("win32", "cygwin", "msys")
 
-_worlds_to_load: typing.List[str | "APWorldContainer"] = []
+_worlds_to_load: typing.List[str | "APWorldContainer"] = ["worlds.generic", "worlds.tracker", "worlds._manual"] 
 
 def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.List[(str, bool)]:
     """Set the game names to the list of game names.

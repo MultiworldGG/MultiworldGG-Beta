@@ -166,18 +166,14 @@ def _mp_gen_game(
 
     # Workers skip the eager full-IGDB load in WebHostLib/__init__.py. 
 
-    # Order matters: populate `_worlds_to_load` first, then trigger the
-    # `worlds` body via `from worlds import load_missing_worlds`, THEN do
-    # restricted_loads — by which time the option module imports are no-ops.
-    from Utils import set_game_names, add_bundled_worlds
+    # Order matters: populate list of games before importing the app and generate
+    from Utils import set_game_names
     needed_games = list((meta or {}).get("games", []))
     set_game_names(needed_games, strict=False)
-    add_bundled_worlds(("tracker", "_manual", "_bizhawk", "_sni", "_debug", "generic"))
+    from worlds.AutoWorld import AutoWorldRegister
 
     from . import app as flask_app
     from .generate import gen_game
-    from worlds import load_missing_worlds
-    load_missing_worlds()
 
     gen_options = restricted_loads(options_bytes)
 

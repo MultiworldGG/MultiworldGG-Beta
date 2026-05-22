@@ -1,0 +1,75 @@
+{% extends 'pageWrapper.html' %}
+{% from 'header/breadcrumb.html' import breadcrumb %}
+
+{% block head %}
+    <title>Recover session · MultiworldGG</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/me.css') }}" />
+{% endblock %}
+
+{% block body %}
+    {% include 'header/grassHeader.html' %}
+    {{ breadcrumb([('Recover session', none)]) }}
+
+    <div class="mw-me-empty">
+        <div class="mw-empty-hero">
+            {# 64px × 64px (within an 80px circle) — round controller-icon hero, currently a broken-image placeholder. #}
+            <img alt="MultiworldGG controller avatar" />
+        </div>
+        <h1>Recover your session</h1>
+        <p class="mw-empty-lead">
+            If you previously added a passkey on this device, MultiworldGG can
+            recover the session it's anchored to. Your device will prompt you
+            for fingerprint, face, PIN, or security key.
+        </p>
+
+        <button id="passkey-signin-btn" type="button" class="mw-modal-submit" style="max-width: 360px; margin: 0 auto;">
+            <i class="mdi mdi-key"></i> Sign in with a passkey
+        </button>
+        <p id="passkey-signin-status" class="mw-modal-status" role="status" aria-live="polite" style="text-align: center;"></p>
+
+        <p class="mw-empty-tertiary">
+            No passkey set up? You can still start fresh from <a href="{{ url_for('me') }}">your dashboard</a>
+            — nothing on the site requires continuity.
+        </p>
+    </div>
+
+<script>
+(async function () {
+    const statusEl = document.getElementById('passkey-signin-status');
+    const btn = document.getElementById('passkey-signin-btn');
+
+    function setStatus(msg, isError) {
+        statusEl.textContent = msg || '';
+        statusEl.classList.toggle('mw-modal-status-error', !!isError);
+    }
+
+    if (!window.PublicKeyCredential) {
+        setStatus('This browser does not support passkeys.', true);
+        btn.disabled = true;
+        return;
+    }
+
+    btn.addEventListener('click', async () => {
+        setStatus('Waiting for device confirmation…');
+        try {
+            const optsRes = await fetch('/session/passkey/auth/start', { method: 'POST' });
+            if (!optsRes.ok) throw new Error('Server rejected the request.');
+            const opts = await optsRes.json();
+            const assertion = await navigator.credentials.get({
+                publicKey: PublicKeyCredential.parseRequestOptionsFromJSON(opts),
+            });
+            const finishRes = await fetch('/session/passkey/auth/finish', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(assertion.toJSON()),
+            });
+            if (!finishRes.ok) throw new Error('Could not recover session.');
+            setStatus('Recovered. Redirecting…');
+            window.location.href = '{{ url_for("me") }}';
+        } catch (err) {
+            setStatus(err.message || 'Recovery failed.', true);
+        }
+    });
+})();
+</script>
+{% endblock %}
