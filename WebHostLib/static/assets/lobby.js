@@ -637,11 +637,11 @@
             const seedForRoom = data.seed_id ? escapeHtml(data.seed_id) : "_";
             html += `<p><a href="/play/seed/${seedForRoom}/room/${escapeHtml(data.room_id)}" class="lobby-btn lobby-btn-primary">Go to Room</a></p>`;
         }
-        if (IS_OWNER && data.server_password) {
-            html += `<p class="server-password-row">Server Password:
-                <span class="server-password-reveal">
+        if (IS_OWNER && data.admin_password) {
+            html += `<p class="admin-password-row">Admin Password:
+                <span class="admin-password-reveal">
                     <span class="password-placeholder">hover to reveal</span>
-                    <span class="password-value">${escapeHtml(data.server_password)}</span>
+                    <span class="password-value">${escapeHtml(data.admin_password)}</span>
                 </span></p>`;
         }
         resultDiv.innerHTML = html;

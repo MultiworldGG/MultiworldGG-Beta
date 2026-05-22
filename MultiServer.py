@@ -236,7 +236,7 @@ class Context:
 
     simple_options = {"hint_cost": int,
                       "location_check_points": int,
-                      "server_password": str,
+                      "admin_password": str,
                       "password": str,
                       "release_mode": str,
                       "remaining_mode": str,
@@ -270,7 +270,7 @@ class Context:
     """ each sphere is { player: { location_id, ... } } """
     logger: logging.Logger
 
-    def __init__(self, host: str, port: int, server_password: str, password: str, location_check_points: int,
+    def __init__(self, host: str, port: int, admin_password: str, password: str, location_check_points: int,
                  hint_cost: int, item_cheat: bool, release_mode: str = "disabled", collect_mode="disabled", hint_mode: str = "default",
                  countdown_mode: str = "auto", remaining_mode: str = "disabled", auto_shutdown: typing.SupportsFloat = 0, 
                  compatibility: int = 2, log_network: bool = False, logger: logging.Logger = logging.getLogger()):
@@ -291,7 +291,7 @@ class Context:
         self.allow_releases = {}
         self.host = host
         self.port = port
-        self.server_password = server_password
+        self.admin_password = admin_password
         self.password = password
         self.server = None
         self.countdown_timer = 0
@@ -693,7 +693,7 @@ class Context:
             "goal_overrides": list(self.goal_overrides),
             "stored_data": self.stored_data,
             "game_options": {"hint_cost": self.hint_cost, "location_check_points": self.location_check_points,
-                             "server_password": self.server_password, "password": self.password,
+                             "admin_password": self.admin_password, "password": self.password,
                              "release_mode": self.release_mode,
                              "remaining_mode": self.remaining_mode, "collect_mode": self.collect_mode,
                              "countdown_mode": self.countdown_mode, "hint_mode": self.hint_mode,
@@ -726,7 +726,7 @@ class Context:
         if "game_options" in savedata:
             self.hint_cost = savedata["game_options"]["hint_cost"]
             self.location_check_points = savedata["game_options"]["location_check_points"]
-            self.server_password = savedata["game_options"]["server_password"]
+            self.admin_password = savedata["game_options"]["admin_password"]
             self.password = savedata["game_options"]["password"]
             self.release_mode = savedata["game_options"]["release_mode"]
             self.remaining_mode = savedata["game_options"]["remaining_mode"]
@@ -1445,8 +1445,8 @@ class CommonCommandProcessor(CommandProcessor):
         """List all current options. Warning: lists password."""
         self.output("Current options:")
         for option in self.ctx.simple_options:
-            if option == "server_password" and self.marker == "!":  # Do not display the server password to the client.
-                self.output(f"Option server_password is set to {('*' * random.randint(4, 16))}")
+            if option == "admin_password" and self.marker == "!":  # Do not display the admin password to the client.
+                self.output(f"Option admin_password is set to {('*' * random.randint(4, 16))}")
             else:
                 self.output(f"Option {option} is set to {getattr(self.ctx, option)}")
 
@@ -1479,7 +1479,7 @@ class ClientMessageProcessor(CommonCommandProcessor):
     @mark_raw
     def _cmd_admin(self, command: str = ""):
         """Allow remote administration of the multiworld server
-        Usage: "!admin login <password>" in order to log in to the remote interface.
+        Usage: "!admin login <admin_password>" in order to log in to the remote interface.
         Once logged in, you can then use "!admin <command>" to issue commands.
         If you need further help once logged in.  use "!admin /help" """
 
@@ -1489,12 +1489,12 @@ class ClientMessageProcessor(CommonCommandProcessor):
             output = f"!admin login {('*' * random.randint(4, 16))}"
         elif output.lower().startswith(
                 # disallow others from knowing what the new remote administration password is.
-                "!admin /option server_password"):
-            output = f"!admin /option server_password {('*' * random.randint(4, 16))}"
+                "!admin /option admin_password"):
+            output = f"!admin /option admin_password {('*' * random.randint(4, 16))}"
         self.ctx.broadcast_text_all(self.ctx.get_aliased_name(self.client.team, self.client.slot) + ': ' + output,
                                     {"type": "Chat", "team": self.client.team, "slot": self.client.slot, "message": output})
 
-        if not self.ctx.server_password:
+        if not self.ctx.admin_password:
             self.output("Sorry, Remote administration is disabled")
             return False
 
@@ -1507,7 +1507,7 @@ class ClientMessageProcessor(CommonCommandProcessor):
             return True
 
         if command.startswith("login "):
-            if command == f"login {self.ctx.server_password}":
+            if command == f"login {self.ctx.admin_password}":
                 self.output("Login successful. You can now issue server side commands.")
                 self.ctx.commandprocessor.client = self.client
                 return True
@@ -2703,7 +2703,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('multidata', nargs="?", default=defaults["multidata"])
     parser.add_argument('--host', default=defaults["host"])
     parser.add_argument('--port', default=defaults["port"], type=int)
-    parser.add_argument('--server-password', default=defaults["server_password"])
+    parser.add_argument('--admin-password', default=defaults["admin_password"])
     parser.add_argument('--password', default=defaults["password"])
     parser.add_argument('--savefile', default=defaults["savefile"])
     parser.add_argument('--disable-save', default=defaults["disable_save"], action='store_true')
@@ -2813,7 +2813,7 @@ async def main(args: argparse.Namespace):
                        add_timestamp=args.logtime,
                        show_logo=True)
 
-    ctx = Context(args.host, args.port, args.server_password, args.password, args.location_check_points,
+    ctx = Context(args.host, args.port, args.admin_password, args.password, args.location_check_points,
                   args.hint_cost, not args.disable_item_cheat, args.release_mode, args.collect_mode,
                   args.countdown_mode, args.remaining_mode, args.hint_mode,
                   args.auto_shutdown, args.compatibility, args.log_network)

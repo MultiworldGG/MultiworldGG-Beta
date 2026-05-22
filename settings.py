@@ -5,6 +5,7 @@ This is different from player options.
 
 import os
 import os.path
+import pathlib
 import shutil
 import sys
 import types
@@ -17,7 +18,7 @@ from typing import cast, Any, BinaryIO, ClassVar, TextIO, TypeVar, Union
 
 __all__ = [
     "get_settings", "fmt_doc", "no_gui",
-    "Group", "Bool", "Path", "UserFilePath", "UserFolderPath", "LocalFilePath", "LocalFolderPath",
+    "Group", "Bool", "APPathLib", "UserFilePath", "UserFolderPath", "LocalFilePath", "LocalFolderPath",
     "OptionalUserFilePath", "OptionalUserFolderPath", "OptionalLocalFilePath", "OptionalLocalFolderPath",
     "GeneralOptions", "ServerOptions", "GeneratorOptions", "SNIOptions", "Settings"
 ]
@@ -86,8 +87,12 @@ class Group:
 
     def __getattribute__(self, item: str) -> Any:
         attr = super().__getattribute__(item)
-        if isinstance(attr, Path) and not super().__getattribute__("_dumping"):
-            if attr.required and not attr.exists() and not super().__getattribute__("_has_attr"):
+        if isinstance(attr, APPathLib) and not super().__getattribute__("_dumping"):
+            # normalize once, here: expand env vars (%USERPROFILE%, $VAR), wrap as
+            # pathlib.Path, and expanduser() for ~. The existence check below and the
+            # final return both use this same canonical form.
+            resolved = pathlib.Path(os.path.expandvars(attr.resolve())).expanduser()
+            if attr.required and not resolved.exists() and not super().__getattribute__("_has_attr"):
                 # if a file is required, and the one from settings does not exist, ask the user to provide it
                 # unless we are dumping the settings, because that would ask for each entry
                 with _lock:  # lock to avoid opening multiple
@@ -98,8 +103,10 @@ class Group:
                     setattr(self, item, new)
                     self._changed = True
                     attr = new
-            # resolve the path immediately when accessing it
-            return attr.__class__(attr.resolve())
+                    resolved = pathlib.Path(os.path.expandvars(attr.resolve())).expanduser()
+            # return as the original APPathLib subclass (string) for backward compat with
+            # downstream code that may pass it to APIs expecting str
+            return attr.__class__(str(resolved))
         return attr
 
     @property
@@ -184,7 +191,7 @@ class Group:
                         setattr(self, k, v)
                         break
                     if cls is not bool and issubclass(cls, type(v)):
-                        # upcast, i.e. int -> IntEnum, str -> Path
+                        # upcast, i.e. int -> IntEnum, str -> APPathLib
                         setattr(self, k, cls.__call__(v))
                         break
                     if issubclass(cls, (tuple, set)) and isinstance(v, list):
@@ -303,12 +310,12 @@ class Bool:
 
 
 # Types for generic settings
-T = TypeVar("T", bound="Path")
+T = TypeVar("T", bound="APPathLib")
 
 
 def _resolve_exe(s: str) -> str:
     """Append exe file extension if the file is an executable"""
-    if isinstance(s, Path):
+    if isinstance(s, APPathLib):
         from Utils import is_windows
         if s.is_exe and is_windows and not s.lower().endswith(".exe"):
             return str(s + ".exe")
@@ -325,7 +332,7 @@ def _to_builtin(o: object) -> Any:
     return c.__call__(o)
 
 
-class Path(str):
+class APPathLib(str):
     # paths in host.yaml are str
     required: bool = True
     """Marks the file as required and opens a file browser when missing"""
@@ -343,7 +350,7 @@ class Path(str):
 
     def browse(self: T, **kwargs: Any) -> T | None:
         """Opens a file browser to search for the file"""
-        raise NotImplementedError(f"Please use a subclass of Path for {self.__class__.__name__}")
+        raise NotImplementedError(f"Please use a subclass of APPathLib for {self.__class__.__name__}")
 
     def resolve(self) -> str:
         return _resolve_exe(self)
@@ -354,21 +361,25 @@ class Path(str):
 
 class _UserPath(str):
     def resolve(self) -> str:
-        if os.path.isabs(self):
-            return str(self)
+        # apply .exe suffix first (uses self.is_exe, which is class-level on APPathLib subclasses),
+        # then decide whether to root under user_path
+        s = _resolve_exe(self)
+        if os.path.isabs(s):
+            return s
         from Utils import user_path
-        return user_path(_resolve_exe(self))
+        return user_path(s)
 
 
 class _LocalPath(str):
     def resolve(self) -> str:
-        if os.path.isabs(self):
-            return str(self)
+        s = _resolve_exe(self)
+        if os.path.isabs(s):
+            return s
         from Utils import local_path
-        return local_path(_resolve_exe(self))
+        return local_path(s)
 
 
-class FilePath(Path):
+class FilePath(APPathLib):
     # path to a file
 
     md5s: ClassVar[list[str | bytes]] = []
@@ -441,7 +452,7 @@ class FilePath(Path):
                 raise ValueError(f"File hash does not match for {path}")
 
 
-class FolderPath(Path):
+class FolderPath(APPathLib):
     # path to a folder
 
     def browse(self: T, **kwargs: Any) -> T | None:
@@ -532,7 +543,7 @@ class ServerOptions(Group):
     These overwrite command line arguments!
     """
 
-    class ServerPassword(str):
+    class AdminPassword(str):
         """
         Allows for clients to log on and manage the server.  If this is null, no remote administration is possible.
         """
@@ -631,7 +642,7 @@ class ServerOptions(Group):
     disable_save: bool = False
     loglevel: str = "info"
     logtime: bool = False
-    server_password: ServerPassword | None = None
+    admin_password: AdminPassword | None = None
     disable_item_cheat: DisableItemCheat | bool = False
     location_check_points: LocationCheckPoints = LocationCheckPoints(1)
     hint_cost: HintCost = HintCost(10)

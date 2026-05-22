@@ -1032,9 +1032,9 @@ def lobby_status(lobby: UUID):
         session_id = session.get("_id")
         is_owner = is_authorized(lobby, session_id) if session_id else False
         if is_owner:
-            pw = server_opts.get("server_password")
+            pw = server_opts.get("admin_password")
             if pw:
-                result["server_password"] = pw
+                result["admin_password"] = pw
 
     if lobby.state == LOBBY_GENERATING and lobby.generation_id:
         gen_id = lobby.generation_id
@@ -2365,7 +2365,7 @@ def lobby_download_package(lobby: UUID):
             "countdown_mode": server_opts.get("countdown_mode", "auto"),
             "hint_mode": server_opts.get("hint_mode", "default"),
             "disable_item_cheat": not server_opts.get("item_cheat", True),
-            "server_password": server_opts.get("server_password") or None,
+            "admin_password": server_opts.get("admin_password") or None,
         },
         "generator": {
             "player_files_path": "Players",

@@ -738,28 +738,28 @@ a.lobby-btn-primary:hover {
     bottom: 100%;
 }
 
-.server-password-row {
+.admin-password-row {
     margin-top: 10px;
     font-size: 0.9rem;
 }
 
-.server-password-reveal {
+.admin-password-reveal {
     cursor: help;
     margin-left: 6px;
 }
 
-.server-password-reveal .password-value {
+.admin-password-reveal .password-value {
     display: none;
     color: #ffdd5a;
     font-family: monospace;
     user-select: all;
 }
 
-.server-password-reveal:hover .password-placeholder {
+.admin-passwordreveal:hover .password-placeholder {
     display: none;
 }
 
-.server-password-reveal:hover .password-value {
+.admin-password-reveal:hover .password-value {
     display: inline;
 }
 
