@@ -36,6 +36,7 @@ from hashlib import sha256
 from typing import List, Optional, Protocol
 
 from flask import Blueprint, abort, current_app, jsonify, request, session
+from flask_limiter.util import get_remote_address
 from webauthn import (
     generate_authentication_options,
     generate_registration_options,
@@ -51,6 +52,20 @@ from webauthn.helpers.structs import (
 )
 
 passkeys_bp = Blueprint("passkeys", __name__, url_prefix="/session/passkey")
+
+
+def _maybe_rate_limit(limit: str):
+    """Decorator that applies a per-IP rate limit when the host app has a
+    flask-limiter ``limiter`` available. Falls through as a no-op when the
+    blueprint is registered standalone (e.g. in unit tests).
+    """
+    def decorator(view):
+        try:
+            from WebHostLib import limiter as _limiter
+        except (ImportError, RuntimeError):
+            return view
+        return _limiter.limit(limit, key_func=get_remote_address)(view)
+    return decorator
 
 
 # ---------------------------------------------------------------------------
@@ -185,6 +200,7 @@ def register_finish():
 # ---------------------------------------------------------------------------
 
 @passkeys_bp.route("/auth/start", methods=["POST"])
+@_maybe_rate_limit("10/minute")
 def auth_start():
     # Empty allow_credentials triggers the discoverable-credential flow:
     # the OS shows the user their available passkeys for this site without
@@ -199,6 +215,7 @@ def auth_start():
 
 
 @passkeys_bp.route("/auth/finish", methods=["POST"])
+@_maybe_rate_limit("10/minute")
 def auth_finish():
     challenge_b64 = session.pop("webauthn_auth_challenge", None)
     if not challenge_b64:
