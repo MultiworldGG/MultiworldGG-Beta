@@ -24,6 +24,7 @@ from WebHostLib.models import (
     LOBBY_OPEN, LOBBY_GENERATING, LOBBY_DONE, LOBBY_CLOSED, LOBBY_LOCKED,
     UUID, db, commit,
 )
+from WebHostLib.ownership import is_authorized
 
 
 def _expire_lobby_if_needed(lobby: Lobby) -> None:
@@ -263,7 +264,7 @@ def lobby_view(lobby: UUID):
         return redirect(url_for('lobby_list'))
 
     player = _get_player_in_lobby(lobby)
-    is_owner = (lobby.owner == session["_id"])
+    is_owner = is_authorized(lobby, session["_id"])
     is_viewer = _is_lobby_viewer(lobby.id) and not player
     show_view_form = not player and not is_viewer and request.args.get('view') == '1'
     needs_password = bool(lobby.password_hash) and not player and lobby.state in (LOBBY_OPEN, LOBBY_LOCKED)

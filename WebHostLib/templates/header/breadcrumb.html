@@ -1,0 +1,35 @@
+{# Breadcrumb macro — render a list of crumbs plus optional right-side context.
+
+   Usage:
+     {% from 'header/breadcrumb.html' import breadcrumb %}
+     {{ breadcrumb([
+         ('Play', url_for('play_hub')),
+         ('Lobbies', url_for('lobby_list')),
+         ('Friday Night MW', None),  # None URL = current/last item
+     ], context='Host: DelilXah · 2 players · Open') }}
+#}
+
+{% macro breadcrumb(crumbs, context=None) %}
+<nav class="mw-breadcrumb" aria-label="Breadcrumb">
+    <ol class="mw-breadcrumb-list">
+        <li class="mw-breadcrumb-item">
+            <a href="{{ url_for('landing') }}" aria-label="Home">
+                <span class="mw-breadcrumb-home">⌂</span>
+            </a>
+        </li>
+        {% for label, url in crumbs %}
+            <li class="mw-breadcrumb-sep" aria-hidden="true">▸</li>
+            <li class="mw-breadcrumb-item">
+                {% if url and not loop.last %}
+                    <a href="{{ url }}">{{ label }}</a>
+                {% else %}
+                    <span class="mw-breadcrumb-current">{{ label }}</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+    {% if context %}
+        <div class="mw-breadcrumb-context">{{ context|safe }}</div>
+    {% endif %}
+</nav>
+{% endmacro %}

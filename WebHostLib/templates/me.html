@@ -1,0 +1,110 @@
+{% extends 'pageWrapper.html' %}
+{% from 'header/breadcrumb.html' import breadcrumb %}
+
+{% block head %}
+    <title>Your MultiworldGG</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/me.css') }}" />
+{% endblock %}
+
+{% block body %}
+    {% include 'header/grassHeader.html' %}
+    {{ breadcrumb([('Your MultiworldGG', none)]) }}
+
+    <div class="mw-me-page">
+
+        {# Page header with greeting + CTA #}
+        <div class="mw-me-header">
+            <div>
+                <h1>Your MultiworldGG</h1>
+                <p class="mw-me-subtitle">
+                    <i class="mdi mdi-monitor"></i>
+                    Saved on this browser
+                    <span class="mw-me-sep">·</span>
+                    <a href="{{ url_for('show_session') }}" data-modal-trigger="move-device">Move to another device</a>
+                </p>
+            </div>
+            <a href="{{ url_for('generate') }}" class="mw-me-cta">
+                <i class="mdi mdi-plus"></i> New game
+            </a>
+        </div>
+
+        {# Sub-nav tabs #}
+        <nav class="mw-me-subnav" aria-label="Dashboard sections">
+            <a href="{{ url_for('me') }}" class="active">Overview</a>
+            <a href="{{ url_for('my_rooms') }}">Rooms</a>
+            <a href="{{ url_for('my_lobbies') }}">Lobbies</a>
+            <a href="{{ url_for('my_seeds') }}">Seeds</a>
+        </nav>
+
+        {# Stats grid #}
+        <div class="mw-stats-grid">
+            <div class="mw-stat">
+                <p class="mw-stat-label">Active rooms</p>
+                <p class="mw-stat-num">{{ data.stats.active_rooms }}</p>
+                <p class="mw-stat-sub">{{ data.stats.active_rooms_sub }}</p>
+            </div>
+            <div class="mw-stat">
+                <p class="mw-stat-label">Open lobbies</p>
+                <p class="mw-stat-num">{{ data.stats.open_lobbies }}</p>
+                <p class="mw-stat-sub">{{ data.stats.open_lobbies_sub }}</p>
+            </div>
+            <div class="mw-stat">
+                <p class="mw-stat-label">Saved seeds</p>
+                <p class="mw-stat-num">{{ data.stats.saved_seeds }}</p>
+                <p class="mw-stat-sub">{{ data.stats.saved_seeds_sub }}</p>
+            </div>
+            <div class="mw-stat">
+                <p class="mw-stat-label">Games tracked</p>
+                <p class="mw-stat-num">{{ data.stats.games_tracked }}</p>
+                <p class="mw-stat-sub">{{ data.stats.games_tracked_sub }}</p>
+            </div>
+        </div>
+
+        {# Active rooms #}
+        {% if data.active_rooms %}
+            <section class="mw-me-section">
+                <div class="mw-me-section-head">
+                    <h2>Active rooms</h2>
+                    {% if data.total_active_rooms > data.active_rooms|length %}
+                        <a href="{{ url_for('my_rooms') }}">View all {{ data.total_active_rooms }} →</a>
+                    {% endif %}
+                </div>
+                {% for room, status in data.active_rooms %}
+                    {% include 'partials/room_card.html' %}
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        {# My lobbies #}
+        {% if data.my_lobbies %}
+            <section class="mw-me-section">
+                <div class="mw-me-section-head">
+                    <h2>My lobbies</h2>
+                    <a href="{{ url_for('lobby_create') }}">Create lobby →</a>
+                </div>
+                {% for lobby in data.my_lobbies %}
+                    {% include 'partials/lobby_card.html' %}
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        {# Recent seeds #}
+        {% if data.recent_seeds %}
+            <section class="mw-me-section">
+                <div class="mw-me-section-head">
+                    <h2>Recent seeds</h2>
+                    {% if data.total_seeds > data.recent_seeds|length %}
+                        <a href="{{ url_for('my_seeds') }}">View all {{ data.total_seeds }} →</a>
+                    {% endif %}
+                </div>
+                {% for seed in data.recent_seeds %}
+                    {% include 'partials/seed_card.html' %}
+                {% endfor %}
+            </section>
+        {% endif %}
+
+    </div>
+
+    {# Phase 8 will add the move-device modal; ignore missing keeps this safe today #}
+    {% include 'partials/move_device_modal.html' ignore missing %}
+{% endblock %}

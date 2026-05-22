@@ -1,0 +1,21 @@
+{# Renders one seed as a tappable card.
+
+   Loop variables expected:
+     seed — Seed model instance
+#}
+<a href="{{ url_for('view_seed', seed=seed.id) }}" class="mw-card-link">
+    <div class="mw-card">
+        <div class="mw-card-body">
+            <div class="mw-card-row1">
+                <span class="mw-card-id">{{ seed.id|suuid }}</span>
+                <span class="mw-card-time">{{ seed.creation_time|relative_time }}</span>
+            </div>
+            <p class="mw-card-meta">
+                {{ seed.slots|length }} slots
+                {# Accessing .spoiler loads the deferred column; OK for the small recent-seeds list #}
+                {% if seed.spoiler is not none %} · Spoiler available{% endif %}
+            </p>
+        </div>
+        <span class="mw-card-action">View <i class="mdi mdi-arrow-right"></i></span>
+    </div>
+</a>

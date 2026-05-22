@@ -1,0 +1,129 @@
+{# "Move to another device" modal — enroll a passkey on this browser so it
+   can recover this session_id on another device later. Listing + remove
+   round out the management UX.
+
+   Trigger: any element with data-modal-trigger="move-device".
+   Included by /me/me.html. #}
+{% if session.get('_id') %}
+<div class="mw-modal" id="move-device-modal" hidden>
+    <div class="mw-modal-backdrop" data-modal-close></div>
+    <div class="mw-modal-panel" role="dialog" aria-label="Move to another device">
+        <button class="mw-modal-close" data-modal-close aria-label="Close">
+            <i class="mdi mdi-close"></i>
+        </button>
+        <h2>Move to another device</h2>
+        <p class="mw-modal-lead">
+            Add a passkey on this device and you'll be able to recover this
+            same MultiworldGG session anywhere your passkeys sync —
+            other browsers, your phone, security keys.
+        </p>
+
+        <button id="passkey-add-btn" type="button" class="mw-modal-submit">
+            <i class="mdi mdi-key"></i> Add a passkey on this device
+        </button>
+        <p id="passkey-status" class="mw-modal-status" role="status" aria-live="polite"></p>
+
+        <div class="mw-modal-keybox">
+            <label>Passkeys on file</label>
+            <ul id="passkey-list" class="mw-modal-list">
+                <li class="mw-modal-list-empty">Loading&hellip;</li>
+            </ul>
+        </div>
+
+        <div class="mw-modal-warning">
+            <i class="mdi mdi-alert"></i>
+            <span>
+                A passkey lets anyone who can unlock its device recover this
+                session. Don't add one on a device you don't control.
+            </span>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const triggers = document.querySelectorAll('[data-modal-trigger="move-device"]');
+    const modal = document.getElementById('move-device-modal');
+    if (!modal) return;
+    const closers = modal.querySelectorAll('[data-modal-close]');
+    const statusEl = document.getElementById('passkey-status');
+    const addBtn = document.getElementById('passkey-add-btn');
+    const listEl = document.getElementById('passkey-list');
+
+    function setStatus(msg, isError) {
+        statusEl.textContent = msg || '';
+        statusEl.classList.toggle('mw-modal-status-error', !!isError);
+    }
+
+    function open() { modal.hidden = false; refreshList(); }
+    function close() { modal.hidden = true; setStatus(''); }
+
+    triggers.forEach(t => t.addEventListener('click', e => { e.preventDefault(); open(); }));
+    closers.forEach(c => c.addEventListener('click', close));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) close(); });
+
+    if (!window.PublicKeyCredential) {
+        setStatus('This browser does not support passkeys.', true);
+        addBtn.disabled = true;
+    }
+
+    async function refreshList() {
+        try {
+            const res = await fetch('/session/passkey/list');
+            if (!res.ok) { listEl.innerHTML = '<li class="mw-modal-list-empty">Could not load.</li>'; return; }
+            const { credentials } = await res.json();
+            if (!credentials.length) {
+                listEl.innerHTML = '<li class="mw-modal-list-empty">None yet.</li>';
+                return;
+            }
+            listEl.innerHTML = '';
+            for (const cred of credentials) {
+                const li = document.createElement('li');
+                const code = document.createElement('code');
+                code.textContent = cred.id.slice(0, 12) + '…';
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'mw-modal-list-remove';
+                btn.textContent = 'Remove';
+                btn.addEventListener('click', async () => {
+                    if (!confirm('Remove this passkey? The device it was added on can no longer recover this session.')) return;
+                    const r = await fetch('/session/passkey/remove', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: cred.id }),
+                    });
+                    if (r.ok) refreshList();
+                });
+                li.appendChild(code);
+                li.appendChild(btn);
+                listEl.appendChild(li);
+            }
+        } catch (e) {
+            listEl.innerHTML = '<li class="mw-modal-list-empty">Could not load.</li>';
+        }
+    }
+
+    addBtn.addEventListener('click', async () => {
+        setStatus('Waiting for device confirmation…');
+        try {
+            const optsRes = await fetch('/session/passkey/register/start', { method: 'POST' });
+            if (!optsRes.ok) throw new Error('Server rejected the request.');
+            const opts = await optsRes.json();
+            const cred = await navigator.credentials.create({
+                publicKey: PublicKeyCredential.parseCreationOptionsFromJSON(opts),
+            });
+            const finishRes = await fetch('/session/passkey/register/finish', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cred.toJSON()),
+            });
+            if (!finishRes.ok) throw new Error('Server rejected the passkey.');
+            setStatus('Passkey added.');
+            refreshList();
+        } catch (err) {
+            setStatus(err.message || 'Could not add passkey.', true);
+        }
+    });
+})();
+</script>
+{% endif %}

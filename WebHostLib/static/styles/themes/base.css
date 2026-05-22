@@ -1,195 +1,394 @@
-html{
-    padding-top: 110px;
-    scroll-padding-top: 100px;
+:root {
+    /* Brand palette */
+    --mw-pink-primary: #ea166c;
+    --mw-pink-dark: #b80f54;
+    --mw-pink-darker: #a01049;
+    --mw-yellow-accent: #ffdd5a;
+    --mw-yellow-dim: #f9d6a3;
+
+    /* Surface colors (dark theme — primary site palette) */
+    --mw-bg-page: #0f0612;
+    --mw-bg-elevated: #1a0a20;
+    --mw-bg-card: #2a1232;
+    --mw-bg-deep: #16081b;
+    --mw-bg-input: #1d0f23;
+
+    /* Borders and dividers */
+    --mw-border-subtle: #2a1232;
+    --mw-border-strong: #36193f;
+    --mw-border-faint: #3d1d47;
+
+    /* Text */
+    --mw-text-primary: #ffe6f0;
+    --mw-text-body: #e8d8e8;
+    --mw-text-secondary: #d4c0d4;
+    --mw-text-muted: #a87890;
+    --mw-text-dim: #7a5868;
+    --mw-text-faint: #5a3650;
+
+    /* Pyramid stripe colors (used in branding, status pills) */
+    --mw-stripe-green: #5dcaa5;
+    --mw-stripe-green-bg: #0a3322;
+    --mw-stripe-green-border: #1d5e44;
+    --mw-stripe-amber: #fac775;
+    --mw-stripe-amber-bg: #3a2607;
+    --mw-stripe-amber-border: #65450f;
+    --mw-stripe-blue: #85b7eb;
+    --mw-stripe-blue-bg: #0a2a3a;
+    --mw-stripe-blue-border: #185fa5;
+
+    /* Typography */
+    --mw-font-sans: 'Inter-Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --mw-font-mono: 'SF Mono', Menlo, Monaco, 'Cascadia Mono', 'Courier New', monospace;
+
+    /* Spacing scale */
+    --mw-space-1: 4px;
+    --mw-space-2: 8px;
+    --mw-space-3: 12px;
+    --mw-space-4: 16px;
+    --mw-space-5: 20px;
+    --mw-space-6: 24px;
+    --mw-space-8: 32px;
+
+    /* Border radius */
+    --mw-radius-sm: 4px;
+    --mw-radius-md: 6px;
+    --mw-radius-lg: 8px;
+    --mw-radius-full: 999px;
+}
+
+html {
     scroll-behavior: smooth;
 }
 
-#base-header{
+/* ===========================================================
+   Top navigation — redesigned for Phase 4
+   =========================================================== */
+
+#base-header {
+    background: var(--mw-bg-elevated);
+    padding: 14px 22px;
     display: flex;
-    flex-direction: row;
+    align-items: center;
     justify-content: space-between;
-    background-size: auto 90px;
-    width: calc(100% - 20px);
-    height: 90px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    padding: 10px;
-    line-height: 2rem;
-    z-index: 9999;
+    border-bottom: 2px solid var(--mw-pink-primary);
+    position: relative;
+    z-index: 100;
 }
 
-#base-header #base-header-left{
+#base-header-left {
     display: flex;
-    flex-direction: row;
+    align-items: center;
 }
 
-#base-header #base-header-left a{
-    margin-right: 0;
-    padding-right: 7px;
-}
-
-#base-header-right{
+#site-title {
     display: flex;
-    flex-direction: row;
-    margin-top: 4px;
-}
-
-#base-header #site-title{
-    margin-right: 7px;
-}
-
-#base-header #site-title img{
-    height: 38px;
-    margin-top: 4px;
-}
-
-#base-header a, #base-header-mobile-menu a, #base-header-popover-text, #base-header-popover-text-2{
-    color: white;
+    align-items: center;
     text-decoration: none;
-    cursor: pointer;
-    margin-right: 1.2rem;
-    font-size: 19px;
+}
+
+#header-logo {
+    height: 40px;
+    width: auto;
+    display: block;
+}
+
+#base-header-right {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+/* Nav items (top-level links and menu triggers) */
+.nav-item {
+    font-size: 13px;
+    color: var(--mw-text-body);
+    text-decoration: none;
     font-weight: 500;
-    font-family: Inter-Regular, sans-serif;
-    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 8px 4px;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s ease;
 }
 
-#base-header-right-mobile{
-    display: none;
-    margin-top: 2rem;
-    margin-right: 1rem;
+.nav-item:hover {
+    color: var(--mw-yellow-accent);
 }
 
-#base-header-mobile-menu{
-    display: none;
-    flex-direction: column;
-    background-color: #09194F;
-    text-align: center;
-    overflow-y: auto;
-    z-index: 10000;
-    width: 100vw;
-    border-bottom-left-radius: 20px;
-    border-bottom-right-radius: 20px;
-
-    position: absolute;
-    top: 7rem;
-    right: 0;
+.nav-item.active {
+    color: var(--mw-pink-primary);
 }
 
-#base-header-mobile-menu a{
-    padding: 3rem 1.5rem;
-    font-size: 4rem;
-    line-height: 5rem;
-    color: #ea166c;
-    border-top: 1px solid #093C4F;
-}
-
-#base-header-mobile-menu :first-child, #base-header-popover-menu :first-child, #base-header-popover-menu-2 :first-child{
-    border-top: none;
-}
-
-#base-header-right-mobile img{
-    height: 3rem;
-}
-
-#base-header-popover-menu, #base-header-popover-menu-2{
-    display: none;
-    flex-direction: column;
-    position: absolute;
-    background-color: #40155d;
-    margin-left: -98px;
-    margin-top: 2.25rem;
-    border-radius: 10px;
-    border-left: 2px solid #d0ebe6;
-    border-bottom: 2px solid #d0ebe6;
-    border-right: 1px solid #d0ebe6;
-    filter: drop-shadow(-6px 6px 2px #2e3e83);
-}
-
-#base-header-popover-menu-2 {
-    margin-left: -40px !important;
-}
-
-#base-header-popover-menu a, #base-header-popover-menu-2 a{
-    color: white;
-    border-top: 1px solid #d3d3d3;
-    text-align: center;
-    font-size: 1rem;
-    line-height: 3rem;
-    margin-right: 2px;
-    padding: 0.25rem 1rem;
-}
-
-#base-header-popover-icon {
-    filter:  brightness(0) invert(1);
-    width: 14px;
-    margin-bottom: 3px;
+/* Dropdown trigger gets a small caret */
+.nav-item.has-menu::after {
+    content: "▾";
+    font-size: 10px;
+    opacity: 0.7;
     margin-left: 2px;
 }
 
-#base-header-right a, #base-header-mobile-menu a {
-    color: white !important;
+/* Dropdown menu */
+.nav-menu {
+    position: absolute;
+    top: 100%;
+    margin-top: -2px;
+    background: var(--mw-bg-elevated);
+    border: 1px solid var(--mw-border-strong);
+    border-radius: var(--mw-radius-lg);
+    padding: 6px 0;
+    min-width: 200px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    display: none;
 }
 
-@media all and (max-width: 960px), only screen and (max-device-width: 768px) {
-    #base-header-right{
+.nav-menu a {
+    display: block;
+    padding: 8px 16px;
+    color: var(--mw-text-body);
+    text-decoration: none;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.nav-menu a:hover {
+    background: var(--mw-bg-card);
+    color: var(--mw-yellow-accent);
+}
+
+/* Show menu when the trigger or menu itself is hovered */
+.nav-item.has-menu:hover + .nav-menu,
+.nav-menu:hover {
+    display: block;
+}
+
+/* Avatar */
+.nav-avatar {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    margin-left: 4px;
+}
+
+.nav-avatar img {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--mw-radius-full);
+    background: var(--mw-yellow-dim);
+    border: 2px solid transparent;
+    padding: 2px;
+    box-sizing: border-box;
+    object-fit: contain;
+    transition: border-color 0.15s ease;
+}
+
+.nav-avatar:hover img,
+.nav-avatar.active img {
+    border-color: var(--mw-yellow-accent);
+}
+
+/* Pink stripe under the header (decorative) */
+.mw-stripe {
+    height: 6px;
+    background: var(--mw-pink-primary);
+    background-image: repeating-linear-gradient(
+        90deg,
+        var(--mw-pink-primary) 0,
+        var(--mw-pink-primary) 14px,
+        var(--mw-pink-darker) 14px,
+        var(--mw-pink-darker) 28px
+    );
+}
+
+/* Mobile menu trigger (hamburger) — hidden by default */
+#base-header-right-mobile {
+    display: none;
+}
+
+#base-header-mobile-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--mw-bg-elevated);
+    border-bottom: 2px solid var(--mw-pink-primary);
+    padding: 8px 0;
+    z-index: 1000;
+}
+
+#base-header-mobile-menu a {
+    display: block;
+    padding: 12px 22px;
+    color: var(--mw-text-body);
+    text-decoration: none;
+    font-size: 15px;
+    border-bottom: 1px solid var(--mw-border-subtle);
+}
+
+#base-header-mobile-menu a:last-child {
+    border-bottom: none;
+}
+
+#base-header-mobile-menu.open {
+    display: block;
+}
+
+/* Responsive breakpoint */
+@media (max-width: 768px) {
+    #base-header {
+        padding: 12px 16px;
+    }
+    #base-header-right {
         display: none;
     }
-
-    #base-header-right-mobile{
-        display: unset;
+    #base-header-right-mobile {
+        display: flex;
+        align-items: center;
+    }
+    #base-header-mobile-menu-button img {
+        width: 28px;
+        height: 28px;
     }
 }
 
-@media all and (max-width: 960px){
-    #base-header-right-mobile{
-        margin-top: 25px;
-        margin-right: -5px;
-    }
+/* ===========================================================
+   Breadcrumb bar — Phase 5
+   =========================================================== */
 
-    #base-header-right-mobile img{
-        height: 1.5rem;
-    }
+.mw-breadcrumb {
+    background: var(--mw-bg-deep);
+    padding: 11px 22px;
+    display: flex;
+    align-items: center;
+    gap: var(--mw-space-2);
+    font-family: var(--mw-font-mono);
+    font-size: 12.5px;
+    border-bottom: 1px solid var(--mw-border-subtle);
+    flex-wrap: wrap;
+}
 
-    #base-header-mobile-menu{
-        top: 3.3rem;
-        width: unset;
-        border-top-left-radius: 10px;
-    }
+.mw-breadcrumb-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--mw-space-2);
+    flex-wrap: wrap;
+}
 
-    #base-header-mobile-menu a{
-        font-size: 1rem;
-        line-height: 2rem;
-        margin: 0;
-        padding: 0.25rem .5rem;
+.mw-breadcrumb-item {
+    display: inline-flex;
+    align-items: center;
+}
+
+.mw-breadcrumb-item a {
+    color: var(--mw-text-muted);
+    text-decoration: none;
+}
+
+.mw-breadcrumb-item a:hover {
+    color: var(--mw-yellow-accent);
+}
+
+.mw-breadcrumb-current {
+    color: var(--mw-yellow-accent);
+    font-weight: 500;
+}
+
+.mw-breadcrumb-home {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.mw-breadcrumb-sep {
+    color: var(--mw-text-faint);
+    font-size: 10px;
+}
+
+.mw-breadcrumb-context {
+    margin-left: auto;
+    font-family: var(--mw-font-sans);
+    font-size: 11.5px;
+    color: var(--mw-text-dim);
+}
+
+.mw-breadcrumb-context strong {
+    color: var(--mw-pink-primary);
+    font-weight: 500;
+}
+
+@media (max-width: 600px) {
+    .mw-breadcrumb {
+        padding: 9px 16px;
+        font-size: 11.5px;
+    }
+    .mw-breadcrumb-context {
+        flex-basis: 100%;
+        margin-left: 0;
+        margin-top: 4px;
+        padding-top: 4px;
+        border-top: 1px solid var(--mw-border-subtle);
     }
 }
 
-@media only screen and (max-device-width: 768px){
-    html{
-        padding-top: 160px;
-        scroll-padding-top: 190px;
-    }
+/* ===========================================================
+   Material Design Icons — shared icon font for the redesign
+   ===========================================================
+   The font is the FA-compatible MDI webfont shipped at
+   data/fonts/materialdesignicons-fa-webfont.ttf and mirrored into
+   WebHostLib/static/static/fonts/ for the webhost. To add a new icon
+   look up its codepoint at https://pictogrammers.com/library/mdi/
+   (or via kivymd.icon_definitions.md_icons) and add one line below.
+   =========================================================== */
 
-    #base-header{
-        height: 120px;
-        background-size: auto 120px;
-    }
-
-    #base-header #site-title img{
-        margin-top: 18px;
-        margin-left: 20px;
-    }
+@font-face {
+    font-family: "MDIcons";
+    src: url('../../static/fonts/materialdesignicons-fa-webfont.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: block;
 }
 
-@media only screen and (max-device-width: 400px){
-    #base-header-right-mobile{
-        margin-right: 10px;
-    }
-    
-    #base-header #site-title img{
-        margin-left: 0px;
-    }
+.mdi {
+    font-family: "MDIcons";
+    font-style: normal;
+    font-weight: normal;
+    display: inline-block;
+    line-height: 1;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
+/* /me dashboard icons (Phase 6) */
+.mdi-play::before                { content: "\F040A"; }
+.mdi-pause::before               { content: "\F03E4"; }
+.mdi-monitor::before             { content: "\F0379"; }
+.mdi-plus::before                { content: "\F0415"; }
+.mdi-arrow-right::before         { content: "\F0054"; }
+.mdi-account-multiple::before    { content: "\F000E"; }
+.mdi-key::before                 { content: "\F0306"; }
+.mdi-dice-6::before              { content: "\F01CF"; }
+.mdi-information::before         { content: "\F02FC"; }
+
+/* /play and /learn hub icons (Phase 7) */
+.mdi-account-group::before       { content: "\F0849"; }
+.mdi-plus-circle::before         { content: "\F0417"; }
+.mdi-upload::before              { content: "\F0552"; }
+.mdi-check-all::before           { content: "\F012D"; }
+.mdi-bookmark::before            { content: "\F00C0"; }
+.mdi-school::before              { content: "\F0474"; }
+.mdi-help-circle::before         { content: "\F02D7"; }
+.mdi-book-open-variant::before   { content: "\F14F7"; }
+
+/* Move-to-another-device modal icons (Phase 8) */
+.mdi-close::before               { content: "\F0156"; }
+.mdi-content-copy::before        { content: "\F018F"; }
+.mdi-check::before               { content: "\F012C"; }
+.mdi-alert::before               { content: "\F0026"; }

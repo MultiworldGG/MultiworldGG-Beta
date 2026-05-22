@@ -1,0 +1,36 @@
+{% extends 'pageWrapper.html' %}
+{% from 'header/breadcrumb.html' import breadcrumb %}
+
+{% block head %}
+    <title>My seeds · MultiworldGG</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/me.css') }}" />
+{% endblock %}
+
+{% block body %}
+    {% include 'header/grassHeader.html' %}
+    {{ breadcrumb([
+        ('Your MultiworldGG', url_for('me')),
+        ('Seeds', none),
+    ]) }}
+
+    <div class="mw-me-page">
+        <h1>All your seeds</h1>
+
+        <nav class="mw-me-subnav" aria-label="Dashboard sections">
+            <a href="{{ url_for('me') }}">Overview</a>
+            <a href="{{ url_for('my_rooms') }}">Rooms</a>
+            <a href="{{ url_for('my_lobbies') }}">Lobbies</a>
+            <a href="{{ url_for('my_seeds') }}" class="active">Seeds</a>
+        </nav>
+
+        {% if seeds %}
+            <div class="mw-table-stack">
+                {% for seed in seeds %}
+                    {% include 'partials/seed_card.html' %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="mw-empty-list">No seeds saved on this browser yet.</p>
+        {% endif %}
+    </div>
+{% endblock %}

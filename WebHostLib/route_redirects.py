@@ -32,7 +32,7 @@ _RENAMES = {
     "/check":             "check",
     "/lobbies":           "lobby_list",
     "/user-content":      "me",
-    "/tutorial":          "learn_hub",
+    "/tutorial":          "tutorial_landing",
 }
 
 
