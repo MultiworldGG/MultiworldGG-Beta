@@ -23,6 +23,7 @@ from WebHostLib.models import (
     LOBBY_OPEN, LOBBY_GENERATING, LOBBY_DONE, LOBBY_CLOSED, LOBBY_LOCKED,
     uuid4,
 )
+from WebHostLib.short_id import assign_short_id
 from WebHostLib import app, limiter
 
 APWORLD_MAX_SIZE = 60 * 1024 * 1024  # 60 MB — leaves headroom under 64 MB global limit
@@ -1041,6 +1042,7 @@ def lobby_status(lobby: UUID):
             if lobby.state == LOBBY_GENERATING:
                 lobby.seed_id = seed.id
                 room = Room(seed_id=seed.id, owner=lobby.owner, tracker=uuid4())
+                assign_short_id(db.session, room)
                 flush()
                 lobby.room_id = room.id
                 lobby.state = LOBBY_DONE
@@ -2455,6 +2457,7 @@ def lobby_upload_game(lobby: UUID):
         return jsonify({"error": "No multidata found in the uploaded file."}), 400
 
     room = Room(seed_id=seed.id, owner=lobby.owner, tracker=uuid4())
+    assign_short_id(db.session, room)
     flush()
     lobby.seed_id = seed.id
     lobby.room_id = room.id

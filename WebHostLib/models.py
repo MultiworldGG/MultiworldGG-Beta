@@ -128,6 +128,7 @@ class Room(Base):
     timeout: int = mapped_column(Integer, nullable=False, default=lambda: 4 * 60 * 60)
     tracker: UUID | None = mapped_column(SA_UUID(as_uuid=True), nullable=True, index=True)
     last_port: int = mapped_column(Integer, nullable=True, default=0)
+    short_id: str | None = mapped_column(String(6), unique=True, nullable=True, index=True)
 
     seed: "Seed" = relationship("Seed", back_populates="rooms")
     commands: list["Command"] = relationship(

@@ -15,6 +15,7 @@ from Utils import __version__
 from . import app, cache
 from .markdown import render_markdown
 from .models import Seed, Room, Command, UUID, uuid4, db, commit
+from .short_id import assign_short_id
 from Utils import title_sorted, utcnow
 
 if TYPE_CHECKING:
@@ -279,6 +280,7 @@ def new_room(seed: UUID):
     if not seed:
         abort(404)
     room = Room(seed_id=seed.id, owner=session["_id"], tracker=uuid4())
+    assign_short_id(db.session, room)
     commit()
     return redirect(url_for("host_room", seed=room.seed_id, room=room.id))
 

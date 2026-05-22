@@ -162,6 +162,9 @@ def register() -> None:
     from .route_redirects import legacy_routes
     app.register_blueprint(legacy_routes)
 
+    from .short_room_route import short_room
+    app.add_url_rule("/r/<short>", "short_room", short_room)
+
     @app.before_request
     def _ensure_dynamic_tracker_routes():
         global _dynamic_tracker_registered

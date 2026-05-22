@@ -8,8 +8,11 @@ Factories return ``SimpleNamespace`` snapshots rather than live ORM objects,
 so attribute access keeps working after the database session closes.
 """
 import pytest
+from contextlib import nullcontext
 from types import SimpleNamespace
 from uuid import uuid4
+
+from flask import has_app_context
 
 
 @pytest.fixture(scope="session")
@@ -41,17 +44,38 @@ def client(app):
 
 
 @pytest.fixture
+def db_session(app):
+    """Yield a SQLAlchemy session bound to an active app context.
+
+    Used by tests that need to drive ``db.session`` directly (e.g.
+    calling ``assign_short_id`` outside a request). Reuses the current
+    app context if one is already active so it nests cleanly with
+    ``room_factory``.
+    """
+    from WebHostLib.models import db
+
+    ctx_mgr = nullcontext() if has_app_context() else app.app_context()
+    with ctx_mgr:
+        yield db.session
+
+
+@pytest.fixture
 def room_factory(app):
     from WebHostLib.models import db, commit, Room, Seed
 
     def _make(**overrides):
-        with app.app_context():
+        ctx_mgr = nullcontext() if has_app_context() else app.app_context()
+        with ctx_mgr:
             owner = overrides.pop("owner", uuid4())
             seed = Seed(multidata=b"", owner=owner)
             db.session.flush()
             room = Room(seed_id=seed.id, owner=owner, tracker=uuid4(), **overrides)
             db.session.flush()
-            snapshot = SimpleNamespace(id=room.id, seed_id=room.seed_id)
+            snapshot = SimpleNamespace(
+                id=room.id,
+                seed_id=room.seed_id,
+                short_id=room.short_id,
+            )
             commit()
             return snapshot
     return _make
