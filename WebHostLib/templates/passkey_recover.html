@@ -12,8 +12,9 @@
 
     <div class="mw-me-empty">
         <div class="mw-empty-hero">
-            {# 64px × 64px (within an 80px circle) — round controller-icon hero, currently a broken-image placeholder. #}
-            <img alt="MultiworldGG controller avatar" />
+            {# 64px × 64px (within an 80px circle) — round controller-icon hero #}
+            <img src="{{ url_for('static', filename='static/branding/controller-icon.png') }}"
+                 alt="MultiworldGG controller avatar" />
         </div>
         <h1>Recover your session</h1>
         <p class="mw-empty-lead">
