@@ -248,3 +248,6 @@ deploy/github-bot.env
 deploy/github-bot-secrets/*
 !deploy/github-bot-secrets/.gitkeep
 
+# Webhost runtime secrets — operator copies example_web.env -> web.env
+deploy/web.env
+

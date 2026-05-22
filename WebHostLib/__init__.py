@@ -21,7 +21,7 @@ from mwgg_igdb import GameIndex
 # per-job in autolauncher._mp_gen_game.
 if multiprocessing.current_process().name == "MainProcess":
     set_game_names(list(GameIndex.game_names.keys()), strict=False)
-    add_bundled_worlds(("tracker", "_manual", "_bizhawk", "_sni", "_debug", "generic"))
+    from worlds.AutoWorld import AutoWorldRegister
 
 from APContainer import is_ap_player_container
 from .cli import CLI
@@ -50,8 +50,14 @@ app.config["PORT"] = 80
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["LOBBY_APWORLD_PATH"] = os.path.abspath(LOBBY_APWORLD_FOLDER)
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # 64 megabyte limit
-# if you want to deploy, make sure you have a non-guessable secret key
-app.config["SECRET_KEY"] = bytes(socket.gethostname(), encoding="utf-8")
+# SECRET_KEY signs session cookies. Resolution order:
+#   1. $MWGG_SECRET_KEY    (preferred for Docker / env-driven deploys)
+#   2. SECRET_KEY in config.yaml (legacy / file-based deploys)
+#   3. host-name fallback (DEV ONLY — get_app() refuses to boot with this in prod)
+app.config["SECRET_KEY"] = (
+    os.environ.get("MWGG_SECRET_KEY", "").encode("utf-8")
+    or bytes(socket.gethostname(), encoding="utf-8")
+)
 app.config["SESSION_PERMANENT"] = True
 app.config["MAX_FORM_MEMORY_SIZE"] = 2 * 1024 * 1024  # 2 MB, needed for large option pages such as SC2
 app.config["MAX_FORM_PARTS"] = 10_000  # Werkzeug 3.x default is 1000; games with many items can exceed this
@@ -104,6 +110,18 @@ app.config["AVATAR_PUBLIC_BASE_URL"] = ""        # empty -> derive from request.
 app.config["AVATAR_MAX_UPLOAD_BYTES"] = 5 * 1024 * 1024
 app.config["AVATAR_MAX_PIXELS"] = 4_000_000
 app.config["AVATAR_OUTPUT_DIM"] = 512
+
+# WebAuthn / passkey recovery (see WebHostLib/passkeys.py).
+# Production MUST override RP_ID / ORIGIN in host.yaml. The browser rejects
+# any RP_ID that doesn't match the live origin's registrable domain, and
+# rejects WebAuthn over plain HTTP except on localhost.
+app.config["WEBAUTHN_RP_ID"] = "localhost"
+app.config["WEBAUTHN_ORIGIN"] = "http://localhost:5050"
+app.config["WEBAUTHN_RP_NAME"] = "MultiworldGG"
+# Used to derive a stable, opaque per-session user-handle for the OS passkey
+# picker. Falls back to SECRET_KEY for local dev; production should set this
+# to a dedicated ≥32-byte random string and rotate independently.
+app.config["WEBAUTHN_USER_HANDLE_SECRET"] = None  # populated below
 
 cache = Cache()
 Compress(app)
@@ -161,6 +179,22 @@ def register() -> None:
 
     from .route_redirects import legacy_routes
     app.register_blueprint(legacy_routes)
+
+    # Passkey blueprint — needs the credential store + per-session HMAC secret.
+    # WEBAUTHN_USER_HANDLE_SECRET resolution order (mirrors SECRET_KEY):
+    #   1. $MWGG_WEBAUTHN_HANDLE_SECRET (preferred for Docker)
+    #   2. WEBAUTHN_USER_HANDLE_SECRET in config.yaml
+    #   3. SECRET_KEY (so the passkey clustering rotates with the signing key)
+    from .passkeys import passkeys_bp
+    from .models import db as _db
+    from .passkey_store import SQLAlchemyCredentialStore
+    env_handle_secret = os.environ.get("MWGG_WEBAUTHN_HANDLE_SECRET", "")
+    if env_handle_secret:
+        app.config["WEBAUTHN_USER_HANDLE_SECRET"] = env_handle_secret.encode("utf-8")
+    elif not app.config.get("WEBAUTHN_USER_HANDLE_SECRET"):
+        app.config["WEBAUTHN_USER_HANDLE_SECRET"] = app.config["SECRET_KEY"]
+    passkeys_bp.credential_store = SQLAlchemyCredentialStore(lambda: _db.session)
+    app.register_blueprint(passkeys_bp)
 
     @app.before_request
     def _ensure_dynamic_tracker_routes():
