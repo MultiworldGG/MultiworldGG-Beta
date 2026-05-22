@@ -254,27 +254,3 @@ def my_seeds():
     return render_template("me_seeds.html", seeds=seeds)
 
 
-@app.route("/disown_seed/<suuid:seed>", methods=["GET"])
-def disown_seed(seed):
-    seed = Seed.get(id=seed)
-    if not seed:
-        return abort(404)
-    if seed.owner != session["_id"]:
-        return abort(403)
-
-    seed.owner = uuid.UUID(int=0)
-    commit()
-    return redirect(url_for("me"))
-
-
-@app.route("/disown_room/<suuid:room>", methods=["GET"])
-def disown_room(room):
-    room = Room.get(id=room)
-    if not room:
-        return abort(404)
-    if room.owner != session["_id"]:
-        return abort(403)
-
-    room.owner = uuid.UUID(int=0)
-    commit()
-    return redirect(url_for("me"))

@@ -65,16 +65,6 @@ input[type="submit"]:active {
   margin-bottom: 2px;
 }
 
-button.button-grass,
-input[type="submit"].button-grass {
-  border: 1px solid black;
-}
-
-button.button-dirt,
-input[type="submit"].button-dirt {
-  border: 1px solid black;
-}
-
 h1,
 h2,
 h3,
@@ -83,7 +73,7 @@ h5,
 h6 {
   font-weight: normal;
   margin: 0;
-  color: #618d63;
+  color: var(--mw-text-primary);
 }
 
 h1 {

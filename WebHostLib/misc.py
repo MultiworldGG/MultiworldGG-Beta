@@ -258,7 +258,7 @@ def tutorial(lang: str, game: str, file: str):
             theme=theme,
             breadcrumb_crumbs=[
                 ("Learn", url_for("learn_hub", lang=lang)),
-                ("Setup tutorials", url_for("tutorial_landing", lang=lang)),
+                ("Setup guides", url_for("tutorial_landing", lang=lang)),
                 (get_world_display_name(game), url_for("game_info", game=game)),
                 (get_tutorial_name(game, file) or file, None),
             ],

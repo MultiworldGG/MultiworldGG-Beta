@@ -10,7 +10,7 @@
 {%- macro fmt_timeout(m) -%}
 {%- if m < 60 -%}{{ m }} min{%- elif m < 1440 -%}{{ (m // 60) }} hr{%- else -%}{{ (m // 1440) }} day{%- if (m // 1440) != 1 -%}s{%- endif -%}{%- endif -%}
 {%- endmacro -%}
-    {% include 'header/grassHeader.html' %}
+    {% include 'header/baseHeader.html' %}
     {% set state_label = ({0: 'Open', 1: 'Generating', 2: 'Seed ready', 3: 'Locked', -1: 'Closed'}).get(lobby.state, 'Unknown') %}
     {{ breadcrumb([
         ('Play', url_for('play_hub')),
@@ -331,7 +331,7 @@
                         </div>
                         {% if player %}
                             <div id="chat-input-area">
-                                <input type="text" id="chat-input" maxlength="500" placeholder="Type a message...">
+                                <input type="text" id="chat-input" maxlength="500" placeholder="Type a message..." aria-label="Chat message">
                                 <button id="chat-send-btn" type="button" class="lobby-btn">Send</button>
                             </div>
                         {% endif %}

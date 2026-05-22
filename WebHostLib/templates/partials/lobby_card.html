@@ -14,7 +14,7 @@
                     <i class="mdi mdi-account-multiple"></i>{{ state_label }}
                 </span>
                 <span class="mw-card-id">{{ lobby.title or 'Untitled lobby' }}</span>
-                <span class="mw-card-time">{{ lobby.last_activity|relative_time }}</span>
+                <span class="mw-card-time" title="Time since this lobby last saw activity">Active {{ lobby.last_activity|relative_time }}</span>
             </div>
             <p class="mw-card-meta">
                 {{ lobby.players|length }}{% if lobby.max_players > 0 %} / {{ lobby.max_players }}{% endif %} players

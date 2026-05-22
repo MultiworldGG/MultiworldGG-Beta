@@ -28,7 +28,7 @@
             <span class="nav-item has-menu" data-menu="learn">Learn</span>
             <div class="nav-menu" data-menu-for="learn">
                 <a href="{{ url_for('learn_hub', lang='en') }}">All guides</a>
-                <a href="{{ url_for('tutorial_landing', lang='en') }}">Setup tutorials</a>
+                <a href="{{ url_for('tutorial_landing', lang='en') }}">Setup guides</a>
                 <a href="{{ url_for('faq', lang='en') }}">FAQ</a>
                 <a href="{{ url_for('glossary', lang='en') }}">Glossary</a>
             </div>
@@ -37,15 +37,15 @@
 
             <span class="nav-item has-menu" data-menu="tools">Tools</span>
             <div class="nav-menu" data-menu-for="tools">
-                <a href="https://chat.multiworld.gg" target="_blank">Web text client</a>
-                <a href="https://drawesome4333.github.io/ap-tracker/" target="_blank">Checklist tracker</a>
-                <a href="https://cheesetrackers.theincrediblewheelofchee.se" target="_blank">Cheese trackers</a>
-                <a href="https://manual.multiworld.gg" target="_blank">Manual world client</a>
-                <a href="https://archipelago.miraheze.org/wiki/Category:Games" target="_blank">Unofficial wiki</a>
+                <a href="https://chat.multiworld.gg" target="_blank" rel="noopener noreferrer">Web text client</a>
+                <a href="https://drawesome4333.github.io/ap-tracker/" target="_blank" rel="noopener noreferrer">Checklist tracker</a>
+                <a href="https://cheesetrackers.theincrediblewheelofchee.se" target="_blank" rel="noopener noreferrer">Cheese trackers</a>
+                <a href="https://manual.multiworld.gg" target="_blank" rel="noopener noreferrer">Manual world client</a>
+                <a href="https://archipelago.miraheze.org/wiki/Category:Games" target="_blank" rel="noopener noreferrer">Unofficial wiki</a>
             </div>
 
             <a class="nav-item" href="{{ url_for('downloads') }}">Downloads</a>
-            <a class="nav-item" href="https://discord.multiworld.gg" target="_blank">Discord</a>
+            <a class="nav-item" href="https://discord.multiworld.gg" target="_blank" rel="noopener noreferrer">Discord</a>
 
             <a href="{{ url_for('me') }}" class="nav-avatar" aria-label="Your MultiworldGG">
                 {# 34px × 34px (28px on mobile) — round controller-icon avatar, cream background #}
@@ -72,7 +72,7 @@
             <a href="{{ url_for('games') }}">Games</a>
             <a href="{{ url_for('downloads') }}">Downloads</a>
             <a href="{{ url_for('me') }}">Your MultiWorldGG</a>
-            <a href="https://discord.multiworld.gg" target="_blank">Discord</a>
+            <a href="https://discord.multiworld.gg" target="_blank" rel="noopener noreferrer">Discord</a>
         </div>
     </header>
     <div class="mw-stripe"></div>

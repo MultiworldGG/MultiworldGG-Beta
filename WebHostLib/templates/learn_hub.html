@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block body %}
-    {% include 'header/grassHeader.html' %}
+    {% include 'header/baseHeader.html' %}
     {{ breadcrumb([('Learn', none)]) }}
 
     <div class="mw-hub">
@@ -17,7 +17,7 @@
         <div class="mw-hub-grid">
             <a href="{{ url_for('tutorial_landing', lang=lang) }}" class="mw-hub-card primary">
                 <div class="mw-hub-icon"><i class="mdi mdi-school"></i></div>
-                <h3>Setup tutorials</h3>
+                <h3>Setup guides</h3>
                 <p>Step-by-step guides for each game. Pick your game, get going.</p>
             </a>
 
