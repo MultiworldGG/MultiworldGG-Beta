@@ -7,9 +7,9 @@
 {% endblock %}
 
 {% block body %}
-    {% include 'header/oceanIslandHeader.html' %}
+    {% include 'header/baseHeader.html' %}
     <div id="generate-game-wrapper">
-        <div id="generate-game" class="grass-island">
+        <div id="generate-game">
             <h1>Generate Game{% if race %} (Race Mode){% endif %}</h1>
             <p>
                 <strong>Playing with others?</strong> If you don't have everyone's YAML files yet, consider using a
@@ -251,5 +251,4 @@ Warning: playthrough can take a significant amount of time for larger multiworld
             </div>
         </div>
     </div>
-    {%  include 'islandFooter.html' %}
 {% endblock %}

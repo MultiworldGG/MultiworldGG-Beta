@@ -1,6 +1,5 @@
 {% extends 'pageWrapper.html' %}
 {% import "macros.html" as macros %}
-{% set show_footer = True %}
 
 {% block head %}
     <title>View Seed {{ seed.id|suuid }}</title>
@@ -9,9 +8,9 @@
 {% endblock %}
 
 {% block body %}
-    {% include 'header/oceanIslandHeader.html' %}
+    {% include 'header/baseHeader.html' %}
     <div id="view-seed-wrapper">
-        <div id="view-seed" class="grass-island">
+        <div id="view-seed">
             <h1>Seed Info</h1>
             <table>
                 <tbody>

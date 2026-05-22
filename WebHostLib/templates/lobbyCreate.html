@@ -6,9 +6,9 @@
 {% endblock %}
 
 {% block body %}
-    {% include 'header/oceanIslandHeader.html' %}
+    {% include 'header/baseHeader.html' %}
     <div id="lobby-create-wrapper">
-        <div id="lobby-create" class="grass-island">
+        <div id="lobby-create">
             <h1>Create Lobby</h1>
             <p>
                 Create a lobby for players to join and upload their YAML configs.
@@ -315,5 +315,4 @@
         raceCheckbox.addEventListener("change", () => applyRaceMode(raceCheckbox.checked));
     })();
     </script>
-    {% include 'islandFooter.html' %}
 {% endblock %}

@@ -18,14 +18,14 @@
         (lobby.title or 'Lobby', none),
     ], context='Host: <strong>' ~ (owner_name or 'Anonymous') ~ '</strong> · ' ~ player_count ~ ' players · ' ~ state_label) }}
     <div id="lobby-wrapper">
-        <div id="lobby-container" class="grass-island">
+        <div id="lobby-container">
             <h2 id="lobby-title">{{ lobby.title }}</h1>
 
             {% if lobby.state == -1 %}
                 <p class="lobby-expired">This lobby has expired.</p>
             {% elif not player and not is_viewer and lobby.state == 0 and not show_view_form %}
                 {# Non-member joining an open lobby #}
-                <div class="lobby-preview grass-island">
+                <div class="lobby-preview">
                     <p class="lobby-preview-meta">
                         Host: <strong>{{ owner_name }}</strong> &mdash;
                         Players: {{ player_count }}{% if lobby.max_players > 0 %}/{{ lobby.max_players }}{% endif %} &mdash;
@@ -71,7 +71,7 @@
                 </div>
             {% elif not player and not is_viewer and lobby.state in (0, 3) and show_view_form %}
                 {# Non-member viewing an open or locked lobby via ?view=1 #}
-                <div class="lobby-preview grass-island">
+                <div class="lobby-preview">
                     <p class="lobby-preview-meta">
                         Host: <strong>{{ owner_name }}</strong> &mdash;
                         Players: {{ player_count }}{% if lobby.max_players > 0 %}/{{ lobby.max_players }}{% endif %} &mdash;
@@ -109,7 +109,7 @@
                 </div>
             {% elif not player and not is_viewer %}
                 {# Non-joined visitor viewing a non-viewable lobby (generating/done) #}
-                <div class="lobby-preview grass-island">
+                <div class="lobby-preview">
                     <p class="lobby-preview-meta">
                         Host: <strong>{{ owner_name }}</strong> &mdash;
                         Players: {{ player_count }}{% if lobby.max_players > 0 %}/{{ lobby.max_players }}{% endif %} &mdash;
@@ -340,7 +340,7 @@
             {% if is_owner and lobby.state in (0, 3) %}
             {# Settings modal #}
             <div id="settings-modal">
-                <div id="settings-modal-content" class="grass-island">
+                <div id="settings-modal-content">
                     <h2>Edit Settings</h2>
                     <div id="settings-form-grid">
                         <div class="settings-section">
@@ -495,11 +495,9 @@
             {% endif %}
         </div>
     </div>
-    {% include 'islandFooter.html' %}
-
     {% if player or is_viewer %}
     <div id="yaml-view-modal">
-        <div id="yaml-view-modal-content" class="grass-island">
+        <div id="yaml-view-modal-content">
             <div id="yaml-view-header">
                 <span id="yaml-view-filename"></span>
                 <button id="yaml-view-close">&times;</button>
