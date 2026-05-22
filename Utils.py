@@ -67,7 +67,7 @@ is_linux = sys.platform.startswith("linux")
 is_macos = sys.platform == "darwin"
 is_windows = sys.platform in ("win32", "cygwin", "msys")
 
-_worlds_to_load: typing.List[str | "APWorldContainer"] = []
+_worlds_to_load: typing.List[str | "APWorldContainer"] = ["worlds.generic", "worlds.tracker", "worlds._manual"]
 
 def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.List[(str, bool)]:
     """Set the game names to the list of game names.
@@ -79,7 +79,6 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
     from mwgg_igdb import GameIndex
     from APContainer import APWorldContainer
     from BaseUtils import get_apworld_manifest
-    game_names = game_names + ["generic", "tracker", "_manual"]
     _worlds_to_install = {game: "" for game in game_names}
     _unknown_worlds = []
     custom_worlds_dir = Path(local_path("custom_worlds"))
