@@ -47,12 +47,12 @@
 }
 
 .mw-hub-card:hover {
-    border-color: var(--mw-pink-primary);
+    border-color: var(--mw-accent-primary);
     transform: translateY(-2px);
 }
 
 .mw-hub-card.primary {
-    border-color: var(--mw-pink-primary);
+    border-color: var(--mw-accent-primary);
     border-width: 2px;
     padding: 21px;
 }
@@ -69,12 +69,12 @@
 }
 
 .mw-hub-card.primary .mw-hub-icon {
-    background: var(--mw-pink-primary);
+    background: var(--mw-accent-primary);
 }
 
 .mw-hub-icon .mdi {
     font-size: 24px;
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
 }
 
 .mw-hub-card.primary .mw-hub-icon .mdi {

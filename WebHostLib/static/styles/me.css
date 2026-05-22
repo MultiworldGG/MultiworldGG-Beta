@@ -56,13 +56,13 @@
 }
 
 .mw-me-subtitle a:hover {
-    color: var(--mw-yellow-accent);
-    text-decoration-color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
+    text-decoration-color: var(--mw-accent-secondary);
 }
 
 .mw-me-cta {
     padding: 8px 14px;
-    background: var(--mw-pink-primary);
+    background: var(--mw-accent-primary);
     color: white;
     border-radius: var(--mw-radius-md);
     font-size: 13px;
@@ -75,7 +75,7 @@
 }
 
 .mw-me-cta:hover {
-    background: var(--mw-pink-dark);
+    background: var(--mw-accent-primary-dark);
 }
 
 /* Sub-nav */
@@ -101,8 +101,8 @@
 }
 
 .mw-me-subnav a.active {
-    color: var(--mw-yellow-accent);
-    border-bottom-color: var(--mw-pink-primary);
+    color: var(--mw-accent-secondary);
+    border-bottom-color: var(--mw-accent-primary);
     font-weight: 500;
 }
 
@@ -158,7 +158,7 @@
 
 .mw-me-section-head h2 {
     font-size: 14px;
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
     margin: 0;
     font-weight: 500;
 }
@@ -170,7 +170,7 @@
 }
 
 .mw-me-section-head a:hover {
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
 }
 
 /* Cards */
@@ -240,7 +240,7 @@
 .mw-card-action {
     padding: 6px 11px;
     background: transparent;
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
     border: 1px solid var(--mw-text-faint);
     border-radius: var(--mw-radius-md);
     font-size: 12px;
@@ -251,7 +251,7 @@
 }
 
 .mw-card:hover .mw-card-action {
-    border-color: var(--mw-yellow-accent);
+    border-color: var(--mw-accent-secondary);
 }
 
 /* Status pills */
@@ -270,10 +270,10 @@
     font-size: 11px;
 }
 
-.mw-pill-running { background: var(--mw-stripe-green-bg); color: var(--mw-stripe-green); border: 1px solid var(--mw-stripe-green-border); }
-.mw-pill-paused  { background: var(--mw-stripe-amber-bg); color: var(--mw-stripe-amber); border: 1px solid var(--mw-stripe-amber-border); }
-.mw-pill-done    { background: var(--mw-stripe-blue-bg);  color: var(--mw-stripe-blue);  border: 1px solid var(--mw-stripe-blue-border); }
-.mw-pill-open    { background: var(--mw-stripe-green-bg); color: var(--mw-stripe-green); border: 1px solid var(--mw-stripe-green-border); }
+.mw-pill-running { background: var(--mw-status-running-bg); color: var(--mw-status-running); border: 1px solid var(--mw-status-running-border); }
+.mw-pill-paused  { background: var(--mw-status-paused-bg); color: var(--mw-status-paused); border: 1px solid var(--mw-status-paused-border); }
+.mw-pill-done    { background: var(--mw-status-done-bg);  color: var(--mw-status-done);  border: 1px solid var(--mw-status-done-border); }
+.mw-pill-open    { background: var(--mw-status-running-bg); color: var(--mw-status-running); border: 1px solid var(--mw-status-running-border); }
 
 /* Empty list (used inside the full-table sub-pages) */
 .mw-empty-list {
@@ -301,8 +301,8 @@
     height: 80px;
     margin: 0 auto 20px;
     border-radius: var(--mw-radius-full);
-    background: var(--mw-yellow-dim);
-    border: 3px solid var(--mw-yellow-accent);
+    background: var(--mw-accent-secondary-dim);
+    border: 3px solid var(--mw-accent-secondary);
     padding: 6px;
     box-sizing: border-box;
     display: flex;
@@ -352,7 +352,7 @@
 }
 
 .mw-empty-choice.primary {
-    border-color: var(--mw-pink-primary);
+    border-color: var(--mw-accent-primary);
     border-width: 2px;
     padding: 17px;
 }
@@ -369,12 +369,12 @@
 }
 
 .mw-empty-choice.primary .mw-empty-choice-icon {
-    background: var(--mw-pink-primary);
+    background: var(--mw-accent-primary);
 }
 
 .mw-empty-choice-icon .mdi {
     font-size: 20px;
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
 }
 
 .mw-empty-choice.primary .mw-empty-choice-icon .mdi {
@@ -397,7 +397,7 @@
 
 .mw-empty-choice-cta {
     font-size: 12px;
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
     margin-top: auto;
     display: inline-flex;
     align-items: center;
@@ -406,7 +406,7 @@
 }
 
 .mw-empty-choice.primary .mw-empty-choice-cta {
-    color: var(--mw-pink-primary);
+    color: var(--mw-accent-primary);
 }
 
 .mw-empty-tertiary {
@@ -441,7 +441,7 @@
 
 .mw-empty-explainer .mdi {
     font-size: 14px;
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
     flex-shrink: 0;
     margin-top: 2px;
 }
@@ -566,7 +566,7 @@
     border: 1px solid var(--mw-border-strong);
     border-radius: var(--mw-radius-md);
     padding: 8px 12px;
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
     font-family: var(--mw-font-mono);
     font-size: 12px;
     width: 100%;
@@ -574,13 +574,13 @@
 
 .mw-modal-key-row input:focus,
 .mw-modal-panel form input:focus {
-    outline: 2px solid var(--mw-pink-primary);
+    outline: 2px solid var(--mw-accent-primary);
     outline-offset: -1px;
 }
 
 .mw-modal-copy-btn,
 .mw-modal-submit {
-    background: var(--mw-pink-primary);
+    background: var(--mw-accent-primary);
     color: white;
     border: none;
     padding: 8px 14px;
@@ -596,7 +596,7 @@
 
 .mw-modal-copy-btn:hover,
 .mw-modal-submit:hover {
-    background: var(--mw-pink-dark);
+    background: var(--mw-accent-primary-dark);
 }
 
 .mw-modal-submit {
@@ -609,7 +609,7 @@
     margin-top: 20px;
     padding: 10px 14px;
     background: var(--mw-bg-deep);
-    border: 1px solid var(--mw-stripe-amber-border);
+    border: 1px solid var(--mw-status-paused-border);
     border-radius: var(--mw-radius-md);
     font-size: 11.5px;
     color: var(--mw-text-muted);
@@ -620,7 +620,7 @@
 }
 
 .mw-modal-warning .mdi {
-    color: var(--mw-stripe-amber);
+    color: var(--mw-status-paused);
     font-size: 14px;
     flex-shrink: 0;
     margin-top: 1px;
@@ -630,10 +630,10 @@
     margin: 12px 0;
     padding: 10px 14px;
     background: var(--mw-bg-deep);
-    border: 1px solid var(--mw-pink-dark);
+    border: 1px solid var(--mw-accent-primary-dark);
     border-radius: var(--mw-radius-md);
     font-size: 12px;
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
 }
 
 /* Passkey modal: inline status + enrolled-passkey listing */
@@ -645,7 +645,7 @@
 }
 
 .mw-modal-status-error {
-    color: var(--mw-pink-primary);
+    color: var(--mw-accent-primary);
 }
 
 .mw-modal-list {
@@ -673,7 +673,7 @@
 
 .mw-modal-list code {
     font-family: var(--mw-font-mono);
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
 }
 
 .mw-modal-list-empty {
@@ -693,8 +693,8 @@
 }
 
 .mw-modal-list-remove:hover {
-    color: var(--mw-pink-primary);
-    border-color: var(--mw-pink-primary);
+    color: var(--mw-accent-primary);
+    border-color: var(--mw-accent-primary);
 }
 
 /* Card cluster — primary tap-target card stacked with a secondary action */
@@ -724,7 +724,7 @@
 }
 
 .mw-card-secondary:hover {
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
     border-color: var(--mw-border-strong);
 }
 

@@ -1,10 +1,10 @@
 :root {
     /* Brand palette */
-    --mw-pink-primary: #ea166c;
-    --mw-pink-dark: #b80f54;
-    --mw-pink-darker: #a01049;
-    --mw-yellow-accent: #ffdd5a;
-    --mw-yellow-dim: #f9d6a3;
+    --mw-accent-primary: #ea166c;
+    --mw-accent-primary-dark: #b80f54;
+    --mw-accent-primary-darker: #a01049;
+    --mw-accent-secondary: #ffdd5a;
+    --mw-accent-secondary-dim: #f9d6a3;
 
     /* Surface colors (dark theme — primary site palette) */
     --mw-bg-page: #0f0612;
@@ -27,15 +27,15 @@
     --mw-text-faint: #5a3650;
 
     /* Pyramid stripe colors (used in branding, status pills) */
-    --mw-stripe-green: #5dcaa5;
-    --mw-stripe-green-bg: #0a3322;
-    --mw-stripe-green-border: #1d5e44;
-    --mw-stripe-amber: #fac775;
-    --mw-stripe-amber-bg: #3a2607;
-    --mw-stripe-amber-border: #65450f;
-    --mw-stripe-blue: #85b7eb;
-    --mw-stripe-blue-bg: #0a2a3a;
-    --mw-stripe-blue-border: #185fa5;
+    --mw-status-running: #5dcaa5;
+    --mw-status-running-bg: #0a3322;
+    --mw-status-running-border: #1d5e44;
+    --mw-status-paused: #fac775;
+    --mw-status-paused-bg: #3a2607;
+    --mw-status-paused-border: #65450f;
+    --mw-status-done: #85b7eb;
+    --mw-status-done-bg: #0a2a3a;
+    --mw-status-done-border: #185fa5;
 
     /* Typography */
     --mw-font-sans: 'Inter-Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -61,6 +61,16 @@ html {
     scroll-behavior: smooth;
 }
 
+/* Base body defaults — picked up from the design tokens. Per-theme CSS
+   shadows the token values on `body { … }` (see Phase 12), which is why
+   these `var()` reads resolve to the theme-tinted surface and text. */
+body {
+    background: var(--mw-bg-page);
+    color: var(--mw-text-body);
+    font-family: var(--mw-font-sans);
+    margin: 0;
+}
+
 /* ===========================================================
    Top navigation — redesigned for Phase 4
    =========================================================== */
@@ -71,7 +81,7 @@ html {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 2px solid var(--mw-pink-primary);
+    border-bottom: 2px solid var(--mw-accent-primary);
     position: relative;
     z-index: 100;
 }
@@ -116,11 +126,11 @@ html {
 }
 
 .nav-item:hover {
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
 }
 
 .nav-item.active {
-    color: var(--mw-pink-primary);
+    color: var(--mw-accent-primary);
 }
 
 /* Dropdown trigger gets a small caret */
@@ -157,7 +167,7 @@ html {
 
 .nav-menu a:hover {
     background: var(--mw-bg-card);
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
 }
 
 /* Show menu when the trigger or menu itself is hovered */
@@ -178,7 +188,7 @@ html {
     width: 34px;
     height: 34px;
     border-radius: var(--mw-radius-full);
-    background: var(--mw-yellow-dim);
+    background: var(--mw-accent-secondary-dim);
     border: 2px solid transparent;
     padding: 2px;
     box-sizing: border-box;
@@ -188,19 +198,19 @@ html {
 
 .nav-avatar:hover img,
 .nav-avatar.active img {
-    border-color: var(--mw-yellow-accent);
+    border-color: var(--mw-accent-secondary);
 }
 
 /* Pink stripe under the header (decorative) */
 .mw-stripe {
     height: 6px;
-    background: var(--mw-pink-primary);
+    background: var(--mw-accent-primary);
     background-image: repeating-linear-gradient(
         90deg,
-        var(--mw-pink-primary) 0,
-        var(--mw-pink-primary) 14px,
-        var(--mw-pink-darker) 14px,
-        var(--mw-pink-darker) 28px
+        var(--mw-accent-primary) 0,
+        var(--mw-accent-primary) 14px,
+        var(--mw-accent-primary-darker) 14px,
+        var(--mw-accent-primary-darker) 28px
     );
 }
 
@@ -216,7 +226,7 @@ html {
     left: 0;
     right: 0;
     background: var(--mw-bg-elevated);
-    border-bottom: 2px solid var(--mw-pink-primary);
+    border-bottom: 2px solid var(--mw-accent-primary);
     padding: 8px 0;
     z-index: 1000;
 }
@@ -293,11 +303,11 @@ html {
 }
 
 .mw-breadcrumb-item a:hover {
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
 }
 
 .mw-breadcrumb-current {
-    color: var(--mw-yellow-accent);
+    color: var(--mw-accent-secondary);
     font-weight: 500;
 }
 
@@ -319,7 +329,7 @@ html {
 }
 
 .mw-breadcrumb-context strong {
-    color: var(--mw-pink-primary);
+    color: var(--mw-accent-primary);
     font-weight: 500;
 }
 

@@ -1,8 +1,5 @@
 @import "../markdown.css";
 html {
-  background-image: url("../../static/backgrounds/ocean.png");
-  background-repeat: repeat;
-  background-size: 650px 650px;
   overflow-x: hidden;
 }
 

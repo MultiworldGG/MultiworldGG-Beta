@@ -1,66 +1,41 @@
-html{
-    background-image: url('../../static/backgrounds/ocean.png');
-    background-repeat: repeat;
-    background-size: 126px 126px;
-}
+/* ocean — deep indigo / starfield palette. Electric blue primary;
+   gold secondary; aqua / coral / violet status pills. */
+body {
+    /* Surface ramp */
+    --mw-bg-page:       #060a18;
+    --mw-bg-elevated:   #0e1428;
+    --mw-bg-card:       #1a2440;
+    --mw-bg-deep:       #08101e;
+    --mw-bg-input:      #11192e;
 
-body{
-    color: #ffffff;
-}
+    /* Borders */
+    --mw-border-subtle: #1a2440;
+    --mw-border-strong: #243156;
+    --mw-border-faint:  #2c3c66;
 
-#base-header{
-    background: url('../../static/backgrounds/header/ocean-header.png') repeat-x;
-}
+    /* Text ramp */
+    --mw-text-primary:   #e6ecff;
+    --mw-text-body:      #d0d8ee;
+    --mw-text-secondary: #aeb6d0;
+    --mw-text-muted:     #7682a0;
+    --mw-text-dim:       #4e5872;
+    --mw-text-faint:     #353d56;
 
-.markdown {
-    background-color:rgba(0, 0, 0, 0.30) !important;
-}
+    /* Brand accents */
+    --mw-accent-primary:        #3878f0;
+    --mw-accent-primary-dark:   #2858c0;
+    --mw-accent-primary-darker: #1a3e94;
+    --mw-accent-secondary:      #ffce5a;
+    --mw-accent-secondary-dim:  #d4ae58;
 
-h1{
-    color: #ffffff;
-}
-
-h2{
-    color: #b44ad9;
-}
-
-h3, h4, h5,h6{
-    color: #ffffff;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
-}
-
-table th{
-
-}
-
-table td{
-
-}
-
-a{
-    color: #ea166c;
-}
-
-pre{
-    margin-top: 0;
-    padding: 0.5rem 0.25rem;
-    background-color: #83a8e1;
-    border: 1px solid #4c658b;
-    border-radius: 6px;
-    color: #000000;
-    overflow-x: auto;
-}
-
-pre code{
-    border: none;
-    display: block;
-}
-
-code{
-    background-color: #83a8e1;
-    border-radius: 4px;
-    border: 1px solid #4c658b;
-    padding-left: 0.25rem;
-    padding-right: 0.25rem;
-    color: #000000;
+    /* Status pills */
+    --mw-status-running:        #4cd8c8;
+    --mw-status-running-bg:     #0a2c2c;
+    --mw-status-running-border: #1c5852;
+    --mw-status-paused:         #f88862;
+    --mw-status-paused-bg:      #3a1408;
+    --mw-status-paused-border:  #6a2c1a;
+    --mw-status-done:           #9a82e8;
+    --mw-status-done-bg:        #1e1638;
+    --mw-status-done-border:    #3c3068;
 }
