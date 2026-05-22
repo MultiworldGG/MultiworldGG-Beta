@@ -32,7 +32,6 @@ _RENAMES = {
     "/check":             "check",
     "/lobbies":           "lobby_list",
     "/user-content":      "me",
-    "/tutorial":          "tutorial_landing",
 }
 
 
@@ -51,6 +50,26 @@ for old_path, target_endpoint in _RENAMES.items():
         endpoint=endpoint_name,
         view_func=_make_static_redirect(target_endpoint),
     )
+
+
+# ---------------------------------------------------------------------------
+# /learn/* — both the hub root and the tutorial-index root now require a
+# <lang> segment. Old language-less URLs redirect to the English equivalents.
+# ---------------------------------------------------------------------------
+
+@legacy_routes.route("/learn")
+def legacy_learn_hub_root():
+    return redirect(url_for("learn_hub", lang="en"), code=301)
+
+
+@legacy_routes.route("/learn/tutorials")
+def legacy_tutorial_landing_root():
+    return redirect(url_for("tutorial_landing", lang="en"), code=301)
+
+
+@legacy_routes.route("/tutorial")
+def legacy_tutorial_root():
+    return redirect(url_for("tutorial_landing", lang="en"), code=301)
 
 
 # ---------------------------------------------------------------------------

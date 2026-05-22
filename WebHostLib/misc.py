@@ -257,8 +257,8 @@ def tutorial(lang: str, game: str, file: str):
             html_from_markdown=document,
             theme=theme,
             breadcrumb_crumbs=[
-                ("Learn", url_for("learn_hub")),
-                ("Setup tutorials", url_for("tutorial_landing")),
+                ("Learn", url_for("learn_hub", lang=lang)),
+                ("Setup tutorials", url_for("tutorial_landing", lang=lang)),
                 (get_world_display_name(game), url_for("game_info", game=game)),
                 (get_tutorial_name(game, file) or file, None),
             ],
@@ -286,17 +286,24 @@ def tutorial_legacy_trailing_lang(game: str, file: str, lang: str):
     return redirect(url_for("tutorial", lang=lang, game=game, file=file), code=301)
 
 
-# Learn hub — landing page for /learn, three top-level guides
-@app.route('/learn')
+# Learn hub — landing page for /learn/<lang>, three top-level guides
+@app.route('/learn/<string:lang>')
 @cache.cached()
-def learn_hub():
-    return render_template("learn_hub.html")
+def learn_hub(lang: str):
+    # Match the convention used by _split_tutorial_file: 2-letter alpha codes.
+    # No content lookup happens at this layer, so any 2-letter code renders;
+    # the hub itself is language-neutral chrome around the per-language links.
+    if not (len(lang) == 2 and lang.isalpha()):
+        abort(404)
+    return render_template("learn_hub.html", lang=lang)
 
 
-# Setup tutorials index — full per-world list, formerly served at /learn directly
-@app.route('/learn/tutorials')
+# Setup tutorials index — full per-world list
+@app.route('/learn/<string:lang>/tutorials')
 @cache.cached()
-def tutorial_landing():
+def tutorial_landing(lang: str):
+    if not (len(lang) == 2 and lang.isalpha()):
+        abort(404)
     from worlds.AutoWorld import AutoWorldRegister
     tutorials = {}
     worlds = AutoWorldRegister.world_types
@@ -343,7 +350,7 @@ def tutorial_landing():
         key=lambda element: "\x00" if element[0] == "Archipelago" else (getattr(element[1].web, 'display_name', None) or element[1].game)
     ))
 
-    return render_template("tutorialLanding.html", worlds=sorted_worlds, tutorials=tutorials)
+    return render_template("tutorialLanding.html", worlds=sorted_worlds, tutorials=tutorials, lang=lang)
 
 
 @app.route('/learn/<string:lang>/faq')
@@ -355,7 +362,7 @@ def faq(lang: str):
         title="Frequently Asked Questions",
         html_from_markdown=document,
         breadcrumb_crumbs=[
-            ("Learn", url_for("learn_hub")),
+            ("Learn", url_for("learn_hub", lang=lang)),
             ("FAQ", None),
         ],
     )
@@ -370,7 +377,7 @@ def glossary(lang: str):
         title="Glossary",
         html_from_markdown=document,
         breadcrumb_crumbs=[
-            ("Learn", url_for("learn_hub")),
+            ("Learn", url_for("learn_hub", lang=lang)),
             ("Glossary", None),
         ],
     )

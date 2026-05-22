@@ -25,8 +25,8 @@
 
             <span class="nav-item has-menu" data-menu="learn">Learn</span>
             <div class="nav-menu" data-menu-for="learn">
-                <a href="{{ url_for('learn_hub') }}">All guides</a>
-                <a href="{{ url_for('tutorial_landing') }}">Setup tutorials</a>
+                <a href="{{ url_for('learn_hub', lang='en') }}">All guides</a>
+                <a href="{{ url_for('tutorial_landing', lang='en') }}">Setup tutorials</a>
                 <a href="{{ url_for('faq', lang='en') }}">FAQ</a>
                 <a href="{{ url_for('glossary', lang='en') }}">Glossary</a>
             </div>
@@ -63,7 +63,7 @@
             <a href="{{ url_for('lobby_list') }}">Browse lobbies</a>
             <a href="{{ url_for('generate') }}">Generate a new game</a>
             <a href="{{ url_for('uploads') }}">Host a pre-generated game</a>
-            <a href="{{ url_for('tutorial_landing') }}">Setup guides</a>
+            <a href="{{ url_for('tutorial_landing', lang='en') }}">Setup guides</a>
             <a href="{{ url_for('faq', lang='en') }}">FAQ</a>
             <a href="{{ url_for('games') }}">Games</a>
             <a href="{{ url_for('downloads') }}">Downloads</a>
