@@ -209,13 +209,13 @@ body {
 }
 
 .nav-avatar img {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     border-radius: var(--mw-radius-full);
     background: var(--mw-accent-secondary-dim);
     border: 2px solid transparent;
     padding: 2px;
-    box-sizing: border-box;
+    box-sizing: content-box;
     object-fit: contain;
     transition: border-color 0.15s ease;
 }
