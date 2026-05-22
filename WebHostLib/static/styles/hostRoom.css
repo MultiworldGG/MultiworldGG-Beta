@@ -15,7 +15,7 @@
 }
 
 #host-room a{
-    color: #ea166c;
+    color: var(--mw-text-link);
 }
 
 #host-room input[type=text]{
@@ -100,7 +100,7 @@
 
 .share-row {
     background: #2a1232;
-    border: 1px solid #ea166c;
+    border: 1px solid var(--mw-accent-primary);
     border-radius: 8px;
     padding: 10px 14px;
     margin-bottom: 14px;
@@ -130,7 +130,7 @@
 }
 
 .share-row-copy-btn {
-    background: #ea166c;
+    background: var(--mw-accent-primary);
     color: #ffffff;
     border: none;
     padding: 6px 12px;
@@ -146,7 +146,7 @@
 }
 
 .share-row-copy-btn:hover {
-    background: #b80f54;
+    background: var(--mw-accent-primary-dark);
 }
 
 .share-row-copy-btn:active {

@@ -21,10 +21,12 @@
     /* Text */
     --mw-text-primary: #ffe6f0;
     --mw-text-body: #e8d8e8;
-    --mw-text-secondary: #d4c0d4;
+    --mw-text-secondary: #FFA810;
     --mw-text-muted: #a87890;
     --mw-text-dim: #7a5868;
     --mw-text-faint: #5a3650;
+
+    --mw-text-link: #f04b6f;
 
     /* Pyramid stripe colors (used in branding, status pills) */
     --mw-status-running: #5dcaa5;
@@ -39,7 +41,7 @@
 
     /* Typography */
     --mw-font-sans: 'Inter-Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --mw-font-mono: 'SF Mono', Menlo, Monaco, 'Cascadia Mono', 'Courier New', monospace;
+    --mw-font-mono: 'Xenon Monaspace', 'Argon Monaspace', 'Neon Monaspace', 'Radon Monaspace', 'Krypton Monaspace', Menlo, Monaco, 'Cascadia Mono', 'Courier New', monospace;
 
     /* Spacing scale */
     --mw-space-1: 4px;
@@ -111,7 +113,7 @@ body {
 
 /* Nav items (top-level links and menu triggers) */
 .nav-item {
-    font-size: 13px;
+    font-size: 15px;
     color: var(--mw-text-body);
     text-decoration: none;
     font-weight: 500;
@@ -141,11 +143,20 @@ body {
     margin-left: 2px;
 }
 
+/* Dropdown wrapper — provides the positioning context for .nav-menu
+   so the menu anchors to the trigger instead of the whole header. */
+.nav-dropdown {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
 /* Dropdown menu */
 .nav-menu {
     position: absolute;
     top: 100%;
-    margin-top: -2px;
+    left: 0;
+    margin-top: 6px;
     background: var(--mw-bg-elevated);
     border: 1px solid var(--mw-border-strong);
     border-radius: var(--mw-radius-lg);
@@ -156,12 +167,23 @@ body {
     display: none;
 }
 
+/* Transparent bridge — keeps the cursor inside the hover region while
+   crossing the 6px gap between trigger and menu. */
+.nav-menu::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 0;
+    right: 0;
+    height: 6px;
+}
+
 .nav-menu a {
     display: block;
     padding: 8px 16px;
     color: var(--mw-text-body);
     text-decoration: none;
-    font-size: 13px;
+    font-size: 14px;
     white-space: nowrap;
 }
 
@@ -170,7 +192,9 @@ body {
     color: var(--mw-accent-secondary);
 }
 
-/* Show menu when the trigger or menu itself is hovered */
+/* Show menu when the wrapper is hovered (covers trigger, menu, and bridge).
+   The older selectors are kept as a fallback. */
+.nav-dropdown:hover .nav-menu,
 .nav-item.has-menu:hover + .nav-menu,
 .nav-menu:hover {
     display: block;

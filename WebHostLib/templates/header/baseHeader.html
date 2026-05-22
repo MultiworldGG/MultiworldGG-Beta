@@ -15,35 +15,40 @@
         </div>
 
         <div id="base-header-right">
-            <span class="nav-item has-menu" data-menu="play">Play</span>
-            <div class="nav-menu" data-menu-for="play">
-                <a href="{{ url_for('play_hub') }}">All play options</a>
-                <a href="{{ url_for('lobby_list') }}">Browse lobbies</a>
-                <a href="{{ url_for('lobby_create') }}">Create lobby</a>
-                <a href="{{ url_for('generate') }}">Generate a new game</a>
-                <a href="{{ url_for('uploads') }}">Host a pre-generated game</a>
-                <a href="{{ url_for('check') }}">Validate YAML</a>
+            <div class="nav-dropdown">
+                <span class="nav-item has-menu" data-menu="play">Play</span>
+                <div class="nav-menu" data-menu-for="play">
+                    <a href="{{ url_for('play_hub') }}">All play options</a>
+                    <a href="{{ url_for('lobby_list') }}">Browse lobbies</a>
+                    <a href="{{ url_for('lobby_create') }}">Create lobby</a>
+                    <a href="{{ url_for('generate') }}">Generate a new game</a>
+                    <a href="{{ url_for('uploads') }}">Host a pre-generated game</a>
+                    <a href="{{ url_for('check') }}">Validate YAML</a>
+                </div>
             </div>
 
-            <span class="nav-item has-menu" data-menu="learn">Learn</span>
-            <div class="nav-menu" data-menu-for="learn">
-                <a href="{{ url_for('learn_hub', lang='en') }}">All guides</a>
-                <a href="{{ url_for('tutorial_landing', lang='en') }}">Setup guides</a>
-                <a href="{{ url_for('faq', lang='en') }}">FAQ</a>
-                <a href="{{ url_for('glossary', lang='en') }}">Glossary</a>
+            <div class="nav-dropdown">
+                <span class="nav-item has-menu" data-menu="learn">Learn</span>
+                <div class="nav-menu" data-menu-for="learn">
+                    <a href="{{ url_for('learn_hub', lang='en') }}">All guides</a>
+                    <a href="{{ url_for('tutorial_landing', lang='en') }}">Setup guides</a>
+                    <a href="{{ url_for('faq', lang='en') }}">FAQ</a>
+                    <a href="{{ url_for('glossary', lang='en') }}">Glossary</a>
+                </div>
+            </div>
+
+            <div class="nav-dropdown">
+                <span class="nav-item has-menu" data-menu="tools">Tools</span>
+                <div class="nav-menu" data-menu-for="tools">
+                    <a href="https://chat.multiworld.gg" target="_blank" rel="noopener noreferrer">Web text client</a>
+                    <a href="https://drawesome4333.github.io/ap-tracker/" target="_blank" rel="noopener noreferrer">Checklist tracker</a>
+                    <a href="https://cheesetrackers.theincrediblewheelofchee.se" target="_blank" rel="noopener noreferrer">Cheese trackers</a>
+                    <a href="https://manual.multiworld.gg" target="_blank" rel="noopener noreferrer">Manual world client</a>
+                    <a href="https://archipelago.miraheze.org/wiki/Category:Games" target="_blank" rel="noopener noreferrer">Unofficial wiki</a>
+                </div>
             </div>
 
             <a class="nav-item" href="{{ url_for('games') }}">Games</a>
-
-            <span class="nav-item has-menu" data-menu="tools">Tools</span>
-            <div class="nav-menu" data-menu-for="tools">
-                <a href="https://chat.multiworld.gg" target="_blank" rel="noopener noreferrer">Web text client</a>
-                <a href="https://drawesome4333.github.io/ap-tracker/" target="_blank" rel="noopener noreferrer">Checklist tracker</a>
-                <a href="https://cheesetrackers.theincrediblewheelofchee.se" target="_blank" rel="noopener noreferrer">Cheese trackers</a>
-                <a href="https://manual.multiworld.gg" target="_blank" rel="noopener noreferrer">Manual world client</a>
-                <a href="https://archipelago.miraheze.org/wiki/Category:Games" target="_blank" rel="noopener noreferrer">Unofficial wiki</a>
-            </div>
-
             <a class="nav-item" href="{{ url_for('downloads') }}">Downloads</a>
             <a class="nav-item" href="https://discord.multiworld.gg" target="_blank" rel="noopener noreferrer">Discord</a>
 

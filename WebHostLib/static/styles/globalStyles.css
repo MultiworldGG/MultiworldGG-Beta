@@ -18,6 +18,31 @@
   src: url("../../static/static/fonts/Inter-Medium.ttf");
 }
 
+@font-face {
+  font-family: Xenon Monaspace;
+  src: url("../../static/static/fonts/MonaspaceXenonFrozen-Regular.ttf");
+}
+
+@font-face {
+  font-family: Argon Monaspace;
+  src: url("../../static/static/fonts/MonaspaceArgonFrozen-Regular.ttf");
+}
+
+@font-face {
+  font-family: Neon Monaspace;
+  src: url("../../static/static/fonts/MonaspaceNeonFrozen-Regular.ttf");
+}
+
+@font-face {
+  font-family: Radon Monaspace;
+  src: url("../../static/static/fonts/MonaspaceRadonFrozen-Regular.ttf");
+}
+
+@font-face {
+  font-family: Krypton Monaspace;
+  src: url("../../static/static/fonts/MonaspaceKryptonFrozen-Regular.ttf");
+}
+
 html {
   font-family: Inter-ExtraLight, sans-serif;
   font-size: 1.1rem;
@@ -36,7 +61,7 @@ main {
 }
 
 a {
-  color: #ea166c;
+  color: var(--mw-text-link);
   text-decoration: none;
   font-family: Inter-Regular, sans-serif;
 }

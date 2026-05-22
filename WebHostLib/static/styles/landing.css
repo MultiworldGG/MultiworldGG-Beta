@@ -54,6 +54,31 @@ html{
     font-family: Inter-Light, sans-serif;
 }
 
+#far-left-button{
+    left: calc(50% - 450px);
+    top: 440px;
+}
+
+#mid-left-button{
+    left: calc(50% - 250px);
+    top: 440px;
+}
+
+#mid-button{
+    left: calc(50% - 50px);
+    top: 440px;
+}
+
+#mid-right-button{
+    left: calc(50% + 150px);
+    top: 440px;
+}
+
+#far-right-button{
+    left: calc(50% + 350px);
+    top: 440px;
+}
+
 #landing #first-line{
     font-family: Inter-Light, sans-serif;
     font-size: 25px;
