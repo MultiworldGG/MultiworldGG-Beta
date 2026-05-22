@@ -55,7 +55,7 @@
 
 .no-lobbies {
     text-align: center !important;
-    color: var(--mw-);
+    color: var(--mw-text-secondary);
     font-size: 20px;
 }
 
