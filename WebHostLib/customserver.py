@@ -61,6 +61,124 @@ class DBCommandProcessor(ServerCommandProcessor):
         self.ctx.logger.info(text)
 
 
+class DualStackServer:
+    """Wraps two websockets.Server instances (one AF_INET, one AF_INET6) under a single interface.
+
+    Both servers listen on the same TCP port so that clients using either address family can
+    reach the room.  The public API mirrors websockets.asyncio.server.Server closely enough
+    that the rest of customserver.py can treat this object like a plain websockets server.
+    """
+
+    def __init__(self, server_v4: websockets.asyncio.server.Server,
+                 server_v6: typing.Optional[websockets.asyncio.server.Server]) -> None:
+        self._servers: typing.List[websockets.asyncio.server.Server] = [server_v4]
+        if server_v6 is not None:
+            self._servers.append(server_v6)
+
+    @property
+    def sockets(self) -> typing.Tuple[socket.socket, ...]:
+        result: typing.List[socket.socket] = []
+        for srv in self._servers:
+            result.extend(srv.sockets)
+        return tuple(result)
+
+    def close(self) -> None:
+        for srv in self._servers:
+            srv.close()
+
+    async def wait_closed(self) -> None:
+        for srv in self._servers:
+            await srv.wait_closed()
+
+
+async def _serve_dual_stack(
+    handler,
+    desired_port: int,
+    *,
+    ssl,
+    extensions,
+    logger: logging.Logger,
+) -> DualStackServer:
+    """Create a DualStackServer where both sockets (AF_INET and AF_INET6) share the same port.
+
+    Strategy:
+    1. Bind an AF_INET socket to 0.0.0.0:<desired_port> (0 = ephemeral).
+    2. Read the assigned port back from getsockname().
+    3. Bind an AF_INET6 socket to ::<same_port> with IPV6_V6ONLY=1
+       (IPV6_V6ONLY is critical; without it the v6 socket grabs the full dual-stack
+       binding and the v4 socket cannot share the port on Linux).
+    4. If the v6 bind races and fails, retry up to MAX_RETRIES times with a fresh
+       ephemeral port, then fall back to v4-only rather than crashing the room.
+    5. Hand each socket to websockets.serve via the sock= kwarg so websockets/asyncio
+       skips their own binding logic.
+    """
+    MAX_RETRIES = 3
+
+    serve_kwargs = dict(ssl=ssl, extensions=extensions)
+
+    for attempt in range(MAX_RETRIES):
+        sock_v4 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sock_v4.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock_v4.bind(("0.0.0.0", desired_port))
+            port = sock_v4.getsockname()[1]
+        except OSError:
+            sock_v4.close()
+            raise  # let the caller handle "port in use" via the OSError fallback
+
+        sock_v6 = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        try:
+            sock_v6.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
+            sock_v6.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock_v6.bind(("::", port))
+        except OSError as exc:
+            sock_v6.close()
+            sock_v4.close()
+            if attempt < MAX_RETRIES - 1:
+                logger.warning(
+                    "IPv6 bind to port %d failed (%s), retrying with a fresh port (attempt %d/%d).",
+                    port, exc, attempt + 1, MAX_RETRIES,
+                )
+                desired_port = 0  # ask OS for a fresh ephemeral port next round
+                continue
+            # All retries exhausted — fall back to v4-only rather than crashing the room.
+            logger.warning(
+                "IPv6 dual-stack bind failed after %d attempts (%s). "
+                "Falling back to IPv4-only for this room.",
+                MAX_RETRIES, exc,
+            )
+            sock_v4_fallback = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock_v4_fallback.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock_v4_fallback.bind(("0.0.0.0", desired_port))
+            server_v4 = await websockets.serve(handler, sock=sock_v4_fallback, **serve_kwargs)
+            return DualStackServer(server_v4, None)
+
+        # Both sockets bound to the same port — hand them to websockets.
+        server_v4 = await websockets.serve(handler, sock=sock_v4, **serve_kwargs)
+        try:
+            server_v6 = await websockets.serve(handler, sock=sock_v6, **serve_kwargs)
+        except Exception as exc:
+            server_v4.close()
+            await server_v4.wait_closed()
+            sock_v6.close()
+            logger.warning(
+                "websockets.serve for IPv6 socket failed (%s). "
+                "Falling back to IPv4-only.",
+                exc,
+            )
+            # Re-start v4-only on the same port
+            sock_v4_retry = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock_v4_retry.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock_v4_retry.bind(("0.0.0.0", port))
+            server_v4 = await websockets.serve(handler, sock=sock_v4_retry, **serve_kwargs)
+            return DualStackServer(server_v4, None)
+
+        return DualStackServer(server_v4, server_v6)
+
+    # Should be unreachable, but satisfy the type checker.
+    raise RuntimeError("_serve_dual_stack exhausted retry budget without returning")
+
+
 class WebHostContext(Context):
     room_id: int
     _db_engine = None  # set by run_server_process
@@ -320,26 +438,26 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
                 ctx.load(room_id)
                 ctx.init_save()
                 assert ctx.server is None
+                handler = functools.partial(server, ctx=ctx)
+                ssl_ctx = get_ssl_context()
                 try:
-                    ctx.server = await websockets.serve(
-                        functools.partial(server, ctx=ctx),
-                        ctx.host,
+                    ctx.server = await _serve_dual_stack(
+                        handler,
                         ctx.port,
-                        ssl=get_ssl_context(),
+                        ssl=ssl_ctx,
                         extensions=[server_per_message_deflate_factory],
+                        logger=ctx.logger,
                     )
-                except OSError:  # likely port in use
-                    ctx.server = await websockets.serve(
-                        functools.partial(server, ctx=ctx), ctx.host, 0, ssl=get_ssl_context())
-                port = 0
-                for wssocket in ctx.server.sockets:
-                    socketname = wssocket.getsockname()
-                    if wssocket.family == socket.AF_INET6:
-                        # Prefer IPv4, as most users seem to not have working ipv6 support
-                        if not port:
-                            port = socketname[1]
-                    elif wssocket.family == socket.AF_INET:
-                        port = socketname[1]
+                except OSError:  # likely port in use — retry on an ephemeral port
+                    ctx.server = await _serve_dual_stack(
+                        handler,
+                        0,
+                        ssl=ssl_ctx,
+                        extensions=[server_per_message_deflate_factory],
+                        logger=ctx.logger,
+                    )
+                # Both sockets share the same port; just read it from the first socket.
+                port = ctx.server.sockets[0].getsockname()[1]
                 if port:
                     ctx.logger.info(f'Hosting game at {host}:{port}')
                     with Session(engine) as session:
