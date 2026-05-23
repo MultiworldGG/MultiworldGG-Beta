@@ -500,6 +500,7 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
         A tuple of the game name, authors, minimum AP version, and world version
     """
     from mwgg_igdb import GameIndex
+    import pkgutil
     data: dict = {}
     try:
         if is_frozen():
@@ -511,8 +512,19 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
             with open(archipelago_json_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
         else:
-            with open(local_path("worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
-                data = json.load(f)
+            # Resolve via the import system so we find archipelago.json inside whichever
+            # wheel/folder the worlds.<name> package was actually loaded from (mwgg_venv,
+            # site-packages, or the monorepo source tree). Matches WebHostLib/misc.py.
+            manifest_bytes = None
+            try:
+                manifest_bytes = pkgutil.get_data("worlds." + world, "archipelago.json")
+            except (ImportError, FileNotFoundError, OSError):
+                manifest_bytes = None
+            if manifest_bytes:
+                data = json.loads(manifest_bytes.decode("utf-8-sig"))
+            else:
+                with open(local_path("worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
+                    data = json.load(f)
     except FileNotFoundError:
         pass
     game_name = "Archipelago" if world == "generic" else data.get("game", GameIndex.get_game(world).get("game_name"))
