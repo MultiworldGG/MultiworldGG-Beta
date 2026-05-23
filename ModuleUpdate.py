@@ -29,6 +29,7 @@ from APContainer import APWorldContainer
 
 # mwgg_igdb package source — orphan branch on the Index repo
 # See MultiworldGG-Index/scripts/build_variants.py for variant definitions.
+# TODO: Fix this, it's overriding every time the module is imported
 MWGG_IGDB_VARIANT = "sixteen"  # canonical default
 MWGG_INDEX_REPO = "MultiworldGG/MultiworldGG-Index"
 MWGG_IGDB_BRANCH = f"game_index_{MWGG_IGDB_VARIANT}"
@@ -71,6 +72,7 @@ elif sys.version_info < (3, 13, 0):
 _skip_update = bool(
     (multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiWorldGG")
     or os.environ.get("SKIP_REQUIREMENTS_UPDATE", "")
+    or os.environ.get("SKIP_ALL_INSTALLS")
 )
 
 update_ran = _skip_update
@@ -455,6 +457,8 @@ def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
 
     Returns True if the install succeeded (or was throttled).
     """
+    if os.environ.get("SKIP_ALL_INSTALLS"):
+        return True
     if upgrade and not force and _igdb_upgraded_recently():
         logger.debug(
             f"mwgg_igdb upgrade attempted within {MWGG_IGDB_UPGRADE_INTERVAL_SECONDS}s; skipping"
@@ -765,6 +769,8 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
     Returns:
         List of apworlds that fell back to a custom apworld.
     """
+    if os.environ.get("SKIP_ALL_INSTALLS"):
+        return []
     apworlds: list[str] = []
 
     world_slugs: list[str] = []
@@ -1116,6 +1122,8 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
 
 
 def _update_locked(yes: bool, force: bool, worlds: Optional[List[str]]) -> None:
+    if os.environ.get("SKIP_ALL_INSTALLS"):
+        return
     # Install/refresh mwgg_igdb upfront
     install_mwgg_igdb(upgrade=True)
 
