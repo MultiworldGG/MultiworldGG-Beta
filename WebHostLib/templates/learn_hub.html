@@ -1,0 +1,37 @@
+{% extends 'pageWrapper.html' %}
+{% from 'header/breadcrumb.html' import breadcrumb %}
+
+{% block head %}
+    <title>Learn · MultiworldGG</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/hub.css') }}" />
+{% endblock %}
+
+{% block body %}
+    {% include 'header/baseHeader.html' %}
+    {{ breadcrumb([('Learn', none)]) }}
+
+    <div class="mw-hub">
+        <h1>Learn MultiworldGG</h1>
+        <p class="mw-hub-lead">Three places to dig in, depending on what you need.</p>
+
+        <div class="mw-hub-grid">
+            <a href="{{ url_for('tutorial_landing', lang=lang) }}" class="mw-hub-card primary">
+                <div class="mw-hub-icon"><i class="mdi mdi-school"></i></div>
+                <h3>Setup guides</h3>
+                <p>Step-by-step guides for each game. Pick your game, get going.</p>
+            </a>
+
+            <a href="{{ url_for('faq', lang='en') }}" class="mw-hub-card">
+                <div class="mw-hub-icon"><i class="mdi mdi-help-circle"></i></div>
+                <h3>FAQ</h3>
+                <p>Common questions about how multiworld works.</p>
+            </a>
+
+            <a href="{{ url_for('glossary', lang='en') }}" class="mw-hub-card">
+                <div class="mw-hub-icon"><i class="mdi mdi-book-open-variant"></i></div>
+                <h3>Glossary</h3>
+                <p>The terminology — items, locations, hints, slots, releases, collects.</p>
+            </a>
+        </div>
+    </div>
+{% endblock %}

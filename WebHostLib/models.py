@@ -128,6 +128,7 @@ class Room(Base):
     timeout: int = mapped_column(Integer, nullable=False, default=lambda: 4 * 60 * 60)
     tracker: UUID | None = mapped_column(SA_UUID(as_uuid=True), nullable=True, index=True)
     last_port: int = mapped_column(Integer, nullable=True, default=0)
+    short_id: str | None = mapped_column(String(6), unique=True, nullable=True, index=True)
 
     seed: "Seed" = relationship("Seed", back_populates="rooms")
     commands: list["Command"] = relationship(
@@ -322,6 +323,79 @@ class LobbyMessage(Base):
     player: LobbyPlayer | None = relationship("LobbyPlayer", back_populates="messages")
 
 
+# ---------------------------------------------------------------------------
+# Co-ownership of rooms and lobbies
+# ---------------------------------------------------------------------------
+# The .owner UUID column on Room and Lobby remains the *primary owner* — the
+# only session that can mint invites, remove a co-owner, or disown the
+# record entirely. Co-owners can do everything else (play, manage, settings,
+# kick, server commands, etc.).
+#
+# Co-ownership is granted via OwnershipInvite tokens — single-use URL
+# fragments the primary owner shares out of band.
+
+class RoomCoOwner(Base):
+    """Additional session UUIDs authorised to manage this room."""
+    __tablename__ = "room_co_owner"
+
+    room_id: UUID = mapped_column(SA_UUID(as_uuid=True), ForeignKey("room.id"), primary_key=True)
+    session_id: UUID = mapped_column(SA_UUID(as_uuid=True), primary_key=True)
+    granted_at: datetime = mapped_column(DateTime, nullable=False, default=utcnow)
+    granted_by: UUID = mapped_column(SA_UUID(as_uuid=True), nullable=False)
+
+
+class LobbyCoOwner(Base):
+    """Additional session UUIDs authorised to manage this lobby."""
+    __tablename__ = "lobby_co_owner"
+
+    lobby_id: UUID = mapped_column(SA_UUID(as_uuid=True), ForeignKey("lobby.id"), primary_key=True)
+    session_id: UUID = mapped_column(SA_UUID(as_uuid=True), primary_key=True)
+    granted_at: datetime = mapped_column(DateTime, nullable=False, default=utcnow)
+    granted_by: UUID = mapped_column(SA_UUID(as_uuid=True), nullable=False)
+
+
+class OwnershipInvite(Base):
+    """Single-use token that lets the holder claim co-ownership (or accept a
+    full transfer) of one room or lobby.
+
+    Polymorphic FK (target_kind + target_id) instead of two tables — keeps
+    the API surface symmetric for room/lobby. The accept endpoint validates
+    that the target still exists before granting access.
+    """
+    __tablename__ = "ownership_invite"
+
+    token: UUID = mapped_column(SA_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    target_kind: str = mapped_column(String, nullable=False)  # 'room' or 'lobby'
+    target_id: UUID = mapped_column(SA_UUID(as_uuid=True), nullable=False, index=True)
+    mode: str = mapped_column(String, nullable=False)         # 'co_owner' or 'transfer'
+    created_by: UUID = mapped_column(SA_UUID(as_uuid=True), nullable=False, index=True)
+    created_at: datetime = mapped_column(DateTime, nullable=False, default=utcnow)
+    expires_at: datetime = mapped_column(DateTime, nullable=False)
+    consumed_at: datetime | None = mapped_column(DateTime, nullable=True)
+    consumed_by: UUID | None = mapped_column(SA_UUID(as_uuid=True), nullable=True)
+
+
+class PasskeyCredential(Base):
+    """One WebAuthn / passkey credential, anchored to a session UUID.
+
+    No PII fields by design. The credential_id is what the authenticator
+    chose on registration and is opaque to us; the public_key is COSE-encoded
+    and only verifies signatures (it can't produce them). sign_count is the
+    monotonic counter the authenticator stamps each assertion with — used to
+    detect cloned authenticators.
+    """
+    __tablename__ = "passkey_credential"
+
+    credential_id: bytes = mapped_column(LargeBinary, primary_key=True)
+    public_key: bytes = mapped_column(LargeBinary, nullable=False)
+    sign_count: int = mapped_column(Integer, nullable=False, default=0)
+    # Stored as the UUID's str() representation since the WebAuthn helpers
+    # work with strings; we re-hydrate to UUID at session-write time.
+    session_id: str = mapped_column(String, nullable=False, index=True)
+    created: datetime = mapped_column(DateTime, nullable=False, default=utcnow)
+    last_used: datetime | None = mapped_column(DateTime, nullable=True)
+
+
 class AvatarToken(Base):
     __tablename__ = "avatartoken"
 
@@ -468,7 +542,8 @@ __all__ = [
     "db", "Base",
     "Slot", "Room", "Seed", "Command", "Generation", "GameDataPackage",
     "Lobby", "LobbyPlayer", "LobbyYaml", "LobbyApworld", "LobbyApworldRequest",
-    "LobbyMessage", "AvatarToken", "Avatar",
+    "LobbyMessage", "AvatarToken", "Avatar", "PasskeyCredential",
+    "RoomCoOwner", "LobbyCoOwner", "OwnershipInvite",
     "STATE_QUEUED", "STATE_STARTED", "STATE_ERROR",
     "LOBBY_OPEN", "LOBBY_GENERATING", "LOBBY_DONE", "LOBBY_CLOSED", "LOBBY_LOCKED",
     "commit", "flush", "rollback",

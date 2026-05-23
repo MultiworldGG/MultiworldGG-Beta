@@ -1,6 +1,5 @@
 {% extends 'pageWrapper.html' %}
 {% import "macros.html" as macros %}
-{% set show_footer = True %}
 
 {% block head %}
     <title>View Seed {{ seed.id|suuid }}</title>
@@ -9,9 +8,9 @@
 {% endblock %}
 
 {% block body %}
-    {% include 'header/oceanIslandHeader.html' %}
+    {% include 'header/baseHeader.html' %}
     <div id="view-seed-wrapper">
-        <div id="view-seed" class="grass-island">
+        <div id="view-seed">
             <h1>Seed Info</h1>
             <table>
                 <tbody>
@@ -42,7 +41,7 @@
                             </li>
                         {% endcall %}
                         {% if seed.rooms %}<span>
-                            There are a total of {{ seed.rooms | length }} Rooms, only those created by you are linked above.
+                            This seed has {{ seed.rooms | length }} room{{ '' if seed.rooms | length == 1 else 's' }} in total; only the ones you host are linked above.
                         </span>{% endif %}
                     </td>
 

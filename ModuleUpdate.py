@@ -29,6 +29,7 @@ from APContainer import APWorldContainer
 
 # mwgg_igdb package source — orphan branch on the Index repo
 # See MultiworldGG-Index/scripts/build_variants.py for variant definitions.
+# TODO: Fix this, it's overriding every time the module is imported
 MWGG_IGDB_VARIANT = "sixteen"  # canonical default
 MWGG_INDEX_REPO = "MultiworldGG/MultiworldGG-Index"
 MWGG_IGDB_BRANCH = f"game_index_{MWGG_IGDB_VARIANT}"

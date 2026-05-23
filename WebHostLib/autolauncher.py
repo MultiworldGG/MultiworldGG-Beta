@@ -171,7 +171,7 @@ def _mp_gen_game(
     needed_games = list((meta or {}).get("games", []))
     set_game_names(needed_games, strict=False)
     from worlds.AutoWorld import AutoWorldRegister
-    
+
     from . import app as flask_app
     from .generate import gen_game
 

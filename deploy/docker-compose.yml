@@ -57,6 +57,13 @@ services:
       # Mount multiworld cache directory
       - /var/lib/mwgg:/root/.local/share/MultiworldGG/
 
+    # Operator must copy example_web.env to web.env (chmod 0600, gitignored)
+    # and fill in MWGG_SECRET_KEY (and optionally MWGG_WEBAUTHN_HANDLE_SECRET)
+    # before bringing this service up. The webhost refuses to start if
+    # SECRET_KEY is still the hostname-derived default.
+    env_file:
+      - ./web.env
+
     environment:
       # Bind gunicorn on 8000
       - PORT=8000

@@ -1,7 +1,7 @@
 {% extends 'pageWrapper.html' %}
 
 {% block head %}
-    {% include 'header/grassHeader.html' %}
+    {% include 'header/baseHeader.html' %}
     <title>MultiworldGG Guides</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="styles/markdown.css") }}"/>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="styles/tutorialLanding.css") }}"/>
@@ -23,8 +23,8 @@
                 <ul>
                     {% for file_name, file_data in tutorial_data.files.items() %}
                         <li>
-                            <a href="{{ url_for("tutorial", game=world_name, file=file_name) }}">{{ file_data.language }}</a>
-                            by {{ file_data.authors | join(", ") }} 
+                            <a href="{{ url_for("tutorial", lang=file_data.lang, game=world_name, file=file_data.file_base) }}">{{ file_data.language }}</a>
+                            by {{ file_data.authors | join(", ") }}
                         </li>
                     {% endfor %}
                 </ul>

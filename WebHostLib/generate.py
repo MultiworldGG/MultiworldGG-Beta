@@ -33,7 +33,7 @@ def get_meta(options_source: dict, race: bool = False) -> dict[str, list[str] | 
         "countdown_mode": str(options_source.get("countdown_mode", ServerOptions.countdown_mode)),
         "hint_mode": str(options_source.get("hint_mode", ServerOptions.hint_mode)),
         "item_cheat": bool(int(options_source.get("item_cheat", not ServerOptions.disable_item_cheat))),
-        "server_password": str(options_source.get("server_password", None)),
+        "admin_password": str(options_source.get("admin_password", None)),
     }
     generator_options = {
         "spoiler": int(options_source.get("spoiler", GeneratorOptions.spoiler)),
@@ -52,8 +52,8 @@ def get_meta(options_source: dict, race: bool = False) -> dict[str, list[str] | 
     }
 
 
-@app.route('/generate', methods=['GET', 'POST'])
-@app.route('/generate/<race>', methods=['GET', 'POST'])
+@app.route('/play/new', methods=['GET', 'POST'])
+@app.route('/play/new/<race>', methods=['GET', 'POST'])
 def generate(race=False):
     if request.method == 'POST':
         # check if the post request has the file part

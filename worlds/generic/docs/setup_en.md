@@ -172,8 +172,8 @@ servers will shut down after 4 hours of inactivity, saving the multiworld progre
 room server can be started back up, and the multiworld can continue to be played. If the link to the room is lost, the
 creator of the room can find it on their [User Content Page](/user-content). The person who created the room becomes the
 "owner" of the room, and as such has access to the server console. Clearing cookies will remove access to this console,
-and there is no way to regain it. If a server password was set when generating the multiworld game, server admin
-privileges may be gained by entering `!admin <password>` from the `MultiworldGGTextClient.exe`.
+and there is no way to regain it. If an admin password was set when generating the multiworld game, server admin
+privileges may be gained by entering `!admin <admin_password>` from the `MultiworldGGTextClient.exe`.
 
 #### The room page
 

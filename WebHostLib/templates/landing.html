@@ -1,5 +1,4 @@
 {% extends 'pageWrapper.html' %}
-{% set show_footer = True %}
 
 {% block head %}
     <title>MultiworldGG</title>
@@ -8,28 +7,22 @@
 {% endblock %}
 
 {% block body %}
-    {% include 'header/oceanIslandHeader.html' %}
+    {% include 'header/baseHeader.html' %}
     <div id="landing-wrapper">
         <div id="landing-header">
             <img id="landing-logo" src="static/static/branding/landing-logo.png" alt="MultiworldGG Logo" />
         </div>
         <div id="landing-links">
-            <a href="/games" id="far-left-button">Supported<br />Games</a>
-            <a href="/tutorial" id="mid-left-button">Setup Guides</a>
-            <a href="/start-playing" id="mid-button">Start<br />Playing</a>
-            <a href="/faq/en/" id="mid-right-button">F.A.Q.</a>
-            <a href="https://discord.multiworld.gg" id="far-right-button" target="_blank">Join<br />Discord</a>
+            <a href="{{ url_for('games') }}" id="far-left-button">Supported<br />Games</a>
+            <a href="{{ url_for('tutorial_landing', lang='en') }}" id="mid-left-button">Setup guides</a>
+            <a href="{{ url_for('play_hub') }}" id="mid-button">Start<br />Playing</a>
+            <a href="{{ url_for('faq', lang='en') }}" id="mid-right-button">F.A.Q.</a>
+            <a href="https://discord.multiworld.gg" id="far-right-button" target="_blank" rel="noopener noreferrer">Join<br />Discord</a>
         </div>
-        <div id="landing-clouds">
-            <img id="cloud1" src="/static/static/backgrounds/clouds/cloud-0001.png"/>
-            <img id="cloud2" src="/static/static/backgrounds/clouds/cloud-0002.png"/>
-            <img id="cloud3" src="/static/static/backgrounds/clouds/cloud-0003.png"/>
-            <img id="cloud4" src="/static/static/backgrounds/clouds/cloud-0004.png"/>
-        </div>
-        <div id="landing" class="grass-island">
+        <div id="landing">
             <div id="landing-body">
                 <p id="first-line">Welcome to Multiworld.GG!</p>
-                <h5 style="color: #ea166c">A multi-game multiworld randomizer</h5>
+                <h5 style="color: var(--mw-sys-color-accent-text)">A multi-game multiworld randomizer</h5>
                 <p>
                     This is a cross-game system which randomizes different games, then uses the result to
                     build a single unified multi-player game. Items from one game may be present in another, and

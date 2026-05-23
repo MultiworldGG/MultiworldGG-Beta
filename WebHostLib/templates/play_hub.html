@@ -1,0 +1,55 @@
+{% extends 'pageWrapper.html' %}
+{% from 'header/breadcrumb.html' import breadcrumb %}
+
+{% block head %}
+    <title>Play · MultiworldGG</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/hub.css') }}" />
+{% endblock %}
+
+{% block body %}
+    {% include 'header/baseHeader.html' %}
+    {{ breadcrumb([('Play', none)]) }}
+
+    <div class="mw-hub">
+        <h1>What do you want to do?</h1>
+        <p class="mw-hub-lead">Pick a path. Each one is a quick step away from playing.</p>
+
+        <div class="mw-hub-grid">
+            <a href="{{ url_for('lobby_list') }}" class="mw-hub-card">
+                <div class="mw-hub-icon"><i class="mdi mdi-account-group"></i></div>
+                <h3>Browse lobbies</h3>
+                <p>Join a lobby that other people have started, or watch one to learn.</p>
+            </a>
+
+            <a href="{{ url_for('lobby_create') }}" class="mw-hub-card">
+                <div class="mw-hub-icon"><i class="mdi mdi-plus-circle"></i></div>
+                <h3>Create a lobby</h3>
+                <p>Start a lobby and invite friends. Generates a seed when everyone's ready.</p>
+            </a>
+
+            <a href="{{ url_for('generate') }}" class="mw-hub-card primary">
+                <div class="mw-hub-icon"><i class="mdi mdi-dice-6"></i></div>
+                <h3>Generate a new game</h3>
+                <p>Skip the lobby. Generate a seed directly from your YAML.</p>
+            </a>
+
+            <a href="{{ url_for('uploads') }}" class="mw-hub-card">
+                <div class="mw-hub-icon"><i class="mdi mdi-upload"></i></div>
+                <h3>Host a pre-generated game</h3>
+                <p>Already have an AP_*.zip file? Upload it to host the game here.</p>
+            </a>
+
+            <a href="{{ url_for('check') }}" class="mw-hub-card">
+                <div class="mw-hub-icon"><i class="mdi mdi-check-all"></i></div>
+                <h3>Validate YAML</h3>
+                <p>Check your YAML for errors before uploading.</p>
+            </a>
+
+            <a href="{{ url_for('me') }}" class="mw-hub-card">
+                <div class="mw-hub-icon"><i class="mdi mdi-bookmark"></i></div>
+                <h3>Your saved stuff</h3>
+                <p>Active rooms, open lobbies, and seeds you've created.</p>
+            </a>
+        </div>
+    </div>
+{% endblock %}

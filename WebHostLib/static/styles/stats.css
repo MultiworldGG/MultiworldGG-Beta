@@ -16,12 +16,12 @@
 /* Dark mode styling */
 body.dark-mode #stats {
     background-color: #1a1a1a;
-    color: #ffffff;
+    color: var(--mw-sys-color-white);
 }
 
 body.dark-mode #stats h1,
 body.dark-mode #stats h5 {
-    color: #ffffff;
+    color: var(--mw-sys-color-white);
 }
 
 body.dark-mode .chart-container {

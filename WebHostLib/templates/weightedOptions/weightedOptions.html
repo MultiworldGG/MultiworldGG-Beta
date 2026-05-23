@@ -16,7 +16,7 @@
 {% endblock %}
 
 {% block body %}
-    {% include 'header/'+theme+'Header.html' %}
+    {% include 'header/baseHeader.html' %}
     <div id="weighted-options" class="markdown" data-game="{{ world_name }}">
         <noscript>
             <div class="js-warning-banner">
@@ -40,7 +40,7 @@
             <p>Choose the options you would like to play with! You may generate a single-player game from
                 this page, or download an options file you can use to participate in a multiworld.</p>
 
-            <p>A list of all games you have generated can be found on the <a href="/user-content">User Content</a>
+            <p>A list of all games you have generated can be found on the <a href="{{ url_for('me') }}">User Content</a>
                 page.</p>
 
 

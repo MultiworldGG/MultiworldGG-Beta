@@ -1,57 +1,84 @@
 {% block head %}
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="styles/themes/base.css") }}" />
-    <script type="application/ecmascript" src="{{ url_for('static', filename="assets/baseHeader.js") }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/themes/base.css') }}" />
+    <script type="application/ecmascript" src="{{ url_for('static', filename='assets/baseHeader.js') }}"></script>
 {% endblock %}
 
 {% block header %}
     <header id="base-header">
         <div id="base-header-left">
-            <a href="/" id="site-title">
-                <img id="header-logo" src="/static/static/branding/header-logo.png" alt="MultiworldGG" />
+            <a href="{{ url_for('landing') }}" id="site-title">
+                {# 40px tall, width auto — header wordmark/logo lockup #}
+                <img id="header-logo"
+                     src="{{ url_for('static', filename='static/branding/header-logo.png') }}"
+                     alt="MultiworldGG logo" />
             </a>
         </div>
+
         <div id="base-header-right">
-            <div id="base-header-popover-text">
-                <img id="base-header-popover-icon" src="/static/static/button-images/popover.png" alt="Popover Menu" />
-                get started
+            <div class="nav-dropdown">
+                <span class="nav-item has-menu" data-menu="play">Play</span>
+                <div class="nav-menu" data-menu-for="play">
+                    <a href="{{ url_for('play_hub') }}">All play options</a>
+                    <a href="{{ url_for('lobby_list') }}">Browse lobbies</a>
+                    <a href="{{ url_for('lobby_create') }}">Create lobby</a>
+                    <a href="{{ url_for('generate') }}">Generate a new game</a>
+                    <a href="{{ url_for('uploads') }}">Host a pre-generated game</a>
+                    <a href="{{ url_for('check') }}">Validate YAML</a>
+                </div>
             </div>
-            <div id="base-header-popover-menu">
-                <a href="/games">supported games</a>
-                <a href="/tutorial">setup guides</a>
-                <a href="/generate">generate game</a>
-                <a href="/uploads">host game</a>
-                <a href="/user-content">user content</a>
+
+            <div class="nav-dropdown">
+                <span class="nav-item has-menu" data-menu="learn">Learn</span>
+                <div class="nav-menu" data-menu-for="learn">
+                    <a href="{{ url_for('learn_hub', lang='en') }}">All guides</a>
+                    <a href="{{ url_for('tutorial_landing', lang='en') }}">Setup guides</a>
+                    <a href="{{ url_for('faq', lang='en') }}">FAQ</a>
+                    <a href="{{ url_for('glossary', lang='en') }}">Glossary</a>
+                </div>
             </div>
-            <a href="/lobbies">Lobbies</a>
-            <div id="base-header-popover-text-2">
-                <img id="base-header-popover-icon" src="/static/static/button-images/popover.png" alt="Popover Menu" />
-                Tools
+
+            <div class="nav-dropdown">
+                <span class="nav-item has-menu" data-menu="tools">Tools</span>
+                <div class="nav-menu" data-menu-for="tools">
+                    <a href="https://chat.multiworld.gg" target="_blank" rel="noopener noreferrer">Web text client</a>
+                    <a href="https://drawesome4333.github.io/ap-tracker/" target="_blank" rel="noopener noreferrer">Checklist tracker</a>
+                    <a href="https://cheesetrackers.theincrediblewheelofchee.se" target="_blank" rel="noopener noreferrer">Cheese trackers</a>
+                    <a href="https://manual.multiworld.gg" target="_blank" rel="noopener noreferrer">Manual world client</a>
+                    <a href="https://archipelago.miraheze.org/wiki/Category:Games" target="_blank" rel="noopener noreferrer">Unofficial wiki</a>
+                </div>
             </div>
-            <div id="base-header-popover-menu-2">
-                <a href="https://chat.multiworld.gg" target="_blank">Web Text Client</a>
-                <a href="https://drawesome4333.github.io/ap-tracker/" target="_blank">Checklist Tracker</a>
-                <a href="https://cheesetrackers.theincrediblewheelofchee.se" target="_blank">Cheesetrackers</a>
-                <a href="https://manual.multiworld.gg" target="_blank">Manual World Client</a>
-                <a href="https://archipelago.miraheze.org/wiki/Category:Games" target="_blank">Unofficial Wiki</a>
-            </div>
-            <a href="/downloads">Downloads</a>
-            <a href="https://discord.multiworld.gg" target="_blank">Discord</a>
-        </div>
-        <div id="base-header-right-mobile">
-            <a id="base-header-mobile-menu-button" href="#">
-                <img src="/static/static/button-images/hamburger-menu-icon.png" alt="Menu" />
+
+            <a class="nav-item" href="{{ url_for('games') }}">Games</a>
+            <a class="nav-item" href="{{ url_for('downloads') }}">Downloads</a>
+            <a class="nav-item" href="https://discord.multiworld.gg" target="_blank" rel="noopener noreferrer">Discord</a>
+
+            <a href="{{ url_for('me') }}" class="nav-avatar" aria-label="Your MultiworldGG">
+                {# 36px × 36px (28px on mobile) — round controller-icon avatar, cream background #}
+                <img src="{{ slot_avatar_url or url_for('static', filename='static/branding/controller-icon.png') }}"
+                     alt="MultiworldGG controller avatar" />
             </a>
         </div>
+
+        <div id="base-header-right-mobile">
+            <a id="base-header-mobile-menu-button" href="#" aria-label="Open menu">
+                {# 28px × 28px — hamburger menu icon #}
+                <img src="{{ url_for('static', filename='static/button-images/hamburger-menu-icon.png') }}"
+                     alt="Open menu" />
+            </a>
+        </div>
+
         <div id="base-header-mobile-menu">
-            <a href="/games">supported games</a>
-            <a href="/tutorial">setup guides</a>
-            <a href="/faq/en">f.a.q.</a>
-            <a href="/lobbies">lobbies</a>
-            <a href="/generate">generate game</a>
-            <a href="/uploads">host game</a>
-            <a href="/user-content">user content</a>
-            <a href="/downloads">Downloads</a>
-            <a href="https://discord.multiworld.gg" target="_blank">discord</a>
+            <a href="{{ url_for('play_hub') }}">Play</a>
+            <a href="{{ url_for('lobby_list') }}">Browse lobbies</a>
+            <a href="{{ url_for('generate') }}">Generate a new game</a>
+            <a href="{{ url_for('uploads') }}">Host a pre-generated game</a>
+            <a href="{{ url_for('tutorial_landing', lang='en') }}">Setup guides</a>
+            <a href="{{ url_for('faq', lang='en') }}">FAQ</a>
+            <a href="{{ url_for('games') }}">Games</a>
+            <a href="{{ url_for('downloads') }}">Downloads</a>
+            <a href="{{ url_for('me') }}">Your MultiWorldGG</a>
+            <a href="https://discord.multiworld.gg" target="_blank" rel="noopener noreferrer">Discord</a>
         </div>
     </header>
+    <div class="mw-stripe"></div>
 {% endblock %}

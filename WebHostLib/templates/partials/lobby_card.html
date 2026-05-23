@@ -1,0 +1,26 @@
+{# Renders one lobby as a tappable card.
+
+   Loop variables expected:
+     lobby        — Lobby model instance
+     session_key  — current session UUID (so we can show "You're hosting")
+#}
+{% set state_label = ({0: 'Open', 1: 'Generating', 2: 'Done', 3: 'Locked'}).get(lobby.state, 'Unknown') %}
+{% set pill_class = ({0: 'open', 1: 'paused', 2: 'done', 3: 'paused'}).get(lobby.state, 'open') %}
+<a href="{{ url_for('lobby_view', lobby=lobby.id) }}" class="mw-card-link">
+    <div class="mw-card">
+        <div class="mw-card-body">
+            <div class="mw-card-row1">
+                <span class="mw-pill mw-pill-{{ pill_class }}">
+                    <i class="mdi mdi-account-multiple"></i>{{ state_label }}
+                </span>
+                <span class="mw-card-id">{{ lobby.title or 'Untitled lobby' }}</span>
+                <span class="mw-card-time" title="Time since this lobby last saw activity">Active {{ lobby.last_activity|relative_time }}</span>
+            </div>
+            <p class="mw-card-meta">
+                {{ lobby.players|length }}{% if lobby.max_players > 0 %} / {{ lobby.max_players }}{% endif %} players
+                {% if lobby.owner == session_key %} · You're hosting{% endif %}
+            </p>
+        </div>
+        <span class="mw-card-action">Open <i class="mdi mdi-arrow-right"></i></span>
+    </div>
+</a>

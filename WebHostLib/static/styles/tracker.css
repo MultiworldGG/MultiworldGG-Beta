@@ -8,7 +8,7 @@
 }
 
 #tracker-wrapper a {
-    color: #ea166c;
+    color: var(--mw-sys-color-primary);
     text-decoration: none;
     cursor: pointer;
 }
@@ -24,7 +24,7 @@
 }
 
 #tracker-header-bar .info {
-    color: #ffffff;
+    color: var(--mw-sys-color-white);
     padding: 2px;
     flex-grow: 1;
     align-self: center;
@@ -41,7 +41,7 @@
 
 .tracker-navigation-bar {
     display: flex;
-    background-color: #2d1b4e;
+    background-color: var(--mw-sys-color-tertiary-surface);
     border-radius: 4px;
 }
 
@@ -55,16 +55,16 @@
     border-radius: 4px;
     text-align: center;
     font-size: 14px;
-    color: #ffffff !important;
+    color: var(--mw-sys-color-white) !important;
     font-weight: lighter;
 }
 
 .tracker-navigation-button:hover {
-    background-color: #652895 !important;
+    background-color: var(--mw-sys-color-tertiary) !important;
 }
 
 .tracker-navigation-button.selected {
-    background-color: #4a2272;
+    background-color: var(--mw-sys-color-tertiary-container);
 }
 
 .table-wrapper {
@@ -78,7 +78,7 @@
     display: flex;
     align-items: center;
     margin-bottom: 0.5rem;
-    color: #ffffff;
+    color: var(--mw-sys-color-white);
 }
 
 .table-options label {
@@ -94,12 +94,12 @@
 }
 
 #search {
-    border: 1px solid #5a3080;
+    border: 1px solid var(--mw-sys-color-tertiary-outline);
     border-radius: 3px;
     padding: 3px;
     width: 200px;
-    background-color: #1e1438;
-    color: #ffffff;
+    background-color: var(--mw-sys-color-tertiary-surface-low);
+    color: var(--mw-sys-color-white);
 }
 
 div.dataTables_wrapper.no-footer .dataTables_scrollBody {
@@ -107,7 +107,7 @@ div.dataTables_wrapper.no-footer .dataTables_scrollBody {
 }
 
 table.dataTable {
-    color: #ffffff;
+    color: var(--mw-sys-color-white);
 }
 
 table.dataTable thead {
@@ -115,12 +115,12 @@ table.dataTable thead {
 }
 
 table.dataTable tbody, table.dataTable tfoot {
-    background-color: #1e1438;
+    background-color: var(--mw-sys-color-tertiary-surface-low);
     font-family: Inter-Light, sans-serif;
 }
 
 table.dataTable tbody tr:hover, table.dataTable tfoot tr:hover {
-    background-color: #2d1b4e;
+    background-color: var(--mw-sys-color-tertiary-surface);
 }
 
 table.dataTable tbody td, table.dataTable tfoot td {
@@ -128,7 +128,7 @@ table.dataTable tbody td, table.dataTable tfoot td {
 }
 
 table.dataTable, table.dataTable.no-footer {
-    border-left: 1px solid #5a3080;
+    border-left: 1px solid var(--mw-sys-color-tertiary-outline);
     width: calc(100% - 2px) !important;
     font-size: 1rem;
 }
@@ -136,14 +136,14 @@ table.dataTable, table.dataTable.no-footer {
 table.dataTable thead th {
     position: -webkit-sticky;
     position: sticky;
-    background-color: #2d1b4e;
+    background-color: var(--mw-sys-color-tertiary-surface);
     top: 0;
 }
 
 table.dataTable thead th.upper-row {
     position: -webkit-sticky;
     position: sticky;
-    background-color: #2d1b4e;
+    background-color: var(--mw-sys-color-tertiary-surface);
     height: 36px;
     top: 0;
 }
@@ -151,13 +151,13 @@ table.dataTable thead th.upper-row {
 table.dataTable thead th.lower-row {
     position: -webkit-sticky;
     position: sticky;
-    background-color: #2d1b4e;
+    background-color: var(--mw-sys-color-tertiary-surface);
     height: 22px;
     top: 46px;
 }
 
 table.dataTable tbody td, table.dataTable tfoot td {
-    border: 1px solid #5a3080;
+    border: 1px solid var(--mw-sys-color-tertiary-outline);
 }
 
 table.dataTable tfoot td {
@@ -179,14 +179,14 @@ img.icon-sprite {
 }
 
 .item-acquired {
-    background-color: #652895;
+    background-color: var(--mw-sys-color-tertiary);
 }
 
 @media all and (max-width: 1700px) {
     table.dataTable thead th.upper-row{
         position: -webkit-sticky;
         position: sticky;
-        background-color: #2d1b4e;
+        background-color: var(--mw-sys-color-tertiary-surface);
         height: 27px;
         top: 0;
     }
@@ -194,7 +194,7 @@ img.icon-sprite {
     table.dataTable thead th.lower-row {
         position: -webkit-sticky;
         position: sticky;
-        background-color: #2d1b4e;
+        background-color: var(--mw-sys-color-tertiary-surface);
         height: 20px;
         top: 37px;
     }
@@ -214,7 +214,7 @@ img.icon-sprite {
     table.dataTable thead th.upper-row{
         position: -webkit-sticky;
         position: sticky;
-        background-color: #2d1b4e;
+        background-color: var(--mw-sys-color-tertiary-surface);
         height: 22px;
         top: 0;
     }
@@ -222,7 +222,7 @@ img.icon-sprite {
     table.dataTable thead th.lower-row {
         position: -webkit-sticky;
         position: sticky;
-        background-color: #2d1b4e;
+        background-color: var(--mw-sys-color-tertiary-surface);
         height: 19px;
         top: 32px;
     }

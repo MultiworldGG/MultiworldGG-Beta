@@ -6,9 +6,9 @@
 {% endblock %}
 
 {% block body %}
-    {% include 'header/oceanIslandHeader.html' %}
+    {% include 'header/baseHeader.html' %}
     <div id="lobby-create-wrapper">
-        <div id="lobby-create" class="grass-island">
+        <div id="lobby-create">
             <h1>Create Lobby</h1>
             <p>
                 Create a lobby for players to join and upload their YAML configs.
@@ -252,13 +252,13 @@
                             <tbody>
                                 <tr>
                                     <td>
-                                        <label for="server_password">Server Password:
+                                        <label for="admin_password">Admin Password
                                             <span class="interactive" data-tooltip="Allows issuing server console commands using !admin.">(?)
                                             </span>
                                         </label>
                                     </td>
                                     <td>
-                                        <input id="server_password" name="server_password">
+                                        <input id="admin_password name="admin_password">
                                     </td>
                                 </tr>
                                 <tr>
@@ -315,5 +315,4 @@
         raceCheckbox.addEventListener("change", () => applyRaceMode(raceCheckbox.checked));
     })();
     </script>
-    {% include 'islandFooter.html' %}
 {% endblock %}

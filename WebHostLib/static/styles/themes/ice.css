@@ -1,65 +1,42 @@
-html{
-    background-image: url("../../static/backgrounds/ocean.png");
-    background-repeat: repeat;
-    background-size: 126px 126px;
-}
+/* ice — frost cyan-black palette. Electric cyan primary against deep navy;
+   mint secondary; aqua / coral / violet status pills. */
+body {
+    /* Surface ramp */
+    --mw-sys-color-background:       #08101a;
+    --mw-sys-color-surface:       #08101a;
+    --mw-sys-color-surface-container-low:   #0e1a26;
+    --mw-sys-color-surface-container:       #18293a;
+    --mw-sys-color-surface-dim:       #0a131e;
+    --mw-sys-color-surface-variant:      #102030;
 
-body{
-    color: #ffffff;
-}
+    /* Borders */
+    --mw-sys-color-outline-variant: #18293a;
+    --mw-sys-color-outline: #233a52;
+    --mw-sys-color-surface-bright:  #2c4660;
 
-#base-header {
-    background: url('../../static/backgrounds/header/ocean-header.png') repeat-x;
-}
+    /* Text ramp */
+    --mw-sys-color-on-surface:   #e6f4ff;
+    --mw-sys-color-on-background:      #d2e2ee;
+    --mw-sys-color-accent-text: #b0c4d2;
+    --mw-sys-color-on-surface-variant:     #7892a4;
+    --mw-sys-color-on-surface-muted:       #4e6478;
+    --mw-sys-color-on-surface-faint:     #344455;
 
-.markdown {
-    background-color: rgba(26, 5, 48, 0.8) !important;
-}
+    /* Brand accents */
+    --mw-sys-color-primary:        #2ad8e8;
+    --mw-sys-color-primary-container:   #1eaab8;
+    --mw-sys-color-primary-fixed: #178290;
+    --mw-sys-color-secondary:      #98ecd0;
+    --mw-sys-color-secondary-container:  #7ec0a8;
 
-h1{
-    color: #ffffff;
-}
-
-h2{
-    color: #ff5884;
-}
-
-h3, h4, h5,h6{
-    color: #ffffff;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
-}
-
-table th{
-
-}
-
-table td{
-
-}
-
-a{
-    color: #ea166c;
-}
-
-pre{
-    margin-top: 0;
-    padding: 0.5rem 0.25rem;
-    background-color: #b08ed5;
-    border: 1px solid #6d5687;
-    border-radius: 6px;
-    color: #000000;
-}
-
-pre code{
-    border: none;
-    display: block;
-}
-
-code{
-    background-color: #b08ed5;
-    border-radius: 4px;
-    border: 1px solid #6d5687;
-    padding-left: 0.25rem;
-    padding-right: 0.25rem;
-    color: #000000;
+    /* Status pills */
+    --mw-sys-color-state-running:        #3acec8;
+    --mw-sys-color-state-running-container:     #0a282a;
+    --mw-sys-color-state-running-outline: #1a5454;
+    --mw-sys-color-state-paused:         #ff8278;
+    --mw-sys-color-state-paused-container:      #340e0a;
+    --mw-sys-color-state-paused-outline:  #5e2418;
+    --mw-sys-color-state-done:           #b888e8;
+    --mw-sys-color-state-done-container:        #1a0e2a;
+    --mw-sys-color-state-done-outline:    #382458;
 }

@@ -1,65 +1,42 @@
-html{
-    background-image: url("../../static/backgrounds/ocean.png");
-    background-repeat: repeat;
-    background-size: 126px 126px;
-}
+/* dirt — warm-brown earth palette. Terracotta primary against burnt-umber
+   surfaces; cream secondary; olive / rust / teal status pills. */
+body {
+    /* Surface ramp */
+    --mw-sys-color-background:       #120c08;
+    --mw-sys-color-surface:       #120c08;
+    --mw-sys-color-surface-container-low:   #1f140d;
+    --mw-sys-color-surface-container:       #2e1f12;
+    --mw-sys-color-surface-dim:       #1a0f08;
+    --mw-sys-color-surface-variant:      #22170f;
 
-body{
-    color: #ffffff;
-}
+    /* Borders */
+    --mw-sys-color-outline-variant: #2e1f12;
+    --mw-sys-color-outline: #3f2a18;
+    --mw-sys-color-surface-bright:  #48311c;
 
-#base-header {
-    background: url('../../static/backgrounds/header/ocean-header.png') repeat-x;
-}
+    /* Text ramp */
+    --mw-sys-color-on-surface:   #fff0e0;
+    --mw-sys-color-on-background:      #ecdcc8;
+    --mw-sys-color-accent-text: #d4c2a8;
+    --mw-sys-color-on-surface-variant:     #a8907a;
+    --mw-sys-color-on-surface-muted:       #7a6450;
+    --mw-sys-color-on-surface-faint:     #5a4536;
 
-.markdown {
-    background-color: rgba(26, 5, 48, 0.8) !important;
-}
+    /* Brand accents */
+    --mw-sys-color-primary:        #e26a3a;
+    --mw-sys-color-primary-container:   #b8542a;
+    --mw-sys-color-primary-fixed: #944220;
+    --mw-sys-color-secondary:      #ffd89a;
+    --mw-sys-color-secondary-container:  #d8b88a;
 
-h1{
-    color: #ffffff;
-}
-
-h2{
-    color: #ff5884;
-}
-
-h3, h4, h5,h6{
-    color: #ffffff;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
-}
-
-table th{
-
-}
-
-table td{
-
-}
-
-a{
-    color: #ea166c;
-}
-
-pre{
-    margin-top: 0;
-    padding: 0.5rem 0.25rem;
-    background-color: #b08ed5;
-    border: 1px solid #6d5687;
-    border-radius: 6px;
-    color: #000000;
-}
-
-pre code{
-    border: none;
-    display: block;
-}
-
-code{
-    background-color: #b08ed5;
-    border-radius: 4px;
-    border: 1px solid #6d5687;
-    padding-left: 0.25rem;
-    padding-right: 0.25rem;
-    color: #000000;
+    /* Status pills */
+    --mw-sys-color-state-running:        #a8c870;
+    --mw-sys-color-state-running-container:     #1e2a10;
+    --mw-sys-color-state-running-outline: #485830;
+    --mw-sys-color-state-paused:         #d8702e;
+    --mw-sys-color-state-paused-container:      #3a1c08;
+    --mw-sys-color-state-paused-outline:  #6a3c18;
+    --mw-sys-color-state-done:           #6ac0c8;
+    --mw-sys-color-state-done-container:        #0e2a2c;
+    --mw-sys-color-state-done-outline:    #285a60;
 }

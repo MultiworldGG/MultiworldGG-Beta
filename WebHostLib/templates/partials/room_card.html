@@ -1,0 +1,32 @@
+{# Renders one room as a tappable card.
+
+   Loop variables expected:
+     room    — Room model instance (with .seed for slot/seed_id access)
+     status  — RoomStatus dataclass from WebHostLib.dashboard.classify_room
+#}
+<a href="{{ url_for('host_room', seed=room.seed_id, room=room.id) }}" class="mw-card-link">
+    <div class="mw-card">
+        <div class="mw-card-body">
+            <div class="mw-card-row1">
+                <span class="mw-pill mw-pill-{{ status.pill_class }}">
+                    <i class="mdi {{ status.icon }}"></i>{{ status.label }}
+                </span>
+                <span class="mw-card-id">{{ (room.id|suuid)[:6] }}</span>
+                <span class="mw-card-time">{{ room.last_activity|relative_time if room.last_activity else 'No activity' }}</span>
+            </div>
+            <p class="mw-card-games">
+                {% for slot in room.seed.slots[:5] %}
+                    {{ slot.game }}{% if not loop.last %} · {% endif %}
+                {% endfor %}
+                {% if room.seed.slots|length > 5 %} +{{ room.seed.slots|length - 5 }} more{% endif %}
+            </p>
+            <p class="mw-card-meta">
+                {{ room.seed.slots|length }} players · Seed #{{ room.seed_id|suuid }}
+            </p>
+        </div>
+        <span class="mw-card-action">
+            {{ 'Resume' if status.label == 'Paused' else 'Open' }}
+            <i class="mdi mdi-arrow-right"></i>
+        </span>
+    </div>
+</a>

@@ -1,65 +1,42 @@
-html{
-    background-image: url("../../static/backgrounds/ocean.png");
-    background-repeat: repeat;
-    background-size: 126px 126px;
-}
+/* stone — neutral cool-slate palette. Crimson primary on grey castle surfaces;
+   brushed-gold secondary; sage / copper / azure status pills. */
+body {
+    /* Surface ramp */
+    --mw-sys-color-background:       #0c0e12;
+    --mw-sys-color-surface:       #0c0e12;
+    --mw-sys-color-surface-container-low:   #161a1f;
+    --mw-sys-color-surface-container:       #232932;
+    --mw-sys-color-surface-dim:       #11141a;
+    --mw-sys-color-surface-variant:      #181d24;
 
-body{
-    color: #ffffff;
-}
+    /* Borders */
+    --mw-sys-color-outline-variant: #232932;
+    --mw-sys-color-outline: #313947;
+    --mw-sys-color-surface-bright:  #3a4250;
 
-#base-header {
-    background: url('../../static/backgrounds/header/ocean-header.png') repeat-x;
-}
+    /* Text ramp */
+    --mw-sys-color-on-surface:   #f0f3f8;
+    --mw-sys-color-on-background:      #d8dde6;
+    --mw-sys-color-accent-text: #b8bdc8;
+    --mw-sys-color-on-surface-variant:     #828896;
+    --mw-sys-color-on-surface-muted:       #5a6070;
+    --mw-sys-color-on-surface-faint:     #3e4452;
 
-.markdown {
-    background-color: rgba(26, 5, 48, 0.8) !important;
-}
+    /* Brand accents */
+    --mw-sys-color-primary:        #dc3a4a;
+    --mw-sys-color-primary-container:   #b02838;
+    --mw-sys-color-primary-fixed: #8c1d2c;
+    --mw-sys-color-secondary:      #d8b878;
+    --mw-sys-color-secondary-container:  #b59f6a;
 
-h1{
-    color: #ffffff;
-}
-
-h2{
-    color: #ff5884;
-}
-
-h3, h4, h5,h6{
-    color: #ffffff;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
-}
-
-table th{
-
-}
-
-table td{
-
-}
-
-a{
-    color: #ea166c;
-}
-
-pre{
-    margin-top: 0;
-    padding: 0.5rem 0.25rem;
-    background-color: #b08ed5;
-    border: 1px solid #6d5687;
-    border-radius: 6px;
-    color: #000000;
-}
-
-pre code{
-    border: none;
-    display: block;
-}
-
-code{
-    background-color: #b08ed5;
-    border-radius: 4px;
-    border: 1px solid #6d5687;
-    padding-left: 0.25rem;
-    padding-right: 0.25rem;
-    color: #000000;
+    /* Status pills */
+    --mw-sys-color-state-running:        #88b888;
+    --mw-sys-color-state-running-container:     #1a2a1c;
+    --mw-sys-color-state-running-outline: #3a583c;
+    --mw-sys-color-state-paused:         #d88c5a;
+    --mw-sys-color-state-paused-container:      #2e1a0e;
+    --mw-sys-color-state-paused-outline:  #5c3a22;
+    --mw-sys-color-state-done:           #6098d8;
+    --mw-sys-color-state-done-container:        #0c1e3a;
+    --mw-sys-color-state-done-outline:    #244068;
 }

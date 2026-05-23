@@ -1,0 +1,46 @@
+{% extends 'pageWrapper.html' %}
+{% from 'header/breadcrumb.html' import breadcrumb %}
+
+{% block head %}
+    <title>My lobbies · MultiworldGG</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/me.css') }}" />
+{% endblock %}
+
+{% block body %}
+    {% include 'header/baseHeader.html' %}
+    {{ breadcrumb([
+        ('Your MultiworldGG', url_for('me')),
+        ('Lobbies', none),
+    ]) }}
+
+    <div class="mw-me-page">
+        <h1>All your lobbies</h1>
+
+        <nav class="mw-me-subnav" aria-label="Dashboard sections">
+            <a href="{{ url_for('me') }}">Overview</a>
+            <a href="{{ url_for('my_rooms') }}">Rooms</a>
+            <a href="{{ url_for('my_lobbies') }}" class="active">Lobbies</a>
+            <a href="{{ url_for('my_seeds') }}">Seeds</a>
+        </nav>
+
+        {% if lobbies %}
+            <div class="mw-table-stack">
+                {% for lobby in lobbies %}
+                    <div class="mw-card-cluster">
+                        {% include 'partials/lobby_card.html' %}
+                        {% if lobby.owner == session_key %}
+                            <a href="{{ url_for('share_access', kind='lobby', target_id=lobby.id) }}"
+                               class="mw-card-secondary">
+                                <i class="mdi mdi-account-multiple"></i> Share access
+                            </a>
+                        {% else %}
+                            <span class="mw-card-secondary mw-card-secondary-muted">Co-owned</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="mw-empty-list">No lobbies saved on this browser yet.</p>
+        {% endif %}
+    </div>
+{% endblock %}

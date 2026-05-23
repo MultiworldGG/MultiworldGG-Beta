@@ -24,6 +24,7 @@ from WebHostLib.models import (
     LOBBY_OPEN, LOBBY_GENERATING, LOBBY_DONE, LOBBY_CLOSED, LOBBY_LOCKED,
     UUID, db, commit,
 )
+from WebHostLib.ownership import is_authorized
 
 
 def _expire_lobby_if_needed(lobby: Lobby) -> None:
@@ -48,7 +49,7 @@ def _is_lobby_viewer(lobby_id) -> bool:
     return bool(session.get(f"lobby_{lobby_id}_viewer"))
 
 
-@app.route('/lobbies')
+@app.route('/play/lobbies')
 def lobby_list():
     lobbies = db.session.scalars(
         select(Lobby).where(Lobby.state == LOBBY_OPEN)
@@ -247,7 +248,7 @@ def lobby_create():
     return render_template("lobbyCreate.html", race=False, version=__version__)
 
 
-@app.route('/lobby/<suuid:lobby>')
+@app.route('/play/lobby/<suuid:lobby>')
 def lobby_view(lobby: UUID):
     lobby = Lobby.get(id=lobby)
     if not lobby:
@@ -263,7 +264,7 @@ def lobby_view(lobby: UUID):
         return redirect(url_for('lobby_list'))
 
     player = _get_player_in_lobby(lobby)
-    is_owner = (lobby.owner == session["_id"])
+    is_owner = is_authorized(lobby, session["_id"])
     is_viewer = _is_lobby_viewer(lobby.id) and not player
     show_view_form = not player and not is_viewer and request.args.get('view') == '1'
     needs_password = bool(lobby.password_hash) and not player and lobby.state in (LOBBY_OPEN, LOBBY_LOCKED)

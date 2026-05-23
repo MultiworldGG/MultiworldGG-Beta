@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block body %}
-    {% include "header/dirtHeader.html" %}
+    {% include 'header/baseHeader.html' %}
 
     <div id="tracker-navigation">
         <div class="tracker-navigation-bar">
@@ -31,7 +31,7 @@
 
     <div id="tracker-wrapper" data-tracker="{{ room.tracker | suuid }}/{{ team }}/{{ player }}" data-second="{{ saving_second }}">
         <div id="tracker-header-bar">
-            <input placeholder="Search" id="search" />
+            <input placeholder="Search" id="search" aria-label="Search items and locations" />
             <div class="info">This tracker will automatically update itself periodically.</div>
         </div>
         <div id="tables-container">

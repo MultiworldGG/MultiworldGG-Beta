@@ -67,7 +67,7 @@ is_linux = sys.platform.startswith("linux")
 is_macos = sys.platform == "darwin"
 is_windows = sys.platform in ("win32", "cygwin", "msys")
 
-_worlds_to_load: typing.List[str | "APWorldContainer"] = ["worlds.generic", "worlds.tracker", "worlds._manual"]
+_worlds_to_load: typing.List[str | "APWorldContainer"] = ["worlds.generic", "worlds.tracker"] 
 
 def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.List[(str, bool)]:
     """Set the game names to the list of game names.
@@ -97,7 +97,6 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
             _unknown_worlds.append(game)
             return
         except importlib.metadata.PackageNotFoundError:
-            # No pip distribution metadata. Bundled monorepo worlds still need to load.
             if importlib.util.find_spec(f"worlds.{_worlds_to_install[game]}") is not None:
                 _worlds_to_load.append(f"worlds.{_worlds_to_install[game]}")
                 _worlds_to_install.pop(game)

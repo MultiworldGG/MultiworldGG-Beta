@@ -7,9 +7,9 @@
 {% endblock %}
 
 {% block body %}
-    {% include 'header/oceanIslandHeader.html' %}
+    {% include 'header/baseHeader.html' %}
     <div id="generate-game-wrapper">
-        <div id="generate-game" class="grass-island">
+        <div id="generate-game">
             <h1>Generate Game{% if race %} (Race Mode){% endif %}</h1>
             <p>
                 <strong>Playing with others?</strong> If you don't have everyone's YAML files yet, consider using a
@@ -205,20 +205,20 @@ Warning: playthrough can take a significant amount of time for larger multiworld
                                     </tr>
                                     <tr>
                                         <td>
-                                            <label for="server_password">Server Password:
+                                            <label for="admin_password">Admin Password:
                                                 <span class="interactive" data-tooltip="Allows for issuing of server console commands from any text client or in-game client using the !admin command.">
                                                     (?)
                                                 </span>
                                             </label>
                                         </td>
                                         <td>
-                                            <input id="server_password" name="server_password">
+                                            <input id="admin_password" name="admin_password">
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>
                                             Plando Options:
-                                            <span class="interactive" data-tooltip="Allows players to plan some of the randomization. See the 'MultiworldGG Plando Guide' in 'Setup Guides' for more information.">
+                                            <span class="interactive" data-tooltip="Allows players to plan some of the randomization. See the 'MultiworldGG Plando Guide' in 'Setup guides' for more information.">
                                                 (?)
                                             </span>
                                         </td>
@@ -251,5 +251,4 @@ Warning: playthrough can take a significant amount of time for larger multiworld
             </div>
         </div>
     </div>
-    {%  include 'islandFooter.html' %}
 {% endblock %}

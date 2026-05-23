@@ -3,13 +3,15 @@ from sqlalchemy import select
 
 from WebHostLib import to_url
 from WebHostLib.models import Room, Seed, db
+from WebHostLib.ownership import list_authorized_rooms
 from . import api_endpoints, get_players
 
 
 @api_endpoints.route('/get_rooms')
 def get_rooms():
     response = []
-    for room in db.session.scalars(select(Room).where(Room.owner == session["_id"])).all():
+    # Includes primary-owned and co-owned rooms.
+    for room in list_authorized_rooms(session["_id"]):
         response.append({
             "room_id": to_url(room.id),
             "seed_id": to_url(room.seed_id),

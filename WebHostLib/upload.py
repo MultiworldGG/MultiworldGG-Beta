@@ -168,7 +168,7 @@ def upload_zip_to_db(zfile: zipfile.ZipFile, owner=None, meta={"race": False}, s
         flash("No multidata was found in the zip file, which is required.")
 
 
-@app.route("/uploads", methods=["GET", "POST"])
+@app.route("/play/host", methods=["GET", "POST"])
 def uploads():
     if request.method == "POST":
         # check if the POST request has a file part.
@@ -212,42 +212,45 @@ def uploads():
     return render_template("hostGame.html", version=__version__)
 
 
-@app.route('/user-content', methods=['GET'])
-def user_content():
-    rooms = db.session.scalars(
-        select(Room).where(Room.owner == session["_id"])
-    ).all()
+@app.route('/me', methods=['GET'])
+def me():
+    """Dashboard overview for the current browser session."""
+    from .dashboard import get_dashboard_data
+    data = get_dashboard_data(session["_id"])
+    if data.is_empty:
+        return render_template("me_first_run.html")
+    return render_template("me.html", data=data, session_key=session["_id"])
+
+
+@app.route('/me/rooms', methods=['GET'])
+def my_rooms():
+    """Full list of all rooms owned (or co-owned) by this browser."""
+    from .dashboard import classify_room
+    from .ownership import list_authorized_rooms
+    rooms = list_authorized_rooms(session["_id"])
+    return render_template(
+        "me_rooms.html",
+        rooms=rooms,
+        classify_room=classify_room,
+        session_key=session["_id"],
+    )
+
+
+@app.route('/me/lobbies', methods=['GET'])
+def my_lobbies():
+    """Full list of all (non-closed) lobbies owned (or co-owned) by this browser."""
+    from .ownership import list_authorized_lobbies
+    lobbies = list_authorized_lobbies(session["_id"])
+    return render_template("me_lobbies.html", lobbies=lobbies, session_key=session["_id"])
+
+
+@app.route('/me/seeds', methods=['GET'])
+def my_seeds():
+    """Full list of all seeds owned by this browser."""
     seeds = db.session.scalars(
         select(Seed).where(Seed.owner == session["_id"])
+        .order_by(Seed.creation_time.desc())
     ).all()
-    lobbies = db.session.scalars(
-        select(Lobby).where(Lobby.owner == session["_id"], Lobby.state >= 0)
-        .order_by(Lobby.last_activity)
-    ).all()
-    return render_template("userContent.html", rooms=rooms, seeds=seeds, lobbies=lobbies)
+    return render_template("me_seeds.html", seeds=seeds)
 
 
-@app.route("/disown_seed/<suuid:seed>", methods=["GET"])
-def disown_seed(seed):
-    seed = Seed.get(id=seed)
-    if not seed:
-        return abort(404)
-    if seed.owner != session["_id"]:
-        return abort(403)
-
-    seed.owner = uuid.UUID(int=0)
-    commit()
-    return redirect(url_for("user_content"))
-
-
-@app.route("/disown_room/<suuid:room>", methods=["GET"])
-def disown_room(room):
-    room = Room.get(id=room)
-    if not room:
-        return abort(404)
-    if room.owner != session["_id"]:
-        return abort(403)
-
-    room.owner = uuid.UUID(int=0)
-    commit()
-    return redirect(url_for("user_content"))

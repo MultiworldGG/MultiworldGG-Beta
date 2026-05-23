@@ -5,7 +5,7 @@
     margin-left: auto;
     margin-right: auto;
     margin-bottom: 30px;
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: var(--mw-sys-color-scrim-light);
     border-radius: 8px;
     padding: 25px 30px 30px;
     font-family: Inter-Light, sans-serif;
@@ -28,7 +28,7 @@
     font-weight: normal;
     font-family: Inter-Regular, sans-serif;
     width: 100%;
-    text-shadow: 1px 1px 4px #000000;
+    text-shadow: 1px 1px 4px var(--mw-sys-color-shadow);
 }
 
 .markdown h2, .markdown details summary.h2{
@@ -38,7 +38,7 @@
     width: 100%;
     margin-top: 20px;
     margin-bottom: 0.5rem;
-    text-shadow: 1px 1px 2px #000000;
+    text-shadow: 1px 1px 2px var(--mw-sys-color-shadow);
 }
 
 .markdown h3, .markdown details summary.h3{
@@ -114,13 +114,13 @@
 .markdown table th{
     text-align: left;
     padding: 10px;
-    border: 1px solid white;
+    border: 1px solid var(--mw-sys-color-white);
     font-size: 20px;
     font-family: Inter-Regular, sans-serif;
 }
 
 .markdown table td{
-    border: 1px solid white;
+    border: 1px solid var(--mw-sys-color-white);
     text-align: left;
     padding: 10px;
 }

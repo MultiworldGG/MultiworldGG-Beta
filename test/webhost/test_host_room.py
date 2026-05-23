@@ -19,6 +19,7 @@ def _cleanup_logger(room_id: UUID) -> None:
 
 class TestHostFakeRoom(TestBase):
     room_id: UUID
+    seed_id: UUID
     log_filename: str
 
     def setUp(self) -> None:
@@ -36,6 +37,7 @@ class TestHostFakeRoom(TestBase):
                 room = Room(seed_id=seed.id, owner=session["_id"], tracker=uuid4())
                 db.session.flush()
                 self.room_id = room.id
+                self.seed_id = seed.id
                 commit()
                 self.log_filename = user_path("logs", f"{self.room_id}.txt")
 
@@ -142,7 +144,7 @@ class TestHostFakeRoom(TestBase):
         """Verify that missing room gives a 404 response."""
         missing_room_id = uuid5(uuid4(), "")  # rooms are always uuid4, so this can't exist
         with self.app.app_context(), self.app.test_request_context():
-            response = self.client.get(url_for("host_room", room=missing_room_id))
+            response = self.client.get(url_for("host_room", seed=uuid4(), room=missing_room_id))
             self.assertEqual(response.status_code, 404)
 
     def test_host_room_own(self) -> None:
@@ -152,11 +154,11 @@ class TestHostFakeRoom(TestBase):
             f.write(text)
 
         with self.app.app_context(), self.app.test_request_context():
-            response = self.client.get(url_for("host_room", room=self.room_id),
+            response = self.client.get(url_for("host_room", seed=self.seed_id, room=self.room_id),
                                        headers={"User-Agent": "Mozilla/5.0"})
             response_text = response.get_data(True)
             self.assertEqual(response.status_code, 200)
-            self.assertIn("href=\"/seed/", response_text)
+            self.assertIn("href=\"/play/seed/", response_text)
             self.assertIn(text, response_text)
 
     def test_host_room_other(self) -> None:
@@ -174,10 +176,10 @@ class TestHostFakeRoom(TestBase):
 
         other_client = self.app.test_client()
         with self.app.app_context(), self.app.test_request_context():
-            response = other_client.get(url_for("host_room", room=self.room_id))
+            response = other_client.get(url_for("host_room", seed=self.seed_id, room=self.room_id))
             response_text = response.get_data(True)
             self.assertEqual(response.status_code, 200)
-            self.assertNotIn("href=\"/seed/", response_text)
+            self.assertNotIn("href=\"/play/seed/", response_text)
             self.assertNotIn(text, response_text)
             self.assertIn("/connect ", response_text)
             self.assertIn(":12345", response_text)
@@ -188,7 +190,7 @@ class TestHostFakeRoom(TestBase):
         from WebHostLib.models import db, Command
 
         with self.app.app_context(), self.app.test_request_context():
-            response = self.client.post(url_for("host_room", room=self.room_id), data={
+            response = self.client.post(url_for("host_room", seed=self.seed_id, room=self.room_id), data={
                 "cmd": "/help"
             })
             self.assertEqual(response.status_code, 302, response.text)
@@ -206,7 +208,7 @@ class TestHostFakeRoom(TestBase):
 
         other_client = self.app.test_client()
         with self.app.app_context(), self.app.test_request_context():
-            response = other_client.post(url_for("host_room", room=self.room_id), data={
+            response = other_client.post(url_for("host_room", seed=self.seed_id, room=self.room_id), data={
                 "cmd": "/help"
             })
             self.assertLess(response.status_code, 500)

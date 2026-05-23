@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block body %}
-    {% include "header/dirtHeader.html" %}
+    {% include 'header/baseHeader.html' %}
     {% include "multitrackerNavigation.html" %}
 
     <div id="tracker-wrapper" data-tracker="{{ room.tracker | suuid }}" data-second="{{ saving_second }}">
@@ -27,6 +27,7 @@
                             {%- if platform == "Twitch" -%}t{%- else -%}yt{%- endif -%}:{{- link -}}/
                         {%- endfor -%}"
                     target="_blank"
+                    rel="noopener noreferrer"
                 >
                     ► Multistream
                 </a>

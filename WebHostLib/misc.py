@@ -15,6 +15,7 @@ from Utils import __version__
 from . import app, cache
 from .markdown import render_markdown
 from .models import Seed, Room, Command, UUID, uuid4, db, commit
+from .short_id import assign_short_id
 from Utils import title_sorted, utcnow
 
 if TYPE_CHECKING:
@@ -123,27 +124,76 @@ def get_visible_worlds() -> dict[str, type(World)]:
     return worlds
 
 
+@app.template_filter("relative_time")
+def relative_time(dt: datetime.datetime | None) -> str:
+    """Render a (tz-naive UTC) datetime as a relative string like '2 min ago'.
+
+    Matches the convention in Utils.utcnow() — model timestamps are tz-naive UTC.
+    """
+    if not dt:
+        return ""
+    # If we receive a tz-aware value, drop the tz to align with utcnow()'s naive output.
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+    seconds = int((utcnow() - dt).total_seconds())
+    if seconds < 60:
+        return "just now"
+    if seconds < 3600:
+        return f"{seconds // 60} min ago"
+    if seconds < 86400:
+        return f"{seconds // 3600} hr ago"
+    if seconds < 172800:
+        return "Yesterday"
+    days = seconds // 86400
+    if days < 7:
+        return f"{days} days ago"
+    return dt.strftime("%b %d")
+
+
+def get_world_display_name(game: str) -> str:
+    """Return the WebWorld display_name for a game, falling back to the game key."""
+    from worlds.AutoWorld import AutoWorldRegister
+    world = AutoWorldRegister.world_types.get(game)
+    if world is None:
+        return game
+    return getattr(world.web, "display_name", None) or world.game
+
+
+def get_tutorial_name(game: str, file_key: str) -> str | None:
+    """Return the tutorial_name for a given URL file_key under a game, or None if not found."""
+    from worlds.AutoWorld import AutoWorldRegister
+    world = AutoWorldRegister.world_types.get(game)
+    if world is None or not hasattr(world.web, "tutorials"):
+        return None
+    for tutorial in world.web.tutorials:
+        if not hasattr(tutorial, "tutorial_name"):
+            continue
+        if secure_filename(tutorial.file_name).rsplit(".", 1)[0] == file_key:
+            return tutorial.tutorial_name
+    return None
+
+
 @app.errorhandler(404)
 @app.errorhandler(jinja2.exceptions.TemplateNotFound)
 def page_not_found(err):
     return render_template('404.html'), 404
 
 
-# Start Playing Page
-@app.route('/start-playing')
+# Play hub — landing page for /play, six action cards
+@app.route('/play')
 @cache.cached()
-def start_playing():
-    return render_template(f"startPlaying.html")
+def play_hub():
+    return render_template("play_hub.html")
 
 
-@app.route('/games/<string:game>/info/<string:lang>')
+@app.route('/games/<string:game>')
 @cache.cached()
-def game_info(game, lang):
+def game_info(game):
     """Game Info Pages"""
     try:
         theme = get_world_theme(game)
         secure_game_name = secure_filename(game)
-        lang = secure_filename(lang)
+        lang = "en"
         file_dir = os.path.join(app.static_folder, "generated", "docs", secure_game_name)
         file_dir_url = url_for("static", filename=f"generated/docs/{secure_game_name}")
         document = render_markdown(os.path.join(file_dir, f"{lang}_{secure_game_name}.md"), file_dir_url)
@@ -152,6 +202,10 @@ def game_info(game, lang):
             title=f"{game} Guide",
             html_from_markdown=document,
             theme=theme,
+            breadcrumb_crumbs=[
+                ("Games", url_for("games")),
+                (get_world_display_name(game), None),
+            ],
         )
     except FileNotFoundError:
         return abort(404)
@@ -164,46 +218,100 @@ def games():
     return render_template("supportedGames.html", worlds=get_visible_worlds(), get_world_authors=get_world_authors, get_world_version=get_world_version)
 
 
-@app.route('/tutorial/<string:game>/<string:file>')
+def _split_tutorial_file(file: str, default_lang: str = "en") -> tuple[str, str]:
+    """Split a tutorial file slug into ``(base, lang)``.
+
+    ``"setup_en"`` -> ``("setup", "en")``;
+    ``"advanced_settings_en"`` -> ``("advanced_settings", "en")``;
+    ``"intro"`` -> ``("intro", "en")`` (no suffix, default).
+
+    Uses ``rpartition`` so only the rightmost ``_`` is considered, and
+    only treats the suffix as a language if it's a 2-letter alpha token.
+    """
+    base, sep, maybe_lang = file.rpartition('_')
+    if sep and base and len(maybe_lang) == 2 and maybe_lang.isalpha():
+        return base, maybe_lang
+    return file, default_lang
+
+
+@app.route('/learn/<string:lang>/tutorial/<string:game>/<string:file>')
 @cache.cached()
-def tutorial(game: str, file: str):
+def tutorial(lang: str, game: str, file: str):
+    """Render a tutorial markdown file for the given language.
+
+    Reads ``static/generated/docs/<game>/<file>_<lang>.md`` — the on-disk
+    layout still uses the suffix form (the rename is not being applied in
+    this monorepo). The URL exposes the language as a clean path segment.
+    """
     try:
         theme = get_world_theme(game)
         secure_game_name = secure_filename(game)
-        file = secure_filename(file)
+        secure_file = secure_filename(file)
+        secure_lang = secure_filename(lang)
         file_dir = os.path.join(app.static_folder, "generated", "docs", secure_game_name)
         file_dir_url = url_for("static", filename=f"generated/docs/{secure_game_name}")
-        document = render_markdown(os.path.join(file_dir, f"{file}.md"), file_dir_url)
+        document = render_markdown(os.path.join(file_dir, f"{secure_file}_{secure_lang}.md"), file_dir_url)
         return render_template(
             "markdown_document.html",
             title=f"{game} Guide",
             html_from_markdown=document,
             theme=theme,
+            breadcrumb_crumbs=[
+                ("Learn", url_for("learn_hub", lang=lang)),
+                ("Setup guides", url_for("tutorial_landing", lang=lang)),
+                (get_world_display_name(game), url_for("game_info", game=game)),
+                (get_tutorial_name(game, file) or file, None),
+            ],
         )
     except FileNotFoundError:
         return abort(404)
 
 
+@app.route('/tutorial/<string:game>/<string:file>')
+def tutorial_legacy_no_lang(game: str, file: str):
+    """301-redirect ``/tutorial/<game>/<file>`` to the new canonical URL.
+
+    If ``file`` ends in ``_<2-letter-lang>``, the suffix is peeled off and
+    surfaced as the ``lang`` path segment. Otherwise defaults to ``en``.
+    """
+    base, lang = _split_tutorial_file(file)
+    return redirect(url_for("tutorial", lang=lang, game=game, file=base), code=301)
+
+
 @app.route('/tutorial/<string:game>/<string:file>/<string:lang>')
-def tutorial_redirect(game: str, file: str, lang: str):
+def tutorial_legacy_trailing_lang(game: str, file: str, lang: str):
+    """301-redirect ``/tutorial/<game>/<file>/<lang>`` straight to the new
+    canonical URL — no double-hop through the suffix form.
     """
-    Permanent redirect old tutorial URLs to new ones to keep search engines happy.
-    e.g. /tutorial/Archipelago/setup/en -> /tutorial/Archipelago/setup_en
-    """
-    return redirect(url_for("tutorial", game=game, file=f"{file}_{lang}"), code=301)
+    return redirect(url_for("tutorial", lang=lang, game=game, file=file), code=301)
 
 
-@app.route('/tutorial/')
+# Learn hub — landing page for /learn/<lang>, three top-level guides
+@app.route('/learn/<string:lang>')
 @cache.cached()
-def tutorial_landing():
+def learn_hub(lang: str):
+    # Match the convention used by _split_tutorial_file: 2-letter alpha codes.
+    # No content lookup happens at this layer, so any 2-letter code renders;
+    # the hub itself is language-neutral chrome around the per-language links.
+    if not (len(lang) == 2 and lang.isalpha()):
+        abort(404)
+    return render_template("learn_hub.html", lang=lang)
+
+
+# Setup tutorials index — full per-world list
+@app.route('/learn/<string:lang>/tutorials')
+@cache.cached()
+def tutorial_landing(lang: str):
+    if not (len(lang) == 2 and lang.isalpha()):
+        abort(404)
     from worlds.AutoWorld import AutoWorldRegister
     tutorials = {}
     worlds = AutoWorldRegister.world_types
-    
+
     # Filter worlds based on hidden webworlds config
-    visible_worlds = {name: world for name, world in worlds.items() 
+    visible_worlds = {name: world for name, world in worlds.items()
                      if name not in app.config["HIDDEN_WEBWORLDS"]}
-    
+
     for world_name, world_type in visible_worlds.items():
         current_world = tutorials[world_name] = {}
         if hasattr(world_type.web, 'tutorials'):
@@ -211,35 +319,41 @@ def tutorial_landing():
                 # Skip if tutorial is not a Tutorial object (e.g., if it's a string)
                 if not hasattr(tutorial, 'tutorial_name'):
                     continue
-                
+
                 current_tutorial = current_world.setdefault(tutorial.tutorial_name, {
                     "description": tutorial.description, "files": {}})
-                
+
                 # Get the file name without extension for the new format
                 file_key = secure_filename(tutorial.file_name).rsplit(".", 1)[0]
-                
-                # Create file data with both old and new link formats
+
+                # Split into (base, lang) for the new URL form. With metadata
+                # like file_name="setup_en.md", file_key="setup_en" splits to
+                # ("setup", "en") so the template can build /learn/en/tutorial/<game>/setup.
+                file_base, file_lang = _split_tutorial_file(file_key)
+
                 file_data = {
                     "authors": tutorial.authors,
                     "language": tutorial.language,
                     "file_name": file_key,
+                    "file_base": file_base,
+                    "lang": file_lang,
                     "legacy_link": tutorial.link if tutorial.link != "unused" else None
                 }
-                
+
                 current_tutorial["files"][file_key] = file_data
     tutorials = {world_name: tutorials for world_name, tutorials in title_sorted(
         tutorials.items(), key=lambda element: "\x00" if element[0] == "Archipelago" else (getattr(visible_worlds[element[0]].web, 'display_name', None) or visible_worlds[element[0]].game))}
-    
+
     # Sort the worlds dictionary by display name for consistent ordering
     sorted_worlds = dict(title_sorted(
-        visible_worlds.items(), 
+        visible_worlds.items(),
         key=lambda element: "\x00" if element[0] == "Archipelago" else (getattr(element[1].web, 'display_name', None) or element[1].game)
     ))
-    
-    return render_template("tutorialLanding.html", worlds=sorted_worlds, tutorials=tutorials)
+
+    return render_template("tutorialLanding.html", worlds=sorted_worlds, tutorials=tutorials, lang=lang)
 
 
-@app.route('/faq/<string:lang>/')
+@app.route('/learn/<string:lang>/faq')
 @cache.cached()
 def faq(lang: str):
     document = render_markdown(os.path.join(app.static_folder, "assets", "faq", secure_filename(lang)+".md"))
@@ -247,10 +361,14 @@ def faq(lang: str):
         "markdown_document.html",
         title="Frequently Asked Questions",
         html_from_markdown=document,
+        breadcrumb_crumbs=[
+            ("Learn", url_for("learn_hub", lang=lang)),
+            ("FAQ", None),
+        ],
     )
 
 
-@app.route('/glossary/<string:lang>/')
+@app.route('/learn/<string:lang>/glossary')
 @cache.cached()
 def glossary(lang: str):
     document = render_markdown(os.path.join(app.static_folder, "assets", "glossary", secure_filename(lang)+".md"))
@@ -258,10 +376,14 @@ def glossary(lang: str):
         "markdown_document.html",
         title="Glossary",
         html_from_markdown=document,
+        breadcrumb_crumbs=[
+            ("Learn", url_for("learn_hub", lang=lang)),
+            ("Glossary", None),
+        ],
     )
 
 
-@app.route('/seed/<suuid:seed>')
+@app.route('/play/seed/<suuid:seed>')
 def view_seed(seed: UUID):
     seed = Seed.get(id=seed)
     if not seed:
@@ -279,8 +401,9 @@ def new_room(seed: UUID):
     if not seed:
         abort(404)
     room = Room(seed_id=seed.id, owner=session["_id"], tracker=uuid4())
+    assign_short_id(db.session, room)
     commit()
-    return redirect(url_for("host_room", room=room.id))
+    return redirect(url_for("host_room", seed=room.seed_id, room=room.id))
 
 @app.route('/downloads/')
 @cache.cached()
@@ -305,10 +428,11 @@ def _read_log(log: IO[Any], offset: int = 0) -> Iterator[bytes]:
 
 @app.route('/log/<suuid:room>')
 def display_log(room: UUID) -> Union[str, Response, Tuple[str, int]]:
+    from .ownership import is_authorized
     room = Room.get(id=room)
     if room is None:
         return abort(404)
-    if room.owner == session["_id"]:
+    if is_authorized(room, session["_id"]):
         file_path = os.path.join("logs", str(room.id) + ".txt")
         try:
             log = open(file_path, "rb")
@@ -329,24 +453,25 @@ def display_log(room: UUID) -> Union[str, Response, Tuple[str, int]]:
     return "Access Denied", 403
 
 
-@app.post("/room/<suuid:room>")
-def host_room_command(room: UUID):
+@app.post("/play/seed/<suuid:seed>/room/<suuid:room>")
+def host_room_command(seed: UUID, room: UUID):
+    from .ownership import is_authorized
     room: Room = Room.get(id=room)
-    if room is None:
+    if room is None or room.seed_id != seed:
         return abort(404)
 
-    if room.owner == session["_id"]:
+    if is_authorized(room, session["_id"]):
         cmd = request.form["cmd"]
         if cmd:
             Command(room_id=room.id, commandtext=cmd)
             commit()
-    return redirect(url_for("host_room", room=room.id))
+    return redirect(url_for("host_room", seed=room.seed_id, room=room.id))
 
 
-@app.get("/room/<suuid:room>")
-def host_room(room: UUID):
+@app.get("/play/seed/<suuid:seed>/room/<suuid:room>")
+def host_room(seed: UUID, room: UUID):
     room: Room = Room.get(id=room)
-    if room is None:
+    if room is None or room.seed_id != seed:
         return abort(404)
 
     now = utcnow()
@@ -382,7 +507,17 @@ def host_room(room: UUID):
         except FileNotFoundError:
             return "", 0
 
-    return render_template("hostRoom.html", room=room, should_refresh=should_refresh, get_log=get_log)
+    from .ownership import is_authorized, is_primary_owner
+    is_authorized_room = is_authorized(room, session["_id"])
+    is_primary_owner_room = is_primary_owner(room, session["_id"])
+    return render_template(
+        "hostRoom.html",
+        room=room,
+        should_refresh=should_refresh,
+        get_log=get_log,
+        is_authorized_room=is_authorized_room,
+        is_primary_owner_room=is_primary_owner_room,
+    )
 
 
 @app.route('/favicon.ico')

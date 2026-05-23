@@ -50,8 +50,14 @@ app.config["PORT"] = 80
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["LOBBY_APWORLD_PATH"] = os.path.abspath(LOBBY_APWORLD_FOLDER)
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # 64 megabyte limit
-# if you want to deploy, make sure you have a non-guessable secret key
-app.config["SECRET_KEY"] = bytes(socket.gethostname(), encoding="utf-8")
+# SECRET_KEY signs session cookies. Resolution order:
+#   1. $MWGG_SECRET_KEY    (preferred for Docker / env-driven deploys)
+#   2. SECRET_KEY in config.yaml (legacy / file-based deploys)
+#   3. host-name fallback (DEV ONLY — get_app() refuses to boot with this in prod)
+app.config["SECRET_KEY"] = (
+    os.environ.get("MWGG_SECRET_KEY", "").encode("utf-8")
+    or bytes(socket.gethostname(), encoding="utf-8")
+)
 app.config["SESSION_PERMANENT"] = True
 app.config["MAX_FORM_MEMORY_SIZE"] = 2 * 1024 * 1024  # 2 MB, needed for large option pages such as SC2
 app.config["MAX_FORM_PARTS"] = 10_000  # Werkzeug 3.x default is 1000; games with many items can exceed this
@@ -97,13 +103,29 @@ app.config["CACHE_KEY_PREFIX"] = "multiworld_"
 app.config["HOST_ADDRESS"] = ""
 app.config["ASSET_RIGHTS"] = False
 app.config["MONITORING_ADMIN_TOKEN"] = None  # Admin token for monitoring API endpoints
+# Canonical public host (no scheme, no trailing slash) used to render
+# shareable URLs like the /r/<short> room link.
+app.config["SHARE_BASE_HOST"] = ""
 
-# Profile-picture uploader (see WebHostLib/api/avatar.py)
+# Profile-picture uploader (see WebHostLib/api/avatar.py). The public URL
+# origin is taken from SHARE_BASE_HOST above, so one config knob covers
+# both surfaces.
 app.config["AVATAR_UPLOAD_FOLDER"] = os.path.abspath(AVATAR_UPLOAD_FOLDER)
-app.config["AVATAR_PUBLIC_BASE_URL"] = ""        # empty -> derive from request.host_url
 app.config["AVATAR_MAX_UPLOAD_BYTES"] = 5 * 1024 * 1024
 app.config["AVATAR_MAX_PIXELS"] = 4_000_000
 app.config["AVATAR_OUTPUT_DIM"] = 512
+
+# WebAuthn / passkey recovery (see WebHostLib/passkeys.py).
+# Production MUST override RP_ID / ORIGIN in host.yaml. The browser rejects
+# any RP_ID that doesn't match the live origin's registrable domain, and
+# rejects WebAuthn over plain HTTP except on localhost.
+app.config["WEBAUTHN_RP_ID"] = "localhost"
+app.config["WEBAUTHN_ORIGIN"] = "http://localhost:5050"
+app.config["WEBAUTHN_RP_NAME"] = "MultiworldGG"
+# Used to derive a stable, opaque per-session user-handle for the OS passkey
+# picker. Falls back to SECRET_KEY for local dev; production should set this
+# to a dedicated ≥32-byte random string and rotate independently.
+app.config["WEBAUTHN_USER_HANDLE_SECRET"] = None  # populated below
 
 cache = Cache()
 Compress(app)
@@ -158,6 +180,31 @@ def register() -> None:
 
     from . import api
     app.register_blueprint(api.api_endpoints)
+
+    from .route_redirects import legacy_routes
+    app.register_blueprint(legacy_routes)
+
+    from .short_room_route import short_room
+    app.add_url_rule("/r/<short>", "short_room", short_room)
+
+    # Passkey blueprint — needs the credential store + per-session HMAC secret.
+    # WEBAUTHN_USER_HANDLE_SECRET resolution order (mirrors SECRET_KEY):
+    #   1. $MWGG_WEBAUTHN_HANDLE_SECRET (preferred for Docker)
+    #   2. WEBAUTHN_USER_HANDLE_SECRET in config.yaml
+    #   3. SECRET_KEY (so the passkey clustering rotates with the signing key)
+    from .passkeys import passkeys_bp
+    from .models import db as _db
+    from .passkey_store import SQLAlchemyCredentialStore
+    env_handle_secret = os.environ.get("MWGG_WEBAUTHN_HANDLE_SECRET", "")
+    if env_handle_secret:
+        app.config["WEBAUTHN_USER_HANDLE_SECRET"] = env_handle_secret.encode("utf-8")
+    elif not app.config.get("WEBAUTHN_USER_HANDLE_SECRET"):
+        app.config["WEBAUTHN_USER_HANDLE_SECRET"] = app.config["SECRET_KEY"]
+    passkeys_bp.credential_store = SQLAlchemyCredentialStore(lambda: _db.session)
+    app.register_blueprint(passkeys_bp)
+
+    from .scripts.backfill_short_ids import register_cli
+    register_cli(app)
 
     @app.before_request
     def _ensure_dynamic_tracker_routes():
