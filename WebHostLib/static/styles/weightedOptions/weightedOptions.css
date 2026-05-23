@@ -6,7 +6,7 @@ html {
   max-width: 1000px;
   margin-left: auto;
   margin-right: auto;
-  background-color: rgba(0, 0, 0, 0.15);
+  background-color: var(--mw-sys-color-scrim-light);
   border-radius: 8px;
   padding: 1rem;
   color: #eeffeb;
@@ -25,7 +25,7 @@ html {
   padding: 0.5rem;
   border-radius: 4px;
   background-color: #f3f309;
-  color: #000000;
+  color: var(--mw-sys-color-black);
   margin-bottom: 0.5rem;
   text-align: center;
 }
@@ -101,7 +101,7 @@ html {
   width: calc(100% - 8px);
   background-color: #ffe86b;
   border-radius: 4px;
-  color: #000000;
+  color: var(--mw-sys-color-black);
   padding: 4px;
   text-align: center;
 }
@@ -114,22 +114,22 @@ html {
   font-weight: normal;
   width: 100%;
   margin-bottom: 0.5rem;
-  color: #ffffff;
-  text-shadow: 1px 1px 4px #000000;
+  color: var(--mw-sys-color-white);
+  text-shadow: 1px 1px 4px var(--mw-sys-color-black);
 }
 #weighted-options h2, #weighted-options details summary.h2 {
   font-size: 2rem;
   font-weight: normal;
-  border-bottom: 1px solid #ffffff;
+  border-bottom: 1px solid var(--mw-sys-color-white);
   width: 100%;
   margin-bottom: 0.5rem;
-  color: #ea166c;
+  color: var(--mw-sys-color-primary);
   text-transform: none;
-  text-shadow: 1px 1px 2px #000000;
+  text-shadow: 1px 1px 2px var(--mw-sys-color-black);
 }
 #weighted-options h3, #weighted-options h4, #weighted-options h5, #weighted-options h6 {
-  color: #ffffff;
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+  color: var(--mw-sys-color-white);
+  text-shadow: 1px 1px 1px var(--mw-sys-color-scrim-medium);
   text-transform: none;
   cursor: unset;
 }
@@ -138,17 +138,17 @@ html {
   font-weight: bold;
 }
 #weighted-options a {
-  color: #ea166c;
+  color: var(--mw-sys-color-primary);
   cursor: pointer;
 }
 #weighted-options input:not([type]) {
-  border: 1px solid #000000;
+  border: 1px solid var(--mw-sys-color-black);
   padding: 3px;
   border-radius: 3px;
   min-width: 150px;
 }
 #weighted-options input:not([type]):focus {
-  border: 1px solid #ffffff;
+  border: 1px solid var(--mw-sys-color-white);
 }
 #weighted-options .invisible {
   display: none;
@@ -162,7 +162,7 @@ html {
   background-color: rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(20, 20, 20, 0.25);
   border-radius: 3px;
-  color: #ffffff;
+  color: var(--mw-sys-color-white);
   max-height: 15rem;
   min-width: 14.5rem;
   overflow-y: auto;
@@ -225,5 +225,3 @@ html {
     min-width: 200px;
   }
 }
-
-/*# sourceMappingURL=weightedOptions.css.map */

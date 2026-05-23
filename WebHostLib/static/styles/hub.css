@@ -9,20 +9,20 @@
     margin: 0 auto;
     padding: 40px 22px;
     font-family: var(--mw-font-sans);
-    color: var(--mw-text-body);
+    color: var(--mw-sys-color-on-background);
 }
 
 .mw-hub h1 {
     font-size: 32px;
     margin: 0 0 8px;
-    color: var(--mw-text-primary);
+    color: var(--mw-sys-color-on-surface);
     font-weight: 500;
     text-align: center;
 }
 
 .mw-hub-lead {
     text-align: center;
-    color: var(--mw-text-muted);
+    color: var(--mw-sys-color-on-surface-variant);
     font-size: 15px;
     margin: 0 auto 36px;
     max-width: 520px;
@@ -35,8 +35,8 @@
 }
 
 .mw-hub-card {
-    background: var(--mw-bg-elevated);
-    border: 1px solid var(--mw-border-subtle);
+    background: var(--mw-sys-color-surface-container-low);
+    border: 1px solid var(--mw-sys-color-outline-variant);
     border-radius: var(--mw-radius-lg);
     padding: 22px;
     text-decoration: none;
@@ -47,12 +47,12 @@
 }
 
 .mw-hub-card:hover {
-    border-color: var(--mw-accent-primary);
+    border-color: var(--mw-sys-color-primary);
     transform: translateY(-2px);
 }
 
 .mw-hub-card.primary {
-    border-color: var(--mw-accent-primary);
+    border-color: var(--mw-sys-color-primary);
     border-width: 2px;
     padding: 21px;
 }
@@ -61,7 +61,7 @@
     width: 48px;
     height: 48px;
     border-radius: var(--mw-radius-lg);
-    background: var(--mw-bg-card);
+    background: var(--mw-sys-color-surface-container);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -69,28 +69,28 @@
 }
 
 .mw-hub-card.primary .mw-hub-icon {
-    background: var(--mw-accent-primary);
+    background: var(--mw-sys-color-primary);
 }
 
 .mw-hub-icon .mdi {
     font-size: 24px;
-    color: var(--mw-accent-secondary);
+    color: var(--mw-sys-color-secondary);
 }
 
 .mw-hub-card.primary .mw-hub-icon .mdi {
-    color: white;
+    color: var(--mw-sys-color-white);
 }
 
 .mw-hub-card h3 {
     font-size: 17px;
     margin: 0 0 6px;
-    color: var(--mw-text-primary);
+    color: var(--mw-sys-color-on-surface);
     font-weight: 500;
 }
 
 .mw-hub-card p {
     font-size: 13.5px;
-    color: var(--mw-text-muted);
+    color: var(--mw-sys-color-on-surface-variant);
     margin: 0;
     line-height: 1.5;
 }

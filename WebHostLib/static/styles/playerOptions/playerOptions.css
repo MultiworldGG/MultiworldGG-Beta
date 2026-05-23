@@ -8,7 +8,7 @@ html {
   max-width: 1280px;
   margin-left: auto;
   margin-right: auto;
-  background-color: rgba(0, 0, 0, 0.15);
+  background-color: var(--mw-sys-color-scrim-light);
   border-radius: 8px;
   padding: 1rem;
   color: #eeffeb;
@@ -28,7 +28,7 @@ html {
   padding: 0.5rem;
   border-radius: 4px;
   background-color: #f3f309;
-  color: #000000;
+  color: var(--mw-sys-color-black);
   margin-bottom: 0.5rem;
   text-align: center;
 }
@@ -64,7 +64,7 @@ html {
   border-radius: 6px;
   padding: 4px 0;
   z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px var(--mw-sys-color-shadow-soft);
 }
 #player-options #player-options-button-row .lobby-picker-menu.visible {
   display: flex;
@@ -73,7 +73,7 @@ html {
 #player-options #player-options-button-row .lobby-picker-menu .lobby-picker-item {
   background: none;
   border: none;
-  color: #fff;
+  color: var(--mw-sys-color-white);
   padding: 8px 12px;
   text-align: left;
   font-size: 14px;
@@ -88,7 +88,7 @@ html {
   width: calc(100% - 8px);
   background-color: #ffe86b;
   border-radius: 4px;
-  color: #000000;
+  color: var(--mw-sys-color-black);
   padding: 4px;
   text-align: center;
   cursor: pointer;
@@ -98,7 +98,7 @@ html {
   font-weight: normal;
   width: 100%;
   margin-bottom: 0.5rem;
-  text-shadow: 1px 1px 4px #000000;
+  text-shadow: 1px 1px 4px var(--mw-sys-color-black);
 }
 #player-options h2 {
   font-size: 40px;
@@ -106,26 +106,26 @@ html {
   width: 100%;
   margin-bottom: 0.5rem;
   text-transform: lowercase;
-  text-shadow: 1px 1px 2px #000000;
+  text-shadow: 1px 1px 2px var(--mw-sys-color-black);
 }
 #player-options h3, #player-options h4, #player-options h5, #player-options h6 {
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+  text-shadow: 1px 1px 1px var(--mw-sys-color-scrim-medium);
 }
 #player-options input:not([type]) {
-  border: 1px solid #000000;
+  border: 1px solid var(--mw-sys-color-black);
   padding: 3px;
   border-radius: 3px;
   min-width: 150px;
 }
 #player-options input:not([type]):focus {
-  border: 1px solid #ffffff;
+  border: 1px solid var(--mw-sys-color-white);
 }
 #player-options select {
-  border: 1px solid #000000;
+  border: 1px solid var(--mw-sys-color-black);
   padding: 3px;
   border-radius: 3px;
   min-width: 150px;
-  background-color: #ffffff;
+  background-color: var(--mw-sys-color-white);
   text-overflow: ellipsis;
 }
 #player-options .game-options {
@@ -250,7 +250,7 @@ html {
   background-color: rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(20, 20, 20, 0.25);
   border-radius: 3px;
-  color: #ffffff;
+  color: var(--mw-sys-color-white);
   max-height: 15rem;
   min-width: 14.5rem;
   overflow-y: auto;
@@ -310,7 +310,7 @@ html {
   max-width: 30px;
   margin: 0 0 0 0.25rem;
   font-size: 14px;
-  border: 1px solid black;
+  border: 1px solid var(--mw-sys-color-black);
   border-radius: 3px;
   background-color: #d3d3d3;
   user-select: none;
@@ -335,7 +335,7 @@ html {
   display: none;
 }
 #player-options .randomize-button:has(input[type=checkbox]:checked) {
-  background-color: #ea166c; /* Same as .interactive in globalStyles.css */
+  background-color: var(--mw-sys-color-primary); /* Same as .interactive in globalStyles.css */
 }
 #player-options .randomize-button:has(input[type=checkbox]:checked):hover {
   background-color: #eedd27;
@@ -371,5 +371,3 @@ html {
     flex-wrap: wrap;
   }
 }
-
-/*# sourceMappingURL=playerOptions.css.map */

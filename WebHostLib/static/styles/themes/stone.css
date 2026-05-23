@@ -2,40 +2,41 @@
    brushed-gold secondary; sage / copper / azure status pills. */
 body {
     /* Surface ramp */
-    --mw-bg-page:       #0c0e12;
-    --mw-bg-elevated:   #161a1f;
-    --mw-bg-card:       #232932;
-    --mw-bg-deep:       #11141a;
-    --mw-bg-input:      #181d24;
+    --mw-sys-color-background:       #0c0e12;
+    --mw-sys-color-surface:       #0c0e12;
+    --mw-sys-color-surface-container-low:   #161a1f;
+    --mw-sys-color-surface-container:       #232932;
+    --mw-sys-color-surface-dim:       #11141a;
+    --mw-sys-color-surface-variant:      #181d24;
 
     /* Borders */
-    --mw-border-subtle: #232932;
-    --mw-border-strong: #313947;
-    --mw-border-faint:  #3a4250;
+    --mw-sys-color-outline-variant: #232932;
+    --mw-sys-color-outline: #313947;
+    --mw-sys-color-surface-bright:  #3a4250;
 
     /* Text ramp */
-    --mw-text-primary:   #f0f3f8;
-    --mw-text-body:      #d8dde6;
-    --mw-text-secondary: #b8bdc8;
-    --mw-text-muted:     #828896;
-    --mw-text-dim:       #5a6070;
-    --mw-text-faint:     #3e4452;
+    --mw-sys-color-on-surface:   #f0f3f8;
+    --mw-sys-color-on-background:      #d8dde6;
+    --mw-sys-color-accent-text: #b8bdc8;
+    --mw-sys-color-on-surface-variant:     #828896;
+    --mw-sys-color-on-surface-muted:       #5a6070;
+    --mw-sys-color-on-surface-faint:     #3e4452;
 
     /* Brand accents */
-    --mw-accent-primary:        #dc3a4a;
-    --mw-accent-primary-dark:   #b02838;
-    --mw-accent-primary-darker: #8c1d2c;
-    --mw-accent-secondary:      #d8b878;
-    --mw-accent-secondary-dim:  #b59f6a;
+    --mw-sys-color-primary:        #dc3a4a;
+    --mw-sys-color-primary-container:   #b02838;
+    --mw-sys-color-primary-fixed: #8c1d2c;
+    --mw-sys-color-secondary:      #d8b878;
+    --mw-sys-color-secondary-container:  #b59f6a;
 
     /* Status pills */
-    --mw-status-running:        #88b888;
-    --mw-status-running-bg:     #1a2a1c;
-    --mw-status-running-border: #3a583c;
-    --mw-status-paused:         #d88c5a;
-    --mw-status-paused-bg:      #2e1a0e;
-    --mw-status-paused-border:  #5c3a22;
-    --mw-status-done:           #6098d8;
-    --mw-status-done-bg:        #0c1e3a;
-    --mw-status-done-border:    #244068;
+    --mw-sys-color-state-running:        #88b888;
+    --mw-sys-color-state-running-container:     #1a2a1c;
+    --mw-sys-color-state-running-outline: #3a583c;
+    --mw-sys-color-state-paused:         #d88c5a;
+    --mw-sys-color-state-paused-container:      #2e1a0e;
+    --mw-sys-color-state-paused-outline:  #5c3a22;
+    --mw-sys-color-state-done:           #6098d8;
+    --mw-sys-color-state-done-container:        #0c1e3a;
+    --mw-sys-color-state-done-outline:    #244068;
 }

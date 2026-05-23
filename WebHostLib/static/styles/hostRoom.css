@@ -2,7 +2,7 @@
     width: 60%;
     margin-left: auto;
     margin-right: auto;
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: var(--mw-sys-color-scrim-light);
     border-radius: 8px;
     padding: 1rem;
     color: #eeffeb;
@@ -15,11 +15,11 @@
 }
 
 #host-room a{
-    color: var(--mw-text-link);
+    color: var(--mw-sys-color-link);
 }
 
 #host-room input[type=text]{
-    border: 1px solid #000000;
+    border: 1px solid var(--mw-sys-color-black);
     padding: 3px;
     border-radius: 3px;
     width: 50%;
@@ -37,13 +37,13 @@
 #host-room table th{
     text-align: left;
     padding: 10px;
-    border: 1px solid white;
+    border: 1px solid var(--mw-sys-color-white);
     font-size: 20px;
     font-family: Inter-Regular, sans-serif;
 }
 
 #host-room table td{
-    border: 1px solid white;
+    border: 1px solid var(--mw-sys-color-white);
     text-align: left;
     padding: 10px;
 }
@@ -54,7 +54,7 @@
     background-color: lightblue;
     border: 1px solid #2a6c2f;
     border-radius: 6px;
-    color: #000000;
+    color: var(--mw-sys-color-black);
     overflow-y: auto;
     max-height: 400px;
 }
@@ -99,8 +99,8 @@
 /* Phase 2b: shareable room URL row. Brand colors match the route-migration nav palette. */
 
 .share-row {
-    background: #2a1232;
-    border: 1px solid var(--mw-accent-primary);
+    background: var(--mw-sys-color-surface-container);
+    border: 1px solid var(--mw-sys-color-primary);
     border-radius: 8px;
     padding: 10px 14px;
     margin-bottom: 14px;
@@ -111,14 +111,14 @@
 }
 
 .share-row-label {
-    color: #a87890;
+    color: var(--mw-sys-color-on-surface-variant);
     font-size: 13px;
     font-weight: 500;
     flex-shrink: 0;
 }
 
 .share-row-url {
-    color: #ffdd5a;
+    color: var(--mw-sys-color-secondary);
     font-family: "SF Mono", Menlo, Monaco, "Cascadia Mono", "Courier New", monospace;
     font-size: 14px;
     font-weight: 500;
@@ -130,8 +130,8 @@
 }
 
 .share-row-copy-btn {
-    background: var(--mw-accent-primary);
-    color: #ffffff;
+    background: var(--mw-sys-color-primary);
+    color: var(--mw-sys-color-white);
     border: none;
     padding: 6px 12px;
     border-radius: 6px;
@@ -146,7 +146,7 @@
 }
 
 .share-row-copy-btn:hover {
-    background: var(--mw-accent-primary-dark);
+    background: var(--mw-sys-color-primary-container);
 }
 
 .share-row-copy-btn:active {
@@ -154,7 +154,7 @@
 }
 
 .share-row-copy-btn--copied {
-    background: #1d5e44;
+    background: var(--mw-sys-color-state-running-outline);
 }
 
 .share-row-copy-icon {

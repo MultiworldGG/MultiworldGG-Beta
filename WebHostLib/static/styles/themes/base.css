@@ -1,43 +1,130 @@
 :root {
-    /* Brand palette */
-    --mw-accent-primary: #ea166c;
-    --mw-accent-primary-dark: #b80f54;
-    --mw-accent-primary-darker: #a01049;
-    --mw-accent-secondary: #ffdd5a;
-    --mw-accent-secondary-dim: #f9d6a3;
+    /* ============================================================
+       Material Design 3-style color tokens. Single source of truth
+       for the entire site palette. Conventions follow MD3:
+         • <role>              — the role color (filled buttons, chips)
+         • on-<role>           — text/icon when placed on <role>
+         • <role>-container    — tonal surface variant of that role
+                                  (alert backgrounds, tinted chips, hovers)
+         • on-<role>-container — text/icon when on the container
 
-    /* Surface colors (dark theme — primary site palette) */
-    --mw-bg-page: #0f0612;
-    --mw-bg-elevated: #1a0a20;
-    --mw-bg-card: #2a1232;
-    --mw-bg-deep: #16081b;
-    --mw-bg-input: #1d0f23;
+       Dark site palette is the default. Per-theme overrides (themes/
+       *.css) shadow these tokens on `body { … }`.
+       ============================================================ */
 
-    /* Borders and dividers */
-    --mw-border-subtle: #2a1232;
-    --mw-border-strong: #36193f;
-    --mw-border-faint: #3d1d47;
+    /* Background / surface */
+    --mw-sys-color-background:                 #0f0612;
+    --mw-sys-color-on-background:              #e8d8e8;
+    --mw-sys-color-surface:                    #0f0612;
+    --mw-sys-color-on-surface:                 #ffe6f0;
+    --mw-sys-color-surface-variant:            #1d0f23;
+    --mw-sys-color-on-surface-variant:         #a87890;
+    --mw-sys-color-on-surface-muted:           #7a5868;
+    --mw-sys-color-on-surface-faint:           #5a3650;
+    --mw-sys-color-surface-dim:                #16081b;
+    --mw-sys-color-surface-bright:             #3d1d47;
+    --mw-sys-color-surface-container-low:      #1a0a20;
+    --mw-sys-color-surface-container:          #2a1232;
+    --mw-sys-color-surface-container-high:     #36193f;
 
-    /* Text */
-    --mw-text-primary: #ffe6f0;
-    --mw-text-body: #e8d8e8;
-    --mw-text-secondary: #FFA810;
-    --mw-text-muted: #a87890;
-    --mw-text-dim: #7a5868;
-    --mw-text-faint: #5a3650;
+    /* Outline (borders, dividers) */
+    --mw-sys-color-outline:                    #36193f;
+    --mw-sys-color-outline-variant:            #2a1232;
 
-    --mw-text-link: #f04b6f;
+    /* Primary — pink brand */
+    --mw-sys-color-primary:                    #ea166c;
+    --mw-sys-color-on-primary:                 #ffffff;
+    --mw-sys-color-primary-container:          #b80f54;
+    --mw-sys-color-on-primary-container:       #ffe6f0;
+    --mw-sys-color-primary-fixed:              #a01049;
 
-    /* Pyramid stripe colors (used in branding, status pills) */
-    --mw-status-running: #5dcaa5;
-    --mw-status-running-bg: #0a3322;
-    --mw-status-running-border: #1d5e44;
-    --mw-status-paused: #fac775;
-    --mw-status-paused-bg: #3a2607;
-    --mw-status-paused-border: #65450f;
-    --mw-status-done: #85b7eb;
-    --mw-status-done-bg: #0a2a3a;
-    --mw-status-done-border: #185fa5;
+    /* Secondary — gold accent */
+    --mw-sys-color-secondary:                  #ffdd5a;
+    --mw-sys-color-on-secondary:               #2a1232;
+    --mw-sys-color-secondary-container:        #f9d6a3;
+    --mw-sys-color-on-secondary-container:     #5a3a0f;
+
+    /* Tertiary — purple branding (gradient buttons, tracker tables) */
+    --mw-sys-color-tertiary:                   #652895;
+    --mw-sys-color-on-tertiary:                #ffffff;
+    --mw-sys-color-tertiary-container:         #4a2272;
+    --mw-sys-color-on-tertiary-container:      #d780ff;
+    --mw-sys-color-tertiary-bright:            #b44ad9;
+    --mw-sys-color-tertiary-hover:             #7d35b5;
+    --mw-sys-color-tertiary-surface-low:       #1e1438;
+    --mw-sys-color-tertiary-surface:           #2d1b4e;
+    --mw-sys-color-tertiary-outline:           #5a3080;
+
+    /* Error — Bootstrap danger red */
+    --mw-sys-color-error:                      #dc3545;
+    --mw-sys-color-on-error:                   #ffffff;
+    --mw-sys-color-error-container:            #3a0d12;
+    --mw-sys-color-on-error-container:         #f8d7da;
+    --mw-sys-color-error-hover:                #a71d2a;
+    --mw-sys-color-error-outline:              #7a1c26;
+
+    /* Warning — Bootstrap warning yellow */
+    --mw-sys-color-warning:                    #ffc107;
+    --mw-sys-color-on-warning:                 #2a1232;
+    --mw-sys-color-warning-container:          #3a2c07;
+    --mw-sys-color-on-warning-container:       #fff3cd;
+    --mw-sys-color-warning-outline:            #65500f;
+
+    /* Success — Bootstrap green */
+    --mw-sys-color-success:                    #28a745;
+    --mw-sys-color-on-success:                 #ffffff;
+    --mw-sys-color-success-container:          #0e2e15;
+    --mw-sys-color-on-success-container:       #d4edda;
+    --mw-sys-color-success-hover:              #1e7e34;
+    --mw-sys-color-success-outline:            #1d5a2c;
+
+    /* Info — Bootstrap cyan */
+    --mw-sys-color-info:                       #17a2b8;
+    --mw-sys-color-on-info:                    #ffffff;
+    --mw-sys-color-info-container:             #082a2f;
+    --mw-sys-color-on-info-container:          #d1ecf1;
+    --mw-sys-color-info-outline:               #115560;
+
+    /* Accent orange — apworld upload UI, custom-disclaimer, locked-status pill */
+    --mw-sys-color-accent-orange:              #e07b00;
+    --mw-sys-color-on-accent-orange:           #ffffff;
+    --mw-sys-color-accent-orange-container:    #3a1f00;
+    --mw-sys-color-on-accent-orange-container: #ffcc80;
+    --mw-sys-color-accent-orange-hover:        #b85e00;
+    --mw-sys-color-accent-orange-bright:       #f0a500;
+    --mw-sys-color-accent-orange-outline:      #5c2d0f;
+
+    /* Game-state palette (status pills, branding stripes) */
+    --mw-sys-color-state-running:              #5dcaa5;
+    --mw-sys-color-state-running-container:    #0a3322;
+    --mw-sys-color-state-running-outline:      #1d5e44;
+    --mw-sys-color-state-paused:               #fac775;
+    --mw-sys-color-state-paused-container:     #3a2607;
+    --mw-sys-color-state-paused-outline:       #65450f;
+    --mw-sys-color-state-done:                 #85b7eb;
+    --mw-sys-color-state-done-container:       #0a2a3a;
+    --mw-sys-color-state-done-outline:         #185fa5;
+
+    /* Link */
+    --mw-sys-color-link:                       #f04b6f;
+
+    /* Accent text (orange-ish highlights — chat sender, version tags) */
+    --mw-sys-color-accent-text:                #FFA810;
+
+    /* Pure */
+    --mw-sys-color-white:                      #ffffff;
+    --mw-sys-color-black:                      #000000;
+
+    /* Shadow & scrim (MD3: a single shadow/scrim color; explicit
+       overlay tokens for the alphas used at call sites) */
+    --mw-sys-color-shadow:                     #000000;
+    --mw-sys-color-scrim:                      #000000;
+    --mw-sys-color-shadow-soft:                rgba(0, 0, 0, 0.4);
+    --mw-sys-color-scrim-light:                rgba(0, 0, 0, 0.15);
+    --mw-sys-color-scrim-medium:               rgba(0, 0, 0, 0.5);
+    --mw-sys-color-scrim-heavy:                rgba(0, 0, 0, 0.85);
+    --mw-sys-color-scrim-hover:                rgba(0, 0, 0, 0.03);
+    --mw-sys-color-overlay-light:              rgba(255, 255, 255, 0.3);
 
     /* Typography */
     --mw-font-sans: 'Inter-Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -67,8 +154,8 @@ html {
    shadows the token values on `body { … }` (see Phase 12), which is why
    these `var()` reads resolve to the theme-tinted surface and text. */
 body {
-    background: var(--mw-bg-page);
-    color: var(--mw-text-body);
+    background: var(--mw-sys-color-background);
+    color: var(--mw-sys-color-on-background);
     font-family: var(--mw-font-sans);
     margin: 0;
 }
@@ -78,12 +165,12 @@ body {
    =========================================================== */
 
 #base-header {
-    background: var(--mw-bg-elevated);
+    background: var(--mw-sys-color-surface-container-low);
     padding: 14px 22px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 2px solid var(--mw-accent-primary);
+    border-bottom: 2px solid var(--mw-sys-color-primary);
     position: relative;
     z-index: 100;
 }
@@ -114,7 +201,7 @@ body {
 /* Nav items (top-level links and menu triggers) */
 .nav-item {
     font-size: 15px;
-    color: var(--mw-text-body);
+    color: var(--mw-sys-color-on-background);
     text-decoration: none;
     font-weight: 500;
     letter-spacing: 0.3px;
@@ -128,11 +215,11 @@ body {
 }
 
 .nav-item:hover {
-    color: var(--mw-accent-secondary);
+    color: var(--mw-sys-color-secondary);
 }
 
 .nav-item.active {
-    color: var(--mw-accent-primary);
+    color: var(--mw-sys-color-primary);
 }
 
 /* Dropdown trigger gets a small caret */
@@ -157,8 +244,8 @@ body {
     top: 100%;
     left: 0;
     margin-top: 6px;
-    background: var(--mw-bg-elevated);
-    border: 1px solid var(--mw-border-strong);
+    background: var(--mw-sys-color-surface-container-low);
+    border: 1px solid var(--mw-sys-color-outline);
     border-radius: var(--mw-radius-lg);
     padding: 6px 0;
     min-width: 200px;
@@ -181,15 +268,15 @@ body {
 .nav-menu a {
     display: block;
     padding: 8px 16px;
-    color: var(--mw-text-body);
+    color: var(--mw-sys-color-on-background);
     text-decoration: none;
     font-size: 14px;
     white-space: nowrap;
 }
 
 .nav-menu a:hover {
-    background: var(--mw-bg-card);
-    color: var(--mw-accent-secondary);
+    background: var(--mw-sys-color-surface-container);
+    color: var(--mw-sys-color-secondary);
 }
 
 /* Show menu when the wrapper is hovered (covers trigger, menu, and bridge).
@@ -212,7 +299,7 @@ body {
     width: 36px;
     height: 36px;
     border-radius: var(--mw-radius-full);
-    background: var(--mw-accent-secondary-dim);
+    background: var(--mw-sys-color-secondary-container);
     border: 2px solid transparent;
     padding: 2px;
     box-sizing: content-box;
@@ -222,19 +309,19 @@ body {
 
 .nav-avatar:hover img,
 .nav-avatar.active img {
-    border-color: var(--mw-accent-secondary);
+    border-color: var(--mw-sys-color-secondary);
 }
 
 /* Pink stripe under the header (decorative) */
 .mw-stripe {
     height: 6px;
-    background: var(--mw-accent-primary);
+    background: var(--mw-sys-color-primary);
     background-image: repeating-linear-gradient(
         90deg,
-        var(--mw-accent-primary) 0,
-        var(--mw-accent-primary) 14px,
-        var(--mw-accent-primary-darker) 14px,
-        var(--mw-accent-primary-darker) 28px
+        var(--mw-sys-color-primary) 0,
+        var(--mw-sys-color-primary) 14px,
+        var(--mw-sys-color-primary-fixed) 14px,
+        var(--mw-sys-color-primary-fixed) 28px
     );
 }
 
@@ -249,8 +336,8 @@ body {
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--mw-bg-elevated);
-    border-bottom: 2px solid var(--mw-accent-primary);
+    background: var(--mw-sys-color-surface-container-low);
+    border-bottom: 2px solid var(--mw-sys-color-primary);
     padding: 8px 0;
     z-index: 1000;
 }
@@ -258,10 +345,10 @@ body {
 #base-header-mobile-menu a {
     display: block;
     padding: 12px 22px;
-    color: var(--mw-text-body);
+    color: var(--mw-sys-color-on-background);
     text-decoration: none;
     font-size: 15px;
-    border-bottom: 1px solid var(--mw-border-subtle);
+    border-bottom: 1px solid var(--mw-sys-color-outline-variant);
 }
 
 #base-header-mobile-menu a:last-child {
@@ -295,14 +382,14 @@ body {
    =========================================================== */
 
 .mw-breadcrumb {
-    background: var(--mw-bg-deep);
+    background: var(--mw-sys-color-surface-dim);
     padding: 11px 22px;
     display: flex;
     align-items: center;
     gap: var(--mw-space-2);
     font-family: var(--mw-font-mono);
     font-size: 12.5px;
-    border-bottom: 1px solid var(--mw-border-subtle);
+    border-bottom: 1px solid var(--mw-sys-color-outline-variant);
     flex-wrap: wrap;
 }
 
@@ -322,16 +409,16 @@ body {
 }
 
 .mw-breadcrumb-item a {
-    color: var(--mw-text-muted);
+    color: var(--mw-sys-color-on-surface-variant);
     text-decoration: none;
 }
 
 .mw-breadcrumb-item a:hover {
-    color: var(--mw-accent-secondary);
+    color: var(--mw-sys-color-secondary);
 }
 
 .mw-breadcrumb-current {
-    color: var(--mw-accent-secondary);
+    color: var(--mw-sys-color-secondary);
     font-weight: 500;
 }
 
@@ -341,7 +428,7 @@ body {
 }
 
 .mw-breadcrumb-sep {
-    color: var(--mw-text-faint);
+    color: var(--mw-sys-color-on-surface-faint);
     font-size: 10px;
 }
 
@@ -349,11 +436,11 @@ body {
     margin-left: auto;
     font-family: var(--mw-font-sans);
     font-size: 11.5px;
-    color: var(--mw-text-dim);
+    color: var(--mw-sys-color-on-surface-muted);
 }
 
 .mw-breadcrumb-context strong {
-    color: var(--mw-accent-primary);
+    color: var(--mw-sys-color-primary);
     font-weight: 500;
 }
 
@@ -367,7 +454,7 @@ body {
         margin-left: 0;
         margin-top: 4px;
         padding-top: 4px;
-        border-top: 1px solid var(--mw-border-subtle);
+        border-top: 1px solid var(--mw-sys-color-outline-variant);
     }
 }
 

@@ -2,40 +2,41 @@
    warm gold secondary; bright-green / amber / teal status pills. */
 body {
     /* Surface ramp */
-    --mw-bg-page:       #0a140c;
-    --mw-bg-elevated:   #122214;
-    --mw-bg-card:       #1c3220;
-    --mw-bg-deep:       #0d1810;
-    --mw-bg-input:      #142818;
+    --mw-sys-color-background:       #0a140c;
+    --mw-sys-color-surface:       #0a140c;
+    --mw-sys-color-surface-container-low:   #122214;
+    --mw-sys-color-surface-container:       #1c3220;
+    --mw-sys-color-surface-dim:       #0d1810;
+    --mw-sys-color-surface-variant:      #142818;
 
     /* Borders */
-    --mw-border-subtle: #1c3220;
-    --mw-border-strong: #28442e;
-    --mw-border-faint:  #305238;
+    --mw-sys-color-outline-variant: #1c3220;
+    --mw-sys-color-outline: #28442e;
+    --mw-sys-color-surface-bright:  #305238;
 
     /* Text ramp */
-    --mw-text-primary:   #eafde8;
-    --mw-text-body:      #d2e6d4;
-    --mw-text-secondary: #b0c8b4;
-    --mw-text-muted:     #7a9682;
-    --mw-text-dim:       #506858;
-    --mw-text-faint:     #36483c;
+    --mw-sys-color-on-surface:   #eafde8;
+    --mw-sys-color-on-background:      #d2e6d4;
+    --mw-sys-color-accent-text: #b0c8b4;
+    --mw-sys-color-on-surface-variant:     #7a9682;
+    --mw-sys-color-on-surface-muted:       #506858;
+    --mw-sys-color-on-surface-faint:     #36483c;
 
     /* Brand accents */
-    --mw-accent-primary:        #2ec070;
-    --mw-accent-primary-dark:   #1f9858;
-    --mw-accent-primary-darker: #157242;
-    --mw-accent-secondary:      #ffd062;
-    --mw-accent-secondary-dim:  #d4b25a;
+    --mw-sys-color-primary:        #2ec070;
+    --mw-sys-color-primary-container:   #1f9858;
+    --mw-sys-color-primary-fixed: #157242;
+    --mw-sys-color-secondary:      #ffd062;
+    --mw-sys-color-secondary-container:  #d4b25a;
 
     /* Status pills */
-    --mw-status-running:        #6ae060;
-    --mw-status-running-bg:     #0e2c10;
-    --mw-status-running-border: #2c5c28;
-    --mw-status-paused:         #f8b048;
-    --mw-status-paused-bg:      #2e1e08;
-    --mw-status-paused-border:  #563818;
-    --mw-status-done:           #58c0b0;
-    --mw-status-done-bg:        #0c2c28;
-    --mw-status-done-border:    #205c54;
+    --mw-sys-color-state-running:        #6ae060;
+    --mw-sys-color-state-running-container:     #0e2c10;
+    --mw-sys-color-state-running-outline: #2c5c28;
+    --mw-sys-color-state-paused:         #f8b048;
+    --mw-sys-color-state-paused-container:      #2e1e08;
+    --mw-sys-color-state-paused-outline:  #563818;
+    --mw-sys-color-state-done:           #58c0b0;
+    --mw-sys-color-state-done-container:        #0c2c28;
+    --mw-sys-color-state-done-outline:    #205c54;
 }
