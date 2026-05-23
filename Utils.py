@@ -237,20 +237,6 @@ def game_names() -> typing.List[str]:
     """Get a list of only the game names that we're using"""
     return _worlds_to_load
 
-def add_bundled_worlds(slugs: typing.Iterable[str]) -> typing.List[str]:
-    """Register bundled monorepo worlds (no pip distribution) for loading."""
-    queued: list[str] = []
-    for slug in slugs:
-        target = f"worlds.{slug}"
-        if target in _worlds_to_load:
-            continue
-        if importlib.util.find_spec(target) is None:
-            update_logger.warning(f"add_bundled_worlds: {target} is not importable, skipping")
-            continue
-        _worlds_to_load.append(target)
-        queued.append(slug)
-    return queued
-
 def get_available_worlds() -> typing.List[str]:
     """Get a list of all of the available worlds"""
     from mwgg_igdb import GameIndex
