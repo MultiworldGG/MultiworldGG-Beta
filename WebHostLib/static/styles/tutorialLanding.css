@@ -6,7 +6,7 @@
 }
 
 #tutorial-landing h1{
-    font-size: 60px;
+    font-size: 32px;
     cursor: unset;
 }
 
@@ -14,7 +14,7 @@
     color: var(--mw-sys-color-tertiary-bright);
     margin-bottom: 2px;
     margin-top: 33px;
-    font-size: 44px;
+    font-size: 24px;
 }
 
 #tutorial-landing a{
@@ -29,11 +29,11 @@
 #tutorial-landing p{
     line-height: 25px;
     margin-bottom: 7px;
-    font-size: 17px;
+    font-size: 16px;
 }
 
 #tutorial-landing ul{
-    font-size: 17px;
+    font-size: 16px;
     margin-top: 0;
     margin-bottom: 26px;
 }

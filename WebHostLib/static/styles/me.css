@@ -23,14 +23,14 @@
 }
 
 .mw-me-header h1 {
-    font-size: 22px;
+    font-size: 31px;
     margin: 0 0 6px;
     color: var(--mw-sys-color-on-surface);
     font-weight: 500;
 }
 
 .mw-me-subtitle {
-    font-size: 13px;
+    font-size: 18px;
     color: var(--mw-sys-color-on-surface-variant);
     margin: 0;
     display: flex;
@@ -40,7 +40,7 @@
 }
 
 .mw-me-subtitle .mdi {
-    font-size: 14px;
+    font-size: 19.5px;
     color: var(--mw-sys-color-on-surface-muted);
 }
 
@@ -65,7 +65,7 @@
     background: var(--mw-sys-color-primary);
     color: var(--mw-sys-color-white);
     border-radius: var(--mw-radius-md);
-    font-size: 13px;
+    font-size: 18px;
     font-weight: 500;
     text-decoration: none;
     display: inline-flex;
@@ -89,7 +89,7 @@
 
 .mw-me-subnav a {
     padding: 8px 14px;
-    font-size: 13px;
+    font-size: 18px;
     color: var(--mw-sys-color-on-surface-variant);
     text-decoration: none;
     border-bottom: 2px solid transparent;
@@ -122,7 +122,7 @@
 }
 
 .mw-stat-label {
-    font-size: 10.5px;
+    font-size: 14.5px;
     color: var(--mw-sys-color-on-surface-muted);
     text-transform: uppercase;
     letter-spacing: 0.6px;
@@ -131,7 +131,7 @@
 }
 
 .mw-stat-num {
-    font-size: 24px;
+    font-size: 33.5px;
     color: var(--mw-sys-color-on-surface);
     font-weight: 500;
     margin: 0;
@@ -139,7 +139,7 @@
 }
 
 .mw-stat-sub {
-    font-size: 11px;
+    font-size: 15.5px;
     color: var(--mw-sys-color-on-surface-variant);
     margin: 4px 0 0;
 }
@@ -157,14 +157,14 @@
 }
 
 .mw-me-section-head h2 {
-    font-size: 14px;
+    font-size: 19.5px;
     color: var(--mw-sys-color-secondary);
     margin: 0;
     font-weight: 500;
 }
 
 .mw-me-section-head a {
-    font-size: 12px;
+    font-size: 17px;
     color: var(--mw-sys-color-on-surface-variant);
     text-decoration: none;
 }
@@ -211,19 +211,19 @@
 
 .mw-card-id {
     font-family: var(--mw-font-mono);
-    font-size: 12px;
+    font-size: 17px;
     color: var(--mw-sys-color-on-surface);
     font-weight: 500;
 }
 
 .mw-card-time {
     margin-left: auto;
-    font-size: 11.5px;
+    font-size: 16px;
     color: var(--mw-sys-color-on-surface-muted);
 }
 
 .mw-card-games {
-    font-size: 12.5px;
+    font-size: 17.5px;
     color: var(--mw-sys-color-accent-text);
     margin: 0;
     overflow: hidden;
@@ -232,7 +232,7 @@
 }
 
 .mw-card-meta {
-    font-size: 11.5px;
+    font-size: 16px;
     color: var(--mw-sys-color-on-surface-muted);
     margin: 3px 0 0;
 }
@@ -243,7 +243,7 @@
     color: var(--mw-sys-color-secondary);
     border: 1px solid var(--mw-sys-color-on-surface-faint);
     border-radius: var(--mw-radius-md);
-    font-size: 12px;
+    font-size: 17px;
     white-space: nowrap;
     display: inline-flex;
     align-items: center;
@@ -261,13 +261,13 @@
     gap: 4px;
     padding: 2px 8px;
     border-radius: var(--mw-radius-full);
-    font-size: 10.5px;
+    font-size: 14.5px;
     font-weight: 500;
     letter-spacing: 0.3px;
 }
 
 .mw-pill .mdi {
-    font-size: 11px;
+    font-size: 15.5px;
 }
 
 .mw-pill-running { background: var(--mw-sys-color-state-running-container); color: var(--mw-sys-color-state-running); border: 1px solid var(--mw-sys-color-state-running-outline); }
@@ -278,7 +278,7 @@
 /* Empty list (used inside the full-table sub-pages) */
 .mw-empty-list {
     color: var(--mw-sys-color-on-surface-variant);
-    font-size: 13px;
+    font-size: 18px;
     padding: 24px;
     text-align: center;
     background: var(--mw-sys-color-surface-container-low);
@@ -317,14 +317,14 @@
 }
 
 .mw-me-empty h1 {
-    font-size: 24px;
+    font-size: 33.5px;
     margin: 0 0 6px;
     color: var(--mw-sys-color-on-surface);
     font-weight: 500;
 }
 
 .mw-empty-lead {
-    font-size: 14px;
+    font-size: 19.5px;
     color: var(--mw-sys-color-on-surface-variant);
     margin: 0 auto 28px;
     max-width: 420px;
@@ -373,7 +373,7 @@
 }
 
 .mw-empty-choice-icon .mdi {
-    font-size: 20px;
+    font-size: 28px;
     color: var(--mw-sys-color-secondary);
 }
 
@@ -382,21 +382,21 @@
 }
 
 .mw-empty-choice h3 {
-    font-size: 14.5px;
+    font-size: 20.5px;
     margin: 0 0 4px;
     color: var(--mw-sys-color-on-surface);
     font-weight: 500;
 }
 
 .mw-empty-choice p {
-    font-size: 12.5px;
+    font-size: 17.5px;
     color: var(--mw-sys-color-on-surface-variant);
     margin: 0 0 14px;
     line-height: 1.55;
 }
 
 .mw-empty-choice-cta {
-    font-size: 12px;
+    font-size: 17px;
     color: var(--mw-sys-color-secondary);
     margin-top: auto;
     display: inline-flex;
@@ -412,7 +412,7 @@
 .mw-empty-tertiary {
     text-align: center;
     margin-top: 22px;
-    font-size: 12.5px;
+    font-size: 17.5px;
     color: var(--mw-sys-color-on-surface-muted);
 }
 
@@ -430,7 +430,7 @@
     background: var(--mw-sys-color-surface-dim);
     border: 1px solid var(--mw-sys-color-outline-variant);
     border-radius: var(--mw-radius-lg);
-    font-size: 11.5px;
+    font-size: 16px;
     color: var(--mw-sys-color-on-surface-variant);
     line-height: 1.6;
     text-align: left;
@@ -440,7 +440,7 @@
 }
 
 .mw-empty-explainer .mdi {
-    font-size: 14px;
+    font-size: 19.5px;
     color: var(--mw-sys-color-secondary);
     flex-shrink: 0;
     margin-top: 2px;
@@ -510,18 +510,18 @@
 }
 
 .mw-modal-close .mdi {
-    font-size: 18px;
+    font-size: 25px;
 }
 
 .mw-modal-panel h2 {
-    font-size: 18px;
+    font-size: 25px;
     margin: 0 0 8px;
     color: var(--mw-sys-color-on-surface);
     font-weight: 500;
 }
 
 .mw-modal-lead {
-    font-size: 13px;
+    font-size: 18px;
     color: var(--mw-sys-color-on-surface-variant);
     margin: 0 0 20px;
     line-height: 1.55;
@@ -547,7 +547,7 @@
 .mw-modal-keybox label,
 .mw-modal-panel form label {
     display: block;
-    font-size: 11px;
+    font-size: 15.5px;
     color: var(--mw-sys-color-on-surface-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -568,7 +568,7 @@
     padding: 8px 12px;
     color: var(--mw-sys-color-secondary);
     font-family: var(--mw-font-mono);
-    font-size: 12px;
+    font-size: 17px;
     width: 100%;
 }
 
@@ -586,7 +586,7 @@
     padding: 8px 14px;
     border-radius: var(--mw-radius-md);
     cursor: pointer;
-    font-size: 13px;
+    font-size: 18px;
     font-weight: 500;
     display: inline-flex;
     align-items: center;
@@ -611,7 +611,7 @@
     background: var(--mw-sys-color-surface-dim);
     border: 1px solid var(--mw-sys-color-state-paused-outline);
     border-radius: var(--mw-radius-md);
-    font-size: 11.5px;
+    font-size: 16px;
     color: var(--mw-sys-color-on-surface-variant);
     line-height: 1.5;
     display: flex;
@@ -621,7 +621,7 @@
 
 .mw-modal-warning .mdi {
     color: var(--mw-sys-color-state-paused);
-    font-size: 14px;
+    font-size: 19.5px;
     flex-shrink: 0;
     margin-top: 1px;
 }
@@ -632,14 +632,14 @@
     background: var(--mw-sys-color-surface-dim);
     border: 1px solid var(--mw-sys-color-primary-container);
     border-radius: var(--mw-radius-md);
-    font-size: 12px;
+    font-size: 17px;
     color: var(--mw-sys-color-secondary);
 }
 
 /* Passkey modal: inline status + enrolled-passkey listing */
 .mw-modal-status {
     margin: 8px 0 0;
-    font-size: 12px;
+    font-size: 17px;
     color: var(--mw-sys-color-on-surface-variant);
     min-height: 1.2em;
 }
@@ -663,7 +663,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 8px 12px;
-    font-size: 12px;
+    font-size: 17px;
     border-bottom: 1px solid var(--mw-sys-color-outline-variant);
 }
 
@@ -688,7 +688,7 @@
     border: 1px solid var(--mw-sys-color-outline);
     border-radius: var(--mw-radius-sm);
     padding: 3px 8px;
-    font-size: 11px;
+    font-size: 15.5px;
     cursor: pointer;
 }
 
@@ -718,7 +718,7 @@
     border-top: none;
     border-bottom-left-radius: var(--mw-radius-lg);
     border-bottom-right-radius: var(--mw-radius-lg);
-    font-size: 12px;
+    font-size: 17px;
     color: var(--mw-sys-color-on-surface-variant);
     text-decoration: none;
 }

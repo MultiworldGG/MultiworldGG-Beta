@@ -16,8 +16,9 @@
 #tracker-header-bar {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: flex-start;
-    align-content: center;
+    align-items: center;
     line-height: 20px;
     gap: 0.5rem;
     margin-bottom: 1rem;
@@ -97,7 +98,10 @@
     border: 1px solid var(--mw-sys-color-tertiary-outline);
     border-radius: 3px;
     padding: 3px;
-    width: 200px;
+    width: 240px;
+    max-width: 100%;
+    box-sizing: border-box;
+    flex: 0 1 240px;
     background-color: var(--mw-sys-color-tertiary-surface-low);
     color: var(--mw-sys-color-white);
 }

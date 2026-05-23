@@ -9,7 +9,7 @@
     border-radius: 8px;
     padding: 25px 30px 30px;
     font-family: Inter-Light, sans-serif;
-    font-size: 19px;
+    font-size: 16px;
 }
 
 .markdown img{
@@ -24,7 +24,7 @@
 .markdown a{}
 
 .markdown h1, .markdown details summary.h1{
-    font-size: 52px;
+    font-size: 32px;
     font-weight: normal;
     font-family: Inter-Regular, sans-serif;
     width: 100%;
@@ -32,7 +32,7 @@
 }
 
 .markdown h2, .markdown details summary.h2{
-    font-size: 30px;
+    font-size: 24px;
     font-weight: normal;
     font-family: Inter-Light, sans-serif;
     width: 100%;
@@ -42,7 +42,7 @@
 }
 
 .markdown h3, .markdown details summary.h3{
-    font-size: 26px;
+    font-size: 20px;
     font-family: Inter-Regular, sans-serif;
     text-transform: none;
     text-align: left;
@@ -53,20 +53,20 @@
 .markdown h4, .markdown details summary.h4{
     font-family: Inter-Regular, sans-serif;
     text-transform: none;
-    font-size: 24px;
+    font-size: 18px;
     margin-bottom: 24px;
 }
 
 .markdown h5, .markdown details summary.h5{
     font-family: Inter-Regular, sans-serif;
     text-transform: none;
-    font-size: 20px;
+    font-size: 17px;
 }
 
 .markdown h6, .markdown details summary.h6{
     font-family: Inter-Regular, sans-serif;
     text-transform: none;
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .markdown h4, .markdown h5, .markdown h6{
@@ -115,7 +115,7 @@
     text-align: left;
     padding: 10px;
     border: 1px solid var(--mw-sys-color-white);
-    font-size: 20px;
+    font-size: 16px;
     font-family: Inter-Regular, sans-serif;
 }
 

@@ -13,7 +13,7 @@
 }
 
 .mw-hub h1 {
-    font-size: 32px;
+    font-size: 45px;
     margin: 0 0 8px;
     color: var(--mw-sys-color-on-surface);
     font-weight: 500;
@@ -23,7 +23,7 @@
 .mw-hub-lead {
     text-align: center;
     color: var(--mw-sys-color-on-surface-variant);
-    font-size: 15px;
+    font-size: 21px;
     margin: 0 auto 36px;
     max-width: 520px;
 }
@@ -73,7 +73,7 @@
 }
 
 .mw-hub-icon .mdi {
-    font-size: 24px;
+    font-size: 33.5px;
     color: var(--mw-sys-color-secondary);
 }
 
@@ -82,14 +82,14 @@
 }
 
 .mw-hub-card h3 {
-    font-size: 17px;
+    font-size: 24px;
     margin: 0 0 6px;
     color: var(--mw-sys-color-on-surface);
     font-weight: 500;
 }
 
 .mw-hub-card p {
-    font-size: 13.5px;
+    font-size: 19px;
     color: var(--mw-sys-color-on-surface-variant);
     margin: 0;
     line-height: 1.5;
@@ -97,6 +97,6 @@
 
 @media (max-width: 600px) {
     .mw-hub { padding: 24px 14px; }
-    .mw-hub h1 { font-size: 24px; }
+    .mw-hub h1 { font-size: 33.5px; }
     .mw-hub-grid { grid-template-columns: 1fr; }
 }
