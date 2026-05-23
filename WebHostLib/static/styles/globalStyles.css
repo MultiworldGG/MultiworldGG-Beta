@@ -45,7 +45,7 @@
 
 html {
   font-family: Inter-ExtraLight, sans-serif;
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: var(--mw-sys-color-black);
 }
 
@@ -102,16 +102,16 @@ h6 {
 }
 
 h1 {
-  font-size: 3rem;
-}
-h2 {
   font-size: 2rem;
 }
-h3 {
+h2 {
   font-size: 1.5rem;
 }
-h4 {
+h3 {
   font-size: 1.25rem;
+}
+h4 {
+  font-size: 1.125rem;
   margin-bottom: 0.5rem;
 }
 h5,
@@ -334,6 +334,6 @@ input[type="range"]:focus::-ms-fill-upper {
 
 @media (max-width: 767px) {
   h1 {
-    font-size: 2rem;
+    font-size: 1.5rem;
   }
 }
