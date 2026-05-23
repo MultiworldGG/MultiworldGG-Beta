@@ -103,6 +103,9 @@ app.config["CACHE_KEY_PREFIX"] = "multiworld_"
 app.config["HOST_ADDRESS"] = ""
 app.config["ASSET_RIGHTS"] = False
 app.config["MONITORING_ADMIN_TOKEN"] = None  # Admin token for monitoring API endpoints
+# Canonical public host (no scheme, no trailing slash) used to render
+# shareable URLs like the /r/<short> room link.
+app.config["SHARE_BASE_HOST"] = ""
 
 # Profile-picture uploader (see WebHostLib/api/avatar.py)
 app.config["AVATAR_UPLOAD_FOLDER"] = os.path.abspath(AVATAR_UPLOAD_FOLDER)

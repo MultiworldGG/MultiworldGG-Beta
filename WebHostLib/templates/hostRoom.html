@@ -33,12 +33,13 @@
     <div id="host-room">
       <span id="host-room-info">
         {% if room.short_id %}
+        {% set share_host = config['SHARE_BASE_HOST'] or request.host %}
         <div class="share-row" role="region" aria-label="Shareable room URL">
             <span class="share-row-label">Share:</span>
-            <span class="share-row-url" id="share-url-text">{{ request.host }}/r/{{ room.short_id }}</span>
+            <span class="share-row-url" id="share-url-text">{{ share_host }}/r/{{ room.short_id }}</span>
             <button type="button"
                     class="share-row-copy-btn"
-                    data-share-url="{{ request.scheme }}://{{ request.host }}/r/{{ room.short_id }}"
+                    data-share-url="{{ request.scheme }}://{{ share_host }}/r/{{ room.short_id }}"
                     aria-label="Copy share URL to clipboard">
                 <span class="share-row-copy-icon" aria-hidden="true">📋</span>
                 <span class="share-row-copy-label">Copy</span>

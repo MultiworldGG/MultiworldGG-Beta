@@ -54,6 +54,12 @@ _VALID_MODES = ("co_owner", "transfer")
 # Lookup helpers
 # ---------------------------------------------------------------------------
 
+def _absolute_url(path: str) -> str:
+    """Build a shareable absolute URL for ``path`` (which already starts with ``/``)."""
+    base_host = app.config.get("SHARE_BASE_HOST") or request.host
+    return f"{request.scheme}://{base_host}{path}"
+
+
 def _get_target(kind: str, target_id: UUID):
     if kind == "room":
         return Room.get(id=target_id)
@@ -107,7 +113,7 @@ def _create_invite(kind: str, target_id: UUID, mode: str):
     )
     commit()
     return jsonify({
-        "url": url_for("accept_invite", token=invite.token, _external=True),
+        "url": _absolute_url(url_for("accept_invite", token=invite.token)),
         "expires_at": invite.expires_at.isoformat() + "Z",
         "mode": mode,
     })
