@@ -14,6 +14,7 @@ import tempfile
 import contextlib
 import errno
 import importlib.metadata
+import importlib.util
 
 logger = logging.getLogger("Update")
 
@@ -29,9 +30,13 @@ from APContainer import APWorldContainer
 
 # mwgg_igdb package source — orphan branch on the Index repo
 # See MultiworldGG-Index/scripts/build_variants.py for variant definitions.
-# TODO: Fix this, it's overriding every time the module is imported
-MWGG_IGDB_VARIANT = "sixteen"  # canonical default
+DEFAULT_MWGG_IGDB_VARIANT = "sixteen"  # ultimate fallback when nothing is installed
+_VARIANTS = ("nr", "ao", "twelve", "sixteen")
+_EXPLICIT_VARIANT: Optional[str] = None  # set via set_variant(); wins over detection
 MWGG_INDEX_REPO = "MultiworldGG/MultiworldGG-Index"
+# The three globals below mirror the currently *resolved* variant. _resolve_variant()
+# keeps them consistent; callers should treat them as read-only.
+MWGG_IGDB_VARIANT = DEFAULT_MWGG_IGDB_VARIANT
 MWGG_IGDB_BRANCH = f"game_index_{MWGG_IGDB_VARIANT}"
 MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
 MWGG_IGDB_UPGRADE_INTERVAL_SECONDS = 86400  # once-daily throttle for upgrade pulls
@@ -379,13 +384,46 @@ def _read_igdb_stamp() -> dict[str, object] | None:
         pass
     return None
 
+def _detect_installed_variant() -> Optional[str]:
+    """Return the variant currently installed locally, or None if undetectable.
+
+    Only trusts the stamp when `mwgg_igdb` is actually importable — a stale stamp
+    left behind by an uninstall must not be treated as authoritative.
+    """
+    if importlib.util.find_spec("mwgg_igdb") is None:
+        return None
+    igdb_stamp = _read_igdb_stamp()
+    if not igdb_stamp:
+        return None
+    variant = igdb_stamp.get("variant")
+    if isinstance(variant, str) and variant in _VARIANTS:
+        return variant
+    return None
+
+
+def _resolve_variant() -> str:
+    """Pick the variant to act on, refresh the derived globals, and return it.
+
+    Precedence: explicit `set_variant()` > detected install > default fallback.
+    """
+    global MWGG_IGDB_VARIANT, MWGG_IGDB_BRANCH, MWGG_IGDB_GIT_URL
+    if _EXPLICIT_VARIANT is not None:
+        variant = _EXPLICIT_VARIANT
+    else:
+        variant = _detect_installed_variant() or DEFAULT_MWGG_IGDB_VARIANT
+    MWGG_IGDB_VARIANT = variant
+    MWGG_IGDB_BRANCH = f"game_index_{variant}"
+    MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
+    return variant
+
+
 def _igdb_stamp_is_recent(igdb_stamp: dict[str, object]) -> bool:
     try:
         last = float(igdb_stamp["last_upgrade"])
         variant = str(igdb_stamp["variant"])
     except (KeyError, TypeError, ValueError):
         return False
-    return variant == MWGG_IGDB_VARIANT and last >= time.time() - MWGG_IGDB_UPGRADE_INTERVAL_SECONDS
+    return variant == _resolve_variant() and last >= time.time() - MWGG_IGDB_UPGRADE_INTERVAL_SECONDS
 
 
 def _igdb_upgraded_recently() -> bool:
@@ -459,6 +497,7 @@ def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
     """
     if os.environ.get("SKIP_ALL_INSTALLS"):
         return True
+    _resolve_variant()
     if upgrade and not force and _igdb_upgraded_recently():
         logger.debug(
             f"mwgg_igdb upgrade attempted within {MWGG_IGDB_UPGRADE_INTERVAL_SECONDS}s; skipping"
@@ -520,9 +559,6 @@ def _module_location_tag(url: str) -> Optional[str]:
     return parts[1]
 
 
-_VARIANTS = ("nr", "ao", "twelve", "sixteen")
-
-
 def _parse_variant_token(token: str) -> Optional[str]:
     """Return the variant name if `token` is `mwgg_igdb` or `mwgg_igdb_<variant>`, else None.
 
@@ -540,11 +576,14 @@ def _parse_variant_token(token: str) -> Optional[str]:
 
 
 def set_variant(variant: str) -> None:
-    """Switch the runtime mwgg_igdb variant; takes effect on next install_mwgg_igdb call."""
-    global MWGG_IGDB_VARIANT, MWGG_IGDB_BRANCH, MWGG_IGDB_GIT_URL
-    MWGG_IGDB_VARIANT = variant
-    MWGG_IGDB_BRANCH = f"game_index_{variant}"
-    MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
+    """Switch the runtime mwgg_igdb variant; takes effect on next install_mwgg_igdb call.
+
+    Sets the explicit-override sentinel so this choice wins over any detected
+    installed variant on subsequent _resolve_variant() calls.
+    """
+    global _EXPLICIT_VARIANT
+    _EXPLICIT_VARIANT = variant
+    _resolve_variant()
 
 
 def _world_slug(world: str) -> str:
