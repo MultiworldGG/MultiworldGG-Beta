@@ -11,7 +11,6 @@ import io
 import os
 import re
 import uuid
-from urllib.parse import urlparse, urlunparse
 from uuid import UUID
 
 from flask import abort, jsonify, request, send_from_directory
@@ -58,11 +57,14 @@ def _resolve_token() -> AvatarToken:
 
 
 def _avatar_base_url() -> str:
-    configured = (app.config.get("AVATAR_PUBLIC_BASE_URL") or "").rstrip("/")
-    if configured:
-        return configured
-    parsed = urlparse(request.host_url)
-    return urlunparse((parsed.scheme, parsed.netloc, "", "", "", "")).rstrip("/")
+    """Return the canonical public origin for avatar URLs (no trailing slash).
+
+    Mirrors `WebHostLib.sharing._absolute_url`: honour the configured
+    `SHARE_BASE_HOST` so the URL points at the public hostname rather than
+    Flask's internal bind (`127.0.0.1:8080` behind a reverse proxy).
+    """
+    base_host = app.config.get("SHARE_BASE_HOST") or request.host
+    return f"{request.scheme}://{base_host}"
 
 
 @api_endpoints.route("/avatar/token", methods=["POST"])

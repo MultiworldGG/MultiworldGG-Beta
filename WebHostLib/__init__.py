@@ -107,9 +107,10 @@ app.config["MONITORING_ADMIN_TOKEN"] = None  # Admin token for monitoring API en
 # shareable URLs like the /r/<short> room link.
 app.config["SHARE_BASE_HOST"] = ""
 
-# Profile-picture uploader (see WebHostLib/api/avatar.py)
+# Profile-picture uploader (see WebHostLib/api/avatar.py). The public URL
+# origin is taken from SHARE_BASE_HOST above, so one config knob covers
+# both surfaces.
 app.config["AVATAR_UPLOAD_FOLDER"] = os.path.abspath(AVATAR_UPLOAD_FOLDER)
-app.config["AVATAR_PUBLIC_BASE_URL"] = ""        # empty -> derive from request.host_url
 app.config["AVATAR_MAX_UPLOAD_BYTES"] = 5 * 1024 * 1024
 app.config["AVATAR_MAX_PIXELS"] = 4_000_000
 app.config["AVATAR_OUTPUT_DIM"] = 512

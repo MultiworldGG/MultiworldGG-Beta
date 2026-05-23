@@ -717,6 +717,23 @@ class CommonContext(InitContext):
             # Build new client features
             await game_client.build()
 
+            # Per-game contexts (tracker, manual, ...) override `make_gui()` to
+            # return a subclass whose `build()` registers custom tabs/screens
+            # via `manager.add_client_tab(...)`. On the takeover path the
+            # frontend's own MDApp.build() lifecycle is consumed by the
+            # launcher, so we explicitly instantiate the subclass and call
+            # `build()` ourselves to trigger those side effects. The launcher
+            # app's `build()` is idempotent for non-live instances (it returns
+            # the live root rather than rebuilding layouts), so this is safe
+            # for contexts that don't override make_gui.
+            try:
+                manager_cls = self.make_gui()
+                manager = manager_cls(self)
+                self.ui = manager
+                manager.build()
+            except Exception:
+                logger.exception("Post-takeover per-game UI setup failed")
+
             # The world's UI is now in front of the user. Signal the launcher.
             self._ready_callback()
 
