@@ -726,10 +726,15 @@ class CommonContext(InitContext):
             # app's `build()` is idempotent for non-live instances (it returns
             # the live root rather than rebuilding layouts), so this is safe
             # for contexts that don't override make_gui.
+            #
+            # The phantom `manager` exists solely to drive build() side effects;
+            # add_client_tab routes through _resolve_live_app() to the launcher.
+            # We must NOT reassign `self.ui = manager` — the phantom's layouts
+            # (top_appbar_layout, etc.) are intentionally not built, so making
+            # it the canonical UI would break on_connect / update_timer / etc.
             try:
                 manager_cls = self.make_gui()
                 manager = manager_cls(self)
-                self.ui = manager
                 manager.build()
             except Exception:
                 logger.exception("Post-takeover per-game UI setup failed")
