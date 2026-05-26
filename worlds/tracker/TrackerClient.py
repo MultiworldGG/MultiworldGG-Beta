@@ -65,6 +65,13 @@ def get_ut_color(color: str)->str:
         default: ClassVar[str] = StringProperty("")
         ut_status: ClassVar[str] = StringProperty("")
     if not hasattr(get_ut_color,"utTextColor"):
+        # Tracker.kv carries the <UTTextColor>: rule that fills in the actual
+        # hex codes. If we instantiate UTTextColor before the kv string is
+        # loaded, every StringProperty stays empty and every color tag in the
+        # tracker output renders as `[color=]...[/color]`. Load the kv first so
+        # the rule is registered with the kivy Builder before we construct it.
+        from worlds.tracker.gui import load_tracker_kv
+        load_tracker_kv()
         get_ut_color.utTextColor = UTTextColor()
     return str(getattr(get_ut_color.utTextColor,color,"DD00FF"))
 
@@ -406,14 +413,12 @@ class TrackerGameContext(CommonContext):
     def set_map_visible(self, visible: bool) -> None:
         """Toggle the Map Page tab on the live UI. Replaces the old
         manager.apply_property(show_map=...) + fbind pattern."""
-        # Only commit the state once the tab actually exists/is gone — otherwise
-        # a set_map_visible(True) before takeover would strand the flag without
-        # a tab, and the next call would early-return as a no-op.
-        if self.ui is None:
-            return
         if visible == self._show_map:
             return
-        live = self.ui._resolve_live_app() if hasattr(self.ui, "_resolve_live_app") else self.ui
+        from kivymd.app import MDApp
+        ui = MDApp.get_running_app()
+        if ui is None:
+            return  # no live UI yet — caller will retry once we're attached
         if visible:
             if self._map_tab_handle is not None:
                 self._show_map = True
@@ -424,11 +429,13 @@ class TrackerGameContext(CommonContext):
             except Exception:
                 traceback.print_exc()
                 return
-            self._map_tab_handle = live.add_client_tab("Map Page", self._map_content)
+            # Single-word lowercase to match the launcher's screen menu
+            # convention (see "tracker" tab in build_gui).
+            self._map_tab_handle = ui.add_client_tab("map", self._map_content)
             self._show_map = True
         else:
             if self._map_tab_handle is not None:
-                live.remove_client_tab(self._map_tab_handle)
+                ui.remove_client_tab(self._map_tab_handle)
                 self._map_tab_handle = None
                 self._map_content = None
             self._show_map = False
@@ -630,30 +637,49 @@ class TrackerGameContext(CommonContext):
             try:
                 from zipfile import is_zipfile
                 packRef = current_world.settings[self.tracker_world.external_pack_key]
-                if packRef == "":
+                if not packRef or str(packRef) in ("", ".") or not is_zipfile(packRef):
                     prompt_desc = getattr(current_world.settings[self.tracker_world.external_pack_key],"ut_dialog_name","Select Poptracker pack")
                     packRef = open_filename(prompt_desc, filetypes=[("Poptracker Pack", [".zip"])])
-                    current_world.settings[self.tracker_world.external_pack_key] = packRef
+                    current_world.settings[self.tracker_world.external_pack_key] = packRef or ""
                     current_world.settings._changed = True
                 if packRef:
                     if is_zipfile(packRef):
                         current_world.settings.update({self.tracker_world.external_pack_key: packRef})
                         current_world.settings._changed = True
+                        # Pack version skew is normal
+                        def _try_load_zip(label, path):
+                            try:
+                                return load_json_zip(packRef, path)
+                            except KeyError:
+                                logger.warning(f"Poptracker pack is missing {label} {path!r}; skipping.")
+                                return None
+                        def _try_load_pkg(label, path):
+                            try:
+                                return load_json(PACK_NAME, path)
+                            except (FileNotFoundError, KeyError):
+                                logger.warning(f"Apworld pack is missing {label} {path!r}; skipping.")
+                                return None
                         if self.tracker_world.map_page_folder:
                             PACK_NAME = current_world.__class__.__module__
                             for map_page in self.tracker_world.map_page_maps:
-                                self.maps += load_json(PACK_NAME, f"/{self.tracker_world.map_page_folder}/{map_page}")
+                                data = _try_load_pkg("map page", f"/{self.tracker_world.map_page_folder}/{map_page}")
+                                if data: self.maps += data
                             for loc_page in self.tracker_world.map_page_locations:
-                                self.locs += load_json(PACK_NAME, f"/{self.tracker_world.map_page_folder}/{loc_page}")
+                                data = _try_load_pkg("locations page", f"/{self.tracker_world.map_page_folder}/{loc_page}")
+                                if data: self.locs += data
                             for layout_page in self.tracker_world.map_page_layouts:
-                                self.layouts.append(load_json(PACK_NAME, f"/{self.tracker_world.map_page_folder}/{layout_page}"))
+                                data = _try_load_pkg("layout page", f"/{self.tracker_world.map_page_folder}/{layout_page}")
+                                if data: self.layouts.append(data)
                         else:
                             for map_page in self.tracker_world.map_page_maps:
-                                self.maps += load_json_zip(packRef, f"{map_page}")
+                                data = _try_load_zip("map page", f"{map_page}")
+                                if data: self.maps += data
                             for loc_page in self.tracker_world.map_page_locations:
-                                self.locs += load_json_zip(packRef, f"{loc_page}")
+                                data = _try_load_zip("locations page", f"{loc_page}")
+                                if data: self.locs += data
                             for layout_page in self.tracker_world.map_page_layouts:
-                                self.layouts.append(load_json_zip(packRef, f"{layout_page}"))
+                                data = _try_load_zip("layout page", f"{layout_page}")
+                                if data: self.layouts.append(data)
                     else:
                         current_world.settings.update({self.tracker_world.external_pack_key: ""}) #failed to find a pack, prompt next launch
                         current_world.settings._changed = True
@@ -871,23 +897,18 @@ class TrackerGameContext(CommonContext):
     def set_glitches_callback(self, func: Callable[[list[str]], bool] | None = None):
         self.glitches_callback = func
 
-    def build_gui(self, manager: "GameManager"):
-        """Public hook: register tracker tabs on the live launcher app.
+    def build_gui(self, app=None):
+        """Register tracker tabs on the live launcher app.
 
-        Downstream worlds (Manual et al.) override this, call super().build_gui(manager),
-        and then layer their own tabs/properties on the same `manager`. The manager
-        passed in is the live MultiMDApp instance — apply_property, fbind,
-        add_client_tab, remove_client_tab all work via kivy's EventDispatcher and
-        MultiMDApp's per-world hooks.
+        The builder passes the live app on launcher takeover. Standalone mode
+        can still resolve it from Kivy after the frontend exists.
         """
-        from worlds.tracker.gui import build_tracker_view, install_app_surface
+        if app is None:
+            from kivymd.app import MDApp
+            app = MDApp.get_running_app()
+        from worlds.tracker.gui import build_tracker_view, build_map_view, install_app_surface
 
-        # Resolve the live launcher app (the one whose screen_manager is on
-        # screen and that Kivy reports via App.get_running_app()). On a phantom
-        # MultiMDApp built post-takeover, _resolve_live_app() returns the
-        # launcher; on the launcher itself it returns self.
-        live_app = manager._resolve_live_app() if hasattr(manager, "_resolve_live_app") else manager
-        install_app_surface(self, live_app)
+        install_app_surface(self, app)
 
         try:
             tracker = build_tracker_view(self)
@@ -896,21 +917,23 @@ class TrackerGameContext(CommonContext):
             traceback.print_exc()
             return
 
-        self._tracker_tab_handle = manager.add_client_tab("Tracker Page", tracker)
+        # One-word lowercase screen name to match the launcher convention
+        # (settings / console / hint / launcher); `change_screen(item.lower())`
+        # would otherwise create a phantom duplicate screen on first menu click.
+        self._tracker_tab_handle = app.add_client_tab("tracker", tracker)
 
+        # Build the map widget eagerly (but don't show its tab yet). load_pack
+        # ends by calling load_map(), which needs `map_page_coords_func` wired
+        # to the real VisualTracker.load_coords — and load_pack runs before
+        # set_map_visible(True), so the lazy build there is too late.
+        # set_map_visible(True) only adds the tab; the widget already exists.
+        try:
+            self._map_content = build_map_view(self)
+        except Exception:
+            self.map_page_coords_func = lambda *args: {}
+            traceback.print_exc()
 
     def make_gui(self):
-        """Return the frontend App class.
-
-        Mirrors CommonContext.make_gui. Post-takeover, returns the live
-        frontend's own class (`type(self.ui)`) so downstream worlds that chain
-        `super().make_gui()` (e.g. Manual) get the class the launcher is
-        already running. We deliberately do not subclass it here — all of our
-        UI mutations happen on the live `ctx.ui` instance via build_gui().
-        """
-        ui = getattr(self, "ui", None)
-        if ui is not None:
-            return type(ui)
         return super().make_gui()
 
     async def server_auth(self, password_requested: bool = False):
@@ -1131,9 +1154,19 @@ class TrackerGameContext(CommonContext):
 
 
 def load_json(pack, path):
-    import pkgutil
+    """Read a JSON resource from inside an installed apworld package.
+
+    `path` is a forward-slash separated path relative to the package root;
+    `pack` is the dotted module name. Uses importlib.resources so both
+    folder-installed and zipimport-installed (``.apworld``) packages work
+    without the deprecated :mod:`pkgutil` API.
+    """
+    import importlib.resources
     import json
-    return json.loads(pkgutil.get_data(pack, path).decode('utf-8-sig'))
+    ref = importlib.resources.files(pack)
+    for part in path.lstrip("/").split("/"):
+        ref = ref.joinpath(part)
+    return json.loads(ref.read_bytes().decode("utf-8-sig"))
 
 
 def load_json_zip(pack, path):
@@ -1373,11 +1406,6 @@ async def main(args):
     if gui_enabled:
         if ctx._can_takeover_existing_ui():
             await ctx._takeover_existing_ui()
-            try:
-                if ctx.ui is not None:
-                    ctx.build_gui(ctx.ui)
-            except Exception:
-                logger.exception("Universal Tracker build_gui failed")
         else:
             # Fallback path: spin up a brand-new GUI (legacy standalone mode).
             ctx.run_gui()
@@ -1389,13 +1417,14 @@ async def main(args):
         # Tidy up the launcher's tab strip when the tracker exits — leaving
         # stale tabs behind would clutter the launcher if it keeps running.
         try:
-            if ctx.ui is not None:
-                live = ctx.ui._resolve_live_app() if hasattr(ctx.ui, "_resolve_live_app") else ctx.ui
+            from kivymd.app import MDApp
+            ui = MDApp.get_running_app()
+            if ui is not None:
                 if ctx._tracker_tab_handle is not None:
-                    live.remove_client_tab(ctx._tracker_tab_handle)
+                    ui.remove_client_tab(ctx._tracker_tab_handle)
                     ctx._tracker_tab_handle = None
                 if ctx._map_tab_handle is not None:
-                    live.remove_client_tab(ctx._map_tab_handle)
+                    ui.remove_client_tab(ctx._map_tab_handle)
                     ctx._map_tab_handle = None
         except Exception:
             logger.exception("Failed to clean up tracker tabs on shutdown")

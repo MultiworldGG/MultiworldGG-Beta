@@ -3,4 +3,5 @@ from enum import Enum
 class ClientState(Enum):
     INITIAL = "initial"
     GAME = "game"
-    TRANSITIONING = "transitioning" 
+    LEGACY_KVUI = "legacy_kvui"
+    TRANSITIONING = "transitioning"

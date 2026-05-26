@@ -2,10 +2,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Optional, Any, Dict, TYPE_CHECKING
 import asyncio
+import logging
+import os
 import weakref
 from ClientState import ClientState
 
 from frontend_protocol import resolve_frontend_class
+
+logger = logging.getLogger("Client")
 
 if TYPE_CHECKING:
     from CommonClient import CommonContext, InitContext
@@ -106,8 +110,14 @@ class GameClient(ClientBuilder):
             
             # Set up game-specific features
             await self._setup_game_features()
+
+            legacy_builder = LegacyKvuiClientBuilder(
+                self.ctx,
+                self._init_data.get("ui"),
+            )
+            legacy_result = await legacy_builder.build()
             
-            return {}
+            return {"legacy_kvui": legacy_result}
             
         except Exception as e:
             self._is_running = False
@@ -125,8 +135,103 @@ class GameClient(ClientBuilder):
     
     def can_transition_to(self, new_state: ClientState) -> bool:
         """Check if can transition to new state"""
-        return False  # Game clients don't transition to other states
-        #TODO: Figure out how to do this
+        return self._is_running and new_state == ClientState.LEGACY_KVUI
+
+
+class LegacyKvuiClientBuilder(ClientBuilder):
+    """Bridge legacy Kivy UI setup onto the already-running frontend.
+
+    This builder coordinates the legacy UI phase. It keeps CommonClient
+    from needing to know whether a world uses an explicit build_gui hook or
+    the old make_gui()/build() compatibility shape.
+    """
+
+    def __init__(self, ctx: 'CommonContext', app: Optional['FrontendProtocol'] = None):
+        super().__init__(ctx=ctx)
+        self.app = app
+        self.manager = None
+
+    async def build(self) -> Dict[str, Any]:
+        if os.environ.get("MWGG_FRONTEND", "gui") == "tui":
+            return {}
+
+        app = self.app or getattr(self.ctx, "ui", None)
+        if app is None:
+            return {}
+
+        self._is_running = True
+
+        try:
+            if self._build_explicit_gui(app):
+                return {"builder": "build_gui"}
+
+            manager_cls = self._legacy_manager_class(app)
+            if manager_cls is None:
+                return {}
+
+            build_legacy_kvui = getattr(app, "build_legacy_kvui", None)
+            if build_legacy_kvui is not None:
+                self.manager = build_legacy_kvui(self.ctx, manager_cls)
+            else:
+                build_for_live_app = getattr(manager_cls, "build_for_live_app", None)
+                if build_for_live_app is not None:
+                    self.manager = build_for_live_app(self.ctx, app)
+                else:
+                    self.manager = manager_cls(self.ctx)
+                    self.manager.build()
+
+            return {"builder": "legacy_kvui", "manager": self.manager}
+        except Exception:
+            logger.exception("Post-takeover per-game UI setup failed")
+            return {}
+
+    def _build_explicit_gui(self, app: 'FrontendProtocol') -> bool:
+        build_gui = getattr(self.ctx, "build_gui", None)
+        if build_gui is None:
+            return False
+
+        previous_state = getattr(self.ctx, "_state", None)
+        self.ctx._state = ClientState.LEGACY_KVUI
+        try:
+            build_gui(app)
+        finally:
+            if previous_state is not None:
+                self.ctx._state = previous_state
+        return True
+
+    def _legacy_manager_class(self, app: 'FrontendProtocol') -> Optional[type]:
+        try:
+            manager_cls = self.ctx.make_gui()
+        except Exception:
+            logger.exception("Failed to resolve legacy kvui manager")
+            return None
+
+        if not isinstance(manager_cls, type):
+            return None
+
+        frontend_cls = resolve_frontend_class()
+        if manager_cls is frontend_cls or manager_cls is type(app):
+            return None
+
+        if hasattr(manager_cls, "build_for_live_app"):
+            return manager_cls
+
+        try:
+            from kvui import GameManager
+        except Exception:
+            return None
+
+        if issubclass(manager_cls, GameManager):
+            return manager_cls
+
+        return None
+
+    async def cleanup(self) -> None:
+        self._is_running = False
+        await asyncio.sleep(0.1)
+
+    def can_transition_to(self, new_state: ClientState) -> bool:
+        return self._is_running and new_state == ClientState.GAME
 
 class Client():
     def __init__(self):

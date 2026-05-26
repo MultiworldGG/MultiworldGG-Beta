@@ -50,13 +50,18 @@ else:
     from mwgg_gui.overrides.markuptextfield import MarkupTextField as ResizableTextField
 
     from mwgg_gui.app import MultiMDApp as ThemedApp, MainScreenMgr as MDScreenManagerBase
+    # Legacy widget shapes preserved for world kv files that reference them
+    # by bare class name (Tracker.kv, Manual.kv, etc.). Importing them here
+    # registers them with the kivy Factory and keeps the original
+    # `from kvui import SelectableLabel` import path working.
+    from mwgg_gui.legacy import SelectableLabel, SelectableRecycleBoxLayout
     from NetUtils import KivyMarkupJSONtoTextParser as KivyJSONtoTextParser
     from kivymd.uix.scrollview import MDScrollView as ScrollBox
     from kivymd.uix.boxlayout import MDBoxLayout
-    from kivy.event import EventDispatcher
     from kivy.properties import ObjectProperty, NumericProperty, StringProperty, BooleanProperty
     from kivy.metrics import dp
     from kivy.uix.widget import Widget
+    from kivy.app import App
     from kivymd.uix.appbar import MDFabBottomAppBarButton as MDNavigationItemBase
     from kivymd.uix.screen import MDScreen
     from kivymd.uix.gridlayout import MDGridLayout as MainLayout
@@ -72,26 +77,48 @@ else:
     from kivy.uix.image import AsyncImage as ApAsyncImage
     from kivymd.uix.tooltip import MDTooltipPlain as ToolTip
 
-    class GameManager(EventDispatcher):
+    class GameManager:
         logging_pairs: list = []
         base_title: str = ""
 
-        def __init__(self, ctx, **kwargs):
+        def __init__(self, ctx, app: App | None = None, **kwargs):
             self.ctx = ctx
-            super().__init__(**kwargs)
+            self._running_app = app
 
-        @property
-        def _frontend_app(self) -> ThemedApp:
-            app = getattr(ThemedApp, "_active_instance", None)
-            if app is None:
-                app = getattr(self.ctx, "ui", None)
-            if app is None or app is self:
-                raise RuntimeError("No active Kivy frontend is available for GameManager delegation.")
-            return app
+        def attach_live_app(self, app: App) -> None:
+            self._running_app = app
+
+        @classmethod
+        def build_for_live_app(cls, ctx, app: App):
+            from ClientState import ClientState
+
+            previous_state = getattr(ctx, "_state", None)
+            ctx._state = ClientState.LEGACY_KVUI
+            try:
+                manager = cls(ctx)
+                manager.attach_live_app(app)
+
+                root_layout = getattr(app, "root_layout", None) or app.root
+                manager.screen_manager = app.screen_manager
+                manager.container = root_layout
+                manager.root_layout = root_layout
+                manager.grid = app.main_layout
+
+                manager.build()
+                app._legacy_kvui_manager = manager
+                return manager
+            finally:
+                if previous_state is not None:
+                    ctx._state = previous_state
+
+        def _get_running_app(self):
+            if self._running_app is None:
+                self._running_app = App.get_running_app()
+            return self._running_app
 
         def __getattr__(self, name):
             try:
-                return getattr(self._frontend_app, name)
+                return getattr(self._get_running_app(), name)
             except RuntimeError as e:
                 raise AttributeError(name) from e
 
@@ -112,15 +139,15 @@ else:
 
         def build(self):
             '''Return the already-running frontend root instead of building a second MDApp.'''
-            return self._frontend_app.root
+            return self._get_running_app().root
 
         def add_client_tab(self, title: str, content: Widget, index: int = -1) -> MDNavigationItemBase:
             '''Stub function for client hook'''
-            return self.create_custom_screen(title, content, index)
+            return self._get_running_app().add_client_tab(title, content, index)
 
         def remove_client_tab(self, tab: MDNavigationItemBase) -> None:
             '''Stub function for client hook'''
-            self.remove_custom_screen(tab)
+            self._get_running_app().remove_client_tab(tab)
 
         def create_custom_screen(self, title: str, content: Widget, index: int = -1) -> MDNavigationItemBase:
             """
@@ -134,17 +161,7 @@ else:
 
             :return: The new navigation item button.
             """
-            app = self._frontend_app
-            new_button = MDNavigationItemBase(text=title)
-            new_button.content = content
-            new_screen = CustomScreen(name=title)
-            new_screen.custom_layout.add_widget(content)
-            new_screen.bottom_appbar.add_widget(new_button)
-            new_button.bind(on_release=lambda *_: setattr(app.screen_manager, "current", title))
-            app.screen_manager.add_widget(new_screen, index=index)
-            return new_button
+            return self._get_running_app().create_custom_screen(title, content, index)
 
         def remove_custom_screen(self, button: MDNavigationItemBase):
-            app = self._frontend_app
-            screen = app.screen_manager.get_screen(button.text)
-            app.screen_manager.remove_widget(screen)
+            self._get_running_app().remove_custom_screen(button)

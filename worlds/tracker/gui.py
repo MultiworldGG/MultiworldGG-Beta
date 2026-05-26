@@ -83,11 +83,11 @@ def load_tracker_kv():
     if _kv_loaded:
         return
     from kivy.lang import Builder
-    import pkgutil
+    import importlib.resources
     from Utils import user_path
     from . import TrackerWorld
 
-    data = pkgutil.get_data(TrackerWorld.__module__, "Tracker.kv").decode()
+    data = importlib.resources.files(TrackerWorld.__module__).joinpath("Tracker.kv").read_bytes().decode()
     Builder.load_string(data)
     user_file = user_path("data", "user.kv")
     if os.path.exists(user_file):
@@ -117,7 +117,11 @@ def build_tracker_view(ctx):
     from worlds.tracker.TrackerClient import get_ut_color
 
     tracker_view = _TrackerView_cls()
-    tracker = _TrackerLayout(orientation="vertical")
+    # MDRelativeLayout (CustomLayout) parents children by pos/size. Force the
+    # tracker to fill the available area explicitly so it doesn't end up at
+    # 100x100 in the bottom-left corner.
+    tracker = _TrackerLayout(orientation="vertical", size_hint=(1, 1),
+                             pos_hint={"x": 0, "y": 0})
 
     tracker_header = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(36))
     tracker_divider = MDDivider(size_hint_y=None, height=dp(1))
@@ -196,9 +200,22 @@ def _ensure_widgets():
     from kvui import MDRecycleView, HoverBehavior
     from kivymd.uix.tooltip import MDTooltip
     from kivy.uix.widget import Widget
-    from kivy.properties import StringProperty, BooleanProperty, DictProperty, ColorProperty
-    from kivy.core.image import AsyncImage as ApAsyncImage
+    from kivy.properties import StringProperty, BooleanProperty, DictProperty, ColorProperty, ObjectProperty
+    # Import the kivy widget directly under a private name and re-export it as
+    # a dedicated tracker subclass. The Tracker.kv file has an `<ApAsyncImage>:`
+    # rule, and we don't want that rule to apply to every AsyncImage in the
+    # whole app — only to tracker widgets that subclass our local ApAsyncImage.
+    from kivy.uix.image import AsyncImage as _KivyAsyncImage
     from kvui import ToolTip
+    # SelectableLabel / SelectableRecycleBoxLayout live in mwgg_gui.legacy
+    # (importing them here registers them with the kivy Factory so
+    # Tracker.kv's `viewclass: 'SelectableLabel'` and
+    # `SelectableRecycleBoxLayout:` rules resolve).
+    from mwgg_gui.legacy import SelectableLabel, SelectableRecycleBoxLayout  # noqa: F401
+
+    class ApAsyncImage(_KivyAsyncImage):
+        pass
+
     from worlds.tracker import UT_VERSION
     from worlds.tracker.TrackerClient import get_ut_color
     from Utils import __version__, instance_name
@@ -235,6 +252,14 @@ def _ensure_widgets():
 
     class ApLocation(HoverBehavior, Widget, MDTooltip):
         locationDict = DictProperty()
+        # Upstream `kvui.HoverBehavior` (pre-kivymd migration) declared
+        # `border_point = ObjectProperty(None)` to cache the mouse position at
+        # the hovered widget's border; `to_window()` below reads it. The
+        # `kivymd.uix.behaviors.HoverBehavior` we inherit from now doesn't,
+        # so we re-declare it here as the same ObjectProperty (not a plain
+        # class attribute) so any external code that binds to it as a kivy
+        # property still works.
+        border_point = ObjectProperty(None)
 
         def __init__(self, sections, parent, **kwargs):
             for location_id in sections:
@@ -495,6 +520,26 @@ def install_app_surface(ctx, app):
     app.map_dropdown_callback = types.MethodType(_map_dropdown_callback, app)
     app.on_auto_tab_active = types.MethodType(_on_auto_tab_active, app)
     app._tracker_surface_installed = True
+
+    # Contribute the Tracker section to the launcher's global SettingsScreen.
+    # register_settings_section handles both cases: SettingsScreen-not-yet-built
+    # (sets up registry; picked up by setup_sections on first build) and
+    # SettingsScreen-already-live (splices in via add_dynamic_section).
+    try:
+        from mwgg_gui.settings import register_settings_section
+        from worlds.tracker.settings_ui import TrackerSettings
+        register_settings_section(
+            name="tracker",
+            title="Tracker",
+            factory=TrackerSettings,
+            items=[
+                {"name": "Runtime", "icon": "play-circle"},
+                {"name": "Display", "icon": "format-list-bulleted"},
+                {"name": "Behavior", "icon": "tune"},
+            ],
+        )
+    except Exception:
+        traceback.print_exc()
 
 
 def _open_map_dropdown(self, item):

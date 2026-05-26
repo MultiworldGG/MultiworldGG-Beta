@@ -324,11 +324,8 @@ class ManualContext(SuperContext):
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
     def make_gui(self) -> typing.Type["kvui.GameManager"]:
-        if hasattr(SuperContext, "make_gui"):
-            ui = super().make_gui()  # before the kivy imports so kvui gets loaded first
-        else:
-            from kvui import GameManager
-            ui = GameManager
+        from kvui import GameManager
+        ui = GameManager
 
         from kivy.core.window import Window
         from kivy.lang import Builder
