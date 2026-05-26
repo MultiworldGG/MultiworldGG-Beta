@@ -640,10 +640,7 @@ class CommonContext(InitContext):
         self.jsontotextparser = JSONtoTextParser(self)
         self.rawjsontotextparser = RawJSONtoTextParser(self)
 
-        # Launcher-provided callbacks, stashed by Utils._perform_module_launch.
-        # One-shot wrappers so the same callback can't fire twice across the
-        # takeover-completion path, the kvui async_run failure path, and the
-        # outer Utils._perform_module_launch exception handler.
+        # Launcher-provided callbacks
         ready_cb, error_cb = _consume_pending_launch_callbacks()
         self._ready_callback = _make_one_shot(ready_cb)
         self._error_callback = _make_one_shot(error_cb)
@@ -703,9 +700,6 @@ class CommonContext(InitContext):
             app.ctx = self
 
             # Notify the frontend that its `ctx` has been reassigned, so it can rebuild
-            # anything cached against the previous ctx (commandprocessor, JSON parser,
-            # etc.). The TUI implements this; mwgg-gui's Kivy app rebuilds those at
-            # console_init() time so it does not need a hook here. Optional by design.
             ctx_swap_hook = getattr(app, "_on_ctx_swapped", None)
             if ctx_swap_hook is not None:
                 ctx_swap_hook()
@@ -716,23 +710,6 @@ class CommonContext(InitContext):
 
             # Build new client features
             await game_client.build()
-
-            # Per-game contexts (tracker, manual, ...) override `make_gui()` to
-            # return a subclass whose `build()` registers custom tabs/screens
-            # via `manager.add_client_tab(...)`. On the takeover path the
-            # frontend's own MDApp.build() lifecycle is consumed by the
-            # launcher, so we explicitly instantiate the subclass and call
-            # `build()` ourselves to trigger those side effects. The launcher
-            # app's `build()` is idempotent for non-live instances (it returns
-            # the live root rather than rebuilding layouts), so this is safe
-            # for contexts that don't override make_gui.
-            try:
-                manager_cls = self.make_gui()
-                manager = manager_cls(self)
-                self.ui = manager
-                manager.build()
-            except Exception:
-                logger.exception("Post-takeover per-game UI setup failed")
 
             # The world's UI is now in front of the user. Signal the launcher.
             self._ready_callback()

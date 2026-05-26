@@ -643,6 +643,7 @@ class ServerOptions(Group):
     loglevel: str = "info"
     logtime: bool = False
     admin_password: AdminPassword | None = None
+    server_password: AdminPassword | None = None #backwards compatibility
     disable_item_cheat: DisableItemCheat | bool = False
     location_check_points: LocationCheckPoints = LocationCheckPoints(1)
     hint_cost: HintCost = HintCost(10)

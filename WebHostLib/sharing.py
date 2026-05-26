@@ -57,7 +57,7 @@ _VALID_MODES = ("co_owner", "transfer")
 def _absolute_url(path: str) -> str:
     """Build a shareable absolute URL for ``path`` (which already starts with ``/``)."""
     base_host = app.config.get("SHARE_BASE_HOST") or request.host
-    return f"{request.scheme}://{base_host}{path}"
+    return f"{base_host}{path}"
 
 
 def _get_target(kind: str, target_id: UUID):

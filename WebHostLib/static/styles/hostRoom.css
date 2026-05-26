@@ -37,15 +37,32 @@
 #host-room table th{
     text-align: left;
     padding: 10px;
-    border: 1px solid var(--mw-sys-color-white);
     font-size: 20px;
     font-family: Inter-Regular, sans-serif;
+    border-bottom: 1px solid var(--mw-sys-color-scrim-medium);
 }
 
 #host-room table td{
-    border: 1px solid var(--mw-sys-color-white);
     text-align: left;
     padding: 10px;
+    word-break: break-word;
+}
+
+#host-room table tbody tr:nth-child(even){
+    background-color: var(--mw-sys-color-scrim-light);
+}
+
+#host-room .room-action-link{
+    display: inline-block;
+    padding: 4px 10px;
+    border: 1px solid var(--mw-sys-color-link);
+    border-radius: 4px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+#host-room .room-action-link:hover{
+    background-color: var(--mw-sys-color-scrim-light);
 }
 
 #host-room #logger{

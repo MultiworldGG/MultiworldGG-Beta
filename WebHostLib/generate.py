@@ -33,7 +33,8 @@ def get_meta(options_source: dict, race: bool = False) -> dict[str, list[str] | 
         "countdown_mode": str(options_source.get("countdown_mode", ServerOptions.countdown_mode)),
         "hint_mode": str(options_source.get("hint_mode", ServerOptions.hint_mode)),
         "item_cheat": bool(int(options_source.get("item_cheat", not ServerOptions.disable_item_cheat))),
-        "admin_password": str(options_source.get("admin_password", None)),
+        "admin_password": str(options_source.get("admin_password", None)) or str(options_source.get("server_password", None)), #backwards compatibility
+
     }
     generator_options = {
         "spoiler": int(options_source.get("spoiler", GeneratorOptions.spoiler)),
