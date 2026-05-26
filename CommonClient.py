@@ -640,10 +640,7 @@ class CommonContext(InitContext):
         self.jsontotextparser = JSONtoTextParser(self)
         self.rawjsontotextparser = RawJSONtoTextParser(self)
 
-        # Launcher-provided callbacks, stashed by Utils._perform_module_launch.
-        # One-shot wrappers so the same callback can't fire twice across the
-        # takeover-completion path, the kvui async_run failure path, and the
-        # outer Utils._perform_module_launch exception handler.
+        # Launcher-provided callbacks
         ready_cb, error_cb = _consume_pending_launch_callbacks()
         self._ready_callback = _make_one_shot(ready_cb)
         self._error_callback = _make_one_shot(error_cb)
@@ -703,9 +700,6 @@ class CommonContext(InitContext):
             app.ctx = self
 
             # Notify the frontend that its `ctx` has been reassigned, so it can rebuild
-            # anything cached against the previous ctx (commandprocessor, JSON parser,
-            # etc.). The TUI implements this; mwgg-gui's Kivy app rebuilds those at
-            # console_init() time so it does not need a hook here. Optional by design.
             ctx_swap_hook = getattr(app, "_on_ctx_swapped", None)
             if ctx_swap_hook is not None:
                 ctx_swap_hook()
