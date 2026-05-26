@@ -64,7 +64,7 @@ def _avatar_base_url() -> str:
     Flask's internal bind (`127.0.0.1:8080` behind a reverse proxy).
     """
     base_host = app.config.get("SHARE_BASE_HOST") or request.host
-    return f"{request.scheme}://{base_host}"
+    return f"{base_host}"
 
 
 @api_endpoints.route("/avatar/token", methods=["POST"])
