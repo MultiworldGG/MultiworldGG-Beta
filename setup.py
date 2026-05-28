@@ -215,12 +215,22 @@ def pre_build_setup():
 def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
     logger.debug("Running post-build setup...")
-    # Both dirs need a placeholder file inside them or actions/upload-artifact
-    # strips them from the build artifact (silent: empty dirs are dropped).
-    # The README also doubles as a hint for the user.
+    # Players/ still lives next to the executable. custom_worlds/ has moved
+    # to the user-data dir (write_path) so AppImage installs can write to it;
+    # the in-bundle README is just a redirect breadcrumb in case anyone goes
+    # looking for it in the old place.
+    _user_custom_worlds_hint = {
+        "Linux":   "~/.local/share/MultiworldGG/custom_worlds",
+        "Darwin":  "~/Library/Application Support/MultiworldGG/custom_worlds",
+        "Windows": "%LOCALAPPDATA%\\MultiworldGG\\custom_worlds",
+    }.get(platform.system(), "<your user data dir>/MultiworldGG/custom_worlds")
     _dir_readmes = {
         "Players": "Drop your generated YAML config files here.\n",
-        "custom_worlds": "Drop .apworld or .whl files here to install custom games.\n",
+        "custom_worlds": (
+            "Custom worlds are loaded from your user data dir, not from here.\n"
+            f"Drop .apworld / .whl files into:\n  {_user_custom_worlds_hint}\n"
+            "(MultiworldGG auto-creates that directory on first launch.)\n"
+        ),
     }
     for subdir, body in _dir_readmes.items():
         path = os.path.join(build_exe_dir, subdir)
