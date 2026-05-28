@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from importlib import invalidate_caches
-from BaseUtils import tuplize_version, Version, local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen, WORLDS_EXIST
+from BaseUtils import tuplize_version, Version, local_path, write_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen, WORLDS_EXIST
 from APContainer import APWorldContainer
 
 # mwgg_igdb package source — orphan branch on the Index repo
@@ -102,8 +102,23 @@ class RequirementsSet(set):
 requirements_files = RequirementsSet({Path(local_path("requirements.txt"))})
 worlds_files = {"wheels": RequirementsSet(), "apworlds": RequirementsSet()}
 
-# Resolved via local_path so it points next to the executable in frozen builds
-custom_worlds_dir = Path(local_path("custom_worlds"))
+# Frozen builds: custom_worlds lives under write_path() — i.e.
+# ~/.local/share/MultiworldGG/custom_worlds on Linux, %LOCALAPPDATA% on Windows,
+# ~/Library/Application Support/ on macOS — so it's user-writable on every
+# install shape (AppImage's `/tmp/.mount_…` mount is read-only; tarball install
+# dirs may be in /opt/ etc.). Dev mode keeps using the in-repo dir for
+# convenience (drop apworlds in <repo>/custom_worlds/ and they're picked up).
+if is_frozen():
+    custom_worlds_dir = Path(write_path("custom_worlds"))
+else:
+    custom_worlds_dir = Path(local_path("custom_worlds"))
+
+# Best-effort mkdir. Skipped silently on the rare read-only filesystem; the
+# downstream readers already handle missing directories.
+try:
+    custom_worlds_dir.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass
 
 # Add wheel files if update hasn't run
 if not update_ran:

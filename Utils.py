@@ -244,8 +244,10 @@ def get_available_worlds() -> typing.List[str]:
     from BaseUtils import get_apworld_manifest
     
     available_worlds = find_world_modules()
-    # Also add worlds from the custom_worlds directory
-    custom_worlds_dir = Path(local_path("custom_worlds"))
+    # Also add worlds from the custom_worlds directory. Resolved (and mkdir'd)
+    # once in ModuleUpdate so frozen builds point at the user-writable
+    # write_path location and dev mode points at the in-repo dir.
+    from ModuleUpdate import custom_worlds_dir
     try:
         for world_file in custom_worlds_dir.iterdir():
             module_name = discover_custom_world_module(world_file)

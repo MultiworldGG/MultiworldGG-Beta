@@ -20,13 +20,61 @@ os.environ["KIVY_NO_ARGS"] = "1"
 
 from BaseUtils import local_path, write_path, use_worlds_venv, init_logging, is_windows, mwgg_venv_site_packages
 
+# Force the SDL2 clipboard provider on Linux. Without this, Kivy probes
+# clipboard_xclip / clipboard_xsel / clipboard_dbusklipper / clipboard_gtk3
+# first and logs noisy FileNotFoundError tracebacks when xclip/xsel aren't
+# installed; it then falls back to sdl2 anyway. Selecting sdl2 explicitly
+# skips the probes. macOS keeps its native provider; Windows is unaffected.
+if sys.platform.startswith("linux"):
+    os.environ.setdefault("KIVY_CLIPBOARD", "sdl2")
+
 # Ensure ctypes is imported early (fixes WinDLL issues in frozen builds)
 import ctypes
+
+# Linux frozen build: pre-load libmtdev.so.1 by absolute path BEFORE Kivy is
+# imported. Kivy's `kivy/lib/mtdev.py` does `ctypes.CDLL("libmtdev.so.1")`
+# without a path, which only succeeds if the lib is on the dlopen search
+# path. setup.py's post_build_setup() copies it to the bundle root; loading
+# it here registers the SONAME with ld.so, so Kivy's later name-only CDLL
+# call gets the cached handle instead of OSError.
+if sys.platform.startswith("linux") and use_worlds_venv():
+    _bundled_mtdev = local_path("libmtdev.so.1")
+    if os.path.exists(_bundled_mtdev):
+        try:
+            ctypes.CDLL(_bundled_mtdev)
+        except OSError:
+            pass  # let Kivy log its own benign "MTDev is not supported" warning
+
+
+def _ensure_writable_kivy_data(src: str) -> str:
+    """Mirror the bundled Kivy data dir into a writable location and return it.
+
+    On the Linux AppImage (and macOS .app), `local_path(...)` resolves under a
+    read-only mount, but Kivy needs to write to its data dir at startup
+    (recoloring `defaulttheme-0.png`). We mirror it under `write_path()`
+    — the parent of `mwgg_venv` in `~/.local/share/MultiworldGG/` — and
+    re-sync whenever the bundled copy is newer than the mirror.
+    """
+    import shutil
+    dst = write_path("kivy", "data")
+    marker = "defaulttheme-0.png"
+    src_marker = os.path.join(src, marker)
+    dst_marker = os.path.join(dst, marker)
+    needs_copy = not os.path.exists(dst_marker) or (
+        os.path.exists(src_marker)
+        and os.path.getmtime(src_marker) > os.path.getmtime(dst_marker)
+    )
+    if needs_copy:
+        if os.path.exists(dst):
+            shutil.rmtree(dst)
+        shutil.copytree(src, dst)
+    return dst
+
 
 # TODO: Move kivy settings out of here and into the kivy module.
 if use_worlds_venv():
     os.environ["KIVY_NO_ARGS"] = "1"
-    os.environ["KIVY_DATA_DIR"] = local_path("lib", "kivy", "data")
+    os.environ["KIVY_DATA_DIR"] = _ensure_writable_kivy_data(local_path("lib", "kivy", "data"))
     default_libs_dir = os.path.join(sys.exec_prefix, "lib")
     if str(default_libs_dir) not in sys.path:
         sys.path.append(default_libs_dir)
@@ -159,8 +207,10 @@ if __name__ == "__main__":
             import ModuleUpdate
             ModuleUpdate.install_worlds(worlds=["mwgg_igdb_sixteen"])
 
-    # Start the splash screen process — only for the Kivy GUI frontend (TUI doesn't have
-    # the ~30s Kivy load that the splash exists to mask).
+    # Start the splash screen process — Windows + Kivy GUI only.
+    # Skipped on Mac/Linux: the splash crashes there, and the long Kivy load
+    # the splash exists to mask is much shorter on those platforms anyway.
+    # TUI also skips it (no Kivy load to hide).
     splash_queue = None
 
     if is_windows and args.frontend == "gui":

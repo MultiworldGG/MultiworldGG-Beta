@@ -21,6 +21,29 @@ _cxf_numpy_hook.Hook.numpy_core_overrides = _no_overrides_patch
 
 from Utils import version_tuple, instance_name, is_windows, is_macos
 
+
+def _find_libmtdev() -> str | None:
+    """Locate libmtdev.so.1 on the build machine for explicit bundling.
+
+    cx_Freeze's `bin_includes` only overrides exclusion of libs it already
+    sees as link-time deps; libmtdev is runtime-loaded via ctypes from
+    `kivy/lib/mtdev.py`, so cx_Freeze never finds it. We bundle it
+    ourselves via `include_files` instead.
+    """
+    if platform.system() != "Linux":
+        return None
+    for path in (
+        "/usr/lib/x86_64-linux-gnu/libmtdev.so.1",
+        "/usr/lib64/libmtdev.so.1",
+        "/usr/lib/libmtdev.so.1",
+    ):
+        if os.path.exists(path):
+            return path
+    return None
+
+
+_libmtdev_path = _find_libmtdev()
+
 logger = logging.getLogger("MultiWorld")
 
 if not logging.getLogger().hasHandlers():
@@ -115,6 +138,10 @@ build_exe_options = {
         ("uv_runtime/uv", "uv") if (not is_windows and not is_macos and os.path.exists("uv_runtime/uv")) else None,
         ("uv_runtime/uv-arm64", "uv-arm64") if (is_macos and os.path.exists("uv_runtime/uv-arm64")) else None,
         ("uv_runtime/uv-x86_64", "uv-x86_64") if (is_macos and os.path.exists("uv_runtime/uv-x86_64")) else None,
+        # NOTE: libmtdev.so.1 is copied at post-build time (see post_build_setup);
+        # `include_files` here put it under lib/ where Kivy's ctypes CDLL didn't
+        # find it. Pairing the bundle-root copy with MultiWorld.py's pre-load
+        # is the combination that actually works.
     ],
     "include_msvcr": True,
     "replace_paths": ["*."],
@@ -188,8 +215,44 @@ def pre_build_setup():
 def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
     logger.debug("Running post-build setup...")
-    os.mkdir(os.path.join(build_exe_dir, "Players"))
-    os.mkdir(os.path.join(build_exe_dir, "custom_worlds"))
+    # Players/ still lives next to the executable. custom_worlds/ has moved
+    # to the user-data dir (write_path) so AppImage installs can write to it;
+    # the in-bundle README is just a redirect breadcrumb in case anyone goes
+    # looking for it in the old place.
+    _user_custom_worlds_hint = {
+        "Linux":   "~/.local/share/MultiworldGG/custom_worlds",
+        "Darwin":  "~/Library/Application Support/MultiworldGG/custom_worlds",
+        "Windows": "%LOCALAPPDATA%\\MultiworldGG\\custom_worlds",
+    }.get(platform.system(), "<your user data dir>/MultiworldGG/custom_worlds")
+    _dir_readmes = {
+        "Players": "Drop your generated YAML config files here.\n",
+        "custom_worlds": (
+            "Custom worlds are loaded from your user data dir, not from here.\n"
+            f"Drop .apworld / .whl files into:\n  {_user_custom_worlds_hint}\n"
+            "(MultiworldGG auto-creates that directory on first launch.)\n"
+        ),
+    }
+    for subdir, body in _dir_readmes.items():
+        path = os.path.join(build_exe_dir, subdir)
+        os.makedirs(path, exist_ok=True)
+        with open(os.path.join(path, "README.txt"), "w") as f:
+            f.write(body)
+
+    # Linux: copy libmtdev.so.1 to the bundle root (next to the executable).
+    # `include_files` and `bin_includes` both proved unreliable for this lib
+    # because Kivy ctypes-loads it at runtime (not a link-time dep). Putting
+    # it at $ORIGIN means Python's RPATH-based search finds it; MultiWorld.py
+    # also pre-loads it by absolute path as a SONAME cache primer.
+    if platform.system() == "Linux":
+        import shutil
+        libmtdev = _find_libmtdev()
+        if libmtdev:
+            dest = os.path.join(build_exe_dir, "libmtdev.so.1")
+            shutil.copy(libmtdev, dest)  # follows symlink, dest is a regular file
+            logger.info(f"Bundled {libmtdev} -> {dest}")
+        else:
+            logger.warning("libmtdev.so.1 not found on build host; AppImage will "
+                           "log a benign 'MTDev is not supported' warning at startup.")
 
 
 def _register_custom_hooks():

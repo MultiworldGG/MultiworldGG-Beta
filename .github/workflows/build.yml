@@ -138,6 +138,12 @@ jobs:
           sudo apt update
           sudo apt -y install build-essential p7zip xz-utils wget libglib2.0-0
           sudo apt -y install python3-gi libgirepository1.0-dev  # should pull dependencies for gi installation below
+          # libcairo2-dev: PyGObject<3.51 pulls pycairo as a build dep that
+          # needs cairo headers via pkg-config at build time.
+          sudo apt -y install libcairo2-dev
+          # libmtdev1: Kivy probes libmtdev.so.1 at startup; cx_Freeze bundles
+          # it via bin_includes in setup.py so the runtime AppImage doesn't need it.
+          sudo apt -y install libmtdev1
       - name: Get a recent python
         uses: actions/setup-python@v6.2.0
         with:
