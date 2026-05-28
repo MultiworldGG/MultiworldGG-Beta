@@ -31,6 +31,20 @@ if sys.platform.startswith("linux"):
 # Ensure ctypes is imported early (fixes WinDLL issues in frozen builds)
 import ctypes
 
+# Linux frozen build: pre-load libmtdev.so.1 by absolute path BEFORE Kivy is
+# imported. Kivy's `kivy/lib/mtdev.py` does `ctypes.CDLL("libmtdev.so.1")`
+# without a path, which only succeeds if the lib is on the dlopen search
+# path. setup.py's post_build_setup() copies it to the bundle root; loading
+# it here registers the SONAME with ld.so, so Kivy's later name-only CDLL
+# call gets the cached handle instead of OSError.
+if sys.platform.startswith("linux") and use_worlds_venv():
+    _bundled_mtdev = local_path("libmtdev.so.1")
+    if os.path.exists(_bundled_mtdev):
+        try:
+            ctypes.CDLL(_bundled_mtdev)
+        except OSError:
+            pass  # let Kivy log its own benign "MTDev is not supported" warning
+
 
 def _ensure_writable_kivy_data(src: str) -> str:
     """Mirror the bundled Kivy data dir into a writable location and return it.
