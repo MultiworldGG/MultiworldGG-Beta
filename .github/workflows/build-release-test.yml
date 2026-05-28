@@ -229,6 +229,10 @@ jobs:
           sudo apt update
           sudo apt -y install build-essential p7zip xz-utils wget libglib2.0-0
           sudo apt -y install python3-gi libgirepository1.0-dev
+          # libcairo2-dev: PyGObject<3.51 pulls pycairo as a build dep; pycairo's
+          # meson build needs cairo headers via pkg-config (without this the pip
+          # install fails with `Dependency "cairo" not found`).
+          sudo apt -y install libcairo2-dev
           # libmtdev1: bundled via cx_Freeze bin_includes; needed at build time so it can be found.
           sudo apt -y install libmtdev1
           source venv/bin/activate

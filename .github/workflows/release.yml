@@ -104,6 +104,9 @@ jobs:
             sudo apt update
             sudo apt -y install build-essential p7zip xz-utils wget libglib2.0-0
             sudo apt -y install python3-gi libgirepository1.0-dev
+            # libcairo2-dev: PyGObject<3.51 pulls pycairo as a build dep that
+            # needs cairo headers via pkg-config at build time.
+            sudo apt -y install libcairo2-dev
             # libmtdev1: cx_Freeze bundles libmtdev.so.1 via bin_includes so
             # the runtime AppImage isn't missing Kivy's multitouch probe target.
             sudo apt -y install libmtdev1
@@ -230,6 +233,9 @@ jobs:
           sudo apt update
           sudo apt -y install build-essential p7zip xz-utils wget libglib2.0-0
           sudo apt -y install python3-gi libgirepository1.0-dev
+          # libcairo2-dev: PyGObject<3.51 pulls pycairo as a build dep that
+          # needs cairo headers via pkg-config at build time.
+          sudo apt -y install libcairo2-dev
           # libmtdev1: bundled via cx_Freeze bin_includes; needed at build time so it can be found.
           sudo apt -y install libmtdev1
           source venv/bin/activate
