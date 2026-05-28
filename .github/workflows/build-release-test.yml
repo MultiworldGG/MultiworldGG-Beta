@@ -188,11 +188,17 @@ jobs:
       - name: Create Linux tarball
         run: |
           cd src/build
+          # cx_Freeze outputs to exe.<platform>-<python_version>/ (e.g.
+          # exe.linux-x86_64-3.13), so the files we need to chmod live one
+          # directory deeper than src/build. Glob the exe dir so a future
+          # Python minor bump doesn't break this step.
+          exe_dir=$(echo exe.*/)
           # setup.py produces MultiWorldGG / MultiWorldGGServer / MultiWorldGGGenerate
           # / MultiWorldGGPatch (capital W); the uv runtime is bundled as `uv`.
-          # The previous `MultiworldGG` (lowercase w, no glob) silently failed via
-          # `2>/dev/null || true` so the tarball shipped non-executable binaries.
-          chmod -c 755 MultiWorldGG* uv*
+          # The previous `MultiworldGG` (lowercase w, no glob, wrong cwd)
+          # silently failed via `2>/dev/null || true` so the tarball shipped
+          # non-executable binaries.
+          chmod -c 755 "${exe_dir}"MultiWorldGG* "${exe_dir}"uv*
           tar -czvf "MultiworldGG-${APP_VERSION}-linux-x86_64.tar.gz" *
           mkdir -p ../dist
           mv *.tar.gz ../dist/
