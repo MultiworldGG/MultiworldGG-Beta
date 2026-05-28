@@ -189,17 +189,20 @@ jobs:
         run: |
           cd src/build
           # cx_Freeze outputs to exe.<platform>-<python_version>/ (e.g.
-          # exe.linux-x86_64-3.13), so the files we need to chmod live one
-          # directory deeper than src/build. Glob the exe dir so a future
-          # Python minor bump doesn't break this step.
+          # exe.linux-x86_64-3.13). Glob it so a future Python minor bump
+          # doesn't break this step, then rename it to the conventional
+          # `<tarball-stem>/` so `tar xf foo.tar.gz` extracts `foo/`.
           exe_dir=$(echo exe.*/)
+          exe_dir="${exe_dir%/}"
+          release_name="MultiworldGG-${APP_VERSION}-linux-x86_64"
           # setup.py produces MultiWorldGG / MultiWorldGGServer / MultiWorldGGGenerate
           # / MultiWorldGGPatch (capital W); the uv runtime is bundled as `uv`.
-          # The previous `MultiworldGG` (lowercase w, no glob, wrong cwd)
-          # silently failed via `2>/dev/null || true` so the tarball shipped
-          # non-executable binaries.
-          chmod -c 755 "${exe_dir}"MultiWorldGG* "${exe_dir}"uv*
-          tar -czvf "MultiworldGG-${APP_VERSION}-linux-x86_64.tar.gz" *
+          # The previous chmod ran in the wrong directory + used the wrong case
+          # and was masked by `2>/dev/null || true`, so the tarball shipped
+          # non-executable binaries on every release.
+          chmod -c 755 "${exe_dir}"/MultiWorldGG* "${exe_dir}"/uv*
+          mv "${exe_dir}" "${release_name}"
+          tar -czvf "${release_name}.tar.gz" "${release_name}"
           mkdir -p ../dist
           mv *.tar.gz ../dist/
 
