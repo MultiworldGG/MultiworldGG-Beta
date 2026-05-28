@@ -119,7 +119,10 @@ build_exe_options = {
     "include_msvcr": True,
     "replace_paths": ["*."],
     "optimize": 1,
-    "bin_includes": ["libffi.so", "libcrypt.so"] if platform.system() == "Linux" else []
+    # libmtdev.so.1: Kivy probes this for multitouch input on Linux. Bundling
+    # silences the "MTDev is not supported by your version of linux" warning;
+    # the matching `libmtdev1` apt package is installed by the AppImage workflow.
+    "bin_includes": ["libffi.so", "libcrypt.so", "libmtdev.so.1"] if platform.system() == "Linux" else []
 }
 
 # Remove None entries from include_files and packages

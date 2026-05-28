@@ -20,6 +20,14 @@ os.environ["KIVY_NO_ARGS"] = "1"
 
 from BaseUtils import local_path, write_path, use_worlds_venv, init_logging, is_windows, mwgg_venv_site_packages
 
+# Force the SDL2 clipboard provider on Linux. Without this, Kivy probes
+# clipboard_xclip / clipboard_xsel / clipboard_dbusklipper / clipboard_gtk3
+# first and logs noisy FileNotFoundError tracebacks when xclip/xsel aren't
+# installed; it then falls back to sdl2 anyway. Selecting sdl2 explicitly
+# skips the probes. macOS keeps its native provider; Windows is unaffected.
+if sys.platform.startswith("linux"):
+    os.environ.setdefault("KIVY_CLIPBOARD", "sdl2")
+
 # Ensure ctypes is imported early (fixes WinDLL issues in frozen builds)
 import ctypes
 
