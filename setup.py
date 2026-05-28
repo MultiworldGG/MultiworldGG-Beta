@@ -215,8 +215,18 @@ def pre_build_setup():
 def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
     logger.debug("Running post-build setup...")
-    os.mkdir(os.path.join(build_exe_dir, "Players"))
-    os.mkdir(os.path.join(build_exe_dir, "custom_worlds"))
+    # Both dirs need a placeholder file inside them or actions/upload-artifact
+    # strips them from the build artifact (silent: empty dirs are dropped).
+    # The README also doubles as a hint for the user.
+    _dir_readmes = {
+        "Players": "Drop your generated YAML config files here.\n",
+        "custom_worlds": "Drop .apworld or .whl files here to install custom games.\n",
+    }
+    for subdir, body in _dir_readmes.items():
+        path = os.path.join(build_exe_dir, subdir)
+        os.makedirs(path, exist_ok=True)
+        with open(os.path.join(path, "README.txt"), "w") as f:
+            f.write(body)
 
     # Linux: copy libmtdev.so.1 to the bundle root (next to the executable).
     # `include_files` and `bin_includes` both proved unreliable for this lib

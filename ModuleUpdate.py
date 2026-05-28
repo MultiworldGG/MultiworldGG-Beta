@@ -105,6 +105,19 @@ worlds_files = {"wheels": RequirementsSet(), "apworlds": RequirementsSet()}
 # Resolved via local_path so it points next to the executable in frozen builds
 custom_worlds_dir = Path(local_path("custom_worlds"))
 
+# Ensure the directory exists. Two reasons:
+#   1. actions/upload-artifact silently strips empty directories, so a fresh
+#      tarball install may not contain custom_worlds even though setup.py
+#      created it at build time (mitigated separately by writing a README into
+#      it; this is the runtime safety net).
+#   2. The dir may not exist on a fresh install if the user never copied one in.
+# mkdir is best-effort: on read-only mounts (AppImage `/tmp/.mount_…`) it'll
+# raise OSError, which we swallow — downstream readers already handle missing.
+try:
+    custom_worlds_dir.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass
+
 # Add wheel files if update hasn't run
 if not update_ran:
     if custom_worlds_dir.exists():
