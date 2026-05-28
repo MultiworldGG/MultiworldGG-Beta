@@ -21,6 +21,29 @@ _cxf_numpy_hook.Hook.numpy_core_overrides = _no_overrides_patch
 
 from Utils import version_tuple, instance_name, is_windows, is_macos
 
+
+def _find_libmtdev() -> str | None:
+    """Locate libmtdev.so.1 on the build machine for explicit bundling.
+
+    cx_Freeze's `bin_includes` only overrides exclusion of libs it already
+    sees as link-time deps; libmtdev is runtime-loaded via ctypes from
+    `kivy/lib/mtdev.py`, so cx_Freeze never finds it. We bundle it
+    ourselves via `include_files` instead.
+    """
+    if platform.system() != "Linux":
+        return None
+    for path in (
+        "/usr/lib/x86_64-linux-gnu/libmtdev.so.1",
+        "/usr/lib64/libmtdev.so.1",
+        "/usr/lib/libmtdev.so.1",
+    ):
+        if os.path.exists(path):
+            return path
+    return None
+
+
+_libmtdev_path = _find_libmtdev()
+
 logger = logging.getLogger("MultiWorld")
 
 if not logging.getLogger().hasHandlers():
@@ -115,14 +138,15 @@ build_exe_options = {
         ("uv_runtime/uv", "uv") if (not is_windows and not is_macos and os.path.exists("uv_runtime/uv")) else None,
         ("uv_runtime/uv-arm64", "uv-arm64") if (is_macos and os.path.exists("uv_runtime/uv-arm64")) else None,
         ("uv_runtime/uv-x86_64", "uv-x86_64") if (is_macos and os.path.exists("uv_runtime/uv-x86_64")) else None,
+        # libmtdev.so.1: Kivy ctypes-loads this at startup; cx_Freeze can't
+        # auto-detect it as a runtime-only dep. Sourced from libmtdev1 apt
+        # package installed in the build workflow.
+        (_libmtdev_path, "lib/libmtdev.so.1") if _libmtdev_path else None,
     ],
     "include_msvcr": True,
     "replace_paths": ["*."],
     "optimize": 1,
-    # libmtdev.so.1: Kivy probes this for multitouch input on Linux. Bundling
-    # silences the "MTDev is not supported by your version of linux" warning;
-    # the matching `libmtdev1` apt package is installed by the AppImage workflow.
-    "bin_includes": ["libffi.so", "libcrypt.so", "libmtdev.so.1"] if platform.system() == "Linux" else []
+    "bin_includes": ["libffi.so", "libcrypt.so"] if platform.system() == "Linux" else []
 }
 
 # Remove None entries from include_files and packages

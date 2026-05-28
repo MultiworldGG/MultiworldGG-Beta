@@ -106,6 +106,15 @@ jobs:
           cd src
           pip install -r requirements.txt
           pip install -r build_requirements.txt
+
+      - name: Install Linux system libs for cx_Freeze bundling
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          # libmtdev1: setup.py's include_files copies libmtdev.so.1 from
+          # /usr/lib/x86_64-linux-gnu/ into the build so Kivy's ctypes load
+          # at runtime succeeds. Must be installed BEFORE `setup.py build_exe`.
+          sudo apt -y install libmtdev1
       
       - name: Mint mwgg-build-fetch App installation token
         id: app-token
