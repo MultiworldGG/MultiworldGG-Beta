@@ -27,6 +27,7 @@ __all__ = ("Version",
            "mwgg_venv_site_packages",
            "mwgg_venv_python",
            "reload_application_options",
+           "get_frontend_versions",
            "init_logging",
            "loglevel_mapping",
            "WORLDS_EXIST",
@@ -396,6 +397,26 @@ def _print_startup_logo() -> None:
         _startup_logo_printed = True
 
 
+_FRONTEND_PACKAGES = ("mwgg_gui", "mwgg_tui", "mwgg_splash")
+
+
+def get_frontend_versions() -> "dict[str, str]":
+    """Return {package: version} for the bundled frontend packages.
+
+    Reads dist-info via importlib.metadata so the heavy modules (which pull in
+    Kivy) are never imported just to read a version. Packages with no
+    discoverable metadata report "unknown".
+    """
+    import importlib.metadata as _md
+    versions: dict[str, str] = {}
+    for name in _FRONTEND_PACKAGES:
+        try:
+            versions[name] = _md.version(name)
+        except Exception:
+            versions[name] = "unknown"
+    return versions
+
+
 def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
                  write_mode: str = "w", log_format: str = "[%(name)s at %(asctime)s]: %(message)s",
                  add_timestamp: bool = False, exception_logger: typing.Optional[str] = None,
@@ -514,6 +535,9 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
         f" on {platform.platform()} process {os.getpid()}"
         f" running Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
         f"{' (frozen)' if is_frozen() else ''}"
+    )
+    logging.info(
+        "Frontends: " + ", ".join(f"{name} {ver}" for name, ver in get_frontend_versions().items())
     )
 
 def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
