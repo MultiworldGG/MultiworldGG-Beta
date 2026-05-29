@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import json
 import logging
 import os
 import random
@@ -12,6 +13,17 @@ import urllib.request
 from collections import Counter
 from itertools import chain
 from typing import Any
+
+# Lightweight "dump option metadata as JSON" mode, used by mwgg-gui's YAML
+# creator. Detected as early as possible — before ModuleUpdate configures the
+# root logger to stdout — because the GUI captures a single JSON object from
+# stdout, so every other byte of output must be diverted to stderr. The real
+# stdout is preserved in _JSON_OUT for the final emit.
+_YAML_OPTIONS_MODE = "--yaml-options" in sys.argv
+_JSON_OUT = sys.stdout
+if _YAML_OPTIONS_MODE:
+    logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
+    sys.stdout = sys.stderr
 
 import ModuleUpdate
 
@@ -69,7 +81,16 @@ def mystery_argparse(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--spoiler-only", action="store_true",
                         help="Skips generation assertion and multidata, outputting only a spoiler log. "
                              "Intended for debugging and testing purposes.")
+    parser.add_argument("--game", help="Game name, used by --yaml-options.")
+    parser.add_argument("--yaml-options", action="store_true",
+                        help="Install/load --game, write its option metadata to stdout as JSON, then exit. "
+                             "Used by the YAML creator GUI; no seed is generated.")
+    parser.add_argument("--visibility", choices=("simple", "complex"), default="simple",
+                        help="Option visibility level for --yaml-options.")
     args = parser.parse_args(argv)
+
+    if args.yaml_options and not args.game:
+        parser.error("--yaml-options requires --game")
 
     if args.skip_output and args.spoiler_only:
         parser.error("Cannot mix --skip-output and --spoiler-only")
@@ -664,9 +685,202 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
     return ret
 
 
+# ---------------------------------------------------------------------------
+# --yaml-options: dump a world's option metadata as JSON (for the YAML creator)
+# ---------------------------------------------------------------------------
+
+def _yo_serialize_default(value):
+    """Coerce option defaults into JSON-safe values."""
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return [_yo_serialize_default(v) for v in value]
+    if isinstance(value, dict):
+        return {str(k): _yo_serialize_default(v) for k, v in value.items()}
+    return str(value)
+
+
+def _yo_clean_docstring(text):
+    if not text:
+        return ""
+    return " ".join(line.strip() for line in text.strip().splitlines() if line.strip())
+
+
+def _yo_choice_extras(option_class):
+    """`choices` (key -> machine name) and `display_names` (key -> human label)."""
+    lookup = dict(getattr(option_class, "name_lookup", {}) or {})
+    choices, display_names = {}, {}
+    for key, name in lookup.items():
+        if name == "random":
+            continue
+        choices[str(key)] = name
+        try:
+            display_names[str(key)] = option_class.get_option_name(key)
+        except Exception:
+            display_names[str(key)] = name
+    return {"choices": choices, "display_names": display_names}
+
+
+def _yo_range_extras(option_class):
+    return {
+        "range_start": int(getattr(option_class, "range_start", 0)),
+        "range_end": int(getattr(option_class, "range_end", 100)),
+    }
+
+
+def _yo_describe_option(option_name, option_class):
+    """JSON-safe descriptor for one option class. Order matters: subclass first."""
+    desc = {
+        "name": option_name,
+        "display_name": getattr(option_class, "display_name", None) or option_name,
+        "docstring": _yo_clean_docstring(getattr(option_class, "__doc__", "") or ""),
+        "default": _yo_serialize_default(getattr(option_class, "default", None)),
+    }
+    if issubclass(option_class, Options.Toggle):
+        desc["type"] = "toggle"
+        return desc
+    if issubclass(option_class, Options.TextChoice):
+        desc["type"] = "text_choice"
+        desc.update(_yo_choice_extras(option_class))
+        return desc
+    if issubclass(option_class, Options.Choice):
+        desc["type"] = "choice"
+        desc.update(_yo_choice_extras(option_class))
+        return desc
+    if issubclass(option_class, Options.NamedRange):
+        desc["type"] = "named_range"
+        desc.update(_yo_range_extras(option_class))
+        desc["special_range_names"] = {
+            str(k): int(v)
+            for k, v in (getattr(option_class, "special_range_names", {}) or {}).items()
+        }
+        return desc
+    if issubclass(option_class, Options.Range):
+        desc["type"] = "range"
+        desc.update(_yo_range_extras(option_class))
+        return desc
+    if issubclass(option_class, Options.FreeText):
+        desc["type"] = "free_text"
+        return desc
+    if issubclass(option_class, Options.ItemSet):
+        desc["type"] = "item_set"
+        desc["valid_keys"] = sorted(getattr(option_class, "valid_keys", []) or [])
+        return desc
+    if issubclass(option_class, Options.LocationSet):
+        desc["type"] = "location_set"
+        desc["valid_keys"] = sorted(getattr(option_class, "valid_keys", []) or [])
+        return desc
+    if issubclass(option_class, Options.OptionCounter):
+        desc["type"] = "option_counter"
+        desc["valid_keys"] = sorted(getattr(option_class, "valid_keys", []) or [])
+        desc["verify_item_name"] = bool(getattr(option_class, "verify_item_name", False))
+        desc["verify_location_name"] = bool(getattr(option_class, "verify_location_name", False))
+        return desc
+    if issubclass(option_class, (Options.OptionSet, Options.OptionList)):
+        desc["type"] = "option_set"
+        desc["valid_keys"] = sorted(getattr(option_class, "valid_keys", []) or [])
+        return desc
+    if issubclass(option_class, Options.OptionDict):
+        desc["type"] = "option_dict"
+        return desc
+    # Unmodeled subclass — let the GUI fall back to a free-text/raw-YAML field.
+    desc["type"] = "free_text"
+    return desc
+
+
+def _yo_describe_world(world):
+    return {
+        "item_names": sorted(getattr(world, "item_names", []) or []),
+        "location_names": sorted(getattr(world, "location_names", []) or []),
+        "item_name_groups": {
+            name: sorted(members or [])
+            for name, members in (getattr(world, "item_name_groups", {}) or {}).items()
+        },
+        "location_name_groups": {
+            name: sorted(members or [])
+            for name, members in (getattr(world, "location_name_groups", {}) or {}).items()
+        },
+    }
+
+
+def _yo_emit(payload) -> int:
+    _JSON_OUT.write(json.dumps(payload))
+    _JSON_OUT.flush()
+    return 0
+
+
+def dump_yaml_options(game_name: str, visibility: str) -> int:
+    """Install/load `game_name` and write its option metadata to stdout as JSON.
+
+    Runs inside the frozen Generate executable, so worlds load in the real
+    bundle environment (C-extension base deps like bsdiff4 import fine).
+    Returns a process exit code; the JSON `ok` field carries success/failure.
+    """
+    import traceback
+    try:
+        if game_name not in GameIndex.game_names:
+            return _yo_emit({
+                "ok": False,
+                "error": f"'{game_name}' is not in the game index; it can't be installed or loaded.",
+            })
+
+        # set_game_names installs the world (uv) if missing and queues it for
+        # loading; the subsequent `import worlds` runs the load loop.
+        set_game_names([game_name], strict=False)
+        from worlds import AutoWorldRegister, failed_world_loads
+
+        world = AutoWorldRegister.world_types.get(game_name)
+        if world is None:
+            if game_name in failed_world_loads:
+                return _yo_emit({
+                    "ok": False,
+                    "error": f"World for '{game_name}' failed to import. See stderr for the traceback.",
+                })
+            return _yo_emit({
+                "ok": False,
+                "error": f"'{game_name}' did not register a World subclass after install.",
+            })
+
+        visibility_flag = (
+            Options.Visibility.complex_ui
+            if visibility == "complex"
+            else Options.Visibility.simple_ui
+        )
+        option_groups = Options.get_option_groups(world, visibility_level=visibility_flag)
+
+        groups_out: dict[str, list] = {}
+        for group_name, options in option_groups.items():
+            descs = []
+            for option_name, option_class in (options or {}).items():
+                try:
+                    descs.append(_yo_describe_option(option_name, option_class))
+                except Exception as e:
+                    logging.warning("describe_option(%s) failed: %s", option_name, e)
+            if descs:
+                groups_out[group_name] = descs
+
+        return _yo_emit({
+            "ok": True,
+            "game_name": game_name,
+            "world": _yo_describe_world(world),
+            "groups": groups_out,
+        })
+    except Exception as e:
+        logging.error("dump_yaml_options failed", exc_info=True)
+        return _yo_emit({"ok": False, "error": f"{type(e).__name__}: {e}", "trace": traceback.format_exc()})
+
+
 if __name__ == '__main__':
     import atexit
     import sys
+
+    # YAML-options mode: emit JSON and exit before the generation pipeline (and
+    # before the interactive "Press enter" atexit hook, which would hang a
+    # subprocess).
+    if _YAML_OPTIONS_MODE:
+        _yo_args = mystery_argparse()
+        sys.exit(dump_yaml_options(_yo_args.game, _yo_args.visibility))
+
     confirmation = atexit.register(input, "Press enter to close.")
     try:
         erargs, seed = main()
