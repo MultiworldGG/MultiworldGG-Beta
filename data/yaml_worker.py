@@ -41,8 +41,13 @@ Response on success:
 Response on failure:
     {"ok": false, "error": "human-readable message"}
 
-The worker pip-installs missing apworlds via `set_game_names` before
-extracting data, mirroring how `Generate.py` resolves worlds.
+Response when the world isn't installed (exit code 2):
+    {"ok": false, "needs_install": "<module_slug>", ...}
+
+The worker never installs anything itself — it runs with SKIP_ALL_INSTALLS
+set so `set_game_names` only queues/probes. If the world isn't already
+available it exits 2 with `needs_install`; the parent GUI installs it via
+`ModuleUpdate.install_worlds` and relaunches a fresh worker.
 """
 from __future__ import annotations
 
@@ -249,64 +254,66 @@ def main():
             )
             return
 
-        # set_game_names appends to _worlds_to_load and pip-installs
-        # any missing wheels via ModuleUpdate.install_worlds. With
-        # strict=False it logs warnings instead of raising.
+        # The worker never installs — the parent GUI does that and re-spawns
+        # us. SKIP_ALL_INSTALLS short-circuits install_worlds() inside
+        # set_game_names so this stays a pure probe.
+        os.environ["SKIP_ALL_INSTALLS"] = "1"
+
+        # set_game_names still does useful non-install work: it queues the
+        # world onto `_worlds_to_load`, picks up custom_worlds/*.apworld
+        # fallbacks, and resolves version precedence. With install_worlds
+        # neutered above, an uninstalled world simply won't end up on
+        # _worlds_to_load — our cue to ask the GUI to install it.
         #
         # CAVEAT: set_game_names calls `importlib.util.find_spec` on
-        # `worlds.<module>` to check for a bundled world before
-        # installing. That side-effects an `import worlds`, which runs
-        # worlds/__init__.py and its `WorldSource(...).load()` loop
-        # against the current `_worlds_to_load`. By the time we install
-        # the missing wheel and `worlds.<module>` is on the import path,
-        # the load loop has already finished — and `from worlds import
-        # AutoWorldRegister` here returns the cached module with no
-        # re-load.
-        #
-        # Fix: after set_game_names completes, manually instantiate +
-        # load WorldSource for any entries that aren't already in
-        # `world_sources`. This is only safe because we're in a fresh
-        # subprocess; the GUI process must never do this (it would
-        # pollute AutoWorldRegister for the whole app lifetime).
+        # `worlds.<module>` to check for a bundled world. That side-effects
+        # an `import worlds`, which runs worlds/__init__.py and its
+        # `WorldSource(...).load()` loop against the current `_worlds_to_load`.
+        # By the time we (or the GUI) install the wheel and re-spawn, the load
+        # loop has already finished in this process — so we manually
+        # instantiate + load WorldSource below for any entries not yet in
+        # `world_sources`. Safe only because we're a fresh subprocess.
         set_game_names([game_name], strict=False)
 
         expected_entry = f"worlds.{known_module}"
         if expected_entry not in _worlds_to_load:
-            _fail(
-                f"set_game_names did not queue '{game_name}' for loading. "
-                f"_worlds_to_load={_worlds_to_load!r}"
-            )
-            return
+            # Not installed and no custom_worlds fallback. Signal the GUI to
+            # install via ModuleUpdate and relaunch the worker.
+            _emit({
+                "ok": False,
+                "needs_install": known_module,
+                "game_name": game_name,
+                "expected_entry": expected_entry,
+            })
+            sys.exit(2)
 
-        from worlds import (
-            AutoWorldRegister,
-            WorldSource,
-            failed_world_loads,
-            world_sources,
-        )
-        already_loaded = {ws.game_module for ws in world_sources}
-        for entry in _worlds_to_load:
-            if entry in already_loaded:
-                continue
-            source = WorldSource(entry)
-            source.load()
-            world_sources.append(source)
+        # Importing `worlds` runs worlds/__init__.py, which loads every entry
+        # on `_worlds_to_load` (now including our freshly-installed world) into
+        # AutoWorldRegister. This is the first `import worlds` in the process —
+        # nothing above triggers it — so the load loop sees the full queue.
+        from worlds import AutoWorldRegister
 
         world = AutoWorldRegister.world_types.get(game_name)
         if world is None:
-            if expected_entry in failed_world_loads:
+            # The load loop above caught and only logged whatever went wrong.
+            # Re-import the module directly to recover the real traceback (a
+            # failed import is evicted from sys.modules, so this re-runs it).
+            import importlib
+            try:
+                importlib.import_module(expected_entry)
                 _fail(
-                    f"World module '{expected_entry}' failed to import. "
-                    f"The pip install may have failed (offline? auth? wheel URL "
-                    f"missing?). Check the parent app's log for the subprocess "
-                    f"pip output."
-                )
-            else:
-                _fail(
-                    f"World '{game_name}' is queued but did not register a World "
+                    f"World '{game_name}' imported but registered no World "
                     f"subclass. AutoWorldRegister has "
                     f"{len(AutoWorldRegister.world_types)} types: "
                     f"{sorted(AutoWorldRegister.world_types)[:10]}…"
+                )
+            except BaseException as load_err:
+                if isinstance(load_err, (KeyboardInterrupt, SystemExit)):
+                    raise
+                trace = f"{type(load_err).__name__}: {load_err}\n\n{traceback.format_exc()}"
+                _fail(
+                    f"World module '{expected_entry}' failed to import:\n{trace}",
+                    trace=trace,
                 )
             return
 
