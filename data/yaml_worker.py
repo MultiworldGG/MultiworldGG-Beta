@@ -52,6 +52,23 @@ import os
 import sys
 import traceback
 
+# When spawned by a frozen build, the parent (world_data.py) passes
+# MWGG_FROZEN_BUNDLE_ROOT so we can recreate the frozen environment in this
+# vanilla venv Python *before* anything triggers BaseUtils.local_path() to
+# cache its path. Without this:
+#   - sys.frozen is absent → is_frozen() returns False
+#   - BaseUtils.__file__ lives inside lib/library.zip, which os.path.isfile()
+#     rejects → local_path() falls through to __main__.__file__ and resolves
+#     to <root>/data instead of <root>
+# Setting sys.argv[0] to a path inside the bundle root makes local_path()'s
+# cx_Freeze branch (dirname(abspath(argv[0]))) return the right value, and
+# is_frozen()=True routes get_archipelago_json/get_apworld_manifest through
+# their venv-site-packages lookups.
+_bundle_root = os.environ.get("MWGG_FROZEN_BUNDLE_ROOT")
+if _bundle_root:
+    sys.frozen = True
+    sys.argv[0] = os.path.join(_bundle_root, "yaml_worker")
+
 logging.basicConfig(level=logging.WARNING)
 
 # Pip / install_worlds / loader chatter would otherwise scribble onto
