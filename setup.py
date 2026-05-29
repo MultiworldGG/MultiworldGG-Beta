@@ -104,6 +104,11 @@ build_exe_options = {
         "Options",
         "frontend_protocol",
         "kvui",
+        # worker.py is spawned as a subprocess by mwgg_gui.yaml_creator.world_data
+        # (not imported), so cx_Freeze's import scanner doesn't see it and prunes
+        # it from the bundle. Forcing it into includes makes cx_Freeze copy it to
+        # lib/mwgg_gui/yaml_creator/worker.py — where world_data.py looks for it.
+        "mwgg_gui.yaml_creator.worker",
     ],
     "excludes": [
         "Cython",
