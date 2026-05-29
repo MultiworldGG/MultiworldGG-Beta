@@ -108,7 +108,10 @@ build_exe_options = {
     "excludes": [
         "Cython",
         "PySide2",
-        "pygments",
+        # pygments is needed by mwgg_gui.yaml_creator (YamlLexer for syntax
+        # highlighting). Previously excluded — likely because cx_Freeze pulled
+        # it in via some other transitive route that's since gone — but now
+        # the YAML creator hard-imports it and the frozen build dies without.
         "pandas",
         "matplotlib",
         "scipy",
