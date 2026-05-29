@@ -25,6 +25,7 @@ __all__ = ("Version",
            "write_path",
            "use_worlds_venv",
            "mwgg_venv_site_packages",
+           "mwgg_venv_python",
            "reload_application_options",
            "init_logging",
            "loglevel_mapping",
@@ -300,6 +301,22 @@ def write_path(*path: str) -> str:
         return os.path.join((Path.home() / ".local" / "share" / "MultiworldGG"), *path)
     else:
         raise RuntimeError("Unsupported platform")
+
+def mwgg_venv_python() -> str:
+    """Path to the Python interpreter inside the mwgg_venv.
+
+    Frozen builds need this to spawn helper subprocesses that have to actually
+    run Python code (e.g. mwgg-gui's yaml worker, pip introspection) —
+    `sys.executable` in a frozen build points at the cx_Freeze launcher, which
+    just runs MultiWorld.py and rejects unknown CLI args.
+
+    On Windows: <write_path('mwgg_venv')>/Scripts/python.exe
+    On Linux/macOS: <write_path('mwgg_venv')>/bin/python
+    """
+    if is_windows:
+        return write_path("mwgg_venv", "Scripts", "python.exe")
+    return write_path("mwgg_venv", "bin", "python")
+
 
 def mwgg_venv_site_packages(*path: str) -> str:
     """Path under <write_path('mwgg_venv')>/<lib>/site-packages, where <lib> is
